@@ -25,14 +25,14 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'copy_value_rep.carbon'
 // CHECK:STDOUT: source_filename = "copy_value_rep.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @X.val.loc18_3 = internal constant { i32 } { i32 1 }
+// CHECK:STDOUT: @X.val.loc18_3.1 = internal constant { i32 } { i32 1 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @main() !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !7
 // CHECK:STDOUT:   %.loc18_21.3.a = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @X.val.loc18_3, i64 4, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @X.val.loc18_3.1, i64 4, i1 false), !dbg !7
 // CHECK:STDOUT:   %.loc19_17.1.a = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !9
 // CHECK:STDOUT:   %.loc19_17.2 = load i32, ptr %.loc19_17.1.a, align 4, !dbg !9
 // CHECK:STDOUT:   %.loc20_4.a = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !10

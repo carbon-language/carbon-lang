@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
-// EXTRA-ARGS: --no-gen-implicit-type-impls
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -16,7 +15,7 @@
 library "[[@TEST_NAME]]";
 
 class HasDestroy {
-  // TODO: Use `fn destroy` instead once lowering supports it.
+  // TODO: Change for `Destruction`+`Destroy`.
   impl as Core.Destroy {
     fn Op[self: Self]();
   }

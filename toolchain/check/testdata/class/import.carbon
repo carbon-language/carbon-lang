@@ -57,13 +57,6 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Empty: type = class_type @Empty [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.228: <witness> = impl_witness @Empty.%Destroy.impl_witness_table [concrete]
-// CHECK:STDOUT:   %ptr.961: type = ptr_type %Empty [concrete]
-// CHECK:STDOUT:   %pattern_type.00f: type = pattern_type %ptr.961 [concrete]
-// CHECK:STDOUT:   %Empty.as.Destroy.impl.Op.type: type = fn_type @Empty.as.Destroy.impl.Op [concrete]
-// CHECK:STDOUT:   %Empty.as.Destroy.impl.Op: %Empty.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Field: type = class_type @Field [concrete]
@@ -72,35 +65,26 @@ fn Run() {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Field.elem: type = unbound_element_type %Field, %i32 [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.9b2: <witness> = impl_witness @Field.%Destroy.impl_witness_table [concrete]
-// CHECK:STDOUT:   %ptr.d8b: type = ptr_type %Field [concrete]
-// CHECK:STDOUT:   %pattern_type.8bd: type = pattern_type %ptr.d8b [concrete]
-// CHECK:STDOUT:   %Field.as.Destroy.impl.Op.type: type = fn_type @Field.as.Destroy.impl.Op [concrete]
-// CHECK:STDOUT:   %Field.as.Destroy.impl.Op: %Field.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.1ec: <witness> = complete_type_witness %struct_type.x [concrete]
 // CHECK:STDOUT:   %ForwardDeclared: type = class_type @ForwardDeclared [concrete]
 // CHECK:STDOUT:   %pattern_type.1b8: type = pattern_type %ForwardDeclared [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.F.type: type = fn_type @ForwardDeclared.F [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.F: %ForwardDeclared.F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.6cf: type = ptr_type %ForwardDeclared [concrete]
-// CHECK:STDOUT:   %pattern_type.ebb: type = pattern_type %ptr.6cf [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %ForwardDeclared [concrete]
+// CHECK:STDOUT:   %pattern_type.ebb: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.G.type: type = fn_type @ForwardDeclared.G [concrete]
 // CHECK:STDOUT:   %ForwardDeclared.G: %ForwardDeclared.G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.00c: <witness> = impl_witness @ForwardDeclared.%Destroy.impl_witness_table [concrete]
-// CHECK:STDOUT:   %ForwardDeclared.as.Destroy.impl.Op.type: type = fn_type @ForwardDeclared.as.Destroy.impl.Op [concrete]
-// CHECK:STDOUT:   %ForwardDeclared.as.Destroy.impl.Op: %ForwardDeclared.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Incomplete: type = class_type @Incomplete [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -120,59 +104,7 @@ fn Run() {
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [concrete = constants.%Incomplete] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Empty.as.Destroy.impl: @Empty.%Self.ref as constants.%Destroy.type {
-// CHECK:STDOUT:   %Empty.as.Destroy.impl.Op.decl: %Empty.as.Destroy.impl.Op.type = fn_decl @Empty.as.Destroy.impl.Op [concrete = constants.%Empty.as.Destroy.impl.Op] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.00f = binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.00f = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc4: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.961 = value_param call_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Empty [concrete = constants.%Empty]
-// CHECK:STDOUT:     %self: %ptr.961 = bind_name self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = %Empty.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = @Empty.%Destroy.impl_witness
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @Field.as.Destroy.impl: @Field.%Self.ref as constants.%Destroy.type {
-// CHECK:STDOUT:   %Field.as.Destroy.impl.Op.decl: %Field.as.Destroy.impl.Op.type = fn_decl @Field.as.Destroy.impl.Op [concrete = constants.%Field.as.Destroy.impl.Op] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.8bd = binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.8bd = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc7: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.d8b = value_param call_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Field [concrete = constants.%Field]
-// CHECK:STDOUT:     %self: %ptr.d8b = bind_name self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = %Field.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = @Field.%Destroy.impl_witness
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @ForwardDeclared.as.Destroy.impl: @ForwardDeclared.%Self.ref as constants.%Destroy.type {
-// CHECK:STDOUT:   %ForwardDeclared.as.Destroy.impl.Op.decl: %ForwardDeclared.as.Destroy.impl.Op.type = fn_decl @ForwardDeclared.as.Destroy.impl.Op [concrete = constants.%ForwardDeclared.as.Destroy.impl.Op] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.ebb = binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.ebb = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc13: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.6cf = value_param call_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%ForwardDeclared [concrete = constants.%ForwardDeclared]
-// CHECK:STDOUT:     %self: %ptr.6cf = bind_name self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = %ForwardDeclared.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = @ForwardDeclared.%Destroy.impl_witness
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: class @Empty {
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Empty [concrete = constants.%Empty]
-// CHECK:STDOUT:   impl_decl @Empty.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Empty.as.Destroy.impl.%Empty.as.Destroy.impl.Op.decl), @Empty.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.228]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -184,10 +116,6 @@ fn Run() {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc8: %Field.elem = field_decl x, element0 [concrete]
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Field [concrete = constants.%Field]
-// CHECK:STDOUT:   impl_decl @Field.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Field.as.Destroy.impl.%Field.as.Destroy.impl.Op.decl), @Field.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.9b2]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x [concrete = constants.%complete_type.1ec]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -210,17 +138,13 @@ fn Run() {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.ebb = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %.loc15_8: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.6cf = value_param call_param0
-// CHECK:STDOUT:     %.loc15_23: type = splice_block %ptr [concrete = constants.%ptr.6cf] {
+// CHECK:STDOUT:     %self.param: %ptr = value_param call_param0
+// CHECK:STDOUT:     %.loc15_23: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%ForwardDeclared [concrete = constants.%ForwardDeclared]
-// CHECK:STDOUT:       %ptr: type = ptr_type %Self.ref [concrete = constants.%ptr.6cf]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Self.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: %ptr.6cf = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %ptr = bind_name self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%ForwardDeclared [concrete = constants.%ForwardDeclared]
-// CHECK:STDOUT:   impl_decl @ForwardDeclared.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@ForwardDeclared.as.Destroy.impl.%ForwardDeclared.as.Destroy.impl.Op.decl), @ForwardDeclared.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.00c]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -232,15 +156,9 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Empty.as.Destroy.impl.Op(%self.param: %ptr.961) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Field.as.Destroy.impl.Op(%self.param: %ptr.d8b) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @ForwardDeclared.F(%self.param: %ForwardDeclared);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ForwardDeclared.G(%self.param: %ptr.6cf);
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @ForwardDeclared.as.Destroy.impl.Op(%self.param: %ptr.6cf) = "no_op";
+// CHECK:STDOUT: fn @ForwardDeclared.G(%self.param: %ptr);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
@@ -307,6 +225,7 @@ fn Run() {
 // CHECK:STDOUT:   %ptr.c62: type = ptr_type %Incomplete [concrete]
 // CHECK:STDOUT:   %pattern_type.275: type = pattern_type %ptr.c62 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanAggregateDestroy>> [concrete]
 // CHECK:STDOUT:   %ptr.as.Destroy.impl.Op.type.6a8: type = fn_type @ptr.as.Destroy.impl.Op, @ptr.as.Destroy.impl(%Incomplete) [concrete]
 // CHECK:STDOUT:   %ptr.as.Destroy.impl.Op.1a6: %ptr.as.Destroy.impl.Op.type.6a8 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.c22: type = ptr_type %ptr.c62 [concrete]
@@ -315,17 +234,20 @@ fn Run() {
 // CHECK:STDOUT:   %ptr.as.Destroy.impl.Op.368: %ptr.as.Destroy.impl.Op.type.501 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.df0: type = ptr_type %ptr.6cf [concrete]
 // CHECK:STDOUT:   %ptr.as.Destroy.impl.Op.specific_fn.0de: <specific function> = specific_function %ptr.as.Destroy.impl.Op.368, @ptr.as.Destroy.impl.Op(%ForwardDeclared.7b34f2.1) [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.146: <witness> = impl_witness imports.%Destroy.impl_witness_table.70a [concrete]
-// CHECK:STDOUT:   %ForwardDeclared.as.Destroy.impl.Op.type: type = fn_type @ForwardDeclared.as.Destroy.impl.Op [concrete]
-// CHECK:STDOUT:   %ForwardDeclared.as.Destroy.impl.Op: %ForwardDeclared.as.Destroy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.da3: <witness> = impl_witness imports.%Destroy.impl_witness_table.c37 [concrete]
-// CHECK:STDOUT:   %Field.as.Destroy.impl.Op.type: type = fn_type @Field.as.Destroy.impl.Op [concrete]
-// CHECK:STDOUT:   %Field.as.Destroy.impl.Op: %Field.as.Destroy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %facet_value.c58: %type_where = facet_value %ForwardDeclared.7b34f2.1, () [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.type.870: type = fn_type @AggregateT.as_type.as.Destroy.impl.Op, @AggregateT.as_type.as.Destroy.impl(%facet_value.c58) [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.189: %AggregateT.as_type.as.Destroy.impl.Op.type.870 = struct_value () [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.839: <specific function> = specific_function %AggregateT.as_type.as.Destroy.impl.Op.189, @AggregateT.as_type.as.Destroy.impl.Op(%facet_value.c58) [concrete]
+// CHECK:STDOUT:   %facet_value.f6b: %type_where = facet_value %Field, () [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.type.f21: type = fn_type @AggregateT.as_type.as.Destroy.impl.Op, @AggregateT.as_type.as.Destroy.impl(%facet_value.f6b) [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.f20: %AggregateT.as_type.as.Destroy.impl.Op.type.f21 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.d8b: type = ptr_type %Field [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.c42: <witness> = impl_witness imports.%Destroy.impl_witness_table.0bf [concrete]
-// CHECK:STDOUT:   %Empty.as.Destroy.impl.Op.type: type = fn_type @Empty.as.Destroy.impl.Op [concrete]
-// CHECK:STDOUT:   %Empty.as.Destroy.impl.Op: %Empty.as.Destroy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.64a: <specific function> = specific_function %AggregateT.as_type.as.Destroy.impl.Op.f20, @AggregateT.as_type.as.Destroy.impl.Op(%facet_value.f6b) [concrete]
+// CHECK:STDOUT:   %facet_value.8d3: %type_where = facet_value %Empty, () [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.type.e4e: type = fn_type @AggregateT.as_type.as.Destroy.impl.Op, @AggregateT.as_type.as.Destroy.impl(%facet_value.8d3) [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.6e7: %AggregateT.as_type.as.Destroy.impl.Op.type.e4e = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.961: type = ptr_type %Empty [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.1a4: <specific function> = specific_function %AggregateT.as_type.as.Destroy.impl.Op.6e7, @AggregateT.as_type.as.Destroy.impl.Op(%facet_value.8d3) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -343,39 +265,24 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//a, loc5_1, loaded [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   %Main.import_ref.fd7 = import_ref Main//a, inst18 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.709: <witness> = import_ref Main//a, loc9_1, loaded [concrete = constants.%complete_type.c07]
-// CHECK:STDOUT:   %Main.import_ref.845 = import_ref Main//a, inst63 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.845 = import_ref Main//a, inst23 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.4d2: %Field.elem = import_ref Main//a, loc8_8, loaded [concrete = %.d33]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.657: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.893) = import_ref Core//prelude/parts/int, loc23_39, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.411)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.e48 = impl_witness_table (%Core.import_ref.657), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %.d33: %Field.elem = field_decl x, element0 [concrete]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//a, loc16_1, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Main.import_ref.39e731.1 = import_ref Main//a, inst113 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.39e731.1 = import_ref Main//a, inst57 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.760: %ForwardDeclared.F.type = import_ref Main//a, loc14_21, loaded [concrete = constants.%ForwardDeclared.F]
 // CHECK:STDOUT:   %Main.import_ref.26e: %ForwardDeclared.G.type = import_ref Main//a, loc15_27, loaded [concrete = constants.%ForwardDeclared.G]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//a, loc16_1, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Main.import_ref.39e731.2 = import_ref Main//a, inst113 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.39e731.2 = import_ref Main//a, inst57 [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.42a = import_ref Main//a, loc14_21, unloaded
 // CHECK:STDOUT:   %Main.import_ref.67a = import_ref Main//a, loc15_27, unloaded
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.0e4: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.31f) = import_ref Core//prelude/parts/copy, loc36_31, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.8a8)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.53c = impl_witness_table (%Core.import_ref.0e4), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.762: <witness> = import_ref Main//a, loc4_13, loaded [concrete = constants.%Destroy.impl_witness.c42]
-// CHECK:STDOUT:   %Main.import_ref.75f: type = import_ref Main//a, loc4_13, loaded [concrete = constants.%Empty]
-// CHECK:STDOUT:   %Main.import_ref.e45cb5.1: type = import_ref Main//a, inst21 [no loc], loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.268: <witness> = import_ref Main//a, loc7_13, loaded [concrete = constants.%Destroy.impl_witness.da3]
-// CHECK:STDOUT:   %Main.import_ref.6de: type = import_ref Main//a, loc7_13, loaded [concrete = constants.%Field]
-// CHECK:STDOUT:   %Main.import_ref.e45cb5.2: type = import_ref Main//a, inst21 [no loc], loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.323: <witness> = import_ref Main//a, loc13_23, loaded [concrete = constants.%Destroy.impl_witness.146]
-// CHECK:STDOUT:   %Main.import_ref.805: type = import_ref Main//a, loc13_23, loaded [concrete = constants.%ForwardDeclared.7b34f2.1]
-// CHECK:STDOUT:   %Main.import_ref.e45cb5.3: type = import_ref Main//a, inst21 [no loc], loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Main.import_ref.8fe: %ForwardDeclared.as.Destroy.impl.Op.type = import_ref Main//a, loc13_23, loaded [concrete = constants.%ForwardDeclared.as.Destroy.impl.Op]
-// CHECK:STDOUT:   %Destroy.impl_witness_table.70a = impl_witness_table (%Main.import_ref.8fe), @ForwardDeclared.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Main.import_ref.439: %Field.as.Destroy.impl.Op.type = import_ref Main//a, loc7_13, loaded [concrete = constants.%Field.as.Destroy.impl.Op]
-// CHECK:STDOUT:   %Destroy.impl_witness_table.c37 = impl_witness_table (%Main.import_ref.439), @Field.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Main.import_ref.90a: %Empty.as.Destroy.impl.Op.type = import_ref Main//a, loc4_13, loaded [concrete = constants.%Empty.as.Destroy.impl.Op]
-// CHECK:STDOUT:   %Destroy.impl_witness_table.0bf = impl_witness_table (%Main.import_ref.90a), @Empty.as.Destroy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -390,21 +297,6 @@ fn Run() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [concrete = constants.%Run] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @Empty.as.Destroy.impl: imports.%Main.import_ref.75f as imports.%Main.import_ref.e45cb5.1 [from "a.carbon"] {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.762
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @Field.as.Destroy.impl: imports.%Main.import_ref.6de as imports.%Main.import_ref.e45cb5.2 [from "a.carbon"] {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.268
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @ForwardDeclared.as.Destroy.impl: imports.%Main.import_ref.805 as imports.%Main.import_ref.e45cb5.3 [from "a.carbon"] {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = imports.%Main.import_ref.323
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Empty [from "a.carbon"] {
@@ -451,8 +343,8 @@ fn Run() {
 // CHECK:STDOUT:   %a.var: ref %Empty = var %a.var_patt
 // CHECK:STDOUT:   %.loc7_19.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc7_19.2: init %Empty = class_init (), %a.var [concrete = constants.%Empty.val]
-// CHECK:STDOUT:   %.loc7_3: init %Empty = converted %.loc7_19.1, %.loc7_19.2 [concrete = constants.%Empty.val]
-// CHECK:STDOUT:   assign %a.var, %.loc7_3
+// CHECK:STDOUT:   %.loc7_3.1: init %Empty = converted %.loc7_19.1, %.loc7_19.2 [concrete = constants.%Empty.val]
+// CHECK:STDOUT:   assign %a.var, %.loc7_3.1
 // CHECK:STDOUT:   %Empty.ref: type = name_ref Empty, imports.%Main.Empty [concrete = constants.%Empty]
 // CHECK:STDOUT:   %a: ref %Empty = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -471,8 +363,8 @@ fn Run() {
 // CHECK:STDOUT:   %.loc9_25.3: ref %i32 = class_element_access %b.var, element0
 // CHECK:STDOUT:   %.loc9_25.4: init %i32 = initialize_from %.loc9_25.2 to %.loc9_25.3 [concrete = constants.%int_1.47b]
 // CHECK:STDOUT:   %.loc9_25.5: init %Field = class_init (%.loc9_25.4), %b.var [concrete = constants.%Field.val]
-// CHECK:STDOUT:   %.loc9_3: init %Field = converted %.loc9_25.1, %.loc9_25.5 [concrete = constants.%Field.val]
-// CHECK:STDOUT:   assign %b.var, %.loc9_3
+// CHECK:STDOUT:   %.loc9_3.1: init %Field = converted %.loc9_25.1, %.loc9_25.5 [concrete = constants.%Field.val]
+// CHECK:STDOUT:   assign %b.var, %.loc9_3.1
 // CHECK:STDOUT:   %Field.ref: type = name_ref Field, imports.%Main.Field [concrete = constants.%Field]
 // CHECK:STDOUT:   %b: ref %Field = bind_name b, %b.var
 // CHECK:STDOUT:   %b.ref: ref %Field = name_ref b, %b
@@ -493,8 +385,8 @@ fn Run() {
 // CHECK:STDOUT:   %c.var: ref %ForwardDeclared.7b34f2.1 = var %c.var_patt
 // CHECK:STDOUT:   %.loc12_29.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc12_29.2: init %ForwardDeclared.7b34f2.1 = class_init (), %c.var [concrete = constants.%ForwardDeclared.val]
-// CHECK:STDOUT:   %.loc12_3: init %ForwardDeclared.7b34f2.1 = converted %.loc12_29.1, %.loc12_29.2 [concrete = constants.%ForwardDeclared.val]
-// CHECK:STDOUT:   assign %c.var, %.loc12_3
+// CHECK:STDOUT:   %.loc12_3.1: init %ForwardDeclared.7b34f2.1 = converted %.loc12_29.1, %.loc12_29.2 [concrete = constants.%ForwardDeclared.val]
+// CHECK:STDOUT:   assign %c.var, %.loc12_3.1
 // CHECK:STDOUT:   %ForwardDeclared.ref.loc12: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.7b34f2.1]
 // CHECK:STDOUT:   %c: ref %ForwardDeclared.7b34f2.1 = bind_name c, %c.var
 // CHECK:STDOUT:   %c.ref.loc13: ref %ForwardDeclared.7b34f2.1 = name_ref c, %c
@@ -545,25 +437,31 @@ fn Run() {
 // CHECK:STDOUT:   %bound_method.loc16_3: <bound method> = bound_method %d.var, %ptr.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc16_3: %ptr.df0 = addr_of %d.var
 // CHECK:STDOUT:   %ptr.as.Destroy.impl.Op.call.loc16: init %empty_tuple.type = call %bound_method.loc16_3(%addr.loc16_3)
-// CHECK:STDOUT:   %ForwardDeclared.as.Destroy.impl.Op.bound: <bound method> = bound_method %c.var, constants.%ForwardDeclared.as.Destroy.impl.Op
+// CHECK:STDOUT:   %facet_value.loc12: %type_where = facet_value constants.%ForwardDeclared.7b34f2.1, () [concrete = constants.%facet_value.c58]
+// CHECK:STDOUT:   %.loc12_3.2: %type_where = converted constants.%ForwardDeclared.7b34f2.1, %facet_value.loc12 [concrete = constants.%facet_value.c58]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound.loc12: <bound method> = bound_method %c.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.189
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%AggregateT.as_type.as.Destroy.impl.Op.189, @AggregateT.as_type.as.Destroy.impl.Op(constants.%facet_value.c58) [concrete = constants.%AggregateT.as_type.as.Destroy.impl.Op.specific_fn.839]
+// CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %c.var, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc12: %ptr.6cf = addr_of %c.var
-// CHECK:STDOUT:   %ForwardDeclared.as.Destroy.impl.Op.call: init %empty_tuple.type = call %ForwardDeclared.as.Destroy.impl.Op.bound(%addr.loc12)
-// CHECK:STDOUT:   %Field.as.Destroy.impl.Op.bound: <bound method> = bound_method %b.var, constants.%Field.as.Destroy.impl.Op
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call.loc12: init %empty_tuple.type = call %bound_method.loc12(%addr.loc12)
+// CHECK:STDOUT:   %facet_value.loc9: %type_where = facet_value constants.%Field, () [concrete = constants.%facet_value.f6b]
+// CHECK:STDOUT:   %.loc9_3.2: %type_where = converted constants.%Field, %facet_value.loc9 [concrete = constants.%facet_value.f6b]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound.loc9: <bound method> = bound_method %b.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.f20
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%AggregateT.as_type.as.Destroy.impl.Op.f20, @AggregateT.as_type.as.Destroy.impl.Op(constants.%facet_value.f6b) [concrete = constants.%AggregateT.as_type.as.Destroy.impl.Op.specific_fn.64a]
+// CHECK:STDOUT:   %bound_method.loc9_3: <bound method> = bound_method %b.var, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc9: %ptr.d8b = addr_of %b.var
-// CHECK:STDOUT:   %Field.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Field.as.Destroy.impl.Op.bound(%addr.loc9)
-// CHECK:STDOUT:   %Empty.as.Destroy.impl.Op.bound: <bound method> = bound_method %a.var, constants.%Empty.as.Destroy.impl.Op
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call.loc9: init %empty_tuple.type = call %bound_method.loc9_3(%addr.loc9)
+// CHECK:STDOUT:   %facet_value.loc7: %type_where = facet_value constants.%Empty, () [concrete = constants.%facet_value.8d3]
+// CHECK:STDOUT:   %.loc7_3.2: %type_where = converted constants.%Empty, %facet_value.loc7 [concrete = constants.%facet_value.8d3]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound.loc7: <bound method> = bound_method %a.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.6e7
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.3: <specific function> = specific_function constants.%AggregateT.as_type.as.Destroy.impl.Op.6e7, @AggregateT.as_type.as.Destroy.impl.Op(constants.%facet_value.8d3) [concrete = constants.%AggregateT.as_type.as.Destroy.impl.Op.specific_fn.1a4]
+// CHECK:STDOUT:   %bound_method.loc7: <bound method> = bound_method %a.var, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn.3
 // CHECK:STDOUT:   %addr.loc7: %ptr.961 = addr_of %a.var
-// CHECK:STDOUT:   %Empty.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Empty.as.Destroy.impl.Op.bound(%addr.loc7)
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call.loc7: init %empty_tuple.type = call %bound_method.loc7(%addr.loc7)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ForwardDeclared.F [from "a.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ForwardDeclared.G [from "a.carbon"];
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @ForwardDeclared.as.Destroy.impl.Op = "no_op" [from "a.carbon"];
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Field.as.Destroy.impl.Op = "no_op" [from "a.carbon"];
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Empty.as.Destroy.impl.Op = "no_op" [from "a.carbon"];
 // CHECK:STDOUT:

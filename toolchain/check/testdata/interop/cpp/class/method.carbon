@@ -326,11 +326,13 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %ptr.235 [concrete]
 // CHECK:STDOUT:   %HasQualifiers.F.type.d208f0.2: type = fn_type @HasQualifiers.F.2 [concrete]
 // CHECK:STDOUT:   %HasQualifiers.F.efd4e4.2: %HasQualifiers.F.type.d208f0.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanAggregateDestroy>> [concrete]
 // CHECK:STDOUT:   %ptr.as.Destroy.impl.Op.type.142: type = fn_type @ptr.as.Destroy.impl.Op, @ptr.as.Destroy.impl(%i32) [concrete]
 // CHECK:STDOUT:   %ptr.as.Destroy.impl.Op.c04: %ptr.as.Destroy.impl.Op.type.142 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.5d5: type = ptr_type %ptr.235 [concrete]
-// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.type.4f9: type = fn_type @Int.as.Destroy.impl.Op, @Int.as.Destroy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.796: %Int.as.Destroy.impl.Op.type.4f9 = struct_value () [concrete]
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value %i32, () [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.type.cb3: type = fn_type @AggregateT.as_type.as.Destroy.impl.Op, @AggregateT.as_type.as.Destroy.impl(%facet_value) [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.cad: %AggregateT.as_type.as.Destroy.impl.Op.type.cb3 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -391,11 +393,13 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %bound_method.loc9_3: <bound method> = bound_method %b.var, %ptr.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr.loc9_3: %ptr.5d5 = addr_of %b.var
 // CHECK:STDOUT:   %ptr.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc9_3(%addr.loc9_3)
-// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.bound: <bound method> = bound_method %a.var, constants.%Int.as.Destroy.impl.Op.796
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%i32, () [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc8_3: %type_where = converted constants.%i32, %facet_value [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %a.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.cad
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc8_3: <bound method> = bound_method %a.var, %Int.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %bound_method.loc8_3: <bound method> = bound_method %a.var, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr.loc8_3: %ptr.235 = addr_of %a.var
-// CHECK:STDOUT:   %Int.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc8_3(%addr.loc8_3)
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc8_3(%addr.loc8_3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

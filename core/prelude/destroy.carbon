@@ -7,8 +7,8 @@ package Core library "prelude/destroy";
 import library "prelude/types/bool";
 import library "prelude/types/int_literal";
 
-// Object destruction, including running `fn destroy()`. Note this is distinct
-// from memory deallocation.
+// Destroys objects. Note this is distinct from memory deallocation.
+// TODO: Switch to `Destructor`+`Destroy` model.
 interface Destroy {
   fn Op[addr self: Self*]();
 }

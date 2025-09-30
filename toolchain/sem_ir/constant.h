@@ -162,6 +162,14 @@ class ConstantValueStore {
     return GetInstId(GetAttached(inst_id));
   }
 
+  // Given a type instruction, returns the unique constant instruction that is
+  // equivalent to it. Returns `None` for a non-constant instruction.
+  auto GetConstantTypeInstId(TypeInstId inst_id) const -> TypeInstId {
+    // If the source instruction has type `type`, its constant value will too,
+    // since the constant value of `type` is itself.
+    return TypeInstId::UnsafeMake(GetInstId(GetAttached(inst_id)));
+  }
+
   // Given a symbolic constant, returns the unattached form of that constant.
   // For any other constant ID, returns the ID unchanged.
   auto GetUnattachedConstant(ConstantId const_id) const -> ConstantId {

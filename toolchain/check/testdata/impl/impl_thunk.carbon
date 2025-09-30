@@ -411,16 +411,16 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %B: type = class_type @B [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
 // CHECK:STDOUT:   %ptr.6db: type = ptr_type %A [concrete]
 // CHECK:STDOUT:   %pattern_type.5f8: type = pattern_type %ptr.6db [concrete]
-// CHECK:STDOUT:   %B: type = class_type @B [concrete]
-// CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
-// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
 // CHECK:STDOUT:   %B.as.X.impl.F.type.84a1c2.1: type = fn_type @B.as.X.impl.F.loc14_39.1 [concrete]
 // CHECK:STDOUT:   %B.as.X.impl.F.b849c8.1: %B.as.X.impl.F.type.84a1c2.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %B.as.X.impl.F.type.84a1c2.2: type = fn_type @B.as.X.impl.F.loc14_39.2 [concrete]
 // CHECK:STDOUT:   %B.as.X.impl.F.b849c8.2: %B.as.X.impl.F.type.84a1c2.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -508,8 +508,8 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %pattern_type.c10: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %B.as.X.impl.F.type.84a1c2.1: type = fn_type @B.as.X.impl.F.loc13_26.1 [concrete]
 // CHECK:STDOUT:   %B.as.X.impl.F.b849c8.1: %B.as.X.impl.F.type.84a1c2.1 = struct_value () [concrete]
@@ -562,16 +562,16 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %B: type = class_type @B [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
 // CHECK:STDOUT:   %ptr.6db: type = ptr_type %A [concrete]
 // CHECK:STDOUT:   %pattern_type.5f8: type = pattern_type %ptr.6db [concrete]
-// CHECK:STDOUT:   %B: type = class_type @B [concrete]
-// CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
-// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
 // CHECK:STDOUT:   %B.as.X.impl.F.type.84a1c2.1: type = fn_type @B.as.X.impl.F.loc14_39.1 [concrete]
 // CHECK:STDOUT:   %B.as.X.impl.F.b849c8.1: %B.as.X.impl.F.type.84a1c2.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %B.as.X.impl.F.type.84a1c2.2: type = fn_type @B.as.X.impl.F.loc14_39.2 [concrete]
 // CHECK:STDOUT:   %B.as.X.impl.F.b849c8.2: %B.as.X.impl.F.type.84a1c2.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -659,16 +659,18 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
-// CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
-// CHECK:STDOUT:   %B.as.Destroy.impl.Op.type: type = fn_type @B.as.Destroy.impl.Op [concrete]
-// CHECK:STDOUT:   %B.as.Destroy.impl.Op: %B.as.Destroy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %pattern_type.049: type = pattern_type %B [concrete]
 // CHECK:STDOUT:   %A.as.X.impl.F.type.dc7bda.1: type = fn_type @A.as.X.impl.F.loc23_14.1 [concrete]
 // CHECK:STDOUT:   %A.as.X.impl.F.0afbb1.1: %A.as.X.impl.F.type.dc7bda.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %A.as.X.impl.F.type.dc7bda.2: type = fn_type @A.as.X.impl.F.loc23_14.2 [concrete]
 // CHECK:STDOUT:   %A.as.X.impl.F.0afbb1.2: %A.as.X.impl.F.type.dc7bda.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanAggregateDestroy>> [concrete]
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value %B, () [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.type.018: type = fn_type @AggregateT.as_type.as.Destroy.impl.Op, @AggregateT.as_type.as.Destroy.impl(%facet_value) [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.68f: %AggregateT.as_type.as.Destroy.impl.Op.type.018 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -707,9 +709,13 @@ impl () as I({}) {
 // CHECK:STDOUT:   %.loc23_14.3: ref %A = class_element_access %.loc23_14.2, element0
 // CHECK:STDOUT:   %.loc23_14.4: ref %A = converted %A.as.X.impl.F.call, %.loc23_14.3
 // CHECK:STDOUT:   %.loc23_14.5: %A = bind_value %.loc23_14.4
-// CHECK:STDOUT:   %B.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc23_14.2, constants.%B.as.Destroy.impl.Op
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%B, () [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc23_14.6: %type_where = converted constants.%B, %facet_value [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc23_14.2, constants.%AggregateT.as_type.as.Destroy.impl.Op.68f
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc23_14.2, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.e79 = addr_of %.loc23_14.2
-// CHECK:STDOUT:   %B.as.Destroy.impl.Op.call: init %empty_tuple.type = call %B.as.Destroy.impl.Op.bound(%addr)
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

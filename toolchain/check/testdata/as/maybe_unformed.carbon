@@ -137,7 +137,6 @@ fn Use() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.type: type = generic_class_type @MaybeUnformed [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.generic: %MaybeUnformed.type = struct_value () [concrete]
@@ -150,12 +149,10 @@ fn Use() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     .MaybeUnformed = %Core.MaybeUnformed
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.MaybeUnformed: %MaybeUnformed.type = import_ref Core//prelude/parts/maybe_unformed, MaybeUnformed, loaded [concrete = constants.%MaybeUnformed.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -211,9 +208,8 @@ fn Use() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Init.type: type = fn_type @Init [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Init: %Init.type = struct_value () [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.type: type = generic_class_type @MaybeUnformed [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.generic: %MaybeUnformed.type = struct_value () [concrete]
@@ -221,22 +217,25 @@ fn Use() {
 // CHECK:STDOUT:   %pattern_type.eb8: type = pattern_type %MaybeUnformed.275 [concrete]
 // CHECK:STDOUT:   %As.type.90f: type = generic_interface_type @As [concrete]
 // CHECK:STDOUT:   %As.generic: %As.type.90f = struct_value () [concrete]
-// CHECK:STDOUT:   %MaybeUnformed.as.Destroy.impl.Op.type.fc3: type = fn_type @MaybeUnformed.as.Destroy.impl.Op, @MaybeUnformed.as.Destroy.impl(%X) [concrete]
-// CHECK:STDOUT:   %MaybeUnformed.as.Destroy.impl.Op.eef: %MaybeUnformed.as.Destroy.impl.Op.type.fc3 = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanAggregateDestroy>> [concrete]
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value %MaybeUnformed.275, () [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.type.354: type = fn_type @AggregateT.as_type.as.Destroy.impl.Op, @AggregateT.as_type.as.Destroy.impl(%facet_value) [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bae: %AggregateT.as_type.as.Destroy.impl.Op.type.354 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.58e: type = ptr_type %MaybeUnformed.275 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     .MaybeUnformed = %Core.MaybeUnformed
 // CHECK:STDOUT:     .As = %Core.As
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.MaybeUnformed: %MaybeUnformed.type = import_ref Core//prelude/parts/maybe_unformed, MaybeUnformed, loaded [concrete = constants.%MaybeUnformed.generic]
 // CHECK:STDOUT:   %Core.As: %As.type.90f = import_ref Core//prelude/parts/as, As, loaded [concrete = constants.%As.generic]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use() {
@@ -278,11 +277,13 @@ fn Use() {
 // CHECK:STDOUT:     %MaybeUnformed.loc27_30: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.275]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: %MaybeUnformed.275 = bind_name v, <error> [concrete = <error>]
-// CHECK:STDOUT:   %MaybeUnformed.as.Destroy.impl.Op.bound: <bound method> = bound_method %i.var, constants.%MaybeUnformed.as.Destroy.impl.Op.eef
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%MaybeUnformed.275, () [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc19_3: %type_where = converted constants.%MaybeUnformed.275, %facet_value [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %i.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.bae
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %i.var, %MaybeUnformed.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %i.var, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.58e = addr_of %i.var
-// CHECK:STDOUT:   %MaybeUnformed.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -295,11 +296,11 @@ fn Use() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
-// CHECK:STDOUT:   %pattern_type.1c6: type = pattern_type %ptr.d17 [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.275: type = class_type @MaybeUnformed, @MaybeUnformed(%X) [concrete]
 // CHECK:STDOUT:   %ptr.58e: type = ptr_type %MaybeUnformed.275 [concrete]
 // CHECK:STDOUT:   %pattern_type.019: type = pattern_type %X [concrete]
+// CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
+// CHECK:STDOUT:   %pattern_type.1c6: type = pattern_type %ptr.d17 [concrete]
 // CHECK:STDOUT:   %reference.var: ref %X = var file.%reference.var_patt [concrete]
 // CHECK:STDOUT:   %addr.a46: %ptr.d17 = addr_of %reference.var [concrete]
 // CHECK:STDOUT: }

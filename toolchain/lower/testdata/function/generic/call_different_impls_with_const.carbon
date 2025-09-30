@@ -62,7 +62,7 @@ fn Run() {
 // CHECK:STDOUT: define void @main() !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CG.Main.5595bcb1d6932ffa(), !dbg !13
-// CHECK:STDOUT:   call void @_CG.Main.029df562ae676f5b(), !dbg !14
+// CHECK:STDOUT:   call void @_CG.Main.b5f20a8e74ede332(), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -80,7 +80,7 @@ fn Run() {
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.029df562ae676f5b() !dbg !19 {
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.b5f20a8e74ede332() !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc37_20.1.temp = alloca i32, align 4, !dbg !20
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc37_20.1.temp), !dbg !20
@@ -121,6 +121,6 @@ fn Run() {
 // CHECK:STDOUT: !16 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.5595bcb1d6932ffa", scope: null, file: !3, line: 36, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !17 = !DILocation(line: 37, column: 16, scope: !16)
 // CHECK:STDOUT: !18 = !DILocation(line: 36, column: 1, scope: !16)
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.029df562ae676f5b", scope: null, file: !3, line: 36, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.b5f20a8e74ede332", scope: null, file: !3, line: 36, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !20 = !DILocation(line: 37, column: 16, scope: !19)
 // CHECK:STDOUT: !21 = !DILocation(line: 36, column: 1, scope: !19)

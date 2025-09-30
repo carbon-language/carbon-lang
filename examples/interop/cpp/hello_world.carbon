@@ -5,8 +5,7 @@
 import Cpp inline "#include <cstdio>";
 
 fn Run() {
-  // TODO: Requires member operator << and class with virtual bases
-  // (basic_ostream).
+  // TODO: Requires class with virtual bases (`basic_ostream`).
   // Cpp.std.cout << "Hello world!\n";
 
   // TODO: Requires variadic function.

@@ -82,10 +82,6 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.G.type: type = fn_type @Class.G [concrete]
 // CHECK:STDOUT:   %Class.G: %Class.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %i32 [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.955: <witness> = impl_witness @Class.%Destroy.impl_witness_table [concrete]
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.type: type = fn_type @Class.as.Destroy.impl.Op [concrete]
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op: %Class.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.k.0bf: type = struct_type {.k: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.954: <witness> = complete_type_witness %struct_type.k.0bf [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -123,6 +119,12 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %Class.val: %Class = struct_value (%int_1.5d2) [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanAggregateDestroy>> [concrete]
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value %Class, () [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.type.bd3: type = fn_type @AggregateT.as_type.as.Destroy.impl.Op, @AggregateT.as_type.as.Destroy.impl(%facet_value) [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.7c2: %AggregateT.as_type.as.Destroy.impl.Op.type.bd3 = struct_value () [concrete]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %AggregateT.as_type.as.Destroy.impl.Op.7c2, @AggregateT.as_type.as.Destroy.impl.Op(%facet_value) [concrete]
 // CHECK:STDOUT:   %CallWithAddr.type: type = fn_type @CallWithAddr [concrete]
 // CHECK:STDOUT:   %CallWithAddr: %CallWithAddr.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CallFThroughPointer.type: type = fn_type @CallFThroughPointer [concrete]
@@ -140,20 +142,20 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     .Copy = %Core.Copy
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.d0f6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.afd) = import_ref Core//prelude/parts/int, loc17_31, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.6cd)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.1ed = impl_witness_table (%Core.import_ref.d0f6), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.ee7: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340) = import_ref Core//prelude/parts/int, loc23_39, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1c0)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.9e9 = impl_witness_table (%Core.import_ref.ee7), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -294,22 +296,6 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Class.as.Destroy.impl: @Class.%Self.ref as constants.%Destroy.type {
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.decl: %Class.as.Destroy.impl.Op.type = fn_decl @Class.as.Destroy.impl.Op [concrete = constants.%Class.as.Destroy.impl.Op] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.796 = binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.796 = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc15: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.e71 = value_param call_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self: %ptr.e71 = bind_name self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = %Class.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = @Class.%Destroy.impl_witness
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.761 = binding_pattern self [concrete]
@@ -348,10 +334,6 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc21: %Class.elem = field_decl k, element0 [concrete]
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:   impl_decl @Class.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Class.as.Destroy.impl.%Class.as.Destroy.impl.Op.decl), @Class.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness.955]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.k.0bf [concrete = constants.%complete_type.954]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -378,8 +360,6 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.G(%self.param: %ptr.e71) -> %i32;
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.as.Destroy.impl.Op(%self.param: %ptr.e71) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call(%c.param: %Class) -> %i32 {
 // CHECK:STDOUT: !entry:
@@ -420,9 +400,13 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.F.bound: <bound method> = bound_method %.loc39_20.1, %F.ref
 // CHECK:STDOUT:   %.loc39_20.2: %Class = bind_value %.loc39_20.1
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%.loc39_20.2)
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc39_18.7, constants.%Class.as.Destroy.impl.Op
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%Class, () [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc39_18.8: %type_where = converted constants.%Class, %facet_value [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc39_18.7, constants.%AggregateT.as_type.as.Destroy.impl.Op.7c2
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%AggregateT.as_type.as.Destroy.impl.Op.7c2, @AggregateT.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%AggregateT.as_type.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc39_18.3: <bound method> = bound_method %.loc39_18.7, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc39_18.7
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Class.as.Destroy.impl.Op.bound(%addr)
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc39_18.3(%addr)
 // CHECK:STDOUT:   return %Class.F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -440,9 +424,13 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.G.bound: <bound method> = bound_method %c.ref, %G.ref
 // CHECK:STDOUT:   %addr.loc44: %ptr.e71 = addr_of %c.ref
 // CHECK:STDOUT:   %Class.G.call: init %i32 = call %Class.G.bound(%addr.loc44)
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.bound: <bound method> = bound_method %c.var, constants.%Class.as.Destroy.impl.Op
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%Class, () [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc43: %type_where = converted constants.%Class, %facet_value [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %c.var, constants.%AggregateT.as_type.as.Destroy.impl.Op.7c2
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%AggregateT.as_type.as.Destroy.impl.Op.7c2, @AggregateT.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%AggregateT.as_type.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.var, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr.loc43: %ptr.e71 = addr_of %c.var
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Class.as.Destroy.impl.Op.bound(%addr.loc43)
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc43)
 // CHECK:STDOUT:   return %Class.G.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -480,9 +468,13 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.F.bound: <bound method> = bound_method %.loc58_15.2, %F.ref
 // CHECK:STDOUT:   %.loc58_15.3: %Class = bind_value %.loc58_15.2
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%.loc58_15.3)
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc58_15.2, constants.%Class.as.Destroy.impl.Op
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%Class, () [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc58_15.4: %type_where = converted constants.%Class, %facet_value [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc58_15.2, constants.%AggregateT.as_type.as.Destroy.impl.Op.7c2
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%AggregateT.as_type.as.Destroy.impl.Op.7c2, @AggregateT.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%AggregateT.as_type.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc58_15.2, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc58_15.2
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Class.as.Destroy.impl.Op.bound(%addr)
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   return %Class.F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -496,9 +488,13 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.G.bound: <bound method> = bound_method %.loc62_15.2, %G.ref
 // CHECK:STDOUT:   %addr.loc62_15.1: %ptr.e71 = addr_of %.loc62_15.2
 // CHECK:STDOUT:   %Class.G.call: init %i32 = call %Class.G.bound(%addr.loc62_15.1)
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc62_15.2, constants.%Class.as.Destroy.impl.Op
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%Class, () [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc62_15.3: %type_where = converted constants.%Class, %facet_value [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc62_15.2, constants.%AggregateT.as_type.as.Destroy.impl.Op.7c2
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%AggregateT.as_type.as.Destroy.impl.Op.7c2, @AggregateT.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%AggregateT.as_type.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc62_15.2, %AggregateT.as_type.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %addr.loc62_15.2: %ptr.e71 = addr_of %.loc62_15.2
-// CHECK:STDOUT:   %Class.as.Destroy.impl.Op.call: init %empty_tuple.type = call %Class.as.Destroy.impl.Op.bound(%addr.loc62_15.2)
+// CHECK:STDOUT:   %AggregateT.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc62_15.2)
 // CHECK:STDOUT:   return %Class.G.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

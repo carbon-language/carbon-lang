@@ -25,6 +25,7 @@ static auto GetOperatorOpFunction(Context& context, SemIR::LocId loc_id,
   auto implicit_loc_id = context.insts().GetLocIdForDesugaring(loc_id);
 
   // Look up the interface, and pass it any generic arguments.
+  // TODO: Improve diagnostics when the found `interface_id` isn't callable.
   auto interface_id =
       LookupNameInCore(context, implicit_loc_id, op.interface_name);
   if (!op.interface_args_ref.empty()) {
@@ -48,15 +49,21 @@ static auto IsCppClassType(Context& context, SemIR::InstId inst_id) -> bool {
     return false;
   }
 
-  const SemIR::Class& class_info = context.classes().Get(class_type->class_id);
-  return class_info.is_complete() &&
-         context.name_scopes().Get(class_info.scope_id).is_cpp_scope();
+  SemIR::NameScopeId class_scope_id =
+      context.classes().Get(class_type->class_id).scope_id;
+  return class_scope_id.has_value() &&
+         context.name_scopes().Get(class_scope_id).is_cpp_scope();
 }
 
 auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                         SemIR::InstId operand_id,
                         MakeDiagnosticBuilderFn missing_impl_diagnoser)
     -> SemIR::InstId {
+  if (operand_id == SemIR::ErrorInst::InstId) {
+    // Exit early for errors, which prevent forming an `Op` function.
+    return SemIR::ErrorInst::InstId;
+  }
+
   // For unary operators with a C++ class as the operand, try to import and call
   // the C++ operator.
   // TODO: Change impl lookup instead. See
@@ -64,7 +71,10 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   if (IsCppClassType(context, operand_id)) {
     SemIR::InstId cpp_inst_id =
         LookupCppOperator(context, loc_id, op, {operand_id});
-    if (cpp_inst_id.has_value() && cpp_inst_id != SemIR::ErrorInst::InstId) {
+    if (cpp_inst_id.has_value()) {
+      if (cpp_inst_id == SemIR::ErrorInst::InstId) {
+        return SemIR::ErrorInst::InstId;
+      }
       return PerformCall(context, loc_id, cpp_inst_id, {operand_id});
     }
   }
@@ -87,6 +97,11 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                          SemIR::InstId lhs_id, SemIR::InstId rhs_id,
                          MakeDiagnosticBuilderFn missing_impl_diagnoser)
     -> SemIR::InstId {
+  if (lhs_id == SemIR::ErrorInst::InstId) {
+    // Exit early for errors, which prevent forming an `Op` function.
+    return SemIR::ErrorInst::InstId;
+  }
+
   // For binary operators with a C++ class as at least one of the operands, try
   // to import and call the C++ operator.
   // TODO: Instead of hooking this here, change impl lookup, so that a generic
@@ -98,7 +113,10 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   if (IsCppClassType(context, lhs_id) || IsCppClassType(context, rhs_id)) {
     SemIR::InstId cpp_inst_id =
         LookupCppOperator(context, loc_id, op, {lhs_id, rhs_id});
-    if (cpp_inst_id.has_value() && cpp_inst_id != SemIR::ErrorInst::InstId) {
+    if (cpp_inst_id.has_value()) {
+      if (cpp_inst_id == SemIR::ErrorInst::InstId) {
+        return SemIR::ErrorInst::InstId;
+      }
       return PerformCall(context, loc_id, cpp_inst_id, {lhs_id, rhs_id});
     }
   }

@@ -189,9 +189,9 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %A.Make.type: type = fn_type @A.Make [concrete]
 // CHECK:STDOUT:   %A.Make: %A.Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
+// CHECK:STDOUT:   %pattern_type.049: type = pattern_type %B [concrete]
 // CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %pattern_type.960: type = pattern_type %ptr.e79 [concrete]
-// CHECK:STDOUT:   %pattern_type.049: type = pattern_type %B [concrete]
 // CHECK:STDOUT:   %a_ref.var: ref %B = var file.%a_ref.var_patt [concrete]
 // CHECK:STDOUT:   %addr: %ptr.e79 = addr_of %a_ref.var [concrete]
 // CHECK:STDOUT: }
@@ -320,7 +320,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
-// CHECK:STDOUT:   %pattern_type.510: type = pattern_type %D [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %D [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %D.val: %D = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -330,7 +330,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type.510 = binding_pattern d [concrete]
+// CHECK:STDOUT:     %d.patt: %pattern_type = binding_pattern d [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.ref: type = name_ref D, %D.decl [concrete = constants.%D]
 // CHECK:STDOUT:   %d: %D = bind_name d, @__global_init.%.loc10_15.2
@@ -431,7 +431,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %tuple.type.c8c: type = tuple_type (%empty_struct_type, type) [concrete]
 // CHECK:STDOUT:   %tuple.type.a10: type = tuple_type (%empty_struct_type, %Noncopyable) [concrete]
-// CHECK:STDOUT:   %pattern_type.c10: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %A [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -440,7 +440,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT: fn @F(%a.param: %A) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a_value.patt: %pattern_type.c10 = binding_pattern a_value [concrete]
+// CHECK:STDOUT:     %a_value.patt: %pattern_type = binding_pattern a_value [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %.loc14_28: %empty_struct_type = struct_literal ()

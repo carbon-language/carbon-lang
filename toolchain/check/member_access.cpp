@@ -96,10 +96,8 @@ static auto IsInstanceType(Context& context, SemIR::TypeId type_id) -> bool {
   return false;
 }
 
-// Returns the highest allowed access. For example, if this returns `Protected`
-// then only `Public` and `Protected` accesses are allowed--not `Private`.
-static auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
-                                    SemIR::ConstantId name_scope_const_id)
+auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
+                             SemIR::ConstantId name_scope_const_id)
     -> SemIR::AccessKind {
   SemIR::ScopeLookupResult lookup_result =
       LookupUnqualifiedName(context, loc_id, SemIR::NameId::SelfType,

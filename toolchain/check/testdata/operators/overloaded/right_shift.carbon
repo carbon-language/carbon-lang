@@ -43,7 +43,6 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %RightShiftWith.type.a33: type = facet_type <@RightShiftWith, @RightShiftWith(%C)> [concrete]
 // CHECK:STDOUT:   %RightShiftWith.Op.type.19b: type = fn_type @RightShiftWith.Op, @RightShiftWith(%C) [concrete]
@@ -54,6 +53,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %RightShiftAssignWith.type.df5: type = facet_type <@RightShiftAssignWith, @RightShiftAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %RightShiftAssignWith.Op.type.ae9: type = fn_type @RightShiftAssignWith.Op, @RightShiftAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %RightShiftAssignWith.impl_witness: <witness> = impl_witness file.%RightShiftAssignWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C.as.RightShiftAssignWith.impl.Op.type: type = fn_type @C.as.RightShiftAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.RightShiftAssignWith.impl.Op: %C.as.RightShiftAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %RightShiftAssignWith.facet: %RightShiftAssignWith.type.df5 = facet_value %C, (%RightShiftAssignWith.impl_witness) [concrete]

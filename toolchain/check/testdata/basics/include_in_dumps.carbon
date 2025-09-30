@@ -114,9 +114,9 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %Self.7ee: %I.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %Self.as_type.a67: type = facet_access_type %Self.7ee [symbolic]
-// CHECK:STDOUT:   %pattern_type.d22: type = pattern_type %Self.as_type.a67 [symbolic]
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
+// CHECK:STDOUT:   %pattern_type.d22: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %I.Op.type: type = fn_type @I.Op [concrete]
 // CHECK:STDOUT:   %I.Op: %I.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
@@ -140,13 +140,13 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:     %self.patt: @I.Op.%pattern_type (%pattern_type.d22) = binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @I.Op.%pattern_type (%pattern_type.d22) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @I.Op.%Self.as_type.loc8_15.1 (%Self.as_type.a67) = value_param call_param0
-// CHECK:STDOUT:     %.loc8_15.1: type = splice_block %.loc8_15.2 [symbolic = %Self.as_type.loc8_15.1 (constants.%Self.as_type.a67)] {
-// CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self.7ee)]
-// CHECK:STDOUT:       %Self.as_type.loc8_15.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc8_15.1 (constants.%Self.as_type.a67)]
-// CHECK:STDOUT:       %.loc8_15.2: type = converted %Self.ref, %Self.as_type.loc8_15.2 [symbolic = %Self.as_type.loc8_15.1 (constants.%Self.as_type.a67)]
+// CHECK:STDOUT:     %self.param: @I.Op.%Self.as_type.loc8_15.1 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc8_15.1: type = splice_block %.loc8_15.2 [symbolic = %Self.as_type.loc8_15.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:       %Self.as_type.loc8_15.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc8_15.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc8_15.2: type = converted %Self.ref, %Self.as_type.loc8_15.2 [symbolic = %Self.as_type.loc8_15.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @I.Op.%Self.as_type.loc8_15.1 (%Self.as_type.a67) = bind_name self, %self.param
+// CHECK:STDOUT:     %self: @I.Op.%Self.as_type.loc8_15.1 (%Self.as_type) = bind_name self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.Op.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -157,16 +157,16 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.Op(@I.%Self: %I.type) {
-// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.7ee)]
-// CHECK:STDOUT:   %Self.as_type.loc8_15.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc8_15.1 (constants.%Self.as_type.a67)]
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self.as_type.loc8_15.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc8_15.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc8_15.1 [symbolic = %pattern_type (constants.%pattern_type.d22)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @I.Op.%Self.as_type.loc8_15.1 (%Self.as_type.a67));
+// CHECK:STDOUT:   fn(%self.param: @I.Op.%Self.as_type.loc8_15.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.Op(constants.%Self.7ee) {
-// CHECK:STDOUT:   %Self => constants.%Self.7ee
-// CHECK:STDOUT:   %Self.as_type.loc8_15.1 => constants.%Self.as_type.a67
+// CHECK:STDOUT: specific @I.Op(constants.%Self) {
+// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %Self.as_type.loc8_15.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.d22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
