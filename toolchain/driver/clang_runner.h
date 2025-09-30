@@ -12,6 +12,7 @@
 #include "common/ostream.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/ThreadPool.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/TargetParser/Triple.h"
 #include "toolchain/driver/runtimes_cache.h"
@@ -25,11 +26,15 @@ namespace Carbon {
 // incorporating custom command line flags from user invocations that we don't
 // parse, but will pass transparently along to Clang itself.
 //
+// This class is thread safe, allowing multiple threads to share a single runner
+// and concurrently invoke Clang.
+//
 // This doesn't literally use a subprocess to invoke Clang; it instead tries to
 // directly use the Clang command line driver library. We also work to simplify
 // how that driver operates and invoke it in an opinionated way to get the best
 // behavior for our expected use cases in the Carbon driver:
 //
+// - Ensure thread-safe invocation of Clang to enable concurrent usage.
 // - Minimize canonicalization of file names to try to preserve the paths as
 //   users type them.
 // - Minimize the use of subprocess invocations which are expensive on some
@@ -42,43 +47,57 @@ namespace Carbon {
 // standard output and standard error, and otherwise can only read and write
 // files based on their names described in the arguments. It doesn't provide any
 // higher-level abstraction such as streams for inputs or outputs.
+//
+// TODO: Switch the diagnostic machinery to buffer and do locked output so that
+// concurrent invocations of Clang don't intermingle their diagnostic output.
+//
+// TODO: If support for thread-local overrides of `llvm::errs` and `llvm::outs`
+// becomes available upstream, also buffer and synchronize those streams to
+// further improve the behavior of concurrent invocations.
 class ClangRunner : ToolRunnerBase {
  public:
-  // Build a Clang runner that uses the provided `exe_name` and `err_stream`.
+  // Build a Clang runner that uses the provided installation and filesystem.
   //
-  // If `verbose` is passed as true, will enable verbose logging to the
-  // `err_stream` both from the runner and Clang itself.
+  // Optionally accepts a `vlog_stream` to enable verbose logging from Carbon to
+  // that stream. The verbose output from Clang goes to stderr regardless.
   ClangRunner(const InstallPaths* install_paths,
-              Runtimes::Cache* on_demand_runtimes_cache,
               llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-              llvm::raw_ostream* vlog_stream = nullptr,
-              bool build_runtimes_on_demand = false);
+              llvm::raw_ostream* vlog_stream = nullptr);
 
-  // Run Clang with the provided arguments.
+  // Run Clang with the provided arguments and a runtime cache for on-demand
+  // runtime building.
   //
   // This works to support all of the Clang commandline, including commands that
   // use target-dependent resources like linking. When it detects such commands,
-  // it will either use the provided target resource-dir path, or if building
-  // runtimes on demand is enabled it will build the needed resource-dir.
+  // it will use runtimes from the provided cache. If not available in the
+  // cache, it will build the necessary runtimes using the provided thread pool
+  // both to use and incorporate into the cache.
   //
   // Returns an error only if unable to successfully run Clang with the
   // arguments. If able to run Clang, no error is returned a bool indicating
   // whether than Clang invocation succeeded is returned.
-  //
-  // TODO: Eventually, this will need to accept an abstraction that can
-  // represent multiple different pre-built runtimes.
   auto Run(llvm::ArrayRef<llvm::StringRef> args,
-           Runtimes* prebuilt_runtimes = nullptr) -> ErrorOr<bool>;
+           Runtimes::Cache& runtimes_cache,
+           llvm::ThreadPoolInterface& runtimes_build_thread_pool)
+      -> ErrorOr<bool>;
 
-  // Run Clang with the provided arguments and without any target-dependent
-  // resources.
+  // Run Clang with the provided arguments and prebuilt runtimes.
+  //
+  // Similar to `Run`, but requires and uses pre-built runtimes rather than a
+  // cache or building them on demand.
+  auto RunWithPrebuiltRuntimes(llvm::ArrayRef<llvm::StringRef> args,
+                               Runtimes& prebuilt_runtimes) -> ErrorOr<bool>;
+
+  // Run Clang with the provided arguments and without any target runtimes.
   //
   // This method can be used to avoid building target-dependent resources when
   // unnecessary, but not all Clang command lines will work correctly.
   // Specifically, compile-only commands will typically work, while linking will
   // not.
-  auto RunTargetIndependentCommand(llvm::ArrayRef<llvm::StringRef> args)
-      -> bool;
+  //
+  // This function simply returns true or false depending on whether Clang runs
+  // successfully, as it should display any needed error messages.
+  auto RunWithNoRuntimes(llvm::ArrayRef<llvm::StringRef> args) -> bool;
 
   // Builds the target-specific resource directory for Clang.
   //
@@ -88,7 +107,8 @@ class ClangRunner : ToolRunnerBase {
   // return the path.
   auto BuildTargetResourceDir(const Runtimes::Cache::Features& features,
                               Runtimes& runtimes,
-                              const std::filesystem::path& tmp_path)
+                              const std::filesystem::path& tmp_path,
+                              llvm::ThreadPoolInterface& threads)
       -> ErrorOr<std::filesystem::path>;
 
   // Enable leaking memory.
@@ -103,6 +123,14 @@ class ClangRunner : ToolRunnerBase {
   auto EnableLeakingMemory() -> void { enable_leaking_ = true; }
 
  private:
+  // Emulates `cc1_main` but in a way that doesn't assume it is running in the
+  // main thread and can more easily fit into library calls to do compiles.
+  //
+  // TODO: Much of the logic here should be factored out of the CC1
+  // implementation in Clang's driver and into a reusable part of its libraries.
+  // That should allow reducing the code here to a minimal amount.
+  auto RunCC1(llvm::SmallVectorImpl<const char*>& cc1_args) -> int;
+
   // Handles building the Clang driver and passing the arguments down to it.
   auto RunInternal(llvm::ArrayRef<llvm::StringRef> args, llvm::StringRef target,
                    std::optional<llvm::StringRef> target_resource_dir_path)
@@ -125,16 +153,11 @@ class ClangRunner : ToolRunnerBase {
   auto BuildBuiltinsLib(llvm::StringRef target,
                         const llvm::Triple& target_triple,
                         const std::filesystem::path& tmp_path,
-                        Filesystem::DirRef lib_dir) -> ErrorOr<Success>;
-
-  Runtimes::Cache* runtimes_cache_;
+                        Filesystem::DirRef lib_dir,
+                        llvm::ThreadPoolInterface& threads) -> ErrorOr<Success>;
 
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagnostic_ids_;
 
-  std::optional<std::filesystem::path> prebuilt_runtimes_path_;
-
-  bool build_runtimes_on_demand_;
   bool enable_leaking_ = false;
 };
 

@@ -442,7 +442,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %A.ref: %A.type.495 = name_ref A, file.%A.decl [concrete = constants.%A.generic]
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %A.type: type = facet_type <@A, @A(constants.%X)> [concrete = constants.%A.type.0a4]
-// CHECK:STDOUT:   %A.facet: %A.type.0a4 = facet_value constants.%Y, (constants.%A.impl_witness) [concrete = constants.%A.facet]
+// CHECK:STDOUT:   %A.facet: %A.type.0a4 = facet_value %Y.ref, (constants.%A.impl_witness) [concrete = constants.%A.facet]
 // CHECK:STDOUT:   %.loc23_6: %A.type.0a4 = converted %Y.ref, %A.facet [concrete = constants.%A.facet]
 // CHECK:STDOUT:   %.loc23_14.1: %A.assoc_type.296 = specific_constant @A.%assoc0.loc6_41.1, @A(constants.%X) [concrete = constants.%assoc0.5f6]
 // CHECK:STDOUT:   %F.ref: %A.assoc_type.296 = name_ref F, %.loc23_14.1 [concrete = constants.%assoc0.5f6]
@@ -538,7 +538,7 @@ fn CallIndirect() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %CallGeneric.ref: %CallGeneric.type = name_ref CallGeneric, file.%CallGeneric.decl [concrete = constants.%CallGeneric]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y]
-// CHECK:STDOUT:   %A.facet: %A.type.0a4 = facet_value constants.%Y, (constants.%A.impl_witness) [concrete = constants.%A.facet]
+// CHECK:STDOUT:   %A.facet: %A.type.0a4 = facet_value %Y.ref, (constants.%A.impl_witness) [concrete = constants.%A.facet]
 // CHECK:STDOUT:   %.loc32: %A.type.0a4 = converted %Y.ref, %A.facet [concrete = constants.%A.facet]
 // CHECK:STDOUT:   %CallGeneric.specific_fn: <specific function> = specific_function %CallGeneric.ref, @CallGeneric(constants.%A.facet) [concrete = constants.%CallGeneric.specific_fn]
 // CHECK:STDOUT:   %CallGeneric.call: init %empty_tuple.type = call %CallGeneric.specific_fn()
@@ -1034,7 +1034,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %A.ref: %A.type.495 = name_ref A, file.%A.decl [concrete = constants.%A.generic]
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %A.type: type = facet_type <@A, @A(constants.%X)> [concrete = constants.%A.type.0a4]
-// CHECK:STDOUT:   %A.facet: %A.type.0a4 = facet_value constants.%tuple.type.a46, (constants.%A.impl_witness.c8b) [concrete = constants.%A.facet.cdd]
+// CHECK:STDOUT:   %A.facet: %A.type.0a4 = facet_value %.loc24_14, (constants.%A.impl_witness.c8b) [concrete = constants.%A.facet.cdd]
 // CHECK:STDOUT:   %.loc24_23: %A.type.0a4 = converted %.loc24_14, %A.facet [concrete = constants.%A.facet.cdd]
 // CHECK:STDOUT:   %.loc24_31.1: %A.assoc_type.296 = specific_constant @A.%assoc0.loc6_39.1, @A(constants.%X) [concrete = constants.%assoc0.5f6]
 // CHECK:STDOUT:   %F.ref: %A.assoc_type.296 = name_ref F, %.loc24_31.1 [concrete = constants.%assoc0.5f6]
@@ -1134,7 +1134,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %Y2.ref: type = name_ref Y2, file.%Y2.decl [concrete = constants.%Y2]
 // CHECK:STDOUT:   %.loc33_22: %tuple.type.24b = tuple_literal (%Y1.ref, %Y2.ref)
 // CHECK:STDOUT:   %.loc33_24: type = converted %.loc33_22, constants.%tuple.type.a46 [concrete = constants.%tuple.type.a46]
-// CHECK:STDOUT:   %A.facet: %A.type.0a4 = facet_value constants.%tuple.type.a46, (constants.%A.impl_witness.c8b) [concrete = constants.%A.facet.cdd]
+// CHECK:STDOUT:   %A.facet: %A.type.0a4 = facet_value %.loc33_24, (constants.%A.impl_witness.c8b) [concrete = constants.%A.facet.cdd]
 // CHECK:STDOUT:   %.loc33_31: %A.type.0a4 = converted %.loc33_24, %A.facet [concrete = constants.%A.facet.cdd]
 // CHECK:STDOUT:   %CallGeneric.specific_fn: <specific function> = specific_function %CallGeneric.ref, @CallGeneric(constants.%A.facet.cdd) [concrete = constants.%CallGeneric.specific_fn]
 // CHECK:STDOUT:   %CallGeneric.call: init %empty_tuple.type = call %CallGeneric.specific_fn()

@@ -331,7 +331,7 @@ fn Read() {
 // CHECK:STDOUT:       %Int.ref.loc11_68: %Int.type = name_ref Int, imports.%Core.Int [concrete = constants.%Int.generic]
 // CHECK:STDOUT:       %N.ref.loc11_73: Core.IntLiteral = name_ref N, @IntRange.%N.loc4_16.2 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:       %Int.loc11_74: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc11_43.1 (constants.%Int.49d0e6.1)]
-// CHECK:STDOUT:       %Copy.facet.loc11_75.2: %Copy.type = facet_value constants.%Int.49d0e6.1, (constants.%Copy.lookup_impl_witness.ccc) [symbolic = %Copy.facet.loc11_75.1 (constants.%Copy.facet.cd7)]
+// CHECK:STDOUT:       %Copy.facet.loc11_75.2: %Copy.type = facet_value %Int.loc11_74, (constants.%Copy.lookup_impl_witness.ccc) [symbolic = %Copy.facet.loc11_75.1 (constants.%Copy.facet.cd7)]
 // CHECK:STDOUT:       %.loc11_75: %Copy.type = converted %Int.loc11_74, %Copy.facet.loc11_75.2 [symbolic = %Copy.facet.loc11_75.1 (constants.%Copy.facet.cd7)]
 // CHECK:STDOUT:       %Optional.loc11_75.2: type = class_type @Optional, @Optional(constants.%Copy.facet.cd7) [symbolic = %Optional.loc11_75.1 (constants.%Optional.671)]
 // CHECK:STDOUT:       %self.param: @IntRange.as.Iterate.impl.Next.%IntRange (%IntRange.349) = value_param call_param0
@@ -427,7 +427,7 @@ fn Read() {
 // CHECK:STDOUT:       %Int.ref.loc9_79: %Int.type = name_ref Int, imports.%Core.Int [concrete = constants.%Int.generic]
 // CHECK:STDOUT:       %N.ref.loc9_84: Core.IntLiteral = name_ref N, @IntRange.%N.loc4_16.2 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:       %Int.loc9_85: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc9_54.1 (constants.%Int.49d0e6.1)]
-// CHECK:STDOUT:       %Copy.facet.loc9_85.2: %Copy.type = facet_value constants.%Int.49d0e6.1, (constants.%Copy.lookup_impl_witness.ccc) [symbolic = %Copy.facet.loc9_85.1 (constants.%Copy.facet.cd7)]
+// CHECK:STDOUT:       %Copy.facet.loc9_85.2: %Copy.type = facet_value %Int.loc9_85, (constants.%Copy.lookup_impl_witness.ccc) [symbolic = %Copy.facet.loc9_85.1 (constants.%Copy.facet.cd7)]
 // CHECK:STDOUT:       %.loc9_85: %Copy.type = converted %Int.loc9_85, %Copy.facet.loc9_85.2 [symbolic = %Copy.facet.loc9_85.1 (constants.%Copy.facet.cd7)]
 // CHECK:STDOUT:       %.loc9_24: type = where_expr %.Self [symbolic = %Iterate_where.type (constants.%Iterate_where.type)] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%Iterate.type
@@ -642,7 +642,7 @@ fn Read() {
 // CHECK:STDOUT:     %Int.ref.loc15: %Int.type = name_ref Int, imports.%Core.Int [concrete = constants.%Int.generic]
 // CHECK:STDOUT:     %N.ref.loc15: Core.IntLiteral = name_ref N, @IntRange.%N.loc4_16.2 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:     %Int.loc15: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc11_43.1 (constants.%Int.49d0e6.1)]
-// CHECK:STDOUT:     %Copy.facet.loc15_41: %Copy.type = facet_value constants.%Int.49d0e6.1, (constants.%Copy.lookup_impl_witness.ccc) [symbolic = %Copy.facet.loc11_75.1 (constants.%Copy.facet.cd7)]
+// CHECK:STDOUT:     %Copy.facet.loc15_41: %Copy.type = facet_value %Int.loc15, (constants.%Copy.lookup_impl_witness.ccc) [symbolic = %Copy.facet.loc11_75.1 (constants.%Copy.facet.cd7)]
 // CHECK:STDOUT:     %.loc15_41: %Copy.type = converted %Int.loc15, %Copy.facet.loc15_41 [symbolic = %Copy.facet.loc11_75.1 (constants.%Copy.facet.cd7)]
 // CHECK:STDOUT:     %Optional.loc15: type = class_type @Optional, @Optional(constants.%Copy.facet.cd7) [symbolic = %Optional.loc11_75.1 (constants.%Optional.671)]
 // CHECK:STDOUT:     %.loc15_42: @IntRange.as.Iterate.impl.Next.%Optional.Some.type (%Optional.Some.type.20f) = specific_constant imports.%Core.import_ref.9103, @Optional(constants.%Copy.facet.cd7) [symbolic = %Optional.Some (constants.%Optional.Some.dff)]
@@ -673,7 +673,7 @@ fn Read() {
 // CHECK:STDOUT:     %Int.ref.loc17: %Int.type = name_ref Int, imports.%Core.Int [concrete = constants.%Int.generic]
 // CHECK:STDOUT:     %N.ref.loc17: Core.IntLiteral = name_ref N, @IntRange.%N.loc4_16.2 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:     %Int.loc17: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc11_43.1 (constants.%Int.49d0e6.1)]
-// CHECK:STDOUT:     %Copy.facet.loc17: %Copy.type = facet_value constants.%Int.49d0e6.1, (constants.%Copy.lookup_impl_witness.ccc) [symbolic = %Copy.facet.loc11_75.1 (constants.%Copy.facet.cd7)]
+// CHECK:STDOUT:     %Copy.facet.loc17: %Copy.type = facet_value %Int.loc17, (constants.%Copy.lookup_impl_witness.ccc) [symbolic = %Copy.facet.loc11_75.1 (constants.%Copy.facet.cd7)]
 // CHECK:STDOUT:     %.loc17_41: %Copy.type = converted %Int.loc17, %Copy.facet.loc17 [symbolic = %Copy.facet.loc11_75.1 (constants.%Copy.facet.cd7)]
 // CHECK:STDOUT:     %Optional.loc17: type = class_type @Optional, @Optional(constants.%Copy.facet.cd7) [symbolic = %Optional.loc11_75.1 (constants.%Optional.671)]
 // CHECK:STDOUT:     %.loc17_42: @IntRange.as.Iterate.impl.Next.%Optional.None.type (%Optional.None.type.66e) = specific_constant imports.%Core.import_ref.725b, @Optional(constants.%Copy.facet.cd7) [symbolic = %Optional.None (constants.%Optional.None.016)]

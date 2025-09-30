@@ -695,13 +695,13 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %w.ref: @HandleTameAnimal2.%W.as_type.loc11_44.1 (%W.as_type) = name_ref w, %w
 // CHECK:STDOUT:     %W.as_type.loc12_14.1: type = facet_access_type constants.%W [symbolic = %W.as_type.loc11_44.1 (constants.%W.as_type)]
 // CHECK:STDOUT:     %.loc12_14.1: type = converted constants.%W, %W.as_type.loc12_14.1 [symbolic = %W.as_type.loc11_44.1 (constants.%W.as_type)]
-// CHECK:STDOUT:     %Animal.facet.loc12_14.1: %Animal.type = facet_value constants.%W.as_type, (constants.%Animal.lookup_impl_witness) [symbolic = %Animal.facet.loc12_14.3 (constants.%Animal.facet)]
+// CHECK:STDOUT:     %Animal.facet.loc12_14.1: %Animal.type = facet_value %.loc12_14.1, (constants.%Animal.lookup_impl_witness) [symbolic = %Animal.facet.loc12_14.3 (constants.%Animal.facet)]
 // CHECK:STDOUT:     %.loc12_14.2: %Animal.type = converted %.loc12_14.1, %Animal.facet.loc12_14.1 [symbolic = %Animal.facet.loc12_14.3 (constants.%Animal.facet)]
 // CHECK:STDOUT:     %facet_value.loc12_14.1: %facet_type.807 = facet_value constants.%W.as_type, (constants.%Eats.lookup_impl_witness, constants.%Tame.lookup_impl_witness) [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]
 // CHECK:STDOUT:     %.loc12_14.3: %facet_type.807 = converted constants.%W.as_type, %facet_value.loc12_14.1 [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]
 // CHECK:STDOUT:     %W.as_type.loc12_14.2: type = facet_access_type constants.%W [symbolic = %W.as_type.loc11_44.1 (constants.%W.as_type)]
 // CHECK:STDOUT:     %.loc12_14.4: type = converted constants.%W, %W.as_type.loc12_14.2 [symbolic = %W.as_type.loc11_44.1 (constants.%W.as_type)]
-// CHECK:STDOUT:     %Animal.facet.loc12_14.2: %Animal.type = facet_value constants.%W.as_type, (constants.%Animal.lookup_impl_witness) [symbolic = %Animal.facet.loc12_14.3 (constants.%Animal.facet)]
+// CHECK:STDOUT:     %Animal.facet.loc12_14.2: %Animal.type = facet_value %.loc12_14.4, (constants.%Animal.lookup_impl_witness) [symbolic = %Animal.facet.loc12_14.3 (constants.%Animal.facet)]
 // CHECK:STDOUT:     %.loc12_14.5: %Animal.type = converted %.loc12_14.4, %Animal.facet.loc12_14.2 [symbolic = %Animal.facet.loc12_14.3 (constants.%Animal.facet)]
 // CHECK:STDOUT:     %facet_value.loc12_14.2: %facet_type.807 = facet_value constants.%W.as_type, (constants.%Eats.lookup_impl_witness, constants.%Tame.lookup_impl_witness) [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]
 // CHECK:STDOUT:     %.loc12_14.6: %facet_type.807 = converted constants.%W.as_type, %facet_value.loc12_14.2 [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]
@@ -1253,7 +1253,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %TakesExtraWhereExplicit.ref: %TakesExtraWhereExplicit.type = name_ref TakesExtraWhereExplicit, file.%TakesExtraWhereExplicit.decl [concrete = constants.%TakesExtraWhereExplicit]
 // CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc9_26.2 [symbolic = %U.loc9_26.1 (constants.%U)]
-// CHECK:STDOUT:     %facet_value.loc10_28.1: %type = facet_value constants.%U, () [symbolic = %facet_value.loc10_28.2 (constants.%facet_value)]
+// CHECK:STDOUT:     %facet_value.loc10_28.1: %type = facet_value %U.ref, () [symbolic = %facet_value.loc10_28.2 (constants.%facet_value)]
 // CHECK:STDOUT:     %.loc10: %type = converted %U.ref, %facet_value.loc10_28.1 [symbolic = %facet_value.loc10_28.2 (constants.%facet_value)]
 // CHECK:STDOUT:     %TakesExtraWhereExplicit.specific_fn.loc10_3.1: <specific function> = specific_function %TakesExtraWhereExplicit.ref, @TakesExtraWhereExplicit(constants.%facet_value) [symbolic = %TakesExtraWhereExplicit.specific_fn.loc10_3.2 (constants.%TakesExtraWhereExplicit.specific_fn)]
 // CHECK:STDOUT:     %TakesExtraWhereExplicit.call: init %empty_tuple.type = call %TakesExtraWhereExplicit.specific_fn.loc10_3.1()

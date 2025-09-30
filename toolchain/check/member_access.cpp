@@ -331,45 +331,19 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
   if (auto assoc_type =
           context.types().TryGetAs<SemIR::AssociatedEntityType>(type_id)) {
     if (lookup_in_type_of_base) {
-      SemIR::TypeId base_type_id = context.insts().Get(base_id).type_id();
-      if (auto facet_access_type =
-              context.types().TryGetAs<SemIR::FacetAccessType>(base_type_id)) {
-        // Move from the type of a symbolic facet value up in typish-ness to its
-        // FacetType to find the type to work with.
-        base_id = facet_access_type->facet_value_inst_id;
-        base_type_id = context.insts().Get(base_id).type_id();
+      auto base_type_id = context.insts().Get(base_id).type_id();
+
+      // When performing access `T.F` on a facet value `T`, convert the facet
+      // value `T` itself to a type (`T as type`) to look inside the facet type
+      // for a witness. This makes the lookup equivalent to `x.F` where the type
+      // of `x` is a facet value `T`.
+      if (context.types().Is<SemIR::FacetType>(base_type_id)) {
+        base_type_id = ExprAsType(context, loc_id, base_id).type_id;
       }
 
-      if (auto facet_type =
-              context.types().TryGetAs<SemIR::FacetType>(base_type_id)) {
-        // Handles `T.F` when `T` is a non-type facet.
-        auto base_as_type = ExprAsType(context, loc_id, base_id);
-
-        auto assoc_interface = assoc_type->GetSpecificInterface();
-
-        // Witness that `T` implements the `assoc_interface`.
-        auto lookup_result = LookupImplWitness(
-            context, loc_id,
-            context.types().GetConstantId(base_as_type.type_id),
-            EvalOrAddInst(
-                context, loc_id,
-                FacetTypeFromInterface(context, assoc_interface.interface_id,
-                                       assoc_interface.specific_id)));
-        CARBON_CHECK(lookup_result.has_value());
-        auto witness_inst_id =
-            GetWitnessFromSingleImplLookupResult(context, lookup_result);
-
-        member_id = AccessMemberOfImplWitness(
-            context, loc_id, base_as_type.type_id, witness_inst_id,
-            assoc_interface.specific_id, member_id);
-      } else {
-        // Handles `x.F` if `x` is of type `class C` that extends an interface
-        // containing `F`.
-        SemIR::ConstantId constant_id =
-            context.types().GetConstantId(base_type_id);
-        member_id = PerformImplLookup(context, loc_id, constant_id, *assoc_type,
-                                      member_id);
-      }
+      member_id = PerformImplLookup(context, loc_id,
+                                    context.types().GetConstantId(base_type_id),
+                                    *assoc_type, member_id);
     } else if (ScopeNeedsImplLookup(context, name_scope_const_id)) {
       // Handles `T.F` where `T` is a type extending an interface containing
       // `F`.

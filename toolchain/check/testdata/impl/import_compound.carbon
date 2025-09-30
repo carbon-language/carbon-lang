@@ -326,7 +326,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %struct_type.i: type = struct_type {.i: %empty_tuple.type} [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %NonInstance.ref: type = name_ref NonInstance, imports.%Main.NonInstance [concrete = constants.%NonInstance.type]
 // CHECK:STDOUT:   %F.ref: %NonInstance.assoc_type = name_ref F, imports.%Main.import_ref.e3c [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %NonInstance.facet: %NonInstance.type = facet_value constants.%struct_type.i, (constants.%NonInstance.impl_witness) [concrete = constants.%NonInstance.facet]
+// CHECK:STDOUT:   %NonInstance.facet: %NonInstance.type = facet_value %struct_type.i, (constants.%NonInstance.impl_witness) [concrete = constants.%NonInstance.facet]
 // CHECK:STDOUT:   %.loc6_11: %NonInstance.type = converted %struct_type.i, %NonInstance.facet [concrete = constants.%NonInstance.facet]
 // CHECK:STDOUT:   %impl.elem0: %.4aa = impl_witness_access constants.%NonInstance.impl_witness, element0 [concrete = constants.%struct_type.i.as.NonInstance.impl.F]
 // CHECK:STDOUT:   %struct_type.i.as.NonInstance.impl.F.call: init %empty_tuple.type = call %impl.elem0()

@@ -1666,7 +1666,7 @@ fn F() {
 // CHECK:STDOUT:     %DD.ref: %DD.type = name_ref DD, file.%DD.decl [concrete = constants.%DD.generic]
 // CHECK:STDOUT:     %E.ref: type = name_ref E, %E.loc12_14.1 [symbolic = %E.loc12_14.2 (constants.%E)]
 // CHECK:STDOUT:     %DD.loc12_31.1: type = class_type @DD, @DD(constants.%E) [symbolic = %DD.loc12_31.2 (constants.%DD.296)]
-// CHECK:STDOUT:     %Z.facet.loc12_32.1: %Z.type = facet_value constants.%DD.296, (constants.%Z.lookup_impl_witness) [symbolic = %Z.facet.loc12_32.2 (constants.%Z.facet.bf0)]
+// CHECK:STDOUT:     %Z.facet.loc12_32.1: %Z.type = facet_value %DD.loc12_31.1, (constants.%Z.lookup_impl_witness) [symbolic = %Z.facet.loc12_32.2 (constants.%Z.facet.bf0)]
 // CHECK:STDOUT:     %.loc12: %Z.type = converted %DD.loc12_31.1, %Z.facet.loc12_32.1 [symbolic = %Z.facet.loc12_32.2 (constants.%Z.facet.bf0)]
 // CHECK:STDOUT:     %CC.loc12_32.1: type = class_type @CC, @CC(constants.%Z.facet.bf0) [symbolic = %CC.loc12_32.2 (constants.%CC.8ff)]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
@@ -1762,11 +1762,11 @@ fn F() {
 // CHECK:STDOUT:   %DD.ref: %DD.type = name_ref DD, file.%DD.decl [concrete = constants.%DD.generic]
 // CHECK:STDOUT:   %EE.ref: type = name_ref EE, file.%EE.decl [concrete = constants.%EE]
 // CHECK:STDOUT:   %DD: type = class_type @DD, @DD(constants.%EE) [concrete = constants.%DD.689]
-// CHECK:STDOUT:   %Z.facet.loc15_12: %Z.type = facet_value constants.%DD.689, (constants.%Z.impl_witness.fbd) [concrete = constants.%Z.facet.8b7]
+// CHECK:STDOUT:   %Z.facet.loc15_12: %Z.type = facet_value %DD, (constants.%Z.impl_witness.fbd) [concrete = constants.%Z.facet.8b7]
 // CHECK:STDOUT:   %.loc15_12: %Z.type = converted %DD, %Z.facet.loc15_12 [concrete = constants.%Z.facet.8b7]
 // CHECK:STDOUT:   %CC: type = class_type @CC, @CC(constants.%Z.facet.8b7) [concrete = constants.%CC.3fd]
 // CHECK:STDOUT:   %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
-// CHECK:STDOUT:   %Z.facet.loc15_14: %Z.type = facet_value constants.%CC.3fd, (constants.%Z.impl_witness.94c) [concrete = constants.%Z.facet.327]
+// CHECK:STDOUT:   %Z.facet.loc15_14: %Z.type = facet_value %CC, (constants.%Z.impl_witness.94c) [concrete = constants.%Z.facet.327]
 // CHECK:STDOUT:   %.loc15_14: %Z.type = converted %CC, %Z.facet.loc15_14 [concrete = constants.%Z.facet.327]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

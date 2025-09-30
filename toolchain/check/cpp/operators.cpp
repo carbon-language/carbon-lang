@@ -7,6 +7,7 @@
 #include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
 #include "toolchain/check/cpp/import.h"
+#include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
@@ -157,12 +158,11 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
 
 auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
                        llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
-  Diagnostics::AnnotationScope annotate_diagnostics(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCppOperatorLookup, Note,
-                          "in `Cpp` operator `{0}` lookup", std::string);
-        builder.Note(loc_id, InCppOperatorLookup, op.interface_name.str());
-      });
+  // Register an annotation scope to flush any Clang diagnostics when we return.
+  // This is important to ensure that Clang diagnostics are properly interleaved
+  // with Carbon diagnostics.
+  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
+                                                    [](auto& /*builder*/) {});
 
   auto op_kind =
       GetClangOperatorKind(context, loc_id, op.interface_name, op.op_name);
@@ -191,9 +191,9 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
   }
 
   clang::UnresolvedSet<4> functions;
-  // TODO: Add location accordingly.
   clang::OverloadCandidateSet candidate_set(
-      clang::SourceLocation(), clang::OverloadCandidateSet::CSK_Operator);
+      GetCppLocation(context, loc_id),
+      clang::OverloadCandidateSet::CSK_Operator);
   // This works for both unary and binary operators.
   context.clang_sema().LookupOverloadedBinOp(candidate_set, *op_kind, functions,
                                              *arg_exprs);

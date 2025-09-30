@@ -85,22 +85,17 @@ static auto CompileTwoSources(const InstallPaths& install_paths,
   // First compile the two source files to `.o` files with Clang.
   RawStringOstream verbose_out;
   auto vfs = llvm::vfs::getRealFileSystem();
-  ClangRunner clang(&install_paths, /*on_demand_runtimes_cache=*/nullptr, vfs,
-                    &verbose_out);
+  ClangRunner clang(&install_paths, vfs, &verbose_out);
   std::string target_arg = llvm::formatv("--target={0}", target).str();
   std::string out;
   std::string err;
   CARBON_CHECK(Testing::CallWithCapturedOutput(
                    out, err,
                    [&] {
-                     auto run_result = clang.Run({target_arg, "-fPIE", "-c",
-                                                  test_a_file.string(), "-o",
-                                                  test_a_output.string()});
-                     if (!run_result.ok()) {
-                       err = run_result.error().message();
-                       return false;
-                     }
-                     return *run_result;
+                     auto run_result = clang.RunWithNoRuntimes(
+                         {target_arg, "-fPIE", "-c", test_a_file.string(), "-o",
+                          test_a_output.string()});
+                     return run_result;
                    }),
                "Verbose output from runner:\n{0}\nStderr:\n{1}\n",
                verbose_out.TakeStr(), err);
@@ -109,14 +104,10 @@ static auto CompileTwoSources(const InstallPaths& install_paths,
   CARBON_CHECK(Testing::CallWithCapturedOutput(
                    out, err,
                    [&] {
-                     auto run_result = clang.Run({target_arg, "-fPIE", "-c",
-                                                  test_b_file.string(), "-o",
-                                                  test_b_output.string()});
-                     if (!run_result.ok()) {
-                       err = run_result.error().message();
-                       return false;
-                     }
-                     return *run_result;
+                     auto run_result = clang.RunWithNoRuntimes(
+                         {target_arg, "-fPIE", "-c", test_b_file.string(), "-o",
+                          test_b_output.string()});
+                     return run_result;
                    }),
                "Verbose output from runner:\n{0}\nStderr:\n{1}\n",
                verbose_out.TakeStr(), err);
