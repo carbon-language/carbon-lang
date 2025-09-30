@@ -126,7 +126,7 @@ static auto IsNonLinkCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   });
 }
 
-auto ClangRunner::RunPrebuiltRuntimes(llvm::ArrayRef<llvm::StringRef> args,
+auto ClangRunner::RunWithPrebuiltRuntimes(llvm::ArrayRef<llvm::StringRef> args,
                                       Runtimes& prebuilt_runtimes)
     -> ErrorOr<bool> {
   // Check the args to see if we have a known target-independent command. If so,
