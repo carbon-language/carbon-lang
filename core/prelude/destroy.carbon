@@ -16,7 +16,7 @@ interface Destroy {
   fn Op[addr self: Self*]();
 }
 
-// True for all types that should have a `Destroy` impl.
+// Returns a constraint that matches all types that should have a `Destroy` impl.
 private fn CanDestroy() -> type = "type.can_destroy";
 
 // Destroys an instance of `DestroyT`. This is also used for trivial types.
