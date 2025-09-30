@@ -73,7 +73,7 @@ standard library.
 ## Syntax
 
 The operands of these operators can be any [expression](expressions/README.md).
-However, the first operand must be modifiable because it is passed to an
+However, the first operand must be modifiable because it is passed to a
 `[ref self: Self]` parameter, which disallows most expression forms other than:
 
 -   The name of a `var` binding.

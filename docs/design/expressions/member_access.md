@@ -765,11 +765,7 @@ If instance binding is performed:
 
 -   For a method, the result is a _bound method_, which is a value `F` such that
     a function call `F(args)` behaves the same as a call to `M(args)` with the
-    `self` parameter initialized by a corresponding recipient argument:
-
-    -   If the method declares its `self` parameter with `ref`, the recipient
-        argument is `&x`.
-    -   Otherwise, the recipient argument is `x`.
+    `self` parameter initialized by `x`.
 
     ```carbon
     class Blob {
@@ -777,7 +773,7 @@ If instance binding is performed:
     }
     fn F(p: Blob*) {
       // ✅ OK, forms bound method `((*p).M)` and calls it.
-      // This calls `Blob.Mutate` with `self` initialized by `&(*p)`
+      // This calls `Blob.Mutate` with `self` initialized by `*p`
       // and `n` initialized by `5`.
       (*p).Mutate(5);
 
