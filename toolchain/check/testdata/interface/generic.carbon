@@ -399,6 +399,7 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Self.a3e: %Generic.type.227 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.03b [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -483,11 +484,13 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT:   %T.loc10_6.1: %Generic.type.227 = bind_symbolic_name T, 0 [symbolic = %T.loc10_6.1 (constants.%T.03b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T.as_type.loc18_6.2: type = facet_access_type %T.loc10_6.1 [symbolic = %T.as_type.loc18_6.2 (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %T.ref: %Generic.type.227 = name_ref T, %T.loc10_6.2 [symbolic = %T.loc10_6.1 (constants.%T.03b)]
+// CHECK:STDOUT:     %T.as_type.loc18_6.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc18_6.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

@@ -22,6 +22,7 @@ def install_filegroup(name, filegroup_target, remove_prefix = "", label = None):
     """
     return {
         "filegroup": filegroup_target,
+        "is_digest": False,
         "is_driver": False,
         "label": label,
         "name": name,
@@ -40,12 +41,13 @@ def install_symlink(name, symlink_to, is_driver = False):
         filegroup.
     """
     return {
+        "is_digest": False,
         "is_driver": is_driver,
         "name": name,
         "symlink": symlink_to,
     }
 
-def install_target(name, target, executable = False, is_driver = False):
+def install_target(name, target, executable = False, is_driver = False, is_digest = False):
     """Adds a target for install.
 
     Used in the `install_dirs` dict.
@@ -56,19 +58,24 @@ def install_target(name, target, executable = False, is_driver = False):
       executable: True if executable.
       is_driver: False if it should be included in the `no_driver_name`
         filegroup.
+      is_digest: False if it should be included in the `no_digest_name`
+        filegroup.
     """
     return {
         "executable": executable,
+        "is_digest": is_digest,
         "is_driver": is_driver,
         "name": name,
         "target": target,
     }
 
-def make_install_filegroups(name, no_driver_name, pkg_name, install_dirs, prefix):
+def make_install_filegroups(name, no_digest_name, no_driver_name, pkg_name, install_dirs, prefix):
     """Makes filegroups of install data.
 
     Args:
       name: The name of the main filegroup, that contains all install_data.
+      no_digest_name: The name of a filegroup which excludes the digest. This is
+        used to compute the digest itself.
       no_driver_name: The name of a filegroup which excludes the driver. This is
         for the driver to depend on and get other files, without a circular
         dependency.
@@ -79,6 +86,7 @@ def make_install_filegroups(name, no_driver_name, pkg_name, install_dirs, prefix
     """
     all_srcs = []
     no_driver_srcs = []
+    no_digest_srcs = []
     pkg_srcs = []
 
     for dir, entries in install_dirs.items():
@@ -89,6 +97,8 @@ def make_install_filegroups(name, no_driver_name, pkg_name, install_dirs, prefix
             all_srcs.append(prefixed_path)
             if not entry["is_driver"]:
                 no_driver_srcs.append(prefixed_path)
+            if not entry["is_digest"]:
+                no_digest_srcs.append(prefixed_path)
 
             pkg_label = entry.get("label") or path + ".pkg"
             pkg_srcs.append(pkg_label)
@@ -152,4 +162,5 @@ def make_install_filegroups(name, no_driver_name, pkg_name, install_dirs, prefix
                 fail("Unrecognized structure: {0}".format(entry))
     native.filegroup(name = name, srcs = all_srcs)
     native.filegroup(name = no_driver_name, srcs = no_driver_srcs)
+    native.filegroup(name = no_digest_name, srcs = no_digest_srcs)
     pkg_filegroup(name = pkg_name, srcs = pkg_srcs)

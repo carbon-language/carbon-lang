@@ -98,9 +98,6 @@ CARBON_PARSE_NODE_KIND(EmptyDecl)
 CARBON_PARSE_NODE_KIND(IdentifierNameNotBeforeParams)
 CARBON_PARSE_NODE_KIND(IdentifierNameBeforeParams)
 
-CARBON_PARSE_NODE_KIND(KeywordNameNotBeforeParams)
-CARBON_PARSE_NODE_KIND(KeywordNameBeforeParams)
-
 CARBON_PARSE_NODE_KIND(IdentifierNameExpr)
 
 CARBON_PARSE_NODE_KIND(SelfValueName)
@@ -133,8 +130,6 @@ CARBON_PARSE_NODE_KIND(InlineImportBody)
 
 CARBON_PARSE_NODE_KIND(IdentifierNameQualifierWithParams)
 CARBON_PARSE_NODE_KIND(IdentifierNameQualifierWithoutParams)
-CARBON_PARSE_NODE_KIND(KeywordNameQualifierWithParams)
-CARBON_PARSE_NODE_KIND(KeywordNameQualifierWithoutParams)
 
 CARBON_PARSE_NODE_KIND(ExportIntroducer)
 CARBON_PARSE_NODE_KIND(ExportDecl)

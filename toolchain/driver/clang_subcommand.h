@@ -19,7 +19,6 @@ namespace Carbon {
 struct ClangOptions {
   auto Build(CommandLine::CommandBuilder& b) -> void;
 
-  llvm::StringRef prebuilt_runtimes_path;
   bool build_runtimes_on_demand = false;
 
   llvm::SmallVector<llvm::StringRef> args;

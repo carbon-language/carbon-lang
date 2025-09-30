@@ -14,6 +14,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/TargetParser/Triple.h"
+#include "toolchain/driver/runtimes_cache.h"
 #include "toolchain/driver/tool_runner_base.h"
 #include "toolchain/install/install_paths.h"
 
@@ -48,6 +49,7 @@ class ClangRunner : ToolRunnerBase {
   // If `verbose` is passed as true, will enable verbose logging to the
   // `err_stream` both from the runner and Clang itself.
   ClangRunner(const InstallPaths* install_paths,
+              Runtimes::Cache* on_demand_runtimes_cache,
               llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
               llvm::raw_ostream* vlog_stream = nullptr,
               bool build_runtimes_on_demand = false);
@@ -66,8 +68,7 @@ class ClangRunner : ToolRunnerBase {
   // TODO: Eventually, this will need to accept an abstraction that can
   // represent multiple different pre-built runtimes.
   auto Run(llvm::ArrayRef<llvm::StringRef> args,
-           std::optional<std::filesystem::path> prebuilt_resource_dir_path = {})
-      -> ErrorOr<bool>;
+           Runtimes* prebuilt_runtimes = nullptr) -> ErrorOr<bool>;
 
   // Run Clang with the provided arguments and without any target-dependent
   // resources.
@@ -85,10 +86,10 @@ class ClangRunner : ToolRunnerBase {
   // contains all the target independent files such as headers. However, for
   // target-specific files like runtimes, we build those on demand here and
   // return the path.
-  auto BuildTargetResourceDir(llvm::StringRef target,
-                              const std::filesystem::path& resource_dir_path,
+  auto BuildTargetResourceDir(const Runtimes::Cache::Features& features,
+                              Runtimes& runtimes,
                               const std::filesystem::path& tmp_path)
-      -> ErrorOr<Success>;
+      -> ErrorOr<std::filesystem::path>;
 
   // Enable leaking memory.
   //
@@ -125,6 +126,8 @@ class ClangRunner : ToolRunnerBase {
                         const llvm::Triple& target_triple,
                         const std::filesystem::path& tmp_path,
                         Filesystem::DirRef lib_dir) -> ErrorOr<Success>;
+
+  Runtimes::Cache* runtimes_cache_;
 
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
   llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagnostic_ids_;

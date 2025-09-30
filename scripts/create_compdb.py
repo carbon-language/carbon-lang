@@ -24,8 +24,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import argparse
+import json
 import subprocess
 import sys
+from typing import Any, Dict
 
 import scripts_utils
 
@@ -72,6 +74,60 @@ def _build_generated_files(
     )
 
 
+def _get_config_for_entry(entry: Dict[str, Any]) -> str:
+    """Returns the configuration for a compile command entry."""
+    arguments = entry.get("arguments")
+
+    # Only handle files where the object file argument is easily found as
+    # the last argument, which matches the expected structure from Bazel.
+    if not arguments or len(arguments) < 2 or arguments[-2] != "-o":
+        return "unknown"
+    obj_file = arguments[-1]
+
+    # The configuration is the name of the subdirectory of `bazel-out`.
+    if not obj_file.startswith("bazel-out/"):
+        return "unknown"
+    return str(obj_file.split("/")[1])
+
+
+def _filter_compilation_database(file_path: str) -> None:
+    """Filters out duplicate exec-config entries from the database."""
+    print("Filtering out duplicate exec-configuration entries...")
+    try:
+        with open(file_path, "r") as f:
+            commands = json.load(f)
+    except FileNotFoundError:
+        print(f"Error: The file '{file_path}' was not found.")
+        sys.exit(1)
+    except json.JSONDecodeError:
+        print(f"Error: The file '{file_path}' is not a valid JSON file.")
+        sys.exit(1)
+
+    # We want to skip compiles that were in the "exec" configuration for tools.
+    # Because we generate compile commands for every bazel cc_* target in the
+    # main configuration, even if only used by tools, their sources should be
+    # covered and the exec configuration would simply be a duplicate.
+    #
+    # Detecting this based on the `-exec-` string in the configuration name of
+    # the directory is a bit of a hack, but even using the `--notool_deps`
+    # argument, Bazel seems to sometimes include this configuration in the query
+    # that produces the compilation database.
+    filtered_commands = [
+        entry
+        for entry in commands
+        if "-exec-" not in _get_config_for_entry(entry)
+    ]
+
+    with open(file_path, "w") as f:
+        # Use indent=4 for a human-readable, pretty-printed output file
+        json.dump(filtered_commands, f, indent=4)
+    print(
+        "Filtered out "
+        f"{len(commands) - len(filtered_commands)} "
+        "duplicate entries..."
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -107,6 +163,8 @@ def main() -> None:
             "--notool_deps",
         ]
     )
+
+    _filter_compilation_database("compile_commands.json")
 
 
 if __name__ == "__main__":

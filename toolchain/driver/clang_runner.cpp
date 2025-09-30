@@ -14,6 +14,7 @@
 #include <string>
 #include <system_error>
 #include <utility>
+#include <variant>
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
@@ -51,10 +52,12 @@ auto clang_main(int Argc, char** Argv, const llvm::ToolContext& ToolContext)
 namespace Carbon {
 
 ClangRunner::ClangRunner(const InstallPaths* install_paths,
+                         Runtimes::Cache* runtimes_cache,
                          llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                          llvm::raw_ostream* vlog_stream,
                          bool build_runtimes_on_demand)
     : ToolRunnerBase(install_paths, vlog_stream),
+      runtimes_cache_(runtimes_cache),
       fs_(std::move(fs)),
       diagnostic_ids_(new clang::DiagnosticIDs()),
       build_runtimes_on_demand_(build_runtimes_on_demand) {}
@@ -130,47 +133,44 @@ static auto IsNonLinkCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   });
 }
 
-auto ClangRunner::Run(
-    llvm::ArrayRef<llvm::StringRef> args,
-    std::optional<std::filesystem::path> prebuilt_resource_dir_path)
-    -> ErrorOr<bool> {
+auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
+                      Runtimes* prebuilt_runtimes) -> ErrorOr<bool> {
   // Check the args to see if we have a known target-independent command. If so,
   // directly dispatch it to avoid the cost of building the target resource
   // directory.
   // TODO: Maybe handle response file expansion similar to the Clang CLI?
   if (args.empty() || args[0].starts_with("-cc1") || IsNonLinkCommand(args) ||
-      (!build_runtimes_on_demand_ && !prebuilt_resource_dir_path)) {
+      (!build_runtimes_on_demand_ && !prebuilt_runtimes)) {
     return RunTargetIndependentCommand(args);
   }
 
   std::string target = ComputeClangTarget(args);
 
   // If we have pre-built runtimes, use them rather than building on demand.
-  if (prebuilt_resource_dir_path) {
-    return RunInternal(args, target, prebuilt_resource_dir_path->native());
+  if (prebuilt_runtimes) {
+    CARBON_ASSIGN_OR_RETURN(std::filesystem::path prebuilt_resource_dir_path,
+                            prebuilt_runtimes->Get(Runtimes::ClangResourceDir));
+    return RunInternal(args, target, prebuilt_resource_dir_path.native());
   }
   CARBON_CHECK(build_runtimes_on_demand_);
 
   // Otherwise, we need to build a target resource directory.
-  //
-  // TODO: Currently, this builds the runtimes in a temporary directory that is
-  // removed after the Clang invocation. That requires building them on each
-  // execution which is expensive and slow. Eventually, we want to replace this
-  // with using an on-disk cache so that only the first execution has to build
-  // the runtimes and subsequently the cached build can be used.
   CARBON_VLOG("Building target resource dir...\n");
-  CARBON_ASSIGN_OR_RETURN(Filesystem::RemovingDir tmp_dir,
-                          Filesystem::MakeTmpDir());
+  Runtimes::Cache::Features features = {.target = target};
+  CARBON_ASSIGN_OR_RETURN(Runtimes runtimes, runtimes_cache_->Lookup(features));
 
-  // Hard code the subdirectory for the resource-dir runtimes.
-  //
-  // TODO: This should be replaced with an abstraction that manages the layout
-  // of a built runtimes tree.
-  std::filesystem::path resource_dir_path =
-      tmp_dir.abs_path() / "clang_resource_dir";
-
-  CARBON_RETURN_IF_ERROR(
-      BuildTargetResourceDir(target, resource_dir_path, tmp_dir.abs_path()));
+  // We need to build the Clang resource directory for these runtimes. This
+  // requires a temporary directory as well as the destination directory for
+  // the build. The temporary directory should only be used during the build,
+  // not once we are running Clang with the built runtime.
+  std::filesystem::path resource_dir_path;
+  {
+    CARBON_ASSIGN_OR_RETURN(Filesystem::RemovingDir tmp_dir,
+                            Filesystem::MakeTmpDir());
+    CARBON_ASSIGN_OR_RETURN(
+        resource_dir_path,
+        BuildTargetResourceDir(features, runtimes, tmp_dir.abs_path()));
+  }
 
   // Note that this function always successfully runs `clang` and returns a bool
   // to indicate whether `clang` itself succeeded, not whether the runner was
@@ -186,32 +186,37 @@ auto ClangRunner::RunTargetIndependentCommand(
 }
 
 auto ClangRunner::BuildTargetResourceDir(
-    llvm::StringRef target, const std::filesystem::path& resource_dir_path,
-    const std::filesystem::path& tmp_path) -> ErrorOr<Success> {
+    const Runtimes::Cache::Features& features, Runtimes& runtimes,
+    const std::filesystem::path& tmp_path) -> ErrorOr<std::filesystem::path> {
   // Disable any leaking of memory while building the target resource dir, and
   // restore the previous setting at the end.
   auto restore_leak_flag = llvm::make_scope_exit(
       [&, orig_flag = enable_leaking_] { enable_leaking_ = orig_flag; });
   enable_leaking_ = false;
 
-  // Create the destination directory if needed.
-  CARBON_ASSIGN_OR_RETURN(
-      Filesystem::Dir resource_dir,
-      Filesystem::Cwd().CreateDirectories(resource_dir_path));
+  CARBON_ASSIGN_OR_RETURN(auto build_dir,
+                          runtimes.Build(Runtimes::ClangResourceDir));
+  if (std::holds_alternative<std::filesystem::path>(build_dir)) {
+    // Found cached build.
+    return std::get<std::filesystem::path>(std::move(build_dir));
+  }
+
+  auto builder = std::get<Runtimes::Builder>(std::move(build_dir));
+  std::string target = features.target;
 
   // Symlink the installation's `include` and `share` directories.
   std::filesystem::path install_resource_path =
       installation_->clang_resource_path();
   CARBON_RETURN_IF_ERROR(
-      resource_dir.Symlink("include", install_resource_path / "include"));
+      builder.dir().Symlink("include", install_resource_path / "include"));
   CARBON_RETURN_IF_ERROR(
-      resource_dir.Symlink("share", install_resource_path / "share"));
+      builder.dir().Symlink("share", install_resource_path / "share"));
 
   // Create the target's `lib` directory.
   std::filesystem::path lib_path =
       std::filesystem::path("lib") / std::string_view(target);
   CARBON_ASSIGN_OR_RETURN(Filesystem::Dir lib_dir,
-                          resource_dir.CreateDirectories(lib_path));
+                          builder.dir().CreateDirectories(lib_path));
 
   llvm::Triple target_triple(target);
   if (target_triple.isOSWindows()) {
@@ -222,15 +227,15 @@ auto ClangRunner::BuildTargetResourceDir(
   // provide the CRT begin/end files, and so we need to build them.
   if (target_triple.isOSLinux()) {
     BuildCrtFile(target, RuntimeSources::CrtBegin,
-                 resource_dir_path / lib_path / "clang_rt.crtbegin.o");
+                 builder.path() / lib_path / "clang_rt.crtbegin.o");
     BuildCrtFile(target, RuntimeSources::CrtEnd,
-                 resource_dir_path / lib_path / "clang_rt.crtend.o");
+                 builder.path() / lib_path / "clang_rt.crtend.o");
   }
 
   CARBON_RETURN_IF_ERROR(
       BuildBuiltinsLib(target, target_triple, tmp_path, lib_dir));
 
-  return Success();
+  return std::move(builder).Commit();
 }
 
 auto ClangRunner::RunInternal(
@@ -508,11 +513,13 @@ auto ClangRunner::BuildBuiltinsLib(llvm::StringRef target,
     objs.push_back(std::move(*obj));
   }
 
-  // Now build an archive out of the `.o` files for the builtins.
+  // Now build an archive out of the `.o` files for the builtins. Note that we
+  // build this directly into the `lib_dir` as this is expected to be a staging
+  // directory and cleaned up on errors.
   std::filesystem::path builtins_a_path = "libclang_rt.builtins.a";
   CARBON_ASSIGN_OR_RETURN(
       Filesystem::WriteFile builtins_a_file,
-      tmp_dir.OpenWriteOnly(builtins_a_path, Filesystem::CreateAlways));
+      lib_dir.OpenWriteOnly(builtins_a_path, Filesystem::CreateAlways));
   {
     llvm::raw_fd_ostream builtins_a_os = builtins_a_file.WriteStream();
 
@@ -527,10 +534,6 @@ auto ClangRunner::BuildBuiltinsLib(llvm::StringRef target,
     }
   }
   CARBON_RETURN_IF_ERROR(std::move(builtins_a_file).Close());
-
-  // Move it into the lib directory.
-  CARBON_RETURN_IF_ERROR(
-      tmp_dir.Rename(builtins_a_path, lib_dir, builtins_a_path));
 
   return Success();
 }

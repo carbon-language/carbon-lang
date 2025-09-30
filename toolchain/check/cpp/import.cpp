@@ -21,6 +21,7 @@
 #include "clang/Frontend/TextDiagnostic.h"
 #include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/Overload.h"
 #include "common/check.h"
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
@@ -102,10 +103,13 @@ static auto GenerateCppIncludesHeaderCode(
       GenerateLineMarker(context, code_stream,
                          context.tokens().GetLineNumber(
                              context.parse_tree().node_token(import.node_id)));
-      code_stream << "#include \""
-                  << FormatEscaped(
-                         context.string_literal_values().Get(import.library_id))
-                  << "\"\n";
+      auto name = context.string_literal_values().Get(import.library_id);
+      if (name.starts_with('<') && name.ends_with('>')) {
+        code_stream << "#include <"
+                    << FormatEscaped(name.drop_front().drop_back()) << ">\n";
+      } else {
+        code_stream << "#include \"" << FormatEscaped(name) << "\"\n";
+      }
     }
   }
 
@@ -504,18 +508,6 @@ static auto GetDeclContext(Context& context, SemIR::NameScopeId scope_id)
       context.clang_decls().Get(scope_clang_decl_context_id).key.decl);
 }
 
-// Looks up for constructors in the class scope and returns the lookup result.
-static auto ClangConstructorLookup(Context& context,
-                                   SemIR::NameScopeId scope_id)
-    -> clang::DeclContextLookupResult {
-  const SemIR::NameScope& scope = context.name_scopes().Get(scope_id);
-
-  clang::Sema& sema = context.clang_sema();
-  clang::Decl* decl =
-      context.clang_decls().Get(scope.clang_decl_context_id()).key.decl;
-  return sema.LookupConstructors(cast<clang::CXXRecordDecl>(decl));
-}
-
 // Returns true if the given Clang declaration is the implicit injected class
 // name within the class.
 static auto IsDeclInjectedClassName(Context& context,
@@ -824,6 +816,16 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
   // TODO: Import vptr(s).
 
+  // The kind of base class we've picked so far. These are ordered in increasing
+  // preference order.
+  enum class BaseKind {
+    None,
+    Empty,
+    NonEmpty,
+    Polymorphic,
+  };
+  BaseKind base_kind = BaseKind::None;
+
   // Import bases.
   for (const auto& base : clang_def->bases()) {
     CARBON_CHECK(!base.isVirtual(),
@@ -845,18 +847,26 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
                             .base_type_inst_id = base_type_inst_id,
                             .index = SemIR::ElementIndex(fields.size())}));
 
-    // If there's exactly one base class, treat it as a Carbon base class too.
-    // TODO: Improve handling for the case where the class has multiple base
-    // classes.
-    if (clang_def->getNumBases() == 1) {
-      auto& class_info = context.classes().Get(class_id);
-      CARBON_CHECK(!class_info.base_id.has_value());
-      class_info.base_id = base_decl_id;
-    }
-
     auto* base_class = base.getType()->getAsCXXRecordDecl();
     CARBON_CHECK(base_class, "Base class {0} is not a class",
                  base.getType().getAsString());
+
+    // If there's a unique "best" base class, treat it as a Carbon base class
+    // too.
+    // TODO: Improve handling for the case where the class has multiple base
+    // classes.
+    BaseKind kind = base_class->isPolymorphic() ? BaseKind::Polymorphic
+                    : base_class->isEmpty()     ? BaseKind::Empty
+                                                : BaseKind::NonEmpty;
+    auto& class_info = context.classes().Get(class_id);
+    if (kind > base_kind) {
+      // This base is better than the previous best.
+      class_info.base_id = base_decl_id;
+      base_kind = kind;
+    } else if (kind == base_kind) {
+      // Multiple base classes of this kind: no unique best.
+      class_info.base_id = SemIR::InstId::None;
+    }
 
     auto base_offset = base.isVirtual()
                            ? clang_layout.getVBaseClassOffset(base_class)
@@ -2052,12 +2062,14 @@ static auto LookupBuiltinTypes(Context& context, SemIR::LocId loc_id,
 
 auto ImportCppOverloadSet(Context& context, SemIR::NameScopeId scope_id,
                           SemIR::NameId name_id,
-                          const clang::UnresolvedSet<4>& overload_set)
+                          clang::CXXRecordDecl* naming_class,
+                          clang::UnresolvedSet<4>&& overload_set)
     -> SemIR::InstId {
   SemIR::CppOverloadSetId overload_set_id = context.cpp_overload_sets().Add(
       SemIR::CppOverloadSet{.name_id = name_id,
                             .parent_scope_id = scope_id,
-                            .candidate_functions = overload_set});
+                            .naming_class = naming_class,
+                            .candidate_functions = std::move(overload_set)});
 
   auto overload_set_inst_id =
       // TODO: Add a location.
@@ -2071,17 +2083,18 @@ auto ImportCppOverloadSet(Context& context, SemIR::NameScopeId scope_id,
   return overload_set_inst_id;
 }
 
-// Gets the access for an overloaded function set. Returns std::nullopt
-// if the access is not the same for all functions in the overload set.
-// TODO: Fix to support functions with different access levels.
-static auto GetOverloadSetAccess(Context& context, SemIR::LocId loc_id,
-                                 const clang::UnresolvedSet<4>& overload_set)
-    -> std::optional<SemIR::AccessKind> {
+// Gets the best access for an overloaded function set. This is the access that
+// we use for the overload set as a whole. More fine-grained checking is done
+// after overload resolution.
+static auto GetOverloadSetAccess(const clang::UnresolvedSet<4>& overload_set)
+    -> SemIR::AccessKind {
   clang::AccessSpecifier access = overload_set.begin().getAccess();
   for (auto it = overload_set.begin() + 1; it != overload_set.end(); ++it) {
-    if (it.getAccess() != access) {
-      context.TODO(loc_id, "Unsupported: Overloaded set with mixed access");
-      return std::nullopt;
+    CARBON_CHECK(
+        (it.getAccess() == clang::AS_none) == (access == clang::AS_none),
+        "Unexpected mixture of members and non-members");
+    if (it.getAccess() < access) {
+      access = it->getAccess();
     }
   }
   return MapAccess(access);
@@ -2089,47 +2102,46 @@ static auto GetOverloadSetAccess(Context& context, SemIR::LocId loc_id,
 
 // Imports an overload set from Clang to Carbon and adds the name into the
 // `NameScope`.
-static auto ImportOverloadSetIntoScope(
-    Context& context, SemIR::LocId loc_id, SemIR::NameScopeId scope_id,
-    SemIR::NameId name_id, const clang::UnresolvedSet<4>& overload_set)
+static auto ImportOverloadSetIntoScope(Context& context,
+                                       SemIR::NameScopeId scope_id,
+                                       SemIR::NameId name_id,
+                                       clang::CXXRecordDecl* naming_class,
+                                       clang::UnresolvedSet<4>&& overload_set)
     -> SemIR::ScopeLookupResult {
-  std::optional<SemIR::AccessKind> access_kind =
-      GetOverloadSetAccess(context, loc_id, overload_set);
-  if (!access_kind.has_value()) {
-    return SemIR::ScopeLookupResult::MakeError();
-  }
-
-  SemIR::InstId inst_id =
-      ImportCppOverloadSet(context, scope_id, name_id, overload_set);
-  AddNameToScope(context, scope_id, name_id, access_kind.value(), inst_id);
+  SemIR::AccessKind access_kind = GetOverloadSetAccess(overload_set);
+  SemIR::InstId inst_id = ImportCppOverloadSet(
+      context, scope_id, name_id, naming_class, std::move(overload_set));
+  AddNameToScope(context, scope_id, name_id, access_kind, inst_id);
   return SemIR::ScopeLookupResult::MakeWrappedLookupResult(inst_id,
-                                                           access_kind.value());
+                                                           access_kind);
 }
 
 // Imports the constructors for a given class name. The found constructors are
 // imported as part of an overload set into the scope. Currently copy/move
 // constructors are not imported.
-static auto ImportConstructorsIntoScope(Context& context, SemIR::LocId loc_id,
+static auto ImportConstructorsIntoScope(Context& context,
                                         SemIR::NameScopeId scope_id,
                                         SemIR::NameId name_id)
     -> SemIR::ScopeLookupResult {
+  auto* naming_class =
+      cast<clang::CXXRecordDecl>(GetDeclContext(context, scope_id));
   clang::DeclContextLookupResult constructors_lookup =
-      ClangConstructorLookup(context, scope_id);
+      context.clang_sema().LookupConstructors(naming_class);
 
   clang::UnresolvedSet<4> overload_set;
-  for (clang::Decl* decl : constructors_lookup) {
-    auto* constructor = cast<clang::CXXConstructorDecl>(decl);
-    if (constructor->isDeleted() || constructor->isCopyOrMoveConstructor()) {
+  for (auto* decl : constructors_lookup) {
+    auto info = clang::getConstructorInfo(decl);
+    if (!info.Constructor || info.Constructor->isCopyOrMoveConstructor()) {
       continue;
     }
-    overload_set.addDecl(constructor, constructor->getAccess());
+    overload_set.addDecl(info.FoundDecl, info.FoundDecl.getAccess());
   }
   if (overload_set.empty()) {
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
 
-  return ImportOverloadSetIntoScope(context, loc_id, scope_id, name_id,
-                                    overload_set);
+  return ImportOverloadSetIntoScope(context, scope_id, name_id, naming_class,
+                                    std::move(overload_set));
 }
 
 // Imports a builtin type from Clang to Carbon and adds the name into the
@@ -2185,8 +2197,9 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
        lookup->getFoundDecl()->isFunctionOrFunctionTemplate())) {
     clang::UnresolvedSet<4> overload_set;
     overload_set.append(lookup->begin(), lookup->end());
-    return ImportOverloadSetIntoScope(context, loc_id, scope_id, name_id,
-                                      overload_set);
+    return ImportOverloadSetIntoScope(context, scope_id, name_id,
+                                      lookup->getNamingClass(),
+                                      std::move(overload_set));
   }
   if (!lookup->isSingleResult()) {
     // Clang will diagnose ambiguous lookup results for us.
@@ -2202,7 +2215,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
   }
   if (IsDeclInjectedClassName(context, scope_id, name_id,
                               lookup->getFoundDecl())) {
-    return ImportConstructorsIntoScope(context, loc_id, scope_id, name_id);
+    return ImportConstructorsIntoScope(context, scope_id, name_id);
   }
   auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(lookup->getFoundDecl());
   return ImportNameDeclIntoScope(context, loc_id, scope_id, name_id, key,
