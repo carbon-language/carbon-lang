@@ -32,6 +32,7 @@ struct Options {
   bool verbose = false;
   bool fuzzing = false;
   bool include_diagnostic_kind = false;
+  bool threads = true;
 
   llvm::StringRef runtimes_cache_path;
   llvm::StringRef prebuilt_runtimes_path;
@@ -124,6 +125,25 @@ applies to each message that forms a diagnostic, not just the primary message.
       },
       [&](auto& arg_b) { arg_b.Set(&include_diagnostic_kind); });
 
+  b.AddFlag(
+      {
+          .name = "threads",
+          .help = R"""(
+Controls whether threads are used to build runtimes.
+
+When enabled (the default), Carbon will try to build runtime libraries using
+threads to parallelize the operation. How many threads is controlled
+automatically by the system.
+
+Disabling threads ensures a single threaded build of the runtimes which can help
+when there are errors or other output.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(true);
+        arg_b.Set(&threads);
+      });
+
   runtimes.AddTo(b, &selected_subcommand);
   clang.AddTo(b, &selected_subcommand);
   compile.AddTo(b, &selected_subcommand);
@@ -206,6 +226,14 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
   }
   if (options.fuzzing) {
     driver_env_.fuzzing = true;
+  }
+
+  llvm::SingleThreadExecutor single_thread({.ThreadsRequested = 1});
+  std::optional<llvm::DefaultThreadPool> threads;
+  driver_env_.thread_pool = &single_thread;
+  if (options.threads) {
+    threads.emplace(llvm::optimal_concurrency());
+    driver_env_.thread_pool = &*threads;
   }
 
   CARBON_CHECK(options.selected_subcommand != nullptr);
