@@ -326,6 +326,29 @@ fn F() {
   Cpp.foo(1 as i32);
 }
 
+// --- fail_missing_impl.carbon
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+  void foo();
+  void foo(int);
+''';
+
+interface I {}
+
+fn EchoValue[ValueT:! I](value:! ValueT) {}
+
+fn F() {
+  // CHECK:STDERR: fail_missing_impl.carbon:[[@LINE+7]]:3: error: cannot convert type `<type of Cpp.foo>` into type implementing `I` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   EchoValue(Cpp.foo);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_missing_impl.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn EchoValue[ValueT:! I](value:! ValueT) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  EchoValue(Cpp.foo);
+}
+
 // CHECK:STDOUT: --- import_multiple_functions_no_overloads.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -1863,5 +1886,107 @@ fn F() {
 // CHECK:STDOUT:   %.loc19_13.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc19_13.2: %i32 = converted %int_1, %.loc19_13.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_missing_impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %ValueT: %I.type = bind_symbolic_name ValueT, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.09a: type = pattern_type %I.type [concrete]
+// CHECK:STDOUT:   %ValueT.as_type: type = facet_access_type %ValueT [symbolic]
+// CHECK:STDOUT:   %value: %ValueT.as_type = bind_symbolic_name value, 1 [symbolic]
+// CHECK:STDOUT:   %pattern_type.d22: type = pattern_type %ValueT.as_type [symbolic]
+// CHECK:STDOUT:   %EchoValue.type: type = fn_type @EchoValue [concrete]
+// CHECK:STDOUT:   %EchoValue: %EchoValue.type = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.c5d: type = cpp_overload_set_type @F [concrete]
+// CHECK:STDOUT:   %.a21: %.c5d = cpp_overload_set_value @F [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .foo = %.a21
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.a21: %.c5d = cpp_overload_set_value @F [concrete = constants.%.a21]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Cpp = imports.%Cpp
+// CHECK:STDOUT:     .I = %I.decl
+// CHECK:STDOUT:     .EchoValue = %EchoValue.decl
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp inline
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
+// CHECK:STDOUT:   %EchoValue.decl: %EchoValue.type = fn_decl @EchoValue [concrete = constants.%EchoValue] {
+// CHECK:STDOUT:     %ValueT.patt: %pattern_type.09a = symbolic_binding_pattern ValueT, 0 [concrete]
+// CHECK:STDOUT:     %value.patt: @EchoValue.%pattern_type (%pattern_type.d22) = symbolic_binding_pattern value, 1 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc10_23: type = splice_block %I.ref [concrete = constants.%I.type] {
+// CHECK:STDOUT:       %.Self.2: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %ValueT.loc10_14.2: %I.type = bind_symbolic_name ValueT, 0 [symbolic = %ValueT.loc10_14.1 (constants.%ValueT)]
+// CHECK:STDOUT:     %.loc10_34.1: type = splice_block %.loc10_34.2 [symbolic = %ValueT.as_type.loc10_34.1 (constants.%ValueT.as_type)] {
+// CHECK:STDOUT:       %.Self.1: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %ValueT.ref: %I.type = name_ref ValueT, %ValueT.loc10_14.2 [symbolic = %ValueT.loc10_14.1 (constants.%ValueT)]
+// CHECK:STDOUT:       %ValueT.as_type.loc10_34.2: type = facet_access_type %ValueT.ref [symbolic = %ValueT.as_type.loc10_34.1 (constants.%ValueT.as_type)]
+// CHECK:STDOUT:       %.loc10_34.2: type = converted %ValueT.ref, %ValueT.as_type.loc10_34.2 [symbolic = %ValueT.as_type.loc10_34.1 (constants.%ValueT.as_type)]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %value.loc10_26.2: @EchoValue.%ValueT.as_type.loc10_34.1 (%ValueT.as_type) = bind_symbolic_name value, 1 [symbolic = %value.loc10_26.1 (constants.%value)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @I {
+// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @EchoValue(%ValueT.loc10_14.2: %I.type, %value.loc10_26.2: @EchoValue.%ValueT.as_type.loc10_34.1 (%ValueT.as_type)) {
+// CHECK:STDOUT:   %ValueT.loc10_14.1: %I.type = bind_symbolic_name ValueT, 0 [symbolic = %ValueT.loc10_14.1 (constants.%ValueT)]
+// CHECK:STDOUT:   %ValueT.as_type.loc10_34.1: type = facet_access_type %ValueT.loc10_14.1 [symbolic = %ValueT.as_type.loc10_34.1 (constants.%ValueT.as_type)]
+// CHECK:STDOUT:   %value.loc10_26.1: @EchoValue.%ValueT.as_type.loc10_34.1 (%ValueT.as_type) = bind_symbolic_name value, 1 [symbolic = %value.loc10_26.1 (constants.%value)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ValueT.as_type.loc10_34.1 [symbolic = %pattern_type (constants.%pattern_type.d22)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %EchoValue.ref: %EchoValue.type = name_ref EchoValue, file.%EchoValue.decl [concrete = constants.%EchoValue]
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %foo.ref: %.c5d = name_ref foo, imports.%.a21 [concrete = constants.%.a21]
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @EchoValue(constants.%ValueT, constants.%value) {
+// CHECK:STDOUT:   %ValueT.loc10_14.1 => constants.%ValueT
+// CHECK:STDOUT:   %ValueT.as_type.loc10_34.1 => constants.%ValueT.as_type
+// CHECK:STDOUT:   %value.loc10_26.1 => constants.%value
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.d22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
