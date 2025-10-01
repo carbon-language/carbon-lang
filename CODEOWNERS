@@ -9,16 +9,16 @@
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeowners-syntax
 
 # Toolchain reviewers are used as a fallback.
-*                          @toolchain-reviewers
+*                          @carbon-language/toolchain-reviewers
 
 # Key project documents should be reviewed by leads.
-/*.md                      @leads
-/LICENSE                   @leads
-/docs/project/principles/* @leads
-/docs/project/evolution.md @leads
-/docs/project/goals.md     @leads
-/docs/project/roadmap.md   @leads
-/proposals/*.md            @leads
+/*.md                      @carbon-language/leads
+/LICENSE                   @carbon-language/leads
+/docs/project/principles/* @carbon-language/leads
+/docs/project/evolution.md @carbon-language/leads
+/docs/project/goals.md     @carbon-language/leads
+/docs/project/roadmap.md   @carbon-language/leads
+/proposals/*.md            @carbon-language/leads
 
 # Core toolchain code.
-/toolchain                 @toolchain-reviewers
+/toolchain                 @carbon-language/toolchain-reviewers
