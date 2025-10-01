@@ -20,5 +20,5 @@
 /docs/project/roadmap.md   @carbon-language/leads
 /proposals/*.md            @carbon-language/leads
 
-# Core toolchain code.
+# Toolchain code.
 /toolchain                 @carbon-language/toolchain-reviewers
