@@ -28,6 +28,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [What should be covered by a review?](#what-should-be-covered-by-a-review)
     -   [Writing review comments](#writing-review-comments)
     -   [Approving the change](#approving-the-change)
+    -   [Pausing reviews and reassigning PRs](#pausing-reviews-and-reassigning-prs)
 -   [Merging pull requests](#merging-pull-requests)
     -   [Merge commit descriptions](#merge-commit-descriptions)
 -   [Resolving an impasse or conflict](#resolving-an-impasse-or-conflict)
@@ -439,6 +440,18 @@ or suggested edits, you should give an LGTM with those comments addressed. The
 author can always come back to you if they have questions, and we can always
 revert changes if the resolution for some reason diverges wildly from your
 expectations.
+
+### Pausing reviews and reassigning PRs
+
+When temporarily unavailable to review, for example due to a vacation, reviewers
+can either mark themselves as
+[busy in GitHub](https://docs.github.com/en/account-and-profile/tutorials/personalize-your-profile#setting-a-status),
+or ask an admin to stop assignment (for example, using
+[setting for toolchain-reviewers](https://github.com/orgs/carbon-language/teams/toolchain-reviewers/edit/review_assignment)).
+
+A PR's reviewer can also be changed to a team, such as
+`carbon-language/toolchain-reviewers`, and it should be automatically
+reassigned. This can be done by anyone, not just a reviewer.
 
 ## Merging pull requests
 
