@@ -14,9 +14,9 @@
 # Key project documents should be reviewed by leads.
 /*.md                      @carbon-language/leads
 /LICENSE                   @carbon-language/leads
-/docs/project/principles/* @carbon-language/leads
 /docs/project/evolution.md @carbon-language/leads
 /docs/project/goals.md     @carbon-language/leads
+/docs/project/principles/* @carbon-language/leads
 /docs/project/roadmap.md   @carbon-language/leads
 /proposals/*.md            @carbon-language/leads
 
