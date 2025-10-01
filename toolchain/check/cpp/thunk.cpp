@@ -120,7 +120,8 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
     if (return_type_id == SemIR::ErrorInst::TypeId) {
       return false;
     }
-    thunk_required = IsThunkRequiredForType(context, return_type_id);
+    thunk_required =
+        thunk_required || IsThunkRequiredForType(context, return_type_id);
   }
 
   for (auto param_id :
