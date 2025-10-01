@@ -765,52 +765,52 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//default, Int, loaded [concrete = constants.%Int]
 // CHECK:STDOUT:   %Core.As: %As.type.90f = import_ref Core//default, As, loaded [concrete = constants.%As.generic]
-// CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//default, loc11_14, loaded [symbolic = @As.%T (constants.%T)]
-// CHECK:STDOUT:   %Core.import_ref.be8 = import_ref Core//default, inst107 [no loc], unloaded
-// CHECK:STDOUT:   %Core.import_ref.5e1: @As.%As.assoc_type (%As.assoc_type.760) = import_ref Core//default, loc12_32, loaded [symbolic = @As.%assoc0 (constants.%assoc0.97d)]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @As.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.be8 = import_ref Core//default, inst{{\d+}} [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.5e1: @As.%As.assoc_type (%As.assoc_type.760) = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @As.%assoc0 (constants.%assoc0.97d)]
 // CHECK:STDOUT:   %Core.Convert.313 = import_ref Core//default, Convert, unloaded
-// CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//default, loc11_14, loaded [symbolic = @As.%T (constants.%T)]
-// CHECK:STDOUT:   %Core.import_ref.a74: @As.%As.type (%As.type.8d8) = import_ref Core//default, inst107 [no loc], loaded [symbolic = @As.%Self (constants.%Self.4b9)]
-// CHECK:STDOUT:   %Core.import_ref.708: @As.%As.Convert.type (%As.Convert.type.843) = import_ref Core//default, loc12_32, loaded [symbolic = @As.%As.Convert (constants.%As.Convert.95f)]
-// CHECK:STDOUT:   %Core.import_ref.4e8 = import_ref Core//default, loc12_32, unloaded
-// CHECK:STDOUT:   %Core.import_ref.931: <witness> = import_ref Core//default, loc23_30, loaded [concrete = constants.%As.impl_witness]
-// CHECK:STDOUT:   %Core.import_ref.8721d7.1: type = import_ref Core//default, loc23_17, loaded [concrete = Core.IntLiteral]
-// CHECK:STDOUT:   %Core.import_ref.a7f: type = import_ref Core//default, loc23_28, loaded [concrete = constants.%As.type.a29]
-// CHECK:STDOUT:   %Core.import_ref.a36: %Core.IntLiteral.as.As.impl.Convert.type = import_ref Core//default, loc24_35, loaded [concrete = constants.%Core.IntLiteral.as.As.impl.Convert]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @As.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.a74: @As.%As.type (%As.type.8d8) = import_ref Core//default, inst{{\d+}} [no loc], loaded [symbolic = @As.%Self (constants.%Self.4b9)]
+// CHECK:STDOUT:   %Core.import_ref.708: @As.%As.Convert.type (%As.Convert.type.843) = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @As.%As.Convert (constants.%As.Convert.95f)]
+// CHECK:STDOUT:   %Core.import_ref.4e8 = import_ref Core//default, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.931: <witness> = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%As.impl_witness]
+// CHECK:STDOUT:   %Core.import_ref.8721d7.1: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = Core.IntLiteral]
+// CHECK:STDOUT:   %Core.import_ref.a7f: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%As.type.a29]
+// CHECK:STDOUT:   %Core.import_ref.a36: %Core.IntLiteral.as.As.impl.Convert.type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.As.impl.Convert]
 // CHECK:STDOUT:   %As.impl_witness_table = impl_witness_table (%Core.import_ref.a36), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %Core.AddWith: %AddWith.type.e05 = import_ref Core//default, AddWith, loaded [concrete = constants.%AddWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.5ab3ec.3: type = import_ref Core//default, loc7_19, loaded [symbolic = @AddWith.%T (constants.%T)]
-// CHECK:STDOUT:   %Core.import_ref.a58 = import_ref Core//default, inst52 [no loc], unloaded
-// CHECK:STDOUT:   %Core.import_ref.35d: @AddWith.%AddWith.assoc_type (%AddWith.assoc_type.c10) = import_ref Core//default, loc8_41, loaded [symbolic = @AddWith.%assoc0 (constants.%assoc0.899)]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.3: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @AddWith.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.a58 = import_ref Core//default, inst{{\d+}} [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.35d: @AddWith.%AddWith.assoc_type (%AddWith.assoc_type.c10) = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @AddWith.%assoc0 (constants.%assoc0.899)]
 // CHECK:STDOUT:   %Core.Op = import_ref Core//default, Op, unloaded
-// CHECK:STDOUT:   %Core.import_ref.5ab3ec.4: type = import_ref Core//default, loc7_19, loaded [symbolic = @AddWith.%T (constants.%T)]
-// CHECK:STDOUT:   %Core.import_ref.b29: @AddWith.%AddWith.type (%AddWith.type.5d0) = import_ref Core//default, inst52 [no loc], loaded [symbolic = @AddWith.%Self (constants.%Self.25f)]
-// CHECK:STDOUT:   %Core.import_ref.1b9: @AddWith.%AddWith.Op.type (%AddWith.Op.type.22d) = import_ref Core//default, loc8_41, loaded [symbolic = @AddWith.%AddWith.Op (constants.%AddWith.Op.965)]
-// CHECK:STDOUT:   %Core.import_ref.7e6 = import_ref Core//default, loc8_41, unloaded
-// CHECK:STDOUT:   %Core.import_ref.8af: <witness> = import_ref Core//default, loc19_26, loaded [concrete = constants.%AddWith.impl_witness]
-// CHECK:STDOUT:   %Core.import_ref.c8c7cd.1: type = import_ref Core//default, loc19_6, loaded [concrete = constants.%i32.builtin]
-// CHECK:STDOUT:   %Core.import_ref.af3: type = import_ref Core//default, loc19_24, loaded [concrete = constants.%AddWith.type.2a3]
-// CHECK:STDOUT:   %Core.import_ref.980: %i32.builtin.as.AddWith.impl.Op.type = import_ref Core//default, loc20_42, loaded [concrete = constants.%i32.builtin.as.AddWith.impl.Op]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.4: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @AddWith.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.b29: @AddWith.%AddWith.type (%AddWith.type.5d0) = import_ref Core//default, inst{{\d+}} [no loc], loaded [symbolic = @AddWith.%Self (constants.%Self.25f)]
+// CHECK:STDOUT:   %Core.import_ref.1b9: @AddWith.%AddWith.Op.type (%AddWith.Op.type.22d) = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @AddWith.%AddWith.Op (constants.%AddWith.Op.965)]
+// CHECK:STDOUT:   %Core.import_ref.7e6 = import_ref Core//default, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.8af: <witness> = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%AddWith.impl_witness]
+// CHECK:STDOUT:   %Core.import_ref.c8c7cd.1: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%i32.builtin]
+// CHECK:STDOUT:   %Core.import_ref.af3: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%AddWith.type.2a3]
+// CHECK:STDOUT:   %Core.import_ref.980: %i32.builtin.as.AddWith.impl.Op.type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%i32.builtin.as.AddWith.impl.Op]
 // CHECK:STDOUT:   %AddWith.impl_witness_table = impl_witness_table (%Core.import_ref.980), @i32.builtin.as.AddWith.impl [concrete]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//default, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.5ab3ec.5: type = import_ref Core//default, loc15_22, loaded [symbolic = @ImplicitAs.%T (constants.%T)]
-// CHECK:STDOUT:   %Core.import_ref.e2c = import_ref Core//default, inst152 [no loc], unloaded
-// CHECK:STDOUT:   %Core.import_ref.492: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ca0) = import_ref Core//default, loc16_32, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.dc0)]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.5: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.e2c = import_ref Core//default, inst{{\d+}} [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.492: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ca0) = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.dc0)]
 // CHECK:STDOUT:   %Core.Convert.e69 = import_ref Core//default, Convert, unloaded
-// CHECK:STDOUT:   %Core.import_ref.5ab3ec.6: type = import_ref Core//default, loc15_22, loaded [symbolic = @ImplicitAs.%T (constants.%T)]
-// CHECK:STDOUT:   %Core.import_ref.b95: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.edb) = import_ref Core//default, inst152 [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.152)]
-// CHECK:STDOUT:   %Core.import_ref.1c752f.1: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type.275) = import_ref Core//default, loc16_32, loaded [symbolic = @ImplicitAs.%ImplicitAs.Convert (constants.%ImplicitAs.Convert.42e)]
-// CHECK:STDOUT:   %Core.import_ref.207 = import_ref Core//default, loc16_32, unloaded
-// CHECK:STDOUT:   %Core.import_ref.8a9: <witness> = import_ref Core//default, loc27_38, loaded [concrete = constants.%ImplicitAs.impl_witness.c15]
-// CHECK:STDOUT:   %Core.import_ref.8721d7.2: type = import_ref Core//default, loc27_17, loaded [concrete = Core.IntLiteral]
-// CHECK:STDOUT:   %Core.import_ref.64f: type = import_ref Core//default, loc27_36, loaded [concrete = constants.%ImplicitAs.type.873]
-// CHECK:STDOUT:   %Core.import_ref.1c752f.2: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type.275) = import_ref Core//default, loc16_32, loaded [symbolic = @ImplicitAs.%ImplicitAs.Convert (constants.%ImplicitAs.Convert.42e)]
-// CHECK:STDOUT:   %Core.import_ref.614: <witness> = import_ref Core//default, loc31_38, loaded [concrete = constants.%ImplicitAs.impl_witness.fb8]
-// CHECK:STDOUT:   %Core.import_ref.c8c7cd.2: type = import_ref Core//default, loc31_6, loaded [concrete = constants.%i32.builtin]
-// CHECK:STDOUT:   %Core.import_ref.d7b: type = import_ref Core//default, loc31_36, loaded [concrete = constants.%ImplicitAs.type.7a9]
-// CHECK:STDOUT:   %Core.import_ref.4ae: %i32.builtin.as.ImplicitAs.impl.Convert.type = import_ref Core//default, loc32_44, loaded [concrete = constants.%i32.builtin.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %Core.import_ref.5ab3ec.6: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.b95: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.edb) = import_ref Core//default, inst{{\d+}} [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.152)]
+// CHECK:STDOUT:   %Core.import_ref.1c752f.1: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type.275) = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%ImplicitAs.Convert (constants.%ImplicitAs.Convert.42e)]
+// CHECK:STDOUT:   %Core.import_ref.207 = import_ref Core//default, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.8a9: <witness> = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%ImplicitAs.impl_witness.c15]
+// CHECK:STDOUT:   %Core.import_ref.8721d7.2: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = Core.IntLiteral]
+// CHECK:STDOUT:   %Core.import_ref.64f: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%ImplicitAs.type.873]
+// CHECK:STDOUT:   %Core.import_ref.1c752f.2: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type.275) = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%ImplicitAs.Convert (constants.%ImplicitAs.Convert.42e)]
+// CHECK:STDOUT:   %Core.import_ref.614: <witness> = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%ImplicitAs.impl_witness.fb8]
+// CHECK:STDOUT:   %Core.import_ref.c8c7cd.2: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%i32.builtin]
+// CHECK:STDOUT:   %Core.import_ref.d7b: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%ImplicitAs.type.7a9]
+// CHECK:STDOUT:   %Core.import_ref.4ae: %i32.builtin.as.ImplicitAs.impl.Convert.type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%i32.builtin.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.16d = impl_witness_table (%Core.import_ref.4ae), @i32.builtin.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.564: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type = import_ref Core//default, loc28_35, loaded [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %Core.import_ref.564: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.b46 = impl_witness_table (%Core.import_ref.564), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -542,26 +542,33 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
   return context.constant_values().GetInstId(witness_const_id);
 }
 
-// Returns true if the `Self` supports aggregate destruction.
-static auto TypeCanAggregateDestroy(Context& context,
-                                    SemIR::ConstantId query_self_const_id)
-    -> bool {
+// Returns true if the `Self` should impl `Destroy`.
+static auto TypeCanDestroy(Context& context,
+                           SemIR::ConstantId query_self_const_id) -> bool {
   auto inst = context.insts().Get(
       context.constant_values().GetInstId(query_self_const_id));
   CARBON_KIND_SWITCH(inst) {
     case CARBON_KIND(SemIR::ClassType class_type): {
       auto class_info = context.classes().Get(class_type.class_id);
-      // Incomplete classes can't be destroyed.
+      // Incomplete and abstract classes can't be destroyed.
       // TODO: Return false if the object repr doesn't impl `Destroy`.
       // TODO: Return false for C++ types that lack a destructor.
-      return class_info.is_complete();
+      return class_info.is_complete() &&
+             class_info.inheritance_kind !=
+                 SemIR::Class::InheritanceKind::Abstract;
     }
     case SemIR::ArrayType::Kind:
+    case SemIR::ConstType::Kind:
     case SemIR::MaybeUnformedType::Kind:
+    case SemIR::PartialType::Kind:
     case SemIR::StructType::Kind:
     case SemIR::TupleType::Kind:
       // TODO: Return false for types that indirectly reference a type that
       // doesn't impl `Destroy`.
+      return true;
+    case SemIR::BoolType::Kind:
+    case SemIR::PointerType::Kind:
+      // Trivially destructible.
       return true;
     default:
       return false;
@@ -597,8 +604,8 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     return SemIR::InstBlockId::None;
   }
   if (builtin_constraint_mask.HasAnyOf(
-          SemIR::BuiltinConstraintMask::TypeCanAggregateDestroy) &&
-      !TypeCanAggregateDestroy(context, query_self_const_id)) {
+          SemIR::BuiltinConstraintMask::TypeCanDestroy) &&
+      !TypeCanDestroy(context, query_self_const_id)) {
     return SemIR::InstBlockId::None;
   }
   if (interfaces.empty()) {

@@ -6,16 +6,16 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/builtins/type/can_aggregate_destroy.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/builtins/type/can_destroy.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/builtins/type/can_aggregate_destroy.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/builtins/type/can_destroy.carbon
 
 // --- param.carbon
 library "[[@TEST_NAME]]";
 
-fn CanAggregateDestroy() -> type = "type.can_aggregate_destroy";
+fn CanDestroy() -> type = "type.can_destroy";
 
-fn F(T:! CanAggregateDestroy()) {}
+fn F(T:! CanDestroy()) {}
 
 fn G() {
   //@dump-sem-ir-begin
@@ -27,9 +27,9 @@ fn G() {
 // --- impls.carbon
 library "[[@TEST_NAME]]";
 
-fn CanAggregateDestroy() -> type = "type.can_aggregate_destroy";
+fn CanDestroy() -> type = "type.can_destroy";
 
-fn F(T:! type where .Self impls CanAggregateDestroy()) {}
+fn F(T:! type where .Self impls CanDestroy()) {}
 
 fn G() {
   //@dump-sem-ir-begin
@@ -38,28 +38,50 @@ fn G() {
   //@dump-sem-ir-end
 }
 
-// --- fail_type_mismatch.carbon
+// --- fail_incomplete.carbon
 library "[[@TEST_NAME]]";
 
-fn CanAggregateDestroy() -> type = "type.can_aggregate_destroy";
+fn CanDestroy() -> type = "type.can_destroy";
 
-fn F(T:! CanAggregateDestroy()) {}
+fn F(T:! CanDestroy()) {}
+
+class Incomplete;
 
 fn G() {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:3: error: cannot convert type `bool` into type implementing `type where .Self impls Core.CanAggregateDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   F(bool);
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE-6]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(T:! CanAggregateDestroy()) {}
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:3: error: cannot convert type `Incomplete` into type implementing `type where .Self impls Core.CanDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   F(Incomplete);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-8]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(T:! CanDestroy()) {}
   // CHECK:STDERR:      ^
   // CHECK:STDERR:
-  F(bool);
+  F(Incomplete);
+}
+
+// --- fail_abstract.carbon
+library "[[@TEST_NAME]]";
+
+fn CanDestroy() -> type = "type.can_destroy";
+
+fn F(T:! CanDestroy()) {}
+
+abstract class Abstract {}
+
+fn G() {
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:3: error: cannot convert type `Abstract` into type implementing `type where .Self impls Core.CanDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   F(Abstract);
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR: fail_abstract.carbon:[[@LINE-8]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(T:! CanDestroy()) {}
+  // CHECK:STDERR:      ^
+  // CHECK:STDERR:
+  F(Abstract);
 }
 
 // --- fail_impl.carbon
 library "[[@TEST_NAME]]";
 
-fn CanAggregateDestroy() -> type = "type.can_aggregate_destroy";
+fn CanDestroy() -> type = "type.can_destroy";
 fn TypeAnd(a: type, b: type) -> type = "type.and";
 
 class C {}
@@ -67,28 +89,28 @@ class C {}
 interface I {}
 
 // CHECK:STDERR: fail_impl.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl C as CanAggregateDestroy() {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: impl C as CanDestroy() {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl C as CanAggregateDestroy() {}
+impl C as CanDestroy() {}
 
 // --- impl_with_interface.carbon
 library "[[@TEST_NAME]]";
 
-fn CanAggregateDestroy() -> type = "type.can_aggregate_destroy";
+fn CanDestroy() -> type = "type.can_destroy";
 fn TypeAnd(a: type, b: type) -> type = "type.and";
 
 class C {}
 
 interface I {}
 
-impl C as TypeAnd(I, CanAggregateDestroy()) {}
+impl C as TypeAnd(I, CanDestroy()) {}
 
 // CHECK:STDOUT: --- param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanAggregateDestroy>> [concrete]
+// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %facet_value.ff9: %type_where = facet_value %empty_tuple.type, () [concrete]
@@ -122,7 +144,7 @@ impl C as TypeAnd(I, CanAggregateDestroy()) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanAggregateDestroy>> [concrete]
+// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %facet_value.ff9: %type_where = facet_value %empty_tuple.type, () [concrete]

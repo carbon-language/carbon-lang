@@ -9,6 +9,8 @@
 #include <utility>
 
 #include "common/ostream.h"
+#include "llvm/Support/ThreadPool.h"
+#include "llvm/Support/Threading.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/driver/runtimes_cache.h"
@@ -61,6 +63,9 @@ struct DriverEnv {
 
   // A diagnostic emitter that has no locations.
   Diagnostics::NoLocEmitter emitter;
+
+  // Thread pool available for use when concurrency is needed.
+  llvm::ThreadPoolInterface* thread_pool;
 
   // For CARBON_VLOG.
   llvm::raw_pwrite_stream* vlog_stream = nullptr;

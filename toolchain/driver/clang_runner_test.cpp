@@ -70,13 +70,12 @@ class ClangRunnerTest : public ::testing::Test {
 
 TEST_F(ClangRunnerTest, Version) {
   RawStringOstream test_os;
-  ClangRunner runner(&install_paths_, &runtimes_cache_, vfs_, &test_os);
+  ClangRunner runner(&install_paths_, vfs_, &test_os);
 
   std::string out;
   std::string err;
-  EXPECT_TRUE(Testing::CallWithCapturedOutput(out, err, [&] {
-    return runner.RunTargetIndependentCommand({"--version"});
-  }));
+  EXPECT_TRUE(Testing::CallWithCapturedOutput(
+      out, err, [&] { return runner.RunWithNoRuntimes({"--version"}); }));
   // The arguments to Clang should be part of the verbose log.
   EXPECT_THAT(test_os.TakeStr(), HasSubstr("--version"));
 
@@ -101,13 +100,13 @@ TEST_F(ClangRunnerTest, DashC) {
   std::filesystem::path test_output = *Testing::WriteTestFile("test.o", "");
 
   RawStringOstream verbose_out;
-  ClangRunner runner(&install_paths_, &runtimes_cache_, vfs_, &verbose_out);
+  ClangRunner runner(&install_paths_, vfs_, &verbose_out);
   std::string out;
   std::string err;
   EXPECT_TRUE(Testing::CallWithCapturedOutput(
       out, err,
       [&] {
-        return runner.RunTargetIndependentCommand(
+        return runner.RunWithNoRuntimes(
             {"-c", test_file.string(), "-o", test_output.string()});
       }))
       << "Verbose output from runner:\n"
@@ -130,13 +129,13 @@ TEST_F(ClangRunnerTest, BuitinHeaders) {
   std::filesystem::path test_output = *Testing::WriteTestFile("test.o", "");
 
   RawStringOstream verbose_out;
-  ClangRunner runner(&install_paths_, &runtimes_cache_, vfs_, &verbose_out);
+  ClangRunner runner(&install_paths_, vfs_, &verbose_out);
   std::string out;
   std::string err;
   EXPECT_TRUE(Testing::CallWithCapturedOutput(
       out, err,
       [&] {
-        return runner.RunTargetIndependentCommand(
+        return runner.RunWithNoRuntimes(
             {"-c", test_file.string(), "-o", test_output.string()});
       }))
       << "Verbose output from runner:\n"
@@ -157,13 +156,13 @@ TEST_F(ClangRunnerTest, CompileMultipleFiles) {
     std::filesystem::path output = *Testing::WriteTestFile(output_file, "");
 
     RawStringOstream verbose_out;
-    ClangRunner runner(&install_paths_, &runtimes_cache_, vfs_, &verbose_out);
+    ClangRunner runner(&install_paths_, vfs_, &verbose_out);
     std::string out;
     std::string err;
     EXPECT_TRUE(Testing::CallWithCapturedOutput(
         out, err,
         [&] {
-          return runner.RunTargetIndependentCommand(
+          return runner.RunWithNoRuntimes(
               {"-c", file.string(), "-o", output.string()});
         }))
         << "Verbose output from runner:\n"
@@ -180,8 +179,7 @@ TEST_F(ClangRunnerTest, CompileMultipleFiles) {
 }
 
 TEST_F(ClangRunnerTest, BuildResourceDir) {
-  ClangRunner runner(&install_paths_, &runtimes_cache_, vfs_, &llvm::errs(),
-                     /*build_runtimes_on_demand=*/true);
+  ClangRunner runner(&install_paths_, vfs_, &llvm::errs());
 
   // Note that we can't test arbitrary targets here as we need to be able to
   // compile the builtin functions for the target. We use the default target as
@@ -191,8 +189,9 @@ TEST_F(ClangRunnerTest, BuildResourceDir) {
   Runtimes::Cache::Features features = {.target = target};
   auto runtimes = *runtimes_cache_.Lookup(features);
   auto tmp_dir = *Filesystem::MakeTmpDir();
-  auto build_result =
-      runner.BuildTargetResourceDir(features, runtimes, tmp_dir.abs_path());
+  llvm::DefaultThreadPool threads(llvm::optimal_concurrency());
+  auto build_result = runner.BuildTargetResourceDir(
+      features, runtimes, tmp_dir.abs_path(), threads);
   ASSERT_TRUE(build_result.ok()) << build_result.error();
   std::filesystem::path resource_dir_path = std::move(*build_result);
 
@@ -270,7 +269,7 @@ TEST_F(ClangRunnerTest, LinkCommandEcho) {
   std::filesystem::path bar_file = *Testing::WriteTestFile("bar.o", "");
 
   RawStringOstream verbose_out;
-  ClangRunner runner(&install_paths_, &runtimes_cache_, vfs_, &verbose_out);
+  ClangRunner runner(&install_paths_, vfs_, &verbose_out);
   std::string out;
   std::string err;
   EXPECT_TRUE(Testing::CallWithCapturedOutput(
@@ -280,7 +279,7 @@ TEST_F(ClangRunnerTest, LinkCommandEcho) {
         // we're just getting the echo-ed output back. For this to actually
         // link, we'd need to have the target-dependent resources, but those are
         // expensive to build so we only want to test them once (above).
-        return runner.RunTargetIndependentCommand(
+        return runner.RunWithNoRuntimes(
             {"-###", "-o", "binary", foo_file.string(), bar_file.string()});
       }))
       << "Verbose output from runner:\n"

@@ -14,9 +14,9 @@
 
 namespace Carbon::SemIR {
 
-#define CARBON_BUILTIN_CONSTRAINT_MASK(X)                            \
-  /* Verifies types can use the builtin `type.aggregate_destroy`. */ \
-  X(TypeCanAggregateDestroy)
+#define CARBON_BUILTIN_CONSTRAINT_MASK(X)                  \
+  /* Verifies types can use the builtin `type.destroy`. */ \
+  X(TypeCanDestroy)
 
 CARBON_DEFINE_RAW_ENUM_MASK(BuiltinConstraintMask, uint32_t) {
   CARBON_BUILTIN_CONSTRAINT_MASK(CARBON_RAW_ENUM_MASK_ENUMERATOR)
