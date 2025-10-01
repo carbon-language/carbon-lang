@@ -446,8 +446,8 @@ expectations.
 When temporarily unavailable to review, for example due to a vacation, reviewers
 can either mark themselves as
 [busy in GitHub](https://docs.github.com/en/account-and-profile/tutorials/personalize-your-profile#setting-a-status),
-or ask an admin to stop assignment (for example, using
-[setting for toolchain-reviewers](https://github.com/orgs/carbon-language/teams/toolchain-reviewers/edit/review_assignment)).
+or ask an admin to stop assignment (using
+["Never assign to certain team members"](https://docs.github.com/en/organizations/organizing-members-into-teams/managing-code-review-settings-for-your-team#configuring-auto-assignment)).
 
 A PR's reviewer can also be changed to a team, such as
 `carbon-language/toolchain-reviewers`, and it should be automatically
