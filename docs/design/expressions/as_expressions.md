@@ -189,7 +189,7 @@ interface AsPrimitive[implicit_into Self:! Form]
   fn Convert[bound self:? Self]()
       ->? ResultForm;
 }
-namespace As(Dest:! type) {
+constraint As(Dest:! type) {
   extend require form(val Self) as
       AsPrimitive(Dest)
       where .ResultForm = form(var Dest);
