@@ -1792,6 +1792,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto class_const_id = GetLocalConstantId(
       resolver,
       resolver.import_classes().Get(inst.class_id).first_owning_decl_id);
+  if (class_const_id == SemIR::ErrorInst::ConstantId) {
+    // TODO: It should be possible to remove this once C++ imports work.
+    return ResolveResult::Done(class_const_id);
+  }
+
   auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
