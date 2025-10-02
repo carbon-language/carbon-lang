@@ -390,11 +390,8 @@ fn F() {
 // CHECK:STDOUT:     %.loc32_76.1: %Edible.type = converted constants.%Food.as_type.e6f, constants.%Food.dcb [symbolic = %Food.loc32_29.1 (constants.%Food.dcb)]
 // CHECK:STDOUT:     %.loc32_76.2: %Edible.type = converted constants.%Food.as_type.e6f, constants.%Food.dcb [symbolic = %Food.loc32_29.1 (constants.%Food.dcb)]
 // CHECK:STDOUT:     %.loc32_76.3: %Edible.type = converted constants.%Food.as_type.e6f, constants.%Food.dcb [symbolic = %Food.loc32_29.1 (constants.%Food.dcb)]
-// CHECK:STDOUT:     %T.as_type.loc32_76: type = facet_access_type constants.%T.611 [symbolic = %T.as_type.loc32_47.1 (constants.%T.as_type.855)]
-// CHECK:STDOUT:     %.loc32_76.4: type = converted constants.%T.611, %T.as_type.loc32_76 [symbolic = %T.as_type.loc32_47.1 (constants.%T.as_type.855)]
-// CHECK:STDOUT:     %.loc32_76.5: %Animal.type = converted %.loc32_76.4, constants.%T.611 [symbolic = %T.loc32_17.1 (constants.%T.611)]
 // CHECK:STDOUT:     %Eats.facet.loc32_76.1: @HandleAnimal.%Eats.type (%Eats.type.130190.2) = facet_value constants.%T.as_type.855, (constants.%Eats.lookup_impl_witness) [symbolic = %Eats.facet.loc32_76.2 (constants.%Eats.facet.7b7)]
-// CHECK:STDOUT:     %.loc32_76.6: @HandleAnimal.%Eats.type (%Eats.type.130190.2) = converted constants.%T.as_type.855, %Eats.facet.loc32_76.1 [symbolic = %Eats.facet.loc32_76.2 (constants.%Eats.facet.7b7)]
+// CHECK:STDOUT:     %.loc32_76.4: @HandleAnimal.%Eats.type (%Eats.type.130190.2) = converted constants.%T.as_type.855, %Eats.facet.loc32_76.1 [symbolic = %Eats.facet.loc32_76.2 (constants.%Eats.facet.7b7)]
 // CHECK:STDOUT:     %Feed.specific_fn.loc32_64.1: <specific function> = specific_function %Feed.ref, @Feed(constants.%Food.dcb, constants.%Eats.facet.7b7) [symbolic = %Feed.specific_fn.loc32_64.2 (constants.%Feed.specific_fn.76b)]
 // CHECK:STDOUT:     %Feed.call: init %empty_tuple.type = call %Feed.specific_fn.loc32_64.1(%a.ref, %food.ref)
 // CHECK:STDOUT:     return

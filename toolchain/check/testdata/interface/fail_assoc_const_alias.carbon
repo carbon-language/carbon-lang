@@ -371,19 +371,13 @@ interface C {
 // CHECK:STDOUT:     %return.param_patt: @J2.F2.%pattern_type (%pattern_type.cad) = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type.loc15_14.2: type = facet_access_type @J2.%Self [symbolic = %Self.as_type.loc15_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %Self.as_type.loc15_14.3: type = facet_access_type constants.%Self.a70 [symbolic = %Self.as_type.loc15_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %.loc15_14.1: type = converted constants.%Self.a70, %Self.as_type.loc15_14.3 [symbolic = %Self.as_type.loc15_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %.loc15_14.2: %J2.type = converted %.loc15_14.1, constants.%Self.a70 [symbolic = %Self (constants.%Self.a70)]
 // CHECK:STDOUT:     %I2.facet.loc15_14.2: %I2.type = facet_value %Self.as_type.loc15_14.2, (constants.%I2.lookup_impl_witness.cb8) [symbolic = %I2.facet.loc15_14.1 (constants.%I2.facet)]
-// CHECK:STDOUT:     %.loc15_14.3: %I2.type = converted @J2.%Self, %I2.facet.loc15_14.2 [symbolic = %I2.facet.loc15_14.1 (constants.%I2.facet)]
+// CHECK:STDOUT:     %.loc15: %I2.type = converted @J2.%Self, %I2.facet.loc15_14.2 [symbolic = %I2.facet.loc15_14.1 (constants.%I2.facet)]
 // CHECK:STDOUT:     %impl.elem0.loc15_14.2: type = impl_witness_access constants.%I2.lookup_impl_witness.cb8, element0 [symbolic = %impl.elem0.loc15_14.1 (constants.%impl.elem0.dc2)]
 // CHECK:STDOUT:     %U2.ref: type = name_ref U2, %impl.elem0.loc15_14.2 [symbolic = %impl.elem0.loc15_14.1 (constants.%impl.elem0.dc2)]
 // CHECK:STDOUT:     %return.param: ref @J2.F2.%impl.elem0.loc15_14.1 (%impl.elem0.dc2) = out_param call_param0
 // CHECK:STDOUT:     %return: ref @J2.F2.%impl.elem0.loc15_14.1 (%impl.elem0.dc2) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type constants.%Self.a70 [symbolic = constants.%Self.as_type]
-// CHECK:STDOUT:   %.loc15_14.1: type = converted constants.%Self.a70, %Self.as_type [symbolic = constants.%Self.as_type]
-// CHECK:STDOUT:   %.loc15_14.2: %J2.type = converted %.loc15_14.1, constants.%Self.a70 [symbolic = constants.%Self.a70]
 // CHECK:STDOUT:   %assoc0: %J2.assoc_type = assoc_entity element0, %J2.F2.decl [concrete = constants.%assoc0.775]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
