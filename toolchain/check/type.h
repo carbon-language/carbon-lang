@@ -121,8 +121,8 @@ auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
 // facet values, when the `as type` conversion is not required to compare as a
 // different value.
 //
-// Type values other than `<facet value> as type` are already canonical and are
-// returned unchanged.
+// For type expressions other than `<facet value> as type`, the canonical type
+// value is returned.
 auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId;
 auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::ConstantId const_id)
