@@ -223,17 +223,15 @@ fn F() {
 // Lvalue reference as return type
 // ============================================================================
 
-// --- return_lvalue_ref.h
-
-struct S {};
-
-auto ReturnsLValue() -> S&;
-
 // --- fail_todo_call_return_lvalue_ref.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "return_lvalue_ref.h";
+import Cpp inline '''
+struct S {};
+
+auto ReturnsLValue() -> S&;
+''';
 
 fn F() {
   //@dump-sem-ir-begin
@@ -249,17 +247,15 @@ fn F() {
 // Rvalue reference as return type
 // ============================================================================
 
-// --- return_rvalue_ref.h
-
-struct S {};
-
-auto ReturnsRValue() -> S&&;
-
 // --- fail_todo_call_return_rvalue_ref.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "return_rvalue_ref.h";
+import Cpp inline '''
+struct S {};
+
+auto ReturnsRValue() -> S&&;
+''';
 
 fn F() {
   //@dump-sem-ir-begin
@@ -275,17 +271,15 @@ fn F() {
 // Const reference as return type
 // ============================================================================
 
-// --- return_const_lvalue_ref.h
-
-struct S {};
-
-auto ReturnConstLValue() -> const S&;
-
 // --- fail_todo_call_return_const_lvalue_ref.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "return_const_lvalue_ref.h";
+import Cpp inline '''
+struct S {};
+
+auto ReturnConstLValue() -> const S&;
+''';
 
 fn F() {
   //@dump-sem-ir-begin
@@ -911,11 +905,11 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type = binding_pattern s [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc12_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc16_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ReturnsLValue.ref: %.041 = name_ref ReturnsLValue, imports.%.03d [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %ReturnsLValue.call: init <error> = call imports.%ReturnsLValue.decl()
-// CHECK:STDOUT:   %.loc12: type = splice_block %ptr [concrete = constants.%ptr] {
-// CHECK:STDOUT:     %Cpp.ref.loc12_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc16: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:     %Cpp.ref.loc16_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:     %ptr: type = ptr_type %S.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
@@ -962,17 +956,17 @@ fn F() {
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.7da = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
-// CHECK:STDOUT:   %Cpp.ref.loc12_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc16_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ReturnsRValue.ref: %.c60 = name_ref ReturnsRValue, imports.%.99d [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %ReturnsRValue.call: init <error> = call imports.%ReturnsRValue.decl()
 // CHECK:STDOUT:   assign %s.var, <error>
-// CHECK:STDOUT:   %.loc12_13: type = splice_block %S.ref [concrete = constants.%S] {
-// CHECK:STDOUT:     %Cpp.ref.loc12_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc16_13: type = splice_block %S.ref [concrete = constants.%S] {
+// CHECK:STDOUT:     %Cpp.ref.loc16_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = bind_name s, %s.var
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%S, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc12_3: %type_where = converted constants.%S, %facet_value [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc16_3: %type_where = converted constants.%S, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %s.var, constants.%DestroyT.as_type.as.Destroy.impl.Op.cc2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %s.var, %DestroyT.as_type.as.Destroy.impl.Op.specific_fn
@@ -1021,18 +1015,18 @@ fn F() {
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.9be = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %const = var %s.var_patt
-// CHECK:STDOUT:   %Cpp.ref.loc12_24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc16_24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ReturnConstLValue.ref: %.c99 = name_ref ReturnConstLValue, imports.%.bf8 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %ReturnConstLValue.call: init <error> = call imports.%ReturnConstLValue.decl()
 // CHECK:STDOUT:   assign %s.var, <error>
-// CHECK:STDOUT:   %.loc12_10: type = splice_block %const [concrete = constants.%const] {
-// CHECK:STDOUT:     %Cpp.ref.loc12_16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc16_10: type = splice_block %const [concrete = constants.%const] {
+// CHECK:STDOUT:     %Cpp.ref.loc16_16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:     %const: type = const_type %S.ref [concrete = constants.%const]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %const = bind_name s, %s.var
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%const, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc12_3: %type_where = converted constants.%const, %facet_value [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc16_3: %type_where = converted constants.%const, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %s.var, constants.%DestroyT.as_type.as.Destroy.impl.Op.818
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %s.var, %DestroyT.as_type.as.Destroy.impl.Op.specific_fn
