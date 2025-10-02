@@ -447,6 +447,10 @@ impl Point_ExtendForward as Vector {
 }
 ```
 
+> **TODO:** The second `impl` in this example is no longer a valid redeclaration
+> of the first after
+> [p5366: The name of an `impl` in `class` scope](/proposals/p5366.md).
+
 More about forward declaring implementations in
 [its dedicated section](#declaring-implementations).
 
@@ -929,6 +933,9 @@ constraint DrawVectorLegoFish {
 }
 ```
 
+> **TODO:** Document that `Self` can be omitted, as adopted in
+> [P5337: Interface extension and `final impl` update](/proposals/p5337.md).
+
 In general, Carbon makes no syntactic distinction between the uses of named
 constraints and interfaces, so one may be replaced with the other without
 affecting users. To accomplish this, Carbon allows a named constraint to be used
@@ -1249,6 +1256,10 @@ fn DoHashAndEquals[T:! Hashable](x: T) {
 
 ### Interface extension
 
+> **TODO:** Update this section as needed to reflect the fact that an impl of an
+> interface doesn't impl the interfaces it extends, as adopted in
+> [p5168: Forward `impl` declaration of an incomplete interface](/proposals/p5168.md).
+
 When implementing an interface, we allow implementing the aliased names as well.
 In the case of `Hashable` above, this includes all the members of `Equatable`,
 obviating the need to implement `Equatable` itself:
@@ -1275,6 +1286,9 @@ benefits:
 
 We expect this concept to be common enough to warrant dedicated `interface`
 syntax:
+
+> **TODO:** Update this section to reflect the new syntax adopted in
+> [p5337: Interface extension and `final impl` update](/proposals/p5337.md).
 
 ```carbon
 interface Equatable { fn Equals[self: Self](rhs: Self) -> bool; }
@@ -1325,6 +1339,9 @@ interface SetAlgebra {
   extend ExpressibleByArrayLiteral;
 }
 ```
+
+> **TODO:** Document `extend [final] impl as I`, as adopted in
+> [p5337: Interface extension and `final impl` update](/proposals/p5337.md).
 
 **Alternative considered:** The `extend` declarations are in the body of the
 `interface` definition instead of the header so we can use
@@ -1433,6 +1450,9 @@ interface MovieCodec {
 ```
 
 #### Diamond dependency issue
+
+> **TODO:** Update this section to reflect the changes in
+> [p5168: Forward `impl` declaration of an incomplete interface](/proposals/p5168.md).
 
 Consider this set of interfaces, simplified from
 [this example generic graph library doc](https://docs.google.com/document/d/15Brjv8NO_96jseSesqer5HbghqSTJICJ_fTaZOH0Mg4/edit?usp=sharing&resourcekey=0-CYSbd6-xF8vYHv9m1rolEQ):
@@ -1986,6 +2006,10 @@ keyword `private` before `adapt`, so you might write
 
 ## Associated constants
 
+> **TODO:** Update this section to reflect the new rules and guidance on
+> associated constants in
+> [p5168: Forward `impl` declaration of an incomplete interface](/proposals/p5168.md).
+
 In addition to associated methods, we allow other kinds of
 [associated entities](terminology.md#associated-entity). For consistency, we use
 the same syntax to describe a compile-time constant in an interface as in a type
@@ -2111,6 +2135,10 @@ type.
 Together associated methods and associated class functions are called
 _associated functions_, much like together methods and class functions are
 called [member functions](/docs/design/classes.md#member-functions).
+
+> **TODO:** Document rules on where associated function implementations can be
+> declared, as adopted in
+> [p5168: Forward `impl` declaration of an incomplete interface](/proposals/p5168.md).
 
 ## Associated facets
 
@@ -4466,6 +4494,9 @@ difference.
 
 #### Prioritization rule
 
+> **TODO:** Document the changes to prioritization adopted in
+> [p5337: Interface extension and `final impl` update](/proposals/p5337.md).
+
 Since at most one library can contain `impl` definitions with a given type
 structure, all `impl` definitions with a given type structure must be in the
 same library. Furthermore by the [`impl` declaration access rules](#access),
@@ -4864,6 +4895,10 @@ class Optional(T:! type) {
 // ❌ Illegal: impl Optional(i32) as Deref { ... }
 ```
 
+> **TODO:** Update the following passage to reflect the relaxed overlap rule
+> adopted in
+> [p5337: Interface extension and `final impl` update](/proposals/p5337.md).
+
 This prevents any higher-priority impl that overlaps a final impl from being
 defined unless it agrees with the `final` impl on the overlap. Overlap is
 computed between two non-`template` `impl` declaration by
@@ -4996,6 +5031,10 @@ differences between the Carbon design and Rust plans:
 
 ## Forward declarations and cyclic references
 
+> **TODO:** Update this section to distinguish between _defined_ and _complete_,
+> as adopted in
+> [p5087: Qualified lookup into types being defined](/proposals/p5087.md).
+
 Interfaces, named constraints, and their implementations may be forward declared
 and then later defined. This is needed to allow cyclic references, for example
 when declaring the edges and nodes of a graph. It is also a tool that may be
@@ -5013,6 +5052,10 @@ There are additional restrictions on how the name of an incomplete entity may be
 used.
 
 ### Declaring interfaces and named constraints
+
+> **TODO:** Update this section to reflect the additional things you can do with
+> a defined but incomplete type, as adoped in
+> [p5087: Qualified lookup into types being defined](/proposals/p5087.md).
 
 The declaration for an interface or named constraint consists of:
 
@@ -5100,6 +5143,9 @@ An incomplete `C` cannot be used in the following contexts:
 
 ### Declaring implementations
 
+> **TODO:** Update this section to reflect the new rules adopted in
+> [p5168: Forward `impl` declaration of an incomplete interface](/proposals/p5168.md).
+
 The declaration of an interface implementation consists of:
 
 -   optional modifier keyword `final`,
@@ -5114,6 +5160,9 @@ The declaration of an interface implementation consists of:
     [`where` clause](#where-constraints) assigning
     [associated constants](#associated-constants) including
     [associated facets](#associated-facets).
+
+> **TODO:** Document the redeclaration syntax `impl C.(as I)` adopted in
+> [p5366: The name of an `impl` in `class` scope](/proposals/p5366.md).
 
 **Note:** The type before the `as` is required except in class scope, where it
 defaults to `Self` as described in the
@@ -5154,6 +5203,11 @@ these rules:
 
 ### Matching and agreeing
 
+> **TODO:** Update this section to reflect the new terminology and rules adopted
+> in [p3763: Matching redeclarations](/proposals/p3763.md), and the new rules
+> adopted in
+> [p5168: Forward `impl` declaration of an incomplete interface](/proposals/p5168.md).
+
 Carbon needs to determine if two declarations match in order to say which
 definition a forward declaration corresponds to and to verify that nothing is
 defined twice. Declarations that match must also agree, meaning they are
@@ -5188,6 +5242,10 @@ expressions match along with
     and the same parameters. Note that a named constraint that is equivalent to
     an interface, as in `constraint Equivalent { extend MyInterface; }`, is not
     considered to match.
+
+> **TODO:** Document the matching rules for the redeclaration syntax
+> `impl C.(as I)` adopted in
+> [p5366: The name of an `impl` in `class` scope](/proposals/p5366.md).
 
 For implementations to agree:
 

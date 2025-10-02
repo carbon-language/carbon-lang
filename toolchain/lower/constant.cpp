@@ -224,6 +224,12 @@ static auto EmitAsConstant(ConstantContext& context,
   return context.GetUnusedConstant(inst.type_id);
 }
 
+static auto EmitAsConstant(ConstantContext& context,
+                           SemIR::CppOverloadSetValue /*inst*/)
+    -> llvm::Constant* {
+  return context.GetLiteralAsValue();
+}
+
 static auto EmitAsConstant(ConstantContext& context, SemIR::FieldDecl inst)
     -> llvm::Constant* {
   return context.GetUnusedConstant(inst.type_id);

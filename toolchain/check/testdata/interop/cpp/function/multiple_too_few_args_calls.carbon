@@ -45,9 +45,9 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %.082: type = cpp_overload_set_type @<null name> [concrete]
-// CHECK:STDOUT:   %empty_struct.e37: %.082 = struct_value () [concrete]
+// CHECK:STDOUT:   %.e7d: %.082 = cpp_overload_set_value @<null name> [concrete]
 // CHECK:STDOUT:   %.152: type = cpp_overload_set_type @<null name> [concrete]
-// CHECK:STDOUT:   %empty_struct.71d: %.152 = struct_value () [concrete]
+// CHECK:STDOUT:   %.172: %.152 = cpp_overload_set_value @<null name> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -56,16 +56,16 @@ fn Call() {
 // CHECK:STDOUT:     .F2 = %.172
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.e7d: %.082 = cpp_overload_set_value @<null name> [concrete = constants.%empty_struct.e37]
-// CHECK:STDOUT:   %.172: %.152 = cpp_overload_set_value @<null name> [concrete = constants.%empty_struct.71d]
+// CHECK:STDOUT:   %.e7d: %.082 = cpp_overload_set_value @<null name> [concrete = constants.%.e7d]
+// CHECK:STDOUT:   %.172: %.152 = cpp_overload_set_value @<null name> [concrete = constants.%.172]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %F1.ref: %.082 = name_ref F1, imports.%.e7d [concrete = constants.%empty_struct.e37]
+// CHECK:STDOUT:   %F1.ref: %.082 = name_ref F1, imports.%.e7d [concrete = constants.%.e7d]
 // CHECK:STDOUT:   %Cpp.ref.loc27: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %F2.ref: %.152 = name_ref F2, imports.%.172 [concrete = constants.%empty_struct.71d]
+// CHECK:STDOUT:   %F2.ref: %.152 = name_ref F2, imports.%.172 [concrete = constants.%.172]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

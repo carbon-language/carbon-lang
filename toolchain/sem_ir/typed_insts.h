@@ -818,8 +818,8 @@ struct CppOverloadSetType {
 struct CppOverloadSetValue {
   static constexpr auto Kind =
       InstKind::CppOverloadSetValue.Define<Parse::NodeId>(
-          // TODO: This should actually be lowered.
-          {.ir_name = "cpp_overload_set_value", .is_lowered = false});
+          {.ir_name = "cpp_overload_set_value",
+           .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
   CppOverloadSetId overload_set_id;

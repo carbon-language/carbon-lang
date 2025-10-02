@@ -135,7 +135,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     inst36:          {kind: NameRef, arg0: name0, arg1: inst16, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst37:          {kind: CppOverloadSetType, arg0: cpp_overload_set0, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst38:          {kind: CppOverloadSetValue, arg0: cpp_overload_set0, type: type(inst37)}
-// CHECK:STDOUT:     inst39:          {kind: StructValue, arg0: inst_block_empty, type: type(inst37)}
+// CHECK:STDOUT:     inst39:          {kind: CppOverloadSetValue, arg0: cpp_overload_set0, type: type(inst37)}
 // CHECK:STDOUT:     inst40:          {kind: NameRef, arg0: name4, arg1: inst38, type: type(inst37)}
 // CHECK:STDOUT:     inst41:          {kind: FunctionDecl, arg0: function1, arg1: inst_block_empty, type: type(inst42)}
 // CHECK:STDOUT:     inst42:          {kind: FunctionType, arg0: function1, arg1: specific<none>, type: type(TypeType)}
