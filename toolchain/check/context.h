@@ -216,13 +216,14 @@ class Context {
     return impl_lookup_stack_;
   }
 
-  // A concrete impl lookup query and its result.
+  // An impl lookup query that resulted in a concrete witness from finding an
+  // `impl` declaration (not though a facet value), and its result. Used to look
+  // for conflicting `impl` declarations.
   struct PoisonedConcreteImplLookupQuery {
     // The location the LookupImplWitness originated from.
     SemIR::LocId loc_id;
     // The query for a witness of an impl for an interface.
     SemIR::LookupImplWitness query;
-    SemIR::InstId non_canonical_query_self_inst_id;
     // The resulting ImplWitness.
     SemIR::InstId impl_witness;
   };

@@ -239,7 +239,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
   // to the facet value here, and if the query was a FacetAccessType we did the
   // same there so they still match.
   deduced_self_const_id =
-      GetCanonicalizedFacetOrTypeValue(context, deduced_self_const_id);
+      GetCanonicalFacetOrTypeValue(context, deduced_self_const_id);
   if (query_self_const_id != deduced_self_const_id) {
     return EvalImplLookupResult::MakeNone();
   }
@@ -299,34 +299,15 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
   }
 }
 
-// Unwraps a FacetAccessType to move from a value of type `TypeType` to a facet
-// value of type `FacetType` if possible.
-//
-// Generally `GetCanonicalizedFacetOrTypeValue()` is what you want to call
-// instead, as this only does part of that operation, potentially returning a
-// non-canonical facet value.
-static auto UnwrapFacetAccessType(Context& context, SemIR::InstId inst_id)
-    -> SemIR::InstId {
-  if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(inst_id)) {
-    return access->facet_value_inst_id;
-  }
-  return inst_id;
-}
-
 // Finds a lookup result from `query_self_inst_id` if it is a facet value that
 // names the query interface in its facet type. Note that `query_self_inst_id`
 // is allowed to be a non-canonical facet value in order to find a concrete
 // witness, so it's not referenced as a constant value.
 static auto LookupImplWitnessInSelfFacetValue(
-    Context& context, SemIR::InstId query_self_inst_id,
+    Context& context, SemIR::InstId self_facet_value_inst_id,
     SemIR::SpecificInterface query_specific_interface) -> EvalImplLookupResult {
-  // Unwrap FacetAccessType without getting the canonical facet value from the
-  // self value, as we want to preserve the non-canonical `FacetValue`
-  // instruction which can contain the concrete witness.
-  query_self_inst_id = UnwrapFacetAccessType(context, query_self_inst_id);
-
   auto facet_type = context.types().TryGetAs<SemIR::FacetType>(
-      context.insts().Get(query_self_inst_id).type_id());
+      context.insts().Get(self_facet_value_inst_id).type_id());
   if (!facet_type) {
     return EvalImplLookupResult::MakeNone();
   }
@@ -346,8 +327,8 @@ static auto LookupImplWitnessInSelfFacetValue(
   }
   auto index = (*it).index();
 
-  if (auto facet_value =
-          context.insts().TryGetAs<SemIR::FacetValue>(query_self_inst_id)) {
+  if (auto facet_value = context.insts().TryGetAs<SemIR::FacetValue>(
+          self_facet_value_inst_id)) {
     auto witness_id =
         context.inst_blocks().Get(facet_value->witnesses_block_id)[index];
     if (context.insts().Is<SemIR::ImplWitness>(witness_id)) {
@@ -854,14 +835,14 @@ static auto CollectCandidateImplsForQuery(
 
 auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
                                  SemIR::LookupImplWitness eval_query,
-                                 SemIR::InstId non_canonical_query_self_inst_id,
+                                 SemIR::InstId self_facet_value_inst_id,
                                  bool poison_concrete_results)
     -> EvalImplLookupResult {
   auto query_specific_interface =
       context.specific_interfaces().Get(eval_query.query_specific_interface_id);
 
   auto facet_lookup_result = LookupImplWitnessInSelfFacetValue(
-      context, non_canonical_query_self_inst_id, query_specific_interface);
+      context, self_facet_value_inst_id, query_specific_interface);
   if (facet_lookup_result.has_concrete_value()) {
     return facet_lookup_result;
   }
@@ -944,8 +925,6 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
         context.poisoned_concrete_impl_lookup_queries().push_back(
             {.loc_id = loc_id,
              .query = eval_query,
-             .non_canonical_query_self_inst_id =
-                 non_canonical_query_self_inst_id,
              .impl_witness = result.concrete_witness()});
       }
       return result;

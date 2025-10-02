@@ -2175,11 +2175,7 @@ auto TryEvalTypedInst<SemIR::BindSymbolicName>(EvalContext& eval_context,
 // `facet_value_inst_id`.
 static auto IsSameFacetValue(Context& context, SemIR::ConstantId const_id,
                              SemIR::InstId facet_value_inst_id) -> bool {
-  if (auto facet_access_type = context.insts().TryGetAs<SemIR::FacetAccessType>(
-          context.constant_values().GetInstId(const_id))) {
-    const_id =
-        context.constant_values().Get(facet_access_type->facet_value_inst_id);
-  }
+  const_id = GetCanonicalFacetOrTypeValue(context, const_id);
   return const_id == context.constant_values().Get(facet_value_inst_id);
 }
 
