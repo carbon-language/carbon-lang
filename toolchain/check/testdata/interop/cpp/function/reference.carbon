@@ -880,7 +880,7 @@ fn F() {
 // CHECK:STDOUT:   %ptr: type = ptr_type %S [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %.041: type = cpp_overload_set_type @ReturnsLValue [concrete]
-// CHECK:STDOUT:   %empty_struct: %.041 = struct_value () [concrete]
+// CHECK:STDOUT:   %.03d: %.041 = cpp_overload_set_value @ReturnsLValue [concrete]
 // CHECK:STDOUT:   %ReturnsLValue.type: type = fn_type @ReturnsLValue [concrete]
 // CHECK:STDOUT:   %ReturnsLValue: %ReturnsLValue.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -892,7 +892,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
-// CHECK:STDOUT:   %.03d: %.041 = cpp_overload_set_value @ReturnsLValue [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.03d: %.041 = cpp_overload_set_value @ReturnsLValue [concrete = constants.%.03d]
 // CHECK:STDOUT:   %ReturnsLValue.decl: %ReturnsLValue.type = fn_decl @ReturnsLValue [concrete = constants.%ReturnsLValue] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -906,7 +906,7 @@ fn F() {
 // CHECK:STDOUT:     %s.patt: %pattern_type = binding_pattern s [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc16_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %ReturnsLValue.ref: %.041 = name_ref ReturnsLValue, imports.%.03d [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %ReturnsLValue.ref: %.041 = name_ref ReturnsLValue, imports.%.03d [concrete = constants.%.03d]
 // CHECK:STDOUT:   %ReturnsLValue.call: init <error> = call imports.%ReturnsLValue.decl()
 // CHECK:STDOUT:   %.loc16: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:     %Cpp.ref.loc16_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -924,7 +924,7 @@ fn F() {
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
 // CHECK:STDOUT:   %pattern_type.7da: type = pattern_type %S [concrete]
 // CHECK:STDOUT:   %.c60: type = cpp_overload_set_type @ReturnsRValue [concrete]
-// CHECK:STDOUT:   %empty_struct: %.c60 = struct_value () [concrete]
+// CHECK:STDOUT:   %.99d: %.c60 = cpp_overload_set_value @ReturnsRValue [concrete]
 // CHECK:STDOUT:   %ReturnsRValue.type: type = fn_type @ReturnsRValue [concrete]
 // CHECK:STDOUT:   %ReturnsRValue: %ReturnsRValue.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
@@ -941,7 +941,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
-// CHECK:STDOUT:   %.99d: %.c60 = cpp_overload_set_value @ReturnsRValue [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.99d: %.c60 = cpp_overload_set_value @ReturnsRValue [concrete = constants.%.99d]
 // CHECK:STDOUT:   %ReturnsRValue.decl: %ReturnsRValue.type = fn_decl @ReturnsRValue [concrete = constants.%ReturnsRValue] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -957,7 +957,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc16_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %ReturnsRValue.ref: %.c60 = name_ref ReturnsRValue, imports.%.99d [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %ReturnsRValue.ref: %.c60 = name_ref ReturnsRValue, imports.%.99d [concrete = constants.%.99d]
 // CHECK:STDOUT:   %ReturnsRValue.call: init <error> = call imports.%ReturnsRValue.decl()
 // CHECK:STDOUT:   assign %s.var, <error>
 // CHECK:STDOUT:   %.loc16_13: type = splice_block %S.ref [concrete = constants.%S] {
@@ -983,7 +983,7 @@ fn F() {
 // CHECK:STDOUT:   %const: type = const_type %S [concrete]
 // CHECK:STDOUT:   %pattern_type.9be: type = pattern_type %const [concrete]
 // CHECK:STDOUT:   %.c99: type = cpp_overload_set_type @ReturnConstLValue [concrete]
-// CHECK:STDOUT:   %empty_struct: %.c99 = struct_value () [concrete]
+// CHECK:STDOUT:   %.bf8: %.c99 = cpp_overload_set_value @ReturnConstLValue [concrete]
 // CHECK:STDOUT:   %ReturnConstLValue.type: type = fn_type @ReturnConstLValue [concrete]
 // CHECK:STDOUT:   %ReturnConstLValue: %ReturnConstLValue.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
@@ -1000,7 +1000,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
-// CHECK:STDOUT:   %.bf8: %.c99 = cpp_overload_set_value @ReturnConstLValue [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.bf8: %.c99 = cpp_overload_set_value @ReturnConstLValue [concrete = constants.%.bf8]
 // CHECK:STDOUT:   %ReturnConstLValue.decl: %ReturnConstLValue.type = fn_decl @ReturnConstLValue [concrete = constants.%ReturnConstLValue] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -1016,7 +1016,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %const = var %s.var_patt
 // CHECK:STDOUT:   %Cpp.ref.loc16_24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %ReturnConstLValue.ref: %.c99 = name_ref ReturnConstLValue, imports.%.bf8 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %ReturnConstLValue.ref: %.c99 = name_ref ReturnConstLValue, imports.%.bf8 [concrete = constants.%.bf8]
 // CHECK:STDOUT:   %ReturnConstLValue.call: init <error> = call imports.%ReturnConstLValue.decl()
 // CHECK:STDOUT:   assign %s.var, <error>
 // CHECK:STDOUT:   %.loc16_10: type = splice_block %const [concrete = constants.%const] {
