@@ -76,8 +76,6 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Float.ref: %Float.type = name_ref Float, imports.%Main.Float [concrete = constants.%Float]
 // CHECK:STDOUT:   %dyn_size.ref: %i32 = name_ref dyn_size, %dyn_size
 // CHECK:STDOUT:   %Float.call: init type = call %Float.ref(%dyn_size.ref)
-// CHECK:STDOUT:   %.loc13_25.1: type = value_of_initializer %Float.call
-// CHECK:STDOUT:   %.loc13_25.2: type = converted %Float.call, %.loc13_25.1
-// CHECK:STDOUT:   return %.loc13_25.2
+// CHECK:STDOUT:   return %Float.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

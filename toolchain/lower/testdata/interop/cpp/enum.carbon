@@ -30,6 +30,7 @@ import Cpp library "enum_member.h";
 
 fn Pass() {
   Cpp.C.F(Cpp.C.a);
+  Cpp.C.F(Cpp.C.a);
   Cpp.C.F(Cpp.C.b);
   Cpp.C.F(Cpp.C.c);
   Cpp.C.F(Cpp.C.E.a);
@@ -91,31 +92,33 @@ fn Call() {
 // CHECK:STDOUT:   %.loc7_16.1.temp = alloca i16, align 2, !dbg !10
 // CHECK:STDOUT:   %.loc8_16.1.temp = alloca i16, align 2, !dbg !11
 // CHECK:STDOUT:   %.loc9_16.1.temp = alloca i16, align 2, !dbg !12
-// CHECK:STDOUT:   %.loc10_18.1.temp = alloca i16, align 2, !dbg !13
+// CHECK:STDOUT:   %.loc10_16.1.temp = alloca i16, align 2, !dbg !13
 // CHECK:STDOUT:   %.loc11_18.1.temp = alloca i16, align 2, !dbg !14
 // CHECK:STDOUT:   %.loc12_18.1.temp = alloca i16, align 2, !dbg !15
+// CHECK:STDOUT:   %.loc13_18.1.temp = alloca i16, align 2, !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_16.1.temp), !dbg !10
 // CHECK:STDOUT:   store i16 0, ptr %.loc7_16.1.temp, align 2, !dbg !10
-// CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk(ptr %.loc7_16.1.temp), !dbg !16
+// CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk(ptr %.loc7_16.1.temp), !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_16.1.temp), !dbg !11
-// CHECK:STDOUT:   store i16 7, ptr %.loc8_16.1.temp, align 2, !dbg !11
-// CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk(ptr %.loc8_16.1.temp), !dbg !17
+// CHECK:STDOUT:   store i16 0, ptr %.loc8_16.1.temp, align 2, !dbg !11
+// CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk(ptr %.loc8_16.1.temp), !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_16.1.temp), !dbg !12
-// CHECK:STDOUT:   store i16 8, ptr %.loc9_16.1.temp, align 2, !dbg !12
-// CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk(ptr %.loc9_16.1.temp), !dbg !18
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc10_18.1.temp), !dbg !13
-// CHECK:STDOUT:   store i16 0, ptr %.loc10_18.1.temp, align 2, !dbg !13
-// CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk(ptr %.loc10_18.1.temp), !dbg !19
+// CHECK:STDOUT:   store i16 7, ptr %.loc9_16.1.temp, align 2, !dbg !12
+// CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk(ptr %.loc9_16.1.temp), !dbg !19
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc10_16.1.temp), !dbg !13
+// CHECK:STDOUT:   store i16 8, ptr %.loc10_16.1.temp, align 2, !dbg !13
+// CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk(ptr %.loc10_16.1.temp), !dbg !20
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc11_18.1.temp), !dbg !14
-// CHECK:STDOUT:   store i16 7, ptr %.loc11_18.1.temp, align 2, !dbg !14
-// CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk(ptr %.loc11_18.1.temp), !dbg !20
+// CHECK:STDOUT:   store i16 0, ptr %.loc11_18.1.temp, align 2, !dbg !14
+// CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk(ptr %.loc11_18.1.temp), !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_18.1.temp), !dbg !15
-// CHECK:STDOUT:   store i16 8, ptr %.loc12_18.1.temp, align 2, !dbg !15
-// CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk(ptr %.loc12_18.1.temp), !dbg !21
-// CHECK:STDOUT:   ret void, !dbg !22
+// CHECK:STDOUT:   store i16 7, ptr %.loc12_18.1.temp, align 2, !dbg !15
+// CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk(ptr %.loc12_18.1.temp), !dbg !22
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc13_18.1.temp), !dbg !16
+// CHECK:STDOUT:   store i16 8, ptr %.loc13_18.1.temp, align 2, !dbg !16
+// CHECK:STDOUT:   call void @_ZN1C1FENS_1EE.carbon_thunk(ptr %.loc13_18.1.temp), !dbg !23
+// CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZN1C1FENS_1EE(i16)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
@@ -131,11 +134,14 @@ fn Call() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_ZN1C1FENS_1EE(i16 signext) #2
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 5, 4, 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 6, 5, 4, 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -156,13 +162,15 @@ fn Call() {
 // CHECK:STDOUT: !13 = !DILocation(line: 10, column: 11, scope: !7)
 // CHECK:STDOUT: !14 = !DILocation(line: 11, column: 11, scope: !7)
 // CHECK:STDOUT: !15 = !DILocation(line: 12, column: 11, scope: !7)
-// CHECK:STDOUT: !16 = !DILocation(line: 7, column: 3, scope: !7)
-// CHECK:STDOUT: !17 = !DILocation(line: 8, column: 3, scope: !7)
-// CHECK:STDOUT: !18 = !DILocation(line: 9, column: 3, scope: !7)
-// CHECK:STDOUT: !19 = !DILocation(line: 10, column: 3, scope: !7)
-// CHECK:STDOUT: !20 = !DILocation(line: 11, column: 3, scope: !7)
-// CHECK:STDOUT: !21 = !DILocation(line: 12, column: 3, scope: !7)
-// CHECK:STDOUT: !22 = !DILocation(line: 6, column: 1, scope: !7)
+// CHECK:STDOUT: !16 = !DILocation(line: 13, column: 11, scope: !7)
+// CHECK:STDOUT: !17 = !DILocation(line: 7, column: 3, scope: !7)
+// CHECK:STDOUT: !18 = !DILocation(line: 8, column: 3, scope: !7)
+// CHECK:STDOUT: !19 = !DILocation(line: 9, column: 3, scope: !7)
+// CHECK:STDOUT: !20 = !DILocation(line: 10, column: 3, scope: !7)
+// CHECK:STDOUT: !21 = !DILocation(line: 11, column: 3, scope: !7)
+// CHECK:STDOUT: !22 = !DILocation(line: 12, column: 3, scope: !7)
+// CHECK:STDOUT: !23 = !DILocation(line: 13, column: 3, scope: !7)
+// CHECK:STDOUT: !24 = !DILocation(line: 6, column: 1, scope: !7)
 // CHECK:STDOUT: ; ModuleID = 'convert.carbon'
 // CHECK:STDOUT: source_filename = "convert.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -191,8 +199,6 @@ fn Call() {
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZN1C1FENS_1EE(i16)
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
@@ -207,8 +213,11 @@ fn Call() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_ZN1C1FENS_1EE(i16 signext) #2
+// CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}

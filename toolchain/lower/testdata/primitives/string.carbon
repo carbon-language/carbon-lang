@@ -31,6 +31,10 @@ fn I() {
   F(v);
 }
 
+fn Copy(s: str) -> str {
+  return s;
+}
+
 // CHECK:STDOUT: ; ModuleID = 'string.carbon'
 // CHECK:STDOUT: source_filename = "string.carbon"
 // CHECK:STDOUT:
@@ -59,6 +63,14 @@ fn I() {
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: define void @_CCopy.Main(ptr sret({ ptr, i64 }) %return, ptr %s) !dbg !15 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @"_COp.String.Core:Copy.Core"(ptr %return, ptr %s), !dbg !16
+// CHECK:STDOUT:   ret void, !dbg !17
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_COp.String.Core:Copy.Core"(ptr sret({ ptr, i64 }), ptr)
+// CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
 // CHECK:STDOUT:
@@ -77,3 +89,6 @@ fn I() {
 // CHECK:STDOUT: !12 = distinct !DISubprogram(name: "I", linkageName: "_CI.Main", scope: null, file: !3, line: 28, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !13 = !DILocation(line: 31, column: 3, scope: !12)
 // CHECK:STDOUT: !14 = !DILocation(line: 28, column: 1, scope: !12)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Copy", linkageName: "_CCopy.Main", scope: null, file: !3, line: 34, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = !DILocation(line: 35, column: 10, scope: !15)
+// CHECK:STDOUT: !17 = !DILocation(line: 35, column: 3, scope: !15)

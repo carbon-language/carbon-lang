@@ -13,7 +13,7 @@
 import Core library "io";
 
 interface I {
-  let T:! type;
+  let T:! Core.Destroy;
   fn F() -> T;
 }
 class X {}
@@ -61,27 +61,43 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @main() !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CG.Main.ae78220c5e9d4af5(), !dbg !13
-// CHECK:STDOUT:   call void @_CG.Main.6b293b16be321a45(), !dbg !14
+// CHECK:STDOUT:   call void @_CG.Main.f84edebea9f363f0(), !dbg !13
+// CHECK:STDOUT:   call void @_CG.Main.b5f20a8e74ede332(), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @printf(ptr, ...)
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.ae78220c5e9d4af5() !dbg !16 {
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.f84edebea9f363f0() !dbg !16 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc37_20.1 = call i1 @"_CF.X.Main:I.Main"(), !dbg !17
+// CHECK:STDOUT:   %.loc37_20.1.temp = alloca i1, align 1, !dbg !17
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc37_20.1.temp), !dbg !17
+// CHECK:STDOUT:   %.loc37_20.2 = call i1 @"_CF.X.Main:I.Main"(), !dbg !17
+// CHECK:STDOUT:   %.loc37_20.3 = zext i1 %.loc37_20.2 to i8, !dbg !17
+// CHECK:STDOUT:   store i8 %.loc37_20.3, ptr %.loc37_20.1.temp, align 1, !dbg !17
+// CHECK:STDOUT:   %.loc37_20.4 = load i8, ptr %.loc37_20.1.temp, align 1, !dbg !17
+// CHECK:STDOUT:   %.loc37_20.41 = trunc i8 %.loc37_20.4 to i1, !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.6b293b16be321a45() !dbg !19 {
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.b5f20a8e74ede332() !dbg !19 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc37_20.1 = call i32 @"_CF.Y.Main:I.Main"(), !dbg !20
+// CHECK:STDOUT:   %.loc37_20.1.temp = alloca i32, align 4, !dbg !20
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc37_20.1.temp), !dbg !20
+// CHECK:STDOUT:   %.loc37_20.2 = call i32 @"_CF.Y.Main:I.Main"(), !dbg !20
+// CHECK:STDOUT:   store i32 %.loc37_20.2, ptr %.loc37_20.1.temp, align 4, !dbg !20
+// CHECK:STDOUT:   %.loc37_20.4 = load i32, ptr %.loc37_20.1.temp, align 4, !dbg !20
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @printf, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -102,9 +118,9 @@ fn Run() {
 // CHECK:STDOUT: !13 = !DILocation(line: 41, column: 3, scope: !12)
 // CHECK:STDOUT: !14 = !DILocation(line: 42, column: 3, scope: !12)
 // CHECK:STDOUT: !15 = !DILocation(line: 40, column: 1, scope: !12)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.ae78220c5e9d4af5", scope: null, file: !3, line: 36, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.f84edebea9f363f0", scope: null, file: !3, line: 36, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !17 = !DILocation(line: 37, column: 16, scope: !16)
 // CHECK:STDOUT: !18 = !DILocation(line: 36, column: 1, scope: !16)
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.6b293b16be321a45", scope: null, file: !3, line: 36, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.b5f20a8e74ede332", scope: null, file: !3, line: 36, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !20 = !DILocation(line: 37, column: 16, scope: !19)
 // CHECK:STDOUT: !21 = !DILocation(line: 36, column: 1, scope: !19)

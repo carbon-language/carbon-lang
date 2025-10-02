@@ -36,6 +36,7 @@ using IdKind = TypeEnum<
     ClassId,
     CompileTimeBindIndex,
     ConstantId,
+    CppOverloadSetId,
     CustomLayoutId,
     DeclInstBlockId,
     DestInstId,

@@ -255,19 +255,21 @@ auto TypeStructureBuilder::Build(SemIR::TypeIterator type_iter)
         break;
       }
       case CARBON_KIND(Step::StructStartOnly _): {
-        AppendStructuralConcrete(TypeStructure::ConcreteStructType());
+        AppendStructuralConcrete(TypeStructure::ConcreteTypeStart::Struct);
         break;
       }
       case CARBON_KIND(Step::StructStart _): {
-        AppendStructuralConcreteOpenParen(TypeStructure::ConcreteStructType());
+        AppendStructuralConcreteOpenParen(
+            TypeStructure::ConcreteTypeStart::Struct);
         break;
       }
       case CARBON_KIND(Step::TupleStartOnly _): {
-        AppendStructuralConcrete(TypeStructure::ConcreteTupleType());
+        AppendStructuralConcrete(TypeStructure::ConcreteTypeStart::Tuple);
         break;
       }
       case CARBON_KIND(Step::TupleStart _): {
-        AppendStructuralConcreteOpenParen(TypeStructure::ConcreteTupleType());
+        AppendStructuralConcreteOpenParen(
+            TypeStructure::ConcreteTypeStart::Tuple);
         break;
       }
       case CARBON_KIND(Step::InterfaceStartOnly interface_start): {
@@ -282,12 +284,31 @@ auto TypeStructureBuilder::Build(SemIR::TypeIterator type_iter)
         AppendStructuralConcreteOpenParen(int_start.type_id);
         break;
       }
+
+      // Types which only have an `OpenParen` shape.
       case CARBON_KIND(Step::ArrayStart _): {
-        AppendStructuralConcreteOpenParen(TypeStructure::ConcreteArrayType());
+        AppendStructuralConcreteOpenParen(
+            TypeStructure::ConcreteTypeStart::Array);
+        break;
+      }
+      case CARBON_KIND(Step::ConstStart _): {
+        AppendStructuralConcreteOpenParen(
+            TypeStructure::ConcreteTypeStart::Const);
+        break;
+      }
+      case CARBON_KIND(Step::MaybeUnformedStart _): {
+        AppendStructuralConcreteOpenParen(
+            TypeStructure::ConcreteTypeStart::MaybeUnformed);
+        break;
+      }
+      case CARBON_KIND(Step::PartialStart _): {
+        AppendStructuralConcreteOpenParen(
+            TypeStructure::ConcreteTypeStart::Partial);
         break;
       }
       case CARBON_KIND(Step::PointerStart _): {
-        AppendStructuralConcreteOpenParen(TypeStructure::ConcretePointerType());
+        AppendStructuralConcreteOpenParen(
+            TypeStructure::ConcreteTypeStart::Pointer);
         break;
       }
     }

@@ -4,6 +4,7 @@
 
 package Core library "prelude/types/optional";
 
+import library "prelude/copy";
 import library "prelude/destroy";
 import library "prelude/types/bool";
 
@@ -15,7 +16,7 @@ import library "prelude/types/bool";
 //
 // TODO: We don't have an approved design for an `Optional` type yet, but it's
 // used by the design for `Iterate`. The API here is a placeholder.
-class Optional(T:! type) {
+class Optional(T:! Copy) {
   fn None() -> Self {
     returned var me: Self;
     me.has_value = false;

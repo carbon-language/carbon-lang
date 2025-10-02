@@ -26,9 +26,9 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Eats.type: type = facet_type <@Eats> [concrete]
-// CHECK:STDOUT:   %Self.1b5: %Eats.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.9e6: %Eats.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete]
-// CHECK:STDOUT:   %Self.fd4: %Animal.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.611: %Animal.type = bind_symbolic_name Self, 0 [symbolic]
 // CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness file.%Eats.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Eats.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -75,7 +75,7 @@ fn G() { F(Animal); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Eats {
-// CHECK:STDOUT:   %Self: %Eats.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1b5]
+// CHECK:STDOUT:   %Self: %Eats.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.9e6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -83,7 +83,7 @@ fn G() { F(Animal); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Animal {
-// CHECK:STDOUT:   %Self: %Animal.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.fd4]
+// CHECK:STDOUT:   %Self: %Animal.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.611]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -104,7 +104,7 @@ fn G() { F(Animal); }
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
-// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value constants.%Animal.type, (constants.%Eats.impl_witness) [concrete = constants.%Eats.facet]
+// CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %Animal.ref, (constants.%Eats.impl_witness) [concrete = constants.%Eats.facet]
 // CHECK:STDOUT:   %.loc23: %Eats.type = converted %Animal.ref, %Eats.facet [concrete = constants.%Eats.facet]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc23)
 // CHECK:STDOUT:   return

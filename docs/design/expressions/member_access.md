@@ -33,6 +33,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
+> **TODO:** [p3720: Member binding operators](/proposals/p3720.md) introduces an
+> additional "member binding" step, redefines simple member access in terms of
+> compound member access, and defines compound member access in terms of calls
+> to user-implementable interface methods. This document must be updated to
+> reflect those changes.
+
 A _qualified name_ is a [word](../lexical_conventions/words.md) that is preceded
 by a period or a rightward arrow. The name is found within a contextually
 determined entity:
@@ -335,7 +341,7 @@ generic parameter, or in fact any
 [compile-time binding](/docs/design/generics/terminology.md#bindings), the
 lookup is performed from a context where the value of that binding is unknown.
 Evaluation of an expression involving the binding may still succeed, but will
-result in a symbolic value involving that binding.
+result in a symbolic constant involving that binding.
 
 ```carbon
 class GenericWrapper(T:! type) {

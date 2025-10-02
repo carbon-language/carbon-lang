@@ -160,7 +160,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//a, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//a, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//a, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//a, inst{{\d+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.2cf = import_ref Main//a, loc5_10, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -204,9 +204,9 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//c, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//c, inst21 [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//c, inst22 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.230 = import_ref Main//c, inst23 [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//c, inst{{\d+}} [indirect], loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//c, inst{{\d+}} [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.230 = import_ref Main//c, inst{{\d+}} [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -266,7 +266,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//a, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//a, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//a, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//a, inst{{\d+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.943: %C.F.type = import_ref Main//a, loc5_10, loaded [concrete = constants.%C.F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -321,9 +321,9 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//c, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//c, inst21 [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//c, inst22 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.5d3: %C.F.type = import_ref Main//c, inst23 [indirect], loaded [concrete = constants.%C.F]
+// CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//c, inst{{\d+}} [indirect], loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//c, inst{{\d+}} [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.5d3: %C.F.type = import_ref Main//c, inst{{\d+}} [indirect], loaded [concrete = constants.%C.F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -377,9 +377,9 @@ var x: () = D.C.F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//c, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//c, inst21 [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//c, inst22 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.5d3: %C.F.type = import_ref Main//c, inst23 [indirect], loaded [concrete = constants.%C.F]
+// CHECK:STDOUT:   %Main.import_ref.8db: <witness> = import_ref Main//c, inst{{\d+}} [indirect], loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.6a9 = import_ref Main//c, inst{{\d+}} [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.5d3: %C.F.type = import_ref Main//c, inst{{\d+}} [indirect], loaded [concrete = constants.%C.F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -435,11 +435,11 @@ var x: () = D.C.F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.D: type = import_ref Main//e, D, loaded [concrete = constants.%D]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//e, loc8_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.cab = import_ref Main//e, inst18 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.cab = import_ref Main//e, inst{{\d+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.bf1: type = import_ref Main//e, loc7_9, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.8f3: <witness> = import_ref Main//e, inst24 [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.db8 = import_ref Main//e, inst25 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.c85: %C.F.type = import_ref Main//e, inst26 [indirect], loaded [concrete = constants.%C.F]
+// CHECK:STDOUT:   %Main.import_ref.8f3: <witness> = import_ref Main//e, inst{{\d+}} [indirect], loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.db8 = import_ref Main//e, inst{{\d+}} [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.c85: %C.F.type = import_ref Main//e, inst{{\d+}} [indirect], loaded [concrete = constants.%C.F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -504,11 +504,11 @@ var x: () = D.C.F();
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.D: type = import_ref Main//e, D, loaded [concrete = constants.%D]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//e, loc8_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.cab = import_ref Main//e, inst18 [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.cab = import_ref Main//e, inst{{\d+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.bf1: type = import_ref Main//e, loc7_9, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.8f3: <witness> = import_ref Main//e, inst24 [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.db8 = import_ref Main//e, inst25 [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.c85: %C.F.type = import_ref Main//e, inst26 [indirect], loaded [concrete = constants.%C.F]
+// CHECK:STDOUT:   %Main.import_ref.8f3: <witness> = import_ref Main//e, inst{{\d+}} [indirect], loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Main.import_ref.db8 = import_ref Main//e, inst{{\d+}} [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.c85: %C.F.type = import_ref Main//e, inst{{\d+}} [indirect], loaded [concrete = constants.%C.F]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

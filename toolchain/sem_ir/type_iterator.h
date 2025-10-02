@@ -38,7 +38,7 @@ class TypeIterator {
   // Add a type value or facet value to be iterated over.
   //
   // The iterator will visit things in the reverse order that they are added.
-  auto Add(SemIR::InstId inst_id) -> void {
+  auto Add(InstId inst_id) -> void {
     auto type_id = sem_ir_->insts().Get(inst_id).type_id();
     CARBON_CHECK(sem_ir_->types().IsFacetType(type_id));
     PushInstId(inst_id);
@@ -47,7 +47,7 @@ class TypeIterator {
   // Add an interface to be iterated over.
   //
   // The iterator will visit things in the reverse order that they are added.
-  auto Add(SemIR::SpecificInterface interface) -> void { Push(interface); }
+  auto Add(SpecificInterface interface) -> void { Push(interface); }
 
   // Iterates and returns the next `Step`. Returns `Step::Done` when complete.
   auto Next() -> Step;
@@ -57,25 +57,27 @@ class TypeIterator {
   struct EndType {};
   // A work item to mark a symbolic type.
   struct SymbolicType {
-    SemIR::TypeId facet_type_id;
+    TypeId facet_type_id;
   };
   // A work item to mark a concrete non-type value.
   struct ConcreteNonTypeValue {
-    SemIR::InstId inst_id;
+    InstId inst_id;
   };
   // A work item to mark a symbolic non-type value.
   struct SymbolicNonTypeValue {
-    SemIR::InstId inst_id;
+    InstId inst_id;
   };
   // A work item to mark the name of a struct field.
   struct StructFieldName {
-    SemIR::NameId name_id;
+    NameId name_id;
   };
 
-  using WorkItem =
-      std::variant<SemIR::TypeId, SymbolicType, ConcreteNonTypeValue,
-                   SymbolicNonTypeValue, StructFieldName,
-                   SemIR::SpecificInterface, EndType>;
+  using WorkItem = std::variant<TypeId, SymbolicType, ConcreteNonTypeValue,
+                                SymbolicNonTypeValue, StructFieldName,
+                                SpecificInterface, EndType>;
+
+  // Processes `next` when it's a `TypeId`.
+  auto ProcessTypeId(TypeId type_id) -> std::optional<Step>;
 
   // Get the TypeId for an instruction that is not a facet value, otherwise
   // return SymbolicType to indicate the instruction is a symbolic facet value.
@@ -83,19 +85,18 @@ class TypeIterator {
   // If the instruction is not a type value, the return is TypeId::None.
   //
   // We reuse the `SymbolicType` work item here to give a nice return type.
-  auto TryGetInstIdAsTypeId(SemIR::InstId inst_id) const
-      -> std::variant<SemIR::TypeId, SymbolicType>;
+  auto TryGetInstIdAsTypeId(InstId inst_id) const
+      -> std::variant<TypeId, SymbolicType>;
 
   // Get the instructions in the specific's instruction block as an ArrayRef.
-  auto GetSpecificArgs(SemIR::SpecificId specific_id) const
-      -> llvm::ArrayRef<SemIR::InstId>;
+  auto GetSpecificArgs(SpecificId specific_id) const -> llvm::ArrayRef<InstId>;
 
   // Push all arguments from the array into the work queue.
-  auto PushArgs(llvm::ArrayRef<SemIR::InstId> args) -> void;
+  auto PushArgs(llvm::ArrayRef<InstId> args) -> void;
 
   // Push an instruction's type value into the work queue, or a marker if the
   // instruction has a symbolic value.
-  auto PushInstId(SemIR::InstId inst_id) -> void;
+  auto PushInstId(InstId inst_id) -> void;
 
   // Push the next step into the work queue.
   auto Push(WorkItem item) -> void;
@@ -112,30 +113,33 @@ class TypeIterator::Step {
 
   // Followed by generic parameters.
   struct ClassStart {
-    SemIR::ClassId class_id;
-    SemIR::TypeId type_id;
+    ClassId class_id;
+    TypeId type_id;
   };
   // Followed by its fields.
   struct StructStart {
-    SemIR::TypeId type_id;
+    TypeId type_id;
   };
   // Followed by its members.
   struct TupleStart {
-    SemIR::TypeId type_id;
+    TypeId type_id;
   };
   // Followed by generic parameters.
   struct InterfaceStart {
-    SemIR::InterfaceId interface_id;
+    InterfaceId interface_id;
   };
   // Followed by the bit width.
   struct IntStart {
-    SemIR::TypeId type_id;
+    TypeId type_id;
   };
   // Followed by the type and bound.
   struct ArrayStart {
-    SemIR::TypeId type_id;
+    TypeId type_id;
   };
-  // Followed by the pointee type.
+  // Simple wrapped types, followed by the inner type.
+  struct ConstStart {};
+  struct MaybeUnformedStart {};
+  struct PartialStart {};
   struct PointerStart {};
 
   // ===========================================================================
@@ -154,12 +158,12 @@ class TypeIterator::Step {
 
   // A type value.
   struct ConcreteType {
-    SemIR::TypeId type_id;
+    TypeId type_id;
   };
   // A symbolic type value, constrained by `facet_type_id`.
   struct SymbolicType {
     // Either a FacetType or the TypeType singleton.
-    SemIR::TypeId facet_type_id;
+    TypeId facet_type_id;
   };
   // A symbolic template type value.
   struct TemplateType {};
@@ -167,17 +171,17 @@ class TypeIterator::Step {
   // type.
   struct ConcreteValue {
     // An instruction that evaluates to the constant value.
-    SemIR::InstId inst_id;
+    InstId inst_id;
   };
   // A symbolic non-type value, which can be found as a generic parameter for a
   // type.
   struct SymbolicValue {
     // An instruction that evaluates to the constant value.
-    SemIR::InstId inst_id;
+    InstId inst_id;
   };
   // A struct field name. The field names contribute to the type of the struct.
   struct StructFieldName {
-    SemIR::NameId name_id;
+    NameId name_id;
   };
 
   // ===========================================================================
@@ -196,9 +200,10 @@ class TypeIterator::Step {
                    SymbolicValue, StructFieldName, ClassStartOnly,
                    StructStartOnly, TupleStartOnly, InterfaceStartOnly,
                    ClassStart, StructStart, TupleStart, InterfaceStart,
-                   IntStart, ArrayStart, PointerStart, End, Done, Error>;
+                   IntStart, ArrayStart, ConstStart, MaybeUnformedStart,
+                   PartialStart, PointerStart, End, Done, Error>;
 
-  template <class T>
+  template <typename T>
   auto Is() const -> bool {
     return std::holds_alternative<T>(any);
   }
@@ -208,10 +213,9 @@ class TypeIterator::Step {
   // This is a template to allow implicit conversion directly from step values
   // that can go inside `Any` to `Step` (without having to make the `Any`
   // explicitly first).
-  template <class T>
+  template <typename T>
     requires std::constructible_from<Any, T>
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  Step(T any) : any(any) {}
+  explicit(false) Step(T any) : any(any) {}
 
   Any any;
 };

@@ -112,6 +112,8 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case CompleteTypeWitness::Kind:
       case ConstType::Kind:
       case ConvertToValueAction::Kind:
+      case CppOverloadSetType::Kind:
+      case CppOverloadSetValue::Kind:
       case CustomLayoutType::Kind:
       case FacetAccessType::Kind:
       case FacetType::Kind:
@@ -290,6 +292,9 @@ auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id)
           return InstId::None;
         }
         return sem_ir.inst_blocks().Get(call.args_id).back();
+      }
+      case CARBON_KIND(ErrorInst _): {
+        return InstId::None;
       }
       default:
         CARBON_FATAL("Initialization from unexpected inst {0}", init_untyped);

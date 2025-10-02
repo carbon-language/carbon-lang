@@ -26,12 +26,9 @@ import Cpp library "unsupported_primitive_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: _BitInt(23)` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: parameter type: _BitInt(23)` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(11);
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo(11);
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo(11);
   //@dump-sem-ir-end
@@ -53,34 +50,72 @@ import Cpp library "unsupported_primitive_type_among_params.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type_among_params.carbon:[[@LINE+7]]:3: error: semantics TODO: `Unsupported: parameter type: _BitInt(23)` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type_among_params.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: parameter type: _BitInt(23)` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.foo(1, 20);
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type_among_params.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `foo` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.foo(1, 20);
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo(1, 20);
   //@dump-sem-ir-end
 }
 
+// ============================================================================
+// Unconvertible integer argument.
+// ============================================================================
+
+// --- int_param.h
+
+auto foo(int a) -> void;
+
+// --- fail_large_int.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "int_param.h";
+
+// This doesn't have a direct type mapping in `getIntTypeForBitwidth`.
+fn F(x: i512) {
+  // CHECK:STDERR: fail_large_int.carbon:[[@LINE+4]]:11: error: call argument of type `i512` is not supported [CppCallArgTypeNotSupported]
+  // CHECK:STDERR:   Cpp.foo(x);
+  // CHECK:STDERR:           ^
+  // CHECK:STDERR:
+  Cpp.foo(x);
+}
+
+// --- fail_very_large_int.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "int_param.h";
+
+// This doesn't fit as an embedded `IntId` value.
+fn F(x: i8388608) {
+  // CHECK:STDERR: fail_very_large_int.carbon:[[@LINE+4]]:11: error: call argument of type `i8388608` is not supported [CppCallArgTypeNotSupported]
+  // CHECK:STDERR:   Cpp.foo(x);
+  // CHECK:STDERR:           ^
+  // CHECK:STDERR:
+  Cpp.foo(x);
+}
+
 // CHECK:STDOUT: --- fail_todo_import_unsupported_primitive_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.c5d: type = cpp_overload_set_type @<null name> [concrete]
+// CHECK:STDOUT:   %.a21: %.c5d = cpp_overload_set_value @<null name> [concrete]
 // CHECK:STDOUT:   %int_11: Core.IntLiteral = int_value 11 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = <error>
+// CHECK:STDOUT:     .foo = %.a21
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.a21: %.c5d = cpp_overload_set_value @<null name> [concrete = constants.%.a21]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   %foo.ref: %.c5d = name_ref foo, imports.%.a21 [concrete = constants.%.a21]
 // CHECK:STDOUT:   %int_11: Core.IntLiteral = int_value 11 [concrete = constants.%int_11]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -88,21 +123,24 @@ fn F() {
 // CHECK:STDOUT: --- fail_todo_import_unsupported_primitive_type_among_params.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.c5d: type = cpp_overload_set_type @<null name> [concrete]
+// CHECK:STDOUT:   %.a21: %.c5d = cpp_overload_set_value @<null name> [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_20: Core.IntLiteral = int_value 20 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .foo = <error>
+// CHECK:STDOUT:     .foo = %.a21
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.a21: %.c5d = cpp_overload_set_value @<null name> [concrete = constants.%.a21]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
+// CHECK:STDOUT:   %foo.ref: %.c5d = name_ref foo, imports.%.a21 [concrete = constants.%.a21]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_20: Core.IntLiteral = int_value 20 [concrete = constants.%int_20]
 // CHECK:STDOUT:   <elided>

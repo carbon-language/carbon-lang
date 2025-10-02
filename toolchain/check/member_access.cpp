@@ -45,12 +45,45 @@ static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
   CARBON_FATAL("Unexpected value {0} in class element name", element_inst);
 }
 
-// Returns whether `function_id` is an instance method, that is, whether it has
-// an implicit `self` parameter.
+// Returns whether `function_id` is an instance method: in other words, whether
+// it has an implicit `self` parameter.
 static auto IsInstanceMethod(const SemIR::File& sem_ir,
                              SemIR::FunctionId function_id) -> bool {
   const auto& function = sem_ir.functions().Get(function_id);
   return function.self_param_id.has_value();
+}
+
+// For callee functions which are instance methods, returns the `self_id` (which
+// may be `None`). This may be an instance method either because it's a Carbon
+// instance method or because it's a C++ overload set that might contain an
+// instance method.
+static auto GetSelfIfInstanceMethod(const SemIR::File& sem_ir,
+                                    const SemIR::Callee& callee)
+    -> std::optional<SemIR::InstId> {
+  CARBON_KIND_SWITCH(callee) {
+    case CARBON_KIND(SemIR::CalleeFunction fn): {
+      if (IsInstanceMethod(sem_ir, fn.function_id)) {
+        return fn.self_id;
+      }
+      return std::nullopt;
+    }
+    case CARBON_KIND(SemIR::CalleeCppOverloadSet overload): {
+      // For now, treat all C++ overload sets as potentially containing instance
+      // methods. Overload resolution will handle the case where we actually
+      // found a static method.
+      // TODO: Consider returning `None` if there are no non-instance methods
+      // in the overload set. This would cause us to reject
+      // `instance.(Class.StaticMethod)()` like we do in pure Carbon code.
+      return overload.self_id;
+    }
+
+    case CARBON_KIND(SemIR::CalleeError _): {
+      return std::nullopt;
+    }
+    case CARBON_KIND(SemIR::CalleeNonFunction _): {
+      return std::nullopt;
+    }
+  }
 }
 
 // Return whether `type_id`, the type of an associated entity, is for an
@@ -63,10 +96,8 @@ static auto IsInstanceType(Context& context, SemIR::TypeId type_id) -> bool {
   return false;
 }
 
-// Returns the highest allowed access. For example, if this returns `Protected`
-// then only `Public` and `Protected` accesses are allowed--not `Private`.
-static auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
-                                    SemIR::ConstantId name_scope_const_id)
+auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
+                             SemIR::ConstantId name_scope_const_id)
     -> SemIR::AccessKind {
   SemIR::ScopeLookupResult lookup_result =
       LookupUnqualifiedName(context, loc_id, SemIR::NameId::SelfType,
@@ -300,45 +331,19 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
   if (auto assoc_type =
           context.types().TryGetAs<SemIR::AssociatedEntityType>(type_id)) {
     if (lookup_in_type_of_base) {
-      SemIR::TypeId base_type_id = context.insts().Get(base_id).type_id();
-      if (auto facet_access_type =
-              context.types().TryGetAs<SemIR::FacetAccessType>(base_type_id)) {
-        // Move from the type of a symbolic facet value up in typish-ness to its
-        // FacetType to find the type to work with.
-        base_id = facet_access_type->facet_value_inst_id;
-        base_type_id = context.insts().Get(base_id).type_id();
+      auto base_type_id = context.insts().Get(base_id).type_id();
+
+      // When performing access `T.F` on a facet value `T`, convert the facet
+      // value `T` itself to a type (`T as type`) to look inside the facet type
+      // for a witness. This makes the lookup equivalent to `x.F` where the type
+      // of `x` is a facet value `T`.
+      if (context.types().Is<SemIR::FacetType>(base_type_id)) {
+        base_type_id = ExprAsType(context, loc_id, base_id).type_id;
       }
 
-      if (auto facet_type =
-              context.types().TryGetAs<SemIR::FacetType>(base_type_id)) {
-        // Handles `T.F` when `T` is a non-type facet.
-        auto base_as_type = ExprAsType(context, loc_id, base_id);
-
-        auto assoc_interface = assoc_type->GetSpecificInterface();
-
-        // Witness that `T` implements the `assoc_interface`.
-        auto lookup_result = LookupImplWitness(
-            context, loc_id,
-            context.constant_values().Get(base_as_type.inst_id),
-            EvalOrAddInst(
-                context, loc_id,
-                FacetTypeFromInterface(context, assoc_interface.interface_id,
-                                       assoc_interface.specific_id)));
-        CARBON_CHECK(lookup_result.has_value());
-        auto witness_inst_id =
-            GetWitnessFromSingleImplLookupResult(context, lookup_result);
-
-        member_id = AccessMemberOfImplWitness(
-            context, loc_id, base_as_type.type_id, witness_inst_id,
-            assoc_interface.specific_id, member_id);
-      } else {
-        // Handles `x.F` if `x` is of type `class C` that extends an interface
-        // containing `F`.
-        SemIR::ConstantId constant_id =
-            context.types().GetConstantId(base_type_id);
-        member_id = PerformImplLookup(context, loc_id, constant_id, *assoc_type,
-                                      member_id);
-      }
+      member_id = PerformImplLookup(context, loc_id,
+                                    context.types().GetConstantId(base_type_id),
+                                    *assoc_type, member_id);
     } else if (ScopeNeedsImplLookup(context, name_scope_const_id)) {
       // Handles `T.F` where `T` is a type extending an interface containing
       // `F`.
@@ -371,11 +376,10 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
                                    SemIR::InstId base_id,
                                    SemIR::InstId member_id) -> SemIR::InstId {
   // If the member is a function, check whether it's an instance method.
-  if (auto callee = SemIR::GetCalleeFunction(context.sem_ir(), member_id);
-      callee.function_id.has_value()) {
-    if (!IsInstanceMethod(context.sem_ir(), callee.function_id) ||
-        callee.self_id.has_value()) {
-      // Found a static member function or an already-bound method.
+  if (auto self_id = GetSelfIfInstanceMethod(
+          context.sem_ir(), SemIR::GetCallee(context.sem_ir(), member_id))) {
+    if (self_id->has_value()) {
+      // Found an already-bound method.
       return member_id;
     }
 

@@ -132,17 +132,11 @@ using EmptyDecl =
 using IdentifierNameBeforeParams =
     LeafNode<NodeKind::IdentifierNameBeforeParams, Lex::IdentifierTokenIndex,
              NodeCategory::MemberName | NodeCategory::NonExprName>;
-using KeywordNameBeforeParams =
-    LeafNode<NodeKind::KeywordNameBeforeParams, Lex::TokenIndex,
-             NodeCategory::MemberName | NodeCategory::NonExprName>;
 
 // A name in a non-expression context, such as a declaration, that is known
 // to not be followed by parameters.
 using IdentifierNameNotBeforeParams =
     LeafNode<NodeKind::IdentifierNameNotBeforeParams, Lex::IdentifierTokenIndex,
-             NodeCategory::MemberName | NodeCategory::NonExprName>;
-using KeywordNameNotBeforeParams =
-    LeafNode<NodeKind::KeywordNameNotBeforeParams, Lex::TokenIndex,
              NodeCategory::MemberName | NodeCategory::NonExprName>;
 
 // A name in an expression context.
@@ -184,15 +178,6 @@ struct IdentifierNameQualifierWithParams {
   std::optional<ExplicitParamListId> params;
   Lex::PeriodTokenIndex token;
 };
-struct KeywordNameQualifierWithParams {
-  static constexpr auto Kind = NodeKind::KeywordNameQualifierWithParams.Define(
-      {.bracketed_by = KeywordNameBeforeParams::Kind});
-
-  KeywordNameBeforeParamsId name;
-  std::optional<ImplicitParamListId> implicit_params;
-  std::optional<ExplicitParamListId> params;
-  Lex::PeriodTokenIndex token;
-};
 
 // A name qualifier without parameters, such as `A.`.
 struct IdentifierNameQualifierWithoutParams {
@@ -203,21 +188,12 @@ struct IdentifierNameQualifierWithoutParams {
   IdentifierNameNotBeforeParamsId name;
   Lex::PeriodTokenIndex token;
 };
-struct KeywordNameQualifierWithoutParams {
-  static constexpr auto Kind =
-      NodeKind::KeywordNameQualifierWithoutParams.Define(
-          {.bracketed_by = KeywordNameNotBeforeParams::Kind});
-
-  KeywordNameNotBeforeParamsId name;
-  Lex::PeriodTokenIndex token;
-};
 
 // A complete name in a declaration: `A.C(T:! type).F(n: i32)`.
 // Note that this includes the parameters of the entity itself.
 struct DeclName {
-  llvm::SmallVector<NodeIdOneOf<
-      IdentifierNameQualifierWithParams, IdentifierNameQualifierWithoutParams,
-      KeywordNameQualifierWithParams, KeywordNameQualifierWithoutParams>>
+  llvm::SmallVector<NodeIdOneOf<IdentifierNameQualifierWithParams,
+                                IdentifierNameQualifierWithoutParams>>
       qualifiers;
   AnyNonExprNameId name;
   std::optional<ImplicitParamListId> implicit_params;

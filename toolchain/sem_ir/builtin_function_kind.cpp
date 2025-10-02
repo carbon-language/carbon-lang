@@ -8,6 +8,7 @@
 
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
@@ -153,8 +154,27 @@ struct AnyFloat {
   }
 };
 
+// Constraint that allows an arbitrary type.
+struct AnyType {
+  static auto Check(const File& /*sem_ir*/, ValidateState& /*state*/,
+                    TypeId /*type_id*/) -> bool {
+    return true;
+  }
+};
+
 // Constraint that requires the type to be the type type.
 using Type = BuiltinType<TypeType::TypeInstId>;
+
+// Constraint that a type supports a primitive copy. This happens if its
+// initializing representation is a copy of its value representation.
+struct PrimitiveCopyable {
+  static auto Check(const File& sem_ir, ValidateState& /*state*/,
+                    TypeId type_id) -> bool {
+    return InitRepr::ForType(sem_ir, type_id).IsCopyOfObjectRepr() &&
+           ValueRepr::ForType(sem_ir, type_id)
+               .IsCopyOfObjectRepr(sem_ir, type_id);
+  }
+};
 
 // Checks that the specified type matches the given type constraint.
 template <typename TypeConstraint>
@@ -261,10 +281,18 @@ using FloatU = TypeParam<1, AnyFloat>;
 // generic type parameter that is constrained to be a sized float type.
 using SizedFloatT = TypeParam<0, AnySizedFloat>;
 
+// Convenience name used in the builtin type signatures below for a first
+// generic type parameter that supports primitive copy.
+using PrimitiveCopyParamT = TypeParam<0, PrimitiveCopyable>;
+
 // Not a builtin function.
 constexpr BuiltinInfo None = {"", nullptr};
 
 constexpr BuiltinInfo NoOp = {"no_op", ValidateNoOpSignature};
+
+constexpr BuiltinInfo PrimitiveCopy = {
+    "primitive_copy",
+    ValidateSignature<auto(PrimitiveCopyParamT)->PrimitiveCopyParamT>};
 
 // Prints a single character.
 constexpr BuiltinInfo PrintChar = {
@@ -581,9 +609,21 @@ constexpr BuiltinInfo BoolNeq = {"bool.neq",
 constexpr BuiltinInfo TypeAnd = {"type.and",
                                  ValidateSignature<auto(Type, Type)->Type>};
 
+// The implementation of `Destroy` for a type. The argument must be checked with
+// `type.can_destroy` first.
+// TODO: The argument should be `addr self: Self*`. Consider modifying
+// `ValidateSignature` to more fully enforce the structure.
+constexpr BuiltinInfo TypeDestroy = {
+    "type.destroy", ValidateSignature<auto(PointerTo<AnyType>)->NoReturn>};
+
+// Returns a facet type that's used to determine whether a type can use
+// `type.destroy`.
+constexpr BuiltinInfo TypeCanDestroy = {"type.can_destroy",
+                                        ValidateSignature<auto()->Type>};
+
 }  // namespace BuiltinFunctionInfo
 
-CARBON_DEFINE_ENUM_CLASS_NAMES(BuiltinFunctionKind) = {
+CARBON_DEFINE_ENUM_CLASS_NAMES(BuiltinFunctionKind) {
 #define CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(Name) \
   BuiltinFunctionInfo::Name.name,
 #include "toolchain/sem_ir/builtin_function_kind.def"
@@ -691,6 +731,10 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
       return AnyLiteralTypes(sem_ir, arg_ids, return_type_id);
 
     case TypeAnd:
+      return true;
+
+    case TypeCanDestroy:
+      // Type queries must be compile-time.
       return true;
 
     default:

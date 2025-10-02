@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -153,6 +153,9 @@ extern alias C = Class;
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: type = bind_alias c, %C.decl [concrete = constants.%C]
@@ -170,6 +173,9 @@ extern alias C = Class;
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

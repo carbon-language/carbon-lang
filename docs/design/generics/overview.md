@@ -373,7 +373,7 @@ kind of parameter is defined using a different syntax: a checked parameter is
 uses a symbolic binding pattern, a template parameter uses a template binding
 pattern, and a regular parameter uses a runtime binding pattern. Likewise, it's
 allowed to pass a symbolic or template constant value to a checked or regular
-parameter. _We have decided to support passing a symbolic value to a template
+parameter. _We have decided to support passing a symbolic constant to a template
 parameter, see
 [leads issue #2153: Checked generics calling templates](https://github.com/carbon-language/carbon-lang/issues/2153),
 but incorporating it into the design is future work._

@@ -15,7 +15,7 @@
 
 namespace Carbon {
 
-CARBON_DEFINE_ENUM_CLASS_NAMES(LLVMTool) = {
+CARBON_DEFINE_ENUM_CLASS_NAMES(LLVMTool) {
 #define CARBON_LLVM_TOOL(Identifier, Name, BinName, MainFn) Name,
 #include "toolchain/base/llvm_tools.def"
 };

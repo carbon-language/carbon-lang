@@ -182,6 +182,13 @@ install_dirs = {
     "lib/carbon": [
         install_target("carbon_install.txt", "carbon_install.txt"),
         install_target(
+            "install_digest.txt",
+            ":install_digest.txt",
+            executable = False,
+            is_digest = True,
+            is_driver = True,
+        ),
+        install_target(
             "carbon-busybox",
             ":carbon-busybox",
             executable = True,
@@ -210,6 +217,7 @@ install_dirs = {
 make_install_filegroups(
     name = "install_data",
     install_dirs = install_dirs,
+    no_digest_name = "install_data.no_digest",
     no_driver_name = "install_data.no_driver",
     pkg_name = "pkg_data",
     prefix = "prefix_root",
@@ -225,6 +233,39 @@ py_test(
 manifest(
     name = "install_data_manifest.txt",
     srcs = [":install_data"],
+)
+
+cc_binary(
+    name = "make-installation-digest",
+    srcs = ["make_installation_digest.cpp"],
+    deps = [
+        ":install_paths",
+        "//common:bazel_working_dir",
+        "//common:error",
+        "//common:exe_path",
+        "//common:filesystem",
+        "//common:init_llvm",
+        "//common:map",
+        "//common:vlog",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+manifest(
+    name = "install_digest_manifest.txt",
+    srcs = [":install_data.no_digest"],
+)
+
+genrule(
+    name = "gen_digest",
+    srcs = [
+        ":install_data.no_digest",
+        "install_digest_manifest.txt",
+    ],
+    outs = [":install_digest.txt"],
+    cmd = "$(location :make-installation-digest) " +
+          "$(location install_digest_manifest.txt) $@",
+    tools = [":make-installation-digest"],
 )
 
 # A list of clang's installed builtin header files.

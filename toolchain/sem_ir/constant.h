@@ -176,6 +176,14 @@ class ConstantValueStore {
     return GetInstId(GetAttached(inst_id));
   }
 
+  // Given a type instruction, returns the unique constant instruction that is
+  // equivalent to it. Returns `None` for a non-constant instruction.
+  auto GetConstantTypeInstId(TypeInstId inst_id) const -> TypeInstId {
+    // If the source instruction has type `type`, its constant value will too,
+    // since the constant value of `type` is itself.
+    return TypeInstId::UnsafeMake(GetInstId(GetAttached(inst_id)));
+  }
+
   // Given a symbolic constant, returns the unattached form of that constant.
   // For any other constant ID, returns the ID unchanged.
   auto GetUnattachedConstant(ConstantId const_id) const -> ConstantId {
@@ -267,8 +275,7 @@ class ConstantValueStore {
 // the eval block that computes the constant value in each specific.
 //
 // Returns InstId::None if the ConstantId is None or NotConstant.
-auto GetInstWithConstantValue(const SemIR::File& file,
-                              SemIR::ConstantId const_id) -> SemIR::InstId;
+auto GetInstWithConstantValue(const File& file, ConstantId const_id) -> InstId;
 
 // Provides storage for instructions representing deduplicated global constants.
 class ConstantStore {

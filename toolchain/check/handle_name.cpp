@@ -140,38 +140,6 @@ auto HandleParseNode(Context& context, Parse::IdentifierNameExprId node_id)
   return true;
 }
 
-// Returns the `NameId` for a keyword node.
-static auto GetKeywordAsNameId(
-    Context& context, Parse::NodeIdOneOf<Parse::KeywordNameNotBeforeParamsId,
-                                         Parse::KeywordNameBeforeParamsId>
-                          node_id) -> SemIR::NameId {
-  auto token = context.parse_tree().node_token(node_id);
-  switch (auto token_kind = context.tokens().GetKind(token)) {
-    case Lex::TokenKind::Destroy:
-      return SemIR::NameId::Destroy;
-    default:
-      CARBON_FATAL("Unexpected token kind: {0}", token_kind);
-  }
-}
-
-auto HandleParseNode(Context& context,
-                     Parse::KeywordNameNotBeforeParamsId node_id) -> bool {
-  // The parent is responsible for binding the name.
-  context.node_stack().Push(node_id, GetKeywordAsNameId(context, node_id));
-  return true;
-}
-
-auto HandleParseNode(Context& context, Parse::KeywordNameBeforeParamsId node_id)
-    -> bool {
-  // Push a pattern block stack entry to handle the parameter pattern.
-  context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushFullPattern(
-      FullPatternStack::Kind::ImplicitParamList);
-  // The parent is responsible for binding the name.
-  context.node_stack().Push(node_id, GetKeywordAsNameId(context, node_id));
-  return true;
-}
-
 auto HandleParseNode(Context& context, Parse::BaseNameId node_id) -> bool {
   context.node_stack().Push(node_id, SemIR::NameId::Base);
   return true;
@@ -215,18 +183,6 @@ auto HandleParseNode(Context& context,
 
 auto HandleParseNode(Context& context,
                      Parse::IdentifierNameQualifierWithoutParamsId /*node_id*/)
-    -> bool {
-  return ApplyNameQualifier(context);
-}
-
-auto HandleParseNode(Context& context,
-                     Parse::KeywordNameQualifierWithParamsId /*node_id*/)
-    -> bool {
-  return ApplyNameQualifier(context);
-}
-
-auto HandleParseNode(Context& context,
-                     Parse::KeywordNameQualifierWithoutParamsId /*node_id*/)
     -> bool {
   return ApplyNameQualifier(context);
 }

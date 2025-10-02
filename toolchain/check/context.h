@@ -58,8 +58,7 @@ class Context {
   explicit Context(DiagnosticEmitterBase* emitter,
                    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
                    SemIR::File* sem_ir, int imported_ir_count,
-                   int total_ir_count, bool gen_implicit_type_impls,
-                   llvm::raw_ostream* vlog_stream);
+                   int total_ir_count, llvm::raw_ostream* vlog_stream);
 
   // Marks an implementation TODO. Always returns false.
   auto TODO(SemIR::LocId loc_id, std::string label) -> bool;
@@ -92,8 +91,6 @@ class Context {
   auto tokens() const -> const Lex::TokenizedBuffer& {
     return parse_tree().tokens();
   }
-
-  auto gen_implicit_type_impls() -> bool { return gen_implicit_type_impls_; }
 
   auto vlog_stream() -> llvm::raw_ostream* { return vlog_stream_; }
 
@@ -155,6 +152,11 @@ class Context {
   auto import_ir_constant_values()
       -> llvm::SmallVector<SemIR::ConstantValueStore, 0>& {
     return import_ir_constant_values_;
+  }
+
+  auto cpp_carbon_file_locations()
+      -> llvm::SmallVector<clang::SourceLocation>& {
+    return cpp_carbon_file_locations_;
   }
 
   auto definitions_required_by_decl() -> llvm::SmallVector<SemIR::InstId>& {
@@ -252,6 +254,9 @@ class Context {
   auto entity_names() -> SemIR::EntityNameStore& {
     return sem_ir().entity_names();
   }
+  auto cpp_overload_sets() -> SemIR::CppOverloadSetStore& {
+    return sem_ir().cpp_overload_sets();
+  }
   auto functions() -> SemIR::FunctionStore& { return sem_ir().functions(); }
   auto classes() -> SemIR::ClassStore& { return sem_ir().classes(); }
   auto vtables() -> SemIR::VtableStore& { return sem_ir().vtables(); }
@@ -278,6 +283,12 @@ class Context {
   auto ast_context() -> clang::ASTContext& {
     return sem_ir().clang_ast_unit()->getASTContext();
   }
+  auto clang_sema() -> clang::Sema& {
+    return sem_ir().clang_ast_unit()->getSema();
+  }
+  auto clang_decls() -> SemIR::ClangDeclStore& {
+    return sem_ir().clang_decls();
+  }
   auto names() -> SemIR::NameStoreWrapper { return sem_ir().names(); }
   auto name_scopes() -> SemIR::NameScopeStore& {
     return sem_ir().name_scopes();
@@ -291,7 +302,7 @@ class Context {
   auto types() -> SemIR::TypeStore& { return sem_ir().types(); }
   // Instructions should be added with `AddInst` or `AddInstInNoBlock` from
   // `inst.h`. This is `const` to prevent accidental misuse.
-  auto insts() -> const SemIR::InstStore& { return sem_ir().insts(); }
+  auto insts() const -> const SemIR::InstStore& { return sem_ir().insts(); }
   auto constant_values() -> SemIR::ConstantValueStore& {
     return sem_ir().constant_values();
   }
@@ -315,10 +326,6 @@ class Context {
   SemIR::File* sem_ir_;
   // The total number of files.
   int total_ir_count_;
-
-  // Whether to generate standard `impl`s for types, such as `Core.Destroy`; see
-  // `CheckParseTreesOptions`.
-  bool gen_implicit_type_impls_;
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;
@@ -380,6 +387,10 @@ class Context {
   //
   // Inline 0 elements because it's expected to require heap allocation.
   llvm::SmallVector<SemIR::ConstantValueStore, 0> import_ir_constant_values_;
+
+  // Per-Carbon-file start locations for corresponding Clang source buffers.
+  // Owned and managed by code in cpp/location.cpp.
+  llvm::SmallVector<clang::SourceLocation> cpp_carbon_file_locations_;
 
   // Declaration instructions of entities that should have definitions by the
   // end of the current source file.

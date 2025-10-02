@@ -10,6 +10,14 @@
 
 namespace Carbon::Check {
 
+// Checks and builds SemIR for a call to `callee_id` with arguments `args_id`,
+// where the callee is a function.
+auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
+                           SemIR::InstId callee_id,
+                           const SemIR::CalleeFunction& callee_function,
+                           llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> SemIR::InstId;
+
 // Checks and builds SemIR for a call to `callee_id` with arguments `args_id`.
 auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
                  llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId;

@@ -111,8 +111,6 @@ fn Var() {
 // CHECK:STDOUT:   ret i8 %.loc6_40.2, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i8 @_Z8ReturnU8v()
-// CHECK:STDOUT:
 // CHECK:STDOUT: define i16 @_CGetU16.Main() !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc7_43.1.temp = alloca i16, align 2, !dbg !13
@@ -121,8 +119,6 @@ fn Var() {
 // CHECK:STDOUT:   %.loc7_43.2 = load i16, ptr %.loc7_43.1.temp, align 2, !dbg !13
 // CHECK:STDOUT:   ret i16 %.loc7_43.2, !dbg !14
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare i16 @_Z9ReturnU16v()
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CGetU32.Main() !dbg !15 {
 // CHECK:STDOUT: entry:
@@ -149,8 +145,6 @@ fn Var() {
 // CHECK:STDOUT:   ret i8 %.loc11_40.2, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i8 @_Z8ReturnI8v()
-// CHECK:STDOUT:
 // CHECK:STDOUT: define i16 @_CGetI16.Main() !dbg !24 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc12_43.1.temp = alloca i16, align 2, !dbg !25
@@ -159,8 +153,6 @@ fn Var() {
 // CHECK:STDOUT:   %.loc12_43.2 = load i16, ptr %.loc12_43.1.temp, align 2, !dbg !25
 // CHECK:STDOUT:   ret i16 %.loc12_43.2, !dbg !26
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare i16 @_Z9ReturnI16v()
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CGetI32.Main() !dbg !27 {
 // CHECK:STDOUT: entry:
@@ -278,6 +270,8 @@ fn Var() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare zeroext i8 @_Z8ReturnU8v() #2
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
 // CHECK:STDOUT: define dso_local void @_Z9ReturnU16v.carbon_thunk(ptr %return) #1 {
 // CHECK:STDOUT: entry:
@@ -288,6 +282,8 @@ fn Var() {
 // CHECK:STDOUT:   store i16 %call, ptr %0, align 2
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare zeroext i16 @_Z9ReturnU16v() #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
 // CHECK:STDOUT: define dso_local void @_Z8ReturnI8v.carbon_thunk(ptr %return) #1 {
@@ -300,6 +296,8 @@ fn Var() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare signext i8 @_Z8ReturnI8v() #2
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
 // CHECK:STDOUT: define dso_local void @_Z9ReturnI16v.carbon_thunk(ptr %return) #1 {
 // CHECK:STDOUT: entry:
@@ -311,11 +309,14 @@ fn Var() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare signext i16 @_Z9ReturnI16v() #2
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -404,8 +405,6 @@ fn Var() {
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z4Makev(ptr sret([16 x i8]))
-// CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CLet.Main() !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_27.1.temp = alloca [16 x i8], align 1, !dbg !13
@@ -435,11 +434,14 @@ fn Var() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Z4Makev(ptr dead_on_unwind writable sret(%struct.X) align 8) #2
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}

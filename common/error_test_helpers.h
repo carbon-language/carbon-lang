@@ -95,6 +95,7 @@ class IsSuccessMatcher {
       : matcher_(std::move(matcher)) {}
 
   template <typename T, typename ErrorT>
+  explicit(false)
   // NOLINTNEXTLINE(google-explicit-constructor): Required for matcher APIs.
   operator ::testing::Matcher<const ErrorOr<T, ErrorT>&>() const {
     return ::testing::Matcher<const ErrorOr<T, ErrorT>&>(

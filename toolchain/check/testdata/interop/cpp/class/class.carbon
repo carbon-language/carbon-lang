@@ -337,6 +337,8 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
+// CHECK:STDOUT:   %.c07: type = cpp_overload_set_type @<null name> [concrete]
+// CHECK:STDOUT:   %.617: %.c07 = cpp_overload_set_value @<null name> [concrete]
 // CHECK:STDOUT:   %Bar.foo.type: type = fn_type @Bar.foo [concrete]
 // CHECK:STDOUT:   %Bar.foo: %Bar.foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -347,6 +349,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
+// CHECK:STDOUT:   %.617: %.c07 = cpp_overload_set_value @<null name> [concrete = constants.%.617]
 // CHECK:STDOUT:   %Bar.foo.decl: %Bar.foo.type = fn_decl @Bar.foo [concrete = constants.%Bar.foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -354,8 +357,8 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
-// CHECK:STDOUT:   %foo.ref: %Bar.foo.type = name_ref foo, imports.%Bar.foo.decl [concrete = constants.%Bar.foo]
-// CHECK:STDOUT:   %Bar.foo.call: init %empty_tuple.type = call %foo.ref()
+// CHECK:STDOUT:   %foo.ref: %.c07 = name_ref foo, imports.%.617 [concrete = constants.%.617]
+// CHECK:STDOUT:   %Bar.foo.call: init %empty_tuple.type = call imports.%Bar.foo.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -489,17 +492,12 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Bar [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness @Derived.%Destroy.impl_witness_table [concrete]
-// CHECK:STDOUT:   %ptr.404: type = ptr_type %Derived [concrete]
-// CHECK:STDOUT:   %pattern_type.605: type = pattern_type %ptr.404 [concrete]
-// CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.type: type = fn_type @Derived.as.Destroy.impl.Op [concrete]
-// CHECK:STDOUT:   %Derived.as.Destroy.impl.Op: %Derived.as.Destroy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.base.36d: type = struct_type {.base: %Bar} [concrete]
 // CHECK:STDOUT:   %complete_type.fff: <witness> = complete_type_witness %struct_type.base.36d [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.c07: type = cpp_overload_set_type @<null name> [concrete]
+// CHECK:STDOUT:   %.617: %.c07 = cpp_overload_set_value @<null name> [concrete]
 // CHECK:STDOUT:   %Bar.foo.type: type = fn_type @Bar.foo [concrete]
 // CHECK:STDOUT:   %Bar.foo: %Bar.foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -510,6 +508,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
+// CHECK:STDOUT:   %.617: %.c07 = cpp_overload_set_value @<null name> [concrete = constants.%.617]
 // CHECK:STDOUT:   %Bar.foo.decl: %Bar.foo.type = fn_decl @Bar.foo [concrete = constants.%Bar.foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -518,30 +517,10 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @Derived.as.Destroy.impl: @Derived.%Self.ref as constants.%Destroy.type {
-// CHECK:STDOUT:   %Derived.as.Destroy.impl.Op.decl: %Derived.as.Destroy.impl.Op.type = fn_decl @Derived.as.Destroy.impl.Op [concrete = constants.%Derived.as.Destroy.impl.Op] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.605 = binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.605 = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc7: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.404 = value_param call_param0
-// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
-// CHECK:STDOUT:     %self: %ptr.404 = bind_name self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Op = %Derived.as.Destroy.impl.Op.decl
-// CHECK:STDOUT:   witness = @Derived.%Destroy.impl_witness
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:   %.loc8: %Derived.elem = base_decl %Bar.ref, element0 [concrete]
-// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
-// CHECK:STDOUT:   impl_decl @Derived.as.Destroy.impl [concrete] {} {}
-// CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (@Derived.as.Destroy.impl.%Derived.as.Destroy.impl.Op.decl), @Derived.as.Destroy.impl [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness %Destroy.impl_witness_table [concrete = constants.%Destroy.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.36d [concrete = constants.%complete_type.fff]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -553,13 +532,11 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   extend %Bar.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Derived.as.Destroy.impl.Op(%self.param: %ptr.404) = "no_op";
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %foo.ref: %Bar.foo.type = name_ref foo, imports.%Bar.foo.decl [concrete = constants.%Bar.foo]
-// CHECK:STDOUT:   %Bar.foo.call: init %empty_tuple.type = call %foo.ref()
+// CHECK:STDOUT:   %foo.ref: %.c07 = name_ref foo, imports.%.617 [concrete = constants.%.617]
+// CHECK:STDOUT:   %Bar.foo.call: init %empty_tuple.type = call imports.%Bar.foo.decl()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

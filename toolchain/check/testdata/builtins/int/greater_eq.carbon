@@ -88,8 +88,6 @@ fn F() {
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %GreaterEq.call: init bool = call %GreaterEq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc20_25.1: bool = value_of_initializer %GreaterEq.call
-// CHECK:STDOUT:   %.loc20_25.2: bool = converted %GreaterEq.call, %.loc20_25.1
-// CHECK:STDOUT:   return %.loc20_25.2
+// CHECK:STDOUT:   return %GreaterEq.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

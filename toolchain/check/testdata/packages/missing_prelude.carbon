@@ -160,7 +160,8 @@ var n: {} = i32;
 // CHECK:STDOUT: --- prelude_fake_int.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic]
@@ -184,10 +185,10 @@ var n: {} = i32;
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_29.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc4_29.2: type = converted %.loc4_29.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.1: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc4_8.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_8.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc4_22: type = splice_block %T.ref [symbolic = %T.loc4_8.1 (constants.%T)] {
-// CHECK:STDOUT:       %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.2: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc4_8.2 [symbolic = %T.loc4_8.1 (constants.%T)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc4_18.2: @Int.%T.loc4_8.1 (%T) = bind_symbolic_name N, 1 [symbolic = %N.loc4_18.1 (constants.%N)]
@@ -205,10 +206,10 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %empty_struct_type {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc4_41: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc4_42: %empty_struct_type = converted %.loc4_41, %empty_struct [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     return %.loc4_42
+// CHECK:STDOUT:     %.loc4_41.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc4_41.2: init %empty_struct_type = struct_init () to %return [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc4_42: init %empty_struct_type = converted %.loc4_41.1, %.loc4_41.2 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     return %.loc4_42 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -239,8 +240,8 @@ var n: {} = i32;
 // CHECK:STDOUT:     import Core//prelude_fake_int
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude_fake_int, Int, loaded [concrete = constants.%Int]
-// CHECK:STDOUT:   %Core.import_ref.5ab: type = import_ref Core//prelude_fake_int, loc4_8, loaded [symbolic = @Int.%T (constants.%T)]
-// CHECK:STDOUT:   %Core.import_ref.34c: @Int.%T (%T) = import_ref Core//prelude_fake_int, loc4_18, loaded [symbolic = @Int.%N (constants.%N)]
+// CHECK:STDOUT:   %Core.import_ref.5ab: type = import_ref Core//prelude_fake_int, loc{{\d+_\d+}}, loaded [symbolic = @Int.%T (constants.%T)]
+// CHECK:STDOUT:   %Core.import_ref.34c: @Int.%T (%T) = import_ref Core//prelude_fake_int, loc{{\d+_\d+}}, loaded [symbolic = @Int.%N (constants.%N)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -297,7 +298,8 @@ var n: {} = i32;
 // CHECK:STDOUT: --- prelude_use_in_prelude.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.Self: type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %N: %T = bind_symbolic_name N, 1 [symbolic]
@@ -325,10 +327,10 @@ var n: {} = i32;
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_29.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc8_29.2: type = converted %.loc8_29.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.Self.1: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.1: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc8_8.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_8.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc8_22: type = splice_block %T.ref [symbolic = %T.loc8_8.1 (constants.%T)] {
-// CHECK:STDOUT:       %.Self.2: type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.2: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc8_8.2 [symbolic = %T.loc8_8.1 (constants.%T)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc8_18.2: @Int.%T.loc8_8.1 (%T) = bind_symbolic_name N, 1 [symbolic = %N.loc8_18.1 (constants.%N)]
@@ -356,10 +358,10 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %empty_tuple.type {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc8_41: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:     %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc8_42: %empty_tuple.type = converted %.loc8_41, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     return %.loc8_42
+// CHECK:STDOUT:     %.loc8_41.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc8_41.2: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc8_42: init %empty_tuple.type = converted %.loc8_41.1, %.loc8_41.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     return %.loc8_42 to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -62,6 +62,8 @@ class ClangRunnerTest : public ::testing::Test {
  public:
   InstallPaths install_paths_ =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
+  Runtimes::Cache runtimes_cache_ =
+      *Runtimes::Cache::MakeSystem(install_paths_);
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> vfs_ =
       llvm::vfs::getRealFileSystem();
 };
@@ -72,9 +74,8 @@ TEST_F(ClangRunnerTest, Version) {
 
   std::string out;
   std::string err;
-  EXPECT_TRUE(Testing::CallWithCapturedOutput(out, err, [&] {
-    return runner.RunTargetIndependentCommand({"--version"});
-  }));
+  EXPECT_TRUE(Testing::CallWithCapturedOutput(
+      out, err, [&] { return runner.RunWithNoRuntimes({"--version"}); }));
   // The arguments to Clang should be part of the verbose log.
   EXPECT_THAT(test_os.TakeStr(), HasSubstr("--version"));
 
@@ -105,7 +106,7 @@ TEST_F(ClangRunnerTest, DashC) {
   EXPECT_TRUE(Testing::CallWithCapturedOutput(
       out, err,
       [&] {
-        return runner.RunTargetIndependentCommand(
+        return runner.RunWithNoRuntimes(
             {"-c", test_file.string(), "-o", test_output.string()});
       }))
       << "Verbose output from runner:\n"
@@ -134,7 +135,7 @@ TEST_F(ClangRunnerTest, BuitinHeaders) {
   EXPECT_TRUE(Testing::CallWithCapturedOutput(
       out, err,
       [&] {
-        return runner.RunTargetIndependentCommand(
+        return runner.RunWithNoRuntimes(
             {"-c", test_file.string(), "-o", test_output.string()});
       }))
       << "Verbose output from runner:\n"
@@ -161,7 +162,7 @@ TEST_F(ClangRunnerTest, CompileMultipleFiles) {
     EXPECT_TRUE(Testing::CallWithCapturedOutput(
         out, err,
         [&] {
-          return runner.RunTargetIndependentCommand(
+          return runner.RunWithNoRuntimes(
               {"-c", file.string(), "-o", output.string()});
         }))
         << "Verbose output from runner:\n"
@@ -178,20 +179,21 @@ TEST_F(ClangRunnerTest, CompileMultipleFiles) {
 }
 
 TEST_F(ClangRunnerTest, BuildResourceDir) {
-  ClangRunner runner(&install_paths_, vfs_, &llvm::errs(),
-                     /*build_runtimes_on_demand=*/true);
+  ClangRunner runner(&install_paths_, vfs_, &llvm::errs());
 
   // Note that we can't test arbitrary targets here as we need to be able to
   // compile the builtin functions for the target. We use the default target as
   // the most likely to pass.
   std::string target = llvm::sys::getDefaultTargetTriple();
   llvm::Triple target_triple(target);
+  Runtimes::Cache::Features features = {.target = target};
+  auto runtimes = *runtimes_cache_.Lookup(features);
   auto tmp_dir = *Filesystem::MakeTmpDir();
-  std::filesystem::path resource_dir_path = tmp_dir.abs_path() / "clang";
-
-  auto build_result = runner.BuildTargetResourceDir(target, resource_dir_path,
-                                                    tmp_dir.abs_path());
+  llvm::DefaultThreadPool threads(llvm::optimal_concurrency());
+  auto build_result = runner.BuildTargetResourceDir(
+      features, runtimes, tmp_dir.abs_path(), threads);
   ASSERT_TRUE(build_result.ok()) << build_result.error();
+  std::filesystem::path resource_dir_path = std::move(*build_result);
 
   // For Linux we can directly check the CRT begin/end object files.
   if (target_triple.isOSLinux()) {
@@ -277,7 +279,7 @@ TEST_F(ClangRunnerTest, LinkCommandEcho) {
         // we're just getting the echo-ed output back. For this to actually
         // link, we'd need to have the target-dependent resources, but those are
         // expensive to build so we only want to test them once (above).
-        return runner.RunTargetIndependentCommand(
+        return runner.RunWithNoRuntimes(
             {"-###", "-o", "binary", foo_file.string(), bar_file.string()});
       }))
       << "Verbose output from runner:\n"

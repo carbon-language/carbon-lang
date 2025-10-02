@@ -7,10 +7,12 @@
 
 #include <dirent.h>
 #include <fcntl.h>
+#include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <chrono>
 #include <concepts>
 #include <filesystem>
 #include <iterator>
@@ -189,6 +191,10 @@ enum class FileType : ModeType {
   UnixMask = S_IFMT,
 };
 
+using Clock = std::chrono::file_clock;
+using Duration = std::chrono::duration<__int128, std::nano>;
+using TimePoint = std::chrono::time_point<Clock, Duration>;
+
 // Enumerates the different open access modes available.
 //
 // These are largely used to parameterize types in order to constrain which API
@@ -227,6 +233,15 @@ consteval auto Cwd() -> Dir;
 // the caller's responsibility to clean up this directory.
 auto MakeTmpDir() -> ErrorOr<RemovingDir, Error>;
 
+// Creates a temporary directory and returns a removing directory handle to it.
+//
+// The path of the temporary directory will use the provided prefix, and will
+// not add any additional directory separators. Every component but the last in
+// the prefix path must exist and be a directory, the last directory must be
+// writable.
+auto MakeTmpDirWithPrefix(std::filesystem::path prefix)
+    -> ErrorOr<RemovingDir, Error>;
+
 // Class modeling a file (or directory) status information structure.
 //
 // This provides a largely-portable model that callers can use, as well as a few
@@ -250,6 +265,18 @@ class FileStatus {
   // the `ModeType` documentation for how to interpret the result.
   auto permissions() const -> ModeType { return stat_buf_.st_mode & 0777; }
 
+  auto mtime() const -> TimePoint {
+    // Linux, FreeBSD, and OpenBSD all use `st_mtim`, but macOS uses a different
+    // spelling.
+#if __APPLE__
+    timespec ts = stat_buf_.st_mtimespec;
+#else
+    timespec ts = stat_buf_.st_mtim;
+#endif
+    TimePoint t(std::chrono::seconds(ts.tv_sec));
+    return t + std::chrono::nanoseconds(ts.tv_nsec);
+  }
+
   // Non-portable APIs only available on Unix-like systems. See the
   // documentation of the Unix `stat` structure fields they expose for their
   // meaning.
@@ -263,6 +290,43 @@ class FileStatus {
   FileStatus() = default;
 
   struct stat stat_buf_ = {};
+};
+
+// Models a held lock on a file or directory.
+//
+// Can model either a shared or exclusive lock with respect to the file, but the
+// held lock is unique.
+//
+// Must be released prior to the underlying file or directory being closed as it
+// contains a non-owning reference to that underlying file.
+class FileLock {
+ public:
+  enum class Kind {
+    Shared = LOCK_SH,
+    Exclusive = LOCK_EX,
+  };
+  using enum Kind;
+
+  FileLock() = default;
+  FileLock(FileLock&& arg) noexcept : fd_(std::exchange(arg.fd_, -1)) {}
+  auto operator=(FileLock&& arg) noexcept -> FileLock& {
+    Destroy();
+    fd_ = std::exchange(arg.fd_, -1);
+    return *this;
+  }
+  ~FileLock() { Destroy(); }
+
+  // Returns true if the lock is currently held.
+  auto is_locked() const -> bool { return fd_ != -1; }
+
+ private:
+  friend Internal::FileRefBase;
+
+  explicit FileLock(int fd) : fd_(fd) {}
+
+  auto Destroy() -> void;
+
+  int fd_ = -1;
 };
 
 // The base class defining the core `File` API.
@@ -283,10 +347,21 @@ class Internal::FileRefBase {
   // handle in that case. This is to support rebinding operations.
   FileRefBase() = default;
 
+  // Returns true if this refers to a valid open file, and false otherwise.
+  auto is_valid() const -> bool { return fd_ != -1; }
+
   // Reads the file status.
   //
   // Analogous to the Unix-like `fstat` call.
   auto Stat() -> ErrorOr<FileStatus, FdError>;
+
+  // Updates the access and modification times for the open file.
+  //
+  // If no explicit `time_point` is provided, sets both times to the current
+  // time. If an explicit `time_point` is provided, the times are updated to
+  // that time.
+  auto UpdateTimes(std::optional<TimePoint> time_point = std::nullopt)
+      -> ErrorOr<Success, FdError>;
 
   // Methods to seek the current file position, with various semantics for the
   // offset.
@@ -294,6 +369,13 @@ class Internal::FileRefBase {
   auto SeekFromBeginning(int64_t delta_from_beginning)
       -> ErrorOr<int64_t, FdError>;
   auto SeekFromEnd(int64_t delta_from_end) -> ErrorOr<int64_t, FdError>;
+
+  // Truncates or extends the size of the file to the provided size.
+  //
+  // If the new size is smaller, all bytes beyond this size will be unavailable.
+  // If the new size is larger, the file will be zero-filled to the new size.
+  // The position of reads and writes does not change.
+  auto Truncate(int64_t new_size) -> ErrorOr<Success, FdError>;
 
   // Reads as much data as is available and fits into the provided buffer.
   //
@@ -330,21 +412,50 @@ class Internal::FileRefBase {
   // which remains owned by the owning `File` object.
   auto WriteStream() -> llvm::raw_fd_ostream;
 
-  // Reads the file until EOF into the returned string.
+  // Reads the file from its start until EOF into the returned string.
   //
   // This method will retry any recoverable errors and work to completely read
-  // the file contents up to first encountering EOF.
+  // the file contents from its beginning up to first encountering EOF. This
+  // will seek the file to ensure it starts at the beginning regardless of
+  // previous read or write operations.
   //
   // Any non-recoverable errors are returned to the caller.
-  auto ReadToString() -> ErrorOr<std::string, FdError>;
+  auto ReadFileToString() -> ErrorOr<std::string, FdError>;
 
-  // Writes a string into the file starting from the current position.
+  // Writes the provided string to the file from the start and truncating to the
+  // written size.
   //
   // This method will retry any recoverable errors and work to completely write
-  // the provided content into the file.
+  // the provided content into the file from its beginning, and truncate the
+  // file's size to the provided string size. Essentially, this function
+  // replaces the file contents with the string's contents.
   //
   // Any non-recoverable errors are returned to the caller.
-  auto WriteFromString(llvm::StringRef str) -> ErrorOr<Success, FdError>;
+  auto WriteFileFromString(llvm::StringRef str) -> ErrorOr<Success, FdError>;
+
+  // Attempt to acquire an advisory shared lock on this directory.
+  //
+  // This is always done as a non-blocking operation, as blocking on advisory
+  // locks without a deadline can easily result in build systems essentially
+  // "fork-bombing" a machine. However, a `deadline` duration can be provided
+  // and this routine will block and attempt to acquire the requested lock for a
+  // bounded amount of time approximately based on that duration. Further, a
+  // `poll_interval` can be provided to control how quickly the lock will be
+  // polled during that duration. There is no scaling of the poll intervals at
+  // this layer, if a back-off heuristic is desired the caller should manage the
+  // polling themselves. The goal is to allow simple cases of spurious failures
+  // to be easily handled without unbounded blocking calls. Typically, callers
+  // should use a duration that is a reasonable upper bound on the latency to
+  // begin the locked operation and a poll interval that is a reasonably low
+  // median latency to begin the operation as 1-2 polls is expected to be
+  // common. These should not be set anywhere near the cost of acquiring a file
+  // lock, and in general file locks should only be used for expensive
+  // operations where it is worth significant delays to avoid duplicate work.
+  //
+  // If the lock cannot be acquired, the most recent lock-attempt error is
+  // returned.
+  auto TryLock(FileLock::Kind kind, Duration deadline = {},
+               Duration poll_interval = {}) -> ErrorOr<FileLock, FdError>;
 
  protected:
   explicit FileRefBase(int fd) : fd_(fd) {}
@@ -417,6 +528,8 @@ class FileRef : public Internal::FileRefBase {
   // Read and Write methods that delegate to the `FileRefBase` implementations,
   // but require the relevant access. See the methods on `FileRefBase` for full
   // documentation.
+  auto Truncate(int64_t new_size) -> ErrorOr<Success, FdError>
+    requires Writeable;
   auto ReadToBuffer(llvm::MutableArrayRef<std::byte> buffer)
       -> ErrorOr<llvm::MutableArrayRef<std::byte>, FdError>
     requires Readable;
@@ -425,9 +538,9 @@ class FileRef : public Internal::FileRefBase {
     requires Writeable;
   auto WriteStream() -> llvm::raw_fd_ostream
     requires Writeable;
-  auto ReadToString() -> ErrorOr<std::string, FdError>
+  auto ReadFileToString() -> ErrorOr<std::string, FdError>
     requires Readable;
-  auto WriteFromString(llvm::StringRef str) -> ErrorOr<Success, FdError>
+  auto WriteFileFromString(llvm::StringRef str) -> ErrorOr<Success, FdError>
     requires Writeable;
 
  protected:
@@ -540,18 +653,60 @@ class DirRef {
   class Iterator;
   class Reader;
 
+  constexpr DirRef() = default;
+
+  // Returns true if this refers to a valid open directory, and false otherwise.
+  auto is_valid() const -> bool { return dfd_ != -1; }
+
   // Begin reading the entries in a directory.
   //
   // This returns a `Reader` object that can be iterated to walk over all the
   // entries in this directory. Note that the returned `Reader` owns a newly
   // allocated handle to this directory, and provides the full `DirRef` API. If
   // it isn't necessary to keep both open, the `Dir` class offers a
-  // move-qualified overload that optimizes this case.
+  // move-qualified method `TakeAndRead` that optimizes this case.
   //
   // Note that it is unspecified whether added and removed files during the
   // lifetime of the reader will be included when iterating, but otherwise
   // concurrent mutations are well defined.
-  auto Read() & -> ErrorOr<Reader, FdError>;
+  auto Read() -> ErrorOr<Reader, FdError>;
+
+  // Reads all of the entries in this directory into a vector.
+  //
+  // A helper function wrapping `Read` and walking the resulting reader's
+  // entries to produce a container.
+  //
+  // For details on errors, see the documentation of `Read` and `Reader`.
+  auto ReadEntries()
+      -> ErrorOr<llvm::SmallVector<std::filesystem::path>, FdError>;
+
+  // Reads the directory and appends entries to a container if they pass a
+  // predicate. The predicate can be null, which is treated as if it always
+  // returns true.
+  //
+  // For details on errors, see the documentation of `Read` and `Reader`.
+  auto AppendEntriesIf(
+      llvm::SmallVectorImpl<std::filesystem::path>& entries,
+      llvm::function_ref<auto(llvm::StringRef name)->bool> predicate = {})
+      -> ErrorOr<Success, FdError>;
+
+  // Reads the directory and appends entries to one of two containers if they
+  // pass a predicate.  The predicate can be null, which is treated as if it
+  // always returns true.
+  //
+  // Which container an entry is appended to depends on its kind -- directories
+  // go to the first and non-directories go to the second. This turns out to be
+  // a very common split with subdirectories often needing separate handling
+  // from other entries.
+  //
+  // For details on errors, see the documentation of `Read` and `Reader`. This
+  // may also `Stat` entries if necessary to determine whether they are
+  // directories.
+  auto AppendEntriesIf(
+      llvm::SmallVectorImpl<std::filesystem::path>& dir_entries,
+      llvm::SmallVectorImpl<std::filesystem::path>& non_dir_entries,
+      llvm::function_ref<auto(llvm::StringRef name)->bool> predicate = {})
+      -> ErrorOr<Success, FdError>;
 
   // Checks that the provided path can be accessed.
   auto Access(const std::filesystem::path& path,
@@ -574,6 +729,15 @@ class DirRef {
   // symlinks, and instead will return the status of the symlink itself.
   auto Lstat(const std::filesystem::path& path)
       -> ErrorOr<FileStatus, PathError>;
+
+  // Updates the access and modification times for the provided path.
+  //
+  // If no explicit `time_point` is provided, sets both times to the current
+  // time. If an explicit `time_point` is provided, the times are updated to
+  // that time.
+  auto UpdateTimes(const std::filesystem::path& path,
+                   std::optional<TimePoint> time_point = std::nullopt)
+      -> ErrorOr<Success, PathError>;
 
   // Reads the target string of the symlink at the provided path.
   //
@@ -682,7 +846,16 @@ class DirRef {
                            CreationOptions creation_options = CreateAlways)
       -> ErrorOr<Success, PathError>;
 
-  // Moves a file from one directory to another directory.
+  // Renames an entry from one directory to another directory, replacing any
+  // existing entry with the target path.
+  //
+  // Note that this is *not* a general purpose move! It must be possible for
+  // this operation to be performed as a metadata-only change, and so without
+  // moving any actual data. This means it will not work across devices, mounts,
+  // or filesystems. However, these restrictions make this an *atomic* rename.
+  //
+  // The most common usage is to rename an entry within a single directory, by
+  // passing `*this` as `target_dir`.
   auto Rename(const std::filesystem::path& path, DirRef target_dir,
               const std::filesystem::path& target_path)
       -> ErrorOr<Success, PathError>;
@@ -753,7 +926,6 @@ class DirRef {
   auto Rmtree(const std::filesystem::path& path) -> ErrorOr<Success, PathError>;
 
  protected:
-  constexpr DirRef() = default;
   constexpr explicit DirRef(int dfd) : dfd_(dfd) {}
 
   // Slow-path fallback when unable to read the symlink target into a small
@@ -1022,8 +1194,10 @@ class ErrnoErrorBase : public ErrorBase<ErrorT> {
   auto no_entity() const -> bool { return errnum_ == ENOENT; }
   auto not_dir() const -> bool { return errnum_ == ENOTDIR; }
   auto access_denied() const -> bool { return errnum_ == EACCES; }
+  auto would_block() const -> bool { return errnum_ == EWOULDBLOCK; }
 
-  // Specific to `Rmdir` operations, two different error values can be used.
+  // Specific to `Rmdir` and `Rename` operations that remove a directory name,
+  // two different error values can be used.
   auto not_empty() const -> bool {
     return errnum_ == ENOTEMPTY || errnum_ == EEXIST;
   }
@@ -1073,6 +1247,7 @@ class FdError : public Internal::ErrnoErrorBase<FdError> {
   auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
+  friend FileLock;
   friend Internal::FileRefBase;
   friend ReadFile;
   friend WriteFile;
@@ -1136,7 +1311,36 @@ class PathError : public Internal::ErrnoErrorBase<PathError> {
 
 // Implementation details only below.
 
+namespace Internal {
+
+inline auto DurationToTimespec(Duration d) -> timespec {
+  timespec ts = {};
+  ts.tv_sec = std::chrono::duration_cast<std::chrono::seconds>(d).count();
+  d -= std::chrono::seconds(ts.tv_sec);
+  ts.tv_nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(d).count();
+  return ts;
+}
+
+}  // namespace Internal
+
 consteval auto Cwd() -> Dir { return Dir(AT_FDCWD); }
+
+inline auto FileLock::Destroy() -> void {
+  if (fd_ == -1) {
+    // Nothing to unlock.
+    return;
+  }
+
+  // We always try to unlock in a non-blocking way as there should never be a
+  // reason to block here.
+  int result = flock(fd_, LOCK_UN | LOCK_NB);
+
+  // The only realistic error is `EBADF` that would represent a programming
+  // error the type system should prevent. We conservatively check-fail if an
+  // error occurs here.
+  CARBON_CHECK(result == 0, "{0}",
+               FdError(errno, "Unexpected error while _unlocking_ '{0}'", fd_));
+}
 
 inline auto Internal::FileRefBase::Stat() -> ErrorOr<FileStatus, FdError> {
   FileStatus status;
@@ -1144,6 +1348,24 @@ inline auto Internal::FileRefBase::Stat() -> ErrorOr<FileStatus, FdError> {
     return status;
   }
   return FdError(errno, "File::Stat on '{0}'", fd_);
+}
+
+inline auto Internal::FileRefBase::UpdateTimes(
+    std::optional<TimePoint> time_point) -> ErrorOr<Success, FdError> {
+  if (!time_point) {
+    if (futimens(fd_, nullptr) == -1) {
+      return FdError(errno, "File::UpdateTimes to now on '{0}'", fd_);
+    }
+    return Success();
+  }
+
+  timespec times[2];
+  times[0] = Internal::DurationToTimespec(time_point->time_since_epoch());
+  times[1] = times[0];
+  if (futimens(fd_, times) == -1) {
+    return FdError(errno, "File::UpdateTimes to a specific time on '{0}'", fd_);
+  }
+  return Success();
 }
 
 inline auto Internal::FileRefBase::Seek(int64_t delta)
@@ -1171,6 +1393,15 @@ inline auto Internal::FileRefBase::SeekFromEnd(int64_t delta_from_end)
     return FdError(errno, "File::SeekFromEnd on '{0}'", fd_);
   }
   return byte_offset;
+}
+
+inline auto Internal::FileRefBase::Truncate(int64_t new_size)
+    -> ErrorOr<Success, FdError> {
+  int64_t result = ftruncate(fd_, new_size);
+  if (result == -1) {
+    return FdError(errno, "File::Truncate on '{0}'", fd_);
+  }
+  return Success();
 }
 
 inline auto Internal::FileRefBase::ReadToBuffer(
@@ -1238,6 +1469,13 @@ inline auto Internal::FileRefBase::WriteableDestroy() -> void {
 }
 
 template <OpenAccess A>
+auto FileRef<A>::Truncate(int64_t new_size) -> ErrorOr<Success, FdError>
+  requires Writeable
+{
+  return FileRefBase::Truncate(new_size);
+}
+
+template <OpenAccess A>
 auto FileRef<A>::ReadToBuffer(llvm::MutableArrayRef<std::byte> buffer)
     -> ErrorOr<llvm::MutableArrayRef<std::byte>, FdError>
   requires Readable
@@ -1246,10 +1484,10 @@ auto FileRef<A>::ReadToBuffer(llvm::MutableArrayRef<std::byte> buffer)
 }
 
 template <OpenAccess A>
-auto FileRef<A>::ReadToString() -> ErrorOr<std::string, FdError>
+auto FileRef<A>::ReadFileToString() -> ErrorOr<std::string, FdError>
   requires Readable
 {
-  return FileRefBase::ReadToString();
+  return FileRefBase::ReadFileToString();
 }
 
 template <OpenAccess A>
@@ -1268,11 +1506,11 @@ auto FileRef<A>::WriteStream() -> llvm::raw_fd_ostream
 }
 
 template <OpenAccess A>
-auto FileRef<A>::WriteFromString(llvm::StringRef str)
+auto FileRef<A>::WriteFileFromString(llvm::StringRef str)
     -> ErrorOr<Success, FdError>
   requires Writeable
 {
-  return FileRefBase::WriteFromString(str);
+  return FileRefBase::WriteFileFromString(str);
 }
 
 template <OpenAccess A>
@@ -1284,7 +1522,7 @@ auto File<A>::Destroy() -> void {
   }
 }
 
-inline auto DirRef::Read() & -> ErrorOr<Reader, FdError> {
+inline auto DirRef::Read() -> ErrorOr<Reader, FdError> {
   int dup_dfd = dup(dfd_);
   if (dup_dfd == -1) {
     // There are very few plausible errors here, but we can return one so it
@@ -1294,6 +1532,13 @@ inline auto DirRef::Read() & -> ErrorOr<Reader, FdError> {
     return FdError(errno, "Dir::Read on '{0}'", dfd_);
   }
   return Dir(dup_dfd).TakeAndRead();
+}
+
+inline auto DirRef::ReadEntries()
+    -> ErrorOr<llvm::SmallVector<std::filesystem::path>, FdError> {
+  llvm::SmallVector<std::filesystem::path> entries;
+  CARBON_RETURN_IF_ERROR(AppendEntriesIf(entries));
+  return entries;
 }
 
 inline auto DirRef::Access(const std::filesystem::path& path,
@@ -1330,6 +1575,29 @@ inline auto DirRef::Lstat(const std::filesystem::path& path)
     return status;
   }
   return PathError(errno, "Dir::Lstat on '{0}' relative to '{1}'", path, dfd_);
+}
+
+inline auto DirRef::UpdateTimes(const std::filesystem::path& path,
+                                std::optional<TimePoint> time_point)
+    -> ErrorOr<Success, PathError> {
+  if (!time_point) {
+    if (utimensat(dfd_, path.c_str(), nullptr, /*flags*/ 0) == -1) {
+      return PathError(errno,
+                       "Dir::UpdateTimes to now on '{0}' relative to '{1}'",
+                       path, dfd_);
+    }
+    return Success();
+  }
+
+  timespec times[2];
+  times[0] = Internal::DurationToTimespec(time_point->time_since_epoch());
+  times[1] = times[0];
+  if (utimensat(dfd_, path.c_str(), times, /*flags*/ 0) == -1) {
+    return PathError(
+        errno, "Dir::UpdateTimes to a specific time on '{0}' relative to '{1}'",
+        path, dfd_);
+  }
+  return Success();
 }
 
 inline auto DirRef::Readlink(const std::filesystem::path& path)
@@ -1547,7 +1815,11 @@ inline auto Dir::Iterator::operator++() -> Iterator& {
   return *this;
 }
 
-inline auto Dir::Reader::begin() -> Iterator { return Iterator(dirp_); }
+inline auto Dir::Reader::begin() -> Iterator {
+  // Reset the position of the directory stream to get the actual beginning.
+  rewinddir(dirp_);
+  return Iterator(dirp_);
+}
 
 inline auto Dir::Reader::end() -> Iterator { return Iterator(); }
 
