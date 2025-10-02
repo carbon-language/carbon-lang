@@ -391,8 +391,8 @@ matched with the same-named element of the converted scrutinee's
 [outcome](values.md#expression-forms). If the scrutinee outcome has any field
 names not present in the pattern, those sub-outcomes are
 [discarded](values.md#form-conversions) in lexical order if the pattern has a
-trailing `_`, or diagnosed as an error if it does not. The struct pattern
-matches if all of these sub-matches succeed.
+trailing `_` (as in `{.a = 1, _}`), or diagnosed as an error if it does not. The
+struct pattern matches if all of these sub-matches succeed.
 
 Note that the left-to-right order is consistent with the behavior of matching
 against a struct-valued expression, where the expression pattern becomes the

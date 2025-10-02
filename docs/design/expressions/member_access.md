@@ -737,8 +737,8 @@ of `x` and instance binding is performed if an instance member is found.
 If instance binding is to be performed, the result of instance binding depends
 on what instance member `M` was found:
 
--   For a field member of a struct type or tuple type, `x` is required to have
-    that type. `x` is converted to a struct or tuple form by
+-   For a field member of a struct type or tuple type, `x` is converted to a
+    struct or tuple form by
     [form decomposition](/docs/design/values.md#category-conversions), and the
     `.f` element of the outcome of that conversion becomes the outcome of `x.f`.
     All other elements are [discarded](/docs/design/values.md#form-conversions).
