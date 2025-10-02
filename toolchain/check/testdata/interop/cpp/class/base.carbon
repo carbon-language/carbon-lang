@@ -465,14 +465,14 @@ class V {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %.75e: type = cpp_overload_set_type @<null name> [concrete]
-// CHECK:STDOUT:   %empty_struct.c9f: %.75e = struct_value () [concrete]
+// CHECK:STDOUT:   %.750: %.75e = cpp_overload_set_value @<null name> [concrete]
 // CHECK:STDOUT:   %Base.base_fn.type: type = fn_type @Base.base_fn [concrete]
 // CHECK:STDOUT:   %Base.base_fn: %Base.base_fn.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %.809: type = cpp_overload_set_type @<null name> [concrete]
-// CHECK:STDOUT:   %empty_struct.422: %.809 = struct_value () [concrete]
+// CHECK:STDOUT:   %.22a: %.809 = cpp_overload_set_value @<null name> [concrete]
 // CHECK:STDOUT:   %.5f9: type = cpp_overload_set_type @<null name> [concrete]
-// CHECK:STDOUT:   %empty_struct.510: %.5f9 = struct_value () [concrete]
+// CHECK:STDOUT:   %.24a: %.5f9 = cpp_overload_set_value @<null name> [concrete]
 // CHECK:STDOUT:   %Derived.derived_fn.type: type = fn_type @Derived.derived_fn [concrete]
 // CHECK:STDOUT:   %Derived.derived_fn: %Derived.derived_fn.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -484,11 +484,11 @@ class V {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
-// CHECK:STDOUT:   %.750: %.75e = cpp_overload_set_value @<null name> [concrete = constants.%empty_struct.c9f]
+// CHECK:STDOUT:   %.750: %.75e = cpp_overload_set_value @<null name> [concrete = constants.%.750]
 // CHECK:STDOUT:   %Base.base_fn.decl: %Base.base_fn.type = fn_decl @Base.base_fn [concrete = constants.%Base.base_fn] {} {}
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
-// CHECK:STDOUT:   %.22a: %.809 = cpp_overload_set_value @<null name> [concrete = constants.%empty_struct.422]
-// CHECK:STDOUT:   %.24a: %.5f9 = cpp_overload_set_value @<null name> [concrete = constants.%empty_struct.510]
+// CHECK:STDOUT:   %.22a: %.809 = cpp_overload_set_value @<null name> [concrete = constants.%.22a]
+// CHECK:STDOUT:   %.24a: %.5f9 = cpp_overload_set_value @<null name> [concrete = constants.%.24a]
 // CHECK:STDOUT:   %Derived.derived_fn.decl: %Derived.derived_fn.type = fn_decl @Derived.derived_fn [concrete = constants.%Derived.derived_fn] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -496,15 +496,15 @@ class V {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:   %base_fn.ref.loc8: %.75e = name_ref base_fn, imports.%.750 [concrete = constants.%empty_struct.c9f]
+// CHECK:STDOUT:   %base_fn.ref.loc8: %.75e = name_ref base_fn, imports.%.750 [concrete = constants.%.750]
 // CHECK:STDOUT:   %Base.base_fn.call.loc8: init %empty_tuple.type = call imports.%Base.base_fn.decl()
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Derived.ref.loc9: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %base_fn.ref.loc9: %.809 = name_ref base_fn, imports.%.22a [concrete = constants.%empty_struct.422]
+// CHECK:STDOUT:   %base_fn.ref.loc9: %.809 = name_ref base_fn, imports.%.22a [concrete = constants.%.22a]
 // CHECK:STDOUT:   %Base.base_fn.call.loc9: init %empty_tuple.type = call imports.%Base.base_fn.decl()
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Derived.ref.loc10: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %derived_fn.ref: %.5f9 = name_ref derived_fn, imports.%.24a [concrete = constants.%empty_struct.510]
+// CHECK:STDOUT:   %derived_fn.ref: %.5f9 = name_ref derived_fn, imports.%.24a [concrete = constants.%.24a]
 // CHECK:STDOUT:   %Derived.derived_fn.call: init %empty_tuple.type = call imports.%Derived.derived_fn.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -583,14 +583,14 @@ class V {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %.5b0: type = cpp_overload_set_type @f__carbon_thunk [concrete]
-// CHECK:STDOUT:   %empty_struct.3f3: %.5b0 = struct_value () [concrete]
+// CHECK:STDOUT:   %.e54: %.5b0 = cpp_overload_set_value @f__carbon_thunk [concrete]
 // CHECK:STDOUT:   %const: type = const_type %Base [concrete]
 // CHECK:STDOUT:   %ptr.a97: type = ptr_type %const [concrete]
 // CHECK:STDOUT:   %f__carbon_thunk.type: type = fn_type @f__carbon_thunk [concrete]
 // CHECK:STDOUT:   %f__carbon_thunk: %f__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.fb2: type = ptr_type %Base [concrete]
 // CHECK:STDOUT:   %.7c6: type = cpp_overload_set_type @CallQualified [concrete]
-// CHECK:STDOUT:   %empty_struct.49e: %.7c6 = struct_value () [concrete]
+// CHECK:STDOUT:   %.362: %.7c6 = cpp_overload_set_value @CallQualified [concrete]
 // CHECK:STDOUT:   %g__carbon_thunk.type: type = fn_type @g__carbon_thunk [concrete]
 // CHECK:STDOUT:   %g__carbon_thunk: %g__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -603,13 +603,13 @@ class V {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
-// CHECK:STDOUT:   %.e54: %.5b0 = cpp_overload_set_value @f__carbon_thunk [concrete = constants.%empty_struct.3f3]
+// CHECK:STDOUT:   %.e54: %.5b0 = cpp_overload_set_value @f__carbon_thunk [concrete = constants.%.e54]
 // CHECK:STDOUT:   %f__carbon_thunk.decl: %f__carbon_thunk.type = fn_decl @f__carbon_thunk [concrete = constants.%f__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.362: %.7c6 = cpp_overload_set_value @CallQualified [concrete = constants.%empty_struct.49e]
+// CHECK:STDOUT:   %.362: %.7c6 = cpp_overload_set_value @CallQualified [concrete = constants.%.362]
 // CHECK:STDOUT:   %g__carbon_thunk.decl: %g__carbon_thunk.type = fn_decl @g__carbon_thunk [concrete = constants.%g__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -620,7 +620,7 @@ class V {
 // CHECK:STDOUT: fn @CallDirect(%d.param: %Derived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %f.ref: %.5b0 = name_ref f, imports.%.e54 [concrete = constants.%empty_struct.3f3]
+// CHECK:STDOUT:   %f.ref: %.5b0 = name_ref f, imports.%.e54 [concrete = constants.%.e54]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.ref, %f.ref
 // CHECK:STDOUT:   %.loc8_3.1: ref %Base = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %.loc8_3.2: ref %Base = converted %d.ref, %.loc8_3.1
@@ -638,7 +638,7 @@ class V {
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:   %g.ref: %.7c6 = name_ref g, imports.%.362 [concrete = constants.%empty_struct.49e]
+// CHECK:STDOUT:   %g.ref: %.7c6 = name_ref g, imports.%.362 [concrete = constants.%.362]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.ref, %g.ref
 // CHECK:STDOUT:   %.loc14_3.1: ref %Base = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %.loc14_3.2: ref %Base = converted %d.ref, %.loc14_3.1

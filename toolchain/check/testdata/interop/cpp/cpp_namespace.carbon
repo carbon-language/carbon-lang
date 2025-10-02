@@ -144,7 +144,7 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.98d: type = cpp_overload_set_type @system_function [concrete]
-// CHECK:STDOUT:   %empty_struct: %.98d = struct_value () [concrete]
+// CHECK:STDOUT:   %.769: %.98d = cpp_overload_set_value @system_function [concrete]
 // CHECK:STDOUT:   %system_function.type: type = fn_type @system_function [concrete]
 // CHECK:STDOUT:   %system_function: %system_function.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -154,7 +154,7 @@ fn F() {
 // CHECK:STDOUT:     .system_function = %.769
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.769: %.98d = cpp_overload_set_value @system_function [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.769: %.98d = cpp_overload_set_value @system_function [concrete = constants.%.769]
 // CHECK:STDOUT:   %system_function.decl: %system_function.type = fn_decl @system_function [concrete = constants.%system_function] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -167,7 +167,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %system_function.ref: %.98d = name_ref system_function, imports.%.769 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %system_function.ref: %.98d = name_ref system_function, imports.%.769 [concrete = constants.%.769]
 // CHECK:STDOUT:   %system_function.call: init %empty_tuple.type = call imports.%system_function.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

@@ -180,14 +180,6 @@ auto EvalConstantInst(Context& context, SemIR::Converted inst)
       context.constant_values().Get(inst.result_id));
 }
 
-// TODO: This should not be necessary since the constant kind is
-// WheneverPossible.
-auto EvalConstantInst(Context& /*context*/, SemIR::CppOverloadSetValue inst)
-    -> ConstantEvalResult {
-  return ConstantEvalResult::NewSamePhase(SemIR::StructValue{
-      .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
-}
-
 auto EvalConstantInst(Context& /*context*/, SemIR::Deref /*inst*/)
     -> ConstantEvalResult {
   // TODO: Handle this.

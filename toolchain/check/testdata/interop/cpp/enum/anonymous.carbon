@@ -44,7 +44,7 @@ fn G() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.557: type = cpp_overload_set_type @C.C [concrete]
-// CHECK:STDOUT:   %empty_struct.56a: %.557 = struct_value () [concrete]
+// CHECK:STDOUT:   %.4a9: %.557 = cpp_overload_set_value @C.C [concrete]
 // CHECK:STDOUT:   %.4f0: type = class_type @.1 [concrete]
 // CHECK:STDOUT:   %int_1.81a: %.4f0 = int_value 1 [concrete]
 // CHECK:STDOUT:   %ptr.793: type = ptr_type %.4f0 [concrete]
@@ -52,12 +52,12 @@ fn G() {
 // CHECK:STDOUT:   %F__carbon_thunk.0cd6a8.1: %F__carbon_thunk.type.eda1ac.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %.d40: type = cpp_overload_set_type @C__carbon_thunk [concrete]
-// CHECK:STDOUT:   %empty_struct.e73: %.d40 = struct_value () [concrete]
+// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.9a3: type = cpp_overload_set_type @C.F [concrete]
-// CHECK:STDOUT:   %empty_struct.acc: %.9a3 = struct_value () [concrete]
+// CHECK:STDOUT:   %.951: %.9a3 = cpp_overload_set_value @C.F [concrete]
 // CHECK:STDOUT:   %.bb7: type = class_type @.2 [concrete]
 // CHECK:STDOUT:   %int_1.1d6: %.bb7 = int_value 1 [concrete]
 // CHECK:STDOUT:   %ptr.73d: type = ptr_type %.bb7 [concrete]
@@ -82,7 +82,7 @@ fn G() {
 // CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.4a9: %.557 = cpp_overload_set_value @C.C [concrete = constants.%empty_struct.56a]
+// CHECK:STDOUT:   %.4a9: %.557 = cpp_overload_set_value @C.C [concrete = constants.%.4a9]
 // CHECK:STDOUT:   %int_1.81a: %.4f0 = int_value 1 [concrete = constants.%int_1.81a]
 // CHECK:STDOUT:   %F__carbon_thunk.decl.e1b8ec.1: %F__carbon_thunk.type.eda1ac.1 = fn_decl @F__carbon_thunk.1 [concrete = constants.%F__carbon_thunk.0cd6a8.1] {
 // CHECK:STDOUT:     <elided>
@@ -90,13 +90,13 @@ fn G() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C__carbon_thunk [concrete = constants.%empty_struct.e73]
+// CHECK:STDOUT:   %.40b: %.d40 = cpp_overload_set_value @C__carbon_thunk [concrete = constants.%.40b]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.951: %.9a3 = cpp_overload_set_value @C.F [concrete = constants.%empty_struct.acc]
+// CHECK:STDOUT:   %.951: %.9a3 = cpp_overload_set_value @C.F [concrete = constants.%.951]
 // CHECK:STDOUT:   %int_1.1d6: %.bb7 = int_value 1 [concrete = constants.%int_1.1d6]
 // CHECK:STDOUT:   %F__carbon_thunk.decl.e1b8ec.2: %F__carbon_thunk.type.eda1ac.2 = fn_decl @F__carbon_thunk.2 [concrete = constants.%F__carbon_thunk.0cd6a8.2] {
 // CHECK:STDOUT:     <elided>
@@ -112,7 +112,7 @@ fn G() {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc8_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %F.ref.loc8: %.557 = name_ref F, imports.%.4a9 [concrete = constants.%empty_struct.56a]
+// CHECK:STDOUT:   %F.ref.loc8: %.557 = name_ref F, imports.%.4a9 [concrete = constants.%.4a9]
 // CHECK:STDOUT:   %Cpp.ref.loc8_9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %b.ref: %.4f0 = name_ref b, imports.%int_1.81a [concrete = constants.%int_1.81a]
 // CHECK:STDOUT:   %.loc8_12.1: ref %.4f0 = temporary_storage
@@ -121,13 +121,13 @@ fn G() {
 // CHECK:STDOUT:   %F__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%F__carbon_thunk.decl.e1b8ec.1(%addr.loc8_14)
 // CHECK:STDOUT:   %Cpp.ref.loc10_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc10_6: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %C.ref.loc10_8: %.d40 = name_ref C, imports.%.40b [concrete = constants.%empty_struct.e73]
+// CHECK:STDOUT:   %C.ref.loc10_8: %.d40 = name_ref C, imports.%.40b [concrete = constants.%.40b]
 // CHECK:STDOUT:   %.loc10_11.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc10_11.1: %ptr.d9e = addr_of %.loc10_11.1
 // CHECK:STDOUT:   %C__carbon_thunk.call: init %empty_tuple.type = call imports.%C__carbon_thunk.decl(%addr.loc10_11.1)
 // CHECK:STDOUT:   %.loc10_11.2: init %C = in_place_init %C__carbon_thunk.call, %.loc10_11.1
 // CHECK:STDOUT:   %.loc10_11.3: ref %C = temporary %.loc10_11.1, %.loc10_11.2
-// CHECK:STDOUT:   %F.ref.loc10: %.9a3 = name_ref F, imports.%.951 [concrete = constants.%empty_struct.acc]
+// CHECK:STDOUT:   %F.ref.loc10: %.9a3 = name_ref F, imports.%.951 [concrete = constants.%.951]
 // CHECK:STDOUT:   %bound_method.loc10_12: <bound method> = bound_method %.loc10_11.3, %F.ref.loc10
 // CHECK:STDOUT:   %Cpp.ref.loc10_15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc10_18: type = name_ref C, imports.%C.decl [concrete = constants.%C]

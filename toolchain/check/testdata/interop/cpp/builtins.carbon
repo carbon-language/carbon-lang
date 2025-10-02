@@ -550,7 +550,7 @@ fn F() {
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.4a9: type = pattern_type %u32 [concrete]
 // CHECK:STDOUT:   %.15a: type = cpp_overload_set_type @unsigned_int.foo [concrete]
-// CHECK:STDOUT:   %empty_struct: %.15a = struct_value () [concrete]
+// CHECK:STDOUT:   %.afb: %.15a = cpp_overload_set_value @unsigned_int.foo [concrete]
 // CHECK:STDOUT:   %ptr.d47: type = ptr_type %unsigned_int [concrete]
 // CHECK:STDOUT:   %unsigned_int.foo.type: type = fn_type @unsigned_int.foo [concrete]
 // CHECK:STDOUT:   %unsigned_int.foo: %unsigned_int.foo.type = struct_value () [concrete]
@@ -566,7 +566,7 @@ fn F() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %unsigned_int.decl: type = class_decl @unsigned_int [concrete = constants.%unsigned_int] {} {}
-// CHECK:STDOUT:   %.afb: %.15a = cpp_overload_set_value @unsigned_int.foo [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.afb: %.15a = cpp_overload_set_value @unsigned_int.foo [concrete = constants.%.afb]
 // CHECK:STDOUT:   %unsigned_int.foo.decl: %unsigned_int.foo.type = fn_decl @unsigned_int.foo [concrete = constants.%unsigned_int.foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -590,7 +590,7 @@ fn F() {
 // CHECK:STDOUT:     %x.patt: %pattern_type.4a9 = binding_pattern x [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %unsigned_int.ref.loc13: ref %unsigned_int = name_ref unsigned_int, %unsigned_int
-// CHECK:STDOUT:   %foo.ref: %.15a = name_ref foo, imports.%.afb [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %foo.ref: %.15a = name_ref foo, imports.%.afb [concrete = constants.%.afb]
 // CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %unsigned_int.ref.loc13, %foo.ref
 // CHECK:STDOUT:   %addr.loc13: %ptr.d47 = addr_of %unsigned_int.ref.loc13
 // CHECK:STDOUT:   %unsigned_int.foo.call: init %u32 = call imports.%unsigned_int.foo.decl(%addr.loc13)

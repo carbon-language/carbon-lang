@@ -83,7 +83,7 @@ fn F() {
 // CHECK:STDOUT:   %ptr.830: type = ptr_type %array_type [concrete]
 // CHECK:STDOUT:   %pattern_type.b6e: type = pattern_type %array_type [concrete]
 // CHECK:STDOUT:   %.cdf: type = cpp_overload_set_type @Core.IntLiteral.as.ImplicitAs.impl.Convert [concrete]
-// CHECK:STDOUT:   %empty_struct.5c5: %.cdf = struct_value () [concrete]
+// CHECK:STDOUT:   %.782: %.cdf = cpp_overload_set_value @Core.IntLiteral.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.d14: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.1b6: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32) [concrete]
@@ -101,9 +101,9 @@ fn F() {
 // CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %.319: type = cpp_overload_set_type @Int.as.ImplicitAs.impl.Convert [concrete]
-// CHECK:STDOUT:   %empty_struct.45a: %.319 = struct_value () [concrete]
+// CHECK:STDOUT:   %.a02: %.319 = cpp_overload_set_value @Int.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %.001: type = cpp_overload_set_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %empty_struct.89b: %.001 = struct_value () [concrete]
+// CHECK:STDOUT:   %.5ec: %.001 = cpp_overload_set_value @Destroy.Op [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %array_type, () [concrete]
 // CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.type.b6e: type = fn_type @DestroyT.as_type.as.Destroy.impl.Op, @DestroyT.as_type.as.Destroy.impl(%facet_value) [concrete]
@@ -118,11 +118,11 @@ fn F() {
 // CHECK:STDOUT:     .Function = %.5ec
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.782: %.cdf = cpp_overload_set_value @Core.IntLiteral.as.ImplicitAs.impl.Convert [concrete = constants.%empty_struct.5c5]
+// CHECK:STDOUT:   %.782: %.cdf = cpp_overload_set_value @Core.IntLiteral.as.ImplicitAs.impl.Convert [concrete = constants.%.782]
 // CHECK:STDOUT:   %Core.import_ref.ee7: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1c0)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.9e9 = impl_witness_table (%Core.import_ref.ee7), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %.a02: %.319 = cpp_overload_set_value @Int.as.ImplicitAs.impl.Convert [concrete = constants.%empty_struct.45a]
-// CHECK:STDOUT:   %.5ec: %.001 = cpp_overload_set_value @Destroy.Op [concrete = constants.%empty_struct.89b]
+// CHECK:STDOUT:   %.a02: %.319 = cpp_overload_set_value @Int.as.ImplicitAs.impl.Convert [concrete = constants.%.a02]
+// CHECK:STDOUT:   %.5ec: %.001 = cpp_overload_set_value @Destroy.Op [concrete = constants.%.5ec]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -140,7 +140,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: ref %array_type = bind_name n, %n.var
 // CHECK:STDOUT:   %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesArray.ref.loc15: %.cdf = name_ref TakesArray, imports.%.782 [concrete = constants.%empty_struct.5c5]
+// CHECK:STDOUT:   %TakesArray.ref.loc15: %.cdf = name_ref TakesArray, imports.%.782 [concrete = constants.%.782]
 // CHECK:STDOUT:   %n.ref.loc15: ref %array_type = name_ref n, %n
 // CHECK:STDOUT:   %int_0.loc15: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -155,18 +155,18 @@ fn F() {
 // CHECK:STDOUT:   %.loc15_22: ref %i32 = array_index %n.ref.loc15, %.loc15_21.2
 // CHECK:STDOUT:   %addr.loc15: %ptr.235 = addr_of %.loc15_22
 // CHECK:STDOUT:   %Cpp.ref.loc21_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesArray.ref.loc21: %.cdf = name_ref TakesArray, imports.%.782 [concrete = constants.%empty_struct.5c5]
+// CHECK:STDOUT:   %TakesArray.ref.loc21: %.cdf = name_ref TakesArray, imports.%.782 [concrete = constants.%.782]
 // CHECK:STDOUT:   %Cpp.ref.loc21_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %nullptr.ref.loc21: <error> = name_ref nullptr, <error> [concrete = <error>]
 // CHECK:STDOUT:   %Cpp.ref.loc27: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesFunction.ref.loc27: %.319 = name_ref TakesFunction, imports.%.a02 [concrete = constants.%empty_struct.45a]
+// CHECK:STDOUT:   %TakesFunction.ref.loc27: %.319 = name_ref TakesFunction, imports.%.a02 [concrete = constants.%.a02]
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %Cpp.ref.loc33_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesFunction.ref.loc33: %.319 = name_ref TakesFunction, imports.%.a02 [concrete = constants.%empty_struct.45a]
+// CHECK:STDOUT:   %TakesFunction.ref.loc33: %.319 = name_ref TakesFunction, imports.%.a02 [concrete = constants.%.a02]
 // CHECK:STDOUT:   %Cpp.ref.loc33_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Function.ref: %.001 = name_ref Function, imports.%.5ec [concrete = constants.%empty_struct.89b]
+// CHECK:STDOUT:   %Function.ref: %.001 = name_ref Function, imports.%.5ec [concrete = constants.%.5ec]
 // CHECK:STDOUT:   %Cpp.ref.loc43: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesFunction.ref.loc43: %.319 = name_ref TakesFunction, imports.%.a02 [concrete = constants.%empty_struct.45a]
+// CHECK:STDOUT:   %TakesFunction.ref.loc43: %.319 = name_ref TakesFunction, imports.%.a02 [concrete = constants.%.a02]
 // CHECK:STDOUT:   %n.ref.loc43: ref %array_type = name_ref n, %n
 // CHECK:STDOUT:   %int_0.loc43: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %int_32.loc43: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -181,7 +181,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc43_25: ref %i32 = array_index %n.ref.loc43, %.loc43_24.2
 // CHECK:STDOUT:   %addr.loc43: %ptr.235 = addr_of %.loc43_25
 // CHECK:STDOUT:   %Cpp.ref.loc49_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesFunction.ref.loc49: %.319 = name_ref TakesFunction, imports.%.a02 [concrete = constants.%empty_struct.45a]
+// CHECK:STDOUT:   %TakesFunction.ref.loc49: %.319 = name_ref TakesFunction, imports.%.a02 [concrete = constants.%.a02]
 // CHECK:STDOUT:   %Cpp.ref.loc49_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %nullptr.ref.loc49: <error> = name_ref nullptr, <error> [concrete = <error>]
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%array_type, () [concrete = constants.%facet_value]

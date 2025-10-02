@@ -1,0 +1,24 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# This file is only used for PR autoassignment. Branch protections don't enforce
+# it.
+#
+# Syntax:
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeowners-syntax
+
+# Toolchain reviewers are used as a fallback.
+*                          @carbon-language/toolchain-reviewers
+
+# Key project documents should be reviewed by leads.
+/*.md                      @carbon-language/leads
+/LICENSE                   @carbon-language/leads
+/docs/project/evolution.md @carbon-language/leads
+/docs/project/goals.md     @carbon-language/leads
+/docs/project/principles/* @carbon-language/leads
+/docs/project/roadmap.md   @carbon-language/leads
+/proposals/*.md            @carbon-language/leads
+
+# Toolchain code.
+/toolchain                 @carbon-language/toolchain-reviewers
