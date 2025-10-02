@@ -54,11 +54,6 @@ static auto GetSelfBinding(Context& context,
                            SemIR::GenericId assoc_entity_generic_id)
     -> SemIR::InstId {
   const auto& generic = context.generics().Get(assoc_entity_generic_id);
-  if (!generic.bindings_id.has_value()) {
-    // There will be no bindings if an error occurred.
-    return SemIR::ErrorInst::InstId;
-  }
-
   auto bindings = context.inst_blocks().Get(generic.bindings_id);
   auto interface_args_id =
       context.specifics().GetArgsOrEmpty(interface_specific_id);

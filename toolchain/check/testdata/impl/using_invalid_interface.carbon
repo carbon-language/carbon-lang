@@ -50,6 +50,14 @@ class C {
   }
 }
 
+// CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE+8]]:21: error: missing object argument in method call [MissingObjectInMethodCall]
+// CHECK:STDERR: fn F(T:! IMisuse) { T.Op(); }
+// CHECK:STDERR:                     ^~~~~~
+// CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE-21]]:1: in import [InImport]
+// CHECK:STDERR: fail_invalid_interface.carbon:16:3: note: calling function declared here [InCallToFunction]
+// CHECK:STDERR:   fn Op[self: Self]() -> ArgToI(Arg);
+// CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(T:! IMisuse) { T.Op(); }
 
 fn G() {
@@ -90,6 +98,14 @@ class C {
   }
 }
 
+// CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE+8]]:21: error: missing object argument in method call [MissingObjectInMethodCall]
+// CHECK:STDERR: fn F(T:! IMisuse) { T.Op(); }
+// CHECK:STDERR:                     ^~~~~~
+// CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE-23]]:1: in import [InImport]
+// CHECK:STDERR: fail_invalid_interface.carbon:16:3: note: calling function declared here [InCallToFunction]
+// CHECK:STDERR:   fn Op[self: Self]() -> ArgToI(Arg);
+// CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn F(T:! IMisuse) { T.Op(); }
 
 fn G() {
