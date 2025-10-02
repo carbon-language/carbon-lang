@@ -1225,9 +1225,6 @@ static auto PerformBuiltinConversion(
       // form. We can skip past the whole impl lookup step then and do that
       // here.
       //
-      // See also test:
-      // facet_access_type_converts_back_to_original_facet_value.carbon
-      //
       // TODO: This instruction is going to become a `SymbolicBindingType`, so
       // we'll need to handle that instead.
       auto const_type_inst_id =
