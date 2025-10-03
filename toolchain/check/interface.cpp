@@ -181,8 +181,13 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
                                         SemIR::TypeId self_type_id,
                                         SemIR::InstId self_witness_id)
     -> SemIR::TypeId {
-  auto decl =
-      context.insts().Get(context.constant_values().GetConstantInstId(decl_id));
+  auto decl_constant_inst_id =
+      context.constant_values().GetConstantInstId(decl_id);
+  if (decl_constant_inst_id == SemIR::ErrorInst::InstId) {
+    return SemIR::ErrorInst::TypeId;
+  }
+
+  auto decl = context.insts().Get(decl_constant_inst_id);
   if (auto assoc_const = decl.TryAs<SemIR::AssociatedConstantDecl>()) {
     // Form a specific for the associated constant, and grab the type from
     // there.
@@ -195,8 +200,9 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
     auto const_specific_id = MakeSpecific(context, loc_id, generic_id, arg_ids);
     return SemIR::GetTypeOfInstInSpecific(context.sem_ir(), const_specific_id,
                                           decl_id);
-  } else if (auto fn = context.types().TryGetAs<SemIR::FunctionType>(
-                 decl.type_id())) {
+  }
+
+  if (auto fn = context.types().TryGetAs<SemIR::FunctionType>(decl.type_id())) {
     // Form the type of the function within the interface, and attach the `Self`
     // type.
     auto interface_fn_type_id = SemIR::GetTypeOfInstInSpecific(
@@ -208,9 +214,9 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
     return GetFunctionTypeWithSelfType(
         context, context.types().GetInstId(interface_fn_type_id),
         self_facet_id);
-  } else {
-    CARBON_FATAL("Unexpected kind for associated constant {0}", decl);
   }
+
+  CARBON_FATAL("Unexpected kind for associated constant {0}", decl);
 }
 
 }  // namespace Carbon::Check
