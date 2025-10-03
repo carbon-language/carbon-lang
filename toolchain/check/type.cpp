@@ -240,14 +240,6 @@ auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
 
 auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId {
-  if (inst_id == SemIR::ErrorInst::InstId) {
-    return inst_id;
-  }
-
-  CARBON_CHECK(
-      context.types().IsFacetType(context.insts().Get(inst_id).type_id()),
-      "{0}", context.insts().Get(inst_id).type_id());
-
   auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
 
   if (auto access =
