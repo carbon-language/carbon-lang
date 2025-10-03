@@ -71,7 +71,7 @@ fn Tuples() -> A((i32, i32)) {
 
 library "[[@TEST_NAME]]";
 
-class C(T:! Core.Copy) {
+class C(T:! Core.Copy & Core.Destroy) {
   fn GetBool[self: Self]() -> bool {
     return self.v;
   }
@@ -283,9 +283,9 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: ; ModuleID = 'access.carbon'
 // CHECK:STDOUT: source_filename = "access.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.9ee.loc16_3 = internal constant { i1, i32 } { i1 true, i32 0 }
-// CHECK:STDOUT: @C.val.f52.loc26_3 = internal constant { i1, {} } { i1 true, {} zeroinitializer }
-// CHECK:STDOUT: @C.val.029.loc31_3 = internal constant { i1, { i32, i32, i32 } } { i1 true, { i32, i32, i32 } { i32 1, i32 2, i32 3 } }
+// CHECK:STDOUT: @C.val.870.loc16_3 = internal constant { i1, i32 } { i1 true, i32 0 }
+// CHECK:STDOUT: @C.val.69e.loc26_3 = internal constant { i1, {} } { i1 true, {} zeroinitializer }
+// CHECK:STDOUT: @C.val.ad8.loc31_3 = internal constant { i1, { i32, i32, i32 } } { i1 true, { i32, i32, i32 } { i32 1, i32 2, i32 3 } }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i1 @_CAccessBool.Main() #0 !dbg !4 {
@@ -294,8 +294,8 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !8
 // CHECK:STDOUT:   %.loc16_37.2.v = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 0, !dbg !9
 // CHECK:STDOUT:   %.loc16_37.5.w = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 1, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.9ee.loc16_3, i64 8, i1 false), !dbg !8
-// CHECK:STDOUT:   %C.GetBool.call = call i1 @_CGetBool.C.Main.5450dc8e8b8e0899(ptr %c.var), !dbg !10
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.870.loc16_3, i64 8, i1 false), !dbg !8
+// CHECK:STDOUT:   %C.GetBool.call = call i1 @_CGetBool.C.Main.d756e33fa3337243(ptr %c.var), !dbg !10
 // CHECK:STDOUT:   ret i1 %C.GetBool.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -306,8 +306,8 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !16
 // CHECK:STDOUT:   %.loc21_37.2.v = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 0, !dbg !17
 // CHECK:STDOUT:   %.loc21_37.5.w = getelementptr inbounds nuw { i1, i32 }, ptr %c.var, i32 0, i32 1, !dbg !17
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.9ee.loc16_3, i64 8, i1 false), !dbg !16
-// CHECK:STDOUT:   %C.GetT.call = call i32 @_CGetT.C.Main.5450dc8e8b8e0899(ptr %c.var), !dbg !18
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.870.loc16_3, i64 8, i1 false), !dbg !16
+// CHECK:STDOUT:   %C.GetT.call = call i32 @_CGetT.C.Main.d756e33fa3337243(ptr %c.var), !dbg !18
 // CHECK:STDOUT:   ret i32 %C.GetT.call, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -318,8 +318,8 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !21
 // CHECK:STDOUT:   %.loc26_37.2.v = getelementptr inbounds nuw { i1, {} }, ptr %c.var, i32 0, i32 0, !dbg !22
 // CHECK:STDOUT:   %.loc26_37.4.w = getelementptr inbounds nuw { i1, {} }, ptr %c.var, i32 0, i32 1, !dbg !22
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.f52.loc26_3, i64 1, i1 false), !dbg !21
-// CHECK:STDOUT:   call void @_CGetT.C.Main.cf13cead63317d44(ptr %c.var), !dbg !23
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.69e.loc26_3, i64 1, i1 false), !dbg !21
+// CHECK:STDOUT:   call void @_CGetT.C.Main.663e1ba05e2b6179(ptr %c.var), !dbg !23
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -333,8 +333,8 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %.loc31_57.4.w, i32 0, i32 0, !dbg !28
 // CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %.loc31_57.4.w, i32 0, i32 1, !dbg !28
 // CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %.loc31_57.4.w, i32 0, i32 2, !dbg !28
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.029.loc31_3, i64 16, i1 false), !dbg !26
-// CHECK:STDOUT:   call void @_CGetT.C.Main.623a49e5eda7ec3b(ptr %return, ptr %c.var), !dbg !29
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.ad8.loc31_3, i64 16, i1 false), !dbg !26
+// CHECK:STDOUT:   call void @_CGetT.C.Main.81199484dbea1f10(ptr %return, ptr %c.var), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -345,7 +345,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i1 @_CGetBool.C.Main.5450dc8e8b8e0899(ptr %self) #0 !dbg !31 {
+// CHECK:STDOUT: define linkonce_odr i1 @_CGetBool.C.Main.d756e33fa3337243(ptr %self) #0 !dbg !31 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc6_16.1.v = getelementptr inbounds nuw { i1, i32 }, ptr %self, i32 0, i32 0, !dbg !36
 // CHECK:STDOUT:   %.loc6_16.2 = load i8, ptr %.loc6_16.1.v, align 1, !dbg !36
@@ -354,7 +354,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CGetT.C.Main.5450dc8e8b8e0899(ptr %self) #0 !dbg !38 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CGetT.C.Main.d756e33fa3337243(ptr %self) #0 !dbg !38 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_16.1.w = getelementptr inbounds nuw { i1, i32 }, ptr %self, i32 0, i32 1, !dbg !43
 // CHECK:STDOUT:   %.loc9_16.2 = load i32, ptr %.loc9_16.1.w, align 4, !dbg !43
@@ -362,14 +362,14 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CGetT.C.Main.cf13cead63317d44(ptr %self) #0 !dbg !45 {
+// CHECK:STDOUT: define linkonce_odr void @_CGetT.C.Main.663e1ba05e2b6179(ptr %self) #0 !dbg !45 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_16.1.w = getelementptr inbounds nuw { i1, {} }, ptr %self, i32 0, i32 1, !dbg !48
 // CHECK:STDOUT:   ret void, !dbg !49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CGetT.C.Main.623a49e5eda7ec3b(ptr sret({ i32, i32, i32 }) %return, ptr %self) #0 !dbg !50 {
+// CHECK:STDOUT: define linkonce_odr void @_CGetT.C.Main.81199484dbea1f10(ptr sret({ i32, i32, i32 }) %return, ptr %self) #0 !dbg !50 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_16.1.w = getelementptr inbounds nuw { i1, { i32, i32, i32 } }, ptr %self, i32 0, i32 1, !dbg !53
 // CHECK:STDOUT:   call void @"_COp.6d582b60b7397ec5:Copy.Core.8e95c89adba3b450"(ptr %return, ptr %.loc9_16.1.w), !dbg !53
@@ -435,26 +435,26 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !28 = !DILocation(line: 31, column: 48, scope: !25)
 // CHECK:STDOUT: !29 = !DILocation(line: 32, column: 10, scope: !25)
 // CHECK:STDOUT: !30 = !DILocation(line: 32, column: 3, scope: !25)
-// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "GetBool", linkageName: "_CGetBool.C.Main.5450dc8e8b8e0899", scope: null, file: !3, line: 5, type: !32, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !34)
+// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "GetBool", linkageName: "_CGetBool.C.Main.d756e33fa3337243", scope: null, file: !3, line: 5, type: !32, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !34)
 // CHECK:STDOUT: !32 = !DISubroutineType(types: !33)
 // CHECK:STDOUT: !33 = !{!7, !7}
 // CHECK:STDOUT: !34 = !{!35}
 // CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !31, type: !7)
 // CHECK:STDOUT: !36 = !DILocation(line: 6, column: 12, scope: !31)
 // CHECK:STDOUT: !37 = !DILocation(line: 6, column: 5, scope: !31)
-// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "GetT", linkageName: "_CGetT.C.Main.5450dc8e8b8e0899", scope: null, file: !3, line: 8, type: !39, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !41)
+// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "GetT", linkageName: "_CGetT.C.Main.d756e33fa3337243", scope: null, file: !3, line: 8, type: !39, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !41)
 // CHECK:STDOUT: !39 = !DISubroutineType(types: !40)
 // CHECK:STDOUT: !40 = !{!15, !7}
 // CHECK:STDOUT: !41 = !{!42}
 // CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !38, type: !7)
 // CHECK:STDOUT: !43 = !DILocation(line: 9, column: 12, scope: !38)
 // CHECK:STDOUT: !44 = !DILocation(line: 9, column: 5, scope: !38)
-// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "GetT", linkageName: "_CGetT.C.Main.cf13cead63317d44", scope: null, file: !3, line: 8, type: !32, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !46)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "GetT", linkageName: "_CGetT.C.Main.663e1ba05e2b6179", scope: null, file: !3, line: 8, type: !32, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !46)
 // CHECK:STDOUT: !46 = !{!47}
 // CHECK:STDOUT: !47 = !DILocalVariable(arg: 1, scope: !45, type: !7)
 // CHECK:STDOUT: !48 = !DILocation(line: 9, column: 12, scope: !45)
 // CHECK:STDOUT: !49 = !DILocation(line: 9, column: 5, scope: !45)
-// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "GetT", linkageName: "_CGetT.C.Main.623a49e5eda7ec3b", scope: null, file: !3, line: 8, type: !32, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !51)
+// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "GetT", linkageName: "_CGetT.C.Main.81199484dbea1f10", scope: null, file: !3, line: 8, type: !32, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !51)
 // CHECK:STDOUT: !51 = !{!52}
 // CHECK:STDOUT: !52 = !DILocalVariable(arg: 1, scope: !50, type: !7)
 // CHECK:STDOUT: !53 = !DILocation(line: 9, column: 12, scope: !50)

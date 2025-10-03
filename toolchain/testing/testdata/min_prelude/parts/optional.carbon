@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/as.carbon
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/bool.carbon
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/copy.carbon
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/destroy.carbon
@@ -10,11 +11,12 @@
 
 package Core library "prelude/parts/optional";
 
+import library "prelude/parts/as";
 import library "prelude/parts/bool";
 import library "prelude/parts/copy";
 import library "prelude/parts/destroy";
 
-class Optional(T:! Copy) {
+class Optional(T:! Copy & Destroy) {
   fn None() -> Self {
     returned var me: Self;
     me.has_value = false;

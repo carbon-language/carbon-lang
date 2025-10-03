@@ -2,18 +2,22 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/as.carbon
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/copy.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/destroy.carbon
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/optional.carbon
 
 // --- min_prelude/parts/iterate.carbon
 
 package Core library "prelude/parts/iterate";
 
+import library "prelude/parts/as";
 import library "prelude/parts/copy";
+import library "prelude/parts/destroy";
 import library "prelude/parts/optional";
 
 interface Iterate {
-  let ElementType:! Copy;
+  let ElementType:! Copy & Destroy;
   let CursorType:! type;
   fn NewCursor[self: Self]() -> CursorType;
   fn Next[self: Self](cursor: CursorType*) -> Optional(ElementType);

@@ -19,6 +19,7 @@
 #include "toolchain/check/impl.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -27,6 +28,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -566,48 +568,206 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
   return context.constant_values().GetInstId(witness_const_id);
 }
 
-// Returns true if the `Self` should impl `Destroy`.
-static auto TypeCanDestroy(Context& context,
-                           SemIR::ConstantId query_self_const_id) -> bool {
-  auto inst = context.insts().Get(context.constant_values().GetInstId(
-      GetCanonicalFacetOrTypeValue(context, query_self_const_id)));
-
-  // For facet values, look if the FacetType provides the same.
-  if (auto facet_type =
-          context.types().TryGetAs<SemIR::FacetType>(inst.type_id())) {
-    const auto& info = context.facet_types().Get(facet_type->facet_type_id);
-    if (info.builtin_constraint_mask.HasAnyOf(
-            SemIR::BuiltinConstraintMask::TypeCanDestroy)) {
-      return true;
-    }
+// Determines whether `type_id` is a `FacetType` which impls `Destroy`.
+//
+// This handles cases where the facet type provides either `CanDestroy` or
+// `Destroy`; the former case will always have a `Destroy` implementation.
+static auto CanDestroyFacetType(Context& context, SemIR::LocId loc_id,
+                                SemIR::FacetType facet_type,
+                                SemIR::InterfaceId& destroy_interface_id)
+    -> bool {
+  const auto& info = context.facet_types().Get(facet_type.facet_type_id);
+  if (info.builtin_constraint_mask.HasAnyOf(
+          SemIR::BuiltinConstraintMask::TypeCanDestroy)) {
+    return true;
   }
 
-  CARBON_KIND_SWITCH(inst) {
-    case CARBON_KIND(SemIR::ClassType class_type): {
-      auto class_info = context.classes().Get(class_type.class_id);
-      // Incomplete and abstract classes can't be destroyed.
-      // TODO: Return false if the object repr doesn't impl `Destroy`.
-      // TODO: Return false for C++ types that lack a destructor.
-      return class_info.is_complete() &&
-             class_info.inheritance_kind !=
-                 SemIR::Class::InheritanceKind::Abstract;
-    }
-    case SemIR::ArrayType::Kind:
-    case SemIR::ConstType::Kind:
-    case SemIR::MaybeUnformedType::Kind:
-    case SemIR::PartialType::Kind:
-    case SemIR::StructType::Kind:
-    case SemIR::TupleType::Kind:
-      // TODO: Return false for types that indirectly reference a type that
-      // doesn't impl `Destroy`.
-      return true;
-    case SemIR::BoolType::Kind:
-    case SemIR::PointerType::Kind:
-      // Trivially destructible.
-      return true;
-    default:
+  if (info.extend_constraints.empty()) {
+    return false;
+  }
+
+  // Fetch `Core.Destroy` if it isn't yet known.
+  if (!destroy_interface_id.has_value()) {
+    auto destroy_id = LookupNameInCore(context, loc_id, "Destroy");
+    auto destroy_facet_type =
+        context.insts().TryGetAs<SemIR::FacetType>(destroy_id);
+    if (!destroy_facet_type) {
       return false;
+    }
+    const auto& destroy_facet_type_info =
+        context.facet_types().Get(destroy_facet_type->facet_type_id);
+    auto destroy_extend = destroy_facet_type_info.TryAsSingleExtend();
+    if (!destroy_extend ||
+        !std::holds_alternative<SemIR::SpecificInterface>(*destroy_extend)) {
+      return false;
+    }
+
+    destroy_interface_id =
+        std::get<SemIR::SpecificInterface>(*destroy_extend).interface_id;
   }
+
+  for (const auto& constraint : info.extend_constraints) {
+    if (constraint.interface_id == destroy_interface_id) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// Returns true if an instruction that should be a `FacetValue` is destructible.
+static auto CanDestroyFacetValue(Context& context, SemIR::LocId loc_id,
+                                 SemIR::InstId facet_value_inst_id,
+                                 SemIR::InterfaceId& destroy_interface_id)
+    -> bool {
+  if (!facet_value_inst_id.has_value()) {
+    return false;
+  }
+  auto facet_value = context.insts().Get(facet_value_inst_id);
+  auto facet_type =
+      context.types().GetAs<SemIR::FacetType>(facet_value.type_id());
+  return CanDestroyFacetType(context, loc_id, facet_type, destroy_interface_id);
+}
+
+// Returns true if the `Self` should impl `Destroy`.
+static auto TypeCanDestroy(Context& context, SemIR::LocId loc_id,
+                           SemIR::ConstantId query_self_const_id) -> bool {
+  // A lazily cached `Destroy` interface.
+  auto destroy_interface_id = SemIR::InterfaceId::None;
+
+  auto query_inst_id = context.constant_values().GetInstId(
+      GetCanonicalFacetOrTypeValue(context, query_self_const_id));
+
+  // When querying a facet type, we can return early.
+  if (auto facet_type = context.types().TryGetAs<SemIR::FacetType>(
+          context.insts().Get(query_inst_id).type_id())) {
+    return CanDestroyFacetType(context, loc_id, *facet_type,
+                               destroy_interface_id);
+  }
+
+  // A stack of IDs to check (ordering shouldn't be important).
+  struct WorkItem {
+    SemIR::InstId id;
+    // The only case `abstract` is allowed during a type walk is when looking at
+    // a `base` type of a class.
+    bool allow_abstract = false;
+  };
+  llvm::SmallVector<WorkItem> work;
+
+  // Start by checking the queried instruction.
+  work.push_back({.id = query_inst_id});
+
+  // Loop through type structures recursively, looking for any types
+  // incompatible with `Destroy`.
+  while (!work.empty()) {
+    auto work_item = work.pop_back_val();
+    auto inst = context.insts().Get(work_item.id);
+
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(SemIR::ArrayType array_type): {
+        work.push_back({.id = array_type.element_type_inst_id});
+        break;
+      }
+
+      case CARBON_KIND(SemIR::BaseDecl base_decl): {
+        work.push_back(
+            {.id = base_decl.base_type_inst_id, .allow_abstract = true});
+        break;
+      }
+
+      case CARBON_KIND(SemIR::ClassType class_type): {
+        auto class_info = context.classes().Get(class_type.class_id);
+        // Incomplete and abstract classes can't be destroyed.
+        if (!class_info.is_complete() ||
+            (!work_item.allow_abstract &&
+             class_info.inheritance_kind ==
+                 SemIR::Class::InheritanceKind::Abstract)) {
+          return false;
+        }
+
+        // For C++ types, use Clang to determine whether they can be destructed.
+        // TODO: Needs appropriate calls.
+        if (context.name_scopes().Get(class_info.scope_id).is_cpp_scope()) {
+          break;
+        }
+
+        auto obj_repr_id =
+            class_info.GetObjectRepr(context.sem_ir(), SemIR::SpecificId::None);
+        work.push_back({.id = context.types().GetInstId(obj_repr_id)});
+        break;
+      }
+
+      case CARBON_KIND(SemIR::ConstType const_type): {
+        work.push_back({.id = const_type.inner_id,
+                        .allow_abstract = work_item.allow_abstract});
+        break;
+      }
+
+      case CARBON_KIND(SemIR::FacetAccessType facet_access_type): {
+        if (!CanDestroyFacetValue(context, loc_id,
+                                  facet_access_type.facet_value_inst_id,
+                                  destroy_interface_id)) {
+          return false;
+        }
+        break;
+      }
+
+      case CARBON_KIND(SemIR::PartialType partial_type): {
+        // TODO: This may be adjusted per
+        // https://github.com/carbon-language/carbon-lang/issues/6161.
+        work.push_back({.id = partial_type.inner_id, .allow_abstract = true});
+        break;
+      }
+
+      case CARBON_KIND(SemIR::StructType struct_type): {
+        for (auto field :
+             context.struct_type_fields().Get(struct_type.fields_id)) {
+          work.push_back({.id = field.type_inst_id});
+        }
+        break;
+      }
+
+      case CARBON_KIND(SemIR::SymbolicBindingType facet_access_type): {
+        if (!CanDestroyFacetValue(context, loc_id,
+                                  facet_access_type.facet_value_inst_id,
+                                  destroy_interface_id)) {
+          return false;
+        }
+        break;
+      }
+
+      case CARBON_KIND(SemIR::TupleType tuple_type): {
+        for (auto element_id :
+             context.inst_blocks().Get(tuple_type.type_elements_id)) {
+          work.push_back({.id = element_id});
+        }
+        break;
+      }
+
+      case SemIR::FloatLiteralType::Kind:
+      case SemIR::FloatType::Kind:
+      case SemIR::IntLiteralType::Kind:
+      case SemIR::IntType::Kind:
+      case SemIR::BoolType::Kind:
+      case SemIR::PointerType::Kind:
+      case SemIR::TypeType::Kind:
+        // Trivially destructible.
+        break;
+
+      case SemIR::ImplWitnessAccess::Kind:
+      case SemIR::MaybeUnformedType::Kind:
+        // TODO: Need to dig into the type to ensure it does `Destroy`;
+        // providing `Destroy` for now for compatibility. Note with
+        // `Core.MaybeUnformed`, it requires `Destroy` for related reasons, and
+        // should probably also support non-`Destroy` types.
+        break;
+
+      default:
+        CARBON_FATAL("TypeCanDestroy found unexpected inst: {0}", inst);
+    }
+  }
+
+  return true;
 }
 
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
@@ -645,7 +805,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   }
   if (builtin_constraint_mask.HasAnyOf(
           SemIR::BuiltinConstraintMask::TypeCanDestroy) &&
-      !TypeCanDestroy(context, query_self_const_id)) {
+      !TypeCanDestroy(context, loc_id, query_self_const_id)) {
     return SemIR::InstBlockId::None;
   }
   if (interfaces.empty()) {

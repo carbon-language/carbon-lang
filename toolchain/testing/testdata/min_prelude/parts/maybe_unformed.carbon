@@ -12,6 +12,7 @@ export import library "prelude/parts/destroy";
 
 private fn Make(t: type) -> type = "maybe_unformed.make_type";
 
-class MaybeUnformed(T:! type) {
+// TODO: There should probably be support for non-destructible types.
+class MaybeUnformed(T:! Destroy) {
   adapt Make(T);
 }

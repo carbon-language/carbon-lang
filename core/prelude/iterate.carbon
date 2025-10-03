@@ -11,13 +11,13 @@ export import library "prelude/operators";
 
 interface Iterate {
   // TODO: Support iterating ranges of non-copyable values.
-  let ElementType:! Copy;
+  let ElementType:! Copy & Destroy;
   let CursorType:! type;
   fn NewCursor[self: Self]() -> CursorType;
   fn Next[self: Self](cursor: CursorType*) -> Optional(ElementType);
 }
 
-impl forall [T:! Copy, N:! IntLiteral()]
+impl forall [T:! Copy & Destroy, N:! IntLiteral()]
     array(T, N) as Iterate
     where .ElementType = T and .CursorType = i32 {
   fn NewCursor[self: Self]() -> i32 { return 0; }
