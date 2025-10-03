@@ -210,14 +210,12 @@ auto EvalConstantInst(Context& context, SemIR::FacetValue inst)
   if (auto access =
           context.insts().TryGetAs<SemIR::FacetAccessType>(inst.type_inst_id)) {
     auto bind_id = access->facet_value_inst_id;
-    auto bind = context.insts().Get(bind_id);
-    if (bind.Is<SemIR::BindSymbolicName>()) {
-      // If the FacetTypes are the same, then the FacetValue didn't add/remove
-      // any witnesses.
-      if (bind.type_id() == inst.type_id) {
-        return ConstantEvalResult::Existing(
-            context.constant_values().Get(bind_id));
-      }
+    auto bind = context.insts().TryGetAs<SemIR::BindSymbolicName>(bind_id);
+    // If the FacetTypes are the same, then the FacetValue didn't add/remove
+    // any witnesses.
+    if (bind.has_value() && bind->type_id == inst.type_id) {
+      return ConstantEvalResult::Existing(
+          context.constant_values().Get(bind_id));
     }
   }
 

@@ -93,9 +93,7 @@ class InstNamer {
   auto GetLabelFor(ScopeId scope_id, InstBlockId block_id) const -> std::string;
 
   // Returns true if the instruction has a specific name assigned.
-  auto has_name(InstId inst_id) const -> bool {
-    return static_cast<bool>(insts_[inst_id.index].second);
-  }
+  auto has_name(InstId inst_id) const -> bool;
 
  private:
   // A space in which unique names can be allocated.

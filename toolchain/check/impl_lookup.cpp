@@ -526,8 +526,19 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
 // Returns true if the `Self` should impl `Destroy`.
 static auto TypeCanDestroy(Context& context,
                            SemIR::ConstantId query_self_const_id) -> bool {
-  auto inst = context.insts().Get(
-      context.constant_values().GetInstId(query_self_const_id));
+  auto inst = context.insts().Get(context.constant_values().GetInstId(
+      GetCanonicalizedFacetOrTypeValue(context, query_self_const_id)));
+
+  // For facet values, look if the FacetType provides the same.
+  if (auto facet_type =
+          context.types().TryGetAs<SemIR::FacetType>(inst.type_id())) {
+    const auto& info = context.facet_types().Get(facet_type->facet_type_id);
+    if (info.builtin_constraint_mask.HasAnyOf(
+            SemIR::BuiltinConstraintMask::TypeCanDestroy)) {
+      return true;
+    }
+  }
+
   CARBON_KIND_SWITCH(inst) {
     case CARBON_KIND(SemIR::ClassType class_type): {
       auto class_info = context.classes().Get(class_type.class_id);

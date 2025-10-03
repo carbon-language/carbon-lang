@@ -149,6 +149,8 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
     return specifics_.enumerate();
   }
 
+  auto GetIdTag() const { return IdTag(); }
+
  private:
   // Context for hashing keys.
   class KeyContext;

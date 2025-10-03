@@ -188,7 +188,8 @@ auto InstNamer::GetUnscopedNameFor(InstId inst_id) const -> llvm::StringRef {
   if (IsSingletonInstId(inst_id)) {
     return sem_ir_->insts().Get(inst_id).kind().ir_name();
   }
-  const auto& inst_name = insts_[inst_id.index].second;
+  auto index = sem_ir_->insts().GetRawIndex(inst_id);
+  const auto& inst_name = insts_[index].second;
   return inst_name ? inst_name.GetFullName() : "";
 }
 
@@ -207,7 +208,8 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
     return "package";
   }
 
-  const auto& [inst_scope, inst_name] = insts_[inst_id.index];
+  auto index = sem_ir_->insts().GetRawIndex(inst_id);
+  const auto& [inst_scope, inst_name] = insts_[index];
   if (!inst_name) {
     // This should not happen in valid IR.
     RawStringOstream out;
@@ -576,9 +578,10 @@ auto InstNamer::PushEntity(ImplId impl_id, ScopeId scope_id, Scope& scope)
   llvm::StringRef self_name;
   auto self_const_id =
       sem_ir_->constant_values().GetConstantInstId(impl.self_id);
+  auto index = sem_ir_->insts().GetRawIndex(self_const_id);
   if (IsSingletonInstId(self_const_id)) {
     self_name = sem_ir_->insts().Get(self_const_id).kind().ir_name();
-  } else if (const auto& inst_name = insts_[self_const_id.index].second) {
+  } else if (const auto& inst_name = insts_[index].second) {
     self_name = inst_name.GetBaseName();
   } else {
     self_name = "<unexpected self>";
@@ -638,7 +641,8 @@ InstNamer::NamingContext::NamingContext(InstNamer* inst_namer,
       inst_(sem_ir().insts().Get(inst_id)) {}
 
 auto InstNamer::NamingContext::AddInstName(std::string name) -> void {
-  ScopeId old_scope_id = inst_namer_->insts_[inst_id_.index].first;
+  auto index = sem_ir().insts().GetRawIndex(inst_id_);
+  ScopeId old_scope_id = inst_namer_->insts_[index].first;
   if (old_scope_id == ScopeId::None) {
     std::variant<LocId, uint64_t> loc_id_or_fingerprint = LocId::None;
     if (scope_id_ == ScopeId::Constants || scope_id_ == ScopeId::Imports) {
@@ -649,7 +653,7 @@ auto InstNamer::NamingContext::AddInstName(std::string name) -> void {
     }
     auto scoped_name = inst_namer_->GetScopeInfo(scope_id_).insts.AllocateName(
         *inst_namer_, loc_id_or_fingerprint, std::move(name));
-    inst_namer_->insts_[inst_id_.index] = {scope_id_, scoped_name};
+    inst_namer_->insts_[index] = {scope_id_, scoped_name};
   } else {
     CARBON_CHECK(old_scope_id == scope_id_,
                  "Attempting to name inst in multiple scopes");
@@ -971,7 +975,8 @@ auto InstNamer::NamingContext::NameInst() -> void {
       auto const_id = sem_ir().constant_values().Get(inst_id_);
       if (const_id.has_value() && const_id.is_concrete()) {
         auto const_inst_id = sem_ir().constant_values().GetInstId(const_id);
-        if (!inst_namer_->insts_[const_inst_id.index].second) {
+        auto index = sem_ir().insts().GetRawIndex(const_inst_id);
+        if (!inst_namer_->insts_[index].second) {
           inst_namer_->PushBlockInsts(ScopeId::Imports, const_inst_id);
         }
       }
@@ -1170,6 +1175,11 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
   }
+}
+
+auto InstNamer::has_name(InstId inst_id) const -> bool {
+  return static_cast<bool>(
+      insts_[sem_ir_->insts().GetRawIndex(inst_id)].second);
 }
 
 }  // namespace Carbon::SemIR

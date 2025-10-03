@@ -36,8 +36,9 @@ namespace Carbon::Check {
 // Adds the ImportIR, excluding the update to the check_ir_map.
 static auto InternalAddImportIR(Context& context, SemIR::ImportIR import_ir)
     -> SemIR::ImportIRId {
-  context.import_ir_constant_values().push_back(
-      SemIR::ConstantValueStore(SemIR::ConstantId::None));
+  context.import_ir_constant_values().push_back(SemIR::ConstantValueStore(
+      SemIR::ConstantId::None,
+      import_ir.sem_ir ? &import_ir.sem_ir->insts() : nullptr));
   return context.import_irs().Add(import_ir);
 }
 
@@ -50,7 +51,9 @@ static auto SetSpecialImportIR(Context& context, SemIR::ImportIR import_ir,
     ir_id = AddImportIR(context, import_ir);
   } else {
     // We don't have a check_ir_id, so add without touching check_ir_map.
-    ir_id = InternalAddImportIR(context, import_ir);
+    context.import_ir_constant_values().push_back(
+        SemIR::ConstantValueStore(SemIR::ConstantValueStore::Unusable));
+    ir_id = context.import_irs().Add(import_ir);
   }
   CARBON_CHECK(ir_id == expected_import_ir_id,
                "Actual ImportIRId ($0) != Expected ImportIRId ({1})", ir_id,

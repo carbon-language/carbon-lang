@@ -442,7 +442,7 @@ class InstStore {
  public:
   using IdType = InstId;
 
-  explicit InstStore(File* file) : file_(file) {}
+  explicit InstStore(File* file, int32_t reserved_inst_ids);
 
   // Adds an instruction to the instruction list, returning an ID to reference
   // the instruction. Note that this doesn't add the instruction to any
@@ -610,7 +610,8 @@ class InstStore {
 
   // Overwrites a given instruction's location with a new value.
   auto SetLocId(InstId inst_id, LocId loc_id) -> void {
-    loc_ids_[inst_id.index] = loc_id;
+    auto index = values_.GetRawIndex(inst_id);
+    loc_ids_[index] = loc_id;
   }
 
   // Overwrites a given instruction and location ID with a new value.
@@ -641,6 +642,12 @@ class InstStore {
     return values_.enumerate();
   }
 
+  auto GetRawIndex(InstId id) const -> int32_t {
+    return values_.GetRawIndex(id);
+  }
+
+  auto GetIdTag() const -> IdTag { return values_.GetIdTag(); }
+
  private:
   // Given a symbolic type, get the corresponding unattached type.
   auto GetUnattachedType(TypeId type_id) const -> TypeId;
@@ -648,9 +655,10 @@ class InstStore {
   // Gets the specified location for an instruction, without performing any
   // canonicalization.
   auto GetNonCanonicalLocId(InstId inst_id) const -> LocId {
-    CARBON_CHECK(static_cast<size_t>(inst_id.index) < loc_ids_.size(),
-                 "{0} {1}", inst_id.index, loc_ids_.size());
-    return loc_ids_[inst_id.index];
+    auto index = values_.GetRawIndex(inst_id);
+    CARBON_CHECK(static_cast<size_t>(index) < loc_ids_.size(), "{0} {1}", index,
+                 loc_ids_.size());
+    return loc_ids_[index];
   }
 
   File* file_;

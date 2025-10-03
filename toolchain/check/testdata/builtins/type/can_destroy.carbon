@@ -38,6 +38,21 @@ fn G() {
   //@dump-sem-ir-end
 }
 
+// --- symbolic.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+
+fn CanDestroy() -> type = "type.can_destroy";
+
+fn G(U:! CanDestroy()) {}
+
+fn F(T:! Z & CanDestroy()) {
+  // Requires a conversion (and thus impl lookup into `T`) since `T` and `U`
+  // have different (but compatible) facet types.
+  G(T);
+}
+
 // --- fail_incomplete.carbon
 library "[[@TEST_NAME]]";
 

@@ -108,9 +108,20 @@ struct SymbolicConstant : Printable<SymbolicConstant> {
 // Provides a ValueStore wrapper for tracking the constant values of
 // instructions.
 class ConstantValueStore {
+  struct UnusableType {};
+
  public:
-  explicit ConstantValueStore(ConstantId default_value)
-      : default_(default_value) {}
+  inline static const auto Unusable = UnusableType();
+
+  // Constructs an unusable ConstantValueStore, only good as a placeholder (eg:
+  // in C++ interop, where there's no foreign SemIR to reference)
+  explicit ConstantValueStore(UnusableType /* tag */)
+      : default_(ConstantId::None), insts_(nullptr) {}
+
+  explicit ConstantValueStore(ConstantId default_value, const InstStore* insts)
+      : default_(default_value),
+        values_((CARBON_CHECK(insts), insts->GetIdTag())),
+        insts_(insts) {}
 
   // Returns the constant value of the requested instruction, which is default_
   // if unallocated. Always returns an unattached constant.
@@ -122,18 +133,21 @@ class ConstantValueStore {
   // Returns the constant value of the requested instruction, which is default_
   // if unallocated. This may be an attached constant.
   auto GetAttached(InstId inst_id) const -> ConstantId {
-    CARBON_DCHECK(inst_id.index >= 0);
-    return static_cast<size_t>(inst_id.index) >= values_.size()
-               ? default_
-               : values_.Get(inst_id);
+    CARBON_CHECK(insts_,
+                 "Used ConstantValueStores must have an associated InstStore.");
+    auto index = insts_->GetRawIndex(inst_id);
+    return static_cast<size_t>(index) >= values_.size() ? default_
+                                                        : values_.Get(inst_id);
   }
 
   // Sets the constant value of the given instruction, or sets that it is known
   // to not be a constant.
   auto Set(InstId inst_id, ConstantId const_id) -> void {
-    CARBON_DCHECK(inst_id.index >= 0);
-    if (static_cast<size_t>(inst_id.index) >= values_.size()) {
-      values_.Resize(inst_id.index + 1, default_);
+    CARBON_CHECK(insts_,
+                 "Used ConstantValueStores must have an associated InstStore.");
+    auto index = insts_->GetRawIndex(inst_id);
+    if (static_cast<size_t>(index) >= values_.size()) {
+      values_.Resize(index + 1, default_);
     }
     values_.Get(inst_id) = const_id;
   }
@@ -251,6 +265,8 @@ class ConstantValueStore {
   // `ConstantId`. For a symbolic constant, we also track information about
   // where the constant was used, which is stored here.
   ValueStore<ConstantId::SymbolicId, SymbolicConstant> symbolic_constants_;
+
+  const InstStore* insts_;
 };
 
 // Given a constant ID, returns an instruction that has that constant value.
