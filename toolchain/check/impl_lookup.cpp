@@ -527,7 +527,7 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
 static auto TypeCanDestroy(Context& context,
                            SemIR::ConstantId query_self_const_id) -> bool {
   auto inst = context.insts().Get(context.constant_values().GetInstId(
-      GetCanonicalizedFacetOrTypeValue(context, query_self_const_id)));
+      GetCanonicalFacetOrTypeValue(context, query_self_const_id)));
 
   // For facet values, look if the FacetType provides the same.
   if (auto facet_type =
