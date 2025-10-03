@@ -841,13 +841,13 @@ static auto DiagnoseConversionFailureToConstraintValue(
                       "cannot convert type {0} that implements {1} into type "
                       "implementing {2}",
                       InstIdAsType, SemIR::TypeId, SemIR::TypeId);
-    context.emitter().Emit(loc_id, ConversionFailureFacetToFacet, const_expr_id,
+    context.emitter().Emit(loc_id, ConversionFailureFacetToFacet, expr_id,
                            const_expr_type_id, target_type_id);
   } else {
     CARBON_DIAGNOSTIC(ConversionFailureTypeToFacet, Error,
                       "cannot convert type {0} into type implementing {1}",
                       InstIdAsType, SemIR::TypeId);
-    context.emitter().Emit(loc_id, ConversionFailureTypeToFacet, const_expr_id,
+    context.emitter().Emit(loc_id, ConversionFailureTypeToFacet, expr_id,
                            target_type_id);
   }
 }
