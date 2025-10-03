@@ -248,13 +248,14 @@ auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
       context.types().IsFacetType(context.insts().Get(inst_id).type_id()),
       "{0}", context.insts().Get(inst_id).type_id());
 
-  inst_id = context.constant_values().GetConstantInstId(inst_id);
+  auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
 
-  if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(inst_id)) {
-    inst_id = access->facet_value_inst_id;
+  if (auto access =
+          context.insts().TryGetAs<SemIR::FacetAccessType>(const_inst_id)) {
+    return access->facet_value_inst_id;
   }
 
-  return inst_id;
+  return const_inst_id;
 }
 
 auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::ConstantId const_id)

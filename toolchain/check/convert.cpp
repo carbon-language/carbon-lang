@@ -831,23 +831,23 @@ static auto DiagnoseConversionFailureToConstraintValue(
   CARBON_CHECK(context.types().IsFacetType(target_type_id));
 
   // If the source type is/has a facet value (converted with `as type` or
-  // otherwise), then we can include its FacetType in the diagnostic to help
+  // otherwise), then we can include its `FacetType` in the diagnostic to help
   // explain what interfaces the source type implements.
-  expr_id = GetCanonicalFacetOrTypeValue(context, expr_id);
-  auto expr_type_id = context.insts().Get(expr_id).type_id();
+  auto const_expr_id = GetCanonicalFacetOrTypeValue(context, expr_id);
+  auto const_expr_type_id = context.insts().Get(const_expr_id).type_id();
 
-  if (context.types().Is<SemIR::FacetType>(expr_type_id)) {
+  if (context.types().Is<SemIR::FacetType>(const_expr_type_id)) {
     CARBON_DIAGNOSTIC(ConversionFailureFacetToFacet, Error,
                       "cannot convert type {0} that implements {1} into type "
                       "implementing {2}",
                       InstIdAsType, SemIR::TypeId, SemIR::TypeId);
-    context.emitter().Emit(loc_id, ConversionFailureFacetToFacet, expr_id,
-                           expr_type_id, target_type_id);
+    context.emitter().Emit(loc_id, ConversionFailureFacetToFacet, const_expr_id,
+                           const_expr_type_id, target_type_id);
   } else {
     CARBON_DIAGNOSTIC(ConversionFailureTypeToFacet, Error,
                       "cannot convert type {0} into type implementing {1}",
                       InstIdAsType, SemIR::TypeId);
-    context.emitter().Emit(loc_id, ConversionFailureTypeToFacet, expr_id,
+    context.emitter().Emit(loc_id, ConversionFailureTypeToFacet, const_expr_id,
                            target_type_id);
   }
 }

@@ -111,11 +111,12 @@ auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
 // possible, or return the canonical value of the input type expression if it
 // has no canonical facet value.
 //
-// A facet value can be appear in two ways: as a facet value of type FacetType,
-// or through an `as type` conversion which has type TypeType but still refers
-// to the original facet value. While both have canonical values of their own,
-// in cases that want to work with the facet value when possible, this collapses
-// the two cases back together by undoing the `as type` conversion.
+// A facet value can be appear in two ways: as a facet value of type
+// `FacetType`, or through an `as type` conversion which has type `TypeType` but
+// still refers to the original facet value. While both have canonical values of
+// their own, in cases that want to work with the facet value when possible,
+// this collapses the two cases back together by undoing the `as type`
+// conversion.
 //
 // This extra canonicalization step is important for constant comparison of
 // facet values, when the `as type` conversion is not required to compare as a
