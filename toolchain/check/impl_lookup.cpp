@@ -882,6 +882,9 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
     }
   }
 
+  // Ensure specifics don't substitute in weird things for the query self.
+  CARBON_CHECK(context.types().IsFacetType(
+      context.insts().Get(eval_query.query_self_inst_id).type_id()));
   SemIR::ConstantId query_self_const_id =
       context.constant_values().Get(eval_query.query_self_inst_id);
 
