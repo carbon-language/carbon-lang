@@ -168,7 +168,7 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
   Check::CheckParseTreesOptions check_options;
   check_options.vlog_stream = context.vlog_stream();
   auto getters =
-      Parse::GetTreeAndSubtreesStore::MakeWithExplicitSize(1, getter);
+      Parse::GetTreeAndSubtreesStore::MakeWithExplicitSize(IdTag(), 1, getter);
 
   auto clang_invocation =
       BuildClangInvocation(consumer, fs, {context.installation().clang_path()});

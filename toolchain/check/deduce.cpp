@@ -10,6 +10,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/subst.h"
+#include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
@@ -289,7 +290,14 @@ auto DeductionContext::Deduce() -> bool {
     if (context().types().Is<SemIR::PatternType>(param_type_id)) {
       param_type_id =
           SemIR::ExtractScrutineeType(context().sem_ir(), param_type_id);
+    } else if (context().types().IsFacetType(param_type_id)) {
+      // Given `fn F[G:! Interface](g: G)`, the type of `g` is `G as type`. For
+      // deduction, we want to ignore the `as type`, and check that the argument
+      // can convert to the FacetType of the canonical facet value.
+      param_id = GetCanonicalFacetOrTypeValue(context(), param_id);
+      param_type_id = context().insts().Get(param_id).type_id();
     }
+
     // If the parameter has a symbolic type, deduce against that.
     if (param_type_id.is_symbolic()) {
       Add(context().types().GetInstId(param_type_id),
@@ -410,20 +418,6 @@ auto DeductionContext::Deduce() -> bool {
       case SemIR::StructValue::Kind:
         // TODO: Match field name order between param and arg.
         break;
-
-      case CARBON_KIND(SemIR::FacetAccessType access): {
-        // Given `fn F[G:! Interface](g: G)`, the type of `g` is `G as type`.
-        // `G` is a symbolic binding, whose type is a facet type, but `G as
-        // type` converts into a `FacetAccessType`.
-        //
-        // When we see a `FacetAccessType` parameter here, we want to deduce the
-        // facet type of `G`, not `G as type`, for the argument (so that the
-        // argument would be a facet value, whose type is the same facet type of
-        // `G`. So here we "undo" the `as type` operation that's built into the
-        // `g` parameter's type.
-        Add(access.facet_value_inst_id, arg_id);
-        continue;
-      }
 
         // TODO: Handle more cases.
 

@@ -110,6 +110,7 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
     for (auto* param : decl->parameters()) {
       if (param->getType()->isReferenceType()) {
         thunk_required = true;
+        break;
       }
     }
   }
@@ -120,7 +121,8 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
     if (return_type_id == SemIR::ErrorInst::TypeId) {
       return false;
     }
-    thunk_required = IsThunkRequiredForType(context, return_type_id);
+    thunk_required =
+        thunk_required || IsThunkRequiredForType(context, return_type_id);
   }
 
   for (auto param_id :
@@ -128,12 +130,10 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
     if (param_id == SemIR::ErrorInst::InstId) {
       return false;
     }
-    if (!thunk_required &&
+    thunk_required =
+        thunk_required ||
         IsThunkRequiredForType(
-            context,
-            context.insts().GetAs<SemIR::AnyParam>(param_id).type_id)) {
-      thunk_required = true;
-    }
+            context, context.insts().GetAs<SemIR::AnyParam>(param_id).type_id);
   }
 
   return thunk_required;

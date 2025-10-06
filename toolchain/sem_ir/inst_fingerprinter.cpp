@@ -60,7 +60,7 @@ struct Worklist {
     auto& store = fingerprints->Get(file->check_ir_id());
     if (store.size() == 0) {
       store = FixedSizeValueStore<InstId, uint64_t>::MakeWithExplicitSize(
-          file->insts().size(), 0);
+          file->insts().GetIdTag(), file->insts().size(), 0);
     }
     store.Set(inst_id, fingerprint ? fingerprint : 1);
   }

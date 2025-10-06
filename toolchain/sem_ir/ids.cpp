@@ -16,7 +16,12 @@ auto InstId::Print(llvm::raw_ostream& out) const -> void {
   if (IsSingletonInstId(*this)) {
     out << Label << "(" << SingletonInstKinds[index] << ")";
   } else {
-    IdBase::Print(out);
+    auto [ir_id, simple_index] = IdTag::DecomposeWithBestEffort(index);
+    if (ir_id == -1) {
+      IdBase::Print(out);
+    } else {
+      out << "ir" << ir_id << ".inst" << simple_index;
+    }
   }
 }
 

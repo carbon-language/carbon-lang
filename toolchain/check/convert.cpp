@@ -828,29 +828,21 @@ static auto CanRemoveQualifiers(SemIR::TypeQualifiers quals,
 static auto DiagnoseConversionFailureToConstraintValue(
     Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     SemIR::TypeId target_type_id) -> void {
-  CARBON_DCHECK(target_type_id == SemIR::TypeType::TypeId ||
-                context.types().Is<SemIR::FacetType>(target_type_id));
+  CARBON_CHECK(context.types().IsFacetType(target_type_id));
 
-  auto type_of_expr_id = context.insts().Get(expr_id).type_id();
-  CARBON_CHECK(context.types().IsFacetType(type_of_expr_id));
-  // If the source type is/has a facet value, then we can include its
-  // FacetType in the diagnostic to help explain what interfaces the
-  // source type implements.
-  auto facet_value_inst_id = SemIR::InstId::None;
-  if (auto facet_access_type =
-          context.insts().TryGetAs<SemIR::FacetAccessType>(expr_id)) {
-    facet_value_inst_id = facet_access_type->facet_value_inst_id;
-  } else if (context.types().Is<SemIR::FacetType>(type_of_expr_id)) {
-    facet_value_inst_id = expr_id;
-  }
+  // If the source type is/has a facet value (converted with `as type` or
+  // otherwise), then we can include its `FacetType` in the diagnostic to help
+  // explain what interfaces the source type implements.
+  auto const_expr_id = GetCanonicalFacetOrTypeValue(context, expr_id);
+  auto const_expr_type_id = context.insts().Get(const_expr_id).type_id();
 
-  if (facet_value_inst_id.has_value()) {
+  if (context.types().Is<SemIR::FacetType>(const_expr_type_id)) {
     CARBON_DIAGNOSTIC(ConversionFailureFacetToFacet, Error,
                       "cannot convert type {0} that implements {1} into type "
                       "implementing {2}",
-                      InstIdAsType, TypeOfInstId, SemIR::TypeId);
+                      InstIdAsType, SemIR::TypeId, SemIR::TypeId);
     context.emitter().Emit(loc_id, ConversionFailureFacetToFacet, expr_id,
-                           facet_value_inst_id, target_type_id);
+                           const_expr_type_id, target_type_id);
   } else {
     CARBON_DIAGNOSTIC(ConversionFailureTypeToFacet, Error,
                       "cannot convert type {0} into type implementing {1}",
@@ -1224,9 +1216,6 @@ static auto PerformBuiltinConversion(
       // would evaluate back to the original BindSymbolicName as its canonical
       // form. We can skip past the whole impl lookup step then and do that
       // here.
-      //
-      // See also test:
-      // facet_access_type_converts_back_to_original_facet_value.carbon
       //
       // TODO: This instruction is going to become a `SymbolicBindingType`, so
       // we'll need to handle that instead.

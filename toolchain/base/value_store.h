@@ -32,6 +32,81 @@ class ValueStoreNotPrintable {};
 
 }  // namespace Internal
 
+struct IdTag {
+  IdTag()
+      : id_tag_(0),
+        initial_reserved_ids_(std::numeric_limits<int32_t>::max()) {}
+  explicit IdTag(int32_t id_index, int32_t initial_reserved_ids)
+      : initial_reserved_ids_(initial_reserved_ids) {
+    // Shift down by 1 to get out of the high bit to avoid using any negative
+    // ids, since they have special uses.
+    // Shift down by another 1 to free up the second highest bit for a marker to
+    // indicate whether the index is tagged (& needs to be untagged) or not.
+    // Add one to the index so it's not zero-based, to make it a bit less likely
+    // this doesn't collide with anything else (though with the
+    // second-highest-bit-tagging this might not be needed).
+    id_tag_ = llvm::reverseBits((((id_index + 1) << 1) | 1) << 1);
+  }
+  auto GetCheckIRId() const -> int32_t {
+    return (llvm::reverseBits(id_tag_) >> 2) - 1;
+  }
+  auto Apply(int32_t index) const -> int32_t {
+    if (index < initial_reserved_ids_) {
+      return index;
+    }
+    // assert that id_tag_ doesn't have the second highest bit set
+    return index ^ id_tag_;
+  }
+  static auto DecomposeWithBestEffort(int32_t tagged_index)
+      -> std::pair<int32_t, int32_t> {
+    if (tagged_index < 0) {
+      return {-1, tagged_index};
+    }
+    if ((llvm::reverseBits(2) & tagged_index) == 0) {
+      return {-1, tagged_index};
+    }
+    int length = 0;
+    int location = 0;
+    for (int i = 0; i != 32; ++i) {
+      int current_run = 0;
+      int location_of_current_run = i;
+      while (i != 32 && (tagged_index & (1 << i)) == 0) {
+        ++current_run;
+        ++i;
+      }
+      if (current_run != 0) {
+        --i;
+      }
+      if (current_run > length) {
+        length = current_run;
+        location = location_of_current_run;
+      }
+    }
+    if (length < 8) {
+      return {-1, tagged_index};
+    }
+    auto index_mask = llvm::maskTrailingOnes<uint32_t>(location);
+    auto ir_id = (llvm::reverseBits(tagged_index & ~index_mask) >> 2) - 1;
+    auto index = tagged_index & index_mask;
+    return {ir_id, index};
+  }
+  auto Remove(int32_t tagged_index) const -> int32_t {
+    if ((llvm::reverseBits(2) & tagged_index) == 0) {
+      CARBON_DCHECK(tagged_index < initial_reserved_ids_,
+                    "This untagged index is outside the initial reserved ids "
+                    "and should have been tagged.");
+      return tagged_index;
+    }
+    auto index = tagged_index ^ id_tag_;
+    CARBON_DCHECK(index >= initial_reserved_ids_,
+                  "When removing tagging bits, found an index that "
+                  "shouldn't've been tagged in the first place.");
+    return index;
+  }
+  int32_t id_tag_;
+  int32_t initial_reserved_ids_;
+};
+
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
 template <typename IdT, typename ValueT>
@@ -74,6 +149,7 @@ class ValueStore
   };
 
   ValueStore() = default;
+  explicit ValueStore(IdTag tag) : tag_(tag) {}
 
   // Stores the value and returns an ID to reference it.
   auto Add(ValueType value) -> IdType {
@@ -82,8 +158,8 @@ class ValueStore
     // tracking down issues easier.
     CARBON_DCHECK(size_ < std::numeric_limits<int32_t>::max(), "Id overflow");
 
-    IdType id(size_);
-    auto [chunk_index, pos] = IdToChunkIndices(id);
+    IdType id(tag_.Apply(size_));
+    auto [chunk_index, pos] = RawIndexToChunkIndices(size_);
     ++size_;
 
     CARBON_DCHECK(static_cast<size_t>(chunk_index) <= chunks_.size(),
@@ -99,16 +175,12 @@ class ValueStore
 
   // Returns a mutable value for an ID.
   auto Get(IdType id) -> RefType {
-    CARBON_DCHECK(id.index >= 0, "{0}", id);
-    CARBON_DCHECK(id.index < size_, "{0}", id);
     auto [chunk_index, pos] = IdToChunkIndices(id);
     return chunks_[chunk_index].Get(pos);
   }
 
   // Returns the value for an ID.
   auto Get(IdType id) const -> ConstRefType {
-    CARBON_DCHECK(id.index >= 0, "{0}", id);
-    CARBON_DCHECK(id.index < size_, "{0}", id);
     auto [chunk_index, pos] = IdToChunkIndices(id);
     return chunks_[chunk_index].Get(pos);
   }
@@ -118,7 +190,7 @@ class ValueStore
     if (size <= size_) {
       return;
     }
-    auto [final_chunk_index, _] = IdToChunkIndices(IdType(size - 1));
+    auto [final_chunk_index, _] = RawIndexToChunkIndices(size - 1);
     chunks_.resize(final_chunk_index + 1);
   }
 
@@ -128,10 +200,10 @@ class ValueStore
       return;
     }
 
-    auto [begin_chunk_index, begin_pos] = IdToChunkIndices(IdType(size_));
+    auto [begin_chunk_index, begin_pos] = RawIndexToChunkIndices(size_);
     // Use an inclusive range so that if `size` would be the next chunk, we
     // don't try doing something with it.
-    auto [end_chunk_index, end_pos] = IdToChunkIndices(IdType(size - 1));
+    auto [end_chunk_index, end_pos] = RawIndexToChunkIndices(size - 1);
     chunks_.resize(end_chunk_index + 1);
 
     // If the begin and end chunks are the same, we only fill from begin to end.
@@ -192,11 +264,31 @@ class ValueStore
     // `mapped_iterator` incorrectly infers the pointer type for `PointerProxy`.
     // NOLINTNEXTLINE(readability-const-return-type)
     auto index_to_id = [&](int32_t i) -> const std::pair<IdType, ConstRefType> {
-      return std::pair<IdType, ConstRefType>(IdType(i), Get(IdType(i)));
+      IdType id(tag_.Apply(i));
+      return std::pair<IdType, ConstRefType>(id, Get(id));
     };
     // Because indices into `ValueStore` are all sequential values from 0, we
     // can use llvm::seq to walk all indices in the store.
     return llvm::map_range(llvm::seq(size_), index_to_id);
+  }
+
+  auto GetIdTag() const -> IdTag { return tag_; }
+  auto GetRawIndex(IdT id) const -> int32_t {
+    auto index = tag_.Remove(id.index);
+    CARBON_DCHECK(index >= 0, "{0}", index);
+    // Attempt to decompose id.index to include extra detail in the check here
+#ifndef NDEBUG
+    if (index >= size_) {
+      auto [ir_id, decomposed_index] = IdTag::DecomposeWithBestEffort(id.index);
+      CARBON_DCHECK(
+          index < size_,
+          "Untagged index was outside of container range. Possibly tagged "
+          "index {0}. Best-effort decomposition: CheckIRId: {1}, index: {2}. "
+          "The IdTag for this container is: {3}",
+          id.index, ir_id, decomposed_index, tag_.GetCheckIRId());
+    }
+#endif
+    return index;
   }
 
  private:
@@ -312,9 +404,10 @@ class ValueStore
     int32_t num_ = 0;
   };
 
-  // Converts an id into an index into the set of chunks, and an offset into
-  // that specific chunk. Looks for index overflow in non-optimized builds.
-  static auto IdToChunkIndices(IdType id) -> std::pair<int32_t, int32_t> {
+  // Converts a raw index into an index into the set of chunks, and an offset
+  // into that specific chunk. Looks for index overflow in non-optimized builds.
+  static auto RawIndexToChunkIndices(int32_t index)
+      -> std::pair<int32_t, int32_t> {
     constexpr auto LowBits = Chunk::IndexBits();
 
     // Verify there are no unused bits when indexing up to the `Capacity`. This
@@ -328,15 +421,23 @@ class ValueStore
     static_assert(LowBits < 30);
 
     // The index of the chunk is the high bits.
-    auto chunk = id.index >> LowBits;
+    auto chunk = index >> LowBits;
     // The index into the chunk is the low bits.
-    auto pos = id.index & ((1 << LowBits) - 1);
+    auto pos = index & ((1 << LowBits) - 1);
     return {chunk, pos};
+  }
+
+  // Converts an id into an index into the set of chunks, and an offset into
+  // that specific chunk.
+  auto IdToChunkIndices(IdType id) const -> std::pair<int32_t, int32_t> {
+    return RawIndexToChunkIndices(GetRawIndex(id));
   }
 
   // Number of elements added to the store. The number should never exceed what
   // fits in an `int32_t`, which is checked in non-optimized builds in Add().
   int32_t size_ = 0;
+
+  IdTag tag_;
 
   // Storage for the `ValueType` objects, indexed by the id. We use a vector of
   // chunks of `ValueType` instead of just a vector of `ValueType` so that

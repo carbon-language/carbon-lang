@@ -36,8 +36,9 @@ namespace Carbon::Check {
 // Adds the ImportIR, excluding the update to the check_ir_map.
 static auto InternalAddImportIR(Context& context, SemIR::ImportIR import_ir)
     -> SemIR::ImportIRId {
-  context.import_ir_constant_values().push_back(
-      SemIR::ConstantValueStore(SemIR::ConstantId::None));
+  context.import_ir_constant_values().push_back(SemIR::ConstantValueStore(
+      SemIR::ConstantId::None,
+      import_ir.sem_ir ? &import_ir.sem_ir->insts() : nullptr));
   return context.import_irs().Add(import_ir);
 }
 
@@ -50,7 +51,9 @@ static auto SetSpecialImportIR(Context& context, SemIR::ImportIR import_ir,
     ir_id = AddImportIR(context, import_ir);
   } else {
     // We don't have a check_ir_id, so add without touching check_ir_map.
-    ir_id = InternalAddImportIR(context, import_ir);
+    context.import_ir_constant_values().push_back(
+        SemIR::ConstantValueStore(SemIR::ConstantValueStore::Unusable));
+    ir_id = context.import_irs().Add(import_ir);
   }
   CARBON_CHECK(ir_id == expected_import_ir_id,
                "Actual ImportIRId ($0) != Expected ImportIRId ({1})", ir_id,
@@ -447,9 +450,6 @@ class ImportRefResolver : public ImportContext {
 
       // Step 1: check for a constant value.
       auto existing = FindResolvedConstId(work.inst_id);
-      if (existing.const_id == SemIR::ErrorInst::ConstantId) {
-        return existing.const_id;
-      }
       if (existing.const_id.has_value() && !work.retry_with_constant_value) {
         work_stack_.pop_back();
         continue;
@@ -589,7 +589,11 @@ class ImportRefResolver : public ImportContext {
       if (ir_inst.ir_id() == SemIR::ImportIRId::Cpp) {
         local_context().TODO(SemIR::LocId::None,
                              "Unsupported: Importing C++ indirectly");
-        return {.const_id = SemIR::ErrorInst::ConstantId};
+        SetResolvedConstId(inst_id, result.indirect_insts,
+                           SemIR::ErrorInst::ConstantId);
+        result.const_id = SemIR::ErrorInst::ConstantId;
+        result.indirect_insts.clear();
+        return result;
       }
 
       const auto* prev_ir = cursor_ir;
@@ -1791,6 +1795,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto class_const_id = GetLocalConstantId(
       resolver,
       resolver.import_classes().Get(inst.class_id).first_owning_decl_id);
+  if (class_const_id == SemIR::ErrorInst::ConstantId) {
+    // TODO: It should be possible to remove this once C++ imports work.
+    return ResolveResult::Done(class_const_id);
+  }
+
   auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();

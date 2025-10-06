@@ -111,7 +111,7 @@ auto Formatter::Format() -> void {
 auto Formatter::ComputeNodeParents() -> void {
   CARBON_CHECK(!node_parents_);
   node_parents_ = NodeParentStore::MakeWithExplicitSize(
-      sem_ir_->parse_tree().size(), Parse::NodeId::None);
+      IdTag(), sem_ir_->parse_tree().size(), Parse::NodeId::None);
   for (auto n : sem_ir_->parse_tree().postorder()) {
     for (auto child : get_tree_and_subtrees_().children(n)) {
       node_parents_->Set(child, n);
@@ -1236,15 +1236,17 @@ auto Formatter::FormatImportRefRhs(AnyImportRef inst) -> void {
     const auto& import_ir = sem_ir_->import_irs().Get(import_ir_inst.ir_id());
     auto loc_id =
         import_ir.sem_ir->insts().GetCanonicalLocId(import_ir_inst.inst_id());
+    InstId stripped_inst_id(
+        import_ir.sem_ir->insts().GetRawIndex(import_ir_inst.inst_id()));
     switch (loc_id.kind()) {
       case LocId::Kind::None: {
-        out_ << import_ir_inst.inst_id() << " [no loc]";
+        out_ << stripped_inst_id << " [no loc]";
         break;
       }
       case LocId::Kind::ImportIRInstId: {
         // TODO: Probably don't want to format each indirection, but maybe
         // reuse GetCanonicalImportIRInst?
-        out_ << import_ir_inst.inst_id() << " [indirect]";
+        out_ << stripped_inst_id << " [indirect]";
         break;
       }
       case LocId::Kind::NodeId: {

@@ -26,11 +26,11 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst14, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst37}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst14, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: ir0.inst37}}
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, call_params_id: inst_block9, return_slot_pattern: inst32, body: [inst_block12]}
+// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, call_params_id: inst_block9, return_slot_pattern: ir0.inst32, body: [inst_block12]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
@@ -43,150 +43,150 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(Error)}
 // CHECK:STDOUT:     'type(inst(NamespaceType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     'type(inst15)':
-// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst15)}
-// CHECK:STDOUT:     'type(inst24)':
-// CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(inst26)}
-// CHECK:STDOUT:     'type(inst26)':
-// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst26)}
-// CHECK:STDOUT:     'type(inst38)':
-// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst15)}
+// CHECK:STDOUT:     'type(ir0.inst15)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(ir0.inst15)}
+// CHECK:STDOUT:     'type(ir0.inst24)':
+// CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(ir0.inst26)}
+// CHECK:STDOUT:     'type(ir0.inst26)':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(ir0.inst26)}
+// CHECK:STDOUT:     'type(ir0.inst38)':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(ir0.inst15)}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     inst14:          {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     inst15:          {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
-// CHECK:STDOUT:     inst16:          {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst15)}
-// CHECK:STDOUT:     inst17:          {kind: Converted, arg0: inst16, arg1: inst15, type: type(TypeType)}
-// CHECK:STDOUT:     inst18:          {kind: BindName, arg0: entity_name0, arg1: inst33, type: type(inst15)}
-// CHECK:STDOUT:     inst19:          {kind: PatternType, arg0: inst15, type: type(TypeType)}
-// CHECK:STDOUT:     inst20:          {kind: BindingPattern, arg0: entity_name0, type: type(inst19)}
-// CHECK:STDOUT:     inst21:          {kind: ValueParamPattern, arg0: inst20, arg1: call_param0, type: type(inst19)}
-// CHECK:STDOUT:     inst22:          {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst15)}
-// CHECK:STDOUT:     inst23:          {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst15)}
-// CHECK:STDOUT:     inst24:          {kind: TupleType, arg0: inst_block7, type: type(TypeType)}
-// CHECK:STDOUT:     inst25:          {kind: TupleLiteral, arg0: inst_block6, type: type(inst24)}
-// CHECK:STDOUT:     inst26:          {kind: PointerType, arg0: inst24, type: type(TypeType)}
-// CHECK:STDOUT:     inst27:          {kind: Converted, arg0: inst22, arg1: inst15, type: type(TypeType)}
-// CHECK:STDOUT:     inst28:          {kind: Converted, arg0: inst23, arg1: inst15, type: type(TypeType)}
-// CHECK:STDOUT:     inst29:          {kind: Converted, arg0: inst25, arg1: inst24, type: type(TypeType)}
-// CHECK:STDOUT:     inst30:          {kind: PatternType, arg0: inst24, type: type(TypeType)}
-// CHECK:STDOUT:     inst31:          {kind: ReturnSlotPattern, arg0: inst29, type: type(inst30)}
-// CHECK:STDOUT:     inst32:          {kind: OutParamPattern, arg0: inst31, arg1: call_param1, type: type(inst30)}
-// CHECK:STDOUT:     inst33:          {kind: ValueParam, arg0: call_param0, arg1: name1, type: type(inst15)}
-// CHECK:STDOUT:     inst34:          {kind: SpliceBlock, arg0: inst_block4, arg1: inst17, type: type(TypeType)}
-// CHECK:STDOUT:     inst35:          {kind: OutParam, arg0: call_param1, arg1: name(ReturnSlot), type: type(inst24)}
-// CHECK:STDOUT:     inst36:          {kind: ReturnSlot, arg0: inst24, arg1: inst35, type: type(inst24)}
-// CHECK:STDOUT:     inst37:          {kind: FunctionDecl, arg0: function0, arg1: inst_block11, type: type(inst38)}
-// CHECK:STDOUT:     inst38:          {kind: FunctionType, arg0: function0, arg1: specific<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst39:          {kind: StructValue, arg0: inst_block_empty, type: type(inst38)}
-// CHECK:STDOUT:     inst40:          {kind: NameRef, arg0: name1, arg1: inst18, type: type(inst15)}
-// CHECK:STDOUT:     inst41:          {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst15)}
-// CHECK:STDOUT:     inst42:          {kind: TupleLiteral, arg0: inst_block13, type: type(inst24)}
-// CHECK:STDOUT:     inst43:          {kind: TupleAccess, arg0: inst36, arg1: element0, type: type(inst15)}
-// CHECK:STDOUT:     inst44:          {kind: TupleInit, arg0: inst_block14, arg1: inst43, type: type(inst15)}
-// CHECK:STDOUT:     inst45:          {kind: TupleValue, arg0: inst_block_empty, type: type(inst15)}
-// CHECK:STDOUT:     inst46:          {kind: Converted, arg0: inst40, arg1: inst44, type: type(inst15)}
-// CHECK:STDOUT:     inst47:          {kind: TupleAccess, arg0: inst36, arg1: element1, type: type(inst15)}
-// CHECK:STDOUT:     inst48:          {kind: TupleInit, arg0: inst_block_empty, arg1: inst47, type: type(inst15)}
-// CHECK:STDOUT:     inst49:          {kind: Converted, arg0: inst41, arg1: inst48, type: type(inst15)}
-// CHECK:STDOUT:     inst50:          {kind: TupleInit, arg0: inst_block15, arg1: inst36, type: type(inst24)}
-// CHECK:STDOUT:     inst51:          {kind: TupleValue, arg0: inst_block16, type: type(inst24)}
-// CHECK:STDOUT:     inst52:          {kind: Converted, arg0: inst42, arg1: inst50, type: type(inst24)}
-// CHECK:STDOUT:     inst53:          {kind: ReturnExpr, arg0: inst52, arg1: inst36}
+// CHECK:STDOUT:     ir0.inst15:      {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst16:      {kind: TupleLiteral, arg0: inst_block_empty, type: type(ir0.inst15)}
+// CHECK:STDOUT:     ir0.inst17:      {kind: Converted, arg0: ir0.inst16, arg1: ir0.inst15, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst18:      {kind: BindName, arg0: entity_name0, arg1: ir0.inst33, type: type(ir0.inst15)}
+// CHECK:STDOUT:     ir0.inst19:      {kind: PatternType, arg0: ir0.inst15, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst20:      {kind: BindingPattern, arg0: entity_name0, type: type(ir0.inst19)}
+// CHECK:STDOUT:     ir0.inst21:      {kind: ValueParamPattern, arg0: ir0.inst20, arg1: call_param0, type: type(ir0.inst19)}
+// CHECK:STDOUT:     ir0.inst22:      {kind: TupleLiteral, arg0: inst_block_empty, type: type(ir0.inst15)}
+// CHECK:STDOUT:     ir0.inst23:      {kind: TupleLiteral, arg0: inst_block_empty, type: type(ir0.inst15)}
+// CHECK:STDOUT:     ir0.inst24:      {kind: TupleType, arg0: inst_block7, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst25:      {kind: TupleLiteral, arg0: inst_block6, type: type(ir0.inst24)}
+// CHECK:STDOUT:     ir0.inst26:      {kind: PointerType, arg0: ir0.inst24, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst27:      {kind: Converted, arg0: ir0.inst22, arg1: ir0.inst15, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst28:      {kind: Converted, arg0: ir0.inst23, arg1: ir0.inst15, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst29:      {kind: Converted, arg0: ir0.inst25, arg1: ir0.inst24, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst30:      {kind: PatternType, arg0: ir0.inst24, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst31:      {kind: ReturnSlotPattern, arg0: ir0.inst29, type: type(ir0.inst30)}
+// CHECK:STDOUT:     ir0.inst32:      {kind: OutParamPattern, arg0: ir0.inst31, arg1: call_param1, type: type(ir0.inst30)}
+// CHECK:STDOUT:     ir0.inst33:      {kind: ValueParam, arg0: call_param0, arg1: name1, type: type(ir0.inst15)}
+// CHECK:STDOUT:     ir0.inst34:      {kind: SpliceBlock, arg0: inst_block4, arg1: ir0.inst17, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst35:      {kind: OutParam, arg0: call_param1, arg1: name(ReturnSlot), type: type(ir0.inst24)}
+// CHECK:STDOUT:     ir0.inst36:      {kind: ReturnSlot, arg0: ir0.inst24, arg1: ir0.inst35, type: type(ir0.inst24)}
+// CHECK:STDOUT:     ir0.inst37:      {kind: FunctionDecl, arg0: function0, arg1: inst_block11, type: type(ir0.inst38)}
+// CHECK:STDOUT:     ir0.inst38:      {kind: FunctionType, arg0: function0, arg1: specific<none>, type: type(TypeType)}
+// CHECK:STDOUT:     ir0.inst39:      {kind: StructValue, arg0: inst_block_empty, type: type(ir0.inst38)}
+// CHECK:STDOUT:     ir0.inst40:      {kind: NameRef, arg0: name1, arg1: ir0.inst18, type: type(ir0.inst15)}
+// CHECK:STDOUT:     ir0.inst41:      {kind: TupleLiteral, arg0: inst_block_empty, type: type(ir0.inst15)}
+// CHECK:STDOUT:     ir0.inst42:      {kind: TupleLiteral, arg0: inst_block13, type: type(ir0.inst24)}
+// CHECK:STDOUT:     ir0.inst43:      {kind: TupleAccess, arg0: ir0.inst36, arg1: element0, type: type(ir0.inst15)}
+// CHECK:STDOUT:     ir0.inst44:      {kind: TupleInit, arg0: inst_block14, arg1: ir0.inst43, type: type(ir0.inst15)}
+// CHECK:STDOUT:     ir0.inst45:      {kind: TupleValue, arg0: inst_block_empty, type: type(ir0.inst15)}
+// CHECK:STDOUT:     ir0.inst46:      {kind: Converted, arg0: ir0.inst40, arg1: ir0.inst44, type: type(ir0.inst15)}
+// CHECK:STDOUT:     ir0.inst47:      {kind: TupleAccess, arg0: ir0.inst36, arg1: element1, type: type(ir0.inst15)}
+// CHECK:STDOUT:     ir0.inst48:      {kind: TupleInit, arg0: inst_block_empty, arg1: ir0.inst47, type: type(ir0.inst15)}
+// CHECK:STDOUT:     ir0.inst49:      {kind: Converted, arg0: ir0.inst41, arg1: ir0.inst48, type: type(ir0.inst15)}
+// CHECK:STDOUT:     ir0.inst50:      {kind: TupleInit, arg0: inst_block15, arg1: ir0.inst36, type: type(ir0.inst24)}
+// CHECK:STDOUT:     ir0.inst51:      {kind: TupleValue, arg0: inst_block16, type: type(ir0.inst24)}
+// CHECK:STDOUT:     ir0.inst52:      {kind: Converted, arg0: ir0.inst42, arg1: ir0.inst50, type: type(ir0.inst24)}
+// CHECK:STDOUT:     ir0.inst53:      {kind: ReturnExpr, arg0: ir0.inst52, arg1: ir0.inst36}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
 // CHECK:STDOUT:       inst14:          concrete_constant(inst14)
-// CHECK:STDOUT:       inst15:          concrete_constant(inst15)
-// CHECK:STDOUT:       inst17:          concrete_constant(inst15)
-// CHECK:STDOUT:       inst19:          concrete_constant(inst19)
-// CHECK:STDOUT:       inst20:          concrete_constant(inst20)
-// CHECK:STDOUT:       inst21:          concrete_constant(inst21)
-// CHECK:STDOUT:       inst24:          concrete_constant(inst24)
-// CHECK:STDOUT:       inst26:          concrete_constant(inst26)
-// CHECK:STDOUT:       inst27:          concrete_constant(inst15)
-// CHECK:STDOUT:       inst28:          concrete_constant(inst15)
-// CHECK:STDOUT:       inst29:          concrete_constant(inst24)
-// CHECK:STDOUT:       inst30:          concrete_constant(inst30)
-// CHECK:STDOUT:       inst31:          concrete_constant(inst31)
-// CHECK:STDOUT:       inst32:          concrete_constant(inst32)
-// CHECK:STDOUT:       inst34:          concrete_constant(inst15)
-// CHECK:STDOUT:       inst37:          concrete_constant(inst39)
-// CHECK:STDOUT:       inst38:          concrete_constant(inst38)
-// CHECK:STDOUT:       inst39:          concrete_constant(inst39)
-// CHECK:STDOUT:       inst44:          concrete_constant(inst45)
-// CHECK:STDOUT:       inst45:          concrete_constant(inst45)
-// CHECK:STDOUT:       inst46:          concrete_constant(inst45)
-// CHECK:STDOUT:       inst48:          concrete_constant(inst45)
-// CHECK:STDOUT:       inst49:          concrete_constant(inst45)
-// CHECK:STDOUT:       inst50:          concrete_constant(inst51)
-// CHECK:STDOUT:       inst51:          concrete_constant(inst51)
-// CHECK:STDOUT:       inst52:          concrete_constant(inst51)
+// CHECK:STDOUT:       ir0.inst15:      concrete_constant(ir0.inst15)
+// CHECK:STDOUT:       ir0.inst17:      concrete_constant(ir0.inst15)
+// CHECK:STDOUT:       ir0.inst19:      concrete_constant(ir0.inst19)
+// CHECK:STDOUT:       ir0.inst20:      concrete_constant(ir0.inst20)
+// CHECK:STDOUT:       ir0.inst21:      concrete_constant(ir0.inst21)
+// CHECK:STDOUT:       ir0.inst24:      concrete_constant(ir0.inst24)
+// CHECK:STDOUT:       ir0.inst26:      concrete_constant(ir0.inst26)
+// CHECK:STDOUT:       ir0.inst27:      concrete_constant(ir0.inst15)
+// CHECK:STDOUT:       ir0.inst28:      concrete_constant(ir0.inst15)
+// CHECK:STDOUT:       ir0.inst29:      concrete_constant(ir0.inst24)
+// CHECK:STDOUT:       ir0.inst30:      concrete_constant(ir0.inst30)
+// CHECK:STDOUT:       ir0.inst31:      concrete_constant(ir0.inst31)
+// CHECK:STDOUT:       ir0.inst32:      concrete_constant(ir0.inst32)
+// CHECK:STDOUT:       ir0.inst34:      concrete_constant(ir0.inst15)
+// CHECK:STDOUT:       ir0.inst37:      concrete_constant(ir0.inst39)
+// CHECK:STDOUT:       ir0.inst38:      concrete_constant(ir0.inst38)
+// CHECK:STDOUT:       ir0.inst39:      concrete_constant(ir0.inst39)
+// CHECK:STDOUT:       ir0.inst44:      concrete_constant(ir0.inst45)
+// CHECK:STDOUT:       ir0.inst45:      concrete_constant(ir0.inst45)
+// CHECK:STDOUT:       ir0.inst46:      concrete_constant(ir0.inst45)
+// CHECK:STDOUT:       ir0.inst48:      concrete_constant(ir0.inst45)
+// CHECK:STDOUT:       ir0.inst49:      concrete_constant(ir0.inst45)
+// CHECK:STDOUT:       ir0.inst50:      concrete_constant(ir0.inst51)
+// CHECK:STDOUT:       ir0.inst51:      concrete_constant(ir0.inst51)
+// CHECK:STDOUT:       ir0.inst52:      concrete_constant(ir0.inst51)
 // CHECK:STDOUT:     symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
 // CHECK:STDOUT:     exports:
-// CHECK:STDOUT:       0:               inst37
+// CHECK:STDOUT:       0:               ir0.inst37
 // CHECK:STDOUT:     imports:         {}
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     inst_block4:
-// CHECK:STDOUT:       0:               inst16
-// CHECK:STDOUT:       1:               inst17
+// CHECK:STDOUT:       0:               ir0.inst16
+// CHECK:STDOUT:       1:               ir0.inst17
 // CHECK:STDOUT:     inst_block5:
-// CHECK:STDOUT:       0:               inst21
+// CHECK:STDOUT:       0:               ir0.inst21
 // CHECK:STDOUT:     inst_block6:
-// CHECK:STDOUT:       0:               inst22
-// CHECK:STDOUT:       1:               inst23
+// CHECK:STDOUT:       0:               ir0.inst22
+// CHECK:STDOUT:       1:               ir0.inst23
 // CHECK:STDOUT:     inst_block7:
-// CHECK:STDOUT:       0:               inst15
-// CHECK:STDOUT:       1:               inst15
+// CHECK:STDOUT:       0:               ir0.inst15
+// CHECK:STDOUT:       1:               ir0.inst15
 // CHECK:STDOUT:     inst_block8:
-// CHECK:STDOUT:       0:               inst27
-// CHECK:STDOUT:       1:               inst28
+// CHECK:STDOUT:       0:               ir0.inst27
+// CHECK:STDOUT:       1:               ir0.inst28
 // CHECK:STDOUT:     inst_block9:
-// CHECK:STDOUT:       0:               inst33
-// CHECK:STDOUT:       1:               inst35
+// CHECK:STDOUT:       0:               ir0.inst33
+// CHECK:STDOUT:       1:               ir0.inst35
 // CHECK:STDOUT:     inst_block10:
-// CHECK:STDOUT:       0:               inst20
-// CHECK:STDOUT:       1:               inst21
-// CHECK:STDOUT:       2:               inst31
-// CHECK:STDOUT:       3:               inst32
+// CHECK:STDOUT:       0:               ir0.inst20
+// CHECK:STDOUT:       1:               ir0.inst21
+// CHECK:STDOUT:       2:               ir0.inst31
+// CHECK:STDOUT:       3:               ir0.inst32
 // CHECK:STDOUT:     inst_block11:
-// CHECK:STDOUT:       0:               inst22
-// CHECK:STDOUT:       1:               inst23
-// CHECK:STDOUT:       2:               inst25
-// CHECK:STDOUT:       3:               inst27
-// CHECK:STDOUT:       4:               inst28
-// CHECK:STDOUT:       5:               inst29
-// CHECK:STDOUT:       6:               inst33
-// CHECK:STDOUT:       7:               inst34
-// CHECK:STDOUT:       8:               inst18
-// CHECK:STDOUT:       9:               inst35
-// CHECK:STDOUT:       10:              inst36
+// CHECK:STDOUT:       0:               ir0.inst22
+// CHECK:STDOUT:       1:               ir0.inst23
+// CHECK:STDOUT:       2:               ir0.inst25
+// CHECK:STDOUT:       3:               ir0.inst27
+// CHECK:STDOUT:       4:               ir0.inst28
+// CHECK:STDOUT:       5:               ir0.inst29
+// CHECK:STDOUT:       6:               ir0.inst33
+// CHECK:STDOUT:       7:               ir0.inst34
+// CHECK:STDOUT:       8:               ir0.inst18
+// CHECK:STDOUT:       9:               ir0.inst35
+// CHECK:STDOUT:       10:              ir0.inst36
 // CHECK:STDOUT:     inst_block12:
-// CHECK:STDOUT:       0:               inst40
-// CHECK:STDOUT:       1:               inst41
-// CHECK:STDOUT:       2:               inst42
-// CHECK:STDOUT:       3:               inst43
-// CHECK:STDOUT:       4:               inst44
-// CHECK:STDOUT:       5:               inst46
-// CHECK:STDOUT:       6:               inst47
-// CHECK:STDOUT:       7:               inst48
-// CHECK:STDOUT:       8:               inst49
-// CHECK:STDOUT:       9:               inst50
-// CHECK:STDOUT:       10:              inst52
-// CHECK:STDOUT:       11:              inst53
+// CHECK:STDOUT:       0:               ir0.inst40
+// CHECK:STDOUT:       1:               ir0.inst41
+// CHECK:STDOUT:       2:               ir0.inst42
+// CHECK:STDOUT:       3:               ir0.inst43
+// CHECK:STDOUT:       4:               ir0.inst44
+// CHECK:STDOUT:       5:               ir0.inst46
+// CHECK:STDOUT:       6:               ir0.inst47
+// CHECK:STDOUT:       7:               ir0.inst48
+// CHECK:STDOUT:       8:               ir0.inst49
+// CHECK:STDOUT:       9:               ir0.inst50
+// CHECK:STDOUT:       10:              ir0.inst52
+// CHECK:STDOUT:       11:              ir0.inst53
 // CHECK:STDOUT:     inst_block13:
-// CHECK:STDOUT:       0:               inst40
-// CHECK:STDOUT:       1:               inst41
+// CHECK:STDOUT:       0:               ir0.inst40
+// CHECK:STDOUT:       1:               ir0.inst41
 // CHECK:STDOUT:     inst_block14:    {}
 // CHECK:STDOUT:     inst_block15:
-// CHECK:STDOUT:       0:               inst46
-// CHECK:STDOUT:       1:               inst49
+// CHECK:STDOUT:       0:               ir0.inst46
+// CHECK:STDOUT:       1:               ir0.inst49
 // CHECK:STDOUT:     inst_block16:
-// CHECK:STDOUT:       0:               inst45
-// CHECK:STDOUT:       1:               inst45
+// CHECK:STDOUT:       0:               ir0.inst45
+// CHECK:STDOUT:       1:               ir0.inst45
 // CHECK:STDOUT:     inst_block17:
 // CHECK:STDOUT:       0:               inst14
-// CHECK:STDOUT:       1:               inst37
+// CHECK:STDOUT:       1:               ir0.inst37
 // CHECK:STDOUT: ...
 // CHECK:STDOUT: --- one_file_with_textual_ir.carbon
 // CHECK:STDOUT:
