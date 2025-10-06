@@ -129,30 +129,39 @@ auto InstNamer::GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int {
   switch (id_enum) {
     case ScopeIdTypeEnum::None:
       // `None` will be getting a full count of scopes.
+
       offset += sem_ir_->associated_constants().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<AssociatedConstantId>:
+
       offset += sem_ir_->classes().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<ClassId>:
+
       offset += sem_ir_->cpp_overload_sets().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<CppOverloadSetId>:
+
       offset += sem_ir_->functions().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<FunctionId>:
+
       offset += sem_ir_->impls().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<ImplId>:
+
       offset += sem_ir_->interfaces().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<InterfaceId>:
+
       offset += sem_ir_->specific_interfaces().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<SpecificInterfaceId>:
+
       offset += sem_ir_->vtables().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<VtableId>:
+
       // All type-specific scopes are offset by `FirstEntityScope`.
       offset += static_cast<int>(ScopeId::FirstEntityScope);
       return offset;
