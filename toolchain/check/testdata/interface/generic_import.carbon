@@ -123,11 +123,11 @@ impl C as AddWith(C) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.AddWith: %AddWith.type.b35 = import_ref Main//a, AddWith, loaded [concrete = constants.%AddWith.generic]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//a, loc4_19, loaded [symbolic = @AddWith.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.a58 = import_ref Main//a, inst{{\d+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.a58 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c77 = import_ref Main//a, loc5_9, unloaded
 // CHECK:STDOUT:   %Main.F: @AddWith.%AddWith.F.type (%AddWith.F.type.fbc) = import_ref Main//a, F, loaded [symbolic = @AddWith.%AddWith.F (constants.%AddWith.F.be3)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//a, loc4_19, loaded [symbolic = @AddWith.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.7fc: @AddWith.%AddWith.type (%AddWith.type.483) = import_ref Main//a, inst{{\d+}} [no loc], loaded [symbolic = @AddWith.%Self (constants.%Self.cc4)]
+// CHECK:STDOUT:   %Main.import_ref.7fc: @AddWith.%AddWith.type (%AddWith.type.483) = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = @AddWith.%Self (constants.%Self.cc4)]
 // CHECK:STDOUT:   %Main.import_ref.0c5 = import_ref Main//a, loc5_9, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

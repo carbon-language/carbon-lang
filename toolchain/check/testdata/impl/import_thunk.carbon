@@ -154,10 +154,10 @@ fn G() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.8e7 = import_ref Main//a, inst{{\d+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8e7 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.507 = import_ref Main//a, loc5_14, unloaded
 // CHECK:STDOUT:   %Main.F: %I.F.type = import_ref Main//a, F, loaded [concrete = constants.%I.F]
-// CHECK:STDOUT:   %Main.import_ref.de2: %I.type = import_ref Main//a, inst{{\d+}} [no loc], loaded [symbolic = constants.%Self.7ee]
+// CHECK:STDOUT:   %Main.import_ref.de2: %I.type = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self.7ee]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.import_ref.f99: %Destroy.assoc_type = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Core.import_ref.725: %Destroy.Op.type = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [concrete = constants.%Destroy.Op]
@@ -439,12 +439,12 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.eb1c17.1: %empty_tuple.type = import_ref Main//b, loc5_9, loaded [symbolic = @C.%X (constants.%X)]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//b, loc5_18, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %Main.import_ref.572 = import_ref Main//b, inst{{\d+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.8e7 = import_ref Main//a, inst{{\d+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.572 = import_ref Main//b, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8e7 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c44: %I.assoc_type = import_ref Main//a, loc5_14, loaded [concrete = constants.%assoc0.3f3]
 // CHECK:STDOUT:   %Main.F.8b9 = import_ref Main//a, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e03: %I.F.type = import_ref Main//a, loc5_14, loaded [concrete = constants.%I.F]
-// CHECK:STDOUT:   %Main.import_ref.de2: %I.type = import_ref Main//a, inst{{\d+}} [no loc], loaded [symbolic = constants.%Self.7ee]
+// CHECK:STDOUT:   %Main.import_ref.de2: %I.type = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self.7ee]
 // CHECK:STDOUT:   %Main.import_ref.8e1: <witness> = import_ref Main//b, loc7_32, loaded [symbolic = @C.as.I.impl.%I.impl_witness (constants.%I.impl_witness.3ec)]
 // CHECK:STDOUT:   %Main.import_ref.eb1c17.2: %empty_tuple.type = import_ref Main//b, loc7_14, loaded [symbolic = @C.as.I.impl.%Y (constants.%Y)]
 // CHECK:STDOUT:   %Main.import_ref.dbf: type = import_ref Main//b, loc7_25, loaded [symbolic = @C.as.I.impl.%C (constants.%C.13320f.2)]
@@ -454,7 +454,7 @@ fn G() {
 // CHECK:STDOUT:   %Main.import_ref.eb1c17.3: %empty_tuple.type = import_ref Main//b, loc7_14, loaded [symbolic = @C.as.I.impl.%Y (constants.%Y)]
 // CHECK:STDOUT:   %Main.import_ref.eb1c17.4: %empty_tuple.type = import_ref Main//b, loc7_14, loaded [symbolic = @C.as.I.impl.%Y (constants.%Y)]
 // CHECK:STDOUT:   %Main.F.162: @C.as.I.impl.%C.as.I.impl.F.type.1 (%C.as.I.impl.F.type.a1f290.1) = import_ref Main//b, F, loaded [symbolic = @C.as.I.impl.%C.as.I.impl.F.1 (constants.%C.as.I.impl.F.e1c928.1)]
-// CHECK:STDOUT:   %Main.import_ref.a3f: @DestroyT.binding.as_type.as.Destroy.impl.%DestroyT.binding.as_type.as.Destroy.impl.Op.type (%DestroyT.binding.as_type.as.Destroy.impl.Op.type.47d) = import_ref Main//b, inst{{\d+}} [indirect], loaded [symbolic = @DestroyT.binding.as_type.as.Destroy.impl.%DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.10b)]
+// CHECK:STDOUT:   %Main.import_ref.a3f: @DestroyT.binding.as_type.as.Destroy.impl.%DestroyT.binding.as_type.as.Destroy.impl.Op.type (%DestroyT.binding.as_type.as.Destroy.impl.Op.type.47d) = import_ref Main//b, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @DestroyT.binding.as_type.as.Destroy.impl.%DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.10b)]
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Main.import_ref.a3f), @DestroyT.binding.as_type.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }

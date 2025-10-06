@@ -33,37 +33,71 @@ class ValueStoreNotPrintable {};
 }  // namespace Internal
 
 struct IdTag {
-  IdTag()
-      : id_tag_(0),
-        initial_reserved_ids_(std::numeric_limits<int32_t>::max()) {}
+  IdTag() = default;
+
   explicit IdTag(int32_t id_index, int32_t initial_reserved_ids)
-      : initial_reserved_ids_(initial_reserved_ids) {
-    // Shift down by 1 to get out of the high bit to avoid using any negative
-    // ids, since they have special uses.
-    // Shift down by another 1 to free up the second highest bit for a marker to
-    // indicate whether the index is tagged (& needs to be untagged) or not.
-    // Add one to the index so it's not zero-based, to make it a bit less likely
-    // this doesn't collide with anything else (though with the
-    // second-highest-bit-tagging this might not be needed).
-    id_tag_ = llvm::reverseBits((((id_index + 1) << 1) | 1) << 1);
-  }
-  auto GetCheckIRId() const -> int32_t {
-    return (llvm::reverseBits(id_tag_) >> 2) - 1;
-  }
+      :  // Shift down by 1 to get out of the high bit to avoid using any
+         // negative ids, since they have special uses. Shift down by another 1
+         // to free up the second highest bit for a marker to indicate whether
+         // the index is tagged (& needs to be untagged) or not. Add one to the
+         // index so it's not zero-based, to make it a bit less likely this
+         // doesn't collide with anything else (though with the
+         // second-highest-bit-tagging this might not be needed).
+        id_tag_(llvm::reverseBits((((id_index + 1) << 1) | 1) << 1)),
+        initial_reserved_ids_(initial_reserved_ids) {}
+
   auto Apply(int32_t index) const -> int32_t {
     if (index < initial_reserved_ids_) {
       return index;
     }
-    // assert that id_tag_ doesn't have the second highest bit set
+    // TODO: Assert that id_tag_ doesn't have the second highest bit set.
     return index ^ id_tag_;
   }
-  static auto DecomposeWithBestEffort(int32_t tagged_index)
-      -> std::pair<int32_t, int32_t> {
-    if (tagged_index < 0) {
-      return {-1, tagged_index};
+
+  auto Remove(int32_t tagged_index) const -> int32_t {
+    if (!HasTag(tagged_index)) {
+      CARBON_DCHECK(tagged_index < initial_reserved_ids_,
+                    "This untagged index is outside the initial reserved ids "
+                    "and should have been tagged.");
+      return tagged_index;
     }
-    if ((llvm::reverseBits(2) & tagged_index) == 0) {
-      return {-1, tagged_index};
+    auto index = tagged_index ^ id_tag_;
+    CARBON_DCHECK(index >= initial_reserved_ids_,
+                  "When removing tagging bits, found an index that "
+                  "shouldn't've been tagged in the first place.");
+    return index;
+  }
+
+  // Gets the value unique to this IdTag instance that is added to indices in
+  // Apply, and removed in Remove.
+  auto GetContainerTag() const -> int32_t {
+    return (llvm::reverseBits(id_tag_) >> 2) - 1;
+  }
+
+  // Returns whether `tagged_index` has an IdTag applied to it, from this IdTag
+  // instance or any other one.
+  static auto HasTag(int32_t tagged_index) -> bool {
+    return (llvm::reverseBits(2) & tagged_index) != 0;
+  }
+
+  template <class TagT>
+  struct TagAndIndex {
+    int32_t tag;
+    int32_t index;
+  };
+
+  template <typename TagT>
+  static auto DecomposeWithBestEffort(int32_t tagged_index)
+      -> TagAndIndex<TagT> {
+    if (tagged_index < 0) {
+      // TODO: This should return TagT::None, but we need a fallback TagT other
+      // than `int32_t`.
+      return {TagT{-1}, tagged_index};
+    }
+    if (!HasTag(tagged_index)) {
+      // TODO: This should return TagT::None, but we need a fallback TagT other
+      // than `int32_t`.
+      return {TagT{-1}, tagged_index};
     }
     int length = 0;
     int location = 0;
@@ -83,28 +117,20 @@ struct IdTag {
       }
     }
     if (length < 8) {
-      return {-1, tagged_index};
+      // TODO: This should return TagT::None, but we need a fallback TagT other
+      // than `int32_t`.
+      return {TagT{-1}, tagged_index};
     }
     auto index_mask = llvm::maskTrailingOnes<uint32_t>(location);
-    auto ir_id = (llvm::reverseBits(tagged_index & ~index_mask) >> 2) - 1;
+    auto tag = (llvm::reverseBits(tagged_index & ~index_mask) >> 2) - 1;
     auto index = tagged_index & index_mask;
-    return {ir_id, index};
+    return {.tag = TagT{static_cast<int32_t>(tag)},
+            .index = static_cast<int32_t>(index)};
   }
-  auto Remove(int32_t tagged_index) const -> int32_t {
-    if ((llvm::reverseBits(2) & tagged_index) == 0) {
-      CARBON_DCHECK(tagged_index < initial_reserved_ids_,
-                    "This untagged index is outside the initial reserved ids "
-                    "and should have been tagged.");
-      return tagged_index;
-    }
-    auto index = tagged_index ^ id_tag_;
-    CARBON_DCHECK(index >= initial_reserved_ids_,
-                  "When removing tagging bits, found an index that "
-                  "shouldn't've been tagged in the first place.");
-    return index;
-  }
-  int32_t id_tag_;
-  int32_t initial_reserved_ids_;
+
+ private:
+  int32_t id_tag_ = 0;
+  int32_t initial_reserved_ids_ = std::numeric_limits<int32_t>::max();
 };
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
@@ -175,12 +201,14 @@ class ValueStore
 
   // Returns a mutable value for an ID.
   auto Get(IdType id) -> RefType {
+    CARBON_DCHECK(id.index >= 0, "{0}", id);
     auto [chunk_index, pos] = IdToChunkIndices(id);
     return chunks_[chunk_index].Get(pos);
   }
 
   // Returns the value for an ID.
   auto Get(IdType id) const -> ConstRefType {
+    CARBON_DCHECK(id.index >= 0, "{0}", id);
     auto [chunk_index, pos] = IdToChunkIndices(id);
     return chunks_[chunk_index].Get(pos);
   }
@@ -276,16 +304,22 @@ class ValueStore
   auto GetRawIndex(IdT id) const -> int32_t {
     auto index = tag_.Remove(id.index);
     CARBON_DCHECK(index >= 0, "{0}", index);
-    // Attempt to decompose id.index to include extra detail in the check here
 #ifndef NDEBUG
     if (index >= size_) {
-      auto [ir_id, decomposed_index] = IdTag::DecomposeWithBestEffort(id.index);
+      // Attempt to decompose id.index to include extra detail in the check
+      // here.
+      //
+      // TODO: Teach ValueStore the type of the tag id with a template, then we
+      // can print it with proper formatting instead of just as an integer.
+      auto [id_tag, id_untagged_index] =
+          IdTag::DecomposeWithBestEffort<int32_t>(id.index);
       CARBON_DCHECK(
           index < size_,
-          "Untagged index was outside of container range. Possibly tagged "
-          "index {0}. Best-effort decomposition: CheckIRId: {1}, index: {2}. "
-          "The IdTag for this container is: {3}",
-          id.index, ir_id, decomposed_index, tag_.GetCheckIRId());
+          "Untagged index was outside of container range. Tagged index {0}. "
+          "Best-effort decomposition: Tag: {1}, Index: {2}. "
+          "Container size: {3}. "
+          "Expected Tag for this container: {4}.",
+          id.index, id_tag, id_untagged_index, size_, tag_.GetContainerTag());
     }
 #endif
     return index;

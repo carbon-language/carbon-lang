@@ -125,7 +125,7 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.b93: <witness> = import_ref Main//a, loc11_1, loaded [concrete = constants.%complete_type.e1c]
-// CHECK:STDOUT:   %Main.import_ref.3a6 = import_ref Main//a, inst{{\d+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.3a6 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.455: %Cycle.elem = import_ref Main//a, loc10_8, loaded [concrete = %.354]
 // CHECK:STDOUT:   %a.patt: %pattern_type.afd = binding_pattern a [concrete]
 // CHECK:STDOUT:   %a.var_patt: %pattern_type.afd = var_pattern %a.patt [concrete]

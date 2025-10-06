@@ -209,12 +209,12 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//included_with_range, loc16_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//included_with_range, inst{{\d+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.8e7 = import_ref Main//included_with_range, inst{{\d+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//included_with_range, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8e7 = import_ref Main//included_with_range, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.9cd: %I.assoc_type = import_ref Main//included_with_range, loc8_22, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.Op = import_ref Main//included_with_range, Op, unloaded
 // CHECK:STDOUT:   %Main.import_ref.7d9: %I.Op.type = import_ref Main//included_with_range, loc8_22, loaded [concrete = constants.%I.Op]
-// CHECK:STDOUT:   %Main.import_ref.de2: %I.type = import_ref Main//included_with_range, inst{{\d+}} [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.de2: %I.type = import_ref Main//included_with_range, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.3a9: <witness> = import_ref Main//included_with_range, loc13_15, loaded [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.29a: type = import_ref Main//included_with_range, loc13_8, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.301: type = import_ref Main//included_with_range, loc13_13, loaded [concrete = constants.%I.type]

@@ -47,12 +47,11 @@ TEST(SemIRTest, Yaml) {
   // Matches the ID of an instruction. Instruction counts may change as various
   // support changes, so this code is only doing loose structural checks.
   auto inst_block_id = Yaml::Scalar(MatchesRegex(R"(inst_block(\d+|_empty))"));
-  auto inst_id = Yaml::Scalar(MatchesRegex(R"((ir\d+\.)?inst\d+)"));
+  auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst[0-9A-F]+)"));
   auto constant_id =
-      Yaml::Scalar(MatchesRegex(R"(concrete_constant\((ir\d+\.)?inst\d+\))"));
-  auto inst_builtin = Yaml::Scalar(MatchesRegex(R"(inst\(\w+\))"));
-  auto type_id = Yaml::Scalar(
-      MatchesRegex(R"(type\((\w+|inst\(\w+\)|(ir\d+\.)?inst\d+)\))"));
+      Yaml::Scalar(MatchesRegex(R"(concrete_constant\(inst[0-9A-F]+\))"));
+  auto type_id =
+      Yaml::Scalar(MatchesRegex(R"(type\((\w+|inst\(\w+\)|inst[0-9A-F]+)\))"));
   auto type_builtin = Pair(type_id, Yaml::Mapping(_));
 
   auto file = Yaml::Mapping(ElementsAre(
