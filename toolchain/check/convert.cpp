@@ -1221,16 +1221,10 @@ static auto PerformBuiltinConversion(
       //
       // TODO: This instruction is going to become a `SymbolicBindingType`, so
       // we'll need to handle that instead.
-      auto const_type_inst_id =
-          sem_ir.constant_values().GetConstantTypeInstId(type_inst_id);
-      if (auto facet_access_type_inst =
-              sem_ir.insts().TryGetAs<SemIR::SymbolicBindingType>(
-                  const_type_inst_id)) {
-        auto facet_value_inst_id = facet_access_type_inst->facet_value_inst_id;
-        if (sem_ir.insts().Get(facet_value_inst_id).type_id() ==
-            target.type_id) {
-          return facet_value_inst_id;
-        }
+      auto facet_value_inst_id =
+          GetCanonicalFacetOrTypeValue(context, type_inst_id);
+      if (sem_ir.insts().Get(facet_value_inst_id).type_id() == target.type_id) {
+        return facet_value_inst_id;
       }
     }
 

@@ -1550,15 +1550,14 @@ fn F() {
 // CHECK:STDOUT:   %require_complete.bb1: <witness> = require_complete_type %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %.2b8: type = fn_type_with_self_type %J.F.type, %T [symbolic]
 // CHECK:STDOUT:   %impl.elem1: %.2b8 = impl_witness_access %J.lookup_impl_witness.0802bc.2, element1 [symbolic]
-// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem0.82c3d7.2, @I [symbolic]
-// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem0.82c3d7.2, @Destroy [symbolic]
-// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %as_type.2a6e07.2, (%I.lookup_impl_witness, %Destroy.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.74c: <specific function> = specific_impl_function %impl.elem1, @J.F(%T) [symbolic]
+// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem0.82c3d7.2, @I [symbolic]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %as_type.2a6e07.2, (%I.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %.c47: type = fn_type_with_self_type %I.Op.type, %I.facet [symbolic]
 // CHECK:STDOUT:   %impl.elem0.f6a: %.c47 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.456: <specific function> = specific_impl_function %impl.elem0.f6a, @I.Op(%I.facet) [symbolic]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem0.82c3d7.2, @Destroy [symbolic]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %as_type.2a6e07.2, (%Destroy.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %.c2f: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet [symbolic]
 // CHECK:STDOUT:   %impl.elem0.dd1: %.c2f = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic]
@@ -1742,14 +1741,13 @@ fn F() {
 // CHECK:STDOUT:   %require_complete.loc12_26: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc12_26 (constants.%require_complete.bb1)]
 // CHECK:STDOUT:   %.loc13_11: type = fn_type_with_self_type constants.%J.F.type, %T.loc12_18.1 [symbolic = %.loc13_11 (constants.%.2b8)]
 // CHECK:STDOUT:   %impl.elem1.loc13_11.2: @GenericResult.%.loc13_11 (%.2b8) = impl_witness_access %J.lookup_impl_witness, element1 [symbolic = %impl.elem1.loc13_11.2 (constants.%impl.elem1)]
-// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem0.loc12_35.1, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
-// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem0.loc12_35.1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
-// CHECK:STDOUT:   %facet_value.loc13_15.3: %facet_type = facet_value %as_type.loc12_35.1, (%I.lookup_impl_witness, %Destroy.lookup_impl_witness) [symbolic = %facet_value.loc13_15.3 (constants.%facet_value)]
 // CHECK:STDOUT:   %specific_impl_fn.loc13_11.2: <specific function> = specific_impl_function %impl.elem1.loc13_11.2, @J.F(%T.loc12_18.1) [symbolic = %specific_impl_fn.loc13_11.2 (constants.%specific_impl_fn.74c)]
+// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem0.loc12_35.1, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
 // CHECK:STDOUT:   %I.facet.loc13_16: %I.type = facet_value %as_type.loc12_35.1, (%I.lookup_impl_witness) [symbolic = %I.facet.loc13_16 (constants.%I.facet)]
 // CHECK:STDOUT:   %.loc13_16: type = fn_type_with_self_type constants.%I.Op.type, %I.facet.loc13_16 [symbolic = %.loc13_16 (constants.%.c47)]
 // CHECK:STDOUT:   %impl.elem0.loc13_16.2: @GenericResult.%.loc13_16 (%.c47) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc13_16.2 (constants.%impl.elem0.f6a)]
 // CHECK:STDOUT:   %specific_impl_fn.loc13_16.2: <specific function> = specific_impl_function %impl.elem0.loc13_16.2, @I.Op(%I.facet.loc13_16) [symbolic = %specific_impl_fn.loc13_16.2 (constants.%specific_impl_fn.456)]
+// CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem0.loc12_35.1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness)]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %as_type.loc12_35.1, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet)]
 // CHECK:STDOUT:   %.loc13_29.8: type = fn_type_with_self_type constants.%Destroy.Op.type, %Destroy.facet [symbolic = %.loc13_29.8 (constants.%.c2f)]
 // CHECK:STDOUT:   %impl.elem0.loc13_29.2: @GenericResult.%.loc13_29.8 (%.c2f) = impl_witness_access %Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc13_29.2 (constants.%impl.elem0.dd1)]
@@ -1763,12 +1761,8 @@ fn F() {
 // CHECK:STDOUT:     %F.ref.loc13_11: %J.assoc_type = name_ref F, @J.%assoc1 [concrete = constants.%assoc1]
 // CHECK:STDOUT:     %impl.elem1.loc13_11.1: @GenericResult.%.loc13_11 (%.2b8) = impl_witness_access constants.%J.lookup_impl_witness.0802bc.2, element1 [symbolic = %impl.elem1.loc13_11.2 (constants.%impl.elem1)]
 // CHECK:STDOUT:     %u.ref.loc13_14: @GenericResult.%as_type.loc12_35.1 (%as_type.2a6e07.2) = name_ref u, %u
-// CHECK:STDOUT:     %as_type.loc13_15.1: type = facet_access_type constants.%impl.elem0.82c3d7.2 [symbolic = %as_type.loc12_35.1 (constants.%as_type.2a6e07.2)]
-// CHECK:STDOUT:     %facet_value.loc13_15.1: %facet_type = facet_value constants.%as_type.2a6e07.2, (constants.%I.lookup_impl_witness, constants.%Destroy.lookup_impl_witness) [symbolic = %facet_value.loc13_15.3 (constants.%facet_value)]
-// CHECK:STDOUT:     %.loc13_15.1: %facet_type = converted constants.%as_type.2a6e07.2, %facet_value.loc13_15.1 [symbolic = %facet_value.loc13_15.3 (constants.%facet_value)]
-// CHECK:STDOUT:     %as_type.loc13_15.2: type = facet_access_type constants.%impl.elem0.82c3d7.2 [symbolic = %as_type.loc12_35.1 (constants.%as_type.2a6e07.2)]
-// CHECK:STDOUT:     %facet_value.loc13_15.2: %facet_type = facet_value constants.%as_type.2a6e07.2, (constants.%I.lookup_impl_witness, constants.%Destroy.lookup_impl_witness) [symbolic = %facet_value.loc13_15.3 (constants.%facet_value)]
-// CHECK:STDOUT:     %.loc13_15.2: %facet_type = converted constants.%as_type.2a6e07.2, %facet_value.loc13_15.2 [symbolic = %facet_value.loc13_15.3 (constants.%facet_value)]
+// CHECK:STDOUT:     %.loc13_15.1: %facet_type = converted constants.%as_type.2a6e07.2, constants.%impl.elem0.82c3d7.2 [symbolic = %impl.elem0.loc12_35.1 (constants.%impl.elem0.82c3d7.2)]
+// CHECK:STDOUT:     %.loc13_15.2: %facet_type = converted constants.%as_type.2a6e07.2, constants.%impl.elem0.82c3d7.2 [symbolic = %impl.elem0.loc12_35.1 (constants.%impl.elem0.82c3d7.2)]
 // CHECK:STDOUT:     %specific_impl_fn.loc13_11.1: <specific function> = specific_impl_function %impl.elem1.loc13_11.1, @J.F(constants.%T) [symbolic = %specific_impl_fn.loc13_11.2 (constants.%specific_impl_fn.74c)]
 // CHECK:STDOUT:     %.loc13_15.3: ref @GenericResult.%as_type.loc12_35.1 (%as_type.2a6e07.2) = temporary_storage
 // CHECK:STDOUT:     %.loc13_15.4: init @GenericResult.%as_type.loc12_35.1 (%as_type.2a6e07.2) = call %specific_impl_fn.loc13_11.1(%u.ref.loc13_14) to %.loc13_15.3
@@ -1782,12 +1776,8 @@ fn F() {
 // CHECK:STDOUT:     %.loc13_25: type = converted %T.ref.loc13, %T.as_type.loc13 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     %impl.elem1.loc13_25: @GenericResult.%.loc13_11 (%.2b8) = impl_witness_access constants.%J.lookup_impl_witness.0802bc.2, element1 [symbolic = %impl.elem1.loc13_11.2 (constants.%impl.elem1)]
 // CHECK:STDOUT:     %u.ref.loc13_28: @GenericResult.%as_type.loc12_35.1 (%as_type.2a6e07.2) = name_ref u, %u
-// CHECK:STDOUT:     %as_type.loc13_29.1: type = facet_access_type constants.%impl.elem0.82c3d7.2 [symbolic = %as_type.loc12_35.1 (constants.%as_type.2a6e07.2)]
-// CHECK:STDOUT:     %facet_value.loc13_29.1: %facet_type = facet_value constants.%as_type.2a6e07.2, (constants.%I.lookup_impl_witness, constants.%Destroy.lookup_impl_witness) [symbolic = %facet_value.loc13_15.3 (constants.%facet_value)]
-// CHECK:STDOUT:     %.loc13_29.1: %facet_type = converted constants.%as_type.2a6e07.2, %facet_value.loc13_29.1 [symbolic = %facet_value.loc13_15.3 (constants.%facet_value)]
-// CHECK:STDOUT:     %as_type.loc13_29.2: type = facet_access_type constants.%impl.elem0.82c3d7.2 [symbolic = %as_type.loc12_35.1 (constants.%as_type.2a6e07.2)]
-// CHECK:STDOUT:     %facet_value.loc13_29.2: %facet_type = facet_value constants.%as_type.2a6e07.2, (constants.%I.lookup_impl_witness, constants.%Destroy.lookup_impl_witness) [symbolic = %facet_value.loc13_15.3 (constants.%facet_value)]
-// CHECK:STDOUT:     %.loc13_29.2: %facet_type = converted constants.%as_type.2a6e07.2, %facet_value.loc13_29.2 [symbolic = %facet_value.loc13_15.3 (constants.%facet_value)]
+// CHECK:STDOUT:     %.loc13_29.1: %facet_type = converted constants.%as_type.2a6e07.2, constants.%impl.elem0.82c3d7.2 [symbolic = %impl.elem0.loc12_35.1 (constants.%impl.elem0.82c3d7.2)]
+// CHECK:STDOUT:     %.loc13_29.2: %facet_type = converted constants.%as_type.2a6e07.2, constants.%impl.elem0.82c3d7.2 [symbolic = %impl.elem0.loc12_35.1 (constants.%impl.elem0.82c3d7.2)]
 // CHECK:STDOUT:     %specific_impl_fn.loc13_25: <specific function> = specific_impl_function %impl.elem1.loc13_25, @J.F(constants.%T) [symbolic = %specific_impl_fn.loc13_11.2 (constants.%specific_impl_fn.74c)]
 // CHECK:STDOUT:     %.loc13_29.3: ref @GenericResult.%as_type.loc12_35.1 (%as_type.2a6e07.2) = temporary_storage
 // CHECK:STDOUT:     %.loc13_29.4: init @GenericResult.%as_type.loc12_35.1 (%as_type.2a6e07.2) = call %specific_impl_fn.loc13_25(%u.ref.loc13_28) to %.loc13_29.3
@@ -1803,14 +1793,14 @@ fn F() {
 // CHECK:STDOUT:     %.loc13_29.5: ref @GenericResult.%as_type.loc12_35.1 (%as_type.2a6e07.2) = temporary %.loc13_29.3, %.loc13_29.4
 // CHECK:STDOUT:     %.loc13_29.6: @GenericResult.%as_type.loc12_35.1 (%as_type.2a6e07.2) = bind_value %.loc13_29.5
 // CHECK:STDOUT:     %.loc13_30.3: init @GenericResult.%as_type.loc12_35.1 (%as_type.2a6e07.2) = call %bound_method.loc13_30(%.loc13_15.6, %.loc13_29.6) to %.loc12_39
-// CHECK:STDOUT:     %as_type.loc13_29.3: type = facet_access_type constants.%impl.elem0.82c3d7.2 [symbolic = %as_type.loc12_35.1 (constants.%as_type.2a6e07.2)]
+// CHECK:STDOUT:     %as_type.loc13_29: type = facet_access_type constants.%impl.elem0.82c3d7.2 [symbolic = %as_type.loc12_35.1 (constants.%as_type.2a6e07.2)]
 // CHECK:STDOUT:     %impl.elem0.loc13_29.1: @GenericResult.%.loc13_29.8 (%.c2f) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc13_29.2 (constants.%impl.elem0.dd1)]
 // CHECK:STDOUT:     %bound_method.loc13_29.1: <bound method> = bound_method %.loc13_29.5, %impl.elem0.loc13_29.1
 // CHECK:STDOUT:     %specific_impl_fn.loc13_29.1: <specific function> = specific_impl_function %impl.elem0.loc13_29.1, @Destroy.Op(constants.%Destroy.facet) [symbolic = %specific_impl_fn.loc13_29.2 (constants.%specific_impl_fn.07a)]
 // CHECK:STDOUT:     %bound_method.loc13_29.2: <bound method> = bound_method %.loc13_29.5, %specific_impl_fn.loc13_29.1
 // CHECK:STDOUT:     %addr.loc13_29: @GenericResult.%ptr (%ptr.d16) = addr_of %.loc13_29.5
 // CHECK:STDOUT:     %.loc13_29.7: init %empty_tuple.type = call %bound_method.loc13_29.2(%addr.loc13_29)
-// CHECK:STDOUT:     %as_type.loc13_15.3: type = facet_access_type constants.%impl.elem0.82c3d7.2 [symbolic = %as_type.loc12_35.1 (constants.%as_type.2a6e07.2)]
+// CHECK:STDOUT:     %as_type.loc13_15: type = facet_access_type constants.%impl.elem0.82c3d7.2 [symbolic = %as_type.loc12_35.1 (constants.%as_type.2a6e07.2)]
 // CHECK:STDOUT:     %impl.elem0.loc13_15: @GenericResult.%.loc13_29.8 (%.c2f) = impl_witness_access constants.%Destroy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc13_29.2 (constants.%impl.elem0.dd1)]
 // CHECK:STDOUT:     %bound_method.loc13_15.1: <bound method> = bound_method %.loc13_15.5, %impl.elem0.loc13_15
 // CHECK:STDOUT:     %specific_impl_fn.loc13_15: <specific function> = specific_impl_function %impl.elem0.loc13_15, @Destroy.Op(constants.%Destroy.facet) [symbolic = %specific_impl_fn.loc13_29.2 (constants.%specific_impl_fn.07a)]
