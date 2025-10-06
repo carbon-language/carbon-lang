@@ -11,15 +11,15 @@
 // - lldb: `expr Dump(context, id)`
 // - gdb: `call Dump(context, id)`
 
+#include "toolchain/sem_ir/ids.h"
 #ifndef NDEBUG
-
-#include "toolchain/lex/dump.h"
 
 #include <string>
 
 #include "common/check.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/check/context.h"
+#include "toolchain/lex/dump.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/dump.h"
 #include "toolchain/parse/tree.h"
@@ -136,6 +136,17 @@ LLVM_DUMP_METHOD static auto Dump(
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::TypeId type_id)
     -> std::string {
   return SemIR::Dump(context.sem_ir(), type_id);
+}
+
+LLVM_DUMP_METHOD static auto MakeInstId(Context& context, int check_ir_id,
+                                        int id) -> SemIR::InstId {
+  if (SemIR::CheckIRId(check_ir_id) == context.check_ir_id()) {
+    return SemIR::MakeInstId(context.sem_ir(), check_ir_id, id);
+  } else {
+    const auto& import_ir = context.import_irs().Get(
+        context.check_ir_map().Get(SemIR::CheckIRId(check_ir_id)));
+    return SemIR::MakeInstId(*import_ir.sem_ir, check_ir_id, id);
+  }
 }
 
 }  // namespace Carbon::Check

@@ -44,13 +44,14 @@ def cmd_dump(debugger: Any, command: Any, result: Any, dict: Any) -> None:
 Dumps the value of an associated ID, using the C++ Dump() functions.
 
 Usage:
-  dump <CONTEXT> [<EXPR>|-- <EXPR>|<TYPE><ID>|<TYPE> <ID>]
+  dump <CONTEXT> [<EXPR>|-- <EXPR>|<TYPE><ID>|<IR>.<TYPE><ID>]
 
 Args:
   CONTEXT is the dump context, such a SemIR::Context reference, a SemIR::File,
           a Parse::Context, or a Lex::TokenizeBuffer.
   EXPR is a C++ expression such as a variable name. Use `--` to prevent it from
        being treated as a TYPE and ID.
+  IR is the CheckIRId(N) in the form `irN`.
   TYPE can be `inst`, `constant`, `generic`, `impl`, `entity_name`, etc. See
        the `Label` string in `IdBase` classes to find possible TYPE names,
        though only Id types that have a matching `Make...Id()` function are
@@ -74,8 +75,13 @@ Example usage:
 
     context = args[0]
 
-    # The set of "Make" functions in dump.cpp.
+    # The set of "Make" functions in dump.cpp. These use ADL to find the factory
+    # function in `context/` or in `sem_ir/`.
     id_types = {
+        "inst": "MakeInstId",
+    }
+    # These id types don't have an IdTag embedded in them.
+    untagged_id_types = {
         "class": "SemIR::MakeClassId",
         "constant": "SemIR::MakeConstantId",
         "symbolic_constant": "SemIR::MakeSymbolicConstantId",
@@ -85,7 +91,6 @@ Example usage:
         "generic": "SemIR::MakeGenericId",
         "impl": "SemIR::MakeImplId",
         "inst_block": "SemIR::MakeInstBlockId",
-        "inst": "SemIR::MakeInstId",
         "interface": "SemIR::MakeInterfaceId",
         "name": "SemIR::MakeNameId",
         "name_scope": "SemIR::MakeNameScopeId",
@@ -110,27 +115,31 @@ Example usage:
 
     # Try to find a type + id from the input args. If not, the id will be passed
     # through directly to C++, as it can be a variable name.
-    id_type = None
+    found_id_type = False
+
+    # Look for <irN>.<type><id> as a single argument.
+    if m := re.fullmatch("ir(\\d+)\\.([a-z_]+)(\\d+)", args[1]):
+        if m[2] in id_types:
+            if len(args) != 2:
+                print_usage()
+                return
+            id_type = m[2]
+            print_dump(
+                context, f"{id_types[id_type]}({context}, {m[1]}, {m[3]})"
+            )
+            found_id_type = True
 
     # Look for <type><id> as a single argument.
     if m := re.fullmatch("([a-z_]+)(\\d+)", args[1]):
-        if m[1] in id_types:
+        if m[1] in untagged_id_types:
             if len(args) != 2:
                 print_usage()
                 return
             id_type = m[1]
-            print_dump(context, f"{id_types[id_type]}({m[2]})")
+            print_dump(context, f"{untagged_id_types[id_type]}({m[2]})")
+            found_id_type = True
 
-    # Look for <type> <id> as two arguments.
-    if not id_type:
-        if args[1] in id_types:
-            if len(args) != 3:
-                print_usage()
-                return
-            id_type = args[1]
-            print_dump(context, f"{id_types[id_type]}({args[2]})")
-
-    if not id_type:
+    if not found_id_type:
         # Use `--` to escape a variable name like `inst22`.
         if args[1] == "--":
             expr = " ".join(args[2:])

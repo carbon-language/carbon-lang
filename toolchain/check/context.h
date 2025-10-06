@@ -243,6 +243,7 @@ class Context {
   // Directly expose SemIR::File data accessors for brevity in calls.
   // --------------------------------------------------------------------------
 
+  auto check_ir_id() -> SemIR::CheckIRId { return sem_ir().check_ir_id(); }
   auto identifiers() -> SharedValueStores::IdentifierStore& {
     return sem_ir().identifiers();
   }

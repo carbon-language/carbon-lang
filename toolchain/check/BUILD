@@ -180,6 +180,7 @@ cc_library(
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:dump",
         "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:typed_insts",
     ],
     # Always link dump methods.
     alwayslink = 1,
