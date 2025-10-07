@@ -356,6 +356,8 @@ struct ImplId : public IdBase<ImplId> {
   static constexpr llvm::StringLiteral Label = "impl";
 
   using IdBase::IdBase;
+
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 // The ID of a `Generic`.

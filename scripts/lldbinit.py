@@ -88,7 +88,7 @@ Example usage:
         "facet_type": ("SemIR::MakeFacetTypeId", DECIMAL),
         "function": ("SemIR::MakeFunctionId", HEX),
         "generic": ("SemIR::MakeGenericId", DECIMAL),
-        "impl": ("SemIR::MakeImplId", DECIMAL),
+        "impl": ("SemIR::MakeImplId", HEX),
         "inst_block": ("SemIR::MakeInstBlockId", DECIMAL),
         "inst": ("SemIR::MakeInstId", HEX),
         "interface": ("SemIR::MakeInterfaceId", DECIMAL),
