@@ -36,20 +36,15 @@ struct IdTag {
   IdTag() = default;
 
   explicit IdTag(int32_t id_index, int32_t initial_reserved_ids)
-      : initial_reserved_ids_(initial_reserved_ids) {
-    // Shift down by 1 to get out of the high bit to avoid using any negative
-    // ids, since they have special uses. Shift down by another 1 to free up the
-    // second highest bit for a marker to indicate whether the index is tagged
-    // (& needs to be untagged) or not. Add one to the index so it's not
-    // zero-based, to make it a bit less likely this doesn't collide with
-    // anything else (though with the second-highest-bit-tagging this might not
-    // be needed).
-    id_tag_ = llvm::reverseBits((((id_index + 1) << 1) | 1) << 1);
-  }
-
-  auto GetCheckIRId() const -> int32_t {
-    return (llvm::reverseBits(id_tag_) >> 2) - 1;
-  }
+      :  // Shift down by 1 to get out of the high bit to avoid using any
+         // negative ids, since they have special uses. Shift down by another 1
+         // to free up the second highest bit for a marker to indicate whether
+         // the index is tagged (& needs to be untagged) or not. Add one to the
+         // index so it's not zero-based, to make it a bit less likely this
+         // doesn't collide with anything else (though with the
+         // second-highest-bit-tagging this might not be needed).
+        id_tag_(llvm::reverseBits((((id_index + 1) << 1) | 1) << 1)),
+        initial_reserved_ids_(initial_reserved_ids) {}
 
   auto Apply(int32_t index) const -> int32_t {
     if (index < initial_reserved_ids_) {
@@ -73,16 +68,24 @@ struct IdTag {
     return index;
   }
 
+  // Gets the value unique to this IdTag instance that is added to indices in
+  // Apply, and removed in Remove.
+  auto GetContainerTag() const -> int32_t {
+    return (llvm::reverseBits(id_tag_) >> 2) - 1;
+  }
+
+  // Returns whether `tagged_index` has an IdTag applied to it, from this IdTag
+  // instance or any other one.
   static auto HasTag(int32_t tagged_index) -> bool {
     return (llvm::reverseBits(2) & tagged_index) != 0;
   }
 
-  struct IrAndIndex {
-    int32_t check_ir_id;
+  struct TagAndIndex {
+    int32_t tag;
     int32_t index;
   };
 
-  static auto DecomposeWithBestEffort(int32_t tagged_index) -> IrAndIndex {
+  static auto DecomposeWithBestEffort(int32_t tagged_index) -> TagAndIndex {
     if (tagged_index < 0) {
       return {-1, tagged_index};
     }
@@ -110,9 +113,9 @@ struct IdTag {
       return {-1, tagged_index};
     }
     auto index_mask = llvm::maskTrailingOnes<uint32_t>(location);
-    auto check_ir_id = (llvm::reverseBits(tagged_index & ~index_mask) >> 2) - 1;
+    auto tag = (llvm::reverseBits(tagged_index & ~index_mask) >> 2) - 1;
     auto index = tagged_index & index_mask;
-    return {.check_ir_id = static_cast<int32_t>(check_ir_id),
+    return {.tag = static_cast<int32_t>(tag),
             .index = static_cast<int32_t>(index)};
   }
 
@@ -299,7 +302,7 @@ class ValueStore
           "Untagged index was outside of container range. Possibly tagged "
           "index {0}. Best-effort decomposition: CheckIRId: {1}, index: {2}. "
           "The IdTag for this container is: {3}",
-          id.index, ir_id, decomposed_index, tag_.GetCheckIRId());
+          id.index, ir_id, decomposed_index, tag_.GetContainerTag());
     }
 #endif
     return index;

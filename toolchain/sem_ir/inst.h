@@ -438,6 +438,9 @@ struct LocIdAndInst {
 };
 
 // Provides a ValueStore wrapper for an API specific to instructions.
+//
+// InstIds in this store are tagged by an IdTag using the File's CheckIRId as
+// the tag value.
 class InstStore {
  public:
   using IdType = InstId;
