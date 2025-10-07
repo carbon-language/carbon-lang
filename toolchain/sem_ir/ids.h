@@ -304,6 +304,8 @@ struct ClassId : public IdBase<ClassId> {
   static constexpr llvm::StringLiteral Label = "class";
 
   using IdBase::IdBase;
+
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 // The ID of a `Vtable`.

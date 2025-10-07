@@ -20,6 +20,10 @@ auto InstId::Print(llvm::raw_ostream& out) const -> void {
   }
 }
 
+auto ClassId::Print(llvm::raw_ostream& out) const -> void {
+  IdBase::PrintHex(out);
+}
+
 auto ConstantId::Print(llvm::raw_ostream& out, bool disambiguate) const
     -> void {
   if (!has_value()) {

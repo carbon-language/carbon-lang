@@ -59,7 +59,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     function3:       {name: name4, parent_scope: name_scope1, call_params_id: inst_block13}
 // CHECK:STDOUT:     function4:       {name: name6, parent_scope: name_scope1, call_params_id: inst_block18}
 // CHECK:STDOUT:   classes:
-// CHECK:STDOUT:     class0:          {name: name3, parent_scope: name_scope1, self_type_id: type(inst60000013), inheritance_kind: Base, is_dynamic: 0, scope_id: name_scope2, body_block_id: inst_block10, adapt_id: inst<none>, base_id: inst<none>, complete_type_witness_id: inst60000021, vtable_decl_id: inst<none>}}
+// CHECK:STDOUT:     class60000000:   {name: name3, parent_scope: name_scope1, self_type_id: type(inst60000013), inheritance_kind: Base, is_dynamic: 0, scope_id: name_scope2, body_block_id: inst_block10, adapt_id: inst<none>, base_id: inst<none>, complete_type_witness_id: inst60000021, vtable_decl_id: inst<none>}}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
 // CHECK:STDOUT:   struct_type_fields:
@@ -114,8 +114,8 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     inst6000000F:    {kind: ImportCppDecl}
 // CHECK:STDOUT:     inst60000010:    {kind: Namespace, arg0: name_scope1, arg1: inst6000000F, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst60000011:    {kind: NameRef, arg0: name0, arg1: inst60000010, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     inst60000012:    {kind: ClassDecl, arg0: class0, arg1: inst_block<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000013:    {kind: ClassType, arg0: class0, arg1: specific<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst60000012:    {kind: ClassDecl, arg0: class60000000, arg1: inst_block<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst60000013:    {kind: ClassType, arg0: class60000000, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000014:    {kind: NameRef, arg0: name3, arg1: inst60000012, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000015:    {kind: BindName, arg0: entity_name0, arg1: inst60000019, type: type(inst60000013)}
 // CHECK:STDOUT:     inst60000016:    {kind: PatternType, arg0: inst60000013, type: type(TypeType)}
