@@ -53,7 +53,7 @@ Args:
        being treated as a TYPE and ID.
   IR is the CheckIRId(N) in the form `irN`. Not all ID types have an `ir`
        prefix, the ones which do are dumped with that prefix, such as for
-       InstId as `ir1.inst2`.
+       `inst` as `ir1.inst2`.
   TYPE can be `inst`, `constant`, `generic`, `impl`, `entity_name`, etc. See
        the `Label` string in `IdBase` classes to find possible TYPE names,
        though only Id types that have a matching `Make...Id()` function are
