@@ -436,13 +436,13 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst60000043:    {kind: TupleAccess, arg0: inst60000034, arg1: element0, type: type(symbolic_constant00000004)}
 // CHECK:STDOUT:     inst60000044:    {kind: RequireCompleteType, arg0: inst6000001B, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst60000045:    {kind: ImportRefLoaded, arg0: import_ir_inst00000000, arg1: entity_name00000003, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000046:    {kind: InterfaceDecl, arg0: interface00000000, arg1: inst_block_empty, type: type(TypeType)}
+// CHECK:STDOUT:     inst60000046:    {kind: InterfaceDecl, arg0: interface60000000, arg1: inst_block_empty, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000047:    {kind: FacetType, arg0: facet_type00000001, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000048:    {kind: BindSymbolicName, arg0: entity_name00000004, arg1: inst<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst60000049:    {kind: ImportRefUnloaded, arg0: import_ir_inst00000002, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst6000004A:    {kind: ImportRefLoaded, arg0: import_ir_inst00000003, arg1: entity_name<none>, type: type(inst6000004C)}
 // CHECK:STDOUT:     inst6000004B:    {kind: ImportRefUnloaded, arg0: import_ir_inst00000004, arg1: entity_name00000005}
-// CHECK:STDOUT:     inst6000004C:    {kind: AssociatedEntityType, arg0: interface00000000, arg1: specific<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst6000004C:    {kind: AssociatedEntityType, arg0: interface60000000, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000004D:    {kind: ImportRefLoaded, arg0: import_ir_inst00000005, arg1: entity_name<none>, type: type(inst60000050)}
 // CHECK:STDOUT:     inst6000004E:    {kind: AssociatedEntity, arg0: element0, arg1: inst6000004D, type: type(inst6000004C)}
 // CHECK:STDOUT:     inst6000004F:    {kind: FunctionDecl, arg0: function60000001, arg1: inst_block_empty, type: type(inst60000050)}

@@ -65,6 +65,8 @@ class InstNamer {
       index = sem_ir_->specific_interfaces().GetRawIndex(id);
     } else if constexpr (std::is_same_v<IdT, VtableId>) {
       index = sem_ir_->vtables().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, InterfaceId>) {
+      index = sem_ir_->interfaces().GetRawIndex(id);
     }
     return static_cast<ScopeId>(GetScopeIdOffset(ScopeIdTypeEnum::For<IdT>) +
                                 index);
