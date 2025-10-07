@@ -42,8 +42,6 @@ auto Dump(const File& file, StructTypeFieldsId struct_type_fields_id)
     -> std::string;
 auto Dump(const File& file, TypeId type_id) -> std::string;
 
-auto MakeInstId(const SemIR::File& file, int check_ir_id, int id) -> InstId;
-
 }  // namespace Carbon::SemIR
 
 #endif  // NDEBUG
