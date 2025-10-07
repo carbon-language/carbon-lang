@@ -33,10 +33,10 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT: filename:        import.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs:
-// CHECK:STDOUT:     import_irApiForImpl: {decl_id: inst<none>, is_export: false}
-// CHECK:STDOUT:     import_irCpp:    {decl_id: inst<none>, is_export: false}
+// CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
+// CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts:
-// CHECK:STDOUT:     import_ir_inst0: {ir_id: import_irCpp, clang_source_loc_id: clang_source_loc0}
+// CHECK:STDOUT:     import_ir_inst0: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc0}
 // CHECK:STDOUT:   clang_decls:
 // CHECK:STDOUT:     clang_decl_id0:  {key: "<translation unit>", inst_id: ir0.inst16}
 // CHECK:STDOUT:     clang_decl_id1:  {key: "struct X {}", inst_id: ir0.inst18}

@@ -49,7 +49,7 @@ auto ConstantId::Print(llvm::raw_ostream& out, bool disambiguate) const
 
 auto CheckIRId::Print(llvm::raw_ostream& out) const -> void {
   if (*this == Cpp) {
-    out << Label << "Cpp";
+    out << Label << "(Cpp)";
   } else {
     IdBase::Print(out);
   }
@@ -66,9 +66,9 @@ auto GenericInstIndex::Print(llvm::raw_ostream& out) const -> void {
 
 auto ImportIRId::Print(llvm::raw_ostream& out) const -> void {
   if (*this == ApiForImpl) {
-    out << Label << "ApiForImpl";
+    out << Label << "(ApiForImpl)";
   } else if (*this == Cpp) {
-    out << Label << "Cpp";
+    out << Label << "(Cpp)";
   } else {
     IdBase::Print(out);
   }

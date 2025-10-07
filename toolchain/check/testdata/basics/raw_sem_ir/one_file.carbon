@@ -21,8 +21,8 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT: filename:        one_file.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs:
-// CHECK:STDOUT:     import_irApiForImpl: {decl_id: inst<none>, is_export: false}
-// CHECK:STDOUT:     import_irCpp:    {decl_id: inst<none>, is_export: false}
+// CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
+// CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     import_ir2:      {decl_id: ir0.inst15, is_export: false}
 // CHECK:STDOUT:     import_ir3:      {decl_id: ir0.inst15, is_export: false}
 // CHECK:STDOUT:     import_ir4:      {decl_id: ir0.inst15, is_export: false}
