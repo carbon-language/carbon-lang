@@ -33,36 +33,60 @@ class ValueStoreNotPrintable {};
 }  // namespace Internal
 
 struct IdTag {
-  IdTag()
-      : id_tag_(0),
-        initial_reserved_ids_(std::numeric_limits<int32_t>::max()) {}
+  IdTag() = default;
+
   explicit IdTag(int32_t id_index, int32_t initial_reserved_ids)
       : initial_reserved_ids_(initial_reserved_ids) {
     // Shift down by 1 to get out of the high bit to avoid using any negative
-    // ids, since they have special uses.
-    // Shift down by another 1 to free up the second highest bit for a marker to
-    // indicate whether the index is tagged (& needs to be untagged) or not.
-    // Add one to the index so it's not zero-based, to make it a bit less likely
-    // this doesn't collide with anything else (though with the
-    // second-highest-bit-tagging this might not be needed).
+    // ids, since they have special uses. Shift down by another 1 to free up the
+    // second highest bit for a marker to indicate whether the index is tagged
+    // (& needs to be untagged) or not. Add one to the index so it's not
+    // zero-based, to make it a bit less likely this doesn't collide with
+    // anything else (though with the second-highest-bit-tagging this might not
+    // be needed).
     id_tag_ = llvm::reverseBits((((id_index + 1) << 1) | 1) << 1);
   }
+
   auto GetCheckIRId() const -> int32_t {
     return (llvm::reverseBits(id_tag_) >> 2) - 1;
   }
+
   auto Apply(int32_t index) const -> int32_t {
     if (index < initial_reserved_ids_) {
       return index;
     }
-    // assert that id_tag_ doesn't have the second highest bit set
+    // TODO: Assert that id_tag_ doesn't have the second highest bit set.
     return index ^ id_tag_;
   }
-  static auto DecomposeWithBestEffort(int32_t tagged_index)
-      -> std::pair<int32_t, int32_t> {
+
+  auto Remove(int32_t tagged_index) const -> int32_t {
+    if (!HasTag(tagged_index)) {
+      CARBON_DCHECK(tagged_index < initial_reserved_ids_,
+                    "This untagged index is outside the initial reserved ids "
+                    "and should have been tagged.");
+      return tagged_index;
+    }
+    auto index = tagged_index ^ id_tag_;
+    CARBON_DCHECK(index >= initial_reserved_ids_,
+                  "When removing tagging bits, found an index that "
+                  "shouldn't've been tagged in the first place.");
+    return index;
+  }
+
+  static auto HasTag(int32_t tagged_index) -> bool {
+    return (llvm::reverseBits(2) & tagged_index) != 0;
+  }
+
+  struct IrAndIndex {
+    int32_t check_ir_id;
+    int32_t index;
+  };
+
+  static auto DecomposeWithBestEffort(int32_t tagged_index) -> IrAndIndex {
     if (tagged_index < 0) {
       return {-1, tagged_index};
     }
-    if ((llvm::reverseBits(2) & tagged_index) == 0) {
+    if (!HasTag(tagged_index)) {
       return {-1, tagged_index};
     }
     int length = 0;
@@ -86,25 +110,15 @@ struct IdTag {
       return {-1, tagged_index};
     }
     auto index_mask = llvm::maskTrailingOnes<uint32_t>(location);
-    auto ir_id = (llvm::reverseBits(tagged_index & ~index_mask) >> 2) - 1;
+    auto check_ir_id = (llvm::reverseBits(tagged_index & ~index_mask) >> 2) - 1;
     auto index = tagged_index & index_mask;
-    return {ir_id, index};
+    return {.check_ir_id = static_cast<int32_t>(check_ir_id),
+            .index = static_cast<int32_t>(index)};
   }
-  auto Remove(int32_t tagged_index) const -> int32_t {
-    if ((llvm::reverseBits(2) & tagged_index) == 0) {
-      CARBON_DCHECK(tagged_index < initial_reserved_ids_,
-                    "This untagged index is outside the initial reserved ids "
-                    "and should have been tagged.");
-      return tagged_index;
-    }
-    auto index = tagged_index ^ id_tag_;
-    CARBON_DCHECK(index >= initial_reserved_ids_,
-                  "When removing tagging bits, found an index that "
-                  "shouldn't've been tagged in the first place.");
-    return index;
-  }
-  int32_t id_tag_;
-  int32_t initial_reserved_ids_;
+
+ private:
+  int32_t id_tag_ = 0;
+  int32_t initial_reserved_ids_ = std::numeric_limits<int32_t>::max();
 };
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the

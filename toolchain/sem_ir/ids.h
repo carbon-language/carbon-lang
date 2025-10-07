@@ -288,7 +288,7 @@ struct FunctionId : public IdBase<FunctionId> {
 // The ID of an IR within the set of all IRs being evaluated in the current
 // check execution.
 struct CheckIRId : public IdBase<CheckIRId> {
-  static constexpr llvm::StringLiteral Label = "check_ir";
+  static constexpr llvm::StringLiteral Label = "ir";
 
   // Used when referring to the imported C++.
   static const CheckIRId Cpp;
@@ -435,7 +435,7 @@ struct ImportCppId : public IdBase<ImportCppId> {
 // The ID of an `ImportIR` within the set of imported IRs, both direct and
 // indirect.
 struct ImportIRId : public IdBase<ImportIRId> {
-  static constexpr llvm::StringLiteral Label = "ir";
+  static constexpr llvm::StringLiteral Label = "import_ir";
 
   // The implicit `api` import, for an `impl` file. A null entry is added if
   // there is none, as in an `api`, in which case this ID should not show up in
