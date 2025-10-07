@@ -149,7 +149,11 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
 
   // Add candidate functions from the name lookup.
   clang::OverloadCandidateSet candidate_set(
-      loc, clang::OverloadCandidateSet::CandidateSetKind::CSK_Normal);
+      loc,
+      overload_set.operator_rewrite_info.OriginalOperator
+          ? clang::OverloadCandidateSet::CandidateSetKind::CSK_Operator
+          : clang::OverloadCandidateSet::CandidateSetKind::CSK_Normal,
+      overload_set.operator_rewrite_info);
 
   clang::Sema& sema = context.clang_sema();
 
@@ -165,6 +169,15 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
     case clang::OverloadingResult::OR_Success: {
       // TODO: Handle the cases when Function is null.
       CARBON_CHECK(best_viable_fn->Function);
+      if (best_viable_fn->RewriteKind) {
+        context.TODO(
+            loc_id,
+            llvm::formatv("Rewriting operator{0} using {1} is not supported",
+                          clang::getOperatorSpelling(
+                              candidate_set.getRewriteInfo().OriginalOperator),
+                          best_viable_fn->Function->getNameAsString()));
+        return SemIR::ErrorInst::InstId;
+      }
       sema.MarkFunctionReferenced(loc, best_viable_fn->Function);
       SemIR::InstId result_id = ImportCppFunctionDecl(
           context, loc_id, best_viable_fn->Function,

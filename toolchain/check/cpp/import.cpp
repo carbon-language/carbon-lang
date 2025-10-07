@@ -2060,16 +2060,17 @@ static auto LookupBuiltinTypes(Context& context, SemIR::LocId loc_id,
   return inst_id;
 }
 
-auto ImportCppOverloadSet(Context& context, SemIR::NameScopeId scope_id,
-                          SemIR::NameId name_id,
-                          clang::CXXRecordDecl* naming_class,
-                          clang::UnresolvedSet<4>&& overload_set)
+auto ImportCppOverloadSet(
+    Context& context, SemIR::NameScopeId scope_id, SemIR::NameId name_id,
+    clang::CXXRecordDecl* naming_class, clang::UnresolvedSet<4>&& overload_set,
+    clang::OverloadCandidateSet::OperatorRewriteInfo operator_rewrite_info)
     -> SemIR::InstId {
   SemIR::CppOverloadSetId overload_set_id = context.cpp_overload_sets().Add(
       SemIR::CppOverloadSet{.name_id = name_id,
                             .parent_scope_id = scope_id,
                             .naming_class = naming_class,
-                            .candidate_functions = std::move(overload_set)});
+                            .candidate_functions = std::move(overload_set),
+                            .operator_rewrite_info = operator_rewrite_info});
 
   auto overload_set_inst_id =
       // TODO: Add a location.
@@ -2110,7 +2111,8 @@ static auto ImportOverloadSetIntoScope(Context& context,
     -> SemIR::ScopeLookupResult {
   SemIR::AccessKind access_kind = GetOverloadSetAccess(overload_set);
   SemIR::InstId inst_id = ImportCppOverloadSet(
-      context, scope_id, name_id, naming_class, std::move(overload_set));
+      context, scope_id, name_id, naming_class, std::move(overload_set),
+      /*operator_rewrite_info=*/{});
   AddNameToScope(context, scope_id, name_id, access_kind, inst_id);
   return SemIR::ScopeLookupResult::MakeWrappedLookupResult(inst_id,
                                                            access_kind);
