@@ -26,7 +26,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst14, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: ir0.inst37}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst(Package), parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: ir0.inst37}}
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:   functions:
@@ -52,7 +52,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     'type(ir0.inst38)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(ir0.inst15)}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst14:          {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     'inst(Package)':   {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     ir0.inst15:      {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst16:      {kind: TupleLiteral, arg0: inst_block_empty, type: type(ir0.inst15)}
 // CHECK:STDOUT:     ir0.inst17:      {kind: Converted, arg0: ir0.inst16, arg1: ir0.inst15, type: type(TypeType)}
@@ -94,7 +94,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     ir0.inst53:      {kind: ReturnExpr, arg0: ir0.inst52, arg1: ir0.inst36}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
-// CHECK:STDOUT:       inst14:          concrete_constant(inst14)
+// CHECK:STDOUT:       'inst(Package)':   concrete_constant(inst(Package))
 // CHECK:STDOUT:       ir0.inst15:      concrete_constant(ir0.inst15)
 // CHECK:STDOUT:       ir0.inst17:      concrete_constant(ir0.inst15)
 // CHECK:STDOUT:       ir0.inst19:      concrete_constant(ir0.inst19)
@@ -185,7 +185,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       0:               ir0.inst45
 // CHECK:STDOUT:       1:               ir0.inst45
 // CHECK:STDOUT:     inst_block17:
-// CHECK:STDOUT:       0:               inst14
+// CHECK:STDOUT:       0:               inst(Package)
 // CHECK:STDOUT:       1:               ir0.inst37
 // CHECK:STDOUT: ...
 // CHECK:STDOUT: --- one_file_with_textual_ir.carbon

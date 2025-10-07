@@ -322,7 +322,7 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
 
       // Reduce instruction numbering sensitivity; this is brittle for
       // instruction edits including adding/removing singleton instructions.
-      static RE2 inst_re(R"((import_ref [^,]*, inst)\d+)");
+      static RE2 inst_re(R"((import_ref [^,]*, ir\d+.inst)\d+)");
       RE2::Replace(&check_line, inst_re, R"(\1{{\\d+}})");
 
       // Reduce location sensitivity in imports referring to `Core`; this is

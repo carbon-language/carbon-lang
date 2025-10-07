@@ -218,7 +218,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     import_ir_inst187: {ir_id: ir4, inst_id: ir3.inst601}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst14, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name(Core): ir0.inst16, name0: ir0.inst53}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst(Package), parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name(Core): ir0.inst16, name0: ir0.inst53}}
 // CHECK:STDOUT:     name_scope1:     {inst: ir0.inst16, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name3: ir0.inst69}}
 // CHECK:STDOUT:     name_scope2:     {inst: ir0.inst70, parent_scope: name_scope1, has_error: false, extended_scopes: [], names: {name(SelfType): ir0.inst73, name4: ir0.inst74}}
 // CHECK:STDOUT:     name_scope3:     {inst: ir0.inst94, parent_scope: name_scope1, has_error: false, extended_scopes: [], names: {}}
@@ -379,7 +379,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     'type(inst(BoundMethodType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(BoundMethodType))}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst14:          {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     'inst(Package)':   {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     ir0.inst15:      {kind: ImportDecl, arg0: name(Core)}
 // CHECK:STDOUT:     ir0.inst16:      {kind: Namespace, arg0: name_scope1, arg1: ir0.inst15, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     ir0.inst17:      {kind: FacetType, arg0: facet_type0, type: type(TypeType)}
@@ -703,7 +703,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     ir0.inst335:     {kind: ReturnExpr, arg0: ir0.inst334, arg1: ir0.inst52}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
-// CHECK:STDOUT:       inst14:          concrete_constant(inst14)
+// CHECK:STDOUT:       'inst(Package)':   concrete_constant(inst(Package))
 // CHECK:STDOUT:       ir0.inst16:      concrete_constant(ir0.inst16)
 // CHECK:STDOUT:       ir0.inst17:      concrete_constant(ir0.inst17)
 // CHECK:STDOUT:       ir0.inst18:      symbolic_constant0
@@ -1791,7 +1791,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       5:               ir0.inst320
 // CHECK:STDOUT:       6:               ir0.inst324
 // CHECK:STDOUT:     inst_block111:
-// CHECK:STDOUT:       0:               inst14
+// CHECK:STDOUT:       0:               inst(Package)
 // CHECK:STDOUT:       1:               ir0.inst15
 // CHECK:STDOUT:       2:               ir0.inst53
 // CHECK:STDOUT: ...

@@ -45,7 +45,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     clang_decl_id4:  {key: {decl: "void f(X x = {})", num_params: 1}, inst_id: ir0.inst55}
 // CHECK:STDOUT:     clang_decl_id5:  {key: {decl: "extern void f__carbon_thunk(X * _Nonnull x)", num_params: 1}, inst_id: ir0.inst64}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst14, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: ir0.inst16, name1: ir0.inst27}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst(Package), parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: ir0.inst16, name1: ir0.inst27}}
 // CHECK:STDOUT:     name_scope1:     {inst: ir0.inst16, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name3: ir0.inst18, name4: ir0.inst38}}
 // CHECK:STDOUT:     name_scope2:     {inst: ir0.inst18, parent_scope: name_scope1, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:
@@ -110,7 +110,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     'inst(SpecificFunctionType)': {kind: SpecificFunctionType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(VtableType)': {kind: VtableType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(WitnessType)': {kind: WitnessType, type: type(TypeType)}
-// CHECK:STDOUT:     inst14:          {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     'inst(Package)':   {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     ir0.inst15:      {kind: ImportCppDecl}
 // CHECK:STDOUT:     ir0.inst16:      {kind: Namespace, arg0: name_scope1, arg1: ir0.inst15, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     ir0.inst17:      {kind: NameRef, arg0: name0, arg1: ir0.inst16, type: type(inst(NamespaceType))}
@@ -183,7 +183,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:       'inst(SpecificFunctionType)': concrete_constant(inst(SpecificFunctionType))
 // CHECK:STDOUT:       'inst(VtableType)': concrete_constant(inst(VtableType))
 // CHECK:STDOUT:       'inst(WitnessType)': concrete_constant(inst(WitnessType))
-// CHECK:STDOUT:       inst14:          concrete_constant(inst14)
+// CHECK:STDOUT:       'inst(Package)':   concrete_constant(inst(Package))
 // CHECK:STDOUT:       ir0.inst16:      concrete_constant(ir0.inst16)
 // CHECK:STDOUT:       ir0.inst17:      concrete_constant(ir0.inst16)
 // CHECK:STDOUT:       ir0.inst18:      concrete_constant(ir0.inst19)
@@ -296,7 +296,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     inst_block22:
 // CHECK:STDOUT:       0:               ir0.inst68
 // CHECK:STDOUT:     inst_block23:
-// CHECK:STDOUT:       0:               inst14
+// CHECK:STDOUT:       0:               inst(Package)
 // CHECK:STDOUT:       1:               ir0.inst15
 // CHECK:STDOUT:       2:               ir0.inst27
 // CHECK:STDOUT: ...

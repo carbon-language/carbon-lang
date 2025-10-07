@@ -36,7 +36,7 @@ fn B() {
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst14, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: ir0.inst15}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst(Package), parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: ir0.inst15}}
 // CHECK:STDOUT:   entity_names:    {}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, call_params_id: inst_block_empty, body: [inst_block5]}
@@ -57,7 +57,7 @@ fn B() {
 // CHECK:STDOUT:     'type(ir0.inst17)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(ir0.inst17)}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst14:          {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     'inst(Package)':   {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     ir0.inst15:      {kind: FunctionDecl, arg0: function0, arg1: inst_block_empty, type: type(ir0.inst16)}
 // CHECK:STDOUT:     ir0.inst16:      {kind: FunctionType, arg0: function0, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     ir0.inst17:      {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
@@ -65,7 +65,7 @@ fn B() {
 // CHECK:STDOUT:     ir0.inst19:      {kind: Return}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
-// CHECK:STDOUT:       inst14:          concrete_constant(inst14)
+// CHECK:STDOUT:       'inst(Package)':   concrete_constant(inst(Package))
 // CHECK:STDOUT:       ir0.inst15:      concrete_constant(ir0.inst18)
 // CHECK:STDOUT:       ir0.inst16:      concrete_constant(ir0.inst16)
 // CHECK:STDOUT:       ir0.inst17:      concrete_constant(ir0.inst17)
@@ -81,7 +81,7 @@ fn B() {
 // CHECK:STDOUT:     inst_block5:
 // CHECK:STDOUT:       0:               ir0.inst19
 // CHECK:STDOUT:     inst_block6:
-// CHECK:STDOUT:       0:               inst14
+// CHECK:STDOUT:       0:               inst(Package)
 // CHECK:STDOUT:       1:               ir0.inst15
 // CHECK:STDOUT: ...
 // CHECK:STDOUT: ---
@@ -96,7 +96,7 @@ fn B() {
 // CHECK:STDOUT:     import_ir_inst1: {ir_id: ir2, inst_id: ir0.inst15}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst14, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name1: ir1.inst16, name0: ir1.inst17}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst(Package), parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name1: ir1.inst16, name0: ir1.inst17}}
 // CHECK:STDOUT:     name_scope1:     {inst: ir1.inst16, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: ir1.inst22}}
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope1, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
@@ -120,7 +120,7 @@ fn B() {
 // CHECK:STDOUT:     'type(ir1.inst19)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(ir1.inst19)}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     inst14:          {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     'inst(Package)':   {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     ir1.inst15:      {kind: ImportDecl, arg0: name1}
 // CHECK:STDOUT:     ir1.inst16:      {kind: Namespace, arg0: name_scope1, arg1: ir1.inst15, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     ir1.inst17:      {kind: FunctionDecl, arg0: function0, arg1: inst_block_empty, type: type(ir1.inst18)}
@@ -137,7 +137,7 @@ fn B() {
 // CHECK:STDOUT:     ir1.inst28:      {kind: Return}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
-// CHECK:STDOUT:       inst14:          concrete_constant(inst14)
+// CHECK:STDOUT:       'inst(Package)':   concrete_constant(inst(Package))
 // CHECK:STDOUT:       ir1.inst16:      concrete_constant(ir1.inst16)
 // CHECK:STDOUT:       ir1.inst17:      concrete_constant(ir1.inst20)
 // CHECK:STDOUT:       ir1.inst18:      concrete_constant(ir1.inst18)
@@ -166,7 +166,7 @@ fn B() {
 // CHECK:STDOUT:       2:               ir1.inst27
 // CHECK:STDOUT:       3:               ir1.inst28
 // CHECK:STDOUT:     inst_block6:
-// CHECK:STDOUT:       0:               inst14
+// CHECK:STDOUT:       0:               inst(Package)
 // CHECK:STDOUT:       1:               ir1.inst15
 // CHECK:STDOUT:       2:               ir1.inst17
 // CHECK:STDOUT: ...

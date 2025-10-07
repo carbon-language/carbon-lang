@@ -13,15 +13,17 @@
 namespace Carbon::SemIR {
 
 auto InstId::Print(llvm::raw_ostream& out) const -> void {
-  if (IsSingletonInstId(*this)) {
+  if (!has_value()) {
+    IdBase::Print(out);
+  } else if (IsSingletonInstId(*this)) {
     out << Label << "(" << SingletonInstKinds[index] << ")";
+  } else if (*this == Namespace::PackageInstId) {
+    // Namespace::PackageInstId is an untagged global constant instruction id,
+    // but is not a "singleton".
+    out << Label << "(Package)";
   } else {
     auto [ir_id, simple_index] = IdTag::DecomposeWithBestEffort(index);
-    if (ir_id == -1) {
-      IdBase::Print(out);
-    } else {
-      out << "ir" << ir_id << ".inst" << simple_index;
-    }
+    out << "ir" << ir_id << "." << Label << simple_index;
   }
 }
 
