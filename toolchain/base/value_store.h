@@ -80,17 +80,24 @@ struct IdTag {
     return (llvm::reverseBits(2) & tagged_index) != 0;
   }
 
+  template <class TagT>
   struct TagAndIndex {
-    int32_t tag;
+    TagT tag;
     int32_t index;
   };
 
-  static auto DecomposeWithBestEffort(int32_t tagged_index) -> TagAndIndex {
+  template <typename TagT>
+  static auto DecomposeWithBestEffort(int32_t tagged_index)
+      -> TagAndIndex<TagT> {
     if (tagged_index < 0) {
-      return {-1, tagged_index};
+      // TODO: This should return TagT::None, but we need a fallback TagT other
+      // than `int32_t`.
+      return {TagT{-1}, tagged_index};
     }
     if (!HasTag(tagged_index)) {
-      return {-1, tagged_index};
+      // TODO: This should return TagT::None, but we need a fallback TagT other
+      // than `int32_t`.
+      return {TagT{-1}, tagged_index};
     }
     int length = 0;
     int location = 0;
@@ -110,12 +117,14 @@ struct IdTag {
       }
     }
     if (length < 8) {
-      return {-1, tagged_index};
+      // TODO: This should return TagT::None, but we need a fallback TagT other
+      // than `int32_t`.
+      return {TagT{-1}, tagged_index};
     }
     auto index_mask = llvm::maskTrailingOnes<uint32_t>(location);
     auto tag = (llvm::reverseBits(tagged_index & ~index_mask) >> 2) - 1;
     auto index = tagged_index & index_mask;
-    return {.tag = static_cast<int32_t>(tag),
+    return {.tag = TagT{static_cast<int32_t>(tag)},
             .index = static_cast<int32_t>(index)};
   }
 
@@ -296,11 +305,14 @@ class ValueStore
     // Attempt to decompose id.index to include extra detail in the check here
 #ifndef NDEBUG
     if (index >= size_) {
-      auto [ir_id, decomposed_index] = IdTag::DecomposeWithBestEffort(id.index);
+      // TODO: Could we add InstId::TagType = CheckIRId and use that here to
+      // print the ChcekIRId properly?
+      auto [ir_id, decomposed_index] =
+          IdTag::DecomposeWithBestEffort<int32_t>(id.index);
       CARBON_DCHECK(
           index < size_,
           "Untagged index was outside of container range. Possibly tagged "
-          "index {0}. Best-effort decomposition: CheckIRId: {1}, index: {2}. "
+          "index {0}. Best-effort decomposition: Tag: {1}, index: {2}. "
           "The IdTag for this container is: {3}",
           id.index, ir_id, decomposed_index, tag_.GetContainerTag());
     }
