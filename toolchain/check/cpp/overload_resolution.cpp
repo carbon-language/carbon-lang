@@ -33,11 +33,11 @@ static auto GetCppName(Context& context, SemIR::NameId name_id)
 }
 
 // Adds the given overload candidates to the candidate set.
-static auto AddOverloadCandidataes(clang::Sema& sema,
-                                   clang::OverloadCandidateSet& candidate_set,
-                                   const clang::UnresolvedSetImpl& functions,
-                                   clang::Expr* self_arg,
-                                   llvm::ArrayRef<clang::Expr*> args) -> void {
+static auto AddOverloadCandidates(clang::Sema& sema,
+                                  clang::OverloadCandidateSet& candidate_set,
+                                  const clang::UnresolvedSetImpl& functions,
+                                  clang::Expr* self_arg,
+                                  llvm::ArrayRef<clang::Expr*> args) -> void {
   constexpr bool SuppressUserConversions = false;
   constexpr bool PartialOverloading = false;
   constexpr clang::TemplateArgumentListInfo* ExplicitTemplateArgs = nullptr;
@@ -153,8 +153,8 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
 
   clang::Sema& sema = context.clang_sema();
 
-  AddOverloadCandidataes(sema, candidate_set, overload_set.candidate_functions,
-                         self_expr, arg_exprs);
+  AddOverloadCandidates(sema, candidate_set, overload_set.candidate_functions,
+                        self_expr, arg_exprs);
 
   // Find best viable function among the candidates.
   clang::OverloadCandidateSet::iterator best_viable_fn;
