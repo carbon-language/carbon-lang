@@ -44,14 +44,16 @@ def cmd_dump(debugger: Any, command: Any, result: Any, dict: Any) -> None:
 Dumps the value of an associated ID, using the C++ Dump() functions.
 
 Usage:
-  dump <CONTEXT> [<EXPR>|-- <EXPR>|<TYPE><ID>|<IR>.<TYPE><ID>]
+  dump <CONTEXT> [<EXPR>|-- <EXPR>|[<IR>.]<TYPE><ID>]
 
 Args:
   CONTEXT is the dump context, such a SemIR::Context reference, a SemIR::File,
           a Parse::Context, or a Lex::TokenizeBuffer.
   EXPR is a C++ expression such as a variable name. Use `--` to prevent it from
        being treated as a TYPE and ID.
-  IR is the CheckIRId(N) in the form `irN`.
+  IR is the CheckIRId(N) in the form `irN`. Not all ID types have an `ir`
+       prefix, the ones which do are dumped with that prefix, such as for
+       InstId as `ir1.inst2`.
   TYPE can be `inst`, `constant`, `generic`, `impl`, `entity_name`, etc. See
        the `Label` string in `IdBase` classes to find possible TYPE names,
        though only Id types that have a matching `Make...Id()` function are
@@ -76,7 +78,7 @@ Example usage:
     context = args[0]
 
     # The set of "Make" functions in dump.cpp. These use ADL to find the factory
-    # function in `context/` or in `sem_ir/`.
+    # function in `check/` or in `sem_ir/`.
     id_types = {
         "inst": "MakeInstId",
     }

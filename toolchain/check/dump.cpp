@@ -11,20 +11,21 @@
 // - lldb: `expr Dump(context, id)`
 // - gdb: `call Dump(context, id)`
 
-#include "toolchain/sem_ir/ids.h"
 #ifndef NDEBUG
+
+#include "toolchain/lex/dump.h"
 
 #include <string>
 
 #include "common/check.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/check/context.h"
-#include "toolchain/lex/dump.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/dump.h"
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/dump.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 

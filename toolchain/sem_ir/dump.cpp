@@ -454,9 +454,12 @@ LLVM_DUMP_METHOD static auto MakeInstBlockId(int id) -> InstBlockId {
 }
 LLVM_DUMP_METHOD auto MakeInstId(const SemIR::File& file, int check_ir_id,
                                  int id) -> InstId {
-  CARBON_CHECK(file.check_ir_id() == SemIR::CheckIRId(check_ir_id),
-               "SemIR::MakeInstId given a CheckIRId for the wrong SemIR::File. "
-               "Maybe you want to dump from a Check::Context.");
+  if (file.check_ir_id() != SemIR::CheckIRId(check_ir_id)) {
+    llvm::errs()
+        << "SemIR::MakeInstId given a CheckIRId for the wrong SemIR::File. "
+           "Maybe you want to dump from a Check::Context.\n";
+    return SemIR::InstId::None;
+  }
   return InstId(file.insts().GetIdTag().Apply(id));
 }
 LLVM_DUMP_METHOD static auto MakeInterfaceId(int id) -> InterfaceId {
