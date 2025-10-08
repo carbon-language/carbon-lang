@@ -304,6 +304,15 @@ interface I(T:! type) {
 // later being constrained by `T.A`.
 fn F(T:! I(.Self) where .A = (I(.Self) where .A = I(.Self))) {}
 
+
+// --- period_self_parameter_sees_lhs_of_where_expr.carbon
+library "[[@TEST_NAME]]";
+
+interface I(T:! Core.Destroy) {}
+
+// The `.Self` can see the LHS of the `where` to know `U` impls Core.Destroy.
+fn F(U:! Core.Destroy where .Self impls I(.Self)) {}
+
 // CHECK:STDOUT: --- period_self_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
