@@ -53,6 +53,8 @@ class InstNamer {
     auto index = id.index;
     if constexpr (std::is_same_v<IdT, ClassId>) {
       index = sem_ir_->classes().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, CppOverloadSetId>) {
+      index = sem_ir_->cpp_overload_sets().GetRawIndex(id);
     } else if constexpr (std::is_same_v<IdT, AssociatedConstantId>) {
       index = sem_ir_->associated_constants().GetRawIndex(id);
     }

@@ -42,6 +42,10 @@ auto ConstantId::Print(llvm::raw_ostream& out, bool disambiguate) const
   }
 }
 
+auto CppOverloadSetId::Print(llvm::raw_ostream& out) const -> void {
+  IdBase::PrintHex(out);
+}
+
 auto CheckIRId::Print(llvm::raw_ostream& out) const -> void {
   if (*this == Cpp) {
     out << Label << "(Cpp)";

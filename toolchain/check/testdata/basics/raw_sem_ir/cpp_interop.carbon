@@ -135,9 +135,9 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     inst60000022:    {kind: CompleteTypeWitness, arg0: inst60000020, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst60000023:    {kind: PointerType, arg0: inst60000020, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000024:    {kind: NameRef, arg0: name0, arg1: inst60000010, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     inst60000025:    {kind: CppOverloadSetType, arg0: cpp_overload_set0, arg1: specific<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000026:    {kind: CppOverloadSetValue, arg0: cpp_overload_set0, type: type(inst60000025)}
-// CHECK:STDOUT:     inst60000027:    {kind: CppOverloadSetValue, arg0: cpp_overload_set0, type: type(inst60000025)}
+// CHECK:STDOUT:     inst60000025:    {kind: CppOverloadSetType, arg0: cpp_overload_set60000000, arg1: specific<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst60000026:    {kind: CppOverloadSetValue, arg0: cpp_overload_set60000000, type: type(inst60000025)}
+// CHECK:STDOUT:     inst60000027:    {kind: CppOverloadSetValue, arg0: cpp_overload_set60000000, type: type(inst60000025)}
 // CHECK:STDOUT:     inst60000028:    {kind: NameRef, arg0: name4, arg1: inst60000026, type: type(inst60000025)}
 // CHECK:STDOUT:     inst60000029:    {kind: FunctionDecl, arg0: function1, arg1: inst_block_empty, type: type(inst6000002A)}
 // CHECK:STDOUT:     inst6000002A:    {kind: FunctionType, arg0: function1, arg1: specific<none>, type: type(TypeType)}
