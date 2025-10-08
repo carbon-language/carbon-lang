@@ -53,6 +53,8 @@ class InstNamer {
     auto index = id.index;
     if constexpr (std::is_same_v<IdT, ClassId>) {
       index = sem_ir_->classes().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, AssociatedConstantId>) {
+      index = sem_ir_->associated_constants().GetRawIndex(id);
     }
     return static_cast<ScopeId>(GetScopeIdOffset(ScopeIdTypeEnum::For<IdT>) +
                                 index);

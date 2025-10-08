@@ -36,6 +36,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       value_stores_(&value_stores),
       filename_(std::move(filename)),
       classes_(IdTag(check_ir_id.index, 0)),
+      associated_constants_(IdTag(check_ir_id.index, 0)),
       impls_(*this),
       // The `+1` prevents adding a tag to the global `NameSpace::PackageInstId`
       // instruction. It's not a "singleton" instruction, but it's a unique
