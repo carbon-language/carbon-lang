@@ -12,7 +12,8 @@
 
 library "[[@TEST_NAME]]";
 
-// TODO: Improved error: no member named `I1` in `T` of type `type`.
+// TODO: This should check. The `T.I1` access should be deferred until we know
+// the value of the `template T`.
 //
 // CHECK:STDERR: fail_todo_template_access_assoc_const.carbon:[[@LINE+4]]:36: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: interface I(template T:! type, N:! T.I1) {

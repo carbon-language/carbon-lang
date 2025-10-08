@@ -100,6 +100,19 @@ fn F(U:! I where .I1 = .Self) {
   (U as type) as (I where .I1 = U);
 }
 
+// --- convert_to_period_self.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let I1:! type;
+  let I2:! type;
+}
+
+fn F(U:! I where .I1 = .Self and .I2 = ()) {
+  U as (I where .I1 = .Self);
+  (U as type) as (I where .I1 = .Self);
+}
+
 // --- access_through_call_once.carbon
 library "[[@TEST_NAME]]";
 
