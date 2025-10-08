@@ -175,14 +175,12 @@ class ValueStore
 
   // Returns a mutable value for an ID.
   auto Get(IdType id) -> RefType {
-    CARBON_DCHECK(id.index >= 0);
     auto [chunk_index, pos] = IdToChunkIndices(id);
     return chunks_[chunk_index].Get(pos);
   }
 
   // Returns the value for an ID.
   auto Get(IdType id) const -> ConstRefType {
-    CARBON_DCHECK(id.index >= 0);
     auto [chunk_index, pos] = IdToChunkIndices(id);
     return chunks_[chunk_index].Get(pos);
   }
