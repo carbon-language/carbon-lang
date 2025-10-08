@@ -123,9 +123,7 @@ Example usage:
             if len(args) != 2:
                 print_usage()
                 return
-            id_type = m[1]
-            make_id_fn = id_types[id_type][0]
-            base = id_types[id_type][1]
+            (make_id_fn, base) = id_types[m[1]]
             id = int(m[2], base)
             print_dump(context, f"{make_id_fn}({id})")
             found_id_type = True
