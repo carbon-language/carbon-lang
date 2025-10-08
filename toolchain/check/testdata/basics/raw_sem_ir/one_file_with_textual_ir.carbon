@@ -21,8 +21,8 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT: filename:        one_file_with_textual_ir.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs:
-// CHECK:STDOUT:     ir0:             {decl_id: inst<none>, is_export: false}
-// CHECK:STDOUT:     ir1:             {decl_id: inst<none>, is_export: false}
+// CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
+// CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   name_scopes:

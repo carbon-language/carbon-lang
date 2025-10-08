@@ -31,8 +31,8 @@ fn B() {
 // CHECK:STDOUT: filename:        a.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs:
-// CHECK:STDOUT:     ir0:             {decl_id: inst<none>, is_export: false}
-// CHECK:STDOUT:     ir1:             {decl_id: inst<none>, is_export: false}
+// CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
+// CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   name_scopes:
@@ -88,12 +88,12 @@ fn B() {
 // CHECK:STDOUT: filename:        b.carbon
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   import_irs:
-// CHECK:STDOUT:     ir0:             {decl_id: inst<none>, is_export: false}
-// CHECK:STDOUT:     ir1:             {decl_id: inst<none>, is_export: false}
-// CHECK:STDOUT:     ir2:             {decl_id: ir1.inst15, is_export: false}
+// CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
+// CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
+// CHECK:STDOUT:     import_ir2:      {decl_id: ir1.inst15, is_export: false}
 // CHECK:STDOUT:   import_ir_insts:
-// CHECK:STDOUT:     import_ir_inst0: {ir_id: ir2, inst_id: ir0.inst15}
-// CHECK:STDOUT:     import_ir_inst1: {ir_id: ir2, inst_id: ir0.inst15}
+// CHECK:STDOUT:     import_ir_inst0: {ir_id: import_ir2, inst_id: ir0.inst15}
+// CHECK:STDOUT:     import_ir_inst1: {ir_id: import_ir2, inst_id: ir0.inst15}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst14, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name1: ir1.inst16, name0: ir1.inst17}}
