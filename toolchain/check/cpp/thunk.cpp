@@ -241,6 +241,14 @@ static auto GetNonnullType(clang::ASTContext& ast_context,
                                        pointer_type, pointer_type);
 }
 
+// Given a type, returns the corresponding _Nonnull-qualified pointer type,
+// ignoring references.
+static auto GetNonNullablePointerType(clang::ASTContext& ast_context,
+                                      clang::QualType type) {
+  return GetNonnullType(ast_context,
+                        ast_context.getPointerType(type.getNonReferenceType()));
+}
+
 // Given the type of a callee parameter, returns the type to use for the
 // corresponding thunk parameter.
 static auto GetThunkParameterType(clang::ASTContext& ast_context,
@@ -249,8 +257,7 @@ static auto GetThunkParameterType(clang::ASTContext& ast_context,
   if (IsSimpleAbiType(ast_context, callee_type)) {
     return callee_type;
   }
-  return GetNonnullType(ast_context, ast_context.getPointerType(
-                                         callee_type.getNonReferenceType()));
+  return GetNonNullablePointerType(ast_context, callee_type);
 }
 
 // Creates the thunk parameter types given the callee function.
@@ -272,9 +279,8 @@ static auto BuildThunkParameterTypes(clang::ASTContext& ast_context,
   }
 
   if (!callee_info.has_simple_return_type) {
-    thunk_param_types.push_back(GetNonnullType(
-        ast_context,
-        ast_context.getPointerType(callee_info.effective_return_type)));
+    thunk_param_types.push_back(GetNonNullablePointerType(
+        ast_context, callee_info.effective_return_type));
   }
 
   CARBON_CHECK(thunk_param_types.size() == callee_info.num_thunk_params());
@@ -524,7 +530,7 @@ static auto BuildThunkBody(clang::Sema& sema,
 
   auto* return_object_addr = BuildThunkParamRef(
       sema, thunk_function_decl, callee_info.GetThunkReturnParamIndex());
-  auto return_type = callee_info.effective_return_type;
+  auto return_type = callee_info.effective_return_type.getNonReferenceType();
   auto* return_type_info =
       sema.Context.getTrivialTypeSourceInfo(return_type, clang_loc);
   auto placement_new = sema.BuildCXXNew(

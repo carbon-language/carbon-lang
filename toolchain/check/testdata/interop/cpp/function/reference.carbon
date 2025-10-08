@@ -229,7 +229,7 @@ struct S {};
 
 auto ReturnsLValue() -> S&;
 
-// --- fail_todo_call_return_lvalue_ref.carbon
+// --- call_return_lvalue_ref.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -237,10 +237,6 @@ import Cpp library "return_lvalue_ref.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_call_return_lvalue_ref.carbon:[[@LINE+4]]:19: error: semantics TODO: `Unsupported: return type: S &` [SemanticsTodo]
-  // CHECK:STDERR:   let s: Cpp.S* = Cpp.ReturnsLValue();
-  // CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   let s: Cpp.S* = Cpp.ReturnsLValue();
   //@dump-sem-ir-end
 }
@@ -255,7 +251,7 @@ struct S {};
 
 auto ReturnsRValue() -> S&&;
 
-// --- fail_todo_call_return_rvalue_ref.carbon
+// --- call_return_rvalue_ref.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -263,10 +259,6 @@ import Cpp library "return_rvalue_ref.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_call_return_rvalue_ref.carbon:[[@LINE+4]]:18: error: semantics TODO: `Unsupported: return type: S &&` [SemanticsTodo]
-  // CHECK:STDERR:   var s: Cpp.S = Cpp.ReturnsRValue();
-  // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   var s: Cpp.S = Cpp.ReturnsRValue();
   //@dump-sem-ir-end
 }
@@ -281,7 +273,7 @@ struct S {};
 
 auto ReturnConstLValue() -> const S&;
 
-// --- fail_todo_call_return_const_lvalue_ref.carbon
+// --- call_return_const_lvalue_ref.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -289,12 +281,25 @@ import Cpp library "return_const_lvalue_ref.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_call_return_const_lvalue_ref.carbon:[[@LINE+4]]:24: error: semantics TODO: `Unsupported: return type: const S &` [SemanticsTodo]
-  // CHECK:STDERR:   var s: const Cpp.S = Cpp.ReturnConstLValue();
-  // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  var s: const Cpp.S = Cpp.ReturnConstLValue();
+  var s: const Cpp.S* = Cpp.ReturnConstLValue();
   //@dump-sem-ir-end
+}
+
+// --- fail_call_return_const_lvalue_ref_const_correctness.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "return_const_lvalue_ref.h";
+
+fn F() {
+  // CHECK:STDERR: fail_call_return_const_lvalue_ref_const_correctness.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `const Cpp.S*` to `Cpp.S*` [ConversionFailure]
+  // CHECK:STDERR:   var s: Cpp.S* = Cpp.ReturnConstLValue();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_call_return_const_lvalue_ref_const_correctness.carbon:[[@LINE+4]]:3: note: type `const Cpp.S*` does not implement interface `Core.ImplicitAs(Cpp.S*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   var s: Cpp.S* = Cpp.ReturnConstLValue();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  var s: Cpp.S* = Cpp.ReturnConstLValue();
 }
 
 // CHECK:STDOUT: --- call_param_lvalue_ref.carbon
@@ -879,7 +884,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_call_return_lvalue_ref.carbon
+// CHECK:STDOUT: --- call_return_lvalue_ref.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
@@ -911,19 +916,21 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type = binding_pattern s [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc16_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ReturnsLValue.ref: %ReturnsLValue.cpp_overload_set.type = name_ref ReturnsLValue, imports.%ReturnsLValue.cpp_overload_set.value [concrete = constants.%ReturnsLValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %ReturnsLValue.call: init <error> = call imports.%ReturnsLValue.decl()
-// CHECK:STDOUT:   %.loc16: type = splice_block %ptr [concrete = constants.%ptr] {
-// CHECK:STDOUT:     %Cpp.ref.loc16_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %ReturnsLValue.call: init %ptr = call imports.%ReturnsLValue.decl()
+// CHECK:STDOUT:   %.loc8_15: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:     %Cpp.ref.loc8_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:     %ptr: type = ptr_type %S.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: %ptr = bind_name s, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc8_37.1: %ptr = value_of_initializer %ReturnsLValue.call
+// CHECK:STDOUT:   %.loc8_37.2: %ptr = converted %ReturnsLValue.call, %.loc8_37.1
+// CHECK:STDOUT:   %s: %ptr = bind_name s, %.loc8_37.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_call_return_rvalue_ref.carbon
+// CHECK:STDOUT: --- call_return_rvalue_ref.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -931,13 +938,13 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.7da: type = pattern_type %S [concrete]
 // CHECK:STDOUT:   %ReturnsRValue.cpp_overload_set.type: type = cpp_overload_set_type @ReturnsRValue.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ReturnsRValue.cpp_overload_set.value: %ReturnsRValue.cpp_overload_set.type = cpp_overload_set_value @ReturnsRValue.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ReturnsRValue.type: type = fn_type @ReturnsRValue [concrete]
-// CHECK:STDOUT:   %ReturnsRValue: %ReturnsRValue.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
+// CHECK:STDOUT:   %ReturnsRValue__carbon_thunk.type: type = fn_type @ReturnsRValue__carbon_thunk [concrete]
+// CHECK:STDOUT:   %ReturnsRValue__carbon_thunk: %ReturnsRValue__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %S, () [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.34a: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.016: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.34a = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -948,7 +955,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
 // CHECK:STDOUT:   %ReturnsRValue.cpp_overload_set.value: %ReturnsRValue.cpp_overload_set.type = cpp_overload_set_value @ReturnsRValue.cpp_overload_set [concrete = constants.%ReturnsRValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %ReturnsRValue.decl: %ReturnsRValue.type = fn_decl @ReturnsRValue [concrete = constants.%ReturnsRValue] {
+// CHECK:STDOUT:   %ReturnsRValue__carbon_thunk.decl: %ReturnsRValue__carbon_thunk.type = fn_decl @ReturnsRValue__carbon_thunk [concrete = constants.%ReturnsRValue__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -962,41 +969,45 @@ fn F() {
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.7da = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
-// CHECK:STDOUT:   %Cpp.ref.loc16_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc8_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ReturnsRValue.ref: %ReturnsRValue.cpp_overload_set.type = name_ref ReturnsRValue, imports.%ReturnsRValue.cpp_overload_set.value [concrete = constants.%ReturnsRValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %ReturnsRValue.call: init <error> = call imports.%ReturnsRValue.decl()
-// CHECK:STDOUT:   assign %s.var, <error>
-// CHECK:STDOUT:   %.loc16_13: type = splice_block %S.ref [concrete = constants.%S] {
-// CHECK:STDOUT:     %Cpp.ref.loc16_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc8_3.1: ref %S = splice_block %s.var {}
+// CHECK:STDOUT:   %addr.loc8_36: %ptr.5c7 = addr_of %.loc8_3.1
+// CHECK:STDOUT:   %ReturnsRValue__carbon_thunk.call: init %empty_tuple.type = call imports.%ReturnsRValue__carbon_thunk.decl(%addr.loc8_36)
+// CHECK:STDOUT:   %.loc8_36: init %S = in_place_init %ReturnsRValue__carbon_thunk.call, %.loc8_3.1
+// CHECK:STDOUT:   assign %s.var, %.loc8_36
+// CHECK:STDOUT:   %.loc8_13: type = splice_block %S.ref [concrete = constants.%S] {
+// CHECK:STDOUT:     %Cpp.ref.loc8_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s: ref %S = bind_name s, %s.var
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%S, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc16_3: %type_where = converted constants.%S, %facet_value [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc8_3.2: %type_where = converted constants.%S, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %s.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.016
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %s.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of %s.var
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %addr.loc8_3: %ptr.5c7 = addr_of %s.var
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc8_3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_call_return_const_lvalue_ref.carbon
+// CHECK:STDOUT: --- call_return_const_lvalue_ref.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
 // CHECK:STDOUT:   %const: type = const_type %S [concrete]
-// CHECK:STDOUT:   %pattern_type.9be: type = pattern_type %const [concrete]
+// CHECK:STDOUT:   %ptr.ff5: type = ptr_type %const [concrete]
+// CHECK:STDOUT:   %pattern_type.32f: type = pattern_type %ptr.ff5 [concrete]
 // CHECK:STDOUT:   %ReturnConstLValue.cpp_overload_set.type: type = cpp_overload_set_type @ReturnConstLValue.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ReturnConstLValue.cpp_overload_set.value: %ReturnConstLValue.cpp_overload_set.type = cpp_overload_set_value @ReturnConstLValue.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ReturnConstLValue.type: type = fn_type @ReturnConstLValue [concrete]
 // CHECK:STDOUT:   %ReturnConstLValue: %ReturnConstLValue.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value %const, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.56e: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.089: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.56e = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.ff5: type = ptr_type %const [concrete]
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value %ptr.ff5, () [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.40d: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.c44: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.40d = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.dec: type = ptr_type %ptr.ff5 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1017,189 +1028,28 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.9be = binding_pattern s [concrete]
-// CHECK:STDOUT:     %s.var_patt: %pattern_type.9be = var_pattern %s.patt [concrete]
+// CHECK:STDOUT:     %s.patt: %pattern_type.32f = binding_pattern s [concrete]
+// CHECK:STDOUT:     %s.var_patt: %pattern_type.32f = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.var: ref %const = var %s.var_patt
-// CHECK:STDOUT:   %Cpp.ref.loc16_24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %s.var: ref %ptr.ff5 = var %s.var_patt
+// CHECK:STDOUT:   %Cpp.ref.loc8_25: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ReturnConstLValue.ref: %ReturnConstLValue.cpp_overload_set.type = name_ref ReturnConstLValue, imports.%ReturnConstLValue.cpp_overload_set.value [concrete = constants.%ReturnConstLValue.cpp_overload_set.value]
-// CHECK:STDOUT:   %ReturnConstLValue.call: init <error> = call imports.%ReturnConstLValue.decl()
-// CHECK:STDOUT:   assign %s.var, <error>
-// CHECK:STDOUT:   %.loc16_10: type = splice_block %const [concrete = constants.%const] {
-// CHECK:STDOUT:     %Cpp.ref.loc16_16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %ReturnConstLValue.call: init %ptr.ff5 = call imports.%ReturnConstLValue.decl()
+// CHECK:STDOUT:   assign %s.var, %ReturnConstLValue.call
+// CHECK:STDOUT:   %.loc8_21: type = splice_block %ptr [concrete = constants.%ptr.ff5] {
+// CHECK:STDOUT:     %Cpp.ref.loc8_16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:     %const: type = const_type %S.ref [concrete = constants.%const]
+// CHECK:STDOUT:     %ptr: type = ptr_type %const [concrete = constants.%ptr.ff5]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: ref %const = bind_name s, %s.var
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%const, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc16_3: %type_where = converted constants.%const, %facet_value [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %s.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.089
+// CHECK:STDOUT:   %s: ref %ptr.ff5 = bind_name s, %s.var
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%ptr.ff5, () [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc8_3: %type_where = converted constants.%ptr.ff5, %facet_value [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %s.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.c44
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %s.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.ff5 = addr_of %s.var
+// CHECK:STDOUT:   %addr: %ptr.dec = addr_of %s.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_call_return_lvalue_ref.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %S: type = class_type @S [concrete]
-// CHECK:STDOUT:   %ptr: type = ptr_type %S [concrete]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
-// CHECK:STDOUT:   %.041: type = cpp_overload_set_type @ReturnsLValue [concrete]
-// CHECK:STDOUT:   %empty_struct: %.041 = struct_value () [concrete]
-// CHECK:STDOUT:   %ReturnsLValue.type: type = fn_type @ReturnsLValue [concrete]
-// CHECK:STDOUT:   %ReturnsLValue: %ReturnsLValue.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .S = %S.decl
-// CHECK:STDOUT:     .ReturnsLValue = %.03d
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
-// CHECK:STDOUT:   %.03d: %.041 = cpp_overload_set_value @ReturnsLValue [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %ReturnsLValue.decl: %ReturnsLValue.type = fn_decl @ReturnsLValue [concrete = constants.%ReturnsLValue] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type = binding_pattern s [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc12_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %ReturnsLValue.ref: %.041 = name_ref ReturnsLValue, imports.%.03d [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %ReturnsLValue.call: init <error> = call imports.%ReturnsLValue.decl()
-// CHECK:STDOUT:   %.loc12: type = splice_block %ptr [concrete = constants.%ptr] {
-// CHECK:STDOUT:     %Cpp.ref.loc12_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:     %ptr: type = ptr_type %S.ref [concrete = constants.%ptr]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: %ptr = bind_name s, <error> [concrete = <error>]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_call_return_rvalue_ref.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %S: type = class_type @S [concrete]
-// CHECK:STDOUT:   %pattern_type.7da: type = pattern_type %S [concrete]
-// CHECK:STDOUT:   %.c60: type = cpp_overload_set_type @ReturnsRValue [concrete]
-// CHECK:STDOUT:   %empty_struct: %.c60 = struct_value () [concrete]
-// CHECK:STDOUT:   %ReturnsRValue.type: type = fn_type @ReturnsRValue [concrete]
-// CHECK:STDOUT:   %ReturnsRValue: %ReturnsRValue.type = struct_value () [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value %S, () [concrete]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.type.df1: type = fn_type @DestroyT.as_type.as.Destroy.impl.Op, @DestroyT.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.cc2: %DestroyT.as_type.as.Destroy.impl.Op.type.df1 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .S = %S.decl
-// CHECK:STDOUT:     .ReturnsRValue = %.99d
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
-// CHECK:STDOUT:   %.99d: %.c60 = cpp_overload_set_value @ReturnsRValue [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %ReturnsRValue.decl: %ReturnsRValue.type = fn_decl @ReturnsRValue [concrete = constants.%ReturnsRValue] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.7da = binding_pattern s [concrete]
-// CHECK:STDOUT:     %s.var_patt: %pattern_type.7da = var_pattern %s.patt [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
-// CHECK:STDOUT:   %Cpp.ref.loc12_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %ReturnsRValue.ref: %.c60 = name_ref ReturnsRValue, imports.%.99d [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %ReturnsRValue.call: init <error> = call imports.%ReturnsRValue.decl()
-// CHECK:STDOUT:   assign %s.var, <error>
-// CHECK:STDOUT:   %.loc12_13: type = splice_block %S.ref [concrete = constants.%S] {
-// CHECK:STDOUT:     %Cpp.ref.loc12_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: ref %S = bind_name s, %s.var
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%S, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc12_3: %type_where = converted constants.%S, %facet_value [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %s.var, constants.%DestroyT.as_type.as.Destroy.impl.Op.cc2
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %s.var, %DestroyT.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of %s.var
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_call_return_const_lvalue_ref.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %S: type = class_type @S [concrete]
-// CHECK:STDOUT:   %const: type = const_type %S [concrete]
-// CHECK:STDOUT:   %pattern_type.9be: type = pattern_type %const [concrete]
-// CHECK:STDOUT:   %.c99: type = cpp_overload_set_type @ReturnConstLValue [concrete]
-// CHECK:STDOUT:   %empty_struct: %.c99 = struct_value () [concrete]
-// CHECK:STDOUT:   %ReturnConstLValue.type: type = fn_type @ReturnConstLValue [concrete]
-// CHECK:STDOUT:   %ReturnConstLValue: %ReturnConstLValue.type = struct_value () [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value %const, () [concrete]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.type.31d: type = fn_type @DestroyT.as_type.as.Destroy.impl.Op, @DestroyT.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.818: %DestroyT.as_type.as.Destroy.impl.Op.type.31d = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.ff5: type = ptr_type %const [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .S = %S.decl
-// CHECK:STDOUT:     .ReturnConstLValue = %.bf8
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
-// CHECK:STDOUT:   %.bf8: %.c99 = cpp_overload_set_value @ReturnConstLValue [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %ReturnConstLValue.decl: %ReturnConstLValue.type = fn_decl @ReturnConstLValue [concrete = constants.%ReturnConstLValue] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.9be = binding_pattern s [concrete]
-// CHECK:STDOUT:     %s.var_patt: %pattern_type.9be = var_pattern %s.patt [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s.var: ref %const = var %s.var_patt
-// CHECK:STDOUT:   %Cpp.ref.loc12_24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %ReturnConstLValue.ref: %.c99 = name_ref ReturnConstLValue, imports.%.bf8 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %ReturnConstLValue.call: init <error> = call imports.%ReturnConstLValue.decl()
-// CHECK:STDOUT:   assign %s.var, <error>
-// CHECK:STDOUT:   %.loc12_10: type = splice_block %const [concrete = constants.%const] {
-// CHECK:STDOUT:     %Cpp.ref.loc12_16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:     %const: type = const_type %S.ref [concrete = constants.%const]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: ref %const = bind_name s, %s.var
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%const, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc12_3: %type_where = converted constants.%const, %facet_value [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %s.var, constants.%DestroyT.as_type.as.Destroy.impl.Op.818
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %s.var, %DestroyT.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.ff5 = addr_of %s.var
-// CHECK:STDOUT:   %DestroyT.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

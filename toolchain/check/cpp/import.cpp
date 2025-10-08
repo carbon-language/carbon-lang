@@ -1446,16 +1446,26 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
 // TODO: Support more return types.
 static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
                               clang::FunctionDecl* clang_decl) -> TypeExpr {
-  clang::QualType ret_type = clang_decl->getReturnType();
-  if (!ret_type->isVoidType()) {
-    TypeExpr mapped_type = MapType(context, loc_id, ret_type);
-    if (!mapped_type.inst_id.has_value()) {
+  clang::QualType orig_ret_type = clang_decl->getReturnType();
+  if (!orig_ret_type->isVoidType()) {
+    // We map `T&` return type to `addr param: T*`, and `T&&` parameters to
+    // `param: T`.
+    // TODO: Revisit this and decide what we really want to do here.
+    clang::QualType ret_type = orig_ret_type.getNonReferenceType();
+
+    auto [orig_type_inst_id, type_id] = MapType(context, loc_id, ret_type);
+    if (!orig_type_inst_id.has_value()) {
       context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",
-                                         ret_type.getAsString()));
+                                         orig_ret_type.getAsString()));
       return {.inst_id = SemIR::ErrorInst::TypeInstId,
               .type_id = SemIR::ErrorInst::TypeId};
     }
-    return mapped_type;
+
+    if (orig_ret_type->isLValueReferenceType()) {
+      type_id = GetPointerType(context, orig_type_inst_id);
+    }
+
+    return {orig_type_inst_id, type_id};
   }
 
   auto* ctor = dyn_cast<clang::CXXConstructorDecl>(clang_decl);
