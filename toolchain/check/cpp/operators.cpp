@@ -190,10 +190,12 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
     return SemIR::ErrorInst::InstId;
   }
 
+  clang::SourceLocation loc = GetCppLocation(context, loc_id);
+  clang::OverloadCandidateSet::OperatorRewriteInfo operator_rewrite_info(
+      *op_kind, loc, /*AllowRewritten=*/true);
   clang::UnresolvedSet<4> functions;
   clang::OverloadCandidateSet candidate_set(
-      GetCppLocation(context, loc_id),
-      clang::OverloadCandidateSet::CSK_Operator);
+      loc, clang::OverloadCandidateSet::CSK_Operator, operator_rewrite_info);
   // This works for both unary and binary operators.
   context.clang_sema().LookupOverloadedBinOp(candidate_set, *op_kind, functions,
                                              *arg_exprs);
@@ -205,9 +207,9 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
     functions.addDecl(it.Function, it.FoundDecl.getAccess());
   }
 
-  return ImportCppOverloadSet(context, SemIR::NameScopeId::None,
-                              SemIR::NameId::CppOperator,
-                              /*naming_class=*/nullptr, std::move(functions));
+  return ImportCppOverloadSet(
+      context, SemIR::NameScopeId::None, SemIR::NameId::CppOperator,
+      /*naming_class=*/nullptr, std::move(functions), operator_rewrite_info);
 }
 
 auto IsCppOperatorMethodDecl(clang::Decl* decl) -> bool {

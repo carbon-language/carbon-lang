@@ -139,6 +139,7 @@ cc_library(
         "//toolchain/parse:tree",
         "@llvm-project//clang:ast",
         "@llvm-project//clang:frontend",
+        "@llvm-project//clang:sema",
         "@llvm-project//llvm:Support",
     ],
 )
