@@ -164,9 +164,10 @@ class ValueStore
     static auto MakeFlattenedRange(const ValueStore& store) -> auto {
       // Because indices into `ValueStore` are all sequential values from 0, we
       // can use llvm::seq to walk all indices in the store.
-      return llvm::map_range(
-          llvm::seq(store.size_),
-          [&](int32_t i) -> ConstRefType { return store.Get(IdType(i)); });
+      return llvm::map_range(llvm::seq(store.size_),
+                             [&](int32_t i) -> ConstRefType {
+                               return store.Get(IdType(store.tag_.Apply(i)));
+                             });
     }
 
     using FlattenedRangeType =
@@ -273,8 +274,9 @@ class ValueStore
 
   // Makes an iterable range over references to all values in the ValueStore.
   auto values() [[clang::lifetimebound]] -> auto {
-    return llvm::map_range(
-        llvm::seq(size_), [&](int32_t i) -> RefType { return Get(IdType(i)); });
+    return llvm::map_range(llvm::seq(size_), [&](int32_t i) -> RefType {
+      return Get(IdType(tag_.Apply(i)));
+    });
   }
   auto values() const [[clang::lifetimebound]] -> Range { return Range(*this); }
 

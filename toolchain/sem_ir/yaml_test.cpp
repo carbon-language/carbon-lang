@@ -82,7 +82,7 @@ TEST(SemIRTest, Yaml) {
                         Contains(Pair(_, Yaml::Mapping(ElementsAre(
 
                                              Pair("kind", "FunctionDecl"),
-                                             Pair("arg0", "function0"),
+                                             Pair("arg0", "function60000000"),
                                              Pair("arg1", "inst_block_empty"),
                                              Pair("type", type_id)))))))),
       Pair("constant_values",

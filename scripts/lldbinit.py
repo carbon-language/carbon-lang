@@ -86,7 +86,7 @@ Example usage:
         "symbolic_constant": ("SemIR::MakeSymbolicConstantId", DECIMAL),
         "entity_name": ("SemIR::MakeEntityNameId", DECIMAL),
         "facet_type": ("SemIR::MakeFacetTypeId", DECIMAL),
-        "function": ("SemIR::MakeFunctionId", DECIMAL),
+        "function": ("SemIR::MakeFunctionId", HEX),
         "generic": ("SemIR::MakeGenericId", DECIMAL),
         "impl": ("SemIR::MakeImplId", DECIMAL),
         "inst_block": ("SemIR::MakeInstBlockId", DECIMAL),

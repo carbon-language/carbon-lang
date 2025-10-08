@@ -30,7 +30,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, call_params_id: inst_block9, return_slot_pattern: inst60000020, body: [inst_block12]}
+// CHECK:STDOUT:     function60000000: {name: name0, parent_scope: name_scope0, call_params_id: inst_block9, return_slot_pattern: inst60000020, body: [inst_block12]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
@@ -75,8 +75,8 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst60000022:    {kind: SpliceBlock, arg0: inst_block4, arg1: inst60000011, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000023:    {kind: OutParam, arg0: call_param1, arg1: name(ReturnSlot), type: type(inst60000018)}
 // CHECK:STDOUT:     inst60000024:    {kind: ReturnSlot, arg0: inst60000018, arg1: inst60000023, type: type(inst60000018)}
-// CHECK:STDOUT:     inst60000025:    {kind: FunctionDecl, arg0: function0, arg1: inst_block11, type: type(inst60000026)}
-// CHECK:STDOUT:     inst60000026:    {kind: FunctionType, arg0: function0, arg1: specific<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst60000025:    {kind: FunctionDecl, arg0: function60000000, arg1: inst_block11, type: type(inst60000026)}
+// CHECK:STDOUT:     inst60000026:    {kind: FunctionType, arg0: function60000000, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000027:    {kind: StructValue, arg0: inst_block_empty, type: type(inst60000026)}
 // CHECK:STDOUT:     inst60000028:    {kind: NameRef, arg0: name1, arg1: inst60000012, type: type(inst6000000F)}
 // CHECK:STDOUT:     inst60000029:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst6000000F)}

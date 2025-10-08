@@ -285,6 +285,8 @@ struct FunctionId : public IdBase<FunctionId> {
   static constexpr llvm::StringLiteral Label = "function";
 
   using IdBase::IdBase;
+
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 // The ID of an IR within the set of all IRs being evaluated in the current
