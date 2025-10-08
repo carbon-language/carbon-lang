@@ -75,26 +75,30 @@ Example usage:
 
     context = args[0]
 
-    # The set of "Make" functions in dump.cpp.
+    DECIMAL = 10
+    HEX = 16
+
+    # The set of "Make" functions in dump.cpp, and whether the ids are printed
+    # in decimal or hex.
     id_types = {
-        "class": "SemIR::MakeClassId",
-        "constant": "SemIR::MakeConstantId",
-        "symbolic_constant": "SemIR::MakeSymbolicConstantId",
-        "entity_name": "SemIR::MakeEntityNameId",
-        "facet_type": "SemIR::MakeFacetTypeId",
-        "function": "SemIR::MakeFunctionId",
-        "generic": "SemIR::MakeGenericId",
-        "impl": "SemIR::MakeImplId",
-        "inst_block": "SemIR::MakeInstBlockId",
-        "inst": "SemIR::MakeInstId",
-        "interface": "SemIR::MakeInterfaceId",
-        "name": "SemIR::MakeNameId",
-        "name_scope": "SemIR::MakeNameScopeId",
-        "identified_facet_type": "SemIR::MakeIdentifiedFacetTypeId",
-        "specific": "SemIR::MakeSpecificId",
-        "specific_interface": "SemIR::MakeSpecificInterfaceId",
-        "struct_type_fields": "SemIR::MakeStructTypeFieldsId",
-        "type": "SemIR::MakeTypeId",
+        "class": ("SemIR::MakeClassId", DECIMAL),
+        "constant": ("SemIR::MakeConstantId", DECIMAL),
+        "symbolic_constant": ("SemIR::MakeSymbolicConstantId", DECIMAL),
+        "entity_name": ("SemIR::MakeEntityNameId", DECIMAL),
+        "facet_type": ("SemIR::MakeFacetTypeId", DECIMAL),
+        "function": ("SemIR::MakeFunctionId", DECIMAL),
+        "generic": ("SemIR::MakeGenericId", DECIMAL),
+        "impl": ("SemIR::MakeImplId", DECIMAL),
+        "inst_block": ("SemIR::MakeInstBlockId", DECIMAL),
+        "inst": ("SemIR::MakeInstId", HEX),
+        "interface": ("SemIR::MakeInterfaceId", DECIMAL),
+        "name": ("SemIR::MakeNameId", DECIMAL),
+        "name_scope": ("SemIR::MakeNameScopeId", DECIMAL),
+        "identified_facet_type": ("SemIR::MakeIdentifiedFacetTypeId", DECIMAL),
+        "specific": ("SemIR::MakeSpecificId", DECIMAL),
+        "specific_interface": ("SemIR::MakeSpecificInterfaceId", DECIMAL),
+        "struct_type_fields": ("SemIR::MakeStructTypeFieldsId", DECIMAL),
+        "type": ("SemIR::MakeTypeId", DECIMAL),
     }
 
     def print_dump(context: str, expr: str) -> None:
@@ -120,11 +124,10 @@ Example usage:
                 print_usage()
                 return
             id_type = m[1]
-            if re.fullmatch("\\d+", m[2]):
-                id = m[2]
-            else:
-                id = int("0x" + m[2], 16)
-            print_dump(context, f"{id_types[id_type]}({id})")
+            make_id_fn = id_types[id_type][0]
+            base = id_types[id_type][1]
+            id = int(m[2], base)
+            print_dump(context, f"{make_id_fn}({id})")
             found_id_type = True
 
     if not found_id_type:
