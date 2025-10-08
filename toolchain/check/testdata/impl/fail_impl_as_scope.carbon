@@ -442,8 +442,6 @@ class X {
 // CHECK:STDOUT:   %bound_method.loc29_16: <bound method> = bound_method %.loc29_7.1, %impl.elem1
 // CHECK:STDOUT:   %.loc29_7.2: %Point = bind_value %.loc29_7.1
 // CHECK:STDOUT:   %Point.as.Z.impl.Method.call: init %empty_tuple.type = call %bound_method.loc29_16(%.loc29_7.2)
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%Point, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc29_5.5: %type_where = converted constants.%Point, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc29_5.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.3aa
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.3aa, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc29_5: <bound method> = bound_method %.loc29_5.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

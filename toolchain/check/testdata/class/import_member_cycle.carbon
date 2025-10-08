@@ -128,13 +128,11 @@ fn Run() {
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.d3d = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %ptr.257 = var %a.var_patt
-// CHECK:STDOUT:   %.loc7_15: type = splice_block %ptr [concrete = constants.%ptr.257] {
+// CHECK:STDOUT:   %.loc7: type = splice_block %ptr [concrete = constants.%ptr.257] {
 // CHECK:STDOUT:     %Cycle.ref: type = name_ref Cycle, imports.%Main.Cycle [concrete = constants.%Cycle]
 // CHECK:STDOUT:     %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr.257]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %ptr.257 = bind_name a, %a.var
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%ptr.257, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc7_3: %type_where = converted constants.%ptr.257, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %a.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d80
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d80, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

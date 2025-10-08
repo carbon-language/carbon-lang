@@ -484,24 +484,15 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
 static auto DiagnoseUnusedGenericBinding(Context& context, SemIR::LocId loc_id,
                                          SemIR::LocId implicit_params_loc_id,
                                          SemIR::ImplId impl_id) -> void {
-  auto deduced_specific_id = SemIR::SpecificId::None;
-
   auto& impl = context.impls().Get(impl_id);
   if (!impl.generic_id.has_value() ||
       impl.witness_id == SemIR::ErrorInst::InstId) {
     return;
   }
 
-  // TODO: Deduce has side effects in the semir by generating `Converted`
-  // instructions which we will not use here. We should stop generating
-  // those when deducing for impl lookup, but for now we discard them by
-  // pushing an InstBlock on the stack and dropping it right after.
-  context.inst_block_stack().Push();
-  deduced_specific_id = DeduceImplArguments(
+  auto deduced_specific_id = DeduceImplArguments(
       context, loc_id, impl, context.constant_values().Get(impl.self_id),
       impl.interface.specific_id);
-  context.inst_block_stack().PopAndDiscard();
-
   if (deduced_specific_id.has_value()) {
     // Deduction succeeded, all bindings were used.
     return;

@@ -61,16 +61,14 @@ fn Main() {
 // CHECK:STDOUT:   %x.var: ref %empty_tuple.type = var %x.var_patt
 // CHECK:STDOUT:   %.loc16_16.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc16_16.2: init %empty_tuple.type = tuple_init () to %x.var [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc16_3.1: init %empty_tuple.type = converted %.loc16_16.1, %.loc16_16.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %x.var, %.loc16_3.1
+// CHECK:STDOUT:   %.loc16_3: init %empty_tuple.type = converted %.loc16_16.1, %.loc16_16.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %x.var, %.loc16_3
 // CHECK:STDOUT:   %.loc16_11.1: type = splice_block %.loc16_11.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc16_11.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc16_11.3: type = converted %.loc16_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_name x, %x.var
 // CHECK:STDOUT:   %x.ref: ref %empty_tuple.type = name_ref x, %x
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%empty_tuple.type, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc16_3.2: %type_where = converted constants.%empty_tuple.type, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %x.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.93e
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.93e, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

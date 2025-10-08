@@ -159,8 +159,8 @@ fn Use() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i.var: ref %.e71 = var %i.var_patt
 // CHECK:STDOUT:   %Init.ref: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
-// CHECK:STDOUT:   %.loc14_3.1: ref %.e71 = splice_block %i.var {}
-// CHECK:STDOUT:   %Init.call: init %X = call %Init.ref() to %.loc14_3.1
+// CHECK:STDOUT:   %.loc14_3: ref %.e71 = splice_block %i.var {}
+// CHECK:STDOUT:   %Init.call: init %X = call %Init.ref() to %.loc14_3
 // CHECK:STDOUT:   %X.ref.loc14_40: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc14_32: type = partial_type %X.ref.loc14_40 [concrete = constants.%.e71]
 // CHECK:STDOUT:   %.loc14_29.1: init %.e71 = as_compatible %Init.call
@@ -214,8 +214,6 @@ fn Use() {
 // CHECK:STDOUT:     %ptr.loc17_19: type = ptr_type %.loc17_10 [concrete = constants.%ptr.7b2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: %ptr.7b2 = bind_name b, %.loc17_27.2
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%.e71, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc14_3.2: %type_where = converted constants.%.e71, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %i.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.70b
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %i.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
@@ -258,7 +256,7 @@ fn Use() {
 // CHECK:STDOUT:   %Init.ref.loc18: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
 // CHECK:STDOUT:   %.loc18_19: ref %.e71 = temporary_storage
 // CHECK:STDOUT:   %Init.call.loc18: init %.e71 = call %Init.ref.loc18() to %.loc18_19
-// CHECK:STDOUT:   %.loc18_3.1: %X = converted %Init.call.loc18, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc18_3: %X = converted %Init.call.loc18, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %i.var, <error>
 // CHECK:STDOUT:   %X.ref.loc18: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %i: ref %X = bind_name i, %i.var
@@ -288,22 +286,16 @@ fn Use() {
 // CHECK:STDOUT:   assign %k.var, <error>
 // CHECK:STDOUT:   %X.ref.loc34_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %k: ref %X = bind_name k, %k.var
-// CHECK:STDOUT:   %facet_value.loc34: %type_where = facet_value constants.%X, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc34_3: %type_where = converted constants.%X, %facet_value.loc34 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc34: <bound method> = bound_method %k.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.756
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc34: <bound method> = bound_method %k.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc34: %ptr.d17 = addr_of %k.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc34: init %empty_tuple.type = call %bound_method.loc34(%addr.loc34)
-// CHECK:STDOUT:   %facet_value.loc26: %type_where = facet_value constants.%X, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc26_3: %type_where = converted constants.%X, %facet_value.loc26 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc26: <bound method> = bound_method %j.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.756
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %j.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc26: %ptr.d17 = addr_of %j.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc26: init %empty_tuple.type = call %bound_method.loc26(%addr.loc26)
-// CHECK:STDOUT:   %facet_value.loc18: %type_where = facet_value constants.%X, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc18_3.2: %type_where = converted constants.%X, %facet_value.loc18 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc18: <bound method> = bound_method %i.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.756
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc18: <bound method> = bound_method %i.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.3

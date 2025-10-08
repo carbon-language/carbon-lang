@@ -104,8 +104,6 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   %.loc17_11.2: %const.58f = bind_value %.loc17_11.1
 // CHECK:STDOUT:   %.loc17_10.1: ref %const.20a = deref %.loc17_11.2
 // CHECK:STDOUT:   %.loc17_10.2: %const.20a = bind_value %.loc17_10.1
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value constants.%i32, (constants.%Copy.impl_witness.a32) [concrete = constants.%Copy.facet.c49]
-// CHECK:STDOUT:   %.loc17_10.3: %Copy.type = converted constants.%i32, %Copy.facet [concrete = constants.%Copy.facet.c49]
 // CHECK:STDOUT:   %impl.elem0: %.78c = impl_witness_access constants.%Copy.impl_witness.e96, element0 [concrete = constants.%const.as.Copy.impl.Op.c18]
 // CHECK:STDOUT:   %bound_method.loc17_10.1: <bound method> = bound_method %.loc17_10.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @const.as.Copy.impl.Op(constants.%Copy.facet.c49) [concrete = constants.%const.as.Copy.impl.Op.specific_fn]

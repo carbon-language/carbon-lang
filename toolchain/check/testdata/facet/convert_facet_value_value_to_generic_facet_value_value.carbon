@@ -267,10 +267,6 @@ fn F() {
 // CHECK:STDOUT:     %food: @HandleAnimal.%Food.binding.as_type (%Food.binding.as_type.3c6) = bind_name food, %food.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT:   %Edible.facet: %Edible.type = facet_value constants.%Grass, (constants.%Edible.impl_witness) [concrete = constants.%Edible.facet]
-// CHECK:STDOUT:   %.loc32_76.1: %Edible.type = converted constants.%Grass, %Edible.facet [concrete = constants.%Edible.facet]
-// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value constants.%Goat, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]
-// CHECK:STDOUT:   %.loc32_76.2: %Animal.type = converted constants.%Goat, %Animal.facet [concrete = constants.%Animal.facet]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Edible {
@@ -391,9 +387,8 @@ fn F() {
 // CHECK:STDOUT:     %food.ref: @HandleAnimal.%Food.binding.as_type (%Food.binding.as_type.3c6) = name_ref food, %food
 // CHECK:STDOUT:     %.loc32_76.1: %Edible.type = converted constants.%Food.binding.as_type.3c6, constants.%Food.dcb [symbolic = %Food.loc32_29.1 (constants.%Food.dcb)]
 // CHECK:STDOUT:     %.loc32_76.2: %Edible.type = converted constants.%Food.binding.as_type.3c6, constants.%Food.dcb [symbolic = %Food.loc32_29.1 (constants.%Food.dcb)]
-// CHECK:STDOUT:     %.loc32_76.3: %Edible.type = converted constants.%Food.binding.as_type.3c6, constants.%Food.dcb [symbolic = %Food.loc32_29.1 (constants.%Food.dcb)]
 // CHECK:STDOUT:     %Eats.facet.loc32_76.1: @HandleAnimal.%Eats.type (%Eats.type.8e412e.2) = facet_value constants.%A.binding.as_type, (constants.%Eats.lookup_impl_witness) [symbolic = %Eats.facet.loc32_76.2 (constants.%Eats.facet.070)]
-// CHECK:STDOUT:     %.loc32_76.4: @HandleAnimal.%Eats.type (%Eats.type.8e412e.2) = converted constants.%A.binding.as_type, %Eats.facet.loc32_76.1 [symbolic = %Eats.facet.loc32_76.2 (constants.%Eats.facet.070)]
+// CHECK:STDOUT:     %.loc32_76.3: @HandleAnimal.%Eats.type (%Eats.type.8e412e.2) = converted constants.%A.binding.as_type, %Eats.facet.loc32_76.1 [symbolic = %Eats.facet.loc32_76.2 (constants.%Eats.facet.070)]
 // CHECK:STDOUT:     %Feed.specific_fn.loc32_64.1: <specific function> = specific_function %Feed.ref, @Feed(constants.%Food.dcb, constants.%Eats.facet.070) [symbolic = %Feed.specific_fn.loc32_64.2 (constants.%Feed.specific_fn.c2a)]
 // CHECK:STDOUT:     %Feed.call: init %empty_tuple.type = call %Feed.specific_fn.loc32_64.1(%a.ref, %food.ref)
 // CHECK:STDOUT:     return
@@ -427,15 +422,11 @@ fn F() {
 // CHECK:STDOUT:   %.loc35_19.2: %Goat = bind_value %.loc35_19.1
 // CHECK:STDOUT:   %.loc35_31.2: %Grass = bind_value %.loc35_31.1
 // CHECK:STDOUT:   %HandleAnimal.call: init %empty_tuple.type = call %HandleAnimal.specific_fn(%.loc35_19.2, %.loc35_31.2)
-// CHECK:STDOUT:   %facet_value.loc35_29: %type_where = facet_value constants.%Grass, () [concrete = constants.%facet_value.c0f]
-// CHECK:STDOUT:   %.loc35_29.5: %type_where = converted constants.%Grass, %facet_value.loc35_29 [concrete = constants.%facet_value.c0f]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc35_29: <bound method> = bound_method %.loc35_29.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.0f2
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.0f2, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.c0f) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.dff]
 // CHECK:STDOUT:   %bound_method.loc35_29: <bound method> = bound_method %.loc35_29.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc35_29: %ptr.2bd = addr_of %.loc35_29.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc35_29: init %empty_tuple.type = call %bound_method.loc35_29(%addr.loc35_29)
-// CHECK:STDOUT:   %facet_value.loc35_17: %type_where = facet_value constants.%Goat, () [concrete = constants.%facet_value.8dd]
-// CHECK:STDOUT:   %.loc35_17.5: %type_where = converted constants.%Goat, %facet_value.loc35_17 [concrete = constants.%facet_value.8dd]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc35_17: <bound method> = bound_method %.loc35_17.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.457
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.457, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.8dd) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.3aa]
 // CHECK:STDOUT:   %bound_method.loc35_17: <bound method> = bound_method %.loc35_17.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2

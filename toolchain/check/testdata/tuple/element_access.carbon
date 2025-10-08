@@ -432,8 +432,6 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_13.2: <bound method> = bound_method %.loc7_13, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc7_13.2(%.loc7_13)
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%tuple.type.a1c, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc7_12.3: %type_where = converted constants.%tuple.type.a1c, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc7_12.2, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.14d
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc7_12: <bound method> = bound_method %.loc7_12.2, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

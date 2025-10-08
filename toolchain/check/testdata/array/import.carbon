@@ -107,8 +107,6 @@ fn F() -> array(i32, 1) {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc6_15.2: <bound method> = bound_method %.loc6_15.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_15.2(%.loc6_15.2)
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%array_type, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc6_12.3: %type_where = converted constants.%array_type, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc6_12.2, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.ce8
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc6_12: <bound method> = bound_method %.loc6_12.2, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

@@ -119,8 +119,8 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:   %specific_fn.loc8: <specific function> = specific_function %impl.elem0.loc8, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_3.2: <bound method> = bound_method %int_42, %specific_fn.loc8 [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc8_3.2(%int_42) [concrete = constants.%int_42.c68]
-// CHECK:STDOUT:   %.loc8_3.1: init %i32 = converted %int_42, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_42.c68]
-// CHECK:STDOUT:   assign %n.var, %.loc8_3.1
+// CHECK:STDOUT:   %.loc8_3: init %i32 = converted %int_42, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_42.c68]
+// CHECK:STDOUT:   assign %n.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %foo.ref [concrete = constants.%i32] {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     <elided>
@@ -140,22 +140,18 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:   %bound_method.loc10_21.2: <bound method> = bound_method %addr.loc10_21, %specific_fn.loc10
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.235 = call %bound_method.loc10_21.2(%addr.loc10_21)
 // CHECK:STDOUT:   assign %p.var, %ptr.as.Copy.impl.Op.call
-// CHECK:STDOUT:   %.loc10_17: type = splice_block %ptr [concrete = constants.%ptr.235] {
+// CHECK:STDOUT:   %.loc10: type = splice_block %ptr [concrete = constants.%ptr.235] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %bar.ref: type = name_ref bar, %i32.1 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %bar.ref [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: ref %ptr.235 = bind_name p, %p.var
-// CHECK:STDOUT:   %facet_value.loc10: %type_where = facet_value constants.%ptr.235, () [concrete = constants.%facet_value.380]
-// CHECK:STDOUT:   %.loc10_3: %type_where = converted constants.%ptr.235, %facet_value.loc10 [concrete = constants.%facet_value.380]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10: <bound method> = bound_method %p.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.62d
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10_3: <bound method> = bound_method %p.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc10_3: %ptr.5d5 = addr_of %p.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc10: init %empty_tuple.type = call %bound_method.loc10_3(%addr.loc10_3)
-// CHECK:STDOUT:   %facet_value.loc8: %type_where = facet_value constants.%i32, () [concrete = constants.%facet_value.d23]
-// CHECK:STDOUT:   %.loc8_3.2: %type_where = converted constants.%i32, %facet_value.loc8 [concrete = constants.%facet_value.d23]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8: <bound method> = bound_method %n.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.a57
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8_3.3: <bound method> = bound_method %n.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
@@ -215,7 +211,7 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:   %bound_method.loc9_20.2: <bound method> = bound_method %addr.loc9_20, %specific_fn.loc9
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call.loc9: init %ptr.d9e = call %bound_method.loc9_20.2(%addr.loc9_20)
 // CHECK:STDOUT:   assign %pd.var, %ptr.as.Copy.impl.Op.call.loc9
-// CHECK:STDOUT:   %.loc9_16: type = splice_block %ptr.loc9 [concrete = constants.%ptr.d9e] {
+// CHECK:STDOUT:   %.loc9: type = splice_block %ptr.loc9 [concrete = constants.%ptr.d9e] {
 // CHECK:STDOUT:     %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %D.ref.loc9: type = name_ref D, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc9: type = ptr_type %D.ref.loc9 [concrete = constants.%ptr.d9e]
@@ -234,21 +230,17 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:   %bound_method.loc10_20.2: <bound method> = bound_method %addr.loc10_20, %specific_fn.loc10
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call.loc10: init %ptr.d9e = call %bound_method.loc10_20.2(%addr.loc10_20)
 // CHECK:STDOUT:   assign %pc.var, %ptr.as.Copy.impl.Op.call.loc10
-// CHECK:STDOUT:   %.loc10_16: type = splice_block %ptr.loc10 [concrete = constants.%ptr.d9e] {
+// CHECK:STDOUT:   %.loc10: type = splice_block %ptr.loc10 [concrete = constants.%ptr.d9e] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc10: type = ptr_type %C.ref.loc10 [concrete = constants.%ptr.d9e]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pc: ref %ptr.d9e = bind_name pc, %pc.var
-// CHECK:STDOUT:   %facet_value.loc10: %type_where = facet_value constants.%ptr.d9e, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc10_3: %type_where = converted constants.%ptr.d9e, %facet_value.loc10 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10: <bound method> = bound_method %pc.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.fe8
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10_3: <bound method> = bound_method %pc.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc10_3: %ptr.01d = addr_of %pc.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc10: init %empty_tuple.type = call %bound_method.loc10_3(%addr.loc10_3)
-// CHECK:STDOUT:   %facet_value.loc9: %type_where = facet_value constants.%ptr.d9e, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc9_3: %type_where = converted constants.%ptr.d9e, %facet_value.loc9 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9: <bound method> = bound_method %pd.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.fe8
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc9_3: <bound method> = bound_method %pd.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2

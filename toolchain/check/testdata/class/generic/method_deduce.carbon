@@ -299,8 +299,6 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %.loc28_25.5: ref %A = converted %.loc28_25.1, %.loc28_25.4
 // CHECK:STDOUT:   %.loc28_25.6: %A = bind_value %.loc28_25.5
 // CHECK:STDOUT:   %Class.GetNoDeduce.call: init %tuple.type.cc6 = call %Class.GetNoDeduce.specific_fn(%.loc28_25.6) to %.loc27_54
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%A, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc28_25.7: %type_where = converted constants.%A, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc28_25.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.8ee
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.8ee, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc28_25.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

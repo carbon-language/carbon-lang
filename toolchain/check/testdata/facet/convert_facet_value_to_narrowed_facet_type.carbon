@@ -682,8 +682,6 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %W.binding.as_type [symbolic = %require_complete (constants.%require_complete.ea5)]
-// CHECK:STDOUT:   %Animal.lookup_impl_witness: <witness> = lookup_impl_witness %W.loc11_22.1, @Animal [symbolic = %Animal.lookup_impl_witness (constants.%Animal.lookup_impl_witness)]
-// CHECK:STDOUT:   %Animal.facet.loc12_14.3: %Animal.type = facet_value %W.binding.as_type, (%Animal.lookup_impl_witness) [symbolic = %Animal.facet.loc12_14.3 (constants.%Animal.facet)]
 // CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %W.loc11_22.1, @Eats [symbolic = %Eats.lookup_impl_witness (constants.%Eats.lookup_impl_witness)]
 // CHECK:STDOUT:   %Tame.lookup_impl_witness: <witness> = lookup_impl_witness %W.loc11_22.1, @Tame [symbolic = %Tame.lookup_impl_witness (constants.%Tame.lookup_impl_witness)]
 // CHECK:STDOUT:   %facet_value.loc12_14.3: %facet_type.807 = facet_value %W.binding.as_type, (%Eats.lookup_impl_witness, %Tame.lookup_impl_witness) [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]
@@ -693,16 +691,10 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %FeedTame2.ref: %FeedTame2.type = name_ref FeedTame2, file.%FeedTame2.decl [concrete = constants.%FeedTame2]
 // CHECK:STDOUT:     %w.ref: @HandleTameAnimal2.%W.binding.as_type (%W.binding.as_type) = name_ref w, %w
-// CHECK:STDOUT:     %as_type.loc12_14.1: type = facet_access_type constants.%W [symbolic = %W.binding.as_type (constants.%W.binding.as_type)]
-// CHECK:STDOUT:     %Animal.facet.loc12_14.1: %Animal.type = facet_value %as_type.loc12_14.1, (constants.%Animal.lookup_impl_witness) [symbolic = %Animal.facet.loc12_14.3 (constants.%Animal.facet)]
-// CHECK:STDOUT:     %.loc12_14.1: %Animal.type = converted constants.%W, %Animal.facet.loc12_14.1 [symbolic = %Animal.facet.loc12_14.3 (constants.%Animal.facet)]
 // CHECK:STDOUT:     %facet_value.loc12_14.1: %facet_type.807 = facet_value constants.%W.binding.as_type, (constants.%Eats.lookup_impl_witness, constants.%Tame.lookup_impl_witness) [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]
-// CHECK:STDOUT:     %.loc12_14.2: %facet_type.807 = converted constants.%W.binding.as_type, %facet_value.loc12_14.1 [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]
-// CHECK:STDOUT:     %as_type.loc12_14.2: type = facet_access_type constants.%W [symbolic = %W.binding.as_type (constants.%W.binding.as_type)]
-// CHECK:STDOUT:     %Animal.facet.loc12_14.2: %Animal.type = facet_value %as_type.loc12_14.2, (constants.%Animal.lookup_impl_witness) [symbolic = %Animal.facet.loc12_14.3 (constants.%Animal.facet)]
-// CHECK:STDOUT:     %.loc12_14.3: %Animal.type = converted constants.%W, %Animal.facet.loc12_14.2 [symbolic = %Animal.facet.loc12_14.3 (constants.%Animal.facet)]
+// CHECK:STDOUT:     %.loc12_14.1: %facet_type.807 = converted constants.%W.binding.as_type, %facet_value.loc12_14.1 [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]
 // CHECK:STDOUT:     %facet_value.loc12_14.2: %facet_type.807 = facet_value constants.%W.binding.as_type, (constants.%Eats.lookup_impl_witness, constants.%Tame.lookup_impl_witness) [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]
-// CHECK:STDOUT:     %.loc12_14.4: %facet_type.807 = converted constants.%W.binding.as_type, %facet_value.loc12_14.2 [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]
+// CHECK:STDOUT:     %.loc12_14.2: %facet_type.807 = converted constants.%W.binding.as_type, %facet_value.loc12_14.2 [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]
 // CHECK:STDOUT:     %FeedTame2.specific_fn.loc12_3.1: <specific function> = specific_function %FeedTame2.ref, @FeedTame2(constants.%facet_value) [symbolic = %FeedTame2.specific_fn.loc12_3.2 (constants.%FeedTame2.specific_fn)]
 // CHECK:STDOUT:     %FeedTame2.call: init %empty_tuple.type = call %FeedTame2.specific_fn.loc12_3.1(%w.ref)
 // CHECK:STDOUT:     return

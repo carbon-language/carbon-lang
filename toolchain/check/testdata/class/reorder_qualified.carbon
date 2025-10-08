@@ -277,8 +277,8 @@ class A {
 // CHECK:STDOUT:   %.loc33_25.3: ref %i32 = class_element_access %a.var, element0
 // CHECK:STDOUT:   %.loc33_25.4: init %i32 = initialize_from %.loc33_25.2 to %.loc33_25.3 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc33_25.5: init %A = class_init (%.loc33_25.4), %a.var [concrete = constants.%A.val]
-// CHECK:STDOUT:   %.loc33_7.1: init %A = converted %.loc33_25.1, %.loc33_25.5 [concrete = constants.%A.val]
-// CHECK:STDOUT:   assign %a.var, %.loc33_7.1
+// CHECK:STDOUT:   %.loc33_7: init %A = converted %.loc33_25.1, %.loc33_25.5 [concrete = constants.%A.val]
+// CHECK:STDOUT:   assign %a.var, %.loc33_7
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -297,8 +297,8 @@ class A {
 // CHECK:STDOUT:   %.loc34_25.3: ref %i32 = class_element_access %b.var, element0
 // CHECK:STDOUT:   %.loc34_25.4: init %i32 = initialize_from %.loc34_25.2 to %.loc34_25.3 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc34_25.5: init %B = class_init (%.loc34_25.4), %b.var [concrete = constants.%B.val]
-// CHECK:STDOUT:   %.loc34_7.1: init %B = converted %.loc34_25.1, %.loc34_25.5 [concrete = constants.%B.val]
-// CHECK:STDOUT:   assign %b.var, %.loc34_7.1
+// CHECK:STDOUT:   %.loc34_7: init %B = converted %.loc34_25.1, %.loc34_25.5 [concrete = constants.%B.val]
+// CHECK:STDOUT:   assign %b.var, %.loc34_7
 // CHECK:STDOUT:   %B.ref: type = name_ref B, @A.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %b: ref %B = bind_name b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -317,8 +317,8 @@ class A {
 // CHECK:STDOUT:   %.loc35_25.3: ref %i32 = class_element_access %c.var, element0
 // CHECK:STDOUT:   %.loc35_25.4: init %i32 = initialize_from %.loc35_25.2 to %.loc35_25.3 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc35_25.5: init %C = class_init (%.loc35_25.4), %c.var [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc35_7.1: init %C = converted %.loc35_25.1, %.loc35_25.5 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign %c.var, %.loc35_7.1
+// CHECK:STDOUT:   %.loc35_7: init %C = converted %.loc35_25.1, %.loc35_25.5 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign %c.var, %.loc35_7
 // CHECK:STDOUT:   %C.ref: type = name_ref C, @B.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -337,8 +337,8 @@ class A {
 // CHECK:STDOUT:   %.loc36_25.3: ref %i32 = class_element_access %d.var, element0
 // CHECK:STDOUT:   %.loc36_25.4: init %i32 = initialize_from %.loc36_25.2 to %.loc36_25.3 [concrete = constants.%int_4.940]
 // CHECK:STDOUT:   %.loc36_25.5: init %D = class_init (%.loc36_25.4), %d.var [concrete = constants.%D.val]
-// CHECK:STDOUT:   %.loc36_7.1: init %D = converted %.loc36_25.1, %.loc36_25.5 [concrete = constants.%D.val]
-// CHECK:STDOUT:   assign %d.var, %.loc36_7.1
+// CHECK:STDOUT:   %.loc36_7: init %D = converted %.loc36_25.1, %.loc36_25.5 [concrete = constants.%D.val]
+// CHECK:STDOUT:   assign %d.var, %.loc36_7
 // CHECK:STDOUT:   %D.ref: type = name_ref D, @C.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:   %d: ref %D = bind_name d, %d.var
 // CHECK:STDOUT:   %AF.ref: %A.AF.type = name_ref AF, @A.%A.AF.decl [concrete = constants.%A.AF]
@@ -349,29 +349,21 @@ class A {
 // CHECK:STDOUT:   %C.CF.call: init %empty_tuple.type = call %CF.ref()
 // CHECK:STDOUT:   %DF.ref: %D.DF.type = name_ref DF, @D.%D.DF.decl [concrete = constants.%D.DF]
 // CHECK:STDOUT:   %D.DF.call: init %empty_tuple.type = call %DF.ref()
-// CHECK:STDOUT:   %facet_value.loc36: %type_where = facet_value constants.%D, () [concrete = constants.%facet_value.1f3]
-// CHECK:STDOUT:   %.loc36_7.2: %type_where = converted constants.%D, %facet_value.loc36 [concrete = constants.%facet_value.1f3]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc36: <bound method> = bound_method %d.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.82c
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.82c, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.1f3) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.9ff]
 // CHECK:STDOUT:   %bound_method.loc36_7: <bound method> = bound_method %d.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc36: %ptr.321 = addr_of %d.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc36: init %empty_tuple.type = call %bound_method.loc36_7(%addr.loc36)
-// CHECK:STDOUT:   %facet_value.loc35: %type_where = facet_value constants.%C, () [concrete = constants.%facet_value.fa1]
-// CHECK:STDOUT:   %.loc35_7.2: %type_where = converted constants.%C, %facet_value.loc35 [concrete = constants.%facet_value.fa1]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc35: <bound method> = bound_method %c.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.cbb
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.cbb, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.fa1) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.ddd]
 // CHECK:STDOUT:   %bound_method.loc35_7: <bound method> = bound_method %c.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc35: %ptr.388 = addr_of %c.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc35: init %empty_tuple.type = call %bound_method.loc35_7(%addr.loc35)
-// CHECK:STDOUT:   %facet_value.loc34: %type_where = facet_value constants.%B, () [concrete = constants.%facet_value.69b]
-// CHECK:STDOUT:   %.loc34_7.2: %type_where = converted constants.%B, %facet_value.loc34 [concrete = constants.%facet_value.69b]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc34: <bound method> = bound_method %b.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.966
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.3: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.966, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.69b) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.cfd]
 // CHECK:STDOUT:   %bound_method.loc34_7: <bound method> = bound_method %b.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.3
 // CHECK:STDOUT:   %addr.loc34: %ptr.01b = addr_of %b.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc34: init %empty_tuple.type = call %bound_method.loc34_7(%addr.loc34)
-// CHECK:STDOUT:   %facet_value.loc33: %type_where = facet_value constants.%A, () [concrete = constants.%facet_value.bb7]
-// CHECK:STDOUT:   %.loc33_7.2: %type_where = converted constants.%A, %facet_value.loc33 [concrete = constants.%facet_value.bb7]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc33: <bound method> = bound_method %a.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.8ee
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.4: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.8ee, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.bb7) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.ae6]
 // CHECK:STDOUT:   %bound_method.loc33_7: <bound method> = bound_method %a.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.4

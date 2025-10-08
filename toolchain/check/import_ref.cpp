@@ -3650,23 +3650,28 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
   auto [indirect_insts, load_type_id] =
       GetInstForLoad(context, inst->import_ir_inst_id);
 
-  // Loading an import ref, if its a generic, can re-evaluate its eval block
-  // against a new self specific. This can involve doing impl lookup, which can
-  // introduce new conversion instructions. Those instructions should be treated
-  // as part of the import, not becoming part of any enclosing generic.
-  context.inst_block_stack().Push();
-  context.generic_region_stack().Push(
-      {.generic_id = SemIR::GenericId::None,
-       .region = SemIR::GenericInstIndex::Declaration});
-
   // The last indirect instruction is the one to resolve. Pop it here because
   // Resolve will assign the constant.
   auto load_ir_inst = indirect_insts.pop_back_val();
   ImportRefResolver resolver(&context, load_ir_inst.ir_id());
+
+  // Loading an import ref creates local constants from the import ones, but
+  // shouldn't be generating novel instructions in the semir as a side effect of
+  // that process. Doing so in a generic context would also cause them to end up
+  // in the eval block, which would be doubly wrong.
+  context.inst_block_stack().Push();
+
   auto type_id = resolver.ResolveType(load_type_id);
   auto constant_id = resolver.Resolve(load_ir_inst.inst_id());
 
-  context.generic_region_stack().Pop();
+  CARBON_CHECK(
+      context.inst_block_stack().PeekCurrentBlockContents().empty(),
+      "Importing an instruction shouldn't add new instructions to the "
+      "local inst block. Found {0} new instructions, first is {1}: {2}.",
+      context.inst_block_stack().PeekCurrentBlockContents().size(),
+      context.inst_block_stack().PeekCurrentBlockContents().front(),
+      context.insts().Get(
+          context.inst_block_stack().PeekCurrentBlockContents().front()));
   context.inst_block_stack().PopAndDiscard();
 
   // Replace the ImportRefUnloaded instruction with ImportRefLoaded. This

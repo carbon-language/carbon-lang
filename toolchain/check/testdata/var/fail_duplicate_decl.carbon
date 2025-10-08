@@ -70,8 +70,8 @@ fn Main() {
 // CHECK:STDOUT:   %x.var.loc3: ref %empty_tuple.type = var %x.var_patt.loc3
 // CHECK:STDOUT:   %.loc3_16.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc3_16.2: init %empty_tuple.type = tuple_init () to %x.var.loc3 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc3_3.1: init %empty_tuple.type = converted %.loc3_16.1, %.loc3_16.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %x.var.loc3, %.loc3_3.1
+// CHECK:STDOUT:   %.loc3_3: init %empty_tuple.type = converted %.loc3_16.1, %.loc3_16.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %x.var.loc3, %.loc3_3
 // CHECK:STDOUT:   %.loc3_11.1: type = splice_block %.loc3_11.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc3_11.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc3_11.3: type = converted %.loc3_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -84,22 +84,18 @@ fn Main() {
 // CHECK:STDOUT:   %x.var.loc11: ref %empty_tuple.type = var %x.var_patt.loc11
 // CHECK:STDOUT:   %.loc11_16.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc11_16.2: init %empty_tuple.type = tuple_init () to %x.var.loc11 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc11_3.1: init %empty_tuple.type = converted %.loc11_16.1, %.loc11_16.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   assign %x.var.loc11, %.loc11_3.1
+// CHECK:STDOUT:   %.loc11_3: init %empty_tuple.type = converted %.loc11_16.1, %.loc11_16.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %x.var.loc11, %.loc11_3
 // CHECK:STDOUT:   %.loc11_11.1: type = splice_block %.loc11_11.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc11_11.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc11_11.3: type = converted %.loc11_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.loc11: ref %empty_tuple.type = bind_name x, %x.var.loc11
-// CHECK:STDOUT:   %facet_value.loc11: %type_where = facet_value constants.%empty_tuple.type, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc11_3.2: %type_where = converted constants.%empty_tuple.type, %facet_value.loc11 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11: <bound method> = bound_method %x.var.loc11, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.93e
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.93e, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc11: <bound method> = bound_method %x.var.loc11, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc11: %ptr.843 = addr_of %x.var.loc11
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc11: init %empty_tuple.type = call %bound_method.loc11(%addr.loc11)
-// CHECK:STDOUT:   %facet_value.loc3: %type_where = facet_value constants.%empty_tuple.type, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc3_3.2: %type_where = converted constants.%empty_tuple.type, %facet_value.loc3 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc3: <bound method> = bound_method %x.var.loc3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.93e
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.93e, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc3: <bound method> = bound_method %x.var.loc3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2

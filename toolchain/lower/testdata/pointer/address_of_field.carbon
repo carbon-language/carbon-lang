@@ -20,7 +20,7 @@ fn F() {
 // CHECK:STDOUT: ; ModuleID = 'address_of_field.carbon'
 // CHECK:STDOUT: source_filename = "address_of_field.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @struct.loc16_3.1 = internal constant { i32, i32 } { i32 1, i32 2 }
+// CHECK:STDOUT: @struct.loc16_3 = internal constant { i32, i32 } { i32 1, i32 2 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CG.Main(ptr)
 // CHECK:STDOUT:
@@ -30,7 +30,7 @@ fn F() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %s.var), !dbg !7
 // CHECK:STDOUT:   %.loc16_46.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %s.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc16_46.6.b = getelementptr inbounds nuw { i32, i32 }, ptr %s.var, i32 0, i32 1, !dbg !8
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %s.var, ptr align 4 @struct.loc16_3.1, i64 8, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %s.var, ptr align 4 @struct.loc16_3, i64 8, i1 false), !dbg !7
 // CHECK:STDOUT:   %.loc17.b = getelementptr inbounds nuw { i32, i32 }, ptr %s.var, i32 0, i32 1, !dbg !9
 // CHECK:STDOUT:   call void @_CG.Main(ptr %.loc17.b), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
