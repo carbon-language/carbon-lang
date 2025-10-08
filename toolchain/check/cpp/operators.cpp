@@ -192,7 +192,7 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
 
   clang::SourceLocation loc = GetCppLocation(context, loc_id);
   clang::OverloadCandidateSet::OperatorRewriteInfo operator_rewrite_info(
-      *op_kind, loc, true);
+      *op_kind, loc, /*AllowRewritten=*/true);
   clang::UnresolvedSet<4> functions;
   clang::OverloadCandidateSet candidate_set(
       loc, clang::OverloadCandidateSet::CSK_Operator, operator_rewrite_info);
