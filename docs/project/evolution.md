@@ -314,9 +314,36 @@ The author of a proposal is not required to include changes to the design
 documentation as part of a proposal, and it may in some cases be preferable to
 decouple the proposal process from updating the design. When accepted, the
 proposal would then be implemented through a series of future PRs to the rest of
-the project, and the proposal document should describe what is being proposed in
-enough detail to validate that those future PRs properly implement the proposed
-direction.
+the project. If the proposal PR defers any documentation changes in this way,
+the proposal document should describe what is being proposed in enough detail to
+validate that those future PRs properly implement the proposed direction, and
+the proposal PR should add "TODO" comments in the places where significant
+future changes will be needed (including adding new placeholder documents if
+needed), with links back to the proposal document. These comments should be kept
+close to the passages that need to be changed. This is intended to ensure that
+readers of the design documentation know when what they're reading is out of
+date, and can easily find out what has changed. For example:
+
+```md
+> **TODO:** Document the redeclaration syntax `impl C.(as I)` adopted in
+> [p5366](/proposals/p5366.md).
+```
+
+See the `docs/design` changes in
+[#5606: Keep design documents current](https://github.com/carbon-language/carbon-lang/pull/5606)
+for additional examples of adding those comments. As with other parts of the
+proposal, these comments should be included in the initial PR, and updated as
+needed during the review.
+
+As an exception, proposals that will have a widespread, pervasive effect on the
+design documents (such as proposals to replace widely-used vocabulary) usually
+shouldn't make those changes as part of the proposal, so that changes during the
+review aren't an excessive burden on the proposal author. Such proposals usually
+shouldn't apply "TODO" comments either, because pervasive "TODO" comments are
+more likely to be disruptive than helpful to the reader. Instead, the proposal
+author should file a GitHub issue to track the need for documentation updates,
+and include a link to it in the proposal document, and then follow up with pull
+requests to make the changes after the proposal is approved by the leads.
 
 #### Open questions
 

@@ -52,18 +52,18 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %.19f: type = cpp_overload_set_type @func [concrete]
-// CHECK:STDOUT:   %empty_struct: %.19f = struct_value () [concrete]
+// CHECK:STDOUT:   %func.cpp_overload_set.type: type = cpp_overload_set_type @func.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %func.cpp_overload_set.value: %func.cpp_overload_set.type = cpp_overload_set_value @func.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %func.type: type = fn_type @func [concrete]
 // CHECK:STDOUT:   %func: %func.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .func = %.ddc
+// CHECK:STDOUT:     .func = %func.cpp_overload_set.value
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.ddc: %.19f = cpp_overload_set_value @func [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %func.cpp_overload_set.value: %func.cpp_overload_set.type = cpp_overload_set_value @func.cpp_overload_set [concrete = constants.%func.cpp_overload_set.value]
 // CHECK:STDOUT:   %func.decl: %func.type = fn_decl @func [concrete = constants.%func] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -76,7 +76,7 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %func.ref: %.19f = name_ref func, imports.%.ddc [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %func.ref: %func.cpp_overload_set.type = name_ref func, imports.%func.cpp_overload_set.value [concrete = constants.%func.cpp_overload_set.value]
 // CHECK:STDOUT:   %func.call: init %empty_tuple.type = call imports.%func.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -85,18 +85,18 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %.bcd: type = cpp_overload_set_type @another_func [concrete]
-// CHECK:STDOUT:   %empty_struct: %.bcd = struct_value () [concrete]
+// CHECK:STDOUT:   %another_func.cpp_overload_set.type: type = cpp_overload_set_type @another_func.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %another_func.cpp_overload_set.value: %another_func.cpp_overload_set.type = cpp_overload_set_value @another_func.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %another_func.type: type = fn_type @another_func [concrete]
 // CHECK:STDOUT:   %another_func: %another_func.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .another_func = %.b52
+// CHECK:STDOUT:     .another_func = %another_func.cpp_overload_set.value
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.b52: %.bcd = cpp_overload_set_value @another_func [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %another_func.cpp_overload_set.value: %another_func.cpp_overload_set.type = cpp_overload_set_value @another_func.cpp_overload_set [concrete = constants.%another_func.cpp_overload_set.value]
 // CHECK:STDOUT:   %another_func.decl: %another_func.type = fn_decl @another_func [concrete = constants.%another_func] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -109,7 +109,7 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %another_func.ref: %.bcd = name_ref another_func, imports.%.b52 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %another_func.ref: %another_func.cpp_overload_set.type = name_ref another_func, imports.%another_func.cpp_overload_set.value [concrete = constants.%another_func.cpp_overload_set.value]
 // CHECK:STDOUT:   %another_func.call: init %empty_tuple.type = call imports.%another_func.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

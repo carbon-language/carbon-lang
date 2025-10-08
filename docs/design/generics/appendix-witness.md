@@ -241,12 +241,12 @@ witness table.
 
 ```
 interface Iterator {
-  fn Advance[addr self: Self*]();
+  fn Advance[ref self: Self]();
 }
 
 interface Container {
   let IteratorType:! Iterator;
-  fn Begin[addr self: Self*]() -> IteratorType;
+  fn Begin[ref self: Self]() -> IteratorType;
 }
 ```
 

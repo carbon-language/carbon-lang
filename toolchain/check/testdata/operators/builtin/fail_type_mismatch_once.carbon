@@ -72,7 +72,6 @@ fn Main() -> i32 {
 // CHECK:STDOUT:   %.loc22: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 34e-1 [concrete = constants.%float]
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [concrete = constants.%int_12]
-// CHECK:STDOUT:   %impl.elem1: <error> = impl_witness_access <error>, element1 [concrete = <error>]
 // CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -26,105 +26,20 @@ auto HandleParseNode(Context& /*context*/, Parse::IndexExprStartId /*node_id*/)
   return true;
 }
 
-// Returns the argument values of the `IndexWith` interface. Arguments
-// correspond to the `SubscriptType` and the `ElementType`. If no arguments are
-// used to define `IndexWith`, this returns an empty array reference. If the
-// class does not implement the said interface, this returns a `std::nullopt`.
-// TODO: Switch to using an associated type instead of a parameter for the
-// `ElementType`.
-static auto GetIndexWithArgs(Context& context, Parse::NodeId node_id,
-                             SemIR::TypeId self_id)
-    -> std::optional<llvm::ArrayRef<SemIR::InstId>> {
-  auto index_with_inst_id = LookupNameInCore(context, node_id, "IndexWith");
-  // If the `IndexWith` interface doesn't have generic arguments then return an
-  // empty reference.
-  if (context.insts().Is<SemIR::FacetType>(index_with_inst_id)) {
-    return llvm::ArrayRef<SemIR::InstId>();
-  }
-
-  auto index_with_inst =
-      context.insts().TryGetAsIfValid<SemIR::StructValue>(index_with_inst_id);
-  if (!index_with_inst) {
-    return std::nullopt;
-  }
-
-  auto index_with_interface =
-      context.types().TryGetAs<SemIR::GenericInterfaceType>(
-          index_with_inst->type_id);
-  if (!index_with_interface) {
-    return std::nullopt;
-  }
-
-  for (const auto& impl : context.impls().values()) {
-    auto impl_self_type_id =
-        context.types().GetTypeIdForTypeInstId(impl.self_id);
-    auto impl_constraint_type_id =
-        context.types().GetTypeIdForTypeInstId(impl.constraint_id);
-
-    if (impl_self_type_id != self_id) {
-      continue;
-    }
-    auto facet_type =
-        context.types().TryGetAs<SemIR::FacetType>(impl_constraint_type_id);
-    if (!facet_type) {
-      continue;
-    }
-    const auto& facet_type_info =
-        context.facet_types().Get(facet_type->facet_type_id);
-    auto interface_type = facet_type_info.TryAsSingleInterface();
-    if (!interface_type) {
-      continue;
-    }
-    if (index_with_interface->interface_id != interface_type->interface_id) {
-      continue;
-    }
-
-    return context.inst_blocks().GetOrEmpty(
-        context.specifics().Get(interface_type->specific_id).args_id);
-  }
-
-  return std::nullopt;
-}
-
 // Performs an index with base expression `operand_inst_id` and
 // `operand_type_id` for types that are not an array. This checks if
 // the base expression implements the `IndexWith` interface; if so, uses the
 // `At` associative method, otherwise prints a diagnostic.
 static auto PerformIndexWith(Context& context, Parse::NodeId node_id,
                              SemIR::InstId operand_inst_id,
-                             SemIR::TypeId operand_type_id,
                              SemIR::InstId index_inst_id) -> SemIR::InstId {
-  auto args = GetIndexWithArgs(context, node_id, operand_type_id);
-
-  // If the type does not implement the `IndexWith` interface, then return
-  // an error.
-  if (!args) {
-    CARBON_DIAGNOSTIC(TypeNotIndexable, Error,
-                      "type {0} does not support indexing", SemIR::TypeId);
-    context.emitter().Emit(node_id, TypeNotIndexable, operand_type_id);
-    return SemIR::ErrorInst::InstId;
-  }
-
-  Operator op{
-      .interface_name = "IndexWith",
-      .interface_args_ref = *args,
-      .op_name = "At",
-  };
-
-  // IndexWith is defined without generic arguments.
-  if (args->empty()) {
-    return BuildBinaryOperator(context, node_id, op, operand_inst_id,
-                               index_inst_id);
-  }
-
-  // The first argument of the `IndexWith` interface corresponds to the
-  // `SubscriptType`, so first cast `index_inst_id` to that type.
-  auto subscript_type_id = context.types().GetTypeIdForTypeInstId((*args)[0]);
-  auto cast_index_id =
-      ConvertToValueOfType(context, node_id, index_inst_id, subscript_type_id);
-
+  SemIR::InstId args[] = {
+      context.types().GetInstId(context.insts().Get(index_inst_id).type_id())};
+  Operator op{.interface_name = "IndexWith",
+              .interface_args_ref = args,
+              .op_name = "At"};
   return BuildBinaryOperator(context, node_id, op, operand_inst_id,
-                             cast_index_id);
+                             index_inst_id);
 }
 
 auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
@@ -170,11 +85,8 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
     }
 
     default: {
-      auto elem_id = SemIR::ErrorInst::InstId;
-      if (operand_type_id != SemIR::ErrorInst::TypeId) {
-        elem_id = PerformIndexWith(context, node_id, operand_inst_id,
-                                   operand_type_id, index_inst_id);
-      }
+      auto elem_id =
+          PerformIndexWith(context, node_id, operand_inst_id, index_inst_id);
       context.node_stack().Push(node_id, elem_id);
       return true;
     }

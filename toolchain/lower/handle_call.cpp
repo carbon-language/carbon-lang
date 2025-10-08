@@ -10,6 +10,7 @@
 #include "llvm/IR/Value.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
+#include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -460,7 +461,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::CharConvertChecked:
     case SemIR::BuiltinFunctionKind::FloatConvertChecked:
     case SemIR::BuiltinFunctionKind::IntConvertChecked:
-    case SemIR::BuiltinFunctionKind::TypeCanAggregateDestroy: {
+    case SemIR::BuiltinFunctionKind::TypeCanDestroy: {
       // TODO: Check this statically.
       CARBON_CHECK(builtin_kind.IsCompTimeOnly(
           context.sem_ir(), arg_ids,
@@ -468,7 +469,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       CARBON_FATAL("Missing constant value for call to comptime-only function");
     }
 
-    case SemIR::BuiltinFunctionKind::TypeAggregateDestroy:
+    case SemIR::BuiltinFunctionKind::TypeDestroy:
       // TODO: Destroy aggregate members.
       return;
   }
@@ -535,7 +536,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   llvm::ArrayRef<SemIR::InstId> arg_ids =
       context.sem_ir().inst_blocks().Get(inst.args_id);
 
-  // TODO: This duplicates the SpecificId handling in `GetCalleeFunction`.
+  // TODO: This duplicates the SpecificId handling in `GetCallee`.
 
   // TODO: Should the `bound_method` be removed when forming the `call`
   // instruction? The `self` parameter is transferred into the call argument
@@ -558,8 +559,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     CARBON_CHECK(callee_id.has_value());
   }
 
-  auto callee_function = SemIR::GetCalleeFunction(*callee_file, callee_id);
-  CARBON_CHECK(callee_function.function_id.has_value());
+  auto callee_function = SemIR::GetCalleeAsFunction(*callee_file, callee_id);
 
   const SemIR::Function& function =
       callee_file->functions().Get(callee_function.function_id);

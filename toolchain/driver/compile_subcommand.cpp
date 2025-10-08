@@ -292,19 +292,6 @@ Whether to use the implicit prelude import. Enabled by default.
       });
   b.AddFlag(
       {
-          .name = "gen-implicit-type-impls",
-          .help = R"""(
-Whether to generate standard `impl`s for types, such as `Core.Destroy`. This
-only controls generation of the `impl`; code which expects the `impl` is
-expected to fail. Enabled by default.
-)""",
-      },
-      [&](auto& arg_b) {
-        arg_b.Default(true);
-        arg_b.Set(&gen_implicit_type_impls);
-      });
-  b.AddFlag(
-      {
           .name = "custom-core",
           .value_name = "CUSTOM_CORE",
           .help = R"""(
@@ -572,8 +559,8 @@ class MultiUnitCache {
 
   auto include_in_dumps() -> const IncludeInDumpsStore& {
     if (!include_in_dumps_) {
-      include_in_dumps_.emplace(
-          IncludeInDumpsStore::MakeWithExplicitSize(units_.size(), false));
+      include_in_dumps_.emplace(IncludeInDumpsStore::MakeWithExplicitSize(
+          IdTag(), units_.size(), false));
       for (const auto& [i, unit] : llvm::enumerate(units_)) {
         // If this is first accessed after lexing is complete, we need to apply
         // per-file includes. Otherwise, this is based only on the exclude
@@ -593,8 +580,8 @@ class MultiUnitCache {
   auto tree_and_subtrees_getters() -> const TreeAndSubtreesGettersStore& {
     if (!tree_and_subtrees_getters_) {
       tree_and_subtrees_getters_.emplace(
-          TreeAndSubtreesGettersStore::MakeWithExplicitSize(units_.size(),
-                                                            nullptr));
+          TreeAndSubtreesGettersStore::MakeWithExplicitSize(
+              IdTag(), units_.size(), nullptr));
       for (const auto& [i, unit] : llvm::enumerate(units_)) {
         if (unit->has_source()) {
           tree_and_subtrees_getters_->Set(SemIR::CheckIRId(i),
@@ -1053,7 +1040,6 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   CARBON_VLOG_TO(driver_env.vlog_stream, "*** Check::CheckParseTrees ***\n");
   Check::CheckParseTreesOptions options;
   options.prelude_import = options_.prelude_import;
-  options.gen_implicit_type_impls = options_.gen_implicit_type_impls;
   options.vlog_stream = driver_env.vlog_stream;
   options.fuzzing = driver_env.fuzzing;
   if (options.vlog_stream || options_.dump_sem_ir || options_.dump_cpp_ast ||

@@ -828,29 +828,21 @@ static auto CanRemoveQualifiers(SemIR::TypeQualifiers quals,
 static auto DiagnoseConversionFailureToConstraintValue(
     Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     SemIR::TypeId target_type_id) -> void {
-  CARBON_DCHECK(target_type_id == SemIR::TypeType::TypeId ||
-                context.types().Is<SemIR::FacetType>(target_type_id));
+  CARBON_CHECK(context.types().IsFacetType(target_type_id));
 
-  auto type_of_expr_id = context.insts().Get(expr_id).type_id();
-  CARBON_CHECK(context.types().IsFacetType(type_of_expr_id));
-  // If the source type is/has a facet value, then we can include its
-  // FacetType in the diagnostic to help explain what interfaces the
-  // source type implements.
-  auto facet_value_inst_id = SemIR::InstId::None;
-  if (auto facet_access_type =
-          context.insts().TryGetAs<SemIR::FacetAccessType>(expr_id)) {
-    facet_value_inst_id = facet_access_type->facet_value_inst_id;
-  } else if (context.types().Is<SemIR::FacetType>(type_of_expr_id)) {
-    facet_value_inst_id = expr_id;
-  }
+  // If the source type is/has a facet value (converted with `as type` or
+  // otherwise), then we can include its `FacetType` in the diagnostic to help
+  // explain what interfaces the source type implements.
+  auto const_expr_id = GetCanonicalFacetOrTypeValue(context, expr_id);
+  auto const_expr_type_id = context.insts().Get(const_expr_id).type_id();
 
-  if (facet_value_inst_id.has_value()) {
+  if (context.types().Is<SemIR::FacetType>(const_expr_type_id)) {
     CARBON_DIAGNOSTIC(ConversionFailureFacetToFacet, Error,
                       "cannot convert type {0} that implements {1} into type "
                       "implementing {2}",
-                      InstIdAsType, TypeOfInstId, SemIR::TypeId);
+                      InstIdAsType, SemIR::TypeId, SemIR::TypeId);
     context.emitter().Emit(loc_id, ConversionFailureFacetToFacet, expr_id,
-                           facet_value_inst_id, target_type_id);
+                           const_expr_type_id, target_type_id);
   } else {
     CARBON_DIAGNOSTIC(ConversionFailureTypeToFacet, Error,
                       "cannot convert type {0} into type implementing {1}",
@@ -1198,25 +1190,39 @@ static auto PerformBuiltinConversion(
   if (sem_ir.types().Is<SemIR::FacetType>(target.type_id) &&
       (sem_ir.types().Is<SemIR::TypeType>(value_type_id) ||
        sem_ir.types().Is<SemIR::FacetType>(value_type_id))) {
-    // The value is a type or facet value, so it has a constant value. We get
-    // that to unwrap things like NameRef and get to the underlying type or
-    // facet value instruction so that we can use `TryGetAs`.
-    auto const_value_id = sem_ir.constant_values().GetConstantInstId(value_id);
     // TODO: Runtime facet values should be allowed to convert based on their
     // FacetTypes, but we assume constant values for impl lookup at the moment.
-    if (!const_value_id.has_value()) {
+    if (!context.constant_values().Get(value_id).is_constant()) {
       context.TODO(loc_id, "conversion of runtime facet value");
-      const_value_id = SemIR::ErrorInst::InstId;
+      return SemIR::ErrorInst::InstId;
     }
 
-    if (auto facet_access_type_inst =
-            sem_ir.insts().TryGetAs<SemIR::FacetAccessType>(const_value_id)) {
-      // Conversion from a `FacetAccessType` to a `FacetValue` of the target
-      // `FacetType` if the instruction in the `FacetAccessType` is of a
-      // `FacetType` that satisfies the requirements of the target `FacetType`.
-      // If the `FacetType` exactly matches the target `FacetType` then we can
-      // shortcut and use that value, and avoid impl lookup.
-      auto facet_value_inst_id = facet_access_type_inst->facet_value_inst_id;
+    // Get the canonical type for which we want to attach a new set of witnesses
+    // to match the requirements of the target FacetType.
+    auto type_inst_id = SemIR::TypeInstId::None;
+    if (sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
+      type_inst_id = AddTypeInst<SemIR::FacetAccessType>(
+          context, loc_id,
+          {.type_id = SemIR::TypeType::TypeId,
+           .facet_value_inst_id = value_id});
+    } else {
+      type_inst_id = context.types().GetAsTypeInstId(value_id);
+
+      // Shortcut for lossless round trips through a FacetAccessType (which
+      // evaluates to SymbolicBindingType when wrapping a symbolic binding) when
+      // converting back to the type of the original symbolic binding facet
+      // value.
+      //
+      // In the case where the FacetAccessType wraps a BindSymbolicName with the
+      // exact facet type that we are converting to, the resulting FacetValue
+      // would evaluate back to the original BindSymbolicName as its canonical
+      // form. We can skip past the whole impl lookup step then and do that
+      // here.
+      //
+      // TODO: This instruction is going to become a `SymbolicBindingType`, so
+      // we'll need to handle that instead.
+      auto facet_value_inst_id =
+          GetCanonicalFacetOrTypeValue(context, type_inst_id);
       if (sem_ir.insts().Get(facet_value_inst_id).type_id() == target.type_id) {
         return facet_value_inst_id;
       }
@@ -1227,25 +1233,12 @@ static auto PerformBuiltinConversion(
     // type satisfies the requirements of the target `FacetType`, as determined
     // by finding impl witnesses for the target FacetType.
     auto lookup_result = LookupImplWitness(
-        context, loc_id, sem_ir.constant_values().Get(const_value_id),
+        context, loc_id, sem_ir.constant_values().Get(type_inst_id),
         sem_ir.types().GetConstantId(target.type_id));
     if (lookup_result.has_value()) {
       if (lookup_result.has_error_value()) {
         return SemIR::ErrorInst::InstId;
       } else {
-        // We bind the input value to the target `FacetType` with a
-        // `FacetValue`, which requires an instruction of type `TypeType`. So if
-        // we are converting from a facet value, we get its `type` via an extra
-        // `FacetAccessType` instruction.
-        auto type_inst_id = SemIR::TypeInstId::None;
-        if (sem_ir.types().Is<SemIR::FacetType>(value_type_id)) {
-          type_inst_id = AddTypeInst<SemIR::FacetAccessType>(
-              context, loc_id,
-              {.type_id = SemIR::TypeType::TypeId,
-               .facet_value_inst_id = const_value_id});
-        } else {
-          type_inst_id = context.types().GetAsTypeInstId(const_value_id);
-        }
         // Note that `FacetValue`'s type is the same `FacetType` that was used
         // to construct the set of witnesses, ie. the query to
         // `LookupImplWitness()`. This ensures that the witnesses are in the

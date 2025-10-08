@@ -93,9 +93,7 @@ class InstNamer {
   auto GetLabelFor(ScopeId scope_id, InstBlockId block_id) const -> std::string;
 
   // Returns true if the instruction has a specific name assigned.
-  auto has_name(InstId inst_id) const -> bool {
-    return static_cast<bool>(insts_[inst_id.index].second);
-  }
+  auto has_name(InstId inst_id) const -> bool;
 
  private:
   // A space in which unique names can be allocated.
@@ -197,6 +195,8 @@ class InstNamer {
   auto PushEntity(ClassId class_id, ScopeId scope_id, Scope& scope) -> void;
   auto PushEntity(FunctionId function_id, ScopeId scope_id, Scope& scope)
       -> void;
+  auto PushEntity(CppOverloadSetId cpp_overload_set_id, ScopeId scope_id,
+                  Scope& scope) -> void;
   auto PushEntity(ImplId impl_id, ScopeId scope_id, Scope& scope) -> void;
   auto PushEntity(InterfaceId interface_id, ScopeId scope_id, Scope& scope)
       -> void;

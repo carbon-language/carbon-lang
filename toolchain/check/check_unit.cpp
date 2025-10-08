@@ -60,7 +60,7 @@ CheckUnit::CheckUnit(
     const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation,
-    bool gen_implicit_type_impls, llvm::raw_ostream* vlog_stream)
+    llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
       tree_and_subtrees_getter_(tree_and_subtrees_getters->Get(
           unit_and_imports->unit->sem_ir->check_ir_id())),
@@ -71,8 +71,7 @@ CheckUnit::CheckUnit(
       context_(&emitter_, tree_and_subtrees_getter_,
                unit_and_imports_->unit->sem_ir,
                GetImportedIRCount(unit_and_imports),
-               unit_and_imports_->unit->total_ir_count, gen_implicit_type_impls,
-               vlog_stream) {}
+               unit_and_imports_->unit->total_ir_count, vlog_stream) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");
@@ -196,7 +195,7 @@ auto CheckUnit::CollectTransitiveImports(SemIR::InstId import_decl_id,
   // exported to this IR.
   auto ir_to_result_index =
       FixedSizeValueStore<SemIR::CheckIRId, int>::MakeWithExplicitSize(
-          unit_and_imports_->unit->total_ir_count, -1);
+          IdTag(), unit_and_imports_->unit->total_ir_count, -1);
 
   // First add direct imports. This means that if an entity is imported both
   // directly and indirectly, the import path will reflect the direct import.
@@ -525,10 +524,9 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
   auto poisoned_queries =
       std::exchange(context_.poisoned_concrete_impl_lookup_queries(), {});
   for (const auto& poison : poisoned_queries) {
-    auto witness_result =
-        EvalLookupSingleImplWitness(context_, poison.loc_id, poison.query,
-                                    poison.non_canonical_query_self_inst_id,
-                                    /*poison_concrete_results=*/false);
+    auto witness_result = EvalLookupSingleImplWitness(
+        context_, poison.loc_id, poison.query, poison.query.query_self_inst_id,
+        /*poison_concrete_results=*/false);
     CARBON_CHECK(witness_result.has_concrete_value());
     auto found_witness_id = witness_result.concrete_witness();
     if (found_witness_id != poison.impl_witness) {

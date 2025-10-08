@@ -31,8 +31,8 @@ struct Worklist {
   // The file containing the instruction we're currently processing.
   const File* sem_ir = nullptr;
   // The instructions we need to compute fingerprints for.
-  llvm::SmallVector<
-      std::pair<const File*, std::variant<InstId, InstBlockId, ImplId>>>
+  llvm::SmallVector<std::pair<
+      const File*, std::variant<InstId, InstBlockId, ImplId, CppOverloadSetId>>>
       todo;
   // The contents of the current instruction as accumulated so far. This is used
   // to build a Merkle tree containing a fingerprint for the current
@@ -60,7 +60,7 @@ struct Worklist {
     auto& store = fingerprints->Get(file->check_ir_id());
     if (store.size() == 0) {
       store = FixedSizeValueStore<InstId, uint64_t>::MakeWithExplicitSize(
-          file->insts().size(), 0);
+          file->insts().GetIdTag(), file->insts().size(), 0);
     }
     store.Set(inst_id, fingerprint ? fingerprint : 1);
   }
@@ -212,7 +212,7 @@ struct Worklist {
   }
 
   auto Add(CppOverloadSetId cpp_overload_set_id) -> void {
-    CppOverloadSet cpp_overload_set =
+    const CppOverloadSet& cpp_overload_set =
         sem_ir->cpp_overload_sets().Get(cpp_overload_set_id);
     Add(cpp_overload_set.name_id);
     if (cpp_overload_set.parent_scope_id.has_value()) {
@@ -501,6 +501,14 @@ auto InstFingerprinter::GetOrCompute(const File* file,
 auto InstFingerprinter::GetOrCompute(const File* file, ImplId impl_id)
     -> uint64_t {
   Worklist worklist = {.todo = {{file, impl_id}},
+                       .fingerprints = &fingerprints_};
+  return worklist.Run();
+}
+
+auto InstFingerprinter::GetOrCompute(const File* file,
+                                     CppOverloadSetId overload_set_id)
+    -> uint64_t {
+  Worklist worklist = {.todo = {{file, overload_set_id}},
                        .fingerprints = &fingerprints_};
   return worklist.Run();
 }

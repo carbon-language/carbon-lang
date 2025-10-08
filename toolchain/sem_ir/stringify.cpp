@@ -331,11 +331,11 @@ class Stringifier {
       some_where = true;
     }
     if (facet_type_info.builtin_constraint_mask.HasAnyOf(
-            SemIR::BuiltinConstraintMask::TypeCanAggregateDestroy)) {
+            SemIR::BuiltinConstraintMask::TypeCanDestroy)) {
       if (some_where) {
         step_stack_->PushString(" and");
       }
-      step_stack_->PushString(" .Self impls Core.CanAggregateDestroy");
+      step_stack_->PushString(" .Self impls Core.CanDestroy");
       some_where = true;
     }
     for (auto rewrite : llvm::reverse(facet_type_info.rewrite_constraints)) {
@@ -569,26 +569,26 @@ class Stringifier {
   }
 
   auto StringifyInst(InstId /*inst_id*/, SpecificFunction inst) -> void {
-    auto callee = GetCalleeFunction(*sem_ir_, inst.callee_id);
-    if (callee.function_id.has_value()) {
-      step_stack_->PushEntityName(sem_ir_->functions().Get(callee.function_id),
+    auto callee = GetCallee(*sem_ir_, inst.callee_id);
+    if (auto* fn = std::get_if<CalleeFunction>(&callee)) {
+      step_stack_->PushEntityName(sem_ir_->functions().Get(fn->function_id),
                                   inst.specific_id);
-    } else {
-      step_stack_->PushString("<invalid specific function>");
+      return;
     }
+    step_stack_->PushString("<invalid specific function>");
   }
 
   auto StringifyInst(InstId /*inst_id*/, SpecificImplFunction inst) -> void {
-    auto callee = GetCalleeFunction(*sem_ir_, inst.callee_id);
-    if (callee.function_id.has_value()) {
+    auto callee = GetCallee(*sem_ir_, inst.callee_id);
+    if (auto* fn = std::get_if<CalleeFunction>(&callee)) {
       // TODO: The specific_id here is for the interface member, but the
       // entity we're passing is the impl member. This might result in
       // strange output once we render specific arguments properly.
-      step_stack_->PushEntityName(sem_ir_->functions().Get(callee.function_id),
+      step_stack_->PushEntityName(sem_ir_->functions().Get(fn->function_id),
                                   inst.specific_id);
-    } else {
-      step_stack_->PushString("<invalid specific function>");
+      return;
     }
+    step_stack_->PushString("<invalid specific function>");
   }
 
   auto StringifyInst(InstId /*inst_id*/, StructType inst) -> void {
@@ -625,6 +625,10 @@ class Stringifier {
          llvm::reverse(llvm::zip(fields, field_values))) {
       step_stack_->Push(".", field.name_id, " = ", value_inst_id, &sep);
     }
+  }
+
+  auto StringifyInst(InstId /*inst_id*/, SymbolicBindingType inst) -> void {
+    step_stack_->PushEntityNameId(inst.entity_name_id);
   }
 
   auto StringifyInst(InstId /*inst_id*/, TupleType inst) -> void {

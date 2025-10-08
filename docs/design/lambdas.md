@@ -474,7 +474,7 @@ let lambda: auto = fn [self] { self.F(); };
 
 Note: Following
 [#3720](https://github.com/carbon-language/carbon-lang/pull/3720), an expression
-of the form `x.(F)`, where `F` is a function with a `self` or `addr self`
+of the form `x.(F)`, where `F` is a function with a `self` or `ref self`
 parameter, produces a callable that holds the value of `x`, and does not hold
 the value of `F`. As a consequence, we can't support combining captures and
 function fields with a `self` parameter.

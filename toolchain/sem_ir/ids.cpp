@@ -16,7 +16,12 @@ auto InstId::Print(llvm::raw_ostream& out) const -> void {
   if (IsSingletonInstId(*this)) {
     out << Label << "(" << SingletonInstKinds[index] << ")";
   } else {
-    IdBase::Print(out);
+    auto [ir_id, simple_index] = IdTag::DecomposeWithBestEffort(index);
+    if (ir_id == -1) {
+      IdBase::Print(out);
+    } else {
+      out << "ir" << ir_id << ".inst" << simple_index;
+    }
   }
 }
 
@@ -42,12 +47,30 @@ auto ConstantId::Print(llvm::raw_ostream& out, bool disambiguate) const
   }
 }
 
+auto CheckIRId::Print(llvm::raw_ostream& out) const -> void {
+  if (*this == Cpp) {
+    out << Label << "(Cpp)";
+  } else {
+    IdBase::Print(out);
+  }
+}
+
 auto GenericInstIndex::Print(llvm::raw_ostream& out) const -> void {
   out << "generic_inst";
   if (has_value()) {
     out << (region() == Declaration ? "_in_decl" : "_in_def") << index();
   } else {
     out << "<none>";
+  }
+}
+
+auto ImportIRId::Print(llvm::raw_ostream& out) const -> void {
+  if (*this == ApiForImpl) {
+    out << Label << "(ApiForImpl)";
+  } else if (*this == Cpp) {
+    out << Label << "(Cpp)";
+  } else {
+    IdBase::Print(out);
   }
 }
 

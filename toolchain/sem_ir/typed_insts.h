@@ -658,12 +658,19 @@ struct FacetType {
   FacetTypeId facet_type_id;
 };
 
-// A facet value, the value of a facet type. This consists of a type and a set
-// of witnesses that it satisfies the required interfaces of the facet type.
+// A facet value is a general value of type FacetType. This consists of a type
+// and a set of witnesses that it satisfies the required interfaces of the
+// FacetType.
+//
+// This instruction is never a type. Though it can be converted to type, doing
+// so evaluates to the `type_inst_id` within.
+//
+// If the FacetValue is just a wrapper around a BindSymbolicName (converted to
+// `type` and back, for example), it evaluates back to the BindSymbolicName.
 struct FacetValue {
   static constexpr auto Kind = InstKind::FacetValue.Define<Parse::NodeId>(
       {.ir_name = "facet_value",
-       .constant_kind = InstConstantKind::Always,
+       .constant_kind = InstConstantKind::Conditional,
        .deduce_through = true});
 
   // A `FacetType`.
@@ -811,8 +818,8 @@ struct CppOverloadSetType {
 struct CppOverloadSetValue {
   static constexpr auto Kind =
       InstKind::CppOverloadSetValue.Define<Parse::NodeId>(
-          // TODO: This should actually be lowered.
-          {.ir_name = "cpp_overload_set_value", .is_lowered = false});
+          {.ir_name = "cpp_overload_set_value",
+           .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
   CppOverloadSetId overload_set_id;
@@ -1678,6 +1685,23 @@ struct SymbolicBindingPattern {
 
   TypeId type_id;
   EntityNameId entity_name_id;
+};
+
+// The constant value of a FacetAccessType for a symbolic facet value.
+struct SymbolicBindingType {
+  static constexpr auto Kind =
+      InstKind::SymbolicBindingType.Define<Parse::NodeId>(
+          {.ir_name = "symbolic_binding_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::SymbolicOnly});
+
+  // Always the builtin type TypeType.
+  TypeId type_id;
+  // The symbolic facet value binding for which this instruction accesses the
+  // concrete type once it is known for the symbolic value.
+  EntityNameId entity_name_id;
+  // TODO: Remove this, and find it through a lookup on ScopeStack.
+  InstId facet_value_inst_id;
 };
 
 // A temporary value.

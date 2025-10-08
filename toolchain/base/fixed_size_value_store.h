@@ -13,6 +13,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/iterator_range.h"
 #include "toolchain/base/mem_usage.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/base/value_store_types.h"
 
 namespace Carbon {
@@ -47,9 +48,11 @@ class FixedSizeValueStore {
   }
 
   // Makes a ValueStore of the specified size, initialized to a default.
-  static auto MakeWithExplicitSize(size_t size, ConstRefType default_value)
+  static auto MakeWithExplicitSize(IdTag tag, size_t size,
+                                   ConstRefType default_value)
       -> FixedSizeValueStore {
     FixedSizeValueStore store;
+    store.tag_ = tag;
     store.values_.resize(size, default_value);
     return store;
   }
@@ -73,7 +76,8 @@ class FixedSizeValueStore {
   template <typename ValueStoreT>
     requires std::same_as<IdT, typename ValueStoreT::IdType>
   explicit FixedSizeValueStore(const ValueStoreT& size_source,
-                               ConstRefType default_value) {
+                               ConstRefType default_value)
+      : tag_(size_source.GetIdTag()) {
     values_.resize(size_source.size(), default_value);
   }
 
@@ -86,7 +90,8 @@ class FixedSizeValueStore {
       llvm::function_ref<
           auto(IdT, typename ValueStoreT::ConstRefType)->ValueType>
           factory_fn)
-      : values_(llvm::map_range(source.enumerate(), factory_fn)) {}
+      : values_(llvm::map_range(source.enumerate(), factory_fn)),
+        tag_(GetIdTag(source)) {}
 
   // Move-only.
   FixedSizeValueStore(FixedSizeValueStore&&) noexcept = default;
@@ -95,20 +100,23 @@ class FixedSizeValueStore {
 
   // Sets the value for an ID.
   auto Set(IdT id, ValueType value) -> void {
-    CARBON_DCHECK(id.index >= 0, "{0}", id);
-    values_[id.index] = value;
+    auto index = tag_.Remove(id.index);
+    CARBON_DCHECK(index >= 0, "{0}", id);
+    values_[index] = value;
   }
 
   // Returns a mutable value for an ID.
   auto Get(IdT id) -> RefType {
-    CARBON_DCHECK(id.index >= 0, "{0}", id);
-    return values_[id.index];
+    auto index = tag_.Remove(id.index);
+    CARBON_DCHECK(index >= 0, "{0}", id);
+    return values_[index];
   }
 
   // Returns the value for an ID.
   auto Get(IdT id) const -> ConstRefType {
-    CARBON_DCHECK(id.index >= 0, "{0}", id);
-    return values_[id.index];
+    auto index = tag_.Remove(id.index);
+    CARBON_DCHECK(index >= 0, "{0}", id);
+    return values_[index];
   }
 
   // Collects memory usage of the values.
@@ -135,6 +143,8 @@ class FixedSizeValueStore {
 
   // Storage for the `ValueT` objects, indexed by the id.
   llvm::SmallVector<ValueT, 0> values_;
+
+  IdTag tag_;
 };
 
 }  // namespace Carbon

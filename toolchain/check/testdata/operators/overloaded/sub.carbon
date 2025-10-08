@@ -43,21 +43,21 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %SubWith.type.c5d: type = facet_type <@SubWith, @SubWith(%C)> [concrete]
 // CHECK:STDOUT:   %SubWith.Op.type.fc0: type = fn_type @SubWith.Op, @SubWith(%C) [concrete]
 // CHECK:STDOUT:   %SubWith.impl_witness: <witness> = impl_witness file.%SubWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.SubWith.impl.Op.type: type = fn_type @C.as.SubWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.SubWith.impl.Op: %C.as.SubWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %SubWith.facet.d64: %SubWith.type.c5d = facet_value %C, (%SubWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %SubWith.facet: %SubWith.type.c5d = facet_value %C, (%SubWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %SubAssignWith.type.9f4: type = facet_type <@SubAssignWith, @SubAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %SubAssignWith.Op.type.ffe: type = fn_type @SubAssignWith.Op, @SubAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %SubAssignWith.impl_witness: <witness> = impl_witness file.%SubAssignWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C.as.SubAssignWith.impl.Op.type: type = fn_type @C.as.SubAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.SubAssignWith.impl.Op: %C.as.SubAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %SubAssignWith.facet: %SubAssignWith.type.9f4 = facet_value %C, (%SubAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.c27: type = fn_type_with_self_type %SubWith.Op.type.fc0, %SubWith.facet.d64 [concrete]
+// CHECK:STDOUT:   %.c27: type = fn_type_with_self_type %SubWith.Op.type.fc0, %SubWith.facet [concrete]
 // CHECK:STDOUT:   %.52c: type = fn_type_with_self_type %SubAssignWith.Op.type.ffe, %SubAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

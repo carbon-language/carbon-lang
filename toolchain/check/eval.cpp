@@ -1646,7 +1646,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       CARBON_FATAL("Not a builtin function.");
 
     case SemIR::BuiltinFunctionKind::NoOp:
-    case SemIR::BuiltinFunctionKind::TypeAggregateDestroy: {
+    case SemIR::BuiltinFunctionKind::TypeDestroy: {
       // Return an empty tuple value.
       auto type_id = GetTupleType(eval_context.context(), {});
       return MakeConstantResult(
@@ -1656,11 +1656,11 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
           phase);
     }
 
-    case SemIR::BuiltinFunctionKind::TypeCanAggregateDestroy: {
+    case SemIR::BuiltinFunctionKind::TypeCanDestroy: {
       CARBON_CHECK(arg_ids.empty());
       auto id = eval_context.facet_types().Add(
           {.builtin_constraint_mask =
-               SemIR::BuiltinConstraintMask::TypeCanAggregateDestroy});
+               SemIR::BuiltinConstraintMask::TypeCanDestroy});
       return MakeConstantResult(
           eval_context.context(),
           SemIR::FacetType{.type_id = SemIR::TypeType::TypeId,
@@ -1939,14 +1939,12 @@ static auto MakeConstantForCall(EvalContext& eval_context,
   bool has_constant_callee = ReplaceFieldWithConstantValue(
       eval_context, &call, &SemIR::Call::callee_id, &phase);
 
-  auto callee_function =
-      SemIR::GetCalleeFunction(eval_context.sem_ir(), call.callee_id);
+  auto callee = SemIR::GetCallee(eval_context.sem_ir(), call.callee_id);
   auto builtin_kind = SemIR::BuiltinFunctionKind::None;
-  if (callee_function.function_id.has_value()) {
+  if (auto* fn = std::get_if<SemIR::CalleeFunction>(&callee)) {
     // Calls to builtins might be constant.
-    builtin_kind = eval_context.functions()
-                       .Get(callee_function.function_id)
-                       .builtin_function_kind();
+    builtin_kind =
+        eval_context.functions().Get(fn->function_id).builtin_function_kind();
     if (builtin_kind == SemIR::BuiltinFunctionKind::None) {
       // TODO: Eventually we'll want to treat some kinds of non-builtin
       // functions as producing constants.
@@ -1977,12 +1975,11 @@ static auto MakeConstantForCall(EvalContext& eval_context,
                         "non-constant call to compile-time-only function");
       CARBON_DIAGNOSTIC(CompTimeOnlyFunctionHere, Note,
                         "compile-time-only function declared here");
+      const auto& function = eval_context.functions().Get(
+          std::get<SemIR::CalleeFunction>(callee).function_id);
       eval_context.emitter()
           .Build(inst_id, NonConstantCallToCompTimeOnlyFunction)
-          .Note(eval_context.functions()
-                    .Get(callee_function.function_id)
-                    .latest_decl_id(),
-                CompTimeOnlyFunctionHere)
+          .Note(function.latest_decl_id(), CompTimeOnlyFunctionHere)
           .Emit();
     }
     return SemIR::ConstantId::NotConstant;
@@ -2174,16 +2171,91 @@ auto TryEvalTypedInst<SemIR::BindSymbolicName>(EvalContext& eval_context,
   return MakeConstantResult(eval_context.context(), bind, phase);
 }
 
+template <>
+auto TryEvalTypedInst<SemIR::SymbolicBindingType>(EvalContext& eval_context,
+                                                  SemIR::InstId inst_id,
+                                                  SemIR::Inst inst)
+    -> SemIR::ConstantId {
+  auto bind = inst.As<SemIR::SymbolicBindingType>();
+
+  Phase phase = Phase::Concrete;
+  bool updated_constants = false;
+
+  // If we know which specific we're evaluating within and this is the type
+  // component of a facet parameter of the generic, its constant value refers to
+  // the type component of the corresponding argument value of the specific.
+  const auto& bind_name = eval_context.entity_names().Get(bind.entity_name_id);
+  if (bind_name.bind_index().has_value()) {
+    // SymbolicBindingType comes from the evaluation of FacetAccessType when the
+    // facet value is symbolic. This block is effectively the deferred
+    // evaluation of that FacetAccessType now that a new value for the symbolic
+    // facet value has become known. The result is equivalent to creating a new
+    // FacetAccessType here with the `value_inst_id` and evaluating it.
+    if (auto value =
+            eval_context.GetCompileTimeBindValue(bind_name.bind_index());
+        value.has_value()) {
+      auto value_inst_id = eval_context.constant_values().GetInstId(value);
+      if (auto facet =
+              eval_context.insts().TryGetAs<SemIR::FacetValue>(value_inst_id)) {
+        return eval_context.constant_values().Get(facet->type_inst_id);
+      }
+
+      // Replace the fields with constant values as usual, except we get the
+      // EntityNameId from the BindSymbolicName in the specific, which
+      // ReplaceFieldWithConstantValue doesn't know how to do.
+      if (!ReplaceTypeWithConstantValue(eval_context, inst_id, &bind, &phase) ||
+          !ReplaceFieldWithConstantValue(
+              eval_context, &bind,
+              &SemIR::SymbolicBindingType::facet_value_inst_id, &phase)) {
+        return SemIR::ConstantId::NotConstant;
+      }
+
+      if (value_inst_id == SemIR::ErrorInst::InstId) {
+        phase = Phase::UnknownDueToError;
+      } else {
+        auto value_bind =
+            eval_context.insts().GetAs<SemIR::BindSymbolicName>(value_inst_id);
+        bind.entity_name_id =
+            GetConstantValue(eval_context, value_bind.entity_name_id, &phase);
+      }
+
+      updated_constants = true;
+    }
+  }
+
+  if (!updated_constants) {
+    if (!ReplaceTypeWithConstantValue(eval_context, inst_id, &inst, &phase) ||
+        !ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
+      return SemIR::ConstantId::NotConstant;
+    }
+    // Copy the updated constant field values into `bind`.
+    bind = inst.As<SemIR::SymbolicBindingType>();
+  }
+  // Propagate error phase after getting the constant value for all fields.
+  if (phase == Phase::UnknownDueToError) {
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  // TODO: Look in ScopeStack with the entity_name_id to find the facet value
+  // and get its constant value in the current specific context. The
+  // facet_value_inst_id will go away.
+  if (auto facet_value = eval_context.insts().TryGetAs<SemIR::FacetValue>(
+          bind.facet_value_inst_id)) {
+    return eval_context.constant_values().Get(facet_value->type_inst_id);
+  }
+
+  return MakeConstantResult(eval_context.context(), bind, phase);
+}
+
 // Returns whether `const_id` is the same constant facet value as
 // `facet_value_inst_id`.
+//
+// Compares with the canonical facet value of `const_id`, dropping any `as type`
+// conversions.
 static auto IsSameFacetValue(Context& context, SemIR::ConstantId const_id,
                              SemIR::InstId facet_value_inst_id) -> bool {
-  if (auto facet_access_type = context.insts().TryGetAs<SemIR::FacetAccessType>(
-          context.constant_values().GetInstId(const_id))) {
-    const_id =
-        context.constant_values().Get(facet_access_type->facet_value_inst_id);
-  }
-  return const_id == context.constant_values().Get(facet_value_inst_id);
+  auto canon_const_id = GetCanonicalFacetOrTypeValue(context, const_id);
+  return canon_const_id == context.constant_values().Get(facet_value_inst_id);
 }
 
 // TODO: Convert this to an EvalConstantInst function. This will require

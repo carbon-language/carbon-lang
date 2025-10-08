@@ -360,7 +360,7 @@ class File : public Printable<File> {
 
   // All instructions. The first entries will always be the singleton
   // instructions.
-  InstStore insts_ = InstStore(this);
+  InstStore insts_;
 
   VtableStore vtables_;
 

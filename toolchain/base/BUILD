@@ -66,6 +66,7 @@ cc_library(
     hdrs = ["fixed_size_value_store.h"],
     deps = [
         ":mem_usage",
+        ":value_store",
         ":value_store_types",
         "//common:check",
         "@llvm-project//llvm:Support",

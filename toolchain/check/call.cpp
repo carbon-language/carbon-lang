@@ -10,7 +10,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
-#include "toolchain/check/cpp/overload_resolution.h"
+#include "toolchain/check/cpp/call.h"
 #include "toolchain/check/cpp/thunk.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/facet_type.h"
@@ -201,11 +201,10 @@ static auto CheckCalleeFunctionReturnType(Context& context, SemIR::LocId loc_id,
   return CheckFunctionReturnType(context, loc_id, function, callee_specific_id);
 }
 
-// Performs a call where the callee is a function.
-static auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
-                                  SemIR::InstId callee_id,
-                                  const SemIR::CalleeFunction& callee_function,
-                                  llvm::ArrayRef<SemIR::InstId> arg_ids)
+auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
+                           SemIR::InstId callee_id,
+                           const SemIR::CalleeFunction& callee_function,
+                           llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
   // If the callee is a generic function, determine the generic argument values
   // for the call.
@@ -293,33 +292,12 @@ static auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
   }
 }
 
-auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
-                 llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
-  // Try treating the callee as a function first.
-  auto callee_function = GetCalleeFunction(context.sem_ir(), callee_id);
-  if (callee_function.is_error) {
-    return SemIR::ErrorInst::InstId;
-  }
-  if (callee_function.cpp_overload_set_id.has_value()) {
-    auto self_id = callee_function.self_id;
-    callee_id = PerformCppOverloadResolution(
-        context, loc_id, callee_function.cpp_overload_set_id, self_id, arg_ids);
-    callee_function = GetCalleeFunction(context.sem_ir(), callee_id);
-    if (callee_function.is_error) {
-      return SemIR::ErrorInst::InstId;
-    }
-    CARBON_CHECK(!callee_function.cpp_overload_set_id.has_value());
-
-    // Preserve the `self` argument from the original callee.
-    CARBON_CHECK(!callee_function.self_id.has_value());
-    callee_function.self_id = self_id;
-  }
-  if (callee_function.function_id.has_value()) {
-    return PerformCallToFunction(context, loc_id, callee_id, callee_function,
-                                 arg_ids);
-  }
-
-  // Callee isn't a function, so try treating it as a generic type.
+// Performs a call where the callee is a generic type. If it's not a generic
+// type, produces a diagnostic.
+static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
+                                     SemIR::InstId callee_id,
+                                     llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> SemIR::InstId {
   auto type_inst =
       context.types().GetAsInst(context.insts().Get(callee_id).type_id());
   CARBON_KIND_SWITCH(type_inst) {
@@ -338,6 +316,29 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
                         "value of type {0} is not callable", TypeOfInstId);
       context.emitter().Emit(loc_id, CallToNonCallable, callee_id);
       return SemIR::ErrorInst::InstId;
+    }
+  }
+}
+
+auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
+                 llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
+  // Try treating the callee as a function first.
+  auto callee = GetCallee(context.sem_ir(), callee_id);
+  CARBON_KIND_SWITCH(callee) {
+    case CARBON_KIND(SemIR::CalleeError _): {
+      return SemIR::ErrorInst::InstId;
+    }
+    case CARBON_KIND(SemIR::CalleeFunction fn): {
+      return PerformCallToFunction(context, loc_id, callee_id, fn, arg_ids);
+    }
+    case CARBON_KIND(SemIR::CalleeNonFunction _): {
+      return PerformCallToNonFunction(context, loc_id, callee_id, arg_ids);
+    }
+
+    case CARBON_KIND(SemIR::CalleeCppOverloadSet overload): {
+      return PerformCallToCppFunction(context, loc_id,
+                                      overload.cpp_overload_set_id,
+                                      overload.self_id, arg_ids);
     }
   }
 }

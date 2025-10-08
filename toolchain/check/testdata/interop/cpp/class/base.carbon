@@ -125,6 +125,20 @@ struct A { int a; };
 struct B { int b; };
 struct C : A, B {};
 
+struct Empty1 {};
+struct Empty2 {};
+struct OneNonEmptyBase : Empty1, A, Empty2 {};
+struct TwoNonEmptyBases : Empty1, A, B, Empty2 {};
+
+struct Polymorphic1 {
+  virtual void f();
+};
+struct Polymorphic2 {
+  virtual void g();
+};
+struct OnePolymorphicBase : A, B, Polymorphic1, Empty1 {};
+struct TwoPolymorphicBases : Polymorphic1, Polymorphic2 {};
+
 // --- fail_todo_use_multiple_inheritance.carbon
 
 library "[[@TEST_NAME]]";
@@ -150,6 +164,112 @@ fn ConvertB(p: Cpp.C*) -> Cpp.B* {
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
+  return p;
+}
+
+fn ConvertOneNonEmptyBaseToEmpty1(p: Cpp.OneNonEmptyBase*) -> Cpp.Empty1* {
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.OneNonEmptyBase*` to `Cpp.Empty1*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.OneNonEmptyBase*` does not implement interface `Core.ImplicitAs(Cpp.Empty1*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+fn ConvertOneNonEmptyBaseToEmpty2(p: Cpp.OneNonEmptyBase*) -> Cpp.Empty2* {
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.OneNonEmptyBase*` to `Cpp.Empty2*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.OneNonEmptyBase*` does not implement interface `Core.ImplicitAs(Cpp.Empty2*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+fn ConvertTwoNonEmptyBasesToA(p: Cpp.TwoNonEmptyBases*) -> Cpp.A* {
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.TwoNonEmptyBases*` to `Cpp.A*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.TwoNonEmptyBases*` does not implement interface `Core.ImplicitAs(Cpp.A*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+fn ConvertTwoNonEmptyBasesToB(p: Cpp.TwoNonEmptyBases*) -> Cpp.B* {
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.TwoNonEmptyBases*` to `Cpp.B*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.TwoNonEmptyBases*` does not implement interface `Core.ImplicitAs(Cpp.B*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+fn ConvertOnePolymorphicBaseToA(p: Cpp.OnePolymorphicBase*) -> Cpp.A* {
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.OnePolymorphicBase*` to `Cpp.A*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.OnePolymorphicBase*` does not implement interface `Core.ImplicitAs(Cpp.A*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+fn ConvertOnePolymorphicBaseToB(p: Cpp.OnePolymorphicBase*) -> Cpp.B* {
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.OnePolymorphicBase*` to `Cpp.B*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.OnePolymorphicBase*` does not implement interface `Core.ImplicitAs(Cpp.B*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+fn ConvertTwoPolymorphicBasesToPolymorphic1(p: Cpp.TwoPolymorphicBases*) -> Cpp.Polymorphic1* {
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.TwoPolymorphicBases*` to `Cpp.Polymorphic1*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.TwoPolymorphicBases*` does not implement interface `Core.ImplicitAs(Cpp.Polymorphic1*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+fn ConvertTwoPolymorphicBasesToPolymorphic2(p: Cpp.TwoPolymorphicBases*) -> Cpp.Polymorphic2* {
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.TwoPolymorphicBases*` to `Cpp.Polymorphic2*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.TwoPolymorphicBases*` does not implement interface `Core.ImplicitAs(Cpp.Polymorphic2*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+// --- multiple_inheritance_with_preferred_base.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "multiple_inheritance.h";
+
+// If there's only one non-empty base, that's our preferred base class. We can
+// convert to that.
+fn ConvertOneNonEmptyBaseToA(p: Cpp.OneNonEmptyBase*) -> Cpp.A* {
+  return p;
+}
+
+// If there's only one polymorphic base, that's our preferred base class. We can
+// convert to that.
+fn ConvertOnePolymorphicBaseToPolymorphic1(p: Cpp.OnePolymorphicBase*) -> Cpp.Polymorphic1* {
   return p;
 }
 
@@ -258,8 +378,8 @@ class V {
 // CHECK:STDOUT:   %Copy.impl_witness.fe1: <witness> = impl_witness imports.%Copy.impl_witness_table.53c, @ptr.as.Copy.impl(%Base) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.2d4: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Base) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.07b: %ptr.as.Copy.impl.Op.type.2d4 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet.e9f: %Copy.type = facet_value %ptr.fb2, (%Copy.impl_witness.fe1) [concrete]
-// CHECK:STDOUT:   %.e43: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.e9f [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.fb2, (%Copy.impl_witness.fe1) [concrete]
+// CHECK:STDOUT:   %.e43: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.07b, @ptr.as.Copy.impl.Op(%Base) [concrete]
 // CHECK:STDOUT:   %AcceptVal.type: type = fn_type @AcceptVal [concrete]
 // CHECK:STDOUT:   %AcceptVal: %AcceptVal.type = struct_value () [concrete]
@@ -276,7 +396,7 @@ class V {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
-// CHECK:STDOUT:   %Core.import_ref.0e4: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.31f) = import_ref Core//prelude/parts/copy, loc36_31, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.8a8)]
+// CHECK:STDOUT:   %Core.import_ref.0e4: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.31f) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.8a8)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.53c = impl_witness_table (%Core.import_ref.0e4), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -344,15 +464,15 @@ class V {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
-// CHECK:STDOUT:   %.75e: type = cpp_overload_set_type @<null name> [concrete]
-// CHECK:STDOUT:   %empty_struct.c9f: %.75e = struct_value () [concrete]
+// CHECK:STDOUT:   %Base.base_fn.cpp_overload_set.type: type = cpp_overload_set_type @Base.base_fn.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Base.base_fn.cpp_overload_set.value: %Base.base_fn.cpp_overload_set.type = cpp_overload_set_value @Base.base_fn.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Base.base_fn.type: type = fn_type @Base.base_fn [concrete]
 // CHECK:STDOUT:   %Base.base_fn: %Base.base_fn.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
-// CHECK:STDOUT:   %.809: type = cpp_overload_set_type @<null name> [concrete]
-// CHECK:STDOUT:   %empty_struct.422: %.809 = struct_value () [concrete]
-// CHECK:STDOUT:   %.5f9: type = cpp_overload_set_type @<null name> [concrete]
-// CHECK:STDOUT:   %empty_struct.510: %.5f9 = struct_value () [concrete]
+// CHECK:STDOUT:   %Derived.base_fn.cpp_overload_set.type: type = cpp_overload_set_type @Derived.base_fn.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Derived.base_fn.cpp_overload_set.value: %Derived.base_fn.cpp_overload_set.type = cpp_overload_set_value @Derived.base_fn.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Derived.derived_fn.cpp_overload_set.type: type = cpp_overload_set_type @Derived.derived_fn.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Derived.derived_fn.cpp_overload_set.value: %Derived.derived_fn.cpp_overload_set.type = cpp_overload_set_value @Derived.derived_fn.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Derived.derived_fn.type: type = fn_type @Derived.derived_fn [concrete]
 // CHECK:STDOUT:   %Derived.derived_fn: %Derived.derived_fn.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -364,11 +484,11 @@ class V {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
-// CHECK:STDOUT:   %.750: %.75e = cpp_overload_set_value @<null name> [concrete = constants.%empty_struct.c9f]
+// CHECK:STDOUT:   %Base.base_fn.cpp_overload_set.value: %Base.base_fn.cpp_overload_set.type = cpp_overload_set_value @Base.base_fn.cpp_overload_set [concrete = constants.%Base.base_fn.cpp_overload_set.value]
 // CHECK:STDOUT:   %Base.base_fn.decl: %Base.base_fn.type = fn_decl @Base.base_fn [concrete = constants.%Base.base_fn] {} {}
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
-// CHECK:STDOUT:   %.22a: %.809 = cpp_overload_set_value @<null name> [concrete = constants.%empty_struct.422]
-// CHECK:STDOUT:   %.24a: %.5f9 = cpp_overload_set_value @<null name> [concrete = constants.%empty_struct.510]
+// CHECK:STDOUT:   %Derived.base_fn.cpp_overload_set.value: %Derived.base_fn.cpp_overload_set.type = cpp_overload_set_value @Derived.base_fn.cpp_overload_set [concrete = constants.%Derived.base_fn.cpp_overload_set.value]
+// CHECK:STDOUT:   %Derived.derived_fn.cpp_overload_set.value: %Derived.derived_fn.cpp_overload_set.type = cpp_overload_set_value @Derived.derived_fn.cpp_overload_set [concrete = constants.%Derived.derived_fn.cpp_overload_set.value]
 // CHECK:STDOUT:   %Derived.derived_fn.decl: %Derived.derived_fn.type = fn_decl @Derived.derived_fn [concrete = constants.%Derived.derived_fn] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -376,15 +496,15 @@ class V {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:   %base_fn.ref.loc8: %.75e = name_ref base_fn, imports.%.750 [concrete = constants.%empty_struct.c9f]
+// CHECK:STDOUT:   %base_fn.ref.loc8: %Base.base_fn.cpp_overload_set.type = name_ref base_fn, imports.%Base.base_fn.cpp_overload_set.value [concrete = constants.%Base.base_fn.cpp_overload_set.value]
 // CHECK:STDOUT:   %Base.base_fn.call.loc8: init %empty_tuple.type = call imports.%Base.base_fn.decl()
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Derived.ref.loc9: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %base_fn.ref.loc9: %.809 = name_ref base_fn, imports.%.22a [concrete = constants.%empty_struct.422]
+// CHECK:STDOUT:   %base_fn.ref.loc9: %Derived.base_fn.cpp_overload_set.type = name_ref base_fn, imports.%Derived.base_fn.cpp_overload_set.value [concrete = constants.%Derived.base_fn.cpp_overload_set.value]
 // CHECK:STDOUT:   %Base.base_fn.call.loc9: init %empty_tuple.type = call imports.%Base.base_fn.decl()
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Derived.ref.loc10: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %derived_fn.ref: %.5f9 = name_ref derived_fn, imports.%.24a [concrete = constants.%empty_struct.510]
+// CHECK:STDOUT:   %derived_fn.ref: %Derived.derived_fn.cpp_overload_set.type = name_ref derived_fn, imports.%Derived.derived_fn.cpp_overload_set.value [concrete = constants.%Derived.derived_fn.cpp_overload_set.value]
 // CHECK:STDOUT:   %Derived.derived_fn.call: init %empty_tuple.type = call imports.%Derived.derived_fn.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -405,8 +525,8 @@ class V {
 // CHECK:STDOUT:   %Copy.impl_witness.a32: <witness> = impl_witness imports.%Copy.impl_witness_table.1ed, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.276: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.f59: %Int.as.Copy.impl.Op.type.276 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet.c49: %Copy.type = facet_value %i32, (%Copy.impl_witness.a32) [concrete]
-// CHECK:STDOUT:   %.7fa: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.c49 [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.a32) [concrete]
+// CHECK:STDOUT:   %.7fa: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.f59, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -418,7 +538,7 @@ class V {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
-// CHECK:STDOUT:   %Core.import_ref.d0f6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.afd) = import_ref Core//prelude/parts/int, loc17_31, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.6cd)]
+// CHECK:STDOUT:   %Core.import_ref.d0f6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.afd) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.6cd)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.1ed = impl_witness_table (%Core.import_ref.d0f6), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -462,15 +582,15 @@ class V {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
-// CHECK:STDOUT:   %.5b0: type = cpp_overload_set_type @f__carbon_thunk [concrete]
-// CHECK:STDOUT:   %empty_struct.3f3: %.5b0 = struct_value () [concrete]
+// CHECK:STDOUT:   %Derived.f.cpp_overload_set.type: type = cpp_overload_set_type @Derived.f.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Derived.f.cpp_overload_set.value: %Derived.f.cpp_overload_set.type = cpp_overload_set_value @Derived.f.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %const: type = const_type %Base [concrete]
 // CHECK:STDOUT:   %ptr.a97: type = ptr_type %const [concrete]
 // CHECK:STDOUT:   %f__carbon_thunk.type: type = fn_type @f__carbon_thunk [concrete]
 // CHECK:STDOUT:   %f__carbon_thunk: %f__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.fb2: type = ptr_type %Base [concrete]
-// CHECK:STDOUT:   %.7c6: type = cpp_overload_set_type @CallQualified [concrete]
-// CHECK:STDOUT:   %empty_struct.49e: %.7c6 = struct_value () [concrete]
+// CHECK:STDOUT:   %Base.g.cpp_overload_set.type: type = cpp_overload_set_type @Base.g.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Base.g.cpp_overload_set.value: %Base.g.cpp_overload_set.type = cpp_overload_set_value @Base.g.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %g__carbon_thunk.type: type = fn_type @g__carbon_thunk [concrete]
 // CHECK:STDOUT:   %g__carbon_thunk: %g__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -483,13 +603,13 @@ class V {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
-// CHECK:STDOUT:   %.e54: %.5b0 = cpp_overload_set_value @f__carbon_thunk [concrete = constants.%empty_struct.3f3]
+// CHECK:STDOUT:   %Derived.f.cpp_overload_set.value: %Derived.f.cpp_overload_set.type = cpp_overload_set_value @Derived.f.cpp_overload_set [concrete = constants.%Derived.f.cpp_overload_set.value]
 // CHECK:STDOUT:   %f__carbon_thunk.decl: %f__carbon_thunk.type = fn_decl @f__carbon_thunk [concrete = constants.%f__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.362: %.7c6 = cpp_overload_set_value @CallQualified [concrete = constants.%empty_struct.49e]
+// CHECK:STDOUT:   %Base.g.cpp_overload_set.value: %Base.g.cpp_overload_set.type = cpp_overload_set_value @Base.g.cpp_overload_set [concrete = constants.%Base.g.cpp_overload_set.value]
 // CHECK:STDOUT:   %g__carbon_thunk.decl: %g__carbon_thunk.type = fn_decl @g__carbon_thunk [concrete = constants.%g__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -500,7 +620,7 @@ class V {
 // CHECK:STDOUT: fn @CallDirect(%d.param: %Derived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
-// CHECK:STDOUT:   %f.ref: %.5b0 = name_ref f, imports.%.e54 [concrete = constants.%empty_struct.3f3]
+// CHECK:STDOUT:   %f.ref: %Derived.f.cpp_overload_set.type = name_ref f, imports.%Derived.f.cpp_overload_set.value [concrete = constants.%Derived.f.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.ref, %f.ref
 // CHECK:STDOUT:   %.loc8_3.1: ref %Base = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %.loc8_3.2: ref %Base = converted %d.ref, %.loc8_3.1
@@ -518,7 +638,7 @@ class V {
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, imports.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:   %g.ref: %.7c6 = name_ref g, imports.%.362 [concrete = constants.%empty_struct.49e]
+// CHECK:STDOUT:   %g.ref: %Base.g.cpp_overload_set.type = name_ref g, imports.%Base.g.cpp_overload_set.value [concrete = constants.%Base.g.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %d.ref, %g.ref
 // CHECK:STDOUT:   %.loc14_3.1: ref %Base = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %.loc14_3.2: ref %Base = converted %d.ref, %.loc14_3.1

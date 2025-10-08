@@ -43,21 +43,21 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %BitAndWith.type.488: type = facet_type <@BitAndWith, @BitAndWith(%C)> [concrete]
 // CHECK:STDOUT:   %BitAndWith.Op.type.914: type = fn_type @BitAndWith.Op, @BitAndWith(%C) [concrete]
 // CHECK:STDOUT:   %BitAndWith.impl_witness: <witness> = impl_witness file.%BitAndWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.BitAndWith.impl.Op.type: type = fn_type @C.as.BitAndWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.BitAndWith.impl.Op: %C.as.BitAndWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %BitAndWith.facet.2d4: %BitAndWith.type.488 = facet_value %C, (%BitAndWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %BitAndWith.facet: %BitAndWith.type.488 = facet_value %C, (%BitAndWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %BitAndAssignWith.type.bc6: type = facet_type <@BitAndAssignWith, @BitAndAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %BitAndAssignWith.Op.type.73d: type = fn_type @BitAndAssignWith.Op, @BitAndAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %BitAndAssignWith.impl_witness: <witness> = impl_witness file.%BitAndAssignWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C.as.BitAndAssignWith.impl.Op.type: type = fn_type @C.as.BitAndAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.BitAndAssignWith.impl.Op: %C.as.BitAndAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %BitAndAssignWith.facet: %BitAndAssignWith.type.bc6 = facet_value %C, (%BitAndAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.446: type = fn_type_with_self_type %BitAndWith.Op.type.914, %BitAndWith.facet.2d4 [concrete]
+// CHECK:STDOUT:   %.446: type = fn_type_with_self_type %BitAndWith.Op.type.914, %BitAndWith.facet [concrete]
 // CHECK:STDOUT:   %.ef9: type = fn_type_with_self_type %BitAndAssignWith.Op.type.73d, %BitAndAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

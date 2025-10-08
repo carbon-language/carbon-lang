@@ -294,6 +294,7 @@ struct CheckIRId : public IdBase<CheckIRId> {
   static const CheckIRId Cpp;
 
   using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 constexpr CheckIRId CheckIRId::Cpp = CheckIRId(NoneIndex - 1);
@@ -435,7 +436,7 @@ struct ImportCppId : public IdBase<ImportCppId> {
 // The ID of an `ImportIR` within the set of imported IRs, both direct and
 // indirect.
 struct ImportIRId : public IdBase<ImportIRId> {
-  static constexpr llvm::StringLiteral Label = "ir";
+  static constexpr llvm::StringLiteral Label = "import_ir";
 
   // The implicit `api` import, for an `impl` file. A null entry is added if
   // there is none, as in an `api`, in which case this ID should not show up in
@@ -447,6 +448,7 @@ struct ImportIRId : public IdBase<ImportIRId> {
   static const ImportIRId Cpp;
 
   using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 constexpr ImportIRId ImportIRId::ApiForImpl = ImportIRId(0);
@@ -566,8 +568,6 @@ constexpr FloatKind FloatKind::PPCFloat128 = FloatKind(6);
   X(ChoiceDiscriminant)                                          \
   /* The name of the package `Core`. */                          \
   X(Core)                                                        \
-  /* The name of `destroy`. */                                   \
-  X(Destroy)                                                     \
   /* The name of `package`. */                                   \
   X(PackageNamespace)                                            \
   /* The name of `.Self`. */                                     \

@@ -43,21 +43,21 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %RightShiftWith.type.a33: type = facet_type <@RightShiftWith, @RightShiftWith(%C)> [concrete]
 // CHECK:STDOUT:   %RightShiftWith.Op.type.19b: type = fn_type @RightShiftWith.Op, @RightShiftWith(%C) [concrete]
 // CHECK:STDOUT:   %RightShiftWith.impl_witness: <witness> = impl_witness file.%RightShiftWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.RightShiftWith.impl.Op.type: type = fn_type @C.as.RightShiftWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.RightShiftWith.impl.Op: %C.as.RightShiftWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %RightShiftWith.facet.e99: %RightShiftWith.type.a33 = facet_value %C, (%RightShiftWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %RightShiftWith.facet: %RightShiftWith.type.a33 = facet_value %C, (%RightShiftWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %RightShiftAssignWith.type.df5: type = facet_type <@RightShiftAssignWith, @RightShiftAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %RightShiftAssignWith.Op.type.ae9: type = fn_type @RightShiftAssignWith.Op, @RightShiftAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %RightShiftAssignWith.impl_witness: <witness> = impl_witness file.%RightShiftAssignWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C.as.RightShiftAssignWith.impl.Op.type: type = fn_type @C.as.RightShiftAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.RightShiftAssignWith.impl.Op: %C.as.RightShiftAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %RightShiftAssignWith.facet: %RightShiftAssignWith.type.df5 = facet_value %C, (%RightShiftAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.bc2: type = fn_type_with_self_type %RightShiftWith.Op.type.19b, %RightShiftWith.facet.e99 [concrete]
+// CHECK:STDOUT:   %.bc2: type = fn_type_with_self_type %RightShiftWith.Op.type.19b, %RightShiftWith.facet [concrete]
 // CHECK:STDOUT:   %.a3c: type = fn_type_with_self_type %RightShiftAssignWith.Op.type.ae9, %RightShiftAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

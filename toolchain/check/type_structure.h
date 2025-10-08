@@ -166,7 +166,7 @@ class TypeStructure : public Printable<TypeStructure> {
       llvm::SmallVector<ConcreteType>::const_iterator& lhs_concrete_cursor,
       llvm::SmallVector<Structural>::const_iterator& rhs_cursor) -> bool;
 
-  // The structural position of concrete and symbolic values in the type.
+  // The structural position of concrete and symbolic constants in the type.
   llvm::SmallVector<Structural> structure_;
 
   // Indices of the symbolic entries in structure_.
@@ -179,7 +179,7 @@ class TypeStructure : public Printable<TypeStructure> {
 
 // Constructs the TypeStructure for a self type or facet value and an interface
 // constraint (e.g. `Iface(A, B(C))`), which represents the location of unknown
-// symbolic values in the combined signature and which is ordered by them.
+// symbolic constants in the combined signature and which is ordered by them.
 //
 // Given `impl C as Z {}` the `self_const_id` would be a `C` and the interface
 // constraint would be `Z`.

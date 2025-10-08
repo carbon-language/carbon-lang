@@ -55,6 +55,7 @@ cc_library(
         ":typed_insts",
         "//common:hashtable_key_context",
         "//common:ostream",
+        "//common:raw_string_ostream",
         "//toolchain/base:canonical_value_store",
         "@llvm-project//clang:ast",
     ],
@@ -138,6 +139,7 @@ cc_library(
         "//toolchain/parse:tree",
         "@llvm-project//clang:ast",
         "@llvm-project//clang:frontend",
+        "@llvm-project//clang:sema",
         "@llvm-project//llvm:Support",
     ],
 )

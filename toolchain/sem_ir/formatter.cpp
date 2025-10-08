@@ -37,7 +37,7 @@ namespace Carbon::SemIR {
 Formatter::Formatter(
     const File* sem_ir, int total_ir_count,
     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
-    const FixedSizeValueStore<SemIR::CheckIRId, bool>* include_ir_in_dumps,
+    const FixedSizeValueStore<CheckIRId, bool>* include_ir_in_dumps,
     bool use_dump_sem_ir_ranges)
     : sem_ir_(sem_ir),
       inst_namer_(sem_ir_, total_ir_count),
@@ -111,7 +111,7 @@ auto Formatter::Format() -> void {
 auto Formatter::ComputeNodeParents() -> void {
   CARBON_CHECK(!node_parents_);
   node_parents_ = NodeParentStore::MakeWithExplicitSize(
-      sem_ir_->parse_tree().size(), Parse::NodeId::None);
+      IdTag(), sem_ir_->parse_tree().size(), Parse::NodeId::None);
   for (auto n : sem_ir_->parse_tree().postorder()) {
     for (auto child : get_tree_and_subtrees_().children(n)) {
       node_parents_->Set(child, n);
@@ -943,23 +943,23 @@ auto Formatter::FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void {
 
 auto Formatter::FormatInstRhs(Inst inst) -> void {
   CARBON_KIND_SWITCH(inst) {
-    case SemIR::InstKind::ArrayInit:
-    case SemIR::InstKind::StructInit:
-    case SemIR::InstKind::TupleInit: {
+    case InstKind::ArrayInit:
+    case InstKind::StructInit:
+    case InstKind::TupleInit: {
       auto init = inst.As<AnyAggregateInit>();
       FormatArgs(init.elements_id);
       FormatReturnSlotArg(init.dest_id);
       return;
     }
 
-    case SemIR::InstKind::ImportRefLoaded:
-    case SemIR::InstKind::ImportRefUnloaded:
+    case InstKind::ImportRefLoaded:
+    case InstKind::ImportRefUnloaded:
       FormatImportRefRhs(inst.As<AnyImportRef>());
       return;
 
-    case SemIR::InstKind::OutParam:
-    case SemIR::InstKind::RefParam:
-    case SemIR::InstKind::ValueParam: {
+    case InstKind::OutParam:
+    case InstKind::RefParam:
+    case InstKind::ValueParam: {
       auto param = inst.As<AnyParam>();
       FormatArgs(param.index);
       // Omit pretty_name because it's an implementation detail of
@@ -1236,15 +1236,17 @@ auto Formatter::FormatImportRefRhs(AnyImportRef inst) -> void {
     const auto& import_ir = sem_ir_->import_irs().Get(import_ir_inst.ir_id());
     auto loc_id =
         import_ir.sem_ir->insts().GetCanonicalLocId(import_ir_inst.inst_id());
+    InstId stripped_inst_id(
+        import_ir.sem_ir->insts().GetRawIndex(import_ir_inst.inst_id()));
     switch (loc_id.kind()) {
       case LocId::Kind::None: {
-        out_ << import_ir_inst.inst_id() << " [no loc]";
+        out_ << stripped_inst_id << " [no loc]";
         break;
       }
       case LocId::Kind::ImportIRInstId: {
         // TODO: Probably don't want to format each indirection, but maybe
         // reuse GetCanonicalImportIRInst?
-        out_ << import_ir_inst.inst_id() << " [indirect]";
+        out_ << stripped_inst_id << " [indirect]";
         break;
       }
       case LocId::Kind::NodeId: {
@@ -1322,8 +1324,8 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
       FormatArg(rewrite.rhs_id);
     }
     if (info.builtin_constraint_mask.HasAnyOf(
-            BuiltinConstraintMask::TypeCanAggregateDestroy)) {
-      out_ << and_sep << ".Self impls <CanAggregateDestroy>";
+            BuiltinConstraintMask::TypeCanDestroy)) {
+      out_ << and_sep << ".Self impls <CanDestroy>";
     }
     if (info.other_requirements) {
       out_ << and_sep << "TODO";

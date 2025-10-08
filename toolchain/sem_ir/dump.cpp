@@ -217,8 +217,8 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InstId inst_id) -> std::string {
 
   Inst inst = file.insts().Get(inst_id);
 
-  if (inst.arg0_and_kind().kind() == IdKind::For<SemIR::EntityNameId>) {
-    auto entity_name_id = SemIR::EntityNameId(inst.arg0());
+  if (inst.arg0_and_kind().kind() == IdKind::For<EntityNameId>) {
+    auto entity_name_id = EntityNameId(inst.arg0());
     out << "\n  - name:"
         << DumpNameIfValid(file,
                            file.entity_names().Get(entity_name_id).name_id);

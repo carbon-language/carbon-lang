@@ -43,21 +43,21 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %ModWith.type.a0d: type = facet_type <@ModWith, @ModWith(%C)> [concrete]
 // CHECK:STDOUT:   %ModWith.Op.type.140: type = fn_type @ModWith.Op, @ModWith(%C) [concrete]
 // CHECK:STDOUT:   %ModWith.impl_witness: <witness> = impl_witness file.%ModWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.ModWith.impl.Op.type: type = fn_type @C.as.ModWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.ModWith.impl.Op: %C.as.ModWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ModWith.facet.316: %ModWith.type.a0d = facet_value %C, (%ModWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %ModWith.facet: %ModWith.type.a0d = facet_value %C, (%ModWith.impl_witness) [concrete]
 // CHECK:STDOUT:   %ModAssignWith.type.444: type = facet_type <@ModAssignWith, @ModAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %ModAssignWith.Op.type.dd0: type = fn_type @ModAssignWith.Op, @ModAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %ModAssignWith.impl_witness: <witness> = impl_witness file.%ModAssignWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C.as.ModAssignWith.impl.Op.type: type = fn_type @C.as.ModAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.ModAssignWith.impl.Op: %C.as.ModAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ModAssignWith.facet: %ModAssignWith.type.444 = facet_value %C, (%ModAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.f86: type = fn_type_with_self_type %ModWith.Op.type.140, %ModWith.facet.316 [concrete]
+// CHECK:STDOUT:   %.f86: type = fn_type_with_self_type %ModWith.Op.type.140, %ModWith.facet [concrete]
 // CHECK:STDOUT:   %.a3f: type = fn_type_with_self_type %ModAssignWith.Op.type.dd0, %ModAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

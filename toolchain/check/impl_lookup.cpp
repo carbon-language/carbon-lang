@@ -239,7 +239,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
   // to the facet value here, and if the query was a FacetAccessType we did the
   // same there so they still match.
   deduced_self_const_id =
-      GetCanonicalizedFacetOrTypeValue(context, deduced_self_const_id);
+      GetCanonicalFacetOrTypeValue(context, deduced_self_const_id);
   if (query_self_const_id != deduced_self_const_id) {
     return EvalImplLookupResult::MakeNone();
   }
@@ -299,34 +299,15 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
   }
 }
 
-// Unwraps a FacetAccessType to move from a value of type `TypeType` to a facet
-// value of type `FacetType` if possible.
-//
-// Generally `GetCanonicalizedFacetOrTypeValue()` is what you want to call
-// instead, as this only does part of that operation, potentially returning a
-// non-canonical facet value.
-static auto UnwrapFacetAccessType(Context& context, SemIR::InstId inst_id)
-    -> SemIR::InstId {
-  if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(inst_id)) {
-    return access->facet_value_inst_id;
-  }
-  return inst_id;
-}
-
 // Finds a lookup result from `query_self_inst_id` if it is a facet value that
 // names the query interface in its facet type. Note that `query_self_inst_id`
 // is allowed to be a non-canonical facet value in order to find a concrete
 // witness, so it's not referenced as a constant value.
 static auto LookupImplWitnessInSelfFacetValue(
-    Context& context, SemIR::InstId query_self_inst_id,
+    Context& context, SemIR::InstId self_facet_value_inst_id,
     SemIR::SpecificInterface query_specific_interface) -> EvalImplLookupResult {
-  // Unwrap FacetAccessType without getting the canonical facet value from the
-  // self value, as we want to preserve the non-canonical `FacetValue`
-  // instruction which can contain the concrete witness.
-  query_self_inst_id = UnwrapFacetAccessType(context, query_self_inst_id);
-
   auto facet_type = context.types().TryGetAs<SemIR::FacetType>(
-      context.insts().Get(query_self_inst_id).type_id());
+      context.insts().Get(self_facet_value_inst_id).type_id());
   if (!facet_type) {
     return EvalImplLookupResult::MakeNone();
   }
@@ -346,8 +327,8 @@ static auto LookupImplWitnessInSelfFacetValue(
   }
   auto index = (*it).index();
 
-  if (auto facet_value =
-          context.insts().TryGetAs<SemIR::FacetValue>(query_self_inst_id)) {
+  if (auto facet_value = context.insts().TryGetAs<SemIR::FacetValue>(
+          self_facet_value_inst_id)) {
     auto witness_id =
         context.inst_blocks().Get(facet_value->witnesses_block_id)[index];
     if (context.insts().Is<SemIR::ImplWitness>(witness_id)) {
@@ -542,13 +523,48 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
   return context.constant_values().GetInstId(witness_const_id);
 }
 
-// Returns true if the `Self` supports aggregate destruction.
-static auto TypeCanAggregateDestroy(Context& context,
-                                    SemIR::ConstantId query_self_const_id)
-    -> bool {
-  auto inst = context.insts().Get(
-      context.constant_values().GetInstId(query_self_const_id));
-  return inst.Is<SemIR::StructType>() || inst.Is<SemIR::TupleType>();
+// Returns true if the `Self` should impl `Destroy`.
+static auto TypeCanDestroy(Context& context,
+                           SemIR::ConstantId query_self_const_id) -> bool {
+  auto inst = context.insts().Get(context.constant_values().GetInstId(
+      GetCanonicalFacetOrTypeValue(context, query_self_const_id)));
+
+  // For facet values, look if the FacetType provides the same.
+  if (auto facet_type =
+          context.types().TryGetAs<SemIR::FacetType>(inst.type_id())) {
+    const auto& info = context.facet_types().Get(facet_type->facet_type_id);
+    if (info.builtin_constraint_mask.HasAnyOf(
+            SemIR::BuiltinConstraintMask::TypeCanDestroy)) {
+      return true;
+    }
+  }
+
+  CARBON_KIND_SWITCH(inst) {
+    case CARBON_KIND(SemIR::ClassType class_type): {
+      auto class_info = context.classes().Get(class_type.class_id);
+      // Incomplete and abstract classes can't be destroyed.
+      // TODO: Return false if the object repr doesn't impl `Destroy`.
+      // TODO: Return false for C++ types that lack a destructor.
+      return class_info.is_complete() &&
+             class_info.inheritance_kind !=
+                 SemIR::Class::InheritanceKind::Abstract;
+    }
+    case SemIR::ArrayType::Kind:
+    case SemIR::ConstType::Kind:
+    case SemIR::MaybeUnformedType::Kind:
+    case SemIR::PartialType::Kind:
+    case SemIR::StructType::Kind:
+    case SemIR::TupleType::Kind:
+      // TODO: Return false for types that indirectly reference a type that
+      // doesn't impl `Destroy`.
+      return true;
+    case SemIR::BoolType::Kind:
+    case SemIR::PointerType::Kind:
+      // Trivially destructible.
+      return true;
+    default:
+      return false;
+  }
 }
 
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
@@ -580,8 +596,8 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     return SemIR::InstBlockId::None;
   }
   if (builtin_constraint_mask.HasAnyOf(
-          SemIR::BuiltinConstraintMask::TypeCanAggregateDestroy) &&
-      !TypeCanAggregateDestroy(context, query_self_const_id)) {
+          SemIR::BuiltinConstraintMask::TypeCanDestroy) &&
+      !TypeCanDestroy(context, query_self_const_id)) {
     return SemIR::InstBlockId::None;
   }
   if (interfaces.empty()) {
@@ -830,14 +846,14 @@ static auto CollectCandidateImplsForQuery(
 
 auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
                                  SemIR::LookupImplWitness eval_query,
-                                 SemIR::InstId non_canonical_query_self_inst_id,
+                                 SemIR::InstId self_facet_value_inst_id,
                                  bool poison_concrete_results)
     -> EvalImplLookupResult {
   auto query_specific_interface =
       context.specific_interfaces().Get(eval_query.query_specific_interface_id);
 
   auto facet_lookup_result = LookupImplWitnessInSelfFacetValue(
-      context, non_canonical_query_self_inst_id, query_specific_interface);
+      context, self_facet_value_inst_id, query_specific_interface);
   if (facet_lookup_result.has_concrete_value()) {
     return facet_lookup_result;
   }
@@ -866,6 +882,9 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
     }
   }
 
+  // Ensure specifics don't substitute in weird things for the query self.
+  CARBON_CHECK(context.types().IsFacetType(
+      context.insts().Get(eval_query.query_self_inst_id).type_id()));
   SemIR::ConstantId query_self_const_id =
       context.constant_values().Get(eval_query.query_self_inst_id);
 
@@ -920,8 +939,6 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
         context.poisoned_concrete_impl_lookup_queries().push_back(
             {.loc_id = loc_id,
              .query = eval_query,
-             .non_canonical_query_self_inst_id =
-                 non_canonical_query_self_inst_id,
              .impl_witness = result.concrete_witness()});
       }
       return result;

@@ -30,6 +30,10 @@ class InstFingerprinter {
   // Gets or computes a fingerprint for the given impl.
   auto GetOrCompute(const File* file, ImplId impl_id) -> uint64_t;
 
+  // Gets or computes a fingerprint for the given C++ overload set.
+  auto GetOrCompute(const File* file, CppOverloadSetId overload_set_id)
+      -> uint64_t;
+
  private:
   // The fingerprint for each instruction that has had its fingerprint computed,
   // indexed by the InstId's index.

@@ -64,9 +64,7 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   // not on the pattern stacks yet. They are only needed in that case if we have
   // a return type, which we now know that we do.
   if (context.node_stack().PeekNodeKind() ==
-          Parse::NodeKind::IdentifierNameNotBeforeParams ||
-      context.node_stack().PeekNodeKind() ==
-          Parse::NodeKind::KeywordNameNotBeforeParams) {
+      Parse::NodeKind::IdentifierNameNotBeforeParams) {
     context.pattern_block_stack().Push();
     context.full_pattern_stack().PushFullPattern(
         FullPatternStack::Kind::ExplicitParamList);
@@ -365,81 +363,6 @@ static auto RequestVtableIfVirtual(
   context.vtable_stack().AddInstId(decl_id);
 }
 
-// Validates the `destroy` function's signature. May replace invalid values for
-// recovery.
-static auto ValidateIfDestroy(Context& context, bool is_redecl,
-                              std::optional<SemIR::Inst> parent_scope_inst,
-                              SemIR::Function& function_info) -> void {
-  if (function_info.name_id != SemIR::NameId::Destroy) {
-    return;
-  }
-
-  // For recovery, always force explicit parameters to be empty. We do this
-  // before any of the returns for simplicity.
-  auto orig_param_patterns_id = function_info.param_patterns_id;
-  function_info.param_patterns_id = SemIR::InstBlockId::Empty;
-
-  // Use differences on merge to diagnose remaining issues.
-  if (is_redecl) {
-    return;
-  }
-
-  if (!parent_scope_inst || !parent_scope_inst->Is<SemIR::ClassDecl>()) {
-    CARBON_DIAGNOSTIC(DestroyFunctionOutsideClass, Error,
-                      "declaring `fn destroy` in non-class scope");
-    context.emitter().Emit(function_info.latest_decl_id(),
-                           DestroyFunctionOutsideClass);
-    return;
-  }
-
-  if (!function_info.self_param_id.has_value()) {
-    CARBON_DIAGNOSTIC(DestroyFunctionMissingSelf, Error,
-                      "missing implicit `self` parameter");
-    context.emitter().Emit(function_info.latest_decl_id(),
-                           DestroyFunctionMissingSelf);
-    return;
-  }
-
-  // `self` must be the only implicit parameter.
-  if (auto block =
-          context.inst_blocks().Get(function_info.implicit_param_patterns_id);
-      block.size() > 1) {
-    // Point at the first non-`self` parameter.
-    auto param_id = block[function_info.self_param_id == block[0] ? 1 : 0];
-    CARBON_DIAGNOSTIC(DestroyFunctionUnexpectedImplicitParam, Error,
-                      "unexpected implicit parameter");
-    context.emitter().Emit(param_id, DestroyFunctionUnexpectedImplicitParam);
-    return;
-  }
-
-  if (!orig_param_patterns_id.has_value()) {
-    CARBON_DIAGNOSTIC(DestroyFunctionPositionalParams, Error,
-                      "missing empty explicit parameter list");
-    context.emitter().Emit(function_info.latest_decl_id(),
-                           DestroyFunctionPositionalParams);
-    return;
-  }
-
-  if (orig_param_patterns_id != SemIR::InstBlockId::Empty) {
-    CARBON_DIAGNOSTIC(DestroyFunctionNonEmptyExplicitParams, Error,
-                      "unexpected parameter");
-    context.emitter().Emit(context.inst_blocks().Get(orig_param_patterns_id)[0],
-                           DestroyFunctionNonEmptyExplicitParams);
-    return;
-  }
-
-  if (auto return_type_id =
-          function_info.GetDeclaredReturnType(context.sem_ir());
-      return_type_id.has_value() &&
-      return_type_id != GetTupleType(context, {})) {
-    CARBON_DIAGNOSTIC(DestroyFunctionIncorrectReturnType, Error,
-                      "incorrect return type; must be unspecified or `()`");
-    context.emitter().Emit(function_info.return_slot_pattern_id,
-                           DestroyFunctionIncorrectReturnType);
-    return;
-  }
-}
-
 // Diagnoses when positional params aren't supported. Reassigns the pattern
 // block if needed.
 static auto DiagnosePositionalParams(Context& context,
@@ -504,12 +427,6 @@ static auto BuildFunctionDecl(Context& context,
   if (is_definition) {
     function_info.definition_id = decl_id;
   }
-
-  // Analyze standard function signatures before positional parameters, so that
-  // we can have more specific diagnostics and recovery.
-  bool is_redecl =
-      name_context.state == DeclNameStack::NameContext::State::Resolved;
-  ValidateIfDestroy(context, is_redecl, parent_scope_inst, function_info);
 
   DiagnosePositionalParams(context, function_info);
 
