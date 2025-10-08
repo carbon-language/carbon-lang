@@ -1365,14 +1365,13 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
       clang_decl.getType()->castAs<clang::FunctionProtoType>();
   for (int i : llvm::seq(num_params)) {
     const auto* param = clang_decl.getNonObjectParameter(i);
+    clang::QualType orig_param_type = function_type->getParamType(
+        clang_decl.hasCXXExplicitFunctionObjectParameter() + i);
+
     // The parameter type is decayed but hasn't necessarily had its qualifiers
     // removed.
     // TODO: The presence of qualifiers here is probably a Clang bug.
-    clang::QualType param_type =
-        function_type
-            ->getParamType(clang_decl.hasCXXExplicitFunctionObjectParameter() +
-                           i)
-            .getUnqualifiedType();
+    clang::QualType param_type = orig_param_type.getUnqualifiedType();
 
     // We map `T&` parameters to `addr param: T*`, and `T&&` parameters to
     // `param: T`.
@@ -1391,9 +1390,8 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
         EndSubpatternAsExpr(context, orig_type_inst_id);
 
     if (!type_id.has_value()) {
-      context.TODO(loc_id,
-                   llvm::formatv("Unsupported: parameter type: {0}",
-                                 function_type->getParamType(i).getAsString()));
+      context.TODO(loc_id, llvm::formatv("Unsupported: parameter type: {0}",
+                                         orig_param_type.getAsString()));
       return SemIR::InstBlockId::None;
     }
 
