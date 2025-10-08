@@ -298,6 +298,7 @@ auto ClangRunner::RunCC1(llvm::SmallVectorImpl<const char*>& cc1_args) -> int {
   // discard the pointer without destroying or deallocating it.
   auto clang_instance = std::make_unique<clang::CompilerInstance>(
       std::move(invocation), std::move(pch_ops));
+  clang_instance->setVirtualFileSystem(fs_);
 
   // Override the disabling of free when we don't want to leak memory.
   if (!enable_leaking_) {
@@ -327,7 +328,7 @@ auto ClangRunner::RunCC1(llvm::SmallVectorImpl<const char*>& cc1_args) -> int {
   }
 
   // Create the actual diagnostics engine.
-  clang_instance->createDiagnostics(*fs_);
+  clang_instance->createDiagnostics();
   if (!clang_instance->hasDiagnostics()) {
     return EXIT_FAILURE;
   }
@@ -374,7 +375,7 @@ auto ClangRunner::RunCC1(llvm::SmallVectorImpl<const char*>& cc1_args) -> int {
     // options are stored in the compiler invocation and we can recreate the VFS
     // from the compiler invocation.
     if (!clang_instance->hasFileManager()) {
-      clang_instance->createFileManager(fs_);
+      clang_instance->createFileManager();
     }
 
     if (auto profiler_output = clang_instance->createOutputFile(

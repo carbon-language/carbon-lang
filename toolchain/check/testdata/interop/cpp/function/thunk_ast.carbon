@@ -64,7 +64,7 @@ auto foo(short a) -> void;
 // CHECK:STDOUT: | |-ParmVarDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc> implicit 'std::align_val_t'
 // CHECK:STDOUT: | `-VisibilityAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit Default
 // CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <<carbon-internal>:8:1, line:14:1> line:8:7 operator new 'void *(unsigned long, void *) noexcept'
-// CHECK:STDOUT: | |-ParmVarDecl {{0x[a-f0-9]+}} <<built-in>:173:23, col:37> <carbon-internal>:8:33 'unsigned long'
+// CHECK:STDOUT: | |-ParmVarDecl {{0x[a-f0-9]+}} <<built-in>:174:23, col:37> <carbon-internal>:8:33 'unsigned long'
 // CHECK:STDOUT: | `-ParmVarDecl {{0x[a-f0-9]+}} <col:35, col:39> col:40 'void *'
 // CHECK:STDOUT: `-FunctionDecl {{0x[a-f0-9]+}} <./thunk_required.h:[[@LINE-51]]:6> col:6 foo__carbon_thunk 'void (short * _Nonnull)' extern
 // CHECK:STDOUT:   |-ParmVarDecl {{0x[a-f0-9]+}} <col:6> col:6 used a 'short * _Nonnull':'short *'
