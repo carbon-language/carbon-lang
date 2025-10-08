@@ -313,6 +313,25 @@ interface I(T:! Core.Destroy) {}
 // The `.Self` can see the LHS of the `where` to know `U` impls Core.Destroy.
 fn F(U:! Core.Destroy where .Self impls I(.Self)) {}
 
+// --- fail_todo_compound_lookup_on_returned_period_self_parameter.carbon
+library "[[@TEST_NAME]]";
+
+interface I(T:! Core.Destroy) {
+  fn G[self: Self]() -> T;
+}
+
+fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
+  // This tests that both `I.G` is accessible and that `Destroy` is preserved;
+  // we'd get an error for missing Destroy otherwise since G() returns an
+  // initializing expression.
+
+  // CHECK:STDERR: fail_todo_compound_lookup_on_returned_period_self_parameter.carbon:[[@LINE+4]]:3: error: cannot access member of interface `I(U as Core.Destroy)` in type `U` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   u.(I(U).G)().(I(U).G)().(I(U).G)();
+  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:
+  u.(I(U).G)().(I(U).G)().(I(U).G)();
+}
+
 // CHECK:STDOUT: --- period_self_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
