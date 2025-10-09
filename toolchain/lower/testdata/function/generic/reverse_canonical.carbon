@@ -10,34 +10,34 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/generic/reverse_canonical.carbon
 
-class C1 {};
+class C1 {}
 
-fn first[U:! type, T:! type, V:! type](arg1: U, arg2: T, arg3: V);
-fn second[U:! type, T:! type, V:! type](arg1: U, arg2: T, arg3: V);
-fn third[U:! type, T:! type, V:! type](arg1: U, arg2: T, arg3: V);
-fn fourth[U:! type, T:! type, V:! type](arg1: U, arg2: T, arg3: V);
+fn first[T:! type, U:! type, V:! type](arg1: T, arg2: U, arg3: V);
+fn second[T:! type, U:! type, V:! type](arg1: T, arg2: U, arg3: V);
+fn third[T:! type, U:! type, V:! type](arg1: T, arg2: U, arg3: V);
+fn fourth[T:! type, U:! type, V:! type](arg1: T, arg2: U, arg3: V);
 
-fn first[U:! type, T:! type, V:! type](arg1: U, arg2: T, arg3: V) {
+fn first[T:! type, U:! type, V:! type](arg1: T, arg2: U, arg3: V) {
   var local_name: C1*;
 
   second(arg2, arg2, local_name);
 }
 
-fn second[U:! type, T:! type, V:! type](arg1: U, arg2: T, arg3: V) {
+fn second[T:! type, U:! type, V:! type](arg1: T, arg2: U, arg3: V) {
   var local_name: C1*;
 
   first(arg3, arg3, arg1);
   third(arg2, arg2, local_name);
 }
 
-fn third[U:! type, T:! type, V:! type](arg1: U, arg2: T, arg3: V) {
+fn third[T:! type, U:! type, V:! type](arg1: T, arg2: U, arg3: V) {
   var local_name: C1**;
 
   fourth(local_name, local_name, arg1);
   fourth(arg3, arg3, arg2);
 }
 
-fn fourth[U:! type, T:! type, V:! type](arg1: U, arg2: T, arg3: V) {
+fn fourth[T:! type, U:! type, V:! type](arg1: T, arg2: U, arg3: V) {
 }
 
 fn Main() {
