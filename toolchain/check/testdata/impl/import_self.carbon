@@ -144,10 +144,10 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.282 = import_ref Main//a, inst{{\d+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.282 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.f99: %Add.assoc_type = import_ref Main//a, loc5_41, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.Op: %Add.Op.type = import_ref Main//a, Op, loaded [concrete = constants.%Add.Op]
-// CHECK:STDOUT:   %Main.import_ref.942: %Add.type = import_ref Main//a, inst{{\d+}} [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.942: %Add.type = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.5a3: %Add.Op.type = import_ref Main//a, loc5_41, loaded [concrete = constants.%Add.Op]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

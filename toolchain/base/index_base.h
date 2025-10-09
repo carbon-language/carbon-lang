@@ -12,6 +12,7 @@
 
 #include "common/ostream.h"
 #include "llvm/ADT/iterator.h"
+#include "llvm/Support/Format.h"
 
 namespace Carbon {
 
@@ -59,6 +60,16 @@ struct IdBase : public AnyIdBase, public Printable<IdT> {
     out << IdT::Label;
     if (has_value()) {
       out << index;
+    } else {
+      out << "<none>";
+    }
+  }
+
+  // TODO: Make Print() do the hex thing for all IDs and remove this function.
+  auto PrintHex(llvm::raw_ostream& out) const -> void {
+    out << IdT::Label;
+    if (has_value()) {
+      out << llvm::format_hex_no_prefix(index, 8, /*Upper=*/true);
     } else {
       out << "<none>";
     }

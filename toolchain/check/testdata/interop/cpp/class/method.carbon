@@ -176,6 +176,24 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
   //@dump-sem-ir-end
 }
 
+// --- fail_call_explicit_object_param_with_unsupported_type_param.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+struct ExplicitObjectParam {
+  void F(this ExplicitObjectParam, _BitInt(23) x);
+};
+''';
+
+fn Call(e: Cpp.ExplicitObjectParam) {
+  // CHECK:STDERR: fail_call_explicit_object_param_with_unsupported_type_param.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: parameter type: _BitInt(23)` [SemanticsTodo]
+  // CHECK:STDERR:   e.(Cpp.ExplicitObjectParam.F)(1);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  e.(Cpp.ExplicitObjectParam.F)(1);
+}
+
 // --- explicit_object_param_overloaded.h
 
 struct Another {

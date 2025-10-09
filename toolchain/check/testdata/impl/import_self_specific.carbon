@@ -345,25 +345,25 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %Main.Z = import_ref Main//impl_def, Z, unloaded
 // CHECK:STDOUT:   %Main.C: %C.type = import_ref Main//impl_def, C, loaded [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//impl_def, I, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref.8e7 = import_ref Main//impl_def, inst{{\d+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8e7 = import_ref Main//impl_def, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.9ff: %I.assoc_type = import_ref Main//impl_def, loc16_12, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.import_ref.abf = import_ref Main//impl_def, loc24_20, unloaded
 // CHECK:STDOUT:   %Main.Assoc: %Y.type = import_ref Main//impl_def, Assoc, loaded [concrete = %Assoc]
 // CHECK:STDOUT:   %Main.F: %I.F.type = import_ref Main//impl_def, F, loaded [concrete = constants.%I.F]
 // CHECK:STDOUT:   %Main.import_ref.1d8: %Y.type = import_ref Main//impl_def, loc16_12, loaded [concrete = %Assoc]
-// CHECK:STDOUT:   %Main.import_ref.0f3 = import_ref Main//impl_def, inst{{\d+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.0f3 = import_ref Main//impl_def, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Assoc: %Y.type = assoc_const_decl @Assoc [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.de261c.1: %I.type = import_ref Main//impl_def, inst{{\d+}} [no loc], loaded [symbolic = constants.%Self.7ee]
+// CHECK:STDOUT:   %Main.import_ref.de261c.1: %I.type = import_ref Main//impl_def, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self.7ee]
 // CHECK:STDOUT:   %Main.import_ref.e7b: <witness> = import_ref Main//impl_def, loc5_31, loaded [symbolic = @T.as.Y.impl.%Y.impl_witness (constants.%Y.impl_witness.0d0)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.1: type = import_ref Main//impl_def, loc5_14, loaded [symbolic = @T.as.Y.impl.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.583: type = import_ref Main//impl_def, loc5_24, loaded [symbolic = @T.as.Y.impl.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.0a1: type = import_ref Main//impl_def, loc5_29, loaded [concrete = constants.%Y.type]
 // CHECK:STDOUT:   %Y.impl_witness_table = impl_witness_table (), @T.as.Y.impl [concrete]
-// CHECK:STDOUT:   %Main.import_ref.362 = import_ref Main//impl_def, inst{{\d+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.362 = import_ref Main//impl_def, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e9e: %Z.type = import_ref Main//impl_def, loc11_9, loaded [symbolic = @C.%V (constants.%V)]
 // CHECK:STDOUT:   %Main.import_ref.3fc: <witness> = import_ref Main//impl_def, loc13_1, loaded [concrete = constants.%complete_type.782]
-// CHECK:STDOUT:   %Main.import_ref.384 = import_ref Main//impl_def, inst{{\d+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.de261c.2: %I.type = import_ref Main//impl_def, inst{{\d+}} [no loc], loaded [symbolic = constants.%Self.7ee]
+// CHECK:STDOUT:   %Main.import_ref.384 = import_ref Main//impl_def, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.de261c.2: %I.type = import_ref Main//impl_def, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self.7ee]
 // CHECK:STDOUT:   %Main.import_ref.36a: <witness> = import_ref Main//impl_def, loc9_31, loaded [symbolic = @U.as.Z.impl.%Z.impl_witness (constants.%Z.impl_witness.f19)]
 // CHECK:STDOUT:   %Main.import_ref.5ab3ec.2: type = import_ref Main//impl_def, loc9_14, loaded [symbolic = @U.as.Z.impl.%U (constants.%U)]
 // CHECK:STDOUT:   %Main.import_ref.144: type = import_ref Main//impl_def, loc9_24, loaded [symbolic = @U.as.Z.impl.%U (constants.%U)]

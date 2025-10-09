@@ -220,13 +220,13 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.96f = import_ref Main//a, inst{{\d+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.834 = import_ref Main//a, inst{{\d+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.96f = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.834 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.3d5: %Basic.assoc_type = import_ref Main//a, loc8_8, loaded [concrete = constants.%assoc0.fee]
 // CHECK:STDOUT:   %Main.import_ref.760: %Basic.assoc_type = import_ref Main//a, loc9_9, loaded [concrete = constants.%assoc1.4ea]
 // CHECK:STDOUT:   %Main.T.44f = import_ref Main//a, T, unloaded
 // CHECK:STDOUT:   %Main.F.eea = import_ref Main//a, F, unloaded
-// CHECK:STDOUT:   %Main.import_ref.013 = import_ref Main//a, inst{{\d+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.013 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.ad1: %ForwardDeclared.assoc_type = import_ref Main//a, loc16_8, loaded [concrete = constants.%assoc0.d40]
 // CHECK:STDOUT:   %Main.import_ref.339: %ForwardDeclared.assoc_type = import_ref Main//a, loc17_9, loaded [concrete = constants.%assoc1.e3d]
 // CHECK:STDOUT:   %Main.T.6ee = import_ref Main//a, T, unloaded
