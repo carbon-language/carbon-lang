@@ -370,6 +370,7 @@ fn Use(y: Cpp.Y) -> i32 {
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %ptr.13d: type = ptr_type %X [concrete]
+// CHECK:STDOUT:   %pattern_type.7a4: type = pattern_type %ptr.13d [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
@@ -385,9 +386,11 @@ fn Use(y: Cpp.Y) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %return.patt: %pattern_type.7a4 = binding_pattern r#return [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.7a4 = value_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %return.param: %ptr.13d = value_param call_param0
+// CHECK:STDOUT:     %return: %ptr.13d = bind_name r#return, %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

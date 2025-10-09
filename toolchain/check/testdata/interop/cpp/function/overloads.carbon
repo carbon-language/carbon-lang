@@ -126,10 +126,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "large_int_literal.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_large_int_literal.carbon:[[@LINE+5]]:11: error: integer value 9223372036854775808 too large for type `i64` [IntTooLargeForType]
+  // CHECK:STDERR: fail_import_large_int_literal.carbon:[[@LINE+7]]:11: error: integer value 9223372036854775808 too large for type `i64` [IntTooLargeForType]
   // CHECK:STDERR:   Cpp.foo(0x8000_0000_0000_0000);
   // CHECK:STDERR:           ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_large_int_literal.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_import_large_int_literal.carbon:[[@LINE+4]]:3: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:   Cpp.foo(0x8000_0000_0000_0000);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo(0x8000_0000_0000_0000);
 }
@@ -161,10 +163,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "negative_literal_passed_to_unsigned.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_negative_literal_passed_to_unsigned.carbon:[[@LINE+5]]:11: error: negative integer value -1 converted to unsigned type `u32` [NegativeIntInUnsignedType]
+  // CHECK:STDERR: fail_import_negative_literal_passed_to_unsigned.carbon:[[@LINE+7]]:11: error: negative integer value -1 converted to unsigned type `u32` [NegativeIntInUnsignedType]
   // CHECK:STDERR:   Cpp.foo(-1);
   // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_import_negative_literal_passed_to_unsigned.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_import_negative_literal_passed_to_unsigned.carbon:[[@LINE+4]]:3: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:   Cpp.foo(-1);
+  // CHECK:STDERR:   ^~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo(-1);
 }
@@ -205,13 +209,15 @@ library "[[@TEST_NAME]]";
 import Cpp library "upsizing_rejected.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_upsizing_rejected.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `i16` to `i32` [ConversionFailure]
+  // CHECK:STDERR: fail_import_upsizing_rejected.carbon:[[@LINE+10]]:11: error: cannot implicitly convert expression of type `i16` to `i32` [ConversionFailure]
   // CHECK:STDERR:   Cpp.foo(1 as i16);
   // CHECK:STDERR:           ^~~~~~~~
-  // CHECK:STDERR: fail_import_upsizing_rejected.carbon:[[@LINE+5]]:11: note: type `i16` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_import_upsizing_rejected.carbon:[[@LINE+7]]:11: note: type `i16` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Cpp.foo(1 as i16);
   // CHECK:STDERR:           ^~~~~~~~
-  // CHECK:STDERR: fail_import_upsizing_rejected.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_import_upsizing_rejected.carbon:[[@LINE+4]]:3: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:   Cpp.foo(1 as i16);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo(1 as i16);
 }
@@ -227,13 +233,15 @@ library "[[@TEST_NAME]]";
 import Cpp library "downsizing_rejected.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_downsizing_rejected.carbon:[[@LINE+8]]:11: error: cannot implicitly convert expression of type `i32` to `i16` [ConversionFailure]
+  // CHECK:STDERR: fail_import_downsizing_rejected.carbon:[[@LINE+10]]:11: error: cannot implicitly convert expression of type `i32` to `i16` [ConversionFailure]
   // CHECK:STDERR:   Cpp.foo(1 as i32);
   // CHECK:STDERR:           ^~~~~~~~
-  // CHECK:STDERR: fail_import_downsizing_rejected.carbon:[[@LINE+5]]:11: note: type `i32` does not implement interface `Core.ImplicitAs(i16)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_import_downsizing_rejected.carbon:[[@LINE+7]]:11: note: type `i32` does not implement interface `Core.ImplicitAs(i16)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Cpp.foo(1 as i32);
   // CHECK:STDERR:           ^~~~~~~~
-  // CHECK:STDERR: fail_import_downsizing_rejected.carbon: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_import_downsizing_rejected.carbon:[[@LINE+4]]:3: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:   Cpp.foo(1 as i32);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.foo(1 as i32);
 }
@@ -1163,13 +1171,13 @@ fn F() {
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %int_9223372036854775808: Core.IntLiteral = int_value 9223372036854775808 [concrete = constants.%int_9223372036854775808.293]
 // CHECK:STDOUT:   %impl.elem0: %.35c = impl_witness_access constants.%ImplicitAs.impl_witness.830, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.719]
-// CHECK:STDOUT:   %bound_method.loc12_11.1: <bound method> = bound_method %int_9223372036854775808, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc14_11.1: <bound method> = bound_method %int_9223372036854775808, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_64) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc12_11.2: <bound method> = bound_method %int_9223372036854775808, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i64 = call %bound_method.loc12_11.2(%int_9223372036854775808) [concrete = constants.%int_9223372036854775808.b10]
-// CHECK:STDOUT:   %.loc12_11.1: %i64 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_9223372036854775808.b10]
-// CHECK:STDOUT:   %.loc12_11.2: %i64 = converted %int_9223372036854775808, %.loc12_11.1 [concrete = constants.%int_9223372036854775808.b10]
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc12_11.2)
+// CHECK:STDOUT:   %bound_method.loc14_11.2: <bound method> = bound_method %int_9223372036854775808, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i64 = call %bound_method.loc14_11.2(%int_9223372036854775808) [concrete = constants.%int_9223372036854775808.b10]
+// CHECK:STDOUT:   %.loc14_11.1: %i64 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_9223372036854775808.b10]
+// CHECK:STDOUT:   %.loc14_11.2: %i64 = converted %int_9223372036854775808, %.loc14_11.1 [concrete = constants.%int_9223372036854775808.b10]
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc14_11.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1384,18 +1392,18 @@ fn F() {
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %impl.elem1: %.a96 = impl_witness_access constants.%Negate.impl_witness, element1 [concrete = constants.%Core.IntLiteral.as.Negate.impl.Op]
-// CHECK:STDOUT:   %bound_method.loc12_11.1: <bound method> = bound_method %int_1, %impl.elem1 [concrete = constants.%Core.IntLiteral.as.Negate.impl.Op.bound]
-// CHECK:STDOUT:   %Core.IntLiteral.as.Negate.impl.Op.call: init Core.IntLiteral = call %bound_method.loc12_11.1(%int_1) [concrete = constants.%int_-1.638]
+// CHECK:STDOUT:   %bound_method.loc14_11.1: <bound method> = bound_method %int_1, %impl.elem1 [concrete = constants.%Core.IntLiteral.as.Negate.impl.Op.bound]
+// CHECK:STDOUT:   %Core.IntLiteral.as.Negate.impl.Op.call: init Core.IntLiteral = call %bound_method.loc14_11.1(%int_1) [concrete = constants.%int_-1.638]
 // CHECK:STDOUT:   %impl.elem0: %.3db = impl_witness_access constants.%ImplicitAs.impl_witness.f1e, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.d2b]
-// CHECK:STDOUT:   %bound_method.loc12_11.2: <bound method> = bound_method %Core.IntLiteral.as.Negate.impl.Op.call, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc14_11.2: <bound method> = bound_method %Core.IntLiteral.as.Negate.impl.Op.call, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc12_11.3: <bound method> = bound_method %Core.IntLiteral.as.Negate.impl.Op.call, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %.loc12_11.1: Core.IntLiteral = value_of_initializer %Core.IntLiteral.as.Negate.impl.Op.call [concrete = constants.%int_-1.638]
-// CHECK:STDOUT:   %.loc12_11.2: Core.IntLiteral = converted %Core.IntLiteral.as.Negate.impl.Op.call, %.loc12_11.1 [concrete = constants.%int_-1.638]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %u32 = call %bound_method.loc12_11.3(%.loc12_11.2) [concrete = constants.%int_-1.311]
-// CHECK:STDOUT:   %.loc12_11.3: %u32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_-1.311]
-// CHECK:STDOUT:   %.loc12_11.4: %u32 = converted %Core.IntLiteral.as.Negate.impl.Op.call, %.loc12_11.3 [concrete = constants.%int_-1.311]
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc12_11.4)
+// CHECK:STDOUT:   %bound_method.loc14_11.3: <bound method> = bound_method %Core.IntLiteral.as.Negate.impl.Op.call, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %.loc14_11.1: Core.IntLiteral = value_of_initializer %Core.IntLiteral.as.Negate.impl.Op.call [concrete = constants.%int_-1.638]
+// CHECK:STDOUT:   %.loc14_11.2: Core.IntLiteral = converted %Core.IntLiteral.as.Negate.impl.Op.call, %.loc14_11.1 [concrete = constants.%int_-1.638]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %u32 = call %bound_method.loc14_11.3(%.loc14_11.2) [concrete = constants.%int_-1.311]
+// CHECK:STDOUT:   %.loc14_11.3: %u32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_-1.311]
+// CHECK:STDOUT:   %.loc14_11.4: %u32 = converted %Core.IntLiteral.as.Negate.impl.Op.call, %.loc14_11.3 [concrete = constants.%int_-1.311]
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc14_11.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1534,13 +1542,13 @@ fn F() {
 // CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   %impl.elem0: %.026 = impl_witness_access constants.%As.impl_witness.2d2, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.97a]
-// CHECK:STDOUT:   %bound_method.loc15_13.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc17_13.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.As.impl.Convert(constants.%int_16) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc15_13.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i16 = call %bound_method.loc15_13.2(%int_1) [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc15_13.1: %i16 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc15_13.2: %i16 = converted %int_1, %.loc15_13.1 [concrete = constants.%int_1.f90]
-// CHECK:STDOUT:   %.loc15_13.3: %i32 = converted %.loc15_13.2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %bound_method.loc17_13.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i16 = call %bound_method.loc17_13.2(%int_1) [concrete = constants.%int_1.f90]
+// CHECK:STDOUT:   %.loc17_13.1: %i16 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.f90]
+// CHECK:STDOUT:   %.loc17_13.2: %i16 = converted %int_1, %.loc17_13.1 [concrete = constants.%int_1.f90]
+// CHECK:STDOUT:   %.loc17_13.3: %i32 = converted %.loc17_13.2, <error> [concrete = <error>]
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -1638,13 +1646,13 @@ fn F() {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %impl.elem0: %.351 = impl_witness_access constants.%As.impl_witness.080, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.414]
-// CHECK:STDOUT:   %bound_method.loc15_13.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc17_13.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc15_13.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i32 = call %bound_method.loc15_13.2(%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc15_13.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc15_13.2: %i32 = converted %int_1, %.loc15_13.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc15_13.3: %i16 = converted %.loc15_13.2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %bound_method.loc17_13.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i32 = call %bound_method.loc17_13.2(%int_1) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc17_13.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc17_13.2: %i32 = converted %int_1, %.loc17_13.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc17_13.3: %i16 = converted %.loc17_13.2, <error> [concrete = <error>]
 // CHECK:STDOUT:   %addr: %ptr = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   return

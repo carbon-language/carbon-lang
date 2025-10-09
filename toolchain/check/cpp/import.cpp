@@ -1412,26 +1412,23 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     // TODO: Fix this once generics are supported.
     bool is_generic = false;
     SemIR::InstId pattern_id =
-        // TODO: Fill in a location once available.
-        AddBindingPattern(context, SemIR::LocId::None, name_id, type_id,
+        AddBindingPattern(context, loc_id, name_id, type_id,
                           type_expr_region_id, is_generic, is_template)
             .pattern_id;
     pattern_id = AddPatternInst(
         context,
-        // TODO: Fill in a location once available.
-        SemIR::LocIdAndInst::NoLoc(SemIR::ValueParamPattern(
-            {.type_id = context.insts().Get(pattern_id).type_id(),
-             .subpattern_id = pattern_id,
-             .index = SemIR::CallParamIndex::None})));
+        {loc_id, SemIR::ValueParamPattern(
+                     {.type_id = context.insts().Get(pattern_id).type_id(),
+                      .subpattern_id = pattern_id,
+                      .index = SemIR::CallParamIndex::None})});
     if (is_ref_param) {
       pattern_id = AddPatternInst(
           context,
-          // TODO: Fill in a location once available.
-          SemIR::LocIdAndInst::NoLoc(SemIR::AddrPattern(
-              {.type_id = GetPatternType(
-                   context,
-                   context.types().GetTypeIdForTypeInstId(orig_type_inst_id)),
-               .inner_id = pattern_id})));
+          {loc_id, SemIR::AddrPattern(
+                       {.type_id = GetPatternType(
+                            context, context.types().GetTypeIdForTypeInstId(
+                                         orig_type_inst_id)),
+                        .inner_id = pattern_id})});
     }
     params.push_back(pattern_id);
   }

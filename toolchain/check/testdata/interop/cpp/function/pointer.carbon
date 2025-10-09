@@ -258,6 +258,7 @@ fn F() {
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
+// CHECK:STDOUT:   %pattern_type.259: type = pattern_type %ptr.5c7 [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
@@ -275,9 +276,11 @@ fn F() {
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.patt: %pattern_type.259 = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.259 = value_param_pattern %_.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.param: %ptr.5c7 = value_param call_param0
+// CHECK:STDOUT:     %_: %ptr.5c7 = bind_name _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -336,6 +339,7 @@ fn F() {
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.dfe: type = ptr_type %ptr.5c7 [concrete]
+// CHECK:STDOUT:   %pattern_type.95a: type = pattern_type %ptr.dfe [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
@@ -358,9 +362,11 @@ fn F() {
 // CHECK:STDOUT:   %Copy.impl_witness_table.53c = impl_witness_table (%Core.import_ref.0e4), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.patt: %pattern_type.95a = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.95a = value_param_pattern %_.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.param: %ptr.dfe = value_param call_param0
+// CHECK:STDOUT:     %_: %ptr.dfe = bind_name _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -433,6 +439,7 @@ fn F() {
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.ff5: type = ptr_type %const [concrete]
+// CHECK:STDOUT:   %pattern_type.32f: type = pattern_type %ptr.ff5 [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
@@ -450,9 +457,11 @@ fn F() {
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.patt: %pattern_type.32f = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.32f = value_param_pattern %_.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.param: %ptr.ff5 = value_param call_param0
+// CHECK:STDOUT:     %_: %ptr.ff5 = bind_name _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -708,8 +717,12 @@ fn F() {
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
+// CHECK:STDOUT:     %_.patt: %pattern_type.259 = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.259 = value_param_pattern %_.patt, call_param0 [concrete]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %_.param: %ptr.5c7 = value_param call_param0
+// CHECK:STDOUT:     %_: %ptr.5c7 = bind_name _, %_.param
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -788,8 +801,12 @@ fn F() {
 // CHECK:STDOUT:   %Direct.cpp_overload_set.value: %Direct.cpp_overload_set.type = cpp_overload_set_value @Direct.cpp_overload_set [concrete = constants.%Direct.cpp_overload_set.value]
 // CHECK:STDOUT:   %Indirect.cpp_overload_set.value: %Indirect.cpp_overload_set.type = cpp_overload_set_value @Indirect.cpp_overload_set [concrete = constants.%Indirect.cpp_overload_set.value]
 // CHECK:STDOUT:   %Indirect.decl: %Indirect.type = fn_decl @Indirect [concrete = constants.%Indirect] {
+// CHECK:STDOUT:     %_.patt: %pattern_type.7da = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.7da = value_param_pattern %_.patt, call_param0 [concrete]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %_.param: %S = value_param call_param0
+// CHECK:STDOUT:     %_: %S = bind_name _, %_.param
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

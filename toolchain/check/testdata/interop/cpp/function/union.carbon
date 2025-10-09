@@ -522,6 +522,7 @@ fn F() {
 // CHECK:STDOUT:   %U: type = class_type @U [concrete]
 // CHECK:STDOUT:   %U.val: %U = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.86f: type = ptr_type %U [concrete]
+// CHECK:STDOUT:   %pattern_type.425: type = pattern_type %ptr.86f [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
@@ -539,9 +540,11 @@ fn F() {
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %U.decl: type = class_decl @U [concrete = constants.%U] {} {}
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.patt: %pattern_type.425 = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.425 = value_param_pattern %_.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.param: %ptr.86f = value_param call_param0
+// CHECK:STDOUT:     %_: %ptr.86f = bind_name _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -641,6 +644,7 @@ fn F() {
 // CHECK:STDOUT:   %U.val: %U = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.eb9: type = pattern_type %U [concrete]
 // CHECK:STDOUT:   %ptr.87e: type = ptr_type %U [concrete]
+// CHECK:STDOUT:   %pattern_type.5d4: type = pattern_type %ptr.87e [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
@@ -662,9 +666,11 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %U.decl: type = class_decl @U [concrete = constants.%U] {} {}
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.patt: %pattern_type.5d4 = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.5d4 = value_param_pattern %_.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.param: %ptr.87e = value_param call_param0
+// CHECK:STDOUT:     %_: %ptr.87e = bind_name _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -722,6 +728,7 @@ fn F() {
 // CHECK:STDOUT:   %U: type = class_type @U [concrete]
 // CHECK:STDOUT:   %U.val: %U = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.8c1: type = ptr_type %U [concrete]
+// CHECK:STDOUT:   %pattern_type.f62: type = pattern_type %ptr.8c1 [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
@@ -747,9 +754,11 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %U.decl: type = class_decl @U [concrete = constants.%U] {} {}
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.patt: %pattern_type.f62 = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.f62 = value_param_pattern %_.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.param: %ptr.8c1 = value_param call_param0
+// CHECK:STDOUT:     %_: %ptr.8c1 = bind_name _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -792,6 +801,7 @@ fn F() {
 // CHECK:STDOUT:   %U: type = class_type @U [concrete]
 // CHECK:STDOUT:   %U.val: %U = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.a6c: type = ptr_type %U [concrete]
+// CHECK:STDOUT:   %pattern_type.774: type = pattern_type %ptr.a6c [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cff: type = pattern_type %O [concrete]
@@ -815,9 +825,11 @@ fn F() {
 // CHECK:STDOUT:   %O.decl: type = class_decl @O [concrete = constants.%O] {} {}
 // CHECK:STDOUT:   %U.decl: type = class_decl @U [concrete = constants.%U] {} {}
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.patt: %pattern_type.774 = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.774 = value_param_pattern %_.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.param: %ptr.a6c = value_param call_param0
+// CHECK:STDOUT:     %_: %ptr.a6c = bind_name _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -878,6 +890,7 @@ fn F() {
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %U.val: %U = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.86f: type = ptr_type %U [concrete]
+// CHECK:STDOUT:   %pattern_type.425: type = pattern_type %ptr.86f [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
@@ -897,9 +910,11 @@ fn F() {
 // CHECK:STDOUT:   %U.bar.decl: %U.bar.type = fn_decl @U.bar [concrete = constants.%U.bar] {} {}
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.patt: %pattern_type.425 = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.425 = value_param_pattern %_.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.param: %ptr.86f = value_param call_param0
+// CHECK:STDOUT:     %_: %ptr.86f = bind_name _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -942,6 +957,7 @@ fn F() {
 // CHECK:STDOUT:   %U: type = class_type @U [concrete]
 // CHECK:STDOUT:   %U.val: %U = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.86f: type = ptr_type %U [concrete]
+// CHECK:STDOUT:   %pattern_type.425: type = pattern_type %ptr.86f [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %U.bar.cpp_overload_set.type: type = cpp_overload_set_type @U.bar.cpp_overload_set [concrete]
@@ -963,9 +979,11 @@ fn F() {
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %U.decl: type = class_decl @U [concrete = constants.%U] {} {}
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.patt: %pattern_type.425 = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type.425 = value_param_pattern %_.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.param: %ptr.86f = value_param call_param0
+// CHECK:STDOUT:     %_: %ptr.86f = bind_name _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %U.bar.cpp_overload_set.value: %U.bar.cpp_overload_set.type = cpp_overload_set_value @U.bar.cpp_overload_set [concrete = constants.%U.bar.cpp_overload_set.value]
 // CHECK:STDOUT:   %U.bar.decl: %U.bar.type = fn_decl @U.bar [concrete = constants.%U.bar] {} {}
@@ -1005,6 +1023,7 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %U: type = class_type @U [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %U [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
@@ -1021,9 +1040,11 @@ fn F() {
 // CHECK:STDOUT:   %U.decl: type = class_decl @U [concrete = constants.%U] {} {}
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.patt: %pattern_type = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type = value_param_pattern %_.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.param: %ptr = value_param call_param0
+// CHECK:STDOUT:     %_: %ptr = bind_name _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1041,6 +1062,7 @@ fn F() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %U: type = class_type @U [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %U [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
@@ -1057,9 +1079,11 @@ fn F() {
 // CHECK:STDOUT:   %U.decl: type = class_decl @U [concrete = constants.%U] {} {}
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.patt: %pattern_type = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.param_patt: %pattern_type = value_param_pattern %_.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %_.param: %ptr = value_param call_param0
+// CHECK:STDOUT:     %_: %ptr = bind_name _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1080,6 +1104,7 @@ fn F() {
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %U: type = class_type @U [concrete]
 // CHECK:STDOUT:   %ptr.86f: type = ptr_type %U [concrete]
+// CHECK:STDOUT:   %pattern_type.425: type = pattern_type %ptr.86f [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
@@ -1095,9 +1120,11 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %return.patt: %pattern_type.425 = binding_pattern r#return [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.425 = value_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %return.param: %ptr.86f = value_param call_param0
+// CHECK:STDOUT:     %return: %ptr.86f = bind_name r#return, %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

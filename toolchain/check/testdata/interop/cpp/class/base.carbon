@@ -586,6 +586,7 @@ class V {
 // CHECK:STDOUT:   %Derived.f.cpp_overload_set.value: %Derived.f.cpp_overload_set.type = cpp_overload_set_value @Derived.f.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %const: type = const_type %Base [concrete]
 // CHECK:STDOUT:   %ptr.a97: type = ptr_type %const [concrete]
+// CHECK:STDOUT:   %pattern_type.813: type = pattern_type %ptr.a97 [concrete]
 // CHECK:STDOUT:   %f__carbon_thunk.type: type = fn_type @f__carbon_thunk [concrete]
 // CHECK:STDOUT:   %f__carbon_thunk: %f__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.fb2: type = ptr_type %Base [concrete]
@@ -605,15 +606,19 @@ class V {
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
 // CHECK:STDOUT:   %Derived.f.cpp_overload_set.value: %Derived.f.cpp_overload_set.type = cpp_overload_set_value @Derived.f.cpp_overload_set [concrete = constants.%Derived.f.cpp_overload_set.value]
 // CHECK:STDOUT:   %f__carbon_thunk.decl: %f__carbon_thunk.type = fn_decl @f__carbon_thunk [concrete = constants.%f__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %this.patt: %pattern_type.813 = binding_pattern this [concrete]
+// CHECK:STDOUT:     %this.param_patt: %pattern_type.813 = value_param_pattern %this.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %this.param: %ptr.a97 = value_param call_param0
+// CHECK:STDOUT:     %this: %ptr.a97 = bind_name this, %this.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Base.g.cpp_overload_set.value: %Base.g.cpp_overload_set.type = cpp_overload_set_value @Base.g.cpp_overload_set [concrete = constants.%Base.g.cpp_overload_set.value]
 // CHECK:STDOUT:   %g__carbon_thunk.decl: %g__carbon_thunk.type = fn_decl @g__carbon_thunk [concrete = constants.%g__carbon_thunk] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %this.patt: %pattern_type.813 = binding_pattern this [concrete]
+// CHECK:STDOUT:     %this.param_patt: %pattern_type.813 = value_param_pattern %this.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %this.param: %ptr.a97 = value_param call_param0
+// CHECK:STDOUT:     %this: %ptr.a97 = bind_name this, %this.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
