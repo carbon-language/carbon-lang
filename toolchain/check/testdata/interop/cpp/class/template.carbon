@@ -94,7 +94,6 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:   %A.f.cpp_overload_set.value: %A.f.cpp_overload_set.type = cpp_overload_set_value @A.f.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %const.16f: type = const_type %A.0bedf0.1 [concrete]
 // CHECK:STDOUT:   %ptr.703: type = ptr_type %const.16f [concrete]
-// CHECK:STDOUT:   %pattern_type.92d: type = pattern_type %ptr.703 [concrete]
 // CHECK:STDOUT:   %f__carbon_thunk.type: type = fn_type @f__carbon_thunk [concrete]
 // CHECK:STDOUT:   %f__carbon_thunk: %f__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.270828.1: type = ptr_type %A.0bedf0.1 [concrete]
@@ -125,11 +124,9 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %A.f.cpp_overload_set.value: %A.f.cpp_overload_set.type = cpp_overload_set_value @A.f.cpp_overload_set [concrete = constants.%A.f.cpp_overload_set.value]
 // CHECK:STDOUT:   %f__carbon_thunk.decl: %f__carbon_thunk.type = fn_decl @f__carbon_thunk [concrete = constants.%f__carbon_thunk] {
-// CHECK:STDOUT:     %this.patt: %pattern_type.92d = binding_pattern this [concrete]
-// CHECK:STDOUT:     %this.param_patt: %pattern_type.92d = value_param_pattern %this.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %this.param: %ptr.703 = value_param call_param0
-// CHECK:STDOUT:     %this: %ptr.703 = bind_name this, %this.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.d0f6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.afd) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.6cd)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.1ed = impl_witness_table (%Core.import_ref.d0f6), @Int.as.Copy.impl [concrete]

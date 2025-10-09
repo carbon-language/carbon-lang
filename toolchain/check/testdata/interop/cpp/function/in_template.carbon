@@ -43,7 +43,6 @@ fn F() {
 // CHECK:STDOUT:   %int_42.20e: Core.IntLiteral = int_value 42 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %X.f.type: type = fn_type @X.f [concrete]
 // CHECK:STDOUT:   %X.f: %X.f.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.d14: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
@@ -70,12 +69,9 @@ fn F() {
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
 // CHECK:STDOUT:   %X.f.cpp_overload_set.value: %X.f.cpp_overload_set.type = cpp_overload_set_value @X.f.cpp_overload_set [concrete = constants.%X.f.cpp_overload_set.value]
 // CHECK:STDOUT:   %X.f.decl: %X.f.type = fn_decl @X.f [concrete = constants.%X.f] {
-// CHECK:STDOUT:     %t.patt: %pattern_type.7ce = binding_pattern t [concrete]
-// CHECK:STDOUT:     %t.param_patt: %pattern_type.7ce = value_param_pattern %t.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %t.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %t: %i32 = bind_name t, %t.param
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.ee7: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1c0)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.9e9 = impl_witness_table (%Core.import_ref.ee7), @Core.IntLiteral.as.ImplicitAs.impl [concrete]

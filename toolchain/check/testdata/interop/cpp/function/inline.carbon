@@ -176,7 +176,6 @@ fn MyF() {
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
 // CHECK:STDOUT:   %pattern_type.2f8: type = pattern_type %i16 [concrete]
 // CHECK:STDOUT:   %ptr.251: type = ptr_type %i16 [concrete]
-// CHECK:STDOUT:   %pattern_type.54c: type = pattern_type %ptr.251 [concrete]
 // CHECK:STDOUT:   %ThunkOnArg__carbon_thunk.type: type = fn_type @ThunkOnArg__carbon_thunk [concrete]
 // CHECK:STDOUT:   %ThunkOnArg__carbon_thunk: %ThunkOnArg__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.527: type = facet_type <@ImplicitAs, @ImplicitAs(%i16)> [concrete]
@@ -226,59 +225,31 @@ fn MyF() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %WithoutThunk.cpp_overload_set.value: %WithoutThunk.cpp_overload_set.type = cpp_overload_set_value @WithoutThunk.cpp_overload_set [concrete = constants.%WithoutThunk.cpp_overload_set.value]
 // CHECK:STDOUT:   %WithoutThunk.decl: %WithoutThunk.type = fn_decl @WithoutThunk [concrete = constants.%WithoutThunk] {
-// CHECK:STDOUT:     %_.patt: %pattern_type.7ce = binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.7ce = value_param_pattern %_.patt, call_param0 [concrete]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %_.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %_: %i32 = bind_name _, %_.param
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.ee7: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1c0)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.9e9 = impl_witness_table (%Core.import_ref.ee7), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %ThunkOnArg.cpp_overload_set.value: %ThunkOnArg.cpp_overload_set.type = cpp_overload_set_value @ThunkOnArg.cpp_overload_set [concrete = constants.%ThunkOnArg.cpp_overload_set.value]
 // CHECK:STDOUT:   %ThunkOnArg__carbon_thunk.decl: %ThunkOnArg__carbon_thunk.type = fn_decl @ThunkOnArg__carbon_thunk [concrete = constants.%ThunkOnArg__carbon_thunk] {
-// CHECK:STDOUT:     %_.patt: %pattern_type.54c = binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.54c = value_param_pattern %_.patt, call_param0 [concrete]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %_.param: %ptr.251 = value_param call_param0
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %_: %ptr.251 = bind_name _, %_.param
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.d0f6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.afd) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.6cd)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.1ed = impl_witness_table (%Core.import_ref.d0f6), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %ThunkOnReturn.cpp_overload_set.value: %ThunkOnReturn.cpp_overload_set.type = cpp_overload_set_value @ThunkOnReturn.cpp_overload_set [concrete = constants.%ThunkOnReturn.cpp_overload_set.value]
 // CHECK:STDOUT:   %ThunkOnReturn__carbon_thunk.decl: %ThunkOnReturn__carbon_thunk.type = fn_decl @ThunkOnReturn__carbon_thunk [concrete = constants.%ThunkOnReturn__carbon_thunk] {
-// CHECK:STDOUT:     %_.patt: %pattern_type.7ce = binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.7ce = value_param_pattern %_.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.54c = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.54c = value_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %_.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %_: %i32 = bind_name _, %_.param
-// CHECK:STDOUT:     %return.param: %ptr.251 = value_param call_param1
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %return: %ptr.251 = bind_name r#return, %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ThunkOnBoth.cpp_overload_set.value: %ThunkOnBoth.cpp_overload_set.type = cpp_overload_set_value @ThunkOnBoth.cpp_overload_set [concrete = constants.%ThunkOnBoth.cpp_overload_set.value]
 // CHECK:STDOUT:   %ThunkOnBoth__carbon_thunk.decl: %ThunkOnBoth__carbon_thunk.type = fn_decl @ThunkOnBoth__carbon_thunk [concrete = constants.%ThunkOnBoth__carbon_thunk] {
-// CHECK:STDOUT:     %_.patt: %pattern_type.54c = binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.54c = value_param_pattern %_.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.54c = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.54c = value_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %_.param: %ptr.251 = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %_: %ptr.251 = bind_name _, %_.param
-// CHECK:STDOUT:     %return.param: %ptr.251 = value_param call_param1
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %return: %ptr.251 = bind_name r#return, %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

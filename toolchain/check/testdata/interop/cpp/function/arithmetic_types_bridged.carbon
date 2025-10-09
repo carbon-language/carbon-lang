@@ -242,12 +242,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "short_param.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_short_param_overflow_max.carbon:[[@LINE+7]]:11: error: integer value 32768 too large for type `i16` [IntTooLargeForType]
+  // CHECK:STDERR: fail_import_short_param_overflow_max.carbon:[[@LINE+8]]:11: error: integer value 32768 too large for type `i16` [IntTooLargeForType]
   // CHECK:STDERR:   Cpp.foo(0x8000);
   // CHECK:STDERR:           ^~~~~~
-  // CHECK:STDERR: fail_import_short_param_overflow_max.carbon:[[@LINE+4]]:3: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   Cpp.foo(0x8000);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_short_param_overflow_max.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./short_param.h:2:16: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: auto foo(short a) -> void;
+  // CHECK:STDERR:                ^
   // CHECK:STDERR:
   Cpp.foo(0x8000);
 }
@@ -271,12 +272,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "short_param.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_short_param_overflow_min.carbon:[[@LINE+7]]:11: error: integer value -32769 too large for type `i16` [IntTooLargeForType]
+  // CHECK:STDERR: fail_import_short_param_overflow_min.carbon:[[@LINE+8]]:11: error: integer value -32769 too large for type `i16` [IntTooLargeForType]
   // CHECK:STDERR:   Cpp.foo(-0x8001);
   // CHECK:STDERR:           ^~~~~~~
-  // CHECK:STDERR: fail_import_short_param_overflow_min.carbon:[[@LINE+4]]:3: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   Cpp.foo(-0x8001);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_short_param_overflow_min.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./short_param.h:2:16: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: auto foo(short a) -> void;
+  // CHECK:STDERR:                ^
   // CHECK:STDERR:
   Cpp.foo(-0x8001);
 }
@@ -288,15 +290,16 @@ library "[[@TEST_NAME]]";
 import Cpp library "short_param.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE+10]]:11: error: cannot implicitly convert expression of type `i32` to `i16` [ConversionFailure]
+  // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE+11]]:11: error: cannot implicitly convert expression of type `i32` to `i16` [ConversionFailure]
   // CHECK:STDERR:   Cpp.foo(1 as i32);
   // CHECK:STDERR:           ^~~~~~~~
-  // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE+7]]:11: note: type `i32` does not implement interface `Core.ImplicitAs(i16)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE+8]]:11: note: type `i32` does not implement interface `Core.ImplicitAs(i16)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   Cpp.foo(1 as i32);
   // CHECK:STDERR:           ^~~~~~~~
-  // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE+4]]:3: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   Cpp.foo(1 as i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./short_param.h:2:16: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: auto foo(short a) -> void;
+  // CHECK:STDERR:                ^
   // CHECK:STDERR:
   Cpp.foo(1 as i32);
 }
@@ -560,7 +563,6 @@ fn F() {
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
 // CHECK:STDOUT:   %ptr.bb2: type = ptr_type bool [concrete]
-// CHECK:STDOUT:   %pattern_type.48e: type = pattern_type %ptr.bb2 [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -584,11 +586,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.48e = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.48e = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %ptr.bb2 = value_param call_param0
-// CHECK:STDOUT:     %a: %ptr.bb2 = bind_name a, %a.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.cc5: %bool.as.Copy.impl.Op.type = import_ref Core//prelude/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.189 = impl_witness_table (%Core.import_ref.cc5), @bool.as.Copy.impl [concrete]
@@ -624,7 +624,6 @@ fn F() {
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT:   %ptr.bb2: type = ptr_type bool [concrete]
-// CHECK:STDOUT:   %pattern_type.48e: type = pattern_type %ptr.bb2 [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -648,11 +647,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.48e = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.48e = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %ptr.bb2 = value_param call_param0
-// CHECK:STDOUT:     %a: %ptr.bb2 = bind_name a, %a.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.cc5: %bool.as.Copy.impl.Op.type = import_ref Core//prelude/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.189 = impl_witness_table (%Core.import_ref.cc5), @bool.as.Copy.impl [concrete]
@@ -700,7 +697,6 @@ fn F() {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %i8: type = class_type @Int, @Int(%int_8) [concrete]
 // CHECK:STDOUT:   %ptr.5c1: type = ptr_type %i8 [concrete]
-// CHECK:STDOUT:   %pattern_type.fb4: type = pattern_type %ptr.5c1 [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.3ce: type = facet_type <@ImplicitAs, @ImplicitAs(%i8)> [concrete]
@@ -745,12 +741,9 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.3d9: %Core.IntLiteral.as.Negate.impl.Op.type = import_ref Core//prelude/operators/arithmetic, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.Negate.impl.Op]
 // CHECK:STDOUT:   %Negate.impl_witness_table = impl_witness_table (%Core.import_ref.abd, %Core.import_ref.3d9), @Core.IntLiteral.as.Negate.impl [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.fb4 = binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.fb4 = value_param_pattern %c.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %c.param: %ptr.5c1 = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %c: %ptr.5c1 = bind_name c, %c.param
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.ee7: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1c0)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.9e9 = impl_witness_table (%Core.import_ref.ee7), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
@@ -805,7 +798,6 @@ fn F() {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
 // CHECK:STDOUT:   %ptr.3e8: type = ptr_type %u8 [concrete]
-// CHECK:STDOUT:   %pattern_type.a66: type = pattern_type %ptr.3e8 [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.54d: type = facet_type <@ImplicitAs, @ImplicitAs(%u8)> [concrete]
@@ -847,12 +839,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.a66 = binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.a66 = value_param_pattern %c.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %c.param: %ptr.3e8 = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %c: %ptr.3e8 = bind_name c, %c.param
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.1c1: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3a3) = import_ref Core//prelude/types/uint, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.782)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.440 = impl_witness_table (%Core.import_ref.1c1), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
@@ -900,7 +889,6 @@ fn F() {
 // CHECK:STDOUT:   %.d16: Core.CharLiteral = char_value U+0058 [concrete]
 // CHECK:STDOUT:   %char: type = class_type @Char [concrete]
 // CHECK:STDOUT:   %ptr.fb0: type = ptr_type %char [concrete]
-// CHECK:STDOUT:   %pattern_type.b81: type = pattern_type %ptr.fb0 [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.3be: type = facet_type <@ImplicitAs, @ImplicitAs(%char)> [concrete]
@@ -933,11 +921,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.b81 = binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.b81 = value_param_pattern %c.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %c.param: %ptr.fb0 = value_param call_param0
-// CHECK:STDOUT:     %c: %ptr.fb0 = bind_name c, %c.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.543: %Core.CharLiteral.as.ImplicitAs.impl.Convert.type = import_ref Core//prelude/types/char, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1f2 = impl_witness_table (%Core.import_ref.543), @Core.CharLiteral.as.ImplicitAs.impl [concrete]
@@ -1005,7 +991,6 @@ fn F() {
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.d14: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
@@ -1032,12 +1017,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.7ce = binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.7ce = value_param_pattern %c.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %c.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %c: %i32 = bind_name c, %c.param
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.ee7: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1c0)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.9e9 = impl_witness_table (%Core.import_ref.ee7), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
@@ -1132,7 +1114,6 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.7be: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.As.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.f90: %i16 = int_value 1 [concrete]
 // CHECK:STDOUT:   %ptr.251: type = ptr_type %i16 [concrete]
-// CHECK:STDOUT:   %pattern_type.54c: type = pattern_type %ptr.251 [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -1162,12 +1143,9 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.99c: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.565) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.d2c)]
 // CHECK:STDOUT:   %As.impl_witness_table.5ad = impl_witness_table (%Core.import_ref.99c), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.54c = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.54c = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %ptr.251 = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %a: %ptr.251 = bind_name a, %a.param
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.d0f6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.afd) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.6cd)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.1ed = impl_witness_table (%Core.import_ref.d0f6), @Int.as.Copy.impl [concrete]
@@ -1217,7 +1195,6 @@ fn F() {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
 // CHECK:STDOUT:   %ptr.251: type = ptr_type %i16 [concrete]
-// CHECK:STDOUT:   %pattern_type.54c: type = pattern_type %ptr.251 [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.527: type = facet_type <@ImplicitAs, @ImplicitAs(%i16)> [concrete]
@@ -1259,12 +1236,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.54c = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.54c = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %ptr.251 = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %a: %ptr.251 = bind_name a, %a.param
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.ee7: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1c0)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.9e9 = impl_witness_table (%Core.import_ref.ee7), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
@@ -1323,7 +1297,6 @@ fn F() {
 // CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
 // CHECK:STDOUT:   %ptr.251: type = ptr_type %i16 [concrete]
-// CHECK:STDOUT:   %pattern_type.54c: type = pattern_type %ptr.251 [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.527: type = facet_type <@ImplicitAs, @ImplicitAs(%i16)> [concrete]
@@ -1368,12 +1341,9 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.3d9: %Core.IntLiteral.as.Negate.impl.Op.type = import_ref Core//prelude/operators/arithmetic, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.Negate.impl.Op]
 // CHECK:STDOUT:   %Negate.impl_witness_table = impl_witness_table (%Core.import_ref.abd, %Core.import_ref.3d9), @Core.IntLiteral.as.Negate.impl [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.54c = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.54c = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %ptr.251 = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %a: %ptr.251 = bind_name a, %a.param
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.ee7: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1c0)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.9e9 = impl_witness_table (%Core.import_ref.ee7), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
@@ -1442,7 +1412,6 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.7be: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.As.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.f90: %i16 = int_value 1 [concrete]
 // CHECK:STDOUT:   %ptr.251: type = ptr_type %i16 [concrete]
-// CHECK:STDOUT:   %pattern_type.54c: type = pattern_type %ptr.251 [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -1472,12 +1441,9 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.99c: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.565) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.d2c)]
 // CHECK:STDOUT:   %As.impl_witness_table.5ad = impl_witness_table (%Core.import_ref.99c), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.54c = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.54c = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %ptr.251 = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %a: %ptr.251 = bind_name a, %a.param
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.d0f6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.afd) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.6cd)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.1ed = impl_witness_table (%Core.import_ref.d0f6), @Int.as.Copy.impl [concrete]
@@ -1541,7 +1507,6 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.7be: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.As.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.f90: %i16 = int_value 1 [concrete]
 // CHECK:STDOUT:   %ptr.251: type = ptr_type %i16 [concrete]
-// CHECK:STDOUT:   %pattern_type.54c: type = pattern_type %ptr.251 [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -1571,12 +1536,9 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.99c: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.565) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.d2c)]
 // CHECK:STDOUT:   %As.impl_witness_table.5ad = impl_witness_table (%Core.import_ref.99c), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.54c = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.54c = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %ptr.251 = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %a: %ptr.251 = bind_name a, %a.param
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.d0f6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.afd) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.6cd)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.1ed = impl_witness_table (%Core.import_ref.d0f6), @Int.as.Copy.impl [concrete]
@@ -1640,7 +1602,6 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.7be: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.As.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.f90: %i16 = int_value 1 [concrete]
 // CHECK:STDOUT:   %ptr.251: type = ptr_type %i16 [concrete]
-// CHECK:STDOUT:   %pattern_type.54c: type = pattern_type %ptr.251 [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -1670,12 +1631,9 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.99c: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.565) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.d2c)]
 // CHECK:STDOUT:   %As.impl_witness_table.5ad = impl_witness_table (%Core.import_ref.99c), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.54c = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.54c = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %ptr.251 = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %a: %ptr.251 = bind_name a, %a.param
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.d0f6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.afd) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.6cd)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.1ed = impl_witness_table (%Core.import_ref.d0f6), @Int.as.Copy.impl [concrete]
@@ -1739,7 +1697,6 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.7be: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.As.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.f90: %i16 = int_value 1 [concrete]
 // CHECK:STDOUT:   %ptr.251: type = ptr_type %i16 [concrete]
-// CHECK:STDOUT:   %pattern_type.54c: type = pattern_type %ptr.251 [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -1769,12 +1726,9 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.99c: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.565) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.d2c)]
 // CHECK:STDOUT:   %As.impl_witness_table.5ad = impl_witness_table (%Core.import_ref.99c), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.54c = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.54c = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %ptr.251 = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %a: %ptr.251 = bind_name a, %a.param
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.d0f6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.afd) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.6cd)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.1ed = impl_witness_table (%Core.import_ref.d0f6), @Int.as.Copy.impl [concrete]
@@ -1837,7 +1791,6 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.149: <bound method> = bound_method %float.c64, %Core.FloatLiteral.as.As.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %float.032: %f16.a6a = float_value 0.7998 [concrete]
 // CHECK:STDOUT:   %ptr.823: type = ptr_type %f16.a6a [concrete]
-// CHECK:STDOUT:   %pattern_type.b1b: type = pattern_type %ptr.823 [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -1867,12 +1820,9 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.ea0: @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert.type (%Core.FloatLiteral.as.As.impl.Convert.type.d83) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert (constants.%Core.FloatLiteral.as.As.impl.Convert.f91)]
 // CHECK:STDOUT:   %As.impl_witness_table = impl_witness_table (%Core.import_ref.ea0), @Core.FloatLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.b1b = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.b1b = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %ptr.823 = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %a: %ptr.823 = bind_name a, %a.param
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.6cc: @Float.as.Copy.impl.%Float.as.Copy.impl.Op.type (%Float.as.Copy.impl.Op.type.89d) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Float.as.Copy.impl.%Float.as.Copy.impl.Op (constants.%Float.as.Copy.impl.Op.b4c)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.3b9 = impl_witness_table (%Core.import_ref.6cc), @Float.as.Copy.impl [concrete]
@@ -1935,7 +1885,6 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.7e5: <bound method> = bound_method %float.c64, %Core.FloatLiteral.as.As.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %float.4cb: %f32.97e = float_value 0.800000011 [concrete]
 // CHECK:STDOUT:   %ptr.0bc: type = ptr_type %f32.97e [concrete]
-// CHECK:STDOUT:   %pattern_type.493: type = pattern_type %ptr.0bc [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -1965,12 +1914,9 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.ea0: @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert.type (%Core.FloatLiteral.as.As.impl.Convert.type.d83) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert (constants.%Core.FloatLiteral.as.As.impl.Convert.f91)]
 // CHECK:STDOUT:   %As.impl_witness_table = impl_witness_table (%Core.import_ref.ea0), @Core.FloatLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.493 = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.493 = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %ptr.0bc = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %a: %ptr.0bc = bind_name a, %a.param
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.6cc: @Float.as.Copy.impl.%Float.as.Copy.impl.Op.type (%Float.as.Copy.impl.Op.type.89d) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Float.as.Copy.impl.%Float.as.Copy.impl.Op (constants.%Float.as.Copy.impl.Op.b4c)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.3b9 = impl_witness_table (%Core.import_ref.6cc), @Float.as.Copy.impl [concrete]
@@ -2033,7 +1979,6 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.a60: <bound method> = bound_method %float.c64, %Core.FloatLiteral.as.As.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %float.0fc: %f64.d77 = float_value 0.80000000000000004 [concrete]
 // CHECK:STDOUT:   %ptr.bcc: type = ptr_type %f64.d77 [concrete]
-// CHECK:STDOUT:   %pattern_type.0ce: type = pattern_type %ptr.bcc [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -2063,12 +2008,9 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.ea0: @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert.type (%Core.FloatLiteral.as.As.impl.Convert.type.d83) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert (constants.%Core.FloatLiteral.as.As.impl.Convert.f91)]
 // CHECK:STDOUT:   %As.impl_witness_table = impl_witness_table (%Core.import_ref.ea0), @Core.FloatLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.0ce = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.0ce = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %ptr.bcc = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %a: %ptr.bcc = bind_name a, %a.param
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.6cc: @Float.as.Copy.impl.%Float.as.Copy.impl.Op.type (%Float.as.Copy.impl.Op.type.89d) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Float.as.Copy.impl.%Float.as.Copy.impl.Op (constants.%Float.as.Copy.impl.Op.b4c)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.3b9 = impl_witness_table (%Core.import_ref.6cc), @Float.as.Copy.impl [concrete]
@@ -2131,7 +2073,6 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.b4a: <bound method> = bound_method %float.c64, %Core.FloatLiteral.as.As.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %float.709: %f128.b8c = float_value 0.800000000000000000000000000000000039 [concrete]
 // CHECK:STDOUT:   %ptr.402: type = ptr_type %f128.b8c [concrete]
-// CHECK:STDOUT:   %pattern_type.74d: type = pattern_type %ptr.402 [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -2161,12 +2102,9 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.ea0: @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert.type (%Core.FloatLiteral.as.As.impl.Convert.type.d83) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert (constants.%Core.FloatLiteral.as.As.impl.Convert.f91)]
 // CHECK:STDOUT:   %As.impl_witness_table = impl_witness_table (%Core.import_ref.ea0), @Core.FloatLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.74d = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.74d = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %ptr.402 = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %a: %ptr.402 = bind_name a, %a.param
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.6cc: @Float.as.Copy.impl.%Float.as.Copy.impl.Op.type (%Float.as.Copy.impl.Op.type.89d) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Float.as.Copy.impl.%Float.as.Copy.impl.Op (constants.%Float.as.Copy.impl.Op.b4c)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.3b9 = impl_witness_table (%Core.import_ref.6cc), @Float.as.Copy.impl [concrete]
@@ -2215,7 +2153,6 @@ fn F() {
 // CHECK:STDOUT:   %foo_bool.cpp_overload_set.type: type = cpp_overload_set_type @foo_bool.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo_bool.cpp_overload_set.value: %foo_bool.cpp_overload_set.type = cpp_overload_set_value @foo_bool.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type bool [concrete]
-// CHECK:STDOUT:   %pattern_type.48e: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %foo_bool__carbon_thunk.type: type = fn_type @foo_bool__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo_bool__carbon_thunk: %foo_bool__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -2227,11 +2164,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo_bool.cpp_overload_set.value: %foo_bool.cpp_overload_set.type = cpp_overload_set_value @foo_bool.cpp_overload_set [concrete = constants.%foo_bool.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo_bool__carbon_thunk.decl: %foo_bool__carbon_thunk.type = fn_decl @foo_bool__carbon_thunk [concrete = constants.%foo_bool__carbon_thunk] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.48e = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.48e = value_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: %ptr = value_param call_param0
-// CHECK:STDOUT:     %return: %ptr = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2267,7 +2202,6 @@ fn F() {
 // CHECK:STDOUT:   %foo_short.cpp_overload_set.type: type = cpp_overload_set_type @foo_short.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo_short.cpp_overload_set.value: %foo_short.cpp_overload_set.type = cpp_overload_set_value @foo_short.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %i16 [concrete]
-// CHECK:STDOUT:   %pattern_type.54c: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %foo_short__carbon_thunk.type: type = fn_type @foo_short__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo_short__carbon_thunk: %foo_short__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -2279,12 +2213,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo_short.cpp_overload_set.value: %foo_short.cpp_overload_set.type = cpp_overload_set_value @foo_short.cpp_overload_set [concrete = constants.%foo_short.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo_short__carbon_thunk.decl: %foo_short__carbon_thunk.type = fn_decl @foo_short__carbon_thunk [concrete = constants.%foo_short__carbon_thunk] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.54c = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.54c = value_param_pattern %return.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %return: %ptr = bind_name r#return, %return.param
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2343,7 +2274,6 @@ fn F() {
 // CHECK:STDOUT:   %foo_double.cpp_overload_set.type: type = cpp_overload_set_type @foo_double.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo_double.cpp_overload_set.value: %foo_double.cpp_overload_set.type = cpp_overload_set_value @foo_double.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %f64.d77 [concrete]
-// CHECK:STDOUT:   %pattern_type.0ce: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %foo_double__carbon_thunk.type: type = fn_type @foo_double__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo_double__carbon_thunk: %foo_double__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -2355,12 +2285,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo_double.cpp_overload_set.value: %foo_double.cpp_overload_set.type = cpp_overload_set_value @foo_double.cpp_overload_set [concrete = constants.%foo_double.cpp_overload_set.value]
 // CHECK:STDOUT:   %foo_double__carbon_thunk.decl: %foo_double__carbon_thunk.type = fn_decl @foo_double__carbon_thunk [concrete = constants.%foo_double__carbon_thunk] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.0ce = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.0ce = value_param_pattern %return.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %return: %ptr = bind_name r#return, %return.param
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -73,7 +73,6 @@ fn G() -> str {
 // CHECK:STDOUT:   %String.val: %str.ee0 = struct_value (%str.3b1, %int_5) [concrete]
 // CHECK:STDOUT:   %pattern_type.461: type = pattern_type %str.ee0 [concrete]
 // CHECK:STDOUT:   %ptr.85f: type = ptr_type %str.ee0 [concrete]
-// CHECK:STDOUT:   %pattern_type.0b0: type = pattern_type %ptr.85f [concrete]
 // CHECK:STDOUT:   %Consume__carbon_thunk.type: type = fn_type @Consume__carbon_thunk [concrete]
 // CHECK:STDOUT:   %Consume__carbon_thunk: %Consume__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
@@ -92,19 +91,15 @@ fn G() -> str {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Consume.cpp_overload_set.value: %Consume.cpp_overload_set.type = cpp_overload_set_value @Consume.cpp_overload_set [concrete = constants.%Consume.cpp_overload_set.value]
 // CHECK:STDOUT:   %Consume__carbon_thunk.decl: %Consume__carbon_thunk.type = fn_decl @Consume__carbon_thunk [concrete = constants.%Consume__carbon_thunk] {
-// CHECK:STDOUT:     %sv.patt: %pattern_type.0b0 = binding_pattern sv [concrete]
-// CHECK:STDOUT:     %sv.param_patt: %pattern_type.0b0 = value_param_pattern %sv.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %sv.param: %ptr.85f = value_param call_param0
-// CHECK:STDOUT:     %sv: %ptr.85f = bind_name sv, %sv.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Produce.cpp_overload_set.value: %Produce.cpp_overload_set.type = cpp_overload_set_value @Produce.cpp_overload_set [concrete = constants.%Produce.cpp_overload_set.value]
 // CHECK:STDOUT:   %Produce__carbon_thunk.decl: %Produce__carbon_thunk.type = fn_decl @Produce__carbon_thunk [concrete = constants.%Produce__carbon_thunk] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.0b0 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.0b0 = value_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: %ptr.85f = value_param call_param0
-// CHECK:STDOUT:     %return: %ptr.85f = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

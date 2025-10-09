@@ -347,26 +347,28 @@ import Cpp library "plus_with_int_conversion.h";
 
 fn F() {
   let c1: Cpp.C = Cpp.C.C(4);
-  // CHECK:STDERR: fail_todo_plus_with_int_conversion.carbon:[[@LINE+10]]:24: error: cannot implicitly convert expression of type `Core.IntLiteral` to `Cpp.C` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_plus_with_int_conversion.carbon:[[@LINE+11]]:24: error: cannot implicitly convert expression of type `Core.IntLiteral` to `Cpp.C` [ConversionFailure]
   // CHECK:STDERR:   let c2: Cpp.C = c1 + 5;
   // CHECK:STDERR:                        ^
-  // CHECK:STDERR: fail_todo_plus_with_int_conversion.carbon:[[@LINE+7]]:24: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(Cpp.C)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_plus_with_int_conversion.carbon:[[@LINE+8]]:24: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(Cpp.C)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let c2: Cpp.C = c1 + 5;
   // CHECK:STDERR:                        ^
-  // CHECK:STDERR: fail_todo_plus_with_int_conversion.carbon:[[@LINE+4]]:19: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   let c2: Cpp.C = c1 + 5;
-  // CHECK:STDERR:                   ^~~~~~
+  // CHECK:STDERR: fail_todo_plus_with_int_conversion.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./plus_with_int_conversion.h:6:25: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: auto operator+(C lhs, C rhs) -> C;
+  // CHECK:STDERR:                         ^
   // CHECK:STDERR:
   let c2: Cpp.C = c1 + 5;
-  // CHECK:STDERR: fail_todo_plus_with_int_conversion.carbon:[[@LINE+10]]:19: error: cannot implicitly convert expression of type `Core.IntLiteral` to `Cpp.C` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_plus_with_int_conversion.carbon:[[@LINE+11]]:19: error: cannot implicitly convert expression of type `Core.IntLiteral` to `Cpp.C` [ConversionFailure]
   // CHECK:STDERR:   let c3: Cpp.C = 6 + c1;
   // CHECK:STDERR:                   ^
-  // CHECK:STDERR: fail_todo_plus_with_int_conversion.carbon:[[@LINE+7]]:19: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(Cpp.C)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR: fail_todo_plus_with_int_conversion.carbon:[[@LINE+8]]:19: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(Cpp.C)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   let c3: Cpp.C = 6 + c1;
   // CHECK:STDERR:                   ^
-  // CHECK:STDERR: fail_todo_plus_with_int_conversion.carbon:[[@LINE-7]]:19: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   let c2: Cpp.C = c1 + 5;
-  // CHECK:STDERR:                   ^~~~~~
+  // CHECK:STDERR: fail_todo_plus_with_int_conversion.carbon:[[@LINE-22]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: ./plus_with_int_conversion.h:6:18: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: auto operator+(C lhs, C rhs) -> C;
+  // CHECK:STDERR:                  ^
   // CHECK:STDERR:
   let c3: Cpp.C = 6 + c1;
 }
@@ -1039,7 +1041,6 @@ fn F() {
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %pattern_type.a31: type = pattern_type %ptr.d9e [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %operator++__carbon_thunk.type: type = fn_type @operator++__carbon_thunk [concrete]
@@ -1062,44 +1063,24 @@ fn F() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete = constants.%C.C.cpp_overload_set.value]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator++__carbon_thunk.decl: %operator++__carbon_thunk.type = fn_decl @operator++__carbon_thunk [concrete = constants.%operator++__carbon_thunk] {
-// CHECK:STDOUT:     %operand.patt: %pattern_type.a31 = binding_pattern operand [concrete]
-// CHECK:STDOUT:     %operand.param_patt: %pattern_type.a31 = value_param_pattern %operand.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %operand.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %operand: %ptr.d9e = bind_name operand, %operand.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator--__carbon_thunk.decl: %operator--__carbon_thunk.type = fn_decl @operator--__carbon_thunk [concrete = constants.%operator--__carbon_thunk] {
-// CHECK:STDOUT:     %operand.patt: %pattern_type.a31 = binding_pattern operand [concrete]
-// CHECK:STDOUT:     %operand.param_patt: %pattern_type.a31 = value_param_pattern %operand.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %operand.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %operand: %ptr.d9e = bind_name operand, %operand.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator-__carbon_thunk.decl: %operator-__carbon_thunk.type = fn_decl @operator-__carbon_thunk [concrete = constants.%operator-__carbon_thunk] {
-// CHECK:STDOUT:     %operand.patt: %pattern_type.a31 = binding_pattern operand [concrete]
-// CHECK:STDOUT:     %operand.param_patt: %pattern_type.a31 = value_param_pattern %operand.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %operand.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %operand: %ptr.d9e = bind_name operand, %operand.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1195,7 +1176,6 @@ fn F() {
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %pattern_type.a31: type = pattern_type %ptr.d9e [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %operator+__carbon_thunk.type: type = fn_type @operator+__carbon_thunk [concrete]
@@ -1217,7 +1197,6 @@ fn F() {
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %operator<<__carbon_thunk.type: type = fn_type @operator<<__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator<<__carbon_thunk: %operator<<__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.d14: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
@@ -1260,7 +1239,6 @@ fn F() {
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %ptr.bb2: type = ptr_type bool [concrete]
-// CHECK:STDOUT:   %pattern_type.48e: type = pattern_type %ptr.bb2 [concrete]
 // CHECK:STDOUT:   %operator==__carbon_thunk.type: type = fn_type @operator==__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator==__carbon_thunk: %operator==__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %operator!=__carbon_thunk.type: type = fn_type @operator!=__carbon_thunk [concrete]
@@ -1287,375 +1265,131 @@ fn F() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete = constants.%C.C.cpp_overload_set.value]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator+__carbon_thunk.decl: %operator+__carbon_thunk.type = fn_decl @operator+__carbon_thunk [concrete = constants.%operator+__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator-__carbon_thunk.decl: %operator-__carbon_thunk.type = fn_decl @operator-__carbon_thunk [concrete = constants.%operator-__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator*__carbon_thunk.decl: %operator*__carbon_thunk.type = fn_decl @operator*__carbon_thunk [concrete = constants.%operator*__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator/__carbon_thunk.decl: %operator/__carbon_thunk.type = fn_decl @operator/__carbon_thunk [concrete = constants.%operator/__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator%__carbon_thunk.decl: %operator%__carbon_thunk.type = fn_decl @operator%__carbon_thunk [concrete = constants.%operator%__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator&__carbon_thunk.decl: %operator&__carbon_thunk.type = fn_decl @operator&__carbon_thunk [concrete = constants.%operator&__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator|__carbon_thunk.decl: %operator|__carbon_thunk.type = fn_decl @operator|__carbon_thunk [concrete = constants.%operator|__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator^__carbon_thunk.decl: %operator^__carbon_thunk.type = fn_decl @operator^__carbon_thunk [concrete = constants.%operator^__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator<<__carbon_thunk.decl: %operator<<__carbon_thunk.type = fn_decl @operator<<__carbon_thunk [concrete = constants.%operator<<__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %num_bits.patt: %pattern_type.7ce = binding_pattern num_bits [concrete]
-// CHECK:STDOUT:     %num_bits.param_patt: %pattern_type.7ce = value_param_pattern %num_bits.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %num_bits.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %num_bits: %i32 = bind_name num_bits, %num_bits.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.ee7: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1c0)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.9e9 = impl_witness_table (%Core.import_ref.ee7), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %operator>>__carbon_thunk.decl: %operator>>__carbon_thunk.type = fn_decl @operator>>__carbon_thunk [concrete = constants.%operator>>__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %num_bits.patt: %pattern_type.7ce = binding_pattern num_bits [concrete]
-// CHECK:STDOUT:     %num_bits.param_patt: %pattern_type.7ce = value_param_pattern %num_bits.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %num_bits.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %num_bits: %i32 = bind_name num_bits, %num_bits.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator+=__carbon_thunk.decl: %operator+=__carbon_thunk.type = fn_decl @operator+=__carbon_thunk [concrete = constants.%operator+=__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator-=__carbon_thunk.decl: %operator-=__carbon_thunk.type = fn_decl @operator-=__carbon_thunk [concrete = constants.%operator-=__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator*=__carbon_thunk.decl: %operator*=__carbon_thunk.type = fn_decl @operator*=__carbon_thunk [concrete = constants.%operator*=__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator/=__carbon_thunk.decl: %operator/=__carbon_thunk.type = fn_decl @operator/=__carbon_thunk [concrete = constants.%operator/=__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator%=__carbon_thunk.decl: %operator%=__carbon_thunk.type = fn_decl @operator%=__carbon_thunk [concrete = constants.%operator%=__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator&=__carbon_thunk.decl: %operator&=__carbon_thunk.type = fn_decl @operator&=__carbon_thunk [concrete = constants.%operator&=__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator|=__carbon_thunk.decl: %operator|=__carbon_thunk.type = fn_decl @operator|=__carbon_thunk [concrete = constants.%operator|=__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator^=__carbon_thunk.decl: %operator^=__carbon_thunk.type = fn_decl @operator^=__carbon_thunk [concrete = constants.%operator^=__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator==__carbon_thunk.decl: %operator==__carbon_thunk.type = fn_decl @operator==__carbon_thunk [concrete = constants.%operator==__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.48e = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.48e = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.bb2 = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.bb2 = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator!=__carbon_thunk.decl: %operator!=__carbon_thunk.type = fn_decl @operator!=__carbon_thunk [concrete = constants.%operator!=__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.48e = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.48e = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.bb2 = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.bb2 = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator>__carbon_thunk.decl: %operator>__carbon_thunk.type = fn_decl @operator>__carbon_thunk [concrete = constants.%operator>__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.48e = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.48e = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.bb2 = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.bb2 = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator<__carbon_thunk.decl: %operator<__carbon_thunk.type = fn_decl @operator<__carbon_thunk [concrete = constants.%operator<__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.48e = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.48e = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.bb2 = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.bb2 = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator>=__carbon_thunk.decl: %operator>=__carbon_thunk.type = fn_decl @operator>=__carbon_thunk [concrete = constants.%operator>=__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.48e = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.48e = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.bb2 = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.bb2 = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator<=__carbon_thunk.decl: %operator<=__carbon_thunk.type = fn_decl @operator<=__carbon_thunk [concrete = constants.%operator<=__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.48e = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.48e = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.bb2 = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.bb2 = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2303,7 +2037,6 @@ fn F() {
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %pattern_type.a31: type = pattern_type %ptr.d9e [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %operator+__carbon_thunk.type: type = fn_type @operator+__carbon_thunk [concrete]
@@ -2322,26 +2055,14 @@ fn F() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete = constants.%C.C.cpp_overload_set.value]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator+__carbon_thunk.decl: %operator+__carbon_thunk.type = fn_decl @operator+__carbon_thunk [concrete = constants.%operator+__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2488,14 +2209,12 @@ fn F() {
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %pattern_type.a31: type = pattern_type %ptr.d9e [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %ptr.bb2: type = ptr_type bool [concrete]
-// CHECK:STDOUT:   %pattern_type.48e: type = pattern_type %ptr.bb2 [concrete]
 // CHECK:STDOUT:   %operator>__carbon_thunk.type: type = fn_type @operator>__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator>__carbon_thunk: %operator>__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %operator<=__carbon_thunk.type: type = fn_type @operator<=__carbon_thunk [concrete]
@@ -2514,41 +2233,19 @@ fn F() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete = constants.%C.C.cpp_overload_set.value]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator>__carbon_thunk.decl: %operator>__carbon_thunk.type = fn_decl @operator>__carbon_thunk [concrete = constants.%operator>__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.48e = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.48e = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.bb2 = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.bb2 = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator<=__carbon_thunk.decl: %operator<=__carbon_thunk.type = fn_decl @operator<=__carbon_thunk [concrete = constants.%operator<=__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.48e = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.48e = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.bb2 = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.bb2 = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2684,14 +2381,12 @@ fn F() {
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %pattern_type.a31: type = pattern_type %ptr.d9e [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %ptr.bb2: type = ptr_type bool [concrete]
-// CHECK:STDOUT:   %pattern_type.48e: type = pattern_type %ptr.bb2 [concrete]
 // CHECK:STDOUT:   %operator==__carbon_thunk.type: type = fn_type @operator==__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator==__carbon_thunk: %operator==__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
@@ -2708,26 +2403,14 @@ fn F() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete = constants.%C.C.cpp_overload_set.value]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator==__carbon_thunk.decl: %operator==__carbon_thunk.type = fn_decl @operator==__carbon_thunk [concrete = constants.%operator==__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.48e = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.48e = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.bb2 = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.bb2 = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2829,7 +2512,6 @@ fn F() {
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.838: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %pattern_type.6c4: type = pattern_type %ptr.838 [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %operator+__carbon_thunk.type: type = fn_type @operator+__carbon_thunk [concrete]
@@ -2852,26 +2534,14 @@ fn F() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete = constants.%C.C.cpp_overload_set.value]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.6c4 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6c4 = value_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: %ptr.838 = value_param call_param0
-// CHECK:STDOUT:     %return: %ptr.838 = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator+__carbon_thunk.decl: %operator+__carbon_thunk.type = fn_decl @operator+__carbon_thunk [concrete = constants.%operator+__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.6c4 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.6c4 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.6c4 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.6c4 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6c4 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6c4 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.838 = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.838 = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.838 = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.838 = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.838 = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.838 = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2969,7 +2639,6 @@ fn F() {
 // CHECK:STDOUT:   %C1.C1.cpp_overload_set.type: type = cpp_overload_set_type @C1.C1.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C1.C1.cpp_overload_set.value: %C1.C1.cpp_overload_set.type = cpp_overload_set_value @C1.C1.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.087: type = ptr_type %C1 [concrete]
-// CHECK:STDOUT:   %pattern_type.faf: type = pattern_type %ptr.087 [concrete]
 // CHECK:STDOUT:   %C1__carbon_thunk.type: type = fn_type @C1__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C1__carbon_thunk: %C1__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C2: type = class_type @C2 [concrete]
@@ -2977,7 +2646,6 @@ fn F() {
 // CHECK:STDOUT:   %C2.C2.cpp_overload_set.type: type = cpp_overload_set_type @C2.C2.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C2.C2.cpp_overload_set.value: %C2.C2.cpp_overload_set.type = cpp_overload_set_value @C2.C2.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.51f: type = ptr_type %C2 [concrete]
-// CHECK:STDOUT:   %pattern_type.563: type = pattern_type %ptr.51f [concrete]
 // CHECK:STDOUT:   %C2__carbon_thunk.type: type = fn_type @C2__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C2__carbon_thunk: %C2__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %operator+__carbon_thunk.type: type = fn_type @operator+__carbon_thunk [concrete]
@@ -3006,11 +2674,9 @@ fn F() {
 // CHECK:STDOUT:   %C1.decl: type = class_decl @C1 [concrete = constants.%C1] {} {}
 // CHECK:STDOUT:   %C1.C1.cpp_overload_set.value: %C1.C1.cpp_overload_set.type = cpp_overload_set_value @C1.C1.cpp_overload_set [concrete = constants.%C1.C1.cpp_overload_set.value]
 // CHECK:STDOUT:   %C1__carbon_thunk.decl: %C1__carbon_thunk.type = fn_decl @C1__carbon_thunk [concrete = constants.%C1__carbon_thunk] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.faf = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.faf = value_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: %ptr.087 = value_param call_param0
-// CHECK:STDOUT:     %return: %ptr.087 = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N2: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C2 = %C2.decl
@@ -3019,41 +2685,19 @@ fn F() {
 // CHECK:STDOUT:   %C2.decl: type = class_decl @C2 [concrete = constants.%C2] {} {}
 // CHECK:STDOUT:   %C2.C2.cpp_overload_set.value: %C2.C2.cpp_overload_set.type = cpp_overload_set_value @C2.C2.cpp_overload_set [concrete = constants.%C2.C2.cpp_overload_set.value]
 // CHECK:STDOUT:   %C2__carbon_thunk.decl: %C2__carbon_thunk.type = fn_decl @C2__carbon_thunk [concrete = constants.%C2__carbon_thunk] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.563 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.563 = value_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: %ptr.51f = value_param call_param0
-// CHECK:STDOUT:     %return: %ptr.51f = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator+__carbon_thunk.decl: %operator+__carbon_thunk.type = fn_decl @operator+__carbon_thunk [concrete = constants.%operator+__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.faf = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.faf = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.563 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.563 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.563 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.563 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.087 = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.087 = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.51f = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.51f = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.51f = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.51f = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator-__carbon_thunk.decl: %operator-__carbon_thunk.type = fn_decl @operator-__carbon_thunk [concrete = constants.%operator-__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.563 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.563 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.faf = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.faf = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.563 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.563 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.51f = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.51f = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.087 = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.087 = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.51f = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.51f = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -3179,7 +2823,6 @@ fn F() {
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.838: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %pattern_type.6c4: type = pattern_type %ptr.838 [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
@@ -3200,11 +2843,9 @@ fn F() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete = constants.%C.C.cpp_overload_set.value]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.6c4 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6c4 = value_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: %ptr.838 = value_param call_param0
-// CHECK:STDOUT:     %return: %ptr.838 = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -3286,7 +2927,6 @@ fn F() {
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.de2: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %pattern_type.c36: type = pattern_type %ptr.de2 [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %operator+__carbon_thunk.type: type = fn_type @operator+__carbon_thunk [concrete]
@@ -3306,26 +2946,14 @@ fn F() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete = constants.%C.C.cpp_overload_set.value]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.c36 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.c36 = value_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: %ptr.de2 = value_param call_param0
-// CHECK:STDOUT:     %return: %ptr.de2 = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator+__carbon_thunk.decl: %operator+__carbon_thunk.type = fn_decl @operator+__carbon_thunk [concrete = constants.%operator+__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.c36 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.c36 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.c36 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.c36 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.c36 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.c36 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.de2 = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.de2 = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.de2 = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.de2 = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.de2 = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.de2 = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -3424,7 +3052,6 @@ fn F() {
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.4b2: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %pattern_type.93e: type = pattern_type %ptr.4b2 [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %operator+__carbon_thunk.type: type = fn_type @operator+__carbon_thunk [concrete]
@@ -3448,26 +3075,14 @@ fn F() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete = constants.%C.C.cpp_overload_set.value]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.93e = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.93e = value_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: %ptr.4b2 = value_param call_param0
-// CHECK:STDOUT:     %return: %ptr.4b2 = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator+__carbon_thunk.decl: %operator+__carbon_thunk.type = fn_decl @operator+__carbon_thunk [concrete = constants.%operator+__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.93e = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.93e = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.93e = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.93e = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.93e = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.93e = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.4b2 = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.4b2 = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.4b2 = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.4b2 = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.4b2 = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.4b2 = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -3570,7 +3185,6 @@ fn F() {
 // CHECK:STDOUT:   %C.C.cpp_overload_set.type: type = cpp_overload_set_type @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %pattern_type.a31: type = pattern_type %ptr.d9e [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %operator-__carbon_thunk.type: type = fn_type @operator-__carbon_thunk [concrete]
@@ -3591,37 +3205,19 @@ fn F() {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.C.cpp_overload_set.value: %C.C.cpp_overload_set.type = cpp_overload_set_value @C.C.cpp_overload_set [concrete = constants.%C.C.cpp_overload_set.value]
 // CHECK:STDOUT:   %C__carbon_thunk.decl: %C__carbon_thunk.type = fn_decl @C__carbon_thunk [concrete = constants.%C__carbon_thunk] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator-__carbon_thunk.decl: %operator-__carbon_thunk.type = fn_decl @operator-__carbon_thunk [concrete = constants.%operator-__carbon_thunk] {
-// CHECK:STDOUT:     %this.patt: %pattern_type.a31 = binding_pattern this [concrete]
-// CHECK:STDOUT:     %this.param_patt: %pattern_type.a31 = value_param_pattern %this.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %this.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %this: %ptr.d9e = bind_name this, %this.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator+__carbon_thunk.decl: %operator+__carbon_thunk.type = fn_decl @operator+__carbon_thunk [concrete = constants.%operator+__carbon_thunk] {
-// CHECK:STDOUT:     %this.patt: %pattern_type.a31 = binding_pattern this [concrete]
-// CHECK:STDOUT:     %this.param_patt: %pattern_type.a31 = value_param_pattern %this.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %this.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %this: %ptr.d9e = bind_name this, %this.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -3714,24 +3310,14 @@ fn F() {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %ptr.a04: type = ptr_type %B [concrete]
-// CHECK:STDOUT:   %pattern_type.837: type = pattern_type %ptr.a04 [concrete]
 // CHECK:STDOUT:   %operator+__carbon_thunk.type: type = fn_type @operator+__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator+__carbon_thunk: %operator+__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %operator+__carbon_thunk.decl: %operator+__carbon_thunk.type = fn_decl @operator+__carbon_thunk [concrete = constants.%operator+__carbon_thunk] {
-// CHECK:STDOUT:     %_.patt.loc14_12.1: %pattern_type.837 = binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt.loc14_12.1: %pattern_type.837 = value_param_pattern %_.patt.loc14_12.1, call_param0 [concrete]
-// CHECK:STDOUT:     %_.patt.loc14_12.2: %pattern_type.837 = binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt.loc14_12.2: %pattern_type.837 = value_param_pattern %_.patt.loc14_12.2, call_param1 [concrete]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %_.param.loc14_12.1: %ptr.a04 = value_param call_param0
-// CHECK:STDOUT:     %_.loc14_12.1: %ptr.a04 = bind_name _, %_.param.loc14_12.1
-// CHECK:STDOUT:     %_.param.loc14_12.2: %ptr.a04 = value_param call_param1
-// CHECK:STDOUT:     %_.loc14_12.2: %ptr.a04 = bind_name _, %_.param.loc14_12.2
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -3755,7 +3341,6 @@ fn F() {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.217: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %pattern_type.a31: type = pattern_type %ptr.d9e [concrete]
 // CHECK:STDOUT:   %operator+__carbon_thunk.type: type = fn_type @operator+__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator+__carbon_thunk: %operator+__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
@@ -3771,19 +3356,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %operator+__carbon_thunk.decl: %operator+__carbon_thunk.type = fn_decl @operator+__carbon_thunk [concrete = constants.%operator+__carbon_thunk] {
-// CHECK:STDOUT:     %lhs.patt: %pattern_type.a31 = binding_pattern lhs [concrete]
-// CHECK:STDOUT:     %lhs.param_patt: %pattern_type.a31 = value_param_pattern %lhs.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %rhs.patt: %pattern_type.a31 = binding_pattern rhs [concrete]
-// CHECK:STDOUT:     %rhs.param_patt: %pattern_type.a31 = value_param_pattern %rhs.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = value_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %lhs.param: %ptr.d9e = value_param call_param0
-// CHECK:STDOUT:     %lhs: %ptr.d9e = bind_name lhs, %lhs.param
-// CHECK:STDOUT:     %rhs.param: %ptr.d9e = value_param call_param1
-// CHECK:STDOUT:     %rhs: %ptr.d9e = bind_name rhs, %rhs.param
-// CHECK:STDOUT:     %return.param: %ptr.d9e = value_param call_param2
-// CHECK:STDOUT:     %return: %ptr.d9e = bind_name r#return, %return.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

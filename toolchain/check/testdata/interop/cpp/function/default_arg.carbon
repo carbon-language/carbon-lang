@@ -183,7 +183,6 @@ fn Call() {
 // CHECK:STDOUT:   %X.B.cpp_overload_set.type: type = cpp_overload_set_type @X.B.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %X.B.cpp_overload_set.value: %X.B.cpp_overload_set.type = cpp_overload_set_value @X.B.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.1f9: type = ptr_type %X [concrete]
-// CHECK:STDOUT:   %pattern_type.45c: type = pattern_type %ptr.1f9 [concrete]
 // CHECK:STDOUT:   %X.B.type: type = fn_type @X.B [concrete]
 // CHECK:STDOUT:   %X.B: %X.B.type = struct_value () [concrete]
 // CHECK:STDOUT:   %X.C.cpp_overload_set.type: type = cpp_overload_set_type @X.C.cpp_overload_set [concrete]
@@ -209,105 +208,36 @@ fn Call() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GlobalNoReturn.cpp_overload_set.value: %GlobalNoReturn.cpp_overload_set.type = cpp_overload_set_value @GlobalNoReturn.cpp_overload_set [concrete = constants.%GlobalNoReturn.cpp_overload_set.value]
 // CHECK:STDOUT:   %GlobalNoReturn.decl: %GlobalNoReturn.type = fn_decl @GlobalNoReturn [concrete = constants.%GlobalNoReturn] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.7ce = binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.7ce = value_param_pattern %b.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %c.patt: %pattern_type.7ce = binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.7ce = value_param_pattern %c.patt, call_param2 [concrete]
-// CHECK:STDOUT:     %d.patt: %pattern_type.7ce = binding_pattern d [concrete]
-// CHECK:STDOUT:     %d.param_patt: %pattern_type.7ce = value_param_pattern %d.patt, call_param3 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
-// CHECK:STDOUT:     %c.param: %i32 = value_param call_param2
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %c: %i32 = bind_name c, %c.param
-// CHECK:STDOUT:     %d.param: %i32 = value_param call_param3
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %d: %i32 = bind_name d, %d.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.ee7: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1c0)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.9e9 = impl_witness_table (%Core.import_ref.ee7), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %GlobalReturnInt.cpp_overload_set.value: %GlobalReturnInt.cpp_overload_set.type = cpp_overload_set_value @GlobalReturnInt.cpp_overload_set [concrete = constants.%GlobalReturnInt.cpp_overload_set.value]
 // CHECK:STDOUT:   %GlobalReturnInt.decl: %GlobalReturnInt.type = fn_decl @GlobalReturnInt [concrete = constants.%GlobalReturnInt] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.7ce = binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.7ce = value_param_pattern %b.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %c.patt: %pattern_type.7ce = binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.7ce = value_param_pattern %c.patt, call_param2 [concrete]
-// CHECK:STDOUT:     %d.patt: %pattern_type.7ce = binding_pattern d [concrete]
-// CHECK:STDOUT:     %d.param_patt: %pattern_type.7ce = value_param_pattern %d.patt, call_param3 [concrete]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
-// CHECK:STDOUT:     %c.param: %i32 = value_param call_param2
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %c: %i32 = bind_name c, %c.param
-// CHECK:STDOUT:     %d.param: %i32 = value_param call_param3
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %d: %i32 = bind_name d, %d.param
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
 // CHECK:STDOUT:   %X.B.cpp_overload_set.value: %X.B.cpp_overload_set.type = cpp_overload_set_value @X.B.cpp_overload_set [concrete = constants.%X.B.cpp_overload_set.value]
 // CHECK:STDOUT:   %X.B.decl: %X.B.type = fn_decl @X.B [concrete = constants.%X.B] {
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.7ce = binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.7ce = value_param_pattern %b.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %a.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %i32 = value_param call_param2
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.C.cpp_overload_set.value: %X.C.cpp_overload_set.type = cpp_overload_set_value @X.C.cpp_overload_set [concrete = constants.%X.C.cpp_overload_set.value]
 // CHECK:STDOUT:   %X.C.decl: %X.C.type = fn_decl @X.C [concrete = constants.%X.C] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.7ce = binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.7ce = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.D.cpp_overload_set.value: %X.D.cpp_overload_set.type = cpp_overload_set_value @X.D.cpp_overload_set [concrete = constants.%X.D.cpp_overload_set.value]
 // CHECK:STDOUT:   %D__carbon_thunk.decl: %D__carbon_thunk.type = fn_decl @D__carbon_thunk [concrete = constants.%D__carbon_thunk] {
-// CHECK:STDOUT:     %_.patt: %pattern_type.45c = binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.45c = value_param_pattern %_.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.7ce = binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.7ce = value_param_pattern %b.patt, call_param2 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %_.param: %ptr.1f9 = value_param call_param0
-// CHECK:STDOUT:     %_: %ptr.1f9 = bind_name _, %_.param
-// CHECK:STDOUT:     %a.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
-// CHECK:STDOUT:     %b.param: %i32 = value_param call_param2
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

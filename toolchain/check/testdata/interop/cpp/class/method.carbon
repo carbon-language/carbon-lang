@@ -229,7 +229,6 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %HasQualifiers.const_this.cpp_overload_set.value: %HasQualifiers.const_this.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.const_this.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %const: type = const_type %HasQualifiers [concrete]
 // CHECK:STDOUT:   %ptr.2cb: type = ptr_type %const [concrete]
-// CHECK:STDOUT:   %pattern_type.70c: type = pattern_type %ptr.2cb [concrete]
 // CHECK:STDOUT:   %const_this__carbon_thunk.type: type = fn_type @const_this__carbon_thunk [concrete]
 // CHECK:STDOUT:   %const_this__carbon_thunk: %const_this__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %HasQualifiers.const_ref_this.cpp_overload_set.type: type = cpp_overload_set_type @HasQualifiers.const_ref_this.cpp_overload_set [concrete]
@@ -249,19 +248,15 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %HasQualifiers.const_this.cpp_overload_set.value: %HasQualifiers.const_this.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.const_this.cpp_overload_set [concrete = constants.%HasQualifiers.const_this.cpp_overload_set.value]
 // CHECK:STDOUT:   %const_this__carbon_thunk.decl: %const_this__carbon_thunk.type = fn_decl @const_this__carbon_thunk [concrete = constants.%const_this__carbon_thunk] {
-// CHECK:STDOUT:     %this.patt: %pattern_type.70c = binding_pattern this [concrete]
-// CHECK:STDOUT:     %this.param_patt: %pattern_type.70c = value_param_pattern %this.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %this.param: %ptr.2cb = value_param call_param0
-// CHECK:STDOUT:     %this: %ptr.2cb = bind_name this, %this.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasQualifiers.const_ref_this.cpp_overload_set.value: %HasQualifiers.const_ref_this.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.const_ref_this.cpp_overload_set [concrete = constants.%HasQualifiers.const_ref_this.cpp_overload_set.value]
 // CHECK:STDOUT:   %const_ref_this__carbon_thunk.decl: %const_ref_this__carbon_thunk.type = fn_decl @const_ref_this__carbon_thunk [concrete = constants.%const_ref_this__carbon_thunk] {
-// CHECK:STDOUT:     %this.patt: %pattern_type.70c = binding_pattern this [concrete]
-// CHECK:STDOUT:     %this.param_patt: %pattern_type.70c = value_param_pattern %this.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %this.param: %ptr.2cb = value_param call_param0
-// CHECK:STDOUT:     %this: %ptr.2cb = bind_name this, %this.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasQualifiers.plain.cpp_overload_set.value: %HasQualifiers.plain.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.plain.cpp_overload_set [concrete = constants.%HasQualifiers.plain.cpp_overload_set.value]
 // CHECK:STDOUT:   %HasQualifiers.plain.decl: %HasQualifiers.plain.type = fn_decl @HasQualifiers.plain [concrete = constants.%HasQualifiers.plain] {
@@ -343,7 +338,6 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %HasQualifiers.F.cpp_overload_set.value: %HasQualifiers.F.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %const: type = const_type %HasQualifiers [concrete]
 // CHECK:STDOUT:   %ptr.2cb: type = ptr_type %const [concrete]
-// CHECK:STDOUT:   %pattern_type.70c: type = pattern_type %ptr.2cb [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.type: type = fn_type @F__carbon_thunk [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk: %F__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
@@ -363,13 +357,8 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %HasQualifiers.F.cpp_overload_set.value: %HasQualifiers.F.cpp_overload_set.type = cpp_overload_set_value @HasQualifiers.F.cpp_overload_set [concrete = constants.%HasQualifiers.F.cpp_overload_set.value]
 // CHECK:STDOUT:   %F__carbon_thunk.decl: %F__carbon_thunk.type = fn_decl @F__carbon_thunk [concrete = constants.%F__carbon_thunk] {
-// CHECK:STDOUT:     %this.patt: %pattern_type.70c = binding_pattern this [concrete]
-// CHECK:STDOUT:     %this.param_patt: %pattern_type.70c = value_param_pattern %this.patt, call_param0 [concrete]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %this.param: %ptr.2cb = value_param call_param0
-// CHECK:STDOUT:     %this: %ptr.2cb = bind_name this, %this.param
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HasQualifiers.F.decl.f862ea.2: %HasQualifiers.F.type.d208f0.2 = fn_decl @HasQualifiers.F.2 [concrete = constants.%HasQualifiers.F.efd4e4.2] {
@@ -446,7 +435,6 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %ExplicitObjectParam.F.cpp_overload_set.type: type = cpp_overload_set_type @ExplicitObjectParam.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ExplicitObjectParam.F.cpp_overload_set.value: %ExplicitObjectParam.F.cpp_overload_set.type = cpp_overload_set_value @ExplicitObjectParam.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.7f5: type = ptr_type %ExplicitObjectParam [concrete]
-// CHECK:STDOUT:   %pattern_type.a79: type = pattern_type %ptr.7f5 [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.type: type = fn_type @F__carbon_thunk [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk: %F__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ExplicitObjectParam.G.cpp_overload_set.type: type = cpp_overload_set_type @ExplicitObjectParam.G.cpp_overload_set [concrete]
@@ -456,7 +444,6 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %ExplicitObjectParam.H.cpp_overload_set.type: type = cpp_overload_set_type @ExplicitObjectParam.H.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ExplicitObjectParam.H.cpp_overload_set.value: %ExplicitObjectParam.H.cpp_overload_set.type = cpp_overload_set_value @ExplicitObjectParam.H.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.289: type = ptr_type %Another [concrete]
-// CHECK:STDOUT:   %pattern_type.548: type = pattern_type %ptr.289 [concrete]
 // CHECK:STDOUT:   %H__carbon_thunk.type: type = fn_type @H__carbon_thunk [concrete]
 // CHECK:STDOUT:   %H__carbon_thunk: %H__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -471,11 +458,9 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %Another.decl: type = class_decl @Another [concrete = constants.%Another] {} {}
 // CHECK:STDOUT:   %ExplicitObjectParam.F.cpp_overload_set.value: %ExplicitObjectParam.F.cpp_overload_set.type = cpp_overload_set_value @ExplicitObjectParam.F.cpp_overload_set [concrete = constants.%ExplicitObjectParam.F.cpp_overload_set.value]
 // CHECK:STDOUT:   %F__carbon_thunk.decl: %F__carbon_thunk.type = fn_decl @F__carbon_thunk [concrete = constants.%F__carbon_thunk] {
-// CHECK:STDOUT:     %_.patt: %pattern_type.a79 = binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.a79 = value_param_pattern %_.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %_.param: %ptr.7f5 = value_param call_param0
-// CHECK:STDOUT:     %_: %ptr.7f5 = bind_name _, %_.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ExplicitObjectParam.G.cpp_overload_set.value: %ExplicitObjectParam.G.cpp_overload_set.type = cpp_overload_set_value @ExplicitObjectParam.G.cpp_overload_set [concrete = constants.%ExplicitObjectParam.G.cpp_overload_set.value]
 // CHECK:STDOUT:   %ExplicitObjectParam.G.decl: %ExplicitObjectParam.G.type = fn_decl @ExplicitObjectParam.G [concrete = constants.%ExplicitObjectParam.G] {
@@ -485,11 +470,9 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ExplicitObjectParam.H.cpp_overload_set.value: %ExplicitObjectParam.H.cpp_overload_set.type = cpp_overload_set_value @ExplicitObjectParam.H.cpp_overload_set [concrete = constants.%ExplicitObjectParam.H.cpp_overload_set.value]
 // CHECK:STDOUT:   %H__carbon_thunk.decl: %H__carbon_thunk.type = fn_decl @H__carbon_thunk [concrete = constants.%H__carbon_thunk] {
-// CHECK:STDOUT:     %_.patt: %pattern_type.548 = binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.548 = value_param_pattern %_.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %_.param: %ptr.289 = value_param call_param0
-// CHECK:STDOUT:     %_: %ptr.289 = bind_name _, %_.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -529,13 +512,11 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %ExplicitObjectParam.F.cpp_overload_set.type: type = cpp_overload_set_type @ExplicitObjectParam.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ExplicitObjectParam.F.cpp_overload_set.value: %ExplicitObjectParam.F.cpp_overload_set.type = cpp_overload_set_value @ExplicitObjectParam.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.7f5: type = ptr_type %ExplicitObjectParam [concrete]
-// CHECK:STDOUT:   %pattern_type.a79: type = pattern_type %ptr.7f5 [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.type.eda1ac.1: type = fn_type @F__carbon_thunk.1 [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.0cd6a8.1: %F__carbon_thunk.type.eda1ac.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %ExplicitObjectParam.F.type.5d25a8.2: type = fn_type @ExplicitObjectParam.F.2 [concrete]
 // CHECK:STDOUT:   %ExplicitObjectParam.F.28cf2e.2: %ExplicitObjectParam.F.type.5d25a8.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.289: type = ptr_type %Another [concrete]
-// CHECK:STDOUT:   %pattern_type.548: type = pattern_type %ptr.289 [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.type.eda1ac.2: type = fn_type @F__carbon_thunk.2 [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.0cd6a8.2: %F__carbon_thunk.type.eda1ac.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -550,11 +531,9 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %Another.decl: type = class_decl @Another [concrete = constants.%Another] {} {}
 // CHECK:STDOUT:   %ExplicitObjectParam.F.cpp_overload_set.value: %ExplicitObjectParam.F.cpp_overload_set.type = cpp_overload_set_value @ExplicitObjectParam.F.cpp_overload_set [concrete = constants.%ExplicitObjectParam.F.cpp_overload_set.value]
 // CHECK:STDOUT:   %F__carbon_thunk.decl.e1b8ec.1: %F__carbon_thunk.type.eda1ac.1 = fn_decl @F__carbon_thunk.1 [concrete = constants.%F__carbon_thunk.0cd6a8.1] {
-// CHECK:STDOUT:     %_.patt: %pattern_type.a79 = binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.a79 = value_param_pattern %_.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %_.param: %ptr.7f5 = value_param call_param0
-// CHECK:STDOUT:     %_: %ptr.7f5 = bind_name _, %_.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ExplicitObjectParam.F.decl.28f5af.2: %ExplicitObjectParam.F.type.5d25a8.2 = fn_decl @ExplicitObjectParam.F.2 [concrete = constants.%ExplicitObjectParam.F.28cf2e.2] {
 // CHECK:STDOUT:     <elided>
@@ -562,11 +541,9 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F__carbon_thunk.decl.e1b8ec.2: %F__carbon_thunk.type.eda1ac.2 = fn_decl @F__carbon_thunk.2 [concrete = constants.%F__carbon_thunk.0cd6a8.2] {
-// CHECK:STDOUT:     %_.patt: %pattern_type.548 = binding_pattern _ [concrete]
-// CHECK:STDOUT:     %_.param_patt: %pattern_type.548 = value_param_pattern %_.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %_.param: %ptr.289 = value_param call_param0
-// CHECK:STDOUT:     %_: %ptr.289 = bind_name _, %_.param
+// CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
