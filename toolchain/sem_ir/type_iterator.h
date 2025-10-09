@@ -165,6 +165,10 @@ class TypeIterator::Step {
     // Either a FacetType or the TypeType singleton.
     TypeId facet_type_id;
   };
+  // A symbolic type value, that comes from a binding named by `entity_name_id`.
+  struct SymbolicBinding {
+    EntityNameId entity_name_id;
+  };
   // A symbolic template type value.
   struct TemplateType {};
   // A concrete non-type value, which can be found as a generic parameter for a
@@ -195,13 +199,12 @@ class TypeIterator::Step {
   struct Error {};
 
   // Each step is one of these.
-  using Any =
-      std::variant<ConcreteType, SymbolicType, TemplateType, ConcreteValue,
-                   SymbolicValue, StructFieldName, ClassStartOnly,
-                   StructStartOnly, TupleStartOnly, InterfaceStartOnly,
-                   ClassStart, StructStart, TupleStart, InterfaceStart,
-                   IntStart, ArrayStart, ConstStart, MaybeUnformedStart,
-                   PartialStart, PointerStart, End, Done, Error>;
+  using Any = std::variant<
+      ConcreteType, SymbolicType, SymbolicBinding, TemplateType, ConcreteValue,
+      SymbolicValue, StructFieldName, ClassStartOnly, StructStartOnly,
+      TupleStartOnly, InterfaceStartOnly, ClassStart, StructStart, TupleStart,
+      InterfaceStart, IntStart, ArrayStart, ConstStart, MaybeUnformedStart,
+      PartialStart, PointerStart, End, Done, Error>;
 
   template <typename T>
   auto Is() const -> bool {

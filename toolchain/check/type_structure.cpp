@@ -229,6 +229,10 @@ auto TypeStructureBuilder::Build(SemIR::TypeIterator type_iter)
         AppendStructuralSymbolic();
         break;
       }
+      case CARBON_KIND(Step::SymbolicBinding _): {
+        AppendStructuralSymbolic();
+        break;
+      }
       case CARBON_KIND(Step::TemplateType _): {
         AppendStructuralSymbolic();
         break;
