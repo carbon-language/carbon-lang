@@ -133,7 +133,8 @@ auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::ConstantId const_id)
 // facet value. Otherwise, return None.
 //
 // In particular, this returns None for non-canonical instructions if no
-// transformation was needed, to preserve source locations in the caller.
+// transformation was needed to return a facet value, to preserve source
+// locations in the caller.
 auto TryGetCanonicalFacetValue(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId;
 
