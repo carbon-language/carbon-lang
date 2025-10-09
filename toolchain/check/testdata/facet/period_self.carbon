@@ -113,9 +113,9 @@ fn F(U:! I(.Self)) {
   // CHECK:STDERR:
   U.G()->G()->G();
   // Conversion to `type` retains access to all of `U`.
-  // CHECK:STDERR: fail_todo_return_of_type_period_self.carbon:[[@LINE+4]]:3: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR: fail_todo_return_of_type_period_self.carbon:[[@LINE+4]]:3: error: member name `G` not found [MemberNameNotFound]
   // CHECK:STDERR:   (U as type).G()->G()->G();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   (U as type).G()->G()->G();
 
@@ -149,9 +149,9 @@ fn F(U:! I(.Self) & J(.Self)) {
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR:
   U.I1()->J1()->I1()->J1()->I1()->J1();
-  // CHECK:STDERR: fail_todo_return_of_type_period_self_extends_interface.carbon:[[@LINE+4]]:3: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR: fail_todo_return_of_type_period_self_extends_interface.carbon:[[@LINE+4]]:3: error: member name `J1` not found [MemberNameNotFound]
   // CHECK:STDERR:   (U as type).I1()->J1()->I1()->J1()->I1()->J1();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   (U as type).I1()->J1()->I1()->J1()->I1()->J1();
 

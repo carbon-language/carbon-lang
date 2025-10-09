@@ -113,10 +113,10 @@ fn F(U:! I where .I1 = .Self and .I2 = ()) {
   (U as type) as (I where .I1 = .Self);
 }
 
-// --- fail_todo_access_through_call_once.carbon
+// --- access_through_call_once.carbon
 library "[[@TEST_NAME]]";
 
-// TODO: Merge this test with the one below once they both work.
+// TODO: Merge this test with the one below once it works.
 
 interface I {
   let X:! type;
@@ -128,10 +128,6 @@ fn F2[U:! I](V: U*) {}
 fn F(U:! I where .X = .Self, V: U) {
   // The returned value of `G` type `U` which has access to the methods of `I`.
   U.G()->G();
-  // CHECK:STDERR: fail_todo_access_through_call_once.carbon:[[@LINE+4]]:3: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
-  // CHECK:STDERR:   (U as type).G()->G();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR:
   (U as type).G()->G();
 
   // The returned value of type `U` can be used as a value of type `U`.
@@ -166,9 +162,9 @@ fn F(U:! I where .X = .Self, V: U*) {
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR:
   U.G()->G()->G();
-  // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE+4]]:3: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE+4]]:3: error: type `.(I.X)` does not support qualified expressions [QualifiedExprUnsupported]
   // CHECK:STDERR:   (U as type).G()->G()->G();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   (U as type).G()->G()->G();
 

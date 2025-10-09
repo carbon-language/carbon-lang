@@ -242,6 +242,7 @@ auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
 auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId {
   auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
+  CARBON_DCHECK(const_inst_id.has_value());
 
   if (auto access =
           context.insts().TryGetAs<SemIR::FacetAccessType>(const_inst_id)) {
@@ -261,6 +262,14 @@ auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::ConstantId const_id)
     -> SemIR::ConstantId {
   return context.constant_values().Get(GetCanonicalFacetOrTypeValue(
       context, context.constant_values().GetInstId(const_id)));
+}
+
+auto TryGetCanonicalFacetValue(Context& context, SemIR::InstId inst_id)
+    -> SemIR::InstId {
+  if (context.insts().Get(inst_id).type_id() == SemIR::TypeType::TypeId) {
+    return GetCanonicalFacetOrTypeValue(context, inst_id);
+  }
+  return SemIR::InstId::None;
 }
 
 }  // namespace Carbon::Check

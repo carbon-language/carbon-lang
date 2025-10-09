@@ -509,6 +509,10 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
 
   // Otherwise, handle `x.F` by performing lookup into the type of `x` (where
   // `x` is `base_id`).
+  if (auto facet_value = TryGetCanonicalFacetValue(context, base_id);
+      facet_value.has_value()) {
+    base_id = facet_value;
+  }
   auto base_type_id = context.insts().Get(base_id).type_id();
 
   // Require a complete type explicitly. Materializing a temporary will too, but
