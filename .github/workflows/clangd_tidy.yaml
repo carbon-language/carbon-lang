@@ -66,6 +66,10 @@ jobs:
         if: steps.filter.outputs.has_cpp == 'true'
         run: ./scripts/create_compdb.py
 
+      - name: Build deps for clangd-tidy
+        if: steps.filter.outputs.has_cpp == 'true'
+        run: ./scripts/run_bazel.py build //scripts:deps_for_clangd_tidy
+
       - name: Install clangd-tidy
         if: steps.filter.outputs.has_cpp == 'true'
         run: pip install clangd-tidy==1.1.0.post2
