@@ -110,6 +110,21 @@ interface Z {
 // CHECK:STDERR:
 fn F(T: Z where .X = (), v: T.X);
 
+// --- fail_todo_member_lookup_in_type_of_runtime_facet_with_value.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  fn G();
+}
+
+fn F(T: Z) {
+  // CHECK:STDERR: fail_todo_member_lookup_in_type_of_runtime_facet_with_value.carbon:[[@LINE+4]]:3: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+  // CHECK:STDERR:   T.G();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR:
+  T.G();
+}
+
 // CHECK:STDOUT: --- facet_value_copy_from_reference.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

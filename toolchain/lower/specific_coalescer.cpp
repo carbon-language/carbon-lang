@@ -80,10 +80,20 @@ auto SpecificCoalescer::CoalesceEquivalentSpecifics(
           // Removed the replaced specific from the list of emitted specifics.
           // Only the top level, since the others are somewhere else in the
           // vector, they will be found and removed during processing.
-          specifics_to_delete.push_back(specifics[j]);
-          specifics[j] = specifics[specifics.size() - 1];
-          specifics.pop_back();
-          --j;
+          if (equivalent_specifics_.Get(specifics[j]).has_value() &&
+              equivalent_specifics_.Get(specifics[j]) != specifics[j]) {
+            specifics_to_delete.push_back(specifics[j]);
+            specifics[j] = specifics[specifics.size() - 1];
+            specifics.pop_back();
+            --j;
+          } else {
+            // j was the canonical one, remove specifics[i], exit j loop.
+            specifics_to_delete.push_back(specifics[i]);
+            specifics[i] = specifics[specifics.size() - 1];
+            specifics.pop_back();
+            --i;
+            break;
+          }
         } else {
           // Only mark non-equivalence based on state for starting specifics.
           InsertPair(specifics[i], specifics[j], non_equivalent_specifics_);

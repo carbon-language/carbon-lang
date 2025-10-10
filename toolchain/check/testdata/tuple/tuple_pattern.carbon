@@ -179,8 +179,8 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %.loc8_30.2: init %empty_struct_type = struct_init () to %tuple.elem1.loc8_31 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_31.3: init %empty_struct_type = converted %.loc8_30.1, %.loc8_30.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_31.4: init %tuple.type.b6b = tuple_init (%.loc8_31.2, %.loc8_31.3) to %.var.loc8 [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc8_3.1: init %tuple.type.b6b = converted %.loc8_31.1, %.loc8_31.4 [concrete = constants.%tuple]
-// CHECK:STDOUT:   assign %.var.loc8, %.loc8_3.1
+// CHECK:STDOUT:   %.loc8_3: init %tuple.type.b6b = converted %.loc8_31.1, %.loc8_31.4 [concrete = constants.%tuple]
+// CHECK:STDOUT:   assign %.var.loc8, %.loc8_3
 // CHECK:STDOUT:   %tuple.elem0.loc8_3: ref %empty_struct_type = tuple_access %.var.loc8, element0
 // CHECK:STDOUT:   %tuple.elem1.loc8_3: ref %empty_struct_type = tuple_access %.var.loc8, element1
 // CHECK:STDOUT:   %.loc8_12.1: type = splice_block %.loc8_12.3 [concrete = constants.%empty_struct_type] {
@@ -193,15 +193,11 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:     %.loc8_19.3: type = converted %.loc8_19.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %empty_struct_type = bind_name d, %tuple.elem1.loc8_3
-// CHECK:STDOUT:   %facet_value.loc8: %type_where = facet_value constants.%tuple.type.b6b, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc8_3.2: %type_where = converted constants.%tuple.type.b6b, %facet_value.loc8 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8: <bound method> = bound_method %.var.loc8, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f21
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %.var.loc8, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc8: %ptr.8fc = addr_of %.var.loc8
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc8: init %empty_tuple.type = call %bound_method.loc8(%addr.loc8)
-// CHECK:STDOUT:   %facet_value.loc7: %type_where = facet_value constants.%tuple.type.b6b, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc7_3: %type_where = converted constants.%tuple.type.b6b, %facet_value.loc7 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7: <bound method> = bound_method %.var.loc7, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f21
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc7: <bound method> = bound_method %.var.loc7, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
@@ -249,8 +245,8 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %.loc6_31.2: init %empty_struct_type = struct_init () to %tuple.elem1.loc6 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc6_32.3: init %empty_struct_type = converted %.loc6_31.1, %.loc6_31.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc6_32.4: init %tuple.type.b6b = tuple_init (%.loc6_32.2, %.loc6_32.3) to %tuple.var [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc6_3.1: init %tuple.type.b6b = converted %.loc6_32.1, %.loc6_32.4 [concrete = constants.%tuple]
-// CHECK:STDOUT:   assign %tuple.var, %.loc6_3.1
+// CHECK:STDOUT:   %.loc6_3: init %tuple.type.b6b = converted %.loc6_32.1, %.loc6_32.4 [concrete = constants.%tuple]
+// CHECK:STDOUT:   assign %tuple.var, %.loc6_3
 // CHECK:STDOUT:   %.loc6_21.1: type = splice_block %.loc6_21.5 [concrete = constants.%tuple.type.b6b] {
 // CHECK:STDOUT:     %.loc6_16: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc6_20: %empty_struct_type = struct_literal ()
@@ -277,8 +273,8 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %.loc7_24.3: init %empty_struct_type = struct_init () to %tuple.elem1.loc7_24.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc7_24.4: init %empty_struct_type = converted %tuple.elem1.loc7_24.1, %.loc7_24.3 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc7_24.5: init %tuple.type.b6b = tuple_init (%.loc7_24.2, %.loc7_24.4) to %.var [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc7_3.1: init %tuple.type.b6b = converted %tuple.ref, %.loc7_24.5 [concrete = constants.%tuple]
-// CHECK:STDOUT:   assign %.var, %.loc7_3.1
+// CHECK:STDOUT:   %.loc7_3: init %tuple.type.b6b = converted %tuple.ref, %.loc7_24.5 [concrete = constants.%tuple]
+// CHECK:STDOUT:   assign %.var, %.loc7_3
 // CHECK:STDOUT:   %tuple.elem0.loc7_3: ref %empty_struct_type = tuple_access %.var, element0
 // CHECK:STDOUT:   %tuple.elem1.loc7_3: ref %empty_struct_type = tuple_access %.var, element1
 // CHECK:STDOUT:   %.loc7_12.1: type = splice_block %.loc7_12.3 [concrete = constants.%empty_struct_type] {
@@ -291,15 +287,11 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:     %.loc7_19.3: type = converted %.loc7_19.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %empty_struct_type = bind_name y, %tuple.elem1.loc7_3
-// CHECK:STDOUT:   %facet_value.loc7: %type_where = facet_value constants.%tuple.type.b6b, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc7_3.2: %type_where = converted constants.%tuple.type.b6b, %facet_value.loc7 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7: <bound method> = bound_method %.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f21
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc7: <bound method> = bound_method %.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc7: %ptr.8fc = addr_of %.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc7: init %empty_tuple.type = call %bound_method.loc7(%addr.loc7)
-// CHECK:STDOUT:   %facet_value.loc6: %type_where = facet_value constants.%tuple.type.b6b, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc6_3.2: %type_where = converted constants.%tuple.type.b6b, %facet_value.loc6 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc6: <bound method> = bound_method %tuple.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f21
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc6: <bound method> = bound_method %tuple.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
@@ -348,8 +340,8 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %.loc14_24.3: init %empty_struct_type = struct_init () to %tuple.elem1.loc14_24.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc14_24.4: init %empty_struct_type = converted %tuple.elem1.loc14_24.1, %.loc14_24.3 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc14_24.5: init %tuple.type.b6b = tuple_init (%.loc14_24.2, %.loc14_24.4) to %.var [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc14_3.1: init %tuple.type.b6b = converted %tuple.ref, %.loc14_24.5 [concrete = constants.%tuple]
-// CHECK:STDOUT:   assign %.var, %.loc14_3.1
+// CHECK:STDOUT:   %.loc14_3: init %tuple.type.b6b = converted %tuple.ref, %.loc14_24.5 [concrete = constants.%tuple]
+// CHECK:STDOUT:   assign %.var, %.loc14_3
 // CHECK:STDOUT:   %tuple.elem0.loc14_3: ref %empty_struct_type = tuple_access %.var, element0
 // CHECK:STDOUT:   %tuple.elem1.loc14_3: ref %empty_struct_type = tuple_access %.var, element1
 // CHECK:STDOUT:   %.loc14_12.1: type = splice_block %.loc14_12.3 [concrete = constants.%empty_struct_type] {
@@ -362,8 +354,6 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:     %.loc14_19.3: type = converted %.loc14_19.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %empty_struct_type = bind_name y, %tuple.elem1.loc14_3
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%tuple.type.b6b, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc14_3.2: %type_where = converted constants.%tuple.type.b6b, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f21
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
@@ -382,8 +372,8 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.var: ref %tuple.type.b6b = var %.var_patt
 // CHECK:STDOUT:   %MakeTuple.ref: %MakeTuple.type = name_ref MakeTuple, file.%MakeTuple.decl [concrete = constants.%MakeTuple]
-// CHECK:STDOUT:   %.loc22_3.1: ref %tuple.type.b6b = splice_block %.var {}
-// CHECK:STDOUT:   %MakeTuple.call: init %tuple.type.b6b = call %MakeTuple.ref() to %.loc22_3.1
+// CHECK:STDOUT:   %.loc22_3: ref %tuple.type.b6b = splice_block %.var {}
+// CHECK:STDOUT:   %MakeTuple.call: init %tuple.type.b6b = call %MakeTuple.ref() to %.loc22_3
 // CHECK:STDOUT:   assign %.var, %MakeTuple.call
 // CHECK:STDOUT:   %tuple.elem0: ref %empty_struct_type = tuple_access %.var, element0
 // CHECK:STDOUT:   %tuple.elem1: ref %empty_struct_type = tuple_access %.var, element1
@@ -397,8 +387,6 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:     %.loc22_19.3: type = converted %.loc22_19.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %empty_struct_type = bind_name y, %tuple.elem1
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%tuple.type.b6b, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc22_3.2: %type_where = converted constants.%tuple.type.b6b, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f21
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

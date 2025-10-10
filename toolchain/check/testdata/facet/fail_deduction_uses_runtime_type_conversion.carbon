@@ -290,15 +290,11 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %.loc41_19.4: %RuntimeConvertTo = bind_value %.loc41_19.3
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%tuple, <error>) [concrete = <error>]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn(%holds_to.ref)
-// CHECK:STDOUT:   %facet_value.loc41: %type_where = facet_value constants.%RuntimeConvertTo, () [concrete = constants.%facet_value.d7d]
-// CHECK:STDOUT:   %.loc41_19.5: %type_where = converted constants.%RuntimeConvertTo, %facet_value.loc41 [concrete = constants.%facet_value.d7d]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc41: <bound method> = bound_method %.loc41_19.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.56b
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.56b, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.d7d) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.f82]
 // CHECK:STDOUT:   %bound_method.loc41_19.2: <bound method> = bound_method %.loc41_19.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc41: %ptr.339 = addr_of %.loc41_19.3
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc41: init %empty_tuple.type = call %bound_method.loc41_19.2(%addr.loc41)
-// CHECK:STDOUT:   %facet_value.loc30: %type_where = facet_value constants.%RuntimeConvertFrom, () [concrete = constants.%facet_value.631]
-// CHECK:STDOUT:   %.loc30_36.5: %type_where = converted constants.%RuntimeConvertFrom, %facet_value.loc30 [concrete = constants.%facet_value.631]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc30: <bound method> = bound_method %.loc30_36.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.558
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.558, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.631) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.451]
 // CHECK:STDOUT:   %bound_method.loc30: <bound method> = bound_method %.loc30_36.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2

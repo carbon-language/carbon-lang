@@ -167,8 +167,6 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %specific_fn.loc21_37: <specific function> = specific_function %impl.elem0.loc21_37, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc21_37.2: <bound method> = bound_method %.loc21_37.2, %specific_fn.loc21_37
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc21_37.2(%.loc21_37.2)
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%Class, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc21_26.11: %type_where = converted constants.%Class, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc21_26.10, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.635
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.635, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc21_26.5: <bound method> = bound_method %.loc21_26.10, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

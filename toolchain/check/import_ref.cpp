@@ -3654,8 +3654,25 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
   // Resolve will assign the constant.
   auto load_ir_inst = indirect_insts.pop_back_val();
   ImportRefResolver resolver(&context, load_ir_inst.ir_id());
+
+  // Loading an import ref creates local constants from the import ones, but
+  // shouldn't be generating novel instructions in the semir as a side effect of
+  // that process. Doing so in a generic context would also cause them to end up
+  // in the eval block, which would be doubly wrong.
+  context.inst_block_stack().Push();
+
   auto type_id = resolver.ResolveType(load_type_id);
   auto constant_id = resolver.Resolve(load_ir_inst.inst_id());
+
+  CARBON_CHECK(
+      context.inst_block_stack().PeekCurrentBlockContents().empty(),
+      "Importing an instruction shouldn't add new instructions to the "
+      "local inst block. Found {0} new instructions, first is {1}: {2}.",
+      context.inst_block_stack().PeekCurrentBlockContents().size(),
+      context.inst_block_stack().PeekCurrentBlockContents().front(),
+      context.insts().Get(
+          context.inst_block_stack().PeekCurrentBlockContents().front()));
+  context.inst_block_stack().PopAndDiscard();
 
   // Replace the ImportRefUnloaded instruction with ImportRefLoaded. This
   // doesn't use ReplacePlaceholderImportedInst because it would trigger

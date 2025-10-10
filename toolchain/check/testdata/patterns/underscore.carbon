@@ -185,15 +185,13 @@ fn F() -> {} {
 // CHECK:STDOUT:   %_.var: ref %empty_struct_type = var %_.var_patt
 // CHECK:STDOUT:   %.loc9_16.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc9_16.2: init %empty_struct_type = struct_init () to %_.var [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc9_3.1: init %empty_struct_type = converted %.loc9_16.1, %.loc9_16.2 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   assign %_.var, %.loc9_3.1
+// CHECK:STDOUT:   %.loc9_3: init %empty_struct_type = converted %.loc9_16.1, %.loc9_16.2 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   assign %_.var, %.loc9_3
 // CHECK:STDOUT:   %.loc9_11.1: type = splice_block %.loc9_11.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc9_11.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc9_11.3: type = converted %.loc9_11.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.loc9: ref %empty_struct_type = bind_name _, %_.var
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value constants.%empty_struct_type, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc9_3.2: %type_where = converted constants.%empty_struct_type, %facet_value [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %_.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.596
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.596, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %_.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

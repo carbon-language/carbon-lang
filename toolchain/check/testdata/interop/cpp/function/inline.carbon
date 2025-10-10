@@ -361,15 +361,11 @@ fn MyF() {
 // CHECK:STDOUT:   %.loc16_34.3: %i16 = value_of_initializer %.loc16_34.2
 // CHECK:STDOUT:   %.loc16_34.4: %i16 = converted %.loc16_34.2, %.loc16_34.3
 // CHECK:STDOUT:   %r4: %i16 = bind_name r4, %.loc16_34.4
-// CHECK:STDOUT:   %facet_value.loc16: %type_where = facet_value constants.%i16, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc16_33.5: %type_where = converted constants.%i16, %facet_value.loc16 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc16: <bound method> = bound_method %.loc16_33.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.89b
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc16_33.5: <bound method> = bound_method %.loc16_33.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc16_33: %ptr.251 = addr_of %.loc16_33.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc16: init %empty_tuple.type = call %bound_method.loc16_33.5(%addr.loc16_33)
-// CHECK:STDOUT:   %facet_value.loc14: %type_where = facet_value constants.%i16, () [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc14_32.5: %type_where = converted constants.%i16, %facet_value.loc14 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc14: <bound method> = bound_method %.loc14_32.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.89b
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc14_32.5: <bound method> = bound_method %.loc14_32.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2

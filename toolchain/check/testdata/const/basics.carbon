@@ -164,8 +164,6 @@ fn G(p: const (const C)**) -> C** {
 // CHECK:STDOUT: fn @B(%p.param: %const.2b1) -> %const.2b1 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %const.2b1 = name_ref p, %p
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value constants.%ptr.019, (constants.%Copy.impl_witness.999) [concrete = constants.%Copy.facet.9e3]
-// CHECK:STDOUT:   %.loc11: %Copy.type = converted constants.%ptr.019, %Copy.facet [concrete = constants.%Copy.facet.9e3]
 // CHECK:STDOUT:   %impl.elem0: %.8d1 = impl_witness_access constants.%Copy.impl_witness.f32, element0 [concrete = constants.%const.as.Copy.impl.Op.bb2]
 // CHECK:STDOUT:   %bound_method.loc11_10.1: <bound method> = bound_method %p.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @const.as.Copy.impl.Op(constants.%Copy.facet.9e3) [concrete = constants.%const.as.Copy.impl.Op.specific_fn]

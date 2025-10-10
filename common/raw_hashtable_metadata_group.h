@@ -1001,6 +1001,7 @@ inline auto MetadataGroup::SimdLoad(const uint8_t* metadata, ssize_t index)
   return g;
 }
 
+// NOLINTNEXTLINE(readability-non-const-parameter): Mutation is in #if.
 inline auto MetadataGroup::SimdStore(uint8_t* metadata, ssize_t index) const
     -> void {
 #if CARBON_NEON_SIMD_SUPPORT
