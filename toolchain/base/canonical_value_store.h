@@ -30,7 +30,8 @@ class CanonicalValueStore {
   using RefType = ValueStoreTypes<ValueT>::RefType;
   using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
 
-  // Stores a canonical copy of the value and returns an ID to reference it.
+  // Stores a canonical copy of the value and returns an ID to reference it. If
+  // the value is already in the store, returns the ID of the existing value.
   auto Add(ValueType value) -> IdT;
 
   // Returns the value for an ID.

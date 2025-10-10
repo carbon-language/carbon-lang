@@ -140,7 +140,7 @@ class IndexIterator
     return *this;
   }
 
-  // Prints the raw token index.
+  // Prints the raw index.
   auto Print(llvm::raw_ostream& output) const -> void {
     output << index_.index;
   }

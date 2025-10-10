@@ -64,7 +64,7 @@ using ExprRegionStore = ValueStore<ExprRegionId, ExprRegion>;
 
 using CustomLayoutStore = BlockValueStore<CustomLayoutId, uint64_t>;
 
-// Provides semantic analysis on a Parse::Tree.
+// The semantic IR for a single file.
 class File : public Printable<File> {
  public:
   using IdentifiedFacetTypeStore =
