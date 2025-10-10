@@ -81,7 +81,7 @@ Example usage:
     # The set of "Make" functions in dump.cpp, and whether the ids are printed
     # in decimal or hex.
     id_types = {
-        "class": ("SemIR::MakeClassId", DECIMAL),
+        "class": ("SemIR::MakeClassId", HEX),
         "constant": ("SemIR::MakeConstantId", DECIMAL),
         "symbolic_constant": ("SemIR::MakeSymbolicConstantId", DECIMAL),
         "entity_name": ("SemIR::MakeEntityNameId", DECIMAL),
