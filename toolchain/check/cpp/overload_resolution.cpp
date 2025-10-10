@@ -35,7 +35,7 @@ static auto GetCppName(Context& context, SemIR::NameId name_id)
 // Adds the given overload candidates to the candidate set.
 static auto AddOverloadCandidates(clang::Sema& sema,
                                   clang::OverloadCandidateSet& candidate_set,
-                                  const clang::UnresolvedSetImpl& functions,
+                                  const clang::UnresolvedSet<4>& functions,
                                   clang::Expr* self_arg,
                                   llvm::ArrayRef<clang::Expr*> args) -> void {
   constexpr bool SuppressUserConversions = false;
@@ -43,7 +43,7 @@ static auto AddOverloadCandidates(clang::Sema& sema,
   constexpr clang::TemplateArgumentListInfo* ExplicitTemplateArgs = nullptr;
 
   for (auto found_decl : functions.pairs()) {
-    auto* decl = found_decl.getDecl()->getUnderlyingDecl();
+    auto* decl = found_decl->getUnderlyingDecl();
     auto* template_decl = dyn_cast<clang::FunctionTemplateDecl>(decl);
     auto* fn_decl = template_decl ? template_decl->getTemplatedDecl()
                                   : cast<clang::FunctionDecl>(decl);
