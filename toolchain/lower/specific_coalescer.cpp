@@ -137,8 +137,13 @@ auto SpecificCoalescer::ProcessSpecificEquivalence(
   // chains in `IsKnownEquivalence`.
   equivalent_specifics_.Set(specific_id1, canon_id1);
   equivalent_specifics_.Set(specific_id2, canon_id1);
-  equivalent_specifics_.Set(canon_id1, canon_id1);
   equivalent_specifics_.Set(canon_id2, canon_id1);
+  // Only update the canonical for itself if it has no value, otherwise a
+  // "better" canonical was previously added and the chain will be followed
+  // when deleting specifics, by calling `UpdateEquivalentSpecific`.
+  if (!equivalent_specifics_.Get(canon_id1).has_value()) {
+    equivalent_specifics_.Set(canon_id1, canon_id1);
+  }
 }
 
 auto SpecificCoalescer::UpdateEquivalentSpecific(SemIR::SpecificId specific_id)
