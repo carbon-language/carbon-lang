@@ -161,6 +161,7 @@ fn MyF(bar : Cpp.Bar*) {
 class Bar {
  public:
   virtual ~Bar();
+  virtual void f();
 };
 
 // --- import_dynamic.carbon
@@ -171,6 +172,18 @@ import Cpp library "dynamic.h";
 
 //@dump-sem-ir-begin
 fn MyF(bar: Cpp.Bar*);
+//@dump-sem-ir-end
+
+// --- call_dynamic.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "dynamic.h";
+
+//@dump-sem-ir-begin
+fn MyF(bar: Cpp.Bar*) {
+  bar->f();
+}
 //@dump-sem-ir-end
 
 // ============================================================================
@@ -484,6 +497,61 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- call_dynamic.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
+// CHECK:STDOUT:   %ptr.f68: type = ptr_type %Bar [concrete]
+// CHECK:STDOUT:   %pattern_type.146: type = pattern_type %ptr.f68 [concrete]
+// CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Bar.f.cpp_overload_set.type: type = cpp_overload_set_type @Bar.f.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Bar.f.cpp_overload_set.value: %Bar.f.cpp_overload_set.type = cpp_overload_set_value @Bar.f.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Bar.f.type: type = fn_type @Bar.f [concrete]
+// CHECK:STDOUT:   %Bar.f: %Bar.f.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .Bar = %Bar.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
+// CHECK:STDOUT:   %Bar.f.cpp_overload_set.value: %Bar.f.cpp_overload_set.type = cpp_overload_set_value @Bar.f.cpp_overload_set [concrete = constants.%Bar.f.cpp_overload_set.value]
+// CHECK:STDOUT:   %Bar.f.decl: %Bar.f.type = fn_decl @Bar.f [concrete = constants.%Bar.f] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
+// CHECK:STDOUT:     %bar.patt: %pattern_type.146 = binding_pattern bar [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type.146 = value_param_pattern %bar.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %bar.param: %ptr.f68 = value_param call_param0
+// CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr.f68] {
+// CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
+// CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr.f68]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %bar: %ptr.f68 = bind_name bar, %bar.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr.f68) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %bar.ref: %ptr.f68 = name_ref bar, %bar
+// CHECK:STDOUT:   %.loc8: ref %Bar = deref %bar.ref
+// CHECK:STDOUT:   %f.ref: %Bar.f.cpp_overload_set.type = name_ref f, imports.%Bar.f.cpp_overload_set.value [concrete = constants.%Bar.f.cpp_overload_set.value]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8, %f.ref
+// CHECK:STDOUT:   %addr: %ptr.f68 = addr_of %.loc8
+// CHECK:STDOUT:   %Bar.f.call: init %empty_tuple.type = call imports.%Bar.f.decl(%addr)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_to_inherit_public.carbon
 // CHECK:STDOUT:
