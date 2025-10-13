@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import argparse
 import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -92,7 +93,12 @@ def main() -> None:
         argv.append("--file_tests=" + ",".join(file_tests))
     # Provide an empty stdin so that the driver tests that read from stdin
     # don't block waiting for input. This matches the behavior of `bazel test`.
-    subprocess.run(argv, check=True)
+    result = subprocess.run(argv)
+    if result.returncode != 0:
+        sys.exit(
+            f"Command `{shlex.join(argv)}` failed with exit code "
+            f"`{result.returncode}`"
+        )
 
 
 if __name__ == "__main__":
