@@ -29,6 +29,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/call.h"
 #include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
@@ -41,6 +42,7 @@
 #include "toolchain/check/import.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
@@ -1221,26 +1223,39 @@ static auto MapQualifiedType(Context& context, clang::QualType type,
   return type_expr;
 }
 
+// Returns the type `Core.Optional(T)`, where  `T` is described by
+// `inner_type_inst_id`.
+static auto MakeOptionalType(Context& context, SemIR::LocId loc_id,
+                             SemIR::InstId inner_type_inst_id) -> TypeExpr {
+  auto fn_inst_id = LookupNameInCore(context, loc_id, "Optional");
+  auto call_id = PerformCall(context, loc_id, fn_inst_id, {inner_type_inst_id});
+  return ExprAsType(context, loc_id, call_id);
+}
+
 // Maps a C++ pointer type to a Carbon pointer type.
-static auto MapPointerType(Context& context, clang::QualType type,
-                           TypeExpr pointee_type_expr) -> TypeExpr {
+static auto MapPointerType(Context& context, SemIR::LocId loc_id,
+                           clang::QualType type, TypeExpr pointee_type_expr)
+    -> TypeExpr {
   CARBON_CHECK(type->isPointerType());
 
+  bool optional = false;
   if (auto nullability = type->getNullability();
       !nullability.has_value() ||
       *nullability != clang::NullabilityKind::NonNull) {
     // If the type was produced by C++ template substitution, then we assume it
     // was deduced from a Carbon pointer type, so it's non-null.
     if (!type->getAs<clang::SubstTemplateTypeParmType>()) {
-      // TODO: Support nullable pointers.
-      return TypeExpr::None;
+      optional = true;
     }
   }
 
-  SemIR::TypeId pointer_type_id =
-      GetPointerType(context, pointee_type_expr.inst_id);
-  return {.inst_id = context.types().GetInstId(pointer_type_id),
-          .type_id = pointer_type_id};
+  TypeExpr pointer_type_expr = TypeExpr::ForUnsugared(
+      context, GetPointerType(context, pointee_type_expr.inst_id));
+  if (optional) {
+    pointer_type_expr =
+        MakeOptionalType(context, loc_id, pointer_type_expr.inst_id);
+  }
+  return pointer_type_expr;
 }
 
 // Maps a C++ reference type to a Carbon type.
@@ -1254,10 +1269,8 @@ static auto MapReferenceType(Context& context, clang::QualType type,
     return referenced_type_expr;
   }
 
-  SemIR::TypeId pointer_type_id =
-      GetPointerType(context, referenced_type_expr.inst_id);
-  return {.inst_id = context.types().GetInstId(pointer_type_id),
-          .type_id = pointer_type_id};
+  return TypeExpr::ForUnsugared(
+      context, GetPointerType(context, referenced_type_expr.inst_id));
 }
 
 // Maps a C++ type to a Carbon type. `type` should not be canonicalized because
@@ -1292,7 +1305,7 @@ static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
     if (wrapper.hasQualifiers()) {
       mapped = MapQualifiedType(context, wrapper, mapped);
     } else if (wrapper->isPointerType()) {
-      mapped = MapPointerType(context, wrapper, mapped);
+      mapped = MapPointerType(context, loc_id, wrapper, mapped);
     } else if (wrapper->isReferenceType()) {
       mapped = MapReferenceType(context, wrapper, mapped);
     } else {

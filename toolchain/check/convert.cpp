@@ -1706,6 +1706,11 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                             self_id, arg_refs, return_slot_arg_id);
 }
 
+auto TypeExpr::ForUnsugared(Context& context, SemIR::TypeId type_id)
+    -> TypeExpr {
+  return {.inst_id = context.types().GetInstId(type_id), .type_id = type_id};
+}
+
 auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
                 bool diagnose) -> TypeExpr {
   auto type_inst_id =
