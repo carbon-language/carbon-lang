@@ -356,6 +356,18 @@ class Derived {
     // CHECK:STDERR: fail_import_function_member_private.carbon: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     static_fn();
+    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+5]]:5: error: cannot access private member `static_fn` of type `Cpp.C` [ClassInvalidMemberAccess]
+    // CHECK:STDERR:     Derived.static_fn();
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_import_function_member_private.carbon: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:
+    Derived.static_fn();
+    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+5]]:5: error: cannot access private member `static_fn` of type `Cpp.C` [ClassInvalidMemberAccess]
+    // CHECK:STDERR:     Cpp.C.static_fn();
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_import_function_member_private.carbon: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:
+    Cpp.C.static_fn();
   }
 }
 
