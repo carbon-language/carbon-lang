@@ -3500,36 +3500,29 @@ static auto FinishPendingGeneric(ImportRefResolver& resolver,
     -> void {
   const auto& import_generic =
       resolver.import_generics().Get(pending.import_id);
+  auto& local_generic = resolver.local_generics().Get(pending.local_id);
 
   // Load the bindings for the generic eagerly; they're used to form the self
   // specific.
   // TODO: Avoid recursion.
-  for (auto binding_id : resolver.local_inst_blocks().Get(
-           resolver.local_generics().Get(pending.local_id).bindings_id)) {
+  for (auto binding_id :
+       resolver.local_inst_blocks().Get(local_generic.bindings_id)) {
     LoadImportRef(resolver.local_context(), binding_id);
   }
 
-  // Don't store the local generic between calls: the generics list can be
-  // reallocated by ResolveLocalEvalBlock importing more specifics.
-
-  auto decl_block_id =
+  local_generic.decl_block_id =
       ResolveLocalEvalBlock(resolver, import_generic, pending.local_id,
                             SemIR::GenericInstIndex::Region::Declaration);
-  resolver.local_generics().Get(pending.local_id).decl_block_id = decl_block_id;
 
-  auto local_decl_id = resolver.local_generics().Get(pending.local_id).decl_id;
-  auto self_specific_id = MakeSelfSpecific(
-      resolver.local_context(), SemIR::LocId(local_decl_id), pending.local_id);
-  resolver.local_generics().Get(pending.local_id).self_specific_id =
-      self_specific_id;
+  local_generic.self_specific_id =
+      MakeSelfSpecific(resolver.local_context(),
+                       SemIR::LocId(local_generic.decl_id), pending.local_id);
   resolver.AddPendingSpecific({.import_id = import_generic.self_specific_id,
-                               .local_id = self_specific_id});
+                               .local_id = local_generic.self_specific_id});
 
-  auto definition_block_id =
+  local_generic.definition_block_id =
       ResolveLocalEvalBlock(resolver, import_generic, pending.local_id,
                             SemIR::GenericInstIndex::Region::Definition);
-  resolver.local_generics().Get(pending.local_id).definition_block_id =
-      definition_block_id;
 }
 
 // Resolves and returns a local inst block of constant instructions
@@ -3551,27 +3544,17 @@ static auto FinishPendingSpecific(ImportRefResolver& resolver,
     -> void {
   const auto& import_specific =
       resolver.import_specifics().Get(pending.import_id);
+  auto& local_specific = resolver.local_specifics().Get(pending.local_id);
 
-  // Don't store the local specific between calls: the specifics list can be
-  // reallocated by ResolveLocalInstBlock importing more specifics.
-
-  if (!resolver.local_specifics()
-           .Get(pending.local_id)
-           .decl_block_id.has_value()) {
-    auto decl_block_id =
+  if (!local_specific.decl_block_id.has_value()) {
+    local_specific.decl_block_id =
         ResolveLocalInstBlock(resolver, import_specific.decl_block_id);
-    resolver.local_specifics().Get(pending.local_id).decl_block_id =
-        decl_block_id;
   }
 
-  if (!resolver.local_specifics()
-           .Get(pending.local_id)
-           .definition_block_id.has_value() &&
+  if (!local_specific.definition_block_id.has_value() &&
       import_specific.definition_block_id.has_value()) {
-    auto definition_block_id =
+    local_specific.definition_block_id =
         ResolveLocalInstBlock(resolver, import_specific.definition_block_id);
-    resolver.local_specifics().Get(pending.local_id).definition_block_id =
-        definition_block_id;
   }
 }
 
