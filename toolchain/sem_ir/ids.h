@@ -391,6 +391,8 @@ struct SpecificInterfaceId : public IdBase<SpecificInterfaceId> {
   static constexpr llvm::StringLiteral Label = "specific_interface";
 
   using IdBase::IdBase;
+
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 // The index of an instruction that depends on generic parameters within a

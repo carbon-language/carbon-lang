@@ -30,6 +30,9 @@ class CanonicalValueStore {
   using RefType = ValueStoreTypes<ValueT>::RefType;
   using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
 
+  CanonicalValueStore() = default;
+  explicit CanonicalValueStore(IdTag tag) : values_(tag) {}
+
   // Stores a canonical copy of the value and returns an ID to reference it. If
   // the value is already in the store, returns the ID of the existing value.
   auto Add(ValueType value) -> IdT;
@@ -62,6 +65,8 @@ class CanonicalValueStore {
     auto bytes = set_.ComputeMetrics(KeyContext(&values_)).storage_bytes;
     mem_usage.Add(MemUsage::ConcatLabel(label, "set_"), bytes, bytes);
   }
+
+  auto GetRawIndex(IdT id) const -> int32_t { return values_.GetRawIndex(id); }
 
  private:
   class KeyContext;

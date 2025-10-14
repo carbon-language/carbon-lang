@@ -96,7 +96,7 @@ Example usage:
         "name_scope": ("SemIR::MakeNameScopeId", DECIMAL),
         "identified_facet_type": ("SemIR::MakeIdentifiedFacetTypeId", DECIMAL),
         "specific": ("SemIR::MakeSpecificId", DECIMAL),
-        "specific_interface": ("SemIR::MakeSpecificInterfaceId", DECIMAL),
+        "specific_interface": ("SemIR::MakeSpecificInterfaceId", HEX),
         "struct_type_fields": ("SemIR::MakeStructTypeFieldsId", DECIMAL),
         "type": ("SemIR::MakeTypeId", DECIMAL),
     }

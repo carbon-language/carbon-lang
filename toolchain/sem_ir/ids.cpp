@@ -70,6 +70,10 @@ auto ImplId::Print(llvm::raw_ostream& out) const -> void {
   IdBase::PrintHex(out);
 }
 
+auto SpecificInterfaceId::Print(llvm::raw_ostream& out) const -> void {
+  IdBase::PrintHex(out);
+}
+
 auto GenericInstIndex::Print(llvm::raw_ostream& out) const -> void {
   out << "generic_inst";
   if (has_value()) {

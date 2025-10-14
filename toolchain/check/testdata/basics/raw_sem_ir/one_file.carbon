@@ -458,7 +458,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst60000059:    {kind: BindSymbolicName, arg0: entity_name4, arg1: inst<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst6000005A:    {kind: SymbolicBindingType, arg0: entity_name4, arg1: inst60000059, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000005B:    {kind: PatternType, arg0: inst6000005A, type: type(TypeType)}
-// CHECK:STDOUT:     inst6000005C:    {kind: LookupImplWitness, arg0: inst6000001B, arg1: specific_interface0, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst6000005C:    {kind: LookupImplWitness, arg0: inst6000001B, arg1: specific_interface60000000, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst6000005D:    {kind: ImportRefUnloaded, arg0: import_ir_inst15, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst6000005E:    {kind: ImplDecl, arg0: impl60000000, arg1: inst_block_empty}
 // CHECK:STDOUT:     inst6000005F:    {kind: BindSymbolicName, arg0: entity_name1, arg1: inst<none>, type: type(inst60000047)}
@@ -493,13 +493,13 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst6000007C:    {kind: PatternType, arg0: inst6000007B, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000007D:    {kind: RequireCompleteType, arg0: inst60000061, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst6000007E:    {kind: RequireCompleteType, arg0: inst60000060, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst6000007F:    {kind: LookupImplWitness, arg0: inst6000005F, arg1: specific_interface0, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst6000007F:    {kind: LookupImplWitness, arg0: inst6000005F, arg1: specific_interface60000000, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst60000080:    {kind: FunctionTypeWithSelfType, arg0: inst60000050, arg1: inst6000005F, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000081:    {kind: ImplWitnessAccess, arg0: inst6000007F, arg1: element0, type: type(symbolic_constant60)}
 // CHECK:STDOUT:     inst60000082:    {kind: SpecificImplFunction, arg0: inst60000081, arg1: specific5, type: type(inst(SpecificFunctionType))}
 // CHECK:STDOUT:     inst60000083:    {kind: RequireCompleteType, arg0: inst6000007B, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst60000084:    {kind: RequireCompleteType, arg0: inst6000007A, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst60000085:    {kind: LookupImplWitness, arg0: inst60000079, arg1: specific_interface0, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst60000085:    {kind: LookupImplWitness, arg0: inst60000079, arg1: specific_interface60000000, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst60000086:    {kind: FunctionTypeWithSelfType, arg0: inst60000050, arg1: inst60000079, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000087:    {kind: ImplWitnessAccess, arg0: inst60000085, arg1: element0, type: type(symbolic_constant69)}
 // CHECK:STDOUT:     inst60000088:    {kind: SpecificImplFunction, arg0: inst60000087, arg1: specific6, type: type(inst(SpecificFunctionType))}
@@ -594,18 +594,18 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst600000E1:    {kind: PatternType, arg0: inst600000E0, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000E2:    {kind: RequireCompleteType, arg0: inst600000C0, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst600000E3:    {kind: RequireCompleteType, arg0: inst600000BF, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst600000E4:    {kind: LookupImplWitness, arg0: inst600000BE, arg1: specific_interface0, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst600000E4:    {kind: LookupImplWitness, arg0: inst600000BE, arg1: specific_interface60000000, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst600000E5:    {kind: FunctionTypeWithSelfType, arg0: inst60000050, arg1: inst600000BE, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000E6:    {kind: ImplWitnessAccess, arg0: inst600000E4, arg1: element0, type: type(symbolic_constant145)}
 // CHECK:STDOUT:     inst600000E7:    {kind: SpecificImplFunction, arg0: inst600000E6, arg1: specific13, type: type(inst(SpecificFunctionType))}
 // CHECK:STDOUT:     inst600000E8:    {kind: RequireCompleteType, arg0: inst600000E0, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst600000E9:    {kind: RequireCompleteType, arg0: inst600000DD, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst600000EA:    {kind: LookupImplWitness, arg0: inst600000DC, arg1: specific_interface0, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst600000EA:    {kind: LookupImplWitness, arg0: inst600000DC, arg1: specific_interface60000000, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst600000EB:    {kind: FunctionTypeWithSelfType, arg0: inst60000050, arg1: inst600000DC, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000EC:    {kind: ImplWitnessAccess, arg0: inst600000EA, arg1: element0, type: type(symbolic_constant154)}
 // CHECK:STDOUT:     inst600000ED:    {kind: SpecificImplFunction, arg0: inst600000EC, arg1: specific14, type: type(inst(SpecificFunctionType))}
 // CHECK:STDOUT:     inst600000EE:    {kind: RequireCompleteType, arg0: inst600000DF, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst600000EF:    {kind: LookupImplWitness, arg0: inst600000DE, arg1: specific_interface0, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst600000EF:    {kind: LookupImplWitness, arg0: inst600000DE, arg1: specific_interface60000000, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst600000F0:    {kind: FunctionTypeWithSelfType, arg0: inst60000050, arg1: inst600000DE, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000F1:    {kind: ImplWitnessAccess, arg0: inst600000EF, arg1: element0, type: type(symbolic_constant159)}
 // CHECK:STDOUT:     inst600000F2:    {kind: SpecificImplFunction, arg0: inst600000F1, arg1: specific15, type: type(inst(SpecificFunctionType))}
@@ -657,29 +657,29 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst60000120:    {kind: PatternType, arg0: inst6000011F, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000121:    {kind: RequireCompleteType, arg0: inst600000F8, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst60000122:    {kind: RequireCompleteType, arg0: inst600000F7, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst60000123:    {kind: LookupImplWitness, arg0: inst600000F6, arg1: specific_interface0, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst60000123:    {kind: LookupImplWitness, arg0: inst600000F6, arg1: specific_interface60000000, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst60000124:    {kind: FunctionTypeWithSelfType, arg0: inst60000050, arg1: inst600000F6, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000125:    {kind: ImplWitnessAccess, arg0: inst60000123, arg1: element0, type: type(symbolic_constant226)}
 // CHECK:STDOUT:     inst60000126:    {kind: SpecificImplFunction, arg0: inst60000125, arg1: specific19, type: type(inst(SpecificFunctionType))}
 // CHECK:STDOUT:     inst60000127:    {kind: RequireCompleteType, arg0: inst6000011F, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst60000128:    {kind: RequireCompleteType, arg0: inst6000011A, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst60000129:    {kind: LookupImplWitness, arg0: inst60000119, arg1: specific_interface0, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst60000129:    {kind: LookupImplWitness, arg0: inst60000119, arg1: specific_interface60000000, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst6000012A:    {kind: FunctionTypeWithSelfType, arg0: inst60000050, arg1: inst60000119, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000012B:    {kind: ImplWitnessAccess, arg0: inst60000129, arg1: element0, type: type(symbolic_constant235)}
 // CHECK:STDOUT:     inst6000012C:    {kind: SpecificImplFunction, arg0: inst6000012B, arg1: specific20, type: type(inst(SpecificFunctionType))}
 // CHECK:STDOUT:     inst6000012D:    {kind: RequireCompleteType, arg0: inst6000011C, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst6000012E:    {kind: LookupImplWitness, arg0: inst6000011B, arg1: specific_interface0, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst6000012E:    {kind: LookupImplWitness, arg0: inst6000011B, arg1: specific_interface60000000, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst6000012F:    {kind: FunctionTypeWithSelfType, arg0: inst60000050, arg1: inst6000011B, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000130:    {kind: ImplWitnessAccess, arg0: inst6000012E, arg1: element0, type: type(symbolic_constant240)}
 // CHECK:STDOUT:     inst60000131:    {kind: SpecificImplFunction, arg0: inst60000130, arg1: specific21, type: type(inst(SpecificFunctionType))}
 // CHECK:STDOUT:     inst60000132:    {kind: RequireCompleteType, arg0: inst6000011E, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst60000133:    {kind: LookupImplWitness, arg0: inst6000011D, arg1: specific_interface0, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst60000133:    {kind: LookupImplWitness, arg0: inst6000011D, arg1: specific_interface60000000, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst60000134:    {kind: FunctionTypeWithSelfType, arg0: inst60000050, arg1: inst6000011D, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000135:    {kind: ImplWitnessAccess, arg0: inst60000133, arg1: element0, type: type(symbolic_constant245)}
 // CHECK:STDOUT:     inst60000136:    {kind: SpecificImplFunction, arg0: inst60000135, arg1: specific22, type: type(inst(SpecificFunctionType))}
 // CHECK:STDOUT:     inst60000137:    {kind: PatternType, arg0: inst600000F7, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000138:    {kind: LookupImplWitness, arg0: inst6000001B, arg1: specific_interface0, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst60000139:    {kind: LookupImplWitness, arg0: inst6000001C, arg1: specific_interface0, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst60000138:    {kind: LookupImplWitness, arg0: inst6000001B, arg1: specific_interface60000000, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst60000139:    {kind: LookupImplWitness, arg0: inst6000001C, arg1: specific_interface60000000, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst6000013A:    {kind: FacetValue, arg0: inst6000001B, arg1: inst_block103, type: type(inst60000047)}
 // CHECK:STDOUT:     inst6000013B:    {kind: FunctionTypeWithSelfType, arg0: inst60000050, arg1: inst6000013A, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000013C:    {kind: ImplWitnessAccess, arg0: inst60000138, arg1: element0, type: type(symbolic_constant256)}
