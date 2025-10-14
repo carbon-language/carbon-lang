@@ -128,7 +128,9 @@ import Cpp library "non_function_member_protected.h";
 class Derived {
   extend base: Cpp.C;
   fn F[self: Self]() -> (i32, i32) {
+    //@dump-sem-ir-begin
     return (self.instance_data, static_data);
+    //@dump-sem-ir-end
   }
 }
 
@@ -288,11 +290,13 @@ import Cpp library "function_member_protected.h";
 class Derived {
   extend base: Cpp.C;
   fn F[self: Self]() {
+    //@dump-sem-ir-begin
     // CHECK:STDERR: fail_todo_import_function_member_protected_extend_call_instance_in_member.carbon:[[@LINE+4]]:5: error: call argument of type `Derived` is not supported [CppCallArgTypeNotSupported]
     // CHECK:STDERR:     self.instance_fn();
     // CHECK:STDERR:     ^~~~
     // CHECK:STDERR:
     self.instance_fn();
+    //@dump-sem-ir-end
   }
 }
 
@@ -305,7 +309,9 @@ import Cpp library "function_member_protected.h";
 class Derived {
   extend base: Cpp.C;
   fn F[self: Self]() {
+    //@dump-sem-ir-begin
     static_fn();
+    //@dump-sem-ir-end
   }
 }
 
@@ -654,6 +660,79 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: --- import_non_function_member_protected_extend_call_in_member.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %i32 [concrete]
+// CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.afd: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.6cd: %Int.as.Copy.impl.Op.type.afd = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.a32: <witness> = impl_witness imports.%Copy.impl_witness_table.1ed, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.276: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.f59: %Int.as.Copy.impl.Op.type.276 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.a32) [concrete]
+// CHECK:STDOUT:   %.7fa: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.f59, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %static_data.var: ref %i32 = var %static_data.var_patt
+// CHECK:STDOUT:   %Core.import_ref.d0f6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.afd) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.6cd)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.1ed = impl_witness_table (%Core.import_ref.d0f6), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Derived {
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .Cpp = <poisoned>
+// CHECK:STDOUT:   .base = %.loc7
+// CHECK:STDOUT:   .F = %Derived.F.decl
+// CHECK:STDOUT:   .instance_data = <poisoned>
+// CHECK:STDOUT:   .static_data = <poisoned>
+// CHECK:STDOUT:   extend %C.ref
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Derived.F(%self.param: %Derived) -> %return.param: %tuple.type.d07 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %self.ref: %Derived = name_ref self, %self
+// CHECK:STDOUT:   %instance_data.ref: %C.elem = name_ref instance_data, @C.%.1 [concrete = @C.%.1]
+// CHECK:STDOUT:   %.loc10_17.1: ref %C = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc10_17.2: ref %C = converted %self.ref, %.loc10_17.1
+// CHECK:STDOUT:   %.loc10_17.3: ref %i32 = class_element_access %.loc10_17.2, element0
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %static_data.ref: ref %i32 = name_ref static_data, imports.%static_data.var
+// CHECK:STDOUT:   %.loc10_44.1: %tuple.type.d07 = tuple_literal (%.loc10_17.3, %static_data.ref)
+// CHECK:STDOUT:   %.loc10_17.4: %i32 = bind_value %.loc10_17.3
+// CHECK:STDOUT:   %impl.elem0.loc10_17: %.7fa = impl_witness_access constants.%Copy.impl_witness.a32, element0 [concrete = constants.%Int.as.Copy.impl.Op.f59]
+// CHECK:STDOUT:   %bound_method.loc10_17.1: <bound method> = bound_method %.loc10_17.4, %impl.elem0.loc10_17
+// CHECK:STDOUT:   %specific_fn.loc10_17: <specific function> = specific_function %impl.elem0.loc10_17, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc10_17.2: <bound method> = bound_method %.loc10_17.4, %specific_fn.loc10_17
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc10_17: init %i32 = call %bound_method.loc10_17.2(%.loc10_17.4)
+// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return, element0
+// CHECK:STDOUT:   %.loc10_44.2: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc10_17 to %tuple.elem0
+// CHECK:STDOUT:   %.loc10_33: %i32 = bind_value %static_data.ref
+// CHECK:STDOUT:   %impl.elem0.loc10_33: %.7fa = impl_witness_access constants.%Copy.impl_witness.a32, element0 [concrete = constants.%Int.as.Copy.impl.Op.f59]
+// CHECK:STDOUT:   %bound_method.loc10_33.1: <bound method> = bound_method %.loc10_33, %impl.elem0.loc10_33
+// CHECK:STDOUT:   %specific_fn.loc10_33: <specific function> = specific_function %impl.elem0.loc10_33, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc10_33.2: <bound method> = bound_method %.loc10_33, %specific_fn.loc10_33
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc10_33: init %i32 = call %bound_method.loc10_33.2(%.loc10_33)
+// CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return, element1
+// CHECK:STDOUT:   %.loc10_44.3: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc10_33 to %tuple.elem1
+// CHECK:STDOUT:   %.loc10_44.4: init %tuple.type.d07 = tuple_init (%.loc10_44.2, %.loc10_44.3) to %return
+// CHECK:STDOUT:   %.loc10_45: init %tuple.type.d07 = converted %.loc10_44.1, %.loc10_44.4
+// CHECK:STDOUT:   return %.loc10_45 to %return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- import_function_member_public.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -698,6 +777,75 @@ fn F() {
 // CHECK:STDOUT:   %S.ref.loc9: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   %static_fn.ref: %S.static_fn.cpp_overload_set.type = name_ref static_fn, imports.%S.static_fn.cpp_overload_set.value [concrete = constants.%S.static_fn.cpp_overload_set.value]
 // CHECK:STDOUT:   %S.static_fn.call: init %empty_tuple.type = call imports.%S.static_fn.decl()
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_todo_import_function_member_protected_extend_call_instance_in_member.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
+// CHECK:STDOUT:   %C.instance_fn.cpp_overload_set.type: type = cpp_overload_set_type @C.instance_fn.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %C.instance_fn.cpp_overload_set.value: %C.instance_fn.cpp_overload_set.type = cpp_overload_set_value @C.instance_fn.cpp_overload_set [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %C.instance_fn.cpp_overload_set.value: %C.instance_fn.cpp_overload_set.type = cpp_overload_set_value @C.instance_fn.cpp_overload_set [concrete = constants.%C.instance_fn.cpp_overload_set.value]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Derived {
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .Cpp = <poisoned>
+// CHECK:STDOUT:   .base = %.loc7
+// CHECK:STDOUT:   .F = %Derived.F.decl
+// CHECK:STDOUT:   .instance_fn = <poisoned>
+// CHECK:STDOUT:   extend %C.ref
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Derived.F(%self.param: %Derived) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %self.ref: %Derived = name_ref self, %self
+// CHECK:STDOUT:   %instance_fn.ref: %C.instance_fn.cpp_overload_set.type = name_ref instance_fn, imports.%C.instance_fn.cpp_overload_set.value [concrete = constants.%C.instance_fn.cpp_overload_set.value]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %self.ref, %instance_fn.ref
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_function_member_protected_extend_call_static_in_member.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %C.static_fn.cpp_overload_set.type: type = cpp_overload_set_type @C.static_fn.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %C.static_fn.cpp_overload_set.value: %C.static_fn.cpp_overload_set.type = cpp_overload_set_value @C.static_fn.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %C.static_fn.type: type = fn_type @C.static_fn [concrete]
+// CHECK:STDOUT:   %C.static_fn: %C.static_fn.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %C.static_fn.cpp_overload_set.value: %C.static_fn.cpp_overload_set.type = cpp_overload_set_value @C.static_fn.cpp_overload_set [concrete = constants.%C.static_fn.cpp_overload_set.value]
+// CHECK:STDOUT:   %C.static_fn.decl: %C.static_fn.type = fn_decl @C.static_fn [concrete = constants.%C.static_fn] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Derived {
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .Cpp = <poisoned>
+// CHECK:STDOUT:   .base = %.loc7
+// CHECK:STDOUT:   .F = %Derived.F.decl
+// CHECK:STDOUT:   .static_fn = <poisoned>
+// CHECK:STDOUT:   extend %C.ref
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Derived.F(%self.param: %Derived) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %static_fn.ref: %C.static_fn.cpp_overload_set.type = name_ref static_fn, imports.%C.static_fn.cpp_overload_set.value [concrete = constants.%C.static_fn.cpp_overload_set.value]
+// CHECK:STDOUT:   %C.static_fn.call: init %empty_tuple.type = call imports.%C.static_fn.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
