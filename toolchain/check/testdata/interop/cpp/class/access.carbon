@@ -233,7 +233,7 @@ class Derived {
   extend base: Cpp.C;
   fn F() {
     // TODO: `C.static_data` is private, so this should fail.
-	  let unqualified_static_data: i32 = static_data;
+    let unqualified_static_data: i32 = static_data;
   }
 }
 
