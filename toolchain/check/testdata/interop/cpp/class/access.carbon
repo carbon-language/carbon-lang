@@ -277,11 +277,12 @@ fn F(c: Cpp.C*) {
   // CHECK:STDERR: fail_import_function_member_protected.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   c->instance_fn();
-  // CHECK:STDERR: fail_import_function_member_protected.carbon:[[@LINE+4]]:3: error: member name `S` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.S.static_fn();
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_import_function_member_protected.carbon:[[@LINE+5]]:3: error: cannot access protected member `static_fn` of type `Cpp.C` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.C.static_fn();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_function_member_protected.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.S.static_fn();
+  Cpp.C.static_fn();
 }
 
 // --- fail_todo_import_function_member_protected_extend_call_instance_in_member.carbon
@@ -363,11 +364,12 @@ fn F(c: Cpp.C*) {
   // CHECK:STDERR: fail_import_function_member_private.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   c->instance_fn();
-  // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+4]]:3: error: member name `S` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.S.static_fn();
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+5]]:3: error: cannot access private member `static_fn` of type `Cpp.C` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.C.static_fn();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_function_member_private.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.S.static_fn();
+  Cpp.C.static_fn();
 }
 
 // ============================================================================
