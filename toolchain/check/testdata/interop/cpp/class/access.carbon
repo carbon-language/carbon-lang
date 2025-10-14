@@ -205,14 +205,22 @@ fn F(d: Derived) {
   // CHECK:STDERR:       ^
   // CHECK:STDERR:
   let instance_data: i32 = d.instance_data;
-  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+7]]:26: error: cannot access private member `static_data` of type `Cpp.C` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let static_data: i32 = Derived.static_data;
-  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+4]]:26: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   let static_data: i32 = Derived.static_data;
-  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+7]]:34: error: cannot access private member `static_data` of type `Cpp.C` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   let derived_static_data: i32 = Derived.static_data;
+  // CHECK:STDERR:                                  ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+4]]:34: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:   let derived_static_data: i32 = Derived.static_data;
+  // CHECK:STDERR:                                  ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let static_data: i32 = Derived.static_data;
+  let derived_static_data: i32 = Derived.static_data;
+  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+7]]:31: error: cannot access private member `static_data` of type `Cpp.C` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   let base_static_data: i32 = Cpp.C.static_data;
+  // CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE-4]]:34: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:   let derived_static_data: i32 = Derived.static_data;
+  // CHECK:STDERR:                                  ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  let base_static_data: i32 = Cpp.C.static_data;
 }
 
 // --- todo_fail_import_non_function_member_private_extend_static_within_member_function.carbon
