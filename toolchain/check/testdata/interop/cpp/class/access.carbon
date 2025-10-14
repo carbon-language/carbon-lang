@@ -127,9 +127,12 @@ import Cpp library "non_function_member_protected.h";
 
 class Derived {
   extend base: Cpp.C;
-  fn F[self: Self]() -> (i32, i32) {
+  fn F[self: Self]() {
     //@dump-sem-ir-begin
-    return (self.instance_data, static_data);
+    let instance_data: i32 = self.instance_data;
+    let unqualified_static_data: i32 = static_data;
+    let derived_static_data: i32 = Derived.static_data;
+    let base_static_data: i32 = Cpp.C.static_data;
     //@dump-sem-ir-end
   }
 }
@@ -179,16 +182,16 @@ import Cpp library "non_function_member_private.h";
 
 class Derived {
   extend base: Cpp.C;
-  fn F[self: Self]() -> i32 {
-    // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+8]]:12: error: cannot access private member `instance_data` of type `Cpp.C` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     return self.instance_data;
-    // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~
+  fn F[self: Self]() {
+    // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+8]]:30: error: cannot access private member `instance_data` of type `Cpp.C` [ClassInvalidMemberAccess]
+    // CHECK:STDERR:     let instance_data: i32 = self.instance_data;
+    // CHECK:STDERR:                              ^~~~~~~~~~~~~~~~~~
     // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
     // CHECK:STDERR: ./non_function_member_private.h:2:7: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR: class C {
     // CHECK:STDERR:       ^
     // CHECK:STDERR:
-    return self.instance_data;
+    let instance_data: i32 = self.instance_data;
   }
 }
 
@@ -220,8 +223,8 @@ import Cpp library "non_function_member_private.h";
 
 class Derived {
   extend base: Cpp.C;
-  fn F() -> i32 {
-    return static_data;
+  fn F() {
+    let unqualified_static_data: i32 = static_data;
   }
 }
 
@@ -311,6 +314,8 @@ class Derived {
   fn F[self: Self]() {
     //@dump-sem-ir-begin
     static_fn();
+    Derived.static_fn();
+    Cpp.C.static_fn();
     //@dump-sem-ir-end
   }
 }
@@ -666,26 +671,18 @@ fn F() {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %i32 [concrete]
-// CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
-// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.afd: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.6cd: %Int.as.Copy.impl.Op.type.afd = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.a32: <witness> = impl_witness imports.%Copy.impl_witness_table.1ed, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.276: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.f59: %Int.as.Copy.impl.Op.type.276 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.a32) [concrete]
-// CHECK:STDOUT:   %.7fa: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.f59, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %static_data.var: ref %i32 = var %static_data.var_patt
-// CHECK:STDOUT:   %Core.import_ref.d0f6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.afd) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.6cd)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.1ed = impl_witness_table (%Core.import_ref.d0f6), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Derived {
@@ -699,38 +696,61 @@ fn F() {
 // CHECK:STDOUT:   .F = %Derived.F.decl
 // CHECK:STDOUT:   .instance_data = <poisoned>
 // CHECK:STDOUT:   .static_data = <poisoned>
+// CHECK:STDOUT:   .Derived = <poisoned>
 // CHECK:STDOUT:   extend %C.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Derived.F(%self.param: %Derived) -> %return.param: %tuple.type.d07 {
+// CHECK:STDOUT: fn @Derived.F(%self.param: %Derived) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %instance_data.patt: %pattern_type.7ce = binding_pattern instance_data [concrete]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.ref: %Derived = name_ref self, %self
 // CHECK:STDOUT:   %instance_data.ref: %C.elem = name_ref instance_data, @C.%.1 [concrete = @C.%.1]
-// CHECK:STDOUT:   %.loc10_17.1: ref %C = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc10_17.2: ref %C = converted %self.ref, %.loc10_17.1
-// CHECK:STDOUT:   %.loc10_17.3: ref %i32 = class_element_access %.loc10_17.2, element0
+// CHECK:STDOUT:   %.loc10_34.1: ref %C = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc10_34.2: ref %C = converted %self.ref, %.loc10_34.1
+// CHECK:STDOUT:   %.loc10_34.3: ref %i32 = class_element_access %.loc10_34.2, element0
+// CHECK:STDOUT:   %.loc10_24: type = splice_block %i32.loc10 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc10_34.4: %i32 = bind_value %.loc10_34.3
+// CHECK:STDOUT:   %instance_data: %i32 = bind_name instance_data, %.loc10_34.4
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %unqualified_static_data.patt: %pattern_type.7ce = binding_pattern unqualified_static_data [concrete]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %static_data.ref: ref %i32 = name_ref static_data, imports.%static_data.var
-// CHECK:STDOUT:   %.loc10_44.1: %tuple.type.d07 = tuple_literal (%.loc10_17.3, %static_data.ref)
-// CHECK:STDOUT:   %.loc10_17.4: %i32 = bind_value %.loc10_17.3
-// CHECK:STDOUT:   %impl.elem0.loc10_17: %.7fa = impl_witness_access constants.%Copy.impl_witness.a32, element0 [concrete = constants.%Int.as.Copy.impl.Op.f59]
-// CHECK:STDOUT:   %bound_method.loc10_17.1: <bound method> = bound_method %.loc10_17.4, %impl.elem0.loc10_17
-// CHECK:STDOUT:   %specific_fn.loc10_17: <specific function> = specific_function %impl.elem0.loc10_17, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc10_17.2: <bound method> = bound_method %.loc10_17.4, %specific_fn.loc10_17
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc10_17: init %i32 = call %bound_method.loc10_17.2(%.loc10_17.4)
-// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return, element0
-// CHECK:STDOUT:   %.loc10_44.2: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc10_17 to %tuple.elem0
-// CHECK:STDOUT:   %.loc10_33: %i32 = bind_value %static_data.ref
-// CHECK:STDOUT:   %impl.elem0.loc10_33: %.7fa = impl_witness_access constants.%Copy.impl_witness.a32, element0 [concrete = constants.%Int.as.Copy.impl.Op.f59]
-// CHECK:STDOUT:   %bound_method.loc10_33.1: <bound method> = bound_method %.loc10_33, %impl.elem0.loc10_33
-// CHECK:STDOUT:   %specific_fn.loc10_33: <specific function> = specific_function %impl.elem0.loc10_33, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc10_33.2: <bound method> = bound_method %.loc10_33, %specific_fn.loc10_33
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc10_33: init %i32 = call %bound_method.loc10_33.2(%.loc10_33)
-// CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return, element1
-// CHECK:STDOUT:   %.loc10_44.3: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc10_33 to %tuple.elem1
-// CHECK:STDOUT:   %.loc10_44.4: init %tuple.type.d07 = tuple_init (%.loc10_44.2, %.loc10_44.3) to %return
-// CHECK:STDOUT:   %.loc10_45: init %tuple.type.d07 = converted %.loc10_44.1, %.loc10_44.4
-// CHECK:STDOUT:   return %.loc10_45 to %return
+// CHECK:STDOUT:   %static_data.ref.loc11: ref %i32 = name_ref static_data, imports.%static_data.var
+// CHECK:STDOUT:   %.loc11_34: type = splice_block %i32.loc11 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc11_40: %i32 = bind_value %static_data.ref.loc11
+// CHECK:STDOUT:   %unqualified_static_data: %i32 = bind_name unqualified_static_data, %.loc11_40
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %derived_static_data.patt: %pattern_type.7ce = binding_pattern derived_static_data [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
+// CHECK:STDOUT:   %static_data.ref.loc12: ref %i32 = name_ref static_data, imports.%static_data.var
+// CHECK:STDOUT:   %.loc12_30: type = splice_block %i32.loc12 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc12_43: %i32 = bind_value %static_data.ref.loc12
+// CHECK:STDOUT:   %derived_static_data: %i32 = bind_name derived_static_data, %.loc12_43
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %base_static_data.patt: %pattern_type.7ce = binding_pattern base_static_data [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %static_data.ref.loc13: ref %i32 = name_ref static_data, imports.%static_data.var
+// CHECK:STDOUT:   %.loc13_27: type = splice_block %i32.loc13 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc13: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc13_38: %i32 = bind_value %static_data.ref.loc13
+// CHECK:STDOUT:   %base_static_data: %i32 = bind_name base_static_data, %.loc13_38
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_function_member_public.carbon
@@ -817,6 +837,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C.static_fn.cpp_overload_set.type: type = cpp_overload_set_type @C.static_fn.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.static_fn.cpp_overload_set.value: %C.static_fn.cpp_overload_set.type = cpp_overload_set_value @C.static_fn.cpp_overload_set [concrete]
@@ -825,6 +846,11 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.static_fn.cpp_overload_set.value: %C.static_fn.cpp_overload_set.type = cpp_overload_set_value @C.static_fn.cpp_overload_set [concrete = constants.%C.static_fn.cpp_overload_set.value]
 // CHECK:STDOUT:   %C.static_fn.decl: %C.static_fn.type = fn_decl @C.static_fn [concrete = constants.%C.static_fn] {} {}
 // CHECK:STDOUT: }
@@ -839,13 +865,21 @@ fn F() {
 // CHECK:STDOUT:   .base = %.loc7
 // CHECK:STDOUT:   .F = %Derived.F.decl
 // CHECK:STDOUT:   .static_fn = <poisoned>
+// CHECK:STDOUT:   .Derived = <poisoned>
 // CHECK:STDOUT:   extend %C.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Derived.F(%self.param: %Derived) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %static_fn.ref: %C.static_fn.cpp_overload_set.type = name_ref static_fn, imports.%C.static_fn.cpp_overload_set.value [concrete = constants.%C.static_fn.cpp_overload_set.value]
-// CHECK:STDOUT:   %C.static_fn.call: init %empty_tuple.type = call imports.%C.static_fn.decl()
+// CHECK:STDOUT:   %static_fn.ref.loc10: %C.static_fn.cpp_overload_set.type = name_ref static_fn, imports.%C.static_fn.cpp_overload_set.value [concrete = constants.%C.static_fn.cpp_overload_set.value]
+// CHECK:STDOUT:   %C.static_fn.call.loc10: init %empty_tuple.type = call imports.%C.static_fn.decl()
+// CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
+// CHECK:STDOUT:   %static_fn.ref.loc11: %C.static_fn.cpp_overload_set.type = name_ref static_fn, imports.%C.static_fn.cpp_overload_set.value [concrete = constants.%C.static_fn.cpp_overload_set.value]
+// CHECK:STDOUT:   %C.static_fn.call.loc11: init %empty_tuple.type = call imports.%C.static_fn.decl()
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %static_fn.ref.loc12: %C.static_fn.cpp_overload_set.type = name_ref static_fn, imports.%C.static_fn.cpp_overload_set.value [concrete = constants.%C.static_fn.cpp_overload_set.value]
+// CHECK:STDOUT:   %C.static_fn.call.loc12: init %empty_tuple.type = call imports.%C.static_fn.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
