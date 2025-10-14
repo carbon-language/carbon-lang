@@ -2176,11 +2176,10 @@ auto TryEvalTypedInst<SemIR::SymbolicBindingType>(EvalContext& eval_context,
                                                   SemIR::InstId inst_id,
                                                   SemIR::Inst inst)
     -> SemIR::ConstantId {
-  auto bind = inst.As<SemIR::SymbolicBindingType>();
-
   // If a specific provides a new value for the binding with `entity_name_id`,
   // the SymbolicBindingType is evaluated for that new value.
-  const auto& bind_name = eval_context.entity_names().Get(bind.entity_name_id);
+  const auto& bind_name = eval_context.entity_names().Get(
+      inst.As<SemIR::SymbolicBindingType>().entity_name_id);
   if (bind_name.bind_index().has_value()) {
     if (auto value =
             eval_context.GetCompileTimeBindValue(bind_name.bind_index());
@@ -2212,9 +2211,6 @@ auto TryEvalTypedInst<SemIR::SymbolicBindingType>(EvalContext& eval_context,
     return SemIR::ErrorInst::ConstantId;
   }
 
-  // Copy the updated constant field values into `bind`.
-  bind = inst.As<SemIR::SymbolicBindingType>();
-
   // Evaluation of SymbolicBindingType.
   //
   // Like FacetAccessType, a SymbolicBindingType of a FacetValue just evaluates
@@ -2224,11 +2220,11 @@ auto TryEvalTypedInst<SemIR::SymbolicBindingType>(EvalContext& eval_context,
   // and get its constant value in the current specific context. The
   // facet_value_inst_id will go away.
   if (auto facet_value = eval_context.insts().TryGetAs<SemIR::FacetValue>(
-          bind.facet_value_inst_id)) {
+          inst.As<SemIR::SymbolicBindingType>().facet_value_inst_id)) {
     return eval_context.constant_values().Get(facet_value->type_inst_id);
   }
 
-  return MakeConstantResult(eval_context.context(), bind, phase);
+  return MakeConstantResult(eval_context.context(), inst, phase);
 }
 
 // Returns whether `const_id` is the same constant facet value as
