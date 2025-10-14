@@ -232,68 +232,69 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     name_scope11:    {inst: inst600000BD, parent_scope: name_scope1, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:     name_scope12:    {inst: inst600000F5, parent_scope: name_scope1, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name0:    {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name1:    {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name2:    {name: name2, parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name3:    {name: name3, parent_scope: name_scope1, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name4:    {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name5:    {name: name4, parent_scope: name_scope2, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name6:    {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name7:    {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name8:    {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name9:    {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name10:   {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name11:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name12:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name13:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name14:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name15:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name16:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name17:   {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name18:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name19:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name20:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name21:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name22:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name23:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name24:   {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name25:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name26:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name27:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name28:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name29:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name30:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name31:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name32:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name33:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name34:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name35:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name36:   {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name37:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name38:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name39:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name40:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name41:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name42:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name43:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name44:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name45:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name46:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name47:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name48:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name49:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name50:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name51:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name52:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name53:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name54:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name55:   {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name56:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name57:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name58:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name59:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name60:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
-// CHECK:STDOUT:     entity_name61:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name0:    {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0}
+// CHECK:STDOUT:     entity_name1:    {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name2:    {name: name2, parent_scope: name_scope<none>, index: -1, is_template: 0}
+// CHECK:STDOUT:     entity_name3:    {name: name3, parent_scope: name_scope1, index: -1, is_template: 0}
+// CHECK:STDOUT:     entity_name4:    {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name5:    {name: name4, parent_scope: name_scope2, index: -1, is_template: 0}
+// CHECK:STDOUT:     entity_name6:    {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name7:    {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name8:    {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0}
+// CHECK:STDOUT:     entity_name9:    {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name10:   {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name11:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name12:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name13:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name14:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name15:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name16:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name17:   {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0}
+// CHECK:STDOUT:     entity_name18:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name19:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name20:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name21:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name22:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name23:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name24:   {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0}
+// CHECK:STDOUT:     entity_name25:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name26:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
+// CHECK:STDOUT:     entity_name27:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
+// CHECK:STDOUT:     entity_name28:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
+// CHECK:STDOUT:     entity_name29:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name30:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name31:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
+// CHECK:STDOUT:     entity_name32:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name33:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
+// CHECK:STDOUT:     entity_name34:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name35:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
+// CHECK:STDOUT:     entity_name36:   {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0}
+// CHECK:STDOUT:     entity_name37:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name38:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name39:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
+// CHECK:STDOUT:     entity_name40:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
+// CHECK:STDOUT:     entity_name41:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
+// CHECK:STDOUT:     entity_name42:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
+// CHECK:STDOUT:     entity_name43:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
+// CHECK:STDOUT:     entity_name44:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
+// CHECK:STDOUT:     entity_name45:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name46:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name47:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
+// CHECK:STDOUT:     entity_name48:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
+// CHECK:STDOUT:     entity_name49:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name50:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
+// CHECK:STDOUT:     entity_name51:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
+// CHECK:STDOUT:     entity_name52:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name53:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
+// CHECK:STDOUT:     entity_name54:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
+// CHECK:STDOUT:     entity_name55:   {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0}
+// CHECK:STDOUT:     entity_name56:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name57:   {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name58:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
+// CHECK:STDOUT:     entity_name59:   {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
+// CHECK:STDOUT:     entity_name60:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
+// CHECK:STDOUT:     entity_name61:   {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
+// CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, call_params_id: inst_block13, return_slot_pattern: inst60000030, body: [inst_block20]}
 // CHECK:STDOUT:     function1:       {name: name4, parent_scope: name_scope2, return_slot_pattern: inst60000055}

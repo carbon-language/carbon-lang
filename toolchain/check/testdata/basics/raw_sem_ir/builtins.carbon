@@ -22,6 +22,7 @@
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst0000000E, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:    {}
+// CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:       {}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}

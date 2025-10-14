@@ -255,6 +255,9 @@ class Context {
   auto entity_names() -> SemIR::EntityNameStore& {
     return sem_ir().entity_names();
   }
+  auto cpp_global_names() -> SemIR::CppGlobalVarStore& {
+    return sem_ir().cpp_global_vars();
+  }
   auto cpp_overload_sets() -> SemIR::CppOverloadSetStore& {
     return sem_ir().cpp_overload_sets();
   }

@@ -1,0 +1,78 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#ifndef CARBON_TOOLCHAIN_SEM_IR_CPP_GLOBAL_VAR_H_
+#define CARBON_TOOLCHAIN_SEM_IR_CPP_GLOBAL_VAR_H_
+
+#include "common/hashing.h"
+#include "common/ostream.h"
+#include "toolchain/sem_ir/clang_decl.h"
+#include "toolchain/sem_ir/ids.h"
+
+namespace Carbon::SemIR {
+
+// A key describing a C++ global variable imported into Carbon, identified by
+// its name.
+struct CppGlobalVarKey : public Printable<CppGlobalVarKey> {
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{name_id: " << name_id << "}";
+  }
+
+  auto operator==(const CppGlobalVarKey& rhs) const -> bool {
+    return name_id == rhs.name_id;
+  }
+
+  // Hashing for CppGlobalVarKey. See common/hashing.h.
+  friend auto CarbonHashValue(const CppGlobalVarKey& value, uint64_t seed)
+      -> HashCode {
+    // Manual hashing support is required because this type has tail padding in
+    // 64-bit compilations.
+    return HashValue(value.name_id, seed);
+  }
+
+  // The name of the variable.
+  EntityNameId name_id;
+};
+
+// A C++ global variable imported into Carbon. This is used to map the name to
+// the Clang declaration so we can use Clang mangling.
+struct CppGlobalVar : public Printable<CppGlobalVar> {
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{key: " << key << ", clang_decl_id: " << clang_decl_id << "}";
+  }
+
+  // Comparison against `CppGlobalVarKey`, required by `CanonicalValueStore`.
+  friend auto operator==(const CppGlobalVar& lhs, const CppGlobalVarKey& rhs)
+      -> bool {
+    return lhs.key == rhs;
+  }
+  friend auto operator==(const CppGlobalVarKey& lhs, const CppGlobalVar& rhs)
+      -> bool {
+    return rhs == lhs;
+  }
+  friend auto operator==(const CppGlobalVar& lhs, const CppGlobalVar& rhs)
+      -> bool {
+    return lhs.key == rhs.key;
+  }
+
+  // Hashing for `CppGlobalVar`. See common/hashing.h.
+  friend auto CarbonHashValue(const CppGlobalVar& value, uint64_t seed)
+      -> HashCode {
+    return HashValue(value.key, seed);
+  }
+
+  // The key by which this variable can be looked up.
+  CppGlobalVarKey key;
+
+  // The Clang declaration for this variable, if any.
+  ClangDeclId clang_decl_id;
+};
+
+// Use the name of a C++ global variable when doing `Lookup` to find an ID.
+using CppGlobalVarStore =
+    CanonicalValueStore<CppGlobalVarId, CppGlobalVarKey, CppGlobalVar>;
+
+}  // namespace Carbon::SemIR
+
+#endif  // CARBON_TOOLCHAIN_SEM_IR_CPP_GLOBAL_VAR_H_

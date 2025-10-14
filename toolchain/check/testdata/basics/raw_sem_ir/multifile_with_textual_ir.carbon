@@ -38,6 +38,7 @@ fn B() {
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope0:     {inst: inst0000000E, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst6000000F}}
 // CHECK:STDOUT:   entity_names:    {}
+// CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, call_params_id: inst_block_empty, body: [inst_block5]}
 // CHECK:STDOUT:   classes:         {}
@@ -118,7 +119,8 @@ fn B() {
 // CHECK:STDOUT:     name_scope0:     {inst: inst0000000E, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name1: inst50000010, name0: inst50000011}}
 // CHECK:STDOUT:     name_scope1:     {inst: inst50000010, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst50000016}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope1, index: -1, is_template: 0, clang_decl_id: clang_decl_id<none>}
+// CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope1, index: -1, is_template: 0}
+// CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, call_params_id: inst_block_empty, body: [inst_block5]}
 // CHECK:STDOUT:     function1:       {name: name1, parent_scope: name_scope1}
