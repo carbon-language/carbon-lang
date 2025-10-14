@@ -224,7 +224,8 @@ import Cpp library "non_function_member_private.h";
 class Derived {
   extend base: Cpp.C;
   fn F() {
-    let unqualified_static_data: i32 = static_data;
+    // TODO: `C.static_data` is private, so this should fail.
+	  let unqualified_static_data: i32 = static_data;
   }
 }
 
@@ -295,6 +296,7 @@ class Derived {
   extend base: Cpp.C;
   fn F[self: Self]() {
     //@dump-sem-ir-begin
+    // TODO: It should be possible to call protected methods in the base class.
     // CHECK:STDERR: fail_todo_import_function_member_protected_extend_call_instance_in_member.carbon:[[@LINE+4]]:5: error: call argument of type `Derived` is not supported [CppCallArgTypeNotSupported]
     // CHECK:STDERR:     self.instance_fn();
     // CHECK:STDERR:     ^~~~
