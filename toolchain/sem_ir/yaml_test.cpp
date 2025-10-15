@@ -60,6 +60,7 @@ TEST(SemIRTest, Yaml) {
       Pair("clang_decls", Yaml::Mapping(SizeIs(0))),
       Pair("name_scopes", Yaml::Mapping(SizeIs(1))),
       Pair("entity_names", Yaml::Mapping(SizeIs(1))),
+      Pair("cpp_global_vars", Yaml::Mapping(SizeIs(0))),
       Pair("functions", Yaml::Mapping(SizeIs(1))),
       Pair("classes", Yaml::Mapping(SizeIs(0))),
       Pair("generics", Yaml::Mapping(SizeIs(0))),
