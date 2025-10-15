@@ -23,8 +23,12 @@ namespace Carbon {
 // argument to `Lookup`. It must be valid to use both `KeyT` and `ValueT` as
 // lookup types in the underlying `Set`.
 template <typename IdT, typename KeyT, typename ValueT = KeyT,
-          auto ValueToKeyFn = [](typename ValueStoreTypes<ValueT>::ConstRefType
-                                     value) { return value; }>
+          // Parentheses around the lambda to help clang-format.
+          auto ValueToKeyFn =
+              ([](typename ValueStoreTypes<ValueT>::ConstRefType value) ->
+               typename ValueStoreTypes<ValueT>::ConstRefType {
+                 return value;
+               })>
 class CanonicalValueStore {
  public:
   using KeyType = std::remove_cvref_t<KeyT>;
@@ -80,9 +84,9 @@ class CanonicalValueStore<IdT, KeyT, ValueT, ValueToKeyFn>::KeyContext
       : values_(values) {}
 
   // Note that it is safe to return a `const` reference here as the underlying
-  // object's lifetime is provided by the `ValueStore`. Returns `auto` to pick
-  // up the return type of `ValueToKeyFn`.
-  auto TranslateKey(IdT id) const -> auto {
+  // object's lifetime is provided by the `ValueStore`.
+  auto TranslateKey(IdT id) const
+      -> llvm::function_traits<decltype(ValueToKeyFn)>::result_t {
     return ValueToKeyFn(values_->Get(id));
   }
 
