@@ -84,7 +84,7 @@ auto main() -> int {
 ```cpp
 // Carbon:
 package Geometry;
-//Math is hypothetical package. Do not exist yet.
+// This is a hypothetical package for demonstrating imports.
 import Math;
 
 class Circle {
@@ -99,7 +99,6 @@ fn PrintTotalArea(circles: [Circle]) {
   Print("Total area: {0}", area);
 }
 
-//The design and the toolchain now use Run()
 fn Run() -> i32 {
   // A dynamically sized array, like `std::vector`.
   var circles: array [Circle] = ({.r = 1.0}, {.r = 2.0});
@@ -122,7 +121,7 @@ struct Circle {
 // Carbon exposing a function for C++:
 package Geometry;
 import Cpp library "circle.h";
-//Math is hypothetical package. Do not exist yet.
+// This is a hypothetical package for demonstrating imports.
 import Math;
 
 fn PrintTotalArea(circles: [Cpp.Circle]) {
