@@ -301,6 +301,15 @@ static auto DoClangASTCheckReplacements(std::string& check_line) -> void {
 
 auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
     -> void {
+  // The path to the core package appears in various places, such as some check
+  // diagnostics and debug information produced by lowering, and will differ
+  // between testing environments, so don't test it.
+  // TODO: Consider adding a content keyword to name the core package, and
+  // replace with that instead. Alternatively, consider adding the core
+  // package to the VFS with a fixed name.
+  absl::StrReplaceAll({{data_->installation.core_package().native(), "{{.*}}"}},
+                      &check_line);
+
   if (component_ == "driver") {
     // TODO: Disable token output, it's not interesting for these tests.
     if (llvm::StringRef(check_line).starts_with("// CHECK:STDOUT: {")) {
@@ -313,28 +322,18 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
     // The column happens to be right for FileStart, but the line is wrong.
     static RE2 file_token_re(R"((FileEnd.*column: |FileStart.*line: )( *\d+))");
     RE2::Replace(&check_line, file_token_re, R"(\1{{ *\\d+}})");
-  } else if (component_ == "check" || component_ == "lower") {
-    // The path to the core package appears in some check diagnostics and in
-    // debug information produced by lowering, and will differ between testing
-    // environments, so don't test it.
-    // TODO: Consider adding a content keyword to name the core package, and
-    // replace with that instead. Alternatively, consider adding the core
-    // package to the VFS with a fixed name.
-    absl::StrReplaceAll(
-        {{data_->installation.core_package().native(), "{{.*}}"}}, &check_line);
-    if (component_ == "check") {
-      DoClangASTCheckReplacements(check_line);
+  } else if (component_ == "check") {
+    DoClangASTCheckReplacements(check_line);
 
-      // Reduce instruction numbering sensitivity; this is brittle for
-      // instruction edits including adding/removing singleton instructions.
-      static RE2 inst_re(R"((import_ref [^,]*, inst)[0-9A-F]+)");
-      RE2::Replace(&check_line, inst_re, R"(\1{{[0-9A-F]+}})");
+    // Reduce instruction numbering sensitivity; this is brittle for
+    // instruction edits including adding/removing singleton instructions.
+    static RE2 inst_re(R"((import_ref [^,]*, inst)[0-9A-F]+)");
+    RE2::Replace(&check_line, inst_re, R"(\1{{[0-9A-F]+}})");
 
-      // Reduce location sensitivity in imports referring to `Core`; this is
-      // brittle for small edits, including comment changes.
-      static RE2 core_loc_re(R"((import_ref Core//[^,]*, loc)\d+_\d+)");
-      RE2::Replace(&check_line, core_loc_re, R"(\1{{\\d+_\\d+}})");
-    }
+    // Reduce location sensitivity in imports referring to `Core`; this is
+    // brittle for small edits, including comment changes.
+    static RE2 core_loc_re(R"((import_ref Core//[^,]*, loc)\d+_\d+)");
+    RE2::Replace(&check_line, core_loc_re, R"(\1{{\\d+_\\d+}})");
   } else {
     FileTestBase::DoExtraCheckReplacements(check_line);
   }
