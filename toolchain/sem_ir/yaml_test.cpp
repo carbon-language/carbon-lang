@@ -105,7 +105,10 @@ TEST(SemIRTest, Yaml) {
   auto root = Yaml::Sequence(ElementsAre(Yaml::Mapping(
       ElementsAre(Pair("filename", "test.carbon"), Pair("sem_ir", file)))));
 
-  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()), IsYaml(root));
+  std::string print_text = print_stream.TakeStr();
+  EXPECT_THAT(Yaml::Value::FromText(print_text), IsYaml(root))
+      << "Actual text:\n"
+      << print_text;
 }
 
 }  // namespace
