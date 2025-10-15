@@ -453,7 +453,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref <error> = var %d.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %D.ref: <error> = name_ref D, <error> [concrete = <error>]
-// CHECK:STDOUT:   %d: <error> = bind_ref_name d, <error> [concrete = <error>]
+// CHECK:STDOUT:   %d: ref <error> = bind_ref_name d, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

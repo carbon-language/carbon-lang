@@ -101,6 +101,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case AutoType::Kind:
       case BindSymbolicName::Kind:
       case BindValue::Kind:
+      case BindValueName::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:
       case BoolType::Kind:
@@ -171,27 +172,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ErrorInst::Kind:
         return ExprCategory::Error;
 
-      case CARBON_KIND(BindRefName inst): {
-        // FIXME: Don't rely on value_id for expression category, since it may
-        // not be valid yet. This workaround only works because we don't support
-        // `var` in function signatures yet.
-        if (!inst.value_id.has_value()) {
-          return value_category;
-        }
-        inst_id = inst.value_id;
-        continue;
-      }
-      case CARBON_KIND(BindValueName inst): {
-        // FIXME: Don't rely on value_id for expression category, since it may
-        // not be valid yet. This workaround only works because we don't support
-        // `var` in function signatures yet.
-        if (!inst.value_id.has_value()) {
-          return value_category;
-        }
-        inst_id = inst.value_id;
-        continue;
-      }
-
       case CARBON_KIND(ArrayIndex inst): {
         inst_id = inst.array_id;
         continue;
@@ -242,6 +222,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case TupleInit::Kind:
         return ExprCategory::Initializing;
 
+      case BindRefName::Kind:
       case Deref::Kind:
       case VarStorage::Kind:
       case ReturnSlot::Kind:
