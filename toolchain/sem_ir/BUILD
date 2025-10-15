@@ -31,7 +31,6 @@ cc_library(
         "//toolchain/base:index_base",
         "//toolchain/base:int",
         "//toolchain/base:value_ids",
-        "//toolchain/base:value_store",
         "//toolchain/diagnostics:diagnostic_emitter",
         "//toolchain/parse:node_kind",
         "@llvm-project//llvm:Support",
