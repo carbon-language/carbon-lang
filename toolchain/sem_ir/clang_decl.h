@@ -90,6 +90,8 @@ struct ClangDecl : public Printable<ClangDecl> {
 
   // The instruction the Clang declaration is mapped to.
   InstId inst_id;
+
+  auto GetAsKey() const -> ClangDeclKey { return key; }
 };
 
 // The ID of a `ClangDecl`.
@@ -108,10 +110,7 @@ struct ClangDeclId : public IdBase<ClangDeclId> {
 
 // Use the AST node pointer directly when doing `Lookup` to find an ID.
 using ClangDeclStore =
-    CanonicalValueStore<ClangDeclId, ClangDeclKey, ClangDecl,
-                        [](const ClangDecl& value) -> const ClangDeclKey& {
-                          return value.key;
-                        }>;
+    CanonicalValueStore<ClangDeclId, ClangDeclKey, ClangDecl>;
 
 }  // namespace Carbon::SemIR
 

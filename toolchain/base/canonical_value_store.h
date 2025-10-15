@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_BASE_CANONICAL_VALUE_STORE_H_
 #define CARBON_TOOLCHAIN_BASE_CANONICAL_VALUE_STORE_H_
 
+#include <functional>
+
 #include "common/hashtable_key_context.h"
 #include "common/set.h"
 #include "toolchain/base/mem_usage.h"
@@ -20,15 +22,9 @@ namespace Carbon {
 // `ValueT` represents the type being stored.
 //
 // `KeyT` can optionally be different from `ValueT`, and if so is used for the
-// argument to `Lookup`. It must be valid to use both `KeyT` and `ValueT` as
-// lookup types in the underlying `Set`.
-template <typename IdT, typename KeyT, typename ValueT = KeyT,
-          // Parentheses around the lambda to help clang-format.
-          auto ValueToKeyFn =
-              ([](typename ValueStoreTypes<ValueT>::ConstRefType value) ->
-               typename ValueStoreTypes<ValueT>::ConstRefType {
-                 return value;
-               })>
+// argument to `Lookup`. In this case, `ValueT` must provide a `GetAsKey` member
+// function that returns the corresponding key.
+template <typename IdT, typename KeyT, typename ValueT = KeyT>
 class CanonicalValueStore {
  public:
   using KeyType = std::remove_cvref_t<KeyT>;
@@ -77,47 +73,55 @@ class CanonicalValueStore {
  private:
   class KeyContext;
 
+  static auto GetAsKey(ConstRefType value) -> ConstRefType
+    requires std::same_as<KeyT, ValueT>
+  {
+    return value;
+  }
+
+  template <typename T>
+  static auto GetAsKey(T&& value) -> decltype(value.GetAsKey()) {
+    return value.GetAsKey();
+  }
+
   ValueStore<IdT, ValueType> values_;
   Set<IdT, /*SmallSize=*/0, KeyContext> set_;
 };
 
-template <typename IdT, typename KeyT, typename ValueT, auto ValueToKeyFn>
-class CanonicalValueStore<IdT, KeyT, ValueT, ValueToKeyFn>::KeyContext
+template <typename IdT, typename KeyT, typename ValueT>
+class CanonicalValueStore<IdT, KeyT, ValueT>::KeyContext
     : public TranslatingKeyContext<KeyContext> {
  public:
   explicit KeyContext(const ValueStore<IdT, ValueType>* values)
       : values_(values) {}
 
-  // Note that it is safe to return a `const` reference here as the underlying
-  // object's lifetime is provided by the `ValueStore`.
+  // Note that it is safe to return a reference here as the underlying object's
+  // lifetime is provided by the `ValueStore`.
   auto TranslateKey(IdT id) const
-      -> llvm::function_traits<decltype(ValueToKeyFn)>::result_t {
-    return ValueToKeyFn(values_->Get(id));
+      -> decltype(GetAsKey(std::declval<ConstRefType>())) {
+    return GetAsKey(values_->Get(id));
   }
 
  private:
   const ValueStore<IdT, ValueType>* values_;
 };
 
-template <typename IdT, typename KeyT, typename ValueT, auto ValueToKeyFn>
-auto CanonicalValueStore<IdT, KeyT, ValueT, ValueToKeyFn>::Add(ValueType value)
-    -> IdT {
+template <typename IdT, typename KeyT, typename ValueT>
+auto CanonicalValueStore<IdT, KeyT, ValueT>::Add(ValueType value) -> IdT {
   auto make_key = [&] { return IdT(values_.Add(std::move(value))); };
-  return set_.Insert(ValueToKeyFn(value), make_key, KeyContext(&values_)).key();
+  return set_.Insert(GetAsKey(value), make_key, KeyContext(&values_)).key();
 }
 
-template <typename IdT, typename KeyT, typename ValueT, auto ValueToKeyFn>
-auto CanonicalValueStore<IdT, KeyT, ValueT, ValueToKeyFn>::Lookup(
-    KeyType key) const -> IdT {
+template <typename IdT, typename KeyT, typename ValueT>
+auto CanonicalValueStore<IdT, KeyT, ValueT>::Lookup(KeyType key) const -> IdT {
   if (auto result = set_.Lookup(key, KeyContext(&values_))) {
     return result.key();
   }
   return IdT::None;
 }
 
-template <typename IdT, typename KeyT, typename ValueT, auto ValueToKeyFn>
-auto CanonicalValueStore<IdT, KeyT, ValueT, ValueToKeyFn>::Reserve(size_t size)
-    -> void {
+template <typename IdT, typename KeyT, typename ValueT>
+auto CanonicalValueStore<IdT, KeyT, ValueT>::Reserve(size_t size) -> void {
   // Compute the resulting new insert count using the size of values -- the
   // set doesn't have a fast to compute current size.
   if (size > values_.size()) {

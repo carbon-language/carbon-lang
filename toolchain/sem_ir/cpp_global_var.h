@@ -44,13 +44,13 @@ struct CppGlobalVar : public Printable<CppGlobalVar> {
   // given key, in order to store it in `CanonicalValueStore` and allow lookup
   // by `CppGlobalVarKey`.
   ClangDeclId clang_decl_id;
+
+  auto GetAsKey() const -> CppGlobalVarKey { return key; }
 };
 
 // Use the name of a C++ global variable when doing `Lookup` to find an ID.
 using CppGlobalVarStore =
-    CanonicalValueStore<CppGlobalVarId, CppGlobalVarKey, CppGlobalVar,
-                        [](const CppGlobalVar& value)
-                            -> const CppGlobalVarKey& { return value.key; }>;
+    CanonicalValueStore<CppGlobalVarId, CppGlobalVarKey, CppGlobalVar>;
 
 }  // namespace Carbon::SemIR
 
