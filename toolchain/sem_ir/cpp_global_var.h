@@ -56,6 +56,9 @@ struct CppGlobalVar : public Printable<CppGlobalVar> {
   CppGlobalVarKey key;
 
   // The Clang declaration for this variable, if any.
+  // This is ignored for equality and hashing, since it's always unique for a
+  // given key, in order to store it in `CanonicalValueStore` and allow lookup
+  // by `CppGlobalVarKey`.
   ClangDeclId clang_decl_id;
 };
 
