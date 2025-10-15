@@ -283,6 +283,8 @@ struct CppOverloadSetId : public IdBase<CppOverloadSetId> {
   static constexpr llvm::StringLiteral Label = "cpp_overload_set";
 
   using IdBase::IdBase;
+
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 // The ID of a function.
@@ -290,6 +292,8 @@ struct FunctionId : public IdBase<FunctionId> {
   static constexpr llvm::StringLiteral Label = "function";
 
   using IdBase::IdBase;
+
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 // The ID of an IR within the set of all IRs being evaluated in the current
@@ -359,6 +363,8 @@ struct ImplId : public IdBase<ImplId> {
   static constexpr llvm::StringLiteral Label = "impl";
 
   using IdBase::IdBase;
+
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 // The ID of a `Generic`.

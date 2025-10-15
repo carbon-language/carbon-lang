@@ -164,7 +164,7 @@ class ImplStore {
     ImplId single_id_storage_;
   };
 
-  explicit ImplStore(File& sem_ir) : sem_ir_(sem_ir) {}
+  explicit ImplStore(File& sem_ir);
 
   // Returns a reference to the lookup bucket containing the list of impls with
   // this self type and constraint, or adds a new bucket if this is the first
@@ -183,6 +183,10 @@ class ImplStore {
 
   auto OutputYaml() const -> Yaml::OutputMapping {
     return values_.OutputYaml();
+  }
+
+  auto GetRawIndex(ImplId id) const -> int32_t {
+    return values_.GetRawIndex(id);
   }
 
   // Collects memory usage of members.

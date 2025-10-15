@@ -42,7 +42,7 @@ class FixedSizeValueStore {
     requires std::same_as<IdT, typename ValueStoreT::IdType>
   static auto MakeForOverwrite(const ValueStoreT& size_source)
       -> FixedSizeValueStore {
-    FixedSizeValueStore store;
+    FixedSizeValueStore store(size_source.GetIdTag());
     store.values_.resize_for_overwrite(size_source.size());
     return store;
   }
@@ -80,6 +80,8 @@ class FixedSizeValueStore {
       : tag_(size_source.GetIdTag()) {
     values_.resize(size_source.size(), default_value);
   }
+
+  explicit FixedSizeValueStore(IdTag tag) : tag_(tag) {}
 
   // Makes a ValueStore using a mapped range of `source`. The `factory_fn`
   // receives each enumerated entry for construction of `ValueType`.

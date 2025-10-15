@@ -40,7 +40,7 @@ fn B() {
 // CHECK:STDOUT:   entity_names:    {}
 // CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, call_params_id: inst_block_empty, body: [inst_block5]}
+// CHECK:STDOUT:     function60000000: {name: name0, parent_scope: name_scope0, call_params_id: inst_block_empty, body: [inst_block5]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
@@ -59,8 +59,8 @@ fn B() {
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst60000011)}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     inst0000000E:    {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     inst6000000F:    {kind: FunctionDecl, arg0: function0, arg1: inst_block_empty, type: type(inst60000010)}
-// CHECK:STDOUT:     inst60000010:    {kind: FunctionType, arg0: function0, arg1: specific<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst6000000F:    {kind: FunctionDecl, arg0: function60000000, arg1: inst_block_empty, type: type(inst60000010)}
+// CHECK:STDOUT:     inst60000010:    {kind: FunctionType, arg0: function60000000, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000011:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000012:    {kind: StructValue, arg0: inst_block_empty, type: type(inst60000010)}
 // CHECK:STDOUT:     inst60000013:    {kind: Return}
@@ -122,8 +122,8 @@ fn B() {
 // CHECK:STDOUT:     entity_name0:    {name: name1, parent_scope: name_scope1, index: -1, is_template: 0}
 // CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function0:       {name: name0, parent_scope: name_scope0, call_params_id: inst_block_empty, body: [inst_block5]}
-// CHECK:STDOUT:     function1:       {name: name1, parent_scope: name_scope1}
+// CHECK:STDOUT:     function50000000: {name: name0, parent_scope: name_scope0, call_params_id: inst_block_empty, body: [inst_block5]}
+// CHECK:STDOUT:     function50000001: {name: name1, parent_scope: name_scope1}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
@@ -144,14 +144,14 @@ fn B() {
 // CHECK:STDOUT:     inst0000000E:    {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst5000000F:    {kind: ImportDecl, arg0: name1}
 // CHECK:STDOUT:     inst50000010:    {kind: Namespace, arg0: name_scope1, arg1: inst5000000F, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     inst50000011:    {kind: FunctionDecl, arg0: function0, arg1: inst_block_empty, type: type(inst50000012)}
-// CHECK:STDOUT:     inst50000012:    {kind: FunctionType, arg0: function0, arg1: specific<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000011:    {kind: FunctionDecl, arg0: function50000000, arg1: inst_block_empty, type: type(inst50000012)}
+// CHECK:STDOUT:     inst50000012:    {kind: FunctionType, arg0: function50000000, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000013:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000014:    {kind: StructValue, arg0: inst_block_empty, type: type(inst50000012)}
 // CHECK:STDOUT:     inst50000015:    {kind: NameRef, arg0: name1, arg1: inst50000010, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst50000016:    {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: entity_name0, type: type(inst50000018)}
-// CHECK:STDOUT:     inst50000017:    {kind: FunctionDecl, arg0: function1, arg1: inst_block_empty, type: type(inst50000018)}
-// CHECK:STDOUT:     inst50000018:    {kind: FunctionType, arg0: function1, arg1: specific<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000017:    {kind: FunctionDecl, arg0: function50000001, arg1: inst_block_empty, type: type(inst50000018)}
+// CHECK:STDOUT:     inst50000018:    {kind: FunctionType, arg0: function50000001, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000019:    {kind: StructValue, arg0: inst_block_empty, type: type(inst50000018)}
 // CHECK:STDOUT:     inst5000001A:    {kind: NameRef, arg0: name1, arg1: inst50000016, type: type(inst50000018)}
 // CHECK:STDOUT:     inst5000001B:    {kind: Call, arg0: inst5000001A, arg1: inst_block_empty, type: type(inst50000013)}

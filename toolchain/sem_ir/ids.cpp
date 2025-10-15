@@ -42,6 +42,14 @@ auto ConstantId::Print(llvm::raw_ostream& out, bool disambiguate) const
   }
 }
 
+auto CppOverloadSetId::Print(llvm::raw_ostream& out) const -> void {
+  IdBase::PrintHex(out);
+}
+
+auto FunctionId::Print(llvm::raw_ostream& out) const -> void {
+  IdBase::PrintHex(out);
+}
+
 auto CheckIRId::Print(llvm::raw_ostream& out) const -> void {
   if (*this == Cpp) {
     out << Label << "(Cpp)";
@@ -55,6 +63,10 @@ auto ClassId::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto AssociatedConstantId::Print(llvm::raw_ostream& out) const -> void {
+  IdBase::PrintHex(out);
+}
+
+auto ImplId::Print(llvm::raw_ostream& out) const -> void {
   IdBase::PrintHex(out);
 }
 

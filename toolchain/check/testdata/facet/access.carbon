@@ -383,6 +383,33 @@ fn G(AB:! A & B where .X = () and .Y = {}) -> AB.Y {
 }
 //@dump-sem-ir-end
 
+// --- symbolic_binding_type_of_impl_witness_access.carbon
+
+interface Y {}
+impl () as Y {}
+
+interface Z {
+  let Y1:! Y;
+  fn G() -> Y1*;
+}
+
+// The type of `T` matches exactly the type of `Z.Y1`, which prevents the
+// specific in the call from F2 from deducing a `FacetValue`. Instead it just
+// passes in the `ImplWitnessAccess` instruction as is.
+//
+// The `t: T` creates a `T as type`, or a `SymbolicBindingType` that gets
+// evaluated against the specific. The facet value that it evaluates against is
+// the `ImplWitnessAccess` from the call in F2.
+//
+// This requires that `SymbolicBindingType` evaluation correctly handles
+// arbitrary facet value instructions. Not just the common case of `FacetValue`
+// or `BindSymbolicName`.
+fn F1(T:! Y, t: T*) {}
+
+fn F2(U:! Z) {
+  F1(U.Y1, U.G());
+}
+
 // CHECK:STDOUT: --- access_assoc_fn.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
