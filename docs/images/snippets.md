@@ -84,7 +84,6 @@ auto main() -> int {
 ```cpp
 // Carbon:
 package Geometry;
-// This is a hypothetical package for demonstrating imports.
 import Math;
 
 class Circle {
@@ -121,7 +120,6 @@ struct Circle {
 // Carbon exposing a function for C++:
 package Geometry;
 import Cpp library "circle.h";
-// This is a hypothetical package for demonstrating imports.
 import Math;
 
 fn PrintTotalArea(circles: [Cpp.Circle]) {

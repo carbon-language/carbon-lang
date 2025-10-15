@@ -151,7 +151,6 @@ Here is a simple function showing some Carbon code:
 
 ```carbon
 import Core library "io";
-// This is a hypothetical package for demonstrating imports.
 import Math;
 
 // Returns the smallest factor of `n` > 1, and
