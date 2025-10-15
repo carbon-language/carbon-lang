@@ -56,7 +56,6 @@ struct IdBase : public AnyIdBase, public Printable<IdT> {
   // NOLINTNEXTLINE(readability-identifier-naming)
   static const IdT& None;
 
-  // TODO: Make Print() do the hex thing for all IDs and remove this function.
   auto Print(llvm::raw_ostream& out) const -> void {
     out << IdT::Label;
     if (has_value()) {
@@ -90,6 +89,8 @@ struct IndexBase : public IdBase<IdT> {
     return lhs.index <=> rhs.index;
   }
 
+  // Print indexed ids in decimal, since they won't have tagging (because, as
+  // the class comment explains, these ids are not entirely opaque).
   auto Print(llvm::raw_ostream& out) const -> void {
     out << IdT::Label;
     if (this->has_value()) {
