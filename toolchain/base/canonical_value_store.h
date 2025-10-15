@@ -23,12 +23,8 @@ namespace Carbon {
 // argument to `Lookup`. It must be valid to use both `KeyT` and `ValueT` as
 // lookup types in the underlying `Set`.
 template <typename IdT, typename KeyT, typename ValueT = KeyT,
-          // Parentheses around the lambda to help clang-format.
-          auto ValueToKeyFn =
-              ([](typename ValueStoreTypes<ValueT>::ConstRefType value) ->
-               typename ValueStoreTypes<ValueT>::ConstRefType {
-                 return value;
-               })>
+          auto ValueToKeyFn = [](typename ValueStoreTypes<ValueT>::ConstRefType
+                                     value) { return value; }>
 class CanonicalValueStore {
  public:
   using KeyType = std::remove_cvref_t<KeyT>;
