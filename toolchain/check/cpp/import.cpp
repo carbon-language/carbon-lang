@@ -1854,8 +1854,8 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
       context.entity_names().AddSymbolicBindingName(
           var_name_id, GetParentNameScopeId(context, var_decl),
           SemIR::CompileTimeBindIndex::None, false);
-  context.cpp_global_names().Add(
-      {.key = {.name_id = entity_name_id}, .clang_decl_id = clang_decl_id});
+  context.cpp_global_names().Add({.key = {.entity_name_id = entity_name_id},
+                                  .clang_decl_id = clang_decl_id});
 
   // Create `BindingPattern` and `VarPattern` in a `NameBindingDecl`.
   context.pattern_block_stack().Push();

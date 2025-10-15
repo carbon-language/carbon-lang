@@ -13,16 +13,16 @@
 namespace Carbon::SemIR {
 
 // A key describing a C++ global variable imported into Carbon, identified by
-// its name.
+// its entity name.
 struct CppGlobalVarKey : public Printable<CppGlobalVarKey> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{name_id: " << name_id << "}";
+    out << "{entity_name_id: " << entity_name_id << "}";
   }
 
   // TODO: Use default when `Printable` supports it.
   friend auto operator==(const CppGlobalVarKey& lhs, const CppGlobalVarKey& rhs)
       -> bool {
-    return lhs.name_id == rhs.name_id;
+    return lhs.entity_name_id == rhs.entity_name_id;
   }
 
   // Hashing for CppGlobalVarKey. See common/hashing.h.
@@ -30,15 +30,15 @@ struct CppGlobalVarKey : public Printable<CppGlobalVarKey> {
       -> HashCode {
     // Manual hashing support is required because this type has tail padding in
     // 64-bit compilations.
-    return HashValue(value.name_id, seed);
+    return HashValue(value.entity_name_id, seed);
   }
 
   // The name of the variable.
-  EntityNameId name_id;
+  EntityNameId entity_name_id;
 };
 
-// A C++ global variable imported into Carbon. This is used to map the name to
-// the Clang declaration so we can use Clang mangling.
+// A C++ global variable imported into Carbon. This is used to map the entity
+// name to the Clang declaration so we can use Clang mangling.
 struct CppGlobalVar : public Printable<CppGlobalVar> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{key: " << key << ", clang_decl_id: " << clang_decl_id << "}";

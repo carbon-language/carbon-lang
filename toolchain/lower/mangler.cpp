@@ -210,7 +210,7 @@ auto Mangler::MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string {
   }
 
   SemIR::CppGlobalVarId cpp_global_var_id =
-      sem_ir().cpp_global_vars().Lookup({.name_id = var_name_id});
+      sem_ir().cpp_global_vars().Lookup({.entity_name_id = var_name_id});
   if (cpp_global_var_id.has_value()) {
     SemIR::ClangDeclId clang_decl_id =
         sem_ir().cpp_global_vars().Get(cpp_global_var_id).clang_decl_id;
