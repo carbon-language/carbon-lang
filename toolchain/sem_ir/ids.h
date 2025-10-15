@@ -318,8 +318,6 @@ struct VtableId : public IdBase<VtableId> {
   static constexpr llvm::StringLiteral Label = "vtable";
 
   using IdBase::IdBase;
-
-  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 // The ID of an `Interface`.
