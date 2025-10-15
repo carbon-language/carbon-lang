@@ -19,8 +19,10 @@ struct CppGlobalVarKey : public Printable<CppGlobalVarKey> {
     out << "{name_id: " << name_id << "}";
   }
 
-  auto operator==(const CppGlobalVarKey& rhs) const -> bool {
-    return name_id == rhs.name_id;
+  // TODO: Use default when `Printable` supports it.
+  friend auto operator==(const CppGlobalVarKey& lhs, const CppGlobalVarKey& rhs)
+      -> bool {
+    return lhs.name_id == rhs.name_id;
   }
 
   // Hashing for CppGlobalVarKey. See common/hashing.h.
@@ -46,10 +48,6 @@ struct CppGlobalVar : public Printable<CppGlobalVar> {
   friend auto operator==(const CppGlobalVar& lhs, const CppGlobalVarKey& rhs)
       -> bool {
     return lhs.key == rhs;
-  }
-  friend auto operator==(const CppGlobalVarKey& lhs, const CppGlobalVar& rhs)
-      -> bool {
-    return rhs == lhs;
   }
   friend auto operator==(const CppGlobalVar& lhs, const CppGlobalVar& rhs)
       -> bool {
