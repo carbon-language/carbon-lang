@@ -26,22 +26,26 @@ fn If(b: bool) {
 // CHECK:STDOUT: ; ModuleID = 'else.carbon'
 // CHECK:STDOUT: source_filename = "else.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CF.Main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CF.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CG.Main() !dbg !8 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CH.Main() !dbg !10 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CH.Main() #0 !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CIf.Main(i1 %b) !dbg !12 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CIf.Main(i1 %b) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   br i1 %b, label %if.then, label %if.else, !dbg !13
 // CHECK:STDOUT:
@@ -57,6 +61,8 @@ fn If(b: bool) {
 // CHECK:STDOUT:   call void @_CH.Main(), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

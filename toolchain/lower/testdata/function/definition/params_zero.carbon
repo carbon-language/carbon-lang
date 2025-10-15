@@ -15,10 +15,13 @@ fn Foo() {}
 // CHECK:STDOUT: ; ModuleID = 'params_zero.carbon'
 // CHECK:STDOUT: source_filename = "params_zero.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CFoo.Main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CFoo.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

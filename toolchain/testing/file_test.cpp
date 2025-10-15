@@ -92,6 +92,11 @@ class ToolchainFileTest : public FileTestBase {
   // Sets different default flags based on the component being tested.
   auto GetDefaultArgs() const -> llvm::SmallVector<std::string> override;
 
+  // Returns string replacements to implement `%{key}` -> `value` in arguments.
+  auto GetArgReplacements() const -> llvm::StringMap<std::string> override {
+    return {{"core", data_->installation.core_package().native()}};
+  }
+
   // Generally uses the parent implementation, with special handling for lex.
   auto GetDefaultFileRE(llvm::ArrayRef<llvm::StringRef> filenames) const
       -> std::optional<RE2> override;

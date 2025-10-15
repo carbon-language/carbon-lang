@@ -35,7 +35,8 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CH.Main()
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CWhile.Main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CWhile.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Main(), !dbg !7
 // CHECK:STDOUT:   br label %while.cond, !dbg !8
@@ -52,6 +53,8 @@ fn While() {
 // CHECK:STDOUT:   call void @_CH.Main(), !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

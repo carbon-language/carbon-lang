@@ -55,7 +55,8 @@ fn M() {
 // CHECK:STDOUT: ; ModuleID = 'call_recursive_reorder_more.carbon'
 // CHECK:STDOUT: source_filename = "call_recursive_reorder_more.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CM.Main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CM.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %val_i16.var = alloca i16, align 2, !dbg !7
 // CHECK:STDOUT:   %val_i32.var = alloca i32, align 4, !dbg !8
@@ -129,9 +130,10 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.077d2bb2ab5eee86(i16 %x, ptr %y, ptr %z, i32 %count) !dbg !65 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.077d2bb2ab5eee86(i16 %x, ptr %y, ptr %z, i32 %count) #0 !dbg !65 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !66
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !67
@@ -145,7 +147,8 @@ fn M() {
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !71
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.9a89ac9e10448feb(i32 %x, ptr %y, ptr %z, i32 %count) !dbg !72 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.9a89ac9e10448feb(i32 %x, ptr %y, ptr %z, i32 %count) #0 !dbg !72 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !73
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !74
@@ -159,7 +162,8 @@ fn M() {
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !78
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.76a945443862cc1f(i1 %x, ptr %y, ptr %z, i32 %count) !dbg !79 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.76a945443862cc1f(i1 %x, ptr %y, ptr %z, i32 %count) #0 !dbg !79 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !80
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !81
@@ -173,7 +177,8 @@ fn M() {
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !85
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.02da1a7614ea56b6(i64 %x, i1 %y, ptr %z, i32 %count) !dbg !86 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.02da1a7614ea56b6(i64 %x, i1 %y, ptr %z, i32 %count) #0 !dbg !86 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !87
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !88
@@ -187,7 +192,8 @@ fn M() {
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !92
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.4dcab66ec095dfec(double %x, ptr %y, ptr %z, i32 %count) !dbg !93 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.4dcab66ec095dfec(double %x, ptr %y, ptr %z, i32 %count) #0 !dbg !93 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !94
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !95
@@ -201,7 +207,8 @@ fn M() {
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !99
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.7776e910959584d9(ptr %x, ptr %y, ptr %z, i32 %count) !dbg !100 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.7776e910959584d9(ptr %x, ptr %y, ptr %z, i32 %count) #0 !dbg !100 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !101
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !102
@@ -215,7 +222,8 @@ fn M() {
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !106
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.bea8bae6e14e4034(i64 %x, ptr %y, i1 %z, i32 %count) !dbg !107 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.bea8bae6e14e4034(i64 %x, ptr %y, i1 %z, i32 %count) #0 !dbg !107 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !108
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !109
@@ -233,7 +241,8 @@ fn M() {
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 8, 7, 6, 5, 4, 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_CF.Main.7776e910959584d9, { 5, 7, 6, 4, 0, 1, 2, 3 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

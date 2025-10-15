@@ -29,12 +29,15 @@ fn F(p: C*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CSet.C.Main(ptr, i32)
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CF.Main(ptr %p) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CF.Main(ptr %p) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %C.Get.call = call i32 @_CGet.C.Main(ptr %p), !dbg !7
 // CHECK:STDOUT:   call void @_CSet.C.Main(ptr %p, i32 %C.Get.call), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

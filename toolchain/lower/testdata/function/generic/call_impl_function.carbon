@@ -46,23 +46,28 @@ fn G() {
 // CHECK:STDOUT: ; ModuleID = 'call_impl_function.carbon'
 // CHECK:STDOUT: source_filename = "call_impl_function.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @"_CF.ImplsSomeInterface.Main:SomeInterface.Main"(i32 %x) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @"_CF.ImplsSomeInterface.Main:SomeInterface.Main"(i32 %x) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.Negate.impl.Op.call = sub i32 0, %x, !dbg !7
 // CHECK:STDOUT:   ret i32 %Int.as.Negate.impl.Op.call, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CG.Main() !dbg !9 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %CallGenericMethod.call = call i32 @_CCallGenericMethod.Main.dc54e41cb8a9bf68(i32 10), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CCallGenericMethod.Main.dc54e41cb8a9bf68(i32 %x) !dbg !12 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CCallGenericMethod.Main.dc54e41cb8a9bf68(i32 %x) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc36_15 = call i32 @"_CF.ImplsSomeInterface.Main:SomeInterface.Main"(i32 %x), !dbg !13
 // CHECK:STDOUT:   ret i32 %.loc36_15, !dbg !14
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

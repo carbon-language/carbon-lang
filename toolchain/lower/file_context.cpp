@@ -608,6 +608,38 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     AddLoweredSpecificForGeneric(declaration_function.generic_id, specific_id);
   }
 
+  // Set attributes on the function definition.
+  {
+    llvm::AttrBuilder attr_builder(llvm_context());
+    attr_builder.addAttribute(llvm::Attribute::NoUnwind);
+
+    // TODO: We should take the opt level from the SemIR file; it might not be
+    // the same for all files in a compilation.
+    if (context().opt_level().getSpeedupLevel() == 0) {
+      // --opt=none disables all optimizations for this function.
+      attr_builder.addAttribute(llvm::Attribute::OptimizeNone);
+      attr_builder.addAttribute(llvm::Attribute::NoInline);
+    } else {
+      // Otherwise, always inline thunks.
+      if (definition_function.special_function_kind ==
+          SemIR::Function::SpecialFunctionKind::Thunk) {
+        attr_builder.addAttribute(llvm::Attribute::AlwaysInline);
+      }
+
+      // Convert --opt=size into optsize and minsize.
+      if (context().opt_level().getSizeLevel() > 0) {
+        attr_builder.addAttribute(llvm::Attribute::OptimizeForSize);
+      }
+      if (context().opt_level().getSizeLevel() > 1) {
+        attr_builder.addAttribute(llvm::Attribute::MinSize);
+      }
+
+      // TODO: Should we generate an InlineHint for some functions? Perhaps for
+      // those defined in the API file?
+    }
+    llvm_function->addFnAttrs(attr_builder);
+  }
+
   FunctionContext function_lowering(
       definition_context, llvm_function, *this, specific_id,
       coalescer_.InitializeFingerprintForSpecific(specific_id),

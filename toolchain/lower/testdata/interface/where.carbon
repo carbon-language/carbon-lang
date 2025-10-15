@@ -25,10 +25,13 @@ impl C as I where .T = () {
 // CHECK:STDOUT: ; ModuleID = 'where.carbon'
 // CHECK:STDOUT: source_filename = "where.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @"_CF.C.Main:I.Main"() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @"_CF.C.Main:I.Main"() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

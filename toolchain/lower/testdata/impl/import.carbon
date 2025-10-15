@@ -39,12 +39,15 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'impl_def.carbon'
 // CHECK:STDOUT: source_filename = "impl_def.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @"_CF.A.Main:I.Main"(ptr %self) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @"_CF.A.Main:I.Main"(ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc14_16.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !7
 // CHECK:STDOUT:   %.loc14_16.2 = load i32, ptr %.loc14_16.1.n, align 4, !dbg !7
 // CHECK:STDOUT:   ret i32 %.loc14_16.2, !dbg !8
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -61,13 +64,16 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'impl_use.carbon'
 // CHECK:STDOUT: source_filename = "impl_use.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CCall.Main(ptr %a) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_CCall.Main(ptr %a) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %A.as.I.impl.F.call = call i32 @"_CF.A.Main:I.Main"(ptr %a), !dbg !7
 // CHECK:STDOUT:   ret i32 %A.as.I.impl.F.call, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @"_CF.A.Main:I.Main"(ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

@@ -8,6 +8,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Passes/OptimizationLevel.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/inst_namer.h"
@@ -27,8 +28,8 @@ struct LowerToLLVMOptions {
   // If set, enables verbose output.
   llvm::raw_ostream* vlog_stream = nullptr;
 
-  // If set, LLVM IR will be dumped to this in textual form.
-  llvm::raw_ostream* dump_stream = nullptr;
+  // The optimization level to set on lowered functions by default.
+  llvm::OptimizationLevel opt_level = llvm::OptimizationLevel::O1;
 };
 
 // Lowers SemIR to LLVM IR.

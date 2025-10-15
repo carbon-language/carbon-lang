@@ -10,6 +10,7 @@
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Passes/OptimizationLevel.h"
 #include "toolchain/check/check.h"
 #include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/driver_env.h"
@@ -26,6 +27,7 @@ struct CompileOptions {
     Parse,
     Check,
     Lower,
+    Opt,
     CodeGen,
   };
 
@@ -34,6 +36,7 @@ struct CompileOptions {
 
   auto Build(CommandLine::CommandBuilder& b) -> void;
 
+  llvm::OptimizationLevel opt_level = llvm::OptimizationLevel::O1;
   CodegenOptions codegen_options;
 
   Phase phase;

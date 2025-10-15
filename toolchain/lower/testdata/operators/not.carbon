@@ -17,11 +17,14 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT: ; ModuleID = 'not.carbon'
 // CHECK:STDOUT: source_filename = "not.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CNot.Main(i1 %b) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CNot.Main(i1 %b) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc14 = xor i1 %b, true, !dbg !7
 // CHECK:STDOUT:   ret i1 %.loc14, !dbg !8
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

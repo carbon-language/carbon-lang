@@ -162,6 +162,7 @@ cc_library(
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:MC",
+        "@llvm-project//llvm:Passes",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:TargetParser",
     ],
