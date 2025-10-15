@@ -84,7 +84,8 @@ auto main() -> int {
 ```cpp
 // Carbon:
 package Geometry;
-import Math; //hypothetical package. Do not exist yet.
+//Math is hypothetical package. Do not exist yet.
+import Math;
 
 class Circle {
   var r: f32;
@@ -98,7 +99,8 @@ fn PrintTotalArea(circles: [Circle]) {
   Print("Total area: {0}", area);
 }
 
-fn Run() -> i32 { //The design and the toolchain now use Run()
+//The design and the toolchain now use Run()
+fn Run() -> i32 {
   // A dynamically sized array, like `std::vector`.
   var circles: array [Circle] = ({.r = 1.0}, {.r = 2.0});
   // Implicitly constructs a slice from the array.
@@ -120,7 +122,8 @@ struct Circle {
 // Carbon exposing a function for C++:
 package Geometry;
 import Cpp library "circle.h";
-import Math; //hypothetical package. Do not exist yet.
+//Math is hypothetical package. Do not exist yet.
+import Math;
 
 fn PrintTotalArea(circles: [Cpp.Circle]) {
   var area: f32 = 0;

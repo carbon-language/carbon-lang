@@ -151,7 +151,8 @@ Here is a simple function showing some Carbon code:
 
 ```carbon
 import Core library "io";
-import Math; //hypothetical package. Do not exist yet.
+//Math is hypothetical package. Do not exist yet.
+import Math;
 
 // Returns the smallest factor of `n` > 1, and
 // whether `n` itself is prime.
