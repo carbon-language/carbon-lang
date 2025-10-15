@@ -5,8 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_BASE_CANONICAL_VALUE_STORE_H_
 #define CARBON_TOOLCHAIN_BASE_CANONICAL_VALUE_STORE_H_
 
-#include <functional>
-
 #include "common/hashtable_key_context.h"
 #include "common/set.h"
 #include "toolchain/base/mem_usage.h"
