@@ -61,7 +61,7 @@ fn F(n: i32) {
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'n'},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'ValBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 8},
 // CHECK:STDOUT:             {kind: 'BoolLiteralTrue', text: 'true'},

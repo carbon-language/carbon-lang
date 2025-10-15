@@ -322,9 +322,9 @@ struct Namespace {
 // Pattern nodes
 // -------------
 
-// A pattern binding, such as `name: Type`, that isn't inside a `var` pattern.
-struct LetBindingPattern {
-  static constexpr auto Kind = NodeKind::LetBindingPattern.Define(
+// A binding pattern, such as `name: Type`, that isn't inside a `var` pattern.
+struct ValBindingPattern {
+  static constexpr auto Kind = NodeKind::ValBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
   AnyRuntimeBindingPatternName name;
@@ -332,7 +332,7 @@ struct LetBindingPattern {
   AnyExprId type;
 };
 
-// A pattern binding, such as `name: Type`, that is inside a `var` pattern.
+// A binding pattern, such as `name: Type`, that is inside a `var` pattern.
 struct VarBindingPattern {
   static constexpr auto Kind = NodeKind::VarBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});

@@ -28,7 +28,7 @@ fn bar(addr template b:! i32);
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'addr', has_error: yes},
 // CHECK:STDOUT:           {kind: 'InvalidParse', text: 'addr', has_error: yes},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: 'template', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'ValBindingPattern', text: 'template', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},

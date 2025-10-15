@@ -25,7 +25,7 @@ var T: type = if true then i32* else f64*;
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'p'},
 // CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:             {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'ValBindingPattern', text: ':', subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:           {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},

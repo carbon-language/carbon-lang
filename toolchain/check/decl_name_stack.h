@@ -189,7 +189,7 @@ class DeclNameStack {
   // Creates and returns a name context corresponding to declaring an
   // unqualified name in the current context. This is suitable for adding to
   // name lookup in situations where a qualified name is not permitted, such as
-  // a pattern binding.
+  // a binding pattern.
   auto MakeUnqualifiedName(SemIR::LocId loc_id, SemIR::NameId name_id)
       -> NameContext;
 

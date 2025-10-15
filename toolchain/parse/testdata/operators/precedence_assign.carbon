@@ -25,7 +25,7 @@ fn F(c: bool) {
 // CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'c'},
 // CHECK:STDOUT:             {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'ValBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 8},
 // CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},

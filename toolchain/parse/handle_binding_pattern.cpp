@@ -109,7 +109,7 @@ static auto HandleBindingPatternFinish(Context& context, bool is_compile_time)
     if (is_compile_time) {
       node_kind = NodeKind::CompileTimeBindingPattern;
     } else {
-      node_kind = NodeKind::LetBindingPattern;
+      node_kind = NodeKind::ValBindingPattern;
     }
   }
   context.AddNode(node_kind, state.token, state.has_error);

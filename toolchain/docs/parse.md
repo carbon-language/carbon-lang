@@ -214,7 +214,7 @@ a variable declaration structure.
 
 </pre>
 
-Next, we can consider the pattern binding. Here, `x` is the identifier and `i32`
+Next, we can consider the binding pattern. Here, `x` is the identifier and `i32`
 is the type expression. The `:` provides a parent node that must always contain
 two children, the name and type expression. Because it always has two direct
 children, it doesn't need to be bracketed.

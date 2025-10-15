@@ -31,7 +31,7 @@ fn foo() -> i32 {
 // CHECK:STDOUT:           {kind: 'ForHeaderStart', text: '('},
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: 'returned', has_error: yes},
 // CHECK:STDOUT:               {kind: 'InvalidParse', text: 'returned', has_error: yes},
-// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: 'returned', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'ValBindingPattern', text: 'returned', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'ForIn', text: '(', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:         {kind: 'ForHeader', text: ')', has_error: yes, subtree_size: 6},
 // CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '{'},

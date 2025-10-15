@@ -40,7 +40,7 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'ForHeaderStart', text: 'for', has_error: yes},
 // CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: '{', has_error: yes},
 // CHECK:STDOUT:               {kind: 'InvalidParse', text: '{', has_error: yes},
-// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: '{', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'ValBindingPattern', text: '{', has_error: yes, subtree_size: 3},
 // CHECK:STDOUT:           {kind: 'ForIn', text: 'for', has_error: yes, subtree_size: 4},
 // CHECK:STDOUT:             {kind: 'StructLiteralStart', text: '{'},
 // CHECK:STDOUT:           {kind: 'StructLiteral', text: '}', subtree_size: 2},

@@ -151,7 +151,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         result_inst_id = SemIR::ErrorInst::InstId;
       } else {
         result_inst_id = make_binding_pattern();
-        if (node_kind == Parse::NodeKind::LetBindingPattern) {
+        if (node_kind == Parse::NodeKind::ValBindingPattern) {
           // A value binding pattern in a function signature is a `Call`
           // parameter, but a variable binding pattern is not (instead the
           // enclosing `var` pattern is), and a symbolic binding pattern is not
@@ -214,10 +214,10 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::LetBindingPatternId node_id)
+auto HandleParseNode(Context& context, Parse::ValBindingPatternId node_id)
     -> bool {
   return HandleAnyBindingPattern(context, node_id,
-                                 Parse::NodeKind::LetBindingPattern);
+                                 Parse::NodeKind::ValBindingPattern);
 }
 
 auto HandleParseNode(Context& context, Parse::VarBindingPatternId node_id)
@@ -272,7 +272,7 @@ auto HandleParseNode(Context& context,
         context.TODO(
             node_id,
             "`let` compile time binding outside function or interface");
-        node_kind = Parse::NodeKind::LetBindingPattern;
+        node_kind = Parse::NodeKind::ValBindingPattern;
       }
     }
   }

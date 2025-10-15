@@ -104,7 +104,7 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'LetIntroducer', text: 'let'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'n'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'ValBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:         {kind: 'LetInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'IntLiteral', text: '0'},
 // CHECK:STDOUT:       {kind: 'LetDecl', text: ';', subtree_size: 7},
