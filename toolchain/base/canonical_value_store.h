@@ -24,7 +24,7 @@ namespace Carbon {
 // lookup types in the underlying `Set`.
 template <typename IdT, typename KeyT, typename ValueT = KeyT,
           auto ValueToKeyFn =
-              // Parens just to help clang-format.
+              // Parentheses just to help clang-format.
           ([](typename ValueStoreTypes<ValueT>::ConstRefType value) ->
            typename ValueStoreTypes<ValueT>::ConstRefType { return value; })>
 class CanonicalValueStore {
@@ -82,7 +82,8 @@ class CanonicalValueStore<IdT, KeyT, ValueT, ValueToKeyFn>::KeyContext
       : values_(values) {}
 
   // Note that it is safe to return a `const` reference here as the underlying
-  // object's lifetime is provided by the `ValueStore`.
+  // object's lifetime is provided by the `ValueStore`. Returns `auto` to pick
+  // up the return type of `ValueToKeyFn`.
   auto TranslateKey(IdT id) const -> auto {
     return ValueToKeyFn(values_->Get(id));
   }
