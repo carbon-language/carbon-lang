@@ -395,9 +395,9 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst6000001A:    {kind: PointerType, arg0: inst60000019, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000001B:    {kind: PointerType, arg0: inst60000015, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000001C:    {kind: PointerType, arg0: inst60000016, type: type(TypeType)}
-// CHECK:STDOUT:     inst6000001D:    {kind: BindName, arg0: entity_name2, arg1: inst60000031, type: type(symbolic_constant4)}
+// CHECK:STDOUT:     inst6000001D:    {kind: BindValueName, arg0: entity_name2, arg1: inst60000031, type: type(symbolic_constant4)}
 // CHECK:STDOUT:     inst6000001E:    {kind: PatternType, arg0: inst6000001B, type: type(TypeType)}
-// CHECK:STDOUT:     inst6000001F:    {kind: BindingPattern, arg0: entity_name2, type: type(symbolic_constant6)}
+// CHECK:STDOUT:     inst6000001F:    {kind: ValueBindingPattern, arg0: entity_name2, type: type(symbolic_constant6)}
 // CHECK:STDOUT:     inst60000020:    {kind: PatternType, arg0: inst6000001C, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000021:    {kind: ValueParamPattern, arg0: inst6000001F, arg1: call_param0, type: type(symbolic_constant6)}
 // CHECK:STDOUT:     inst60000022:    {kind: NameRef, arg0: name1, arg1: inst60000014, type: type(TypeType)}
@@ -452,7 +452,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst60000053:    {kind: PatternType, arg0: inst60000052, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000054:    {kind: ReturnSlotPattern, arg0: inst<none>, type: type(symbolic_constant19)}
 // CHECK:STDOUT:     inst60000055:    {kind: OutParamPattern, arg0: inst60000054, arg1: call_param1, type: type(symbolic_constant19)}
-// CHECK:STDOUT:     inst60000056:    {kind: BindingPattern, arg0: entity_name8, type: type(symbolic_constant19)}
+// CHECK:STDOUT:     inst60000056:    {kind: ValueBindingPattern, arg0: entity_name8, type: type(symbolic_constant19)}
 // CHECK:STDOUT:     inst60000057:    {kind: ValueParamPattern, arg0: inst60000056, arg1: call_param0, type: type(symbolic_constant19)}
 // CHECK:STDOUT:     inst60000058:    {kind: ImportRefLoaded, arg0: import_ir_inst11, arg1: entity_name<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst60000059:    {kind: BindSymbolicName, arg0: entity_name4, arg1: inst<none>, type: type(inst60000047)}
@@ -482,7 +482,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst60000071:    {kind: PatternType, arg0: inst60000061, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000072:    {kind: ReturnSlotPattern, arg0: inst<none>, type: type(symbolic_constant43)}
 // CHECK:STDOUT:     inst60000073:    {kind: OutParamPattern, arg0: inst60000072, arg1: call_param1, type: type(symbolic_constant43)}
-// CHECK:STDOUT:     inst60000074:    {kind: BindingPattern, arg0: entity_name17, type: type(symbolic_constant43)}
+// CHECK:STDOUT:     inst60000074:    {kind: ValueBindingPattern, arg0: entity_name17, type: type(symbolic_constant43)}
 // CHECK:STDOUT:     inst60000075:    {kind: ValueParamPattern, arg0: inst60000074, arg1: call_param0, type: type(symbolic_constant43)}
 // CHECK:STDOUT:     inst60000076:    {kind: ImportRefLoaded, arg0: import_ir_inst32, arg1: entity_name<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst60000077:    {kind: FunctionType, arg0: function60000002, arg1: specific3, type: type(TypeType)}
@@ -537,7 +537,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst600000A8:    {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant81)}
 // CHECK:STDOUT:     inst600000A9:    {kind: ReturnSlotPattern, arg0: inst<none>, type: type(symbolic_constant85)}
 // CHECK:STDOUT:     inst600000AA:    {kind: OutParamPattern, arg0: inst600000A9, arg1: call_param1, type: type(symbolic_constant85)}
-// CHECK:STDOUT:     inst600000AB:    {kind: BindingPattern, arg0: entity_name24, type: type(symbolic_constant85)}
+// CHECK:STDOUT:     inst600000AB:    {kind: ValueBindingPattern, arg0: entity_name24, type: type(symbolic_constant85)}
 // CHECK:STDOUT:     inst600000AC:    {kind: ValueParamPattern, arg0: inst600000AB, arg1: call_param0, type: type(symbolic_constant85)}
 // CHECK:STDOUT:     inst600000AD:    {kind: ImportRefLoaded, arg0: import_ir_inst77, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000AE:    {kind: FunctionType, arg0: function60000003, arg1: specific8, type: type(TypeType)}
@@ -580,7 +580,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst600000D3:    {kind: PatternType, arg0: inst600000C0, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000D4:    {kind: ReturnSlotPattern, arg0: inst<none>, type: type(symbolic_constant119)}
 // CHECK:STDOUT:     inst600000D5:    {kind: OutParamPattern, arg0: inst600000D4, arg1: call_param1, type: type(symbolic_constant119)}
-// CHECK:STDOUT:     inst600000D6:    {kind: BindingPattern, arg0: entity_name36, type: type(symbolic_constant119)}
+// CHECK:STDOUT:     inst600000D6:    {kind: ValueBindingPattern, arg0: entity_name36, type: type(symbolic_constant119)}
 // CHECK:STDOUT:     inst600000D7:    {kind: ValueParamPattern, arg0: inst600000D6, arg1: call_param0, type: type(symbolic_constant119)}
 // CHECK:STDOUT:     inst600000D8:    {kind: ImportRefLoaded, arg0: import_ir_inst113, arg1: entity_name<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst600000D9:    {kind: ImportRefLoaded, arg0: import_ir_inst114, arg1: entity_name<none>, type: type(inst60000047)}
@@ -640,7 +640,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst6000010F:    {kind: PatternType, arg0: inst600000F8, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000110:    {kind: ReturnSlotPattern, arg0: inst<none>, type: type(symbolic_constant191)}
 // CHECK:STDOUT:     inst60000111:    {kind: OutParamPattern, arg0: inst60000110, arg1: call_param1, type: type(symbolic_constant191)}
-// CHECK:STDOUT:     inst60000112:    {kind: BindingPattern, arg0: entity_name55, type: type(symbolic_constant191)}
+// CHECK:STDOUT:     inst60000112:    {kind: ValueBindingPattern, arg0: entity_name55, type: type(symbolic_constant191)}
 // CHECK:STDOUT:     inst60000113:    {kind: ValueParamPattern, arg0: inst60000112, arg1: call_param0, type: type(symbolic_constant191)}
 // CHECK:STDOUT:     inst60000114:    {kind: ImportRefLoaded, arg0: import_ir_inst159, arg1: entity_name<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst60000115:    {kind: ImportRefLoaded, arg0: import_ir_inst160, arg1: entity_name<none>, type: type(inst60000047)}

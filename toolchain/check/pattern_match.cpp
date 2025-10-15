@@ -607,8 +607,9 @@ auto MatchContext::EmitPatternMatch(Context& context,
       });
   auto pattern = context.insts().Get(entry.pattern_id);
   CARBON_KIND_SWITCH(pattern) {
-    case SemIR::BindingPattern::Kind:
-    case SemIR::SymbolicBindingPattern::Kind: {
+    case SemIR::RefBindingPattern::Kind:
+    case SemIR::SymbolicBindingPattern::Kind:
+    case SemIR::ValueBindingPattern::Kind: {
       DoEmitPatternMatch(context, pattern.As<SemIR::AnyBindingPattern>(),
                          entry.pattern_id, entry);
       break;

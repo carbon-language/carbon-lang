@@ -746,15 +746,17 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case BindAlias::Kind:
-    case BindName::Kind:
+    case BindRefName::Kind:
     case BindSymbolicName::Kind:
+    case BindValueName::Kind:
     case ExportDecl::Kind: {
       auto inst = inst_.As<AnyBindNameOrExportDecl>();
       AddInstNameId(sem_ir().entity_names().Get(inst.entity_name_id).name_id);
       return;
     }
-    case BindingPattern::Kind:
-    case SymbolicBindingPattern::Kind: {
+    case RefBindingPattern::Kind:
+    case SymbolicBindingPattern::Kind:
+    case ValueBindingPattern::Kind: {
       auto inst = inst_.As<AnyBindingPattern>();
       auto name_id = NameId::Underscore;
       if (inst.entity_name_id.has_value()) {
