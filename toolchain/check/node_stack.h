@@ -200,6 +200,9 @@ class NodeStack {
     return PopWithNodeId<SemIR::NameId>();
   }
 
+  // Peeks a name from the top of the stack.
+  auto PeekNameId() const -> SemIR::NameId;
+
   // Pops the top of the stack and returns the node_id and the ID.
   template <const Parse::NodeKind& RequiredParseKind>
   auto PopWithNodeId() -> auto {
@@ -442,6 +445,8 @@ class NodeStack {
       case Parse::NodeKind::DefaultLibrary:
       case Parse::NodeKind::LibraryName:
         return Id::KindFor<SemIR::LibraryNameId>();
+      case Parse::NodeKind::CompileTimeBindingPatternStart:
+        return Id::KindFor<SemIR::EntityNameId>();
       case Parse::NodeKind::BuiltinName:
       case Parse::NodeKind::ChoiceIntroducer:
       case Parse::NodeKind::ClassIntroducer:
@@ -481,7 +486,6 @@ class NodeStack {
       case Parse::NodeKind::CallExprComma:
       case Parse::NodeKind::ChoiceAlternativeListComma:
       case Parse::NodeKind::CodeBlock:
-      case Parse::NodeKind::CompileTimeBindingPatternStart:
       case Parse::NodeKind::ContinueStatementStart:
       case Parse::NodeKind::CorePackageName:
       case Parse::NodeKind::ExportIntroducer:
@@ -638,6 +642,10 @@ constexpr NodeStack::IdKindTableType NodeStack::IdKindTable =
 inline auto NodeStack::PopExprWithNodeId()
     -> std::pair<Parse::AnyExprId, SemIR::InstId> {
   return PopWithNodeId<Parse::NodeCategory::Expr>();
+}
+
+inline auto NodeStack::PeekNameId() const -> SemIR::NameId {
+  return Peek<Id::KindFor<SemIR::NameId>()>();
 }
 
 inline auto NodeStack::PeekPattern() const -> SemIR::InstId {

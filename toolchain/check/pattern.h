@@ -35,12 +35,23 @@ struct BindingPatternInfo {
 
 // TODO: Add EndSubpatternAsPattern, when needed.
 
-// Creates a binding pattern. Returns the binding pattern and the bind name
-// instruction.
+// Creates a binding pattern and EntityName for a `name_id`. Returns the binding
+// pattern and the bind name instruction.
+//
+// To make a generic binding with a CompileTimeBindIndex, construct the
+// EntityName and use `AddBindingPatternWithEntityName()`.
 auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                        SemIR::NameId name_id, SemIR::TypeId type_id,
-                       SemIR::ExprRegionId type_region_id, bool is_generic,
-                       bool is_template) -> BindingPatternInfo;
+                       SemIR::ExprRegionId type_region_id)
+    -> BindingPatternInfo;
+
+// Creates a binding pattern with a pre-created EntityName. Returns the binding
+// pattern and the bind name instruction.
+auto AddBindingPatternWithEntityName(Context& context, SemIR::LocId name_loc,
+                                     SemIR::EntityNameId entity_name_id,
+                                     SemIR::TypeId type_id,
+                                     SemIR::ExprRegionId type_region_id)
+    -> BindingPatternInfo;
 
 // Creates storage for `var` patterns nested within the given pattern at the
 // current location in the output SemIR. For a `returned var`, this

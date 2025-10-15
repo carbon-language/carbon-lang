@@ -22,7 +22,7 @@ fn Six() -> x { return 6; }
 // TODO: This should probably work.
 // CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:5: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
 // CHECK:STDERR: let y:! type = i32;
-// CHECK:STDERR:     ^~~~~~~~
+// CHECK:STDERR:     ^~~
 // CHECK:STDERR:
 let y:! type = i32;
 // CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:19: error: cannot evaluate type expression [TypeExprEvaluationFailure]
@@ -34,7 +34,7 @@ fn HalfDozen() -> y { return 6; }
 // TODO: This should work.
 // CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:5: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
 // CHECK:STDERR: let template z:! type = i32;
-// CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:     ^~~~~~~~~~~~
 // CHECK:STDERR:
 let template z:! type = i32;
 // CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+4]]:28: error: cannot evaluate type expression [TypeExprEvaluationFailure]

@@ -30,24 +30,22 @@ auto HandleParseNode(Context& context, Parse::UnderscoreNameId node_id)
 
 // TODO: make this function shorter by factoring pieces out.
 static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
+                                    Parse::NodeId name_node,
+                                    SemIR::EntityNameId entity_name_id,
+                                    Parse::NodeId type_node,
+                                    SemIR::InstId parsed_type_inst_id,
                                     Parse::NodeKind node_kind) -> bool {
   // TODO: split this into smaller, more focused functions.
-  auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
   auto [cast_type_inst_id, cast_type_id] =
-      ExprAsType(context, type_node, parsed_type_id);
+      ExprAsType(context, type_node, parsed_type_inst_id);
 
   SemIR::ExprRegionId type_expr_region_id =
       EndSubpatternAsExpr(context, cast_type_inst_id);
 
-  // The name in a template binding may be wrapped in `template`.
-  bool is_generic = node_kind == Parse::NodeKind::CompileTimeBindingPattern;
-  auto is_template =
-      context.node_stack()
-          .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::TemplateBindingName>();
-  // A non-generic template binding is diagnosed by the parser.
-  is_template &= is_generic;
-
-  auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
+  const auto& entity_name = context.entity_names().Get(entity_name_id);
+  auto name_id = entity_name.name_id;
+  CARBON_CHECK((node_kind == Parse::NodeKind::CompileTimeBindingPattern) ==
+               entity_name.bind_index().has_value());
 
   const DeclIntroducerState& introducer =
       context.decl_introducer_state_stack().innermost();
@@ -55,15 +53,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   auto make_binding_pattern = [&]() -> SemIR::InstId {
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
-    auto binding =
-        AddBindingPattern(context, name_node, name_id, cast_type_id,
-                          type_expr_region_id, is_generic, is_template);
-
-    // TODO: If `is_generic`, then `binding.bind_id is a BindSymbolicName. Subst
-    // the `.Self` of type `type` in the `cast_type_id` type (a `FacetType`)
-    // with the `binding.bind_id` itself, and build a new pattern with that.
-    // This is kind of cyclical. So we need to reuse the EntityNameId, which
-    // will also reuse the CompileTimeBinding for the new BindSymbolicName.
+    auto binding = AddBindingPatternWithEntityName(
+        context, name_node, entity_name_id, cast_type_id, type_expr_region_id);
 
     if (name_id != SemIR::NameId::Underscore) {
       // Add name to lookup immediately, so it can be used in the rest of the
@@ -100,7 +91,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         case Lex::TokenKind::Fn: {
           if (context.full_pattern_stack().CurrentKind() ==
                   FullPatternStack::Kind::ImplicitParamList &&
-              !(is_generic || name_id == SemIR::NameId::SelfValue)) {
+              (node_kind != Parse::NodeKind::CompileTimeBindingPattern &&
+               name_id != SemIR::NameId::SelfValue)) {
             CARBON_DIAGNOSTIC(
                 ImplictParamMustBeConstant, Error,
                 "implicit parameters of functions must be constant or `self`");
@@ -130,7 +122,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                               "`self` parameter only allowed on functions");
             context.emitter().Emit(node_id, SelfParameterNotAllowed);
             had_error = true;
-          } else if (!is_generic) {
+          } else if (node_kind != Parse::NodeKind::CompileTimeBindingPattern) {
             CARBON_DIAGNOSTIC(GenericParamMustBeConstant, Error,
                               "parameters of generic types must be constant");
             context.emitter().Emit(node_id, GenericParamMustBeConstant);
@@ -149,6 +141,12 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         // Replace the parameter with `ErrorInst` so that we don't try
         // constructing a generic based on it.
         result_inst_id = SemIR::ErrorInst::InstId;
+        if (node_kind == Parse::NodeKind::CompileTimeBindingPattern) {
+          // Push an error for the EntityName's binding index, since we're not
+          // constructing an entity with make_binding_pattern().
+          context.scope_stack().PushCompileTimeBinding(
+              SemIR::ErrorInst::InstId);
+        }
       } else {
         result_inst_id = make_binding_pattern();
         if (node_kind == Parse::NodeKind::LetBindingPattern) {
@@ -193,8 +191,6 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       }
       auto binding_pattern_id = make_binding_pattern();
       if (node_kind == Parse::NodeKind::VarBindingPattern) {
-        CARBON_CHECK(!is_generic);
-
         if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Returned)) {
           // TODO: Should we check this for the `var` as a whole, rather than
           // for the name binding?
@@ -216,45 +212,49 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
 
 auto HandleParseNode(Context& context, Parse::LetBindingPatternId node_id)
     -> bool {
-  return HandleAnyBindingPattern(context, node_id,
+  auto [type_node, type_inst_id] = context.node_stack().PopExprWithNodeId();
+
+  // `template` is incorrect here, but is diagnosed in parse.
+  context.node_stack()
+      .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::TemplateBindingName>();
+
+  auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
+  auto entity_name_id = context.entity_names().Add(
+      {.name_id = name_id,
+       .parent_scope_id = context.scope_stack().PeekNameScopeId()});
+
+  return HandleAnyBindingPattern(context, node_id, name_node, entity_name_id,
+                                 type_node, type_inst_id,
                                  Parse::NodeKind::LetBindingPattern);
 }
 
 auto HandleParseNode(Context& context, Parse::VarBindingPatternId node_id)
     -> bool {
-  return HandleAnyBindingPattern(context, node_id,
+  auto [type_node, type_inst_id] = context.node_stack().PopExprWithNodeId();
+
+  // `template` is incorrect here, but is diagnosed in parse.
+  context.node_stack()
+      .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::TemplateBindingName>();
+
+  auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
+  auto entity_name_id = context.entity_names().Add(
+      {.name_id = name_id,
+       .parent_scope_id = context.scope_stack().PeekNameScopeId()});
+
+  return HandleAnyBindingPattern(context, node_id, name_node, entity_name_id,
+                                 type_node, type_inst_id,
                                  Parse::NodeKind::VarBindingPattern);
 }
 
 auto HandleParseNode(Context& context,
                      Parse::CompileTimeBindingPatternStartId node_id) -> bool {
-  // Make a scope to contain the `.Self` facet value for use in the type of the
-  // compile time binding. This is popped when handling the
-  // CompileTimeBindingPatternId.
-  context.scope_stack().PushForSameRegion();
+  auto is_template =
+      context.node_stack()
+          .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::TemplateBindingName>();
 
-  // The `.Self` must have a type of `FacetType`, so that it gets wrapped in
-  // `FacetAccessType` when used in a type position, such as in `U:! I(.Self)`.
-  // This allows substitution with other facet values without requiring an
-  // additional `FacetAccessType` to be inserted.
-  SemIR::FacetTypeId facet_type_id =
-      context.facet_types().Add(SemIR::FacetTypeInfo{});
-  auto const_id = EvalOrAddInst<SemIR::FacetType>(
-      context, node_id,
-      {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id});
-  auto type_id = context.types().GetTypeIdForTypeConstantId(const_id);
+  auto name_id = context.node_stack().PeekNameId();
+  auto entity_name_id = SemIR::EntityNameId::None;
 
-  MakePeriodSelfFacetValue(context, type_id);
-  return true;
-}
-
-auto HandleParseNode(Context& context,
-                     Parse::CompileTimeBindingPatternId node_id) -> bool {
-  // Pop the `.Self` facet value name introduced by the
-  // CompileTimeBindingPatternStart.
-  context.scope_stack().Pop();
-
-  auto node_kind = Parse::NodeKind::CompileTimeBindingPattern;
   const DeclIntroducerState& introducer =
       context.decl_introducer_state_stack().innermost();
   if (introducer.kind == Lex::TokenKind::Let) {
@@ -272,12 +272,83 @@ auto HandleParseNode(Context& context,
         context.TODO(
             node_id,
             "`let` compile time binding outside function or interface");
-        node_kind = Parse::NodeKind::LetBindingPattern;
+        entity_name_id = context.entity_names().Add(
+            {.name_id = name_id,
+             .parent_scope_id = context.scope_stack().PeekNameScopeId()});
       }
     }
   }
 
-  return HandleAnyBindingPattern(context, node_id, node_kind);
+  // This compile time binding is added but not pushed because we don't have the
+  // BindSymbolicName for it until we get to the CompileTimeBindingPatternId
+  // node. This leaves the CompileTimeBinding stack in a fragile state while the
+  // binding's facet type is checked, but only the index is used during type
+  // checking. The instruction wouldn't be needed until building a generic,
+  // which we don't do in this scope.
+  //
+  // We avoid making a CompileTimeBinding in the case where a compile-time
+  // binding is disallowed. In that case, we already constructed an
+  // `entity_name_id` above.
+  if (!entity_name_id.has_value()) {
+    auto bind_index = context.scope_stack().AddCompileTimeBinding();
+    entity_name_id = context.entity_names().AddSymbolicBindingName(
+        name_id, context.scope_stack().PeekNameScopeId(), bind_index,
+        is_template);
+  }
+
+  // TODO: Construct a SymbolicBindingType for `entity_name_id` instead of a
+  // BindSymbolicName for a `PeriodSelf` EntityName.
+  //
+  // The `.Self` must have a type of `FacetType`, so that it gets wrapped in
+  // `FacetAccessType` when used in a type position, such as in `U:! I(.Self)`.
+  // This allows substitution with other facet values without requiring an
+  // additional `FacetAccessType` to be inserted.
+  SemIR::FacetTypeId facet_type_id =
+      context.facet_types().Add(SemIR::FacetTypeInfo{});
+  auto const_id = EvalOrAddInst<SemIR::FacetType>(
+      context, node_id,
+      {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id});
+  auto type_id = context.types().GetTypeIdForTypeConstantId(const_id);
+
+  // Make a scope to contain the `.Self` facet value for use in the type of the
+  // compile time binding. This is popped when handling the
+  // CompileTimeBindingPatternId.
+  context.scope_stack().PushForSameRegion();
+  MakePeriodSelfFacetValue(context, type_id);
+
+  context.node_stack().Push(node_id, entity_name_id);
+  return true;
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::CompileTimeBindingPatternId node_id) -> bool {
+  // Pop the `.Self` facet value name introduced by the
+  // CompileTimeBindingPatternStart.
+  context.scope_stack().Pop();
+
+  auto [type_node, type_inst_id] = context.node_stack().PopExprWithNodeId();
+
+  auto entity_name_id =
+      context.node_stack()
+          .Pop<Parse::NodeKind::CompileTimeBindingPatternStart>();
+
+  // The NameId was already used to construct the `entity_name_id`.
+  auto [name_node, _] = context.node_stack().PopNameWithNodeId();
+
+  auto node_kind = Parse::NodeKind::CompileTimeBindingPattern;
+  if (!context.entity_names().Get(entity_name_id).bind_index().has_value()) {
+    // This indicates that CompileTimeBindingPatternStartId found a `let` in an
+    // incorrect scope. We treat them as runtime bindings instead of compile
+    // time bindings, since we avoided introducing a CompileTimeBindingIndex
+    // that won't be used.
+    node_kind = Parse::NodeKind::LetBindingPattern;
+  }
+
+  auto success =
+      HandleAnyBindingPattern(context, node_id, name_node, entity_name_id,
+                              type_node, type_inst_id, node_kind);
+
+  return success;
 }
 
 auto HandleParseNode(Context& context,

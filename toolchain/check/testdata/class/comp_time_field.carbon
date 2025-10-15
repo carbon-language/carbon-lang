@@ -19,13 +19,13 @@ library "[[@TEST_NAME]]";
 class Class {
   // CHECK:STDERR: fail_let.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
   // CHECK:STDERR:   let A:! type = Class;
-  // CHECK:STDERR:       ^~~~~~~~
+  // CHECK:STDERR:       ^~~
   // CHECK:STDERR:
   let A:! type = Class;
 
   // CHECK:STDERR: fail_let.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
   // CHECK:STDERR:   let template B:! type = Class;
-  // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:       ^~~~~~~~~~~~
   // CHECK:STDERR:
   let template B:! type = Class;
 }

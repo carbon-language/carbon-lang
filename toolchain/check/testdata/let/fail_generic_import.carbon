@@ -18,7 +18,7 @@ package Implicit;
 
 // CHECK:STDERR: fail_implicit.carbon:[[@LINE+4]]:5: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
 // CHECK:STDERR: let T:! type = i32;
-// CHECK:STDERR:     ^~~~~~~~
+// CHECK:STDERR:     ^~~
 // CHECK:STDERR:
 let T:! type = i32;
 

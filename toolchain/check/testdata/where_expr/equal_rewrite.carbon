@@ -186,7 +186,7 @@ impl D as A {}
 // TODO: Compile-time binding are not yet supported at file scope.
 // CHECK:STDERR: fail_todo_let_compile_time.carbon:[[@LINE+4]]:5: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
 // CHECK:STDERR: let B:! type where .Self impls A = D;
-// CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:     ^~~
 // CHECK:STDERR:
 let B:! type where .Self impls A = D;
 

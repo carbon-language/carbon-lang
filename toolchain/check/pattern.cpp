@@ -48,13 +48,22 @@ auto EndSubpatternAsNonExpr(Context& context) -> void {
 
 auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                        SemIR::NameId name_id, SemIR::TypeId type_id,
-                       SemIR::ExprRegionId type_region_id, bool is_generic,
-                       bool is_template) -> BindingPatternInfo {
-  auto entity_name_id = context.entity_names().AddSymbolicBindingName(
-      name_id, context.scope_stack().PeekNameScopeId(),
-      is_generic ? context.scope_stack().AddCompileTimeBinding()
-                 : SemIR::CompileTimeBindIndex::None,
-      is_template);
+                       SemIR::ExprRegionId type_region_id)
+    -> BindingPatternInfo {
+  auto entity_name_id = context.entity_names().Add(
+      {.name_id = name_id,
+       .parent_scope_id = context.scope_stack().PeekNameScopeId()});
+  return AddBindingPatternWithEntityName(context, name_loc, entity_name_id,
+                                         type_id, type_region_id);
+}
+
+auto AddBindingPatternWithEntityName(Context& context, SemIR::LocId name_loc,
+                                     SemIR::EntityNameId entity_name_id,
+                                     SemIR::TypeId type_id,
+                                     SemIR::ExprRegionId type_region_id)
+    -> BindingPatternInfo {
+  auto& entity_name = context.entity_names().Get(entity_name_id);
+  bool is_generic = entity_name.bind_index().has_value();
 
   auto bind_id = SemIR::InstId::None;
   if (is_generic) {
@@ -138,8 +147,7 @@ auto AddSelfParamPattern(Context& context, SemIR::LocId loc_id,
                          SemIR::TypeId type_id) -> SemIR::InstId {
   SemIR::InstId pattern_id =
       AddBindingPattern(context, loc_id, SemIR::NameId::SelfValue, type_id,
-                        type_expr_region_id, /*is_generic=*/false,
-                        /*is_template=*/false)
+                        type_expr_region_id)
           .pattern_id;
 
   pattern_id = AddPatternInst<SemIR::ValueParamPattern>(

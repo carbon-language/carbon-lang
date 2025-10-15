@@ -73,10 +73,16 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
   auto type_expr_region_id = context.sem_ir().expr_regions().Add(
       {.block_ids = {SemIR::InstBlockId::Empty}, .result_id = type_inst_id});
 
-  // Rebuild the binding pattern.
-  return AddBindingPattern(context, SemIR::LocId(pattern_id),
-                           entity_name.name_id, type_id, type_expr_region_id,
-                           is_generic, entity_name.is_template)
+  // Rebuild the binding pattern, with its own CompileTimeBindingIndex.
+  auto cloned_entity_name_id = context.entity_names().AddSymbolicBindingName(
+      entity_name.name_id, entity_name.parent_scope_id,
+      entity_name.bind_index().has_value()
+          ? context.scope_stack().AddCompileTimeBinding()
+          : SemIR::CompileTimeBindIndex::None,
+      entity_name.is_template);
+  return AddBindingPatternWithEntityName(context, SemIR::LocId(pattern_id),
+                                         cloned_entity_name_id, type_id,
+                                         type_expr_region_id)
       .pattern_id;
 }
 

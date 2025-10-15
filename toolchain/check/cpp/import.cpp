@@ -1423,13 +1423,15 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     SemIR::LocId param_loc_id =
         AddImportIRInst(context.sem_ir(), param->getLocation());
 
-    // TODO: Fix this once templates are supported.
-    bool is_template = false;
-    // TODO: Fix this once generics are supported.
-    bool is_generic = false;
+    auto entity_name_id = context.entity_names().AddSymbolicBindingName(
+        name_id, context.scope_stack().PeekNameScopeId(),
+        // TODO: Fix this once generics are supported.
+        SemIR::CompileTimeBindIndex::None,
+        // TODO: Fix this once templates are supported.
+        /*is_template=*/false);
     SemIR::InstId pattern_id =
-        AddBindingPattern(context, param_loc_id, name_id, type_id,
-                          type_expr_region_id, is_generic, is_template)
+        AddBindingPatternWithEntityName(context, param_loc_id, entity_name_id,
+                                        type_id, type_expr_region_id)
             .pattern_id;
     pattern_id = AddPatternInst(
         context, {param_loc_id,
