@@ -37,7 +37,6 @@ class CanonicalValueStore {
   using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
 
   CanonicalValueStore() = default;
-  explicit CanonicalValueStore(IdTag tag) : values_(tag) {}
   template <typename Id>
   explicit CanonicalValueStore(Id id, int32_t initial_reserved_ids = 0)
       : values_(id, initial_reserved_ids) {}
