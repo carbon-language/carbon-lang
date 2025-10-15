@@ -45,6 +45,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       // instruction. It's not a "singleton" instruction, but it's a unique
       // instruction id that comes right after the singletons.
       insts_(this, SingletonInstKinds.size() + 1),
+      vtables_(IdTag(check_ir_id.index, 0)),
       constant_values_(ConstantId::NotConstant, &insts_),
       inst_blocks_(allocator_),
       constants_(this) {
