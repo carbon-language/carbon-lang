@@ -83,16 +83,6 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
 // Instances of this type are managed by a `ClangDeclStore`, which ensures that
 // a single `ClangDecl` exists for each `ClangDeclKey` used.
 struct ClangDecl : public Printable<ClangDecl> {
-  // Comparison against ClangDeclKey, required by CanonicalValueStore.
-  auto operator==(const ClangDeclKey& rhs) const -> bool { return key == rhs; }
-  auto operator==(const ClangDecl& rhs) const -> bool { return key == rhs.key; }
-
-  // Hashing for ClangDecl. See common/hashing.h.
-  friend auto CarbonHashValue(const ClangDecl& value, uint64_t seed)
-      -> HashCode {
-    return HashValue(value.key, seed);
-  }
-
   auto Print(llvm::raw_ostream& out) const -> void;
 
   // The key by which this declaration can be looked up.
@@ -117,8 +107,11 @@ struct ClangDeclId : public IdBase<ClangDeclId> {
 };
 
 // Use the AST node pointer directly when doing `Lookup` to find an ID.
-using ClangDeclStore =
-    CanonicalValueStore<ClangDeclId, ClangDeclKey, ClangDecl>;
+using ClangDeclStore = CanonicalValueStore<ClangDeclId, ClangDeclKey, ClangDecl,
+                                           [](const SemIR::ClangDecl& value)
+                                               -> const SemIR::ClangDeclKey& {
+                                             return value.key;
+                                           }>;
 
 }  // namespace Carbon::SemIR
 
