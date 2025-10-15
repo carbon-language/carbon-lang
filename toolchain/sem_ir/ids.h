@@ -12,6 +12,7 @@
 #include "llvm/ADT/APFloat.h"
 #include "toolchain/base/index_base.h"
 #include "toolchain/base/value_ids.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/parse/node_ids.h"
 
@@ -305,7 +306,12 @@ struct CheckIRId : public IdBase<CheckIRId> {
   static const CheckIRId Cpp;
 
   using IdBase::IdBase;
+
   auto Print(llvm::raw_ostream& out) const -> void;
+
+  auto BuildIdTag(int32_t initial_reserved_ids = 0) const -> IdTag {
+    return IdTag(index, initial_reserved_ids);
+  }
 };
 
 constexpr CheckIRId CheckIRId::Cpp = CheckIRId(NoneIndex - 1);
