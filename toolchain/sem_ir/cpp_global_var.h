@@ -25,14 +25,6 @@ struct CppGlobalVarKey : public Printable<CppGlobalVarKey> {
     return lhs.entity_name_id == rhs.entity_name_id;
   }
 
-  // Hashing for CppGlobalVarKey. See common/hashing.h.
-  friend auto CarbonHashValue(const CppGlobalVarKey& value, uint64_t seed)
-      -> HashCode {
-    // Manual hashing support is required because this type has tail padding in
-    // 64-bit compilations.
-    return HashValue(value.entity_name_id, seed);
-  }
-
   // The name of the variable.
   EntityNameId entity_name_id;
 };
