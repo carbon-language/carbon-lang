@@ -36,22 +36,6 @@ struct CppGlobalVar : public Printable<CppGlobalVar> {
     out << "{key: " << key << ", clang_decl_id: " << clang_decl_id << "}";
   }
 
-  // Comparison against `CppGlobalVarKey`, required by `CanonicalValueStore`.
-  friend auto operator==(const CppGlobalVar& lhs, const CppGlobalVarKey& rhs)
-      -> bool {
-    return lhs.key == rhs;
-  }
-  friend auto operator==(const CppGlobalVar& lhs, const CppGlobalVar& rhs)
-      -> bool {
-    return lhs.key == rhs.key;
-  }
-
-  // Hashing for `CppGlobalVar`. See common/hashing.h.
-  friend auto CarbonHashValue(const CppGlobalVar& value, uint64_t seed)
-      -> HashCode {
-    return HashValue(value.key, seed);
-  }
-
   // The key by which this variable can be looked up.
   CppGlobalVarKey key;
 
@@ -64,7 +48,9 @@ struct CppGlobalVar : public Printable<CppGlobalVar> {
 
 // Use the name of a C++ global variable when doing `Lookup` to find an ID.
 using CppGlobalVarStore =
-    CanonicalValueStore<CppGlobalVarId, CppGlobalVarKey, CppGlobalVar>;
+    CanonicalValueStore<CppGlobalVarId, CppGlobalVarKey, CppGlobalVar,
+                        [](const CppGlobalVar& value)
+                            -> const CppGlobalVarKey& { return value.key; }>;
 
 }  // namespace Carbon::SemIR
 

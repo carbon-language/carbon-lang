@@ -107,11 +107,11 @@ struct ClangDeclId : public IdBase<ClangDeclId> {
 };
 
 // Use the AST node pointer directly when doing `Lookup` to find an ID.
-using ClangDeclStore = CanonicalValueStore<ClangDeclId, ClangDeclKey, ClangDecl,
-                                           [](const SemIR::ClangDecl& value)
-                                               -> const SemIR::ClangDeclKey& {
-                                             return value.key;
-                                           }>;
+using ClangDeclStore =
+    CanonicalValueStore<ClangDeclId, ClangDeclKey, ClangDecl,
+                        [](const ClangDecl& value) -> const ClangDeclKey& {
+                          return value.key;
+                        }>;
 
 }  // namespace Carbon::SemIR
 
