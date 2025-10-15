@@ -297,7 +297,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   // A diagnostics renderer based on clang's TextDiagnostic that captures just
   // the code context (the snippet).
   class CodeContextRenderer : public clang::TextDiagnostic {
-   public:
+   protected:
     using TextDiagnostic::TextDiagnostic;
 
     void emitDiagnosticMessage(
