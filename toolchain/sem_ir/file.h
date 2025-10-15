@@ -409,8 +409,6 @@ class File : public Printable<File> {
   ClangSourceLocStore clang_source_locs_;
 };
 
-auto BuildIdTag(CheckIRId id, int32_t initial_reserved_ids = 0) -> IdTag;
-
 }  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_FILE_H_

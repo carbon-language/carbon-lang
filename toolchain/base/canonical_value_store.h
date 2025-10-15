@@ -38,6 +38,9 @@ class CanonicalValueStore {
 
   CanonicalValueStore() = default;
   explicit CanonicalValueStore(IdTag tag) : values_(tag) {}
+  template <typename Id>
+  explicit CanonicalValueStore(Id id, int32_t initial_reserved_ids = 0)
+      : values_(id, initial_reserved_ids) {}
 
   // Stores a canonical copy of the value and returns an ID to reference it. If
   // the value is already in the store, returns the ID of the existing value.
