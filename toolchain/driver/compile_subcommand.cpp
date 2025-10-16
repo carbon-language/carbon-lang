@@ -1220,7 +1220,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     return make_result();
   }
 
-  // Lower and optimize
+  // Lower and optimize.
   for (const auto& unit : units) {
     unit->RunLower();
 
