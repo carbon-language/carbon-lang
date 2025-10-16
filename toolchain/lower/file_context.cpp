@@ -80,10 +80,11 @@ auto FileContext::PrepareToLower() -> void {
     // Emit any top-level declarations now.
     // TODO: This may miss things that we need to emit which are handed to the
     // ASTConsumer in other ways. Instead of doing this, we should create the
-    // CodeGenerator earlier and register it as an ASTConsumer before we parse the
-    // C++ inputs.
+    // CodeGenerator earlier and register it as an ASTConsumer before we parse
+    // the C++ inputs.
     non_const_ast_unit->visitLocalTopLevelDecls(
-        cpp_code_generator_.get(), [](void* codegen_ptr, const clang::Decl* decl) {
+        cpp_code_generator_.get(),
+        [](void* codegen_ptr, const clang::Decl* decl) {
           auto* codegen = static_cast<clang::CodeGenerator*>(codegen_ptr);
           // CodeGenerator won't modify the declaration it's given, but we can
           // only call it via the ASTConsumer interface which doesn't know that.
