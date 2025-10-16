@@ -476,7 +476,8 @@ class CompilationUnit {
   auto RunOpt() -> void;
 
   // Runs post-lowering-to-LLVM-IR logic. This is always called if we do any
-  // lowering work, after we've finished building the IR.
+  // lowering work, after we've finished building the IR in RunLower() and,
+  // optionally, RunOpt().
   auto PostLower() -> void;
 
   auto RunCodeGen() -> void;
