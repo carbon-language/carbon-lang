@@ -28,9 +28,12 @@
 
 namespace Carbon::Check {
 
-// Find the bit width of an integer literal.
-// The default bit width is 32. If the literal's bit width is greater than 32,
-// the bit width is increased to 64.
+// Find the bit width of an integer literal. Following the C++ standard rules
+// for assigning a type to a decimal integer literal, the first signed integer
+// in which the value could fit among bit widths of 32, 64 and 128 is selected.
+// If the value can't fit into a signed integer with width of 128-bits, then a
+// diagnostic is emitted and the maximum width of 128-bits is returned. Returns
+// IntId::None if the argument is not a constant integer or is symbolic.
 static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id)
     -> IntId {
   auto arg_const_id = context.constant_values().Get(arg_id);
@@ -39,16 +42,29 @@ static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id)
       arg_const_id.is_symbolic()) {
     // TODO: Add tests for these cases.
     return IntId::None;
+    ;
   }
   auto arg = context.insts().GetAs<SemIR::IntValue>(
       context.constant_values().GetInstId(arg_const_id));
-  unsigned arg_non_sign_bits =
-      context.ints().Get(arg.int_id).getSignificantBits() - 1;
+  llvm::APInt arg_val = context.ints().Get(arg.int_id);
+  unsigned arg_non_sign_bits = arg_val.getSignificantBits() - 1;
 
-  // TODO: What if the literal is larger than 64 bits? Currently an error is
-  // reported that the int value is too large for type `i64`. Maybe try to fit
-  // in i128/i256? Try unsigned?
-  return (arg_non_sign_bits <= 32) ? IntId::MakeRaw(32) : IntId::MakeRaw(64);
+  // Value doesn't fit to any C++ supported signed integer, diagnose and return
+  // the maximum supported integer bit width.
+  if (arg_non_sign_bits >= 128) {
+    CARBON_DIAGNOSTIC(IntTooLargeForCppType, Error,
+                      "integer value {0} too large to be fitted in any "
+                      "supported signed C++ type, max supported _int128",
+                      TypedInt);
+    context.emitter().Emit(arg_id, IntTooLargeForCppType,
+                           {.type = arg.type_id, .value = arg_val});
+    return IntId::MakeRaw(128);
+  }
+
+  return (arg_non_sign_bits < 32)
+             ? IntId::MakeRaw(32)
+             : ((arg_non_sign_bits < 64) ? IntId::MakeRaw(64)
+                                         : IntId::MakeRaw(128));
 }
 
 // Attempts to look up a type by name, and returns the corresponding `QualType`,
