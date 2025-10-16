@@ -272,13 +272,11 @@ auto HandleParseNode(Context& context,
         context.TODO(
             node_id,
             "`let` compile time binding outside function or interface");
+        // We avoid making a CompileTimeBinding in the case where a compile-time
+        // binding is disallowed, and any `.Self` name.
         entity_name_id = context.entity_names().Add(
             {.name_id = name_id,
              .parent_scope_id = context.scope_stack().PeekNameScopeId()});
-        // We avoid making a CompileTimeBinding in the case where a compile-time
-        // binding is disallowed, and any `.Self` name. But we must still push a
-        // scope just for CompileTimeBindingPatternId to pop.
-        context.scope_stack().PushForSameRegion();
         context.node_stack().Push(node_id, entity_name_id);
         return true;
       }
@@ -326,10 +324,6 @@ auto HandleParseNode(Context& context,
 
 auto HandleParseNode(Context& context,
                      Parse::CompileTimeBindingPatternId node_id) -> bool {
-  // Pop the `.Self` facet value name introduced by the
-  // CompileTimeBindingPatternStart.
-  context.scope_stack().Pop();
-
   auto [type_node, type_inst_id] = context.node_stack().PopExprWithNodeId();
 
   auto entity_name_id =
@@ -339,13 +333,20 @@ auto HandleParseNode(Context& context,
   // The NameId was already used to construct the `entity_name_id`.
   auto [name_node, _] = context.node_stack().PopNameWithNodeId();
 
+  bool is_comptime_binding =
+      context.entity_names().Get(entity_name_id).bind_index().has_value();
+
   auto node_kind = Parse::NodeKind::CompileTimeBindingPattern;
-  if (!context.entity_names().Get(entity_name_id).bind_index().has_value()) {
+  if (!is_comptime_binding) {
     // This indicates that CompileTimeBindingPatternStartId found a `let` in an
     // incorrect scope. We treat them as runtime bindings instead of compile
     // time bindings, since we avoided introducing a CompileTimeBindingIndex
     // that won't be used.
     node_kind = Parse::NodeKind::LetBindingPattern;
+  } else {
+    // Pop the `.Self` facet value name introduced by the
+    // CompileTimeBindingPatternStart.
+    context.scope_stack().Pop();
   }
 
   return HandleAnyBindingPattern(context, node_id, name_node, entity_name_id,
