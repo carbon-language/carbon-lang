@@ -91,17 +91,19 @@ TEST(SemIRTest, Yaml) {
                Pair("values",
                     Yaml::Mapping(AllOf(Each(Pair(inst_id, constant_id))))),
                Pair("symbolic_constants", Yaml::Mapping(SizeIs(0)))))),
-      Pair("inst_blocks",
-           Yaml::Mapping(ElementsAre(
-               Pair("inst_block_empty", Yaml::Mapping(IsEmpty())),
-               Pair("exports", Yaml::Mapping(Each(Pair(_, inst_id)))),
-               Pair("imports", Yaml::Mapping(IsEmpty())),
-               Pair("global_init", Yaml::Mapping(IsEmpty())),
-               Pair("inst_block4", Yaml::Mapping(Each(Pair(_, inst_id)))),
-               Pair("inst_block5", Yaml::Mapping(Each(Pair(_, inst_id)))),
-               Pair("inst_block6", Yaml::Mapping(Each(Pair(_, inst_id)))),
-               Pair("inst_block7", Yaml::Mapping(Each(Pair(_, inst_id)))),
-               Pair("inst_block8", Yaml::Mapping(Each(Pair(_, inst_id)))))))));
+      Pair(
+          "inst_blocks",
+          Yaml::Mapping(ElementsAre(
+              Pair("inst_block_empty", Yaml::Mapping(IsEmpty())),
+              Pair("exports", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("imports", Yaml::Mapping(IsEmpty())),
+              Pair("global_init", Yaml::Mapping(IsEmpty())),
+              Pair("inst_block00000004", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block00000005", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block00000006", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block00000007", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block00000008",
+                   Yaml::Mapping(Each(Pair(_, inst_id)))))))));
 
   auto root = Yaml::Sequence(ElementsAre(Yaml::Mapping(
       ElementsAre(Pair("filename", "test.carbon"), Pair("sem_ir", file)))));

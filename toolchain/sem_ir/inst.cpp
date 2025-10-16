@@ -55,8 +55,7 @@ const std::pair<IdKind, IdKind> Inst::ArgKindTable[] = {
 };
 
 InstStore::InstStore(File* file, int32_t reserved_inst_ids)
-    : file_(file),
-      values_(IdTag(file->check_ir_id().index, reserved_inst_ids)) {}
+    : file_(file), values_(file->check_ir_id(), reserved_inst_ids) {}
 
 auto InstStore::GetUnattachedType(TypeId type_id) const -> TypeId {
   return file_->types().GetUnattachedType(type_id);

@@ -139,6 +139,7 @@ cc_library(
         "//toolchain/base:index_base",
         "//toolchain/base:int",
         "//toolchain/base:kind_switch",
+        "//toolchain/base:shared_value_stores",
         "//toolchain/base:value_ids",
         "//toolchain/base:value_store",
         "//toolchain/check:generic_region_stack",

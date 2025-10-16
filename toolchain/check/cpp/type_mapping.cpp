@@ -171,7 +171,6 @@ static auto MapNonWrapperType(Context& context, SemIR::InstId inst_id,
       return context.ast_context().getIntTypeForBitwidth(bit_width_id.AsValue(),
                                                          true);
     }
-    // TODO: What if the value doesn't fit to f64?
     case SemIR::FloatLiteralType::Kind: {
       return context.ast_context().DoubleTy;
     }
