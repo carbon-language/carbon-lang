@@ -702,7 +702,7 @@ similar to [C++](https://en.cppreference.com/w/cpp/language/value_category):
 Expressions in one category can be converted to any other category when needed.
 The primitive conversion steps used are:
 
--   _Value binding_ converts a reference expression into a value expression.
+-   _Value borrowing_ converts a reference expression into a value expression.
 -   _Direct initialization_ converts a value expression into an initializing
     expression.
 -   _Copy initialization_ converts a reference expression into an initializing
