@@ -415,9 +415,6 @@ auto FileContext::HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
       cpp_code_generator_->GetAddrOfGlobal(CreateGlobalDecl(cpp_def),
                                            /*isForDefinition=*/false);
   CARBON_CHECK(function_address);
-
-  // Emit the function code.
-  cpp_code_generator_->HandleTopLevelDecl(clang::DeclGroupRef(cpp_def));
 }
 
 auto FileContext::HandleReferencedSpecificFunction(
@@ -461,12 +458,6 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   // corresponding C++ function anyway.
   if (function.special_function_kind ==
       SemIR::Function::SpecialFunctionKind::HasCppThunk) {
-    // Make sure Clang emits this function.
-    // TODO: This shouldn't be necessary: Clang should emit definitions of
-    // functions that it emits calls to. But this doesn't currently work.
-    auto clang_decl_id = sem_ir().functions().Get(function_id).clang_decl_id;
-    HandleReferencedCppFunction(cast<clang::FunctionDecl>(
-        sem_ir().clang_decls().Get(clang_decl_id).key.decl));
     return nullptr;
   }
 
