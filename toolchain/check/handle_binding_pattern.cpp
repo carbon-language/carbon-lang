@@ -275,6 +275,12 @@ auto HandleParseNode(Context& context,
         entity_name_id = context.entity_names().Add(
             {.name_id = name_id,
              .parent_scope_id = context.scope_stack().PeekNameScopeId()});
+        // We avoid making a CompileTimeBinding in the case where a compile-time
+        // binding is disallowed, and any `.Self` name. But we must still push a
+        // scope just for CompileTimeBindingPatternId to pop.
+        context.scope_stack().PushForSameRegion();
+        context.node_stack().Push(node_id, entity_name_id);
+        return true;
       }
     }
   }
@@ -289,20 +295,18 @@ auto HandleParseNode(Context& context,
   // We avoid making a CompileTimeBinding in the case where a compile-time
   // binding is disallowed. In that case, we already constructed an
   // `entity_name_id` above.
-  if (!entity_name_id.has_value()) {
-    auto bind_index = context.scope_stack().AddCompileTimeBinding();
-    entity_name_id = context.entity_names().AddSymbolicBindingName(
-        name_id, context.scope_stack().PeekNameScopeId(), bind_index,
-        is_template);
-  }
+  auto bind_index = context.scope_stack().AddCompileTimeBinding();
+  entity_name_id = context.entity_names().AddSymbolicBindingName(
+      name_id, context.scope_stack().PeekNameScopeId(), bind_index,
+      is_template);
 
   // TODO: Construct a SymbolicBindingType for `entity_name_id` instead of a
   // BindSymbolicName for a `PeriodSelf` EntityName.
   //
   // The `.Self` must have a type of `FacetType`, so that it gets wrapped in
-  // `FacetAccessType` when used in a type position, such as in `U:! I(.Self)`.
-  // This allows substitution with other facet values without requiring an
-  // additional `FacetAccessType` to be inserted.
+  // `FacetAccessType` when used in a type position, such as in `U:!
+  // I(.Self)`. This allows substitution with other facet values without
+  // requiring an additional `FacetAccessType` to be inserted.
   SemIR::FacetTypeId facet_type_id =
       context.facet_types().Add(SemIR::FacetTypeInfo{});
   auto const_id = EvalOrAddInst<SemIR::FacetType>(
@@ -310,8 +314,8 @@ auto HandleParseNode(Context& context,
       {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id});
   auto type_id = context.types().GetTypeIdForTypeConstantId(const_id);
 
-  // Make a scope to contain the `.Self` facet value for use in the type of the
-  // compile time binding. This is popped when handling the
+  // Make a scope to contain the `.Self` facet value for use in the type of
+  // the compile time binding. This is popped when handling the
   // CompileTimeBindingPatternId.
   context.scope_stack().PushForSameRegion();
   MakePeriodSelfFacetValue(context, type_id);
@@ -344,11 +348,8 @@ auto HandleParseNode(Context& context,
     node_kind = Parse::NodeKind::LetBindingPattern;
   }
 
-  auto success =
-      HandleAnyBindingPattern(context, node_id, name_node, entity_name_id,
-                              type_node, type_inst_id, node_kind);
-
-  return success;
+  return HandleAnyBindingPattern(context, node_id, name_node, entity_name_id,
+                                 type_node, type_inst_id, node_kind);
 }
 
 auto HandleParseNode(Context& context,
