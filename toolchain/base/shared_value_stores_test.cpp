@@ -52,12 +52,13 @@ TEST(SharedValueStores, PrintVals) {
   RawStringOstream out;
   value_stores.Print(out);
 
-  EXPECT_THAT(Yaml::Value::FromText(out.TakeStr()),
-              MatchSharedValues(
-                  ElementsAre(Pair("ap_int0", Yaml::Scalar("999999999999"))),
-                  ElementsAre(Pair("real0", Yaml::Scalar("8*10^8"))), IsEmpty(),
-                  ElementsAre(Pair("identifier0", Yaml::Scalar("a"))),
-                  ElementsAre(Pair("string0", Yaml::Scalar("foo'\"baz")))));
+  EXPECT_THAT(
+      Yaml::Value::FromText(out.TakeStr()),
+      MatchSharedValues(
+          ElementsAre(Pair("ap_int00000000", Yaml::Scalar("999999999999"))),
+          ElementsAre(Pair("real00000000", Yaml::Scalar("8*10^8"))), IsEmpty(),
+          ElementsAre(Pair("identifier00000000", Yaml::Scalar("a"))),
+          ElementsAre(Pair("string00000000", Yaml::Scalar("foo'\"baz")))));
 }
 
 }  // namespace

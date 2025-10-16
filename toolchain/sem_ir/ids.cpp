@@ -16,7 +16,7 @@ auto InstId::Print(llvm::raw_ostream& out) const -> void {
   if (IsSingletonInstId(*this)) {
     out << Label << "(" << SingletonInstKinds[index] << ")";
   } else {
-    IdBase::PrintHex(out);
+    IdBase::Print(out);
   }
 }
 
@@ -42,32 +42,12 @@ auto ConstantId::Print(llvm::raw_ostream& out, bool disambiguate) const
   }
 }
 
-auto CppOverloadSetId::Print(llvm::raw_ostream& out) const -> void {
-  IdBase::PrintHex(out);
-}
-
-auto FunctionId::Print(llvm::raw_ostream& out) const -> void {
-  IdBase::PrintHex(out);
-}
-
 auto CheckIRId::Print(llvm::raw_ostream& out) const -> void {
   if (*this == Cpp) {
     out << Label << "(Cpp)";
   } else {
     IdBase::Print(out);
   }
-}
-
-auto ClassId::Print(llvm::raw_ostream& out) const -> void {
-  IdBase::PrintHex(out);
-}
-
-auto AssociatedConstantId::Print(llvm::raw_ostream& out) const -> void {
-  IdBase::PrintHex(out);
-}
-
-auto ImplId::Print(llvm::raw_ostream& out) const -> void {
-  IdBase::PrintHex(out);
 }
 
 auto GenericInstIndex::Print(llvm::raw_ostream& out) const -> void {

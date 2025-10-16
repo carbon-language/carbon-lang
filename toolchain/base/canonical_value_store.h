@@ -20,8 +20,8 @@ namespace Carbon {
 // `ValueT` represents the type being stored.
 //
 // `KeyT` can optionally be different from `ValueT`, and if so is used for the
-// argument to `Lookup`. It must be valid to use both `KeyT` and `ValueT` as
-// lookup types in the underlying `Set`.
+// argument to `Lookup`. In this case, `ValueT` must provide a `GetAsKey` member
+// function that returns the corresponding key.
 template <typename IdT, typename KeyT, typename ValueT = KeyT>
 class CanonicalValueStore {
  public:
@@ -29,6 +29,11 @@ class CanonicalValueStore {
   using ValueType = ValueStoreTypes<ValueT>::ValueType;
   using RefType = ValueStoreTypes<ValueT>::RefType;
   using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
+
+  CanonicalValueStore() = default;
+  template <typename Id>
+  explicit CanonicalValueStore(Id id, int32_t initial_reserved_ids = 0)
+      : values_(id, initial_reserved_ids) {}
 
   // Stores a canonical copy of the value and returns an ID to reference it. If
   // the value is already in the store, returns the ID of the existing value.
@@ -63,8 +68,21 @@ class CanonicalValueStore {
     mem_usage.Add(MemUsage::ConcatLabel(label, "set_"), bytes, bytes);
   }
 
+  auto GetRawIndex(IdT id) const -> int32_t { return values_.GetRawIndex(id); }
+
  private:
   class KeyContext;
+
+  static auto GetAsKey(ConstRefType value) -> ConstRefType
+    requires std::same_as<KeyT, ValueT>
+  {
+    return value;
+  }
+
+  template <typename T>
+  static auto GetAsKey(T&& value) -> decltype(value.GetAsKey()) {
+    return value.GetAsKey();
+  }
 
   ValueStore<IdT, ValueType> values_;
   Set<IdT, /*SmallSize=*/0, KeyContext> set_;
@@ -77,9 +95,12 @@ class CanonicalValueStore<IdT, KeyT, ValueT>::KeyContext
   explicit KeyContext(const ValueStore<IdT, ValueType>* values)
       : values_(values) {}
 
-  // Note that it is safe to return a `const` reference here as the underlying
-  // object's lifetime is provided by the `ValueStore`.
-  auto TranslateKey(IdT id) const -> ConstRefType { return values_->Get(id); }
+  // Note that it is safe to return a reference here as the underlying object's
+  // lifetime is provided by the `ValueStore`.
+  auto TranslateKey(IdT id) const
+      -> decltype(GetAsKey(std::declval<ConstRefType>())) {
+    return GetAsKey(values_->Get(id));
+  }
 
  private:
   const ValueStore<IdT, ValueType>* values_;
@@ -88,7 +109,7 @@ class CanonicalValueStore<IdT, KeyT, ValueT>::KeyContext
 template <typename IdT, typename KeyT, typename ValueT>
 auto CanonicalValueStore<IdT, KeyT, ValueT>::Add(ValueType value) -> IdT {
   auto make_key = [&] { return IdT(values_.Add(std::move(value))); };
-  return set_.Insert(value, make_key, KeyContext(&values_)).key();
+  return set_.Insert(GetAsKey(value), make_key, KeyContext(&values_)).key();
 }
 
 template <typename IdT, typename KeyT, typename ValueT>

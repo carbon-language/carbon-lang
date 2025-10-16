@@ -177,6 +177,9 @@ class ValueStore
 
   ValueStore() = default;
   explicit ValueStore(IdTag tag) : tag_(tag) {}
+  template <typename Id>
+  explicit ValueStore(Id id, int32_t initial_reserved_ids = 0)
+      : tag_(id.index, initial_reserved_ids) {}
 
   // Stores the value and returns an ID to reference it.
   auto Add(ValueType value) -> IdType {
