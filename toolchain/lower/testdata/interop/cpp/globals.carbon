@@ -34,7 +34,9 @@ fn MyF() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @global = external global {}
+// CHECK:STDOUT: %class.C = type { i8 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: @global = dso_local global %class.C zeroinitializer, align 1
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CMyF.Main() !dbg !7 {
 // CHECK:STDOUT: entry:
