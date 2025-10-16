@@ -94,10 +94,10 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param.loc28: %MemberNamedSelf = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc28_25: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]
-// CHECK:STDOUT:     %x.loc28: %MemberNamedSelf = bind_val_name x, %x.param.loc28
+// CHECK:STDOUT:     %x.loc28: %MemberNamedSelf = value_binding x, %x.param.loc28
 // CHECK:STDOUT:     %y.param.loc28: %Self.362 = value_param call_param1
 // CHECK:STDOUT:     %Self.ref.loc28_34: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [concrete = constants.%Self.362]
-// CHECK:STDOUT:     %y.loc28: %Self.362 = bind_val_name y, %y.param.loc28
+// CHECK:STDOUT:     %y.loc28: %Self.362 = value_binding y, %y.param.loc28
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -121,10 +121,10 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param.loc25: %MemberNamedSelf = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc25_11: type = name_ref Self, constants.%MemberNamedSelf [concrete = constants.%MemberNamedSelf]
-// CHECK:STDOUT:     %x.loc25: %MemberNamedSelf = bind_val_name x, %x.param.loc25
+// CHECK:STDOUT:     %x.loc25: %MemberNamedSelf = value_binding x, %x.param.loc25
 // CHECK:STDOUT:     %y.param.loc25: %Self.362 = value_param call_param1
 // CHECK:STDOUT:     %Self.ref.loc25_20: type = name_ref r#Self, @MemberNamedSelf.%Self.decl [concrete = constants.%Self.362]
-// CHECK:STDOUT:     %y.loc25: %Self.362 = bind_val_name y, %y.param.loc25
+// CHECK:STDOUT:     %y.loc25: %Self.362 = value_binding y, %y.param.loc25
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -154,7 +154,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     %Self.ref.loc17: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:     %ptr.loc17: type = ptr_type %Self.ref.loc17 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Self: ref %ptr.e71 = bind_ref_name r#Self, %Self.var
+// CHECK:STDOUT:   %Self: ref %ptr.e71 = ref_binding r#Self, %Self.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %p.patt: %pattern_type.796 = ref_binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.796 = var_pattern %p.patt [concrete]
@@ -172,7 +172,7 @@ fn MemberNamedSelf.F(x: Self, y: r#Self) {}
 // CHECK:STDOUT:     %Self.ref.loc18_12: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:     %ptr.loc18: type = ptr_type %Self.ref.loc18_12 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: ref %ptr.e71 = bind_ref_name p, %p.var
+// CHECK:STDOUT:   %p: ref %ptr.e71 = ref_binding p, %p.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc18: <bound method> = bound_method %p.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.1b5
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.1b5, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc18_5: <bound method> = bound_method %p.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1

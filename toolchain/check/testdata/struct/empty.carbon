@@ -37,7 +37,7 @@ var y: {} = x;
 // CHECK:STDOUT:     %.loc15_9.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc15_9.3: type = converted %.loc15_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %empty_struct_type = bind_ref_name x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %x: ref %empty_struct_type = ref_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type = ref_binding_pattern y [concrete]
 // CHECK:STDOUT:     %y.var_patt: %pattern_type = var_pattern %y.patt [concrete]
@@ -47,7 +47,7 @@ var y: {} = x;
 // CHECK:STDOUT:     %.loc16_9.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc16_9.3: type = converted %.loc16_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: ref %empty_struct_type = bind_ref_name y, %y.var [concrete = %y.var]
+// CHECK:STDOUT:   %y: ref %empty_struct_type = ref_binding y, %y.var [concrete = %y.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

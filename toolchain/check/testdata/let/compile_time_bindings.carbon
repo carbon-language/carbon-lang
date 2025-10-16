@@ -212,7 +212,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc10_17.2: %empty_tuple.type = converted %.loc10_17.1, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %x: %empty_tuple.type = bind_val_name x, %.loc10_17.2
+// CHECK:STDOUT:   %x: %empty_tuple.type = value_binding x, %.loc10_17.2
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -273,7 +273,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc9_17.2: %empty_tuple.type = converted %.loc9_17.1, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %x: %empty_tuple.type = bind_val_name x, %.loc9_17.2
+// CHECK:STDOUT:   %x: %empty_tuple.type = value_binding x, %.loc9_17.2
 // CHECK:STDOUT:   %C.F.decl: %C.F.type = fn_decl @C.F [concrete = constants.%C.F] {
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param0 [concrete]
@@ -381,7 +381,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_tuple.loc9: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc9_17.2: %empty_tuple.type = converted %.loc9_17.1, %empty_tuple.loc9 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %a: %empty_tuple.type = bind_val_name a, %.loc9_17.2
+// CHECK:STDOUT:   %a: %empty_tuple.type = value_binding a, %.loc9_17.2
 // CHECK:STDOUT:   %C.F.decl: %C.F.type = fn_decl @C.F [concrete = constants.%C.F] {
 // CHECK:STDOUT:     %b.patt: %pattern_type.559 = symbolic_binding_pattern b, 0 [concrete]
 // CHECK:STDOUT:   } {
@@ -420,7 +420,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %.loc22_37.4: %empty_tuple.type = converted %.loc22_36, %empty_tuple.loc22_36 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %tuple: %tuple.type.2d5 = tuple_value (%.loc22_37.2, %.loc22_37.3, %.loc22_37.4) [concrete = constants.%tuple.7e4]
 // CHECK:STDOUT:   %.loc22_37.5: %tuple.type.2d5 = converted %.loc22_37.1, %tuple [concrete = constants.%tuple.7e4]
-// CHECK:STDOUT:   %d: %tuple.type.2d5 = bind_val_name d, %.loc22_37.5
+// CHECK:STDOUT:   %d: %tuple.type.2d5 = value_binding d, %.loc22_37.5
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -477,7 +477,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:       %.loc13_14.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc13_14.3: type = converted %.loc13_14.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a1: ref %empty_tuple.type = bind_ref_name a1, %a1.var
+// CHECK:STDOUT:     %a1: ref %empty_tuple.type = ref_binding a1, %a1.var
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %b1.patt: %pattern_type.559 = ref_binding_pattern b1 [concrete]
 // CHECK:STDOUT:       %b1.var_patt: %pattern_type.559 = var_pattern %b1.patt [concrete]
@@ -497,7 +497,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:       %.loc14_17.3: type = converted %.loc14_15, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %.loc14_17.4: type = converted %.loc14_17.2, constants.%tuple.type.9fb [concrete = constants.%tuple.type.9fb]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b1: ref %tuple.type.9fb = bind_ref_name b1, %b1.var
+// CHECK:STDOUT:     %b1: ref %tuple.type.9fb = ref_binding b1, %b1.var
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %c1.patt: %pattern_type.5b8 = ref_binding_pattern c1 [concrete]
 // CHECK:STDOUT:       %c1.var_patt: %pattern_type.5b8 = var_pattern %c1.patt [concrete]
@@ -523,7 +523,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:       %.loc15_20.4: type = converted %.loc15_19, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %.loc15_20.5: type = converted %.loc15_20.2, constants.%tuple.type.bcd [concrete = constants.%tuple.type.bcd]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c1: ref %tuple.type.bcd = bind_ref_name c1, %c1.var
+// CHECK:STDOUT:     %c1: ref %tuple.type.bcd = ref_binding c1, %c1.var
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %d1.patt: %pattern_type.8c1 = ref_binding_pattern d1 [concrete]
 // CHECK:STDOUT:       %d1.var_patt: %pattern_type.8c1 = var_pattern %d1.patt [concrete]
@@ -555,7 +555,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:       %.loc16_24.5: type = converted %.loc16_23, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %.loc16_24.6: type = converted %.loc16_24.2, constants.%tuple.type.2d5 [concrete = constants.%tuple.type.2d5]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %d1: ref %tuple.type.2d5 = bind_ref_name d1, %d1.var
+// CHECK:STDOUT:     %d1: ref %tuple.type.2d5 = ref_binding d1, %d1.var
 // CHECK:STDOUT:     %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc16: <bound method> = bound_method %d1.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.7c8
 // CHECK:STDOUT:     %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.7c8, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.c7f) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.176]
 // CHECK:STDOUT:     %bound_method.loc16: <bound method> = bound_method %d1.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -1004,7 +1004,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:   %T: type = bind_val_name T, %i32
+// CHECK:STDOUT:   %T: type = value_binding T, %i32
 // CHECK:STDOUT:   %I.F.decl: %I.F.type = fn_decl @I.F [concrete = constants.%I.F] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0 [concrete]
@@ -1058,7 +1058,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = value_binding_pattern T [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:   %T: type = bind_val_name T, @__global_init.%i32
+// CHECK:STDOUT:   %T: type = value_binding T, @__global_init.%i32
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0 [concrete]
@@ -1164,7 +1164,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc11_20.2(%int_0) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc11_20.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc11_20.2: %i32 = converted %int_0, %.loc11_20.1 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %Zero: %i32 = bind_val_name Zero, %.loc11_20.2
+// CHECK:STDOUT:   %Zero: %i32 = value_binding Zero, %.loc11_20.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Zero = %Zero

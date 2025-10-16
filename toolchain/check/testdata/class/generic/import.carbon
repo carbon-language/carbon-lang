@@ -593,7 +593,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %CompleteClass: type = class_type @CompleteClass, @CompleteClass(constants.%i32) [concrete = constants.%CompleteClass.e9e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %CompleteClass.e9e = bind_ref_name v, %v.var
+// CHECK:STDOUT:   %v: ref %CompleteClass.e9e = ref_binding v, %v.var
 // CHECK:STDOUT:   %v.ref: ref %CompleteClass.e9e = name_ref v, %v
 // CHECK:STDOUT:   %.loc7: %CompleteClass.F.type.1bc = specific_constant imports.%Main.import_ref.a52, @CompleteClass(constants.%i32) [concrete = constants.%CompleteClass.F.f7c]
 // CHECK:STDOUT:   %F.ref.loc7: %CompleteClass.F.type.1bc = name_ref F, %.loc7 [concrete = constants.%CompleteClass.F.f7c]
@@ -632,7 +632,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %CompleteClass: type = class_type @CompleteClass, @CompleteClass(constants.%i32) [concrete = constants.%CompleteClass.e9e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %CompleteClass.e9e = bind_ref_name v, %v.var
+// CHECK:STDOUT:   %v: ref %CompleteClass.e9e = ref_binding v, %v.var
 // CHECK:STDOUT:   %v.ref: ref %CompleteClass.e9e = name_ref v, %v
 // CHECK:STDOUT:   %n.ref: %CompleteClass.elem.7fc = name_ref n, imports.%Main.import_ref.e76 [concrete = imports.%.364]
 // CHECK:STDOUT:   %.loc12_11.1: ref %i32 = class_element_access %v.ref, element0
@@ -791,7 +791,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr.9e1]
 // CHECK:STDOUT:     %CompleteClass: type = class_type @CompleteClass, @CompleteClass(constants.%ptr.9e1) [concrete = constants.%CompleteClass.0fe]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %CompleteClass.0fe = bind_ref_name v, %v.var
+// CHECK:STDOUT:   %v: ref %CompleteClass.0fe = ref_binding v, %v.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %v.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.da9
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.da9, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %v.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

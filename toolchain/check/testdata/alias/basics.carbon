@@ -194,7 +194,7 @@ extern alias C = Class;
 // CHECK:STDOUT:   %.loc10_13.3: ref %C = temporary %.loc10_13.1, %.loc10_13.2
 // CHECK:STDOUT:   %.loc10_13.4: ref %C = converted @__global_init.%.loc10, %.loc10_13.3
 // CHECK:STDOUT:   %.loc10_13.5: %C = bind_value %.loc10_13.4
-// CHECK:STDOUT:   %d: %C = bind_val_name d, %.loc10_13.5
+// CHECK:STDOUT:   %d: %C = value_binding d, %.loc10_13.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

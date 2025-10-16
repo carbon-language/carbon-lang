@@ -147,7 +147,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:       %.loc2_27.2: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc2_27.3: type = converted %IntLiteral.call, %.loc2_27.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N: Core.IntLiteral = bind_val_name N, %N.param
+// CHECK:STDOUT:     %N: Core.IntLiteral = value_binding N, %N.param
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param1
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -180,7 +180,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:       %A: type = class_type @A, @A(constants.%int_0.6a9) [concrete = constants.%A.6fc]
 // CHECK:STDOUT:       %ptr.loc15: type = ptr_type %A [concrete = constants.%ptr.b65]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %ptr.b65 = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: %ptr.b65 = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -255,7 +255,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   %.loc20_15.2: ref %B = class_element_access %.loc20_15.1, element0
 // CHECK:STDOUT:   %addr: %ptr.e79 = addr_of %.loc20_15.2
 // CHECK:STDOUT:   %.loc20_15.3: %ptr.e79 = converted %a.ref, %addr
-// CHECK:STDOUT:   %b: %ptr.e79 = bind_val_name b, %.loc20_15.3
+// CHECK:STDOUT:   %b: %ptr.e79 = value_binding b, %.loc20_15.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

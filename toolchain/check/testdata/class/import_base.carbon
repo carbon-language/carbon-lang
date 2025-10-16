@@ -89,7 +89,7 @@ fn Run() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Base = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
-// CHECK:STDOUT:     %self: %Base = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: %Base = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Base.Unused.decl: %Base.Unused.type = fn_decl @Base.Unused [concrete = constants.%Base.Unused] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.bcc = value_binding_pattern self [concrete]
@@ -97,7 +97,7 @@ fn Run() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Base = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
-// CHECK:STDOUT:     %self: %Base = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: %Base = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -283,7 +283,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_3: init %Child = converted %.loc7_48.1, %.loc7_48.4 [concrete = constants.%Child.val]
 // CHECK:STDOUT:   assign %a.var, %.loc7_3
 // CHECK:STDOUT:   %Child.ref: type = name_ref Child, imports.%Main.Child [concrete = constants.%Child]
-// CHECK:STDOUT:   %a: ref %Child = bind_ref_name a, %a.var
+// CHECK:STDOUT:   %a: ref %Child = ref_binding a, %a.var
 // CHECK:STDOUT:   %a.ref.loc8: ref %Child = name_ref a, %a
 // CHECK:STDOUT:   %x.ref: %Base.elem = name_ref x, imports.%Main.import_ref.e67 [concrete = imports.%.720]
 // CHECK:STDOUT:   %.loc8_4.1: ref %Base = class_element_access %a.ref.loc8, element0

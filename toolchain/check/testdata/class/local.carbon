@@ -198,7 +198,7 @@ class A {
 // CHECK:STDOUT:   %.loc19_18: init %B = converted %.loc19_39.1, %.loc19_39.5 [concrete = constants.%B.val]
 // CHECK:STDOUT:   assign %return, %.loc19_18
 // CHECK:STDOUT:   %Self.ref.loc19: type = name_ref Self, constants.%B [concrete = constants.%B]
-// CHECK:STDOUT:   %b: ref %B = bind_ref_name b, %return
+// CHECK:STDOUT:   %b: ref %B = ref_binding b, %return
 // CHECK:STDOUT:   return %b to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

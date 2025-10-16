@@ -81,13 +81,13 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %Class = value_param call_param0
 // CHECK:STDOUT:     %Class.ref.loc24_9: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:     %c: %Class = bind_val_name c, %c.param
+// CHECK:STDOUT:     %c: %Class = value_binding c, %c.param
 // CHECK:STDOUT:     %p.param: %ptr.e71 = value_param call_param1
 // CHECK:STDOUT:     %.loc24: type = splice_block %ptr [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:       %Class.ref.loc24_19: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref.loc24_19 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.e71 = bind_val_name p, %p.param
+// CHECK:STDOUT:     %p: %ptr.e71 = value_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -102,7 +102,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:       %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: %ptr.e71 = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: %ptr.e71 = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.G.decl: %Class.G.type = fn_decl @Class.G [concrete = constants.%Class.G] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.761 = value_binding_pattern self [concrete]
@@ -110,7 +110,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Class = value_param call_param0
 // CHECK:STDOUT:     %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:     %self: %Class = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: %Class = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

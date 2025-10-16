@@ -103,7 +103,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type.4fe)]
 // CHECK:STDOUT:       %.loc20_22.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type.4fe)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %e: @Feed.%T.binding.as_type (%T.binding.as_type.4fe) = bind_val_name e, %e.param
+// CHECK:STDOUT:     %e: @Feed.%T.binding.as_type (%T.binding.as_type.4fe) = value_binding e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HandleAnimal.decl: %HandleAnimal.type = fn_decl @HandleAnimal [concrete = constants.%HandleAnimal] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.3c3 = symbolic_binding_pattern T, 0 [concrete]
@@ -121,7 +121,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type.5cd)]
 // CHECK:STDOUT:       %.loc22_32.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type.5cd)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @HandleAnimal.%T.binding.as_type (%T.binding.as_type.5cd) = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: @HandleAnimal.%T.binding.as_type (%T.binding.as_type.5cd) = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

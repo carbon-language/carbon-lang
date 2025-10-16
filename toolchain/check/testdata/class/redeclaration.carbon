@@ -56,13 +56,13 @@ fn Class.F[self: Self](b: ()) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc21: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc21: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc21: %Class = bind_val_name self, %self.param.loc21
+// CHECK:STDOUT:     %self.loc21: %Class = value_binding self, %self.param.loc21
 // CHECK:STDOUT:     %b.param.loc21: %empty_tuple.type = value_param call_param1
 // CHECK:STDOUT:     %.loc21_28.1: type = splice_block %.loc21_28.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc21_28.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc21_28.3: type = converted %.loc21_28.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc21: %empty_tuple.type = bind_val_name b, %b.param.loc21
+// CHECK:STDOUT:     %b.loc21: %empty_tuple.type = value_binding b, %b.param.loc21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -75,13 +75,13 @@ fn Class.F[self: Self](b: ()) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param.loc18: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc18: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc18: %Class = bind_val_name self, %self.param.loc18
+// CHECK:STDOUT:     %self.loc18: %Class = value_binding self, %self.param.loc18
 // CHECK:STDOUT:     %b.param.loc18: %empty_tuple.type = value_param call_param1
 // CHECK:STDOUT:     %.loc18_24.1: type = splice_block %.loc18_24.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc18_24.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc18_24.3: type = converted %.loc18_24.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc18: %empty_tuple.type = bind_val_name b, %b.param.loc18
+// CHECK:STDOUT:     %b.loc18: %empty_tuple.type = value_binding b, %b.param.loc18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

@@ -161,7 +161,7 @@ class Derived {
 // CHECK:STDOUT:     %.loc17_35.2: type = converted %.loc17_35.1, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:     %d: %Derived = bind_val_name d, %d.param
+// CHECK:STDOUT:     %d: %Derived = value_binding d, %d.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.d07 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %tuple.type.d07 = return_slot %return.param
 // CHECK:STDOUT:   }

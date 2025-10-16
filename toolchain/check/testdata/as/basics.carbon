@@ -185,7 +185,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %t.patt: %pattern_type = value_binding_pattern t [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t: type = bind_val_name t, @__global_init.%.loc5_24.3
+// CHECK:STDOUT:   %t: type = value_binding t, @__global_init.%.loc5_24.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -251,7 +251,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %.loc13_33.3: %X = bind_value %.loc13_33.2
 // CHECK:STDOUT:   %tuple: %tuple.type.b67 = tuple_value (%.loc13_25.3, %.loc13_33.3)
 // CHECK:STDOUT:   %.loc13_34.2: %tuple.type.b67 = converted %.loc13_34.1, %tuple
-// CHECK:STDOUT:   %a: %tuple.type.b67 = bind_val_name a, %.loc13_34.2
+// CHECK:STDOUT:   %a: %tuple.type.b67 = value_binding a, %.loc13_34.2
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc13_33: <bound method> = bound_method %.loc13_33.2, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.756
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc13_33: <bound method> = bound_method %.loc13_33.2, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -292,7 +292,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:     %.loc20_15.2: %tuple.type.24b = tuple_literal (%X.ref.loc20_11, %X.ref.loc20_14)
 // CHECK:STDOUT:     %.loc20_15.3: type = converted %.loc20_15.2, constants.%tuple.type.b67 [concrete = constants.%tuple.type.b67]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %tuple.type.b67 = bind_ref_name b, %b.var
+// CHECK:STDOUT:   %b: ref %tuple.type.b67 = ref_binding b, %b.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %b.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.961
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %b.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
@@ -328,7 +328,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %n.ref: %X = name_ref n, %n
 // CHECK:STDOUT:   %X.ref.loc10_19: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %X.ref.loc10_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %m: %X = bind_val_name m, %n.ref
+// CHECK:STDOUT:   %m: %X = value_binding m, %n.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -345,7 +345,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:     %X.ref.loc16_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %ptr.loc16: type = ptr_type %X.ref.loc16_10 [concrete = constants.%ptr.d17]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %q: %ptr.d17 = bind_val_name q, %addr
+// CHECK:STDOUT:   %q: %ptr.d17 = value_binding q, %addr
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -362,7 +362,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %X.ref.loc24_25: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   assign %x.var, %Make.call
 // CHECK:STDOUT:   %X.ref.loc24_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %x: ref %X = bind_ref_name x, %x.var
+// CHECK:STDOUT:   %x: ref %X = ref_binding x, %x.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %x.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.756
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
@@ -400,7 +400,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, %Y.decl [concrete = constants.%Y]
 // CHECK:STDOUT:   %.loc19_29.1: ref %Y = temporary @__global_init.%.loc19_29.1, @__global_init.%.loc19_29.2
 // CHECK:STDOUT:   %.loc19_29.2: %Y = bind_value %.loc19_29.1
-// CHECK:STDOUT:   %n: %Y = bind_val_name n, %.loc19_29.2
+// CHECK:STDOUT:   %n: %Y = value_binding n, %.loc19_29.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

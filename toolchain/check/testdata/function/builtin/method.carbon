@@ -172,7 +172,7 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:     %.loc23_39.4: Core.IntLiteral = converted %i32.as.I.impl.F.call, %.loc23_39.3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %array_type: type = array_type %.loc23_39.4, %i32.loc23_16 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %arr: ref %array_type = bind_ref_name arr, %arr.var [concrete = %arr.var]
+// CHECK:STDOUT:   %arr: ref %array_type = ref_binding arr, %arr.var [concrete = %arr.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -194,14 +194,14 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:       %Self.as_type.loc16_14: type = facet_access_type %Self.ref.loc16_14 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.1b7)]
 // CHECK:STDOUT:       %.loc16_14.2: type = converted %Self.ref.loc16_14, %Self.as_type.loc16_14 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.1b7)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @I.F.%Self.binding.as_type (%Self.binding.as_type.1b7) = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: @I.F.%Self.binding.as_type (%Self.binding.as_type.1b7) = value_binding self, %self.param
 // CHECK:STDOUT:     %other.param: @I.F.%Self.binding.as_type (%Self.binding.as_type.1b7) = value_param call_param1
 // CHECK:STDOUT:     %.loc16_27.1: type = splice_block %.loc16_27.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.1b7)] {
 // CHECK:STDOUT:       %Self.ref.loc16_27: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self.7ee)]
 // CHECK:STDOUT:       %Self.as_type.loc16_27: type = facet_access_type %Self.ref.loc16_27 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.1b7)]
 // CHECK:STDOUT:       %.loc16_27.2: type = converted %Self.ref.loc16_27, %Self.as_type.loc16_27 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.1b7)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %other: @I.F.%Self.binding.as_type (%Self.binding.as_type.1b7) = bind_val_name other, %other.param
+// CHECK:STDOUT:     %other: @I.F.%Self.binding.as_type (%Self.binding.as_type.1b7) = value_binding other, %other.param
 // CHECK:STDOUT:     %return.param: ref @I.F.%Self.binding.as_type (%Self.binding.as_type.1b7) = out_param call_param2
 // CHECK:STDOUT:     %return: ref @I.F.%Self.binding.as_type (%Self.binding.as_type.1b7) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -229,13 +229,13 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:       %int_32.loc20_14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc20_14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: %i32 = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: %i32 = value_binding self, %self.param
 // CHECK:STDOUT:     %other.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %.loc20_26: type = splice_block %i32.loc20_26 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc20_26: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc20_26: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %other: %i32 = bind_val_name other, %other.param
+// CHECK:STDOUT:     %other: %i32 = value_binding other, %other.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }

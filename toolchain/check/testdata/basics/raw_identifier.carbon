@@ -56,7 +56,7 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:       %.loc14_10.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc14_10.3: type = converted %.loc14_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: %empty_tuple.type = bind_val_name n, %n.param
+// CHECK:STDOUT:     %n: %empty_tuple.type = value_binding n, %n.param
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param1
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -73,7 +73,7 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:       %.loc18_12.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc18_12.3: type = converted %.loc18_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: %empty_tuple.type = bind_val_name n, %n.param
+// CHECK:STDOUT:     %n: %empty_tuple.type = value_binding n, %n.param
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param1
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -90,7 +90,7 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:       %.loc22_13.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc22_13.3: type = converted %.loc22_13.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %if: %empty_tuple.type = bind_val_name r#if, %if.param
+// CHECK:STDOUT:     %if: %empty_tuple.type = value_binding r#if, %if.param
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param1
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }

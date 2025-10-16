@@ -97,7 +97,7 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_48.1: ref %.b2d = temporary @__global_init.%.loc11, @__global_init.%MakeNullEmptyStruct.call
 // CHECK:STDOUT:   %.loc11_48.2: %.b2d = bind_value %.loc11_48.1
-// CHECK:STDOUT:   %s: %.b2d = bind_val_name s, %.loc11_48.2
+// CHECK:STDOUT:   %s: %.b2d = value_binding s, %.loc11_48.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.ad6 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
@@ -111,7 +111,7 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_37.1: ref %.273 = temporary @__global_init.%.loc12, @__global_init.%MakeNullC.call
 // CHECK:STDOUT:   %.loc12_37.2: %.273 = bind_value %.loc12_37.1
-// CHECK:STDOUT:   %c: %.273 = bind_val_name c, %.loc12_37.2
+// CHECK:STDOUT:   %c: %.273 = value_binding c, %.loc12_37.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -159,7 +159,7 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_39.1: ref %.b2d = temporary @__global_init.%.loc10_39.2, @__global_init.%MakeNull.call.loc10
 // CHECK:STDOUT:   %.loc10_39.2: %.b2d = bind_value %.loc10_39.1
-// CHECK:STDOUT:   %s: %.b2d = bind_val_name s, %.loc10_39.2
+// CHECK:STDOUT:   %s: %.b2d = value_binding s, %.loc10_39.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.ad6 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
@@ -173,7 +173,7 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_37.1: ref %.273 = temporary @__global_init.%.loc11, @__global_init.%MakeNull.call.loc11
 // CHECK:STDOUT:   %.loc11_37.2: %.273 = bind_value %.loc11_37.1
-// CHECK:STDOUT:   %c: %.273 = bind_val_name c, %.loc11_37.2
+// CHECK:STDOUT:   %c: %.273 = value_binding c, %.loc11_37.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

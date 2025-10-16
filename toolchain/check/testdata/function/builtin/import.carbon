@@ -79,7 +79,7 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:       %.loc6_22.2: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc6_22.3: type = converted %IntLiteral.call, %.loc6_22.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N: Core.IntLiteral = bind_val_name N, %N.param
+// CHECK:STDOUT:     %N: Core.IntLiteral = value_binding N, %N.param
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param1
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -100,7 +100,7 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:       %.loc8_24.2: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc8_24.3: type = converted %IntLiteral.call, %.loc8_24.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: Core.IntLiteral = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: Core.IntLiteral = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32.builtin = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32.builtin = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -121,7 +121,7 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:       %.loc9_20.2: type = value_of_initializer %Int.call [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:       %.loc9_20.3: type = converted %Int.call, %.loc9_20.2 [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %i32.builtin = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: %i32.builtin = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -144,7 +144,7 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:       %.loc11_15.2: type = value_of_initializer %Int.call.loc11_15 [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:       %.loc11_15.3: type = converted %Int.call.loc11_15, %.loc11_15.2 [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %i32.builtin = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: %i32.builtin = value_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %i32.builtin = value_param call_param1
 // CHECK:STDOUT:     %.loc11_23.1: type = splice_block %.loc11_23.3 [concrete = constants.%i32.builtin] {
 // CHECK:STDOUT:       %int_32.loc11_23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -152,7 +152,7 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:       %.loc11_23.2: type = value_of_initializer %Int.call.loc11_23 [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:       %.loc11_23.3: type = converted %Int.call.loc11_23, %.loc11_23.2 [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: %i32.builtin = bind_val_name b, %b.param
+// CHECK:STDOUT:     %b: %i32.builtin = value_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32.builtin = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32.builtin = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -248,7 +248,7 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:     %.loc4_81.2: Core.IntLiteral = converted %AsIntLiteral.call, %.loc4_81.1 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %array_type: type = array_type %.loc4_81.2, %.loc4_16.2 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %arr: ref %array_type = bind_ref_name arr, %arr.var [concrete = %arr.var]
+// CHECK:STDOUT:   %arr: ref %array_type = ref_binding arr, %arr.var [concrete = %arr.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Int = "int.make_type_signed" [from "core.carbon"];

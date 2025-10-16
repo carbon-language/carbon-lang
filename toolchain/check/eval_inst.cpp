@@ -105,7 +105,7 @@ auto EvalConstantInst(Context& context, SemIR::BindAlias inst)
       context.constant_values().Get(inst.value_id));
 }
 
-auto EvalConstantInst(Context& context, SemIR::BindRefName inst)
+auto EvalConstantInst(Context& context, SemIR::RefBinding inst)
     -> ConstantEvalResult {
   // A reference binding evaluates to the value it's bound to.
   if (inst.value_id.has_value()) {
@@ -115,7 +115,7 @@ auto EvalConstantInst(Context& context, SemIR::BindRefName inst)
   return ConstantEvalResult::NotConstant;
 }
 
-auto EvalConstantInst(Context& /*context*/, SemIR::BindValueName /*inst*/)
+auto EvalConstantInst(Context& /*context*/, SemIR::ValueBinding /*inst*/)
     -> ConstantEvalResult {
   // Non-`:!` value bindings are not constant.
   return ConstantEvalResult::NotConstant;

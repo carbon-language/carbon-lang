@@ -151,7 +151,7 @@ fn Main() {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %i32 = bind_ref_name a, %a.var
+// CHECK:STDOUT:   %a: ref %i32 = ref_binding a, %a.var
 // CHECK:STDOUT:   %a.ref.loc23_3: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %a.ref.loc23_7: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %a.ref.loc23_10: ref %i32 = name_ref a, %a

@@ -140,7 +140,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:       %B.ref: type = name_ref B, file.%B.decl.loc4 [concrete = constants.%B]
 // CHECK:STDOUT:       %A: type = class_type @A, @A(constants.%B) [concrete = constants.%A.1d4]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: %A.1d4 = bind_val_name x, %x.param
+// CHECK:STDOUT:     %x: %A.1d4 = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl.loc29: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT: }
@@ -312,7 +312,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_6.2 [symbolic = %T.loc6_6.1 (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc7_11.1: type = ptr_type %T.ref [symbolic = %ptr.loc7_11.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v: ref @F.%ptr.loc7_11.2 (%ptr.79f) = bind_ref_name v, %v.var
+// CHECK:STDOUT:     %v: ref @F.%ptr.loc7_11.2 (%ptr.79f) = ref_binding v, %v.var
 // CHECK:STDOUT:     %v.ref: ref @F.%ptr.loc7_11.2 (%ptr.79f) = name_ref v, %v
 // CHECK:STDOUT:     %.loc8_4: @F.%ptr.loc7_11.2 (%ptr.79f) = bind_value %v.ref
 // CHECK:STDOUT:     %.loc8_3: ref @F.%T.loc6_6.1 (%T) = deref %.loc8_4
@@ -465,7 +465,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_6.2 [symbolic = %T.loc6_6.1 (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc7_11.1: type = ptr_type %T.ref [symbolic = %ptr.loc7_11.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v: ref @F.%ptr.loc7_11.2 (%ptr.79f) = bind_ref_name v, %v.var
+// CHECK:STDOUT:     %v: ref @F.%ptr.loc7_11.2 (%ptr.79f) = ref_binding v, %v.var
 // CHECK:STDOUT:     %v.ref: ref @F.%ptr.loc7_11.2 (%ptr.79f) = name_ref v, %v
 // CHECK:STDOUT:     %.loc14_4: @F.%ptr.loc7_11.2 (%ptr.79f) = bind_value %v.ref
 // CHECK:STDOUT:     %.loc14_3: ref @F.%T.loc6_6.1 (%T) = deref %.loc14_4

@@ -201,7 +201,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:     %int_32.loc32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %t.param: type = value_param call_param0
-// CHECK:STDOUT:     %t: type = bind_val_name t, %t.param
+// CHECK:STDOUT:     %t: type = value_binding t, %t.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -326,7 +326,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   br !.loc27_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc27_7:
-// CHECK:STDOUT:   %v: ref %i32 = bind_ref_name v, %v.var
+// CHECK:STDOUT:   %v: ref %i32 = ref_binding v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.fe8 = ref_binding_pattern w [concrete]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.fe8 = var_pattern %w.patt [concrete]
@@ -362,7 +362,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   br !.loc28_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc28_7:
-// CHECK:STDOUT:   %w: ref %ptr.235 = bind_ref_name w, %w.var
+// CHECK:STDOUT:   %w: ref %ptr.235 = ref_binding w, %w.var
 // CHECK:STDOUT:   %w.ref: ref %ptr.235 = name_ref w, %w
 // CHECK:STDOUT:   %.loc29_11: %ptr.235 = bind_value %w.ref
 // CHECK:STDOUT:   %.loc29_10.1: ref %i32 = deref %.loc29_11
@@ -420,7 +420,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   br !.loc33_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc33_7:
-// CHECK:STDOUT:   %v: ref %i32 = bind_ref_name v, %v.var
+// CHECK:STDOUT:   %v: ref %i32 = ref_binding v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.fe8 = ref_binding_pattern w [concrete]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.fe8 = var_pattern %w.patt [concrete]
@@ -455,7 +455,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   br !.loc34_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc34_7:
-// CHECK:STDOUT:   %w: ref %ptr.235 = bind_ref_name w, %w.var
+// CHECK:STDOUT:   %w: ref %ptr.235 = ref_binding w, %w.var
 // CHECK:STDOUT:   %w.ref: ref %ptr.235 = name_ref w, %w
 // CHECK:STDOUT:   %.loc35_11: %ptr.235 = bind_value %w.ref
 // CHECK:STDOUT:   %.loc35_10.1: ref %i32 = deref %.loc35_11

@@ -89,7 +89,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:       %.loc4_23.2: type = value_of_initializer %Bool.call.loc4 [concrete = bool]
 // CHECK:STDOUT:       %.loc4_23.3: type = converted %Bool.call.loc4, %.loc4_23.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: bool = bind_val_name x, %x.param
+// CHECK:STDOUT:     %x: bool = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -131,7 +131,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !.loc9_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc9_7:
-// CHECK:STDOUT:   %a: ref <error> = bind_ref_name a, <error> [concrete = <error>]
+// CHECK:STDOUT:   %a: ref <error> = ref_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: <error> = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: <error> = var_pattern %b.patt [concrete]
@@ -169,7 +169,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !.loc14_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc14_7:
-// CHECK:STDOUT:   %b: ref <error> = bind_ref_name b, <error> [concrete = <error>]
+// CHECK:STDOUT:   %b: ref <error> = ref_binding b, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -214,7 +214,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:       %.loc4_41.2: type = value_of_initializer %Bool.call.loc4 [concrete = bool]
 // CHECK:STDOUT:       %.loc4_41.3: type = converted %Bool.call.loc4, %.loc4_41.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: bool = bind_val_name x, %x.param
+// CHECK:STDOUT:     %x: bool = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -256,7 +256,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !.loc11_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc11_7:
-// CHECK:STDOUT:   %c: ref <error> = bind_ref_name c, <error> [concrete = <error>]
+// CHECK:STDOUT:   %c: ref <error> = ref_binding c, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: <error> = ref_binding_pattern d [concrete]
 // CHECK:STDOUT:     %d.var_patt: <error> = var_pattern %d.patt [concrete]
@@ -294,7 +294,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !.loc16_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc16_7:
-// CHECK:STDOUT:   %d: ref <error> = bind_ref_name d, <error> [concrete = <error>]
+// CHECK:STDOUT:   %d: ref <error> = ref_binding d, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

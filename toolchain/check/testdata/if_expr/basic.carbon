@@ -118,19 +118,19 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:       %.loc15_9.2: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:       %.loc15_9.3: type = converted %Bool.call, %.loc15_9.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: bool = bind_val_name b, %b.param
+// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %.loc15_18: type = splice_block %i32.loc15_18 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc15_18: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc15_18: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: %i32 = bind_val_name n, %n.param
+// CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
 // CHECK:STDOUT:     %m.param: %i32 = value_param call_param2
 // CHECK:STDOUT:     %.loc15_26: type = splice_block %i32.loc15_26 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc15_26: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc15_26: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %m: %i32 = bind_val_name m, %m.param
+// CHECK:STDOUT:     %m: %i32 = value_binding m, %m.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param3
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -163,7 +163,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %array_type: type = array_type %int_1, %i32.loc16 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %array_type = bind_ref_name x, %x.var
+// CHECK:STDOUT:   %x: ref %array_type = ref_binding x, %x.var
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:

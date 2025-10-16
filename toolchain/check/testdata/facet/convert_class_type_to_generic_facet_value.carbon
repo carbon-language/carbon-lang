@@ -468,7 +468,7 @@ fn G() {
 // CHECK:STDOUT:     %U.loc15_32.2: @CallGenericMethod.%Generic.type.loc15_45.1 (%Generic.type.2db63e.2) = bind_symbolic_name U, 1 [symbolic = %U.loc15_32.1 (constants.%U)]
 // CHECK:STDOUT:     %t.param: @CallGenericMethod.%T.loc15_22.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref.loc15_51: type = name_ref T, %T.loc15_22.2 [symbolic = %T.loc15_22.1 (constants.%T)]
-// CHECK:STDOUT:     %t: @CallGenericMethod.%T.loc15_22.1 (%T) = bind_val_name t, %t.param
+// CHECK:STDOUT:     %t: @CallGenericMethod.%T.loc15_22.1 (%T) = value_binding t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }

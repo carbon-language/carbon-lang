@@ -201,7 +201,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:       %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:       %array_type.loc6_29.2: type = array_type %int_3, %T.ref.loc6_25 [symbolic = %array_type.loc6_29.1 (constants.%array_type.743)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%array_type.loc6_29.1 (%array_type.743) = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: @F.%array_type.loc6_29.1 (%array_type.743) = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref @F.%T.loc6_6.1 (%T) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%T.loc6_6.1 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -276,7 +276,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:     %array_type: type = array_type %int_3, %C.ref.loc9 [concrete = constants.%array_type.002]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type.002 = bind_ref_name a, %a.var
+// CHECK:STDOUT:   %a: ref %array_type.002 = ref_binding a, %a.var
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type.002 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [concrete = constants.%F.specific_fn.04a]
@@ -429,7 +429,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:       %N.ref.loc6_41: Core.IntLiteral = name_ref N, %N.loc6_6.2 [symbolic = %N.loc6_6.1 (constants.%N)]
 // CHECK:STDOUT:       %array_type.loc6_42.2: type = array_type %N.ref.loc6_41, %C.ref [symbolic = %array_type.loc6_42.1 (constants.%array_type.6a2)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%array_type.loc6_42.1 (%array_type.6a2) = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: @F.%array_type.loc6_42.1 (%array_type.6a2) = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -507,7 +507,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %array_type: type = array_type %int_3, %C.ref [concrete = constants.%array_type.002]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type.002 = bind_ref_name a, %a.var
+// CHECK:STDOUT:   %a: ref %array_type.002 = ref_binding a, %a.var
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type.002 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_3.1ba) [concrete = constants.%F.specific_fn]
@@ -624,7 +624,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:       %N.ref: Core.IntLiteral = name_ref N, %N.loc6_16.2 [symbolic = %N.loc6_16.1 (constants.%N)]
 // CHECK:STDOUT:       %array_type.loc6_52.2: type = array_type %N.ref, %T.ref [symbolic = %array_type.loc6_52.1 (constants.%array_type.bb5)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%array_type.loc6_52.1 (%array_type.bb5) = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: @F.%array_type.loc6_52.1 (%array_type.bb5) = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
@@ -683,7 +683,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:     %array_type: type = array_type %int_3, %C.ref [concrete = constants.%array_type.002]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type.002 = bind_ref_name a, %a.var
+// CHECK:STDOUT:   %a: ref %array_type.002 = ref_binding a, %a.var
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type.002 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C, constants.%int_3) [concrete = constants.%F.specific_fn]
@@ -796,7 +796,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:       %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:       %array_type.loc6_29.2: type = array_type %int_2, %T.ref.loc6_25 [symbolic = %array_type.loc6_29.1 (constants.%array_type.9d4)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%array_type.loc6_29.1 (%array_type.9d4) = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: @F.%array_type.loc6_29.1 (%array_type.9d4) = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref @F.%T.loc6_6.1 (%T) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%T.loc6_6.1 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -871,7 +871,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:     %array_type: type = array_type %int_3, %C.ref.loc10 [concrete = constants.%array_type.002]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type.002 = bind_ref_name a, %a.var
+// CHECK:STDOUT:   %a: ref %array_type.002 = ref_binding a, %a.var
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type.002 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [concrete = constants.%F.specific_fn.04a]
@@ -1029,7 +1029,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:       %N.ref.loc7_41: Core.IntLiteral = name_ref N, %N.loc7_6.2 [symbolic = %N.loc7_6.1 (constants.%N)]
 // CHECK:STDOUT:       %array_type.loc7_42.2: type = array_type %N.ref.loc7_41, %C.ref [symbolic = %array_type.loc7_42.1 (constants.%array_type.6a2)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%array_type.loc7_42.1 (%array_type.6a2) = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: @F.%array_type.loc7_42.1 (%array_type.6a2) = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1115,7 +1115,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %array_type: type = array_type %int_3, %D.ref [concrete = constants.%array_type.fe4]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type.fe4 = bind_ref_name a, %a.var
+// CHECK:STDOUT:   %a: ref %array_type.fe4 = ref_binding a, %a.var
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type.fe4 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_3.1ba) [concrete = constants.%F.specific_fn]
@@ -1272,7 +1272,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:       %.loc6_27.2: Core.IntLiteral = converted %N.ref.loc6_27, %.loc6_27.1 [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc6_27.1 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
 // CHECK:STDOUT:       %array_type.loc6_28.2: type = array_type %.loc6_27.2, %C.ref [symbolic = %array_type.loc6_28.1 (constants.%array_type.566)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%array_type.loc6_28.1 (%array_type.566) = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: @F.%array_type.loc6_28.1 (%array_type.566) = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1351,7 +1351,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:     %array_type: type = array_type %int_3, %C.ref [concrete = constants.%array_type.002]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type.002 = bind_ref_name a, %a.var
+// CHECK:STDOUT:   %a: ref %array_type.002 = ref_binding a, %a.var
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type.002 = name_ref a, %a
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %a.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f70

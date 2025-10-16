@@ -126,7 +126,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:         %T.as_type.loc6_11: type = facet_access_type %T.ref.loc6_11 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:         %.loc6_11.2: type = converted %T.ref.loc6_11, %T.as_type.loc6_11 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %n: @Class.F.%T.binding.as_type (%T.binding.as_type) = bind_val_name n, %n.param
+// CHECK:STDOUT:       %n: @Class.F.%T.binding.as_type (%T.binding.as_type) = value_binding n, %n.param
 // CHECK:STDOUT:       %return.param: ref @Class.F.%T.binding.as_type (%T.binding.as_type) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Class.F.%T.binding.as_type (%T.binding.as_type) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -144,7 +144,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:         %.loc10_14.2: type = specific_constant constants.%Class, @Class(constants.%T.be8) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc10_14.2 [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @Class.G.%Class (%Class) = bind_val_name self, %self.param
+// CHECK:STDOUT:       %self: @Class.G.%Class (%Class) = value_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @Class.G.%T.binding.as_type (%T.binding.as_type) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Class.G.%T.binding.as_type (%T.binding.as_type) = return_slot %return.param
 // CHECK:STDOUT:     }

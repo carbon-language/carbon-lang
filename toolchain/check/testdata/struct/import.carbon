@@ -170,7 +170,7 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:     %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %struct_type.a = bind_ref_name a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %struct_type.a = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.020 = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.020 = var_pattern %b.patt [concrete]
@@ -188,7 +188,7 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:     %i32.loc6_40: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.d: type = struct_type {.a: %struct_type.b.c, .d: %i32} [concrete = constants.%struct_type.a.d.9db]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %struct_type.a.d.9db = bind_ref_name b, %b.var [concrete = %b.var]
+// CHECK:STDOUT:   %b: ref %struct_type.a.d.9db = ref_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.a5a = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.a5a = var_pattern %c.patt [concrete]
@@ -217,7 +217,7 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:     %.loc7_26.2: %struct_type.a.b.5ca = converted %.loc7_25.1, %struct [concrete = constants.%struct]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%struct) [concrete = constants.%C.a8a]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C.a8a = bind_ref_name c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C.a8a = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

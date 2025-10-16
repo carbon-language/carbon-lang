@@ -94,7 +94,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc21_34.2, %ptr.loc21_40.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U: @H.%Empty_where.type (%Empty_where.type.b70) = bind_val_name U, %U.param
+// CHECK:STDOUT:     %U: @H.%Empty_where.type (%Empty_where.type.b70) = value_binding U, %U.param
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %V.loc21_43.2: type = bind_symbolic_name V, 1 [symbolic = %V.loc21_43.1 (constants.%V)]
 // CHECK:STDOUT:   }

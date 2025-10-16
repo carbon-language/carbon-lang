@@ -56,7 +56,7 @@ fn F(n: i32, a: array(i32, n)*);
 // CHECK:STDOUT:       %int_32.loc19_9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc19_9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: %i32 = bind_val_name n, %n.param
+// CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
 // CHECK:STDOUT:     %a.param: <error> = value_param call_param1
 // CHECK:STDOUT:     %.loc19_30: type = splice_block %ptr [concrete = <error>] {
 // CHECK:STDOUT:       %int_32.loc19_23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -64,7 +64,7 @@ fn F(n: i32, a: array(i32, n)*);
 // CHECK:STDOUT:       %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: <error> = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: <error> = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

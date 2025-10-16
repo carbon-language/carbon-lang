@@ -82,7 +82,7 @@ fn Main() {
 // CHECK:STDOUT:     %.loc23_10.2: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:     %.loc23_10.3: type = converted %Bool.call, %.loc23_10.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref bool = bind_ref_name x, %x.var
+// CHECK:STDOUT:   %x: ref bool = ref_binding x, %x.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %x.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.999
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.999, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

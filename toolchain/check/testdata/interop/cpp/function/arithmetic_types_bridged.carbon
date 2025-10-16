@@ -2156,7 +2156,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_30.3: bool = value_of_initializer %.loc8_30.2
 // CHECK:STDOUT:   %.loc8_30.4: bool = converted %.loc8_30.2, %.loc8_30.3
-// CHECK:STDOUT:   %x: bool = bind_val_name x, %.loc8_30.4
+// CHECK:STDOUT:   %x: bool = value_binding x, %.loc8_30.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2204,7 +2204,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_30.3: %i16 = value_of_initializer %.loc8_30.2
 // CHECK:STDOUT:   %.loc8_30.4: %i16 = converted %.loc8_30.2, %.loc8_30.3
-// CHECK:STDOUT:   %x: %i16 = bind_val_name x, %.loc8_30.4
+// CHECK:STDOUT:   %x: %i16 = value_binding x, %.loc8_30.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2276,7 +2276,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_31.3: %f64.d77 = value_of_initializer %.loc8_31.2
 // CHECK:STDOUT:   %.loc8_31.4: %f64.d77 = converted %.loc8_31.2, %.loc8_31.3
-// CHECK:STDOUT:   %x: %f64.d77 = bind_val_name x, %.loc8_31.4
+// CHECK:STDOUT:   %x: %f64.d77 = value_binding x, %.loc8_31.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

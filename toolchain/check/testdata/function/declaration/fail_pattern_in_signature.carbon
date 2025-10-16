@@ -47,7 +47,7 @@ fn F((a: {}, b: {}), c: {});
 // CHECK:STDOUT:       %.loc19_26.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:       %.loc19_26.3: type = converted %.loc19_26.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %empty_struct_type = bind_val_name c, %c.param
+// CHECK:STDOUT:     %c: %empty_struct_type = value_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

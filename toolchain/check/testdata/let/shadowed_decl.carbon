@@ -94,7 +94,7 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:       %int_32.loc15_9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc15_9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc15: %i32 = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a.loc15: %i32 = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -117,7 +117,7 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc16_16.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc16_16.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc16_16.2: %i32 = converted %int_1, %.loc16_16.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %a.loc16: %i32 = bind_val_name a, %.loc16_16.2
+// CHECK:STDOUT:   %a.loc16: %i32 = value_binding a, %.loc16_16.2
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a.loc16
 // CHECK:STDOUT:   %impl.elem0.loc18: %.7fa = impl_witness_access constants.%Copy.impl_witness.a32, element0 [concrete = constants.%Int.as.Copy.impl.Op.f59]
 // CHECK:STDOUT:   %bound_method.loc18_10.1: <bound method> = bound_method %a.ref, %impl.elem0.loc18

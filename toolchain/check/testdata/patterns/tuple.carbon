@@ -62,14 +62,14 @@ let (a: (), b: ()) = t;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_tuple.loc5_24: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_24: %empty_tuple.type = converted @__global_init.%.loc5_24, %empty_tuple.loc5_24 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %a: %empty_tuple.type = bind_val_name a, %.loc5_24
+// CHECK:STDOUT:   %a: %empty_tuple.type = value_binding a, %.loc5_24
 // CHECK:STDOUT:   %.loc5_17.1: type = splice_block %.loc5_17.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc5_17.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc5_17.3: type = converted %.loc5_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_tuple.loc5_28: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_28: %empty_tuple.type = converted @__global_init.%.loc5_28, %empty_tuple.loc5_28 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %b: %empty_tuple.type = bind_val_name b, %.loc5_28
+// CHECK:STDOUT:   %b: %empty_tuple.type = value_binding b, %.loc5_28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -107,14 +107,14 @@ let (a: (), b: ()) = t;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple.loc7_24.1: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_24.2: %empty_tuple.type = converted %tuple.elem0, %tuple.loc7_24.1 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %a: %empty_tuple.type = bind_val_name a, %.loc7_24.2
+// CHECK:STDOUT:   %a: %empty_tuple.type = value_binding a, %.loc7_24.2
 // CHECK:STDOUT:   %.loc7_17.1: type = splice_block %.loc7_17.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc7_17.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc7_17.3: type = converted %.loc7_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple.loc7_24.2: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_24.3: %empty_tuple.type = converted %tuple.elem1, %tuple.loc7_24.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %b: %empty_tuple.type = bind_val_name b, %.loc7_24.3
+// CHECK:STDOUT:   %b: %empty_tuple.type = value_binding b, %.loc7_24.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -151,14 +151,14 @@ let (a: (), b: ()) = t;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple.loc6_22.1: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_22.1: %empty_tuple.type = converted %tuple.elem0, %tuple.loc6_22.1 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %a: %empty_tuple.type = bind_val_name a, %.loc6_22.1
+// CHECK:STDOUT:   %a: %empty_tuple.type = value_binding a, %.loc6_22.1
 // CHECK:STDOUT:   %.loc6_17.1: type = splice_block %.loc6_17.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc6_17.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_17.3: type = converted %.loc6_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple.loc6_22.2: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_22.2: %empty_tuple.type = converted %tuple.elem1, %tuple.loc6_22.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %b: %empty_tuple.type = bind_val_name b, %.loc6_22.2
+// CHECK:STDOUT:   %b: %empty_tuple.type = value_binding b, %.loc6_22.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

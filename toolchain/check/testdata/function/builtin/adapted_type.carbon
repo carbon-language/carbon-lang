@@ -105,7 +105,7 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %N.param: %MyIntLiteral = value_param call_param0
 // CHECK:STDOUT:     %MyIntLiteral.ref: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
-// CHECK:STDOUT:     %N: %MyIntLiteral = bind_val_name N, %N.param
+// CHECK:STDOUT:     %N: %MyIntLiteral = value_binding N, %N.param
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param1
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -119,7 +119,7 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %MyInt32.ref.loc18: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
 // CHECK:STDOUT:     %a.param.loc18: %MyIntLiteral = value_param call_param0
 // CHECK:STDOUT:     %MyIntLiteral.ref.loc18: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
-// CHECK:STDOUT:     %a.loc18: %MyIntLiteral = bind_val_name a, %a.param.loc18
+// CHECK:STDOUT:     %a.loc18: %MyIntLiteral = value_binding a, %a.param.loc18
 // CHECK:STDOUT:     %return.param.loc18: ref %MyInt32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc18: ref %MyInt32 = return_slot %return.param.loc18
 // CHECK:STDOUT:   }
@@ -134,10 +134,10 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %MyInt32.ref.loc20_37: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
 // CHECK:STDOUT:     %a.param: %MyInt32 = value_param call_param0
 // CHECK:STDOUT:     %MyInt32.ref.loc20_13: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
-// CHECK:STDOUT:     %a: %MyInt32 = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: %MyInt32 = value_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %MyInt32 = value_param call_param1
 // CHECK:STDOUT:     %MyInt32.ref.loc20_25: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
-// CHECK:STDOUT:     %b: %MyInt32 = bind_val_name b, %b.param
+// CHECK:STDOUT:     %b: %MyInt32 = value_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %MyInt32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %MyInt32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -147,7 +147,7 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %MyInt32 = var %v.var_patt [concrete]
 // CHECK:STDOUT:   %MyInt32.ref: type = name_ref MyInt32, %MyInt32.decl [concrete = constants.%MyInt32]
-// CHECK:STDOUT:   %v: ref %MyInt32 = bind_ref_name v, %v.var [concrete = %v.var]
+// CHECK:STDOUT:   %v: ref %MyInt32 = ref_binding v, %v.var [concrete = %v.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @MyIntLiteral {
@@ -183,7 +183,7 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:     %MyInt32.ref.loc15: type = name_ref MyInt32, file.%MyInt32.decl [concrete = constants.%MyInt32]
 // CHECK:STDOUT:     %a.param.loc15: %MyIntLiteral = value_param call_param0
 // CHECK:STDOUT:     %MyIntLiteral.ref.loc15: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
-// CHECK:STDOUT:     %a.loc15: %MyIntLiteral = bind_val_name a, %a.param.loc15
+// CHECK:STDOUT:     %a.loc15: %MyIntLiteral = value_binding a, %a.param.loc15
 // CHECK:STDOUT:     %return.param.loc15: ref %MyInt32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc15: ref %MyInt32 = return_slot %return.param.loc15
 // CHECK:STDOUT:   }
@@ -258,7 +258,7 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %N.param: %MyIntLiteral = value_param call_param0
 // CHECK:STDOUT:     %MyIntLiteral.ref: type = name_ref MyIntLiteral, file.%MyIntLiteral.decl [concrete = constants.%MyIntLiteral]
-// CHECK:STDOUT:     %N: %MyIntLiteral = bind_val_name N, %N.param
+// CHECK:STDOUT:     %N: %MyIntLiteral = value_binding N, %N.param
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param1
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }

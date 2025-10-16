@@ -319,7 +319,7 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_42.1: %u32 = value_of_initializer @__global_init.%Int32ToUint32.call [concrete = constants.%int_1.c1d]
 // CHECK:STDOUT:   %.loc6_42.2: %u32 = converted @__global_init.%Int32ToUint32.call, %.loc6_42.1 [concrete = constants.%int_1.c1d]
-// CHECK:STDOUT:   %SizePreserving: %u32 = bind_val_name SizePreserving, %.loc6_42.2
+// CHECK:STDOUT:   %SizePreserving: %u32 = value_binding SizePreserving, %.loc6_42.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %Narrowing.patt: %pattern_type.88f = value_binding_pattern Narrowing [concrete]
 // CHECK:STDOUT:   }
@@ -329,7 +329,7 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_36.1: %i16 = value_of_initializer @__global_init.%Int32ToInt16.call [concrete = constants.%int_1.c22]
 // CHECK:STDOUT:   %.loc7_36.2: %i16 = converted @__global_init.%Int32ToInt16.call, %.loc7_36.1 [concrete = constants.%int_1.c22]
-// CHECK:STDOUT:   %Narrowing: %i16 = bind_val_name Narrowing, %.loc7_36.2
+// CHECK:STDOUT:   %Narrowing: %i16 = value_binding Narrowing, %.loc7_36.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %Widening.patt: %pattern_type.a10 = value_binding_pattern Widening [concrete]
 // CHECK:STDOUT:   }
@@ -339,7 +339,7 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_35.1: %i64 = value_of_initializer @__global_init.%Int32ToInt64.call [concrete = constants.%int_1.a95]
 // CHECK:STDOUT:   %.loc8_35.2: %i64 = converted @__global_init.%Int32ToInt64.call, %.loc8_35.1 [concrete = constants.%int_1.a95]
-// CHECK:STDOUT:   %Widening: %i64 = bind_val_name Widening, %.loc8_35.2
+// CHECK:STDOUT:   %Widening: %i64 = value_binding Widening, %.loc8_35.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

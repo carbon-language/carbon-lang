@@ -90,7 +90,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: %i32 = bind_val_name n, %n.param
+// CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -106,7 +106,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       %.loc16_14.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @Simple.G.%Self.binding.as_type (%Self.binding.as_type) = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: @Simple.G.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, %Simple.G.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -123,14 +123,14 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %Undeclared.ref: <error> = name_ref Undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:     %self: <error> = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: <error> = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.decl.loc24_27.2: %i32.as.Simple.impl.G.type.4745bc.2 = fn_decl @i32.as.Simple.impl.G.loc24_27.2 [concrete = constants.%i32.as.Simple.impl.G.2bbe53.2] {
 // CHECK:STDOUT:     %self.patt: %pattern_type.7ce = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.7ce = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %self: %i32 = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: %i32 = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

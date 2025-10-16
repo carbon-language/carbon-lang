@@ -125,7 +125,7 @@ fn G(p: const (const C)**) -> C** {
 // CHECK:STDOUT:       %ptr.loc6_16: type = ptr_type %const.loc6_9 [concrete = constants.%ptr.801]
 // CHECK:STDOUT:       %ptr.loc6_17: type = ptr_type %ptr.loc6_16 [concrete = constants.%ptr.564]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.564 = bind_val_name p, %p.param
+// CHECK:STDOUT:     %p: %ptr.564 = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.564 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.564 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -144,7 +144,7 @@ fn G(p: const (const C)**) -> C** {
 // CHECK:STDOUT:       %ptr.loc10_17: type = ptr_type %C.ref.loc10_16 [concrete = constants.%ptr.019]
 // CHECK:STDOUT:       %const.loc10_9: type = const_type %ptr.loc10_17 [concrete = constants.%const.2b1]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %const.2b1 = bind_val_name p, %p.param
+// CHECK:STDOUT:     %p: %const.2b1 = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %const.2b1 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %const.2b1 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -219,7 +219,7 @@ fn G(p: const (const C)**) -> C** {
 // CHECK:STDOUT:       %ptr.loc11_16: type = ptr_type %const.loc11_9 [concrete = constants.%ptr.801]
 // CHECK:STDOUT:       %ptr.loc11_17: type = ptr_type %ptr.loc11_16 [concrete = constants.%ptr.564]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.564 = bind_val_name p, %p.param
+// CHECK:STDOUT:     %p: %ptr.564 = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.564 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.564 = return_slot %return.param
 // CHECK:STDOUT:   }

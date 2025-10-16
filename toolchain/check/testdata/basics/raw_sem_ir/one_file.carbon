@@ -395,7 +395,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst6000001A:    {kind: PointerType, arg0: inst60000019, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000001B:    {kind: PointerType, arg0: inst60000015, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000001C:    {kind: PointerType, arg0: inst60000016, type: type(TypeType)}
-// CHECK:STDOUT:     inst6000001D:    {kind: BindValueName, arg0: entity_name2, arg1: inst60000031, type: type(symbolic_constant4)}
+// CHECK:STDOUT:     inst6000001D:    {kind: ValueBinding, arg0: entity_name2, arg1: inst60000031, type: type(symbolic_constant4)}
 // CHECK:STDOUT:     inst6000001E:    {kind: PatternType, arg0: inst6000001B, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000001F:    {kind: ValueBindingPattern, arg0: entity_name2, type: type(symbolic_constant6)}
 // CHECK:STDOUT:     inst60000020:    {kind: PatternType, arg0: inst6000001C, type: type(TypeType)}

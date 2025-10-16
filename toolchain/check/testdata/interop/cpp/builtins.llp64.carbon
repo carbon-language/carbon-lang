@@ -127,7 +127,7 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %long_long.ref: type = name_ref long_long, %i64.1 [concrete = constants.%i64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_long_long: %i64 = bind_val_name cpp_long_long, %.loc8_41.2
+// CHECK:STDOUT:   %cpp_long_long: %i64 = value_binding cpp_long_long, %.loc8_41.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_long_long.patt: %pattern_type.95b = value_binding_pattern carbon_long_long [concrete]
 // CHECK:STDOUT:   }
@@ -136,7 +136,7 @@ fn F() {
 // CHECK:STDOUT:     %int_64.loc9: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %i64.loc9: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %carbon_long_long: %i64 = bind_val_name carbon_long_long, %cpp_long_long.ref
+// CHECK:STDOUT:   %carbon_long_long: %i64 = value_binding carbon_long_long, %cpp_long_long.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_unsigned_long_long.patt: %pattern_type.157 = value_binding_pattern cpp_unsigned_long_long [concrete]
 // CHECK:STDOUT:   }
@@ -155,7 +155,7 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %unsigned_long_long.ref: type = name_ref unsigned_long_long, %u64.1 [concrete = constants.%u64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_unsigned_long_long: %u64 = bind_val_name cpp_unsigned_long_long, %.loc11_59.2
+// CHECK:STDOUT:   %cpp_unsigned_long_long: %u64 = value_binding cpp_unsigned_long_long, %.loc11_59.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_unsigned_long_long.patt: %pattern_type.157 = value_binding_pattern carbon_unsigned_long_long [concrete]
 // CHECK:STDOUT:   }
@@ -164,7 +164,7 @@ fn F() {
 // CHECK:STDOUT:     %int_64.loc12: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %u64.loc12: type = class_type @UInt, @UInt(constants.%int_64) [concrete = constants.%u64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %carbon_unsigned_long_long: %u64 = bind_val_name carbon_unsigned_long_long, %cpp_unsigned_long_long.ref
+// CHECK:STDOUT:   %carbon_unsigned_long_long: %u64 = value_binding carbon_unsigned_long_long, %cpp_unsigned_long_long.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -229,7 +229,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc15_31.1: %i64 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc15 [concrete = constants.%int_1.41a]
 // CHECK:STDOUT:   %.loc15_31.2: %i64 = converted %int_1.loc15, %.loc15_31.1 [concrete = constants.%int_1.41a]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %cpp_long: <error> = bind_val_name cpp_long, <error> [concrete = <error>]
+// CHECK:STDOUT:   %cpp_long: <error> = value_binding cpp_long, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_long.patt: %pattern_type.95b = value_binding_pattern carbon_long [concrete]
 // CHECK:STDOUT:   }
@@ -238,7 +238,7 @@ fn F() {
 // CHECK:STDOUT:     %int_64.loc16: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %i64.loc16: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %carbon_long: %i64 = bind_val_name carbon_long, <error> [concrete = <error>]
+// CHECK:STDOUT:   %carbon_long: %i64 = value_binding carbon_long, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_unsigned_long.patt: <error> = value_binding_pattern cpp_unsigned_long [concrete]
 // CHECK:STDOUT:   }
@@ -253,7 +253,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc25_49.1: %u64 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc25 [concrete = constants.%int_1.f23]
 // CHECK:STDOUT:   %.loc25_49.2: %u64 = converted %int_1.loc25, %.loc25_49.1 [concrete = constants.%int_1.f23]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %cpp_unsigned_long: <error> = bind_val_name cpp_unsigned_long, <error> [concrete = <error>]
+// CHECK:STDOUT:   %cpp_unsigned_long: <error> = value_binding cpp_unsigned_long, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_unsigned_long.patt: %pattern_type.157 = value_binding_pattern carbon_unsigned_long [concrete]
 // CHECK:STDOUT:   }
@@ -262,7 +262,7 @@ fn F() {
 // CHECK:STDOUT:     %int_64.loc26: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %u64.loc26: type = class_type @UInt, @UInt(constants.%int_64) [concrete = constants.%u64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %carbon_unsigned_long: %u64 = bind_val_name carbon_unsigned_long, <error> [concrete = <error>]
+// CHECK:STDOUT:   %carbon_unsigned_long: %u64 = value_binding carbon_unsigned_long, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

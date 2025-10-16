@@ -67,7 +67,7 @@ fn Main() {
 // CHECK:STDOUT:     %.loc16_11.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc16_11.3: type = converted %.loc16_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %empty_tuple.type = bind_ref_name x, %x.var
+// CHECK:STDOUT:   %x: ref %empty_tuple.type = ref_binding x, %x.var
 // CHECK:STDOUT:   %x.ref: ref %empty_tuple.type = name_ref x, %x
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %x.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.93e
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.93e, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]

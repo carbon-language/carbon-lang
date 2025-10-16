@@ -155,7 +155,7 @@ fn MyF() {
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_25: %C = bind_value %global.ref
-// CHECK:STDOUT:   %local: %C = bind_val_name local, %.loc7_25
+// CHECK:STDOUT:   %local: %C = value_binding local, %.loc7_25
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %local_ptr.patt: %pattern_type.a31 = value_binding_pattern local_ptr [concrete]
 // CHECK:STDOUT:   }
@@ -167,7 +167,7 @@ fn MyF() {
 // CHECK:STDOUT:     %ptr.loc8: type = ptr_type %C.ref.loc8 [concrete = constants.%ptr.d9e]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_30: %ptr.d9e = bind_value %global_ptr.ref
-// CHECK:STDOUT:   %local_ptr: %ptr.d9e = bind_val_name local_ptr, %.loc8_30
+// CHECK:STDOUT:   %local_ptr: %ptr.d9e = value_binding local_ptr, %.loc8_30
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %local_ref.patt: %pattern_type.a31 = value_binding_pattern local_ref [concrete]
 // CHECK:STDOUT:   }
@@ -179,7 +179,7 @@ fn MyF() {
 // CHECK:STDOUT:     %ptr.loc9: type = ptr_type %C.ref.loc9 [concrete = constants.%ptr.d9e]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_30: %ptr.d9e = bind_value %global_ref.ref
-// CHECK:STDOUT:   %local_ref: %ptr.d9e = bind_val_name local_ref, %.loc9_30
+// CHECK:STDOUT:   %local_ref: %ptr.d9e = value_binding local_ref, %.loc9_30
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -248,7 +248,7 @@ fn MyF() {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_29: %C = bind_value %global.ref
-// CHECK:STDOUT:   %local: %C = bind_val_name local, %.loc7_29
+// CHECK:STDOUT:   %local: %C = value_binding local, %.loc7_29
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -295,7 +295,7 @@ fn MyF() {
 // CHECK:STDOUT:     %Cpp.ref.loc22_14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %UnusupportedType.ref: <error> = name_ref UnusupportedType, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %local: <error> = bind_val_name local, <error> [concrete = <error>]
+// CHECK:STDOUT:   %local: <error> = value_binding local, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

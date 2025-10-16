@@ -176,7 +176,7 @@ fn H() {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:     %d: %Derived = bind_val_name d, %d.param
+// CHECK:STDOUT:     %d: %Derived = value_binding d, %d.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -359,7 +359,7 @@ fn H() {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, imports.%Main.Derived [concrete = constants.%Derived]
-// CHECK:STDOUT:     %d: %Derived = bind_val_name d, %d.param
+// CHECK:STDOUT:     %d: %Derived = value_binding d, %d.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -711,7 +711,7 @@ fn H() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13_25.1: %i32 = value_of_initializer %X.G.call
 // CHECK:STDOUT:   %.loc13_25.2: %i32 = converted %X.G.call, %.loc13_25.1
-// CHECK:STDOUT:   %i: %i32 = bind_val_name i, %.loc13_25.2
+// CHECK:STDOUT:   %i: %i32 = value_binding i, %.loc13_25.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -910,7 +910,7 @@ fn H() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_25.1: %i32 = value_of_initializer %X.G.call
 // CHECK:STDOUT:   %.loc7_25.2: %i32 = converted %X.G.call, %.loc7_25.1
-// CHECK:STDOUT:   %j: %i32 = bind_val_name j, %.loc7_25.2
+// CHECK:STDOUT:   %j: %i32 = value_binding j, %.loc7_25.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

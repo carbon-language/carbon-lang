@@ -112,7 +112,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %C.ref.loc19_23: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc19_17: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a: %C = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: %C = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param1
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -127,10 +127,10 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %C.ref.loc27_30: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc27_18: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a: %C = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: %C = value_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %C = value_param call_param1
 // CHECK:STDOUT:     %C.ref.loc27_24: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %b: %C = bind_val_name b, %b.param
+// CHECK:STDOUT:     %b: %C = value_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -140,7 +140,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc35: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %b: %C = bind_val_name b, %b.param
+// CHECK:STDOUT:     %b: %C = value_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -177,7 +177,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %.loc36_3: init %C = converted %.loc36_15.1, %.loc36_15.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign %a.var, %.loc36_3
 // CHECK:STDOUT:   %C.ref.loc36: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %a: ref %C = bind_ref_name a, %a.var
+// CHECK:STDOUT:   %a: ref %C = ref_binding a, %a.var
 // CHECK:STDOUT:   %a.ref.loc41: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %a.ref.loc46: ref %C = name_ref a, %a

@@ -241,7 +241,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:       %T.as_type.loc13: type = facet_access_type %T.ref.loc13 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %.loc13_19.2: type = converted %T.ref.loc13, %T.as_type.loc13 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %t: @F.%T.binding.as_type (%T.binding.as_type) = bind_val_name t, %t.param
+// CHECK:STDOUT:     %t: @F.%T.binding.as_type (%T.binding.as_type) = value_binding t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -339,7 +339,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:       %.loc15_11.3: type = converted %T.ref.loc15, %T.as_type.loc15 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%Z.impl_witness.8e9, element0 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @F.%T.binding.as_type (%T.binding.as_type) = bind_val_name a, %t.ref
+// CHECK:STDOUT:     %a: @F.%T.binding.as_type (%T.binding.as_type) = value_binding a, %t.ref
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -582,7 +582,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:       %T.as_type.loc14: type = facet_access_type %T.ref.loc14 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %.loc14_19.2: type = converted %T.ref.loc14, %T.as_type.loc14 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %t: @F.%T.binding.as_type (%T.binding.as_type) = bind_val_name t, %t.param
+// CHECK:STDOUT:     %t: @F.%T.binding.as_type (%T.binding.as_type) = value_binding t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -699,7 +699,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     %.loc22_16.1: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.cd9) = specific_constant imports.%Core.import_ref.492, @ImplicitAs(constants.%impl.elem0.407) [symbolic = %assoc0 (constants.%assoc0.1bf)]
 // CHECK:STDOUT:     %Convert.ref: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.cd9) = name_ref Convert, %.loc22_16.1 [symbolic = %assoc0 (constants.%assoc0.1bf)]
 // CHECK:STDOUT:     %.loc22_16.2: @F.%impl.elem0.loc22_11.2 (%impl.elem0.407) = converted %t.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:     %a: @F.%impl.elem0.loc22_11.2 (%impl.elem0.407) = bind_val_name a, <error> [concrete = <error>]
+// CHECK:STDOUT:     %a: @F.%impl.elem0.loc22_11.2 (%impl.elem0.407) = value_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -863,7 +863,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     %T.loc9_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc9_6.1 (constants.%T.8b3)]
 // CHECK:STDOUT:     %t.param: ref @F.%T.loc9_6.1 (%T.8b3) = ref_param call_param0
 // CHECK:STDOUT:     %T.ref.loc9_23: type = name_ref T, %T.loc9_6.2 [symbolic = %T.loc9_6.1 (constants.%T.8b3)]
-// CHECK:STDOUT:     %t: ref @F.%T.loc9_6.1 (%T.8b3) = bind_ref_name t, %t.param
+// CHECK:STDOUT:     %t: ref @F.%T.loc9_6.1 (%T.8b3) = ref_binding t, %t.param
 // CHECK:STDOUT:     %return.param: ref @F.%ptr (%ptr.79f131.2) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%ptr (%ptr.79f131.2) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1068,7 +1068,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:       %T.as_type.loc9_22: type = facet_access_type %T.ref.loc9_22 [symbolic = %T.binding.as_type (constants.%T.binding.as_type.3e3)]
 // CHECK:STDOUT:       %.loc9_22.2: type = converted %T.ref.loc9_22, %T.as_type.loc9_22 [symbolic = %T.binding.as_type (constants.%T.binding.as_type.3e3)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %t: ref @F.%T.binding.as_type (%T.binding.as_type.3e3) = bind_ref_name t, %t.param
+// CHECK:STDOUT:     %t: ref @F.%T.binding.as_type (%T.binding.as_type.3e3) = ref_binding t, %t.param
 // CHECK:STDOUT:     %return.param: ref @F.%ptr (%ptr.a08) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%ptr (%ptr.a08) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1272,7 +1272,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref.loc9_22 [symbolic = %T.binding.as_type (constants.%T.binding.as_type.3e3)]
 // CHECK:STDOUT:       %.loc9_22.2: type = converted %T.ref.loc9_22, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type.3e3)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %t: ref @F.%T.binding.as_type (%T.binding.as_type.3e3) = bind_ref_name t, %t.param
+// CHECK:STDOUT:     %t: ref @F.%T.binding.as_type (%T.binding.as_type.3e3) = ref_binding t, %t.param
 // CHECK:STDOUT:     %return.param: ref @F.%ptr (%ptr.a08) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%ptr (%ptr.a08) = return_slot %return.param
 // CHECK:STDOUT:   }

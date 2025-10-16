@@ -50,7 +50,7 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:     %Incomplete.ref.loc24: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %Incomplete} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: ref <error> = bind_ref_name s, <error> [concrete = <error>]
+// CHECK:STDOUT:   %s: ref <error> = ref_binding s, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %p.patt: %pattern_type = ref_binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.var_patt: %pattern_type = var_pattern %p.patt [concrete]
@@ -60,7 +60,7 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:     %Incomplete.ref.loc26: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
 // CHECK:STDOUT:     %ptr: type = ptr_type %Incomplete.ref.loc26 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: ref %ptr = bind_ref_name p, %p.var [concrete = %p.var]
+// CHECK:STDOUT:   %p: ref %ptr = ref_binding p, %p.var [concrete = %p.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;

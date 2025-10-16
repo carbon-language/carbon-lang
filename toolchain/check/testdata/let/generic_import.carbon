@@ -68,7 +68,7 @@ var b: T = *a;
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = value_binding_pattern T [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:   %T: type = bind_val_name T, @__global_init.%i32
+// CHECK:STDOUT:   %T: type = value_binding T, @__global_init.%i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -107,14 +107,14 @@ var b: T = *a;
 // CHECK:STDOUT:     %T.ref.loc8: type = name_ref T, imports.%Implicit.T
 // CHECK:STDOUT:     %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref <error> = bind_ref_name a, <error> [concrete = <error>]
+// CHECK:STDOUT:   %a: ref <error> = ref_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: <error> = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: <error> = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref <error> = var %b.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %T.ref.loc13: type = name_ref T, imports.%Implicit.T
-// CHECK:STDOUT:   %b: ref <error> = bind_ref_name b, <error> [concrete = <error>]
+// CHECK:STDOUT:   %b: ref <error> = ref_binding b, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

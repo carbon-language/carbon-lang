@@ -268,7 +268,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:       %.loc4_10.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc4_10.3: type = converted %.loc4_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: %empty_tuple.type = bind_val_name x, %x.param
+// CHECK:STDOUT:     %x: %empty_tuple.type = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

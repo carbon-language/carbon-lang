@@ -102,7 +102,7 @@ fn H() {
 // CHECK:STDOUT:     %.loc7_19.2: %tuple.type.24b = tuple_literal (%i32.loc7_11, %i32.loc7_16)
 // CHECK:STDOUT:     %.loc7_19.3: type = converted %.loc7_19.2, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %tuple.type.d07 = bind_ref_name v, %v.var
+// CHECK:STDOUT:   %v: ref %tuple.type.d07 = ref_binding v, %v.var
 // CHECK:STDOUT:   %v.ref: ref %tuple.type.d07 = name_ref v, %v
 // CHECK:STDOUT:   %F.ref.loc8: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc8: ref %tuple.type.d07 = splice_block %v.ref {}
@@ -230,7 +230,7 @@ fn H() {
 // CHECK:STDOUT:     %.loc7_43.4: type = converted %.loc7_42, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
 // CHECK:STDOUT:     %.loc7_43.5: type = converted %.loc7_43.2, constants.%tuple.type.99b [concrete = constants.%tuple.type.99b]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %tuple.type.99b = bind_ref_name v, %v.var
+// CHECK:STDOUT:   %v: ref %tuple.type.99b = ref_binding v, %v.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %v.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.4b6
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %v.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
@@ -287,7 +287,7 @@ fn H() {
 // CHECK:STDOUT:     %.loc13_36.3: type = converted %.loc13_30, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
 // CHECK:STDOUT:     %.loc13_36.4: type = converted %.loc13_36.2, constants.%tuple.type.516 [concrete = constants.%tuple.type.516]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %tuple.type.516 = bind_ref_name v, %v.var
+// CHECK:STDOUT:   %v: ref %tuple.type.516 = ref_binding v, %v.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %v.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.903
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc13_3: <bound method> = bound_method %v.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

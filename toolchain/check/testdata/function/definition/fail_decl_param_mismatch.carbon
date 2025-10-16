@@ -123,7 +123,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:       %.loc23_10.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc23_10.3: type = converted %.loc23_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: %empty_tuple.type = bind_val_name x, %x.param
+// CHECK:STDOUT:     %x: %empty_tuple.type = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl.loc25: %G.type.9f9306.1 = fn_decl @G.loc25 [concrete = constants.%G.57b67a.1] {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete]
@@ -134,7 +134,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:       %.loc25_10.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc25_10.3: type = converted %.loc25_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: %empty_tuple.type = bind_val_name x, %x.param
+// CHECK:STDOUT:     %x: %empty_tuple.type = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl.loc33: %G.type.9f9306.2 = fn_decl @G.loc33 [concrete = constants.%G.57b67a.2] {} {}
 // CHECK:STDOUT:   %H.decl.loc35: %H.type.6826c6.1 = fn_decl @H.loc35 [concrete = constants.%H.8a6545.1] {
@@ -146,14 +146,14 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:       %.loc35_10.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc35_10.3: type = converted %.loc35_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: %empty_tuple.type = bind_val_name x, %x.param
+// CHECK:STDOUT:     %x: %empty_tuple.type = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl.loc40: %H.type.6826c6.2 = fn_decl @H.loc40 [concrete = constants.%H.8a6545.2] {
 // CHECK:STDOUT:     %x.patt: <error> = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: <error> = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: <error> = value_param call_param0
-// CHECK:STDOUT:     %x: <error> = bind_val_name x, %x.param
+// CHECK:STDOUT:     %x: <error> = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl.loc42: %I.type.af49c4.1 = fn_decl @I.loc42 [concrete = constants.%I.58e4ec.1] {} {}
 // CHECK:STDOUT:   %I.decl.loc50: %I.type.af49c4.2 = fn_decl @I.loc50 [concrete = constants.%I.58e4ec.2] {

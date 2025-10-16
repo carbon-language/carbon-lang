@@ -104,7 +104,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:       %i32.loc15_23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.501]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %s: %struct_type.a.b.501 = bind_val_name s, %s.param
+// CHECK:STDOUT:     %s: %struct_type.a.b.501 = value_binding s, %s.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %cond.patt: %pattern_type.831 = value_binding_pattern cond [concrete]
@@ -116,7 +116,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:       %.loc17_12.2: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:       %.loc17_12.3: type = converted %Bool.call, %.loc17_12.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %cond: bool = bind_val_name cond, %cond.param
+// CHECK:STDOUT:     %cond: bool = value_binding cond, %cond.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -158,7 +158,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     %i32.loc18_24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.501]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %struct_type.a.b.501 = bind_ref_name a, %a.var
+// CHECK:STDOUT:   %a: ref %struct_type.a.b.501 = ref_binding a, %a.var
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %cond.ref: bool = name_ref cond, %cond
 // CHECK:STDOUT:   if %cond.ref br !if.expr.then else br !if.expr.else

@@ -103,7 +103,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     %ForwardDeclared.ref: type = name_ref ForwardDeclared, %ForwardDeclared.decl [concrete = constants.%ForwardDeclared.type]
 // CHECK:STDOUT:     %struct_type.f: type = struct_type {.f: %ForwardDeclared.type} [concrete = constants.%struct_type.f]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f_ref: ref %struct_type.f = bind_ref_name f_ref, %f_ref.var [concrete = %f_ref.var]
+// CHECK:STDOUT:   %f_ref: ref %struct_type.f = ref_binding f_ref, %f_ref.var [concrete = %f_ref.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty {
@@ -267,7 +267,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %Empty.type = value_param call_param0
 // CHECK:STDOUT:     %Empty.ref: type = name_ref Empty, imports.%Main.Empty [concrete = constants.%Empty.type]
-// CHECK:STDOUT:     %e: %Empty.type = bind_val_name e, %e.param
+// CHECK:STDOUT:     %e: %Empty.type = value_binding e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseBasic.decl: %UseBasic.type = fn_decl @UseBasic [concrete = constants.%UseBasic] {
 // CHECK:STDOUT:     %e.patt: %pattern_type.2b6 = value_binding_pattern e [concrete]
@@ -275,7 +275,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %Basic.type = value_param call_param0
 // CHECK:STDOUT:     %Basic.ref: type = name_ref Basic, imports.%Main.Basic [concrete = constants.%Basic.type]
-// CHECK:STDOUT:     %e: %Basic.type = bind_val_name e, %e.param
+// CHECK:STDOUT:     %e: %Basic.type = value_binding e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %UseForwardDeclared.decl: %UseForwardDeclared.type = fn_decl @UseForwardDeclared [concrete = constants.%UseForwardDeclared] {
 // CHECK:STDOUT:     %f.patt: %pattern_type.71a = value_binding_pattern f [concrete]
@@ -283,7 +283,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %f.param: %ForwardDeclared.type = value_param call_param0
 // CHECK:STDOUT:     %ForwardDeclared.ref: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
-// CHECK:STDOUT:     %f: %ForwardDeclared.type = bind_val_name f, %f.param
+// CHECK:STDOUT:     %f: %ForwardDeclared.type = value_binding f, %f.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Basic.ref.loc10: type = name_ref Basic, imports.%Main.Basic [concrete = constants.%Basic.type]
 // CHECK:STDOUT:   %T.ref.loc10: %Basic.assoc_type = name_ref T, imports.%Main.import_ref.3d5 [concrete = constants.%assoc0.fee]
@@ -306,7 +306,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     %ForwardDeclared.ref.loc16: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.type]
 // CHECK:STDOUT:     %ptr: type = ptr_type %ForwardDeclared.ref.loc16 [concrete = constants.%ptr.f78]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %ptr.f78 = bind_ref_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %ptr.f78 = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Empty [from "a.carbon"] {

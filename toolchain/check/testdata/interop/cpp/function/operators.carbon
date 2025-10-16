@@ -1103,7 +1103,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc8_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc8_13: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C = bind_ref_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var
 // CHECK:STDOUT:   %c.ref.loc11: ref %C = name_ref c, %c
 // CHECK:STDOUT:   %.loc11_3.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc11_5: %ptr.d9e = addr_of %c.ref.loc11
@@ -1135,7 +1135,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_22.3: ref %C = temporary %.loc15_22.1, %.loc15_22.2
 // CHECK:STDOUT:   %.loc15_22.4: %C = bind_value %.loc15_22.3
-// CHECK:STDOUT:   %minus: %C = bind_val_name minus, %.loc15_22.4
+// CHECK:STDOUT:   %minus: %C = value_binding minus, %.loc15_22.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc15: <bound method> = bound_method %.loc15_22.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.841
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc15: <bound method> = bound_method %.loc15_22.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -1404,7 +1404,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc8_14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1: ref %C = bind_ref_name c1, %c1.var
+// CHECK:STDOUT:   %c1: ref %C = ref_binding c1, %c1.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.217 = ref_binding_pattern c2 [concrete]
 // CHECK:STDOUT:     %c2.var_patt: %pattern_type.217 = var_pattern %c2.patt [concrete]
@@ -1422,7 +1422,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc9_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc9_14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c2: ref %C = bind_ref_name c2, %c2.var
+// CHECK:STDOUT:   %c2: ref %C = ref_binding c2, %c2.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %addition.patt: %pattern_type.217 = value_binding_pattern addition [concrete]
 // CHECK:STDOUT:   }
@@ -1444,7 +1444,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_28.3: ref %C = temporary %.loc12_28.1, %.loc12_28.2
 // CHECK:STDOUT:   %.loc12_28.4: %C = bind_value %.loc12_28.3
-// CHECK:STDOUT:   %addition: %C = bind_val_name addition, %.loc12_28.4
+// CHECK:STDOUT:   %addition: %C = value_binding addition, %.loc12_28.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %subtraction.patt: %pattern_type.217 = value_binding_pattern subtraction [concrete]
 // CHECK:STDOUT:   }
@@ -1466,7 +1466,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13_31.3: ref %C = temporary %.loc13_31.1, %.loc13_31.2
 // CHECK:STDOUT:   %.loc13_31.4: %C = bind_value %.loc13_31.3
-// CHECK:STDOUT:   %subtraction: %C = bind_val_name subtraction, %.loc13_31.4
+// CHECK:STDOUT:   %subtraction: %C = value_binding subtraction, %.loc13_31.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %multiplication.patt: %pattern_type.217 = value_binding_pattern multiplication [concrete]
 // CHECK:STDOUT:   }
@@ -1488,7 +1488,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc14_34.3: ref %C = temporary %.loc14_34.1, %.loc14_34.2
 // CHECK:STDOUT:   %.loc14_34.4: %C = bind_value %.loc14_34.3
-// CHECK:STDOUT:   %multiplication: %C = bind_val_name multiplication, %.loc14_34.4
+// CHECK:STDOUT:   %multiplication: %C = value_binding multiplication, %.loc14_34.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %division.patt: %pattern_type.217 = value_binding_pattern division [concrete]
 // CHECK:STDOUT:   }
@@ -1510,7 +1510,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_28.3: ref %C = temporary %.loc15_28.1, %.loc15_28.2
 // CHECK:STDOUT:   %.loc15_28.4: %C = bind_value %.loc15_28.3
-// CHECK:STDOUT:   %division: %C = bind_val_name division, %.loc15_28.4
+// CHECK:STDOUT:   %division: %C = value_binding division, %.loc15_28.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %modulo.patt: %pattern_type.217 = value_binding_pattern modulo [concrete]
 // CHECK:STDOUT:   }
@@ -1532,7 +1532,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_26.3: ref %C = temporary %.loc16_26.1, %.loc16_26.2
 // CHECK:STDOUT:   %.loc16_26.4: %C = bind_value %.loc16_26.3
-// CHECK:STDOUT:   %modulo: %C = bind_val_name modulo, %.loc16_26.4
+// CHECK:STDOUT:   %modulo: %C = value_binding modulo, %.loc16_26.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %bitwise_and.patt: %pattern_type.217 = value_binding_pattern bitwise_and [concrete]
 // CHECK:STDOUT:   }
@@ -1554,7 +1554,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19_31.3: ref %C = temporary %.loc19_31.1, %.loc19_31.2
 // CHECK:STDOUT:   %.loc19_31.4: %C = bind_value %.loc19_31.3
-// CHECK:STDOUT:   %bitwise_and: %C = bind_val_name bitwise_and, %.loc19_31.4
+// CHECK:STDOUT:   %bitwise_and: %C = value_binding bitwise_and, %.loc19_31.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %bitwise_or.patt: %pattern_type.217 = value_binding_pattern bitwise_or [concrete]
 // CHECK:STDOUT:   }
@@ -1576,7 +1576,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc20_30.3: ref %C = temporary %.loc20_30.1, %.loc20_30.2
 // CHECK:STDOUT:   %.loc20_30.4: %C = bind_value %.loc20_30.3
-// CHECK:STDOUT:   %bitwise_or: %C = bind_val_name bitwise_or, %.loc20_30.4
+// CHECK:STDOUT:   %bitwise_or: %C = value_binding bitwise_or, %.loc20_30.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %bitwise_xor.patt: %pattern_type.217 = value_binding_pattern bitwise_xor [concrete]
 // CHECK:STDOUT:   }
@@ -1598,7 +1598,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc21_31.3: ref %C = temporary %.loc21_31.1, %.loc21_31.2
 // CHECK:STDOUT:   %.loc21_31.4: %C = bind_value %.loc21_31.3
-// CHECK:STDOUT:   %bitwise_xor: %C = bind_val_name bitwise_xor, %.loc21_31.4
+// CHECK:STDOUT:   %bitwise_xor: %C = value_binding bitwise_xor, %.loc21_31.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %left_shift.patt: %pattern_type.217 = value_binding_pattern left_shift [concrete]
 // CHECK:STDOUT:   }
@@ -1624,7 +1624,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22_30.3: ref %C = temporary %.loc22_30.1, %.loc22_30.2
 // CHECK:STDOUT:   %.loc22_30.4: %C = bind_value %.loc22_30.3
-// CHECK:STDOUT:   %left_shift: %C = bind_val_name left_shift, %.loc22_30.4
+// CHECK:STDOUT:   %left_shift: %C = value_binding left_shift, %.loc22_30.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %right_shift.patt: %pattern_type.217 = value_binding_pattern right_shift [concrete]
 // CHECK:STDOUT:   }
@@ -1650,7 +1650,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc23_31.3: ref %C = temporary %.loc23_31.1, %.loc23_31.2
 // CHECK:STDOUT:   %.loc23_31.4: %C = bind_value %.loc23_31.3
-// CHECK:STDOUT:   %right_shift: %C = bind_val_name right_shift, %.loc23_31.4
+// CHECK:STDOUT:   %right_shift: %C = value_binding right_shift, %.loc23_31.4
 // CHECK:STDOUT:   %c1.ref.loc26: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc26: ref %C = name_ref c2, %c2
 // CHECK:STDOUT:   %.loc26_6.1: ref %C = temporary_storage
@@ -1761,7 +1761,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc38_24.3: bool = value_of_initializer %.loc38_24.2
 // CHECK:STDOUT:   %.loc38_24.4: bool = converted %.loc38_24.2, %.loc38_24.3
-// CHECK:STDOUT:   %equal: bool = bind_val_name equal, %.loc38_24.4
+// CHECK:STDOUT:   %equal: bool = value_binding equal, %.loc38_24.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %not_equal.patt: %pattern_type.831 = value_binding_pattern not_equal [concrete]
 // CHECK:STDOUT:   }
@@ -1784,7 +1784,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc39_28.3: bool = value_of_initializer %.loc39_28.2
 // CHECK:STDOUT:   %.loc39_28.4: bool = converted %.loc39_28.2, %.loc39_28.3
-// CHECK:STDOUT:   %not_equal: bool = bind_val_name not_equal, %.loc39_28.4
+// CHECK:STDOUT:   %not_equal: bool = value_binding not_equal, %.loc39_28.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %greater_than.patt: %pattern_type.831 = value_binding_pattern greater_than [concrete]
 // CHECK:STDOUT:   }
@@ -1807,7 +1807,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc40_31.3: bool = value_of_initializer %.loc40_31.2
 // CHECK:STDOUT:   %.loc40_31.4: bool = converted %.loc40_31.2, %.loc40_31.3
-// CHECK:STDOUT:   %greater_than: bool = bind_val_name greater_than, %.loc40_31.4
+// CHECK:STDOUT:   %greater_than: bool = value_binding greater_than, %.loc40_31.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %less_than.patt: %pattern_type.831 = value_binding_pattern less_than [concrete]
 // CHECK:STDOUT:   }
@@ -1830,7 +1830,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc41_28.3: bool = value_of_initializer %.loc41_28.2
 // CHECK:STDOUT:   %.loc41_28.4: bool = converted %.loc41_28.2, %.loc41_28.3
-// CHECK:STDOUT:   %less_than: bool = bind_val_name less_than, %.loc41_28.4
+// CHECK:STDOUT:   %less_than: bool = value_binding less_than, %.loc41_28.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %greater_than_or_equal.patt: %pattern_type.831 = value_binding_pattern greater_than_or_equal [concrete]
 // CHECK:STDOUT:   }
@@ -1853,7 +1853,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc42_40.3: bool = value_of_initializer %.loc42_40.2
 // CHECK:STDOUT:   %.loc42_40.4: bool = converted %.loc42_40.2, %.loc42_40.3
-// CHECK:STDOUT:   %greater_than_or_equal: bool = bind_val_name greater_than_or_equal, %.loc42_40.4
+// CHECK:STDOUT:   %greater_than_or_equal: bool = value_binding greater_than_or_equal, %.loc42_40.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %less_than_or_equal.patt: %pattern_type.831 = value_binding_pattern less_than_or_equal [concrete]
 // CHECK:STDOUT:   }
@@ -1876,7 +1876,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc43_37.3: bool = value_of_initializer %.loc43_37.2
 // CHECK:STDOUT:   %.loc43_37.4: bool = converted %.loc43_37.2, %.loc43_37.3
-// CHECK:STDOUT:   %less_than_or_equal: bool = bind_val_name less_than_or_equal, %.loc43_37.4
+// CHECK:STDOUT:   %less_than_or_equal: bool = value_binding less_than_or_equal, %.loc43_37.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc35: <bound method> = bound_method %.loc35_6.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.841
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc35: <bound method> = bound_method %.loc35_6.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -2036,7 +2036,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_27.3: ref %C = temporary %.loc8_27.1, %.loc8_27.2
 // CHECK:STDOUT:   %.loc8_27.4: %C = bind_value %.loc8_27.3
-// CHECK:STDOUT:   %c1: %C = bind_val_name c1, %.loc8_27.4
+// CHECK:STDOUT:   %c1: %C = value_binding c1, %.loc8_27.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.217 = value_binding_pattern c2 [concrete]
 // CHECK:STDOUT:   }
@@ -2053,7 +2053,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_27.3: ref %C = temporary %.loc9_27.1, %.loc9_27.2
 // CHECK:STDOUT:   %.loc9_27.4: %C = bind_value %.loc9_27.3
-// CHECK:STDOUT:   %c2: %C = bind_val_name c2, %.loc9_27.4
+// CHECK:STDOUT:   %c2: %C = value_binding c2, %.loc9_27.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c3.patt: %pattern_type.217 = value_binding_pattern c3 [concrete]
 // CHECK:STDOUT:   }
@@ -2073,7 +2073,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_22.3: ref %C = temporary %.loc10_22.1, %.loc10_22.2
 // CHECK:STDOUT:   %.loc10_22.4: %C = bind_value %.loc10_22.3
-// CHECK:STDOUT:   %c3: %C = bind_val_name c3, %.loc10_22.4
+// CHECK:STDOUT:   %c3: %C = value_binding c3, %.loc10_22.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c4.patt: %pattern_type.217 = value_binding_pattern c4 [concrete]
 // CHECK:STDOUT:   }
@@ -2093,7 +2093,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_22.3: ref %C = temporary %.loc11_22.1, %.loc11_22.2
 // CHECK:STDOUT:   %.loc11_22.4: %C = bind_value %.loc11_22.3
-// CHECK:STDOUT:   %c4: %C = bind_val_name c4, %.loc11_22.4
+// CHECK:STDOUT:   %c4: %C = value_binding c4, %.loc11_22.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c5.patt: %pattern_type.217 = value_binding_pattern c5 [concrete]
 // CHECK:STDOUT:   }
@@ -2113,7 +2113,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_22.3: ref %C = temporary %.loc12_22.1, %.loc12_22.2
 // CHECK:STDOUT:   %.loc12_22.4: %C = bind_value %.loc12_22.3
-// CHECK:STDOUT:   %c5: %C = bind_val_name c5, %.loc12_22.4
+// CHECK:STDOUT:   %c5: %C = value_binding c5, %.loc12_22.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc12: <bound method> = bound_method %.loc12_22.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.841
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %.loc12_22.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -2210,7 +2210,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc15_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc15_14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1: ref %C = bind_ref_name c1, %c1.var
+// CHECK:STDOUT:   %c1: ref %C = ref_binding c1, %c1.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.217 = ref_binding_pattern c2 [concrete]
 // CHECK:STDOUT:     %c2.var_patt: %pattern_type.217 = var_pattern %c2.patt [concrete]
@@ -2228,7 +2228,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc16_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc16_14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c2: ref %C = bind_ref_name c2, %c2.var
+// CHECK:STDOUT:   %c2: ref %C = ref_binding c2, %c2.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %greater_than.patt: %pattern_type.831 = value_binding_pattern greater_than [concrete]
 // CHECK:STDOUT:   }
@@ -2251,7 +2251,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19_31.3: bool = value_of_initializer %.loc19_31.2
 // CHECK:STDOUT:   %.loc19_31.4: bool = converted %.loc19_31.2, %.loc19_31.3
-// CHECK:STDOUT:   %greater_than: bool = bind_val_name greater_than, %.loc19_31.4
+// CHECK:STDOUT:   %greater_than: bool = value_binding greater_than, %.loc19_31.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %less_than.patt: %pattern_type.831 = value_binding_pattern less_than [concrete]
 // CHECK:STDOUT:   }
@@ -2262,7 +2262,7 @@ fn F() {
 // CHECK:STDOUT:     %.loc26_18.2: type = value_of_initializer %Bool.call.loc26 [concrete = bool]
 // CHECK:STDOUT:     %.loc26_18.3: type = converted %Bool.call.loc26, %.loc26_18.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %less_than: bool = bind_val_name less_than, <error> [concrete = <error>]
+// CHECK:STDOUT:   %less_than: bool = value_binding less_than, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %greater_than_or_equal.patt: %pattern_type.831 = value_binding_pattern greater_than_or_equal [concrete]
 // CHECK:STDOUT:   }
@@ -2273,7 +2273,7 @@ fn F() {
 // CHECK:STDOUT:     %.loc33_30.2: type = value_of_initializer %Bool.call.loc33 [concrete = bool]
 // CHECK:STDOUT:     %.loc33_30.3: type = converted %Bool.call.loc33, %.loc33_30.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %greater_than_or_equal: bool = bind_val_name greater_than_or_equal, <error> [concrete = <error>]
+// CHECK:STDOUT:   %greater_than_or_equal: bool = value_binding greater_than_or_equal, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %less_than_or_equal.patt: %pattern_type.831 = value_binding_pattern less_than_or_equal [concrete]
 // CHECK:STDOUT:   }
@@ -2296,7 +2296,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc36_37.3: bool = value_of_initializer %.loc36_37.2
 // CHECK:STDOUT:   %.loc36_37.4: bool = converted %.loc36_37.2, %.loc36_37.3
-// CHECK:STDOUT:   %less_than_or_equal: bool = bind_val_name less_than_or_equal, %.loc36_37.4
+// CHECK:STDOUT:   %less_than_or_equal: bool = value_binding less_than_or_equal, %.loc36_37.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc16: <bound method> = bound_method %c2.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.841
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc16: <bound method> = bound_method %c2.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -2371,7 +2371,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc12_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc12_14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1: ref %C = bind_ref_name c1, %c1.var
+// CHECK:STDOUT:   %c1: ref %C = ref_binding c1, %c1.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.217 = ref_binding_pattern c2 [concrete]
 // CHECK:STDOUT:     %c2.var_patt: %pattern_type.217 = var_pattern %c2.patt [concrete]
@@ -2389,7 +2389,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc13_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc13_14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c2: ref %C = bind_ref_name c2, %c2.var
+// CHECK:STDOUT:   %c2: ref %C = ref_binding c2, %c2.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %equal.patt: %pattern_type.831 = value_binding_pattern equal [concrete]
 // CHECK:STDOUT:   }
@@ -2412,7 +2412,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_24.3: bool = value_of_initializer %.loc16_24.2
 // CHECK:STDOUT:   %.loc16_24.4: bool = converted %.loc16_24.2, %.loc16_24.3
-// CHECK:STDOUT:   %equal: bool = bind_val_name equal, %.loc16_24.4
+// CHECK:STDOUT:   %equal: bool = value_binding equal, %.loc16_24.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %not_equal.patt: %pattern_type.831 = value_binding_pattern not_equal [concrete]
 // CHECK:STDOUT:   }
@@ -2423,7 +2423,7 @@ fn F() {
 // CHECK:STDOUT:     %.loc23_18.2: type = value_of_initializer %Bool.call.loc23 [concrete = bool]
 // CHECK:STDOUT:     %.loc23_18.3: type = converted %Bool.call.loc23, %.loc23_18.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %not_equal: bool = bind_val_name not_equal, <error> [concrete = <error>]
+// CHECK:STDOUT:   %not_equal: bool = value_binding not_equal, <error> [concrete = <error>]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc13: <bound method> = bound_method %c2.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.841
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %c2.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -2499,7 +2499,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_31.3: ref %C = temporary %.loc8_31.1, %.loc8_31.2
 // CHECK:STDOUT:   %.loc8_31.4: %C = bind_value %.loc8_31.3
-// CHECK:STDOUT:   %c1: %C = bind_val_name c1, %.loc8_31.4
+// CHECK:STDOUT:   %c1: %C = value_binding c1, %.loc8_31.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.69f = value_binding_pattern c2 [concrete]
 // CHECK:STDOUT:   }
@@ -2518,7 +2518,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_31.3: ref %C = temporary %.loc9_31.1, %.loc9_31.2
 // CHECK:STDOUT:   %.loc9_31.4: %C = bind_value %.loc9_31.3
-// CHECK:STDOUT:   %c2: %C = bind_val_name c2, %.loc9_31.4
+// CHECK:STDOUT:   %c2: %C = value_binding c2, %.loc9_31.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c3.patt: %pattern_type.69f = value_binding_pattern c3 [concrete]
 // CHECK:STDOUT:   }
@@ -2539,7 +2539,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_24.3: ref %C = temporary %.loc10_24.1, %.loc10_24.2
 // CHECK:STDOUT:   %.loc10_24.4: %C = bind_value %.loc10_24.3
-// CHECK:STDOUT:   %c3: %C = bind_val_name c3, %.loc10_24.4
+// CHECK:STDOUT:   %c3: %C = value_binding c3, %.loc10_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10: <bound method> = bound_method %.loc10_24.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b69
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %.loc10_24.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -2649,7 +2649,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_36.3: ref %C1 = temporary %.loc8_36.1, %.loc8_36.2
 // CHECK:STDOUT:   %.loc8_36.4: %C1 = bind_value %.loc8_36.3
-// CHECK:STDOUT:   %c1: %C1 = bind_val_name c1, %.loc8_36.4
+// CHECK:STDOUT:   %c1: %C1 = value_binding c1, %.loc8_36.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.846 = value_binding_pattern c2 [concrete]
 // CHECK:STDOUT:   }
@@ -2668,7 +2668,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_36.3: ref %C2 = temporary %.loc9_36.1, %.loc9_36.2
 // CHECK:STDOUT:   %.loc9_36.4: %C2 = bind_value %.loc9_36.3
-// CHECK:STDOUT:   %c2: %C2 = bind_val_name c2, %.loc9_36.4
+// CHECK:STDOUT:   %c2: %C2 = value_binding c2, %.loc9_36.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c3.patt: %pattern_type.846 = value_binding_pattern c3 [concrete]
 // CHECK:STDOUT:   }
@@ -2689,7 +2689,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_26.3: ref %C2 = temporary %.loc10_26.1, %.loc10_26.2
 // CHECK:STDOUT:   %.loc10_26.4: %C2 = bind_value %.loc10_26.3
-// CHECK:STDOUT:   %c3: %C2 = bind_val_name c3, %.loc10_26.4
+// CHECK:STDOUT:   %c3: %C2 = value_binding c3, %.loc10_26.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c4.patt: %pattern_type.846 = value_binding_pattern c4 [concrete]
 // CHECK:STDOUT:   }
@@ -2710,7 +2710,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_26.3: ref %C2 = temporary %.loc11_26.1, %.loc11_26.2
 // CHECK:STDOUT:   %.loc11_26.4: %C2 = bind_value %.loc11_26.3
-// CHECK:STDOUT:   %c4: %C2 = bind_val_name c4, %.loc11_26.4
+// CHECK:STDOUT:   %c4: %C2 = value_binding c4, %.loc11_26.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11: <bound method> = bound_method %.loc11_26.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.553
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc11: <bound method> = bound_method %.loc11_26.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -2789,7 +2789,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_31.3: ref %C = temporary %.loc8_31.1, %.loc8_31.2
 // CHECK:STDOUT:   %.loc8_31.4: %C = bind_value %.loc8_31.3
-// CHECK:STDOUT:   %c1: %C = bind_val_name c1, %.loc8_31.4
+// CHECK:STDOUT:   %c1: %C = value_binding c1, %.loc8_31.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.69f = value_binding_pattern c2 [concrete]
 // CHECK:STDOUT:   }
@@ -2808,7 +2808,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_31.3: ref %C = temporary %.loc9_31.1, %.loc9_31.2
 // CHECK:STDOUT:   %.loc9_31.4: %C = bind_value %.loc9_31.3
-// CHECK:STDOUT:   %c2: %C = bind_val_name c2, %.loc9_31.4
+// CHECK:STDOUT:   %c2: %C = value_binding c2, %.loc9_31.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c3.patt: %pattern_type.69f = value_binding_pattern c3 [concrete]
 // CHECK:STDOUT:   }
@@ -2819,7 +2819,7 @@ fn F() {
 // CHECK:STDOUT:     %N.ref.loc14: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:     %C.ref.loc14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c3: %C = bind_val_name c3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %c3: %C = value_binding c3, <error> [concrete = <error>]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9: <bound method> = bound_method %.loc9_31.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b69
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %.loc9_31.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -2893,7 +2893,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_31.3: ref %C = temporary %.loc8_31.1, %.loc8_31.2
 // CHECK:STDOUT:   %.loc8_31.4: %C = bind_value %.loc8_31.3
-// CHECK:STDOUT:   %c1: %C = bind_val_name c1, %.loc8_31.4
+// CHECK:STDOUT:   %c1: %C = value_binding c1, %.loc8_31.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.b28 = value_binding_pattern c2 [concrete]
 // CHECK:STDOUT:   }
@@ -2912,7 +2912,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_31.3: ref %C = temporary %.loc9_31.1, %.loc9_31.2
 // CHECK:STDOUT:   %.loc9_31.4: %C = bind_value %.loc9_31.3
-// CHECK:STDOUT:   %c2: %C = bind_val_name c2, %.loc9_31.4
+// CHECK:STDOUT:   %c2: %C = value_binding c2, %.loc9_31.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c3.patt: %pattern_type.b28 = value_binding_pattern c3 [concrete]
 // CHECK:STDOUT:   }
@@ -2933,7 +2933,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_24.3: ref %C = temporary %.loc10_24.1, %.loc10_24.2
 // CHECK:STDOUT:   %.loc10_24.4: %C = bind_value %.loc10_24.3
-// CHECK:STDOUT:   %c3: %C = bind_val_name c3, %.loc10_24.4
+// CHECK:STDOUT:   %c3: %C = value_binding c3, %.loc10_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10: <bound method> = bound_method %.loc10_24.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.ae5
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %.loc10_24.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -3018,7 +3018,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_35.3: ref %C = temporary %.loc8_35.1, %.loc8_35.2
 // CHECK:STDOUT:   %.loc8_35.4: %C = bind_value %.loc8_35.3
-// CHECK:STDOUT:   %c1: %C = bind_val_name c1, %.loc8_35.4
+// CHECK:STDOUT:   %c1: %C = value_binding c1, %.loc8_35.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.84b = value_binding_pattern c2 [concrete]
 // CHECK:STDOUT:   }
@@ -3039,7 +3039,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_35.3: ref %C = temporary %.loc9_35.1, %.loc9_35.2
 // CHECK:STDOUT:   %.loc9_35.4: %C = bind_value %.loc9_35.3
-// CHECK:STDOUT:   %c2: %C = bind_val_name c2, %.loc9_35.4
+// CHECK:STDOUT:   %c2: %C = value_binding c2, %.loc9_35.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c3.patt: %pattern_type.84b = value_binding_pattern c3 [concrete]
 // CHECK:STDOUT:   }
@@ -3061,7 +3061,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_26.3: ref %C = temporary %.loc10_26.1, %.loc10_26.2
 // CHECK:STDOUT:   %.loc10_26.4: %C = bind_value %.loc10_26.3
-// CHECK:STDOUT:   %c3: %C = bind_val_name c3, %.loc10_26.4
+// CHECK:STDOUT:   %c3: %C = value_binding c3, %.loc10_26.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10: <bound method> = bound_method %.loc10_26.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.971
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %.loc10_26.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -3144,7 +3144,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc8_14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1: ref %C = bind_ref_name c1, %c1.var
+// CHECK:STDOUT:   %c1: ref %C = ref_binding c1, %c1.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c2.patt: %pattern_type.217 = ref_binding_pattern c2 [concrete]
 // CHECK:STDOUT:     %c2.var_patt: %pattern_type.217 = var_pattern %c2.patt [concrete]
@@ -3161,7 +3161,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc9: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c2: ref %C = bind_ref_name c2, %c2.var
+// CHECK:STDOUT:   %c2: ref %C = ref_binding c2, %c2.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c3.patt: %pattern_type.217 = ref_binding_pattern c3 [concrete]
 // CHECK:STDOUT:     %c3.var_patt: %pattern_type.217 = var_pattern %c3.patt [concrete]
@@ -3182,7 +3182,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c3: ref %C = bind_ref_name c3, %c3.var
+// CHECK:STDOUT:   %c3: ref %C = ref_binding c3, %c3.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10: <bound method> = bound_method %c3.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.841
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %c3.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -3282,7 +3282,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_22.3: ref %C = temporary %.loc10_22.1, %.loc10_22.2
 // CHECK:STDOUT:   %.loc10_22.4: %C = bind_value %.loc10_22.3
-// CHECK:STDOUT:   %c3: %C = bind_val_name c3, %.loc10_22.4
+// CHECK:STDOUT:   %c3: %C = value_binding c3, %.loc10_22.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10: <bound method> = bound_method %.loc10_22.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.841
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %.loc10_22.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1

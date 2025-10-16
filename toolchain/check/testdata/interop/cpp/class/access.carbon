@@ -632,7 +632,7 @@ fn F() {
 // CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %instance_data: %i32 = bind_val_name instance_data, %.loc8_29.2
+// CHECK:STDOUT:   %instance_data: %i32 = value_binding instance_data, %.loc8_29.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %static_data.patt: %pattern_type.7ce = value_binding_pattern static_data [concrete]
 // CHECK:STDOUT:   }
@@ -645,7 +645,7 @@ fn F() {
 // CHECK:STDOUT:     %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_31: %i32 = bind_value %static_data.ref
-// CHECK:STDOUT:   %static_data: %i32 = bind_val_name static_data, %.loc9_31
+// CHECK:STDOUT:   %static_data: %i32 = value_binding static_data, %.loc9_31
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -679,7 +679,7 @@ fn F() {
 // CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_29.4: %i32 = bind_value %.loc12_29.3
-// CHECK:STDOUT:   %instance_data: %i32 = bind_val_name instance_data, %.loc12_29.4
+// CHECK:STDOUT:   %instance_data: %i32 = value_binding instance_data, %.loc12_29.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %static_data.patt: %pattern_type.7ce = value_binding_pattern static_data [concrete]
 // CHECK:STDOUT:   }
@@ -691,7 +691,7 @@ fn F() {
 // CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13_33: %i32 = bind_value %static_data.ref
-// CHECK:STDOUT:   %static_data: %i32 = bind_val_name static_data, %.loc13_33
+// CHECK:STDOUT:   %static_data: %i32 = value_binding static_data, %.loc13_33
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -745,7 +745,7 @@ fn F() {
 // CHECK:STDOUT:     %i32.loc10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_34.4: %i32 = bind_value %.loc10_34.3
-// CHECK:STDOUT:   %instance_data: %i32 = bind_val_name instance_data, %.loc10_34.4
+// CHECK:STDOUT:   %instance_data: %i32 = value_binding instance_data, %.loc10_34.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %unqualified_static_data.patt: %pattern_type.7ce = value_binding_pattern unqualified_static_data [concrete]
 // CHECK:STDOUT:   }
@@ -756,7 +756,7 @@ fn F() {
 // CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_40: %i32 = bind_value %static_data.ref.loc11
-// CHECK:STDOUT:   %unqualified_static_data: %i32 = bind_val_name unqualified_static_data, %.loc11_40
+// CHECK:STDOUT:   %unqualified_static_data: %i32 = value_binding unqualified_static_data, %.loc11_40
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %derived_static_data.patt: %pattern_type.7ce = value_binding_pattern derived_static_data [concrete]
 // CHECK:STDOUT:   }
@@ -767,7 +767,7 @@ fn F() {
 // CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_43: %i32 = bind_value %static_data.ref.loc12
-// CHECK:STDOUT:   %derived_static_data: %i32 = bind_val_name derived_static_data, %.loc12_43
+// CHECK:STDOUT:   %derived_static_data: %i32 = value_binding derived_static_data, %.loc12_43
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %base_static_data.patt: %pattern_type.7ce = value_binding_pattern base_static_data [concrete]
 // CHECK:STDOUT:   }
@@ -779,7 +779,7 @@ fn F() {
 // CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13_38: %i32 = bind_value %static_data.ref.loc13
-// CHECK:STDOUT:   %base_static_data: %i32 = bind_val_name base_static_data, %.loc13_38
+// CHECK:STDOUT:   %base_static_data: %i32 = value_binding base_static_data, %.loc13_38
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

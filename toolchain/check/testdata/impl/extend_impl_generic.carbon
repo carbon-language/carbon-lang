@@ -181,7 +181,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc20: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %c: %C = bind_val_name c, %c.param
+// CHECK:STDOUT:     %c: %C = value_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -308,7 +308,7 @@ class X(U:! type) {
 // CHECK:STDOUT:     %i32.loc21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc21_21.2: %i32 = bind_value %.loc21_21.1
-// CHECK:STDOUT:   %a: %i32 = bind_val_name a, %.loc21_21.2
+// CHECK:STDOUT:   %a: %i32 = value_binding a, %.loc21_21.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.7ce = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.7ce = var_pattern %b.patt [concrete]
@@ -334,7 +334,7 @@ class X(U:! type) {
 // CHECK:STDOUT:     %int_32.loc22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc22: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %i32 = bind_ref_name b, %b.var
+// CHECK:STDOUT:   %b: ref %i32 = ref_binding b, %b.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc22_20: <bound method> = bound_method %.loc22_20.2, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d70
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d70, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.654) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.eab]
 // CHECK:STDOUT:   %bound_method.loc22_20: <bound method> = bound_method %.loc22_20.2, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -474,10 +474,10 @@ class X(U:! type) {
 // CHECK:STDOUT:         %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:         %.loc5_14.3: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @I.F.%Self.binding.as_type (%Self.binding.as_type) = bind_val_name self, %self.param
+// CHECK:STDOUT:       %self: @I.F.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:       %t.param: @I.F.%T (%T) = value_param call_param1
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @I.%T.loc4_13.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %t: @I.F.%T (%T) = bind_val_name t, %t.param
+// CHECK:STDOUT:       %t: @I.F.%T (%T) = value_binding t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc5_25.1: @I.%I.assoc_type (%I.assoc_type.1e5078.1) = assoc_entity element0, %I.F.decl [symbolic = %assoc0.loc5_25.2 (constants.%assoc0.8f0422.1)]
 // CHECK:STDOUT:
@@ -513,10 +513,10 @@ class X(U:! type) {
 // CHECK:STDOUT:         %.loc10_16.2: type = specific_constant constants.%X, @X(constants.%U) [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc10_16.2 [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @X.as.I.impl.F.%X (%X) = bind_val_name self, %self.param
+// CHECK:STDOUT:       %self: @X.as.I.impl.F.%X (%X) = value_binding self, %self.param
 // CHECK:STDOUT:       %t.param: @X.as.I.impl.F.%U (%U) = value_param call_param1
 // CHECK:STDOUT:       %U.ref: type = name_ref U, @X.%U.loc8_9.2 [symbolic = %U (constants.%U)]
-// CHECK:STDOUT:       %t: @X.as.I.impl.F.%U (%U) = bind_val_name t, %t.param
+// CHECK:STDOUT:       %t: @X.as.I.impl.F.%U (%U) = value_binding t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:

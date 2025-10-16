@@ -138,7 +138,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:     %.loc6_15.2: type = converted %.loc6_15.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %array_type: type = array_type %int_3, %.loc6_15.2 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %array_type = bind_ref_name b, %b.var [concrete = %b.var]
+// CHECK:STDOUT:   %b: ref %array_type = ref_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -222,7 +222,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:     %.loc10_24.2: type = converted %.loc10_24.1, constants.%tuple.type.734 [concrete = constants.%tuple.type.734]
 // CHECK:STDOUT:     %array_type: type = array_type %int_2, %.loc10_24.2 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %array_type = bind_ref_name v, %v.var
+// CHECK:STDOUT:   %v: ref %array_type = ref_binding v, %v.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %v.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9cb
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %v.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
@@ -267,7 +267,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:     %.loc7_17.2: type = converted %.loc7_17.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %array_type: type = array_type %int_3, %.loc7_17.2 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type = bind_ref_name a, %a.var
+// CHECK:STDOUT:   %a: ref %array_type = ref_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.8c1 = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.8c1 = var_pattern %b.patt [concrete]
@@ -283,7 +283,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:     %.loc8_21.5: type = converted %.loc8_20, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc8_21.6: type = converted %.loc8_21.2, constants.%tuple.type [concrete = constants.%tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %tuple.type = bind_ref_name b, %b.var
+// CHECK:STDOUT:   %b: ref %tuple.type = ref_binding b, %b.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8: <bound method> = bound_method %b.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.7c8
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %b.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -349,7 +349,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:     %.loc8_17.2: type = converted %.loc8_17.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %array_type: type = array_type %int_1, %.loc8_17.2 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t: ref %array_type = bind_ref_name t, %t.var
+// CHECK:STDOUT:   %t: ref %array_type = ref_binding t, %t.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_27: <bound method> = bound_method %.loc8_27.2, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.a49
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8_27: <bound method> = bound_method %.loc8_27.2, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -408,7 +408,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:     %.loc9_15.2: type = converted %.loc9_15.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %array_type: type = array_type %int_9, %.loc9_15.2 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %array_type = bind_ref_name b, %b.var [concrete = %b.var]
+// CHECK:STDOUT:   %b: ref %array_type = ref_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

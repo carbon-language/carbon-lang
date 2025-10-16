@@ -153,7 +153,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:     %int_32.loc17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %i32 = bind_ref_name v, %v.var
+// CHECK:STDOUT:   %v: ref %i32 = ref_binding v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.7ce = ref_binding_pattern w [concrete]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.7ce = var_pattern %w.patt [concrete]
@@ -171,7 +171,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:     %int_32.loc25: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc25: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w: ref %i32 = bind_ref_name w, %w.var
+// CHECK:STDOUT:   %w: ref %i32 = ref_binding w, %w.var
 // CHECK:STDOUT:   br !if.else
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
@@ -218,7 +218,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:     %int_32.loc32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %i32 = bind_ref_name v, %v.var
+// CHECK:STDOUT:   %v: ref %i32 = ref_binding v, %v.var
 // CHECK:STDOUT:   %true.loc33: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   if %true.loc33 br !if.then.loc33 else br !if.else.loc33
 // CHECK:STDOUT:
@@ -240,7 +240,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:     %int_32.loc41: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc41: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w: ref %i32 = bind_ref_name w, %w.var
+// CHECK:STDOUT:   %w: ref %i32 = ref_binding w, %w.var
 // CHECK:STDOUT:   br !if.else.loc33
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc33:

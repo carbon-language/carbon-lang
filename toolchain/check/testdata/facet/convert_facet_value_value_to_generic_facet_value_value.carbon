@@ -224,14 +224,14 @@ fn F() {
 // CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type.4e5)]
 // CHECK:STDOUT:       %.loc31_43.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type.4e5)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %e: @Feed.%T.binding.as_type (%T.binding.as_type.4e5) = bind_val_name e, %e.param
+// CHECK:STDOUT:     %e: @Feed.%T.binding.as_type (%T.binding.as_type.4e5) = value_binding e, %e.param
 // CHECK:STDOUT:     %food.param: @Feed.%Food.binding.as_type (%Food.binding.as_type.4d0) = value_param call_param1
 // CHECK:STDOUT:     %.loc31_52.1: type = splice_block %.loc31_52.2 [symbolic = %Food.binding.as_type (constants.%Food.binding.as_type.4d0)] {
 // CHECK:STDOUT:       %Food.ref.loc31_52: %Edible.type = name_ref Food, %Food.loc31_9.2 [symbolic = %Food.loc31_9.1 (constants.%Food.f09)]
 // CHECK:STDOUT:       %Food.as_type.loc31_52: type = facet_access_type %Food.ref.loc31_52 [symbolic = %Food.binding.as_type (constants.%Food.binding.as_type.4d0)]
 // CHECK:STDOUT:       %.loc31_52.2: type = converted %Food.ref.loc31_52, %Food.as_type.loc31_52 [symbolic = %Food.binding.as_type (constants.%Food.binding.as_type.4d0)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %food: @Feed.%Food.binding.as_type (%Food.binding.as_type.4d0) = bind_val_name food, %food.param
+// CHECK:STDOUT:     %food: @Feed.%Food.binding.as_type (%Food.binding.as_type.4d0) = value_binding food, %food.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HandleAnimal.decl: %HandleAnimal.type = fn_decl @HandleAnimal [concrete = constants.%HandleAnimal] {
 // CHECK:STDOUT:     %A.patt: %pattern_type.3c3 = symbolic_binding_pattern A, 0 [concrete]
@@ -257,14 +257,14 @@ fn F() {
 // CHECK:STDOUT:       %A.as_type: type = facet_access_type %A.ref [symbolic = %A.binding.as_type (constants.%A.binding.as_type)]
 // CHECK:STDOUT:       %.loc32_47.2: type = converted %A.ref, %A.as_type [symbolic = %A.binding.as_type (constants.%A.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @HandleAnimal.%A.binding.as_type (%A.binding.as_type) = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: @HandleAnimal.%A.binding.as_type (%A.binding.as_type) = value_binding a, %a.param
 // CHECK:STDOUT:     %food.param: @HandleAnimal.%Food.binding.as_type (%Food.binding.as_type.3c6) = value_param call_param1
 // CHECK:STDOUT:     %.loc32_56.1: type = splice_block %.loc32_56.2 [symbolic = %Food.binding.as_type (constants.%Food.binding.as_type.3c6)] {
 // CHECK:STDOUT:       %Food.ref: %Edible.type = name_ref Food, %Food.loc32_29.2 [symbolic = %Food.loc32_29.1 (constants.%Food.dcb)]
 // CHECK:STDOUT:       %Food.as_type: type = facet_access_type %Food.ref [symbolic = %Food.binding.as_type (constants.%Food.binding.as_type.3c6)]
 // CHECK:STDOUT:       %.loc32_56.2: type = converted %Food.ref, %Food.as_type [symbolic = %Food.binding.as_type (constants.%Food.binding.as_type.3c6)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %food: @HandleAnimal.%Food.binding.as_type (%Food.binding.as_type.3c6) = bind_val_name food, %food.param
+// CHECK:STDOUT:     %food: @HandleAnimal.%Food.binding.as_type (%Food.binding.as_type.3c6) = value_binding food, %food.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }

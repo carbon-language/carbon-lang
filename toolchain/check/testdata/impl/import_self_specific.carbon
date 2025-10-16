@@ -176,7 +176,7 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:       %.loc24_18.2: %Z.type = converted %Assoc.ref, %Z.facet.loc24_18.2 [symbolic = %Z.facet.loc24_18.1 (constants.%Z.facet)]
 // CHECK:STDOUT:       %C.loc24_18.2: type = class_type @C, @C(constants.%Z.facet) [symbolic = %C.loc24_18.1 (constants.%C.cd7)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: @I.F.%C.loc24_18.1 (%C.cd7) = bind_val_name c, %c.param
+// CHECK:STDOUT:     %c: @I.F.%C.loc24_18.1 (%C.cd7) = value_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, %I.F.decl [concrete = constants.%assoc1]
 // CHECK:STDOUT:
@@ -492,7 +492,7 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:         %.loc21_15.2: %Z.type = converted %.loc21_14, %Z.facet [concrete = constants.%Z.facet.c2e]
 // CHECK:STDOUT:         %C: type = class_type @C, @C(constants.%Z.facet.c2e) [concrete = constants.%C.e33]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %c: %C.e33 = bind_val_name c, %c.param
+// CHECK:STDOUT:       %c: %C.e33 = value_binding c, %c.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:

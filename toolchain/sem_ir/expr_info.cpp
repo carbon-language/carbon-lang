@@ -101,7 +101,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case AutoType::Kind:
       case BindSymbolicName::Kind:
       case BindValue::Kind:
-      case BindValueName::Kind:
+      case ValueBinding::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:
       case BoolType::Kind:
@@ -222,7 +222,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case TupleInit::Kind:
         return ExprCategory::Initializing;
 
-      case BindRefName::Kind:
+      case RefBinding::Kind:
       case Deref::Kind:
       case VarStorage::Kind:
       case ReturnSlot::Kind:

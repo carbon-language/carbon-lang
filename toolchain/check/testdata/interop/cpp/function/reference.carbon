@@ -354,7 +354,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: ref %S = bind_ref_name s, %s.var
+// CHECK:STDOUT:   %s: ref %S = ref_binding s, %s.var
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesLValue.ref: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
@@ -413,7 +413,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref.loc8: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %S = bind_ref_name v, %v.var
+// CHECK:STDOUT:   %v: ref %S = ref_binding v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type.7da = value_binding_pattern s [concrete]
 // CHECK:STDOUT:   }
@@ -423,7 +423,7 @@ fn F() {
 // CHECK:STDOUT:     %S.ref.loc9: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_18: %S = bind_value %v.ref
-// CHECK:STDOUT:   %s: %S = bind_val_name s, %.loc9_18
+// CHECK:STDOUT:   %s: %S = value_binding s, %.loc9_18
 // CHECK:STDOUT:   %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesLValue.ref.loc18: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: %S = name_ref s, %s
@@ -436,7 +436,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t: ref %T = bind_ref_name t, %t.var
+// CHECK:STDOUT:   %t: ref %T = ref_binding t, %t.var
 // CHECK:STDOUT:   %Cpp.ref.loc29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesLValue.ref.loc29: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %t.ref: ref %T = name_ref t, %t
@@ -449,7 +449,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref.loc31: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %u: ref %S = bind_ref_name u, %u.var
+// CHECK:STDOUT:   %u: ref %S = ref_binding u, %u.var
 // CHECK:STDOUT:   %Cpp.ref.loc40_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesLValue.ref.loc40: %TakesLValue.cpp_overload_set.type = name_ref TakesLValue, imports.%TakesLValue.cpp_overload_set.value [concrete = constants.%TakesLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %u.ref: ref %S = name_ref u, %u
@@ -581,7 +581,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_19.4: ref %S = temporary %.loc12_19.2, %.loc12_19.3
 // CHECK:STDOUT:   %.loc12_19.5: ref %S = converted %.loc12_19.1, %.loc12_19.4
 // CHECK:STDOUT:   %.loc12_19.6: %S = bind_value %.loc12_19.5
-// CHECK:STDOUT:   %s: %S = bind_val_name s, %.loc12_19.6
+// CHECK:STDOUT:   %s: %S = value_binding s, %.loc12_19.6
 // CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesRValue.ref: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: %S = name_ref s, %s
@@ -643,7 +643,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref.loc8: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: ref %S = bind_ref_name s, %s.var
+// CHECK:STDOUT:   %s: ref %S = ref_binding s, %s.var
 // CHECK:STDOUT:   %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesRValue.ref.loc17: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s
@@ -656,7 +656,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t: ref %T = bind_ref_name t, %t.var
+// CHECK:STDOUT:   %t: ref %T = ref_binding t, %t.var
 // CHECK:STDOUT:   %Cpp.ref.loc28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesRValue.ref.loc28: %TakesRValue.cpp_overload_set.type = name_ref TakesRValue, imports.%TakesRValue.cpp_overload_set.value [concrete = constants.%TakesRValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %t.ref: ref %T = name_ref t, %t
@@ -743,7 +743,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref.loc8: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: ref %S = bind_ref_name s, %s.var
+// CHECK:STDOUT:   %s: ref %S = ref_binding s, %s.var
 // CHECK:STDOUT:   %Cpp.ref.loc9_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesConstLValue.ref.loc9: %TakesConstLValue.cpp_overload_set.type = name_ref TakesConstLValue, imports.%TakesConstLValue.cpp_overload_set.value [concrete = constants.%TakesConstLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref.loc9: ref %S = name_ref s, %s
@@ -828,7 +828,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc12_19.4: ref %S = temporary %.loc12_19.2, %.loc12_19.3
 // CHECK:STDOUT:   %.loc12_19.5: ref %S = converted %.loc12_19.1, %.loc12_19.4
 // CHECK:STDOUT:   %.loc12_19.6: %S = bind_value %.loc12_19.5
-// CHECK:STDOUT:   %s: %S = bind_val_name s, %.loc12_19.6
+// CHECK:STDOUT:   %s: %S = value_binding s, %.loc12_19.6
 // CHECK:STDOUT:   %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesConstLValue.ref.loc21: %TakesConstLValue.cpp_overload_set.type = name_ref TakesConstLValue, imports.%TakesConstLValue.cpp_overload_set.value [concrete = constants.%TakesConstLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: %S = name_ref s, %s
@@ -846,7 +846,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, imports.%T.decl [concrete = constants.%T]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t: ref %T = bind_ref_name t, %t.var
+// CHECK:STDOUT:   %t: ref %T = ref_binding t, %t.var
 // CHECK:STDOUT:   %Cpp.ref.loc32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesConstLValue.ref.loc32: %TakesConstLValue.cpp_overload_set.type = name_ref TakesConstLValue, imports.%TakesConstLValue.cpp_overload_set.value [concrete = constants.%TakesConstLValue.cpp_overload_set.value]
 // CHECK:STDOUT:   %t.ref: ref %T = name_ref t, %t
@@ -905,7 +905,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_37.1: %ptr = value_of_initializer %ReturnsLValue.call
 // CHECK:STDOUT:   %.loc8_37.2: %ptr = converted %ReturnsLValue.call, %.loc8_37.1
-// CHECK:STDOUT:   %s: %ptr = bind_val_name s, %.loc8_37.2
+// CHECK:STDOUT:   %s: %ptr = value_binding s, %.loc8_37.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -959,7 +959,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc8_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: ref %S = bind_ref_name s, %s.var
+// CHECK:STDOUT:   %s: ref %S = ref_binding s, %s.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %s.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.016
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %s.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
@@ -1019,7 +1019,7 @@ fn F() {
 // CHECK:STDOUT:     %const: type = const_type %S.ref [concrete = constants.%const]
 // CHECK:STDOUT:     %ptr: type = ptr_type %const [concrete = constants.%ptr.ff5]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: ref %ptr.ff5 = bind_ref_name s, %s.var
+// CHECK:STDOUT:   %s: ref %ptr.ff5 = ref_binding s, %s.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %s.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.c44
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %s.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

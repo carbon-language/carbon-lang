@@ -53,7 +53,7 @@ let not_8_bit: CharLiteral() = '\u{1E15}';
 // CHECK:STDOUT:     %.loc7_26.2: type = value_of_initializer %CharLiteral.call.loc7 [concrete = Core.CharLiteral]
 // CHECK:STDOUT:     %.loc7_26.3: type = converted %CharLiteral.call.loc7, %.loc7_26.2 [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ascii_x: Core.CharLiteral = bind_val_name ascii_x, @__global_init.%.loc7
+// CHECK:STDOUT:   %ascii_x: Core.CharLiteral = value_binding ascii_x, @__global_init.%.loc7
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %not_7_bit.patt: %pattern_type.8c6 = value_binding_pattern not_7_bit [concrete]
 // CHECK:STDOUT:   }
@@ -63,7 +63,7 @@ let not_8_bit: CharLiteral() = '\u{1E15}';
 // CHECK:STDOUT:     %.loc8_28.2: type = value_of_initializer %CharLiteral.call.loc8 [concrete = Core.CharLiteral]
 // CHECK:STDOUT:     %.loc8_28.3: type = converted %CharLiteral.call.loc8, %.loc8_28.2 [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %not_7_bit: Core.CharLiteral = bind_val_name not_7_bit, @__global_init.%.loc8
+// CHECK:STDOUT:   %not_7_bit: Core.CharLiteral = value_binding not_7_bit, @__global_init.%.loc8
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %not_8_bit.patt: %pattern_type.8c6 = value_binding_pattern not_8_bit [concrete]
 // CHECK:STDOUT:   }
@@ -73,7 +73,7 @@ let not_8_bit: CharLiteral() = '\u{1E15}';
 // CHECK:STDOUT:     %.loc9_28.2: type = value_of_initializer %CharLiteral.call.loc9 [concrete = Core.CharLiteral]
 // CHECK:STDOUT:     %.loc9_28.3: type = converted %CharLiteral.call.loc9, %.loc9_28.2 [concrete = Core.CharLiteral]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %not_8_bit: Core.CharLiteral = bind_val_name not_8_bit, @__global_init.%.loc9
+// CHECK:STDOUT:   %not_8_bit: Core.CharLiteral = value_binding not_8_bit, @__global_init.%.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

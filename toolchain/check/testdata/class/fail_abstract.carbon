@@ -287,7 +287,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %v: ref <error> = bind_ref_name v, <error> [concrete = <error>]
+// CHECK:STDOUT:   %v: ref <error> = ref_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -323,7 +323,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %Abstract = value_param call_param0
 // CHECK:STDOUT:     %Abstract.ref.loc7: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %a: %Abstract = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: %Abstract = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -342,7 +342,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %Abstract = name_ref a, %a
 // CHECK:STDOUT:   %Abstract.ref.loc8: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %l: %Abstract = bind_val_name l, <error> [concrete = <error>]
+// CHECK:STDOUT:   %l: %Abstract = value_binding l, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -428,7 +428,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %Abstract = value_param call_param0
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %a: %Abstract = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: %Abstract = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [concrete = constants.%Call] {
 // CHECK:STDOUT:     %p.patt: %pattern_type = value_binding_pattern p [concrete]
@@ -436,7 +436,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %Abstract = value_param call_param0
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %p: %Abstract = bind_val_name p, %p.param
+// CHECK:STDOUT:     %p: %Abstract = value_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -577,7 +577,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     %Abstract.ref.loc13_27: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:     %a.param: %Abstract = value_param call_param0
 // CHECK:STDOUT:     %Abstract.ref.loc13_14: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %a: %Abstract = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: %Abstract = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %Abstract = out_param call_param1
 // CHECK:STDOUT:     %return: ref %Abstract = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -660,7 +660,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     %.loc14_27.2: type = converted %.loc14_27.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:     %d: %Derived = bind_val_name d, %d.param
+// CHECK:STDOUT:     %d: %Derived = value_binding d, %d.param
 // CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param call_param1
 // CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -748,7 +748,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %l: %Abstract = bind_val_name l, <error> [concrete = <error>]
+// CHECK:STDOUT:   %l: %Abstract = value_binding l, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

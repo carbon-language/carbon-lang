@@ -54,13 +54,13 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
   SemIR::InstKind bind_name_kind;
   switch (pattern_kind) {
     case SemIR::InstKind::RefBindingPattern:
-      bind_name_kind = SemIR::InstKind::BindRefName;
+      bind_name_kind = SemIR::InstKind::RefBinding;
       break;
     case SemIR::InstKind::SymbolicBindingPattern:
       bind_name_kind = SemIR::InstKind::BindSymbolicName;
       break;
     case SemIR::InstKind::ValueBindingPattern:
-      bind_name_kind = SemIR::InstKind::BindValueName;
+      bind_name_kind = SemIR::InstKind::ValueBinding;
       break;
     default:
       CARBON_FATAL("pattern_kind is not a binding pattern kind");

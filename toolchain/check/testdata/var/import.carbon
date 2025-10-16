@@ -45,7 +45,7 @@ var a: () = a_ref;
 // CHECK:STDOUT:     %.loc4_13.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_13.3: type = converted %.loc4_13.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a_ref: ref %empty_tuple.type = bind_ref_name a_ref, %a_ref.var [concrete = %a_ref.var]
+// CHECK:STDOUT:   %a_ref: ref %empty_tuple.type = ref_binding a_ref, %a_ref.var [concrete = %a_ref.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -88,7 +88,7 @@ var a: () = a_ref;
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_ref_name a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %empty_tuple.type = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

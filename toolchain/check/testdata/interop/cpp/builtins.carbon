@@ -274,7 +274,7 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %signed_char.ref: type = name_ref signed_char, %i8.1 [concrete = constants.%i8]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_signed_char: %i8 = bind_val_name cpp_signed_char, %.loc8_45.2
+// CHECK:STDOUT:   %cpp_signed_char: %i8 = value_binding cpp_signed_char, %.loc8_45.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_signed_char.patt: %pattern_type.e3f = value_binding_pattern carbon_signed_char [concrete]
 // CHECK:STDOUT:   }
@@ -283,7 +283,7 @@ fn F() {
 // CHECK:STDOUT:     %int_8.loc9: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
 // CHECK:STDOUT:     %i8.loc9: type = class_type @Int, @Int(constants.%int_8) [concrete = constants.%i8]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %carbon_signed_char: %i8 = bind_val_name carbon_signed_char, %cpp_signed_char.ref
+// CHECK:STDOUT:   %carbon_signed_char: %i8 = value_binding carbon_signed_char, %cpp_signed_char.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_short.patt: %pattern_type.2f8 = value_binding_pattern cpp_short [concrete]
 // CHECK:STDOUT:   }
@@ -302,7 +302,7 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %short.ref: type = name_ref short, %i16.1 [concrete = constants.%i16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_short: %i16 = bind_val_name cpp_short, %.loc11_33.2
+// CHECK:STDOUT:   %cpp_short: %i16 = value_binding cpp_short, %.loc11_33.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_short.patt: %pattern_type.2f8 = value_binding_pattern carbon_short [concrete]
 // CHECK:STDOUT:   }
@@ -311,7 +311,7 @@ fn F() {
 // CHECK:STDOUT:     %int_16.loc12: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:     %i16.loc12: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %carbon_short: %i16 = bind_val_name carbon_short, %cpp_short.ref
+// CHECK:STDOUT:   %carbon_short: %i16 = value_binding carbon_short, %cpp_short.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_int.patt: %pattern_type.7ce = value_binding_pattern cpp_int [concrete]
 // CHECK:STDOUT:   }
@@ -330,7 +330,7 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %int.ref: type = name_ref int, %i32.1 [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_int: %i32 = bind_val_name cpp_int, %.loc14_29.2
+// CHECK:STDOUT:   %cpp_int: %i32 = value_binding cpp_int, %.loc14_29.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_int.patt: %pattern_type.7ce = value_binding_pattern carbon_int [concrete]
 // CHECK:STDOUT:   }
@@ -339,7 +339,7 @@ fn F() {
 // CHECK:STDOUT:     %int_32.loc15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %carbon_int: %i32 = bind_val_name carbon_int, %cpp_int.ref
+// CHECK:STDOUT:   %carbon_int: %i32 = value_binding carbon_int, %cpp_int.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_unsigned_char.patt: %pattern_type.8f3 = value_binding_pattern cpp_unsigned_char [concrete]
 // CHECK:STDOUT:   }
@@ -358,7 +358,7 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %unsigned_char.ref: type = name_ref unsigned_char, %u8.1 [concrete = constants.%u8]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_unsigned_char: %u8 = bind_val_name cpp_unsigned_char, %.loc17_49.2
+// CHECK:STDOUT:   %cpp_unsigned_char: %u8 = value_binding cpp_unsigned_char, %.loc17_49.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_unsigned_char.patt: %pattern_type.8f3 = value_binding_pattern carbon_unsigned_char [concrete]
 // CHECK:STDOUT:   }
@@ -367,7 +367,7 @@ fn F() {
 // CHECK:STDOUT:     %int_8.loc18: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
 // CHECK:STDOUT:     %u8.loc18: type = class_type @UInt, @UInt(constants.%int_8) [concrete = constants.%u8]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %carbon_unsigned_char: %u8 = bind_val_name carbon_unsigned_char, %cpp_unsigned_char.ref
+// CHECK:STDOUT:   %carbon_unsigned_char: %u8 = value_binding carbon_unsigned_char, %cpp_unsigned_char.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_unsigned_short.patt: %pattern_type.9db = value_binding_pattern cpp_unsigned_short [concrete]
 // CHECK:STDOUT:   }
@@ -386,7 +386,7 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %unsigned_short.ref: type = name_ref unsigned_short, %u16.1 [concrete = constants.%u16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_unsigned_short: %u16 = bind_val_name cpp_unsigned_short, %.loc20_51.2
+// CHECK:STDOUT:   %cpp_unsigned_short: %u16 = value_binding cpp_unsigned_short, %.loc20_51.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_unsigned_short.patt: %pattern_type.9db = value_binding_pattern carbon_unsigned_short [concrete]
 // CHECK:STDOUT:   }
@@ -395,7 +395,7 @@ fn F() {
 // CHECK:STDOUT:     %int_16.loc21: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:     %u16.loc21: type = class_type @UInt, @UInt(constants.%int_16) [concrete = constants.%u16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %carbon_unsigned_short: %u16 = bind_val_name carbon_unsigned_short, %cpp_unsigned_short.ref
+// CHECK:STDOUT:   %carbon_unsigned_short: %u16 = value_binding carbon_unsigned_short, %cpp_unsigned_short.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_unsigned_int.patt: %pattern_type.4a9 = value_binding_pattern cpp_unsigned_int [concrete]
 // CHECK:STDOUT:   }
@@ -414,7 +414,7 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %unsigned_int.ref: type = name_ref unsigned_int, %u32.1 [concrete = constants.%u32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_unsigned_int: %u32 = bind_val_name cpp_unsigned_int, %.loc23_47.2
+// CHECK:STDOUT:   %cpp_unsigned_int: %u32 = value_binding cpp_unsigned_int, %.loc23_47.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_unsigned_int.patt: %pattern_type.4a9 = value_binding_pattern carbon_unsigned_int [concrete]
 // CHECK:STDOUT:   }
@@ -423,7 +423,7 @@ fn F() {
 // CHECK:STDOUT:     %int_32.loc24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %u32.loc24: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %carbon_unsigned_int: %u32 = bind_val_name carbon_unsigned_int, %cpp_unsigned_int.ref
+// CHECK:STDOUT:   %carbon_unsigned_int: %u32 = value_binding carbon_unsigned_int, %cpp_unsigned_int.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_float.patt: %pattern_type.201 = value_binding_pattern cpp_float [concrete]
 // CHECK:STDOUT:   }
@@ -442,7 +442,7 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %float.ref: type = name_ref float, %f32.1 [concrete = constants.%f32.97e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_float: %f32.97e = bind_val_name cpp_float, %.loc26_35.2
+// CHECK:STDOUT:   %cpp_float: %f32.97e = value_binding cpp_float, %.loc26_35.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_float.patt: %pattern_type.201 = value_binding_pattern carbon_float [concrete]
 // CHECK:STDOUT:   }
@@ -451,7 +451,7 @@ fn F() {
 // CHECK:STDOUT:     %int_32.loc27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %f32.loc27: type = class_type @Float, @Float(constants.%int_32) [concrete = constants.%f32.97e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %carbon_float: %f32.97e = bind_val_name carbon_float, %cpp_float.ref
+// CHECK:STDOUT:   %carbon_float: %f32.97e = value_binding carbon_float, %cpp_float.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %cpp_double.patt: %pattern_type.0ae = value_binding_pattern cpp_double [concrete]
 // CHECK:STDOUT:   }
@@ -470,7 +470,7 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %double.ref: type = name_ref double, %f64.1 [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_double: %f64.d77 = bind_val_name cpp_double, %.loc29_37.2
+// CHECK:STDOUT:   %cpp_double: %f64.d77 = value_binding cpp_double, %.loc29_37.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_double.patt: %pattern_type.0ae = value_binding_pattern carbon_double [concrete]
 // CHECK:STDOUT:   }
@@ -479,7 +479,7 @@ fn F() {
 // CHECK:STDOUT:     %int_64.loc30: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %f64.loc30: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %carbon_double: %f64.d77 = bind_val_name carbon_double, %cpp_double.ref
+// CHECK:STDOUT:   %carbon_double: %f64.d77 = value_binding carbon_double, %cpp_double.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -527,7 +527,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc15_47.1: %f64.d77 = value_of_initializer %Core.FloatLiteral.as.As.impl.Convert.call [concrete = constants.%float.d20]
 // CHECK:STDOUT:   %.loc15_47.2: %f64.d77 = converted %float, %.loc15_47.1 [concrete = constants.%float.d20]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %cpp_long_double: <error> = bind_val_name cpp_long_double, <error> [concrete = <error>]
+// CHECK:STDOUT:   %cpp_long_double: <error> = value_binding cpp_long_double, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_long_double.patt: %pattern_type.0ae = value_binding_pattern carbon_long_double [concrete]
 // CHECK:STDOUT:   }
@@ -536,7 +536,7 @@ fn F() {
 // CHECK:STDOUT:     %int_64.loc16: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %f64.loc16: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %carbon_long_double: %f64.d77 = bind_val_name carbon_long_double, <error> [concrete = <error>]
+// CHECK:STDOUT:   %carbon_long_double: %f64.d77 = value_binding carbon_long_double, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -585,7 +585,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %unsigned_int.ref.loc12: type = name_ref unsigned_int, imports.%unsigned_int.decl [concrete = constants.%unsigned_int]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %unsigned_int: ref %unsigned_int = bind_ref_name unsigned_int, %unsigned_int.var
+// CHECK:STDOUT:   %unsigned_int: ref %unsigned_int = ref_binding unsigned_int, %unsigned_int.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.4a9 = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   }
@@ -600,7 +600,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13_33.1: %u32 = value_of_initializer %unsigned_int.foo.call
 // CHECK:STDOUT:   %.loc13_33.2: %u32 = converted %unsigned_int.foo.call, %.loc13_33.1
-// CHECK:STDOUT:   %x: %u32 = bind_val_name x, %.loc13_33.2
+// CHECK:STDOUT:   %x: %u32 = value_binding x, %.loc13_33.2
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %unsigned_int.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d14
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %unsigned_int.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

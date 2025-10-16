@@ -253,7 +253,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:     %.loc6_12.2: type = converted %.loc6_11, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%empty_struct_type) [concrete = constants.%C.7a7]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C.7a7 = bind_ref_name c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C.7a7 = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0 [concrete]

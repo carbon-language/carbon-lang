@@ -125,7 +125,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:       %A.ref.loc23_31: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:       %Class: type = class_type @Class, @Class(constants.%A) [concrete = constants.%Class.480]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %Class.480 = bind_val_name c, %c.param
+// CHECK:STDOUT:     %c: %Class.480 = value_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.cc6 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %tuple.type.cc6 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -145,7 +145,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:       %A.ref.loc27_50: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:       %Class: type = class_type @Class, @Class(constants.%A) [concrete = constants.%Class.480]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %Class.480 = bind_val_name c, %c.param
+// CHECK:STDOUT:     %c: %Class.480 = value_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.cc6 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %tuple.type.cc6 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -204,7 +204,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:       %.loc20_42.2: type = converted %.loc20_42.1, constants.%tuple.type.30b [symbolic = %tuple.type (constants.%tuple.type.30b)]
 // CHECK:STDOUT:       %x.param: @Class.GetNoDeduce.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %T.ref.loc20_21: type = name_ref T, @Class.%T.loc18_13.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %x: @Class.GetNoDeduce.%T (%T) = bind_val_name x, %x.param
+// CHECK:STDOUT:       %x: @Class.GetNoDeduce.%T (%T) = value_binding x, %x.param
 // CHECK:STDOUT:       %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %U.loc20_24.2: type = bind_symbolic_name U, 1 [symbolic = %U.loc20_24.1 (constants.%U)]
 // CHECK:STDOUT:       %return.param: ref @Class.GetNoDeduce.%tuple.type (%tuple.type.30b) = out_param call_param1

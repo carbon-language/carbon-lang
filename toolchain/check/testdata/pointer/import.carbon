@@ -101,7 +101,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:     %int_32.loc4: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc4: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a_orig: ref %i32 = bind_ref_name a_orig, %a_orig.var [concrete = %a_orig.var]
+// CHECK:STDOUT:   %a_orig: ref %i32 = ref_binding a_orig, %a_orig.var [concrete = %a_orig.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a_ref.patt: %pattern_type.fe8 = ref_binding_pattern a_ref [concrete]
 // CHECK:STDOUT:     %a_ref.var_patt: %pattern_type.fe8 = var_pattern %a_ref.patt [concrete]
@@ -112,7 +112,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:     %i32.loc5: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc5 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a_ref: ref %ptr.235 = bind_ref_name a_ref, %a_ref.var [concrete = %a_ref.var]
+// CHECK:STDOUT:   %a_ref: ref %ptr.235 = ref_binding a_ref, %a_ref.var [concrete = %a_ref.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -196,7 +196,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr.9e1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %ptr.9e1 = bind_ref_name a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %ptr.9e1 = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

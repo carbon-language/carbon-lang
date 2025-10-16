@@ -262,34 +262,6 @@ struct BindAlias {
   InstId value_id;
 };
 
-// Binds a name as a reference expression, such as `x` in `var x: i32`.
-// See AnyBindName for member documentation.
-// FIXME rethink naming? See also zygoloid's suggestion to rename the category
-// conversion to "value borrowing", ergo BindValue -> BorrowValue.
-struct BindRefName {
-  // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::BindRefName.Define<Parse::NodeId>(
-      {.ir_name = "bind_ref_name",
-       .constant_kind = InstConstantKind::Indirect});
-
-  TypeId type_id;
-  EntityNameId entity_name_id;
-  InstId value_id;
-};
-
-// Binds a name as a value expression, such as `x` in `let x: i32`. See
-// AnyBindName for member documentation.
-struct BindValueName {
-  // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::BindValueName.Define<Parse::NodeId>(
-      {.ir_name = "bind_val_name",
-       .constant_kind = InstConstantKind::Indirect});
-
-  TypeId type_id;
-  EntityNameId entity_name_id;
-  InstId value_id;
-};
-
 // Binds a symbolic name, such as `x` in `let x:! i32 = 7;`. See AnyBindName for
 // member documentation.
 struct BindSymbolicName {
@@ -1320,6 +1292,23 @@ struct PointerType {
   TypeInstId pointee_id;
 };
 
+// Binds a name as a reference expression, such as `x` in `var x: i32`.
+// See AnyBindName for member documentation.
+// TODO: rename other classes for consistency:
+//   AnyBindName -> AnyBinding
+//   BindSymbolicName -> SymbolicBinding
+//   BindAlias -> AliasBinding
+//   BindValue -> BorrowValue   (see also proposal #6231)
+struct RefBinding {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::RefBinding.Define<Parse::NodeId>(
+      {.ir_name = "ref_binding", .constant_kind = InstConstantKind::Indirect});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
+  InstId value_id;
+};
+
 // An action that performs type refinement for an instruction, by creating an
 // instruction that converts from a template symbolic type to a concrete type.
 struct RefineTypeAction {
@@ -1882,6 +1871,19 @@ struct ValueAsRef {
       {.ir_name = "value_as_ref", .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
+  InstId value_id;
+};
+
+// Binds a name as a value expression, such as `x` in `let x: i32`. See
+// AnyBindName for member documentation.
+struct ValueBinding {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::ValueBinding.Define<Parse::NodeId>(
+      {.ir_name = "value_binding",
+       .constant_kind = InstConstantKind::Indirect});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
   InstId value_id;
 };
 

@@ -57,7 +57,7 @@ let b: () = Other.a;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_14: %empty_tuple.type = converted @__global_init.%.loc4, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %a: %empty_tuple.type = bind_val_name a, %.loc4_14
+// CHECK:STDOUT:   %a: %empty_tuple.type = value_binding a, %.loc4_14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -91,7 +91,7 @@ let b: () = Other.a;
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %empty_tuple.type = bind_val_name b, @__global_init.%a.ref
+// CHECK:STDOUT:   %b: %empty_tuple.type = value_binding b, @__global_init.%a.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -121,7 +121,7 @@ let b: () = Other.a;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_14: %empty_tuple.type = converted @__global_init.%.loc4, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %a: %empty_tuple.type = bind_val_name a, %.loc4_14
+// CHECK:STDOUT:   %a: %empty_tuple.type = value_binding a, %.loc4_14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -158,7 +158,7 @@ let b: () = Other.a;
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %empty_tuple.type = bind_val_name b, @__global_init.%a.ref
+// CHECK:STDOUT:   %b: %empty_tuple.type = value_binding b, @__global_init.%a.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -94,7 +94,7 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:       %int_32.loc16_9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc16_9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %i32 = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -118,7 +118,7 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   %.loc25_14.1: %ImplicitAs.assoc_type.ca0d85.2 = specific_constant imports.%Core.import_ref.492, @ImplicitAs(constants.%T) [symbolic = constants.%assoc0.9f5e6b.2]
 // CHECK:STDOUT:   %Convert.ref: %ImplicitAs.assoc_type.ca0d85.2 = name_ref Convert, %.loc25_14.1 [symbolic = constants.%assoc0.9f5e6b.2]
 // CHECK:STDOUT:   %.loc25_14.2: %T = converted %int_5, <error> [concrete = <error>]
-// CHECK:STDOUT:   %x: %T = bind_val_name x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x: %T = value_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   %x.ref: %T = name_ref x, %x [concrete = <error>]
 // CHECK:STDOUT:   %.loc33: %i32 = converted %x.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error> to %return

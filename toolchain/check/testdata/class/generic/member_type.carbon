@@ -214,7 +214,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:         %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:         %.loc9_11.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %n: @Outer.F.%T.binding.as_type (%T.binding.as_type) = bind_val_name n, %n.param
+// CHECK:STDOUT:       %n: @Outer.F.%T.binding.as_type (%T.binding.as_type) = value_binding n, %n.param
 // CHECK:STDOUT:       %return.param: ref @Outer.F.%Inner (%Inner.6ee) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Outer.F.%Inner (%Inner.6ee) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -328,7 +328,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %.loc13_20.2: type = specific_constant @Outer.%Inner.decl, @Outer(constants.%Copy.facet.c49) [concrete = constants.%Inner.d35]
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, %.loc13_20.2 [concrete = constants.%Inner.d35]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %Inner.d35 = bind_ref_name c, %c.var
+// CHECK:STDOUT:   %c: ref %Inner.d35 = ref_binding c, %c.var
 // CHECK:STDOUT:   %c.ref: ref %Inner.d35 = name_ref c, %c
 // CHECK:STDOUT:   %n.ref: %Inner.elem.7f6 = name_ref n, @Inner.%.loc6_10 [concrete = @Inner.%.loc6_10]
 // CHECK:STDOUT:   %.loc14_11.1: ref %i32 = class_element_access %c.ref, element0
@@ -551,7 +551,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:         %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.b52)]
 // CHECK:STDOUT:         %.loc6_16.3: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.b52)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @Inner.F.%Self.binding.as_type (%Self.binding.as_type.b52) = bind_val_name self, %self.param
+// CHECK:STDOUT:       %self: @Inner.F.%Self.binding.as_type (%Self.binding.as_type.b52) = value_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @Inner.F.%T (%T) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Inner.F.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -589,7 +589,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:         %.loc11_18.2: type = specific_constant @Outer.%C.decl, @Outer(constants.%T) [symbolic = %C (constants.%C.390)]
 // CHECK:STDOUT:         %C.ref: type = name_ref C, %.loc11_18.2 [symbolic = %C (constants.%C.390)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @C.as.Inner.impl.F.%C (%C.390) = bind_val_name self, %self.param
+// CHECK:STDOUT:       %self: @C.as.Inner.impl.F.%C (%C.390) = value_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @C.as.Inner.impl.F.%T (%T) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @C.as.Inner.impl.F.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -614,7 +614,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %self.param: %D = value_param call_param0
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:     %self: %D = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: %D = value_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -758,7 +758,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %.loc23_20.2: type = specific_constant @Outer.%C.decl, @Outer(constants.%i32) [concrete = constants.%C.70f]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %.loc23_20.2 [concrete = constants.%C.70f]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C.70f = bind_ref_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C.70f = ref_binding c, %c.var
 // CHECK:STDOUT:   %c.ref: ref %C.70f = name_ref c, %c
 // CHECK:STDOUT:   %Outer.ref.loc24: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
 // CHECK:STDOUT:   %int_32.loc24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

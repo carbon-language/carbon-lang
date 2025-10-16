@@ -299,7 +299,7 @@ class X {
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.c3d)]
 // CHECK:STDOUT:       %.loc5_19.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.c3d)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @Z.Method.%Self.binding.as_type (%Self.binding.as_type.c3d) = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: @Z.Method.%Self.binding.as_type (%Self.binding.as_type.c3d) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc1: %Z.assoc_type = assoc_entity element1, %Z.Method.decl [concrete = constants.%assoc1]
 // CHECK:STDOUT:   impl_decl @<error>.as.Z.impl [concrete] {} {
@@ -334,7 +334,7 @@ class X {
 // CHECK:STDOUT:         %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.c3d)]
 // CHECK:STDOUT:         %.loc13_21.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.c3d)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @<error>.as.Z.impl.Method.%Self.binding.as_type (%Self.binding.as_type.c3d) = bind_val_name self, %self.param
+// CHECK:STDOUT:       %self: @<error>.as.Z.impl.Method.%Self.binding.as_type (%Self.binding.as_type.c3d) = value_binding self, %self.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -352,7 +352,7 @@ class X {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Point = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Point [concrete = constants.%Point]
-// CHECK:STDOUT:     %self: %Point = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: %Point = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

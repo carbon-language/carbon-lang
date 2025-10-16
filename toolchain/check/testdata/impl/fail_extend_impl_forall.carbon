@@ -85,7 +85,7 @@ class C {
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %x.param: @GenericInterface.F.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @GenericInterface.%T.loc15_28.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %x: @GenericInterface.F.%T (%T) = bind_val_name x, %x.param
+// CHECK:STDOUT:       %x: @GenericInterface.F.%T (%T) = value_binding x, %x.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc16_13.1: @GenericInterface.%GenericInterface.assoc_type (%GenericInterface.assoc_type) = assoc_entity element0, %GenericInterface.F.decl [symbolic = %assoc0.loc16_13.2 (constants.%assoc0)]
 // CHECK:STDOUT:
@@ -114,7 +114,7 @@ class C {
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %x.param: @C.as.GenericInterface.impl.F.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @C.as.GenericInterface.impl.%T.loc24_23.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %x: @C.as.GenericInterface.impl.F.%T (%T) = bind_val_name x, %x.param
+// CHECK:STDOUT:       %x: @C.as.GenericInterface.impl.F.%T (%T) = value_binding x, %x.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:

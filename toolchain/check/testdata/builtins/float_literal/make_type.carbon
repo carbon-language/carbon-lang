@@ -49,7 +49,7 @@ let f: FloatLiteral() = 1.0;
 // CHECK:STDOUT:     %.loc7_21.2: type = value_of_initializer %FloatLiteral.call [concrete = Core.FloatLiteral]
 // CHECK:STDOUT:     %.loc7_21.3: type = converted %FloatLiteral.call, %.loc7_21.2 [concrete = Core.FloatLiteral]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: Core.FloatLiteral = bind_val_name f, @__global_init.%float
+// CHECK:STDOUT:   %f: Core.FloatLiteral = value_binding f, @__global_init.%float
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

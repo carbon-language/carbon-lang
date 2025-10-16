@@ -138,7 +138,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:       %.loc8_10.2: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:       %.loc8_10.3: type = converted %Bool.call, %.loc8_10.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: bool = bind_val_name b, %b.param
+// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -192,7 +192,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:       %.loc7_10.2: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:       %.loc7_10.3: type = converted %Bool.call, %.loc7_10.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: bool = bind_val_name b, %b.param
+// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -254,7 +254,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:       %.loc4_10.2: type = value_of_initializer %Bool.call.loc4_10 [concrete = bool]
 // CHECK:STDOUT:       %.loc4_10.3: type = converted %Bool.call.loc4_10, %.loc4_10.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: bool = bind_val_name b, %b.param
+// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param1
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }

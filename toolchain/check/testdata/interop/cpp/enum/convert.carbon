@@ -152,7 +152,7 @@ fn F() {
 // CHECK:STDOUT:     %int_16.loc8_10: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:     %i16.loc8_10: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %i16 = bind_val_name a, %.loc8_27.2
+// CHECK:STDOUT:   %a: %i16 = value_binding a, %.loc8_27.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.ebf = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
@@ -174,7 +174,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc9_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Enum.ref.loc9_13: type = name_ref Enum, imports.%Enum.decl [concrete = constants.%Enum]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %Enum = bind_val_name b, %.loc9_33.2
+// CHECK:STDOUT:   %b: %Enum = value_binding b, %.loc9_33.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.c06 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
@@ -188,7 +188,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc10_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Other.ref.loc10_13: type = name_ref Other, imports.%Other.decl [concrete = constants.%Other]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: %Other = bind_val_name c, %.loc10_28.2
+// CHECK:STDOUT:   %c: %Other = value_binding c, %.loc10_28.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

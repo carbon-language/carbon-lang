@@ -300,7 +300,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:         %U.ref.loc6_21: type = name_ref U, %U.loc6_8.2 [symbolic = %U.loc6_8.1 (constants.%U.2cb)]
 // CHECK:STDOUT:         %ptr.loc6_22.2: type = ptr_type %U.ref.loc6_21 [symbolic = %ptr.loc6_22.1 (constants.%ptr.204)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %u: @A.F.%ptr.loc6_22.1 (%ptr.204) = bind_val_name u, %u.param
+// CHECK:STDOUT:       %u: @A.F.%ptr.loc6_22.1 (%ptr.204) = value_binding u, %u.param
 // CHECK:STDOUT:       %return.param: ref @A.F.%tuple.type.loc6_40.2 (%tuple.type.eee) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @A.F.%tuple.type.loc6_40.2 (%tuple.type.eee) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -335,7 +335,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:       %U.ref.loc16_21: type = name_ref U, %U.loc16_8.2 [symbolic = %U.loc16_8.1 (constants.%U.8b3)]
 // CHECK:STDOUT:       %ptr.loc16_22.2: type = ptr_type %U.ref.loc16_21 [symbolic = %ptr.loc16_22.1 (constants.%ptr.79f131.1)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %u: @Y.as.A.impl.F.%ptr.loc16_22.1 (%ptr.79f131.1) = bind_val_name u, %u.param
+// CHECK:STDOUT:     %u: @Y.as.A.impl.F.%ptr.loc16_22.1 (%ptr.79f131.1) = value_binding u, %u.param
 // CHECK:STDOUT:     %return.param: ref @Y.as.A.impl.F.%tuple.type.loc16 (%tuple.type.c14) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @Y.as.A.impl.F.%tuple.type.loc16 (%tuple.type.c14) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -436,7 +436,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %u.var: ref %Z = var %u.var_patt
 // CHECK:STDOUT:   %Z.ref.loc22: type = name_ref Z, file.%Z.decl [concrete = constants.%Z]
-// CHECK:STDOUT:   %u: ref %Z = bind_ref_name u, %u.var
+// CHECK:STDOUT:   %u: ref %Z = ref_binding u, %u.var
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y]
 // CHECK:STDOUT:   %A.ref: %A.type.495 = name_ref A, file.%A.decl [concrete = constants.%A.generic]
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
@@ -497,7 +497,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %u.var: ref %Z = var %u.var_patt
 // CHECK:STDOUT:     %Z.ref.loc27: type = name_ref Z, file.%Z.decl [concrete = constants.%Z]
-// CHECK:STDOUT:     %u: ref %Z = bind_ref_name u, %u.var
+// CHECK:STDOUT:     %u: ref %Z = ref_binding u, %u.var
 // CHECK:STDOUT:     %T.ref: %A.type.0a4 = name_ref T, %T.loc26_16.2 [symbolic = %T.loc26_16.1 (constants.%T.7bf)]
 // CHECK:STDOUT:     %.loc28_4.1: %A.assoc_type.296 = specific_constant @A.%assoc0.loc6_41.1, @A(constants.%X) [concrete = constants.%assoc0.5f6]
 // CHECK:STDOUT:     %F.ref: %A.assoc_type.296 = name_ref F, %.loc28_4.1 [concrete = constants.%assoc0.5f6]
@@ -880,7 +880,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:       %U.loc6_8.2: type = bind_symbolic_name U, 2 [symbolic = %U.loc6_8.1 (constants.%U.2cb)]
 // CHECK:STDOUT:       %u.param: @A.F.%U.loc6_8.1 (%U.2cb) = value_param call_param0
 // CHECK:STDOUT:       %U.ref.loc6_21: type = name_ref U, %U.loc6_8.2 [symbolic = %U.loc6_8.1 (constants.%U.2cb)]
-// CHECK:STDOUT:       %u: @A.F.%U.loc6_8.1 (%U.2cb) = bind_val_name u, %u.param
+// CHECK:STDOUT:       %u: @A.F.%U.loc6_8.1 (%U.2cb) = value_binding u, %u.param
 // CHECK:STDOUT:       %return.param: ref @A.F.%tuple.type.loc6_38.2 (%tuple.type.253) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @A.F.%tuple.type.loc6_38.2 (%tuple.type.253) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -927,7 +927,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:       %U.loc17_8.2: type = bind_symbolic_name U, 3 [symbolic = %U.loc17_8.1 (constants.%U.753)]
 // CHECK:STDOUT:       %u.param: @tuple.type.as.A.impl.F.%U.loc17_8.1 (%U.753) = value_param call_param0
 // CHECK:STDOUT:       %U.ref.loc17_21: type = name_ref U, %U.loc17_8.2 [symbolic = %U.loc17_8.1 (constants.%U.753)]
-// CHECK:STDOUT:       %u: @tuple.type.as.A.impl.F.%U.loc17_8.1 (%U.753) = bind_val_name u, %u.param
+// CHECK:STDOUT:       %u: @tuple.type.as.A.impl.F.%U.loc17_8.1 (%U.753) = value_binding u, %u.param
 // CHECK:STDOUT:       %return.param: ref @tuple.type.as.A.impl.F.%tuple.type.loc17_42.2 (%tuple.type.8ae) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @tuple.type.as.A.impl.F.%tuple.type.loc17_42.2 (%tuple.type.8ae) = return_slot %return.param
 // CHECK:STDOUT:     }

@@ -193,17 +193,17 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_27.9: ref %C = temporary %.loc13_27.2, %.loc13_27.8
 // CHECK:STDOUT:   %.loc13_27.10: ref %C = converted @__global_init.%.loc13, %.loc13_27.9
 // CHECK:STDOUT:   %.loc13_27.11: %C = bind_value %.loc13_27.10
-// CHECK:STDOUT:   %a: %C = bind_val_name a, %.loc13_27.11
+// CHECK:STDOUT:   %a: %C = value_binding a, %.loc13_27.11
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.a1a = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AdaptC.ref.loc15: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
-// CHECK:STDOUT:   %b: %AdaptC = bind_val_name b, @__global_init.%.loc15_19.2
+// CHECK:STDOUT:   %b: %AdaptC = value_binding b, @__global_init.%.loc15_19.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.c48 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref.loc17: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %c: %C = bind_val_name c, @__global_init.%.loc17_14.2
+// CHECK:STDOUT:   %c: %C = value_binding c, @__global_init.%.loc17_14.2
 // CHECK:STDOUT:   %MakeC.decl: %MakeC.type = fn_decl @MakeC [concrete = constants.%MakeC] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.c48 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.c48 = out_param_pattern %return.patt, call_param0 [concrete]
@@ -226,14 +226,14 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %AdaptC = var %d.var_patt [concrete]
 // CHECK:STDOUT:   %AdaptC.ref.loc23: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
-// CHECK:STDOUT:   %d: ref %AdaptC = bind_ref_name d, %d.var [concrete = %d.var]
+// CHECK:STDOUT:   %d: ref %AdaptC = ref_binding d, %d.var [concrete = %d.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.c48 = ref_binding_pattern e [concrete]
 // CHECK:STDOUT:     %e.var_patt: %pattern_type.c48 = var_pattern %e.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %C = var %e.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref.loc25: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %e: ref %C = bind_ref_name e, %e.var [concrete = %e.var]
+// CHECK:STDOUT:   %e: ref %C = ref_binding e, %e.var [concrete = %e.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -394,19 +394,19 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %.loc13_27.9: ref %C = temporary %.loc13_27.2, %.loc13_27.8
 // CHECK:STDOUT:   %.loc13_27.10: ref %C = converted @__global_init.%.loc13, %.loc13_27.9
 // CHECK:STDOUT:   %.loc13_27.11: %C = bind_value %.loc13_27.10
-// CHECK:STDOUT:   %a: %C = bind_val_name a, %.loc13_27.11
+// CHECK:STDOUT:   %a: %C = value_binding a, %.loc13_27.11
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.a1a = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %AdaptC.ref.loc24: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
 // CHECK:STDOUT:   %.loc24: %AdaptC = converted @__global_init.%a.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %b: %AdaptC = bind_val_name b, <error> [concrete = <error>]
+// CHECK:STDOUT:   %b: %AdaptC = value_binding b, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.c48 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref.loc33: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc33: %C = converted @__global_init.%b.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %c: %C = bind_val_name c, <error> [concrete = <error>]
+// CHECK:STDOUT:   %c: %C = value_binding c, <error> [concrete = <error>]
 // CHECK:STDOUT:   %MakeC.decl: %MakeC.type = fn_decl @MakeC [concrete = constants.%MakeC] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.c48 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.c48 = out_param_pattern %return.patt, call_param0 [concrete]
@@ -429,14 +429,14 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %AdaptC = var %d.var_patt [concrete]
 // CHECK:STDOUT:   %AdaptC.ref.loc46: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
-// CHECK:STDOUT:   %d: ref %AdaptC = bind_ref_name d, %d.var [concrete = %d.var]
+// CHECK:STDOUT:   %d: ref %AdaptC = ref_binding d, %d.var [concrete = %d.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.c48 = ref_binding_pattern e [concrete]
 // CHECK:STDOUT:     %e.var_patt: %pattern_type.c48 = var_pattern %e.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %C = var %e.var_patt [concrete]
 // CHECK:STDOUT:   %C.ref.loc55: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %e: ref %C = bind_ref_name e, %e.var [concrete = %e.var]
+// CHECK:STDOUT:   %e: ref %C = ref_binding e, %e.var [concrete = %e.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

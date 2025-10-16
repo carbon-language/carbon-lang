@@ -247,7 +247,7 @@ class A {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc6_45.2(%int_5) [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc6_45.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc6_45.2: %i32 = converted %int_5, %.loc6_45.1 [concrete = constants.%int_5.0f6]
-// CHECK:STDOUT:   %SOME_INTERNAL_CONSTANT: %i32 = bind_val_name SOME_INTERNAL_CONSTANT, %.loc6_45.2
+// CHECK:STDOUT:   %SOME_INTERNAL_CONSTANT: %i32 = value_binding SOME_INTERNAL_CONSTANT, %.loc6_45.2
 // CHECK:STDOUT:   %Circle.SomeInternalFunction.decl: %Circle.SomeInternalFunction.type = fn_decl @Circle.SomeInternalFunction [concrete = constants.%Circle.SomeInternalFunction] {
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param0 [concrete]
@@ -317,7 +317,7 @@ class A {
 // CHECK:STDOUT:   %Circle.ref.loc18_15: type = name_ref Circle, file.%Circle.decl [concrete = constants.%Circle]
 // CHECK:STDOUT:   %.loc18_36.2: ref %Circle = temporary %.loc18_36.1, %Circle.Make.call
 // CHECK:STDOUT:   %.loc18_36.3: %Circle = bind_value %.loc18_36.2
-// CHECK:STDOUT:   %circle: %Circle = bind_val_name circle, %.loc18_36.3
+// CHECK:STDOUT:   %circle: %Circle = value_binding circle, %.loc18_36.3
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %radius.patt: %pattern_type.7ce = value_binding_pattern radius [concrete]
 // CHECK:STDOUT:   }
@@ -327,7 +327,7 @@ class A {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %radius: %i32 = bind_val_name radius, <error> [concrete = <error>]
+// CHECK:STDOUT:   %radius: %i32 = value_binding radius, <error> [concrete = <error>]
 // CHECK:STDOUT:   %circle.ref.loc34: %Circle = name_ref circle, %circle
 // CHECK:STDOUT:   %radius.ref.loc34: <error> = name_ref radius, <error> [concrete = <error>]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
@@ -403,7 +403,7 @@ class A {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: %i32 = bind_val_name x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x: %i32 = value_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -496,7 +496,7 @@ class A {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %self.param: %Circle = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [concrete = constants.%Circle]
-// CHECK:STDOUT:     %self: %Circle = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: %Circle = value_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -519,7 +519,7 @@ class A {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %self.param: %Circle = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [concrete = constants.%Circle]
-// CHECK:STDOUT:     %self: %Circle = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: %Circle = value_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -626,7 +626,7 @@ class A {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: %i32 = bind_val_name x, @__global_init.%x.ref
+// CHECK:STDOUT:   %x: %i32 = value_binding x, @__global_init.%x.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -645,7 +645,7 @@ class A {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc5_16.2(%int_5) [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc5_16.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc5_16.2: %i32 = converted %int_5, %.loc5_16.1 [concrete = constants.%int_5.0f6]
-// CHECK:STDOUT:   %x: %i32 = bind_val_name x, %.loc5_16.2
+// CHECK:STDOUT:   %x: %i32 = value_binding x, %.loc5_16.2
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -720,7 +720,7 @@ class A {
 // CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: %i32 = bind_val_name x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x: %i32 = value_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.7ce = value_binding_pattern y [concrete]
 // CHECK:STDOUT:   }
@@ -728,7 +728,7 @@ class A {
 // CHECK:STDOUT:     %int_32.loc24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: %i32 = bind_val_name y, <error> [concrete = <error>]
+// CHECK:STDOUT:   %y: %i32 = value_binding y, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -747,7 +747,7 @@ class A {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc5: init %i32 = call %bound_method.loc5_26.2(%int_5.loc5) [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc5_26.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc5 [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc5_26.2: %i32 = converted %int_5.loc5, %.loc5_26.1 [concrete = constants.%int_5.0f6]
-// CHECK:STDOUT:   %x: %i32 = bind_val_name x, %.loc5_26.2
+// CHECK:STDOUT:   %x: %i32 = value_binding x, %.loc5_26.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.7ce = value_binding_pattern y [concrete]
 // CHECK:STDOUT:   }
@@ -763,7 +763,7 @@ class A {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6: init %i32 = call %bound_method.loc6_24.2(%int_5.loc6) [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc6_24.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6 [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc6_24.2: %i32 = converted %int_5.loc6, %.loc6_24.1 [concrete = constants.%int_5.0f6]
-// CHECK:STDOUT:   %y: %i32 = bind_val_name y, %.loc6_24.2
+// CHECK:STDOUT:   %y: %i32 = value_binding y, %.loc6_24.2
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

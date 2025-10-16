@@ -104,7 +104,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:       %T.ref.loc16: type = name_ref T, %T.loc15_6.2 [symbolic = %T.loc15_6.1 (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc16_11.1: type = ptr_type %T.ref.loc16 [symbolic = %ptr.loc16_11.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: ref @F.%ptr.loc16_11.2 (%ptr.79f) = bind_ref_name p, %p.var
+// CHECK:STDOUT:     %p: ref @F.%ptr.loc16_11.2 (%ptr.79f) = ref_binding p, %p.var
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %n.patt: @F.%pattern_type.loc17 (%pattern_type.7dc) = value_binding_pattern n [concrete]
 // CHECK:STDOUT:     }
@@ -113,7 +113,7 @@ fn F(T:! type) {
 // CHECK:STDOUT:     %.loc17_14.1: ref @F.%T.loc15_6.1 (%T) = deref %.loc17_15
 // CHECK:STDOUT:     %T.ref.loc17: type = name_ref T, %T.loc15_6.2 [symbolic = %T.loc15_6.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc17_14.2: @F.%T.loc15_6.1 (%T) = bind_value %.loc17_14.1
-// CHECK:STDOUT:     %n: @F.%T.loc15_6.1 (%T) = bind_val_name n, %.loc17_14.2
+// CHECK:STDOUT:     %n: @F.%T.loc15_6.1 (%T) = value_binding n, %.loc17_14.2
 // CHECK:STDOUT:     %impl.elem0: @F.%.loc16_3 (%.0f0) = impl_witness_access constants.%Destroy.impl_witness.5e2, element0 [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.7c0)]
 // CHECK:STDOUT:     %bound_method.loc16_3.1: <bound method> = bound_method %p.var, %impl.elem0
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn)]

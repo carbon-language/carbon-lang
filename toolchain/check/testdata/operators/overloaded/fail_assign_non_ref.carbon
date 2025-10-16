@@ -120,7 +120,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a: %C = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: %C = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestAddAssignNonRef.decl: %TestAddAssignNonRef.type = fn_decl @TestAddAssignNonRef [concrete = constants.%TestAddAssignNonRef] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.c48 = value_binding_pattern a [concrete]
@@ -130,10 +130,10 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc37_27: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %a: %C = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: %C = value_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %C = value_param call_param1
 // CHECK:STDOUT:     %C.ref.loc37_33: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %b: %C = bind_val_name b, %b.param
+// CHECK:STDOUT:     %b: %C = value_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -148,7 +148,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr: type = ptr_type %C.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: %ptr.019 = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: %ptr.019 = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -170,10 +170,10 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:       %C.ref.loc23_20: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr: type = ptr_type %C.ref.loc23_20 [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: %ptr.019 = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: %ptr.019 = value_binding self, %self.param
 // CHECK:STDOUT:     %other.param: %C = value_param call_param1
 // CHECK:STDOUT:     %C.ref.loc23_31: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %other: %C = bind_val_name other, %other.param
+// CHECK:STDOUT:     %other: %C = value_binding other, %other.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

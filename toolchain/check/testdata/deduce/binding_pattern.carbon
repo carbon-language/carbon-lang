@@ -148,7 +148,7 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %value.param: @C.Create.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @C.%T.loc4_9.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %value: @C.Create.%T (%T) = bind_val_name value, %value.param
+// CHECK:STDOUT:       %value: @C.Create.%T (%T) = value_binding value, %value.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -350,7 +350,7 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %value.param: @C.Create.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @C.%T.loc4_9.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %value: @C.Create.%T (%T) = bind_val_name value, %value.param
+// CHECK:STDOUT:       %value: @C.Create.%T (%T) = value_binding value, %value.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type

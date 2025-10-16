@@ -125,7 +125,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:       %.loc7_37.2: %tuple.type.24b = tuple_literal (%T.ref, %U.ref.loc7_36)
 // CHECK:STDOUT:       %.loc7_37.3: type = converted %.loc7_37.2, constants.%tuple.type.30b [symbolic = %tuple.type (constants.%tuple.type.30b)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %pair: @F.%tuple.type (%tuple.type.30b) = bind_val_name pair, %pair.param
+// CHECK:STDOUT:     %pair: @F.%tuple.type (%tuple.type.30b) = value_binding pair, %pair.param
 // CHECK:STDOUT:     %return.param: ref @F.%U.loc7_16.1 (%U) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%U.loc7_16.1 (%U) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -143,7 +143,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:       %.loc9_17.2: %tuple.type.24b = tuple_literal (%C.ref, %D.ref.loc9_16)
 // CHECK:STDOUT:       %.loc9_17.3: type = converted %.loc9_17.2, constants.%tuple.type.e8a [concrete = constants.%tuple.type.e8a]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %pair: %tuple.type.e8a = bind_val_name pair, %pair.param
+// CHECK:STDOUT:     %pair: %tuple.type.e8a = value_binding pair, %pair.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -367,7 +367,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:       %.loc6_41.2: %tuple.type.d07 = converted %.loc6_40, %tuple.loc6_40.2 [symbolic = %tuple.loc6_40.1 (constants.%tuple.159)]
 // CHECK:STDOUT:       %HasPair.loc6_41.2: type = class_type @HasPair, @HasPair(constants.%tuple.159) [symbolic = %HasPair.loc6_41.1 (constants.%HasPair.568)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %h: @F.%HasPair.loc6_41.1 (%HasPair.568) = bind_val_name h, %h.param
+// CHECK:STDOUT:     %h: @F.%HasPair.loc6_41.1 (%HasPair.568) = value_binding h, %h.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -403,7 +403,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:       %.loc8_23.2: %tuple.type.d07 = converted %.loc8_22.1, %tuple [concrete = constants.%tuple.21c]
 // CHECK:STDOUT:       %HasPair: type = class_type @HasPair, @HasPair(constants.%tuple.21c) [concrete = constants.%HasPair.369]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %h: %HasPair.369 = bind_val_name h, %h.param
+// CHECK:STDOUT:     %h: %HasPair.369 = value_binding h, %h.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -552,7 +552,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:       %.loc7_27.2: %tuple.type.24b = tuple_literal (%T.ref.loc7_23, %T.ref.loc7_26)
 // CHECK:STDOUT:       %.loc7_27.3: type = converted %.loc7_27.2, constants.%tuple.type.d00 [symbolic = %tuple.type (constants.%tuple.type.d00)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %pair: @F.%tuple.type (%tuple.type.d00) = bind_val_name pair, %pair.param
+// CHECK:STDOUT:     %pair: @F.%tuple.type (%tuple.type.d00) = value_binding pair, %pair.param
 // CHECK:STDOUT:     %return.param: ref @F.%T.loc7_6.1 (%T) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%T.loc7_6.1 (%T) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -570,7 +570,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:       %.loc9_17.2: %tuple.type.24b = tuple_literal (%C.ref, %D.ref.loc9_16)
 // CHECK:STDOUT:       %.loc9_17.3: type = converted %.loc9_17.2, constants.%tuple.type.e8a [concrete = constants.%tuple.type.e8a]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %pair: %tuple.type.e8a = bind_val_name pair, %pair.param
+// CHECK:STDOUT:     %pair: %tuple.type.e8a = value_binding pair, %pair.param
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param1
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }

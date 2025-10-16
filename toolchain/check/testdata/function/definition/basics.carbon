@@ -47,7 +47,7 @@ fn F(n: C) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %n: %C = bind_val_name n, %n.param
+// CHECK:STDOUT:     %n: %C = value_binding n, %n.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

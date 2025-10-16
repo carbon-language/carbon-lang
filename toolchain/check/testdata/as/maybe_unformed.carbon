@@ -176,7 +176,7 @@ fn Use() {
 // CHECK:STDOUT:     %MaybeUnformed.loc12_30: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.275]
 // CHECK:STDOUT:     %ptr.loc12: type = ptr_type %MaybeUnformed.loc12_30 [concrete = constants.%ptr.58e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %ptr.58e = bind_val_name a, %addr
+// CHECK:STDOUT:   %a: %ptr.58e = value_binding a, %addr
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.460 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
@@ -195,7 +195,7 @@ fn Use() {
 // CHECK:STDOUT:     %MaybeUnformed.loc13_30: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.275]
 // CHECK:STDOUT:     %ptr.loc13_31: type = ptr_type %MaybeUnformed.loc13_30 [concrete = constants.%ptr.58e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %ptr.58e = bind_val_name b, %.loc13_39.2
+// CHECK:STDOUT:   %b: %ptr.58e = value_binding b, %.loc13_39.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -260,7 +260,7 @@ fn Use() {
 // CHECK:STDOUT:     %X.ref.loc19_29: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %MaybeUnformed.loc19_30: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.275]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i: ref %MaybeUnformed.275 = bind_ref_name i, %i.var
+// CHECK:STDOUT:   %i: ref %MaybeUnformed.275 = ref_binding i, %i.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.eb8 = value_binding_pattern v [concrete]
 // CHECK:STDOUT:   }
@@ -276,7 +276,7 @@ fn Use() {
 // CHECK:STDOUT:     %X.ref.loc27_29: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %MaybeUnformed.loc27_30: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.275]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: %MaybeUnformed.275 = bind_val_name v, <error> [concrete = <error>]
+// CHECK:STDOUT:   %v: %MaybeUnformed.275 = value_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %i.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.60f
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %i.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
@@ -318,7 +318,7 @@ fn Use() {
 // CHECK:STDOUT:   %.loc13_27.3: %X = bind_value %.loc13_27.2
 // CHECK:STDOUT:   %.loc13_27.4: %X = converted %value.ref, %.loc13_27.3
 // CHECK:STDOUT:   %X.ref.loc13_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %v: %X = bind_val_name v, %.loc13_27.4
+// CHECK:STDOUT:   %v: %X = value_binding v, %.loc13_27.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.1c6 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
@@ -331,7 +331,7 @@ fn Use() {
 // CHECK:STDOUT:     %X.ref.loc14_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %ptr.loc14: type = ptr_type %X.ref.loc14_10 [concrete = constants.%ptr.d17]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %ptr.d17 = bind_val_name a, %addr
+// CHECK:STDOUT:   %a: %ptr.d17 = value_binding a, %addr
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.1c6 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
@@ -344,7 +344,7 @@ fn Use() {
 // CHECK:STDOUT:     %X.ref.loc15_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %ptr.loc15_11: type = ptr_type %X.ref.loc15_10 [concrete = constants.%ptr.d17]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %ptr.d17 = bind_val_name b, %.loc15_26.2
+// CHECK:STDOUT:   %b: %ptr.d17 = value_binding b, %.loc15_26.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

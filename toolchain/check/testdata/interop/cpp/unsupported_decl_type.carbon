@@ -50,7 +50,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %c: ref <error> = bind_ref_name c, <error> [concrete = <error>]
+// CHECK:STDOUT:   %c: ref <error> = ref_binding c, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

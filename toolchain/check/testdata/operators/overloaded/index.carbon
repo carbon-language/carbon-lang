@@ -229,10 +229,10 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:         %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:         %.loc5_15.3: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @IndexWith.At.%Self.binding.as_type (%Self.binding.as_type) = bind_val_name self, %self.param
+// CHECK:STDOUT:       %self: @IndexWith.At.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:       %subscript.param: @IndexWith.At.%SubscriptType (%SubscriptType) = value_param call_param1
 // CHECK:STDOUT:       %SubscriptType.ref: type = name_ref SubscriptType, @IndexWith.%SubscriptType.loc4_21.2 [symbolic = %SubscriptType (constants.%SubscriptType)]
-// CHECK:STDOUT:       %subscript: @IndexWith.At.%SubscriptType (%SubscriptType) = bind_val_name subscript, %subscript.param
+// CHECK:STDOUT:       %subscript: @IndexWith.At.%SubscriptType (%SubscriptType) = value_binding subscript, %subscript.param
 // CHECK:STDOUT:       %return.param: ref @IndexWith.At.%ElementType (%ElementType) = out_param call_param2
 // CHECK:STDOUT:       %return: ref @IndexWith.At.%ElementType (%ElementType) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -382,13 +382,13 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:     %.loc7_40.2: type = converted %.loc7_40.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @empty_tuple.type.as.IndexWith.impl.%.loc6_7.2 [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %self: %empty_tuple.type = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: %empty_tuple.type = value_binding self, %self.param
 // CHECK:STDOUT:     %subscript.param: %empty_tuple.type = value_param call_param1
 // CHECK:STDOUT:     %.loc7_33.1: type = splice_block %.loc7_33.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc7_33.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc7_33.3: type = converted %.loc7_33.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %subscript: %empty_tuple.type = bind_val_name subscript, %subscript.param
+// CHECK:STDOUT:     %subscript: %empty_tuple.type = value_binding subscript, %subscript.param
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param2
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }

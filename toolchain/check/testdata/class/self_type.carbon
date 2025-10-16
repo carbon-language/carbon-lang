@@ -87,7 +87,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:     %i32.loc25: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %self.param.loc25: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc25: %Class = bind_val_name self, %self.param.loc25
+// CHECK:STDOUT:     %self.loc25: %Class = value_binding self, %self.param.loc25
 // CHECK:STDOUT:     %return.param.loc25: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc25: ref %i32 = return_slot %return.param.loc25
 // CHECK:STDOUT:   }
@@ -104,7 +104,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %self.param.loc16: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:     %self.loc16: %Class = bind_val_name self, %self.param.loc16
+// CHECK:STDOUT:     %self.loc16: %Class = value_binding self, %self.param.loc16
 // CHECK:STDOUT:     %return.param.loc16: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc16: ref %i32 = return_slot %return.param.loc16
 // CHECK:STDOUT:   }
@@ -150,7 +150,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.761 = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self.ref.loc18: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:   %s: ref %Class = bind_ref_name s, %return
+// CHECK:STDOUT:   %s: ref %Class = ref_binding s, %return
 // CHECK:STDOUT:   %s.ref.loc19_5: ref %Class = name_ref s, %s
 // CHECK:STDOUT:   %s.ref.loc19_16: ref %Class = name_ref s, %s
 // CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %s.ref.loc19_16

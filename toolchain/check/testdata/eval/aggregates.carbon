@@ -152,7 +152,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %.loc4_26.2: %tuple.type.24b = tuple_literal (%i32.loc4_18, %i32.loc4_23)
 // CHECK:STDOUT:     %.loc4_26.3: type = converted %.loc4_26.2, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %tuple_copy: ref %tuple.type.d07 = bind_ref_name tuple_copy, %tuple_copy.var [concrete = %tuple_copy.var]
+// CHECK:STDOUT:   %tuple_copy: ref %tuple.type.d07 = ref_binding tuple_copy, %tuple_copy.var [concrete = %tuple_copy.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %struct_copy.patt: %pattern_type.8ae = ref_binding_pattern struct_copy [concrete]
 // CHECK:STDOUT:     %struct_copy.var_patt: %pattern_type.8ae = var_pattern %struct_copy.patt [concrete]
@@ -167,7 +167,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %i32.loc6_41: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.b.c: type = struct_type {.a: %i32, .b: %i32, .c: %i32} [concrete = constants.%struct_type.a.b.c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %struct_copy: ref %struct_type.a.b.c = bind_ref_name struct_copy, %struct_copy.var [concrete = %struct_copy.var]
+// CHECK:STDOUT:   %struct_copy: ref %struct_type.a.b.c = ref_binding struct_copy, %struct_copy.var [concrete = %struct_copy.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %tuple_index.patt: %pattern_type.a98 = ref_binding_pattern tuple_index [concrete]
 // CHECK:STDOUT:     %tuple_index.var_patt: %pattern_type.a98 = var_pattern %tuple_index.patt [concrete]
@@ -179,7 +179,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %int_1.loc8: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %array_type.loc8: type = array_type %int_1.loc8, %i32.loc8 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %tuple_index: ref %array_type = bind_ref_name tuple_index, %tuple_index.var [concrete = %tuple_index.var]
+// CHECK:STDOUT:   %tuple_index: ref %array_type = ref_binding tuple_index, %tuple_index.var [concrete = %tuple_index.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %struct_access.patt: %pattern_type.a98 = ref_binding_pattern struct_access [concrete]
 // CHECK:STDOUT:     %struct_access.var_patt: %pattern_type.a98 = var_pattern %struct_access.patt [concrete]
@@ -191,7 +191,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %int_1.loc10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %array_type.loc10: type = array_type %int_1.loc10, %i32.loc10 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %struct_access: ref %array_type = bind_ref_name struct_access, %struct_access.var [concrete = %struct_access.var]
+// CHECK:STDOUT:   %struct_access: ref %array_type = ref_binding struct_access, %struct_access.var [concrete = %struct_access.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -419,7 +419,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %array_type: type = array_type %int_1, %i32 [concrete = constants.%array_type.0cb]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %array_index: ref %array_type.0cb = bind_ref_name array_index, %array_index.var [concrete = %array_index.var]
+// CHECK:STDOUT:   %array_index: ref %array_type.0cb = ref_binding array_index, %array_index.var [concrete = %array_index.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -640,7 +640,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:       %.loc6_22.2: %tuple.type.24b = tuple_literal (%ptr.loc6_12.1, %const.loc6_15.1)
 // CHECK:STDOUT:       %.loc6_22.3: type = converted %.loc6_22.2, constants.%tuple.type.4f2 [symbolic = %tuple.type (constants.%tuple.type.4f2)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %u: ref @F.%tuple.type (%tuple.type.4f2) = bind_ref_name u, %u.var
+// CHECK:STDOUT:     %u: ref @F.%tuple.type (%tuple.type.4f2) = ref_binding u, %u.var
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %v.patt: @F.%pattern_type.loc7 (%pattern_type.95a) = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:       %v.var_patt: @F.%pattern_type.loc7 (%pattern_type.95a) = var_pattern %v.patt [concrete]
@@ -650,7 +650,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:       %T.ref.loc7: type = name_ref T, %T.loc4_6.2 [symbolic = %T.loc4_6.1 (constants.%T)]
 // CHECK:STDOUT:       %struct_type.a.loc7_16.1: type = struct_type {.a: @F.%T.loc4_6.1 (%T)} [symbolic = %struct_type.a.loc7_16.2 (constants.%struct_type.a)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v: ref @F.%struct_type.a.loc7_16.2 (%struct_type.a) = bind_ref_name v, %v.var
+// CHECK:STDOUT:     %v: ref @F.%struct_type.a.loc7_16.2 (%struct_type.a) = ref_binding v, %v.var
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %w.patt: @F.%pattern_type.loc8 (%pattern_type.035) = ref_binding_pattern w [concrete]
 // CHECK:STDOUT:       %w.var_patt: @F.%pattern_type.loc8 (%pattern_type.035) = var_pattern %w.patt [concrete]
@@ -661,7 +661,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:       %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
 // CHECK:STDOUT:       %array_type.loc8_20.1: type = array_type %int_5, %T.ref.loc8 [symbolic = %array_type.loc8_20.2 (constants.%array_type.ec2)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %w: ref @F.%array_type.loc8_20.2 (%array_type.ec2) = bind_ref_name w, %w.var
+// CHECK:STDOUT:     %w: ref @F.%array_type.loc8_20.2 (%array_type.ec2) = ref_binding w, %w.var
 // CHECK:STDOUT:     %impl.elem0.loc8: @F.%.loc8_3 (%.0ab) = impl_witness_access constants.%Destroy.impl_witness.aac, element0 [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.loc8 (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.1fc)]
 // CHECK:STDOUT:     %bound_method.loc8_3.1: <bound method> = bound_method %w.var, %impl.elem0.loc8
 // CHECK:STDOUT:     %specific_fn.loc8: <specific function> = specific_function %impl.elem0.loc8, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.daa) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.loc8 (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.deb)]
@@ -724,7 +724,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:       %.loc14_21.2: Core.IntLiteral = converted %N.ref, %.loc14_21.1 [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc14_21.2 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
 // CHECK:STDOUT:       %array_type.loc14_22.1: type = array_type %.loc14_21.2, %i32.loc14 [symbolic = %array_type.loc14_22.2 (constants.%array_type.120)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %k: ref @G.%array_type.loc14_22.2 (%array_type.120) = bind_ref_name k, %k.var
+// CHECK:STDOUT:     %k: ref @G.%array_type.loc14_22.2 (%array_type.120) = ref_binding k, %k.var
 // CHECK:STDOUT:     %impl.elem0.loc14_3: @G.%.loc14_3 (%.728) = impl_witness_access constants.%Destroy.impl_witness.349, element0 [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.0e5)]
 // CHECK:STDOUT:     %bound_method.loc14_3.1: <bound method> = bound_method %k.var, %impl.elem0.loc14_3
 // CHECK:STDOUT:     %specific_fn.loc14_3: <specific function> = specific_function %impl.elem0.loc14_3, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.8b7) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.f2e)]

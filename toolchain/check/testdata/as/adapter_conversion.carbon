@@ -204,7 +204,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:     %b_val.patt: %pattern_type.049 = value_binding_pattern b_val [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.ref.loc22: type = name_ref B, %B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %b_val: %B = bind_val_name b_val, @__global_init.%.loc22_22.2
+// CHECK:STDOUT:   %b_val: %B = value_binding b_val, @__global_init.%.loc22_22.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b_ptr.patt: %pattern_type.960 = value_binding_pattern b_ptr [concrete]
 // CHECK:STDOUT:   }
@@ -212,14 +212,14 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:     %B.ref.loc23: type = name_ref B, %B.decl [concrete = constants.%B]
 // CHECK:STDOUT:     %ptr: type = ptr_type %B.ref.loc23 [concrete = constants.%ptr.e79]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b_ptr: %ptr.e79 = bind_val_name b_ptr, @__global_init.%addr
+// CHECK:STDOUT:   %b_ptr: %ptr.e79 = value_binding b_ptr, @__global_init.%addr
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b_factory.patt: %pattern_type.049 = ref_binding_pattern b_factory [concrete]
 // CHECK:STDOUT:     %b_factory.var_patt: %pattern_type.049 = var_pattern %b_factory.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_factory.var: ref %B = var %b_factory.var_patt [concrete]
 // CHECK:STDOUT:   %B.ref.loc25: type = name_ref B, %B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %b_factory: ref %B = bind_ref_name b_factory, %b_factory.var [concrete = %b_factory.var]
+// CHECK:STDOUT:   %b_factory: ref %B = ref_binding b_factory, %b_factory.var [concrete = %b_factory.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -281,7 +281,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:     %a.patt: %pattern_type.c10 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %a: %A = bind_val_name a, @__global_init.%.loc9_23.2
+// CHECK:STDOUT:   %a: %A = value_binding a, @__global_init.%.loc9_23.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
 // CHECK:STDOUT:   }
@@ -289,7 +289,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n: %i32 = bind_val_name n, @__global_init.%.loc10_16.2
+// CHECK:STDOUT:   %n: %i32 = value_binding n, @__global_init.%.loc10_16.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -333,7 +333,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:     %d.patt: %pattern_type = value_binding_pattern d [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.ref: type = name_ref D, %D.decl [concrete = constants.%D]
-// CHECK:STDOUT:   %d: %D = bind_val_name d, @__global_init.%.loc10_15.2
+// CHECK:STDOUT:   %d: %D = value_binding d, @__global_init.%.loc10_15.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -388,7 +388,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %.loc14: %B = bind_value @__global_init.%.loc14_42.2
-// CHECK:STDOUT:   %b_value: %B = bind_val_name b_value, %.loc14
+// CHECK:STDOUT:   %b_value: %B = value_binding b_value, %.loc14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -454,7 +454,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %.loc14_45.1: %A = as_compatible %.loc14_23.2
 // CHECK:STDOUT:   %.loc14_45.2: %A = converted %.loc14_23.2, %.loc14_45.1
 // CHECK:STDOUT:   %A.ref.loc14_16: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %a_value: %A = bind_val_name a_value, %.loc14_45.2
+// CHECK:STDOUT:   %a_value: %A = value_binding a_value, %.loc14_45.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

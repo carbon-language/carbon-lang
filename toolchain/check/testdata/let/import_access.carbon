@@ -77,7 +77,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_22: %empty_tuple.type = converted @__global_init.%.loc4, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %v: %empty_tuple.type = bind_val_name v, %.loc4_22
+// CHECK:STDOUT:   %v: %empty_tuple.type = value_binding v, %.loc4_22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -111,7 +111,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT:     %.loc4_10.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_10.3: type = converted %.loc4_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v2: %empty_tuple.type = bind_val_name v2, @__global_init.%v.ref
+// CHECK:STDOUT:   %v2: %empty_tuple.type = value_binding v2, @__global_init.%v.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -140,7 +140,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT:     %.loc10_10.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_10.3: type = converted %.loc10_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v2: %empty_tuple.type = bind_val_name v2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %v2: %empty_tuple.type = value_binding v2, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -176,7 +176,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT:     %.loc10_10.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_10.3: type = converted %.loc10_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v2: %empty_tuple.type = bind_val_name v2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %v2: %empty_tuple.type = value_binding v2, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

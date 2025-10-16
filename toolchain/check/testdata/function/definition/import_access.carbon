@@ -224,7 +224,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_ref_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Def [from "def.carbon"];
@@ -259,7 +259,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_ref_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -298,7 +298,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_ref_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -338,7 +338,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_ref_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ForwardWithDef [from "forward_with_def.carbon"];
@@ -373,7 +373,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_ref_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -412,7 +412,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_ref_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -452,7 +452,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_ref_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT:   %Forward.decl: %Forward.type = fn_decl @Forward [concrete = constants.%Forward] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -491,7 +491,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_ref_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -530,7 +530,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_ref_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

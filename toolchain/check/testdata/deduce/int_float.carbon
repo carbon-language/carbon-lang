@@ -121,7 +121,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:       %N.ref.loc4: Core.IntLiteral = name_ref N, %N.loc4_6.2 [symbolic = %N.loc4_6.1 (constants.%N)]
 // CHECK:STDOUT:       %Int.loc4_42.2: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc4_42.1 (constants.%Int)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: @F.%Int.loc4_42.1 (%Int) = bind_val_name n, %n.param
+// CHECK:STDOUT:     %n: @F.%Int.loc4_42.1 (%Int) = value_binding n, %n.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -141,7 +141,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:       %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:       %i64: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %i64 = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: %i64 = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -276,7 +276,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:       %N.ref.loc4: Core.IntLiteral = name_ref N, %N.loc4_6.2 [symbolic = %N.loc4_6.1 (constants.%N)]
 // CHECK:STDOUT:       %Float.loc4_44.2: type = class_type @Float, @Float(constants.%N) [symbolic = %Float.loc4_44.1 (constants.%Float)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: @F.%Float.loc4_44.1 (%Float) = bind_val_name n, %n.param
+// CHECK:STDOUT:     %n: @F.%Float.loc4_44.1 (%Float) = value_binding n, %n.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -296,7 +296,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:       %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:       %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %f64.d77 = bind_val_name a, %a.param
+// CHECK:STDOUT:     %a: %f64.d77 = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }

@@ -85,7 +85,7 @@ fn B() {
 // CHECK:STDOUT:       %.loc4_21: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %struct_type.a.loc4_22.2: type = struct_type {.a: @A.%T.binding.as_type (%T.binding.as_type)} [symbolic = %struct_type.a.loc4_22.1 (constants.%struct_type.a)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @A.%struct_type.a.loc4_22.1 (%struct_type.a) = bind_val_name x, %x.param
+// CHECK:STDOUT:     %x: @A.%struct_type.a.loc4_22.1 (%struct_type.a) = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -178,7 +178,7 @@ fn B() {
 // CHECK:STDOUT:       %.loc4_25: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %struct_type.a.loc4_26.2: type = struct_type {.a: @A.loc4.%T.binding.as_type (%T.binding.as_type)} [symbolic = %struct_type.a.loc4_26.1 (constants.%struct_type.a)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @A.loc4.%struct_type.a.loc4_26.1 (%struct_type.a) = bind_val_name x, %x.param
+// CHECK:STDOUT:     %x: @A.loc4.%struct_type.a.loc4_26.1 (%struct_type.a) = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT: }

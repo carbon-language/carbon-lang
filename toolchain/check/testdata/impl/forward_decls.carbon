@@ -650,7 +650,7 @@ interface I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc9_19: %empty_tuple.type = converted @__global_init.%.loc9, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %x: %empty_tuple.type = bind_val_name x, %.loc9_19
+// CHECK:STDOUT:   %x: %empty_tuple.type = value_binding x, %.loc9_19
 // CHECK:STDOUT:   impl_decl @C.as.I.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc11: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref.loc11: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
@@ -783,7 +783,7 @@ interface I {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc9_22: %empty_tuple.type = converted @__global_init.%.loc9, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %x: %empty_tuple.type = bind_val_name x, %.loc9_22
+// CHECK:STDOUT:   %x: %empty_tuple.type = value_binding x, %.loc9_22
 // CHECK:STDOUT:   impl_decl @C.as.I.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc11: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref.loc11: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
@@ -894,7 +894,7 @@ interface I {
 // CHECK:STDOUT:     %.loc13_16.2: type = converted %.loc13_11, %as_type [concrete = constants.%C]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%I.impl_witness, element0 [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: <error> = bind_val_name x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x: <error> = value_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   impl_decl @C.as.I.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc22: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref.loc22: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
@@ -1254,7 +1254,7 @@ interface I {
 // CHECK:STDOUT:       %.loc8_12.2: %I.type = converted %D.ref.loc8, %I.facet.loc8 [concrete = constants.%I.facet]
 // CHECK:STDOUT:       %C.loc8: type = class_type @C, @C(constants.%I.facet) [concrete = constants.%C.cc1]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x.loc8: %C.cc1 = bind_val_name x, %x.param.loc8
+// CHECK:STDOUT:     %x.loc8: %C.cc1 = value_binding x, %x.param.loc8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl.loc10: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @D.as.I.impl [concrete] {} {
@@ -1282,7 +1282,7 @@ interface I {
 // CHECK:STDOUT:       %.loc14_12.2: %I.type = converted %D.ref.loc14, %I.facet.loc14 [concrete = constants.%I.facet]
 // CHECK:STDOUT:       %C.loc14: type = class_type @C, @C(constants.%I.facet) [concrete = constants.%C.cc1]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x.loc14: %C.cc1 = bind_val_name x, %x.param.loc14
+// CHECK:STDOUT:     %x.loc14: %C.cc1 = value_binding x, %x.param.loc14
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1602,7 +1602,7 @@ interface I {
 // CHECK:STDOUT:       %U.as_type.loc7: type = facet_access_type %U.ref.loc7 [symbolic = %U.binding.as_type (constants.%U.binding.as_type)]
 // CHECK:STDOUT:       %.loc7_16.2: type = converted %U.ref.loc7, %U.as_type.loc7 [symbolic = %U.binding.as_type (constants.%U.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %u.loc7: @G.%U.binding.as_type (%U.binding.as_type) = bind_val_name u, %u.param.loc7
+// CHECK:STDOUT:     %u.loc7: @G.%U.binding.as_type (%U.binding.as_type) = value_binding u, %u.param.loc7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc9: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   impl_decl @C.as.X.impl [concrete] {} {
@@ -1620,7 +1620,7 @@ interface I {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc25: type = name_ref C, file.%C.decl.loc9 [concrete = constants.%C]
-// CHECK:STDOUT:     %c: %C = bind_val_name c, %c.param
+// CHECK:STDOUT:     %c: %C = value_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Y.decl.loc33: type = interface_decl @Y [concrete = constants.%Y.type] {} {}
 // CHECK:STDOUT:   %F.decl.loc34: %F.type = fn_decl @F [concrete = constants.%F] {
@@ -1648,7 +1648,7 @@ interface I {
 // CHECK:STDOUT:       %U.as_type.loc35: type = facet_access_type %U.ref.loc35 [symbolic = %U.binding.as_type (constants.%U.binding.as_type)]
 // CHECK:STDOUT:       %.loc35_16.2: type = converted %U.ref.loc35, %U.as_type.loc35 [symbolic = %U.binding.as_type (constants.%U.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %u.loc35: @G.%U.binding.as_type (%U.binding.as_type) = bind_val_name u, %u.param.loc35
+// CHECK:STDOUT:     %u.loc35: @G.%U.binding.as_type (%U.binding.as_type) = value_binding u, %u.param.loc35
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @C.as.Y.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc36: type = name_ref C, file.%C.decl.loc9 [concrete = constants.%C]

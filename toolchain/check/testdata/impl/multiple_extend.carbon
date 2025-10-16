@@ -214,7 +214,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc21: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %c: %C = bind_val_name c, %c.param
+// CHECK:STDOUT:     %c: %C = value_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -379,7 +379,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %d.param: %D = value_param call_param0
 // CHECK:STDOUT:     %D.ref.loc21: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:     %d: %D = bind_val_name d, %d.param
+// CHECK:STDOUT:     %d: %D = value_binding d, %d.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -527,7 +527,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %E = value_param call_param0
 // CHECK:STDOUT:     %E.ref.loc19: type = name_ref E, file.%E.decl [concrete = constants.%E]
-// CHECK:STDOUT:     %e: %E = bind_val_name e, %e.param
+// CHECK:STDOUT:     %e: %E = value_binding e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -666,7 +666,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %l.param: %L = value_param call_param0
 // CHECK:STDOUT:     %L.ref.loc19: type = name_ref L, file.%L.decl [concrete = constants.%L]
-// CHECK:STDOUT:     %l: %L = bind_val_name l, %l.param
+// CHECK:STDOUT:     %l: %L = value_binding l, %l.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -807,7 +807,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %o.param: %O = value_param call_param0
 // CHECK:STDOUT:     %O.ref.loc27: type = name_ref O, file.%O.decl [concrete = constants.%O]
-// CHECK:STDOUT:     %o: %O = bind_val_name o, %o.param
+// CHECK:STDOUT:     %o: %O = value_binding o, %o.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

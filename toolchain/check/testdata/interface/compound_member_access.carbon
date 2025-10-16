@@ -547,7 +547,7 @@ fn Works() {
 // CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %.loc8_23.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @Simple3.%T.binding.as_type (%T.binding.as_type) = bind_val_name x, %x.param
+// CHECK:STDOUT:     %x: @Simple3.%T.binding.as_type (%T.binding.as_type) = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Compound3.decl: %Compound3.type = fn_decl @Compound3 [concrete = constants.%Compound3] {
 // CHECK:STDOUT:     %V.patt: %pattern_type.4d9 = symbolic_binding_pattern V, 0 [concrete]
@@ -565,7 +565,7 @@ fn Works() {
 // CHECK:STDOUT:       %V.as_type: type = facet_access_type %V.ref [symbolic = %V.binding.as_type (constants.%V.binding.as_type)]
 // CHECK:STDOUT:       %.loc14_25.2: type = converted %V.ref, %V.as_type [symbolic = %V.binding.as_type (constants.%V.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %y: @Compound3.%V.binding.as_type (%V.binding.as_type) = bind_val_name y, %y.param
+// CHECK:STDOUT:     %y: @Compound3.%V.binding.as_type (%V.binding.as_type) = value_binding y, %y.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -730,7 +730,7 @@ fn Works() {
 // CHECK:STDOUT:       %T.as_type.loc9_23: type = facet_access_type %T.ref.loc9_23 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %.loc9_23.2: type = converted %T.ref.loc9_23, %T.as_type.loc9_23 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @Simple4.%T.binding.as_type (%T.binding.as_type) = bind_val_name x, %x.param
+// CHECK:STDOUT:     %x: @Simple4.%T.binding.as_type (%T.binding.as_type) = value_binding x, %x.param
 // CHECK:STDOUT:     %p.param: @Simple4.%ptr.loc9_30.1 (%ptr.24e2cb.2) = value_param call_param1
 // CHECK:STDOUT:     %.loc9_30.1: type = splice_block %ptr.loc9_30.2 [symbolic = %ptr.loc9_30.1 (constants.%ptr.24e2cb.2)] {
 // CHECK:STDOUT:       %T.ref.loc9_29: %L1.type = name_ref T, %T.loc9_12.2 [symbolic = %T.loc9_12.1 (constants.%T)]
@@ -738,7 +738,7 @@ fn Works() {
 // CHECK:STDOUT:       %.loc9_30.2: type = converted %T.ref.loc9_29, %T.as_type.loc9_30 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %ptr.loc9_30.2: type = ptr_type %.loc9_30.2 [symbolic = %ptr.loc9_30.1 (constants.%ptr.24e2cb.2)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: @Simple4.%ptr.loc9_30.1 (%ptr.24e2cb.2) = bind_val_name p, %p.param
+// CHECK:STDOUT:     %p: @Simple4.%ptr.loc9_30.1 (%ptr.24e2cb.2) = value_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Compound4.decl: %Compound4.type = fn_decl @Compound4 [concrete = constants.%Compound4] {
 // CHECK:STDOUT:     %V.patt: %pattern_type.e3e = symbolic_binding_pattern V, 0 [concrete]
@@ -758,7 +758,7 @@ fn Works() {
 // CHECK:STDOUT:       %V.as_type.loc15_25: type = facet_access_type %V.ref.loc15_25 [symbolic = %V.binding.as_type (constants.%V.binding.as_type)]
 // CHECK:STDOUT:       %.loc15_25.2: type = converted %V.ref.loc15_25, %V.as_type.loc15_25 [symbolic = %V.binding.as_type (constants.%V.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %y: @Compound4.%V.binding.as_type (%V.binding.as_type) = bind_val_name y, %y.param
+// CHECK:STDOUT:     %y: @Compound4.%V.binding.as_type (%V.binding.as_type) = value_binding y, %y.param
 // CHECK:STDOUT:     %p.param: @Compound4.%ptr.loc15_32.1 (%ptr.24e2cb.3) = value_param call_param1
 // CHECK:STDOUT:     %.loc15_32.1: type = splice_block %ptr.loc15_32.2 [symbolic = %ptr.loc15_32.1 (constants.%ptr.24e2cb.3)] {
 // CHECK:STDOUT:       %V.ref.loc15_31: %L1.type = name_ref V, %V.loc15_14.2 [symbolic = %V.loc15_14.1 (constants.%V)]
@@ -766,7 +766,7 @@ fn Works() {
 // CHECK:STDOUT:       %.loc15_32.2: type = converted %V.ref.loc15_31, %V.as_type.loc15_32 [symbolic = %V.binding.as_type (constants.%V.binding.as_type)]
 // CHECK:STDOUT:       %ptr.loc15_32.2: type = ptr_type %.loc15_32.2 [symbolic = %ptr.loc15_32.1 (constants.%ptr.24e2cb.3)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: @Compound4.%ptr.loc15_32.1 (%ptr.24e2cb.3) = bind_val_name p, %p.param
+// CHECK:STDOUT:     %p: @Compound4.%ptr.loc15_32.1 (%ptr.24e2cb.3) = value_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -782,7 +782,7 @@ fn Works() {
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       %.loc4_15.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @L1.R1.%Self.binding.as_type (%Self.binding.as_type) = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: @L1.R1.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %L1.assoc_type = assoc_entity element0, %L1.R1.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %L1.S1.decl: %L1.S1.type = fn_decl @L1.S1 [concrete = constants.%L1.S1] {
@@ -797,7 +797,7 @@ fn Works() {
 // CHECK:STDOUT:       %.loc5_24.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       %ptr.loc5_24.2: type = ptr_type %.loc5_24.2 [symbolic = %ptr.loc5_24.1 (constants.%ptr.24e2cb.1)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @L1.S1.%ptr.loc5_24.1 (%ptr.24e2cb.1) = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: @L1.S1.%ptr.loc5_24.1 (%ptr.24e2cb.1) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc1: %L1.assoc_type = assoc_entity element1, %L1.S1.decl [concrete = constants.%assoc1]
 // CHECK:STDOUT:
@@ -1050,7 +1050,7 @@ fn Works() {
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       %.loc5_15.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @L2.R2.%Self.binding.as_type (%Self.binding.as_type) = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: @L2.R2.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %L2.assoc_type = assoc_entity element0, %L2.R2.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %L2.S2.decl: %L2.S2.type = fn_decl @L2.S2 [concrete = constants.%L2.S2] {
@@ -1065,7 +1065,7 @@ fn Works() {
 // CHECK:STDOUT:       %.loc6_24.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       %ptr.loc6_24.2: type = ptr_type %.loc6_24.2 [symbolic = %ptr.loc6_24.1 (constants.%ptr.ab04da.1)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @L2.S2.%ptr.loc6_24.1 (%ptr.ab04da.1) = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: @L2.S2.%ptr.loc6_24.1 (%ptr.ab04da.1) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc1: %L2.assoc_type = assoc_entity element1, %L2.S2.decl [concrete = constants.%assoc1]
 // CHECK:STDOUT:

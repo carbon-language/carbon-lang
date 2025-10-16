@@ -85,7 +85,7 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.98f = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: type = bind_val_name x, @__global_init.%i32.loc15
+// CHECK:STDOUT:   %x: type = value_binding x, @__global_init.%i32.loc15
 // CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [concrete = constants.%Six] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0 [concrete]
@@ -98,7 +98,7 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:     %y.patt: %pattern_type.98f = value_binding_pattern y [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.Self.1: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:   %y: type = bind_val_name y, @__global_init.%i32.loc27
+// CHECK:STDOUT:   %y: type = value_binding y, @__global_init.%i32.loc27
 // CHECK:STDOUT:   %HalfDozen.decl: %HalfDozen.type = fn_decl @HalfDozen [concrete = constants.%HalfDozen] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0 [concrete]
@@ -111,7 +111,7 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:     %z.patt: %pattern_type.98f = value_binding_pattern z [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.Self.2: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:   %z: type = bind_val_name z, @__global_init.%i32.loc39
+// CHECK:STDOUT:   %z: type = value_binding z, @__global_init.%i32.loc39
 // CHECK:STDOUT:   %FirstPerfectNumber.decl: %FirstPerfectNumber.type = fn_decl @FirstPerfectNumber [concrete = constants.%FirstPerfectNumber] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0 [concrete]

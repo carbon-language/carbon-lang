@@ -139,7 +139,7 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:       %i32.loc9_15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %Class: type = class_type @Class, @Class(constants.%i32) [concrete = constants.%Class.247]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %Class.247 = bind_val_name c, %c.param
+// CHECK:STDOUT:     %c: %Class.247 = value_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -167,7 +167,7 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:       %.loc13_31.2: type = converted %T.ref.loc13_30, %T.as_type.loc13_31 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %Class.loc13_31.2: type = class_type @Class, @Class(constants.%T.binding.as_type) [symbolic = %Class.loc13_31.1 (constants.%Class.09119d.1)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: @G.%Class.loc13_31.1 (%Class.09119d.1) = bind_val_name c, %c.param
+// CHECK:STDOUT:     %c: @G.%Class.loc13_31.1 (%Class.09119d.1) = value_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref @G.%T.binding.as_type (%T.binding.as_type) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @G.%T.binding.as_type (%T.binding.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -195,7 +195,7 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:       %.loc17_31.2: type = converted %U.ref.loc17_30, %U.as_type.loc17_31 [symbolic = %U.binding.as_type (constants.%U.binding.as_type.2a0)]
 // CHECK:STDOUT:       %Class.loc17_31.2: type = class_type @Class, @Class(constants.%U.binding.as_type.2a0) [symbolic = %Class.loc17_31.1 (constants.%Class.09119d.2)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: @H.%Class.loc17_31.1 (%Class.09119d.2) = bind_val_name c, %c.param
+// CHECK:STDOUT:     %c: @H.%Class.loc17_31.1 (%Class.09119d.2) = value_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref @H.%U.binding.as_type (%U.binding.as_type.2a0) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @H.%U.binding.as_type (%U.binding.as_type.2a0) = return_slot %return.param
 // CHECK:STDOUT:   }

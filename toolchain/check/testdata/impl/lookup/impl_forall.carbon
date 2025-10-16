@@ -173,7 +173,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, @A.as.I.impl.%A.loc12_27.2 [symbolic = %A (constants.%A.13025a.2)]
 // CHECK:STDOUT:         %ptr.loc13_23.2: type = ptr_type %Self.ref [symbolic = %ptr.loc13_23.1 (constants.%ptr.ca9f10.1)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @A.as.I.impl.F.%ptr.loc13_23.1 (%ptr.ca9f10.1) = bind_val_name self, %self.param
+// CHECK:STDOUT:       %self: @A.as.I.impl.F.%ptr.loc13_23.1 (%ptr.ca9f10.1) = value_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @A.as.I.impl.F.%ptr.loc13_32.1 (%ptr.79f131.2) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @A.as.I.impl.F.%ptr.loc13_32.1 (%ptr.79f131.2) = return_slot %return.param
 // CHECK:STDOUT:     }

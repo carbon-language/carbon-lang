@@ -152,7 +152,7 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:       %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:       %array_type: type = array_type %int_3, %i32.loc17 [concrete = constants.%array_type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: %array_type = bind_val_name b, %b.param
+// CHECK:STDOUT:     %b: %array_type = value_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -191,7 +191,7 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:     %i32.loc23_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc23: type = ptr_type %i32.loc23_11 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pb: ref %ptr.235 = bind_ref_name pb, %pb.var
+// CHECK:STDOUT:   %pb: ref %ptr.235 = ref_binding pb, %pb.var
 // CHECK:STDOUT:   %b.ref.loc28: %array_type = name_ref b, %b
 // CHECK:STDOUT:   %int_0.loc28: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %int_32.loc28: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -247,7 +247,7 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:     %i32.loc36_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc36: type = ptr_type %i32.loc36_11 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pf: ref %ptr.235 = bind_ref_name pf, %pf.var
+// CHECK:STDOUT:   %pf: ref %ptr.235 = ref_binding pf, %pf.var
 // CHECK:STDOUT:   %F.ref.loc41: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc41_5.1: ref %array_type = temporary_storage
 // CHECK:STDOUT:   %F.call.loc41: init %array_type = call %F.ref.loc41() to %.loc41_5.1

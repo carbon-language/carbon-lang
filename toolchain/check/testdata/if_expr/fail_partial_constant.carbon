@@ -89,7 +89,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:       %.loc4_30.2: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:       %.loc4_30.3: type = converted %Bool.call, %.loc4_30.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: bool = bind_val_name b, %b.param
+// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -123,7 +123,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   br !.loc12_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc12_7:
-// CHECK:STDOUT:   %v: ref <error> = bind_ref_name v, <error> [concrete = <error>]
+// CHECK:STDOUT:   %v: ref <error> = ref_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -165,7 +165,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:     %t.param_patt: %pattern_type.98f = value_param_pattern %t.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %t.param: type = value_param call_param0
-// CHECK:STDOUT:     %t: type = bind_val_name t, %t.param
+// CHECK:STDOUT:     %t: type = value_binding t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -198,7 +198,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   br !.loc9_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc9_7:
-// CHECK:STDOUT:   %v: ref <error> = bind_ref_name v, <error> [concrete = <error>]
+// CHECK:STDOUT:   %v: ref <error> = ref_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: <error> = ref_binding_pattern w [concrete]
 // CHECK:STDOUT:     %w.var_patt: <error> = var_pattern %w.patt [concrete]
@@ -226,7 +226,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   br !.loc14_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc14_7:
-// CHECK:STDOUT:   %w: ref <error> = bind_ref_name w, <error> [concrete = <error>]
+// CHECK:STDOUT:   %w: ref <error> = ref_binding w, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

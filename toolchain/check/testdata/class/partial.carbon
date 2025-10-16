@@ -189,7 +189,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %.loc6_9.2: type = partial_type %C.ref [concrete = constants.%.43f]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %.43f = bind_val_name p, %p.param
+// CHECK:STDOUT:     %p: %.43f = value_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -218,7 +218,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %.loc6_9.2: type = partial_type %C.ref [concrete = constants.%.43f]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %.43f = bind_val_name p, %p.param
+// CHECK:STDOUT:     %p: %.43f = value_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -247,7 +247,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %.loc10_9.2: type = partial_type %C.ref [concrete = constants.%.43f]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %.43f = bind_val_name p, %p.param
+// CHECK:STDOUT:     %p: %.43f = value_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -276,7 +276,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:       %.loc13_9.2: type = partial_type %Derived.ref [concrete = constants.%.604]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %.604 = bind_val_name p, %p.param
+// CHECK:STDOUT:     %p: %.604 = value_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -305,7 +305,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %.loc13_9.2: type = partial_type %C.ref [concrete = constants.%.43f]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %.43f = bind_val_name p, %p.param
+// CHECK:STDOUT:     %p: %.43f = value_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -339,7 +339,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:       %.loc10_9.2: type = converted %.loc10_22, constants.%tuple.type.56b [concrete = constants.%tuple.type.56b]
 // CHECK:STDOUT:       %.loc10_9.3: type = partial_type %.loc10_9.2 [concrete = constants.%.62c]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %.62c = bind_val_name p, %p.param
+// CHECK:STDOUT:     %p: %.62c = value_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -370,7 +370,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:       %struct_type.x: type = struct_type {.x: %C} [concrete = constants.%struct_type.x]
 // CHECK:STDOUT:       %.loc10_9.2: type = partial_type %struct_type.x [concrete = constants.%.1ed]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %.1ed = bind_val_name p, %p.param
+// CHECK:STDOUT:     %p: %.1ed = value_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -401,7 +401,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:       %.loc10_18: type = partial_type %C.ref [concrete = constants.%.43f]
 // CHECK:STDOUT:       %.loc10_9.2: type = partial_type %.loc10_18 [concrete = constants.%.a34]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %.a34 = bind_val_name p, %p.param
+// CHECK:STDOUT:     %p: %.a34 = value_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

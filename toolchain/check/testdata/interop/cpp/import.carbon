@@ -132,7 +132,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref <error> = var %x.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %MyStructAlias.ref: type = name_ref MyStructAlias, imports.%Main.MyStructAlias [concrete = <error>]
-// CHECK:STDOUT:   %x: ref <error> = bind_ref_name x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x: ref <error> = ref_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   %x.ref: ref <error> = name_ref x, %x [concrete = <error>]
 // CHECK:STDOUT:   %Foo.ref: <error> = name_ref Foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>

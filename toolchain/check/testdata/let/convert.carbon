@@ -75,7 +75,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc8_28.3: %i32 = bind_value %tuple.elem2.loc8
 // CHECK:STDOUT:   %tuple: %tuple.type.189 = tuple_value (%.loc8_28.1, %.loc8_28.2, %.loc8_28.3)
 // CHECK:STDOUT:   %.loc8_28.4: %tuple.type.189 = converted %v.ref, %tuple
-// CHECK:STDOUT:   %w: %tuple.type.189 = bind_val_name w, %.loc8_28.4
+// CHECK:STDOUT:   %w: %tuple.type.189 = value_binding w, %.loc8_28.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

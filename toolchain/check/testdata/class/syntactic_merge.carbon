@@ -1160,7 +1160,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:       %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Base.ref [concrete = constants.%ptr.11f]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: %ptr.11f = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: %ptr.11f = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1178,7 +1178,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Self.ref [concrete = constants.%ptr.11f]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: %ptr.11f = bind_val_name self, %self.param
+// CHECK:STDOUT:     %self: %ptr.11f = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
