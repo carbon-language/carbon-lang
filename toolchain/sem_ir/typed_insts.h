@@ -1296,6 +1296,7 @@ struct PointerType {
 // See AnyBindName for member documentation.
 // TODO: rename other classes for consistency:
 //   AnyBindName -> AnyBinding
+//   AnyBindNameOrExportDecl -> AnyBindingOrExportDecl
 //   BindSymbolicName -> SymbolicBinding
 //   BindAlias -> AliasBinding
 //   BindValue -> BorrowValue   (see also proposal #6231)
