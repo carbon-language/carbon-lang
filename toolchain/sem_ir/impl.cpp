@@ -9,7 +9,7 @@
 namespace Carbon::SemIR {
 
 ImplStore::ImplStore(File& sem_ir)
-    : sem_ir_(sem_ir), values_(IdTag(sem_ir.check_ir_id().index, 0)) {}
+    : sem_ir_(sem_ir), values_(sem_ir.check_ir_id()) {}
 
 auto ImplStore::GetOrAddLookupBucket(const Impl& impl) -> LookupBucketRef {
   auto self_id = sem_ir_.constant_values().GetConstantInstId(impl.self_id);

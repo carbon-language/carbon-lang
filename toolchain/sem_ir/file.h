@@ -21,6 +21,7 @@
 #include "toolchain/sem_ir/associated_constant.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/cpp_global_var.h"
 #include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/entity_name.h"
 #include "toolchain/sem_ir/facet_type_info.h"
@@ -154,6 +155,10 @@ class File : public Printable<File> {
 
   auto entity_names() -> EntityNameStore& { return entity_names_; }
   auto entity_names() const -> const EntityNameStore& { return entity_names_; }
+  auto cpp_global_vars() -> CppGlobalVarStore& { return cpp_global_vars_; }
+  auto cpp_global_vars() const -> const CppGlobalVarStore& {
+    return cpp_global_vars_;
+  }
   auto functions() -> FunctionStore& { return functions_; }
   auto functions() const -> const FunctionStore& { return functions_; }
   auto cpp_overload_sets() -> CppOverloadSetStore& {
@@ -300,6 +305,9 @@ class File : public Printable<File> {
 
   // Storage for EntityNames.
   EntityNameStore entity_names_;
+
+  // For imported C++ global variables, the Clang decl to use for mangling.
+  CppGlobalVarStore cpp_global_vars_;
 
   // Storage for callable objects.
   FunctionStore functions_;
