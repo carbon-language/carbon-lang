@@ -1346,6 +1346,9 @@ tightly coupled, it's possible to have one interface gain the members of and
 _provide_ an implementation for the other interface instead, with
 `extend impl as`.
 
+Just as when used in a class, the implied `Self` between `extend impl` and `as`
+must be omitted.
+
 When an interface `A` contains `extend impl as B`, implementing `A` will require
 writing an implementation of all members of `B` inside the `impl` of `A`. And
 anything that implements `A` will implicitly also implement `B`, using the
