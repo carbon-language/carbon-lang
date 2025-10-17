@@ -22,6 +22,8 @@ interface Z(T:! type) {}
 // --- interface_z_with_impl.carbon
 library "[[@TEST_NAME]]";
 
+// Add an extra unused interface to bump `Z`'s id up so that it doesn't
+// accidentally match the id assigned to the imported copy of `Z`.
 interface Other(T:! type) {}
 
 interface Z(T:! type) {}
