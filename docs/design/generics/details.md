@@ -1384,7 +1384,7 @@ impl forall [U:! B] U as A {
 ```
 
 The implied `impl` definition can be made `final` by writing the reference to
-`B` as `extend final impl as B`.
+`A` as `extend final impl as A`.
 
 Note that this is supported only in an `interface` and not in a named
 [`constraint`](#named-constraints).
