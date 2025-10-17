@@ -4,10 +4,9 @@
 
 #include "toolchain/driver/build_runtimes_subcommand.h"
 
-#include <variant>
-
 #include "llvm/TargetParser/Triple.h"
 #include "toolchain/driver/clang_runner.h"
+#include "toolchain/driver/clang_runtimes.h"
 
 namespace Carbon {
 
@@ -92,8 +91,13 @@ auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
                : Runtimes::Make(explicit_output_path, driver_env.vlog_stream));
   CARBON_ASSIGN_OR_RETURN(auto tmp_dir, Filesystem::MakeTmpDir());
 
-  return runner.BuildTargetResourceDir(features, runtimes, tmp_dir.abs_path(),
-                                       *driver_env.thread_pool);
+  ClangResourceDirBuilder resource_dir_builder(&runner, driver_env.thread_pool,
+                                               llvm::Triple(features.target),
+                                               &runtimes);
+
+  CARBON_RETURN_IF_ERROR(std::move(resource_dir_builder).Wait());
+
+  return runtimes.base_path();
 }
 
 }  // namespace Carbon

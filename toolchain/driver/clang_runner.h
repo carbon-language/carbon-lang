@@ -6,11 +6,13 @@
 #define CARBON_TOOLCHAIN_DRIVER_CLANG_RUNNER_H_
 
 #include <filesystem>
+#include <optional>
 
-#include "clang/Basic/DiagnosticIDs.h"
 #include "common/error.h"
 #include "common/ostream.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ThreadPool.h"
 #include "llvm/Support/VirtualFileSystem.h"
@@ -78,15 +80,16 @@ class ClangRunner : ToolRunnerBase {
   // whether than Clang invocation succeeded is returned.
   auto Run(llvm::ArrayRef<llvm::StringRef> args,
            Runtimes::Cache& runtimes_cache,
-           llvm::ThreadPoolInterface& runtimes_build_thread_pool)
-      -> ErrorOr<bool>;
+           llvm::ThreadPoolInterface& runtimes_build_thread_pool,
+           bool enable_leaking = false) -> ErrorOr<bool>;
 
   // Run Clang with the provided arguments and prebuilt runtimes.
   //
   // Similar to `Run`, but requires and uses pre-built runtimes rather than a
   // cache or building them on demand.
   auto RunWithPrebuiltRuntimes(llvm::ArrayRef<llvm::StringRef> args,
-                               Runtimes& prebuilt_runtimes) -> ErrorOr<bool>;
+                               Runtimes& prebuilt_runtimes,
+                               bool enable_leaking = false) -> ErrorOr<bool>;
 
   // Run Clang with the provided arguments and without any target runtimes.
   //
@@ -97,68 +100,38 @@ class ClangRunner : ToolRunnerBase {
   //
   // This function simply returns true or false depending on whether Clang runs
   // successfully, as it should display any needed error messages.
-  auto RunWithNoRuntimes(llvm::ArrayRef<llvm::StringRef> args) -> bool;
-
-  // Builds the target-specific resource directory for Clang.
-  //
-  // There is a resource directory installed along side the Clang binary that
-  // contains all the target independent files such as headers. However, for
-  // target-specific files like runtimes, we build those on demand here and
-  // return the path.
-  auto BuildTargetResourceDir(const Runtimes::Cache::Features& features,
-                              Runtimes& runtimes,
-                              const std::filesystem::path& tmp_path,
-                              llvm::ThreadPoolInterface& threads)
-      -> ErrorOr<std::filesystem::path>;
-
-  // Enable leaking memory.
-  //
-  // Clang can avoid deallocating some of its memory to improve compile time.
-  // However, this isn't compatible with library-based invocations. When using
-  // the runner in a context where memory leaks are acceptable, such as from a
-  // command line driver, you can use this to enable that leaking behavior. Note
-  // that this will not override _explicit_ `args` in a run invocation that
-  // cause leaking, it will merely disable Clang's libraries injecting that
-  // behavior.
-  auto EnableLeakingMemory() -> void { enable_leaking_ = true; }
+  auto RunWithNoRuntimes(llvm::ArrayRef<llvm::StringRef> args,
+                         bool enable_leaking = false) -> bool;
 
  private:
+  friend class ClangRuntimesBuilderBase;
+
   // Emulates `cc1_main` but in a way that doesn't assume it is running in the
   // main thread and can more easily fit into library calls to do compiles.
   //
   // TODO: Much of the logic here should be factored out of the CC1
   // implementation in Clang's driver and into a reusable part of its libraries.
   // That should allow reducing the code here to a minimal amount.
-  auto RunCC1(llvm::SmallVectorImpl<const char*>& cc1_args) -> int;
+  auto RunCC1(llvm::SmallVectorImpl<const char*>& cc1_args, bool enable_leaking)
+      -> int;
 
   // Handles building the Clang driver and passing the arguments down to it.
   auto RunInternal(llvm::ArrayRef<llvm::StringRef> args, llvm::StringRef target,
-                   std::optional<llvm::StringRef> target_resource_dir_path)
-      -> bool;
-
-  // Helper to compile a single file of the CRT runtimes.
-  auto BuildCrtFile(llvm::StringRef target, llvm::StringRef src_file,
-                    const std::filesystem::path& out_path) -> void;
+                   std::optional<llvm::StringRef> target_resource_dir_path,
+                   bool enable_leaking) -> bool;
 
   // Returns the target-specific source files for the builtins runtime library.
   auto CollectBuiltinsSrcFiles(const llvm::Triple& target_triple)
       -> llvm::SmallVector<llvm::StringRef>;
 
-  // Helper to compile a single file of the compiler builtins runtimes.
-  auto BuildBuiltinsFile(llvm::StringRef target, llvm::StringRef src_file,
-                         const std::filesystem::path& out_path) -> void;
-
   // Builds the builtins runtime library into the provided archive file path,
   // using the provided objects path for intermediate object files.
   auto BuildBuiltinsLib(llvm::StringRef target,
                         const llvm::Triple& target_triple,
-                        const std::filesystem::path& tmp_path,
-                        Filesystem::DirRef lib_dir,
-                        llvm::ThreadPoolInterface& threads) -> ErrorOr<Success>;
+                        const std::filesystem::path& runtimes_path,
+                        llvm::ThreadPoolTaskGroup& threads) -> ErrorOr<Success>;
 
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
-
-  bool enable_leaking_ = false;
 };
 
 }  // namespace Carbon
