@@ -210,6 +210,115 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::CompileMember(
   return std::move(*obj_result);
 }
 
+template <Runtimes::Component Component>
+ClangArchiveRuntimesBuilder<Component>::ClangArchiveRuntimesBuilder(
+    ClangRunner* clang, llvm::ThreadPoolInterface* threads,
+    llvm::Triple target_triple, Runtimes* runtimes)
+    : ClangRuntimesBuilderBase(clang, threads, std::move(target_triple)) {
+  // Ensure we're on a platform where we _can_ build a working runtime.
+  if (target_triple_.isOSWindows()) {
+    result_ =
+        Error("TODO: Windows runtimes are untested and not yet supported.");
+    return;
+  }
+
+  auto build_dir_or_error = runtimes->Build(Component);
+  if (!build_dir_or_error.ok()) {
+    result_ = std::move(build_dir_or_error).error();
+    return;
+  }
+  auto build_dir = *(std::move(build_dir_or_error));
+  if (std::holds_alternative<std::filesystem::path>(build_dir)) {
+    // Found cached build.
+    result_ = std::get<std::filesystem::path>(std::move(build_dir));
+    return;
+  }
+
+  if constexpr (Component == Runtimes::LibUnwind) {
+    srcs_path_ = installation().libunwind_path();
+    include_path_ = installation().libunwind_path() / "include";
+    archive_path_ = std::filesystem::path("lib") / "libunwind.a";
+  } else {
+    static_assert(false,
+                  "Invalid runtimes component for an archive runtime builder.");
+  }
+
+  runtimes_builder_ = std::get<Runtimes::Builder>(std::move(build_dir));
+  archive_.emplace(this, archive_path_, srcs_path_, CollectSrcFiles(),
+                   CollectCflags());
+  tasks_.async([this]() mutable { Setup(); });
+}
+
+template <Runtimes::Component Component>
+auto ClangArchiveRuntimesBuilder<Component>::CollectSrcFiles()
+    -> llvm::SmallVector<llvm::StringRef> {
+  if constexpr (Component == Runtimes::LibUnwind) {
+    return llvm::SmallVector<llvm::StringRef>(llvm::make_filter_range(
+        RuntimeSources::LibunwindSrcs, [](llvm::StringRef src) {
+          return src.ends_with(".c") || src.ends_with(".cpp") ||
+                 src.ends_with(".S");
+        }));
+  } else {
+    static_assert(false,
+                  "Invalid runtimes component for an archive runtime builder.");
+  }
+}
+
+template <Runtimes::Component Component>
+auto ClangArchiveRuntimesBuilder<Component>::CollectCflags()
+    -> llvm::SmallVector<llvm::StringRef> {
+  if constexpr (Component == Runtimes::LibUnwind) {
+    return {
+        "-no-canonical-prefixes",
+        "-O3",
+        "-fPIC",
+        "-funwind-tables",
+        "-fno-exceptions",
+        "-fno-rtti",
+        "-nostdinc++",
+        "-I",
+        include_path_.native(),
+        "-D_LIBUNWIND_IS_NATIVE_ONLY",
+        "-w",
+    };
+  } else {
+    static_assert(false,
+                  "Invalid runtimes component for an archive runtime builder.");
+  }
+}
+
+template <Runtimes::Component Component>
+auto ClangArchiveRuntimesBuilder<Component>::Setup() -> void {
+  // Symlink the installation's `include` into the runtime.
+  CARBON_CHECK(include_path_.is_absolute(),
+               "Unexpected relative include path: {0}", include_path_);
+  if (auto result = runtimes_builder_->dir().Symlink("include", include_path_);
+      !result.ok()) {
+    result_ = std::move(result).error();
+    return;
+  }
+
+  // Finish building the runtime once the archive is built.
+  Latch::Handle latch_handle = step_counter_.Init(
+      [this]() mutable { tasks_.async([this]() mutable { Finish(); }); });
+
+  // Start building the archive itself with a handle to detect when complete.
+  archive_->Setup(std::move(latch_handle));
+}
+
+template <Runtimes::Component Component>
+auto ClangArchiveRuntimesBuilder<Component>::Finish() -> void {
+  CARBON_VLOG("Finished building {0}...\n", archive_path_);
+  if (!archive_->result().ok()) {
+    result_ = std::move(archive_->result()).error();
+    return;
+  }
+
+  result_ = (*std::move(runtimes_builder_)).Commit();
+}
+
+template class ClangArchiveRuntimesBuilder<Runtimes::LibUnwind>;
+
 ClangResourceDirBuilder::ClangResourceDirBuilder(
     ClangRunner* clang, llvm::ThreadPoolInterface* threads,
     llvm::Triple target_triple, Runtimes* runtimes)

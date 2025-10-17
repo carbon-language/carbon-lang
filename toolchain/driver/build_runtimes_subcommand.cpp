@@ -94,8 +94,12 @@ auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
   ClangResourceDirBuilder resource_dir_builder(&runner, driver_env.thread_pool,
                                                llvm::Triple(features.target),
                                                &runtimes);
+  ClangArchiveRuntimesBuilder<Runtimes::LibUnwind> lib_unwind_builder(
+      &runner, driver_env.thread_pool, llvm::Triple(features.target),
+      &runtimes);
 
   CARBON_RETURN_IF_ERROR(std::move(resource_dir_builder).Wait());
+  CARBON_RETURN_IF_ERROR(std::move(lib_unwind_builder).Wait());
 
   return runtimes.base_path();
 }

@@ -203,6 +203,57 @@ class ClangRuntimesBuilderBase::ArchiveBuilder {
   ErrorOr<Success> result_ = Error("No archive built!");
 };
 
+// A class template to build runtimes consisting of a single archive.
+//
+// The template argument comes from the `Runtimes::Component` enum, but is only
+// intended for Clang-runtimes that consist of a single archive.
+template <Runtimes::Component Component>
+class ClangArchiveRuntimesBuilder : public ClangRuntimesBuilderBase {
+ public:
+  // Constructing this class will attempt to build the `Component` archive into
+  // `runtimes`.
+  //
+  // If an existing build is found, it will immediately be available.
+  // Otherwise, constructing this class will schedule asynchronous work on
+  // `threads` to build the archive on-demand using `clang`.
+  //
+  // Once constructed, callers may call `Wait` (from the base class) to wait
+  // until the asynchronous work is complete and the runtimes are available. If
+  // they were already available, the call to `Wait` will not block.
+  ClangArchiveRuntimesBuilder(ClangRunner* clang,
+                              llvm::ThreadPoolInterface* threads,
+                              llvm::Triple target_triple, Runtimes* runtimes);
+
+ private:
+  // Helpers to compute the list of source files and compile flags for a
+  // particular archive. The implementations of these are expected to be
+  // specialized for each different `Component`.
+  auto CollectSrcFiles() -> llvm::SmallVector<llvm::StringRef>;
+  auto CollectCflags() -> llvm::SmallVector<llvm::StringRef>;
+
+  // Helper to encapsulate the initial, but still asynchronous setup work.
+  auto Setup() -> void;
+
+  // Helper to encapsulate the final asynchronous step in building the resource
+  // directory.
+  auto Finish() -> void;
+
+  // The root path used for any of the source files.
+  std::filesystem::path srcs_path_;
+
+  // The (absolute) include path used during the compilation of the source
+  // files.
+  std::filesystem::path include_path_;
+
+  // The relative archive path within the runtimes' build directory.
+  std::filesystem::path archive_path_;
+
+  // The archive builder if it is necessary to build the archive.
+  std::optional<ArchiveBuilder> archive_;
+};
+
+extern template class ClangArchiveRuntimesBuilder<Runtimes::LibUnwind>;
+
 // Builds the target-specific resource directory for Clang.
 //
 // There is a resource directory installed along side the Clang binary that

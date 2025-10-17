@@ -162,6 +162,14 @@ filegroup(
     srcs = CRT_FILES.values() + BUILTINS_FILEGROUPS.values(),
 )
 
+filegroup(
+    name = "libunwind",
+    srcs = [
+        "@llvm-project//libunwind:libunwind_hdrs",
+        "@llvm-project//libunwind:libunwind_srcs",
+    ],
+)
+
 # Given a root `prefix_root`, the hierarchy looks like:
 #
 # - prefix_root/bin: Binaries intended for direct use.
@@ -195,6 +203,7 @@ install_dirs = {
             is_driver = True,
         ),
         install_filegroup("core", "//core:prelude"),
+        install_filegroup("libunwind", ":libunwind"),
     ],
     "lib/carbon/llvm/bin": [install_symlink(
         name,
