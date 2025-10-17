@@ -904,9 +904,9 @@ same definition are equivalent even if they have different names. This is
 because types don't have to explicitly specify which named constraints they
 implement, types automatically implement any named constraints they can satisfy.
 
-A named constraint definition can contain interface requirements using
-`require ... impls` declarations and names using `alias` declarations. Note that
-this allows us to declare the aspects of a facet type directly.
+A named constraint definition can contain interface requirements using `require`
+... `impls` declarations and names using `alias` declarations. Note that this
+allows us to declare the aspects of a facet type directly.
 
 ```carbon
 constraint VectorLegoFish {
@@ -1202,7 +1202,7 @@ For example, in C++,
 requires all containers to also satisfy the requirements of
 `DefaultConstructible`, `CopyConstructible`, `Eq`, and `Swappable`. This is
 already a capability for [facet types in general](#facet-types). For consistency
-we use the same semantics and `require ... impls` syntax as we do for
+we use the same semantics and `require` ... `impls` syntax as we do for
 [named constraints](#named-constraints):
 
 ```carbon
@@ -1349,10 +1349,10 @@ _provide_ an implementation for the other interface instead, with
 Just as when used in a class, the implied `Self` between `extend impl` and `as`
 must be omitted.
 
-When an interface `A` contains `extend impl as B`, implementing `A` will require
-writing an implementation of all members of `B` inside the `impl` of `A`. And
-anything that implements `A` will implicitly also implement `B`, using the
-definitions from the `impl` of `A`. Here is an example:
+When an interface `B` contains `extend impl as A`, implementing `B` will require
+writing an implementation of all members of `A` inside the `impl` of `B`. And
+anything that implements `B` will implicitly also implement `A`, using the
+definitions from the `impl` of `B`. Here is an example:
 
 ```carbon
 interface A {
@@ -1362,7 +1362,7 @@ interface A {
 }
 
 interface B {
-  extend impl as I;
+  extend impl as A;
   fn H();
 }
 ```
