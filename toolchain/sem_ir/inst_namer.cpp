@@ -493,7 +493,7 @@ auto InstNamer::PushGeneric(ScopeId scope_id, GenericId generic_id) -> void {
   if (!generic_id.has_value()) {
     return;
   }
-  generic_scopes_[generic_id.index] = scope_id;
+  generic_scopes_[sem_ir_->generics().GetRawIndex(generic_id)] = scope_id;
   const auto& generic = sem_ir_->generics().Get(generic_id);
 
   // Push blocks in reverse order.

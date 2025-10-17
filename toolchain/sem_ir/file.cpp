@@ -41,6 +41,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       associated_constants_(check_ir_id),
       impls_(*this),
       specific_interfaces_(check_ir_id),
+      generics_(check_ir_id),
       // The `+1` prevents adding a tag to the global `NameSpace::PackageInstId`
       // instruction. It's not a "singleton" instruction, but it's a unique
       // instruction id that comes right after the singletons.
