@@ -162,6 +162,8 @@ using AnyFunctionDeclId = NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId,
 using AnyImplDeclId = NodeIdOneOf<ImplDeclId, ImplDefinitionStartId>;
 using AnyInterfaceDeclId =
     NodeIdOneOf<InterfaceDeclId, InterfaceDefinitionStartId>;
+using AnyNamedConstraintDeclId =
+    NodeIdOneOf<NamedConstraintDeclId, NamedConstraintDefinitionStartId>;
 using AnyNamespaceId =
     NodeIdOneOf<NamespaceId, ImportDeclId, LibraryDeclId, PackageDeclId>;
 using AnyPackagingDeclId =

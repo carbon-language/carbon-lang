@@ -35,6 +35,7 @@
 #include "toolchain/sem_ir/interface.h"
 #include "toolchain/sem_ir/name.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/named_constraint.h"
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
@@ -176,6 +177,12 @@ class File : public Printable<File> {
   }
   auto associated_constants() const -> const AssociatedConstantStore& {
     return associated_constants_;
+  }
+  auto named_constraints() -> NamedConstraintStore& {
+    return named_constraints_;
+  }
+  auto named_constraints() const -> const NamedConstraintStore& {
+    return named_constraints_;
   }
   // TODO: Rename these to `facet_type_infos`.
   auto facet_types() -> FacetTypeInfoStore& { return facet_types_; }
@@ -323,6 +330,9 @@ class File : public Printable<File> {
 
   // Storage for associated constants.
   AssociatedConstantStore associated_constants_;
+
+  // Storage for named constraints.
+  NamedConstraintStore named_constraints_;
 
   // Storage for facet types.
   FacetTypeInfoStore facet_types_;

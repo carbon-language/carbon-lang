@@ -855,6 +855,21 @@ struct GenericInterfaceType {
   SpecificId enclosing_specific_id;
 };
 
+// The type of the name of a generic named constraint. The corresponding value
+// is an empty `StructValue`.
+struct GenericNamedConstraintType {
+  // This is only ever created as a constant, so doesn't have a location.
+  static constexpr auto Kind =
+      InstKind::GenericNamedConstraintType.Define<Parse::NoneNodeId>(
+          {.ir_name = "generic_named_constaint_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::WheneverPossible});
+
+  TypeId type_id;
+  NamedConstraintId named_constraint_id;
+  SpecificId enclosing_specific_id;
+};
+
 // An `impl` declaration.
 struct ImplDecl {
   static constexpr auto Kind = InstKind::ImplDecl.Define<Parse::AnyImplDeclId>(
@@ -1114,6 +1129,7 @@ struct InterfaceDecl {
       InstKind::InterfaceDecl.Define<Parse::AnyInterfaceDeclId>(
           {.ir_name = "interface_decl", .is_lowered = false});
 
+  // Always `type`.
   TypeId type_id;
   InterfaceId interface_id;
   // The declaration block, containing the interface name's qualifiers and the
@@ -1217,6 +1233,20 @@ struct NameBindingDecl {
        .constant_kind = InstConstantKind::Never});
 
   InstBlockId pattern_block_id;
+};
+
+// A named constraint declaration.
+struct NamedConstraintDecl {
+  static constexpr auto Kind =
+      InstKind::NamedConstraintDecl.Define<Parse::AnyNamedConstraintDeclId>(
+          {.ir_name = "constraint_decl", .is_lowered = false});
+
+  // Always `type`.
+  TypeId type_id;
+  NamedConstraintId named_constraint_id;
+  // The declaration block, containing the constraint name's qualifiers and the
+  // constraint's generic parameters.
+  DeclInstBlockId decl_block_id;
 };
 
 // A name reference, with the value of the name. This only handles name

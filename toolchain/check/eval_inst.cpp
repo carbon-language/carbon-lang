@@ -451,6 +451,25 @@ auto EvalConstantInst(Context& context, SemIR::InterfaceDecl inst)
       context.generics().GetSelfSpecific(interface_info.generic_id)));
 }
 
+auto EvalConstantInst(Context& context, SemIR::NamedConstraintDecl inst)
+    -> ConstantEvalResult {
+  const auto& named_constraint_info =
+      context.named_constraints().Get(inst.named_constraint_id);
+
+  // If the named constraint has generic parameters, we don't produce a named
+  // constraint type, but a callable whose return value is a named constraint
+  // type.
+  if (named_constraint_info.has_parameters()) {
+    return ConstantEvalResult::NewSamePhase(SemIR::StructValue{
+        .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
+  }
+
+  // A non-parameterized interface declaration evaluates to a facet type.
+  return ConstantEvalResult::NewAnyPhase(FacetTypeFromInterface(
+      context, inst.named_constraint_id,
+      context.generics().GetSelfSpecific(named_constraint_info.generic_id)));
+}
+
 auto EvalConstantInst(Context& context, SemIR::NameRef inst)
     -> ConstantEvalResult {
   // A name reference evaluates to the value the name resolves to.

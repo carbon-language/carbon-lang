@@ -436,12 +436,16 @@ class NodeStack {
         return Id::KindFor<SemIR::InterfaceId>();
       case Parse::NodeKind::ImplDefinitionStart:
         return Id::KindFor<SemIR::ImplId>();
+      case Parse::NodeKind::NamedConstraintDefinitionStart:
+        return Id::KindFor<SemIR::NamedConstraintId>();
       case Parse::NodeKind::SelfTypeName:
       case Parse::NodeKind::SelfValueName:
         return Id::KindFor<SemIR::NameId>();
       case Parse::NodeKind::DefaultLibrary:
       case Parse::NodeKind::LibraryName:
         return Id::KindFor<SemIR::LibraryNameId>();
+      case Parse::NodeKind::AssociatedConstantInitializer:
+      case Parse::NodeKind::AssociatedConstantIntroducer:
       case Parse::NodeKind::BuiltinName:
       case Parse::NodeKind::ChoiceIntroducer:
       case Parse::NodeKind::ClassIntroducer:
@@ -457,8 +461,7 @@ class NodeStack {
       case Parse::NodeKind::InterfaceIntroducer:
       case Parse::NodeKind::LetInitializer:
       case Parse::NodeKind::LetIntroducer:
-      case Parse::NodeKind::AssociatedConstantIntroducer:
-      case Parse::NodeKind::AssociatedConstantInitializer:
+      case Parse::NodeKind::NamedConstraintIntroducer:
       case Parse::NodeKind::ReturnStatementStart:
       case Parse::NodeKind::StructLiteralStart:
       case Parse::NodeKind::StructTypeLiteralField:
@@ -515,8 +518,6 @@ class NodeStack {
       case Parse::NodeKind::MatchDefaultStart:
       case Parse::NodeKind::MatchIntroducer:
       case Parse::NodeKind::MatchStatementStart:
-      case Parse::NodeKind::NamedConstraintDefinitionStart:
-      case Parse::NodeKind::NamedConstraintIntroducer:
       case Parse::NodeKind::NamespaceStart:
       case Parse::NodeKind::PackageIntroducer:
       case Parse::NodeKind::ParenExprStart:

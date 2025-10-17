@@ -730,7 +730,7 @@ auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
 }
 
 auto DiagnoseIfGenericMissingExplicitParameters(
-    Context& context, SemIR::EntityWithParamsBase& entity_base) -> void {
+    Context& context, const SemIR::EntityWithParamsBase& entity_base) -> void {
   if (!entity_base.implicit_param_patterns_id.has_value() ||
       entity_base.param_patterns_id.has_value()) {
     return;

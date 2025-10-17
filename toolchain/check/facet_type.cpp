@@ -8,6 +8,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
@@ -22,13 +23,35 @@
 
 namespace Carbon::Check {
 
-auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
+auto FacetTypeFromInterface(Context& context, InterfaceOrNamedConstraintId id,
                             SemIR::SpecificId specific_id) -> SemIR::FacetType {
-  auto info =
-      SemIR::FacetTypeInfo{.extend_constraints = {{interface_id, specific_id}}};
+  auto info = SemIR::FacetTypeInfo{};
+  CARBON_KIND_SWITCH(id) {
+    case CARBON_KIND(SemIR::InterfaceId interface_id): {
+      info.extend_constraints.push_back({interface_id, specific_id});
+      // TODO: Add `require impls` to the set of constraints.
+      break;
+    }
+    case CARBON_KIND(SemIR::NamedConstraintId _): {
+      // TODO: Add `require impls` to the set of constraints.
+      break;
+    }
+  }
   info.Canonicalize();
   SemIR::FacetTypeId facet_type_id = context.facet_types().Add(info);
   return {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id};
+}
+
+auto EntityFromInterface(Context& context, InterfaceOrNamedConstraintId id)
+    -> const SemIR::EntityWithParamsBase& {
+  CARBON_KIND_SWITCH(id) {
+    case CARBON_KIND(SemIR::InterfaceId interface_id): {
+      return context.interfaces().Get(interface_id);
+    }
+    case CARBON_KIND(SemIR::NamedConstraintId named_constraint_id): {
+      return context.named_constraints().Get(named_constraint_id);
+    }
+  }
 }
 
 // Returns whether the `LookupImplWitness` of `witness_id` matches `interface`.

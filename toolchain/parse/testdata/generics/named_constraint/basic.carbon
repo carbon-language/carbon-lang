@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/named_constraint/basic.carbon
 
 constraint Foo {
-  fn Baz();
+  // TODO: Add a require statement.
 }
 
 constraint ForwardDeclared;
@@ -20,12 +20,7 @@ constraint ForwardDeclared;
 // CHECK:STDOUT:         {kind: 'NamedConstraintIntroducer', text: 'constraint'},
 // CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'Foo'},
 // CHECK:STDOUT:       {kind: 'NamedConstraintDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'Baz'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'NamedConstraintDefinition', text: '}', subtree_size: 9},
+// CHECK:STDOUT:     {kind: 'NamedConstraintDefinition', text: '}', subtree_size: 4},
 // CHECK:STDOUT:       {kind: 'NamedConstraintIntroducer', text: 'constraint'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeParams', text: 'ForwardDeclared'},
 // CHECK:STDOUT:     {kind: 'NamedConstraintDecl', text: ';', subtree_size: 3},

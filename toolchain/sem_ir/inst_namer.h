@@ -39,7 +39,8 @@ class InstNamer {
   // Entities whose scopes get entries from `ScopeId`.
   using ScopeIdTypeEnum =
       TypeEnum<AssociatedConstantId, ClassId, CppOverloadSetId, FunctionId,
-               ImplId, InterfaceId, SpecificInterfaceId, VtableId>;
+               ImplId, InterfaceId, NamedConstraintId, SpecificInterfaceId,
+               VtableId>;
 
   // Construct the instruction namer, and assign names to all instructions in
   // the provided file.
@@ -216,6 +217,8 @@ class InstNamer {
   auto PushEntity(ImplId impl_id, ScopeId scope_id, Scope& scope) -> void;
   auto PushEntity(InterfaceId interface_id, ScopeId scope_id, Scope& scope)
       -> void;
+  auto PushEntity(NamedConstraintId named_constraint_id, ScopeId scope_id,
+                  Scope& scope) -> void;
   auto PushEntity(VtableId vtable_id, ScopeId scope_id, Scope& scope) -> void;
 
   // Always returns the name of the entity. May push it if it has not yet been
