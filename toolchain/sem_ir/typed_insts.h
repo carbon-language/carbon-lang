@@ -1201,6 +1201,7 @@ struct MaybeUnformedType {
           .ir_name = "maybe_unformed_type",
           .is_type = InstIsType::Always,
           .constant_kind = InstConstantKind::WheneverPossible,
+          .deduce_through = true,
       });
 
   TypeId type_id;

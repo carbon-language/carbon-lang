@@ -280,9 +280,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:     %impl.elem0: %.100 = impl_witness_access constants.%I.impl_witness.bed, element0 [concrete = constants.%C.as.I.impl.F.09f]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @C.as.I.impl.F(constants.%empty_struct_type) [concrete = constants.%C.as.I.impl.F.specific_fn]
 // CHECK:STDOUT:     %C.as.I.impl.F.call: init %empty_tuple.type = call %specific_fn()
-// CHECK:STDOUT:     %.loc25_23.1: ref %empty_tuple.type = temporary_storage
-// CHECK:STDOUT:     %.loc25_23.2: ref %empty_tuple.type = temporary %.loc25_23.1, %C.as.I.impl.F.call
-// CHECK:STDOUT:     %.loc25_23.3: type = converted %C.as.I.impl.F.call, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc25_23: type = converted %C.as.I.impl.F.call, <error> [concrete = <error>]
 // CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }

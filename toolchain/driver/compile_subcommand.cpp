@@ -885,7 +885,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // Validate the target before passing it to Clang.
   std::string target_error;
   const llvm::Target* target = llvm::TargetRegistry::lookupTarget(
-      options_.codegen_options.target, target_error);
+      llvm::Triple(options_.codegen_options.target), target_error);
   if (!target) {
     CARBON_DIAGNOSTIC(CompileTargetInvalid, Error, "invalid target: {0}",
                       std::string);

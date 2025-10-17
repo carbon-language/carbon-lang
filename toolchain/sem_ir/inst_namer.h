@@ -50,8 +50,24 @@ class InstNamer {
   template <typename IdT>
     requires ScopeIdTypeEnum::Contains<IdT>
   auto GetScopeFor(IdT id) const -> ScopeId {
+    auto index = id.index;
+    if constexpr (std::is_same_v<IdT, ClassId>) {
+      index = sem_ir_->classes().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, CppOverloadSetId>) {
+      index = sem_ir_->cpp_overload_sets().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, AssociatedConstantId>) {
+      index = sem_ir_->associated_constants().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, FunctionId>) {
+      index = sem_ir_->functions().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, ImplId>) {
+      index = sem_ir_->impls().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, SpecificInterfaceId>) {
+      index = sem_ir_->specific_interfaces().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, VtableId>) {
+      index = sem_ir_->vtables().GetRawIndex(id);
+    }
     return static_cast<ScopeId>(GetScopeIdOffset(ScopeIdTypeEnum::For<IdT>) +
-                                id.index);
+                                index);
   }
 
   // Returns the scope ID corresponding to a generic. A generic object shares

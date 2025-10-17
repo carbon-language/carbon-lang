@@ -29,6 +29,55 @@ var c: () = a.(0 as i32);
 var d: i32 = a.({.index = 1 as i32}.index);
 //@dump-sem-ir-end
 
+// --- interface_member.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  fn F[self: Self]();
+}
+
+impl (i32, i32) as I {
+  fn F[self: Self]() {}
+}
+
+fn G(x: (i32, i32)) {
+  x.(I.F)();
+}
+
+// --- impl_thunk.carbon
+library "[[@TEST_NAME]]";
+
+base class Base {}
+class Derived { extend base: Base; }
+
+interface I {
+  fn F[self: Self]() -> Base*;
+}
+
+var d: Derived;
+
+impl (i32, i32) as I {
+  // This requires a thunk due to the return type mismatch.
+  // The thunk internally contains an element access of the form
+  // `self.(RealF)()`.
+  fn F[self: Self]() -> Derived* { return &d; }
+}
+
+fn G(x: (i32, i32)) {
+  x.(I.F)();
+}
+
+// --- class_member.carbon
+library "[[@TEST_NAME]]";
+
+class C {
+  fn F[self: (i32, i32)]();
+}
+
+fn G(x: (i32, i32)) {
+  x.(C.F)();
+}
+
 // --- return_value_access.carbon
 library "[[@TEST_NAME]]";
 

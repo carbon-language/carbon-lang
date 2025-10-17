@@ -16,7 +16,7 @@ auto InstId::Print(llvm::raw_ostream& out) const -> void {
   if (IsSingletonInstId(*this)) {
     out << Label << "(" << SingletonInstKinds[index] << ")";
   } else {
-    IdBase::PrintHex(out);
+    IdBase::Print(out);
   }
 }
 

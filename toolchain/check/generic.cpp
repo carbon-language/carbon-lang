@@ -466,8 +466,6 @@ auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId {
     context.generics().Get(generic_id) = generic;
   }
 
-  // MakeSelfSpecificId could cause something to be imported, which would
-  // invalidate the return value of `context.generics().Get(generic_id)`.
   auto self_specific_id = MakeSelfSpecificId(context, generic_id);
   context.generics().Get(generic_id).self_specific_id = self_specific_id;
   return generic_id;
@@ -654,18 +652,15 @@ auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,
                          SemIR::SpecificId specific_id) -> void {
   // If this is the first time we've formed this specific, evaluate its decl
   // block to form information about the specific.
-  if (!context.specifics().Get(specific_id).decl_block_id.has_value()) {
+  auto& specific = context.specifics().Get(specific_id);
+  if (!specific.decl_block_id.has_value()) {
     // Set a placeholder value as the decl block ID so we won't attempt to
     // recursively resolve the same specific.
-    context.specifics().Get(specific_id).decl_block_id =
-        SemIR::InstBlockId::Empty;
+    specific.decl_block_id = SemIR::InstBlockId::Empty;
 
-    auto decl_block_id =
+    specific.decl_block_id =
         TryEvalBlockForSpecific(context, loc_id, specific_id,
                                 SemIR::GenericInstIndex::Region::Declaration);
-    // Note that TryEvalBlockForSpecific may reallocate the list of specifics,
-    // so re-lookup the specific here.
-    context.specifics().Get(specific_id).decl_block_id = decl_block_id;
   }
 }
 
@@ -728,12 +723,8 @@ auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
       // The generic is not defined yet.
       return false;
     }
-    auto definition_block_id = TryEvalBlockForSpecific(
+    specific.definition_block_id = TryEvalBlockForSpecific(
         context, loc_id, specific_id, SemIR::GenericInstIndex::Definition);
-    // Note that TryEvalBlockForSpecific may reallocate the list of specifics,
-    // so re-lookup the specific here.
-    context.specifics().Get(specific_id).definition_block_id =
-        definition_block_id;
   }
   return true;
 }

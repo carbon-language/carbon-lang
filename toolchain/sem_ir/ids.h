@@ -251,6 +251,13 @@ struct EntityNameId : public IdBase<EntityNameId> {
   using IdBase::IdBase;
 };
 
+// The ID of a C++ global variable.
+struct CppGlobalVarId : public IdBase<CppGlobalVarId> {
+  static constexpr llvm::StringLiteral Label = "cpp_global_var";
+
+  using IdBase::IdBase;
+};
+
 // The index of a compile-time binding. This is the de Bruijn level for the
 // binding -- that is, this is the number of other compile time bindings whose
 // scope encloses this binding.

@@ -60,6 +60,7 @@ TEST(SemIRTest, Yaml) {
       Pair("clang_decls", Yaml::Mapping(SizeIs(0))),
       Pair("name_scopes", Yaml::Mapping(SizeIs(1))),
       Pair("entity_names", Yaml::Mapping(SizeIs(1))),
+      Pair("cpp_global_vars", Yaml::Mapping(SizeIs(0))),
       Pair("functions", Yaml::Mapping(SizeIs(1))),
       Pair("classes", Yaml::Mapping(SizeIs(0))),
       Pair("generics", Yaml::Mapping(SizeIs(0))),
@@ -82,7 +83,7 @@ TEST(SemIRTest, Yaml) {
                         Contains(Pair(_, Yaml::Mapping(ElementsAre(
 
                                              Pair("kind", "FunctionDecl"),
-                                             Pair("arg0", "function0"),
+                                             Pair("arg0", "function60000000"),
                                              Pair("arg1", "inst_block_empty"),
                                              Pair("type", type_id)))))))),
       Pair("constant_values",
@@ -90,22 +91,27 @@ TEST(SemIRTest, Yaml) {
                Pair("values",
                     Yaml::Mapping(AllOf(Each(Pair(inst_id, constant_id))))),
                Pair("symbolic_constants", Yaml::Mapping(SizeIs(0)))))),
-      Pair("inst_blocks",
-           Yaml::Mapping(ElementsAre(
-               Pair("inst_block_empty", Yaml::Mapping(IsEmpty())),
-               Pair("exports", Yaml::Mapping(Each(Pair(_, inst_id)))),
-               Pair("imports", Yaml::Mapping(IsEmpty())),
-               Pair("global_init", Yaml::Mapping(IsEmpty())),
-               Pair("inst_block4", Yaml::Mapping(Each(Pair(_, inst_id)))),
-               Pair("inst_block5", Yaml::Mapping(Each(Pair(_, inst_id)))),
-               Pair("inst_block6", Yaml::Mapping(Each(Pair(_, inst_id)))),
-               Pair("inst_block7", Yaml::Mapping(Each(Pair(_, inst_id)))),
-               Pair("inst_block8", Yaml::Mapping(Each(Pair(_, inst_id)))))))));
+      Pair(
+          "inst_blocks",
+          Yaml::Mapping(ElementsAre(
+              Pair("inst_block_empty", Yaml::Mapping(IsEmpty())),
+              Pair("exports", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("imports", Yaml::Mapping(IsEmpty())),
+              Pair("global_init", Yaml::Mapping(IsEmpty())),
+              Pair("inst_block00000004", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block00000005", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block00000006", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block00000007", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block00000008",
+                   Yaml::Mapping(Each(Pair(_, inst_id)))))))));
 
   auto root = Yaml::Sequence(ElementsAre(Yaml::Mapping(
       ElementsAre(Pair("filename", "test.carbon"), Pair("sem_ir", file)))));
 
-  EXPECT_THAT(Yaml::Value::FromText(print_stream.TakeStr()), IsYaml(root));
+  std::string print_text = print_stream.TakeStr();
+  EXPECT_THAT(Yaml::Value::FromText(print_text), IsYaml(root))
+      << "Actual text:\n"
+      << print_text;
 }
 
 }  // namespace

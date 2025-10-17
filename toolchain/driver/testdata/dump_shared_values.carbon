@@ -24,19 +24,19 @@ var str2: str = "ab'\"c";
 // CHECK:STDOUT: shared_values:
 // CHECK:STDOUT:   ints:            {}
 // CHECK:STDOUT:   reals:
-// CHECK:STDOUT:     real0:           10*10^-1
-// CHECK:STDOUT:     real1:           8*10^7
-// CHECK:STDOUT:     real2:           8*10^8
+// CHECK:STDOUT:     real00000000:    10*10^-1
+// CHECK:STDOUT:     real00000001:    8*10^7
+// CHECK:STDOUT:     real00000002:    8*10^8
 // CHECK:STDOUT:   floats:          {}
 // CHECK:STDOUT:   identifiers:
-// CHECK:STDOUT:     identifier0:     int1
-// CHECK:STDOUT:     identifier1:     int2
-// CHECK:STDOUT:     identifier2:     real1
-// CHECK:STDOUT:     identifier3:     real2
-// CHECK:STDOUT:     identifier4:     real3
-// CHECK:STDOUT:     identifier5:     str1
-// CHECK:STDOUT:     identifier6:     str2
+// CHECK:STDOUT:     identifier00000000: int1
+// CHECK:STDOUT:     identifier00000001: int2
+// CHECK:STDOUT:     identifier00000002: real1
+// CHECK:STDOUT:     identifier00000003: real2
+// CHECK:STDOUT:     identifier00000004: real3
+// CHECK:STDOUT:     identifier00000005: str1
+// CHECK:STDOUT:     identifier00000006: str2
 // CHECK:STDOUT:   strings:
-// CHECK:STDOUT:     string0:         abc
-// CHECK:STDOUT:     string1:         ab'"c
+// CHECK:STDOUT:     string00000000:  abc
+// CHECK:STDOUT:     string00000001:  ab'"c
 // CHECK:STDOUT: ...

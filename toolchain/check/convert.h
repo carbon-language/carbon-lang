@@ -134,6 +134,10 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 struct TypeExpr {
   static const TypeExpr None;
 
+  // Returns a TypeExpr describing a type with no associated spelling or type
+  // sugar.
+  static auto ForUnsugared(Context& context, SemIR::TypeId type_id) -> TypeExpr;
+
   // The converted expression of type `type`, or `ErrorInst::InstId`.
   SemIR::TypeInstId inst_id;
   // The corresponding type, or `ErrorInst::TypeId`.

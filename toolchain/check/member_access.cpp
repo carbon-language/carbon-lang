@@ -742,9 +742,6 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
       return GetAssociatedValueImpl(context, loc_id, base_id, assoc_entity,
                                     assoc_type->GetSpecificInterface());
     }
-  } else if (context.insts().Is<SemIR::TupleType>(
-                 context.constant_values().GetInstId(base_type_const_id))) {
-    return PerformTupleAccess(context, loc_id, base_id, member_expr_id);
   }
 
   // Perform instance binding if we found an instance member.
@@ -754,6 +751,13 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
   // because the base expression is not used for anything.
   if (member_id == member_expr_id &&
       member.type_id() != SemIR::ErrorInst::TypeId) {
+    // As a special case, an integer-valued expression can be used as a member
+    // name when indexing a tuple.
+    if (context.insts().Is<SemIR::TupleType>(
+            context.constant_values().GetInstId(base_type_const_id))) {
+      return PerformTupleAccess(context, loc_id, base_id, member_expr_id);
+    }
+
     CARBON_DIAGNOSTIC(CompoundMemberAccessDoesNotUseBase, Error,
                       "member name of type {0} in compound member access is "
                       "not an instance member or an interface member",

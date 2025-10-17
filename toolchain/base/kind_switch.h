@@ -222,8 +222,12 @@ consteval auto ForCase() -> auto {
   }
 }
 
-// Given `CARBON_KIND_SWITCH(value)` and `CARBON_KIND(CaseT name)` this
-// generates `value.As<CaseT>()`.
+// Given `CARBON_KIND_SWITCH(value)` and `CARBON_KIND(CaseT name)` this converts
+// the `value` to `CaseT`.
+//
+// For types with a `kind()` accessor this uses `value.As<CaseT>`.
+//
+// For `std::variant<...>` this uses `std::get<CaseT>(value)`.
 template <typename CaseFnT, typename SwitchT>
 auto Cast(SwitchT&& kind_switch_value) -> decltype(auto) {
   using CaseT = llvm::function_traits<CaseFnT>::template arg_t<0>;

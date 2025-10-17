@@ -61,6 +61,7 @@ cc_library(
         "//toolchain/base:kind_switch",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:absolute_node_id",
+        "//toolchain/sem_ir:clang_decl",
         "//toolchain/sem_ir:diagnostic_loc_converter",
         "//toolchain/sem_ir:entry_point",
         "//toolchain/sem_ir:expr_info",

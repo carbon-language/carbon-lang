@@ -19,12 +19,12 @@ namespace Carbon {
 
 auto CodeGen::Make(llvm::Module* module, llvm::StringRef target_triple_str,
                    Diagnostics::Consumer* consumer) -> std::optional<CodeGen> {
+  llvm::Triple target_triple(target_triple_str);
   std::string error;
   const llvm::Target* target =
-      llvm::TargetRegistry::lookupTarget(target_triple_str, error);
+      llvm::TargetRegistry::lookupTarget(target_triple, error);
   CARBON_CHECK(target, "Target should be validated before codegen: {0}", error);
 
-  llvm::Triple target_triple(target_triple_str);
   module->setTargetTriple(target_triple);
 
   constexpr llvm::StringLiteral CPU = "generic";
