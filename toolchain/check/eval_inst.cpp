@@ -295,7 +295,7 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 
   auto result = EvalLookupSingleImplWitness(context, SemIR::LocId(inst_id),
                                             inst, self_facet_value_inst_id,
-                                            /*poison_concrete_results=*/true);
+                                            /*poison_final_results=*/true);
   if (!result.has_value()) {
     // We use NotConstant to communicate back to impl lookup that the lookup
     // failed. This can not happen for a deferred symbolic lookup in a generic
@@ -303,9 +303,9 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
     // evaluated here) to the SemIR if the lookup succeeds.
     return ConstantEvalResult::NotConstant;
   }
-  if (result.has_concrete_value()) {
+  if (result.has_final_value()) {
     return ConstantEvalResult::Existing(
-        context.constant_values().Get(result.concrete_witness()));
+        context.constant_values().Get(result.final_witness()));
   }
 
   return ConstantEvalResult::NewSamePhase(inst);
