@@ -174,6 +174,14 @@ class C;
 // Can't write a final impl in both the interface's file and the root self
 // type's file (when they are different files).
 //
+// CHECK:STDERR: fail_final_impl_with_both_interface_and_self_but_different_files.carbon:[[@LINE+8]]:1: error: `final impl` overlaps with `final impl` from another file [FinalImplOverlapsDifferentFile]
+// CHECK:STDERR: final impl C as Z(()) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_final_impl_with_both_interface_and_self_but_different_files.carbon:[[@LINE-10]]:1: in import [InImport]
+// CHECK:STDERR: interface_z_with_impl.carbon:7:1: note: imported `final impl` here [FinalImplOverlapsDifferentFileNote]
+// CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 final impl C as Z(()) {}
 
 // --- fail_final_overlaps_final_from_other_file.carbon
@@ -186,6 +194,14 @@ class C;
 // This final impl is overlapped by a final impl in the interface file, and you
 // can't write a final impl in two different files.
 //
+// CHECK:STDERR: fail_final_overlaps_final_from_other_file.carbon:[[@LINE+8]]:1: error: `final impl` overlaps with `final impl` from another file [FinalImplOverlapsDifferentFile]
+// CHECK:STDERR: final impl C as Z(C) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_final_overlaps_final_from_other_file.carbon:[[@LINE-10]]:1: in import [InImport]
+// CHECK:STDERR: interface_z_with_impl.carbon:7:1: note: imported `final impl` here [FinalImplOverlapsDifferentFileNote]
+// CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 final impl C as Z(C) {}
 
 // --- fail_final_overlaps_non_final_from_other_file.carbon
@@ -197,6 +213,14 @@ class C;
 
 // This non-final impl is subsumed by a final impl in the interface file.
 //
+// CHECK:STDERR: fail_final_overlaps_non_final_from_other_file.carbon:[[@LINE+8]]:1: error: `impl` will never be used [ImplFinalOverlapsNonFinal]
+// CHECK:STDERR: impl C as Z(C) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_final_overlaps_non_final_from_other_file.carbon:[[@LINE-9]]:1: in import [InImport]
+// CHECK:STDERR: interface_z_with_impl.carbon:7:1: note: `final impl` declared here would always be used instead [ImplFinalOverlapsNonFinalNote]
+// CHECK:STDERR: final impl forall [T:! type] T as Z(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl C as Z(C) {}
 
 // --- fail_final_different_file_from_self_and_interface.carbon

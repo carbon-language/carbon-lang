@@ -370,8 +370,20 @@ static auto ImportFinalImplsWithImplInFile(Context& context) -> void {
     if (!import_ir_id.has_value()) {
       continue;
     }
+    auto interface_owning_decl_id = interface.first_owning_decl_id;
+    if (!interface_owning_decl_id.has_value()) {
+      continue;
+    }
+    const auto& import_ir_inst =
+        GetCanonicalImportIRInst(context, interface.first_owning_decl_id);
     interfaces_to_import.push_back(
-        {.ir_id = import_ir_id, .interface_id = interface_id});
+        {.ir_id = import_ir_inst.ir_id(),
+         .interface_id =
+             context.import_irs()
+                 .Get(import_ir_inst.ir_id())
+                 .sem_ir->insts()
+                 .GetAs<SemIR::InterfaceDecl>(import_ir_inst.inst_id())
+                 .interface_id});
   }
 
   llvm::sort(interfaces_to_import);
