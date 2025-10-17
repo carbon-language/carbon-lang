@@ -964,14 +964,16 @@ That is, `type` is the facet type with no requirements (so matches every type),
 and defines no names.
 
 ```carbon
-fn Identity[T:! type](x: T) -> T {
+fn Identity[T:! type](x: T*) -> T* {
   // Can accept values of any type. But, since we know nothing about the
   // type, we don't know about any operations on `x` inside this function.
   return x;
 }
 
-var i: i32 = Identity(3);
-var s: String = Identity("string");
+var i: i32 = 3;
+var p_i: i32* = Identity(&i);
+var s: String = "string";
+var p_s: String = Identity(&s);
 ```
 
 In general, the declarations in `constraint` definition match a subset of the
