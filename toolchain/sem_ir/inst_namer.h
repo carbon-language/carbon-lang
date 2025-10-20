@@ -73,7 +73,7 @@ class InstNamer {
   // Returns the scope ID corresponding to a generic. A generic object shares
   // its scope with its generic entity.
   auto GetScopeFor(GenericId id) const -> ScopeId {
-    return generic_scopes_[id.index];
+    return generic_scopes_[sem_ir_->generics().GetRawIndex(id)];
   }
 
   // Returns the IR name for the specified scope.

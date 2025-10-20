@@ -4,6 +4,7 @@
 
 #include "toolchain/check/cpp/thunk.h"
 
+#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/GlobalDecl.h"
 #include "clang/AST/Mangle.h"
 #include "clang/Sema/Lookup.h"
@@ -569,6 +570,8 @@ auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
     return nullptr;
   }
 
+  context.clang_sema().getASTConsumer().HandleTopLevelDecl(
+      clang::DeclGroupRef(thunk_function_decl));
   return thunk_function_decl;
 }
 
