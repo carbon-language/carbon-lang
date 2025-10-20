@@ -56,7 +56,7 @@ Args:
        though only Id types that have a matching `Make...Id()` function are
        supported.
   ID is an integer number, such as `42`, in hex (without the typical 0x prefix),
-     such as `6000A`.
+     such as `inst6000000A`.
 
 Example usage:
   # Dumps the `inst_id` local variable, with a `context` local variable.
