@@ -869,22 +869,7 @@ fn Call(var instance: Cpp.Public) {
   instance.PrivateInstance();
 }
 
-// --- fail_import_base_class_protected.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "base_class.h";
-
-fn F() {
-  // CHECK:STDERR: fail_import_base_class_protected.carbon:[[@LINE+5]]:3: error: cannot access protected member `PublicStatic` of type `Cpp.Protected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.Protected.PublicStatic();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_base_class_protected.carbon: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:
-  Cpp.Protected.PublicStatic();
-}
-
-// --- use_base_class_protected_from_derived.carbon
+// --- base_class_protected_access_allowed.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -893,10 +878,120 @@ import Cpp library "base_class.h";
 class Derived {
   extend base: Cpp.Protected;
 
-  fn F() {
-    // OK, we can access a protected member of our base class.
+  fn CallStatic() {
+    //@dump-sem-ir-begin
+    // OK, we can access a public member of our base class.
     Cpp.Protected.PublicStatic();
+    Self.PublicStatic();
+
+    // OK, we can access a protected member of our base class.
+    Cpp.Protected.ProtectedStatic();
+    Self.ProtectedStatic();
+    //@dump-sem-ir-end
   }
+
+  fn CallInstance(var instance: Cpp.Protected) {
+    //@dump-sem-ir-begin
+    // OK, we can access a public member of our base class.
+    instance.PublicInstance();
+    // OK, we can access a protected member of our base class.
+    instance.ProtectedInstance();
+    //@dump-sem-ir-end
+  }
+}
+
+// --- fail_base_class_protected_access_disallowed.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "base_class.h";
+
+class Derived {
+  extend base: Cpp.Protected;
+
+  fn CallStatic() {
+    // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon:[[@LINE+5]]:5: error: cannot access private member `PrivateStatic` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+    // CHECK:STDERR:     Cpp.Protected.PrivateStatic();
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:
+    Cpp.Protected.PrivateStatic();
+    // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon:[[@LINE+5]]:5: error: cannot access private member `PrivateStatic` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+    // CHECK:STDERR:     Self.PrivateStatic();
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:
+    Self.PrivateStatic();
+  }
+
+  fn CallInstance(var instance: Cpp.Protected) {
+    // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon:[[@LINE+5]]:5: error: cannot access private member `PrivateInstance` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+    // CHECK:STDERR:     instance.PrivateInstance();
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:
+    instance.PrivateInstance();
+  }
+}
+
+fn Call(var instance: Cpp.Protected) {
+  // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon:[[@LINE+5]]:3: error: cannot access protected member `PublicStatic` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Protected.PublicStatic();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:
+  Cpp.Protected.PublicStatic();
+  // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon:[[@LINE+5]]:3: error: cannot access protected member `PublicStatic` of type `Derived` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Derived.PublicStatic();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:
+  Derived.PublicStatic();
+
+  // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon:[[@LINE+5]]:3: error: cannot access protected member `ProtectedStatic` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Protected.ProtectedStatic();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:
+  Cpp.Protected.ProtectedStatic();
+  // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon:[[@LINE+5]]:3: error: cannot access protected member `ProtectedStatic` of type `Derived` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Derived.ProtectedStatic();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:
+  Derived.ProtectedStatic();
+
+  // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon:[[@LINE+5]]:3: error: cannot access private member `PrivateStatic` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Protected.PrivateStatic();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:
+  Cpp.Protected.PrivateStatic();
+  // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon:[[@LINE+5]]:3: error: cannot access private member `PrivateStatic` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Derived.PrivateStatic();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:
+  Derived.PrivateStatic();
+
+  // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon:[[@LINE+5]]:3: error: cannot access protected member `PublicInstance` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   instance.PublicInstance();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:
+  instance.PublicInstance();
+  // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon:[[@LINE+5]]:3: error: cannot access protected member `ProtectedInstance` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   instance.ProtectedInstance();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:
+  instance.ProtectedInstance();
+  // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon:[[@LINE+5]]:3: error: cannot access private member `PrivateInstance` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   instance.PrivateInstance();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_class_protected_access_disallowed.carbon: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:
+  instance.PrivateInstance();
 }
 
 // --- fail_import_base_class_private.carbon
@@ -1717,6 +1812,114 @@ class Derived {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %instance.ref: ref %Public = name_ref instance, %instance
 // CHECK:STDOUT:   %PrivateInstance.ref: <error> = name_ref PrivateInstance, <error> [concrete = <error>]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- base_class_protected_access_allowed.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
+// CHECK:STDOUT:   %Protected: type = class_type @Protected [concrete]
+// CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %Protected.PublicStatic.cpp_overload_set.type: type = cpp_overload_set_type @Protected.PublicStatic.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Protected.PublicStatic.cpp_overload_set.value: %Protected.PublicStatic.cpp_overload_set.type = cpp_overload_set_value @Protected.PublicStatic.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Base.PublicStatic.type: type = fn_type @Base.PublicStatic [concrete]
+// CHECK:STDOUT:   %Base.PublicStatic: %Base.PublicStatic.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Protected.ProtectedStatic.cpp_overload_set.type: type = cpp_overload_set_type @Protected.ProtectedStatic.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Protected.ProtectedStatic.cpp_overload_set.value: %Protected.ProtectedStatic.cpp_overload_set.type = cpp_overload_set_value @Protected.ProtectedStatic.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Base.ProtectedStatic.type: type = fn_type @Base.ProtectedStatic [concrete]
+// CHECK:STDOUT:   %Base.ProtectedStatic: %Base.ProtectedStatic.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Protected.PublicInstance.cpp_overload_set.type: type = cpp_overload_set_type @Protected.PublicInstance.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Protected.PublicInstance.cpp_overload_set.value: %Protected.PublicInstance.cpp_overload_set.type = cpp_overload_set_value @Protected.PublicInstance.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %ptr.fb2: type = ptr_type %Base [concrete]
+// CHECK:STDOUT:   %Base.PublicInstance.type: type = fn_type @Base.PublicInstance [concrete]
+// CHECK:STDOUT:   %Base.PublicInstance: %Base.PublicInstance.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.f97: type = ptr_type %Protected [concrete]
+// CHECK:STDOUT:   %Protected.ProtectedInstance.cpp_overload_set.type: type = cpp_overload_set_type @Protected.ProtectedInstance.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Protected.ProtectedInstance.cpp_overload_set.value: %Protected.ProtectedInstance.cpp_overload_set.type = cpp_overload_set_value @Protected.ProtectedInstance.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Base.ProtectedInstance.type: type = fn_type @Base.ProtectedInstance [concrete]
+// CHECK:STDOUT:   %Base.ProtectedInstance: %Base.ProtectedInstance.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .Protected = %Protected.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Protected.decl: type = class_decl @Protected [concrete = constants.%Protected] {} {}
+// CHECK:STDOUT:   %Protected.PublicStatic.cpp_overload_set.value: %Protected.PublicStatic.cpp_overload_set.type = cpp_overload_set_value @Protected.PublicStatic.cpp_overload_set [concrete = constants.%Protected.PublicStatic.cpp_overload_set.value]
+// CHECK:STDOUT:   %Base.PublicStatic.decl: %Base.PublicStatic.type = fn_decl @Base.PublicStatic [concrete = constants.%Base.PublicStatic] {} {}
+// CHECK:STDOUT:   %Protected.ProtectedStatic.cpp_overload_set.value: %Protected.ProtectedStatic.cpp_overload_set.type = cpp_overload_set_value @Protected.ProtectedStatic.cpp_overload_set [concrete = constants.%Protected.ProtectedStatic.cpp_overload_set.value]
+// CHECK:STDOUT:   %Base.ProtectedStatic.decl: %Base.ProtectedStatic.type = fn_decl @Base.ProtectedStatic [concrete = constants.%Base.ProtectedStatic] {} {}
+// CHECK:STDOUT:   %Protected.PublicInstance.cpp_overload_set.value: %Protected.PublicInstance.cpp_overload_set.type = cpp_overload_set_value @Protected.PublicInstance.cpp_overload_set [concrete = constants.%Protected.PublicInstance.cpp_overload_set.value]
+// CHECK:STDOUT:   %Base.PublicInstance.decl: %Base.PublicInstance.type = fn_decl @Base.PublicInstance [concrete = constants.%Base.PublicInstance] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Protected.ProtectedInstance.cpp_overload_set.value: %Protected.ProtectedInstance.cpp_overload_set.type = cpp_overload_set_value @Protected.ProtectedInstance.cpp_overload_set [concrete = constants.%Protected.ProtectedInstance.cpp_overload_set.value]
+// CHECK:STDOUT:   %Base.ProtectedInstance.decl: %Base.ProtectedInstance.type = fn_decl @Base.ProtectedInstance [concrete = constants.%Base.ProtectedInstance] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Derived {
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .Cpp = <poisoned>
+// CHECK:STDOUT:   .base = %.loc7
+// CHECK:STDOUT:   .CallStatic = %Derived.CallStatic.decl
+// CHECK:STDOUT:   .CallInstance = %Derived.CallInstance.decl
+// CHECK:STDOUT:   .PublicStatic = <poisoned>
+// CHECK:STDOUT:   .ProtectedStatic = <poisoned>
+// CHECK:STDOUT:   extend %Protected.ref
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Derived.CallStatic() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Protected.ref.loc12: type = name_ref Protected, imports.%Protected.decl [concrete = constants.%Protected]
+// CHECK:STDOUT:   %PublicStatic.ref.loc12: %Protected.PublicStatic.cpp_overload_set.type = name_ref PublicStatic, imports.%Protected.PublicStatic.cpp_overload_set.value [concrete = constants.%Protected.PublicStatic.cpp_overload_set.value]
+// CHECK:STDOUT:   %Base.PublicStatic.call.loc12: init %empty_tuple.type = call imports.%Base.PublicStatic.decl()
+// CHECK:STDOUT:   %Self.ref.loc13: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
+// CHECK:STDOUT:   %PublicStatic.ref.loc13: %Protected.PublicStatic.cpp_overload_set.type = name_ref PublicStatic, imports.%Protected.PublicStatic.cpp_overload_set.value [concrete = constants.%Protected.PublicStatic.cpp_overload_set.value]
+// CHECK:STDOUT:   %Base.PublicStatic.call.loc13: init %empty_tuple.type = call imports.%Base.PublicStatic.decl()
+// CHECK:STDOUT:   %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Protected.ref.loc16: type = name_ref Protected, imports.%Protected.decl [concrete = constants.%Protected]
+// CHECK:STDOUT:   %ProtectedStatic.ref.loc16: %Protected.ProtectedStatic.cpp_overload_set.type = name_ref ProtectedStatic, imports.%Protected.ProtectedStatic.cpp_overload_set.value [concrete = constants.%Protected.ProtectedStatic.cpp_overload_set.value]
+// CHECK:STDOUT:   %Base.ProtectedStatic.call.loc16: init %empty_tuple.type = call imports.%Base.ProtectedStatic.decl()
+// CHECK:STDOUT:   %Self.ref.loc17: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
+// CHECK:STDOUT:   %ProtectedStatic.ref.loc17: %Protected.ProtectedStatic.cpp_overload_set.type = name_ref ProtectedStatic, imports.%Protected.ProtectedStatic.cpp_overload_set.value [concrete = constants.%Protected.ProtectedStatic.cpp_overload_set.value]
+// CHECK:STDOUT:   %Base.ProtectedStatic.call.loc17: init %empty_tuple.type = call imports.%Base.ProtectedStatic.decl()
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Derived.CallInstance(%instance.param: %Protected) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %instance.ref.loc24: ref %Protected = name_ref instance, %instance
+// CHECK:STDOUT:   %PublicInstance.ref: %Protected.PublicInstance.cpp_overload_set.type = name_ref PublicInstance, imports.%Protected.PublicInstance.cpp_overload_set.value [concrete = constants.%Protected.PublicInstance.cpp_overload_set.value]
+// CHECK:STDOUT:   %bound_method.loc24: <bound method> = bound_method %instance.ref.loc24, %PublicInstance.ref
+// CHECK:STDOUT:   %addr.loc24_5.1: %ptr.f97 = addr_of %instance.ref.loc24
+// CHECK:STDOUT:   %.loc24_5.1: ref %Protected = deref %addr.loc24_5.1
+// CHECK:STDOUT:   %.loc24_5.2: ref %Base = class_element_access %.loc24_5.1, element0
+// CHECK:STDOUT:   %addr.loc24_5.2: %ptr.fb2 = addr_of %.loc24_5.2
+// CHECK:STDOUT:   %.loc24_5.3: %ptr.fb2 = converted %addr.loc24_5.1, %addr.loc24_5.2
+// CHECK:STDOUT:   %Base.PublicInstance.call: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc24_5.3)
+// CHECK:STDOUT:   %instance.ref.loc26: ref %Protected = name_ref instance, %instance
+// CHECK:STDOUT:   %ProtectedInstance.ref: %Protected.ProtectedInstance.cpp_overload_set.type = name_ref ProtectedInstance, imports.%Protected.ProtectedInstance.cpp_overload_set.value [concrete = constants.%Protected.ProtectedInstance.cpp_overload_set.value]
+// CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %instance.ref.loc26, %ProtectedInstance.ref
+// CHECK:STDOUT:   %addr.loc26_5.1: %ptr.f97 = addr_of %instance.ref.loc26
+// CHECK:STDOUT:   %.loc26_5.1: ref %Protected = deref %addr.loc26_5.1
+// CHECK:STDOUT:   %.loc26_5.2: ref %Base = class_element_access %.loc26_5.1, element0
+// CHECK:STDOUT:   %addr.loc26_5.2: %ptr.fb2 = addr_of %.loc26_5.2
+// CHECK:STDOUT:   %.loc26_5.3: %ptr.fb2 = converted %addr.loc26_5.1, %addr.loc26_5.2
+// CHECK:STDOUT:   %Base.ProtectedInstance.call: init %empty_tuple.type = call imports.%Base.ProtectedInstance.decl(%.loc26_5.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
