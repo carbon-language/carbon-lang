@@ -61,6 +61,62 @@ fn G(p: const (const C)**) -> C** {
   return p;
 }
 
+// --- add_or_remove_while_forming_value.carbon
+library "[[@TEST_NAME]]";
+
+class X {}
+
+fn TakeValue(x: X) {}
+fn TakeConstValue(x: const X) {}
+
+fn PassConstValueToValue(a: const X) {
+  TakeValue(a);
+}
+
+fn PassValueToConstValue(a: X) {
+  TakeConstValue(a);
+}
+
+fn PassConstReferenceToValue(p: const X*) {
+  TakeValue(*p);
+}
+
+fn PassReferenceToConstValue(p: X*) {
+  TakeConstValue(*p);
+}
+
+// --- add_while_forming_reference.carbon
+library "[[@TEST_NAME]]";
+
+class X {
+  fn TakeConstSelf[addr self: const Self*]();
+}
+
+fn PassReferenceToConstReference(p: X*) {
+  p->TakeConstSelf();
+}
+
+// --- fail_remove_while_forming_reference.carbon
+library "[[@TEST_NAME]]";
+
+class X {
+  fn TakeSelf[addr self: Self*]();
+}
+
+fn PassConstReferenceToReference(p: const X*) {
+  // CHECK:STDERR: remove_while_forming_reference.carbon:[[@LINE+10]]:3: error: cannot implicitly convert expression of type `const X*` to `X*` [ConversionFailure]
+  // CHECK:STDERR:   p->(X.TakeSelf)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: remove_while_forming_reference.carbon:[[@LINE+7]]:3: note: type `const X*` does not implement interface `Core.ImplicitAs(X*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   p->(X.TakeSelf)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: remove_while_forming_reference.carbon:[[@LINE-10]]:20: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:   fn TakeSelf[addr self: Self*]();
+  // CHECK:STDERR:                    ^~~~~~~~~~~
+  // CHECK:STDERR:
+  p->(X.TakeSelf)();
+}
+
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

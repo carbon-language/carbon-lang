@@ -79,7 +79,7 @@ fn Value(v: Cpp.HasQualifiers) {
   // CHECK:STDERR:       |        ^
   v.ref_ref_this();
 
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+29]]:3: note: in thunk for C++ function used here [InCppThunk]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+21]]:3: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:   v.const_ref_ref_this();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -99,14 +99,6 @@ fn Value(v: Cpp.HasQualifiers) {
   // CHECK:STDERR: ./object_param_qualifiers.h:7:8: note: candidate function not viable: expects an lvalue for object argument [CppInteropParseNote]
   // CHECK:STDERR:     7 |   void ref_this() &;
   // CHECK:STDERR:       |        ^
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+8]]:3: error: cannot implicitly convert expression of type `Cpp.HasQualifiers` to `const Cpp.HasQualifiers` [ConversionFailure]
-  // CHECK:STDERR:   v.const_ref_ref_this();
-  // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+5]]:3: note: type `Cpp.HasQualifiers` does not implement interface `Core.ImplicitAs(const Cpp.HasQualifiers)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   v.const_ref_ref_this();
-  // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   v.const_ref_ref_this();
 }
