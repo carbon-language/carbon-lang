@@ -2124,10 +2124,11 @@ auto ImportCppOverloadSet(
 static auto GetOverloadSetAccess(const clang::UnresolvedSet<4>& overload_set)
     -> SemIR::AccessKind {
   SemIR::AccessKind access_kind = SemIR::AccessKind::Private;
-  for (auto it = overload_set.begin();
-       it != overload_set.end() && access_kind != SemIR::AccessKind::Public;
-       ++it) {
+  for (auto it = overload_set.begin(); it != overload_set.end(); ++it) {
     access_kind = std::min(access_kind, MapAccess(it));
+    if (access_kind == SemIR::AccessKind::Public) {
+      break;
+    }
   }
   return access_kind;
 }
