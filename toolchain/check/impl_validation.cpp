@@ -366,8 +366,7 @@ static auto ImportFinalImplsWithImplInFile(Context& context) -> void {
 
     auto interface_id = impl.interface.interface_id;
     const auto& interface = context.interfaces().Get(interface_id);
-    auto interface_owning_decl_id = interface.first_owning_decl_id;
-    if (!interface_owning_decl_id.has_value()) {
+    if (!interface.first_owning_decl_id.has_value()) {
       continue;
     }
     const auto& import_ir_inst =
