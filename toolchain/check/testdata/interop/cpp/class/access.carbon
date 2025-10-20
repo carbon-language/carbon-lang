@@ -409,13 +409,13 @@ fn F(c: Cpp.C*) {
 class C {
  public:
   C();
-  static auto foo() -> void;
+  static auto Overload() -> void;
  protected:
   C(int);
-  static auto foo(int a) -> void;
+  static auto Overload(int a) -> void;
  private:
   C(int, int);
-  static auto foo(int a, int b) -> void;
+  static auto Overload(int a, int b) -> void;
 };
 
 // --- import_overload_set_public.carbon
@@ -427,7 +427,7 @@ import Cpp library "overload_set.h";
 fn F() {
   //@dump-sem-ir-begin
   Cpp.C.C();
-  Cpp.C.foo();
+  Cpp.C.Overload();
   //@dump-sem-ir-end
 }
 
@@ -445,12 +445,12 @@ fn F() {
   // CHECK:STDERR:
   Cpp.C.C(1 as i32);
 
-  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE+5]]:3: error: cannot access protected member `foo` of type `Cpp.C` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.C.foo(1 as i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE+5]]:3: error: cannot access protected member `Overload` of type `Cpp.C` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.C.Overload(1 as i32);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_protected.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.C.foo(1 as i32);
+  Cpp.C.Overload(1 as i32);
 }
 
 // --- import_overload_set_protected_base.carbon
@@ -471,11 +471,11 @@ class D {
   }
 
   fn CallPublic() {
-    foo();
+    Overload();
   }
 
   fn CallProtected() {
-    foo(1 as i32);
+    Overload(1 as i32);
   }
 }
 
@@ -493,12 +493,12 @@ fn F() {
   // CHECK:STDERR:
   Cpp.C.C(1 as i32, 2 as i32);
 
-  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE+5]]:3: error: cannot access private member `foo` of type `Cpp.C` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.C.foo(1 as i32, 2 as i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE+5]]:3: error: cannot access private member `Overload` of type `Cpp.C` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.C.Overload(1 as i32, 2 as i32);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_private.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.C.foo(1 as i32, 2 as i32);
+  Cpp.C.Overload(1 as i32, 2 as i32);
 }
 
 // --- fail_import_overload_set_private_base.carbon
@@ -520,12 +520,12 @@ class D {
   }
 
   fn CallPrivate() {
-    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE+5]]:5: error: cannot access private member `foo` of type `Cpp.C` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     foo(1 as i32, 2 as i32);
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE+5]]:5: error: cannot access private member `Overload` of type `Cpp.C` [ClassInvalidMemberAccess]
+    // CHECK:STDERR:     Overload(1 as i32, 2 as i32);
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // CHECK:STDERR: fail_import_overload_set_private_base.carbon: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
-    foo(1 as i32, 2 as i32);
+    Overload(1 as i32, 2 as i32);
   }
 }
 
@@ -545,7 +545,7 @@ import Cpp library "overload_set_base_class.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  Cpp.Public.foo();
+  Cpp.Public.Overload();
   //@dump-sem-ir-end
 }
 
@@ -556,18 +556,18 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set_base_class.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+5]]:3: error: cannot access protected member `foo` of type `Cpp.Public` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.Public.foo(1);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+5]]:3: error: cannot access protected member `Overload` of type `Cpp.Public` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Public.Overload(1);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.Public.foo(1);
-  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+5]]:3: error: cannot access private member `foo` of type `Cpp.Public` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.Public.foo(1, 2);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  Cpp.Public.Overload(1);
+  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+5]]:3: error: cannot access private member `Overload` of type `Cpp.Public` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Public.Overload(1, 2);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.Public.foo(1, 2);
+  Cpp.Public.Overload(1, 2);
 }
 
 // --- import_overload_set_public_base_class_derived_call_non_private.carbon
@@ -581,8 +581,8 @@ class Derived {
 
   fn F() {
     //@dump-sem-ir-begin
-    foo();
-    foo(1);
+    Overload();
+    Overload(1);
     //@dump-sem-ir-end
   }
 }
@@ -597,12 +597,12 @@ class Derived {
   extend base: Cpp.Public;
 
   fn F() {
-    // CHECK:STDERR: fail_import_overload_set_public_base_class_derived_call_private.carbon:[[@LINE+5]]:5: error: cannot access private member `foo` of type `Cpp.Public` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     foo(1, 2);
-    // CHECK:STDERR:     ^~~~~~~~~
+    // CHECK:STDERR: fail_import_overload_set_public_base_class_derived_call_private.carbon:[[@LINE+5]]:5: error: cannot access private member `Overload` of type `Cpp.Public` [ClassInvalidMemberAccess]
+    // CHECK:STDERR:     Overload(1, 2);
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~
     // CHECK:STDERR: fail_import_overload_set_public_base_class_derived_call_private.carbon: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
-    foo(1, 2);
+    Overload(1, 2);
   }
 }
 
@@ -613,24 +613,24 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set_base_class.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+5]]:3: error: cannot access protected member `foo` of type `Cpp.Protected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.Protected.foo();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+5]]:3: error: cannot access protected member `Overload` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Protected.Overload();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.Protected.foo();
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+5]]:3: error: cannot access protected member `foo` of type `Cpp.Protected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.Protected.foo(1);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  Cpp.Protected.Overload();
+  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+5]]:3: error: cannot access protected member `Overload` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Protected.Overload(1);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.Protected.foo(1);
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+5]]:3: error: cannot access protected member `foo` of type `Cpp.Protected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.Protected.foo(1, 2);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  Cpp.Protected.Overload(1);
+  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+5]]:3: error: cannot access protected member `Overload` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Protected.Overload(1, 2);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.Protected.foo(1, 2);
+  Cpp.Protected.Overload(1, 2);
 }
 
 // --- import_overload_set_protected_base_class_derived_call_non_private.carbon
@@ -644,8 +644,8 @@ class Derived {
 
   fn F() {
     //@dump-sem-ir-begin
-    foo();
-    foo(1);
+    Overload();
+    Overload(1);
     //@dump-sem-ir-end
   }
 }
@@ -660,12 +660,12 @@ class Derived {
   extend base: Cpp.Protected;
 
   fn F() {
-    // CHECK:STDERR: fail_import_overload_set_protected_base_class_derived_call_private.carbon:[[@LINE+5]]:5: error: cannot access private member `foo` of type `Cpp.Protected` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     foo(1, 2);
-    // CHECK:STDERR:     ^~~~~~~~~
+    // CHECK:STDERR: fail_import_overload_set_protected_base_class_derived_call_private.carbon:[[@LINE+5]]:5: error: cannot access private member `Overload` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+    // CHECK:STDERR:     Overload(1, 2);
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~
     // CHECK:STDERR: fail_import_overload_set_protected_base_class_derived_call_private.carbon: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
-    foo(1, 2);
+    Overload(1, 2);
   }
 }
 
@@ -676,24 +676,24 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set_base_class.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+5]]:3: error: cannot access private member `foo` of type `Cpp.Private` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.Private.foo();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+5]]:3: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Private.Overload();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.Private.foo();
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+5]]:3: error: cannot access private member `foo` of type `Cpp.Private` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.Private.foo(1);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  Cpp.Private.Overload();
+  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+5]]:3: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Private.Overload(1);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.Private.foo(1);
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+5]]:3: error: cannot access private member `foo` of type `Cpp.Private` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.Private.foo(1, 2);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  Cpp.Private.Overload(1);
+  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+5]]:3: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Private.Overload(1, 2);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.Private.foo(1, 2);
+  Cpp.Private.Overload(1, 2);
 }
 
 // --- fail_import_overload_set_private_base_class_derived.carbon
@@ -706,24 +706,24 @@ class Derived {
   extend base: Cpp.Private;
 
   fn F() {
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+5]]:5: error: cannot access private member `foo` of type `Cpp.Private` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     foo();
-    // CHECK:STDERR:     ^~~~~
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+5]]:5: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
+    // CHECK:STDERR:     Overload();
+    // CHECK:STDERR:     ^~~~~~~~~~
     // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
-    foo();
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+5]]:5: error: cannot access private member `foo` of type `Cpp.Private` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     foo(1);
-    // CHECK:STDERR:     ^~~~~~
+    Overload();
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+5]]:5: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
+    // CHECK:STDERR:     Overload(1);
+    // CHECK:STDERR:     ^~~~~~~~~~~
     // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
-    foo(1);
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+5]]:5: error: cannot access private member `foo` of type `Cpp.Private` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     foo(1, 2);
-    // CHECK:STDERR:     ^~~~~~~~~
+    Overload(1);
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+5]]:5: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
+    // CHECK:STDERR:     Overload(1, 2);
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~
     // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
-    foo(1, 2);
+    Overload(1, 2);
   }
 }
 
@@ -1711,10 +1711,10 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C.foo.cpp_overload_set.type: type = cpp_overload_set_type @C.foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %C.foo.cpp_overload_set.value: %C.foo.cpp_overload_set.type = cpp_overload_set_value @C.foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %C.foo.type: type = fn_type @C.foo [concrete]
-// CHECK:STDOUT:   %C.foo: %C.foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.Overload.cpp_overload_set.type: type = cpp_overload_set_type @C.Overload.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %C.Overload.cpp_overload_set.value: %C.Overload.cpp_overload_set.type = cpp_overload_set_value @C.Overload.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %C.Overload.type: type = fn_type @C.Overload [concrete]
+// CHECK:STDOUT:   %C.Overload: %C.Overload.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %C, () [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.b92: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
@@ -1733,8 +1733,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.foo.cpp_overload_set.value: %C.foo.cpp_overload_set.type = cpp_overload_set_value @C.foo.cpp_overload_set [concrete = constants.%C.foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %C.foo.decl: %C.foo.type = fn_decl @C.foo [concrete = constants.%C.foo] {} {}
+// CHECK:STDOUT:   %C.Overload.cpp_overload_set.value: %C.Overload.cpp_overload_set.type = cpp_overload_set_value @C.Overload.cpp_overload_set [concrete = constants.%C.Overload.cpp_overload_set.value]
+// CHECK:STDOUT:   %C.Overload.decl: %C.Overload.type = fn_decl @C.Overload [concrete = constants.%C.Overload] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -1749,8 +1749,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %.loc8_11.3: ref %C = temporary %.loc8_11.1, %.loc8_11.2
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc9: type = name_ref C, imports.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %foo.ref: %C.foo.cpp_overload_set.type = name_ref foo, imports.%C.foo.cpp_overload_set.value [concrete = constants.%C.foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %C.foo.call: init %empty_tuple.type = call imports.%C.foo.decl()
+// CHECK:STDOUT:   %Overload.ref: %C.Overload.cpp_overload_set.type = name_ref Overload, imports.%C.Overload.cpp_overload_set.value [concrete = constants.%C.Overload.cpp_overload_set.value]
+// CHECK:STDOUT:   %C.Overload.call: init %empty_tuple.type = call imports.%C.Overload.decl()
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_11.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.841
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8_11.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
@@ -1764,10 +1764,10 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Public: type = class_type @Public [concrete]
-// CHECK:STDOUT:   %Public.foo.cpp_overload_set.type: type = cpp_overload_set_type @Public.foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %Public.foo.cpp_overload_set.value: %Public.foo.cpp_overload_set.type = cpp_overload_set_value @Public.foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %C.foo.type: type = fn_type @C.foo [concrete]
-// CHECK:STDOUT:   %C.foo: %C.foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Public.Overload.cpp_overload_set.type: type = cpp_overload_set_type @Public.Overload.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Public.Overload.cpp_overload_set.value: %Public.Overload.cpp_overload_set.type = cpp_overload_set_value @Public.Overload.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %C.Overload.type: type = fn_type @C.Overload [concrete]
+// CHECK:STDOUT:   %C.Overload: %C.Overload.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1776,16 +1776,16 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Public.decl: type = class_decl @Public [concrete = constants.%Public] {} {}
-// CHECK:STDOUT:   %Public.foo.cpp_overload_set.value: %Public.foo.cpp_overload_set.type = cpp_overload_set_value @Public.foo.cpp_overload_set [concrete = constants.%Public.foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %C.foo.decl: %C.foo.type = fn_decl @C.foo [concrete = constants.%C.foo] {} {}
+// CHECK:STDOUT:   %Public.Overload.cpp_overload_set.value: %Public.Overload.cpp_overload_set.type = cpp_overload_set_value @Public.Overload.cpp_overload_set [concrete = constants.%Public.Overload.cpp_overload_set.value]
+// CHECK:STDOUT:   %C.Overload.decl: %C.Overload.type = fn_decl @C.Overload [concrete = constants.%C.Overload] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Public.ref: type = name_ref Public, imports.%Public.decl [concrete = constants.%Public]
-// CHECK:STDOUT:   %foo.ref: %Public.foo.cpp_overload_set.type = name_ref foo, imports.%Public.foo.cpp_overload_set.value [concrete = constants.%Public.foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %C.foo.call: init %empty_tuple.type = call imports.%C.foo.decl()
+// CHECK:STDOUT:   %Overload.ref: %Public.Overload.cpp_overload_set.type = name_ref Overload, imports.%Public.Overload.cpp_overload_set.value [concrete = constants.%Public.Overload.cpp_overload_set.value]
+// CHECK:STDOUT:   %C.Overload.call: init %empty_tuple.type = call imports.%C.Overload.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1794,15 +1794,15 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %Public.foo.cpp_overload_set.type: type = cpp_overload_set_type @Public.foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %Public.foo.cpp_overload_set.value: %Public.foo.cpp_overload_set.type = cpp_overload_set_value @Public.foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %C.foo.type.54cd32.1: type = fn_type @C.foo.1 [concrete]
-// CHECK:STDOUT:   %C.foo.25ba20.1: %C.foo.type.54cd32.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Public.Overload.cpp_overload_set.type: type = cpp_overload_set_type @Public.Overload.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Public.Overload.cpp_overload_set.value: %Public.Overload.cpp_overload_set.type = cpp_overload_set_value @Public.Overload.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %C.Overload.type.fd2af6.1: type = fn_type @C.Overload.1 [concrete]
+// CHECK:STDOUT:   %C.Overload.5043eb.1: %C.Overload.type.fd2af6.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %C.foo.type.54cd32.2: type = fn_type @C.foo.2 [concrete]
-// CHECK:STDOUT:   %C.foo.25ba20.2: %C.foo.type.54cd32.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %C.Overload.type.fd2af6.2: type = fn_type @C.Overload.2 [concrete]
+// CHECK:STDOUT:   %C.Overload.5043eb.2: %C.Overload.type.fd2af6.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.d14: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.1b6: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
@@ -1820,9 +1820,9 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Public.foo.cpp_overload_set.value: %Public.foo.cpp_overload_set.type = cpp_overload_set_value @Public.foo.cpp_overload_set [concrete = constants.%Public.foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %C.foo.decl.10458f.1: %C.foo.type.54cd32.1 = fn_decl @C.foo.1 [concrete = constants.%C.foo.25ba20.1] {} {}
-// CHECK:STDOUT:   %C.foo.decl.10458f.2: %C.foo.type.54cd32.2 = fn_decl @C.foo.2 [concrete = constants.%C.foo.25ba20.2] {
+// CHECK:STDOUT:   %Public.Overload.cpp_overload_set.value: %Public.Overload.cpp_overload_set.type = cpp_overload_set_value @Public.Overload.cpp_overload_set [concrete = constants.%Public.Overload.cpp_overload_set.value]
+// CHECK:STDOUT:   %C.Overload.decl.b29afa.1: %C.Overload.type.fd2af6.1 = fn_decl @C.Overload.1 [concrete = constants.%C.Overload.5043eb.1] {} {}
+// CHECK:STDOUT:   %C.Overload.decl.b29afa.2: %C.Overload.type.fd2af6.2 = fn_decl @C.Overload.2 [concrete = constants.%C.Overload.5043eb.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -1840,24 +1840,24 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   .Cpp = <poisoned>
 // CHECK:STDOUT:   .base = %.loc7
 // CHECK:STDOUT:   .F = %Derived.F.decl
-// CHECK:STDOUT:   .foo = <poisoned>
+// CHECK:STDOUT:   .Overload = <poisoned>
 // CHECK:STDOUT:   extend %Public.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Derived.F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %foo.ref.loc11: %Public.foo.cpp_overload_set.type = name_ref foo, imports.%Public.foo.cpp_overload_set.value [concrete = constants.%Public.foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %C.foo.call.loc11: init %empty_tuple.type = call imports.%C.foo.decl.10458f.1()
-// CHECK:STDOUT:   %foo.ref.loc12: %Public.foo.cpp_overload_set.type = name_ref foo, imports.%Public.foo.cpp_overload_set.value [concrete = constants.%Public.foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %Overload.ref.loc11: %Public.Overload.cpp_overload_set.type = name_ref Overload, imports.%Public.Overload.cpp_overload_set.value [concrete = constants.%Public.Overload.cpp_overload_set.value]
+// CHECK:STDOUT:   %C.Overload.call.loc11: init %empty_tuple.type = call imports.%C.Overload.decl.b29afa.1()
+// CHECK:STDOUT:   %Overload.ref.loc12: %Public.Overload.cpp_overload_set.type = name_ref Overload, imports.%Public.Overload.cpp_overload_set.value [concrete = constants.%Public.Overload.cpp_overload_set.value]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:   %bound_method.loc12_9.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc12_14.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc12_9.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc12_9.2(%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc12_9.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc12_9.2: %i32 = converted %int_1, %.loc12_9.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %C.foo.call.loc12: init %empty_tuple.type = call imports.%C.foo.decl.10458f.2(%.loc12_9.2)
+// CHECK:STDOUT:   %bound_method.loc12_14.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc12_14.2(%int_1) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc12_14.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc12_14.2: %i32 = converted %int_1, %.loc12_14.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %C.Overload.call.loc12: init %empty_tuple.type = call imports.%C.Overload.decl.b29afa.2(%.loc12_14.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1866,15 +1866,15 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %Protected.foo.cpp_overload_set.type: type = cpp_overload_set_type @Protected.foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %Protected.foo.cpp_overload_set.value: %Protected.foo.cpp_overload_set.type = cpp_overload_set_value @Protected.foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %C.foo.type.54cd32.1: type = fn_type @C.foo.1 [concrete]
-// CHECK:STDOUT:   %C.foo.25ba20.1: %C.foo.type.54cd32.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %Protected.Overload.cpp_overload_set.type: type = cpp_overload_set_type @Protected.Overload.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Protected.Overload.cpp_overload_set.value: %Protected.Overload.cpp_overload_set.type = cpp_overload_set_value @Protected.Overload.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %C.Overload.type.fd2af6.1: type = fn_type @C.Overload.1 [concrete]
+// CHECK:STDOUT:   %C.Overload.5043eb.1: %C.Overload.type.fd2af6.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %C.foo.type.54cd32.2: type = fn_type @C.foo.2 [concrete]
-// CHECK:STDOUT:   %C.foo.25ba20.2: %C.foo.type.54cd32.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %C.Overload.type.fd2af6.2: type = fn_type @C.Overload.2 [concrete]
+// CHECK:STDOUT:   %C.Overload.5043eb.2: %C.Overload.type.fd2af6.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.d14: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.1b6: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
@@ -1892,9 +1892,9 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Protected.foo.cpp_overload_set.value: %Protected.foo.cpp_overload_set.type = cpp_overload_set_value @Protected.foo.cpp_overload_set [concrete = constants.%Protected.foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %C.foo.decl.10458f.1: %C.foo.type.54cd32.1 = fn_decl @C.foo.1 [concrete = constants.%C.foo.25ba20.1] {} {}
-// CHECK:STDOUT:   %C.foo.decl.10458f.2: %C.foo.type.54cd32.2 = fn_decl @C.foo.2 [concrete = constants.%C.foo.25ba20.2] {
+// CHECK:STDOUT:   %Protected.Overload.cpp_overload_set.value: %Protected.Overload.cpp_overload_set.type = cpp_overload_set_value @Protected.Overload.cpp_overload_set [concrete = constants.%Protected.Overload.cpp_overload_set.value]
+// CHECK:STDOUT:   %C.Overload.decl.b29afa.1: %C.Overload.type.fd2af6.1 = fn_decl @C.Overload.1 [concrete = constants.%C.Overload.5043eb.1] {} {}
+// CHECK:STDOUT:   %C.Overload.decl.b29afa.2: %C.Overload.type.fd2af6.2 = fn_decl @C.Overload.2 [concrete = constants.%C.Overload.5043eb.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -1912,24 +1912,24 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   .Cpp = <poisoned>
 // CHECK:STDOUT:   .base = %.loc7
 // CHECK:STDOUT:   .F = %Derived.F.decl
-// CHECK:STDOUT:   .foo = <poisoned>
+// CHECK:STDOUT:   .Overload = <poisoned>
 // CHECK:STDOUT:   extend %Protected.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Derived.F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %foo.ref.loc11: %Protected.foo.cpp_overload_set.type = name_ref foo, imports.%Protected.foo.cpp_overload_set.value [concrete = constants.%Protected.foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %C.foo.call.loc11: init %empty_tuple.type = call imports.%C.foo.decl.10458f.1()
-// CHECK:STDOUT:   %foo.ref.loc12: %Protected.foo.cpp_overload_set.type = name_ref foo, imports.%Protected.foo.cpp_overload_set.value [concrete = constants.%Protected.foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %Overload.ref.loc11: %Protected.Overload.cpp_overload_set.type = name_ref Overload, imports.%Protected.Overload.cpp_overload_set.value [concrete = constants.%Protected.Overload.cpp_overload_set.value]
+// CHECK:STDOUT:   %C.Overload.call.loc11: init %empty_tuple.type = call imports.%C.Overload.decl.b29afa.1()
+// CHECK:STDOUT:   %Overload.ref.loc12: %Protected.Overload.cpp_overload_set.type = name_ref Overload, imports.%Protected.Overload.cpp_overload_set.value [concrete = constants.%Protected.Overload.cpp_overload_set.value]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:   %bound_method.loc12_9.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc12_14.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc12_9.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc12_9.2(%int_1) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc12_9.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc12_9.2: %i32 = converted %int_1, %.loc12_9.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %C.foo.call.loc12: init %empty_tuple.type = call imports.%C.foo.decl.10458f.2(%.loc12_9.2)
+// CHECK:STDOUT:   %bound_method.loc12_14.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc12_14.2(%int_1) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc12_14.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc12_14.2: %i32 = converted %int_1, %.loc12_14.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %C.Overload.call.loc12: init %empty_tuple.type = call imports.%C.Overload.decl.b29afa.2(%.loc12_14.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
