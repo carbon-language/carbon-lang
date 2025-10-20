@@ -2016,10 +2016,10 @@ auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
       SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, num_params));
 }
 
-// Deduces the access given UnresolvedSetIterator.
+// Calculates the access given `UnresolvedSetIterator`.
 static auto MapAccess(clang::UnresolvedSetIterator iterator)
     -> SemIR::AccessKind {
-  return DeduceClangAccess(iterator.getAccess(), iterator->getAccess());
+  return ConvertCppAccess(iterator.getAccess(), iterator->getAccess());
 }
 
 // Imports a Clang declaration into Carbon and adds that name into the

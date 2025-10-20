@@ -90,7 +90,7 @@ static auto CheckOverloadAccess(Context& context, SemIR::LocId loc_id,
                                 clang::DeclAccessPair overload,
                                 SemIR::InstId overload_inst_id) -> void {
   SemIR::AccessKind member_access_kind =
-      DeduceClangAccess(overload.getAccess(), overload->getAccess());
+      ConvertCppAccess(overload.getAccess(), overload->getAccess());
   if (member_access_kind == SemIR::AccessKind::Public) {
     return;
   }

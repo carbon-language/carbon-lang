@@ -26,8 +26,8 @@ static auto CalculateEffectiveAccess(clang::AccessSpecifier lookup_access,
   return clang::AS_public;
 }
 
-auto DeduceClangAccess(clang::AccessSpecifier lookup_access,
-                       clang::AccessSpecifier lexical_access)
+auto ConvertCppAccess(clang::AccessSpecifier lookup_access,
+                      clang::AccessSpecifier lexical_access)
     -> SemIR::AccessKind {
   switch (CalculateEffectiveAccess(lookup_access, lexical_access)) {
     case clang::AS_public:
