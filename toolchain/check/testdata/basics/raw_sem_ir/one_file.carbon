@@ -383,7 +383,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst0000000E:    {kind: Namespace, arg0: name_scope00000000, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst6000000F:    {kind: ImportDecl, arg0: name(Core)}
 // CHECK:STDOUT:     inst60000010:    {kind: Namespace, arg0: name_scope60000001, arg1: inst6000000F, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     inst60000011:    {kind: FacetType, arg0: facet_type00000000, type: type(TypeType)}
+// CHECK:STDOUT:     inst60000011:    {kind: FacetType, arg0: facet_type60000000, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000012:    {kind: BindSymbolicName, arg0: entity_name60000000, arg1: inst<none>, type: type(inst60000011)}
 // CHECK:STDOUT:     inst60000013:    {kind: BindSymbolicName, arg0: entity_name60000000, arg1: inst<none>, type: type(inst60000011)}
 // CHECK:STDOUT:     inst60000014:    {kind: BindSymbolicName, arg0: entity_name60000001, arg1: inst<none>, type: type(TypeType)}
@@ -437,7 +437,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst60000044:    {kind: RequireCompleteType, arg0: inst6000001B, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst60000045:    {kind: ImportRefLoaded, arg0: import_ir_inst00000000, arg1: entity_name60000003, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000046:    {kind: InterfaceDecl, arg0: interface60000000, arg1: inst_block_empty, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000047:    {kind: FacetType, arg0: facet_type00000001, type: type(TypeType)}
+// CHECK:STDOUT:     inst60000047:    {kind: FacetType, arg0: facet_type60000001, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000048:    {kind: BindSymbolicName, arg0: entity_name60000004, arg1: inst<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst60000049:    {kind: ImportRefUnloaded, arg0: import_ir_inst00000002, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst6000004A:    {kind: ImportRefLoaded, arg0: import_ir_inst00000003, arg1: entity_name<none>, type: type(inst6000004C)}

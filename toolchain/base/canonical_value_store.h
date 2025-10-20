@@ -29,6 +29,7 @@ class CanonicalValueStore {
   using ValueType = ValueStoreTypes<ValueT>::ValueType;
   using RefType = ValueStoreTypes<ValueT>::RefType;
   using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
+  using IdType = IdT;
 
   CanonicalValueStore() = default;
   template <typename Id>

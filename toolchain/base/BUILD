@@ -126,6 +126,7 @@ cc_library(
     name = "relational_value_store",
     hdrs = ["relational_value_store.h"],
     deps = [
+        ":value_store",
         ":value_store_types",
         "//common:check",
         "@llvm-project//llvm:Support",

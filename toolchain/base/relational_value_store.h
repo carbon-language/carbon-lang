@@ -9,6 +9,7 @@
 
 #include "common/check.h"
 #include "llvm/ADT/SmallVector.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/base/value_store_types.h"
 
 namespace Carbon {
@@ -30,17 +31,21 @@ namespace Carbon {
 // requires storing a bit for presence of each `RelatedIdT`. And it allocates
 // memory for values for all IDs up largest ID present in the store, even if
 // they are not yet used.
-template <typename RelatedIdT, typename IdT, typename ValueT>
+template <typename RelatedStore, typename IdT, typename ValueT>
 class RelationalValueStore {
  public:
   using ValueType = ValueStoreTypes<ValueT>::ValueType;
   using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
+  using RelatedIdType = RelatedStore::IdType;
+
+  explicit RelationalValueStore(const RelatedStore* related_store)
+      : related_store_(related_store) {}
 
   // Given the related ID and a value, stores the value and returns a mapped ID
   // to reference it in the store.
-  auto Add(RelatedIdT related_id, ValueType value) -> IdT {
-    CARBON_DCHECK(related_id.index >= 0, "{0}", related_id);
-    IdT id(related_id.index);
+  auto Add(RelatedIdType related_id, ValueType value) -> IdT {
+    auto related_index = related_store_->GetRawIndex(related_id);
+    IdT id(related_index);
     if (static_cast<size_t>(id.index) >= values_.size()) {
       values_.resize(id.index + 1);
     }
@@ -53,16 +58,16 @@ class RelationalValueStore {
 
   // Returns the ID of a value in the store if the `related_id` was previously
   // used to add a value to the store, or None.
-  auto TryGetId(RelatedIdT related_id) const -> IdT {
-    CARBON_DCHECK(related_id.index >= 0, "{0}", related_id);
-    if (static_cast<size_t>(related_id.index) >= values_.size()) {
+  auto TryGetId(RelatedIdType related_id) const -> IdT {
+    auto related_index = related_store_->GetRawIndex(related_id);
+    if (static_cast<size_t>(related_index) >= values_.size()) {
       return IdT::None;
     }
-    auto& opt = values_[related_id.index];
+    auto& opt = values_[related_index];
     if (!opt.has_value()) {
       return IdT::None;
     }
-    return IdT(related_id.index);
+    return IdT(related_index);
   }
 
   // Returns a value for an ID.
@@ -75,6 +80,7 @@ class RelationalValueStore {
   // Set inline size to 0 because these will typically be too large for the
   // stack, while this does make File smaller.
   llvm::SmallVector<std::optional<ValueType>, 0> values_;
+  const RelatedStore* related_store_;
 };
 
 }  // namespace Carbon

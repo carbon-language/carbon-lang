@@ -69,7 +69,7 @@ using CustomLayoutStore = BlockValueStore<CustomLayoutId, uint64_t>;
 class File : public Printable<File> {
  public:
   using IdentifiedFacetTypeStore =
-      RelationalValueStore<FacetTypeId, IdentifiedFacetTypeId,
+      RelationalValueStore<FacetTypeInfoStore, IdentifiedFacetTypeId,
                            IdentifiedFacetType>;
 
   // Starts a new file for Check::CheckParseTree.
