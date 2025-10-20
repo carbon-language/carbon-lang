@@ -172,17 +172,17 @@ class File : public Printable<File> {
   auto classes() const -> const ClassStore& { return classes_; }
   auto interfaces() -> InterfaceStore& { return interfaces_; }
   auto interfaces() const -> const InterfaceStore& { return interfaces_; }
-  auto associated_constants() -> AssociatedConstantStore& {
-    return associated_constants_;
-  }
-  auto associated_constants() const -> const AssociatedConstantStore& {
-    return associated_constants_;
-  }
   auto named_constraints() -> NamedConstraintStore& {
     return named_constraints_;
   }
   auto named_constraints() const -> const NamedConstraintStore& {
     return named_constraints_;
+  }
+  auto associated_constants() -> AssociatedConstantStore& {
+    return associated_constants_;
+  }
+  auto associated_constants() const -> const AssociatedConstantStore& {
+    return associated_constants_;
   }
   // TODO: Rename these to `facet_type_infos`.
   auto facet_types() -> FacetTypeInfoStore& { return facet_types_; }
@@ -328,11 +328,11 @@ class File : public Printable<File> {
   // Storage for interfaces.
   InterfaceStore interfaces_;
 
-  // Storage for associated constants.
-  AssociatedConstantStore associated_constants_;
-
   // Storage for named constraints.
   NamedConstraintStore named_constraints_;
+
+  // Storage for associated constants.
+  AssociatedConstantStore associated_constants_;
 
   // Storage for facet types.
   FacetTypeInfoStore facet_types_;

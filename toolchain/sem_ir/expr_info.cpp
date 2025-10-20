@@ -141,8 +141,8 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case IntType::Kind:
       case IntValue::Kind:
       case InterfaceDecl::Kind:
-      case NamedConstraintDecl::Kind:
       case MaybeUnformedType::Kind:
+      case NamedConstraintDecl::Kind:
       case NamespaceType::Kind:
       case PartialType::Kind:
       case PatternType::Kind:

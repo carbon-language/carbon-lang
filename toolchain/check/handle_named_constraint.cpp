@@ -6,7 +6,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
-#include "toolchain/check/interface_support.h"
+#include "toolchain/check/interface.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/type.h"
 #include "toolchain/sem_ir/ids.h"
@@ -41,7 +41,7 @@ static auto BuildNamedConstraintDecl(Context& context,
       .PopAndDiscardSoloNodeId<Parse::NodeKind::NamedConstraintIntroducer>();
 
   // TODO: PopSoloNodeId(`template`) if it's present, and track that in the
-  // NamedConstraint.
+  // NamedConstraint. Or maybe it should be a modifier, like `abstract class`?
 
   // Process modifiers.
   auto [_, parent_scope_inst] =
@@ -77,9 +77,10 @@ static auto BuildNamedConstraintDecl(Context& context,
       return nullptr;
     }
   };
-  if (auto existing_decl = GetExistingDeclOrDiagnoseMismatch(
-          context, node_id, name, name_context, constraint_info, is_definition,
-          try_constraint_decl_to_entity, lookup_result)) {
+  if (auto existing_decl =
+          TryGetExistingDecl(context, node_id, name, name_context,
+                             introducer.kind, constraint_info, is_definition,
+                             try_constraint_decl_to_entity, lookup_result)) {
     auto existing_constraint_decl =
         existing_decl->As<SemIR::NamedConstraintDecl>();
     constraint_decl.named_constraint_id =
@@ -94,6 +95,7 @@ static auto BuildNamedConstraintDecl(Context& context,
                                     .generic_id;
     FinishGenericRedecl(context, prev_decl_generic_id);
   } else {
+    // Create a new named constraint if this isn't a valid redeclaration.
     constraint_info.generic_id = BuildGenericDecl(context, decl_inst_id);
     constraint_decl.named_constraint_id =
         context.named_constraints().Add(constraint_info);
@@ -107,7 +109,6 @@ static auto BuildNamedConstraintDecl(Context& context,
   // Write the completed NamedConstraintDecl instruction.
   ReplaceInstBeforeConstantUse(context, decl_inst_id, constraint_decl);
 
-  (void)is_definition;
   return {constraint_decl.named_constraint_id, decl_inst_id};
 }
 
@@ -164,7 +165,8 @@ auto HandleParseNode(Context& context,
           .Pop<Parse::NodeKind::NamedConstraintDefinitionStart>();
   context.inst_block_stack().Pop();
 
-  auto& constraint_info = context.named_constraints().Get(named_constraint_id);
+  const auto& constraint_info =
+      context.named_constraints().Get(named_constraint_id);
 
   // TODO: Do something with `require` and `alias` statements in the body of the
   // constraint.

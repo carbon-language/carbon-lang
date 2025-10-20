@@ -10,7 +10,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
-#include "toolchain/check/interface_support.h"
+#include "toolchain/check/interface.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
@@ -80,9 +80,9 @@ static auto BuildInterfaceDecl(Context& context,
       return nullptr;
     }
   };
-  if (auto existing_decl = GetExistingDeclOrDiagnoseMismatch(
-          context, node_id, name, name_context, interface_info, is_definition,
-          try_interface_decl_to_entity, lookup_result)) {
+  if (auto existing_decl = TryGetExistingDecl(
+          context, node_id, name, name_context, introducer.kind, interface_info,
+          is_definition, try_interface_decl_to_entity, lookup_result)) {
     auto existing_interface_decl = existing_decl->As<SemIR::InterfaceDecl>();
     interface_decl.interface_id = existing_interface_decl.interface_id;
     interface_decl.type_id = existing_interface_decl.type_id;
@@ -95,11 +95,6 @@ static auto BuildInterfaceDecl(Context& context,
     FinishGenericRedecl(context, prev_decl_generic_id);
   } else {
     // Create a new interface if this isn't a valid redeclaration.
-    //
-    // TODO: If this is an invalid redeclaration of a non-interface entity or
-    // there was an error in the qualifier, we will have lost track of the
-    // interface name here. We should keep track of it even if the name is
-    // invalid.
     interface_info.generic_id = BuildGenericDecl(context, decl_inst_id);
     interface_decl.interface_id = context.interfaces().Add(interface_info);
     if (interface_info.has_parameters()) {

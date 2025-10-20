@@ -11,7 +11,10 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/merge.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -217,6 +220,86 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
   }
 
   CARBON_FATAL("Unexpected kind for associated constant {0}", decl);
+}
+
+auto GetSelfParameter(Context& context, SemIR::TypeId type_id,
+                      SemIR::NameScopeId scope_id, bool is_template)
+    -> SemIR::InstId {
+  auto entity_name_id = context.entity_names().AddSymbolicBindingName(
+      SemIR::NameId::SelfType, scope_id,
+      context.scope_stack().AddCompileTimeBinding(), is_template);
+  // Because there is no equivalent non-symbolic value, we use `None` as
+  // the `value_id` on the `BindSymbolicName`.
+  auto self_param_inst_id =
+      AddInst(context, SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
+                           {.type_id = type_id,
+                            .entity_name_id = entity_name_id,
+                            .value_id = SemIR::InstId::None}));
+  context.scope_stack().PushCompileTimeBinding(self_param_inst_id);
+  context.name_scopes().AddRequiredName(scope_id, SemIR::NameId::SelfType,
+                                        self_param_inst_id);
+  return self_param_inst_id;
+}
+
+auto TryGetExistingDecl(
+    Context& context, SemIR::LocId loc_id, const NameComponent& name,
+    const DeclNameStack::NameContext& name_context,
+    Lex::TokenKind decl_token_kind, const SemIR::EntityWithParamsBase& entity,
+    bool is_definition,
+    llvm::function_ref<auto(SemIR::Inst)->const SemIR::EntityWithParamsBase*>
+        try_get_entity,
+    SemIR::ScopeLookupResult lookup_result) -> std::optional<SemIR::Inst> {
+  if (lookup_result.is_poisoned()) {
+    // This is a declaration of a poisoned name.
+    DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
+                         lookup_result.poisoning_loc_id(), name_context.loc_id);
+    return std::nullopt;
+  }
+
+  if (!lookup_result.is_found()) {
+    return std::nullopt;
+  }
+
+  SemIR::InstId existing_id = lookup_result.target_inst_id();
+  SemIR::Inst existing_decl_inst = context.insts().Get(existing_id);
+  const auto* existing_decl_entity = try_get_entity(existing_decl_inst);
+  if (!existing_decl_entity) {
+    // This is a redeclaration with a different entity kind.
+    DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
+                          SemIR::LocId(existing_id));
+    return std::nullopt;
+  }
+
+  if (!CheckRedeclParamsMatch(
+          context,
+          DeclParams(loc_id, name.first_param_node_id, name.last_param_node_id,
+                     name.implicit_param_patterns_id, name.param_patterns_id),
+          DeclParams(*existing_decl_entity))) {
+    // Mismatch is diagnosed already if found.
+    return std::nullopt;
+  }
+
+  // TODO: This should be refactored a little, particularly for
+  // prev_import_ir_id. See similar logic for classes and functions, which
+  // might also be refactored to merge.
+  DiagnoseIfInvalidRedecl(
+      context, decl_token_kind, existing_decl_entity->name_id,
+      RedeclInfo(entity, loc_id, is_definition),
+      RedeclInfo(*existing_decl_entity,
+                 SemIR::LocId(existing_decl_entity->latest_decl_id()),
+                 existing_decl_entity->has_definition_started()),
+      /*prev_import_ir_id=*/SemIR::ImportIRId::None);
+
+  if (is_definition && existing_decl_entity->has_definition_started()) {
+    // DiagnoseIfInvalidRedecl would diagnose an error in this case, since we'd
+    // have two definitions. Normally we'd still use the pre-existing definition
+    // as a forward declaration anyway, for error recovery, but we can't for
+    // generics.
+    return std::nullopt;
+  }
+
+  // This is a matching redeclaration of an existing entity of the same type.
+  return existing_decl_inst;
 }
 
 }  // namespace Carbon::Check
