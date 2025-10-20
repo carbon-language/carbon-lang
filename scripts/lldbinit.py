@@ -55,8 +55,7 @@ Args:
        the `Label` string in `IdBase` classes to find possible TYPE names,
        though only Id types that have a matching `Make...Id()` function are
        supported.
-  ID is an integer number, such as `42`, in hex (without the typical 0x prefix),
-     such as `inst6000000A`.
+  ID is an integer number, such as `42`, in hex, such as in `inst6000000A`.
 
 Example usage:
   # Dumps the `inst_id` local variable, with a `context` local variable.
