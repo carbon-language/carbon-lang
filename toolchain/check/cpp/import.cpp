@@ -2016,12 +2016,6 @@ auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
       SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, num_params));
 }
 
-// Calculates the access given `UnresolvedSetIterator`.
-static auto MapAccess(clang::UnresolvedSetIterator iterator)
-    -> SemIR::AccessKind {
-  return ConvertCppAccess(iterator.getPair());
-}
-
 // Imports a Clang declaration into Carbon and adds that name into the
 // `NameScope`.
 static auto ImportNameDeclIntoScope(Context& context, SemIR::LocId loc_id,
@@ -2124,8 +2118,8 @@ auto ImportCppOverloadSet(
 static auto GetOverloadSetAccess(const clang::UnresolvedSet<4>& overload_set)
     -> SemIR::AccessKind {
   SemIR::AccessKind access_kind = SemIR::AccessKind::Private;
-  for (auto it = overload_set.begin(); it != overload_set.end(); ++it) {
-    access_kind = std::min(access_kind, MapAccess(it));
+  for (clang::DeclAccessPair overload : overload_set.pairs()) {
+    access_kind = std::min(access_kind, ConvertCppAccess(overload));
     if (access_kind == SemIR::AccessKind::Public) {
       break;
     }
@@ -2251,7 +2245,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
   }
   auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(lookup->getFoundDecl());
   return ImportNameDeclIntoScope(context, loc_id, scope_id, name_id, key,
-                                 MapAccess(lookup->begin()));
+                                 ConvertCppAccess(lookup->begin().getPair()));
 }
 
 auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
