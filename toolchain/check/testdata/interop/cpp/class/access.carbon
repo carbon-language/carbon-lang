@@ -533,9 +533,9 @@ class D {
 
 #include "overload_set.h"
 
-class PublicDerived : public C {};
-class ProtectedDerived : protected C {};
-class PrivateDerived : private C {};
+class Public : public C {};
+class Protected : protected C {};
+class Private : private C {};
 
 // --- import_overload_set_public_base_class_call_public.carbon
 
@@ -545,7 +545,7 @@ import Cpp library "overload_set_base_class.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  Cpp.PublicDerived.foo();
+  Cpp.Public.foo();
   //@dump-sem-ir-end
 }
 
@@ -556,18 +556,18 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set_base_class.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+5]]:3: error: cannot access protected member `foo` of type `Cpp.PublicDerived` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.PublicDerived.foo(1);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+5]]:3: error: cannot access protected member `foo` of type `Cpp.Public` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Public.foo(1);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.PublicDerived.foo(1);
-  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+5]]:3: error: cannot access private member `foo` of type `Cpp.PublicDerived` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.PublicDerived.foo(1, 2);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Cpp.Public.foo(1);
+  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+5]]:3: error: cannot access private member `foo` of type `Cpp.Public` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Public.foo(1, 2);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.PublicDerived.foo(1, 2);
+  Cpp.Public.foo(1, 2);
 }
 
 // --- import_overload_set_public_base_class_derived_call_non_private.carbon
@@ -577,7 +577,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set_base_class.h";
 
 class Derived {
-  extend base: Cpp.PublicDerived;
+  extend base: Cpp.Public;
 
   fn F() {
     //@dump-sem-ir-begin
@@ -594,10 +594,10 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set_base_class.h";
 
 class Derived {
-  extend base: Cpp.PublicDerived;
+  extend base: Cpp.Public;
 
   fn F() {
-    // CHECK:STDERR: fail_import_overload_set_public_base_class_derived_call_private.carbon:[[@LINE+5]]:5: error: cannot access private member `foo` of type `Cpp.PublicDerived` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_overload_set_public_base_class_derived_call_private.carbon:[[@LINE+5]]:5: error: cannot access private member `foo` of type `Cpp.Public` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     foo(1, 2);
     // CHECK:STDERR:     ^~~~~~~~~
     // CHECK:STDERR: fail_import_overload_set_public_base_class_derived_call_private.carbon: note: declared here [ClassMemberDeclaration]
@@ -613,24 +613,24 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set_base_class.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+5]]:3: error: cannot access protected member `foo` of type `Cpp.ProtectedDerived` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.ProtectedDerived.foo();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+5]]:3: error: cannot access protected member `foo` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Protected.foo();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.ProtectedDerived.foo();
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+5]]:3: error: cannot access protected member `foo` of type `Cpp.ProtectedDerived` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.ProtectedDerived.foo(1);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  Cpp.Protected.foo();
+  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+5]]:3: error: cannot access protected member `foo` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Protected.foo(1);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.ProtectedDerived.foo(1);
-  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+5]]:3: error: cannot access protected member `foo` of type `Cpp.ProtectedDerived` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.ProtectedDerived.foo(1, 2);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  Cpp.Protected.foo(1);
+  // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon:[[@LINE+5]]:3: error: cannot access protected member `foo` of type `Cpp.Protected` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Protected.foo(1, 2);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_protected_base_class.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.ProtectedDerived.foo(1, 2);
+  Cpp.Protected.foo(1, 2);
 }
 
 // --- import_overload_set_protected_base_class_derived_call_non_private.carbon
@@ -640,7 +640,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set_base_class.h";
 
 class Derived {
-  extend base: Cpp.ProtectedDerived;
+  extend base: Cpp.Protected;
 
   fn F() {
     //@dump-sem-ir-begin
@@ -657,10 +657,10 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set_base_class.h";
 
 class Derived {
-  extend base: Cpp.ProtectedDerived;
+  extend base: Cpp.Protected;
 
   fn F() {
-    // CHECK:STDERR: fail_import_overload_set_protected_base_class_derived_call_private.carbon:[[@LINE+5]]:5: error: cannot access private member `foo` of type `Cpp.ProtectedDerived` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_overload_set_protected_base_class_derived_call_private.carbon:[[@LINE+5]]:5: error: cannot access private member `foo` of type `Cpp.Protected` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     foo(1, 2);
     // CHECK:STDERR:     ^~~~~~~~~
     // CHECK:STDERR: fail_import_overload_set_protected_base_class_derived_call_private.carbon: note: declared here [ClassMemberDeclaration]
@@ -676,24 +676,24 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set_base_class.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+5]]:3: error: cannot access private member `foo` of type `Cpp.PrivateDerived` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.PrivateDerived.foo();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+5]]:3: error: cannot access private member `foo` of type `Cpp.Private` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Private.foo();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.PrivateDerived.foo();
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+5]]:3: error: cannot access private member `foo` of type `Cpp.PrivateDerived` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.PrivateDerived.foo(1);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
+  Cpp.Private.foo();
+  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+5]]:3: error: cannot access private member `foo` of type `Cpp.Private` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Private.foo(1);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.PrivateDerived.foo(1);
-  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+5]]:3: error: cannot access private member `foo` of type `Cpp.PrivateDerived` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   Cpp.PrivateDerived.foo(1, 2);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
+  Cpp.Private.foo(1);
+  // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon:[[@LINE+5]]:3: error: cannot access private member `foo` of type `Cpp.Private` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   Cpp.Private.foo(1, 2);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_overload_set_private_base_class.carbon: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
-  Cpp.PrivateDerived.foo(1, 2);
+  Cpp.Private.foo(1, 2);
 }
 
 // --- fail_import_overload_set_private_base_class_derived.carbon
@@ -703,22 +703,22 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set_base_class.h";
 
 class Derived {
-  extend base: Cpp.PrivateDerived;
+  extend base: Cpp.Private;
 
   fn F() {
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+5]]:5: error: cannot access private member `foo` of type `Cpp.PrivateDerived` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+5]]:5: error: cannot access private member `foo` of type `Cpp.Private` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     foo();
     // CHECK:STDERR:     ^~~~~
     // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     foo();
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+5]]:5: error: cannot access private member `foo` of type `Cpp.PrivateDerived` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+5]]:5: error: cannot access private member `foo` of type `Cpp.Private` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     foo(1);
     // CHECK:STDERR:     ^~~~~~
     // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     foo(1);
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+5]]:5: error: cannot access private member `foo` of type `Cpp.PrivateDerived` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+5]]:5: error: cannot access private member `foo` of type `Cpp.Private` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     foo(1, 2);
     // CHECK:STDERR:     ^~~~~~~~~
     // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon: note: declared here [ClassMemberDeclaration]
@@ -1763,28 +1763,28 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %PublicDerived: type = class_type @PublicDerived [concrete]
-// CHECK:STDOUT:   %PublicDerived.foo.cpp_overload_set.type: type = cpp_overload_set_type @PublicDerived.foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %PublicDerived.foo.cpp_overload_set.value: %PublicDerived.foo.cpp_overload_set.type = cpp_overload_set_value @PublicDerived.foo.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Public: type = class_type @Public [concrete]
+// CHECK:STDOUT:   %Public.foo.cpp_overload_set.type: type = cpp_overload_set_type @Public.foo.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Public.foo.cpp_overload_set.value: %Public.foo.cpp_overload_set.type = cpp_overload_set_value @Public.foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.foo.type: type = fn_type @C.foo [concrete]
 // CHECK:STDOUT:   %C.foo: %C.foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .PublicDerived = %PublicDerived.decl
+// CHECK:STDOUT:     .Public = %Public.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %PublicDerived.decl: type = class_decl @PublicDerived [concrete = constants.%PublicDerived] {} {}
-// CHECK:STDOUT:   %PublicDerived.foo.cpp_overload_set.value: %PublicDerived.foo.cpp_overload_set.type = cpp_overload_set_value @PublicDerived.foo.cpp_overload_set [concrete = constants.%PublicDerived.foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %Public.decl: type = class_decl @Public [concrete = constants.%Public] {} {}
+// CHECK:STDOUT:   %Public.foo.cpp_overload_set.value: %Public.foo.cpp_overload_set.type = cpp_overload_set_value @Public.foo.cpp_overload_set [concrete = constants.%Public.foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %C.foo.decl: %C.foo.type = fn_decl @C.foo [concrete = constants.%C.foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %PublicDerived.ref: type = name_ref PublicDerived, imports.%PublicDerived.decl [concrete = constants.%PublicDerived]
-// CHECK:STDOUT:   %foo.ref: %PublicDerived.foo.cpp_overload_set.type = name_ref foo, imports.%PublicDerived.foo.cpp_overload_set.value [concrete = constants.%PublicDerived.foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %Public.ref: type = name_ref Public, imports.%Public.decl [concrete = constants.%Public]
+// CHECK:STDOUT:   %foo.ref: %Public.foo.cpp_overload_set.type = name_ref foo, imports.%Public.foo.cpp_overload_set.value [concrete = constants.%Public.foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %C.foo.call: init %empty_tuple.type = call imports.%C.foo.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -1794,8 +1794,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %PublicDerived.foo.cpp_overload_set.type: type = cpp_overload_set_type @PublicDerived.foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %PublicDerived.foo.cpp_overload_set.value: %PublicDerived.foo.cpp_overload_set.type = cpp_overload_set_value @PublicDerived.foo.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Public.foo.cpp_overload_set.type: type = cpp_overload_set_type @Public.foo.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Public.foo.cpp_overload_set.value: %Public.foo.cpp_overload_set.type = cpp_overload_set_value @Public.foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.foo.type.54cd32.1: type = fn_type @C.foo.1 [concrete]
 // CHECK:STDOUT:   %C.foo.25ba20.1: %C.foo.type.54cd32.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
@@ -1820,7 +1820,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %PublicDerived.foo.cpp_overload_set.value: %PublicDerived.foo.cpp_overload_set.type = cpp_overload_set_value @PublicDerived.foo.cpp_overload_set [concrete = constants.%PublicDerived.foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %Public.foo.cpp_overload_set.value: %Public.foo.cpp_overload_set.type = cpp_overload_set_value @Public.foo.cpp_overload_set [concrete = constants.%Public.foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %C.foo.decl.10458f.1: %C.foo.type.54cd32.1 = fn_decl @C.foo.1 [concrete = constants.%C.foo.25ba20.1] {} {}
 // CHECK:STDOUT:   %C.foo.decl.10458f.2: %C.foo.type.54cd32.2 = fn_decl @C.foo.2 [concrete = constants.%C.foo.25ba20.2] {
 // CHECK:STDOUT:     <elided>
@@ -1841,14 +1841,14 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   .base = %.loc7
 // CHECK:STDOUT:   .F = %Derived.F.decl
 // CHECK:STDOUT:   .foo = <poisoned>
-// CHECK:STDOUT:   extend %PublicDerived.ref
+// CHECK:STDOUT:   extend %Public.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Derived.F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %foo.ref.loc11: %PublicDerived.foo.cpp_overload_set.type = name_ref foo, imports.%PublicDerived.foo.cpp_overload_set.value [concrete = constants.%PublicDerived.foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %foo.ref.loc11: %Public.foo.cpp_overload_set.type = name_ref foo, imports.%Public.foo.cpp_overload_set.value [concrete = constants.%Public.foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %C.foo.call.loc11: init %empty_tuple.type = call imports.%C.foo.decl.10458f.1()
-// CHECK:STDOUT:   %foo.ref.loc12: %PublicDerived.foo.cpp_overload_set.type = name_ref foo, imports.%PublicDerived.foo.cpp_overload_set.value [concrete = constants.%PublicDerived.foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %foo.ref.loc12: %Public.foo.cpp_overload_set.type = name_ref foo, imports.%Public.foo.cpp_overload_set.value [concrete = constants.%Public.foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
 // CHECK:STDOUT:   %bound_method.loc12_9.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
@@ -1866,8 +1866,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %ProtectedDerived.foo.cpp_overload_set.type: type = cpp_overload_set_type @ProtectedDerived.foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ProtectedDerived.foo.cpp_overload_set.value: %ProtectedDerived.foo.cpp_overload_set.type = cpp_overload_set_value @ProtectedDerived.foo.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Protected.foo.cpp_overload_set.type: type = cpp_overload_set_type @Protected.foo.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %Protected.foo.cpp_overload_set.value: %Protected.foo.cpp_overload_set.type = cpp_overload_set_value @Protected.foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %C.foo.type.54cd32.1: type = fn_type @C.foo.1 [concrete]
 // CHECK:STDOUT:   %C.foo.25ba20.1: %C.foo.type.54cd32.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
@@ -1892,7 +1892,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %ProtectedDerived.foo.cpp_overload_set.value: %ProtectedDerived.foo.cpp_overload_set.type = cpp_overload_set_value @ProtectedDerived.foo.cpp_overload_set [concrete = constants.%ProtectedDerived.foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %Protected.foo.cpp_overload_set.value: %Protected.foo.cpp_overload_set.type = cpp_overload_set_value @Protected.foo.cpp_overload_set [concrete = constants.%Protected.foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %C.foo.decl.10458f.1: %C.foo.type.54cd32.1 = fn_decl @C.foo.1 [concrete = constants.%C.foo.25ba20.1] {} {}
 // CHECK:STDOUT:   %C.foo.decl.10458f.2: %C.foo.type.54cd32.2 = fn_decl @C.foo.2 [concrete = constants.%C.foo.25ba20.2] {
 // CHECK:STDOUT:     <elided>
@@ -1913,14 +1913,14 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   .base = %.loc7
 // CHECK:STDOUT:   .F = %Derived.F.decl
 // CHECK:STDOUT:   .foo = <poisoned>
-// CHECK:STDOUT:   extend %ProtectedDerived.ref
+// CHECK:STDOUT:   extend %Protected.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Derived.F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %foo.ref.loc11: %ProtectedDerived.foo.cpp_overload_set.type = name_ref foo, imports.%ProtectedDerived.foo.cpp_overload_set.value [concrete = constants.%ProtectedDerived.foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %foo.ref.loc11: %Protected.foo.cpp_overload_set.type = name_ref foo, imports.%Protected.foo.cpp_overload_set.value [concrete = constants.%Protected.foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %C.foo.call.loc11: init %empty_tuple.type = call imports.%C.foo.decl.10458f.1()
-// CHECK:STDOUT:   %foo.ref.loc12: %ProtectedDerived.foo.cpp_overload_set.type = name_ref foo, imports.%ProtectedDerived.foo.cpp_overload_set.value [concrete = constants.%ProtectedDerived.foo.cpp_overload_set.value]
+// CHECK:STDOUT:   %foo.ref.loc12: %Protected.foo.cpp_overload_set.type = name_ref foo, imports.%Protected.foo.cpp_overload_set.value [concrete = constants.%Protected.foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
 // CHECK:STDOUT:   %bound_method.loc12_9.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
