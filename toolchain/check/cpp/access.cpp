@@ -8,6 +8,9 @@ namespace Carbon::Check {
 
 static auto CalculateEffectiveAccess(clang::DeclAccessPair access_pair)
     -> clang::AccessSpecifier {
+  // Note that we use `.getAccess()` here, not `->getAccess()`, which is
+  // equivalent to `.getDecl()->getAccess()`, because we want to consider the
+  // lookup access and not the lexical access.
   switch (access_pair.getAccess()) {
     // Lookup access takes precedence.
     case clang::AS_public:
