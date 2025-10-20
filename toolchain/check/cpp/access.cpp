@@ -6,30 +6,26 @@
 
 namespace Carbon::Check {
 
-static auto CalculateEffectiveAccess(clang::AccessSpecifier lookup_access,
-                                     clang::AccessSpecifier lexical_access)
+static auto CalculateEffectiveAccess(clang::DeclAccessPair access_pair)
     -> clang::AccessSpecifier {
-  if (lookup_access != clang::AS_none) {
+  switch (access_pair.getAccess()) {
     // Lookup access takes precedence.
-    return lookup_access;
+    case clang::AS_public:
+    case clang::AS_protected:
+    case clang::AS_private:
+      return access_pair.getAccess();
+    case clang::AS_none:
+      // No access specified meaning depends on the declaration. For class
+      // members it means we lost access along the inheritance path. Otherwise
+      // it means there's no access associated with this function so we treat it
+      // as public.
+      return access_pair->isCXXClassMember() ? clang::AS_private
+                                             : clang::AS_public;
   }
-
-  if (lexical_access != clang::AS_none) {
-    // When a base class private member is accessed through a derived class, the
-    // lookup access would be set to `AS_none`.
-    CARBON_CHECK(lexical_access == clang::AS_private);
-    return lexical_access;
-  }
-
-  // No access specified means that this is not a record member, so we treat it
-  // as public.
-  return clang::AS_public;
 }
 
-auto ConvertCppAccess(clang::AccessSpecifier lookup_access,
-                      clang::AccessSpecifier lexical_access)
-    -> SemIR::AccessKind {
-  switch (CalculateEffectiveAccess(lookup_access, lexical_access)) {
+auto ConvertCppAccess(clang::DeclAccessPair access_pair) -> SemIR::AccessKind {
+  switch (CalculateEffectiveAccess(access_pair)) {
     case clang::AS_public:
       return SemIR::AccessKind::Public;
     case clang::AS_protected:
@@ -37,7 +33,7 @@ auto ConvertCppAccess(clang::AccessSpecifier lookup_access,
     case clang::AS_private:
       return SemIR::AccessKind::Private;
     case clang::AS_none:
-      CARBON_FATAL("Couldn't deduce access");
+      CARBON_FATAL("Couldn't convert access");
   }
 }
 

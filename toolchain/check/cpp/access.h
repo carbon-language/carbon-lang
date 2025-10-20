@@ -9,11 +9,9 @@
 
 namespace Carbon::Check {
 
-// Calculates the effective access kind from the given lookup and lexical access
-// specifiers.
-auto ConvertCppAccess(clang::AccessSpecifier lookup_access,
-                      clang::AccessSpecifier lexical_access)
-    -> SemIR::AccessKind;
+// Calculates the effective access kind from the given (declaration, lookup
+// access) pair.
+auto ConvertCppAccess(clang::DeclAccessPair access_pair) -> SemIR::AccessKind;
 
 }  // namespace Carbon::Check
 
