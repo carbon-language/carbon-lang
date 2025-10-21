@@ -54,7 +54,7 @@ auto HandleParseNode(Context& context, Parse::ForallId /*node_id*/) -> bool {
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::TypeImplAsId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::ImplTypeAsId node_id) -> bool {
   auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
   auto self_type_inst_id = ExprAsType(context, self_node, self_id).inst_id;
   context.node_stack().Push(node_id, self_type_inst_id);
@@ -67,7 +67,7 @@ auto HandleParseNode(Context& context, Parse::TypeImplAsId node_id) -> bool {
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
+auto HandleParseNode(Context& context, Parse::ImplDefaultSelfAsId node_id)
     -> bool {
   auto self_inst_id = SemIR::TypeInstId::None;
 

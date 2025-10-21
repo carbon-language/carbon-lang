@@ -108,6 +108,7 @@ using AnyModifierId = NodeIdInCategory<NodeCategory::Modifier>;
 using AnyPatternId = NodeIdInCategory<NodeCategory::Pattern>;
 using AnyStatementId =
     NodeIdInCategory<NodeCategory::Statement | NodeCategory::Decl>;
+using AnyRequireImplsId = NodeIdInCategory<NodeCategory::RequireImpls>;
 using AnyRequirementId = NodeIdInCategory<NodeCategory::Requirement>;
 using AnyNonExprNameId = NodeIdInCategory<NodeCategory::NonExprName>;
 using AnyPackageNameId = NodeIdInCategory<NodeCategory::PackageName>;

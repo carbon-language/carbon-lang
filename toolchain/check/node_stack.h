@@ -523,6 +523,9 @@ class NodeStack {
       case Parse::NodeKind::ParenExprStart:
       case Parse::NodeKind::PatternListComma:
       case Parse::NodeKind::Placeholder:
+      case Parse::NodeKind::RequireIntroducer:
+      case Parse::NodeKind::RequireDefaultSelfImpls:
+      case Parse::NodeKind::RequireTypeImpls:
       case Parse::NodeKind::RequirementAnd:
       case Parse::NodeKind::RequirementEqual:
       case Parse::NodeKind::RequirementEqualEqual:

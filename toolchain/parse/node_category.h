@@ -15,18 +15,21 @@ namespace Carbon::Parse {
 //   #define CARBON_NODE_CATEGORY_FOR_XYZ(Name) ...
 //   CARBON_NODE_CATEGORY(CARBON_NODE_CATEGORY_FOR_XYZ)
 //   #undef CARBON_NODE_CATEGORY_FOR_XYZ
-#define CARBON_NODE_CATEGORY(X) \
-  X(Decl)                       \
-  X(Expr)                       \
-  X(ImplAs)                     \
-  X(IntConst)                   \
-  X(MemberExpr)                 \
-  X(MemberName)                 \
-  X(Modifier)                   \
-  X(NonExprName)                \
-  X(PackageName)                \
-  X(Pattern)                    \
-  X(Requirement)                \
+#define CARBON_NODE_CATEGORY(X)                        \
+  X(Decl)                                              \
+  X(Expr)                                              \
+  /* `impl <type> as` or just `impl as` */             \
+  X(ImplAs)                                            \
+  X(IntConst)                                          \
+  X(MemberExpr)                                        \
+  X(MemberName)                                        \
+  X(Modifier)                                          \
+  X(NonExprName)                                       \
+  X(PackageName)                                       \
+  X(Pattern)                                           \
+  /* `require <type> impls` or just `require impls` */ \
+  X(RequireImpls)                                      \
+  X(Requirement)                                       \
   X(Statement)
 
 // We expect this to grow, so are using a bigger size than needed.

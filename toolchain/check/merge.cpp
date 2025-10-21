@@ -461,17 +461,17 @@ static auto CheckRedeclParamSyntax(Context& context,
       // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md#redeclarations
       auto new_node_kind = context.parse_tree().node_kind(new_node_id);
       auto prev_node_kind = context.parse_tree().node_kind(prev_node_id);
-      if (new_node_kind == Parse::NodeKind::DefaultSelfImplAs &&
+      if (new_node_kind == Parse::NodeKind::ImplDefaultSelfAs &&
           prev_node_kind == Parse::NodeKind::SelfTypeNameExpr &&
           context.parse_tree().node_kind(prev_iter[1]) ==
-              Parse::NodeKind::TypeImplAs) {
+              Parse::NodeKind::ImplTypeAs) {
         ++prev_iter;
         continue;
       }
-      if (prev_node_kind == Parse::NodeKind::DefaultSelfImplAs &&
+      if (prev_node_kind == Parse::NodeKind::ImplDefaultSelfAs &&
           new_node_kind == Parse::NodeKind::SelfTypeNameExpr &&
           context.parse_tree().node_kind(new_iter[1]) ==
-              Parse::NodeKind::TypeImplAs) {
+              Parse::NodeKind::ImplTypeAs) {
         ++new_iter;
         continue;
       }
