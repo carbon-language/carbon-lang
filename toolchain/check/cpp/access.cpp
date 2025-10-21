@@ -18,10 +18,14 @@ static auto CalculateEffectiveAccess(clang::DeclAccessPair access_pair)
     case clang::AS_private:
       return access_pair.getAccess();
     case clang::AS_none:
-      // No access specified meaning depends on the declaration. For class
-      // members it means we lost access along the inheritance path. Otherwise
-      // it means there's no access associated with this function so we treat it
-      // as public.
+      // No access specified meaning depends on the declaration. For non class
+      // members, it means there's no access associated with this function so we
+      // treat it as public. For class members it means we lost access along the
+      // inheritance path, and the difference between `none` and `private` only
+      // matters when the access check is performed within a friend or member of
+      // the naming class. Because the naming class is a C++ class, and we don't
+      // yet have a mechanism for a C++ class to befriend a Carbon class, we can
+      // safely map `none` to `private` for now.
       return access_pair->isCXXClassMember() ? clang::AS_private
                                              : clang::AS_public;
   }
