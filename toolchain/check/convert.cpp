@@ -801,7 +801,7 @@ static auto CanAddQualifiers(SemIR::TypeQualifiers quals,
 static auto CanRemoveQualifiers(SemIR::TypeQualifiers quals,
                                 SemIR::ExprCategory cat,
                                 ConversionTarget::Kind kind) -> bool {
-  const bool allow_unsafe = kind == ConversionTarget::ExplicitUnsafeAs;
+  bool allow_unsafe = kind == ConversionTarget::ExplicitUnsafeAs;
 
   if (quals.HasAnyOf(SemIR::TypeQualifiers::Const) && !allow_unsafe &&
       SemIR::IsRefCategory(cat) &&
