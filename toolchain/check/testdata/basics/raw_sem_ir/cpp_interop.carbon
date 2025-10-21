@@ -53,23 +53,23 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     clang_decl_id00000007: {key: "X * _Nonnull global", inst_id: inst6000004B}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope00000000: {inst: inst0000000E, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name00000000: inst60000010, name00000001: inst6000001B}}
-// CHECK:STDOUT:     name_scope00000001: {inst: inst60000010, parent_scope: name_scope00000000, has_error: false, extended_scopes: [], names: {name00000003: inst60000012, name00000004: inst60000029, name00000005: inst6000004B}}
-// CHECK:STDOUT:     name_scope00000002: {inst: inst60000012, parent_scope: name_scope00000001, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope60000001: {inst: inst60000010, parent_scope: name_scope00000000, has_error: false, extended_scopes: [], names: {name00000003: inst60000012, name00000004: inst60000029, name00000005: inst6000004B}}
+// CHECK:STDOUT:     name_scope60000002: {inst: inst60000012, parent_scope: name_scope60000001, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name00000000: {name: name00000002, parent_scope: name_scope<none>, index: -1, is_template: 0}
 // CHECK:STDOUT:     entity_name00000001: {name: name00000002, parent_scope: name_scope<none>, index: -1, is_template: 0}
 // CHECK:STDOUT:     entity_name00000002: {name: name00000002, parent_scope: name_scope<none>, index: -1, is_template: 0}
-// CHECK:STDOUT:     entity_name00000003: {name: name00000005, parent_scope: name_scope00000001, index: -1, is_template: 0}
+// CHECK:STDOUT:     entity_name00000003: {name: name00000005, parent_scope: name_scope60000001, index: -1, is_template: 0}
 // CHECK:STDOUT:   cpp_global_vars:
 // CHECK:STDOUT:     cpp_global_var00000000: {key: {entity_name_id: entity_name00000003}, clang_decl_id: clang_decl_id00000007}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function60000000: {name: name00000001, parent_scope: name_scope00000000, call_params_id: inst_block00000006, body: [inst_block00000009]}
-// CHECK:STDOUT:     function60000001: {name: name00000004, parent_scope: name_scope00000001, call_params_id: inst_block_empty}
-// CHECK:STDOUT:     function60000002: {name: name00000007, parent_scope: name_scope00000001, call_params_id: inst_block_empty}
-// CHECK:STDOUT:     function60000003: {name: name00000004, parent_scope: name_scope00000001, call_params_id: inst_block0000000D}
-// CHECK:STDOUT:     function60000004: {name: name00000007, parent_scope: name_scope00000001, call_params_id: inst_block00000012}
+// CHECK:STDOUT:     function60000001: {name: name00000004, parent_scope: name_scope60000001, call_params_id: inst_block_empty}
+// CHECK:STDOUT:     function60000002: {name: name00000007, parent_scope: name_scope60000001, call_params_id: inst_block_empty}
+// CHECK:STDOUT:     function60000003: {name: name00000004, parent_scope: name_scope60000001, call_params_id: inst_block0000000D}
+// CHECK:STDOUT:     function60000004: {name: name00000007, parent_scope: name_scope60000001, call_params_id: inst_block00000012}
 // CHECK:STDOUT:   classes:
-// CHECK:STDOUT:     class60000000:   {name: name00000003, parent_scope: name_scope00000001, self_type_id: type(inst60000013), inheritance_kind: Base, is_dynamic: 0, scope_id: name_scope00000002, body_block_id: inst_block0000000A, adapt_id: inst<none>, base_id: inst<none>, complete_type_witness_id: inst60000024, vtable_decl_id: inst<none>}}
+// CHECK:STDOUT:     class60000000:   {name: name00000003, parent_scope: name_scope60000001, self_type_id: type(inst60000013), inheritance_kind: Base, is_dynamic: 0, scope_id: name_scope60000002, body_block_id: inst_block0000000A, adapt_id: inst<none>, base_id: inst<none>, complete_type_witness_id: inst60000024, vtable_decl_id: inst<none>}}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
 // CHECK:STDOUT:   struct_type_fields:
@@ -126,7 +126,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     'inst(WitnessType)': {kind: WitnessType, type: type(TypeType)}
 // CHECK:STDOUT:     inst0000000E:    {kind: Namespace, arg0: name_scope00000000, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst6000000F:    {kind: ImportCppDecl}
-// CHECK:STDOUT:     inst60000010:    {kind: Namespace, arg0: name_scope00000001, arg1: inst6000000F, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst60000010:    {kind: Namespace, arg0: name_scope60000001, arg1: inst6000000F, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst60000011:    {kind: NameRef, arg0: name00000000, arg1: inst60000010, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst60000012:    {kind: ClassDecl, arg0: class60000000, arg1: inst_block<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000013:    {kind: ClassType, arg0: class60000000, arg1: specific<none>, type: type(TypeType)}

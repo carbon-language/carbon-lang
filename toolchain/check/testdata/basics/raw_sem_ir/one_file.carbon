@@ -219,25 +219,25 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope00000000: {inst: inst0000000E, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name(Core): inst60000010, name00000000: inst60000035}}
-// CHECK:STDOUT:     name_scope00000001: {inst: inst60000010, parent_scope: name_scope00000000, has_error: false, extended_scopes: [], names: {name00000003: inst60000045}}
-// CHECK:STDOUT:     name_scope00000002: {inst: inst60000046, parent_scope: name_scope00000001, has_error: false, extended_scopes: [], names: {name(SelfType): inst60000049, name00000004: inst6000004A}}
-// CHECK:STDOUT:     name_scope00000003: {inst: inst6000005E, parent_scope: name_scope00000001, has_error: false, extended_scopes: [], names: {}}
-// CHECK:STDOUT:     name_scope00000004: {inst: inst6000008B, parent_scope: name_scope00000001, has_error: false, extended_scopes: [], names: {}}
-// CHECK:STDOUT:     name_scope00000005: {inst: inst6000008F, parent_scope: name_scope00000001, has_error: false, extended_scopes: [], names: {}}
-// CHECK:STDOUT:     name_scope00000006: {inst: inst60000093, parent_scope: name_scope00000001, has_error: false, extended_scopes: [], names: {}}
-// CHECK:STDOUT:     name_scope00000007: {inst: inst60000097, parent_scope: name_scope00000001, has_error: false, extended_scopes: [], names: {}}
-// CHECK:STDOUT:     name_scope00000008: {inst: inst6000009B, parent_scope: name_scope00000001, has_error: false, extended_scopes: [], names: {}}
-// CHECK:STDOUT:     name_scope00000009: {inst: inst600000B5, parent_scope: name_scope00000001, has_error: false, extended_scopes: [], names: {}}
-// CHECK:STDOUT:     name_scope0000000A: {inst: inst600000B9, parent_scope: name_scope00000001, has_error: false, extended_scopes: [], names: {}}
-// CHECK:STDOUT:     name_scope0000000B: {inst: inst600000BD, parent_scope: name_scope00000001, has_error: false, extended_scopes: [], names: {}}
-// CHECK:STDOUT:     name_scope0000000C: {inst: inst600000F5, parent_scope: name_scope00000001, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope60000001: {inst: inst60000010, parent_scope: name_scope00000000, has_error: false, extended_scopes: [], names: {name00000003: inst60000045}}
+// CHECK:STDOUT:     name_scope60000002: {inst: inst60000046, parent_scope: name_scope60000001, has_error: false, extended_scopes: [], names: {name(SelfType): inst60000049, name00000004: inst6000004A}}
+// CHECK:STDOUT:     name_scope60000003: {inst: inst6000005E, parent_scope: name_scope60000001, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope60000004: {inst: inst6000008B, parent_scope: name_scope60000001, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope60000005: {inst: inst6000008F, parent_scope: name_scope60000001, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope60000006: {inst: inst60000093, parent_scope: name_scope60000001, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope60000007: {inst: inst60000097, parent_scope: name_scope60000001, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope60000008: {inst: inst6000009B, parent_scope: name_scope60000001, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope60000009: {inst: inst600000B5, parent_scope: name_scope60000001, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope6000000A: {inst: inst600000B9, parent_scope: name_scope60000001, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope6000000B: {inst: inst600000BD, parent_scope: name_scope60000001, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope6000000C: {inst: inst600000F5, parent_scope: name_scope60000001, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name00000000: {name: name(PeriodSelf), parent_scope: name_scope<none>, index: -1, is_template: 0}
 // CHECK:STDOUT:     entity_name00000001: {name: name00000001, parent_scope: name_scope<none>, index: 0, is_template: 0}
 // CHECK:STDOUT:     entity_name00000002: {name: name00000002, parent_scope: name_scope<none>, index: -1, is_template: 0}
-// CHECK:STDOUT:     entity_name00000003: {name: name00000003, parent_scope: name_scope00000001, index: -1, is_template: 0}
+// CHECK:STDOUT:     entity_name00000003: {name: name00000003, parent_scope: name_scope60000001, index: -1, is_template: 0}
 // CHECK:STDOUT:     entity_name00000004: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name00000005: {name: name00000004, parent_scope: name_scope00000002, index: -1, is_template: 0}
+// CHECK:STDOUT:     entity_name00000005: {name: name00000004, parent_scope: name_scope60000002, index: -1, is_template: 0}
 // CHECK:STDOUT:     entity_name00000006: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0}
 // CHECK:STDOUT:     entity_name00000007: {name: name(SelfType), parent_scope: name_scope<none>, index: 0, is_template: 0}
 // CHECK:STDOUT:     entity_name00000008: {name: name(SelfValue), parent_scope: name_scope<none>, index: -1, is_template: 0}
@@ -297,11 +297,11 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function60000000: {name: name00000000, parent_scope: name_scope00000000, call_params_id: inst_block0000000D, return_slot_pattern: inst60000030, body: [inst_block00000014]}
-// CHECK:STDOUT:     function60000001: {name: name00000004, parent_scope: name_scope00000002, return_slot_pattern: inst60000055}
-// CHECK:STDOUT:     function60000002: {name: name00000004, parent_scope: name_scope00000003, return_slot_pattern: inst60000073}
-// CHECK:STDOUT:     function60000003: {name: name00000004, parent_scope: name_scope00000008, return_slot_pattern: inst600000AA}
-// CHECK:STDOUT:     function60000004: {name: name00000004, parent_scope: name_scope0000000B, return_slot_pattern: inst600000D5}
-// CHECK:STDOUT:     function60000005: {name: name00000004, parent_scope: name_scope0000000C, return_slot_pattern: inst60000111}
+// CHECK:STDOUT:     function60000001: {name: name00000004, parent_scope: name_scope60000002, return_slot_pattern: inst60000055}
+// CHECK:STDOUT:     function60000002: {name: name00000004, parent_scope: name_scope60000003, return_slot_pattern: inst60000073}
+// CHECK:STDOUT:     function60000003: {name: name00000004, parent_scope: name_scope60000008, return_slot_pattern: inst600000AA}
+// CHECK:STDOUT:     function60000004: {name: name00000004, parent_scope: name_scope6000000B, return_slot_pattern: inst600000D5}
+// CHECK:STDOUT:     function60000005: {name: name00000004, parent_scope: name_scope6000000C, return_slot_pattern: inst60000111}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:
 // CHECK:STDOUT:     generic60000000: {decl: inst60000035, bindings: inst_block00000010}
@@ -382,7 +382,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     inst0000000E:    {kind: Namespace, arg0: name_scope00000000, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst6000000F:    {kind: ImportDecl, arg0: name(Core)}
-// CHECK:STDOUT:     inst60000010:    {kind: Namespace, arg0: name_scope00000001, arg1: inst6000000F, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst60000010:    {kind: Namespace, arg0: name_scope60000001, arg1: inst6000000F, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst60000011:    {kind: FacetType, arg0: facet_type00000000, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000012:    {kind: BindSymbolicName, arg0: entity_name00000000, arg1: inst<none>, type: type(inst60000011)}
 // CHECK:STDOUT:     inst60000013:    {kind: BindSymbolicName, arg0: entity_name00000000, arg1: inst<none>, type: type(inst60000011)}
