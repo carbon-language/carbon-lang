@@ -35,9 +35,9 @@ namespace Carbon {
 template <typename RelatedStoreT, typename IdT, typename ValueT>
 class RelationalValueStore {
  public:
+  using RelatedIdType = RelatedStoreT::IdType;
   using ValueType = ValueStoreTypes<ValueT>::ValueType;
   using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
-  using RelatedIdType = RelatedStoreT::IdType;
 
   explicit RelationalValueStore(const RelatedStoreT* related_store)
       : related_store_(related_store) {}
