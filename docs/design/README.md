@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
 > **STATUS:** Up-to-date on 09-Aug-2022, including proposals up through
-> [#1327](https://github.com/carbon-language/carbon-lang/pull/1327).
+> [#1382](https://github.com/carbon-language/carbon-lang/pull/1382).
 
 <!-- toc -->
 
