@@ -25,11 +25,11 @@ namespace Carbon {
 template <typename IdT, typename KeyT, typename ValueT = KeyT>
 class CanonicalValueStore {
  public:
+  using IdType = IdT;
   using KeyType = std::remove_cvref_t<KeyT>;
   using ValueType = ValueStoreTypes<ValueT>::ValueType;
   using RefType = ValueStoreTypes<ValueT>::RefType;
   using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
-  using IdType = IdT;
 
   CanonicalValueStore() = default;
   template <typename Id>
