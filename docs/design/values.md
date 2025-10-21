@@ -12,7 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Values, objects, and expressions](#values-objects-and-expressions)
     -   [Expression categories](#expression-categories)
-        -   [Value borrowing](#value-borrowing)
+        -   [Value acquisition](#value-acquisition)
         -   [Direct initialization](#direct-initialization)
         -   [Copy initialization](#copy-initialization)
         -   [Temporary materialization](#temporary-materialization)
@@ -80,7 +80,7 @@ There are three expression categories in Carbon:
 Expressions in one category can be converted to any other category when needed.
 The primitive conversion steps used are:
 
--   [_Value borrowing_](#value-borrowing) forms a value expression from the
+-   [_Value acquisition_](#value-acquisition) forms a value expression from the
     current value of the object referenced by a reference expression.
 -   [_Direct initialization_](#direct-initialization) converts a value
     expression into an initializing expression.
@@ -91,11 +91,11 @@ The primitive conversion steps used are:
 
 These conversion steps combine to provide the transitive conversion table:
 
-|               From: | value                     | reference | initializing         |
-| ------------------: | ------------------------- | --------- | -------------------- |
-|        to **value** | ==                        | borrow    | materialize + borrow |
-|    to **reference** | direct init + materialize | ==        | materialize          |
-| to **initializing** | direct init               | copy init | ==                   |
+|               From: | value                     | reference | initializing          |
+| ------------------: | ------------------------- | --------- | --------------------- |
+|        to **value** | ==                        | acquire   | materialize + acquire |
+|    to **reference** | direct init + materialize | ==        | materialize           |
+| to **initializing** | direct init               | copy init | ==                    |
 
 Reference expressions formed through temporary materialization are called
 [_ephemeral reference expressions_](#ephemeral-reference-expressions) and have
@@ -105,12 +105,12 @@ to declared storage are called
 restrictions on what is valid, there is no distinction in their behavior or
 semantics.
 
-#### Value borrowing
+#### Value acquisition
 
 We call forming a value expression from a reference expression _value
-borrowing_. This forms a value expression that will evaluate to the value of the
-object in the referenced storage of the reference expression. It may do this by
-eagerly reading that value into a machine register, lazily reading that value
+acquisition_. This forms a value expression that will evaluate to the value of
+the object in the referenced storage of the reference expression. It may do this
+by eagerly reading that value into a machine register, lazily reading that value
 on-demand into a machine register, or in some other way modeling that abstract
 value.
 
@@ -133,8 +133,8 @@ trivially and where this is implemented as a `memcpy` of their underlying bytes.
 #### Temporary materialization
 
 We use temporary materialization when we need to initialize an object by way of
-storage, but weren't provided dedicated storage and can simply borrow the result
-as a value afterward.
+storage, but weren't provided dedicated storage and can simply acquire the
+result as a value afterward.
 
 > **Open question:** The lifetimes of temporaries is not yet specified.
 
@@ -339,7 +339,7 @@ enable generic code that needs a single type model that will have consistently
 good performance.
 
 When forming a value expression from a reference expression, Carbon
-[borrows](#value-borrowing) the value of the referenced object. This allows
+[acquires](#value-acquisition) the value of the referenced object. This allows
 immediately reading from the object's storage into a machine register or a copy
 if desired, but does not require that. The read of the underlying object can
 also be deferred until the value expression itself is used. Once an object is

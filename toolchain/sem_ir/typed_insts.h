@@ -287,9 +287,9 @@ struct BindSymbolicName {
   InstId value_id;
 };
 
-// A value borrowing. Used when an expression contains a reference and we want a
-// value.
-// TODO: Rename to BorrowValue
+// A value acquisition. Used when an expression contains a reference and we want
+// a value.
+// TODO: Rename to AcquireValue
 struct BindValue {
   static constexpr auto Kind =
       InstKind::BindValue.Define<Parse::NodeId>({.ir_name = "bind_value"});
