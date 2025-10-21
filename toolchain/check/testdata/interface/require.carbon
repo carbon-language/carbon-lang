@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/require.carbon
 
-// --- todo_implicit_self_impls.carbon
+// --- fail_todo_implicit_self_impls.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {
@@ -19,7 +19,7 @@ interface Y {
 
 //@dump-sem-ir-begin
 interface Z {
-  // CHECK:STDERR: todo_implicit_self_impls.carbon:[[@LINE+4]]:3: error: semantics TODO: `require` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_implicit_self_impls.carbon:[[@LINE+4]]:3: error: semantics TODO: `require` [SemanticsTodo]
   // CHECK:STDERR:   require impls Y;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -31,7 +31,7 @@ fn F(T:! Z) {
   T.(Y.YY)();
 }
 
-// --- todo_explicit_self_impls.carbon
+// --- fail_todo_explicit_self_impls.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {
@@ -40,7 +40,7 @@ interface Y {
 
 //@dump-sem-ir-begin
 interface Z {
-  // CHECK:STDERR: todo_explicit_self_impls.carbon:[[@LINE+4]]:3: error: semantics TODO: `require` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_explicit_self_impls.carbon:[[@LINE+4]]:3: error: semantics TODO: `require` [SemanticsTodo]
   // CHECK:STDERR:   require Self impls Y;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -92,7 +92,7 @@ fn F(T:! Z) {
   T.YY();
 }
 
-// --- todo_explicit_self_specific_impls.carbon
+// --- fail_todo_explicit_self_specific_impls.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {}
@@ -101,7 +101,7 @@ class C(T:! type);
 
 //@dump-sem-ir-begin
 interface Z {
-  // CHECK:STDERR: todo_explicit_self_specific_impls.carbon:[[@LINE+4]]:3: error: semantics TODO: `require` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_explicit_self_specific_impls.carbon:[[@LINE+4]]:3: error: semantics TODO: `require` [SemanticsTodo]
   // CHECK:STDERR:   require C(Self) impls Y;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -109,14 +109,14 @@ interface Z {
 }
 //@dump-sem-ir-end
 
-// --- todo_impls_where.carbon
+// --- fail_todo_impls_where.carbon
 library "[[@TEST_NAME]]";
 
 interface Y { let Y1:! type; }
 
 //@dump-sem-ir-begin
 interface Z {
-  // CHECK:STDERR: todo_impls_where.carbon:[[@LINE+4]]:3: error: semantics TODO: `require` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_impls_where.carbon:[[@LINE+4]]:3: error: semantics TODO: `require` [SemanticsTodo]
   // CHECK:STDERR:   require impls Y where .Y1 = ();
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -124,14 +124,14 @@ interface Z {
 }
 //@dump-sem-ir-end
 
-// --- todo_other_impls_with_self.carbon
+// --- fail_todo_other_impls_with_self.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {}
 
 //@dump-sem-ir-begin
 interface Z(T:! type) {
-  // CHECK:STDERR: todo_other_impls_with_self.carbon:[[@LINE+4]]:3: error: semantics TODO: `require` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_other_impls_with_self.carbon:[[@LINE+4]]:3: error: semantics TODO: `require` [SemanticsTodo]
   // CHECK:STDERR:   require T impls Z(Self);
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
@@ -156,7 +156,7 @@ interface Z(T:! type) {
 }
 //@dump-sem-ir-end
 
-// --- todo_extend.carbon
+// --- fail_todo_extend.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {
@@ -165,7 +165,7 @@ interface Y {
 
 //@dump-sem-ir-begin
 interface Z {
-  // CHECK:STDERR: todo_extend.carbon:[[@LINE+4]]:10: error: semantics TODO: `require` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_extend.carbon:[[@LINE+4]]:10: error: semantics TODO: `require` [SemanticsTodo]
   // CHECK:STDERR:   extend require impls Y;
   // CHECK:STDERR:          ^~~~~~~
   // CHECK:STDERR:
@@ -178,7 +178,7 @@ fn F(T:! Z) {
   T.(Y.YY)();
 }
 
-// CHECK:STDOUT: --- todo_implicit_self_impls.carbon
+// CHECK:STDOUT: --- fail_todo_implicit_self_impls.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }
@@ -189,7 +189,7 @@ fn F(T:! Z) {
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_explicit_self_impls.carbon
+// CHECK:STDOUT: --- fail_todo_explicit_self_impls.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }
@@ -200,7 +200,7 @@ fn F(T:! Z) {
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_explicit_self_specific_impls.carbon
+// CHECK:STDOUT: --- fail_todo_explicit_self_specific_impls.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }
@@ -211,7 +211,7 @@ fn F(T:! Z) {
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_impls_where.carbon
+// CHECK:STDOUT: --- fail_todo_impls_where.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }
@@ -222,7 +222,7 @@ fn F(T:! Z) {
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_other_impls_with_self.carbon
+// CHECK:STDOUT: --- fail_todo_other_impls_with_self.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
@@ -262,7 +262,7 @@ fn F(T:! Z) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_extend.carbon
+// CHECK:STDOUT: --- fail_todo_extend.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }

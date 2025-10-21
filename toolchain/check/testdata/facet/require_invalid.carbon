@@ -42,11 +42,11 @@ interface Y {}
 
 fn F() {
   // require is not allowed outside of `interface` or `constraint`.
-  // CHECK:STDERR: fail_todo_require_in_fn.carbon:[[@LINE+8]]:3: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR: fail_require_in_fn.carbon:[[@LINE+8]]:3: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:   require impls Y;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_require_in_fn.carbon:[[@LINE+4]]:3: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR: fail_require_in_fn.carbon:[[@LINE+4]]:3: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:   require impls Y;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:
