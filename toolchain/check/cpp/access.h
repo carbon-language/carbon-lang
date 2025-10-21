@@ -11,7 +11,7 @@ namespace Carbon::Check {
 
 // Calculates the effective access kind from the given (declaration, lookup
 // access) pair.
-auto ConvertCppAccess(clang::DeclAccessPair access_pair) -> SemIR::AccessKind;
+auto MapCppAccess(clang::DeclAccessPair access_pair) -> SemIR::AccessKind;
 
 }  // namespace Carbon::Check
 

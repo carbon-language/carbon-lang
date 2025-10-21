@@ -27,7 +27,7 @@ static auto CalculateEffectiveAccess(clang::DeclAccessPair access_pair)
   }
 }
 
-auto ConvertCppAccess(clang::DeclAccessPair access_pair) -> SemIR::AccessKind {
+auto MapCppAccess(clang::DeclAccessPair access_pair) -> SemIR::AccessKind {
   switch (CalculateEffectiveAccess(access_pair)) {
     case clang::AS_public:
       return SemIR::AccessKind::Public;

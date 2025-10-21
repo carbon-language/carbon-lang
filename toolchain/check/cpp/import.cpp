@@ -2119,7 +2119,7 @@ static auto GetOverloadSetAccess(const clang::UnresolvedSet<4>& overload_set)
     -> SemIR::AccessKind {
   SemIR::AccessKind access_kind = SemIR::AccessKind::Private;
   for (clang::DeclAccessPair overload : overload_set.pairs()) {
-    access_kind = std::min(access_kind, ConvertCppAccess(overload));
+    access_kind = std::min(access_kind, MapCppAccess(overload));
     if (access_kind == SemIR::AccessKind::Public) {
       break;
     }
@@ -2245,7 +2245,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
   }
   auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(lookup->getFoundDecl());
   return ImportNameDeclIntoScope(context, loc_id, scope_id, name_id, key,
-                                 ConvertCppAccess(lookup->begin().getPair()));
+                                 MapCppAccess(lookup->begin().getPair()));
 }
 
 auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
