@@ -969,7 +969,7 @@ static auto PerformBuiltinConversion(
     }
   }
 
-  // T implicitly converts to U if T and U are the same ignorig qualifiers, and
+  // T implicitly converts to U if T and U are the same ignoring qualifiers, and
   // we're allowed to remove / add any qualifiers that differ. Similarly, T
   // explicitly converts to U if T is compatible with U, and we're allowed to
   // remove / add any qualifiers that differ.
