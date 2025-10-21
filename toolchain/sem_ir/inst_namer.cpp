@@ -249,7 +249,8 @@ auto InstNamer::GetUnscopedLabelFor(InstBlockId block_id) const
   if (!block_id.has_value()) {
     return "";
   }
-  const auto& label_name = labels_[block_id.index].second;
+  const auto& label_name =
+      labels_[sem_ir_->inst_blocks().GetRawIndex(block_id)].second;
   return label_name ? label_name.GetFullName() : "";
 }
 
@@ -260,7 +261,8 @@ auto InstNamer::GetLabelFor(ScopeId scope_id, InstBlockId block_id) const
     return "!invalid";
   }
 
-  const auto& [label_scope, label_name] = labels_[block_id.index];
+  const auto& [label_scope, label_name] =
+      labels_[sem_ir_->inst_blocks().GetRawIndex(block_id)];
   if (!label_name) {
     // This should not happen in valid IR.
     RawStringOstream out;
@@ -374,7 +376,8 @@ auto InstNamer::Namespace::AllocateName(
 auto InstNamer::AddBlockLabel(
     ScopeId scope_id, InstBlockId block_id, std::string name,
     std::variant<LocId, uint64_t> loc_id_or_fingerprint) -> void {
-  if (!block_id.has_value() || labels_[block_id.index].second) {
+  if (!block_id.has_value() ||
+      labels_[sem_ir_->inst_blocks().GetRawIndex(block_id)].second) {
     return;
   }
 
@@ -386,7 +389,7 @@ auto InstNamer::AddBlockLabel(
     }
   }
 
-  labels_[block_id.index] = {
+  labels_[sem_ir_->inst_blocks().GetRawIndex(block_id)] = {
       scope_id, GetScopeInfo(scope_id).labels.AllocateName(
                     *this, loc_id_or_fingerprint, std::move(name))};
 }
