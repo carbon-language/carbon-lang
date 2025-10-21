@@ -100,7 +100,7 @@ fn B() {
 // CHECK:STDOUT:     name_scope00000000: {inst: inst0000000E, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name00000001: inst50000010, name00000000: inst50000011}}
 // CHECK:STDOUT:     name_scope50000001: {inst: inst50000010, parent_scope: name_scope00000000, has_error: false, extended_scopes: [], names: {name00000001: inst50000016}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name00000000: {name: name00000001, parent_scope: name_scope50000001, index: -1, is_template: 0}
+// CHECK:STDOUT:     entity_name50000000: {name: name00000001, parent_scope: name_scope50000001, index: -1, is_template: 0}
 // CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function50000000: {name: name00000000, parent_scope: name_scope00000000, call_params_id: inst_block_empty, body: [inst_block00000005]}
@@ -130,7 +130,7 @@ fn B() {
 // CHECK:STDOUT:     inst50000013:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000014:    {kind: StructValue, arg0: inst_block_empty, type: type(inst50000012)}
 // CHECK:STDOUT:     inst50000015:    {kind: NameRef, arg0: name00000001, arg1: inst50000010, type: type(inst(NamespaceType))}
-// CHECK:STDOUT:     inst50000016:    {kind: ImportRefLoaded, arg0: import_ir_inst00000000, arg1: entity_name00000000, type: type(inst50000018)}
+// CHECK:STDOUT:     inst50000016:    {kind: ImportRefLoaded, arg0: import_ir_inst00000000, arg1: entity_name50000000, type: type(inst50000018)}
 // CHECK:STDOUT:     inst50000017:    {kind: FunctionDecl, arg0: function50000001, arg1: inst_block_empty, type: type(inst50000018)}
 // CHECK:STDOUT:     inst50000018:    {kind: FunctionType, arg0: function50000001, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000019:    {kind: StructValue, arg0: inst_block_empty, type: type(inst50000018)}

@@ -28,7 +28,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope00000000: {inst: inst0000000E, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name00000000: inst60000025}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name00000000: {name: name00000001, parent_scope: name_scope<none>, index: -1, is_template: 0}
+// CHECK:STDOUT:     entity_name60000000: {name: name00000001, parent_scope: name_scope<none>, index: -1, is_template: 0}
 // CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function60000000: {name: name00000000, parent_scope: name_scope00000000, call_params_id: inst_block00000009, return_slot_pattern: inst60000020, body: [inst_block0000000C]}
@@ -57,9 +57,9 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst6000000F:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000010:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst6000000F)}
 // CHECK:STDOUT:     inst60000011:    {kind: Converted, arg0: inst60000010, arg1: inst6000000F, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000012:    {kind: BindName, arg0: entity_name00000000, arg1: inst60000021, type: type(inst6000000F)}
+// CHECK:STDOUT:     inst60000012:    {kind: BindName, arg0: entity_name60000000, arg1: inst60000021, type: type(inst6000000F)}
 // CHECK:STDOUT:     inst60000013:    {kind: PatternType, arg0: inst6000000F, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000014:    {kind: BindingPattern, arg0: entity_name00000000, type: type(inst60000013)}
+// CHECK:STDOUT:     inst60000014:    {kind: BindingPattern, arg0: entity_name60000000, type: type(inst60000013)}
 // CHECK:STDOUT:     inst60000015:    {kind: ValueParamPattern, arg0: inst60000014, arg1: call_param0, type: type(inst60000013)}
 // CHECK:STDOUT:     inst60000016:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst6000000F)}
 // CHECK:STDOUT:     inst60000017:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst6000000F)}
