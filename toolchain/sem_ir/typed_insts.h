@@ -1299,7 +1299,7 @@ struct PointerType {
 //   AnyBindNameOrExportDecl -> AnyBindingOrExportDecl
 //   BindSymbolicName -> SymbolicBinding
 //   BindAlias -> AliasBinding
-//   BindValue -> BorrowValue   (see also proposal #6231)
+//   BindValue -> AcquireValue
 struct RefBinding {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::RefBinding.Define<Parse::NodeId>(
