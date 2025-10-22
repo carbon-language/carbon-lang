@@ -13,19 +13,21 @@
 
 namespace Carbon::Check {
 
-// Either an InterfaceId or a NamedConstraintId, used in places where they can
-// be used interchangeably, which is places that turn into facet types.
-using InterfaceOrNamedConstraintId =
-    std::variant<SemIR::InterfaceId, SemIR::NamedConstraintId>;
-
-// Create a FacetType typed instruction object consisting of a single
-// interface. The `specific_id` specifies arguments in the case the interface is
-// generic.
-auto FacetTypeFromInterface(Context& context, InterfaceOrNamedConstraintId id,
+// Create a FacetType typed instruction object consisting of a interface. The
+// `specific_id` specifies arguments in the case the interface is generic.
+//
+// The resulting FacetType may contain multiple interfaces if the named
+// interface contains `require` declarations.
+auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
                             SemIR::SpecificId specific_id) -> SemIR::FacetType;
 
-auto EntityFromInterface(Context& context, InterfaceOrNamedConstraintId id)
-    -> const SemIR::EntityWithParamsBase&;
+// Create a FacetType typed instruction object consisting of a named constraint.
+// The `specific_id` specifies arguments in the case the named constraint is
+// generic.
+auto FacetTypeFromNamedConstraint(Context& context,
+                                  SemIR::NamedConstraintId named_constraint_id,
+                                  SemIR::SpecificId specific_id)
+    -> SemIR::FacetType;
 
 // Given an ImplWitnessAccessSubstituted, returns the InstId of the
 // ImplWitnessAccess. Otherwise, returns the input `inst_id` unchanged.

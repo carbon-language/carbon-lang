@@ -142,7 +142,8 @@ auto HandleParseNode(Context& context,
   context.inst_block_stack().Push();
 
   // Declare and introduce `Self`. We model `Self` as a symbolic binding whose
-  // type is the named constraint.
+  // type is the named constraint, excluding any other interfaces mentioned by
+  // `require` declarations. This makes it an empty facet type.
   SemIR::TypeId self_type_id =
       GetNamedConstraintType(context, named_constraint_id, self_specific_id);
   constraint_info.self_param_id = AddSelfGenericParameter(

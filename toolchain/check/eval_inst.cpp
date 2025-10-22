@@ -464,8 +464,8 @@ auto EvalConstantInst(Context& context, SemIR::NamedConstraintDecl inst)
         .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
   }
 
-  // A non-parameterized interface declaration evaluates to a facet type.
-  return ConstantEvalResult::NewAnyPhase(FacetTypeFromInterface(
+  // A non-parameterized named constraint declaration evaluates to a facet type.
+  return ConstantEvalResult::NewAnyPhase(FacetTypeFromNamedConstraint(
       context, inst.named_constraint_id,
       context.generics().GetSelfSpecific(named_constraint_info.generic_id)));
 }

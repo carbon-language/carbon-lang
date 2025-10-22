@@ -143,7 +143,8 @@ auto HandleParseNode(Context& context,
   context.args_type_info_stack().Push();
 
   // Declare and introduce `Self`. We model `Self` as a symbolic binding whose
-  // type is the interface.
+  // type is the interface, excluding any other interfaces mentioned by
+  // `require` declarations.
   SemIR::TypeId self_type_id =
       GetInterfaceType(context, interface_id, self_specific_id);
   interface_info.self_param_id = AddSelfGenericParameter(

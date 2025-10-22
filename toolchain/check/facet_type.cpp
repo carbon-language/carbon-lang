@@ -23,35 +23,28 @@
 
 namespace Carbon::Check {
 
-auto FacetTypeFromInterface(Context& context, InterfaceOrNamedConstraintId id,
+auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
                             SemIR::SpecificId specific_id) -> SemIR::FacetType {
   auto info = SemIR::FacetTypeInfo{};
-  CARBON_KIND_SWITCH(id) {
-    case CARBON_KIND(SemIR::InterfaceId interface_id): {
-      info.extend_constraints.push_back({interface_id, specific_id});
-      // TODO: Add `require impls` to the set of constraints.
-      break;
-    }
-    case CARBON_KIND(SemIR::NamedConstraintId _): {
-      // TODO: Add `require impls` to the set of constraints.
-      break;
-    }
-  }
+
+  info.extend_constraints.push_back({interface_id, specific_id});
+  // TODO: Add `require impls` to the set of constraints.
+
   info.Canonicalize();
   SemIR::FacetTypeId facet_type_id = context.facet_types().Add(info);
   return {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id};
 }
 
-auto EntityFromInterface(Context& context, InterfaceOrNamedConstraintId id)
-    -> const SemIR::EntityWithParamsBase& {
-  CARBON_KIND_SWITCH(id) {
-    case CARBON_KIND(SemIR::InterfaceId interface_id): {
-      return context.interfaces().Get(interface_id);
-    }
-    case CARBON_KIND(SemIR::NamedConstraintId named_constraint_id): {
-      return context.named_constraints().Get(named_constraint_id);
-    }
-  }
+auto FacetTypeFromNamedConstraint(
+    Context& context, SemIR::NamedConstraintId /*named_constraint_id*/,
+    SemIR::SpecificId /*specific_id*/) -> SemIR::FacetType {
+  auto info = SemIR::FacetTypeInfo{};
+
+  // TODO: Add `require impls` to the set of constraints.
+
+  info.Canonicalize();
+  SemIR::FacetTypeId facet_type_id = context.facet_types().Add(info);
+  return {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id};
 }
 
 // Returns whether the `LookupImplWitness` of `witness_id` matches `interface`.

@@ -223,8 +223,9 @@ auto GetNamedConstraintType(Context& context,
                             SemIR::NamedConstraintId named_constraint_id,
                             SemIR::SpecificId specific_id) -> SemIR::TypeId {
   return GetTypeImpl<SemIR::FacetType>(
-      context, FacetTypeFromInterface(context, named_constraint_id, specific_id)
-                   .facet_type_id);
+      context,
+      FacetTypeFromNamedConstraint(context, named_constraint_id, specific_id)
+          .facet_type_id);
 }
 
 auto GetFacetType(Context& context, const SemIR::FacetTypeInfo& info)

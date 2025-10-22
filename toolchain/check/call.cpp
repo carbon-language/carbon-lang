@@ -116,13 +116,27 @@ static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
                                          .specific_id = *callee_specific_id});
 }
 
-// Performs a call where the callee is the name of a generic interface, such as
-// `AddWith(i32)`.
+static auto EntityFromInterfaceOrNamedConstraint(
+    Context& context, SemIR::InterfaceId interface_id)
+    -> const SemIR::EntityWithParamsBase& {
+  return context.interfaces().Get(interface_id);
+}
+
+static auto EntityFromInterfaceOrNamedConstraint(
+    Context& context, SemIR::NamedConstraintId named_constraint_id)
+    -> const SemIR::EntityWithParamsBase& {
+  return context.named_constraints().Get(named_constraint_id);
+}
+
+// Performs a call where the callee is the name of a generic interface or named
+// constraint, such as `AddWith(i32)`.
+template <typename IdT>
+  requires SameAsOneOf<IdT, SemIR::InterfaceId, SemIR::NamedConstraintId>
 static auto PerformCallToGenericInterfaceOrNamedConstaint(
-    Context& context, SemIR::LocId loc_id, InterfaceOrNamedConstraintId id,
+    Context& context, SemIR::LocId loc_id, IdT id,
     SemIR::SpecificId enclosing_specific_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
-  const auto& entity = EntityFromInterface(context, id);
+  const auto& entity = EntityFromInterfaceOrNamedConstraint(context, id);
   auto callee_specific_id =
       ResolveCalleeInCall(context, loc_id, entity, EntityKind::GenericInterface,
                           enclosing_specific_id,
@@ -131,8 +145,13 @@ static auto PerformCallToGenericInterfaceOrNamedConstaint(
   if (!callee_specific_id) {
     return SemIR::ErrorInst::InstId;
   }
-  return GetOrAddInst(context, loc_id,
-                      FacetTypeFromInterface(context, id, *callee_specific_id));
+  std::optional<SemIR::FacetType> facet_type;
+  if constexpr (std::same_as<IdT, SemIR::InterfaceId>) {
+    facet_type = FacetTypeFromInterface(context, id, *callee_specific_id);
+  } else {
+    facet_type = FacetTypeFromNamedConstraint(context, id, *callee_specific_id);
+  }
+  return GetOrAddInst(context, loc_id, *facet_type);
 }
 
 // Builds an appropriate specific function for the callee, also handling
