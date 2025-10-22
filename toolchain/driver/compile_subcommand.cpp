@@ -888,6 +888,7 @@ auto CompilationUnit::RunOpt() -> void {
 }
 
 auto CompilationUnit::PostLower() -> void {
+  CARBON_CHECK(module_, "Must call RunLower first");
   if (options_->dump_llvm_ir && IncludeInDumps()) {
     module_->print(*driver_env_->output_stream, /*AAW=*/nullptr,
                    /*ShouldPreserveUseListOrder=*/true);
