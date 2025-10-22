@@ -50,21 +50,15 @@ auto AddSelfGenericParameter(Context& context, SemIR::TypeId type_id,
                              SemIR::NameScopeId scope_id, bool is_template)
     -> SemIR::InstId;
 
-// Given a search result `lookup_result` for `name_context`, returns the
-// previous valid declaration of `name_context` if there is one. Otherwise,
+// Given a search result `lookup_result` for `name`, returns the previous valid
+// declaration of `name` if there is one. The `entity` is a new decl of the same
+// `name`, and the existing decl need to be of the same entity type. Otherwise,
 // produces diagnostics if needed and returns nullopt.
-//
-// `try_get_entity` should return the entity pointer for the Inst only if the
-// Inst matches the expected type. For instance, for a `SemIR::InterfaceDecl`,
-// it may return the `SemIR::Interface`. Otherwise, it should return nullptr
-// which will be diagnosed as a redeclaration of a different eniuty type.
 template <typename EntityT>
   requires SameAsOneOf<EntityT, SemIR::Interface, SemIR::NamedConstraint>
-auto TryGetExistingDecl(Context& context, SemIR::LocId loc_id,
-                        const NameComponent& name,
-                        const DeclNameStack::NameContext& name_context,
-                        const EntityT& entity, bool is_definition,
-                        SemIR::ScopeLookupResult lookup_result)
+auto TryGetExistingDecl(Context& context, const NameComponent& name,
+                        SemIR::ScopeLookupResult lookup_result,
+                        const EntityT& entity, bool is_definition)
     -> std::optional<SemIR::Inst>;
 
 }  // namespace Carbon::Check

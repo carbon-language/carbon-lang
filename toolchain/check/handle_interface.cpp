@@ -72,9 +72,8 @@ static auto BuildInterfaceDecl(Context& context,
   SemIR::ScopeLookupResult lookup_result =
       context.decl_name_stack().LookupOrAddName(
           name_context, decl_inst_id, introducer.modifier_set.GetAccessKind());
-  if (auto existing_decl =
-          TryGetExistingDecl(context, node_id, name, name_context,
-                             interface_info, is_definition, lookup_result)) {
+  if (auto existing_decl = TryGetExistingDecl(context, name, lookup_result,
+                                              interface_info, is_definition)) {
     auto existing_interface_decl = existing_decl->As<SemIR::InterfaceDecl>();
     interface_decl.interface_id = existing_interface_decl.interface_id;
     interface_decl.type_id = existing_interface_decl.type_id;

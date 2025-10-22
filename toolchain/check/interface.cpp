@@ -278,16 +278,14 @@ static constexpr auto DeclTokenKind() -> Lex::TokenKind {
 
 template <typename EntityT>
   requires SameAsOneOf<EntityT, SemIR::Interface, SemIR::NamedConstraint>
-auto TryGetExistingDecl(Context& context, SemIR::LocId loc_id,
-                        const NameComponent& name,
-                        const DeclNameStack::NameContext& name_context,
-                        const EntityT& entity, bool is_definition,
-                        SemIR::ScopeLookupResult lookup_result)
+auto TryGetExistingDecl(Context& context, const NameComponent& name,
+                        SemIR::ScopeLookupResult lookup_result,
+                        const EntityT& entity, bool is_definition)
     -> std::optional<SemIR::Inst> {
   if (lookup_result.is_poisoned()) {
     // This is a declaration of a poisoned name.
-    DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
-                         lookup_result.poisoning_loc_id(), name_context.loc_id);
+    DiagnosePoisonedName(context, name.name_id,
+                         lookup_result.poisoning_loc_id(), name.name_loc_id);
     return std::nullopt;
   }
 
@@ -301,14 +299,15 @@ auto TryGetExistingDecl(Context& context, SemIR::LocId loc_id,
       TryGetEntity<EntityT>(context, existing_decl_inst);
   if (!existing_decl_entity) {
     // This is a redeclaration with a different entity kind.
-    DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
+    DiagnoseDuplicateName(context, name.name_id, name.name_loc_id,
                           SemIR::LocId(existing_id));
     return std::nullopt;
   }
 
   if (!CheckRedeclParamsMatch(
           context,
-          DeclParams(loc_id, name.first_param_node_id, name.last_param_node_id,
+          DeclParams(SemIR::LocId(entity.latest_decl_id()),
+                     name.first_param_node_id, name.last_param_node_id,
                      name.implicit_param_patterns_id, name.param_patterns_id),
           DeclParams(*existing_decl_entity))) {
     // Mismatch is diagnosed already if found.
@@ -320,7 +319,7 @@ auto TryGetExistingDecl(Context& context, SemIR::LocId loc_id,
   // might also be refactored to merge.
   DiagnoseIfInvalidRedecl(
       context, DeclTokenKind<EntityT>(), existing_decl_entity->name_id,
-      RedeclInfo(entity, loc_id, is_definition),
+      RedeclInfo(entity, SemIR::LocId(entity.latest_decl_id()), is_definition),
       RedeclInfo(*existing_decl_entity,
                  SemIR::LocId(existing_decl_entity->latest_decl_id()),
                  existing_decl_entity->has_definition_started()),
@@ -340,19 +339,15 @@ auto TryGetExistingDecl(Context& context, SemIR::LocId loc_id,
   return existing_decl_inst;
 }
 
-template auto TryGetExistingDecl(Context& context, SemIR::LocId loc_id,
-                                 const NameComponent& name,
-                                 const DeclNameStack::NameContext& name_context,
+template auto TryGetExistingDecl(Context& context, const NameComponent& name,
+                                 SemIR::ScopeLookupResult lookup_result,
                                  const SemIR::Interface& entity,
-                                 bool is_definition,
-                                 SemIR::ScopeLookupResult lookup_result)
+                                 bool is_definition)
     -> std::optional<SemIR::Inst>;
-template auto TryGetExistingDecl(Context& context, SemIR::LocId loc_id,
-                                 const NameComponent& name,
-                                 const DeclNameStack::NameContext& name_context,
+template auto TryGetExistingDecl(Context& context, const NameComponent& name,
+                                 SemIR::ScopeLookupResult lookup_result,
                                  const SemIR::NamedConstraint& entity,
-                                 bool is_definition,
-                                 SemIR::ScopeLookupResult lookup_result)
+                                 bool is_definition)
     -> std::optional<SemIR::Inst>;
 
 }  // namespace Carbon::Check
