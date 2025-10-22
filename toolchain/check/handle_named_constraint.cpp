@@ -69,18 +69,9 @@ static auto BuildNamedConstraintDecl(Context& context,
   SemIR::ScopeLookupResult lookup_result =
       context.decl_name_stack().LookupOrAddName(
           name_context, decl_inst_id, introducer.modifier_set.GetAccessKind());
-  auto try_constraint_decl_to_entity =
-      [&](SemIR::Inst inst) -> const SemIR::EntityWithParamsBase* {
-    if (auto decl = inst.TryAs<SemIR::NamedConstraintDecl>()) {
-      return &context.named_constraints().Get(decl->named_constraint_id);
-    } else {
-      return nullptr;
-    }
-  };
   if (auto existing_decl =
           TryGetExistingDecl(context, node_id, name, name_context,
-                             introducer.kind, constraint_info, is_definition,
-                             try_constraint_decl_to_entity, lookup_result)) {
+                             constraint_info, is_definition, lookup_result)) {
     auto existing_constraint_decl =
         existing_decl->As<SemIR::NamedConstraintDecl>();
     constraint_decl.named_constraint_id =

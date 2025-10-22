@@ -58,14 +58,14 @@ auto AddSelfGenericParameter(Context& context, SemIR::TypeId type_id,
 // Inst matches the expected type. For instance, for a `SemIR::InterfaceDecl`,
 // it may return the `SemIR::Interface`. Otherwise, it should return nullptr
 // which will be diagnosed as a redeclaration of a different eniuty type.
-auto TryGetExistingDecl(
-    Context& context, SemIR::LocId loc_id, const NameComponent& name,
-    const DeclNameStack::NameContext& name_context,
-    Lex::TokenKind decl_token_kind, const SemIR::EntityWithParamsBase& entity,
-    bool is_definition,
-    llvm::function_ref<auto(SemIR::Inst)->const SemIR::EntityWithParamsBase*>
-        try_get_entity,
-    SemIR::ScopeLookupResult lookup_result) -> std::optional<SemIR::Inst>;
+template <typename EntityT>
+  requires SameAsOneOf<EntityT, SemIR::Interface, SemIR::NamedConstraint>
+auto TryGetExistingDecl(Context& context, SemIR::LocId loc_id,
+                        const NameComponent& name,
+                        const DeclNameStack::NameContext& name_context,
+                        const EntityT& entity, bool is_definition,
+                        SemIR::ScopeLookupResult lookup_result)
+    -> std::optional<SemIR::Inst>;
 
 }  // namespace Carbon::Check
 
