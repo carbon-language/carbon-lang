@@ -676,6 +676,8 @@ class InstBlockStore : public BlockValueStore<InstBlockId, InstId> {
 
   explicit InstBlockStore(llvm::BumpPtrAllocator& allocator,
                           CheckIRId check_ir_id = CheckIRId::None)
+      // 4 reserved ids for the `Empty` placeholder defined in `BlockValueStore,
+      // plus the 3 other placeholders defined below in this constructor.
       : BaseType(allocator, IdTag(check_ir_id.index, 4)) {
     auto exports_id = AddPlaceholder();
     CARBON_CHECK(exports_id == InstBlockId::Exports);
