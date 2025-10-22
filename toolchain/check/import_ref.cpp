@@ -117,8 +117,10 @@ static auto AddLoadedImportRef(Context& context, SemIR::TypeId type_id,
   context.imports().push_back(inst_id);
 
   context.constant_values().Set(inst_id, const_id);
-  context.import_ir_constant_values()[import_ir_inst.ir_id().index].Set(
-      import_ir_inst.inst_id(), const_id);
+  context
+      .import_ir_constant_values()[context.sem_ir().import_irs().GetRawIndex(
+          import_ir_inst.ir_id())]
+      .Set(import_ir_inst.inst_id(), const_id);
   return inst_id;
 }
 
@@ -290,7 +292,8 @@ class ImportContext {
   // from `InstId`s in the import IR to corresponding `ConstantId`s in the local
   // IR.
   auto local_constant_values_for_import_insts() -> SemIR::ConstantValueStore& {
-    return local_context().import_ir_constant_values()[import_ir_id_.index];
+    return local_context().import_ir_constant_values()
+        [local_context().sem_ir().import_irs().GetRawIndex(import_ir_id_)];
   }
 
   // Returns the file we are importing into.
@@ -636,9 +639,12 @@ class ImportRefResolver : public ImportContext {
       CARBON_CHECK(cursor_ir != prev_ir || cursor_inst_id != prev_inst_id,
                    "{0}", cursor_ir->insts().Get(cursor_inst_id));
 
-      if (auto const_id = local_context()
-                              .import_ir_constant_values()[cursor_ir_id.index]
-                              .GetAttached(cursor_inst_id);
+      if (auto const_id =
+              local_context()
+                  .import_ir_constant_values()
+                      [local_context().sem_ir().import_irs().GetRawIndex(
+                          cursor_ir_id)]
+                  .GetAttached(cursor_inst_id);
           const_id.has_value()) {
         SetResolvedConstId(inst_id, result.indirect_insts, const_id);
         result.const_id = const_id;
@@ -658,7 +664,9 @@ class ImportRefResolver : public ImportContext {
     local_constant_values_for_import_insts().Set(inst_id, const_id);
     for (auto indirect_inst : indirect_insts) {
       local_context()
-          .import_ir_constant_values()[indirect_inst.ir_id().index]
+          .import_ir_constant_values()
+              [local_context().sem_ir().import_irs().GetRawIndex(
+                  indirect_inst.ir_id())]
           .Set(indirect_inst.inst_id(), const_id);
     }
   }
@@ -3696,8 +3704,10 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
   // Store the constant for both the ImportRefLoaded and indirect instructions.
   context.constant_values().Set(inst_id, constant_id);
   for (const auto& import_ir_inst : indirect_insts) {
-    context.import_ir_constant_values()[import_ir_inst.ir_id().index].Set(
-        import_ir_inst.inst_id(), constant_id);
+    context
+        .import_ir_constant_values()[context.sem_ir().import_irs().GetRawIndex(
+            import_ir_inst.ir_id())]
+        .Set(import_ir_inst.inst_id(), constant_id);
   }
 }
 

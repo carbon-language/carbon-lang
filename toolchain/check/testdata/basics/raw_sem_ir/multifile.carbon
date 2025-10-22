@@ -91,10 +91,10 @@ fn B() {
 // CHECK:STDOUT:   import_irs:
 // CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
-// CHECK:STDOUT:     import_ir00000002: {decl_id: inst5000000F, is_export: false}
+// CHECK:STDOUT:     import_ir50000002: {decl_id: inst5000000F, is_export: false}
 // CHECK:STDOUT:   import_ir_insts:
-// CHECK:STDOUT:     import_ir_inst00000000: {ir_id: import_ir00000002, inst_id: inst6000000F}
-// CHECK:STDOUT:     import_ir_inst00000001: {ir_id: import_ir00000002, inst_id: inst6000000F}
+// CHECK:STDOUT:     import_ir_inst00000000: {ir_id: import_ir50000002, inst_id: inst6000000F}
+// CHECK:STDOUT:     import_ir_inst00000001: {ir_id: import_ir50000002, inst_id: inst6000000F}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   name_scopes:
 // CHECK:STDOUT:     name_scope00000000: {inst: inst0000000E, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name00000001: inst50000010, name00000000: inst50000011}}
