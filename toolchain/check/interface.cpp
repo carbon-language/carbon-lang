@@ -222,8 +222,8 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
   CARBON_FATAL("Unexpected kind for associated constant {0}", decl);
 }
 
-auto GetSelfParameter(Context& context, SemIR::TypeId type_id,
-                      SemIR::NameScopeId scope_id, bool is_template)
+auto AddSelfGenericParameter(Context& context, SemIR::TypeId type_id,
+                             SemIR::NameScopeId scope_id, bool is_template)
     -> SemIR::InstId {
   auto entity_name_id = context.entity_names().AddSymbolicBindingName(
       SemIR::NameId::SelfType, scope_id,
@@ -292,9 +292,11 @@ auto TryGetExistingDecl(
 
   if (is_definition && existing_decl_entity->has_definition_started()) {
     // DiagnoseIfInvalidRedecl would diagnose an error in this case, since we'd
-    // have two definitions. Normally we'd still use the pre-existing definition
-    // as a forward declaration anyway, for error recovery, but we can't for
-    // generics.
+    // have two definitions. Given the declaration parts of the definitions
+    // match, we would be able to use the prior declaration for error recovery,
+    // except that having two definitions causes larger problems for generics.
+    // All interfaces (and named constraints) are generic with an implicit Self
+    // compile time binding.
     return std::nullopt;
   }
 

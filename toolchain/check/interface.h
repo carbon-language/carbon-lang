@@ -43,11 +43,11 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
     -> SemIR::TypeId;
 
 // Creates a symbolic binding for `Self` of type `type_id` in the scope of
-// `scope_id`, and add the name `Self` for the binding.
+// `scope_id`, and add the name `Self` for the compile time binding.
 //
 // Returns the symbolic binding instruction.
-auto GetSelfParameter(Context& context, SemIR::TypeId type_id,
-                      SemIR::NameScopeId scope_id, bool is_template)
+auto AddSelfGenericParameter(Context& context, SemIR::TypeId type_id,
+                             SemIR::NameScopeId scope_id, bool is_template)
     -> SemIR::InstId;
 
 // Given a search result `lookup_result` for `name_context`, returns the
