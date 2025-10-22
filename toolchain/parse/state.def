@@ -360,7 +360,7 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 //   1. Package
 //
 // require ...
-// ^~~~
+// ^~~~~~~
 //   1. RequireAfterIntroducer
 //
 // var ...        (variant is Regular)
@@ -1354,7 +1354,7 @@ CARBON_PARSE_STATE(ImplAfterIntroducer)
 //                     ^~
 //   1. Expr
 // impl forall [ ... ] TypeExpression as ...
-//                     ^
+//                    ^
 //   1. Expr
 //   2. ImplBeforeAs
 CARBON_PARSE_STATE(ImplAfterForall)
@@ -1369,12 +1369,12 @@ CARBON_PARSE_STATE(ImplBeforeAs)
 
 // Handles processing of a `require...impls` declaration after the introducer.
 //
-// require as ...
-//         ^~
+// require impls ...
+//         ^~~~~
 //   1. Expr
 //   2. RequireDecl
-// require TypeExpression as ...
-//         ^
+// require TypeExpression impls ...
+//        ^
 //   1. Expr
 //   2. RequireBeforeImpls
 //   3. RequireDecl

@@ -19,7 +19,7 @@ auto HandleRequireAfterIntroducer(Context& context) -> void {
   } else {
     // <expression> impls <expression>...
     context.PushState(StateKind::RequireBeforeImpls);
-    context.PushStateForExpr(PrecedenceGroup::ForRequireImpls());
+    context.PushStateForExpr(PrecedenceGroup::ForRequirements());
   }
 }
 

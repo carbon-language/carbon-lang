@@ -176,10 +176,6 @@ inline auto PrecedenceGroup::ForImplAs() -> PrecedenceGroup {
   return PrecedenceGroup(As);
 }
 
-inline auto PrecedenceGroup::ForRequireImpls() -> PrecedenceGroup {
-  return PrecedenceGroup(As);
-}
-
 inline auto PrecedenceGroup::ForRequirements() -> PrecedenceGroup {
   return PrecedenceGroup(Where);
 }
