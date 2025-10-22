@@ -296,28 +296,12 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     entity_name6000003D: {name: name00000006, parent_scope: name_scope<none>, index: 2, is_template: 0}
 // CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:
-<<<<<<< HEAD
-// CHECK:STDOUT:     function60000000: {name: name00000000, parent_scope: name_scope00000000, call_params_id: inst_block4000000D, return_slot_pattern: inst60000030, body: [inst_block40000014]}
+// CHECK:STDOUT:     function60000000: {name: name00000000, parent_scope: name_scope00000000, call_params_id: inst_block6000000D, return_slot_pattern: inst60000030, body: [inst_block60000014]}
 // CHECK:STDOUT:     function60000001: {name: name00000004, parent_scope: name_scope60000002, return_slot_pattern: inst60000055}
 // CHECK:STDOUT:     function60000002: {name: name00000004, parent_scope: name_scope60000003, return_slot_pattern: inst60000073}
 // CHECK:STDOUT:     function60000003: {name: name00000004, parent_scope: name_scope60000008, return_slot_pattern: inst600000AA}
 // CHECK:STDOUT:     function60000004: {name: name00000004, parent_scope: name_scope6000000B, return_slot_pattern: inst600000D5}
 // CHECK:STDOUT:     function60000005: {name: name00000004, parent_scope: name_scope6000000C, return_slot_pattern: inst60000111}
-||||||| parent of c0aad8cbd (Actually pass in the `CheckIRId`)
-// CHECK:STDOUT:     function60000000: {name: name00000000, parent_scope: name_scope00000000, call_params_id: inst_block4000000D, return_slot_pattern: inst60000030, body: [inst_block40000014]}
-// CHECK:STDOUT:     function60000001: {name: name00000004, parent_scope: name_scope00000002, return_slot_pattern: inst60000055}
-// CHECK:STDOUT:     function60000002: {name: name00000004, parent_scope: name_scope00000003, return_slot_pattern: inst60000073}
-// CHECK:STDOUT:     function60000003: {name: name00000004, parent_scope: name_scope00000008, return_slot_pattern: inst600000AA}
-// CHECK:STDOUT:     function60000004: {name: name00000004, parent_scope: name_scope0000000B, return_slot_pattern: inst600000D5}
-// CHECK:STDOUT:     function60000005: {name: name00000004, parent_scope: name_scope0000000C, return_slot_pattern: inst60000111}
-=======
-// CHECK:STDOUT:     function60000000: {name: name00000000, parent_scope: name_scope00000000, call_params_id: inst_block6000000D, return_slot_pattern: inst60000030, body: [inst_block60000014]}
-// CHECK:STDOUT:     function60000001: {name: name00000004, parent_scope: name_scope00000002, return_slot_pattern: inst60000055}
-// CHECK:STDOUT:     function60000002: {name: name00000004, parent_scope: name_scope00000003, return_slot_pattern: inst60000073}
-// CHECK:STDOUT:     function60000003: {name: name00000004, parent_scope: name_scope00000008, return_slot_pattern: inst600000AA}
-// CHECK:STDOUT:     function60000004: {name: name00000004, parent_scope: name_scope0000000B, return_slot_pattern: inst600000D5}
-// CHECK:STDOUT:     function60000005: {name: name00000004, parent_scope: name_scope0000000C, return_slot_pattern: inst60000111}
->>>>>>> c0aad8cbd (Actually pass in the `CheckIRId`)
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:
 // CHECK:STDOUT:     generic60000000: {decl: inst60000035, bindings: inst_block60000010}
@@ -572,25 +556,11 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst600000BB:    {kind: ImportRefLoaded, arg0: import_ir_inst0000005B, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000BC:    {kind: ImportRefUnloaded, arg0: import_ir_inst0000005C, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst600000BD:    {kind: ImplDecl, arg0: impl60000008, arg1: inst_block_empty}
-<<<<<<< HEAD
 // CHECK:STDOUT:     inst600000BE:    {kind: BindSymbolicName, arg0: entity_name6000001A, arg1: inst<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst600000BF:    {kind: SymbolicBindingType, arg0: entity_name6000001A, arg1: inst600000BE, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000C0:    {kind: TupleType, arg0: inst_block40000039, type: type(TypeType)}
+// CHECK:STDOUT:     inst600000C0:    {kind: TupleType, arg0: inst_block60000039, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000C1:    {kind: SymbolicBindingPattern, arg0: entity_name6000001C, type: type(inst60000062)}
 // CHECK:STDOUT:     inst600000C2:    {kind: SymbolicBindingPattern, arg0: entity_name6000001D, type: type(inst60000062)}
-||||||| parent of c0aad8cbd (Actually pass in the `CheckIRId`)
-// CHECK:STDOUT:     inst600000BE:    {kind: BindSymbolicName, arg0: entity_name0000001A, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst600000BF:    {kind: SymbolicBindingType, arg0: entity_name0000001A, arg1: inst600000BE, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000C0:    {kind: TupleType, arg0: inst_block40000039, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000C1:    {kind: SymbolicBindingPattern, arg0: entity_name0000001C, type: type(inst60000062)}
-// CHECK:STDOUT:     inst600000C2:    {kind: SymbolicBindingPattern, arg0: entity_name0000001D, type: type(inst60000062)}
-=======
-// CHECK:STDOUT:     inst600000BE:    {kind: BindSymbolicName, arg0: entity_name0000001A, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst600000BF:    {kind: SymbolicBindingType, arg0: entity_name0000001A, arg1: inst600000BE, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000C0:    {kind: TupleType, arg0: inst_block60000039, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000C1:    {kind: SymbolicBindingPattern, arg0: entity_name0000001C, type: type(inst60000062)}
-// CHECK:STDOUT:     inst600000C2:    {kind: SymbolicBindingPattern, arg0: entity_name0000001D, type: type(inst60000062)}
->>>>>>> c0aad8cbd (Actually pass in the `CheckIRId`)
 // CHECK:STDOUT:     inst600000C3:    {kind: ImportRefLoaded, arg0: import_ir_inst00000060, arg1: entity_name<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst600000C4:    {kind: ImportRefLoaded, arg0: import_ir_inst00000061, arg1: entity_name<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst600000C5:    {kind: ImportRefLoaded, arg0: import_ir_inst00000062, arg1: entity_name<none>, type: type(TypeType)}
@@ -598,25 +568,11 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst600000C7:    {kind: ImportRefUnloaded, arg0: import_ir_inst00000064, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst600000C8:    {kind: ImplWitnessTable, arg0: inst_block6000003C, arg1: impl60000008}
 // CHECK:STDOUT:     inst600000C9:    {kind: ImplWitness, arg0: inst600000C8, arg1: specific6000000A, type: type(inst(WitnessType))}
-<<<<<<< HEAD
 // CHECK:STDOUT:     inst600000CA:    {kind: BindSymbolicName, arg0: entity_name60000001, arg1: inst<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst600000CB:    {kind: BindSymbolicName, arg0: entity_name6000001A, arg1: inst<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst600000CC:    {kind: SymbolicBindingType, arg0: entity_name60000001, arg1: inst600000CA, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000CD:    {kind: SymbolicBindingType, arg0: entity_name6000001A, arg1: inst600000CB, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000CE:    {kind: TupleType, arg0: inst_block4000003E, type: type(TypeType)}
-||||||| parent of c0aad8cbd (Actually pass in the `CheckIRId`)
-// CHECK:STDOUT:     inst600000CA:    {kind: BindSymbolicName, arg0: entity_name00000001, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst600000CB:    {kind: BindSymbolicName, arg0: entity_name0000001A, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst600000CC:    {kind: SymbolicBindingType, arg0: entity_name00000001, arg1: inst600000CA, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000CD:    {kind: SymbolicBindingType, arg0: entity_name0000001A, arg1: inst600000CB, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000CE:    {kind: TupleType, arg0: inst_block4000003E, type: type(TypeType)}
-=======
-// CHECK:STDOUT:     inst600000CA:    {kind: BindSymbolicName, arg0: entity_name00000001, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst600000CB:    {kind: BindSymbolicName, arg0: entity_name0000001A, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst600000CC:    {kind: SymbolicBindingType, arg0: entity_name00000001, arg1: inst600000CA, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000CD:    {kind: SymbolicBindingType, arg0: entity_name0000001A, arg1: inst600000CB, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000CE:    {kind: TupleType, arg0: inst_block6000003E, type: type(TypeType)}
->>>>>>> c0aad8cbd (Actually pass in the `CheckIRId`)
 // CHECK:STDOUT:     inst600000CF:    {kind: ImplWitness, arg0: inst600000C8, arg1: specific6000000B, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst600000D0:    {kind: FunctionDecl, arg0: function60000004, arg1: inst_block_empty, type: type(symbolic_constant00000072)}
 // CHECK:STDOUT:     inst600000D1:    {kind: FunctionType, arg0: function60000004, arg1: specific6000000A, type: type(TypeType)}
@@ -630,25 +586,11 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst600000D9:    {kind: ImportRefLoaded, arg0: import_ir_inst00000072, arg1: entity_name<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst600000DA:    {kind: FunctionType, arg0: function60000004, arg1: specific6000000B, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000DB:    {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant00000079)}
-<<<<<<< HEAD
 // CHECK:STDOUT:     inst600000DC:    {kind: BindSymbolicName, arg0: entity_name60000001, arg1: inst<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst600000DD:    {kind: SymbolicBindingType, arg0: entity_name60000001, arg1: inst600000DC, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000DE:    {kind: BindSymbolicName, arg0: entity_name6000001A, arg1: inst<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst600000DF:    {kind: SymbolicBindingType, arg0: entity_name6000001A, arg1: inst600000DE, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000E0:    {kind: TupleType, arg0: inst_block40000046, type: type(TypeType)}
-||||||| parent of c0aad8cbd (Actually pass in the `CheckIRId`)
-// CHECK:STDOUT:     inst600000DC:    {kind: BindSymbolicName, arg0: entity_name00000001, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst600000DD:    {kind: SymbolicBindingType, arg0: entity_name00000001, arg1: inst600000DC, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000DE:    {kind: BindSymbolicName, arg0: entity_name0000001A, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst600000DF:    {kind: SymbolicBindingType, arg0: entity_name0000001A, arg1: inst600000DE, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000E0:    {kind: TupleType, arg0: inst_block40000046, type: type(TypeType)}
-=======
-// CHECK:STDOUT:     inst600000DC:    {kind: BindSymbolicName, arg0: entity_name00000001, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst600000DD:    {kind: SymbolicBindingType, arg0: entity_name00000001, arg1: inst600000DC, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000DE:    {kind: BindSymbolicName, arg0: entity_name0000001A, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst600000DF:    {kind: SymbolicBindingType, arg0: entity_name0000001A, arg1: inst600000DE, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000E0:    {kind: TupleType, arg0: inst_block60000046, type: type(TypeType)}
->>>>>>> c0aad8cbd (Actually pass in the `CheckIRId`)
 // CHECK:STDOUT:     inst600000E1:    {kind: PatternType, arg0: inst600000E0, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000E2:    {kind: RequireCompleteType, arg0: inst600000C0, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst600000E3:    {kind: RequireCompleteType, arg0: inst600000BF, type: type(inst(WitnessType))}
@@ -670,28 +612,12 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst600000F3:    {kind: PatternType, arg0: inst600000BF, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000F4:    {kind: ImportRefUnloaded, arg0: import_ir_inst00000086, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst600000F5:    {kind: ImplDecl, arg0: impl60000009, arg1: inst_block_empty}
-<<<<<<< HEAD
 // CHECK:STDOUT:     inst600000F6:    {kind: BindSymbolicName, arg0: entity_name60000029, arg1: inst<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst600000F7:    {kind: SymbolicBindingType, arg0: entity_name60000029, arg1: inst600000F6, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000F8:    {kind: TupleType, arg0: inst_block4000004F, type: type(TypeType)}
+// CHECK:STDOUT:     inst600000F8:    {kind: TupleType, arg0: inst_block6000004F, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000F9:    {kind: SymbolicBindingPattern, arg0: entity_name6000002B, type: type(inst60000062)}
 // CHECK:STDOUT:     inst600000FA:    {kind: SymbolicBindingPattern, arg0: entity_name6000002C, type: type(inst60000062)}
 // CHECK:STDOUT:     inst600000FB:    {kind: SymbolicBindingPattern, arg0: entity_name6000002D, type: type(inst60000062)}
-||||||| parent of c0aad8cbd (Actually pass in the `CheckIRId`)
-// CHECK:STDOUT:     inst600000F6:    {kind: BindSymbolicName, arg0: entity_name00000029, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst600000F7:    {kind: SymbolicBindingType, arg0: entity_name00000029, arg1: inst600000F6, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000F8:    {kind: TupleType, arg0: inst_block4000004F, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000F9:    {kind: SymbolicBindingPattern, arg0: entity_name0000002B, type: type(inst60000062)}
-// CHECK:STDOUT:     inst600000FA:    {kind: SymbolicBindingPattern, arg0: entity_name0000002C, type: type(inst60000062)}
-// CHECK:STDOUT:     inst600000FB:    {kind: SymbolicBindingPattern, arg0: entity_name0000002D, type: type(inst60000062)}
-=======
-// CHECK:STDOUT:     inst600000F6:    {kind: BindSymbolicName, arg0: entity_name00000029, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst600000F7:    {kind: SymbolicBindingType, arg0: entity_name00000029, arg1: inst600000F6, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000F8:    {kind: TupleType, arg0: inst_block6000004F, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000F9:    {kind: SymbolicBindingPattern, arg0: entity_name0000002B, type: type(inst60000062)}
-// CHECK:STDOUT:     inst600000FA:    {kind: SymbolicBindingPattern, arg0: entity_name0000002C, type: type(inst60000062)}
-// CHECK:STDOUT:     inst600000FB:    {kind: SymbolicBindingPattern, arg0: entity_name0000002D, type: type(inst60000062)}
->>>>>>> c0aad8cbd (Actually pass in the `CheckIRId`)
 // CHECK:STDOUT:     inst600000FC:    {kind: ImportRefLoaded, arg0: import_ir_inst0000008B, arg1: entity_name<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst600000FD:    {kind: ImportRefLoaded, arg0: import_ir_inst0000008C, arg1: entity_name<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst600000FE:    {kind: ImportRefLoaded, arg0: import_ir_inst0000008D, arg1: entity_name<none>, type: type(inst60000047)}
@@ -700,31 +626,13 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst60000101:    {kind: ImportRefUnloaded, arg0: import_ir_inst00000090, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst60000102:    {kind: ImplWitnessTable, arg0: inst_block60000052, arg1: impl60000009}
 // CHECK:STDOUT:     inst60000103:    {kind: ImplWitness, arg0: inst60000102, arg1: specific60000010, type: type(inst(WitnessType))}
-<<<<<<< HEAD
 // CHECK:STDOUT:     inst60000104:    {kind: BindSymbolicName, arg0: entity_name60000001, arg1: inst<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst60000105:    {kind: BindSymbolicName, arg0: entity_name6000001A, arg1: inst<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst60000106:    {kind: BindSymbolicName, arg0: entity_name60000029, arg1: inst<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst60000107:    {kind: SymbolicBindingType, arg0: entity_name60000001, arg1: inst60000104, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000108:    {kind: SymbolicBindingType, arg0: entity_name6000001A, arg1: inst60000105, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000109:    {kind: SymbolicBindingType, arg0: entity_name60000029, arg1: inst60000106, type: type(TypeType)}
-// CHECK:STDOUT:     inst6000010A:    {kind: TupleType, arg0: inst_block40000054, type: type(TypeType)}
-||||||| parent of c0aad8cbd (Actually pass in the `CheckIRId`)
-// CHECK:STDOUT:     inst60000104:    {kind: BindSymbolicName, arg0: entity_name00000001, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst60000105:    {kind: BindSymbolicName, arg0: entity_name0000001A, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst60000106:    {kind: BindSymbolicName, arg0: entity_name00000029, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst60000107:    {kind: SymbolicBindingType, arg0: entity_name00000001, arg1: inst60000104, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000108:    {kind: SymbolicBindingType, arg0: entity_name0000001A, arg1: inst60000105, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000109:    {kind: SymbolicBindingType, arg0: entity_name00000029, arg1: inst60000106, type: type(TypeType)}
-// CHECK:STDOUT:     inst6000010A:    {kind: TupleType, arg0: inst_block40000054, type: type(TypeType)}
-=======
-// CHECK:STDOUT:     inst60000104:    {kind: BindSymbolicName, arg0: entity_name00000001, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst60000105:    {kind: BindSymbolicName, arg0: entity_name0000001A, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst60000106:    {kind: BindSymbolicName, arg0: entity_name00000029, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst60000107:    {kind: SymbolicBindingType, arg0: entity_name00000001, arg1: inst60000104, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000108:    {kind: SymbolicBindingType, arg0: entity_name0000001A, arg1: inst60000105, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000109:    {kind: SymbolicBindingType, arg0: entity_name00000029, arg1: inst60000106, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000010A:    {kind: TupleType, arg0: inst_block60000054, type: type(TypeType)}
->>>>>>> c0aad8cbd (Actually pass in the `CheckIRId`)
 // CHECK:STDOUT:     inst6000010B:    {kind: ImplWitness, arg0: inst60000102, arg1: specific60000011, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst6000010C:    {kind: FunctionDecl, arg0: function60000005, arg1: inst_block_empty, type: type(symbolic_constant000000BA)}
 // CHECK:STDOUT:     inst6000010D:    {kind: FunctionType, arg0: function60000005, arg1: specific60000010, type: type(TypeType)}
@@ -739,31 +647,13 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst60000116:    {kind: ImportRefLoaded, arg0: import_ir_inst000000A1, arg1: entity_name<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst60000117:    {kind: FunctionType, arg0: function60000005, arg1: specific60000011, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000118:    {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant000000C1)}
-<<<<<<< HEAD
 // CHECK:STDOUT:     inst60000119:    {kind: BindSymbolicName, arg0: entity_name60000001, arg1: inst<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst6000011A:    {kind: SymbolicBindingType, arg0: entity_name60000001, arg1: inst60000119, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000011B:    {kind: BindSymbolicName, arg0: entity_name6000001A, arg1: inst<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst6000011C:    {kind: SymbolicBindingType, arg0: entity_name6000001A, arg1: inst6000011B, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000011D:    {kind: BindSymbolicName, arg0: entity_name60000029, arg1: inst<none>, type: type(inst60000047)}
 // CHECK:STDOUT:     inst6000011E:    {kind: SymbolicBindingType, arg0: entity_name60000029, arg1: inst6000011D, type: type(TypeType)}
-// CHECK:STDOUT:     inst6000011F:    {kind: TupleType, arg0: inst_block4000005C, type: type(TypeType)}
-||||||| parent of c0aad8cbd (Actually pass in the `CheckIRId`)
-// CHECK:STDOUT:     inst60000119:    {kind: BindSymbolicName, arg0: entity_name00000001, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst6000011A:    {kind: SymbolicBindingType, arg0: entity_name00000001, arg1: inst60000119, type: type(TypeType)}
-// CHECK:STDOUT:     inst6000011B:    {kind: BindSymbolicName, arg0: entity_name0000001A, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst6000011C:    {kind: SymbolicBindingType, arg0: entity_name0000001A, arg1: inst6000011B, type: type(TypeType)}
-// CHECK:STDOUT:     inst6000011D:    {kind: BindSymbolicName, arg0: entity_name00000029, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst6000011E:    {kind: SymbolicBindingType, arg0: entity_name00000029, arg1: inst6000011D, type: type(TypeType)}
-// CHECK:STDOUT:     inst6000011F:    {kind: TupleType, arg0: inst_block4000005C, type: type(TypeType)}
-=======
-// CHECK:STDOUT:     inst60000119:    {kind: BindSymbolicName, arg0: entity_name00000001, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst6000011A:    {kind: SymbolicBindingType, arg0: entity_name00000001, arg1: inst60000119, type: type(TypeType)}
-// CHECK:STDOUT:     inst6000011B:    {kind: BindSymbolicName, arg0: entity_name0000001A, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst6000011C:    {kind: SymbolicBindingType, arg0: entity_name0000001A, arg1: inst6000011B, type: type(TypeType)}
-// CHECK:STDOUT:     inst6000011D:    {kind: BindSymbolicName, arg0: entity_name00000029, arg1: inst<none>, type: type(inst60000047)}
-// CHECK:STDOUT:     inst6000011E:    {kind: SymbolicBindingType, arg0: entity_name00000029, arg1: inst6000011D, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000011F:    {kind: TupleType, arg0: inst_block6000005C, type: type(TypeType)}
->>>>>>> c0aad8cbd (Actually pass in the `CheckIRId`)
 // CHECK:STDOUT:     inst60000120:    {kind: PatternType, arg0: inst6000011F, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000121:    {kind: RequireCompleteType, arg0: inst600000F8, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst60000122:    {kind: RequireCompleteType, arg0: inst600000F7, type: type(inst(WitnessType))}

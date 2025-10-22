@@ -63,33 +63,13 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:   cpp_global_vars:
 // CHECK:STDOUT:     cpp_global_var00000000: {key: {entity_name_id: entity_name60000003}, clang_decl_id: clang_decl_id00000007}
 // CHECK:STDOUT:   functions:
-<<<<<<< HEAD
-// CHECK:STDOUT:     function60000000: {name: name00000001, parent_scope: name_scope00000000, call_params_id: inst_block40000006, body: [inst_block40000009]}
+// CHECK:STDOUT:     function60000000: {name: name00000001, parent_scope: name_scope00000000, call_params_id: inst_block60000006, body: [inst_block60000009]}
 // CHECK:STDOUT:     function60000001: {name: name00000004, parent_scope: name_scope60000001, call_params_id: inst_block_empty}
 // CHECK:STDOUT:     function60000002: {name: name00000007, parent_scope: name_scope60000001, call_params_id: inst_block_empty}
-// CHECK:STDOUT:     function60000003: {name: name00000004, parent_scope: name_scope60000001, call_params_id: inst_block4000000D}
-// CHECK:STDOUT:     function60000004: {name: name00000007, parent_scope: name_scope60000001, call_params_id: inst_block40000012}
-||||||| parent of c0aad8cbd (Actually pass in the `CheckIRId`)
-// CHECK:STDOUT:     function60000000: {name: name00000001, parent_scope: name_scope00000000, call_params_id: inst_block40000006, body: [inst_block40000009]}
-// CHECK:STDOUT:     function60000001: {name: name00000004, parent_scope: name_scope00000001, call_params_id: inst_block_empty}
-// CHECK:STDOUT:     function60000002: {name: name00000007, parent_scope: name_scope00000001, call_params_id: inst_block_empty}
-// CHECK:STDOUT:     function60000003: {name: name00000004, parent_scope: name_scope00000001, call_params_id: inst_block4000000D}
-// CHECK:STDOUT:     function60000004: {name: name00000007, parent_scope: name_scope00000001, call_params_id: inst_block40000012}
-=======
-// CHECK:STDOUT:     function60000000: {name: name00000001, parent_scope: name_scope00000000, call_params_id: inst_block60000006, body: [inst_block60000009]}
-// CHECK:STDOUT:     function60000001: {name: name00000004, parent_scope: name_scope00000001, call_params_id: inst_block_empty}
-// CHECK:STDOUT:     function60000002: {name: name00000007, parent_scope: name_scope00000001, call_params_id: inst_block_empty}
-// CHECK:STDOUT:     function60000003: {name: name00000004, parent_scope: name_scope00000001, call_params_id: inst_block6000000D}
-// CHECK:STDOUT:     function60000004: {name: name00000007, parent_scope: name_scope00000001, call_params_id: inst_block60000012}
->>>>>>> c0aad8cbd (Actually pass in the `CheckIRId`)
+// CHECK:STDOUT:     function60000003: {name: name00000004, parent_scope: name_scope60000001, call_params_id: inst_block6000000D}
+// CHECK:STDOUT:     function60000004: {name: name00000007, parent_scope: name_scope60000001, call_params_id: inst_block60000012}
 // CHECK:STDOUT:   classes:
-<<<<<<< HEAD
-// CHECK:STDOUT:     class60000000:   {name: name00000003, parent_scope: name_scope60000001, self_type_id: type(inst60000013), inheritance_kind: Base, is_dynamic: 0, scope_id: name_scope60000002, body_block_id: inst_block4000000A, adapt_id: inst<none>, base_id: inst<none>, complete_type_witness_id: inst60000024, vtable_decl_id: inst<none>}}
-||||||| parent of c0aad8cbd (Actually pass in the `CheckIRId`)
-// CHECK:STDOUT:     class60000000:   {name: name00000003, parent_scope: name_scope00000001, self_type_id: type(inst60000013), inheritance_kind: Base, is_dynamic: 0, scope_id: name_scope00000002, body_block_id: inst_block4000000A, adapt_id: inst<none>, base_id: inst<none>, complete_type_witness_id: inst60000024, vtable_decl_id: inst<none>}}
-=======
-// CHECK:STDOUT:     class60000000:   {name: name00000003, parent_scope: name_scope00000001, self_type_id: type(inst60000013), inheritance_kind: Base, is_dynamic: 0, scope_id: name_scope00000002, body_block_id: inst_block6000000A, adapt_id: inst<none>, base_id: inst<none>, complete_type_witness_id: inst60000024, vtable_decl_id: inst<none>}}
->>>>>>> c0aad8cbd (Actually pass in the `CheckIRId`)
+// CHECK:STDOUT:     class60000000:   {name: name00000003, parent_scope: name_scope60000001, self_type_id: type(inst60000013), inheritance_kind: Base, is_dynamic: 0, scope_id: name_scope60000002, body_block_id: inst_block6000000A, adapt_id: inst<none>, base_id: inst<none>, complete_type_witness_id: inst60000024, vtable_decl_id: inst<none>}}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
 // CHECK:STDOUT:   struct_type_fields:

@@ -103,16 +103,8 @@ fn B() {
 // CHECK:STDOUT:     entity_name50000000: {name: name00000001, parent_scope: name_scope50000001, index: -1, is_template: 0}
 // CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:
-<<<<<<< HEAD
-// CHECK:STDOUT:     function50000000: {name: name00000000, parent_scope: name_scope00000000, call_params_id: inst_block_empty, body: [inst_block40000005]}
-// CHECK:STDOUT:     function50000001: {name: name00000001, parent_scope: name_scope50000001}
-||||||| parent of c0aad8cbd (Actually pass in the `CheckIRId`)
-// CHECK:STDOUT:     function50000000: {name: name00000000, parent_scope: name_scope00000000, call_params_id: inst_block_empty, body: [inst_block40000005]}
-// CHECK:STDOUT:     function50000001: {name: name00000001, parent_scope: name_scope00000001}
-=======
 // CHECK:STDOUT:     function50000000: {name: name00000000, parent_scope: name_scope00000000, call_params_id: inst_block_empty, body: [inst_block50000005]}
-// CHECK:STDOUT:     function50000001: {name: name00000001, parent_scope: name_scope00000001}
->>>>>>> c0aad8cbd (Actually pass in the `CheckIRId`)
+// CHECK:STDOUT:     function50000001: {name: name00000001, parent_scope: name_scope50000001}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
