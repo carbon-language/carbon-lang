@@ -46,15 +46,14 @@ class RelationalValueStore {
   // to reference it in the store.
   auto Add(RelatedIdType related_id, ValueType value) -> IdT {
     auto related_index = related_store_->GetRawIndex(related_id);
-    IdT id(related_index);
-    if (static_cast<size_t>(id.index) >= values_.size()) {
-      values_.resize(id.index + 1);
+    if (static_cast<size_t>(related_index) >= values_.size()) {
+      values_.resize(related_index + 1);
     }
-    auto& opt = values_[id.index];
+    auto& opt = values_[related_index];
     CARBON_CHECK(!opt.has_value(),
                  "Add with `related_id` that was already added to the store");
     opt.emplace(std::move(value));
-    return id;
+    return IdT(related_store_->GetIdTag().Apply(related_index));
   }
 
   // Returns the ID of a value in the store if the `related_id` was previously
@@ -68,13 +67,14 @@ class RelationalValueStore {
     if (!opt.has_value()) {
       return IdT::None;
     }
-    return IdT(related_index);
+    return IdT(related_store_->GetIdTag().Apply(related_index));
   }
 
   // Returns a value for an ID.
   auto Get(IdT id) const -> ConstRefType {
-    CARBON_DCHECK(id.index >= 0, "{0}", id);
-    return *values_[id.index];
+    auto index = related_store_->GetIdTag().Remove(id.index);
+    CARBON_DCHECK(index >= 0, "{0}", id);
+    return *values_[index];
   }
 
  private:

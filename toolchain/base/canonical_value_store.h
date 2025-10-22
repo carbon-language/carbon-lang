@@ -71,6 +71,8 @@ class CanonicalValueStore {
 
   auto GetRawIndex(IdT id) const -> int32_t { return values_.GetRawIndex(id); }
 
+  auto GetIdTag() const -> IdTag { return values_.GetIdTag(); }
+
  private:
   class KeyContext;
 
