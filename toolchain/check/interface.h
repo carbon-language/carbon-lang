@@ -52,7 +52,7 @@ auto GetSelfParameter(Context& context, SemIR::TypeId type_id,
 
 // Given a search result `lookup_result` for `name_context`, returns the
 // previous valid declaration of `name_context` if there is one. Otherwise,
-// produces diagnostics if needed and returns ErrorInst.
+// produces diagnostics if needed and returns nullopt.
 //
 // `try_get_entity` should return the entity pointer for the Inst only if the
 // Inst matches the expected type. For instance, for a `SemIR::InterfaceDecl`,
