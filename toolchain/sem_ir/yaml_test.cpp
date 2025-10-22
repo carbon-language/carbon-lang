@@ -99,11 +99,11 @@ TEST(SemIRTest, Yaml) {
               Pair("exports", Yaml::Mapping(Each(Pair(_, inst_id)))),
               Pair("imports", Yaml::Mapping(IsEmpty())),
               Pair("global_init", Yaml::Mapping(IsEmpty())),
-              Pair("inst_block40000004", Yaml::Mapping(Each(Pair(_, inst_id)))),
-              Pair("inst_block40000005", Yaml::Mapping(Each(Pair(_, inst_id)))),
-              Pair("inst_block40000006", Yaml::Mapping(Each(Pair(_, inst_id)))),
-              Pair("inst_block40000007", Yaml::Mapping(Each(Pair(_, inst_id)))),
-              Pair("inst_block40000008",
+              Pair("inst_block60000004", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block60000005", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block60000006", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block60000007", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block60000008",
                    Yaml::Mapping(Each(Pair(_, inst_id)))))))));
 
   auto root = Yaml::Sequence(ElementsAre(Yaml::Mapping(

@@ -53,7 +53,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       insts_(this, SingletonInstKinds.size() + 1),
       vtables_(check_ir_id),
       constant_values_(ConstantId::NotConstant, &insts_),
-      inst_blocks_(allocator_),
+      inst_blocks_(allocator_, check_ir_id),
       constants_(this) {
   // `type` and the error type are both complete & concrete types.
   types_.SetComplete(
