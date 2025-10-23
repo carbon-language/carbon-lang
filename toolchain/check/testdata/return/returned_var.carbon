@@ -143,7 +143,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: fn @F() -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %result.patt: %pattern_type.c48 = binding_pattern result [concrete]
+// CHECK:STDOUT:     %result.patt: %pattern_type.c48 = ref_binding_pattern result [concrete]
 // CHECK:STDOUT:     %result.var_patt: %pattern_type.c48 = var_pattern %result.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -169,14 +169,14 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc21_12: init %C = converted %.loc21_43.1, %.loc21_43.8 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign %return, %.loc21_12
 // CHECK:STDOUT:   %C.ref.loc21: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %result: ref %C = bind_name result, %return
+// CHECK:STDOUT:   %result: ref %C = ref_binding result, %return
 // CHECK:STDOUT:   return %result to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %result.patt: %pattern_type.7ce = binding_pattern result [concrete]
+// CHECK:STDOUT:     %result.patt: %pattern_type.7ce = ref_binding_pattern result [concrete]
 // CHECK:STDOUT:     %result.var_patt: %pattern_type.7ce = var_pattern %result.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %result.var: ref %i32 = var %result.var_patt
@@ -192,7 +192,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %int_32.loc26: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc26: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %result: ref %i32 = bind_name result, %result.var
+// CHECK:STDOUT:   %result: ref %i32 = ref_binding result, %result.var
 // CHECK:STDOUT:   %.loc26_16: %i32 = bind_value %result
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %result.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.a57
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.a57, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]

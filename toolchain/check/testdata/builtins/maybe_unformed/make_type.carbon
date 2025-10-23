@@ -70,7 +70,7 @@ fn ColonBangParam(T:! type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.ce6 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.ce6 = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.ce6 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %.2ba = var %b.var_patt [concrete]
@@ -86,7 +86,7 @@ fn ColonBangParam(T:! type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT:     %.loc7_21.2: type = value_of_initializer %Make.call.loc7_21 [concrete = constants.%.2ba]
 // CHECK:STDOUT:     %.loc7_21.3: type = converted %Make.call.loc7_21, %.loc7_21.2 [concrete = constants.%.2ba]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %.2ba = bind_name b, %b.var [concrete = %b.var]
+// CHECK:STDOUT:   %b: ref %.2ba = ref_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- runtime_call.carbon
@@ -104,16 +104,16 @@ fn ColonBangParam(T:! type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t.patt: %pattern_type = binding_pattern t [concrete]
+// CHECK:STDOUT:     %t.patt: %pattern_type = value_binding_pattern t [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7: type = converted @__global_init.%.loc7, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %t: type = bind_name t, %.loc7
+// CHECK:STDOUT:   %t: type = value_binding t, %.loc7
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %u.patt: %pattern_type = binding_pattern u [concrete]
+// CHECK:STDOUT:     %u.patt: %pattern_type = value_binding_pattern u [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_21.1: type = value_of_initializer @__global_init.%Make.call
 // CHECK:STDOUT:   %.loc8_21.2: type = converted @__global_init.%Make.call, %.loc8_21.1
-// CHECK:STDOUT:   %u: type = bind_name u, %.loc8_21.2
+// CHECK:STDOUT:   %u: type = value_binding u, %.loc8_21.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

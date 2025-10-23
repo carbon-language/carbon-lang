@@ -70,7 +70,7 @@ fn B() {
 // CHECK:STDOUT:   %Z.decl: type = interface_decl @Z [concrete = constants.%Z.type] {} {}
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.4a0 = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %x.patt: @A.%pattern_type (%pattern_type.86d) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: @A.%pattern_type (%pattern_type.86d) = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: @A.%pattern_type (%pattern_type.86d) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_10: type = splice_block %Z.ref [concrete = constants.%Z.type] {
@@ -85,7 +85,7 @@ fn B() {
 // CHECK:STDOUT:       %.loc4_21: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %struct_type.a.loc4_22.2: type = struct_type {.a: @A.%T.binding.as_type (%T.binding.as_type)} [symbolic = %struct_type.a.loc4_22.1 (constants.%struct_type.a)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @A.%struct_type.a.loc4_22.1 (%struct_type.a) = bind_name x, %x.param
+// CHECK:STDOUT:     %x: @A.%struct_type.a.loc4_22.1 (%struct_type.a) = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -162,7 +162,7 @@ fn B() {
 // CHECK:STDOUT:   %Lib.import = import Lib
 // CHECK:STDOUT:   %A.decl: %A.type.00d = fn_decl @A.loc4 [concrete = constants.%A.1db] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.819 = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %x.patt: @A.loc4.%pattern_type (%pattern_type.0cc) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: @A.loc4.%pattern_type (%pattern_type.0cc) = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: @A.loc4.%pattern_type (%pattern_type.0cc) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_13: type = splice_block %Z.ref [concrete = constants.%Z.type] {
@@ -178,7 +178,7 @@ fn B() {
 // CHECK:STDOUT:       %.loc4_25: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %struct_type.a.loc4_26.2: type = struct_type {.a: @A.loc4.%T.binding.as_type (%T.binding.as_type)} [symbolic = %struct_type.a.loc4_26.1 (constants.%struct_type.a)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @A.loc4.%struct_type.a.loc4_26.1 (%struct_type.a) = bind_name x, %x.param
+// CHECK:STDOUT:     %x: @A.loc4.%struct_type.a.loc4_26.1 (%struct_type.a) = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT: }

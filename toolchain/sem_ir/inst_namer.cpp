@@ -249,7 +249,8 @@ auto InstNamer::GetUnscopedLabelFor(InstBlockId block_id) const
   if (!block_id.has_value()) {
     return "";
   }
-  const auto& label_name = labels_[block_id.index].second;
+  const auto& label_name =
+      labels_[sem_ir_->inst_blocks().GetRawIndex(block_id)].second;
   return label_name ? label_name.GetFullName() : "";
 }
 
@@ -260,7 +261,8 @@ auto InstNamer::GetLabelFor(ScopeId scope_id, InstBlockId block_id) const
     return "!invalid";
   }
 
-  const auto& [label_scope, label_name] = labels_[block_id.index];
+  const auto& [label_scope, label_name] =
+      labels_[sem_ir_->inst_blocks().GetRawIndex(block_id)];
   if (!label_name) {
     // This should not happen in valid IR.
     RawStringOstream out;
@@ -374,7 +376,8 @@ auto InstNamer::Namespace::AllocateName(
 auto InstNamer::AddBlockLabel(
     ScopeId scope_id, InstBlockId block_id, std::string name,
     std::variant<LocId, uint64_t> loc_id_or_fingerprint) -> void {
-  if (!block_id.has_value() || labels_[block_id.index].second) {
+  if (!block_id.has_value() ||
+      labels_[sem_ir_->inst_blocks().GetRawIndex(block_id)].second) {
     return;
   }
 
@@ -386,7 +389,7 @@ auto InstNamer::AddBlockLabel(
     }
   }
 
-  labels_[block_id.index] = {
+  labels_[sem_ir_->inst_blocks().GetRawIndex(block_id)] = {
       scope_id, GetScopeInfo(scope_id).labels.AllocateName(
                     *this, loc_id_or_fingerprint, std::move(name))};
 }
@@ -770,15 +773,17 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case BindAlias::Kind:
-    case BindName::Kind:
+    case RefBinding::Kind:
     case BindSymbolicName::Kind:
+    case ValueBinding::Kind:
     case ExportDecl::Kind: {
       auto inst = inst_.As<AnyBindNameOrExportDecl>();
       AddInstNameId(sem_ir().entity_names().Get(inst.entity_name_id).name_id);
       return;
     }
-    case BindingPattern::Kind:
-    case SymbolicBindingPattern::Kind: {
+    case RefBindingPattern::Kind:
+    case SymbolicBindingPattern::Kind:
+    case ValueBindingPattern::Kind: {
       auto inst = inst_.As<AnyBindingPattern>();
       auto name_id = NameId::Underscore;
       if (inst.entity_name_id.has_value()) {

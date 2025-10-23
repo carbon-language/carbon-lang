@@ -40,7 +40,7 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %NotGenericF.decl: %NotGenericF.type = fn_decl @NotGenericF [concrete = constants.%NotGenericF] {
-// CHECK:STDOUT:     %U.patt: %pattern_type.917 = binding_pattern U [concrete]
+// CHECK:STDOUT:     %U.patt: %pattern_type.917 = value_binding_pattern U [concrete]
 // CHECK:STDOUT:     %U.param_patt: %pattern_type.917 = value_param_pattern %U.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.param: %I_where.type = value_param call_param0
@@ -59,7 +59,7 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:         requirement_equivalent %impl.elem0, %i32
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U: %I_where.type = bind_name U, %U.param
+// CHECK:STDOUT:     %U: %I_where.type = value_binding U, %U.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

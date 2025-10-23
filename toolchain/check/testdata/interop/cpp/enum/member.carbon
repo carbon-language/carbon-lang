@@ -60,7 +60,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %A.ref.loc8_23: type = name_ref A, imports.%A.decl [concrete = constants.%A]
@@ -70,9 +70,9 @@ fn F() {
 // CHECK:STDOUT:     %A.ref.loc8_13: type = name_ref A, imports.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %E.ref.loc8: type = name_ref E, imports.%E.decl [concrete = constants.%E]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %E = bind_name a, %a.ref
+// CHECK:STDOUT:   %a: %E = value_binding a, %a.ref
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9_20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %A.ref.loc9_23: type = name_ref A, imports.%A.decl [concrete = constants.%A]
@@ -83,7 +83,7 @@ fn F() {
 // CHECK:STDOUT:     %A.ref.loc9_13: type = name_ref A, imports.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:     %E.ref.loc9_15: type = name_ref E, imports.%E.decl [concrete = constants.%E]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %E = bind_name b, %b.ref
+// CHECK:STDOUT:   %b: %E = value_binding b, %b.ref
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

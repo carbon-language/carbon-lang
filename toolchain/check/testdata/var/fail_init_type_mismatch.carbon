@@ -47,7 +47,7 @@ var x: {} = ();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.a96 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.a96 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.a96 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_struct_type = var %x.var_patt [concrete]
@@ -55,7 +55,7 @@ var x: {} = ();
 // CHECK:STDOUT:     %.loc22_9.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc22_9.3: type = converted %.loc22_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %empty_struct_type = bind_name x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %x: ref %empty_struct_type = ref_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

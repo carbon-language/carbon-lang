@@ -172,7 +172,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %N.loc4_23.2: %i32 = bind_symbolic_name N, 1 [symbolic = %N.loc4_23.1 (constants.%N.356)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.d51 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.d51 = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.d51 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %Class.f29 = var %a.var_patt [concrete]
@@ -191,9 +191,9 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %.loc6_21.3: %i32 = converted %int_5, %.loc6_21.2 [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:     %Class.loc6: type = class_type @Class, @Class(constants.%ptr.235, constants.%int_5.0f6) [concrete = constants.%Class.f29]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %Class.f29 = bind_name a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %Class.f29 = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.c73 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.c73 = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.c73 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %Class.dd4 = var %b.var_patt [concrete]
@@ -211,7 +211,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %.loc9_19.4: %i32 = converted %int_0, %.loc9_19.3 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:     %Class.loc9: type = class_type @Class, @Class(constants.%empty_tuple.type, constants.%int_0.6a9) [concrete = constants.%Class.dd4]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %Class.dd4 = bind_name b, %b.var [concrete = %b.var]
+// CHECK:STDOUT:   %b: ref %Class.dd4 = ref_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(%T.loc4_13.2: type, %N.loc4_23.2: %i32) {
@@ -299,7 +299,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %N.loc4_23.2: %i32 = bind_symbolic_name N, 1 [symbolic = %N.loc4_23.1 (constants.%N.356)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: <error> = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: <error> = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var %a.var_patt [concrete = <error>]
@@ -309,7 +309,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: <error> = bind_name a, <error> [concrete = <error>]
+// CHECK:STDOUT:   %a: ref <error> = ref_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(%T.loc4_13.2: type, %N.loc4_23.2: %i32) {
@@ -385,7 +385,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %N.loc4_23.2: %i32 = bind_symbolic_name N, 1 [symbolic = %N.loc4_23.1 (constants.%N.356)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: <error> = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: <error> = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var %a.var_patt [concrete = <error>]
@@ -397,7 +397,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: <error> = bind_name a, <error> [concrete = <error>]
+// CHECK:STDOUT:   %a: ref <error> = ref_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(%T.loc4_13.2: type, %N.loc4_23.2: %i32) {
@@ -476,7 +476,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %N.loc4_23.2: %i32 = bind_symbolic_name N, 1 [symbolic = %N.loc4_23.1 (constants.%N.356)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: <error> = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: <error> = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref <error> = var %a.var_patt [concrete = <error>]
@@ -488,7 +488,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr]
 // CHECK:STDOUT:     %.loc16: type = converted %int_5, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: <error> = bind_name a, <error> [concrete = <error>]
+// CHECK:STDOUT:   %a: ref <error> = ref_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Class(%T.loc4_13.2: type, %N.loc4_23.2: %i32) {

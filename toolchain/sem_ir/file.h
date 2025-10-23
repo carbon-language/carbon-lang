@@ -403,7 +403,7 @@ class File : public Printable<File> {
   ConstantStore constants_;
 
   // Storage for StructTypeField lists.
-  StructTypeFieldsStore struct_type_fields_ = StructTypeFieldsStore(allocator_);
+  StructTypeFieldsStore struct_type_fields_;
 
   // Storage for custom layouts.
   CustomLayoutStore custom_layouts_ = CustomLayoutStore(allocator_);

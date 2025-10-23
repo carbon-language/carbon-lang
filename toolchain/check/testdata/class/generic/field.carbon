@@ -125,7 +125,7 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:     %T.loc5_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc5_13.1 (constants.%T.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.0fa = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.0fa = value_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.0fa = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -139,13 +139,13 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:       %i32.loc9_15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %Class: type = class_type @Class, @Class(constants.%i32) [concrete = constants.%Class.247]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %Class.247 = bind_name c, %c.param
+// CHECK:STDOUT:     %c: %Class.247 = value_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.322 = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %c.patt: @G.%pattern_type.loc13_21 (%pattern_type.4bf21b.1) = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: @G.%pattern_type.loc13_21 (%pattern_type.4bf21b.1) = value_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.param_patt: @G.%pattern_type.loc13_21 (%pattern_type.4bf21b.1) = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: @G.%pattern_type.loc13_34 (%pattern_type.17e4b7.2) = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: @G.%pattern_type.loc13_34 (%pattern_type.17e4b7.2) = out_param_pattern %return.patt, call_param1 [concrete]
@@ -167,13 +167,13 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:       %.loc13_31.2: type = converted %T.ref.loc13_30, %T.as_type.loc13_31 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %Class.loc13_31.2: type = class_type @Class, @Class(constants.%T.binding.as_type) [symbolic = %Class.loc13_31.1 (constants.%Class.09119d.1)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: @G.%Class.loc13_31.1 (%Class.09119d.1) = bind_name c, %c.param
+// CHECK:STDOUT:     %c: @G.%Class.loc13_31.1 (%Class.09119d.1) = value_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref @G.%T.binding.as_type (%T.binding.as_type) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @G.%T.binding.as_type (%T.binding.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.322 = symbolic_binding_pattern U, 0 [concrete]
-// CHECK:STDOUT:     %c.patt: @H.%pattern_type.loc17_21 (%pattern_type.4bf21b.2) = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: @H.%pattern_type.loc17_21 (%pattern_type.4bf21b.2) = value_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.param_patt: @H.%pattern_type.loc17_21 (%pattern_type.4bf21b.2) = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: @H.%pattern_type.loc17_34 (%pattern_type.17e4b7.3) = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: @H.%pattern_type.loc17_34 (%pattern_type.17e4b7.3) = out_param_pattern %return.patt, call_param1 [concrete]
@@ -195,7 +195,7 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:       %.loc17_31.2: type = converted %U.ref.loc17_30, %U.as_type.loc17_31 [symbolic = %U.binding.as_type (constants.%U.binding.as_type.2a0)]
 // CHECK:STDOUT:       %Class.loc17_31.2: type = class_type @Class, @Class(constants.%U.binding.as_type.2a0) [symbolic = %Class.loc17_31.1 (constants.%Class.09119d.2)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: @H.%Class.loc17_31.1 (%Class.09119d.2) = bind_name c, %c.param
+// CHECK:STDOUT:     %c: @H.%Class.loc17_31.1 (%Class.09119d.2) = value_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref @H.%U.binding.as_type (%U.binding.as_type.2a0) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @H.%U.binding.as_type (%U.binding.as_type.2a0) = return_slot %return.param
 // CHECK:STDOUT:   }

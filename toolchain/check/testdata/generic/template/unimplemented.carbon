@@ -110,7 +110,7 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0, template [concrete]
-// CHECK:STDOUT:     %x.patt: @F.%pattern_type (%pattern_type.7dcd0a.1) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: @F.%pattern_type (%pattern_type.7dcd0a.1) = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: @F.%pattern_type (%pattern_type.7dcd0a.1) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -121,7 +121,7 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:     %T.loc6_15.2: type = bind_symbolic_name T, 0, template [template = %T.loc6_15.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @F.%T.loc6_15.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc6_15.2 [template = %T.loc6_15.1 (constants.%T)]
-// CHECK:STDOUT:     %x: @F.%T.loc6_15.1 (%T) = bind_name x, %x.param
+// CHECK:STDOUT:     %x: @F.%T.loc6_15.1 (%T) = value_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -302,7 +302,7 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.3ab = symbolic_binding_pattern T, 0, template [concrete]
-// CHECK:STDOUT:     %x.patt: @F.%pattern_type (%pattern_type.2f2) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: @F.%pattern_type (%pattern_type.2f2) = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: @F.%pattern_type (%pattern_type.2f2) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_23: type = splice_block %Destroy.ref [concrete = constants.%Destroy.type] {
@@ -317,7 +317,7 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:       %T.as_type.loc4: type = facet_access_type %T.ref.loc4 [template = %T.binding.as_type (constants.%T.binding.as_type.ef2)]
 // CHECK:STDOUT:       %.loc4_36.2: type = converted %T.ref.loc4, %T.as_type.loc4 [template = %T.binding.as_type (constants.%T.binding.as_type.ef2)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @F.%T.binding.as_type (%T.binding.as_type.ef2) = bind_name x, %x.param
+// CHECK:STDOUT:     %x: @F.%T.binding.as_type (%T.binding.as_type.ef2) = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -341,7 +341,7 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:   fn(%x.param: @F.%T.binding.as_type (%T.binding.as_type.ef2)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %v.patt: @F.%pattern_type (%pattern_type.2f2) = binding_pattern v [concrete]
+// CHECK:STDOUT:       %v.patt: @F.%pattern_type (%pattern_type.2f2) = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:       %v.var_patt: @F.%pattern_type (%pattern_type.2f2) = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v.var: ref @F.%T.binding.as_type (%T.binding.as_type.ef2) = var %v.var_patt
@@ -355,9 +355,9 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:       %T.as_type.loc14: type = facet_access_type %T.ref.loc14 [template = %T.binding.as_type (constants.%T.binding.as_type.ef2)]
 // CHECK:STDOUT:       %.loc14_10.2: type = converted %T.ref.loc14, %T.as_type.loc14 [template = %T.binding.as_type (constants.%T.binding.as_type.ef2)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v: ref @F.%T.binding.as_type (%T.binding.as_type.ef2) = bind_name v, %v.var
+// CHECK:STDOUT:     %v: ref @F.%T.binding.as_type (%T.binding.as_type.ef2) = ref_binding v, %v.var
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %w.patt: %pattern_type.7ce = binding_pattern w [concrete]
+// CHECK:STDOUT:       %w.patt: %pattern_type.7ce = ref_binding_pattern w [concrete]
 // CHECK:STDOUT:       %w.var_patt: %pattern_type.7ce = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %w.var: ref %i32 = var %w.var_patt
@@ -368,7 +368,7 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %w: ref %i32 = bind_name w, %w.var
+// CHECK:STDOUT:     %w: ref %i32 = ref_binding w, %w.var
 // CHECK:STDOUT:     %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %w.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.a57
 // CHECK:STDOUT:     %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.a57, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc22: <bound method> = bound_method %w.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

@@ -66,9 +66,9 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT: interface @Add {
 // CHECK:STDOUT:   %Self: %Add.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Add.Op.decl: %Add.Op.type = fn_decl @Add.Op [concrete = constants.%Add.Op] {
-// CHECK:STDOUT:     %self.patt: @Add.Op.%pattern_type (%pattern_type) = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: @Add.Op.%pattern_type (%pattern_type) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @Add.Op.%pattern_type (%pattern_type) = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %other.patt: @Add.Op.%pattern_type (%pattern_type) = binding_pattern other [concrete]
+// CHECK:STDOUT:     %other.patt: @Add.Op.%pattern_type (%pattern_type) = value_binding_pattern other [concrete]
 // CHECK:STDOUT:     %other.param_patt: @Add.Op.%pattern_type (%pattern_type) = value_param_pattern %other.patt, call_param1 [concrete]
 // CHECK:STDOUT:     %return.patt: @Add.Op.%pattern_type (%pattern_type) = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: @Add.Op.%pattern_type (%pattern_type) = out_param_pattern %return.patt, call_param2 [concrete]
@@ -82,14 +82,14 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:       %Self.as_type.loc5_15: type = facet_access_type %Self.ref.loc5_15 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       %.loc5_15.2: type = converted %Self.ref.loc5_15, %Self.as_type.loc5_15 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @Add.Op.%Self.binding.as_type (%Self.binding.as_type) = bind_name self, %self.param
+// CHECK:STDOUT:     %self: @Add.Op.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:     %other.param: @Add.Op.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param1
 // CHECK:STDOUT:     %.loc5_28.1: type = splice_block %.loc5_28.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
 // CHECK:STDOUT:       %Self.ref.loc5_28: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:       %Self.as_type.loc5_28: type = facet_access_type %Self.ref.loc5_28 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       %.loc5_28.2: type = converted %Self.ref.loc5_28, %Self.as_type.loc5_28 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %other: @Add.Op.%Self.binding.as_type (%Self.binding.as_type) = bind_name other, %other.param
+// CHECK:STDOUT:     %other: @Add.Op.%Self.binding.as_type (%Self.binding.as_type) = value_binding other, %other.param
 // CHECK:STDOUT:     %return.param: ref @Add.Op.%Self.binding.as_type (%Self.binding.as_type) = out_param call_param2
 // CHECK:STDOUT:     %return: ref @Add.Op.%Self.binding.as_type (%Self.binding.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -167,9 +167,9 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %Add.impl_witness_table = impl_witness_table (@empty_tuple.type.as.Add.impl.%empty_tuple.type.as.Add.impl.Op.decl), @empty_tuple.type.as.Add.impl [concrete]
 // CHECK:STDOUT:   %Add.impl_witness: <witness> = impl_witness %Add.impl_witness_table [concrete = constants.%Add.impl_witness]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.cb1 = value_param_pattern %x.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %y.patt: %pattern_type.cb1 = binding_pattern y [concrete]
+// CHECK:STDOUT:     %y.patt: %pattern_type.cb1 = value_binding_pattern y [concrete]
 // CHECK:STDOUT:     %y.param_patt: %pattern_type.cb1 = value_param_pattern %y.patt, call_param1 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param2 [concrete]
@@ -181,13 +181,13 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:       %.loc10_10.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc10_10.3: type = converted %.loc10_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: %empty_tuple.type = bind_name x, %x.param
+// CHECK:STDOUT:     %x: %empty_tuple.type = value_binding x, %x.param
 // CHECK:STDOUT:     %y.param: %empty_tuple.type = value_param call_param1
 // CHECK:STDOUT:     %.loc10_17.1: type = splice_block %.loc10_17.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc10_17.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc10_17.3: type = converted %.loc10_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %y: %empty_tuple.type = bind_name y, %y.param
+// CHECK:STDOUT:     %y: %empty_tuple.type = value_binding y, %y.param
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param2
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -202,9 +202,9 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.Add.impl: %.loc6_7.2 as %Add.ref {
 // CHECK:STDOUT:   %empty_tuple.type.as.Add.impl.Op.decl: %empty_tuple.type.as.Add.impl.Op.type = fn_decl @empty_tuple.type.as.Add.impl.Op [concrete = constants.%empty_tuple.type.as.Add.impl.Op] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.cb1 = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %other.patt: %pattern_type.cb1 = binding_pattern other [concrete]
+// CHECK:STDOUT:     %other.patt: %pattern_type.cb1 = value_binding_pattern other [concrete]
 // CHECK:STDOUT:     %other.param_patt: %pattern_type.cb1 = value_param_pattern %other.patt, call_param1 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param2 [concrete]
@@ -212,10 +212,10 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %Self.ref.loc7_37: type = name_ref Self, @empty_tuple.type.as.Add.impl.%.loc6_7.2 [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc7_15: type = name_ref Self, @empty_tuple.type.as.Add.impl.%.loc6_7.2 [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %self: %empty_tuple.type = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %empty_tuple.type = value_binding self, %self.param
 // CHECK:STDOUT:     %other.param: %empty_tuple.type = value_param call_param1
 // CHECK:STDOUT:     %Self.ref.loc7_28: type = name_ref Self, @empty_tuple.type.as.Add.impl.%.loc6_7.2 [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %other: %empty_tuple.type = bind_name other, %other.param
+// CHECK:STDOUT:     %other: %empty_tuple.type = value_binding other, %other.param
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param2
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }

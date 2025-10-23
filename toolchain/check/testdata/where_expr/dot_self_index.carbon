@@ -69,7 +69,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %U.patt: @H.%pattern_type (%pattern_type.382) = binding_pattern U [concrete]
+// CHECK:STDOUT:     %U.patt: @H.%pattern_type (%pattern_type.382) = value_binding_pattern U [concrete]
 // CHECK:STDOUT:     %U.param_patt: @H.%pattern_type (%pattern_type.382) = value_param_pattern %U.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %V.patt: %pattern_type.98f = symbolic_binding_pattern V, 1 [concrete]
 // CHECK:STDOUT:   } {
@@ -94,7 +94,7 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0.loc21_34.2, %ptr.loc21_40.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U: @H.%Empty_where.type (%Empty_where.type.b70) = bind_name U, %U.param
+// CHECK:STDOUT:     %U: @H.%Empty_where.type (%Empty_where.type.b70) = value_binding U, %U.param
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %V.loc21_43.2: type = bind_symbolic_name V, 1 [symbolic = %V.loc21_43.1 (constants.%V)]
 // CHECK:STDOUT:   }

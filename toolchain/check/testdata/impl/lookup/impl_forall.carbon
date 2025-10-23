@@ -160,7 +160,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %A.loc12_27.2 as %I.type.loc12_35.2 {
 // CHECK:STDOUT:     %A.as.I.impl.F.decl: @A.as.I.impl.%A.as.I.impl.F.type (%A.as.I.impl.F.type.34761a.1) = fn_decl @A.as.I.impl.F [symbolic = @A.as.I.impl.%A.as.I.impl.F (constants.%A.as.I.impl.F.93cd51.1)] {
-// CHECK:STDOUT:       %self.patt: @A.as.I.impl.F.%pattern_type.loc13_13 (%pattern_type.09bae9.1) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.patt: @A.as.I.impl.F.%pattern_type.loc13_13 (%pattern_type.09bae9.1) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @A.as.I.impl.F.%pattern_type.loc13_13 (%pattern_type.09bae9.1) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %.loc13_8: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:       %return.patt: @A.as.I.impl.F.%pattern_type.loc13_28 (%pattern_type.afe393.2) = return_slot_pattern [concrete]
@@ -173,7 +173,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, @A.as.I.impl.%A.loc12_27.2 [symbolic = %A (constants.%A.13025a.2)]
 // CHECK:STDOUT:         %ptr.loc13_23.2: type = ptr_type %Self.ref [symbolic = %ptr.loc13_23.1 (constants.%ptr.ca9f10.1)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @A.as.I.impl.F.%ptr.loc13_23.1 (%ptr.ca9f10.1) = bind_name self, %self.param
+// CHECK:STDOUT:       %self: @A.as.I.impl.F.%ptr.loc13_23.1 (%ptr.ca9f10.1) = value_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @A.as.I.impl.F.%ptr.loc13_32.1 (%ptr.79f131.2) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @A.as.I.impl.F.%ptr.loc13_32.1 (%ptr.79f131.2) = return_slot %return.param
 // CHECK:STDOUT:     }

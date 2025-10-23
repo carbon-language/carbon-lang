@@ -139,7 +139,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %x.patt: @F.%pattern_type (%pattern_type.be3) = binding_pattern x [concrete]
+// CHECK:STDOUT:       %x.patt: @F.%pattern_type (%pattern_type.be3) = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:       %x.var_patt: @F.%pattern_type (%pattern_type.be3) = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x.var: ref @F.%ptr.loc22_11.2 (%ptr.1e6) = var %x.var_patt
@@ -149,7 +149,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:       %.loc22_11.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %ptr.loc22_11.1: type = ptr_type %.loc22_11.2 [symbolic = %ptr.loc22_11.2 (constants.%ptr.1e6)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: ref @F.%ptr.loc22_11.2 (%ptr.1e6) = bind_name x, %x.var
+// CHECK:STDOUT:     %x: ref @F.%ptr.loc22_11.2 (%ptr.1e6) = ref_binding x, %x.var
 // CHECK:STDOUT:     %impl.elem0: @F.%.loc22_3 (%.a0c) = impl_witness_access constants.%Destroy.impl_witness.90f, element0 [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.57a)]
 // CHECK:STDOUT:     %bound_method.loc22_3.1: <bound method> = bound_method %x.var, %impl.elem0
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn)]

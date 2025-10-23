@@ -221,7 +221,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
@@ -229,7 +229,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "other_define.carbon"] {
@@ -276,7 +276,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: <error> = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: <error> = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
@@ -284,7 +284,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: <error> = bind_name c, <error> [concrete = <error>]
+// CHECK:STDOUT:   %c: ref <error> = ref_binding c, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "other_extern.carbon"];
@@ -330,7 +330,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
@@ -338,7 +338,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "other_define.carbon"] {
@@ -391,7 +391,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
@@ -399,7 +399,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "other_define.carbon"] {

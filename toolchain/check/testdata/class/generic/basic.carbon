@@ -119,7 +119,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Class.GetAddr.decl: @Class.%Class.GetAddr.type (%Class.GetAddr.type) = fn_decl @Class.GetAddr [symbolic = @Class.%Class.GetAddr (constants.%Class.GetAddr)] {
-// CHECK:STDOUT:       %self.patt: @Class.GetAddr.%pattern_type.loc6_19 (%pattern_type.e8f) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.patt: @Class.GetAddr.%pattern_type.loc6_19 (%pattern_type.e8f) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @Class.GetAddr.%pattern_type.loc6_19 (%pattern_type.e8f) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %.loc6_14: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:       %return.patt: @Class.GetAddr.%pattern_type.loc6_34 (%pattern_type.fef) = return_slot_pattern [concrete]
@@ -135,12 +135,12 @@ class Declaration(T:! type);
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc6_25 [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:         %ptr.loc6_29.2: type = ptr_type %Self.ref [symbolic = %ptr.loc6_29.1 (constants.%ptr.818)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @Class.GetAddr.%ptr.loc6_29.1 (%ptr.818) = bind_name self, %self.param
+// CHECK:STDOUT:       %self: @Class.GetAddr.%ptr.loc6_29.1 (%ptr.818) = value_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @Class.GetAddr.%ptr.loc6_38.1 (%ptr.b04) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Class.GetAddr.%ptr.loc6_38.1 (%ptr.b04) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Class.GetValue.decl: @Class.%Class.GetValue.type (%Class.GetValue.type) = fn_decl @Class.GetValue [symbolic = @Class.%Class.GetValue (constants.%Class.GetValue)] {
-// CHECK:STDOUT:       %self.patt: @Class.GetValue.%pattern_type.loc10_15 (%pattern_type.38d) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.patt: @Class.GetValue.%pattern_type.loc10_15 (%pattern_type.38d) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @Class.GetValue.%pattern_type.loc10_15 (%pattern_type.38d) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %return.patt: @Class.GetValue.%pattern_type.loc10_29 (%pattern_type.17e4b7.1) = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: @Class.GetValue.%pattern_type.loc10_29 (%pattern_type.17e4b7.1) = out_param_pattern %return.patt, call_param1 [concrete]
@@ -153,7 +153,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:         %.loc10_21.2: type = specific_constant constants.%Class, @Class(constants.%T.be8) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc10_21.2 [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @Class.GetValue.%Class (%Class) = bind_name self, %self.param
+// CHECK:STDOUT:       %self: @Class.GetValue.%Class (%Class) = value_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @Class.GetValue.%T.binding.as_type (%T.binding.as_type) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Class.GetValue.%T.binding.as_type (%T.binding.as_type) = return_slot %return.param
 // CHECK:STDOUT:     }

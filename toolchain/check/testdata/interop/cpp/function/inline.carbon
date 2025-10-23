@@ -256,7 +256,7 @@ fn MyF() {
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %r1.patt: %pattern_type.7ce = binding_pattern r1 [concrete]
+// CHECK:STDOUT:     %r1.patt: %pattern_type.7ce = value_binding_pattern r1 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %WithoutThunk.ref: %WithoutThunk.cpp_overload_set.type = name_ref WithoutThunk, imports.%WithoutThunk.cpp_overload_set.value [concrete = constants.%WithoutThunk.cpp_overload_set.value]
@@ -275,9 +275,9 @@ fn MyF() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13_35.1: %i32 = value_of_initializer %WithoutThunk.call
 // CHECK:STDOUT:   %.loc13_35.2: %i32 = converted %WithoutThunk.call, %.loc13_35.1
-// CHECK:STDOUT:   %r1: %i32 = bind_name r1, %.loc13_35.2
+// CHECK:STDOUT:   %r1: %i32 = value_binding r1, %.loc13_35.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %r2.patt: %pattern_type.7ce = binding_pattern r2 [concrete]
+// CHECK:STDOUT:     %r2.patt: %pattern_type.7ce = value_binding_pattern r2 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ThunkOnArg.ref: %ThunkOnArg.cpp_overload_set.type = name_ref ThunkOnArg, imports.%ThunkOnArg.cpp_overload_set.value [concrete = constants.%ThunkOnArg.cpp_overload_set.value]
@@ -304,9 +304,9 @@ fn MyF() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc14_33.1: %i32 = value_of_initializer %ThunkOnArg__carbon_thunk.call
 // CHECK:STDOUT:   %.loc14_33.2: %i32 = converted %ThunkOnArg__carbon_thunk.call, %.loc14_33.1
-// CHECK:STDOUT:   %r2: %i32 = bind_name r2, %.loc14_33.2
+// CHECK:STDOUT:   %r2: %i32 = value_binding r2, %.loc14_33.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %r3.patt: %pattern_type.2f8 = binding_pattern r3 [concrete]
+// CHECK:STDOUT:     %r3.patt: %pattern_type.2f8 = value_binding_pattern r3 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ThunkOnReturn.ref: %ThunkOnReturn.cpp_overload_set.type = name_ref ThunkOnReturn, imports.%ThunkOnReturn.cpp_overload_set.value [concrete = constants.%ThunkOnReturn.cpp_overload_set.value]
@@ -328,9 +328,9 @@ fn MyF() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_36.3: %i16 = value_of_initializer %.loc15_36.2
 // CHECK:STDOUT:   %.loc15_36.4: %i16 = converted %.loc15_36.2, %.loc15_36.3
-// CHECK:STDOUT:   %r3: %i16 = bind_name r3, %.loc15_36.4
+// CHECK:STDOUT:   %r3: %i16 = value_binding r3, %.loc15_36.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %r4.patt: %pattern_type.2f8 = binding_pattern r4 [concrete]
+// CHECK:STDOUT:     %r4.patt: %pattern_type.2f8 = value_binding_pattern r4 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %ThunkOnBoth.ref: %ThunkOnBoth.cpp_overload_set.type = name_ref ThunkOnBoth, imports.%ThunkOnBoth.cpp_overload_set.value [concrete = constants.%ThunkOnBoth.cpp_overload_set.value]
@@ -360,7 +360,7 @@ fn MyF() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_34.3: %i16 = value_of_initializer %.loc16_34.2
 // CHECK:STDOUT:   %.loc16_34.4: %i16 = converted %.loc16_34.2, %.loc16_34.3
-// CHECK:STDOUT:   %r4: %i16 = bind_name r4, %.loc16_34.4
+// CHECK:STDOUT:   %r4: %i16 = value_binding r4, %.loc16_34.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc16: <bound method> = bound_method %.loc16_33.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.89b
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc16_33.5: <bound method> = bound_method %.loc16_33.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1

@@ -97,7 +97,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
 // CHECK:STDOUT:   %Base.F.decl: %Base.F.type = fn_decl @Base.F [concrete = constants.%Base.F] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.1b9 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.1b9 = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.1b9 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %.loc21_11: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
@@ -106,11 +106,11 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:       %Self.ref.loc21: type = name_ref Self, constants.%Base [concrete = constants.%Base]
 // CHECK:STDOUT:       %ptr.loc21: type = ptr_type %Self.ref.loc21 [concrete = constants.%ptr.11f]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self.loc21: %ptr.11f = bind_name self, %self.param.loc21
+// CHECK:STDOUT:     %self.loc21: %ptr.11f = value_binding self, %self.param.loc21
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [concrete = constants.%Call] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.605 = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.605 = value_binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.605 = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %ptr.404 = value_param call_param0
@@ -118,7 +118,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Derived.ref [concrete = constants.%ptr.404]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.404 = bind_name p, %p.param
+// CHECK:STDOUT:     %p: %ptr.404 = value_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -127,7 +127,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc16: %Base.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %Base.F.decl: %Base.F.type = fn_decl @Base.F [concrete = constants.%Base.F] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.1b9 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.1b9 = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.1b9 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %.loc21_11: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
@@ -136,7 +136,7 @@ fn Call(p: Derived*) {
 // CHECK:STDOUT:       %Self.ref.loc18: type = name_ref Self, constants.%Base [concrete = constants.%Base]
 // CHECK:STDOUT:       %ptr.loc18: type = ptr_type %Self.ref.loc18 [concrete = constants.%ptr.11f]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self.loc18: %ptr.11f = bind_name self, %self.param.loc18
+// CHECK:STDOUT:     %self.loc18: %ptr.11f = value_binding self, %self.param.loc18
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a [concrete = constants.%complete_type.fd7]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

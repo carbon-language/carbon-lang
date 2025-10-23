@@ -103,11 +103,12 @@ instruction IDs:
       case (n: i32, n) => ...
     ```
     For this to work, the name `n` needs to be added to the scope as soon as we
-    handle its declaration, and it needs to resolve to the `BindName`
-    instruction that binds a value to that name. This means that the `BindName`
-    instruction needs to be allocated during the pattern step, even though it is
-    part of matching, not part of the pattern. `Context::bind_name_map` stores
-    these `BindName`s, keyed by the corresponding `BindingPattern` instruction.
+    handle its declaration, and it needs to resolve to the `ValueBinding`
+    instruction that binds a value to that name. This means that the
+    `ValueBinding` instruction needs to be allocated during the pattern step,
+    even though it is part of matching, not part of the pattern.
+    `Context::bind_name_map` stores these `ValueBinding`s, keyed by the
+    corresponding `ValueBindingPattern` instruction.
 -   A `var` pattern allocates storage during matching, which is represented by a
     `VarStorage` instruction. This instruction must be allocated during the
     pattern step, so that it can be used as the output parameter of scrutinee
@@ -264,8 +265,8 @@ the `OutParam` instruction representing the storage passed by the caller.
 
 This structure is analogous to the handling of an ordinary by-value parameter,
 which is represented in the `Call` parameters as a `ValueParamPattern`
-instruction with a `BindingPattern`, and in the pattern-matching SemIR as a
-`BindName` instruction that binds the parameter name to the `ValueParam`
+instruction with a `ValueBindingPattern`, and in the pattern-matching SemIR as a
+`ValueBinding` instruction that binds the parameter name to the `ValueParam`
 instruction representing the argument passed by the caller.
 
 Note that if the return type does not have an in-place value representation

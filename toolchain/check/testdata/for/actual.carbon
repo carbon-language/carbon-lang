@@ -271,7 +271,7 @@ fn Read() {
 // CHECK:STDOUT:     %N.loc4_16.2: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic = %N.loc4_16.1 (constants.%N)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Range.decl: %Range.type = fn_decl @Range [concrete = constants.%Range] {
-// CHECK:STDOUT:     %end.patt: %pattern_type.7ce = binding_pattern end [concrete]
+// CHECK:STDOUT:     %end.patt: %pattern_type.7ce = value_binding_pattern end [concrete]
 // CHECK:STDOUT:     %end.param_patt: %pattern_type.7ce = value_param_pattern %end.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.d16 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.d16 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -284,7 +284,7 @@ fn Read() {
 // CHECK:STDOUT:       %int_32.loc26_15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %end: %i32 = bind_name end, %end.param
+// CHECK:STDOUT:     %end: %i32 = value_binding end, %end.param
 // CHECK:STDOUT:     %return.param: ref %IntRange.365 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %IntRange.365 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -308,7 +308,7 @@ fn Read() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %Self.ref as %.loc9_24 {
 // CHECK:STDOUT:     %IntRange.as.Iterate.impl.NewCursor.decl: @IntRange.as.Iterate.impl.%IntRange.as.Iterate.impl.NewCursor.type (%IntRange.as.Iterate.impl.NewCursor.type) = fn_decl @IntRange.as.Iterate.impl.NewCursor [symbolic = @IntRange.as.Iterate.impl.%IntRange.as.Iterate.impl.NewCursor (constants.%IntRange.as.Iterate.impl.NewCursor)] {
-// CHECK:STDOUT:       %self.patt: @IntRange.as.Iterate.impl.NewCursor.%pattern_type.loc10_18 (%pattern_type.dcd) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.patt: @IntRange.as.Iterate.impl.NewCursor.%pattern_type.loc10_18 (%pattern_type.dcd) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @IntRange.as.Iterate.impl.NewCursor.%pattern_type.loc10_18 (%pattern_type.dcd) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %return.patt: @IntRange.as.Iterate.impl.NewCursor.%pattern_type.loc10_32 (%pattern_type.8963eb.1) = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: @IntRange.as.Iterate.impl.NewCursor.%pattern_type.loc10_32 (%pattern_type.8963eb.1) = out_param_pattern %return.patt, call_param1 [concrete]
@@ -322,14 +322,14 @@ fn Read() {
 // CHECK:STDOUT:         %.loc10_24.2: type = specific_constant constants.%IntRange.349, @IntRange(constants.%N) [symbolic = %IntRange (constants.%IntRange.349)]
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc10_24.2 [symbolic = %IntRange (constants.%IntRange.349)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @IntRange.as.Iterate.impl.NewCursor.%IntRange (%IntRange.349) = bind_name self, %self.param
+// CHECK:STDOUT:       %self: @IntRange.as.Iterate.impl.NewCursor.%IntRange (%IntRange.349) = value_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @IntRange.as.Iterate.impl.NewCursor.%Int.loc10_45.1 (%Int.49d0e6.1) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @IntRange.as.Iterate.impl.NewCursor.%Int.loc10_45.1 (%Int.49d0e6.1) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %IntRange.as.Iterate.impl.Next.decl: @IntRange.as.Iterate.impl.%IntRange.as.Iterate.impl.Next.type (%IntRange.as.Iterate.impl.Next.type) = fn_decl @IntRange.as.Iterate.impl.Next [symbolic = @IntRange.as.Iterate.impl.%IntRange.as.Iterate.impl.Next (constants.%IntRange.as.Iterate.impl.Next)] {
-// CHECK:STDOUT:       %self.patt: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_13 (%pattern_type.dcd) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.patt: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_13 (%pattern_type.dcd) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_13 (%pattern_type.dcd) = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:       %cursor.patt: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_25 (%pattern_type.4dc) = binding_pattern cursor [concrete]
+// CHECK:STDOUT:       %cursor.patt: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_25 (%pattern_type.4dc) = value_binding_pattern cursor [concrete]
 // CHECK:STDOUT:       %cursor.param_patt: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_25 (%pattern_type.4dc) = value_param_pattern %cursor.patt, call_param1 [concrete]
 // CHECK:STDOUT:       %return.patt: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_47 (%pattern_type.485) = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: @IntRange.as.Iterate.impl.Next.%pattern_type.loc11_47 (%pattern_type.485) = out_param_pattern %return.patt, call_param2 [concrete]
@@ -348,7 +348,7 @@ fn Read() {
 // CHECK:STDOUT:         %.loc11_19.2: type = specific_constant constants.%IntRange.349, @IntRange(constants.%N) [symbolic = %IntRange (constants.%IntRange.349)]
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc11_19.2 [symbolic = %IntRange (constants.%IntRange.349)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @IntRange.as.Iterate.impl.Next.%IntRange (%IntRange.349) = bind_name self, %self.param
+// CHECK:STDOUT:       %self: @IntRange.as.Iterate.impl.Next.%IntRange (%IntRange.349) = value_binding self, %self.param
 // CHECK:STDOUT:       %cursor.param: @IntRange.as.Iterate.impl.Next.%ptr.loc11_44.1 (%ptr.784) = value_param call_param1
 // CHECK:STDOUT:       %.loc11_44: type = splice_block %ptr.loc11_44.2 [symbolic = %ptr.loc11_44.1 (constants.%ptr.784)] {
 // CHECK:STDOUT:         %Core.ref.loc11_33: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -357,7 +357,7 @@ fn Read() {
 // CHECK:STDOUT:         %Int.loc11_43.2: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc11_43.1 (constants.%Int.49d0e6.1)]
 // CHECK:STDOUT:         %ptr.loc11_44.2: type = ptr_type %Int.loc11_43.2 [symbolic = %ptr.loc11_44.1 (constants.%ptr.784)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %cursor: @IntRange.as.Iterate.impl.Next.%ptr.loc11_44.1 (%ptr.784) = bind_name cursor, %cursor.param
+// CHECK:STDOUT:       %cursor: @IntRange.as.Iterate.impl.Next.%ptr.loc11_44.1 (%ptr.784) = value_binding cursor, %cursor.param
 // CHECK:STDOUT:       %return.param: ref @IntRange.as.Iterate.impl.Next.%Optional.loc11_75.1 (%Optional.37d) = out_param call_param2
 // CHECK:STDOUT:       %return: ref @IntRange.as.Iterate.impl.Next.%Optional.loc11_75.1 (%Optional.37d) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -385,9 +385,9 @@ fn Read() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %IntRange.Make.decl: @IntRange.%IntRange.Make.type (%IntRange.Make.type.51f) = fn_decl @IntRange.Make [symbolic = @IntRange.%IntRange.Make (constants.%IntRange.Make.2ec)] {
-// CHECK:STDOUT:       %start.patt: @IntRange.Make.%pattern_type.loc5_11 (%pattern_type.8963eb.1) = binding_pattern start [concrete]
+// CHECK:STDOUT:       %start.patt: @IntRange.Make.%pattern_type.loc5_11 (%pattern_type.8963eb.1) = value_binding_pattern start [concrete]
 // CHECK:STDOUT:       %start.param_patt: @IntRange.Make.%pattern_type.loc5_11 (%pattern_type.8963eb.1) = value_param_pattern %start.patt, call_param0 [concrete]
-// CHECK:STDOUT:       %end.patt: @IntRange.Make.%pattern_type.loc5_11 (%pattern_type.8963eb.1) = binding_pattern end [concrete]
+// CHECK:STDOUT:       %end.patt: @IntRange.Make.%pattern_type.loc5_11 (%pattern_type.8963eb.1) = value_binding_pattern end [concrete]
 // CHECK:STDOUT:       %end.param_patt: @IntRange.Make.%pattern_type.loc5_11 (%pattern_type.8963eb.1) = value_param_pattern %end.patt, call_param1 [concrete]
 // CHECK:STDOUT:       %return.patt: @IntRange.Make.%pattern_type.loc5_49 (%pattern_type.dcd) = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: @IntRange.Make.%pattern_type.loc5_49 (%pattern_type.dcd) = out_param_pattern %return.patt, call_param2 [concrete]
@@ -401,7 +401,7 @@ fn Read() {
 // CHECK:STDOUT:         %N.ref.loc5_27: Core.IntLiteral = name_ref N, @IntRange.%N.loc4_16.2 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:         %Int.loc5_28.2: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc5_28.1 (constants.%Int.49d0e6.1)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %start: @IntRange.Make.%Int.loc5_28.1 (%Int.49d0e6.1) = bind_name start, %start.param
+// CHECK:STDOUT:       %start: @IntRange.Make.%Int.loc5_28.1 (%Int.49d0e6.1) = value_binding start, %start.param
 // CHECK:STDOUT:       %end.param: @IntRange.Make.%Int.loc5_28.1 (%Int.49d0e6.1) = value_param call_param1
 // CHECK:STDOUT:       %.loc5_46: type = splice_block %Int.loc5_46 [symbolic = %Int.loc5_28.1 (constants.%Int.49d0e6.1)] {
 // CHECK:STDOUT:         %Core.ref.loc5_36: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -409,7 +409,7 @@ fn Read() {
 // CHECK:STDOUT:         %N.ref.loc5_45: Core.IntLiteral = name_ref N, @IntRange.%N.loc4_16.2 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:         %Int.loc5_46: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc5_28.1 (constants.%Int.49d0e6.1)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %end: @IntRange.Make.%Int.loc5_28.1 (%Int.49d0e6.1) = bind_name end, %end.param
+// CHECK:STDOUT:       %end: @IntRange.Make.%Int.loc5_28.1 (%Int.49d0e6.1) = value_binding end, %end.param
 // CHECK:STDOUT:       %return.param: ref @IntRange.Make.%IntRange (%IntRange.349) = out_param call_param2
 // CHECK:STDOUT:       %return: ref @IntRange.Make.%IntRange (%IntRange.349) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -601,7 +601,7 @@ fn Read() {
 // CHECK:STDOUT:   fn(%self.param: @IntRange.as.Iterate.impl.Next.%IntRange (%IntRange.349), %cursor.param: @IntRange.as.Iterate.impl.Next.%ptr.loc11_44.1 (%ptr.784)) -> %return.param: @IntRange.as.Iterate.impl.Next.%Optional.loc11_75.1 (%Optional.37d) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %value.patt: @IntRange.as.Iterate.impl.Next.%pattern_type.loc12 (%pattern_type.8963eb.1) = binding_pattern value [concrete]
+// CHECK:STDOUT:       %value.patt: @IntRange.as.Iterate.impl.Next.%pattern_type.loc12 (%pattern_type.8963eb.1) = ref_binding_pattern value [concrete]
 // CHECK:STDOUT:       %value.var_patt: @IntRange.as.Iterate.impl.Next.%pattern_type.loc12 (%pattern_type.8963eb.1) = var_pattern %value.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %value.var: ref @IntRange.as.Iterate.impl.Next.%Int.loc11_43.1 (%Int.49d0e6.1) = var %value.var_patt
@@ -620,7 +620,7 @@ fn Read() {
 // CHECK:STDOUT:       %N.ref.loc12: Core.IntLiteral = name_ref N, @IntRange.%N.loc4_16.2 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:       %Int.loc12: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc11_43.1 (constants.%Int.49d0e6.1)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %value: ref @IntRange.as.Iterate.impl.Next.%Int.loc11_43.1 (%Int.49d0e6.1) = bind_name value, %value.var
+// CHECK:STDOUT:     %value: ref @IntRange.as.Iterate.impl.Next.%Int.loc11_43.1 (%Int.49d0e6.1) = ref_binding value, %value.var
 // CHECK:STDOUT:     %value.ref.loc13: ref @IntRange.as.Iterate.impl.Next.%Int.loc11_43.1 (%Int.49d0e6.1) = name_ref value, %value
 // CHECK:STDOUT:     %self.ref: @IntRange.as.Iterate.impl.Next.%IntRange (%IntRange.349) = name_ref self, %self
 // CHECK:STDOUT:     %end.ref: @IntRange.as.Iterate.impl.Next.%IntRange.elem (%IntRange.elem.e7c) = name_ref end, @IntRange.%.loc23 [concrete = @IntRange.%.loc23]
@@ -963,7 +963,7 @@ fn Read() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: Core.IntLiteral = bind_symbolic_name y, 0, %int_43 [symbolic = constants.%y]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.d16 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.d16 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.d16 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %IntRange.365 = var %x.var_patt
@@ -984,7 +984,7 @@ fn Read() {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %IntRange: type = class_type @IntRange, @IntRange(constants.%int_32) [concrete = constants.%IntRange.365]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %IntRange.365 = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %IntRange.365 = ref_binding x, %x.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %x.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.45c
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.45c, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc6_3: <bound method> = bound_method %x.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

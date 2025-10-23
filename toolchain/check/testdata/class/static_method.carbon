@@ -102,12 +102,12 @@ fn Run() -> i32 {
 // CHECK:STDOUT: fn @Run() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.761 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.761 = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.761 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %Class = var %c.var_patt
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %c: ref %Class = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %Class = ref_binding c, %c.var
 // CHECK:STDOUT:   %c.ref: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %F.ref()

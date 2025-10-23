@@ -143,7 +143,7 @@ fn F() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc4: %pattern_type.a96 = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.patt.loc4: %pattern_type.a96 = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc4_9.1: type = splice_block %.loc4_9.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc4_9.2: %empty_struct_type = struct_literal ()
@@ -151,9 +151,9 @@ fn F() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc4_14: %empty_struct_type = converted @__global_init.%.loc4, %empty_struct [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %_.loc4: %empty_struct_type = bind_name _, %.loc4_14
+// CHECK:STDOUT:   %_.loc4: %empty_struct_type = value_binding _, %.loc4_14
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc5: %pattern_type.a96 = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.patt.loc5: %pattern_type.a96 = ref_binding_pattern _ [concrete]
 // CHECK:STDOUT:     %_.var_patt: %pattern_type.a96 = var_pattern %_.patt.loc5 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.var: ref %empty_struct_type = var %_.var_patt
@@ -161,14 +161,14 @@ fn F() -> {} {
 // CHECK:STDOUT:     %.loc5_9.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc5_9.3: type = converted %.loc5_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc5: ref %empty_struct_type = bind_name _, %_.var
+// CHECK:STDOUT:   %_.loc5: ref %empty_struct_type = ref_binding _, %_.var
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc8: %pattern_type.a96 = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.patt.loc8: %pattern_type.a96 = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_16.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %.loc8_11.1: type = splice_block %.loc8_11.3 [concrete = constants.%empty_struct_type] {
@@ -177,9 +177,9 @@ fn F() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_16.2: %empty_struct_type = converted %.loc8_16.1, %empty_struct [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %_.loc8: %empty_struct_type = bind_name _, %.loc8_16.2
+// CHECK:STDOUT:   %_.loc8: %empty_struct_type = value_binding _, %.loc8_16.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc9: %pattern_type.a96 = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.patt.loc9: %pattern_type.a96 = ref_binding_pattern _ [concrete]
 // CHECK:STDOUT:     %_.var_patt: %pattern_type.a96 = var_pattern %_.patt.loc9 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.var: ref %empty_struct_type = var %_.var_patt
@@ -191,7 +191,7 @@ fn F() -> {} {
 // CHECK:STDOUT:     %.loc9_11.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc9_11.3: type = converted %.loc9_11.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc9: ref %empty_struct_type = bind_name _, %_.var
+// CHECK:STDOUT:   %_.loc9: ref %empty_struct_type = ref_binding _, %_.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %_.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.596
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.596, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %_.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
@@ -241,7 +241,7 @@ fn F() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %_.patt: %pattern_type = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.patt: %pattern_type = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:     %_.param_patt: %pattern_type = value_param_pattern %_.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %_.param: %empty_struct_type = value_param call_param0
@@ -249,10 +249,10 @@ fn F() -> {} {
 // CHECK:STDOUT:       %.loc4_10.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:       %.loc4_10.3: type = converted %.loc4_10.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %_: %empty_struct_type = bind_name _, %_.param
+// CHECK:STDOUT:     %_: %empty_struct_type = value_binding _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %_.patt: %pattern_type = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.patt: %pattern_type = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:     %_.param_patt: %pattern_type = value_param_pattern %_.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %_.param: %empty_struct_type = value_param call_param0
@@ -260,7 +260,7 @@ fn F() -> {} {
 // CHECK:STDOUT:       %.loc6_10.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:       %.loc6_10.3: type = converted %.loc6_10.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %_: %empty_struct_type = bind_name _, %_.param
+// CHECK:STDOUT:     %_: %empty_struct_type = value_binding _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {} {}
 // CHECK:STDOUT: }

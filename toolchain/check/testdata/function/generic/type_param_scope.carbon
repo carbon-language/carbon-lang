@@ -53,14 +53,14 @@ fn F(T:! type, n: T*) -> T* {
 // CHECK:STDOUT:   fn(%n.param: @F.%ptr.loc4_20.1 (%ptr)) -> @F.%ptr.loc4_20.1 (%ptr) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %m.patt: @F.%pattern_type (%pattern_type.afe) = binding_pattern m [concrete]
+// CHECK:STDOUT:       %m.patt: @F.%pattern_type (%pattern_type.afe) = value_binding_pattern m [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n.ref: @F.%ptr.loc4_20.1 (%ptr) = name_ref n, %n
 // CHECK:STDOUT:     %.loc6: type = splice_block %ptr.loc6 [symbolic = %ptr.loc4_20.1 (constants.%ptr)] {
 // CHECK:STDOUT:       %T.ref.loc6: type = name_ref T, %T.loc4_6.2 [symbolic = %T.loc4_6.1 (constants.%T.8b3)]
 // CHECK:STDOUT:       %ptr.loc6: type = ptr_type %T.ref.loc6 [symbolic = %ptr.loc4_20.1 (constants.%ptr)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %m: @F.%ptr.loc4_20.1 (%ptr) = bind_name m, %n.ref
+// CHECK:STDOUT:     %m: @F.%ptr.loc4_20.1 (%ptr) = value_binding m, %n.ref
 // CHECK:STDOUT:     %m.ref: @F.%ptr.loc4_20.1 (%ptr) = name_ref m, %m
 // CHECK:STDOUT:     %impl.elem0.loc7_10.1: @F.%.loc7_10.2 (%.1cc) = impl_witness_access constants.%Copy.lookup_impl_witness.cb2, element0 [symbolic = %impl.elem0.loc7_10.2 (constants.%impl.elem0.751)]
 // CHECK:STDOUT:     %bound_method.loc7_10.1: <bound method> = bound_method %m.ref, %impl.elem0.loc7_10.1

@@ -130,7 +130,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Constant.decl: %Constant.type = fn_decl @Constant [concrete = constants.%Constant] {} {}
 // CHECK:STDOUT:   %PartialConstant.decl: %PartialConstant.type = fn_decl @PartialConstant [concrete = constants.%PartialConstant] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.831 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.831 = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.831 = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: bool = value_param call_param0
@@ -139,7 +139,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:       %.loc29_23.2: type = value_of_initializer %Bool.call.loc29 [concrete = bool]
 // CHECK:STDOUT:       %.loc29_23.3: type = converted %Bool.call.loc29, %.loc29_23.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: bool = bind_name x, %x.param
+// CHECK:STDOUT:     %x: bool = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -189,7 +189,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT: fn @Constant() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.831 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.831 = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.831 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref bool = var %a.var_patt
@@ -230,9 +230,9 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   br !.loc23_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc23_7:
-// CHECK:STDOUT:   %a: ref bool = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref bool = ref_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.831 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref bool = var %b.var_patt
@@ -273,9 +273,9 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   br !.loc24_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc24_7:
-// CHECK:STDOUT:   %b: ref bool = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref bool = ref_binding b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.831 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.831 = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.831 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref bool = var %c.var_patt
@@ -316,9 +316,9 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   br !.loc25_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc25_7:
-// CHECK:STDOUT:   %c: ref bool = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref bool = ref_binding c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type.cb1 = binding_pattern d [concrete]
+// CHECK:STDOUT:     %d.patt: %pattern_type.cb1 = ref_binding_pattern d [concrete]
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.cb1 = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var %d.var_patt
@@ -358,7 +358,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   br !.loc26_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc26_7:
-// CHECK:STDOUT:   %d: ref %empty_tuple.type = bind_name d, %d.var
+// CHECK:STDOUT:   %d: ref %empty_tuple.type = ref_binding d, %d.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc26: <bound method> = bound_method %d.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.93e
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.93e, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.ff9) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1ba]
 // CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %d.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -385,7 +385,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT: fn @PartialConstant(%x.param: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.831 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.831 = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.831 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref bool = var %a.var_patt
@@ -426,7 +426,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   br !.loc30_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc30_7:
-// CHECK:STDOUT:   %a: ref bool = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref bool = ref_binding a, %a.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %a.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.999
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.999, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.3f5) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.6e8]
 // CHECK:STDOUT:   %bound_method.loc30_3: <bound method> = bound_method %a.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

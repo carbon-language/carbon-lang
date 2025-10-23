@@ -163,7 +163,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness %IndexWith.impl_witness_table [concrete = constants.%IndexWith.impl_witness]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%ElementType [concrete = constants.%ElementType]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.df7 = binding_pattern s [concrete]
+// CHECK:STDOUT:     %s.patt: %pattern_type.df7 = value_binding_pattern s [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %SubscriptType.ref: type = name_ref SubscriptType, %SubscriptType.decl [concrete = constants.%SubscriptType.8ee]
 // CHECK:STDOUT:   %.loc14_25.1: ref %SubscriptType.8ee = temporary_storage
@@ -171,9 +171,9 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc14_25.3: ref %SubscriptType.8ee = temporary %.loc14_25.1, %.loc14_25.2
 // CHECK:STDOUT:   %.loc14_25.4: ref %SubscriptType.8ee = converted @__global_init.%.loc14, %.loc14_25.3
 // CHECK:STDOUT:   %.loc14_25.5: %SubscriptType.8ee = bind_value %.loc14_25.4
-// CHECK:STDOUT:   %s: %SubscriptType.8ee = bind_name s, %.loc14_25.5
+// CHECK:STDOUT:   %s: %SubscriptType.8ee = value_binding s, %.loc14_25.5
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc15_13.1: ref %C = temporary_storage
@@ -181,21 +181,21 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc15_13.3: ref %C = temporary %.loc15_13.1, %.loc15_13.2
 // CHECK:STDOUT:   %.loc15_13.4: ref %C = converted @__global_init.%.loc15, %.loc15_13.3
 // CHECK:STDOUT:   %.loc15_13.5: %C = bind_value %.loc15_13.4
-// CHECK:STDOUT:   %c: %C = bind_name c, %.loc15_13.5
+// CHECK:STDOUT:   %c: %C = value_binding c, %.loc15_13.5
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.c39 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.c39 = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ElementType.ref: type = name_ref ElementType, %ElementType.decl [concrete = constants.%ElementType]
 // CHECK:STDOUT:   %.loc16_25.1: ref %ElementType = temporary @__global_init.%.loc16, @__global_init.%C.as.IndexWith.impl.At.call
 // CHECK:STDOUT:   %.loc16_25.2: %ElementType = bind_value %.loc16_25.1
-// CHECK:STDOUT:   %x: %ElementType = bind_name x, %.loc16_25.2
+// CHECK:STDOUT:   %x: %ElementType = value_binding x, %.loc16_25.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.IndexWith.impl: %C.ref as %.loc8_41 {
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At.decl: %C.as.IndexWith.impl.At.type = fn_decl @C.as.IndexWith.impl.At [concrete = constants.%C.as.IndexWith.impl.At] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.c48 = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %subscript.patt: %pattern_type.df7 = binding_pattern subscript [concrete]
+// CHECK:STDOUT:     %subscript.patt: %pattern_type.df7 = value_binding_pattern subscript [concrete]
 // CHECK:STDOUT:     %subscript.param_patt: %pattern_type.df7 = value_param_pattern %subscript.patt, call_param1 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.c39 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.c39 = out_param_pattern %return.patt, call_param2 [concrete]
@@ -203,10 +203,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [concrete = constants.%ElementType]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.IndexWith.impl.%C.ref [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
 // CHECK:STDOUT:     %subscript.param: %SubscriptType.8ee = value_param call_param1
 // CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [concrete = constants.%SubscriptType.8ee]
-// CHECK:STDOUT:     %subscript: %SubscriptType.8ee = bind_name subscript, %subscript.param
+// CHECK:STDOUT:     %subscript: %SubscriptType.8ee = value_binding subscript, %subscript.param
 // CHECK:STDOUT:     %return.param: ref %ElementType = out_param call_param2
 // CHECK:STDOUT:     %return: ref %ElementType = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -398,7 +398,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness %IndexWith.impl_witness_table [concrete = constants.%IndexWith.impl_witness]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.511 = binding_pattern s [concrete]
+// CHECK:STDOUT:     %s.patt: %pattern_type.511 = value_binding_pattern s [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_17.1: type = splice_block %.loc10_17.3 [concrete = constants.%tuple.type.d07] {
 // CHECK:STDOUT:     %int_32.loc10_9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -424,9 +424,9 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc10_26.4: %i32 = converted @__global_init.%int_5, %.loc10_26.3 [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %tuple: %tuple.type.d07 = tuple_value (%.loc10_26.2, %.loc10_26.4) [concrete = constants.%tuple]
 // CHECK:STDOUT:   %.loc10_26.5: %tuple.type.d07 = converted @__global_init.%.loc10, %tuple [concrete = constants.%tuple]
-// CHECK:STDOUT:   %s: %tuple.type.d07 = bind_name s, %.loc10_26.5
+// CHECK:STDOUT:   %s: %tuple.type.d07 = value_binding s, %.loc10_26.5
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %e.patt: %pattern_type.7ce = binding_pattern e [concrete]
+// CHECK:STDOUT:     %e.patt: %pattern_type.7ce = value_binding_pattern e [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_8: type = splice_block %i32.loc11 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -434,14 +434,14 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_17.1: %i32 = value_of_initializer @__global_init.%tuple.type.as.IndexWith.impl.At.call
 // CHECK:STDOUT:   %.loc11_17.2: %i32 = converted @__global_init.%tuple.type.as.IndexWith.impl.At.call, %.loc11_17.1
-// CHECK:STDOUT:   %e: %i32 = bind_name e, %.loc11_17.2
+// CHECK:STDOUT:   %e: %i32 = value_binding e, %.loc11_17.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @tuple.type.as.IndexWith.impl: %.loc4_15.2 as %.loc4_54 {
 // CHECK:STDOUT:   %tuple.type.as.IndexWith.impl.At.decl: %tuple.type.as.IndexWith.impl.At.type = fn_decl @tuple.type.as.IndexWith.impl.At [concrete = constants.%tuple.type.as.IndexWith.impl.At] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.511 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.511 = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.511 = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %subscript.patt: %pattern_type.dc0 = binding_pattern subscript [concrete]
+// CHECK:STDOUT:     %subscript.patt: %pattern_type.dc0 = value_binding_pattern subscript [concrete]
 // CHECK:STDOUT:     %subscript.param_patt: %pattern_type.dc0 = value_param_pattern %subscript.patt, call_param1 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param2 [concrete]
@@ -450,7 +450,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %self.param: %tuple.type.d07 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @tuple.type.as.IndexWith.impl.%.loc4_15.2 [concrete = constants.%tuple.type.d07]
-// CHECK:STDOUT:     %self: %tuple.type.d07 = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %tuple.type.d07 = value_binding self, %self.param
 // CHECK:STDOUT:     %subscript.param: Core.IntLiteral = value_param call_param1
 // CHECK:STDOUT:     %.loc5_48.1: type = splice_block %.loc5_48.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -459,7 +459,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:       %.loc5_48.2: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc5_48.3: type = converted %IntLiteral.call, %.loc5_48.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %subscript: Core.IntLiteral = bind_name subscript, %subscript.param
+// CHECK:STDOUT:     %subscript: Core.IntLiteral = value_binding subscript, %subscript.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -576,7 +576,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness %IndexWith.impl_witness_table [concrete = constants.%IndexWith.impl_witness]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%ElementType [concrete = constants.%ElementType]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc14_13.1: ref %C = temporary_storage
@@ -584,19 +584,19 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc14_13.3: ref %C = temporary %.loc14_13.1, %.loc14_13.2
 // CHECK:STDOUT:   %.loc14_13.4: ref %C = converted @__global_init.%.loc14, %.loc14_13.3
 // CHECK:STDOUT:   %.loc14_13.5: %C = bind_value %.loc14_13.4
-// CHECK:STDOUT:   %c: %C = bind_name c, %.loc14_13.5
+// CHECK:STDOUT:   %c: %C = value_binding c, %.loc14_13.5
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.c39 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.c39 = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ElementType.ref: type = name_ref ElementType, %ElementType.decl [concrete = constants.%ElementType]
-// CHECK:STDOUT:   %x: %ElementType = bind_name x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x: %ElementType = value_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.IndexWith.impl: %C.ref as %.loc8_41 {
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At.decl: %C.as.IndexWith.impl.At.type = fn_decl @C.as.IndexWith.impl.At [concrete = constants.%C.as.IndexWith.impl.At] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.c48 = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %subscript.patt: %pattern_type.df7 = binding_pattern subscript [concrete]
+// CHECK:STDOUT:     %subscript.patt: %pattern_type.df7 = value_binding_pattern subscript [concrete]
 // CHECK:STDOUT:     %subscript.param_patt: %pattern_type.df7 = value_param_pattern %subscript.patt, call_param1 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.c39 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.c39 = out_param_pattern %return.patt, call_param2 [concrete]
@@ -604,10 +604,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %ElementType.ref: type = name_ref ElementType, file.%ElementType.decl [concrete = constants.%ElementType]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.IndexWith.impl.%C.ref [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
 // CHECK:STDOUT:     %subscript.param: %SubscriptType.8ee = value_param call_param1
 // CHECK:STDOUT:     %SubscriptType.ref: type = name_ref SubscriptType, file.%SubscriptType.decl [concrete = constants.%SubscriptType.8ee]
-// CHECK:STDOUT:     %subscript: %SubscriptType.8ee = bind_name subscript, %subscript.param
+// CHECK:STDOUT:     %subscript: %SubscriptType.8ee = value_binding subscript, %subscript.param
 // CHECK:STDOUT:     %return.param: ref %ElementType = out_param call_param2
 // CHECK:STDOUT:     %return: ref %ElementType = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -698,7 +698,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc6_13.1: ref %C = temporary_storage
@@ -706,15 +706,15 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc6_13.3: ref %C = temporary %.loc6_13.1, %.loc6_13.2
 // CHECK:STDOUT:   %.loc6_13.4: ref %C = converted @__global_init.%.loc6, %.loc6_13.3
 // CHECK:STDOUT:   %.loc6_13.5: %C = bind_value %.loc6_13.4
-// CHECK:STDOUT:   %c: %C = bind_name c, %.loc6_13.5
+// CHECK:STDOUT:   %c: %C = value_binding c, %.loc6_13.5
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: %i32 = bind_name x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x: %i32 = value_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

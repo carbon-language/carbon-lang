@@ -93,7 +93,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %s.patt: %pattern_type.851 = binding_pattern s [concrete]
+// CHECK:STDOUT:     %s.patt: %pattern_type.851 = value_binding_pattern s [concrete]
 // CHECK:STDOUT:     %s.param_patt: %pattern_type.851 = value_param_pattern %s.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %s.param: %struct_type.a.b.501 = value_param call_param0
@@ -104,10 +104,10 @@ fn F(cond: bool) {
 // CHECK:STDOUT:       %i32.loc15_23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.501]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %s: %struct_type.a.b.501 = bind_name s, %s.param
+// CHECK:STDOUT:     %s: %struct_type.a.b.501 = value_binding s, %s.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %cond.patt: %pattern_type.831 = binding_pattern cond [concrete]
+// CHECK:STDOUT:     %cond.patt: %pattern_type.831 = value_binding_pattern cond [concrete]
 // CHECK:STDOUT:     %cond.param_patt: %pattern_type.831 = value_param_pattern %cond.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %cond.param: bool = value_param call_param0
@@ -116,7 +116,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:       %.loc17_12.2: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:       %.loc17_12.3: type = converted %Bool.call, %.loc17_12.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %cond: bool = bind_name cond, %cond.param
+// CHECK:STDOUT:     %cond: bool = value_binding cond, %cond.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -125,7 +125,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT: fn @F(%cond.param: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.851 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.851 = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.851 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %struct_type.a.b.501 = var %a.var_patt
@@ -158,7 +158,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:     %i32.loc18_24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.501]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %struct_type.a.b.501 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %struct_type.a.b.501 = ref_binding a, %a.var
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %cond.ref: bool = name_ref cond, %cond
 // CHECK:STDOUT:   if %cond.ref br !if.expr.then else br !if.expr.else

@@ -402,7 +402,7 @@ class V {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %ConvertPtr.decl: %ConvertPtr.type = fn_decl @ConvertPtr [concrete = constants.%ConvertPtr] {
-// CHECK:STDOUT:     %d.patt: %pattern_type.5c8 = binding_pattern d [concrete]
+// CHECK:STDOUT:     %d.patt: %pattern_type.5c8 = value_binding_pattern d [concrete]
 // CHECK:STDOUT:     %d.param_patt: %pattern_type.5c8 = value_param_pattern %d.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.72a = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.72a = out_param_pattern %return.patt, call_param1 [concrete]
@@ -416,12 +416,12 @@ class V {
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:       %ptr.loc7_29: type = ptr_type %Derived.ref [concrete = constants.%ptr.ddb]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %d: %ptr.ddb = bind_name d, %d.param
+// CHECK:STDOUT:     %d: %ptr.ddb = value_binding d, %d.param
 // CHECK:STDOUT:     %return.param: ref %ptr.fb2 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.fb2 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertVal.decl: %ConvertVal.type = fn_decl @ConvertVal [concrete = constants.%ConvertVal] {
-// CHECK:STDOUT:     %d.patt: %pattern_type.5de = binding_pattern d [concrete]
+// CHECK:STDOUT:     %d.patt: %pattern_type.5de = value_binding_pattern d [concrete]
 // CHECK:STDOUT:     %d.param_patt: %pattern_type.5de = value_param_pattern %d.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
@@ -429,7 +429,7 @@ class V {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
+// CHECK:STDOUT:     %d: %Derived = value_binding d, %d.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

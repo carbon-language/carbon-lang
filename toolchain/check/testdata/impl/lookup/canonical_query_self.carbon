@@ -146,7 +146,7 @@ fn G() {
 // CHECK:STDOUT:   %J.decl: type = interface_decl @J [concrete = constants.%J.type] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.add = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %t.patt: @F.%pattern_type (%pattern_type.038) = binding_pattern t [concrete]
+// CHECK:STDOUT:     %t.patt: @F.%pattern_type (%pattern_type.038) = value_binding_pattern t [concrete]
 // CHECK:STDOUT:     %t.param_patt: @F.%pattern_type (%pattern_type.038) = value_param_pattern %t.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc22_12.1: type = splice_block %.loc22_12.3 [concrete = constants.%facet_type] {
@@ -166,7 +166,7 @@ fn G() {
 // CHECK:STDOUT:       %T.as_type.loc22: type = facet_access_type %T.ref.loc22 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %.loc22_20.2: type = converted %T.ref.loc22, %T.as_type.loc22 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %t: @F.%T.binding.as_type (%T.binding.as_type) = bind_name t, %t.param
+// CHECK:STDOUT:     %t: @F.%T.binding.as_type (%T.binding.as_type) = value_binding t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
@@ -174,7 +174,7 @@ fn G() {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.7ee]
 // CHECK:STDOUT:   %I.II.decl: %I.II.type = fn_decl @I.II [concrete = constants.%I.II] {
-// CHECK:STDOUT:     %self.patt: @I.II.%pattern_type (%pattern_type.3f7) = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: @I.II.%pattern_type (%pattern_type.3f7) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @I.II.%pattern_type (%pattern_type.3f7) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @I.II.%Self.binding.as_type (%Self.binding.as_type.1b7) = value_param call_param0
@@ -183,7 +183,7 @@ fn G() {
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.1b7)]
 // CHECK:STDOUT:       %.loc16_15.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.1b7)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @I.II.%Self.binding.as_type (%Self.binding.as_type.1b7) = bind_name self, %self.param
+// CHECK:STDOUT:     %self: @I.II.%Self.binding.as_type (%Self.binding.as_type.1b7) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.II.decl [concrete = constants.%assoc0.82e]
 // CHECK:STDOUT:
@@ -198,7 +198,7 @@ fn G() {
 // CHECK:STDOUT: interface @J {
 // CHECK:STDOUT:   %Self: %J.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.bf6]
 // CHECK:STDOUT:   %J.JJ.decl: %J.JJ.type = fn_decl @J.JJ [concrete = constants.%J.JJ] {
-// CHECK:STDOUT:     %self.patt: @J.JJ.%pattern_type (%pattern_type.a23) = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: @J.JJ.%pattern_type (%pattern_type.a23) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @J.JJ.%pattern_type (%pattern_type.a23) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @J.JJ.%Self.binding.as_type (%Self.binding.as_type.09d) = value_param call_param0
@@ -207,7 +207,7 @@ fn G() {
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.09d)]
 // CHECK:STDOUT:       %.loc19_15.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.09d)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @J.JJ.%Self.binding.as_type (%Self.binding.as_type.09d) = bind_name self, %self.param
+// CHECK:STDOUT:     %self: @J.JJ.%Self.binding.as_type (%Self.binding.as_type.09d) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %J.assoc_type = assoc_entity element0, %J.JJ.decl [concrete = constants.%assoc0.78c]
 // CHECK:STDOUT:
@@ -219,12 +219,12 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %Self.ref as %I.ref {
 // CHECK:STDOUT:   %C.as.I.impl.II.decl: %C.as.I.impl.II.type = fn_decl @C.as.I.impl.II [concrete = constants.%C.as.I.impl.II] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.893 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.893 = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.893 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -234,12 +234,12 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.J.impl: %Self.ref as %J.ref {
 // CHECK:STDOUT:   %C.as.J.impl.JJ.decl: %C.as.J.impl.JJ.type = fn_decl @C.as.J.impl.JJ [concrete = constants.%C.as.J.impl.JJ] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.893 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.893 = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.893 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

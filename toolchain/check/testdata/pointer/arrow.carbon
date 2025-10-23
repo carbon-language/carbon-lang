@@ -60,7 +60,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %ptr.patt: %pattern_type.44a = binding_pattern ptr [concrete]
+// CHECK:STDOUT:     %ptr.patt: %pattern_type.44a = value_binding_pattern ptr [concrete]
 // CHECK:STDOUT:     %ptr.param_patt: %pattern_type.44a = value_param_pattern %ptr.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ptr.param: %ptr.019 = value_param call_param0
@@ -68,18 +68,18 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr.loc20_14: type = ptr_type %C.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %ptr.loc20_8: %ptr.019 = bind_name ptr, %ptr.param
+// CHECK:STDOUT:     %ptr.loc20_8: %ptr.019 = value_binding ptr, %ptr.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %C.Member.decl: %C.Member.type = fn_decl @C.Member [concrete = constants.%C.Member] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.c48 = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %ptr: type = ptr_type %C.ref [concrete = constants.%ptr.019]

@@ -66,7 +66,7 @@ choice Always(T:! type) {
 // CHECK:STDOUT:     %.loc16_1.9: ref @Always.%Always (%Always) = temporary %.loc16_1.4, %.loc16_1.8
 // CHECK:STDOUT:     %.loc16_1.10: ref @Always.%Always (%Always) = converted %.loc16_1.3, %.loc16_1.9
 // CHECK:STDOUT:     %.loc16_1.11: @Always.%Always (%Always) = bind_value %.loc16_1.10
-// CHECK:STDOUT:     %Sunny: @Always.%Always (%Always) = bind_name Sunny, %.loc16_1.11
+// CHECK:STDOUT:     %Sunny: @Always.%Always (%Always) = value_binding Sunny, %.loc16_1.11
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:

@@ -131,7 +131,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:     %T.loc6_9.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc6_9.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.1b7 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.1b7 = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.1b7 = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %A.1d4 = value_param call_param0
@@ -140,7 +140,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:       %B.ref: type = name_ref B, file.%B.decl.loc4 [concrete = constants.%B]
 // CHECK:STDOUT:       %A: type = class_type @A, @A(constants.%B) [concrete = constants.%A.1d4]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: %A.1d4 = bind_name x, %x.param
+// CHECK:STDOUT:     %x: %A.1d4 = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl.loc29: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT: }
@@ -304,7 +304,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %v.patt: @F.%pattern_type (%pattern_type.afe) = binding_pattern v [concrete]
+// CHECK:STDOUT:       %v.patt: @F.%pattern_type (%pattern_type.afe) = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:       %v.var_patt: @F.%pattern_type (%pattern_type.afe) = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v.var: ref @F.%ptr.loc7_11.2 (%ptr.79f) = var %v.var_patt
@@ -312,7 +312,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_6.2 [symbolic = %T.loc6_6.1 (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc7_11.1: type = ptr_type %T.ref [symbolic = %ptr.loc7_11.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v: ref @F.%ptr.loc7_11.2 (%ptr.79f) = bind_name v, %v.var
+// CHECK:STDOUT:     %v: ref @F.%ptr.loc7_11.2 (%ptr.79f) = ref_binding v, %v.var
 // CHECK:STDOUT:     %v.ref: ref @F.%ptr.loc7_11.2 (%ptr.79f) = name_ref v, %v
 // CHECK:STDOUT:     %.loc8_4: @F.%ptr.loc7_11.2 (%ptr.79f) = bind_value %v.ref
 // CHECK:STDOUT:     %.loc8_3: ref @F.%T.loc6_6.1 (%T) = deref %.loc8_4
@@ -457,7 +457,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %v.patt: @F.%pattern_type (%pattern_type.afe) = binding_pattern v [concrete]
+// CHECK:STDOUT:       %v.patt: @F.%pattern_type (%pattern_type.afe) = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:       %v.var_patt: @F.%pattern_type (%pattern_type.afe) = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v.var: ref @F.%ptr.loc7_11.2 (%ptr.79f) = var %v.var_patt
@@ -465,7 +465,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_6.2 [symbolic = %T.loc6_6.1 (constants.%T)]
 // CHECK:STDOUT:       %ptr.loc7_11.1: type = ptr_type %T.ref [symbolic = %ptr.loc7_11.2 (constants.%ptr.79f)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v: ref @F.%ptr.loc7_11.2 (%ptr.79f) = bind_name v, %v.var
+// CHECK:STDOUT:     %v: ref @F.%ptr.loc7_11.2 (%ptr.79f) = ref_binding v, %v.var
 // CHECK:STDOUT:     %v.ref: ref @F.%ptr.loc7_11.2 (%ptr.79f) = name_ref v, %v
 // CHECK:STDOUT:     %.loc14_4: @F.%ptr.loc7_11.2 (%ptr.79f) = bind_value %v.ref
 // CHECK:STDOUT:     %.loc14_3: ref @F.%T.loc6_6.1 (%T) = deref %.loc14_4

@@ -1440,11 +1440,11 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
 
     // TODO: Fix this once templates are supported.
     bool is_template = false;
-    // TODO: Fix this once generics are supported.
-    bool is_generic = false;
+    // TODO: Model reference parameters as ref bindings.
     SemIR::InstId pattern_id =
         AddBindingPattern(context, param_loc_id, name_id, type_id,
-                          type_expr_region_id, is_generic, is_template)
+                          type_expr_region_id, SemIR::ValueBindingPattern::Kind,
+                          is_template)
             .pattern_id;
     pattern_id = AddPatternInst(
         context, {param_loc_id,
@@ -1872,12 +1872,13 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   context.cpp_global_names().Add({.key = {.entity_name_id = entity_name_id},
                                   .clang_decl_id = clang_decl_id});
 
-  // Create `BindingPattern` and `VarPattern` in a `NameBindingDecl`.
+  // Create `RefBindingPattern` and `VarPattern` in a `NameBindingDecl`.
   context.pattern_block_stack().Push();
   SemIR::TypeId pattern_type_id = GetPatternType(context, var_type_id);
-  SemIR::InstId binding_pattern_inst_id = AddPatternInst<SemIR::BindingPattern>(
-      context, loc_id,
-      {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
+  SemIR::InstId binding_pattern_inst_id =
+      AddPatternInst<SemIR::RefBindingPattern>(
+          context, loc_id,
+          {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
   var_storage.pattern_id = AddPatternInst<SemIR::VarPattern>(
       context, Parse::VariablePatternId::None,
       {.type_id = pattern_type_id, .subpattern_id = binding_pattern_inst_id});

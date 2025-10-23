@@ -78,7 +78,7 @@ fn F() {
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
 // CHECK:STDOUT:   %WalkAnimal.decl: %WalkAnimal.type = fn_decl @WalkAnimal [concrete = constants.%WalkAnimal] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.3c3 = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %a.patt: @WalkAnimal.%pattern_type (%pattern_type.a4a) = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: @WalkAnimal.%pattern_type (%pattern_type.a4a) = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: @WalkAnimal.%pattern_type (%pattern_type.a4a) = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc17_19: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
@@ -92,7 +92,7 @@ fn F() {
 // CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %.loc17_30.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @WalkAnimal.%T.binding.as_type (%T.binding.as_type) = bind_name a, %a.param
+// CHECK:STDOUT:     %a: @WalkAnimal.%T.binding.as_type (%T.binding.as_type) = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Goat.decl: type = class_decl @Goat [concrete = constants.%Goat] {} {}
 // CHECK:STDOUT:   impl_decl @Goat.as.Animal.impl [concrete] {} {

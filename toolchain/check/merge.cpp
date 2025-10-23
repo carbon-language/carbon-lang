@@ -272,8 +272,9 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
              .new_id =
                  new_param_pattern.As<SemIR::VarPattern>().subpattern_id});
         break;
-      case SemIR::BindingPattern::Kind:
-      case SemIR::SymbolicBindingPattern::Kind: {
+      case SemIR::RefBindingPattern::Kind:
+      case SemIR::SymbolicBindingPattern::Kind:
+      case SemIR::ValueBindingPattern::Kind: {
         auto new_name_id =
             context.entity_names()
                 .Get(new_param_pattern.As<SemIR::AnyBindingPattern>()

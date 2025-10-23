@@ -71,7 +71,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
 // CHECK:STDOUT:   %Feed.decl: %Feed.type = fn_decl @Feed [concrete = constants.%Feed] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.384 = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %e.patt: @Feed.%pattern_type (%pattern_type.fae) = binding_pattern e [concrete]
+// CHECK:STDOUT:     %e.patt: @Feed.%pattern_type (%pattern_type.fae) = value_binding_pattern e [concrete]
 // CHECK:STDOUT:     %e.param_patt: @Feed.%pattern_type (%pattern_type.fae) = value_param_pattern %e.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc18_13: type = splice_block %Eats.ref [concrete = constants.%Eats.type] {
@@ -85,11 +85,11 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type.4fe)]
 // CHECK:STDOUT:       %.loc18_22.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type.4fe)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %e: @Feed.%T.binding.as_type (%T.binding.as_type.4fe) = bind_name e, %e.param
+// CHECK:STDOUT:     %e: @Feed.%T.binding.as_type (%T.binding.as_type.4fe) = value_binding e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HandleAnimal.decl: %HandleAnimal.type = fn_decl @HandleAnimal [concrete = constants.%HandleAnimal] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.3c3 = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %a.patt: @HandleAnimal.%pattern_type (%pattern_type.a4a) = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: @HandleAnimal.%pattern_type (%pattern_type.a4a) = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: @HandleAnimal.%pattern_type (%pattern_type.a4a) = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc27_21: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
@@ -103,7 +103,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type.5cd)]
 // CHECK:STDOUT:       %.loc27_32.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type.5cd)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @HandleAnimal.%T.binding.as_type (%T.binding.as_type.5cd) = bind_name a, %a.param
+// CHECK:STDOUT:     %a: @HandleAnimal.%T.binding.as_type (%T.binding.as_type.5cd) = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

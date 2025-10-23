@@ -143,12 +143,12 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %C.Create.decl: @C.%C.Create.type (%C.Create.type.f31) = fn_decl @C.Create [symbolic = @C.%C.Create (constants.%C.Create.cc8)] {
-// CHECK:STDOUT:       %value.patt: @C.Create.%pattern_type (%pattern_type.7dcd0a.1) = binding_pattern value [concrete]
+// CHECK:STDOUT:       %value.patt: @C.Create.%pattern_type (%pattern_type.7dcd0a.1) = value_binding_pattern value [concrete]
 // CHECK:STDOUT:       %value.param_patt: @C.Create.%pattern_type (%pattern_type.7dcd0a.1) = value_param_pattern %value.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %value.param: @C.Create.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @C.%T.loc4_9.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %value: @C.Create.%T (%T) = bind_name value, %value.param
+// CHECK:STDOUT:       %value: @C.Create.%T (%T) = value_binding value, %value.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -345,12 +345,12 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %C.Create.decl: @C.%C.Create.type (%C.Create.type.f31) = fn_decl @C.Create [symbolic = @C.%C.Create (constants.%C.Create.cc8)] {
-// CHECK:STDOUT:       %value.patt: @C.Create.%pattern_type (%pattern_type.7dcd0a.1) = binding_pattern value [concrete]
+// CHECK:STDOUT:       %value.patt: @C.Create.%pattern_type (%pattern_type.7dcd0a.1) = value_binding_pattern value [concrete]
 // CHECK:STDOUT:       %value.param_patt: @C.Create.%pattern_type (%pattern_type.7dcd0a.1) = value_param_pattern %value.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %value.param: @C.Create.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @C.%T.loc4_9.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %value: @C.Create.%T (%T) = bind_name value, %value.param
+// CHECK:STDOUT:       %value: @C.Create.%T (%T) = value_binding value, %value.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type

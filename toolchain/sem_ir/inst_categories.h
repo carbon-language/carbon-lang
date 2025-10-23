@@ -65,7 +65,8 @@ struct AnyAggregateValue {
 // Common representation for various `*binding_pattern` nodes.
 struct AnyBindingPattern {
   // TODO: Also handle TemplateBindingPattern once it exists.
-  using CategoryInfo = CategoryOf<BindingPattern, SymbolicBindingPattern>;
+  using CategoryInfo = CategoryOf<RefBindingPattern, SymbolicBindingPattern,
+                                  ValueBindingPattern>;
 
   InstKind kind;
 
@@ -82,19 +83,23 @@ struct AnyBindingPattern {
 // Common representation for various `bind*` nodes.
 struct AnyBindName {
   // TODO: Also handle BindTemplateName once it exists.
-  using CategoryInfo = CategoryOf<BindAlias, BindName, BindSymbolicName>;
+  using CategoryInfo =
+      CategoryOf<BindAlias, RefBinding, BindSymbolicName, ValueBinding>;
 
   InstKind kind;
   TypeId type_id;
   EntityNameId entity_name_id;
+
+  // The value is inline in the inst so that value access doesn't require an
+  // indirection.
   InstId value_id;
 };
 
 // Common representation for various `bind*` nodes, and `export name`.
 struct AnyBindNameOrExportDecl {
   // TODO: Also handle BindTemplateName once it exists.
-  using CategoryInfo =
-      CategoryOf<BindAlias, BindName, BindSymbolicName, ExportDecl>;
+  using CategoryInfo = CategoryOf<BindAlias, RefBinding, BindSymbolicName,
+                                  ValueBinding, ExportDecl>;
 
   InstKind kind;
   TypeId type_id;

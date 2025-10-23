@@ -128,14 +128,14 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:   %NoParams.decl: type = class_decl @NoParams [concrete = constants.%NoParams] {} {}
 // CHECK:STDOUT:   %EmptyParams.decl: %EmptyParams.type = class_decl @EmptyParams [concrete = constants.%EmptyParams.generic] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.32d = binding_pattern v [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.32d = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.32d = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %NoParams = var %v.var_patt [concrete]
 // CHECK:STDOUT:   %NoParams.ref: type = name_ref NoParams, %NoParams.decl [concrete = constants.%NoParams]
-// CHECK:STDOUT:   %v: ref %NoParams = bind_name v, %v.var [concrete = %v.var]
+// CHECK:STDOUT:   %v: ref %NoParams = ref_binding v, %v.var [concrete = %v.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %pattern_type.71c = binding_pattern w [concrete]
+// CHECK:STDOUT:     %w.patt: %pattern_type.71c = ref_binding_pattern w [concrete]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.71c = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %EmptyParams = var %w.var_patt [concrete]
@@ -143,7 +143,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %EmptyParams.ref: %EmptyParams.type = name_ref EmptyParams, %EmptyParams.decl [concrete = constants.%EmptyParams.generic]
 // CHECK:STDOUT:     %EmptyParams: type = class_type @EmptyParams [concrete = constants.%EmptyParams]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w: ref %EmptyParams = bind_name w, %w.var [concrete = %w.var]
+// CHECK:STDOUT:   %w: ref %EmptyParams = ref_binding w, %w.var [concrete = %w.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NoParams {
@@ -229,7 +229,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_13.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.828 = binding_pattern v [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.828 = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.828 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %Outer.614 = var %v.var_patt [concrete]
@@ -240,9 +240,9 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %ptr.loc9: type = ptr_type %.loc9_16 [concrete = constants.%ptr.c28]
 // CHECK:STDOUT:     %Outer.loc9: type = class_type @Outer, @Outer(constants.%ptr.c28) [concrete = constants.%Outer.614]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %Outer.614 = bind_name v, %v.var [concrete = %v.var]
+// CHECK:STDOUT:   %v: ref %Outer.614 = ref_binding v, %v.var [concrete = %v.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %pattern_type.5fa = binding_pattern w [concrete]
+// CHECK:STDOUT:     %w.patt: %pattern_type.5fa = ref_binding_pattern w [concrete]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.5fa = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %Inner.277 = var %w.var_patt [concrete]
@@ -260,7 +260,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %ptr.loc19_34: type = ptr_type %struct_type.a [concrete = constants.%ptr.1bb]
 // CHECK:STDOUT:     %Inner: type = class_type @Inner, @Inner(constants.%ptr.c28, constants.%ptr.1bb) [concrete = constants.%Inner.277]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w: ref %Inner.277 = bind_name w, %w.var [concrete = %w.var]
+// CHECK:STDOUT:   %w: ref %Inner.277 = ref_binding w, %w.var [concrete = %w.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Outer(%T.loc4_13.2: type) {
@@ -399,7 +399,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %N.loc4_9.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc4_9.1 (constants.%N.51e)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.1b4 = binding_pattern v [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.1b4 = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.1b4 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %C.4c3 = var %v.var_patt [concrete]
@@ -415,7 +415,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %.loc13_13.3: %i32 = converted %int_123, %.loc13_13.2 [concrete = constants.%int_123.f7f]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%int_123.f7f) [concrete = constants.%C.4c3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %C.4c3 = bind_name v, %v.var [concrete = %v.var]
+// CHECK:STDOUT:   %v: ref %C.4c3 = ref_binding v, %v.var [concrete = %v.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%N.loc4_9.2: %i32) {
@@ -536,7 +536,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %F.loc9_9.2: %D = bind_symbolic_name F, 0 [symbolic = %F.loc9_9.1 (constants.%F)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %g.patt: <error> = binding_pattern g [concrete]
+// CHECK:STDOUT:     %g.patt: <error> = ref_binding_pattern g [concrete]
 // CHECK:STDOUT:     %g.var_patt: <error> = var_pattern %g.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %g.var: ref <error> = var %g.var_patt [concrete = <error>]
@@ -567,7 +567,7 @@ var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 // CHECK:STDOUT:     %.loc25_26.1: ref %D = converted %.loc25_25.1, %.loc25_25.10
 // CHECK:STDOUT:     %.loc25_26.2: %D = bind_value %.loc25_26.1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %g: <error> = bind_name g, <error> [concrete = <error>]
+// CHECK:STDOUT:   %g: ref <error> = ref_binding g, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {

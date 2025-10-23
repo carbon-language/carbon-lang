@@ -40,7 +40,7 @@ fn B() {
 // CHECK:STDOUT:   entity_names:    {}
 // CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function60000000: {name: name00000000, parent_scope: name_scope00000000, call_params_id: inst_block_empty, body: [inst_block00000005]}
+// CHECK:STDOUT:     function60000000: {name: name00000000, parent_scope: name_scope00000000, call_params_id: inst_block_empty, body: [inst_block60000005]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
@@ -78,10 +78,10 @@ fn B() {
 // CHECK:STDOUT:       0:               inst6000000F
 // CHECK:STDOUT:     imports:         {}
 // CHECK:STDOUT:     global_init:     {}
-// CHECK:STDOUT:     inst_block00000004: {}
-// CHECK:STDOUT:     inst_block00000005:
+// CHECK:STDOUT:     inst_block60000004: {}
+// CHECK:STDOUT:     inst_block60000005:
 // CHECK:STDOUT:       0:               inst60000013
-// CHECK:STDOUT:     inst_block00000006:
+// CHECK:STDOUT:     inst_block60000006:
 // CHECK:STDOUT:       0:               inst0000000E
 // CHECK:STDOUT:       1:               inst6000000F
 // CHECK:STDOUT: ...
@@ -122,7 +122,7 @@ fn B() {
 // CHECK:STDOUT:     entity_name50000000: {name: name00000001, parent_scope: name_scope50000001, index: -1, is_template: 0}
 // CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function50000000: {name: name00000000, parent_scope: name_scope00000000, call_params_id: inst_block_empty, body: [inst_block00000005]}
+// CHECK:STDOUT:     function50000000: {name: name00000000, parent_scope: name_scope00000000, call_params_id: inst_block_empty, body: [inst_block50000005]}
 // CHECK:STDOUT:     function50000001: {name: name00000001, parent_scope: name_scope50000001}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
@@ -180,13 +180,13 @@ fn B() {
 // CHECK:STDOUT:       1:               inst50000016
 // CHECK:STDOUT:       2:               inst50000017
 // CHECK:STDOUT:     global_init:     {}
-// CHECK:STDOUT:     inst_block00000004: {}
-// CHECK:STDOUT:     inst_block00000005:
+// CHECK:STDOUT:     inst_block50000004: {}
+// CHECK:STDOUT:     inst_block50000005:
 // CHECK:STDOUT:       0:               inst50000015
 // CHECK:STDOUT:       1:               inst5000001A
 // CHECK:STDOUT:       2:               inst5000001B
 // CHECK:STDOUT:       3:               inst5000001C
-// CHECK:STDOUT:     inst_block00000006:
+// CHECK:STDOUT:     inst_block50000006:
 // CHECK:STDOUT:       0:               inst0000000E
 // CHECK:STDOUT:       1:               inst5000000F
 // CHECK:STDOUT:       2:               inst50000011

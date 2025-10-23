@@ -95,7 +95,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %N.patt: %pattern_type.dc0 = symbolic_binding_pattern N, 0 [concrete]
-// CHECK:STDOUT:     %n.patt: @F.%pattern_type (%pattern_type.896) = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.patt: @F.%pattern_type (%pattern_type.896) = value_binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.param_patt: @F.%pattern_type (%pattern_type.896) = value_param_pattern %n.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.dc0 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.dc0 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -121,12 +121,12 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:       %N.ref.loc4: Core.IntLiteral = name_ref N, %N.loc4_6.2 [symbolic = %N.loc4_6.1 (constants.%N)]
 // CHECK:STDOUT:       %Int.loc4_42.2: type = class_type @Int, @Int(constants.%N) [symbolic = %Int.loc4_42.1 (constants.%Int)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: @F.%Int.loc4_42.1 (%Int) = bind_name n, %n.param
+// CHECK:STDOUT:     %n: @F.%Int.loc4_42.1 (%Int) = value_binding n, %n.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.95b = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.95b = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.95b = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.dc0 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.dc0 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -141,7 +141,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:       %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:       %i64: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %i64 = bind_name a, %a.param
+// CHECK:STDOUT:     %a: %i64 = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -250,7 +250,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %N.patt: %pattern_type.dc0 = symbolic_binding_pattern N, 0 [concrete]
-// CHECK:STDOUT:     %n.patt: @F.%pattern_type (%pattern_type.f08) = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.patt: @F.%pattern_type (%pattern_type.f08) = value_binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.param_patt: @F.%pattern_type (%pattern_type.f08) = value_param_pattern %n.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.dc0 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.dc0 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -276,12 +276,12 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:       %N.ref.loc4: Core.IntLiteral = name_ref N, %N.loc4_6.2 [symbolic = %N.loc4_6.1 (constants.%N)]
 // CHECK:STDOUT:       %Float.loc4_44.2: type = class_type @Float, @Float(constants.%N) [symbolic = %Float.loc4_44.1 (constants.%Float)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: @F.%Float.loc4_44.1 (%Float) = bind_name n, %n.param
+// CHECK:STDOUT:     %n: @F.%Float.loc4_44.1 (%Float) = value_binding n, %n.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.0ae = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.0ae = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.0ae = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.dc0 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.dc0 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -296,7 +296,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:       %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:       %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %f64.d77 = bind_name a, %a.param
+// CHECK:STDOUT:     %a: %f64.d77 = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }

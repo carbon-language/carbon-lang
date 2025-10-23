@@ -1422,7 +1422,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: fn @F(%s.param: %S) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %instance_data.patt: %pattern_type.7ce = binding_pattern instance_data [concrete]
+// CHECK:STDOUT:     %instance_data.patt: %pattern_type.7ce = value_binding_pattern instance_data [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.ref: %S = name_ref s, %s
 // CHECK:STDOUT:   %instance_data.ref: %S.elem = name_ref instance_data, @S.%.1 [concrete = @S.%.1]
@@ -1432,9 +1432,9 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %instance_data: %i32 = bind_name instance_data, %.loc8_29.2
+// CHECK:STDOUT:   %instance_data: %i32 = value_binding instance_data, %.loc8_29.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %static_data.patt: %pattern_type.7ce = binding_pattern static_data [concrete]
+// CHECK:STDOUT:     %static_data.patt: %pattern_type.7ce = value_binding_pattern static_data [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %S.ref.loc9: type = name_ref S, imports.%S.decl [concrete = constants.%S]
@@ -1445,7 +1445,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:     %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_31: %i32 = bind_value %static_data.ref
-// CHECK:STDOUT:   %static_data: %i32 = bind_name static_data, %.loc9_31
+// CHECK:STDOUT:   %static_data: %i32 = value_binding static_data, %.loc9_31
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1467,7 +1467,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: fn @F(%d.param: %Derived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %instance_data.patt: %pattern_type.7ce = binding_pattern instance_data [concrete]
+// CHECK:STDOUT:     %instance_data.patt: %pattern_type.7ce = value_binding_pattern instance_data [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %instance_data.ref: %S.elem = name_ref instance_data, @S.%.1 [concrete = @S.%.1]
@@ -1479,9 +1479,9 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_29.4: %i32 = bind_value %.loc12_29.3
-// CHECK:STDOUT:   %instance_data: %i32 = bind_name instance_data, %.loc12_29.4
+// CHECK:STDOUT:   %instance_data: %i32 = value_binding instance_data, %.loc12_29.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %static_data.patt: %pattern_type.7ce = binding_pattern static_data [concrete]
+// CHECK:STDOUT:     %static_data.patt: %pattern_type.7ce = value_binding_pattern static_data [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.ref.loc13: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   <elided>
@@ -1491,7 +1491,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13_33: %i32 = bind_value %static_data.ref
-// CHECK:STDOUT:   %static_data: %i32 = bind_name static_data, %.loc13_33
+// CHECK:STDOUT:   %static_data: %i32 = value_binding static_data, %.loc13_33
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1533,7 +1533,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: fn @Derived.F(%self.param: %Derived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %instance_data.patt: %pattern_type.7ce = binding_pattern instance_data [concrete]
+// CHECK:STDOUT:     %instance_data.patt: %pattern_type.7ce = value_binding_pattern instance_data [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %self.ref: %Derived = name_ref self, %self
 // CHECK:STDOUT:   %instance_data.ref: %C.elem = name_ref instance_data, @C.%.1 [concrete = @C.%.1]
@@ -1545,9 +1545,9 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:     %i32.loc10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_34.4: %i32 = bind_value %.loc10_34.3
-// CHECK:STDOUT:   %instance_data: %i32 = bind_name instance_data, %.loc10_34.4
+// CHECK:STDOUT:   %instance_data: %i32 = value_binding instance_data, %.loc10_34.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %unqualified_static_data.patt: %pattern_type.7ce = binding_pattern unqualified_static_data [concrete]
+// CHECK:STDOUT:     %unqualified_static_data.patt: %pattern_type.7ce = value_binding_pattern unqualified_static_data [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %static_data.ref.loc11: ref %i32 = name_ref static_data, imports.%static_data.var
@@ -1556,9 +1556,9 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_40: %i32 = bind_value %static_data.ref.loc11
-// CHECK:STDOUT:   %unqualified_static_data: %i32 = bind_name unqualified_static_data, %.loc11_40
+// CHECK:STDOUT:   %unqualified_static_data: %i32 = value_binding unqualified_static_data, %.loc11_40
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %derived_static_data.patt: %pattern_type.7ce = binding_pattern derived_static_data [concrete]
+// CHECK:STDOUT:     %derived_static_data.patt: %pattern_type.7ce = value_binding_pattern derived_static_data [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %static_data.ref.loc12: ref %i32 = name_ref static_data, imports.%static_data.var
@@ -1567,9 +1567,9 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc12_43: %i32 = bind_value %static_data.ref.loc12
-// CHECK:STDOUT:   %derived_static_data: %i32 = bind_name derived_static_data, %.loc12_43
+// CHECK:STDOUT:   %derived_static_data: %i32 = value_binding derived_static_data, %.loc12_43
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %base_static_data.patt: %pattern_type.7ce = binding_pattern base_static_data [concrete]
+// CHECK:STDOUT:     %base_static_data.patt: %pattern_type.7ce = value_binding_pattern base_static_data [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -1579,7 +1579,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc13_38: %i32 = bind_value %static_data.ref.loc13
-// CHECK:STDOUT:   %base_static_data: %i32 = bind_name base_static_data, %.loc13_38
+// CHECK:STDOUT:   %base_static_data: %i32 = value_binding base_static_data, %.loc13_38
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

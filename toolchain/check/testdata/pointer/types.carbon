@@ -76,7 +76,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Ptr.decl: %Ptr.type = fn_decl @Ptr [concrete = constants.%Ptr] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.fe8 = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.fe8 = value_binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.fe8 = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.fe8 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.fe8 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -90,12 +90,12 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:       %i32.loc15_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %ptr.loc15_14: type = ptr_type %i32.loc15_11 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.235 = bind_name p, %p.param
+// CHECK:STDOUT:     %p: %ptr.235 = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.235 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.235 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConstPtr.decl: %ConstPtr.type = fn_decl @ConstPtr [concrete = constants.%ConstPtr] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.bff = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.bff = value_binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.bff = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.bff = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.bff = out_param_pattern %return.patt, call_param1 [concrete]
@@ -111,7 +111,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
 // CHECK:STDOUT:       %const.loc19_16: type = const_type %i32.loc19_22 [concrete = constants.%const.20a]
 // CHECK:STDOUT:       %ptr.loc19_25: type = ptr_type %const.loc19_16 [concrete = constants.%ptr.36b]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.36b = bind_name p, %p.param
+// CHECK:STDOUT:     %p: %ptr.36b = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.36b = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.36b = return_slot %return.param
 // CHECK:STDOUT:   }

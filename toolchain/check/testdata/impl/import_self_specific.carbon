@@ -163,7 +163,7 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%Assoc [concrete = constants.%assoc0]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.F.decl: %I.F.type = fn_decl @I.F [concrete = constants.%I.F] {
-// CHECK:STDOUT:     %c.patt: @I.F.%pattern_type (%pattern_type.174) = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: @I.F.%pattern_type (%pattern_type.174) = value_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.param_patt: @I.F.%pattern_type (%pattern_type.174) = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: @I.F.%C.loc24_18.1 (%C.cd7) = value_param call_param0
@@ -176,7 +176,7 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:       %.loc24_18.2: %Z.type = converted %Assoc.ref, %Z.facet.loc24_18.2 [symbolic = %Z.facet.loc24_18.1 (constants.%Z.facet)]
 // CHECK:STDOUT:       %C.loc24_18.2: type = class_type @C, @C(constants.%Z.facet) [symbolic = %C.loc24_18.1 (constants.%C.cd7)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: @I.F.%C.loc24_18.1 (%C.cd7) = bind_name c, %c.param
+// CHECK:STDOUT:     %c: @I.F.%C.loc24_18.1 (%C.cd7) = value_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, %I.F.decl [concrete = constants.%assoc1]
 // CHECK:STDOUT:
@@ -481,7 +481,7 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %D.loc20_24.2 as %.loc20_31 {
 // CHECK:STDOUT:     %D.as.I.impl.F.decl: @D.as.I.impl.%D.as.I.impl.F.type (%D.as.I.impl.F.type) = fn_decl @D.as.I.impl.F [symbolic = @D.as.I.impl.%D.as.I.impl.F (constants.%D.as.I.impl.F)] {
-// CHECK:STDOUT:       %c.patt: %pattern_type.99b = binding_pattern c [concrete]
+// CHECK:STDOUT:       %c.patt: %pattern_type.99b = value_binding_pattern c [concrete]
 // CHECK:STDOUT:       %c.param_patt: %pattern_type.99b = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %c.param: %C.e33 = value_param call_param0
@@ -492,7 +492,7 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:         %.loc21_15.2: %Z.type = converted %.loc21_14, %Z.facet [concrete = constants.%Z.facet.c2e]
 // CHECK:STDOUT:         %C: type = class_type @C, @C(constants.%Z.facet.c2e) [concrete = constants.%C.e33]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %c: %C.e33 = bind_name c, %c.param
+// CHECK:STDOUT:       %c: %C.e33 = value_binding c, %c.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:

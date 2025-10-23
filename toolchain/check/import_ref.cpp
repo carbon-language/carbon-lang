@@ -60,7 +60,7 @@ static auto SetSpecialImportIR(Context& context, SemIR::ImportIR import_ir,
     ir_id = context.import_irs().Add(import_ir);
   }
   CARBON_CHECK(ir_id == expected_import_ir_id,
-               "Actual ImportIRId ($0) != Expected ImportIRId ({1})", ir_id,
+               "Actual ImportIRId ({0}) != Expected ImportIRId ({1})", ir_id,
                expected_import_ir_id);
 }
 
@@ -3191,7 +3191,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
   if (!inst_constant_id.is_constant()) {
     // TODO: Import of non-constant BindNames happens when importing `let`
     // declarations.
-    CARBON_CHECK(resolver.import_insts().Is<SemIR::BindName>(inst_id),
+    CARBON_CHECK(resolver.import_insts().Is<SemIR::AnyBindName>(inst_id),
                  "TryResolveInst on non-constant instruction {0}", inst_id);
     return ResolveResult::Done(SemIR::ConstantId::NotConstant);
   }
@@ -3234,9 +3234,6 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::BindAlias inst): {
       return TryResolveTypedInst(resolver, inst);
-    }
-    case CARBON_KIND(SemIR::BindingPattern inst): {
-      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::BindSymbolicName inst): {
       return TryResolveTypedInst(resolver, inst);
@@ -3343,6 +3340,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::PointerType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
+    case CARBON_KIND(SemIR::RefBindingPattern inst): {
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
+    }
     case CARBON_KIND(SemIR::RefParamPattern inst): {
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
@@ -3387,6 +3387,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::UnboundElementType inst): {
       return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::ValueBindingPattern inst): {
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::ValueParamPattern inst): {
       return TryResolveTypedInst(resolver, inst, constant_inst_id);

@@ -262,7 +262,7 @@ class A {
 // CHECK:STDOUT: fn @D.DF() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.c10 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.c10 = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.c10 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt
@@ -280,9 +280,9 @@ class A {
 // CHECK:STDOUT:   %.loc33_7: init %A = converted %.loc33_25.1, %.loc33_25.5 [concrete = constants.%A.val]
 // CHECK:STDOUT:   assign %a.var, %.loc33_7
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %A = ref_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.98e = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.98e = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.98e = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %B = var %b.var_patt
@@ -300,9 +300,9 @@ class A {
 // CHECK:STDOUT:   %.loc34_7: init %B = converted %.loc34_25.1, %.loc34_25.5 [concrete = constants.%B.val]
 // CHECK:STDOUT:   assign %b.var, %.loc34_7
 // CHECK:STDOUT:   %B.ref: type = name_ref B, @A.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %b: ref %B = bind_name b, %b.var
+// CHECK:STDOUT:   %b: ref %B = ref_binding b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.6d8 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.6d8 = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.6d8 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt
@@ -320,9 +320,9 @@ class A {
 // CHECK:STDOUT:   %.loc35_7: init %C = converted %.loc35_25.1, %.loc35_25.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign %c.var, %.loc35_7
 // CHECK:STDOUT:   %C.ref: type = name_ref C, @B.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type.d58 = binding_pattern d [concrete]
+// CHECK:STDOUT:     %d.patt: %pattern_type.d58 = ref_binding_pattern d [concrete]
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.d58 = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %D = var %d.var_patt
@@ -340,7 +340,7 @@ class A {
 // CHECK:STDOUT:   %.loc36_7: init %D = converted %.loc36_25.1, %.loc36_25.5 [concrete = constants.%D.val]
 // CHECK:STDOUT:   assign %d.var, %.loc36_7
 // CHECK:STDOUT:   %D.ref: type = name_ref D, @C.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:   %d: ref %D = bind_name d, %d.var
+// CHECK:STDOUT:   %d: ref %D = ref_binding d, %d.var
 // CHECK:STDOUT:   %AF.ref: %A.AF.type = name_ref AF, @A.%A.AF.decl [concrete = constants.%A.AF]
 // CHECK:STDOUT:   %A.AF.call: init %empty_tuple.type = call %AF.ref()
 // CHECK:STDOUT:   %BF.ref: %B.BF.type = name_ref BF, @B.%B.BF.decl [concrete = constants.%B.BF]

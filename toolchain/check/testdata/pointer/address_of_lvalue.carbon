@@ -140,7 +140,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.851 = binding_pattern s [concrete]
+// CHECK:STDOUT:     %s.patt: %pattern_type.851 = ref_binding_pattern s [concrete]
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.851 = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %struct_type.a.b.501 = var %s.var_patt
@@ -173,9 +173,9 @@ fn F() {
 // CHECK:STDOUT:     %i32.loc16_24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.b.loc16: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.501]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: ref %struct_type.a.b.501 = bind_name s, %s.var
+// CHECK:STDOUT:   %s: ref %struct_type.a.b.501 = ref_binding s, %s.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.8dd = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.8dd = ref_binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.8dd = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr.3ee = var %p.var_patt
@@ -195,9 +195,9 @@ fn F() {
 // CHECK:STDOUT:     %struct_type.a.b.loc18: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.501]
 // CHECK:STDOUT:     %ptr.loc18: type = ptr_type %struct_type.a.b.loc18 [concrete = constants.%ptr.3ee]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: ref %ptr.3ee = bind_name p, %p.var
+// CHECK:STDOUT:   %p: ref %ptr.3ee = ref_binding p, %p.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %q.patt: %pattern_type.fe8 = binding_pattern q [concrete]
+// CHECK:STDOUT:     %q.patt: %pattern_type.fe8 = ref_binding_pattern q [concrete]
 // CHECK:STDOUT:     %q.var_patt: %pattern_type.fe8 = var_pattern %q.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %q.var: ref %ptr.235 = var %q.var_patt
@@ -215,9 +215,9 @@ fn F() {
 // CHECK:STDOUT:     %i32.loc19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc19: type = ptr_type %i32.loc19 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %q: ref %ptr.235 = bind_name q, %q.var
+// CHECK:STDOUT:   %q: ref %ptr.235 = ref_binding q, %q.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %r.patt: %pattern_type.fe8 = binding_pattern r [concrete]
+// CHECK:STDOUT:     %r.patt: %pattern_type.fe8 = ref_binding_pattern r [concrete]
 // CHECK:STDOUT:     %r.var_patt: %pattern_type.fe8 = var_pattern %r.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %r.var: ref %ptr.235 = var %r.var_patt
@@ -235,9 +235,9 @@ fn F() {
 // CHECK:STDOUT:     %i32.loc20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc20: type = ptr_type %i32.loc20 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %r: ref %ptr.235 = bind_name r, %r.var
+// CHECK:STDOUT:   %r: ref %ptr.235 = ref_binding r, %r.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t.patt: %pattern_type.511 = binding_pattern t [concrete]
+// CHECK:STDOUT:     %t.patt: %pattern_type.511 = ref_binding_pattern t [concrete]
 // CHECK:STDOUT:     %t.var_patt: %pattern_type.511 = var_pattern %t.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t.var: ref %tuple.type.d07 = var %t.var_patt
@@ -271,9 +271,9 @@ fn F() {
 // CHECK:STDOUT:     %.loc22_19.2: %tuple.type.24b = tuple_literal (%i32.loc22_11, %i32.loc22_16)
 // CHECK:STDOUT:     %.loc22_19.3: type = converted %.loc22_19.2, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t: ref %tuple.type.d07 = bind_name t, %t.var
+// CHECK:STDOUT:   %t: ref %tuple.type.d07 = ref_binding t, %t.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t0.patt: %pattern_type.fe8 = binding_pattern t0 [concrete]
+// CHECK:STDOUT:     %t0.patt: %pattern_type.fe8 = ref_binding_pattern t0 [concrete]
 // CHECK:STDOUT:     %t0.var_patt: %pattern_type.fe8 = var_pattern %t0.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t0.var: ref %ptr.235 = var %t0.var_patt
@@ -292,9 +292,9 @@ fn F() {
 // CHECK:STDOUT:     %i32.loc23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc23: type = ptr_type %i32.loc23 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t0: ref %ptr.235 = bind_name t0, %t0.var
+// CHECK:STDOUT:   %t0: ref %ptr.235 = ref_binding t0, %t0.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t1.patt: %pattern_type.fe8 = binding_pattern t1 [concrete]
+// CHECK:STDOUT:     %t1.patt: %pattern_type.fe8 = ref_binding_pattern t1 [concrete]
 // CHECK:STDOUT:     %t1.var_patt: %pattern_type.fe8 = var_pattern %t1.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t1.var: ref %ptr.235 = var %t1.var_patt
@@ -313,7 +313,7 @@ fn F() {
 // CHECK:STDOUT:     %i32.loc24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc24: type = ptr_type %i32.loc24 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %t1: ref %ptr.235 = bind_name t1, %t1.var
+// CHECK:STDOUT:   %t1: ref %ptr.235 = ref_binding t1, %t1.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc24: <bound method> = bound_method %t1.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.62d
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.62d, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.380) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.d52]
 // CHECK:STDOUT:   %bound_method.loc24_3: <bound method> = bound_method %t1.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1

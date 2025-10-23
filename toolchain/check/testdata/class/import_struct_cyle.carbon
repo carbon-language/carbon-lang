@@ -63,7 +63,7 @@ fn Run() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Cycle.decl.loc4: type = class_decl @Cycle [concrete = constants.%Cycle] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %struct_type.b = var %a.var_patt [concrete]
@@ -72,7 +72,7 @@ fn Run() {
 // CHECK:STDOUT:     %ptr: type = ptr_type %Cycle.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     %struct_type.b: type = struct_type {.b: %ptr} [concrete = constants.%struct_type.b]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %struct_type.b = bind_name a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %struct_type.b = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   %Cycle.decl.loc8: type = class_decl @Cycle [concrete = constants.%Cycle] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -101,7 +101,7 @@ fn Run() {
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %struct_type.b} [concrete]
 // CHECK:STDOUT:   %complete_type.e1c: <witness> = complete_type_witness %struct_type.c [concrete]
 // CHECK:STDOUT:   %pattern_type.afd: type = pattern_type %struct_type.b [concrete]
-// CHECK:STDOUT:   %.46a: ref %ptr.257 = struct_access imports.%a.var, element0 [concrete]
+// CHECK:STDOUT:   %.d8d: ref %ptr.257 = struct_access imports.%a.var, element0 [concrete]
 // CHECK:STDOUT:   %Cycle.elem: type = unbound_element_type %Cycle, %struct_type.b [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
@@ -127,7 +127,7 @@ fn Run() {
 // CHECK:STDOUT:   %Main.import_ref.b93: <witness> = import_ref Main//a, loc11_1, loaded [concrete = constants.%complete_type.e1c]
 // CHECK:STDOUT:   %Main.import_ref.3a6 = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.455: %Cycle.elem = import_ref Main//a, loc10_8, loaded [concrete = %.354]
-// CHECK:STDOUT:   %a.patt: %pattern_type.afd = binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.afd = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:   %a.var_patt: %pattern_type.afd = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %a.var: ref %struct_type.b = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %.354: %Cycle.elem = field_decl c, element0 [concrete]
@@ -159,9 +159,9 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref.loc7_3: ref %struct_type.b = name_ref a, imports.%Main.a [concrete = imports.%a.var]
-// CHECK:STDOUT:   %.loc7_4: ref %ptr.257 = struct_access %a.ref.loc7_3, element0 [concrete = constants.%.46a]
+// CHECK:STDOUT:   %.loc7_4: ref %ptr.257 = struct_access %a.ref.loc7_3, element0 [concrete = constants.%.d8d]
 // CHECK:STDOUT:   %a.ref.loc7_11: ref %struct_type.b = name_ref a, imports.%Main.a [concrete = imports.%a.var]
-// CHECK:STDOUT:   %.loc7_12.1: ref %ptr.257 = struct_access %a.ref.loc7_11, element0 [concrete = constants.%.46a]
+// CHECK:STDOUT:   %.loc7_12.1: ref %ptr.257 = struct_access %a.ref.loc7_11, element0 [concrete = constants.%.d8d]
 // CHECK:STDOUT:   %.loc7_12.2: %ptr.257 = bind_value %.loc7_12.1
 // CHECK:STDOUT:   %.loc7_10: ref %Cycle = deref %.loc7_12.2
 // CHECK:STDOUT:   %c.ref: %Cycle.elem = name_ref c, imports.%Main.import_ref.455 [concrete = imports.%.354]

@@ -137,12 +137,12 @@ fn Test() {
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %cv.patt: %pattern_type.761 = binding_pattern cv [concrete]
+// CHECK:STDOUT:     %cv.patt: %pattern_type.761 = ref_binding_pattern cv [concrete]
 // CHECK:STDOUT:     %cv.var_patt: %pattern_type.761 = var_pattern %cv.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cv.var: ref %Class = var %cv.var_patt
 // CHECK:STDOUT:   %Class.ref.loc21: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %cv: ref %Class = bind_name cv, %cv.var
+// CHECK:STDOUT:   %cv: ref %Class = ref_binding cv, %cv.var
 // CHECK:STDOUT:   %cv.ref.loc22: ref %Class = name_ref cv, %cv
 // CHECK:STDOUT:   %j.ref.loc22: %Class.elem = name_ref j, @Class.%.loc16 [concrete = @Class.%.loc16]
 // CHECK:STDOUT:   %.loc22_5: ref %i32 = class_element_access %cv.ref.loc22, element0
@@ -166,14 +166,14 @@ fn Test() {
 // CHECK:STDOUT:   %.loc23_8: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc23 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   assign %.loc23_5, %.loc23_8
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.761 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.761 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cv.ref.loc24: ref %Class = name_ref cv, %cv
 // CHECK:STDOUT:   %Class.ref.loc24: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %.loc24: %Class = bind_value %cv.ref.loc24
-// CHECK:STDOUT:   %c: %Class = bind_name c, %.loc24
+// CHECK:STDOUT:   %c: %Class = value_binding c, %.loc24
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %cj.patt: %pattern_type.7ce = binding_pattern cj [concrete]
+// CHECK:STDOUT:     %cj.patt: %pattern_type.7ce = ref_binding_pattern cj [concrete]
 // CHECK:STDOUT:     %cj.var_patt: %pattern_type.7ce = var_pattern %cj.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cj.var: ref %i32 = var %cj.var_patt
@@ -191,9 +191,9 @@ fn Test() {
 // CHECK:STDOUT:     %int_32.loc25: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc25: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cj: ref %i32 = bind_name cj, %cj.var
+// CHECK:STDOUT:   %cj: ref %i32 = ref_binding cj, %cj.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %ck.patt: %pattern_type.7ce = binding_pattern ck [concrete]
+// CHECK:STDOUT:     %ck.patt: %pattern_type.7ce = ref_binding_pattern ck [concrete]
 // CHECK:STDOUT:     %ck.var_patt: %pattern_type.7ce = var_pattern %ck.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ck.var: ref %i32 = var %ck.var_patt
@@ -211,7 +211,7 @@ fn Test() {
 // CHECK:STDOUT:     %int_32.loc26: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc26: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ck: ref %i32 = bind_name ck, %ck.var
+// CHECK:STDOUT:   %ck: ref %i32 = ref_binding ck, %ck.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc26: <bound method> = bound_method %ck.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.a57
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.a57, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.d23) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.8ab]
 // CHECK:STDOUT:   %bound_method.loc26_3: <bound method> = bound_method %ck.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1

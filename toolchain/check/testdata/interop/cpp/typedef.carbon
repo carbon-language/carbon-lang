@@ -109,7 +109,7 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = ref_binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.var_patt: %pattern_type.7ce = var_pattern %n.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %i32 = var %n.var_patt
@@ -126,9 +126,9 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %foo.ref: type = name_ref foo, %i32.2 [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n: ref %i32 = bind_name n, %n.var
+// CHECK:STDOUT:   %n: ref %i32 = ref_binding n, %n.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.fe8 = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.fe8 = ref_binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.fe8 = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr.235 = var %p.var_patt
@@ -146,7 +146,7 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:     %bar.ref: type = name_ref bar, %i32.1 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %bar.ref [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: ref %ptr.235 = bind_name p, %p.var
+// CHECK:STDOUT:   %p: ref %ptr.235 = ref_binding p, %p.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10: <bound method> = bound_method %p.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.62d
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10_3: <bound method> = bound_method %p.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -199,7 +199,7 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT: fn @H(%c.param: %C, %d.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %pd.patt: %pattern_type.a31 = binding_pattern pd [concrete]
+// CHECK:STDOUT:     %pd.patt: %pattern_type.a31 = ref_binding_pattern pd [concrete]
 // CHECK:STDOUT:     %pd.var_patt: %pattern_type.a31 = var_pattern %pd.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pd.var: ref %ptr.d9e = var %pd.var_patt
@@ -216,9 +216,9 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:     %D.ref.loc9: type = name_ref D, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc9: type = ptr_type %D.ref.loc9 [concrete = constants.%ptr.d9e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pd: ref %ptr.d9e = bind_name pd, %pd.var
+// CHECK:STDOUT:   %pd: ref %ptr.d9e = ref_binding pd, %pd.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %pc.patt: %pattern_type.a31 = binding_pattern pc [concrete]
+// CHECK:STDOUT:     %pc.patt: %pattern_type.a31 = ref_binding_pattern pc [concrete]
 // CHECK:STDOUT:     %pc.var_patt: %pattern_type.a31 = var_pattern %pc.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pc.var: ref %ptr.d9e = var %pc.var_patt
@@ -235,7 +235,7 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc10: type = ptr_type %C.ref.loc10 [concrete = constants.%ptr.d9e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pc: ref %ptr.d9e = bind_name pc, %pc.var
+// CHECK:STDOUT:   %pc: ref %ptr.d9e = ref_binding pc, %pc.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10: <bound method> = bound_method %pc.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.fe8
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10_3: <bound method> = bound_method %pc.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1

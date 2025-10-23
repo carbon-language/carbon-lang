@@ -108,9 +108,9 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %bound_method.f36: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_3.822: %i32 = int_value 3 [concrete]
 // CHECK:STDOUT:   %struct.21d: %struct_type.b.a.c = struct_value (%int_2.ef8, %int_1.5d2, %int_3.822) [concrete]
-// CHECK:STDOUT:   %.91e: ref %i32 = struct_access file.%struct_copy.var, element1 [concrete]
-// CHECK:STDOUT:   %.657: ref %i32 = struct_access file.%struct_copy.var, element0 [concrete]
-// CHECK:STDOUT:   %.8fb: ref %i32 = struct_access file.%struct_copy.var, element2 [concrete]
+// CHECK:STDOUT:   %.44a: ref %i32 = struct_access file.%struct_copy.var, element1 [concrete]
+// CHECK:STDOUT:   %.5b7: ref %i32 = struct_access file.%struct_copy.var, element0 [concrete]
+// CHECK:STDOUT:   %.c61: ref %i32 = struct_access file.%struct_copy.var, element2 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound.b5b: <bound method> = bound_method %int_3.822, %Int.as.Copy.impl.Op.f59 [concrete]
 // CHECK:STDOUT:   %bound_method.028: <bound method> = bound_method %int_3.822, %Int.as.Copy.impl.Op.specific_fn [concrete]
 // CHECK:STDOUT:   %struct.cff: %struct_type.a.b.c = struct_value (%int_1.5d2, %int_2.ef8, %int_3.822) [concrete]
@@ -140,7 +140,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %tuple_copy.patt: %pattern_type.511 = binding_pattern tuple_copy [concrete]
+// CHECK:STDOUT:     %tuple_copy.patt: %pattern_type.511 = ref_binding_pattern tuple_copy [concrete]
 // CHECK:STDOUT:     %tuple_copy.var_patt: %pattern_type.511 = var_pattern %tuple_copy.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple_copy.var: ref %tuple.type.d07 = var %tuple_copy.var_patt [concrete]
@@ -152,9 +152,9 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %.loc4_26.2: %tuple.type.24b = tuple_literal (%i32.loc4_18, %i32.loc4_23)
 // CHECK:STDOUT:     %.loc4_26.3: type = converted %.loc4_26.2, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %tuple_copy: ref %tuple.type.d07 = bind_name tuple_copy, %tuple_copy.var [concrete = %tuple_copy.var]
+// CHECK:STDOUT:   %tuple_copy: ref %tuple.type.d07 = ref_binding tuple_copy, %tuple_copy.var [concrete = %tuple_copy.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %struct_copy.patt: %pattern_type.8ae = binding_pattern struct_copy [concrete]
+// CHECK:STDOUT:     %struct_copy.patt: %pattern_type.8ae = ref_binding_pattern struct_copy [concrete]
 // CHECK:STDOUT:     %struct_copy.var_patt: %pattern_type.8ae = var_pattern %struct_copy.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %struct_copy.var: ref %struct_type.a.b.c = var %struct_copy.var_patt [concrete]
@@ -167,9 +167,9 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %i32.loc6_41: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.b.c: type = struct_type {.a: %i32, .b: %i32, .c: %i32} [concrete = constants.%struct_type.a.b.c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %struct_copy: ref %struct_type.a.b.c = bind_name struct_copy, %struct_copy.var [concrete = %struct_copy.var]
+// CHECK:STDOUT:   %struct_copy: ref %struct_type.a.b.c = ref_binding struct_copy, %struct_copy.var [concrete = %struct_copy.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %tuple_index.patt: %pattern_type.a98 = binding_pattern tuple_index [concrete]
+// CHECK:STDOUT:     %tuple_index.patt: %pattern_type.a98 = ref_binding_pattern tuple_index [concrete]
 // CHECK:STDOUT:     %tuple_index.var_patt: %pattern_type.a98 = var_pattern %tuple_index.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple_index.var: ref %array_type = var %tuple_index.var_patt [concrete]
@@ -179,9 +179,9 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %int_1.loc8: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %array_type.loc8: type = array_type %int_1.loc8, %i32.loc8 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %tuple_index: ref %array_type = bind_name tuple_index, %tuple_index.var [concrete = %tuple_index.var]
+// CHECK:STDOUT:   %tuple_index: ref %array_type = ref_binding tuple_index, %tuple_index.var [concrete = %tuple_index.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %struct_access.patt: %pattern_type.a98 = binding_pattern struct_access [concrete]
+// CHECK:STDOUT:     %struct_access.patt: %pattern_type.a98 = ref_binding_pattern struct_access [concrete]
 // CHECK:STDOUT:     %struct_access.var_patt: %pattern_type.a98 = var_pattern %struct_access.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %struct_access.var: ref %array_type = var %struct_access.var_patt [concrete]
@@ -191,7 +191,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %int_1.loc10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %array_type.loc10: type = array_type %int_1.loc10, %i32.loc10 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %struct_access: ref %array_type = bind_name struct_access, %struct_access.var [concrete = %struct_access.var]
+// CHECK:STDOUT:   %struct_access: ref %array_type = ref_binding struct_access, %struct_access.var [concrete = %struct_access.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -280,7 +280,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %specific_fn.loc6_73.1: <specific function> = specific_function %impl.elem0.loc6_73.1, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc6_73.2: <bound method> = bound_method %.loc6_73.2, %specific_fn.loc6_73.1 [concrete = constants.%bound_method.dd6]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc6_73.1: init %i32 = call %bound_method.loc6_73.2(%.loc6_73.2) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc6_73.3: ref %i32 = struct_access file.%struct_copy.var, element1 [concrete = constants.%.91e]
+// CHECK:STDOUT:   %.loc6_73.3: ref %i32 = struct_access file.%struct_copy.var, element1 [concrete = constants.%.44a]
 // CHECK:STDOUT:   %.loc6_73.4: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc6_73.1 to %.loc6_73.3 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc6_73.5: %i32 = struct_access %.loc6_73.1, element0 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %impl.elem0.loc6_73.2: %.7fa = impl_witness_access constants.%Copy.impl_witness.a32, element0 [concrete = constants.%Int.as.Copy.impl.Op.f59]
@@ -288,7 +288,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %specific_fn.loc6_73.2: <specific function> = specific_function %impl.elem0.loc6_73.2, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc6_73.4: <bound method> = bound_method %.loc6_73.5, %specific_fn.loc6_73.2 [concrete = constants.%bound_method.bb3]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc6_73.2: init %i32 = call %bound_method.loc6_73.4(%.loc6_73.5) [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc6_73.6: ref %i32 = struct_access file.%struct_copy.var, element0 [concrete = constants.%.657]
+// CHECK:STDOUT:   %.loc6_73.6: ref %i32 = struct_access file.%struct_copy.var, element0 [concrete = constants.%.5b7]
 // CHECK:STDOUT:   %.loc6_73.7: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc6_73.2 to %.loc6_73.6 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc6_73.8: %i32 = struct_access %.loc6_73.1, element2 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %impl.elem0.loc6_73.3: %.7fa = impl_witness_access constants.%Copy.impl_witness.a32, element0 [concrete = constants.%Int.as.Copy.impl.Op.f59]
@@ -296,7 +296,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %specific_fn.loc6_73.3: <specific function> = specific_function %impl.elem0.loc6_73.3, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc6_73.6: <bound method> = bound_method %.loc6_73.8, %specific_fn.loc6_73.3 [concrete = constants.%bound_method.028]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc6_73.3: init %i32 = call %bound_method.loc6_73.6(%.loc6_73.8) [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc6_73.9: ref %i32 = struct_access file.%struct_copy.var, element2 [concrete = constants.%.8fb]
+// CHECK:STDOUT:   %.loc6_73.9: ref %i32 = struct_access file.%struct_copy.var, element2 [concrete = constants.%.c61]
 // CHECK:STDOUT:   %.loc6_73.10: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc6_73.3 to %.loc6_73.9 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc6_73.11: init %struct_type.a.b.c = struct_init (%.loc6_73.4, %.loc6_73.7, %.loc6_73.10) to file.%struct_copy.var [concrete = constants.%struct.cff]
 // CHECK:STDOUT:   %.loc6_1: init %struct_type.a.b.c = converted %.loc6_73.1, %.loc6_73.11 [concrete = constants.%struct.cff]
@@ -409,7 +409,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %array_index.patt: %pattern_type.a98 = binding_pattern array_index [concrete]
+// CHECK:STDOUT:     %array_index.patt: %pattern_type.a98 = ref_binding_pattern array_index [concrete]
 // CHECK:STDOUT:     %array_index.var_patt: %pattern_type.a98 = var_pattern %array_index.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %array_index.var: ref %array_type.0cb = var %array_index.var_patt [concrete]
@@ -419,7 +419,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %array_type: type = array_type %int_1, %i32 [concrete = constants.%array_type.0cb]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %array_index: ref %array_type.0cb = bind_name array_index, %array_index.var [concrete = %array_index.var]
+// CHECK:STDOUT:   %array_index: ref %array_type.0cb = ref_binding array_index, %array_index.var [concrete = %array_index.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -628,7 +628,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %u.patt: @F.%pattern_type.loc6 (%pattern_type.973) = binding_pattern u [concrete]
+// CHECK:STDOUT:       %u.patt: @F.%pattern_type.loc6 (%pattern_type.973) = ref_binding_pattern u [concrete]
 // CHECK:STDOUT:       %u.var_patt: @F.%pattern_type.loc6 (%pattern_type.973) = var_pattern %u.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %u.var: ref @F.%tuple.type (%tuple.type.4f2) = var %u.var_patt
@@ -640,9 +640,9 @@ fn G(N:! i32) {
 // CHECK:STDOUT:       %.loc6_22.2: %tuple.type.24b = tuple_literal (%ptr.loc6_12.1, %const.loc6_15.1)
 // CHECK:STDOUT:       %.loc6_22.3: type = converted %.loc6_22.2, constants.%tuple.type.4f2 [symbolic = %tuple.type (constants.%tuple.type.4f2)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %u: ref @F.%tuple.type (%tuple.type.4f2) = bind_name u, %u.var
+// CHECK:STDOUT:     %u: ref @F.%tuple.type (%tuple.type.4f2) = ref_binding u, %u.var
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %v.patt: @F.%pattern_type.loc7 (%pattern_type.95a) = binding_pattern v [concrete]
+// CHECK:STDOUT:       %v.patt: @F.%pattern_type.loc7 (%pattern_type.95a) = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:       %v.var_patt: @F.%pattern_type.loc7 (%pattern_type.95a) = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v.var: ref @F.%struct_type.a.loc7_16.2 (%struct_type.a) = var %v.var_patt
@@ -650,9 +650,9 @@ fn G(N:! i32) {
 // CHECK:STDOUT:       %T.ref.loc7: type = name_ref T, %T.loc4_6.2 [symbolic = %T.loc4_6.1 (constants.%T)]
 // CHECK:STDOUT:       %struct_type.a.loc7_16.1: type = struct_type {.a: @F.%T.loc4_6.1 (%T)} [symbolic = %struct_type.a.loc7_16.2 (constants.%struct_type.a)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v: ref @F.%struct_type.a.loc7_16.2 (%struct_type.a) = bind_name v, %v.var
+// CHECK:STDOUT:     %v: ref @F.%struct_type.a.loc7_16.2 (%struct_type.a) = ref_binding v, %v.var
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %w.patt: @F.%pattern_type.loc8 (%pattern_type.035) = binding_pattern w [concrete]
+// CHECK:STDOUT:       %w.patt: @F.%pattern_type.loc8 (%pattern_type.035) = ref_binding_pattern w [concrete]
 // CHECK:STDOUT:       %w.var_patt: @F.%pattern_type.loc8 (%pattern_type.035) = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %w.var: ref @F.%array_type.loc8_20.2 (%array_type.ec2) = var %w.var_patt
@@ -661,7 +661,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:       %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
 // CHECK:STDOUT:       %array_type.loc8_20.1: type = array_type %int_5, %T.ref.loc8 [symbolic = %array_type.loc8_20.2 (constants.%array_type.ec2)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %w: ref @F.%array_type.loc8_20.2 (%array_type.ec2) = bind_name w, %w.var
+// CHECK:STDOUT:     %w: ref @F.%array_type.loc8_20.2 (%array_type.ec2) = ref_binding w, %w.var
 // CHECK:STDOUT:     %impl.elem0.loc8: @F.%.loc8_3 (%.0ab) = impl_witness_access constants.%Destroy.impl_witness.aac, element0 [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.loc8 (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.1fc)]
 // CHECK:STDOUT:     %bound_method.loc8_3.1: <bound method> = bound_method %w.var, %impl.elem0.loc8
 // CHECK:STDOUT:     %specific_fn.loc8: <specific function> = specific_function %impl.elem0.loc8, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.daa) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.loc8 (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.deb)]
@@ -707,7 +707,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %k.patt: @G.%pattern_type (%pattern_type.aeb) = binding_pattern k [concrete]
+// CHECK:STDOUT:       %k.patt: @G.%pattern_type (%pattern_type.aeb) = ref_binding_pattern k [concrete]
 // CHECK:STDOUT:       %k.var_patt: @G.%pattern_type (%pattern_type.aeb) = var_pattern %k.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %k.var: ref @G.%array_type.loc14_22.2 (%array_type.120) = var %k.var_patt
@@ -724,7 +724,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:       %.loc14_21.2: Core.IntLiteral = converted %N.ref, %.loc14_21.1 [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc14_21.2 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
 // CHECK:STDOUT:       %array_type.loc14_22.1: type = array_type %.loc14_21.2, %i32.loc14 [symbolic = %array_type.loc14_22.2 (constants.%array_type.120)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %k: ref @G.%array_type.loc14_22.2 (%array_type.120) = bind_name k, %k.var
+// CHECK:STDOUT:     %k: ref @G.%array_type.loc14_22.2 (%array_type.120) = ref_binding k, %k.var
 // CHECK:STDOUT:     %impl.elem0.loc14_3: @G.%.loc14_3 (%.728) = impl_witness_access constants.%Destroy.impl_witness.349, element0 [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.0e5)]
 // CHECK:STDOUT:     %bound_method.loc14_3.1: <bound method> = bound_method %k.var, %impl.elem0.loc14_3
 // CHECK:STDOUT:     %specific_fn.loc14_3: <specific function> = specific_function %impl.elem0.loc14_3, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.8b7) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.f2e)]

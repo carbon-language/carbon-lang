@@ -172,7 +172,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %pattern_type.dab = binding_pattern f [concrete]
+// CHECK:STDOUT:     %f.patt: %pattern_type.dab = value_binding_pattern f [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_21.1: type = splice_block %.loc6_21.3 [concrete = Core.FloatLiteral] {
 // CHECK:STDOUT:     %FloatLiteral.ref: %FloatLiteral.type = name_ref FloatLiteral, imports.%Main.FloatLiteral [concrete = constants.%FloatLiteral]
@@ -182,7 +182,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_55.1: Core.FloatLiteral = value_of_initializer @__global_init.%FloatLiteralToFloatLiteral.call [concrete = constants.%float]
 // CHECK:STDOUT:   %.loc6_55.2: Core.FloatLiteral = converted @__global_init.%FloatLiteralToFloatLiteral.call, %.loc6_55.1 [concrete = constants.%float]
-// CHECK:STDOUT:   %f: Core.FloatLiteral = bind_name f, %.loc6_55.2
+// CHECK:STDOUT:   %f: Core.FloatLiteral = value_binding f, %.loc6_55.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -215,7 +215,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.0ae = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.0ae = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_8: type = splice_block %f64.loc6 [concrete = constants.%f64.d77] {
 // CHECK:STDOUT:     %int_64.loc6: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
@@ -223,9 +223,9 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_39.1: %f64.d77 = value_of_initializer @__global_init.%FloatLiteralToFloat64.call.loc6 [concrete = constants.%float.0a8]
 // CHECK:STDOUT:   %.loc6_39.2: %f64.d77 = converted @__global_init.%FloatLiteralToFloat64.call.loc6, %.loc6_39.1 [concrete = constants.%float.0a8]
-// CHECK:STDOUT:   %a: %f64.d77 = bind_name a, %.loc6_39.2
+// CHECK:STDOUT:   %a: %f64.d77 = value_binding a, %.loc6_39.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.0ae = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.0ae = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_8: type = splice_block %f64.loc7 [concrete = constants.%f64.d77] {
 // CHECK:STDOUT:     %int_64.loc7: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
@@ -233,9 +233,9 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_39.1: %f64.d77 = value_of_initializer @__global_init.%FloatLiteralToFloat64.call.loc7 [concrete = constants.%float.d20]
 // CHECK:STDOUT:   %.loc7_39.2: %f64.d77 = converted @__global_init.%FloatLiteralToFloat64.call.loc7, %.loc7_39.1 [concrete = constants.%float.d20]
-// CHECK:STDOUT:   %b: %f64.d77 = bind_name b, %.loc7_39.2
+// CHECK:STDOUT:   %b: %f64.d77 = value_binding b, %.loc7_39.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.0ae = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.0ae = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_8: type = splice_block %f64.loc8 [concrete = constants.%f64.d77] {
 // CHECK:STDOUT:     %int_64.loc8: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
@@ -243,7 +243,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_43.1: %f64.d77 = value_of_initializer @__global_init.%FloatLiteralToFloat64.call.loc8 [concrete = constants.%float.bde]
 // CHECK:STDOUT:   %.loc8_43.2: %f64.d77 = converted @__global_init.%FloatLiteralToFloat64.call.loc8, %.loc8_43.1 [concrete = constants.%float.bde]
-// CHECK:STDOUT:   %c: %f64.d77 = bind_name c, %.loc8_43.2
+// CHECK:STDOUT:   %c: %f64.d77 = value_binding c, %.loc8_43.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -282,7 +282,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.201 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.201 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_8: type = splice_block %f32.loc6 [concrete = constants.%f32.97e] {
 // CHECK:STDOUT:     %int_32.loc6: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -290,9 +290,9 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_39.1: %f32.97e = value_of_initializer @__global_init.%FloatLiteralToFloat32.call.loc6 [concrete = constants.%float.4db]
 // CHECK:STDOUT:   %.loc6_39.2: %f32.97e = converted @__global_init.%FloatLiteralToFloat32.call.loc6, %.loc6_39.1 [concrete = constants.%float.4db]
-// CHECK:STDOUT:   %a: %f32.97e = bind_name a, %.loc6_39.2
+// CHECK:STDOUT:   %a: %f32.97e = value_binding a, %.loc6_39.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.201 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.201 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_8: type = splice_block %f32.loc7 [concrete = constants.%f32.97e] {
 // CHECK:STDOUT:     %int_32.loc7: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -300,9 +300,9 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_39.1: %f32.97e = value_of_initializer @__global_init.%FloatLiteralToFloat32.call.loc7 [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %.loc7_39.2: %f32.97e = converted @__global_init.%FloatLiteralToFloat32.call.loc7, %.loc7_39.1 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %b: %f32.97e = bind_name b, %.loc7_39.2
+// CHECK:STDOUT:   %b: %f32.97e = value_binding b, %.loc7_39.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.201 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.201 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_8: type = splice_block %f32.loc8 [concrete = constants.%f32.97e] {
 // CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -310,7 +310,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_42.1: %f32.97e = value_of_initializer @__global_init.%FloatLiteralToFloat32.call.loc8 [concrete = constants.%float.520]
 // CHECK:STDOUT:   %.loc8_42.2: %f32.97e = converted @__global_init.%FloatLiteralToFloat32.call.loc8, %.loc8_42.1 [concrete = constants.%float.520]
-// CHECK:STDOUT:   %c: %f32.97e = bind_name c, %.loc8_42.2
+// CHECK:STDOUT:   %c: %f32.97e = value_binding c, %.loc8_42.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -368,7 +368,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.0ae = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.0ae = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_8: type = splice_block %f64.loc6 [concrete = constants.%f64.d77] {
 // CHECK:STDOUT:     %int_64.loc6: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
@@ -376,9 +376,9 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_34.1: %f64.d77 = value_of_initializer @__global_init.%Float64ToFloat64.call.loc6 [concrete = constants.%float.0a8]
 // CHECK:STDOUT:   %.loc6_34.2: %f64.d77 = converted @__global_init.%Float64ToFloat64.call.loc6, %.loc6_34.1 [concrete = constants.%float.0a8]
-// CHECK:STDOUT:   %a: %f64.d77 = bind_name a, %.loc6_34.2
+// CHECK:STDOUT:   %a: %f64.d77 = value_binding a, %.loc6_34.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.0ae = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.0ae = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_8: type = splice_block %f64.loc7 [concrete = constants.%f64.d77] {
 // CHECK:STDOUT:     %int_64.loc7: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
@@ -386,9 +386,9 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_34.1: %f64.d77 = value_of_initializer @__global_init.%Float64ToFloat64.call.loc7 [concrete = constants.%float.d20]
 // CHECK:STDOUT:   %.loc7_34.2: %f64.d77 = converted @__global_init.%Float64ToFloat64.call.loc7, %.loc7_34.1 [concrete = constants.%float.d20]
-// CHECK:STDOUT:   %b: %f64.d77 = bind_name b, %.loc7_34.2
+// CHECK:STDOUT:   %b: %f64.d77 = value_binding b, %.loc7_34.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.0ae = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.0ae = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_8: type = splice_block %f64.loc8 [concrete = constants.%f64.d77] {
 // CHECK:STDOUT:     %int_64.loc8: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
@@ -396,7 +396,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_38.1: %f64.d77 = value_of_initializer @__global_init.%Float64ToFloat64.call.loc8 [concrete = constants.%float.bde]
 // CHECK:STDOUT:   %.loc8_38.2: %f64.d77 = converted @__global_init.%Float64ToFloat64.call.loc8, %.loc8_38.1 [concrete = constants.%float.bde]
-// CHECK:STDOUT:   %c: %f64.d77 = bind_name c, %.loc8_38.2
+// CHECK:STDOUT:   %c: %f64.d77 = value_binding c, %.loc8_38.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -475,7 +475,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.201 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.201 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_8: type = splice_block %f32.loc6 [concrete = constants.%f32.97e] {
 // CHECK:STDOUT:     %int_32.loc6: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -483,9 +483,9 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_34.1: %f32.97e = value_of_initializer @__global_init.%Float32ToFloat32.call.loc6 [concrete = constants.%float.4db]
 // CHECK:STDOUT:   %.loc6_34.2: %f32.97e = converted @__global_init.%Float32ToFloat32.call.loc6, %.loc6_34.1 [concrete = constants.%float.4db]
-// CHECK:STDOUT:   %a: %f32.97e = bind_name a, %.loc6_34.2
+// CHECK:STDOUT:   %a: %f32.97e = value_binding a, %.loc6_34.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.201 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.201 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_8: type = splice_block %f32.loc7 [concrete = constants.%f32.97e] {
 // CHECK:STDOUT:     %int_32.loc7: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -493,9 +493,9 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_34.1: %f32.97e = value_of_initializer @__global_init.%Float32ToFloat32.call.loc7 [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %.loc7_34.2: %f32.97e = converted @__global_init.%Float32ToFloat32.call.loc7, %.loc7_34.1 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %b: %f32.97e = bind_name b, %.loc7_34.2
+// CHECK:STDOUT:   %b: %f32.97e = value_binding b, %.loc7_34.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.201 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.201 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_8: type = splice_block %f32.loc8 [concrete = constants.%f32.97e] {
 // CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -503,7 +503,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_37.1: %f32.97e = value_of_initializer @__global_init.%Float32ToFloat32.call.loc8 [concrete = constants.%float.520]
 // CHECK:STDOUT:   %.loc8_37.2: %f32.97e = converted @__global_init.%Float32ToFloat32.call.loc8, %.loc8_37.1 [concrete = constants.%float.520]
-// CHECK:STDOUT:   %c: %f32.97e = bind_name c, %.loc8_37.2
+// CHECK:STDOUT:   %c: %f32.97e = value_binding c, %.loc8_37.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -577,7 +577,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.201 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.201 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_8: type = splice_block %f32 [concrete = constants.%f32.97e] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -585,7 +585,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_34.1: %f32.97e = value_of_initializer @__global_init.%Float64ToFloat32.call [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %.loc6_34.2: %f32.97e = converted @__global_init.%Float64ToFloat32.call, %.loc6_34.1 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %a: %f32.97e = bind_name a, %.loc6_34.2
+// CHECK:STDOUT:   %a: %f32.97e = value_binding a, %.loc6_34.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -647,7 +647,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.201 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.201 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_8: type = splice_block %f32.loc11 [concrete = constants.%f32.97e] {
 // CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -655,9 +655,9 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_37.1: %f32.97e = value_of_initializer @__global_init.%Float64ToFloat32.call [concrete = <error>]
 // CHECK:STDOUT:   %.loc11_37.2: %f32.97e = converted @__global_init.%Float64ToFloat32.call, %.loc11_37.1 [concrete = <error>]
-// CHECK:STDOUT:   %a: %f32.97e = bind_name a, %.loc11_37.2 [concrete = <error>]
+// CHECK:STDOUT:   %a: %f32.97e = value_binding a, %.loc11_37.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.201 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.201 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_8: type = splice_block %f32.loc16 [concrete = constants.%f32.97e] {
 // CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -665,9 +665,9 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_42.1: %f32.97e = value_of_initializer @__global_init.%FloatLiteralToFloat32.call [concrete = <error>]
 // CHECK:STDOUT:   %.loc16_42.2: %f32.97e = converted @__global_init.%FloatLiteralToFloat32.call, %.loc16_42.1 [concrete = <error>]
-// CHECK:STDOUT:   %b: %f32.97e = bind_name b, %.loc16_42.2 [concrete = <error>]
+// CHECK:STDOUT:   %b: %f32.97e = value_binding b, %.loc16_42.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.0ae = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.0ae = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc21_8: type = splice_block %f64 [concrete = constants.%f64.d77] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
@@ -675,7 +675,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc21_43.1: %f64.d77 = value_of_initializer @__global_init.%FloatLiteralToFloat64.call [concrete = <error>]
 // CHECK:STDOUT:   %.loc21_43.2: %f64.d77 = converted @__global_init.%FloatLiteralToFloat64.call, %.loc21_43.1 [concrete = <error>]
-// CHECK:STDOUT:   %c: %f64.d77 = bind_name c, %.loc21_43.2 [concrete = <error>]
+// CHECK:STDOUT:   %c: %f64.d77 = value_binding c, %.loc21_43.2 [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -740,7 +740,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.0ae = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.0ae = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_8: type = splice_block %f64.loc6 [concrete = constants.%f64.d77] {
 // CHECK:STDOUT:     %int_64.loc6: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
@@ -748,9 +748,9 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_34.1: %f64.d77 = value_of_initializer @__global_init.%Float32ToFloat64.call.loc6 [concrete = constants.%float.d20]
 // CHECK:STDOUT:   %.loc6_34.2: %f64.d77 = converted @__global_init.%Float32ToFloat64.call.loc6, %.loc6_34.1 [concrete = constants.%float.d20]
-// CHECK:STDOUT:   %a: %f64.d77 = bind_name a, %.loc6_34.2
+// CHECK:STDOUT:   %a: %f64.d77 = value_binding a, %.loc6_34.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.0ae = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.0ae = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_8: type = splice_block %f64.loc7 [concrete = constants.%f64.d77] {
 // CHECK:STDOUT:     %int_64.loc7: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
@@ -758,7 +758,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc7_37.1: %f64.d77 = value_of_initializer @__global_init.%Float32ToFloat64.call.loc7 [concrete = constants.%float.6a7]
 // CHECK:STDOUT:   %.loc7_37.2: %f64.d77 = converted @__global_init.%Float32ToFloat64.call.loc7, %.loc7_37.1 [concrete = constants.%float.6a7]
-// CHECK:STDOUT:   %b: %f64.d77 = bind_name b, %.loc7_37.2
+// CHECK:STDOUT:   %b: %f64.d77 = value_binding b, %.loc7_37.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -819,7 +819,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %not_constant_64.patt: %pattern_type.0ae = binding_pattern not_constant_64 [concrete]
+// CHECK:STDOUT:     %not_constant_64.patt: %pattern_type.0ae = value_binding_pattern not_constant_64 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc6_22: type = splice_block %f64.loc6 [concrete = constants.%f64.d77] {
 // CHECK:STDOUT:     %int_64.loc6: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
@@ -832,9 +832,9 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f64.d77 = call %bound_method.loc6_28.2(@__global_init.%float) [concrete = constants.%float.0a8]
 // CHECK:STDOUT:   %.loc6_28.1: %f64.d77 = value_of_initializer %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.0a8]
 // CHECK:STDOUT:   %.loc6_28.2: %f64.d77 = converted @__global_init.%float, %.loc6_28.1 [concrete = constants.%float.0a8]
-// CHECK:STDOUT:   %not_constant_64: %f64.d77 = bind_name not_constant_64, %.loc6_28.2
+// CHECK:STDOUT:   %not_constant_64: %f64.d77 = value_binding not_constant_64, %.loc6_28.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %convert_not_constant.patt: %pattern_type.0ae = binding_pattern convert_not_constant [concrete]
+// CHECK:STDOUT:     %convert_not_constant.patt: %pattern_type.0ae = value_binding_pattern convert_not_constant [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_27: type = splice_block %f64.loc15 [concrete = constants.%f64.d77] {
 // CHECK:STDOUT:     %int_64.loc15: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
@@ -842,7 +842,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc15_65.1: %f64.d77 = value_of_initializer @__global_init.%Float64ToFloat64.call
 // CHECK:STDOUT:   %.loc15_65.2: %f64.d77 = converted @__global_init.%Float64ToFloat64.call, %.loc15_65.1
-// CHECK:STDOUT:   %convert_not_constant: %f64.d77 = bind_name convert_not_constant, %.loc15_65.2
+// CHECK:STDOUT:   %convert_not_constant: %f64.d77 = value_binding convert_not_constant, %.loc15_65.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -82,13 +82,13 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.v [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.abf: ref %empty_tuple.type = class_element_access file.%d_val.var, element0 [concrete]
+// CHECK:STDOUT:   %.70b: ref %empty_tuple.type = class_element_access file.%d_val.var, element0 [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %.914: ref %empty_tuple.type = class_element_access file.%c_val.var, element0 [concrete]
-// CHECK:STDOUT:   %.604: ref %empty_tuple.type = class_element_access file.%b_val.var, element0 [concrete]
-// CHECK:STDOUT:   %.b4e: ref %empty_tuple.type = class_element_access file.%a_val.var, element0 [concrete]
+// CHECK:STDOUT:   %.cbd: ref %empty_tuple.type = class_element_access file.%c_val.var, element0 [concrete]
+// CHECK:STDOUT:   %.89b: ref %empty_tuple.type = class_element_access file.%b_val.var, element0 [concrete]
+// CHECK:STDOUT:   %.4f1: ref %empty_tuple.type = class_element_access file.%a_val.var, element0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -117,33 +117,33 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d_val.patt: %pattern_type = binding_pattern d_val [concrete]
+// CHECK:STDOUT:     %d_val.patt: %pattern_type = ref_binding_pattern d_val [concrete]
 // CHECK:STDOUT:     %d_val.var_patt: %pattern_type = var_pattern %d_val.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d_val.var: ref %C = var %d_val.var_patt [concrete]
 // CHECK:STDOUT:   %d.ref: type = name_ref d, imports.%Main.d [concrete = constants.%C]
-// CHECK:STDOUT:   %d_val: ref %C = bind_name d_val, %d_val.var [concrete = %d_val.var]
+// CHECK:STDOUT:   %d_val: ref %C = ref_binding d_val, %d_val.var [concrete = %d_val.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c_val.patt: %pattern_type = binding_pattern c_val [concrete]
+// CHECK:STDOUT:     %c_val.patt: %pattern_type = ref_binding_pattern c_val [concrete]
 // CHECK:STDOUT:     %c_val.var_patt: %pattern_type = var_pattern %c_val.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c_val.var: ref %C = var %c_val.var_patt [concrete]
 // CHECK:STDOUT:   %c.ref: type = name_ref c, imports.%Main.c [concrete = constants.%C]
-// CHECK:STDOUT:   %c_val: ref %C = bind_name c_val, %c_val.var [concrete = %c_val.var]
+// CHECK:STDOUT:   %c_val: ref %C = ref_binding c_val, %c_val.var [concrete = %c_val.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b_val.patt: %pattern_type = binding_pattern b_val [concrete]
+// CHECK:STDOUT:     %b_val.patt: %pattern_type = ref_binding_pattern b_val [concrete]
 // CHECK:STDOUT:     %b_val.var_patt: %pattern_type = var_pattern %b_val.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_val.var: ref %C = var %b_val.var_patt [concrete]
 // CHECK:STDOUT:   %b.ref: type = name_ref b, imports.%Main.b [concrete = constants.%C]
-// CHECK:STDOUT:   %b_val: ref %C = bind_name b_val, %b_val.var [concrete = %b_val.var]
+// CHECK:STDOUT:   %b_val: ref %C = ref_binding b_val, %b_val.var [concrete = %b_val.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a_val.patt: %pattern_type = binding_pattern a_val [concrete]
+// CHECK:STDOUT:     %a_val.patt: %pattern_type = ref_binding_pattern a_val [concrete]
 // CHECK:STDOUT:     %a_val.var_patt: %pattern_type = var_pattern %a_val.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a_val.var: ref %C = var %a_val.var_patt [concrete]
 // CHECK:STDOUT:   %a.ref: type = name_ref a, imports.%Main.a [concrete = constants.%C]
-// CHECK:STDOUT:   %a_val: ref %C = bind_name a_val, %a_val.var [concrete = %a_val.var]
+// CHECK:STDOUT:   %a_val: ref %C = ref_binding a_val, %a_val.var [concrete = %a_val.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"] {
@@ -158,7 +158,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_23.1: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:   %.loc7_24.1: %struct_type.v = struct_literal (%.loc7_23.1)
-// CHECK:STDOUT:   %.loc7_24.2: ref %empty_tuple.type = class_element_access file.%d_val.var, element0 [concrete = constants.%.abf]
+// CHECK:STDOUT:   %.loc7_24.2: ref %empty_tuple.type = class_element_access file.%d_val.var, element0 [concrete = constants.%.70b]
 // CHECK:STDOUT:   %.loc7_23.2: init %empty_tuple.type = tuple_init () to %.loc7_24.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_24.3: init %empty_tuple.type = converted %.loc7_23.1, %.loc7_23.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_24.4: init %C = class_init (%.loc7_24.3), file.%d_val.var [concrete = constants.%C.val]
@@ -166,9 +166,9 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   assign file.%d_val.var, %.loc7_1
 // CHECK:STDOUT:   %d_val.ref: ref %C = name_ref d_val, file.%d_val [concrete = file.%d_val.var]
 // CHECK:STDOUT:   %v.ref.loc8: %C.elem = name_ref v, imports.%Main.import_ref.f99 [concrete = imports.%.2fc]
-// CHECK:STDOUT:   %.loc8_27.1: ref %empty_tuple.type = class_element_access %d_val.ref, element0 [concrete = constants.%.abf]
+// CHECK:STDOUT:   %.loc8_27.1: ref %empty_tuple.type = class_element_access %d_val.ref, element0 [concrete = constants.%.70b]
 // CHECK:STDOUT:   %.loc8_29.1: %struct_type.v = struct_literal (%.loc8_27.1)
-// CHECK:STDOUT:   %.loc8_29.2: ref %empty_tuple.type = class_element_access file.%c_val.var, element0 [concrete = constants.%.914]
+// CHECK:STDOUT:   %.loc8_29.2: ref %empty_tuple.type = class_element_access file.%c_val.var, element0 [concrete = constants.%.cbd]
 // CHECK:STDOUT:   %.loc8_27.2: init %empty_tuple.type = tuple_init () to %.loc8_29.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_29.3: init %empty_tuple.type = converted %.loc8_27.1, %.loc8_27.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_29.4: init %C = class_init (%.loc8_29.3), file.%c_val.var [concrete = constants.%C.val]
@@ -176,9 +176,9 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   assign file.%c_val.var, %.loc8_1
 // CHECK:STDOUT:   %c_val.ref: ref %C = name_ref c_val, file.%c_val [concrete = file.%c_val.var]
 // CHECK:STDOUT:   %v.ref.loc9: %C.elem = name_ref v, imports.%Main.import_ref.f99 [concrete = imports.%.2fc]
-// CHECK:STDOUT:   %.loc9_27.1: ref %empty_tuple.type = class_element_access %c_val.ref, element0 [concrete = constants.%.914]
+// CHECK:STDOUT:   %.loc9_27.1: ref %empty_tuple.type = class_element_access %c_val.ref, element0 [concrete = constants.%.cbd]
 // CHECK:STDOUT:   %.loc9_29.1: %struct_type.v = struct_literal (%.loc9_27.1)
-// CHECK:STDOUT:   %.loc9_29.2: ref %empty_tuple.type = class_element_access file.%b_val.var, element0 [concrete = constants.%.604]
+// CHECK:STDOUT:   %.loc9_29.2: ref %empty_tuple.type = class_element_access file.%b_val.var, element0 [concrete = constants.%.89b]
 // CHECK:STDOUT:   %.loc9_27.2: init %empty_tuple.type = tuple_init () to %.loc9_29.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc9_29.3: init %empty_tuple.type = converted %.loc9_27.1, %.loc9_27.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc9_29.4: init %C = class_init (%.loc9_29.3), file.%b_val.var [concrete = constants.%C.val]
@@ -186,9 +186,9 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   assign file.%b_val.var, %.loc9_1
 // CHECK:STDOUT:   %b_val.ref: ref %C = name_ref b_val, file.%b_val [concrete = file.%b_val.var]
 // CHECK:STDOUT:   %v.ref.loc10: %C.elem = name_ref v, imports.%Main.import_ref.f99 [concrete = imports.%.2fc]
-// CHECK:STDOUT:   %.loc10_27.1: ref %empty_tuple.type = class_element_access %b_val.ref, element0 [concrete = constants.%.604]
+// CHECK:STDOUT:   %.loc10_27.1: ref %empty_tuple.type = class_element_access %b_val.ref, element0 [concrete = constants.%.89b]
 // CHECK:STDOUT:   %.loc10_29.1: %struct_type.v = struct_literal (%.loc10_27.1)
-// CHECK:STDOUT:   %.loc10_29.2: ref %empty_tuple.type = class_element_access file.%a_val.var, element0 [concrete = constants.%.b4e]
+// CHECK:STDOUT:   %.loc10_29.2: ref %empty_tuple.type = class_element_access file.%a_val.var, element0 [concrete = constants.%.4f1]
 // CHECK:STDOUT:   %.loc10_27.2: init %empty_tuple.type = tuple_init () to %.loc10_29.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc10_29.3: init %empty_tuple.type = converted %.loc10_27.1, %.loc10_27.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc10_29.4: init %C = class_init (%.loc10_29.3), file.%a_val.var [concrete = constants.%C.val]

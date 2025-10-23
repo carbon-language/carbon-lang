@@ -36,6 +36,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       value_stores_(&value_stores),
       filename_(std::move(filename)),
       entity_names_(check_ir_id),
+      cpp_global_vars_(check_ir_id),
       functions_(check_ir_id),
       cpp_overload_sets_(check_ir_id),
       classes_(check_ir_id),
@@ -53,8 +54,10 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       insts_(this, SingletonInstKinds.size() + 1),
       vtables_(check_ir_id),
       constant_values_(ConstantId::NotConstant, &insts_),
-      inst_blocks_(allocator_),
-      constants_(this) {
+      inst_blocks_(allocator_, check_ir_id),
+      constants_(this),
+      // 1 reserved id for `StructTypeFields::Empty`.
+      struct_type_fields_(allocator_, IdTag(check_ir_id.index, 1)) {
   // `type` and the error type are both complete & concrete types.
   types_.SetComplete(
       TypeType::TypeId,

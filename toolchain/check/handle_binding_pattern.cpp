@@ -47,6 +47,21 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   // A non-generic template binding is diagnosed by the parser.
   is_template &= is_generic;
 
+  SemIR::InstKind pattern_inst_kind;
+  switch (node_kind) {
+    case Parse::NodeKind::CompileTimeBindingPattern:
+      pattern_inst_kind = SemIR::InstKind::SymbolicBindingPattern;
+      break;
+    case Parse::NodeKind::LetBindingPattern:
+      pattern_inst_kind = SemIR::InstKind::ValueBindingPattern;
+      break;
+    case Parse::NodeKind::VarBindingPattern:
+      pattern_inst_kind = SemIR::InstKind::RefBindingPattern;
+      break;
+    default:
+      CARBON_FATAL("Unexpected node kind: {0}", node_kind);
+  }
+
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 
   const DeclIntroducerState& introducer =
@@ -57,7 +72,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     // scopes, but right now we don't support qualified names here.
     auto binding =
         AddBindingPattern(context, name_node, name_id, cast_type_id,
-                          type_expr_region_id, is_generic, is_template);
+                          type_expr_region_id, pattern_inst_kind, is_template);
 
     // TODO: If `is_generic`, then `binding.bind_id is a BindSymbolicName. Subst
     // the `.Self` of type `type` in the `cast_type_id` type (a `FacetType`)

@@ -129,7 +129,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT: fn @F() -> %return.param: %struct_type.a.b {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.a5c = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.a5c = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeF64.ref: %MakeF64.type = name_ref MakeF64, file.%MakeF64.decl [concrete = constants.%MakeF64]
 // CHECK:STDOUT:   %MakeF64.call: init %f64.d77 = call %MakeF64.ref()
@@ -149,9 +149,9 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %.loc19_62.5: %f64.d77 = converted %MakeF64.call, %.loc19_62.4
 // CHECK:STDOUT:   %struct.loc19: %struct_type.a.b = struct_value (%.loc19_62.3, %.loc19_62.5)
 // CHECK:STDOUT:   %.loc19_62.6: %struct_type.a.b = converted %.loc19_62.1, %struct.loc19
-// CHECK:STDOUT:   %x: %struct_type.a.b = bind_name x, %.loc19_62.6
+// CHECK:STDOUT:   %x: %struct_type.a.b = value_binding x, %.loc19_62.6
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type.b43 = binding_pattern y [concrete]
+// CHECK:STDOUT:     %y.patt: %pattern_type.b43 = value_binding_pattern y [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.ref: %struct_type.a.b = name_ref x, %x
 // CHECK:STDOUT:   %.loc20_27: type = splice_block %struct_type.b.a [concrete = constants.%struct_type.b.a] {
@@ -165,7 +165,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %.loc20_31.2: %i32 = struct_access %x.ref, element0
 // CHECK:STDOUT:   %struct.loc20: %struct_type.b.a = struct_value (%.loc20_31.1, %.loc20_31.2)
 // CHECK:STDOUT:   %.loc20_31.3: %struct_type.b.a = converted %x.ref, %struct.loc20
-// CHECK:STDOUT:   %y: %struct_type.b.a = bind_name y, %.loc20_31.3
+// CHECK:STDOUT:   %y: %struct_type.b.a = value_binding y, %.loc20_31.3
 // CHECK:STDOUT:   %y.ref: %struct_type.b.a = name_ref y, %y
 // CHECK:STDOUT:   %.loc21_10.1: %i32 = struct_access %y.ref, element1
 // CHECK:STDOUT:   %impl.elem0.loc21_10.1: %.7fa = impl_witness_access constants.%Copy.impl_witness.a32, element0 [concrete = constants.%Int.as.Copy.impl.Op.f59]
