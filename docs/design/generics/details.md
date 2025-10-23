@@ -5738,7 +5738,7 @@ A `require <type> impls <facet type>` constraint in an `interface`, or
 parameter to the [type](#parameterized-types) or an
 [interface](#parameterized-interfaces) in the facet type. In particular, it
 requires `Self` be part of the type structure of any `impl` that could satisfy
-that require. If the `<type>` is omitted entirely, it will be implied to be
+that `require`. If the `<type>` is omitted entirely, it will be implied to be
 `Self`. For example:
 
 -   ✅ Allowed: `require impls Equatable`
