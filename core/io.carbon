@@ -13,6 +13,7 @@ import library "prelude";
 // TODO: Consider rewriting using native support once library support exists.
 fn Print(x: i32) = "print.int";
 fn PrintChar(x: char) -> i32 = "print.char";
+// TODO: Return an `Optional(char)` instead of `i32`.
 fn ReadChar() -> i32 = "read.char";
 
 // TODO: Change this to a global constant once they are fully supported.
