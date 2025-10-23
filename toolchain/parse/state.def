@@ -125,6 +125,12 @@ CARBON_PARSE_STATE_VARIANTS3(BraceExprParam, Type, Value, Unknown)
 // Handles a brace expression parameter after the initial designator. This
 // should be at a `:` or `=`, depending on whether it's a type or value literal.
 //
+// { .foo = ref bar ... }
+//        ^~~~~
+//   1. Expr
+//   2. RefTagFinish
+//   3. BraceExprParamFinishAsValue
+//
 // { .foo = bar ... }
 //        ^
 //   1. Expr
@@ -167,11 +173,26 @@ CARBON_PARSE_STATE_VARIANTS3(BraceExprParamFinish, Type, Value, Unknown)
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS3(BraceExprFinish, Type, Value, Unknown)
 
-// Handles a call expression `(...)`.
+// Handles the end of an argument expression tagged with `ref`.
+//
+// ref ...
+//        ^
+//   (state done)
+CARBON_PARSE_STATE(RefTagFinish)
+
+// Handles a call expression `(...)`, including the initial `ref`, if any.
 //
 // F()
 //  ^
 //   1. CallExprFinish
+//
+// F(ref ...
+//  ^~~~
+//
+// 1. Expr
+// 2. RefTagFinish
+// 2. CallExprParamFinish
+// 3. CallExprFinish
 //
 // F( ...
 //  ^
@@ -180,7 +201,15 @@ CARBON_PARSE_STATE_VARIANTS3(BraceExprFinish, Type, Value, Unknown)
 //   3. CallExprFinish
 CARBON_PARSE_STATE(CallExpr)
 
-// Handles the `,` or `)` after a call parameter.
+// Handles the `,` or `)` after a call parameter, and the start of the next
+// parameter (if any).
+//
+// F(a, ref ...)
+//    ^~~~~
+//
+//   1. Expr
+//   2. RefTagFinish
+//   2. CallExprParamFinish
 //
 // F(a, ...)
 //    ^
@@ -924,17 +953,29 @@ CARBON_PARSE_STATE(OnlyParenExpr)
 //       ^
 CARBON_PARSE_STATE(OnlyParenExprFinish)
 
-// Handles the `(` of a parenthesized single expression
+// Handles the `(` of an expression that's presumed to be a parenthesized
+// single expression, but may later be reclassified as a tuple literal.
+// This also handles a `ref` following the `(`, if present. That's only
+// valid in tuple literals, but doesn't cause the expression to be a tuple
+// literal.
 //
 // ( )
 // ^
 //   1. TupleLiteralFinish
 //
+// (ref ... )
+// ^~~~
+//
+//   1. Expr
+//   2. RefTagFinish
+//   3. ExprAfterOpenParenFinish
+//   4. ParenExprFinishAsRef        (SPECIAL: may be replaced)
+//
 // ( ... )
 // ^
 //   1. Expr
 //   2. ExprAfterOpenParenFinish
-//   3. ParenExprFinish    (SPECIAL: may be replaced)
+//   3. ParenExprFinishAsRegular    (SPECIAL: may be replaced)
 CARBON_PARSE_STATE(ParenExpr)
 
 // Handles the `)` of a tuple literal.
@@ -949,6 +990,13 @@ CARBON_PARSE_STATE(TupleLiteralFinish)
 // ( ... , )
 //       ^
 //   (state done)
+//   SPECIAL: parent becomes TupleLiteralFinish
+//
+// ( ... , ref ... )
+//       ^~~~~
+//   1. Expr
+//   2. RefTagFinish
+//   3. TupleLiteralElementFinish
 //   SPECIAL: parent becomes TupleLiteralFinish
 //
 // ( ... , ... )
@@ -969,6 +1017,12 @@ CARBON_PARSE_STATE(ExprAfterOpenParenFinish)
 //       ^
 //   (state done)
 //
+// ( ... , ref ... )
+//       ^~~~~
+//   1. Expr
+//   2. RefTagFinish
+//   3. TupleLiteralElementFinish
+//
 // ( ... , ... )
 //       ^
 //   1. Expr
@@ -984,7 +1038,7 @@ CARBON_PARSE_STATE(TupleLiteralElementFinish)
 // ( ... )
 //       ^
 //   (state done)
-CARBON_PARSE_STATE(ParenExprFinish)
+CARBON_PARSE_STATE_VARIANTS2(ParenExprFinish, Regular, Ref)
 
 // Handles processing of a pattern.
 //

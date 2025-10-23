@@ -54,8 +54,15 @@ auto HandleParenExpr(Context& context) -> void {
   if (context.PositionIs(Lex::TokenKind::CloseParen)) {
     context.PushState(state, StateKind::TupleLiteralFinish);
   } else {
-    context.PushState(state, StateKind::ParenExprFinish);
-    context.PushState(StateKind::ExprAfterOpenParenFinish);
+    if (context.PositionIs(Lex::TokenKind::Ref)) {
+      context.PushState(state, StateKind::ParenExprFinishAsRef);
+      context.PushState(StateKind::ExprAfterOpenParenFinish);
+      context.PushState(StateKind::RefTagFinish);
+      context.ConsumeChecked(Lex::TokenKind::Ref);
+    } else {
+      context.PushState(state, StateKind::ParenExprFinishAsRegular);
+      context.PushState(StateKind::ExprAfterOpenParenFinish);
+    }
     context.PushState(StateKind::Expr);
   }
 }
@@ -71,7 +78,8 @@ auto HandleExprAfterOpenParenFinish(Context& context) -> void {
 
   // We found a comma, so switch parent state to tuple handling.
   auto finish_state = context.PopState();
-  CARBON_CHECK(finish_state.kind == StateKind::ParenExprFinish,
+  CARBON_CHECK(finish_state.kind == StateKind::ParenExprFinishAsRef ||
+                   finish_state.kind == StateKind::ParenExprFinishAsRegular,
                "Unexpected parent state, found: {0}", finish_state.kind);
   context.PushState(finish_state, StateKind::TupleLiteralFinish);
 
@@ -79,6 +87,10 @@ auto HandleExprAfterOpenParenFinish(Context& context) -> void {
   // for the next tuple element.
   if (list_token_kind != Context::ListTokenKind::CommaClose) {
     context.PushState(state, StateKind::TupleLiteralElementFinish);
+    if (context.PositionIs(Lex::TokenKind::Ref)) {
+      context.PushState(StateKind::RefTagFinish);
+      context.ConsumeChecked(Lex::TokenKind::Ref);
+    }
     context.PushState(StateKind::Expr);
   }
 }
@@ -90,16 +102,35 @@ auto HandleTupleLiteralElementFinish(Context& context) -> void {
                                Lex::TokenKind::CloseParen, state.has_error) ==
       Context::ListTokenKind::Comma) {
     context.PushState(state);
+    if (context.PositionIs(Lex::TokenKind::Ref)) {
+      context.PushState(StateKind::RefTagFinish);
+      context.ConsumeChecked(Lex::TokenKind::Ref);
+    }
     context.PushState(StateKind::Expr);
   }
 }
 
-auto HandleParenExprFinish(Context& context) -> void {
+static auto HandleParenExprFinish(Context& context, StateKind state_kind)
+    -> void {
   auto state = context.PopState();
-
+  if (state_kind == StateKind::ParenExprFinishAsRef) {
+    Lex::TokenIndex ref_position(state.token.index + 1);
+    CARBON_DIAGNOSTIC(UnexpectedRef, Error,
+                      "found `ref` in unexpected position");
+    context.emitter().Emit(ref_position, UnexpectedRef);
+  }
   context.ReplacePlaceholderNode(state.subtree_start, NodeKind::ParenExprStart,
-                                 state.token);
+                                 state.token,
+                                 state_kind == StateKind::ParenExprFinishAsRef);
   FinishParenExpr(context, state);
+}
+
+auto HandleParenExprFinishAsRegular(Context& context) -> void {
+  HandleParenExprFinish(context, StateKind::ParenExprFinishAsRegular);
+}
+
+auto HandleParenExprFinishAsRef(Context& context) -> void {
+  HandleParenExprFinish(context, StateKind::ParenExprFinishAsRef);
 }
 
 auto HandleTupleLiteralFinish(Context& context) -> void {
