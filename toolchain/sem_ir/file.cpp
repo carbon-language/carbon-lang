@@ -60,7 +60,8 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       inst_blocks_(allocator_, check_ir_id),
       constants_(this),
       // 1 reserved id for `StructTypeFields::Empty`.
-      struct_type_fields_(allocator_, IdTag(check_ir_id.index, 1)) {
+      struct_type_fields_(allocator_, IdTag(check_ir_id.index, 1)),
+      clang_source_locs_(check_ir_id) {
   // `type` and the error type are both complete & concrete types.
   types_.SetComplete(
       TypeType::TypeId,

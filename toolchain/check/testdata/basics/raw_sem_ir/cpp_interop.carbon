@@ -39,9 +39,9 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts:
-// CHECK:STDOUT:     import_ir_inst00000000: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc00000000}
-// CHECK:STDOUT:     import_ir_inst00000001: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc00000001}
-// CHECK:STDOUT:     import_ir_inst00000002: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc00000002}
+// CHECK:STDOUT:     import_ir_inst00000000: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc60000000}
+// CHECK:STDOUT:     import_ir_inst00000001: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc60000001}
+// CHECK:STDOUT:     import_ir_inst00000002: {ir_id: import_ir(Cpp), clang_source_loc_id: clang_source_loc60000002}
 // CHECK:STDOUT:   clang_decls:
 // CHECK:STDOUT:     clang_decl_id00000000: {key: "<translation unit>", inst_id: inst60000010}
 // CHECK:STDOUT:     clang_decl_id00000001: {key: "struct X {}", inst_id: inst60000012}
