@@ -1103,7 +1103,8 @@ auto InstNamer::NamingContext::NameInst() -> void {
     }
     case OutParamPattern::Kind:
     case RefParamPattern::Kind:
-    case ValueParamPattern::Kind: {
+    case ValueParamPattern::Kind:
+    case VarParamPattern::Kind: {
       AddInstNameId(GetPrettyNameFromPatternId(sem_ir(), inst_id_),
                     ".param_patt");
       return;

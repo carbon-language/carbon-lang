@@ -33,9 +33,29 @@ fn F(ref a: i32) {
 
 fn G() {
   var x: i32 = 0;
-  F(x);
+  F(ref x);
 }
 //@dump-sem-ir-end
+
+// --- fail_missing_ref_tag.carbon
+
+library "[[@TEST_NAME]]";
+
+fn F(ref a: i32) {
+  a = 1;
+}
+
+fn G() {
+  var x: i32 = 0;
+  // CHECK:STDERR: fail_missing_ref_tag.carbon:[[@LINE+7]]:5: error: argument to `ref` parameter not marked with `ref` [RefParamNoRefTag]
+  // CHECK:STDERR:   F(x);
+  // CHECK:STDERR:     ^
+  // CHECK:STDERR: fail_missing_ref_tag.carbon:[[@LINE-9]]:6: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fn F(ref a: i32) {
+  // CHECK:STDERR:      ^~~~~~~~~~
+  // CHECK:STDERR:
+  F(x);
+}
 
 // --- self.carbon
 

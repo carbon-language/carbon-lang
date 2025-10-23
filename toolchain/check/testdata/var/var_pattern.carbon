@@ -473,7 +473,7 @@ fn G() {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.cb1 = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %y.patt: %pattern_type.cb1 = ref_binding_pattern y [concrete]
-// CHECK:STDOUT:     %y.param_patt: %pattern_type.cb1 = ref_param_pattern %y.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %y.param_patt: %pattern_type.cb1 = var_param_pattern %y.patt, call_param1 [concrete]
 // CHECK:STDOUT:     %y.var_patt: %pattern_type.cb1 = var_pattern %y.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
@@ -559,7 +559,7 @@ fn G() {
 // CHECK:STDOUT:     %x.patt: %pattern_type = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %y.patt: %pattern_type = ref_binding_pattern y [concrete]
-// CHECK:STDOUT:     %y.param_patt: %pattern_type = ref_param_pattern %y.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %y.param_patt: %pattern_type = var_param_pattern %y.patt, call_param1 [concrete]
 // CHECK:STDOUT:     %y.var_patt: %pattern_type = var_pattern %y.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
@@ -607,7 +607,7 @@ fn G() {
 // CHECK:STDOUT:     %x.patt: %pattern_type = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %y.patt: %pattern_type = ref_binding_pattern y [concrete]
-// CHECK:STDOUT:     %y.param_patt: %pattern_type = ref_param_pattern %y.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %y.param_patt: %pattern_type = var_param_pattern %y.patt, call_param1 [concrete]
 // CHECK:STDOUT:     %y.var_patt: %pattern_type = var_pattern %y.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
@@ -863,7 +863,7 @@ fn G() {
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %C.F.decl: %C.F.type = fn_decl @C.F [concrete = constants.%C.F] {
 // CHECK:STDOUT:     %self.patt: %pattern_type = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type = ref_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type = var_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %self.var_patt: %pattern_type = var_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %C = ref_param call_param0

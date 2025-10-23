@@ -1362,7 +1362,8 @@ struct RefBindingPattern {
   EntityNameId entity_name_id;
 };
 
-// A by-reference `Call` parameter. See AnyParam for member documentation.
+// A by-reference `Call` parameter. See AnyParam for member documentation. Note
+// that this may correspond to either a RefParamPattern or a VarParamPattern.
 struct RefParam {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::RefParam.Define<Parse::NodeId>(
@@ -1373,7 +1374,7 @@ struct RefParam {
   NameId pretty_name_id;
 };
 
-// A pattern that represents a by-reference `Call` parameter. See
+// A pattern that represents a `ref`-qualified `Call` parameter. See
 // `AnyParamPattern` for member documentation.
 struct RefParamPattern {
   // TODO: Make Parse::NodeId more specific.
@@ -1971,6 +1972,21 @@ struct ValueParamPattern {
   static constexpr auto Kind =
       InstKind::ValueParamPattern.Define<Parse::NodeId>(
           {.ir_name = "value_param_pattern",
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+
+  TypeId type_id;
+  InstId subpattern_id;
+  CallParamIndex index;
+};
+
+// A pattern that represents a `Call` parameter corresponding to a `var`
+// pattern. See `AnyParamPattern` for member documentation. Note that there is
+// no `VarParam` -- a `VarParamPattern` corresponds to a `RefParam`.
+struct VarParamPattern {
+  static constexpr auto Kind =
+      InstKind::VarParamPattern.Define<Parse::VariablePatternId>(
+          {.ir_name = "var_param_pattern",
            .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 

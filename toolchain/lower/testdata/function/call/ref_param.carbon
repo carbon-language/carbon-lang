@@ -14,7 +14,7 @@ fn DoNothing(ref a: i32) {}
 
 fn Main() {
   var a: i32 = 0;
-  DoNothing(a);
+  DoNothing(ref a);
 }
 
 // CHECK:STDOUT: ; ModuleID = 'ref_param.carbon'

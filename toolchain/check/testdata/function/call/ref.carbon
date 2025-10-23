@@ -63,7 +63,7 @@ fn G() {
   F(ref y);
 }
 
-// --- todo_fail_missing_ref.carbon
+// --- fail_missing_ref.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -71,6 +71,13 @@ fn F(ref x: i32);
 
 fn G() {
   var y: i32 = 0;
+  // CHECK:STDERR: fail_missing_ref.carbon:[[@LINE+7]]:5: error: argument to `ref` parameter not marked with `ref` [RefParamNoRefTag]
+  // CHECK:STDERR:   F(y);
+  // CHECK:STDERR:     ^
+  // CHECK:STDERR: fail_missing_ref.carbon:[[@LINE-7]]:6: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fn F(ref x: i32);
+  // CHECK:STDERR:      ^~~~~~~~~~
+  // CHECK:STDERR:
   F(y);
 }
 

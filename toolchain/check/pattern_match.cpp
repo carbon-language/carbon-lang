@@ -108,8 +108,10 @@ class MatchContext {
                           SemIR::ValueParamPattern param_pattern,
                           SemIR::InstId pattern_inst_id, WorkItem entry)
       -> void;
-  auto DoEmitPatternMatch(Context& context,
-                          SemIR::RefParamPattern param_pattern,
+  template <typename RefParamPatternT>
+    requires std::is_same_v<RefParamPatternT, SemIR::RefParamPattern> ||
+             std::is_same_v<RefParamPatternT, SemIR::VarParamPattern>
+  auto DoEmitPatternMatch(Context& context, RefParamPatternT param_pattern,
                           SemIR::InstId pattern_inst_id, WorkItem entry)
       -> void;
   auto DoEmitPatternMatch(Context& context,
@@ -350,8 +352,11 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
   }
 }
 
+template <typename RefParamPatternT>
+  requires std::is_same_v<RefParamPatternT, SemIR::RefParamPattern> ||
+           std::is_same_v<RefParamPatternT, SemIR::VarParamPattern>
 auto MatchContext::DoEmitPatternMatch(Context& context,
-                                      SemIR::RefParamPattern param_pattern,
+                                      RefParamPatternT param_pattern,
                                       SemIR::InstId pattern_inst_id,
                                       WorkItem entry) -> void {
   switch (kind_) {
@@ -362,15 +367,25 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
           param_pattern.index.index);
       CARBON_CHECK(entry.scrutinee_id.has_value());
 
-      // TODO: If this is a `ref` pattern and !entry.is_self, require the
-      // scrutinee to have a `ref` tag.
-
-      auto scrutinee_ref_id = ConvertToValueOrRefOfType(
-          context, SemIR::LocId(entry.scrutinee_id), entry.scrutinee_id,
-          ExtractScrutineeType(
-              context.sem_ir(),
-              SemIR::GetTypeOfInstInSpecific(
-                  context.sem_ir(), callee_specific_id_, pattern_inst_id)));
+      if constexpr (std::is_same_v<RefParamPatternT, SemIR::RefParamPattern>) {
+        if (!context.ref_tags().Lookup(entry.scrutinee_id) && !entry.is_self) {
+          CARBON_DIAGNOSTIC(
+              RefParamNoRefTag, Error,
+              "argument to `ref` parameter not marked with `ref`");
+          context.emitter().Emit(entry.scrutinee_id, RefParamNoRefTag);
+        }
+      }
+      auto scrutinee_type_id = ExtractScrutineeType(
+          context.sem_ir(),
+          SemIR::GetTypeOfInstInSpecific(context.sem_ir(), callee_specific_id_,
+                                         pattern_inst_id));
+      // We should already have a durable reference (in the case of a
+      // VarParamPattern, that's handled by the enclosing VarPattern), but we
+      // may need to adjust its type.
+      auto scrutinee_ref_id =
+          Convert(context, SemIR::LocId(entry.scrutinee_id), entry.scrutinee_id,
+                  ConversionTarget{.kind = ConversionTarget::ValueOrRef,
+                                   .type_id = scrutinee_type_id});
 
       switch (SemIR::GetExprCategory(context.sem_ir(), scrutinee_ref_id)) {
         case SemIR::ExprCategory::Error:
@@ -641,6 +656,10 @@ auto MatchContext::EmitPatternMatch(Context& context,
       break;
     }
     case CARBON_KIND(SemIR::RefParamPattern param_pattern): {
+      DoEmitPatternMatch(context, param_pattern, entry.pattern_id, entry);
+      break;
+    }
+    case CARBON_KIND(SemIR::VarParamPattern param_pattern): {
       DoEmitPatternMatch(context, param_pattern, entry.pattern_id, entry);
       break;
     }

@@ -3402,6 +3402,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::ValueParamPattern inst): {
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
+    case CARBON_KIND(SemIR::VarParamPattern inst): {
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
+    }
     case CARBON_KIND(SemIR::VarPattern inst): {
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
