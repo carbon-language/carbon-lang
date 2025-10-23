@@ -39,7 +39,8 @@ class InstNamer {
   // Entities whose scopes get entries from `ScopeId`.
   using ScopeIdTypeEnum =
       TypeEnum<AssociatedConstantId, ClassId, CppOverloadSetId, FunctionId,
-               ImplId, InterfaceId, SpecificInterfaceId, VtableId>;
+               ImplId, InterfaceId, NamedConstraintId, SpecificInterfaceId,
+               VtableId>;
 
   // Construct the instruction namer, and assign names to all instructions in
   // the provided file.
@@ -61,6 +62,12 @@ class InstNamer {
       index = sem_ir_->functions().GetRawIndex(id);
     } else if constexpr (std::is_same_v<IdT, ImplId>) {
       index = sem_ir_->impls().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, InterfaceId>) {
+      index = sem_ir_->interfaces().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, SpecificInterfaceId>) {
+      index = sem_ir_->specific_interfaces().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, VtableId>) {
+      index = sem_ir_->vtables().GetRawIndex(id);
     }
     return static_cast<ScopeId>(GetScopeIdOffset(ScopeIdTypeEnum::For<IdT>) +
                                 index);
@@ -69,7 +76,7 @@ class InstNamer {
   // Returns the scope ID corresponding to a generic. A generic object shares
   // its scope with its generic entity.
   auto GetScopeFor(GenericId id) const -> ScopeId {
-    return generic_scopes_[id.index];
+    return generic_scopes_[sem_ir_->generics().GetRawIndex(id)];
   }
 
   // Returns the IR name for the specified scope.
@@ -212,6 +219,8 @@ class InstNamer {
   auto PushEntity(ImplId impl_id, ScopeId scope_id, Scope& scope) -> void;
   auto PushEntity(InterfaceId interface_id, ScopeId scope_id, Scope& scope)
       -> void;
+  auto PushEntity(NamedConstraintId named_constraint_id, ScopeId scope_id,
+                  Scope& scope) -> void;
   auto PushEntity(VtableId vtable_id, ScopeId scope_id, Scope& scope) -> void;
 
   // Always returns the name of the entity. May push it if it has not yet been

@@ -238,6 +238,10 @@ struct Worklist {
     AddEntity(sem_ir->interfaces().Get(interface_id));
   }
 
+  auto Add(NamedConstraintId named_constraint_id) -> void {
+    AddEntity(sem_ir->named_constraints().Get(named_constraint_id));
+  }
+
   auto Add(AssociatedConstantId assoc_const_id) -> void {
     AddEntity<AssociatedConstant>(
         sem_ir->associated_constants().Get(assoc_const_id));

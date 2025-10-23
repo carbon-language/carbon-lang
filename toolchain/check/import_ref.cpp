@@ -12,6 +12,7 @@
 #include "common/check.h"
 #include "common/growing_range.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
@@ -24,10 +25,13 @@
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_categories.h"
 #include "toolchain/sem_ir/inst_kind.h"
+#include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -223,48 +227,61 @@ class ImportContext {
   auto import_ir() -> const SemIR::File& { return import_ir_; }
 
   // Accessors into value stores of the file we are importing from.
-  auto import_associated_constants() -> decltype(auto) {
+  auto import_associated_constants() -> const SemIR::AssociatedConstantStore& {
     return import_ir().associated_constants();
   }
-  auto import_classes() -> decltype(auto) { return import_ir().classes(); }
-  auto import_vtables() -> decltype(auto) { return import_ir().vtables(); }
-  auto import_constant_values() -> decltype(auto) {
+  auto import_classes() -> const SemIR::ClassStore& {
+    return import_ir().classes();
+  }
+  auto import_vtables() -> const SemIR::VtableStore& {
+    return import_ir().vtables();
+  }
+  auto import_constant_values() -> const SemIR::ConstantValueStore& {
     return import_ir().constant_values();
   }
-  auto import_entity_names() -> decltype(auto) {
+  auto import_entity_names() -> const SemIR::EntityNameStore& {
     return import_ir().entity_names();
   }
-  auto import_facet_types() -> decltype(auto) {
+  auto import_facet_types() -> const SemIR::FacetTypeInfoStore& {
     return import_ir().facet_types();
   }
-  auto import_functions() -> decltype(auto) { return import_ir().functions(); }
-  auto import_generics() -> decltype(auto) { return import_ir().generics(); }
-  auto import_identifiers() -> decltype(auto) {
+  auto import_functions() -> const SemIR::FunctionStore& {
+    return import_ir().functions();
+  }
+  auto import_generics() -> const SemIR::GenericStore& {
+    return import_ir().generics();
+  }
+  auto import_identifiers() -> const SharedValueStores::IdentifierStore& {
     return import_ir().identifiers();
   }
-  auto import_impls() -> decltype(auto) { return import_ir().impls(); }
-  auto import_inst_blocks() -> decltype(auto) {
+  auto import_impls() -> const SemIR::ImplStore& { return import_ir().impls(); }
+  auto import_inst_blocks() -> const SemIR::InstBlockStore& {
     return import_ir().inst_blocks();
   }
-  auto import_insts() -> decltype(auto) { return import_ir().insts(); }
-  auto import_interfaces() -> decltype(auto) {
+  auto import_insts() -> const SemIR::InstStore& { return import_ir().insts(); }
+  auto import_interfaces() -> const SemIR::InterfaceStore& {
     return import_ir().interfaces();
   }
-  auto import_ints() -> decltype(auto) { return import_ir().ints(); }
-  auto import_name_scopes() -> decltype(auto) {
+  auto import_ints() -> const SharedValueStores::IntStore& {
+    return import_ir().ints();
+  }
+  auto import_name_scopes() -> const SemIR::NameScopeStore& {
     return import_ir().name_scopes();
   }
-  auto import_specifics() -> decltype(auto) { return import_ir().specifics(); }
-  auto import_specific_interfaces() -> decltype(auto) {
+  auto import_specifics() -> const SemIR::SpecificStore& {
+    return import_ir().specifics();
+  }
+  auto import_specific_interfaces() -> const SemIR::SpecificInterfaceStore& {
     return import_ir().specific_interfaces();
   }
-  auto import_string_literal_values() -> decltype(auto) {
+  auto import_string_literal_values()
+      -> const SharedValueStores::StringLiteralStore& {
     return import_ir().string_literal_values();
   }
-  auto import_struct_type_fields() -> decltype(auto) {
+  auto import_struct_type_fields() -> const SemIR::StructTypeFieldsStore& {
     return import_ir().struct_type_fields();
   }
-  auto import_types() -> decltype(auto) { return import_ir().types(); }
+  auto import_types() -> const SemIR::TypeStore& { return import_ir().types(); }
 
   // Returns the local file's import ID for the IR we are importing from.
   auto import_ir_id() -> SemIR::ImportIRId { return import_ir_id_; }
@@ -272,7 +289,7 @@ class ImportContext {
   // A value store for local constant values of imported instructions. This maps
   // from `InstId`s in the import IR to corresponding `ConstantId`s in the local
   // IR.
-  auto local_constant_values_for_import_insts() -> decltype(auto) {
+  auto local_constant_values_for_import_insts() -> SemIR::ConstantValueStore& {
     return local_context().import_ir_constant_values()[import_ir_id_.index];
   }
 
@@ -283,49 +300,59 @@ class ImportContext {
   auto local_context() -> Context& { return *context_; }
 
   // Accessors into value stores of the file we are importing into.
-  auto local_associated_constants() -> decltype(auto) {
+  auto local_associated_constants() -> SemIR::AssociatedConstantStore& {
     return local_ir().associated_constants();
   }
-  auto local_classes() -> decltype(auto) { return local_ir().classes(); }
-  auto local_vtables() -> decltype(auto) { return local_ir().vtables(); }
-  auto local_constant_values() -> decltype(auto) {
+  auto local_classes() -> SemIR::ClassStore& { return local_ir().classes(); }
+  auto local_vtables() -> SemIR::VtableStore& { return local_ir().vtables(); }
+  auto local_constant_values() -> SemIR::ConstantValueStore& {
     return local_ir().constant_values();
   }
-  auto local_entity_names() -> decltype(auto) {
+  auto local_entity_names() -> SemIR::EntityNameStore& {
     return local_ir().entity_names();
   }
-  auto local_facet_types() -> decltype(auto) {
+  auto local_facet_types() -> SemIR::FacetTypeInfoStore& {
     return local_ir().facet_types();
   }
-  auto local_functions() -> decltype(auto) { return local_ir().functions(); }
-  auto local_generics() -> decltype(auto) { return local_ir().generics(); }
-  auto local_identifiers() -> decltype(auto) {
+  auto local_functions() -> SemIR::FunctionStore& {
+    return local_ir().functions();
+  }
+  auto local_generics() -> SemIR::GenericStore& {
+    return local_ir().generics();
+  }
+  auto local_identifiers() -> SharedValueStores::IdentifierStore& {
     return local_ir().identifiers();
   }
-  auto local_impls() -> decltype(auto) { return local_ir().impls(); }
-  auto local_import_ir_insts() -> decltype(auto) {
+  auto local_impls() -> SemIR::ImplStore& { return local_ir().impls(); }
+  auto local_import_ir_insts() -> SemIR::ImportIRInstStore& {
     return local_ir().import_ir_insts();
   }
-  auto local_inst_blocks() -> decltype(auto) {
+  auto local_inst_blocks() -> SemIR::InstBlockStore& {
     return local_ir().inst_blocks();
   }
-  auto local_insts() -> decltype(auto) { return local_ir().insts(); }
-  auto local_interfaces() -> decltype(auto) { return local_ir().interfaces(); }
-  auto local_ints() -> decltype(auto) { return local_ir().ints(); }
-  auto local_name_scopes() -> decltype(auto) {
+  auto local_insts() -> SemIR::InstStore& { return local_ir().insts(); }
+  auto local_interfaces() -> SemIR::InterfaceStore& {
+    return local_ir().interfaces();
+  }
+  auto local_ints() -> SharedValueStores::IntStore& {
+    return local_ir().ints();
+  }
+  auto local_name_scopes() -> SemIR::NameScopeStore& {
     return local_ir().name_scopes();
   }
-  auto local_specifics() -> decltype(auto) { return local_ir().specifics(); }
-  auto local_specific_interfaces() -> decltype(auto) {
+  auto local_specifics() -> SemIR::SpecificStore& {
+    return local_ir().specifics();
+  }
+  auto local_specific_interfaces() -> SemIR::SpecificInterfaceStore& {
     return local_ir().specific_interfaces();
   }
-  auto local_string_literal_values() -> decltype(auto) {
+  auto local_string_literal_values() -> SharedValueStores::StringLiteralStore& {
     return local_ir().string_literal_values();
   }
-  auto local_struct_type_fields() -> decltype(auto) {
+  auto local_struct_type_fields() -> SemIR::StructTypeFieldsStore& {
     return local_ir().struct_type_fields();
   }
-  auto local_types() -> decltype(auto) { return local_ir().types(); }
+  auto local_types() -> SemIR::TypeStore& { return local_ir().types(); }
 
   // Add a generic that has been partially imported but needs to be finished.
   auto AddPendingGeneric(PendingGeneric pending) -> void {

@@ -80,6 +80,11 @@ auto Formatter::Format() -> void {
     FormatInterface(id, interface);
   }
 
+  for (const auto& [id, constraint] :
+       sem_ir_->named_constraints().enumerate()) {
+    FormatNamedConstraint(id, constraint);
+  }
+
   for (const auto& [id, assoc_const] :
        sem_ir_->associated_constants().enumerate()) {
     FormatAssociatedConstant(id, assoc_const);
@@ -415,6 +420,39 @@ auto Formatter::FormatInterface(InterfaceId id, const Interface& interface_info)
   out_ << '\n';
 
   FormatEntityEnd(interface_info.generic_id);
+}
+
+auto Formatter::FormatNamedConstraint(NamedConstraintId id,
+                                      const NamedConstraint& constraint_info)
+    -> void {
+  if (!ShouldFormatEntity(constraint_info)) {
+    return;
+  }
+
+  FormatEntityStart("constraint", constraint_info, id);
+
+  llvm::SaveAndRestore constraint_scope(scope_, inst_namer_.GetScopeFor(id));
+
+  if (constraint_info.scope_id.has_value()) {
+    out_ << ' ';
+    OpenBrace();
+    FormatCodeBlock(constraint_info.body_block_id);
+
+    // Always include the !members label because we always list the witness in
+    // this section.
+    IndentLabel();
+    out_ << "!members:\n";
+    FormatNameScope(constraint_info.scope_id);
+
+    // TODO: Print `require` statements.
+
+    CloseBrace();
+  } else {
+    Semicolon();
+  }
+  out_ << '\n';
+
+  FormatEntityEnd(constraint_info.generic_id);
 }
 
 auto Formatter::FormatAssociatedConstant(AssociatedConstantId id,
@@ -1081,6 +1119,15 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
 
     case CARBON_KIND(NameBindingDecl name): {
       FormatTrailingBlock(name.pattern_block_id);
+      return;
+    }
+
+    case CARBON_KIND(NamedConstraintDecl decl): {
+      FormatDeclRhs(decl.named_constraint_id,
+                    sem_ir_->named_constraints()
+                        .Get(decl.named_constraint_id)
+                        .pattern_block_id,
+                    decl.decl_block_id);
       return;
     }
 

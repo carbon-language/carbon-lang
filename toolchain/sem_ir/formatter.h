@@ -158,6 +158,10 @@ class Formatter {
   // Formats a full interface.
   auto FormatInterface(InterfaceId id, const Interface& interface_info) -> void;
 
+  // Formats a full named constraint.
+  auto FormatNamedConstraint(NamedConstraintId id,
+                             const NamedConstraint& constraint_info) -> void;
+
   // Formats an associated constant entity.
   auto FormatAssociatedConstant(AssociatedConstantId id,
                                 const AssociatedConstant& assoc_const) -> void;

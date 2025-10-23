@@ -526,9 +526,9 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
   for (const auto& poison : poisoned_queries) {
     auto witness_result = EvalLookupSingleImplWitness(
         context_, poison.loc_id, poison.query, poison.query.query_self_inst_id,
-        /*poison_concrete_results=*/false);
-    CARBON_CHECK(witness_result.has_concrete_value());
-    auto found_witness_id = witness_result.concrete_witness();
+        /*poison_final_results=*/false);
+    CARBON_CHECK(witness_result.has_final_value());
+    auto found_witness_id = witness_result.final_witness();
     if (found_witness_id != poison.impl_witness) {
       auto witness_to_impl_id = [&](SemIR::InstId witness_id) {
         auto table_id = context_.insts()

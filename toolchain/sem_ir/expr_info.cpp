@@ -128,6 +128,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FunctionTypeWithSelfType::Kind:
       case GenericClassType::Kind:
       case GenericInterfaceType::Kind:
+      case GenericNamedConstraintType::Kind:
       case LookupImplWitness::Kind:
       case ImplWitness::Kind:
       case ImplWitnessAccess::Kind:
@@ -143,6 +144,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case IntValue::Kind:
       case InterfaceDecl::Kind:
       case MaybeUnformedType::Kind:
+      case NamedConstraintDecl::Kind:
       case NamespaceType::Kind:
       case PartialType::Kind:
       case PatternType::Kind:

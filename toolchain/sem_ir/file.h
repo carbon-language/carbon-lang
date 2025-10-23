@@ -35,6 +35,7 @@
 #include "toolchain/sem_ir/interface.h"
 #include "toolchain/sem_ir/name.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/named_constraint.h"
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
@@ -69,7 +70,7 @@ using CustomLayoutStore = BlockValueStore<CustomLayoutId, uint64_t>;
 class File : public Printable<File> {
  public:
   using IdentifiedFacetTypeStore =
-      RelationalValueStore<FacetTypeId, IdentifiedFacetTypeId,
+      RelationalValueStore<FacetTypeInfoStore, IdentifiedFacetTypeId,
                            IdentifiedFacetType>;
 
   // Starts a new file for Check::CheckParseTree.
@@ -171,6 +172,12 @@ class File : public Printable<File> {
   auto classes() const -> const ClassStore& { return classes_; }
   auto interfaces() -> InterfaceStore& { return interfaces_; }
   auto interfaces() const -> const InterfaceStore& { return interfaces_; }
+  auto named_constraints() -> NamedConstraintStore& {
+    return named_constraints_;
+  }
+  auto named_constraints() const -> const NamedConstraintStore& {
+    return named_constraints_;
+  }
   auto associated_constants() -> AssociatedConstantStore& {
     return associated_constants_;
   }
@@ -321,6 +328,9 @@ class File : public Printable<File> {
   // Storage for interfaces.
   InterfaceStore interfaces_;
 
+  // Storage for named constraints.
+  NamedConstraintStore named_constraints_;
+
   // Storage for associated constants.
   AssociatedConstantStore associated_constants_;
 
@@ -393,7 +403,7 @@ class File : public Printable<File> {
   ConstantStore constants_;
 
   // Storage for StructTypeField lists.
-  StructTypeFieldsStore struct_type_fields_ = StructTypeFieldsStore(allocator_);
+  StructTypeFieldsStore struct_type_fields_;
 
   // Storage for custom layouts.
   CustomLayoutStore custom_layouts_ = CustomLayoutStore(allocator_);

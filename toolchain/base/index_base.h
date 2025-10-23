@@ -59,16 +59,6 @@ struct IdBase : public AnyIdBase, public Printable<IdT> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << IdT::Label;
     if (has_value()) {
-      out << index;
-    } else {
-      out << "<none>";
-    }
-  }
-
-  // TODO: Make Print() do the hex thing for all IDs and remove this function.
-  auto PrintHex(llvm::raw_ostream& out) const -> void {
-    out << IdT::Label;
-    if (has_value()) {
       out << llvm::format_hex_no_prefix(index, 8, /*Upper=*/true);
     } else {
       out << "<none>";
@@ -97,6 +87,17 @@ struct IndexBase : public IdBase<IdT> {
   friend auto operator<=>(IndexBase<IdT> lhs, IndexBase<IdT> rhs)
       -> std::strong_ordering {
     return lhs.index <=> rhs.index;
+  }
+
+  // Print indexed ids in decimal, since they won't have tagging (because, as
+  // the class comment explains, these ids are not entirely opaque).
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << IdT::Label;
+    if (this->has_value()) {
+      out << this->index;
+    } else {
+      out << "<none>";
+    }
   }
 };
 

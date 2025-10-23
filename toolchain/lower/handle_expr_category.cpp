@@ -14,10 +14,10 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   switch (context.GetValueRepr(inst_type).repr.kind) {
     case SemIR::ValueRepr::Unknown:
       CARBON_FATAL(
-          "Value binding for type with incomplete value representation");
+          "Value acquisition for type with incomplete value representation");
     case SemIR::ValueRepr::Dependent:
       CARBON_FATAL(
-          "Value binding for type with dependent value representation");
+          "Value acquisition for type with dependent value representation");
     case SemIR::ValueRepr::None:
       // Nothing should use this value, but StubRef needs a value to
       // propagate.

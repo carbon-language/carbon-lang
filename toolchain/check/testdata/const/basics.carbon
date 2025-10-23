@@ -61,6 +61,101 @@ fn G(p: const (const C)**) -> C** {
   return p;
 }
 
+// --- add_or_remove_while_forming_value.carbon
+library "[[@TEST_NAME]]";
+
+class X {}
+
+fn TakeValue(x: X) {}
+fn TakeConstValue(x: const X) {}
+
+fn PassConstValueToValue(a: const X) {
+  TakeValue(a);
+}
+
+fn PassValueToConstValue(a: X) {
+  TakeConstValue(a);
+}
+
+fn PassConstReferenceToValue(p: const X*) {
+  TakeValue(*p);
+}
+
+fn PassReferenceToConstValue(p: X*) {
+  TakeConstValue(*p);
+}
+
+// --- fail_todo_add_or_remove_while_initializing.carbon
+library "[[@TEST_NAME]]";
+
+class X {}
+
+// TODO: None of these should require `X` to be copyable.
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:40: error: cannot copy value of type `X` [CopyOfUncopyableType]
+// CHECK:STDERR: var init_non_const_from_non_const: X = {} as X;
+// CHECK:STDERR:                                        ^~~~~~~
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:40: note: type `X` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: var init_non_const_from_non_const: X = {} as X;
+// CHECK:STDERR:                                        ^~~~~~~
+// CHECK:STDERR:
+var init_non_const_from_non_const: X = {} as X;
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:1: error: cannot copy value of type `X` [CopyOfUncopyableType]
+// CHECK:STDERR: var init_non_const_from_const: X = ({} as X) as const X;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:1: note: type `X` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: var init_non_const_from_const: X = ({} as X) as const X;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+var init_non_const_from_const: X = ({} as X) as const X;
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:1: error: cannot copy value of type `const X` [CopyOfUncopyableType]
+// CHECK:STDERR: var init_const_from_non_const: const X = {} as X;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:1: note: type `const X` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: var init_const_from_non_const: const X = {} as X;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+var init_const_from_non_const: const X = {} as X;
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:38: error: cannot copy value of type `const X` [CopyOfUncopyableType]
+// CHECK:STDERR: var init_const_from_const: const X = ({} as X) as const X;
+// CHECK:STDERR:                                      ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:38: note: type `const X` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: var init_const_from_const: const X = ({} as X) as const X;
+// CHECK:STDERR:                                      ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+var init_const_from_const: const X = ({} as X) as const X;
+
+// --- add_while_forming_reference.carbon
+library "[[@TEST_NAME]]";
+
+class X {
+  fn TakeConstSelf[addr self: const Self*]();
+}
+
+fn PassReferenceToConstReference(p: X*) {
+  p->TakeConstSelf();
+}
+
+// --- fail_remove_while_forming_reference.carbon
+library "[[@TEST_NAME]]";
+
+class X {
+  fn TakeSelf[addr self: Self*]();
+}
+
+fn PassConstReferenceToReference(p: const X*) {
+  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE+10]]:3: error: cannot implicitly convert expression of type `const X*` to `X*` [ConversionFailure]
+  // CHECK:STDERR:   p->(X.TakeSelf)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE+7]]:3: note: type `const X*` does not implement interface `Core.ImplicitAs(X*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   p->(X.TakeSelf)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE-10]]:20: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:   fn TakeSelf[addr self: Self*]();
+  // CHECK:STDERR:                    ^~~~~~~~~~~
+  // CHECK:STDERR:
+  p->(X.TakeSelf)();
+}
+
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

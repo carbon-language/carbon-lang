@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -->
 
 > **STATUS:** Up-to-date on 09-Aug-2022, including proposals up through
-> [#1327](https://github.com/carbon-language/carbon-lang/pull/1327).
+> [#1382](https://github.com/carbon-language/carbon-lang/pull/1382).
 
 <!-- toc -->
 
@@ -702,7 +702,7 @@ similar to [C++](https://en.cppreference.com/w/cpp/language/value_category):
 Expressions in one category can be converted to any other category when needed.
 The primitive conversion steps used are:
 
--   _Value binding_ converts a reference expression into a value expression.
+-   _Value acquisition_ converts a reference expression into a value expression.
 -   _Direct initialization_ converts a value expression into an initializing
     expression.
 -   _Copy initialization_ converts a reference expression into an initializing

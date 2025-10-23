@@ -420,7 +420,7 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
             SemIR::ExprCategory::Value) {
       // Class element access on a value expression produces an ephemeral
       // reference if the class's value representation is a pointer to the
-      // object representation. Add a value binding in that case so that the
+      // object representation. Add a value acquisition in that case so that the
       // expression category of the result matches the expression category
       // of the base.
       access_id = ConvertToValueExpr(context, access_id);

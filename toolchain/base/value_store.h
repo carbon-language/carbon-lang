@@ -44,7 +44,11 @@ struct IdTag {
          // doesn't collide with anything else (though with the
          // second-highest-bit-tagging this might not be needed).
         id_tag_(llvm::reverseBits((((id_index + 1) << 1) | 1) << 1)),
-        initial_reserved_ids_(initial_reserved_ids) {}
+        initial_reserved_ids_(initial_reserved_ids) {
+    CARBON_CHECK(
+        id_index != -1,
+        "IdTag should be default constructed if no tagging id is available.");
+  }
 
   auto Apply(int32_t index) const -> int32_t {
     if (index < initial_reserved_ids_) {
@@ -177,6 +181,9 @@ class ValueStore
 
   ValueStore() = default;
   explicit ValueStore(IdTag tag) : tag_(tag) {}
+  template <typename Id>
+  explicit ValueStore(Id id, int32_t initial_reserved_ids = 0)
+      : tag_(id.index, initial_reserved_ids) {}
 
   // Stores the value and returns an ID to reference it.
   auto Add(ValueType value) -> IdType {

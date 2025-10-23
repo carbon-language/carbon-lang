@@ -283,8 +283,6 @@ struct CppOverloadSetId : public IdBase<CppOverloadSetId> {
   static constexpr llvm::StringLiteral Label = "cpp_overload_set";
 
   using IdBase::IdBase;
-
-  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 // The ID of a function.
@@ -292,8 +290,6 @@ struct FunctionId : public IdBase<FunctionId> {
   static constexpr llvm::StringLiteral Label = "function";
 
   using IdBase::IdBase;
-
-  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 // The ID of an IR within the set of all IRs being evaluated in the current
@@ -315,8 +311,6 @@ struct ClassId : public IdBase<ClassId> {
   static constexpr llvm::StringLiteral Label = "class";
 
   using IdBase::IdBase;
-
-  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 // The ID of a `Vtable`.
@@ -333,13 +327,18 @@ struct InterfaceId : public IdBase<InterfaceId> {
   using IdBase::IdBase;
 };
 
+// The ID of a `NamedConstraint`.
+struct NamedConstraintId : public IdBase<NamedConstraintId> {
+  static constexpr llvm::StringLiteral Label = "constraint";
+
+  using IdBase::IdBase;
+};
+
 // The ID of an `AssociatedConstant`.
 struct AssociatedConstantId : public IdBase<AssociatedConstantId> {
   static constexpr llvm::StringLiteral Label = "assoc_const";
 
   using IdBase::IdBase;
-
-  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 // The ID of a `FacetTypeInfo`.
@@ -363,8 +362,6 @@ struct ImplId : public IdBase<ImplId> {
   static constexpr llvm::StringLiteral Label = "impl";
 
   using IdBase::IdBase;
-
-  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 // The ID of a `Generic`.

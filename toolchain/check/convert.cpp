@@ -799,11 +799,16 @@ static auto CanAddQualifiers(SemIR::TypeQualifiers quals,
 // Determine whether the given set of qualifiers can be removed by a conversion
 // of an expression of the given category.
 static auto CanRemoveQualifiers(SemIR::TypeQualifiers quals,
-                                SemIR::ExprCategory cat, bool allow_unsafe)
-    -> bool {
+                                SemIR::ExprCategory cat,
+                                ConversionTarget::Kind kind) -> bool {
+  bool allow_unsafe = kind == ConversionTarget::ExplicitUnsafeAs;
+
   if (quals.HasAnyOf(SemIR::TypeQualifiers::Const) && !allow_unsafe &&
-      SemIR::IsRefCategory(cat)) {
-    // Removing `const` is an unsafe conversion for a reference expression.
+      SemIR::IsRefCategory(cat) &&
+      IsValidExprCategoryForConversionTarget(cat, kind)) {
+    // Removing `const` is an unsafe conversion for a reference expression. But
+    // it's OK if we will be converting to a different category as part of this
+    // overall conversion anyway.
     return false;
   }
 
@@ -964,21 +969,26 @@ static auto PerformBuiltinConversion(
     }
   }
 
-  // T explicitly converts to U if T is compatible with U, and we're allowed to
+  // T implicitly converts to U if T and U are the same ignoring qualifiers, and
+  // we're allowed to remove / add any qualifiers that differ. Similarly, T
+  // explicitly converts to U if T is compatible with U, and we're allowed to
   // remove / add any qualifiers that differ.
-  if (target.is_explicit_as() && target.type_id != value_type_id) {
+  if (target.type_id != value_type_id) {
     auto [target_foundation_id, target_quals] =
-        context.types().GetTransitiveUnqualifiedAdaptedType(target.type_id);
+        target.is_explicit_as()
+            ? context.types().GetTransitiveUnqualifiedAdaptedType(
+                  target.type_id)
+            : context.types().GetUnqualifiedTypeAndQualifiers(target.type_id);
     auto [value_foundation_id, value_quals] =
-        context.types().GetTransitiveUnqualifiedAdaptedType(value_type_id);
+        target.is_explicit_as()
+            ? context.types().GetTransitiveUnqualifiedAdaptedType(value_type_id)
+            : context.types().GetUnqualifiedTypeAndQualifiers(value_type_id);
     if (target_foundation_id == value_foundation_id) {
       auto category = SemIR::GetExprCategory(context.sem_ir(), value_id);
       auto added_quals = target_quals & ~value_quals;
       auto removed_quals = value_quals & ~target_quals;
       if (CanAddQualifiers(added_quals, category) &&
-          CanRemoveQualifiers(
-              removed_quals, category,
-              target.kind == ConversionTarget::ExplicitUnsafeAs)) {
+          CanRemoveQualifiers(removed_quals, category, target.kind)) {
         // For a struct or tuple literal, perform a category conversion if
         // necessary.
         if (category == SemIR::ExprCategory::Mixed) {
@@ -1072,6 +1082,9 @@ static auto PerformBuiltinConversion(
     }
 
     // An expression of type T converts to U if T is a class derived from U.
+    //
+    // TODO: Combine this with the qualifiers and adapter conversion logic above
+    // to allow qualifiers and inheritance conversions to be performed together.
     if (auto path = ComputeInheritancePath(context, loc_id, value_type_id,
                                            target.type_id);
         path && !path->empty()) {
@@ -1704,6 +1717,11 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
   return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
                             callee.param_patterns_id, return_slot_pattern_id,
                             self_id, arg_refs, return_slot_arg_id);
+}
+
+auto TypeExpr::ForUnsugared(Context& context, SemIR::TypeId type_id)
+    -> TypeExpr {
+  return {.inst_id = context.types().GetInstId(type_id), .type_id = type_id};
 }
 
 auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,

@@ -847,14 +847,14 @@ static auto CollectCandidateImplsForQuery(
 auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
                                  SemIR::LookupImplWitness eval_query,
                                  SemIR::InstId self_facet_value_inst_id,
-                                 bool poison_concrete_results)
+                                 bool poison_final_results)
     -> EvalImplLookupResult {
   auto query_specific_interface =
       context.specific_interfaces().Get(eval_query.query_specific_interface_id);
 
   auto facet_lookup_result = LookupImplWitnessInSelfFacetValue(
       context, self_facet_value_inst_id, query_specific_interface);
-  if (facet_lookup_result.has_concrete_value()) {
+  if (facet_lookup_result.has_final_value()) {
     return facet_lookup_result;
   }
 
@@ -927,19 +927,19 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
         context, loc_id, query_is_concrete, query_self_const_id,
         query_specific_interface, candidate.impl_id);
     if (result.has_value()) {
-      // Record the query which found a concrete impl witness. It's illegal to
+      // Record the query which found a final impl witness. It's illegal to
       // write a final impl afterward that would match the same query.
       //
       // If the impl was effectively final, then we don't need to poison here. A
       // change of query result will already be diagnosed at the point where the
       // new impl decl was written that changes the result.
-      if (poison_concrete_results && result.has_concrete_value() &&
+      if (poison_final_results && result.has_final_value() &&
           !IsImplEffectivelyFinal(context,
                                   context.impls().Get(candidate.impl_id))) {
         context.poisoned_concrete_impl_lookup_queries().push_back(
             {.loc_id = loc_id,
              .query = eval_query,
-             .impl_witness = result.concrete_witness()});
+             .impl_witness = result.final_witness()});
       }
       return result;
     }

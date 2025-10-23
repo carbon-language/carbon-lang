@@ -155,6 +155,10 @@ auto InstNamer::GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int {
       [[fallthrough]];
     case ScopeIdTypeEnum::For<InterfaceId>:
 
+      offset += sem_ir_->named_constraints().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<NamedConstraintId>:
+
       offset += sem_ir_->specific_interfaces().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<SpecificInterfaceId>:
@@ -245,7 +249,8 @@ auto InstNamer::GetUnscopedLabelFor(InstBlockId block_id) const
   if (!block_id.has_value()) {
     return "";
   }
-  const auto& label_name = labels_[block_id.index].second;
+  const auto& label_name =
+      labels_[sem_ir_->inst_blocks().GetRawIndex(block_id)].second;
   return label_name ? label_name.GetFullName() : "";
 }
 
@@ -256,7 +261,8 @@ auto InstNamer::GetLabelFor(ScopeId scope_id, InstBlockId block_id) const
     return "!invalid";
   }
 
-  const auto& [label_scope, label_name] = labels_[block_id.index];
+  const auto& [label_scope, label_name] =
+      labels_[sem_ir_->inst_blocks().GetRawIndex(block_id)];
   if (!label_name) {
     // This should not happen in valid IR.
     RawStringOstream out;
@@ -370,7 +376,8 @@ auto InstNamer::Namespace::AllocateName(
 auto InstNamer::AddBlockLabel(
     ScopeId scope_id, InstBlockId block_id, std::string name,
     std::variant<LocId, uint64_t> loc_id_or_fingerprint) -> void {
-  if (!block_id.has_value() || labels_[block_id.index].second) {
+  if (!block_id.has_value() ||
+      labels_[sem_ir_->inst_blocks().GetRawIndex(block_id)].second) {
     return;
   }
 
@@ -382,7 +389,7 @@ auto InstNamer::AddBlockLabel(
     }
   }
 
-  labels_[block_id.index] = {
+  labels_[sem_ir_->inst_blocks().GetRawIndex(block_id)] = {
       scope_id, GetScopeInfo(scope_id).labels.AllocateName(
                     *this, loc_id_or_fingerprint, std::move(name))};
 }
@@ -493,7 +500,7 @@ auto InstNamer::PushGeneric(ScopeId scope_id, GenericId generic_id) -> void {
   if (!generic_id.has_value()) {
     return;
   }
-  generic_scopes_[generic_id.index] = scope_id;
+  generic_scopes_[sem_ir_->generics().GetRawIndex(generic_id)] = scope_id;
   const auto& generic = sem_ir_->generics().Get(generic_id);
 
   // Push blocks in reverse order.
@@ -545,6 +552,9 @@ auto InstNamer::GetNameForParentNameScope(NameScopeId name_scope_id)
     }
     case CARBON_KIND(InterfaceDecl interface): {
       return MaybePushEntity(interface.interface_id);
+    }
+    case CARBON_KIND(NamedConstraintDecl named_constraint): {
+      return MaybePushEntity(named_constraint.named_constraint_id);
     }
     case SemIR::Namespace::Kind: {
       // Only prefix type scopes.
@@ -643,6 +653,23 @@ auto InstNamer::PushEntity(InterfaceId interface_id, ScopeId scope_id,
   PushGeneric(scope_id, interface.generic_id);
   PushBlockId(scope_id, interface.body_block_id);
   PushBlockId(scope_id, interface.pattern_block_id);
+}
+
+auto InstNamer::PushEntity(NamedConstraintId named_constraint_id,
+                           ScopeId scope_id, Scope& scope) -> void {
+  const auto& constraint =
+      sem_ir_->named_constraints().Get(named_constraint_id);
+  LocId constraint_loc(constraint.latest_decl_id());
+  scope.name = globals_.AllocateName(
+      *this, constraint_loc,
+      sem_ir_->names().GetIRBaseName(constraint.name_id).str());
+  AddBlockLabel(scope_id, constraint.body_block_id, "constraint",
+                constraint_loc);
+
+  // Push blocks in reverse order.
+  PushGeneric(scope_id, constraint.generic_id);
+  PushBlockId(scope_id, constraint.body_block_id);
+  PushBlockId(scope_id, constraint.pattern_block_id);
 }
 
 auto InstNamer::PushEntity(VtableId vtable_id, ScopeId /*scope_id*/,
@@ -926,6 +953,10 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddEntityNameAndMaybePush(inst.interface_id, ".type");
       return;
     }
+    case CARBON_KIND(GenericNamedConstraintType inst): {
+      AddEntityNameAndMaybePush(inst.named_constraint_id, ".type");
+      return;
+    }
     case CARBON_KIND(ImplDecl inst): {
       // `impl` declarations aren't named because they aren't added to any
       // namespace, and so aren't referenced directly.
@@ -1046,6 +1077,13 @@ auto InstNamer::NamingContext::NameInst() -> void {
     }
     case CARBON_KIND(NameBindingDecl inst): {
       PushBlockId(scope_id_, inst.pattern_block_id);
+      return;
+    }
+    case CARBON_KIND(NamedConstraintDecl inst): {
+      AddEntityNameAndMaybePush(inst.named_constraint_id, ".decl");
+      auto interface_scope_id =
+          inst_namer_->GetScopeFor(inst.named_constraint_id);
+      PushBlockId(interface_scope_id, inst.decl_block_id);
       return;
     }
     case CARBON_KIND(NameRef inst): {

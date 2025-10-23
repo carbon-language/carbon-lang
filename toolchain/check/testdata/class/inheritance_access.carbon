@@ -100,7 +100,10 @@ library "[[@TEST_NAME]]";
 
 class C {
   private fn F() {}
-  fn G() { Self.F(); }
+  fn G() {
+    Self.F();
+    F();
+  }
 }
 
 // --- noninstance_protected_on_self.carbon
@@ -109,10 +112,13 @@ library "[[@TEST_NAME]]";
 
 class C {
   protected fn F() {}
-  fn G() { Self.F(); }
+  fn G() {
+    Self.F();
+    F();
+  }
 }
 
-// --- fail_noninstance_private_on_parent.carbon
+// --- fail_noninstance_private_on_parent_qualified.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -122,14 +128,27 @@ base class B {
 
 class C {
   extend base: B;
-  // CHECK:STDERR: fail_noninstance_private_on_parent.carbon:[[@LINE+7]]:12: error: cannot access private member `F` of type `B` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_noninstance_private_on_parent_qualified.carbon:[[@LINE+7]]:12: error: cannot access private member `F` of type `B` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   fn G() { Self.F(); }
   // CHECK:STDERR:            ^~~~~~
-  // CHECK:STDERR: fail_noninstance_private_on_parent.carbon:[[@LINE-8]]:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: fail_noninstance_private_on_parent_qualified.carbon:[[@LINE-8]]:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   private fn F() {}
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   fn G() { Self.F(); }
+}
+
+// --- todo_fail_noninstance_private_on_parent_unqualified.carbon
+
+library "[[@TEST_NAME]]";
+
+base class B {
+  private fn F() {}
+}
+
+class C {
+  extend base: B;
+  fn G() { F(); }
 }
 
 // --- noninstance_protected_on_parent.carbon
@@ -817,8 +836,10 @@ class B {
 // CHECK:STDOUT: fn @C.G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref: %C.F.type = name_ref F, @C.%C.F.decl [concrete = constants.%C.F]
-// CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call %F.ref()
+// CHECK:STDOUT:   %F.ref.loc7: %C.F.type = name_ref F, @C.%C.F.decl [concrete = constants.%C.F]
+// CHECK:STDOUT:   %C.F.call.loc7: init %empty_tuple.type = call %F.ref.loc7()
+// CHECK:STDOUT:   %F.ref.loc8: %C.F.type = name_ref F, @C.%C.F.decl [concrete = constants.%C.F]
+// CHECK:STDOUT:   %C.F.call.loc8: init %empty_tuple.type = call %F.ref.loc8()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -871,12 +892,14 @@ class B {
 // CHECK:STDOUT: fn @C.G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref: %C.F.type = name_ref F, @C.%C.F.decl [concrete = constants.%C.F]
-// CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call %F.ref()
+// CHECK:STDOUT:   %F.ref.loc7: %C.F.type = name_ref F, @C.%C.F.decl [concrete = constants.%C.F]
+// CHECK:STDOUT:   %C.F.call.loc7: init %empty_tuple.type = call %F.ref.loc7()
+// CHECK:STDOUT:   %F.ref.loc8: %C.F.type = name_ref F, @C.%C.F.decl [concrete = constants.%C.F]
+// CHECK:STDOUT:   %C.F.call.loc8: init %empty_tuple.type = call %F.ref.loc8()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_noninstance_private_on_parent.carbon
+// CHECK:STDOUT: --- fail_noninstance_private_on_parent_qualified.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
@@ -945,6 +968,79 @@ class B {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:   %F.ref: <error> = name_ref F, <error> [concrete = <error>]
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- todo_fail_noninstance_private_on_parent_unqualified.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %B: type = class_type @B [concrete]
+// CHECK:STDOUT:   %B.F.type: type = fn_type @B.F [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %B.F: %B.F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %B [concrete]
+// CHECK:STDOUT:   %C.G.type: type = fn_type @C.G [concrete]
+// CHECK:STDOUT:   %C.G: %C.G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %B} [concrete]
+// CHECK:STDOUT:   %complete_type.98e: <witness> = complete_type_witness %struct_type.base [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .B = %B.decl
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @B {
+// CHECK:STDOUT:   %B.F.decl: %B.F.type = fn_decl @B.F [concrete = constants.%B.F] {} {}
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%B
+// CHECK:STDOUT:   .F [private] = %B.F.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %.loc9: %C.elem = base_decl %B.ref, element0 [concrete]
+// CHECK:STDOUT:   %C.G.decl: %C.G.type = fn_decl @C.G [concrete = constants.%C.G] {} {}
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base [concrete = constants.%complete_type.98e]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .B = <poisoned>
+// CHECK:STDOUT:   .base = %.loc9
+// CHECK:STDOUT:   .G = %C.G.decl
+// CHECK:STDOUT:   .F = <poisoned>
+// CHECK:STDOUT:   extend %B.ref
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @B.F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @C.G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %B.F.type = name_ref F, @B.%B.F.decl [concrete = constants.%B.F]
+// CHECK:STDOUT:   %B.F.call: init %empty_tuple.type = call %F.ref()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

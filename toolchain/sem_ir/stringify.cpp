@@ -437,6 +437,16 @@ class Stringifier {
                       ">");
   }
 
+  auto StringifyInst(InstId /*inst_id*/, GenericNamedConstraintType inst)
+      -> void {
+    const auto& constraint =
+        sem_ir_->named_constraints().Get(inst.named_constraint_id);
+    *out_ << "<type of ";
+    step_stack_->Push(StepStack::QualifiedNameItem{constraint.parent_scope_id,
+                                                   constraint.name_id},
+                      ">");
+  }
+
   // Determine the specific interface that an impl witness instruction provides
   // an implementation of.
   // TODO: Should we track this in the type?
