@@ -8,6 +8,7 @@
 #include <utility>
 
 #include "common/check.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/deferred_definition_worklist.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -76,6 +77,18 @@ auto Context::VerifyOnFinish() const -> void {
   if (auto verify = sem_ir_->Verify(); !verify.ok()) {
     CARBON_FATAL("{0}Built invalid semantics IR: {1}\n", sem_ir_,
                  verify.error());
+  }
+
+  if (!sem_ir_->has_errors()) {
+    auto ref_tags_needed = sem_ir_->CollectRefTagsNeeded();
+
+    ref_tags_.ForEach([&ref_tags_needed](SemIR::InstId inst_id) {
+      CARBON_CHECK(ref_tags_needed.Erase(inst_id),
+                   "Inst has unnecessary `ref` tag: {0}", inst_id);
+    });
+    ref_tags_needed.ForEach([](SemIR::InstId inst_id) {
+      CARBON_FATAL("Inst missing `ref` tag: {0}", inst_id);
+    });
   }
 #endif
 }

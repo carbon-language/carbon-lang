@@ -190,6 +190,7 @@ class Context {
   }
 
   auto ref_tags() -> Set<SemIR::InstId>& { return ref_tags_; }
+  auto ref_tags() const -> const Set<SemIR::InstId>& { return ref_tags_; }
 
   // During Choice typechecking, each alternative turns into a name binding on
   // the Choice type, but this can't be done until the full Choice type is
