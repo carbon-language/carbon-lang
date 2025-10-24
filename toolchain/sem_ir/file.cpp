@@ -51,6 +51,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       // The `2` prevents adding a tag for the global ids
       // `ImportIRId::{ApiForImpl,Cpp}`.
       import_irs_(IdTag(check_ir_id.index, 2)),
+      clang_decls_(check_ir_id),
       // The `+1` prevents adding a tag to the global `NameSpace::PackageInstId`
       // instruction. It's not a "singleton" instruction, but it's a unique
       // instruction id that comes right after the singletons.
