@@ -81,7 +81,7 @@ fn G() {
   F(y);
 }
 
-// --- todo_fail_unnecessary_ref.carbon
+// --- fail_unnecessary_ref.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -90,9 +90,18 @@ fn F(x: i32);
 fn G() {
   var y: i32 = 0;
 
-  // TODO: ideally all the following uses of `ref` should be diagnosed as not
-  // needed.
+  // CHECK:STDERR: fail_unnecessary_ref.carbon:[[@LINE+4]]:24: error: `ref` tag not used with a parameter that requires it [RefTagNoRefParam]
+  // CHECK:STDERR:   var z: (i32,) = (ref y,);
+  // CHECK:STDERR:                        ^
+  // CHECK:STDERR:
   var z: (i32,) = (ref y,);
+  // CHECK:STDERR: fail_unnecessary_ref.carbon:[[@LINE+7]]:9: error: `ref` tag not used with a parameter that requires it [RefTagNoRefParam]
+  // CHECK:STDERR:   F(ref y);
+  // CHECK:STDERR:         ^
+  // CHECK:STDERR: fail_unnecessary_ref.carbon:[[@LINE-13]]:6: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fn F(x: i32);
+  // CHECK:STDERR:      ^~~~~~
+  // CHECK:STDERR:
   F(ref y);
 }
 

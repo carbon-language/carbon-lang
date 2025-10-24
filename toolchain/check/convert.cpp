@@ -1390,6 +1390,17 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     return SemIR::ErrorInst::InstId;
   }
 
+  if (auto has_ref_tag = static_cast<bool>(context.ref_tags().Lookup(expr_id));
+      target.require_ref_tag && !has_ref_tag) {
+    CARBON_DIAGNOSTIC(RefParamNoRefTag, Error,
+                      "argument to `ref` parameter not marked with `ref`");
+    context.emitter().Emit(expr_id, RefParamNoRefTag);
+  } else if (!target.require_ref_tag && has_ref_tag) {
+    CARBON_DIAGNOSTIC(RefTagNoRefParam, Error,
+                      "`ref` tag not used with a parameter that requires it");
+    context.emitter().Emit(expr_id, RefTagNoRefParam);
+  }
+
   // We can only perform initialization for complete, non-abstract types. Note
   // that `RequireConcreteType` returns true for facet types, since their
   // representation is fixed. This allows us to support using the `Self` of an

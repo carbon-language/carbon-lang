@@ -57,6 +57,8 @@ struct ConversionTarget {
   // should be false.
   bool diagnose = true;
 
+  bool require_ref_tag = false;
+
   // Are we converting this value into an initializer for an object?
   auto is_initializer() const -> bool {
     return kind == Initializer || kind == FullInitializer;
