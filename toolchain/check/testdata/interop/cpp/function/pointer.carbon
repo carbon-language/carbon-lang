@@ -1036,9 +1036,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_14.2: init %Optional.143 = converted %addr.loc11_14.1, %T.binding.as_type.as.ImplicitAs.impl.Convert.call
 // CHECK:STDOUT:   %.loc11_14.3: ref %Optional.143 = temporary %.loc11_14.1, %.loc11_14.2
 // CHECK:STDOUT:   %.loc11_14.4: %Optional.143 = bind_value %.loc11_14.3
-// CHECK:STDOUT:   %.loc11_16.2: ref %Optional.143 = temporary_storage
-// CHECK:STDOUT:   %Direct__carbon_thunk.call: init %Optional.143 = call imports.%Direct__carbon_thunk.decl(%.loc11_14.4) to %.loc11_16.2
-// CHECK:STDOUT:   %.loc11_16.3: ref %Optional.143 = temporary %.loc11_16.2, %Direct__carbon_thunk.call
+// CHECK:STDOUT:   %Direct__carbon_thunk.call: init %Optional.143 = call imports.%Direct__carbon_thunk.decl(%.loc11_14.4) to %.loc11_16.1
+// CHECK:STDOUT:   %.loc11_16.2: ref %Optional.143 = temporary %.loc11_16.1, %Direct__carbon_thunk.call
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.aa5 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
@@ -1055,8 +1054,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc13_50.2: %S = bind_value %.loc13_50.1
 // CHECK:STDOUT:   %.loc13_50.3: ref %S = value_as_ref %.loc13_50.2
 // CHECK:STDOUT:   %addr.loc13_58.1: %ptr.5c7 = addr_of %.loc13_50.3
-// CHECK:STDOUT:   %.loc13_58.2: ref %Optional.143 = temporary_storage
-// CHECK:STDOUT:   %Indirect__carbon_thunk.call: init %Optional.143 = call imports.%Indirect__carbon_thunk.decl(%addr.loc13_58.1) to %.loc13_58.2
+// CHECK:STDOUT:   %Indirect__carbon_thunk.call: init %Optional.143 = call imports.%Indirect__carbon_thunk.decl(%addr.loc13_58.1) to %.loc13_58.1
 // CHECK:STDOUT:   %.loc13_30.1: type = splice_block %Optional [concrete = constants.%Optional.143] {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %Optional.ref: %Optional.type = name_ref Optional, imports.%Core.Optional [concrete = constants.%Optional.generic]
@@ -1067,23 +1065,23 @@ fn F() {
 // CHECK:STDOUT:     %.loc13_30.2: %OptionalStorage.type = converted %ptr, %OptionalStorage.facet [concrete = constants.%OptionalStorage.facet]
 // CHECK:STDOUT:     %Optional: type = class_type @Optional, @Optional(constants.%OptionalStorage.facet) [concrete = constants.%Optional.143]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc13_58.3: ref %Optional.143 = temporary %.loc13_58.2, %Indirect__carbon_thunk.call
-// CHECK:STDOUT:   %.loc13_58.4: %Optional.143 = bind_value %.loc13_58.3
-// CHECK:STDOUT:   %a: %Optional.143 = value_binding a, %.loc13_58.4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc13_58: <bound method> = bound_method %.loc13_58.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.465
+// CHECK:STDOUT:   %.loc13_58.2: ref %Optional.143 = temporary %.loc13_58.1, %Indirect__carbon_thunk.call
+// CHECK:STDOUT:   %.loc13_58.3: %Optional.143 = bind_value %.loc13_58.2
+// CHECK:STDOUT:   %a: %Optional.143 = value_binding a, %.loc13_58.3
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc13_58: <bound method> = bound_method %.loc13_58.2, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.465
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc13_58: <bound method> = bound_method %.loc13_58.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc13_58.2: %ptr.451 = addr_of %.loc13_58.3
+// CHECK:STDOUT:   %bound_method.loc13_58: <bound method> = bound_method %.loc13_58.2, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc13_58.2: %ptr.451 = addr_of %.loc13_58.2
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc13_58: init %empty_tuple.type = call %bound_method.loc13_58(%addr.loc13_58.2)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc13_48: <bound method> = bound_method %.loc13_48.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.016
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc13_48: <bound method> = bound_method %.loc13_48.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc13_48: %ptr.5c7 = addr_of %.loc13_48.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc13_48: init %empty_tuple.type = call %bound_method.loc13_48(%addr.loc13_48)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11_16: <bound method> = bound_method %.loc11_16.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.465
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11_16: <bound method> = bound_method %.loc11_16.2, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.465
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc11_16: <bound method> = bound_method %.loc11_16.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.3
-// CHECK:STDOUT:   %addr.loc11_16: %ptr.451 = addr_of %.loc11_16.3
+// CHECK:STDOUT:   %bound_method.loc11_16: <bound method> = bound_method %.loc11_16.2, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.3
+// CHECK:STDOUT:   %addr.loc11_16: %ptr.451 = addr_of %.loc11_16.2
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc11_16: init %empty_tuple.type = call %bound_method.loc11_16(%addr.loc11_16)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11_14: <bound method> = bound_method %.loc11_14.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.465
 // CHECK:STDOUT:   <elided>
