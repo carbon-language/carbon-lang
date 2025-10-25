@@ -6,9 +6,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/array/field.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/array/field_addr.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/array/field.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/array/field_addr.carbon
 
 class A {
   var v: array(i32, 2);
@@ -19,14 +19,14 @@ class A {
     return self.v[0];
   }
 
-  fn Use[ref self: Self]() -> i32 {
-    self.v[0] = 1;
-    return self.v[1];
+  fn Use[addr self: Self*]() -> i32 {
+    self->v[0] = 1;
+    return self->v[1];
   }
 }
 
-// CHECK:STDOUT: ; ModuleID = 'field.carbon'
-// CHECK:STDOUT: source_filename = "field.carbon"
+// CHECK:STDOUT: ; ModuleID = 'field_addr.carbon'
+// CHECK:STDOUT: source_filename = "field_addr.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @A.val.loc16_40 = internal constant { [2 x i32] } { [2 x i32] [i32 1, i32 2] }
 // CHECK:STDOUT:
@@ -49,13 +49,13 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CUse.A.Main(ptr %self) !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc23_9.v = getelementptr inbounds nuw { [2 x i32] }, ptr %self, i32 0, i32 0, !dbg !14
-// CHECK:STDOUT:   %.loc23_13.array.index = getelementptr inbounds [2 x i32], ptr %.loc23_9.v, i32 0, i32 0, !dbg !14
-// CHECK:STDOUT:   store i32 1, ptr %.loc23_13.array.index, align 4, !dbg !14
-// CHECK:STDOUT:   %.loc24_16.v = getelementptr inbounds nuw { [2 x i32] }, ptr %self, i32 0, i32 0, !dbg !15
-// CHECK:STDOUT:   %.loc24_20.1.array.index = getelementptr inbounds [2 x i32], ptr %.loc24_16.v, i32 0, i32 1, !dbg !15
-// CHECK:STDOUT:   %.loc24_20.2 = load i32, ptr %.loc24_20.1.array.index, align 4, !dbg !15
-// CHECK:STDOUT:   ret i32 %.loc24_20.2, !dbg !16
+// CHECK:STDOUT:   %.loc23_9.2.v = getelementptr inbounds nuw { [2 x i32] }, ptr %self, i32 0, i32 0, !dbg !14
+// CHECK:STDOUT:   %.loc23_14.array.index = getelementptr inbounds [2 x i32], ptr %.loc23_9.2.v, i32 0, i32 0, !dbg !14
+// CHECK:STDOUT:   store i32 1, ptr %.loc23_14.array.index, align 4, !dbg !14
+// CHECK:STDOUT:   %.loc24_16.2.v = getelementptr inbounds nuw { [2 x i32] }, ptr %self, i32 0, i32 0, !dbg !15
+// CHECK:STDOUT:   %.loc24_21.1.array.index = getelementptr inbounds [2 x i32], ptr %.loc24_16.2.v, i32 0, i32 1, !dbg !15
+// CHECK:STDOUT:   %.loc24_21.2 = load i32, ptr %.loc24_21.1.array.index, align 4, !dbg !15
+// CHECK:STDOUT:   ret i32 %.loc24_21.2, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
@@ -69,7 +69,7 @@ class A {
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "field.carbon", directory: "")
+// CHECK:STDOUT: !3 = !DIFile(filename: "field_addr.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Init", linkageName: "_CInit.A.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}

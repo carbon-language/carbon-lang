@@ -6,15 +6,15 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/class/method.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/class/method_addr.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/class/method.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/class/method_addr.carbon
 
 class C {
   var a: i32;
 
   fn Get[self: C]() -> i32;
-  fn Set[ref self: C](n: i32);
+  fn Set[addr self: C*](n: i32);
 }
 
 fn F(p: C*) {
@@ -22,8 +22,8 @@ fn F(p: C*) {
   (*p).Set(n);
 }
 
-// CHECK:STDOUT: ; ModuleID = 'method.carbon'
-// CHECK:STDOUT: source_filename = "method.carbon"
+// CHECK:STDOUT: ; ModuleID = 'method_addr.carbon'
+// CHECK:STDOUT: source_filename = "method_addr.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @_CGet.C.Main(ptr)
 // CHECK:STDOUT:
@@ -42,7 +42,7 @@ fn F(p: C*) {
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "method.carbon", directory: "")
+// CHECK:STDOUT: !3 = !DIFile(filename: "method_addr.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
