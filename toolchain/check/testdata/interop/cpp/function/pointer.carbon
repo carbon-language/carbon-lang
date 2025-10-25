@@ -663,8 +663,8 @@ fn F() {
 // CHECK:STDOUT:   %OptionalStorage.impl_witness.707: <witness> = impl_witness imports.%OptionalStorage.impl_witness_table.377, @ptr.as.OptionalStorage.impl(%S) [concrete]
 // CHECK:STDOUT:   %OptionalStorage.facet: %OptionalStorage.type = facet_value %ptr.5c7, (%OptionalStorage.impl_witness.707) [concrete]
 // CHECK:STDOUT:   %Optional.143: type = class_type @Optional, @Optional(%OptionalStorage.facet) [concrete]
-// CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
-// CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
+// CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.06b: type = facet_type <@ImplicitAs, @ImplicitAs(%Optional.143)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.e1b: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Optional.143) [concrete]
 // CHECK:STDOUT:   %T.binding.as_type.as.ImplicitAs.impl.Convert.type.6f7: type = fn_type @T.binding.as_type.as.ImplicitAs.impl.Convert.1, @T.binding.as_type.as.ImplicitAs.impl.3a5(%T.76d) [symbolic]
@@ -699,7 +699,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.6db = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.5a7 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %OptionalStorage.impl_witness_table.377 = impl_witness_table (%Core.import_ref.8c0, %Core.import_ref.566, %Core.import_ref.637, %Core.import_ref.6db, %Core.import_ref.5a7), @ptr.as.OptionalStorage.impl [concrete]
-// CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
+// CHECK:STDOUT:   %foo.decl: %foo.type = fn_decl @foo [concrete = constants.%foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -743,7 +743,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_11.2: init %Optional.143 = converted %addr.loc9_11.1, %T.binding.as_type.as.ImplicitAs.impl.Convert.call
 // CHECK:STDOUT:   %.loc9_11.3: ref %Optional.143 = temporary %.loc9_11.1, %.loc9_11.2
 // CHECK:STDOUT:   %.loc9_11.4: %Optional.143 = bind_value %.loc9_11.3
-// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%.loc9_11.4)
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc9_11.4)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9: <bound method> = bound_method %.loc9_11.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.465
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc9_11.3: <bound method> = bound_method %.loc9_11.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -925,8 +925,8 @@ fn F() {
 // CHECK:STDOUT:   %OptionalStorage.facet: %OptionalStorage.type = facet_value %ptr.5c7, (%OptionalStorage.impl_witness.707) [concrete]
 // CHECK:STDOUT:   %Optional.143: type = class_type @Optional, @Optional(%OptionalStorage.facet) [concrete]
 // CHECK:STDOUT:   %pattern_type.aa5: type = pattern_type %Optional.143 [concrete]
-// CHECK:STDOUT:   %Direct__carbon_thunk.type: type = fn_type @Direct__carbon_thunk [concrete]
-// CHECK:STDOUT:   %Direct__carbon_thunk: %Direct__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Direct.type: type = fn_type @Direct [concrete]
+// CHECK:STDOUT:   %Direct: %Direct.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.06b: type = facet_type <@ImplicitAs, @ImplicitAs(%Optional.143)> [concrete]
@@ -977,7 +977,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.6db = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.5a7 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %OptionalStorage.impl_witness_table.377 = impl_witness_table (%Core.import_ref.8c0, %Core.import_ref.566, %Core.import_ref.637, %Core.import_ref.6db, %Core.import_ref.5a7), @ptr.as.OptionalStorage.impl [concrete]
-// CHECK:STDOUT:   %Direct__carbon_thunk.decl: %Direct__carbon_thunk.type = fn_decl @Direct__carbon_thunk [concrete = constants.%Direct__carbon_thunk] {
+// CHECK:STDOUT:   %Direct.decl: %Direct.type = fn_decl @Direct [concrete = constants.%Direct] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %OptionalStorage.facet.loc11_16.1: %OptionalStorage.type = facet_value constants.%ptr.5c7, (constants.%OptionalStorage.impl_witness.707) [concrete = constants.%OptionalStorage.facet]
@@ -1036,8 +1036,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_14.2: init %Optional.143 = converted %addr.loc11_14.1, %T.binding.as_type.as.ImplicitAs.impl.Convert.call
 // CHECK:STDOUT:   %.loc11_14.3: ref %Optional.143 = temporary %.loc11_14.1, %.loc11_14.2
 // CHECK:STDOUT:   %.loc11_14.4: %Optional.143 = bind_value %.loc11_14.3
-// CHECK:STDOUT:   %Direct__carbon_thunk.call: init %Optional.143 = call imports.%Direct__carbon_thunk.decl(%.loc11_14.4) to %.loc11_16.1
-// CHECK:STDOUT:   %.loc11_16.2: ref %Optional.143 = temporary %.loc11_16.1, %Direct__carbon_thunk.call
+// CHECK:STDOUT:   %Direct.call: init %Optional.143 = call imports.%Direct.decl(%.loc11_14.4) to %.loc11_16.1
+// CHECK:STDOUT:   %.loc11_16.2: ref %Optional.143 = temporary %.loc11_16.1, %Direct.call
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.aa5 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }

@@ -50,106 +50,30 @@ static auto GenerateThunkMangledName(
   return mangled_name_stream.TakeStr();
 }
 
-// Returns true if a C++ thunk is required for the given type. A C++ thunk is
-// required for any type except for void, pointer types and signed 32-bit and
-// 64-bit integers.
-static auto IsThunkRequiredForType(Context& context, SemIR::TypeId type_id)
-    -> bool {
-  if (!type_id.has_value() || type_id == SemIR::ErrorInst::TypeId) {
-    return false;
-  }
-
-  type_id = context.types().GetUnqualifiedType(type_id);
-
-  switch (context.types().GetAsInst(type_id).kind()) {
-    case SemIR::PointerType::Kind: {
-      return false;
-    }
-
-    case SemIR::ClassType::Kind: {
-      if (!context.types().IsComplete(type_id)) {
-        // Signed integers of 32 or 64 bits should be completed when imported.
-        return true;
-      }
-
-      auto int_info = context.types().TryGetIntTypeInfo(type_id);
-      if (!int_info || !int_info->bit_width.has_value()) {
-        return true;
-      }
-
-      llvm::APInt bit_width = context.ints().Get(int_info->bit_width);
-      return bit_width != 32 && bit_width != 64;
-    }
-
-    default:
-      return true;
-  }
-}
-
-auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
-    -> bool {
-  if (!function.clang_decl_id.has_value()) {
-    return false;
-  }
-
-  // A thunk is required if any parameter or return type requires it. However,
-  // we don't generate a thunk if any relevant type is erroneous.
-  bool thunk_required = false;
-
-  const auto& decl_info = context.clang_decls().Get(function.clang_decl_id);
-  const auto* decl = cast<clang::FunctionDecl>(decl_info.key.decl);
-  if (decl_info.key.num_params !=
-      static_cast<int>(decl->getNumNonObjectParams())) {
-    // We require a thunk if the number of parameters we want isn't all of them.
-    // This happens if default arguments are in use, or (eventually) when
-    // calling a varargs function.
-    thunk_required = true;
-  } else {
-    // We require a thunk if any parameter is of reference type, even if the
-    // corresponding SemIR function has an acceptable parameter type.
-    // TODO: We should be able to avoid thunks for reference parameters.
-    for (auto* param : decl->parameters()) {
-      if (param->getType()->isReferenceType()) {
-        thunk_required = true;
-        break;
-      }
-    }
-  }
-
-  SemIR::TypeId return_type_id =
-      function.GetDeclaredReturnType(context.sem_ir());
-  if (return_type_id.has_value()) {
-    if (return_type_id == SemIR::ErrorInst::TypeId) {
-      return false;
-    }
-    thunk_required =
-        thunk_required || IsThunkRequiredForType(context, return_type_id);
-  }
-
-  for (auto param_id :
-       context.inst_blocks().GetOrEmpty(function.call_params_id)) {
-    if (param_id == SemIR::ErrorInst::InstId) {
-      return false;
-    }
-    thunk_required =
-        thunk_required ||
-        IsThunkRequiredForType(
-            context, context.insts().GetAs<SemIR::AnyParam>(param_id).type_id);
-  }
-
-  return thunk_required;
-}
-
-// Returns whether the type is void, a pointer, or a signed int of 32 or 64
-// bits.
+// Returns whether the Carbon lowering for a parameter or return of this type is
+// known to match the C++ lowering.
 static auto IsSimpleAbiType(clang::ASTContext& ast_context,
-                            clang::QualType type) -> bool {
+                            clang::QualType type, bool for_parameter) -> bool {
   if (type->isVoidType() || type->isPointerType()) {
     return true;
   }
 
+  if (!for_parameter && type->isLValueReferenceType()) {
+    // An lvalue reference return type maps to a pointer, which uses the same
+    // lowering rule.
+    return true;
+  }
+
+  if (const auto* enum_decl = type->getAsEnumDecl()) {
+    // An enum type has a simple ABI if its underlying type does.
+    type = enum_decl->getIntegerType();
+    if (type.isNull()) {
+      return false;
+    }
+  }
+
   if (const auto* builtin_type = type->getAs<clang::BuiltinType>()) {
-    if (builtin_type->isSignedInteger()) {
+    if (builtin_type->isIntegerType()) {
       uint64_t type_size = ast_context.getIntWidth(type);
       return type_size == 32 || type_size == 64;
     }
@@ -174,8 +98,8 @@ struct CalleeFunctionInfo {
     effective_return_type =
         is_ctor ? ast_context.getCanonicalTagType(method_decl->getParent())
                 : decl->getReturnType();
-    has_simple_return_type =
-        IsSimpleAbiType(ast_context, effective_return_type);
+    has_simple_return_type = IsSimpleAbiType(ast_context, effective_return_type,
+                                             /*for_parameter=*/false);
   }
 
   // Returns whether this callee has an implicit `this` parameter.
@@ -234,6 +158,52 @@ struct CalleeFunctionInfo {
 };
 }  // namespace
 
+auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
+    -> bool {
+  if (!function.clang_decl_id.has_value()) {
+    return false;
+  }
+
+  const auto& decl_info = context.clang_decls().Get(function.clang_decl_id);
+  auto* decl = cast<clang::FunctionDecl>(decl_info.key.decl);
+  if (decl_info.key.num_params !=
+      static_cast<int>(decl->getNumNonObjectParams())) {
+    // We require a thunk if the number of parameters we want isn't all of them.
+    // This happens if default arguments are in use, or (eventually) when
+    // calling a varargs function.
+    return true;
+  }
+
+  CalleeFunctionInfo callee_info(decl, decl_info.key.num_params);
+  if (!callee_info.has_simple_return_type) {
+    return true;
+  }
+
+  auto& ast_context = context.ast_context();
+  if (callee_info.has_implicit_object_parameter()) {
+    // TODO: The object parameter is a reference parameter, but we don't force a
+    // thunk here like we do for explicit reference parameters in the case where
+    // we would map the parameter to an `addr` parameter. We should make this
+    // behavior consistent.
+    auto* method_decl = cast<clang::CXXMethodDecl>(decl);
+    if (method_decl->getRefQualifier() == clang::RQ_RValue ||
+        method_decl->getMethodQualifiers().hasConst()) {
+      return true;
+    }
+  }
+
+  const auto* function_type =
+      decl->getType()->castAs<clang::FunctionProtoType>();
+  for (int i : llvm::seq(decl->getNumParams())) {
+    if (!IsSimpleAbiType(ast_context, function_type->getParamType(i),
+                         /*for_parameter=*/true)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 // Given a pointer type, returns the corresponding _Nonnull-qualified pointer
 // type.
 static auto GetNonnullType(clang::ASTContext& ast_context,
@@ -255,7 +225,7 @@ static auto GetNonNullablePointerType(clang::ASTContext& ast_context,
 static auto GetThunkParameterType(clang::ASTContext& ast_context,
                                   clang::QualType callee_type)
     -> clang::QualType {
-  if (IsSimpleAbiType(ast_context, callee_type)) {
+  if (IsSimpleAbiType(ast_context, callee_type, /*for_parameter=*/true)) {
     return callee_type;
   }
   return GetNonNullablePointerType(ast_context, callee_type);
