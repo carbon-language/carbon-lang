@@ -114,8 +114,7 @@ auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
   auto inst = sem_ir.insts().Get(inst_id);
 
   sem_ir.insts().TryUnwrap(inst, inst_id, &AddrPattern::inner_id);
-  auto [var_pattern, var_pattern_id] =
-      sem_ir.insts().TryUnwrap(inst, inst_id, &VarPattern::subpattern_id);
+  sem_ir.insts().TryUnwrap(inst, inst_id, &VarPattern::subpattern_id);
   auto [param_pattern, param_pattern_id] =
       sem_ir.insts().TryUnwrap(inst, inst_id, &AnyParamPattern::subpattern_id);
   if (!param_pattern) {
@@ -125,8 +124,7 @@ auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
   auto binding_pattern = inst.As<AnyBindingPattern>();
   return {{.inst_id = param_pattern_id,
            .inst = *param_pattern,
-           .entity_name_id = binding_pattern.entity_name_id,
-           .var_pattern_id = var_pattern_id}};
+           .entity_name_id = binding_pattern.entity_name_id}};
 }
 
 auto Function::GetDeclaredReturnType(const File& file,
