@@ -32,8 +32,9 @@ namespace Carbon::Check {
 // for assigning a type to a decimal integer literal, the first signed integer
 // in which the value could fit among bit widths of 32, 64 and 128 is selected.
 // If the value can't fit into a signed integer with width of 128-bits, then a
-// diagnostic is emitted and the maximum width of 128-bits is returned. Returns
-// IntId::None if the argument is not a constant integer or is symbolic.
+// diagnostic is emitted and the function returns IntId::None. Returns
+// IntId::None also if the argument is not a constant integer, if it is an
+// error constant, or if it is a symbolic constant.
 static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id)
     -> IntId {
   auto arg_const_id = context.constant_values().Get(arg_id);
@@ -49,8 +50,6 @@ static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id)
   llvm::APInt arg_val = context.ints().Get(arg.int_id);
   int arg_non_sign_bits = arg_val.getSignificantBits() - 1;
 
-  // Value doesn't fit to any C++ supported signed integer, diagnose and return
-  // the maximum supported integer bit width.
   if (arg_non_sign_bits >= 128) {
     CARBON_DIAGNOSTIC(IntTooLargeForCppType, Error,
                       "integer value {0} too large to fit in a signed C++ "
