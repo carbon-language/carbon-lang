@@ -377,6 +377,10 @@ class Stringifier {
     step_stack_->Push(inst.type_inst_id, " as ", inst.type_id);
   }
 
+  auto StringifyInst(InstId /*inst_id*/, CustomCppVoidType /*inst*/) -> void {
+    *out_ << "<builtin Cpp.void>";
+  }
+
   auto StringifyInst(InstId /*inst_id*/, FloatType inst) -> void {
     *out_ << "<builtin ";
     step_stack_->PushString(">");

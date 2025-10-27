@@ -1137,6 +1137,10 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
               context.ints().Add(ast_context.getTypeSize(qual_type))));
     }
     // TODO: Handle floating-point types that map to named aliases.
+  } else if (type.isVoidType()) {
+    return ExprAsType(context, Parse::NodeId::None,
+                      context.types().GetInstId(GetSingletonType(
+                          context, SemIR::CustomCppVoidType::TypeInstId)));
   }
 
   return TypeExpr::None;
@@ -2074,6 +2078,7 @@ static auto LookupBuiltinTypes(Context& context, SemIR::LocId loc_id,
           .Case("float", ast_context.FloatTy)
           .Case("double", ast_context.DoubleTy)
           .Case("long_double", ast_context.LongDoubleTy)
+          .Case("void", ast_context.VoidTy)
           .Default(clang::QualType());
   if (builtin_type.isNull()) {
     return SemIR::InstId::None;

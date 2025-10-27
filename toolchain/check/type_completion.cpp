@@ -123,10 +123,10 @@ class TypeCompleter {
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<
              SemIR::AssociatedEntityType, SemIR::CppOverloadSetType,
-             SemIR::FunctionType, SemIR::FunctionTypeWithSelfType,
-             SemIR::GenericClassType, SemIR::GenericInterfaceType,
-             SemIR::GenericNamedConstraintType, SemIR::InstType,
-             SemIR::UnboundElementType, SemIR::WhereExpr>())
+             SemIR::CustomCppVoidType, SemIR::FunctionType,
+             SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
+             SemIR::GenericInterfaceType, SemIR::GenericNamedConstraintType,
+             SemIR::InstType, SemIR::UnboundElementType, SemIR::WhereExpr>())
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
     // These types have no runtime operations, so we use an empty value

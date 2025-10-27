@@ -558,6 +558,22 @@ struct ConvertToValueAction {
   TypeInstId target_type_inst_id;
 };
 
+// A type for C++ `void`. Should only be used for pointers (`void*`).
+struct CustomCppVoidType {
+  static constexpr auto Kind =
+      InstKind::CustomCppVoidType.Define<Parse::NoneNodeId>(
+          {.ir_name = "custom_cpp_void_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
+
+  SemIR::TypeId type_id;
+};
+
 // A type whose layout is determined externally. This is used as the object
 // representation of class types imported from C++.
 struct CustomLayoutType {
