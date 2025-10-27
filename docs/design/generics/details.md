@@ -5733,11 +5733,13 @@ interface CommonTypeWith(T:! type) {
 says that if `Self` implements `CommonTypeWith(T)`, then `T` must implement
 `CommonTypeWith(Self)`.
 
-A `require`...`impls` constraint in an `interface`, or `constraint`, definition
-must still use `Self` in some way. It can be an argument to either the
-[type](#parameterized-types) or [interface](#parameterized-interfaces). The
-`Self` can be omitted and will be implied as the type between `require impls`.
-For example:
+A `require <type> impls <facet type>` constraint in an `interface`, or
+`constraint`, definition must still use `Self` as either the type, or as a
+parameter to the [type](#parameterized-types) or an
+[interface](#parameterized-interfaces) in the facet type. In particular, it
+requires `Self` be part of the type structure of any `impl` that could satisfy
+that `require`. If the `<type>` is omitted entirely, it will be implied to be
+`Self`. For example:
 
 -   ✅ Allowed: `require impls Equatable`
 -   ✅ Allowed: `require Self impls Equatable`
@@ -5746,7 +5748,8 @@ For example:
 -   ✅ Allowed: `require impls CommonTypeWith(Self)`
 -   ✅ Allowed: `require Self impls CommonTypeWith(Self)`
 -   ❌ Error: `require i32 impls Equatable`
--   ❌ Error: `require T impls Equatable` where `T` is some parameter to the
+-   ❌ Error: `require i32 impls Equatable where .Result = Self`
+-   ❌ Error: `require T impls Equatable` when `T` is some parameter to the
     interface
 
 This restriction allows the Carbon compiler to know where to look for facts
