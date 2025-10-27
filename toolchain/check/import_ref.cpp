@@ -1543,13 +1543,13 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::BindAlias inst) -> ResolveResult {
+                                SemIR::AliasBinding inst) -> ResolveResult {
   auto value_id = GetLocalConstantId(resolver, inst.value_id);
   return RetryOrDone(resolver, value_id);
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::BindSymbolicName inst) -> ResolveResult {
+                                SemIR::SymbolicBinding inst) -> ResolveResult {
   auto type_id = GetLocalConstantId(resolver, inst.type_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
@@ -1557,7 +1557,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   auto entity_name_id =
       GetLocalSymbolicEntityNameId(resolver, inst.entity_name_id);
-  return ResolveAsDeduplicated<SemIR::BindSymbolicName>(
+  return ResolveAsDeduplicated<SemIR::SymbolicBinding>(
       resolver,
       {.type_id =
            resolver.local_context().types().GetTypeIdForTypeConstantId(type_id),
@@ -3199,7 +3199,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
   if (!inst_constant_id.is_constant()) {
     // TODO: Import of non-constant BindNames happens when importing `let`
     // declarations.
-    CARBON_CHECK(resolver.import_insts().Is<SemIR::AnyBindName>(inst_id),
+    CARBON_CHECK(resolver.import_insts().Is<SemIR::AnyBinding>(inst_id),
                  "TryResolveInst on non-constant instruction {0}", inst_id);
     return ResolveResult::Done(SemIR::ConstantId::NotConstant);
   }
@@ -3240,10 +3240,10 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::BaseDecl inst): {
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
-    case CARBON_KIND(SemIR::BindAlias inst): {
+    case CARBON_KIND(SemIR::AliasBinding inst): {
       return TryResolveTypedInst(resolver, inst);
     }
-    case CARBON_KIND(SemIR::BindSymbolicName inst): {
+    case CARBON_KIND(SemIR::SymbolicBinding inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::BoolLiteral inst): {

@@ -65,22 +65,22 @@ constraint Generic(T:! type) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %GenericType.type: type = generic_named_constaint_type @GenericType [concrete]
 // CHECK:STDOUT:   %empty_struct.bd5: %GenericType.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Self.eca39f.1: %type = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.aa1546.1: %type = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
-// CHECK:STDOUT:   %Self.1d7: %Z.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %U: %Z.type = bind_symbolic_name U, 0 [symbolic]
+// CHECK:STDOUT:   %Self.3b3: %Z.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %U: %Z.type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.4a0: type = pattern_type %Z.type [concrete]
 // CHECK:STDOUT:   %GenericZ.type: type = generic_named_constaint_type @GenericZ [concrete]
 // CHECK:STDOUT:   %empty_struct.05e: %GenericZ.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Self.eca39f.2: %type = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.aa1546.2: %type = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %ForwardDeclaredGeneric.type: type = generic_named_constaint_type @ForwardDeclaredGeneric [concrete]
 // CHECK:STDOUT:   %empty_struct.1a7: %ForwardDeclaredGeneric.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Self.eca39f.3: %type = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.aa1546.3: %type = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -93,35 +93,35 @@ constraint Generic(T:! type) {}
 // CHECK:STDOUT:   %GenericType.decl: %GenericType.type = constraint_decl @GenericType [concrete = constants.%empty_struct.bd5] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %T.loc4_24.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_24.1 (constants.%T)]
+// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %T.loc4_24.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_24.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Z.decl: type = interface_decl @Z [concrete = constants.%Z.type] {} {}
 // CHECK:STDOUT:   %GenericZ.decl: %GenericZ.type = constraint_decl @GenericZ [concrete = constants.%empty_struct.05e] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.4a0 = symbolic_binding_pattern U, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7: type = splice_block %Z.ref [concrete = constants.%Z.type] {
-// CHECK:STDOUT:       %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc7_21.2: %Z.type = bind_symbolic_name U, 0 [symbolic = %U.loc7_21.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc7_21.2: %Z.type = symbolic_binding U, 0 [symbolic = %U.loc7_21.1 (constants.%U)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ForwardDeclaredGeneric.decl.loc9: %ForwardDeclaredGeneric.type = constraint_decl @ForwardDeclaredGeneric [concrete = constants.%empty_struct.1a7] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self.2: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %T.loc9_35.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc9_35.1 (constants.%T)]
+// CHECK:STDOUT:     %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %T.loc9_35.2: type = symbolic_binding T, 0 [symbolic = %T.loc9_35.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ForwardDeclaredGeneric.decl.loc10: %ForwardDeclaredGeneric.type = constraint_decl @ForwardDeclaredGeneric [concrete = constants.%empty_struct.1a7] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self.1: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %T.loc10: type = bind_symbolic_name T, 0 [symbolic = %T.loc9_35.1 (constants.%T)]
+// CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %T.loc10: type = symbolic_binding T, 0 [symbolic = %T.loc9_35.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
-// CHECK:STDOUT:   %Self: %Z.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.1d7]
+// CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.3b3]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -129,13 +129,13 @@ constraint Generic(T:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic constraint @GenericType(%T.loc4_24.2: type) {
-// CHECK:STDOUT:   %T.loc4_24.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_24.1 (constants.%T)]
+// CHECK:STDOUT:   %T.loc4_24.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_24.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self.2: %type = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.eca39f.1)]
+// CHECK:STDOUT:   %Self.2: %type = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.aa1546.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
-// CHECK:STDOUT:     %Self.1: %type = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.eca39f.1)]
+// CHECK:STDOUT:     %Self.1: %type = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.aa1546.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
@@ -143,13 +143,13 @@ constraint Generic(T:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic constraint @GenericZ(%U.loc7_21.2: %Z.type) {
-// CHECK:STDOUT:   %U.loc7_21.1: %Z.type = bind_symbolic_name U, 0 [symbolic = %U.loc7_21.1 (constants.%U)]
+// CHECK:STDOUT:   %U.loc7_21.1: %Z.type = symbolic_binding U, 0 [symbolic = %U.loc7_21.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self.2: %type = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.eca39f.2)]
+// CHECK:STDOUT:   %Self.2: %type = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.aa1546.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
-// CHECK:STDOUT:     %Self.1: %type = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.eca39f.2)]
+// CHECK:STDOUT:     %Self.1: %type = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.aa1546.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
@@ -157,13 +157,13 @@ constraint Generic(T:! type) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic constraint @ForwardDeclaredGeneric(%T.loc9_35.2: type) {
-// CHECK:STDOUT:   %T.loc9_35.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc9_35.1 (constants.%T)]
+// CHECK:STDOUT:   %T.loc9_35.1: type = symbolic_binding T, 0 [symbolic = %T.loc9_35.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self.2: %type = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.eca39f.3)]
+// CHECK:STDOUT:   %Self.2: %type = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.aa1546.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
-// CHECK:STDOUT:     %Self.1: %type = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.eca39f.3)]
+// CHECK:STDOUT:     %Self.1: %type = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.aa1546.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1

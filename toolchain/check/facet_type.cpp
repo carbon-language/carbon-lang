@@ -636,7 +636,7 @@ auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
   });
   auto inst_id = AddInst(
-      context, SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>({
+      context, SemIR::LocIdAndInst::NoLoc<SemIR::SymbolicBinding>({
                    .type_id = self_type_id,
                    .entity_name_id = entity_name_id,
                    // `None` because there is no equivalent non-symbolic value.

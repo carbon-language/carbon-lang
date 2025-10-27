@@ -148,7 +148,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %.loc39_4.1: ref %Class = deref %p.ref.loc39
 // CHECK:STDOUT:   %G.ref.loc39: %Class.G.type = name_ref G, @Class.%Class.G.decl [concrete = constants.%Class.G]
 // CHECK:STDOUT:   %Class.G.bound.loc39: <bound method> = bound_method %.loc39_4.1, %G.ref.loc39
-// CHECK:STDOUT:   %.loc39_4.2: %Class = bind_value %.loc39_4.1
+// CHECK:STDOUT:   %.loc39_4.2: %Class = acquire_value %.loc39_4.1
 // CHECK:STDOUT:   %Class.G.call.loc39: init %empty_tuple.type = call %Class.G.bound.loc39(%.loc39_4.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

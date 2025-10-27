@@ -378,7 +378,7 @@ class SubstWitnessesCallbacks : public SubstInstCallbacks {
 
     auto lookup =
         context().insts().GetAs<SemIR::LookupImplWitness>(access->witness_id);
-    auto bind_name = context().insts().TryGetAs<SemIR::BindSymbolicName>(
+    auto bind_name = context().insts().TryGetAs<SemIR::SymbolicBinding>(
         lookup.query_self_inst_id);
     if (!bind_name) {
       return SubstOperands;
@@ -872,7 +872,7 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   // crashes.
   bool self_facet_provides_witness = facet_lookup_result.has_value();
   if (self_facet_provides_witness) {
-    if (auto bind = context.insts().TryGetAs<SemIR::BindSymbolicName>(
+    if (auto bind = context.insts().TryGetAs<SemIR::SymbolicBinding>(
             eval_query.query_self_inst_id)) {
       const auto& entity = context.entity_names().Get(bind->entity_name_id);
       if (entity.name_id == SemIR::NameId::PeriodSelf ||

@@ -85,7 +85,7 @@ class EvalContext {
 
   // Gets the value of the specified compile-time binding in this context.
   // Returns `None` if the value is not fixed in this context.
-  auto GetCompileTimeBindValue(SemIR::CompileTimeBindIndex bind_index)
+  auto GetCompileTimeAcquireValue(SemIR::CompileTimeBindIndex bind_index)
       -> SemIR::ConstantId {
     if (!bind_index.has_value() || !specific_id_.has_value()) {
       return SemIR::ConstantId::None;
@@ -2142,18 +2142,18 @@ auto TryEvalTypedInst<SemIR::ImportRefLoaded>(EvalContext& /*eval_context*/,
 // Symbolic bindings are a special case because they can reach into the eval
 // context and produce a context-specific value.
 template <>
-auto TryEvalTypedInst<SemIR::BindSymbolicName>(EvalContext& eval_context,
-                                               SemIR::InstId inst_id,
-                                               SemIR::Inst inst)
+auto TryEvalTypedInst<SemIR::SymbolicBinding>(EvalContext& eval_context,
+                                              SemIR::InstId inst_id,
+                                              SemIR::Inst inst)
     -> SemIR::ConstantId {
-  auto bind = inst.As<SemIR::BindSymbolicName>();
+  auto bind = inst.As<SemIR::SymbolicBinding>();
 
   // If we know which specific we're evaluating within and this is an argument
   // of that specific, its constant value is the corresponding argument value.
   const auto& bind_name = eval_context.entity_names().Get(bind.entity_name_id);
   if (bind_name.bind_index().has_value()) {
     if (auto value =
-            eval_context.GetCompileTimeBindValue(bind_name.bind_index());
+            eval_context.GetCompileTimeAcquireValue(bind_name.bind_index());
         value.has_value()) {
       return value;
     }
@@ -2165,7 +2165,7 @@ auto TryEvalTypedInst<SemIR::BindSymbolicName>(EvalContext& eval_context,
   bind.value_id = SemIR::InstId::None;
   if (!ReplaceTypeWithConstantValue(eval_context, inst_id, &bind, &phase) ||
       !ReplaceFieldWithConstantValue(eval_context, &bind,
-                                     &SemIR::BindSymbolicName::entity_name_id,
+                                     &SemIR::SymbolicBinding::entity_name_id,
                                      &phase)) {
     return SemIR::ConstantId::NotConstant;
   }
@@ -2184,14 +2184,14 @@ auto TryEvalTypedInst<SemIR::SymbolicBindingType>(EvalContext& eval_context,
       inst.As<SemIR::SymbolicBindingType>().entity_name_id);
   if (bind_name.bind_index().has_value()) {
     if (auto value =
-            eval_context.GetCompileTimeBindValue(bind_name.bind_index());
+            eval_context.GetCompileTimeAcquireValue(bind_name.bind_index());
         value.has_value()) {
       auto value_inst_id = eval_context.constant_values().GetInstId(value);
 
       // A SymbolicBindingType can evaluate to a FacetAccessType if the new
       // value of the entity is a facet value that that does not have a concrete
       // type (a FacetType) and does not have a new EntityName to point to (a
-      // BindSymbolicName).
+      // SymbolicBinding).
       auto access = SemIR::FacetAccessType{
           .type_id = SemIR::TypeType::TypeId,
           .facet_value_inst_id = value_inst_id,

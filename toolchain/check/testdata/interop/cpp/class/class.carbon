@@ -395,7 +395,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     %Bar.ref.loc8_15: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:     %ptr: type = ptr_type %Bar.ref.loc8_15 [concrete = constants.%ptr.f68]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_30: %ptr.f68 = bind_value %foo.ref
+// CHECK:STDOUT:   %.loc8_30: %ptr.f68 = acquire_value %foo.ref
 // CHECK:STDOUT:   %bar: %ptr.f68 = value_binding bar, %.loc8_30
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -448,7 +448,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     %Bar.ref.loc8: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:     %ptr.loc8: type = ptr_type %Bar.ref.loc8 [concrete = constants.%ptr.f68]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_30.3: %ptr.f68 = bind_value %.loc8_30.2
+// CHECK:STDOUT:   %.loc8_30.3: %ptr.f68 = acquire_value %.loc8_30.2
 // CHECK:STDOUT:   %foo_bar: %ptr.f68 = value_binding foo_bar, %.loc8_30.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

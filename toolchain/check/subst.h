@@ -102,7 +102,7 @@ auto SubstInst(Context& context, SemIR::TypeInstId inst_id,
 
 // A substitution that is being performed.
 struct Substitution {
-  // The index of a `BindSymbolicName` instruction that is being replaced.
+  // The index of a `SymbolicBinding` instruction that is being replaced.
   SemIR::CompileTimeBindIndex bind_id;
   // The replacement constant value to substitute.
   SemIR::ConstantId replacement_id;
@@ -110,7 +110,7 @@ struct Substitution {
 
 using Substitutions = llvm::ArrayRef<Substitution>;
 
-// Replaces the `BindSymbolicName` instruction `bind_id` with `replacement_id`
+// Replaces the `SymbolicBinding` instruction `bind_id` with `replacement_id`
 // throughout the constant `const_id`, and returns the substituted value.
 auto SubstConstant(Context& context, SemIR::LocId loc_id,
                    SemIR::ConstantId const_id, Substitutions substitutions)

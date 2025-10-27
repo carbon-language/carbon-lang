@@ -57,7 +57,7 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
       bind_name_kind = SemIR::InstKind::RefBinding;
       break;
     case SemIR::InstKind::SymbolicBindingPattern:
-      bind_name_kind = SemIR::InstKind::BindSymbolicName;
+      bind_name_kind = SemIR::InstKind::SymbolicBinding;
       break;
     case SemIR::InstKind::ValueBindingPattern:
       bind_name_kind = SemIR::InstKind::ValueBinding;
@@ -76,10 +76,10 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
   auto bind_id = AddInstInNoBlock(
       context,
       SemIR::LocIdAndInst::UncheckedLoc(
-          name_loc, SemIR::AnyBindName{.kind = bind_name_kind,
-                                       .type_id = type_id,
-                                       .entity_name_id = entity_name_id,
-                                       .value_id = SemIR::InstId::None}));
+          name_loc, SemIR::AnyBinding{.kind = bind_name_kind,
+                                      .type_id = type_id,
+                                      .entity_name_id = entity_name_id,
+                                      .value_id = SemIR::InstId::None}));
 
   auto pattern_type_id = GetPatternType(context, type_id);
   auto binding_pattern_id = AddPatternInst(

@@ -52,7 +52,7 @@ interface I {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %I.type.116: type = facet_type <@I.loc33> [concrete]
-// CHECK:STDOUT:   %Self: %I.type.116 = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %I.type.116 = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.type.d37: type = fn_type @I.loc39 [concrete]
 // CHECK:STDOUT:   %I: %I.type.d37 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -78,7 +78,7 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.loc33 {
-// CHECK:STDOUT:   %Self: %I.type.116 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %I.type.116 = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }

@@ -53,7 +53,7 @@ interface I {}
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type.11614e.1: type = facet_type <@I.1> [concrete]
 // CHECK:STDOUT:   %I.type.11614e.2: type = facet_type <@I.loc13> [concrete]
-// CHECK:STDOUT:   %Self: %I.type.11614e.2 = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %I.type.11614e.2 = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -71,7 +71,7 @@ interface I {}
 // CHECK:STDOUT: interface @I.1 [from "a.carbon"];
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.loc13 {
-// CHECK:STDOUT:   %Self: %I.type.11614e.2 = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %I.type.11614e.2 = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

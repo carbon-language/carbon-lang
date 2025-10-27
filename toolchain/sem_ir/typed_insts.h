@@ -78,6 +78,16 @@ struct AccessOptionalMemberAction {
   NameId name_id;
 };
 
+// A value acquisition. Used when an expression contains a reference and we want
+// a value.
+struct AcquireValue {
+  static constexpr auto Kind = InstKind::AcquireValue.Define<Parse::NodeId>(
+      {.ir_name = "acquire_value"});
+
+  TypeId type_id;
+  InstId value_id;
+};
+
 // An adapted type declaration in a class, of the form `adapt T;`.
 struct AdaptDecl {
   static constexpr auto Kind = InstKind::AdaptDecl.Define<Parse::AdaptDeclId>(
@@ -114,6 +124,16 @@ struct AddrPattern {
   TypeId type_id;
   // The `self` binding pattern.
   InstId inner_id;
+};
+
+// Binds a name as an alias. See AnyBinding for member documentation.
+struct AliasBinding {
+  static constexpr auto Kind = InstKind::AliasBinding.Define<Parse::NodeId>(
+      {.ir_name = "alias_binding"});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
+  InstId value_id;
 };
 
 // An array indexing operation, such as `array[index]`.
@@ -250,40 +270,6 @@ struct BaseDecl {
   TypeId type_id;
   TypeInstId base_type_inst_id;
   ElementIndex index;
-};
-
-// Binds a name as an alias. See AnyBindName for member documentation.
-struct BindAlias {
-  static constexpr auto Kind =
-      InstKind::BindAlias.Define<Parse::NodeId>({.ir_name = "bind_alias"});
-
-  TypeId type_id;
-  EntityNameId entity_name_id;
-  InstId value_id;
-};
-
-// Binds a symbolic name, such as `x` in `let x:! i32 = 7;`. See AnyBindName for
-// member documentation.
-struct BindSymbolicName {
-  static constexpr auto Kind = InstKind::BindSymbolicName.Define<Parse::NodeId>(
-      {.ir_name = "bind_symbolic_name",
-       .is_type = InstIsType::Maybe,
-       .constant_kind = InstConstantKind::SymbolicOnly});
-
-  TypeId type_id;
-  EntityNameId entity_name_id;
-  InstId value_id;
-};
-
-// A value acquisition. Used when an expression contains a reference and we want
-// a value.
-// TODO: Rename to AcquireValue
-struct BindValue {
-  static constexpr auto Kind =
-      InstKind::BindValue.Define<Parse::NodeId>({.ir_name = "bind_value"});
-
-  TypeId type_id;
-  InstId value_id;
 };
 
 // Reads an argument from `BranchWithArg`.
@@ -642,8 +628,8 @@ struct FacetType {
 // This instruction is never a type. Though it can be converted to type, doing
 // so evaluates to the `type_inst_id` within.
 //
-// If the FacetValue is just a wrapper around a BindSymbolicName (converted to
-// `type` and back, for example), it evaluates back to the BindSymbolicName.
+// If the FacetValue is just a wrapper around a SymbolicBinding (converted to
+// `type` and back, for example), it evaluates back to the SymbolicBinding.
 struct FacetValue {
   static constexpr auto Kind = InstKind::FacetValue.Define<Parse::NodeId>(
       {.ir_name = "facet_value",
@@ -1324,13 +1310,7 @@ struct PointerType {
 };
 
 // Binds a name as a reference expression, such as `x` in `var x: i32`.
-// See AnyBindName for member documentation.
-// TODO: rename other classes for consistency:
-//   AnyBindName -> AnyBinding
-//   AnyBindNameOrExportDecl -> AnyBindingOrExportDecl
-//   BindSymbolicName -> SymbolicBinding
-//   BindAlias -> AliasBinding
-//   BindValue -> AcquireValue
+// See AnyBinding for member documentation.
 struct RefBinding {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::RefBinding.Define<Parse::NodeId>(
@@ -1712,6 +1692,19 @@ struct StructValue {
   InstBlockId elements_id;
 };
 
+// Binds a symbolic name, such as `x` in `let x:! i32 = 7;`. See AnyBinding for
+// member documentation.
+struct SymbolicBinding {
+  static constexpr auto Kind = InstKind::SymbolicBinding.Define<Parse::NodeId>(
+      {.ir_name = "symbolic_binding",
+       .is_type = InstIsType::Maybe,
+       .constant_kind = InstConstantKind::SymbolicOnly});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
+  InstId value_id;
+};
+
 // Represents a symbolic binding pattern. See `AnyBindingPattern` for member
 // documentation.
 struct SymbolicBindingPattern {
@@ -1907,7 +1900,7 @@ struct ValueAsRef {
 };
 
 // Binds a name as a value expression, such as `x` in `let x: i32`. See
-// AnyBindName for member documentation.
+// AnyBinding for member documentation.
 struct ValueBinding {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::ValueBinding.Define<Parse::NodeId>(

@@ -28,7 +28,7 @@ interface Interface {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [concrete]
-// CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %Interface.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Interface.F.type.1ad64d.1: type = fn_type @Interface.F.loc16 [concrete]
 // CHECK:STDOUT:   %Interface.F.5d382e.1: %Interface.F.type.1ad64d.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface [concrete]
@@ -45,7 +45,7 @@ interface Interface {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
-// CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %Interface.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Interface.F.decl.loc16: %Interface.F.type.1ad64d.1 = fn_decl @Interface.F.loc16 [concrete = constants.%Interface.F.5d382e.1] {} {}
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %Interface.F.decl.loc16 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Interface.F.decl.loc24: %Interface.F.type.1ad64d.2 = fn_decl @Interface.F.loc24 [concrete = constants.%Interface.F.5d382e.2] {} {}

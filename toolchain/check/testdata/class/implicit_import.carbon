@@ -255,7 +255,7 @@ class B {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %B: type = bind_alias B, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %B: type = alias_binding B, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
