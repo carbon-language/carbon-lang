@@ -140,17 +140,13 @@ import Cpp library "int_literal.h";
 
 fn F() {
   // i128_max + 1
-  // CHECK:STDERR: fail_import_large_int_literal.carbon:[[@LINE+12]]:25: error: integer value 170141183460469231731687303715884105728 too large to be fitted in any supported signed C++ type, max supported _int128 [IntTooLargeForCppType]
+  // CHECK:STDERR: fail_import_large_int_literal.carbon:[[@LINE+8]]:25: error: integer value 170141183460469231731687303715884105728 too large to fit in a signed C++ integer type; requires 129 bits, but max is 128 [IntTooLargeForCppType]
   // CHECK:STDERR:   let h: i128 = Cpp.foo(170141183460469231731687303715884105728);
   // CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_large_int_literal.carbon:[[@LINE+8]]:25: error: integer value 170141183460469231731687303715884105728 too large for type `i128` [IntTooLargeForType]
+  // CHECK:STDERR: fail_import_large_int_literal.carbon:[[@LINE+4]]:25: error: call argument of type `Core.IntLiteral` is not supported [CppCallArgTypeNotSupported]
   // CHECK:STDERR:   let h: i128 = Cpp.foo(170141183460469231731687303715884105728);
   // CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_large_int_literal.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./int_literal.h:11:19: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto foo(__int128 a) -> __int128;
-  // CHECK:STDERR:                   ^
   // CHECK:STDERR:
   let h: i128 = Cpp.foo(170141183460469231731687303715884105728);
 }
@@ -1390,63 +1386,20 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_128: Core.IntLiteral = int_value 128 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
-// CHECK:STDOUT:   %N: Core.IntLiteral = bind_symbolic_name N, 0 [symbolic]
 // CHECK:STDOUT:   %i128: type = class_type @Int, @Int(%int_128) [concrete]
 // CHECK:STDOUT:   %pattern_type.57d: type = pattern_type %i128 [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %int_170141183460469231731687303715884105728.70f: Core.IntLiteral = int_value 170141183460469231731687303715884105728 [concrete]
-// CHECK:STDOUT:   %ptr.974: type = ptr_type %i128 [concrete]
-// CHECK:STDOUT:   %pattern_type.662: type = pattern_type %ptr.974 [concrete]
-// CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
-// CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
-// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.9d8: type = facet_type <@ImplicitAs, @ImplicitAs(%i128)> [concrete]
-// CHECK:STDOUT:   %ImplicitAs.Convert.type.812: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i128) [concrete]
-// CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.1c0: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.614: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.9e9, @Core.IntLiteral.as.ImplicitAs.impl(%int_128) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e70: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_128) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.29e: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e70 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.9d8 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.614) [concrete]
-// CHECK:STDOUT:   %.4c6: type = fn_type_with_self_type %ImplicitAs.Convert.type.812, %ImplicitAs.facet [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_170141183460469231731687303715884105728.70f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.29e [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.29e, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_128) [concrete]
-// CHECK:STDOUT:   %bound_method.d04: <bound method> = bound_method %int_170141183460469231731687303715884105728.70f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
-// CHECK:STDOUT:   %int_170141183460469231731687303715884105728.919: %i128 = int_value 170141183460469231731687303715884105728 [concrete]
-// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.afd: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.6cd: %Int.as.Copy.impl.Op.type.afd = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.115: <witness> = impl_witness imports.%Copy.impl_witness_table.1ed, @Int.as.Copy.impl(%int_128) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.569: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_128) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.827: %Int.as.Copy.impl.Op.type.569 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i128, (%Copy.impl_witness.115) [concrete]
-// CHECK:STDOUT:   %.827: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound: <bound method> = bound_method %int_170141183460469231731687303715884105728.919, %Int.as.Copy.impl.Op.827 [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.827, @Int.as.Copy.impl.Op(%int_128) [concrete]
-// CHECK:STDOUT:   %bound_method.b33: <bound method> = bound_method %int_170141183460469231731687303715884105728.919, %Int.as.Copy.impl.Op.specific_fn [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value %i128, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.4fa: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.726: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.4fa = struct_value () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.726, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value) [concrete]
+// CHECK:STDOUT:   %int_170141183460469231731687303715884105728: Core.IntLiteral = int_value 170141183460469231731687303715884105728 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
-// CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
-// CHECK:STDOUT:     .Copy = %Core.Copy
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -1456,32 +1409,6 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.662 = binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.662 = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.662 = binding_pattern r#return [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.662 = value_param_pattern %return.patt, call_param1 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %a.param: %ptr.974 = value_param call_param0
-// CHECK:STDOUT:     %.1: type = splice_block constants.%ptr.974 [concrete = constants.%ptr.974] {
-// CHECK:STDOUT:       %int_128.2: Core.IntLiteral = int_value 128 [concrete = constants.%int_128]
-// CHECK:STDOUT:       %i128.2: type = class_type @Int, @Int(constants.%int_128) [concrete = constants.%i128]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %ptr.974 = bind_name a, %a.param
-// CHECK:STDOUT:     %return.param: %ptr.974 = value_param call_param1
-// CHECK:STDOUT:     %.2: type = splice_block constants.%ptr.974 [concrete = constants.%ptr.974] {
-// CHECK:STDOUT:       %int_128.1: Core.IntLiteral = int_value 128 [concrete = constants.%int_128]
-// CHECK:STDOUT:       %i128.1: type = class_type @Int, @Int(constants.%int_128) [concrete = constants.%i128]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %return: %ptr.974 = bind_name r#return, %return.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.ee7: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1c0)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.9e9 = impl_witness_table (%Core.import_ref.ee7), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.d0f6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.afd) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.6cd)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.1ed = impl_witness_table (%Core.import_ref.d0f6), @Int.as.Copy.impl [concrete]
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1504,44 +1431,14 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %int_170141183460469231731687303715884105728: Core.IntLiteral = int_value 170141183460469231731687303715884105728 [concrete = constants.%int_170141183460469231731687303715884105728.70f]
-// CHECK:STDOUT:   %impl.elem0.loc20_25.1: %.4c6 = impl_witness_access constants.%ImplicitAs.impl_witness.614, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.29e]
-// CHECK:STDOUT:   %bound_method.loc20_25.1: <bound method> = bound_method %int_170141183460469231731687303715884105728, %impl.elem0.loc20_25.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc20_25.1: <specific function> = specific_function %impl.elem0.loc20_25.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_128) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc20_25.2: <bound method> = bound_method %int_170141183460469231731687303715884105728, %specific_fn.loc20_25.1 [concrete = constants.%bound_method.d04]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i128 = call %bound_method.loc20_25.2(%int_170141183460469231731687303715884105728) [concrete = constants.%int_170141183460469231731687303715884105728.919]
-// CHECK:STDOUT:   %.loc20_25.1: %i128 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_170141183460469231731687303715884105728.919]
-// CHECK:STDOUT:   %.loc20_25.2: %i128 = converted %int_170141183460469231731687303715884105728, %.loc20_25.1 [concrete = constants.%int_170141183460469231731687303715884105728.919]
-// CHECK:STDOUT:   %.loc20_25.3: ref %i128 = temporary_storage
-// CHECK:STDOUT:   %impl.elem0.loc20_25.2: %.827 = impl_witness_access constants.%Copy.impl_witness.115, element0 [concrete = constants.%Int.as.Copy.impl.Op.827]
-// CHECK:STDOUT:   %bound_method.loc20_25.3: <bound method> = bound_method %.loc20_25.2, %impl.elem0.loc20_25.2 [concrete = constants.%Int.as.Copy.impl.Op.bound]
-// CHECK:STDOUT:   %specific_fn.loc20_25.2: <specific function> = specific_function %impl.elem0.loc20_25.2, @Int.as.Copy.impl.Op(constants.%int_128) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc20_25.4: <bound method> = bound_method %.loc20_25.2, %specific_fn.loc20_25.2 [concrete = constants.%bound_method.b33]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i128 = call %bound_method.loc20_25.4(%.loc20_25.2) [concrete = constants.%int_170141183460469231731687303715884105728.919]
-// CHECK:STDOUT:   %.loc20_25.4: ref %i128 = temporary %.loc20_25.3, %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:   %addr.loc20_64.1: %ptr.974 = addr_of %.loc20_25.4
-// CHECK:STDOUT:   %.loc20_64.1: ref %i128 = temporary_storage
-// CHECK:STDOUT:   %addr.loc20_64.2: %ptr.974 = addr_of %.loc20_64.1
-// CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc20_64.1, %addr.loc20_64.2)
-// CHECK:STDOUT:   %.loc20_64.2: init %i128 = in_place_init %foo__carbon_thunk.call, %.loc20_64.1
-// CHECK:STDOUT:   %.loc20_10: type = splice_block %i128 [concrete = constants.%i128] {
+// CHECK:STDOUT:   %int_170141183460469231731687303715884105728: Core.IntLiteral = int_value 170141183460469231731687303715884105728 [concrete = constants.%int_170141183460469231731687303715884105728]
+// CHECK:STDOUT:   %.loc16: type = splice_block %i128 [concrete = constants.%i128] {
 // CHECK:STDOUT:     %int_128: Core.IntLiteral = int_value 128 [concrete = constants.%int_128]
 // CHECK:STDOUT:     %i128: type = class_type @Int, @Int(constants.%int_128) [concrete = constants.%i128]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc20_64.3: %i128 = value_of_initializer %.loc20_64.2
-// CHECK:STDOUT:   %.loc20_64.4: %i128 = converted %.loc20_64.2, %.loc20_64.3
-// CHECK:STDOUT:   %h: %i128 = bind_name h, %.loc20_64.4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc20_25.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.726
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.726, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc20_25.5: <bound method> = bound_method %.loc20_25.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc20_25: %ptr.974 = addr_of %.loc20_25.4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc20_25.5(%addr.loc20_25)
+// CHECK:STDOUT:   %h: %i128 = bind_name h, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo(%a.param: %i128) -> %i128;
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo__carbon_thunk(%a.param: %ptr.974, %return.param: %ptr.974);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_negative_int_literal.carbon
 // CHECK:STDOUT:

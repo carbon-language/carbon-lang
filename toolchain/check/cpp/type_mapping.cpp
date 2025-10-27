@@ -47,18 +47,19 @@ static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id)
   auto arg = context.insts().GetAs<SemIR::IntValue>(
       context.constant_values().GetInstId(arg_const_id));
   llvm::APInt arg_val = context.ints().Get(arg.int_id);
-  unsigned arg_non_sign_bits = arg_val.getSignificantBits() - 1;
+  int arg_non_sign_bits = arg_val.getSignificantBits() - 1;
 
   // Value doesn't fit to any C++ supported signed integer, diagnose and return
   // the maximum supported integer bit width.
   if (arg_non_sign_bits >= 128) {
     CARBON_DIAGNOSTIC(IntTooLargeForCppType, Error,
-                      "integer value {0} too large to be fitted in any "
-                      "supported signed C++ type, max supported _int128",
-                      TypedInt);
+                      "integer value {0} too large to fit in a signed C++ "
+                      "integer type; requires {1} bits, but max is 128",
+                      TypedInt, int);
     context.emitter().Emit(arg_id, IntTooLargeForCppType,
-                           {.type = arg.type_id, .value = arg_val});
-    return IntId::MakeRaw(128);
+                           {.type = arg.type_id, .value = arg_val},
+                           arg_non_sign_bits + 1);
+    return IntId::None;
   }
 
   return (arg_non_sign_bits < 32)
