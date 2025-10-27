@@ -43,7 +43,6 @@ static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id)
       arg_const_id.is_symbolic()) {
     // TODO: Add tests for these cases.
     return IntId::None;
-    ;
   }
   auto arg = context.insts().GetAs<SemIR::IntValue>(
       context.constant_values().GetInstId(arg_const_id));
