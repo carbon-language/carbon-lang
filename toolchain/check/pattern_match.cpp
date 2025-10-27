@@ -95,6 +95,8 @@ class MatchContext {
   // Implementations of `EmitPatternMatch` for particular pattern inst kinds.
   // The pattern argument is always equal to
   // `context.insts().Get(entry.pattern_id)`.
+  // TODO: drop pattern_inst_id parameter, which is redundant with
+  // entry.pattern_id
   auto DoEmitPatternMatch(Context& context,
                           SemIR::AnyBindingPattern binding_pattern,
                           SemIR::InstId pattern_inst_id, WorkItem entry)
@@ -360,30 +362,26 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
           param_pattern.index.index);
       CARBON_CHECK(entry.scrutinee_id.has_value());
 
-      // FIXME:
-      // If !entry.is_self, scrutinee must be ref-tagged (diagnose otherwise).
-      // Unwrap.
+      // TODO: If this is a `ref` pattern and !entry.is_self, require the
+      // scrutinee to have a `ref` tag.
 
-      auto scrutinee_ref_id = ConvertToValueOrRefOfType(
+      auto scrutinee_type_id = ExtractScrutineeType(
+          context.sem_ir(),
+          SemIR::GetTypeOfInstInSpecific(context.sem_ir(), callee_specific_id_,
+                                         pattern_inst_id));
+      // We should already have a durable reference, but we may need to adjust
+      // its type.
+      auto scrutinee_ref_id = Convert(
           context, SemIR::LocId(entry.scrutinee_id), entry.scrutinee_id,
-          ExtractScrutineeType(
-              context.sem_ir(),
-              SemIR::GetTypeOfInstInSpecific(
-                  context.sem_ir(), callee_specific_id_, pattern_inst_id)));
+          {.kind = ConversionTarget::DurableRef, .type_id = scrutinee_type_id});
 
-      switch (SemIR::GetExprCategory(context.sem_ir(), scrutinee_ref_id)) {
-        case SemIR::ExprCategory::Error:
-        case SemIR::ExprCategory::DurableRef:
-        case SemIR::ExprCategory::EphemeralRef:
-          break;
-        default:
-          CARBON_DIAGNOSTIC(ValueForRefParam, Error,
-                            "value expression passed to reference parameter");
-          context.emitter().Emit(entry.scrutinee_id, ValueForRefParam);
-          // Add fake reference expression to preserve invariants.
-          auto scrutinee = context.insts().GetWithLocId(entry.scrutinee_id);
-          scrutinee_ref_id = AddInst<SemIR::TemporaryStorage>(
-              context, scrutinee.loc_id, {.type_id = scrutinee.inst.type_id()});
+      if (context.insts().Is<SemIR::ErrorInst>(scrutinee_ref_id)) {
+        // Add fake reference expression to preserve invariants.
+        auto scrutinee = context.insts().GetWithLocId(entry.scrutinee_id);
+        scrutinee_ref_id = AddInstWithCleanup<SemIR::VarStorage>(
+            context, scrutinee.loc_id,
+            {.type_id = scrutinee.inst.type_id(),
+             .pattern_id = entry.pattern_id});
       }
       results_.push_back(scrutinee_ref_id);
       // Do not traverse farther, because the caller side of the pattern
@@ -499,10 +497,11 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       break;
     }
     case MatchKind::Caller: {
-      storage_id = AddInst<SemIR::TemporaryStorage>(
+      storage_id = AddInstWithCleanup<SemIR::VarStorage>(
           context, SemIR::LocId(pattern_inst_id),
           {.type_id =
-               ExtractScrutineeType(context.sem_ir(), var_pattern.type_id)});
+               ExtractScrutineeType(context.sem_ir(), var_pattern.type_id),
+           .pattern_id = entry.pattern_id});
       CARBON_CHECK(entry.scrutinee_id.has_value());
       break;
     }
@@ -516,23 +515,13 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
   if (entry.scrutinee_id.has_value()) {
     auto init_id = Initialize(context, SemIR::LocId(pattern_inst_id),
                               storage_id, entry.scrutinee_id);
-    // If we created a `TemporaryStorage` to hold the var, create a
-    // corresponding `Temporary` to model that its initialization is complete.
     // TODO: If the subpattern is a binding, we may want to destroy the
     // parameter variable in the callee instead of the caller so that we can
     // support destructive move from it.
-    if (kind_ == MatchKind::Caller) {
-      storage_id = AddInstWithCleanup<SemIR::Temporary>(
-          context, SemIR::LocId(pattern_inst_id),
-          {.type_id = context.insts().Get(storage_id).type_id(),
-           .storage_id = storage_id,
-           .init_id = init_id});
-    } else {
-      // TODO: Consider using different instruction kinds for assignment
-      // versus initialization.
-      AddInst<SemIR::Assign>(context, SemIR::LocId(pattern_inst_id),
-                             {.lhs_id = storage_id, .rhs_id = init_id});
-    }
+    // TODO: Consider using different instruction kinds for assignment
+    // versus initialization.
+    AddInst<SemIR::Assign>(context, SemIR::LocId(pattern_inst_id),
+                           {.lhs_id = storage_id, .rhs_id = init_id});
   }
   AddWork(
       {.pattern_id = var_pattern.subpattern_id, .scrutinee_id = storage_id});

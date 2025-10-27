@@ -122,7 +122,7 @@ fn InitLet() {
 // CHECK:STDOUT: ; ModuleID = 'var_param.carbon'
 // CHECK:STDOUT: source_filename = "var_param.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.loc6_6.2 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.loc6 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CF.Main(ptr %x) !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -133,10 +133,10 @@ fn InitLet() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CCallF.Main() !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc6_6.1.temp = alloca {}, align 8, !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc6_6.1.temp), !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc6_6.1.temp, ptr align 1 @C.val.loc6_6.2, i64 0, i1 false), !dbg !9
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc6_6.1.temp), !dbg !10
+// CHECK:STDOUT:   %x.var = alloca {}, align 8, !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %x.var, ptr align 1 @C.val.loc6, i64 0, i1 false), !dbg !9
+// CHECK:STDOUT:   call void @_CF.Main(ptr %x.var), !dbg !10
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
