@@ -1738,14 +1738,15 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
           builder.Note(loc_id, InCppThunk);
         });
 
-    clang::FunctionDecl* thunk_clang_decl =
-        BuildCppThunk(context, function_info);
-    if (thunk_clang_decl) {
-      SemIR::FunctionId thunk_function_id = *ImportFunction(
-          context, loc_id, thunk_clang_decl, thunk_clang_decl->getNumParams());
-      SemIR::InstId thunk_function_decl_id =
-          context.functions().Get(thunk_function_id).first_owning_decl_id;
-      function_info.SetHasCppThunk(thunk_function_decl_id);
+    if (clang::FunctionDecl* thunk_clang_decl =
+            BuildCppThunk(context, function_info)) {
+      if (auto thunk_function_id =
+              ImportFunction(context, loc_id, thunk_clang_decl,
+                             thunk_clang_decl->getNumParams())) {
+        SemIR::InstId thunk_function_decl_id =
+            context.functions().Get(*thunk_function_id).first_owning_decl_id;
+        function_info.SetHasCppThunk(thunk_function_decl_id);
+      }
     }
   }
 

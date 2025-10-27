@@ -117,8 +117,8 @@ fn F() {
 // CHECK:STDOUT:   %OptionalStorage.impl_witness.2cf: <witness> = impl_witness imports.%OptionalStorage.impl_witness_table.236, @ptr.as.OptionalStorage.impl(%i32) [concrete]
 // CHECK:STDOUT:   %OptionalStorage.facet: %OptionalStorage.type = facet_value %ptr.235, (%OptionalStorage.impl_witness.2cf) [concrete]
 // CHECK:STDOUT:   %Optional.18c: type = class_type @Optional, @Optional(%OptionalStorage.facet) [concrete]
-// CHECK:STDOUT:   %TakesArray__carbon_thunk.type: type = fn_type @TakesArray__carbon_thunk [concrete]
-// CHECK:STDOUT:   %TakesArray__carbon_thunk: %TakesArray__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %TakesArray.type: type = fn_type @TakesArray [concrete]
+// CHECK:STDOUT:   %TakesArray: %TakesArray.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.4f4: type = facet_type <@ImplicitAs, @ImplicitAs(%Optional.18c)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.7ef: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Optional.18c) [concrete]
 // CHECK:STDOUT:   %T.binding.as_type.as.ImplicitAs.impl.Convert.type.a78: type = fn_type @T.binding.as_type.as.ImplicitAs.impl.Convert.2, @T.binding.as_type.as.ImplicitAs.impl.339(%T.3fe) [symbolic]
@@ -153,7 +153,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.6a9 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.971 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %OptionalStorage.impl_witness_table.236 = impl_witness_table (%Core.import_ref.2fb, %Core.import_ref.a7c, %Core.import_ref.1b2, %Core.import_ref.6a9, %Core.import_ref.971), @ptr.as.OptionalStorage.impl [concrete]
-// CHECK:STDOUT:   %TakesArray__carbon_thunk.decl: %TakesArray__carbon_thunk.type = fn_decl @TakesArray__carbon_thunk [concrete = constants.%TakesArray__carbon_thunk] {
+// CHECK:STDOUT:   %TakesArray.decl: %TakesArray.type = fn_decl @TakesArray [concrete = constants.%TakesArray] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -207,7 +207,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_18.2: init %Optional.18c = converted %addr.loc11_18.1, %T.binding.as_type.as.ImplicitAs.impl.Convert.call
 // CHECK:STDOUT:   %.loc11_18.3: ref %Optional.18c = temporary %.loc11_18.1, %.loc11_18.2
 // CHECK:STDOUT:   %.loc11_18.4: %Optional.18c = acquire_value %.loc11_18.3
-// CHECK:STDOUT:   %TakesArray__carbon_thunk.call: init %empty_tuple.type = call imports.%TakesArray__carbon_thunk.decl(%.loc11_18.4)
+// CHECK:STDOUT:   %TakesArray.call: init %empty_tuple.type = call imports.%TakesArray.decl(%.loc11_18.4)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11: <bound method> = bound_method %.loc11_18.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.55c
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc11_18.3: <bound method> = bound_method %.loc11_18.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1

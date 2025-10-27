@@ -60,8 +60,10 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       constant_values_(ConstantId::NotConstant, &insts_),
       inst_blocks_(allocator_, check_ir_id),
       constants_(this),
-      // 1 reserved id for `StructTypeFields::Empty`.
+      // 1 reserved id for `StructTypeFieldsId::Empty`.
       struct_type_fields_(allocator_, IdTag(check_ir_id.index, 1)),
+      // 1 reserved id for `CustomLayoutId::Empty`.
+      custom_layouts_(allocator_, IdTag(check_ir_id.index, 1)),
       expr_regions_(check_ir_id),
       clang_source_locs_(check_ir_id) {
   // `type` and the error type are both complete & concrete types.
