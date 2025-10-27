@@ -669,9 +669,25 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
                           context.insts().Get(return_slot_id).type_id())),
          .lvalue_id = return_slot_id});
     thunk_arg_ids.push_back(arg_id);
+  } else if (return_slot_id.has_value()) {
+    thunk_arg_ids.push_back(return_slot_id);
   }
 
-  auto result_id = PerformCall(context, loc_id, thunk_callee_id, thunk_arg_ids);
+  // Compute the return type of the call to the thunk.
+  auto thunk_return_type_id =
+      thunk_function.GetDeclaredReturnType(context.sem_ir());
+  if (!thunk_return_type_id.has_value()) {
+    CARBON_CHECK(thunk_takes_return_address || !return_type_id.has_value());
+    thunk_return_type_id = GetTupleType(context, {});
+  } else {
+    CARBON_CHECK(thunk_return_type_id == return_type_id);
+  }
+
+  auto result_id = GetOrAddInst<SemIR::Call>(
+      context, loc_id,
+      {.type_id = thunk_return_type_id,
+       .callee_id = thunk_callee_id,
+       .args_id = context.inst_blocks().Add(thunk_arg_ids)});
 
   // Produce the result of the call, taking the value from the return storage.
   if (thunk_takes_return_address) {
