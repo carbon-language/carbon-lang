@@ -83,14 +83,6 @@ static auto IsSimpleAbiType(clang::ASTContext& ast_context,
     }
   }
 
-  if (const auto* enum_decl = type->getAsEnumDecl()) {
-    // An enum type has a simple ABI if its underlying type does.
-    type = enum_decl->getIntegerType();
-    if (type.isNull()) {
-      return false;
-    }
-  }
-
   if (const auto* builtin_type = type->getAs<clang::BuiltinType>()) {
     if (builtin_type->isIntegerType()) {
       uint64_t type_size = ast_context.getIntWidth(type);
