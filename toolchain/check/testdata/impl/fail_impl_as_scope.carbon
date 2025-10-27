@@ -290,7 +290,7 @@ class X {
 // CHECK:STDOUT:   %Z.Zero.decl: %Z.Zero.type = fn_decl @Z.Zero [concrete = constants.%Z.Zero] {} {}
 // CHECK:STDOUT:   %assoc0: %Z.assoc_type = assoc_entity element0, %Z.Zero.decl [concrete = constants.%assoc0.534]
 // CHECK:STDOUT:   %Z.Method.decl: %Z.Method.type = fn_decl @Z.Method [concrete = constants.%Z.Method] {
-// CHECK:STDOUT:     %self.patt: @Z.Method.%pattern_type (%pattern_type.5d1) = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: @Z.Method.%pattern_type (%pattern_type.5d1) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @Z.Method.%pattern_type (%pattern_type.5d1) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @Z.Method.%Self.binding.as_type (%Self.binding.as_type.c3d) = value_param call_param0
@@ -299,7 +299,7 @@ class X {
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.c3d)]
 // CHECK:STDOUT:       %.loc5_19.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.c3d)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @Z.Method.%Self.binding.as_type (%Self.binding.as_type.c3d) = bind_name self, %self.param
+// CHECK:STDOUT:     %self: @Z.Method.%Self.binding.as_type (%Self.binding.as_type.c3d) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc1: %Z.assoc_type = assoc_entity element1, %Z.Method.decl [concrete = constants.%assoc1]
 // CHECK:STDOUT:   impl_decl @<error>.as.Z.impl [concrete] {} {
@@ -325,7 +325,7 @@ class X {
 // CHECK:STDOUT:   impl: <error> as %Z.ref {
 // CHECK:STDOUT:     %<error>.as.Z.impl.Zero.decl: @<error>.as.Z.impl.%<error>.as.Z.impl.Zero.type (%<error>.as.Z.impl.Zero.type) = fn_decl @<error>.as.Z.impl.Zero [symbolic = @<error>.as.Z.impl.%<error>.as.Z.impl.Zero (constants.%<error>.as.Z.impl.Zero)] {} {}
 // CHECK:STDOUT:     %<error>.as.Z.impl.Method.decl: @<error>.as.Z.impl.%<error>.as.Z.impl.Method.type (%<error>.as.Z.impl.Method.type) = fn_decl @<error>.as.Z.impl.Method [symbolic = @<error>.as.Z.impl.%<error>.as.Z.impl.Method (constants.%<error>.as.Z.impl.Method)] {
-// CHECK:STDOUT:       %self.patt: @<error>.as.Z.impl.Method.%pattern_type (%pattern_type.5d1) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.patt: @<error>.as.Z.impl.Method.%pattern_type (%pattern_type.5d1) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @<error>.as.Z.impl.Method.%pattern_type (%pattern_type.5d1) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @<error>.as.Z.impl.Method.%Self.binding.as_type (%Self.binding.as_type.c3d) = value_param call_param0
@@ -334,7 +334,7 @@ class X {
 // CHECK:STDOUT:         %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.c3d)]
 // CHECK:STDOUT:         %.loc13_21.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.c3d)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @<error>.as.Z.impl.Method.%Self.binding.as_type (%Self.binding.as_type.c3d) = bind_name self, %self.param
+// CHECK:STDOUT:       %self: @<error>.as.Z.impl.Method.%Self.binding.as_type (%Self.binding.as_type.c3d) = value_binding self, %self.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -347,12 +347,12 @@ class X {
 // CHECK:STDOUT: impl @Point.as.Z.impl: %Self.ref as %Z.ref {
 // CHECK:STDOUT:   %Point.as.Z.impl.Zero.decl: %Point.as.Z.impl.Zero.type = fn_decl @Point.as.Z.impl.Zero [concrete = constants.%Point.as.Z.impl.Zero] {} {}
 // CHECK:STDOUT:   %Point.as.Z.impl.Method.decl: %Point.as.Z.impl.Method.type = fn_decl @Point.as.Z.impl.Method [concrete = constants.%Point.as.Z.impl.Method] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.35b = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.35b = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.35b = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %Point = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Point [concrete = constants.%Point]
-// CHECK:STDOUT:     %self: %Point = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %Point = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

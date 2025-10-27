@@ -64,7 +64,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.d8f = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.d8f = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.d8f = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C.2ba = var %a.var_patt [concrete]
@@ -78,7 +78,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %.loc12_25.3: bool = converted %Neq.call.loc12, %.loc12_25.2 [concrete = constants.%false]
 // CHECK:STDOUT:     %C.loc12: type = class_type @C, @C(constants.%false) [concrete = constants.%C.2ba]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %C.2ba = bind_name a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %C.2ba = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -119,7 +119,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.d8f = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.d8f = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.d8f = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C.2ba = var %a.var_patt [concrete]
@@ -134,7 +134,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %.loc10_22.3: bool = converted %bool.as.EqWith.impl.NotEqual.call.loc10, %.loc10_22.2 [concrete = constants.%false]
 // CHECK:STDOUT:     %C.loc10: type = class_type @C, @C(constants.%false) [concrete = constants.%C.2ba]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %C.2ba = bind_name a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %C.2ba = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

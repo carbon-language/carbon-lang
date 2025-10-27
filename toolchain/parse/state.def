@@ -359,6 +359,10 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // ^~~~~~~
 //   1. Package
 //
+// require ...
+// ^~~~~~~
+//   1. RequireAfterIntroducer
+//
 // var ...        (variant is Regular)
 // ^~~
 //   1. VarAsRegular
@@ -1336,7 +1340,7 @@ CARBON_PARSE_STATE(BaseDecl)
 //      ^~
 //   1. Expr
 //   2. DeclOrDefinitionAsImpl
-// impl type_expression as ...
+// impl TypeExpression as ...
 //     ^
 //   1. Expr
 //   2. ImplBeforeAs
@@ -1349,7 +1353,7 @@ CARBON_PARSE_STATE(ImplAfterIntroducer)
 // impl forall [ ... ] as ...
 //                     ^~
 //   1. Expr
-// impl forall [ ... ] type_expression as ...
+// impl forall [ ... ] TypeExpression as ...
 //                    ^
 //   1. Expr
 //   2. ImplBeforeAs
@@ -1362,6 +1366,34 @@ CARBON_PARSE_STATE(ImplAfterForall)
 //                     ^~
 //   1. Expr
 CARBON_PARSE_STATE(ImplBeforeAs)
+
+// Handles processing of a `require...impls` declaration after the introducer.
+//
+// require impls ...
+//         ^~~~~
+//   1. Expr
+//   2. RequireDecl
+// require TypeExpression impls ...
+//        ^
+//   1. Expr
+//   2. RequireBeforeImpls
+//   3. RequireDecl
+CARBON_PARSE_STATE(RequireAfterIntroducer)
+
+// Handles processing of the `impls` in a `require` declaration after the type
+// expression.
+//
+// require TypeExpression impls ...
+//                        ^~~~~
+//   1. Expr
+CARBON_PARSE_STATE(RequireBeforeImpls)
+
+// Handles processing of a completed `require` declaration.
+//
+// require TypeExpression impls FacetTypeExpression ;
+//                                                  ^
+//   (state done)
+CARBON_PARSE_STATE(RequireDecl)
 
 // Handles the start of a `var` or `returned var` in a non-class context.
 //

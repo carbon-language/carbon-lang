@@ -23,15 +23,15 @@ class Digits {
 
   fn Print[self: Self](max_depth: i32) {
     for (digit: i32 in Core.Range(10)) {
-      Core.PrintChar(digit + 0x30);
-      Core.PrintChar(0x3A);
+      Core.PrintChar(((digit + 0x30) as u8) as char);
+      Core.PrintChar(':');
       for (depth: i32 in Core.Range(max_depth)) {
-        Core.PrintChar(0x20);
+        Core.PrintChar(' ');
         PrintInt64NoNewline(self.count[digit][depth]);
       }
-      Core.PrintChar(0x0A);
+      Core.PrintChar('\n');
     }
-    Core.PrintChar(0x0A);
+    Core.PrintChar('\n');
   }
 
   var count: array(array(i64, 75), 10);

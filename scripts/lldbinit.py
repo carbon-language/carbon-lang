@@ -55,8 +55,7 @@ Args:
        the `Label` string in `IdBase` classes to find possible TYPE names,
        though only Id types that have a matching `Make...Id()` function are
        supported.
-  ID is an integer number, such as `42`. This can be in hex (without the typical
-       0x prefix), such as `6000A`.
+  ID is an integer number, such as `42`, in hex, such as in `inst6000000A`.
 
 Example usage:
   # Dumps the `inst_id` local variable, with a `context` local variable.
@@ -75,8 +74,7 @@ Example usage:
 
     context = args[0]
 
-    # The set of "Make" functions in dump.cpp, and whether the ids are printed
-    # in decimal or hex.
+    # The set of "Make" functions in dump.cpp.
     id_types = {
         "class": "SemIR::MakeClassId",
         "constant": "SemIR::MakeConstantId",

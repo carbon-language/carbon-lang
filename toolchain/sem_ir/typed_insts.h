@@ -252,7 +252,7 @@ struct BaseDecl {
   ElementIndex index;
 };
 
-// Binds a name as an alias.
+// Binds a name as an alias. See AnyBindName for member documentation.
 struct BindAlias {
   static constexpr auto Kind =
       InstKind::BindAlias.Define<Parse::NodeId>({.ir_name = "bind_alias"});
@@ -262,20 +262,8 @@ struct BindAlias {
   InstId value_id;
 };
 
-// Binds a name, such as `x` in `var x: i32`.
-struct BindName {
-  // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::BindName.Define<Parse::NodeId>(
-      {.ir_name = "bind_name", .constant_kind = InstConstantKind::Indirect});
-
-  TypeId type_id;
-  EntityNameId entity_name_id;
-  // The value is inline in the inst so that value access doesn't require an
-  // indirection.
-  InstId value_id;
-};
-
-// Binds a symbolic name, such as `x` in `let x:! i32 = 7;`.
+// Binds a symbolic name, such as `x` in `let x:! i32 = 7;`. See AnyBindName for
+// member documentation.
 struct BindSymbolicName {
   static constexpr auto Kind = InstKind::BindSymbolicName.Define<Parse::NodeId>(
       {.ir_name = "bind_symbolic_name",
@@ -287,26 +275,15 @@ struct BindSymbolicName {
   InstId value_id;
 };
 
-// A value binding. Used when an expression contains a reference and we want a
-// value.
+// A value acquisition. Used when an expression contains a reference and we want
+// a value.
+// TODO: Rename to AcquireValue
 struct BindValue {
   static constexpr auto Kind =
       InstKind::BindValue.Define<Parse::NodeId>({.ir_name = "bind_value"});
 
   TypeId type_id;
   InstId value_id;
-};
-
-// Represents a non-symbolic binding pattern. See `AnyBindingPattern` for member
-// documentation.
-struct BindingPattern {
-  static constexpr auto Kind = InstKind::BindingPattern.Define<Parse::NodeId>(
-      {.ir_name = "binding_pattern",
-       .constant_kind = InstConstantKind::AlwaysUnique,
-       .is_lowered = false});
-
-  TypeId type_id;
-  EntityNameId entity_name_id;
 };
 
 // Reads an argument from `BranchWithArg`.
@@ -855,6 +832,21 @@ struct GenericInterfaceType {
   SpecificId enclosing_specific_id;
 };
 
+// The type of the name of a generic named constraint. The corresponding value
+// is an empty `StructValue`.
+struct GenericNamedConstraintType {
+  // This is only ever created as a constant, so doesn't have a location.
+  static constexpr auto Kind =
+      InstKind::GenericNamedConstraintType.Define<Parse::NoneNodeId>(
+          {.ir_name = "generic_named_constaint_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::WheneverPossible});
+
+  TypeId type_id;
+  NamedConstraintId named_constraint_id;
+  SpecificId enclosing_specific_id;
+};
+
 // An `impl` declaration.
 struct ImplDecl {
   static constexpr auto Kind = InstKind::ImplDecl.Define<Parse::AnyImplDeclId>(
@@ -1114,6 +1106,7 @@ struct InterfaceDecl {
       InstKind::InterfaceDecl.Define<Parse::AnyInterfaceDeclId>(
           {.ir_name = "interface_decl", .is_lowered = false});
 
+  // Always `type`.
   TypeId type_id;
   InterfaceId interface_id;
   // The declaration block, containing the interface name's qualifiers and the
@@ -1219,6 +1212,20 @@ struct NameBindingDecl {
   InstBlockId pattern_block_id;
 };
 
+// A named constraint declaration.
+struct NamedConstraintDecl {
+  static constexpr auto Kind =
+      InstKind::NamedConstraintDecl.Define<Parse::AnyNamedConstraintDeclId>(
+          {.ir_name = "constraint_decl", .is_lowered = false});
+
+  // Always `type`.
+  TypeId type_id;
+  NamedConstraintId named_constraint_id;
+  // The declaration block, containing the constraint name's qualifiers and the
+  // constraint's generic parameters.
+  DeclInstBlockId decl_block_id;
+};
+
 // A name reference, with the value of the name. This only handles name
 // resolution; the value may be used for reading or writing.
 struct NameRef {
@@ -1316,6 +1323,24 @@ struct PointerType {
   TypeInstId pointee_id;
 };
 
+// Binds a name as a reference expression, such as `x` in `var x: i32`.
+// See AnyBindName for member documentation.
+// TODO: rename other classes for consistency:
+//   AnyBindName -> AnyBinding
+//   AnyBindNameOrExportDecl -> AnyBindingOrExportDecl
+//   BindSymbolicName -> SymbolicBinding
+//   BindAlias -> AliasBinding
+//   BindValue -> AcquireValue
+struct RefBinding {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::RefBinding.Define<Parse::NodeId>(
+      {.ir_name = "ref_binding", .constant_kind = InstConstantKind::Indirect});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
+  InstId value_id;
+};
+
 // An action that performs type refinement for an instruction, by creating an
 // instruction that converts from a template symbolic type to a concrete type.
 struct RefineTypeAction {
@@ -1327,6 +1352,19 @@ struct RefineTypeAction {
   TypeId type_id;
   MetaInstId inst_id;
   TypeInstId inst_type_inst_id;
+};
+
+// Represents a reference binding pattern. See `AnyBindingPattern` for member
+// documentation.
+struct RefBindingPattern {
+  static constexpr auto Kind =
+      InstKind::RefBindingPattern.Define<Parse::NodeId>(
+          {.ir_name = "ref_binding_pattern",
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
 };
 
 // A by-reference `Call` parameter. See AnyParam for member documentation.
@@ -1866,6 +1904,32 @@ struct ValueAsRef {
 
   TypeId type_id;
   InstId value_id;
+};
+
+// Binds a name as a value expression, such as `x` in `let x: i32`. See
+// AnyBindName for member documentation.
+struct ValueBinding {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::ValueBinding.Define<Parse::NodeId>(
+      {.ir_name = "value_binding",
+       .constant_kind = InstConstantKind::Indirect});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
+  InstId value_id;
+};
+
+// Represents a value binding pattern. See `AnyBindingPattern` for member
+// documentation.
+struct ValueBindingPattern {
+  static constexpr auto Kind =
+      InstKind::ValueBindingPattern.Define<Parse::NodeId>(
+          {.ir_name = "value_binding_pattern",
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
 };
 
 // Converts an initializing expression to a value expression, in the case

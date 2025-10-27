@@ -130,6 +130,8 @@ static constexpr auto DeclIntroducers = [] {
       StateKind::TypeAfterIntroducerAsInterface);
   set(Lex::TokenKind::Namespace, NodeKind::NamespaceStart,
       StateKind::Namespace);
+  set(Lex::TokenKind::Require, NodeKind::RequireIntroducer,
+      StateKind::RequireAfterIntroducer);
   set_contextual(Lex::TokenKind::Let, RegularContext, NodeKind::LetIntroducer,
                  StateKind::Let);
   set_contextual(Lex::TokenKind::Let, ClassContext, NodeKind::LetIntroducer,
@@ -225,6 +227,7 @@ static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
         case Lex::TokenKind::Let:
         case Lex::TokenKind::Library:
         case Lex::TokenKind::Namespace:
+        case Lex::TokenKind::Require:
         case Lex::TokenKind::Var:
 #define CARBON_PARSE_NODE_KIND(Name)
 #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name) case Lex::TokenKind::Name:

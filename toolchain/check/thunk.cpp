@@ -58,9 +58,9 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
                                 SemIR::AnyBindingPattern pattern,
                                 SemIR::TypeId new_pattern_type_id)
     -> SemIR::InstId {
-  bool is_generic = pattern.kind == SemIR::SymbolicBindingPattern::Kind;
   auto entity_name = context.entity_names().Get(pattern.entity_name_id);
-  CARBON_CHECK(is_generic == entity_name.bind_index().has_value());
+  CARBON_CHECK((pattern.kind == SemIR::SymbolicBindingPattern::Kind) ==
+               entity_name.bind_index().has_value());
 
   // Get the transformed type of the binding.
   if (new_pattern_type_id == SemIR::ErrorInst::TypeId) {
@@ -76,7 +76,7 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
   // Rebuild the binding pattern.
   return AddBindingPattern(context, SemIR::LocId(pattern_id),
                            entity_name.name_id, type_id, type_expr_region_id,
-                           is_generic, entity_name.is_template)
+                           pattern.kind, entity_name.is_template)
       .pattern_id;
 }
 

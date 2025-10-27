@@ -113,7 +113,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_21.2: %i32 = converted %int_42, %.loc8_21.1 [concrete = constants.%int_42.c68]
 // CHECK:STDOUT:   %TakesConstInt.call: init %empty_tuple.type = call imports.%TakesConstInt.decl(%.loc8_21.2)
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: %pattern_type.7da = binding_pattern s [concrete]
+// CHECK:STDOUT:     %s.patt: %pattern_type.7da = ref_binding_pattern s [concrete]
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.7da = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
@@ -125,7 +125,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %S.ref: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: ref %S = bind_name s, %s.var
+// CHECK:STDOUT:   %s: ref %S = ref_binding s, %s.var
 // CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesConstS.ref: %TakesConstS.cpp_overload_set.type = name_ref TakesConstS, imports.%TakesConstS.cpp_overload_set.value [concrete = constants.%TakesConstS.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: ref %S = name_ref s, %s

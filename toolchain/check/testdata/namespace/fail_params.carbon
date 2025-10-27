@@ -83,13 +83,13 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %F.decl.loc22: %F.type.bd7 = fn_decl @F.loc22 [concrete = constants.%F.199] {} {}
 // CHECK:STDOUT:   %n.param: <error> = value_param call_param0
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
-// CHECK:STDOUT:   %n: <error> = bind_name n, %n.param
+// CHECK:STDOUT:   %n: <error> = value_binding n, %n.param
 // CHECK:STDOUT:   %B: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic = constants.%T]
 // CHECK:STDOUT:   %x.param: %T = value_param call_param0
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
-// CHECK:STDOUT:   %x: %T = bind_name x, %x.param
+// CHECK:STDOUT:   %x: %T = value_binding x, %x.param
 // CHECK:STDOUT:   %C: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %F.decl.loc48: %F.type.b25 = fn_decl @F.loc48 [concrete = constants.%F.c41] {} {

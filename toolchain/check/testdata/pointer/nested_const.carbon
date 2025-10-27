@@ -73,7 +73,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.800 = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.800 = value_binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.800 = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.a65 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.a65 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -91,7 +91,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:       %ptr.loc16_34: type = ptr_type %const.loc16_16 [concrete = constants.%ptr.6e8]
 // CHECK:STDOUT:       %const.loc16_9: type = const_type %ptr.loc16_34 [concrete = constants.%const.fa2]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %const.fa2 = bind_name p, %p.param
+// CHECK:STDOUT:     %p: %const.fa2 = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %const.20a = out_param call_param1
 // CHECK:STDOUT:     %return: ref %const.20a = return_slot %return.param
 // CHECK:STDOUT:   }

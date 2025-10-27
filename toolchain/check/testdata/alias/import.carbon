@@ -85,7 +85,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %C.ref.loc6: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c_alias: type = bind_alias c_alias, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %ptr = var %a.var_patt [concrete]
@@ -93,7 +93,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr: type = ptr_type %C.ref.loc8 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %ptr = bind_name a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %ptr = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -134,7 +134,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %c_alias.ref.loc6: type = name_ref c_alias, imports.%Main.c_alias [concrete = constants.%C]
 // CHECK:STDOUT:   %c_alias_alias: type = bind_alias c_alias_alias, imports.%Main.c_alias [concrete = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %ptr = var %b.var_patt [concrete]
@@ -142,7 +142,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     %c_alias.ref.loc8: type = name_ref c_alias, imports.%Main.c_alias [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr: type = ptr_type %c_alias.ref.loc8 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %ptr = bind_name b, %b.var [concrete = %b.var]
+// CHECK:STDOUT:   %b: ref %ptr = ref_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "class1.carbon"] {
@@ -177,7 +177,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %ptr = var %c.var_patt [concrete]
@@ -185,7 +185,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     %c_alias_alias.ref: type = name_ref c_alias_alias, imports.%Main.c_alias_alias [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr: type = ptr_type %c_alias_alias.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %ptr = bind_name c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %ptr = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "class2.carbon"] {
@@ -209,7 +209,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     .a_alias = %a_alias
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var %a.var_patt [concrete]
@@ -217,7 +217,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %empty_tuple.type = bind_name a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %empty_tuple.type = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   %a.ref: ref %empty_tuple.type = name_ref a, %a [concrete = %a.var]
 // CHECK:STDOUT:   %a_alias: ref %empty_tuple.type = bind_alias a_alias, %a [concrete = %a.var]
 // CHECK:STDOUT: }
@@ -242,7 +242,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.a = import_ref Main//var1, a, unloaded
 // CHECK:STDOUT:   %Main.a_alias: ref %empty_tuple.type = import_ref Main//var1, a_alias, loaded [concrete = %a.var]
-// CHECK:STDOUT:   %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:   %a.var_patt: %pattern_type = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var %a.var_patt [concrete]
 // CHECK:STDOUT: }
@@ -258,7 +258,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   %a_alias.ref: ref %empty_tuple.type = name_ref a_alias, imports.%Main.a_alias [concrete = imports.%a.var]
 // CHECK:STDOUT:   %a_alias_alias: ref %empty_tuple.type = bind_alias a_alias_alias, imports.%Main.a_alias [concrete = imports.%a.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var %b.var_patt [concrete]
@@ -266,7 +266,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     %.loc8_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc8_9.3: type = converted %.loc8_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_name b, %b.var [concrete = %b.var]
+// CHECK:STDOUT:   %b: ref %empty_tuple.type = ref_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -289,7 +289,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.a_alias_alias: ref %empty_tuple.type = import_ref Main//var2, a_alias_alias, loaded [concrete = %a.var]
 // CHECK:STDOUT:   %Main.b = import_ref Main//var2, b, unloaded
-// CHECK:STDOUT:   %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:   %a.var_patt: %pattern_type = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var %a.var_patt [concrete]
 // CHECK:STDOUT: }
@@ -302,7 +302,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %empty_tuple.type = var %c.var_patt [concrete]
@@ -310,7 +310,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:     %.loc6_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %empty_tuple.type = bind_name c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %empty_tuple.type = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

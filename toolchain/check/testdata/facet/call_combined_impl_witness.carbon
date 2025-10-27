@@ -172,7 +172,7 @@ fn F() {
 // CHECK:STDOUT:   %B.impl_witness: <witness> = impl_witness %B.impl_witness_table [concrete = constants.%B.impl_witness]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.001 = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %t.patt: @G.%pattern_type (%pattern_type.81b) = binding_pattern t [concrete]
+// CHECK:STDOUT:     %t.patt: @G.%pattern_type (%pattern_type.81b) = value_binding_pattern t [concrete]
 // CHECK:STDOUT:     %t.param_patt: @G.%pattern_type (%pattern_type.81b) = value_param_pattern %t.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc33_20.1: type = splice_block %.loc33_20.3 [concrete = constants.%facet_type.b5f] {
@@ -198,7 +198,7 @@ fn F() {
 // CHECK:STDOUT:       %T.as_type.loc33: type = facet_access_type %T.ref.loc33 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %.loc33_28.2: type = converted %T.ref.loc33, %T.as_type.loc33 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %t: @G.%T.binding.as_type (%T.binding.as_type) = bind_name t, %t.param
+// CHECK:STDOUT:     %t: @G.%T.binding.as_type (%T.binding.as_type) = value_binding t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }

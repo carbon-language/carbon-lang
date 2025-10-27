@@ -195,7 +195,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %c.patt: @Class.F.%pattern_type (%pattern_type.3c1) = binding_pattern c [concrete]
+// CHECK:STDOUT:       %c.patt: @Class.F.%pattern_type (%pattern_type.3c1) = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:       %c.var_patt: @Class.F.%pattern_type (%pattern_type.3c1) = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c.var: ref @Class.F.%Class.loc21_19.2 (%Class) = var %c.var_patt
@@ -210,9 +210,9 @@ class Class(T:! type) {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc15_13.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %Class.loc21_19.1: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc21_19.2 (constants.%Class)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: ref @Class.F.%Class.loc21_19.2 (%Class) = bind_name c, %c.var
+// CHECK:STDOUT:     %c: ref @Class.F.%Class.loc21_19.2 (%Class) = ref_binding c, %c.var
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %s.patt: @Class.F.%pattern_type (%pattern_type.3c1) = binding_pattern s [concrete]
+// CHECK:STDOUT:       %s.patt: @Class.F.%pattern_type (%pattern_type.3c1) = ref_binding_pattern s [concrete]
 // CHECK:STDOUT:       %s.var_patt: @Class.F.%pattern_type (%pattern_type.3c1) = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %s.var: ref @Class.F.%Class.loc21_19.2 (%Class) = var %s.var_patt
@@ -226,7 +226,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:       %.loc22_12.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class.loc21_19.2 (constants.%Class)]
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc22_12.2 [symbolic = %Class.loc21_19.2 (constants.%Class)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %s: ref @Class.F.%Class.loc21_19.2 (%Class) = bind_name s, %s.var
+// CHECK:STDOUT:     %s: ref @Class.F.%Class.loc21_19.2 (%Class) = ref_binding s, %s.var
 // CHECK:STDOUT:     %impl.elem0.loc22: @Class.F.%.loc22_5.2 (%.8a0) = impl_witness_access constants.%Destroy.impl_witness.751, element0 [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.a4e)]
 // CHECK:STDOUT:     %bound_method.loc22_5.1: <bound method> = bound_method %s.var, %impl.elem0.loc22
 // CHECK:STDOUT:     %specific_fn.loc22: <specific function> = specific_function %impl.elem0.loc22, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn)]

@@ -148,7 +148,7 @@ class Derived {
 // CHECK:STDOUT:     %return: ref %Derived = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [concrete = constants.%Access] {
-// CHECK:STDOUT:     %d.patt: %pattern_type.fb9 = binding_pattern d [concrete]
+// CHECK:STDOUT:     %d.patt: %pattern_type.fb9 = value_binding_pattern d [concrete]
 // CHECK:STDOUT:     %d.param_patt: %pattern_type.fb9 = value_param_pattern %d.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.511 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.511 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -161,7 +161,7 @@ class Derived {
 // CHECK:STDOUT:     %.loc17_35.2: type = converted %.loc17_35.1, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:     %d: %Derived = bind_name d, %d.param
+// CHECK:STDOUT:     %d: %Derived = value_binding d, %d.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.d07 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %tuple.type.d07 = return_slot %return.param
 // CHECK:STDOUT:   }

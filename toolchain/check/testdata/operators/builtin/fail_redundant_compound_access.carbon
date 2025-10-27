@@ -135,7 +135,7 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.7ce = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt
@@ -151,7 +151,7 @@ fn Main() {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %i32 = ref_binding a, %a.var
 // CHECK:STDOUT:   %a.ref.loc23_3: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %a.ref.loc23_7: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %a.ref.loc23_10: ref %i32 = name_ref a, %a

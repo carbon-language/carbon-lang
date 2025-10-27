@@ -112,7 +112,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Class.F.decl: @Class.%Class.F.type (%Class.F.type) = fn_decl @Class.F [symbolic = @Class.%Class.F (constants.%Class.F)] {
-// CHECK:STDOUT:       %n.patt: @Class.F.%pattern_type (%pattern_type.17e4b7.1) = binding_pattern n [concrete]
+// CHECK:STDOUT:       %n.patt: @Class.F.%pattern_type (%pattern_type.17e4b7.1) = value_binding_pattern n [concrete]
 // CHECK:STDOUT:       %n.param_patt: @Class.F.%pattern_type (%pattern_type.17e4b7.1) = value_param_pattern %n.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %return.patt: @Class.F.%pattern_type (%pattern_type.17e4b7.1) = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: @Class.F.%pattern_type (%pattern_type.17e4b7.1) = out_param_pattern %return.patt, call_param1 [concrete]
@@ -126,12 +126,12 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:         %T.as_type.loc6_11: type = facet_access_type %T.ref.loc6_11 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:         %.loc6_11.2: type = converted %T.ref.loc6_11, %T.as_type.loc6_11 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %n: @Class.F.%T.binding.as_type (%T.binding.as_type) = bind_name n, %n.param
+// CHECK:STDOUT:       %n: @Class.F.%T.binding.as_type (%T.binding.as_type) = value_binding n, %n.param
 // CHECK:STDOUT:       %return.param: ref @Class.F.%T.binding.as_type (%T.binding.as_type) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Class.F.%T.binding.as_type (%T.binding.as_type) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Class.G.decl: @Class.%Class.G.type (%Class.G.type) = fn_decl @Class.G [symbolic = @Class.%Class.G (constants.%Class.G)] {
-// CHECK:STDOUT:       %self.patt: @Class.G.%pattern_type.loc10_8 (%pattern_type.38d) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.patt: @Class.G.%pattern_type.loc10_8 (%pattern_type.38d) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @Class.G.%pattern_type.loc10_8 (%pattern_type.38d) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %return.patt: @Class.G.%pattern_type.loc10_22 (%pattern_type.17e4b7.1) = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: @Class.G.%pattern_type.loc10_22 (%pattern_type.17e4b7.1) = out_param_pattern %return.patt, call_param1 [concrete]
@@ -144,7 +144,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:         %.loc10_14.2: type = specific_constant constants.%Class, @Class(constants.%T.be8) [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc10_14.2 [symbolic = %Class (constants.%Class)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @Class.G.%Class (%Class) = bind_name self, %self.param
+// CHECK:STDOUT:       %self: @Class.G.%Class (%Class) = value_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @Class.G.%T.binding.as_type (%T.binding.as_type) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Class.G.%T.binding.as_type (%T.binding.as_type) = return_slot %return.param
 // CHECK:STDOUT:     }

@@ -61,6 +61,101 @@ fn G(p: const (const C)**) -> C** {
   return p;
 }
 
+// --- add_or_remove_while_forming_value.carbon
+library "[[@TEST_NAME]]";
+
+class X {}
+
+fn TakeValue(x: X) {}
+fn TakeConstValue(x: const X) {}
+
+fn PassConstValueToValue(a: const X) {
+  TakeValue(a);
+}
+
+fn PassValueToConstValue(a: X) {
+  TakeConstValue(a);
+}
+
+fn PassConstReferenceToValue(p: const X*) {
+  TakeValue(*p);
+}
+
+fn PassReferenceToConstValue(p: X*) {
+  TakeConstValue(*p);
+}
+
+// --- fail_todo_add_or_remove_while_initializing.carbon
+library "[[@TEST_NAME]]";
+
+class X {}
+
+// TODO: None of these should require `X` to be copyable.
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:40: error: cannot copy value of type `X` [CopyOfUncopyableType]
+// CHECK:STDERR: var init_non_const_from_non_const: X = {} as X;
+// CHECK:STDERR:                                        ^~~~~~~
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:40: note: type `X` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: var init_non_const_from_non_const: X = {} as X;
+// CHECK:STDERR:                                        ^~~~~~~
+// CHECK:STDERR:
+var init_non_const_from_non_const: X = {} as X;
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:1: error: cannot copy value of type `X` [CopyOfUncopyableType]
+// CHECK:STDERR: var init_non_const_from_const: X = ({} as X) as const X;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:1: note: type `X` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: var init_non_const_from_const: X = ({} as X) as const X;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+var init_non_const_from_const: X = ({} as X) as const X;
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:1: error: cannot copy value of type `const X` [CopyOfUncopyableType]
+// CHECK:STDERR: var init_const_from_non_const: const X = {} as X;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:1: note: type `const X` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: var init_const_from_non_const: const X = {} as X;
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+var init_const_from_non_const: const X = {} as X;
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+7]]:38: error: cannot copy value of type `const X` [CopyOfUncopyableType]
+// CHECK:STDERR: var init_const_from_const: const X = ({} as X) as const X;
+// CHECK:STDERR:                                      ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_add_or_remove_while_initializing.carbon:[[@LINE+4]]:38: note: type `const X` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: var init_const_from_const: const X = ({} as X) as const X;
+// CHECK:STDERR:                                      ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+var init_const_from_const: const X = ({} as X) as const X;
+
+// --- add_while_forming_reference.carbon
+library "[[@TEST_NAME]]";
+
+class X {
+  fn TakeConstSelf[addr self: const Self*]();
+}
+
+fn PassReferenceToConstReference(p: X*) {
+  p->TakeConstSelf();
+}
+
+// --- fail_remove_while_forming_reference.carbon
+library "[[@TEST_NAME]]";
+
+class X {
+  fn TakeSelf[addr self: Self*]();
+}
+
+fn PassConstReferenceToReference(p: const X*) {
+  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE+10]]:3: error: cannot implicitly convert expression of type `const X*` to `X*` [ConversionFailure]
+  // CHECK:STDERR:   p->(X.TakeSelf)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE+7]]:3: note: type `const X*` does not implement interface `Core.ImplicitAs(X*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   p->(X.TakeSelf)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE-10]]:20: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:   fn TakeSelf[addr self: Self*]();
+  // CHECK:STDERR:                    ^~~~~~~~~~~
+  // CHECK:STDERR:
+  p->(X.TakeSelf)();
+}
+
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -109,7 +204,7 @@ fn G(p: const (const C)**) -> C** {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.28c = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.28c = value_binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.28c = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.28c = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.28c = out_param_pattern %return.patt, call_param1 [concrete]
@@ -125,12 +220,12 @@ fn G(p: const (const C)**) -> C** {
 // CHECK:STDOUT:       %ptr.loc6_16: type = ptr_type %const.loc6_9 [concrete = constants.%ptr.801]
 // CHECK:STDOUT:       %ptr.loc6_17: type = ptr_type %ptr.loc6_16 [concrete = constants.%ptr.564]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.564 = bind_name p, %p.param
+// CHECK:STDOUT:     %p: %ptr.564 = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.564 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.564 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.3a2 = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.3a2 = value_binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.3a2 = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.3a2 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.3a2 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -144,7 +239,7 @@ fn G(p: const (const C)**) -> C** {
 // CHECK:STDOUT:       %ptr.loc10_17: type = ptr_type %C.ref.loc10_16 [concrete = constants.%ptr.019]
 // CHECK:STDOUT:       %const.loc10_9: type = const_type %ptr.loc10_17 [concrete = constants.%const.2b1]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %const.2b1 = bind_name p, %p.param
+// CHECK:STDOUT:     %p: %const.2b1 = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %const.2b1 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %const.2b1 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -202,7 +297,7 @@ fn G(p: const (const C)**) -> C** {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.28c = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.28c = value_binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.28c = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.28c = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.28c = out_param_pattern %return.patt, call_param1 [concrete]
@@ -219,7 +314,7 @@ fn G(p: const (const C)**) -> C** {
 // CHECK:STDOUT:       %ptr.loc11_16: type = ptr_type %const.loc11_9 [concrete = constants.%ptr.801]
 // CHECK:STDOUT:       %ptr.loc11_17: type = ptr_type %ptr.loc11_16 [concrete = constants.%ptr.564]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.564 = bind_name p, %p.param
+// CHECK:STDOUT:     %p: %ptr.564 = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.564 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.564 = return_slot %return.param
 // CHECK:STDOUT:   }

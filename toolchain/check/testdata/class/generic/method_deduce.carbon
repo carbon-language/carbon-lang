@@ -110,7 +110,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:     %T.loc18_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc18_13.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGenericMethod.decl: %CallGenericMethod.type = fn_decl @CallGenericMethod [concrete = constants.%CallGenericMethod] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.827 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.827 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.827 = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.edc = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.edc = out_param_pattern %return.patt, call_param1 [concrete]
@@ -125,12 +125,12 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:       %A.ref.loc23_31: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:       %Class: type = class_type @Class, @Class(constants.%A) [concrete = constants.%Class.480]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %Class.480 = bind_name c, %c.param
+// CHECK:STDOUT:     %c: %Class.480 = value_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.cc6 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %tuple.type.cc6 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %CallGenericMethodWithNonDeducedParam.decl: %CallGenericMethodWithNonDeducedParam.type = fn_decl @CallGenericMethodWithNonDeducedParam [concrete = constants.%CallGenericMethodWithNonDeducedParam] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.827 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.827 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.827 = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.edc = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.edc = out_param_pattern %return.patt, call_param1 [concrete]
@@ -145,7 +145,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:       %A.ref.loc27_50: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:       %Class: type = class_type @Class, @Class(constants.%A) [concrete = constants.%Class.480]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %Class.480 = bind_name c, %c.param
+// CHECK:STDOUT:     %c: %Class.480 = value_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.cc6 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %tuple.type.cc6 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -192,7 +192,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:       %return: ref @Class.Get.%tuple.type (%tuple.type.30b) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Class.GetNoDeduce.decl: @Class.%Class.GetNoDeduce.type (%Class.GetNoDeduce.type.766) = fn_decl @Class.GetNoDeduce [symbolic = @Class.%Class.GetNoDeduce (constants.%Class.GetNoDeduce.c9a)] {
-// CHECK:STDOUT:       %x.patt: @Class.GetNoDeduce.%pattern_type.loc20_18 (%pattern_type.7dc) = binding_pattern x [concrete]
+// CHECK:STDOUT:       %x.patt: @Class.GetNoDeduce.%pattern_type.loc20_18 (%pattern_type.7dc) = value_binding_pattern x [concrete]
 // CHECK:STDOUT:       %x.param_patt: @Class.GetNoDeduce.%pattern_type.loc20_18 (%pattern_type.7dc) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 1 [concrete]
 // CHECK:STDOUT:       %return.patt: @Class.GetNoDeduce.%pattern_type.loc20_34 (%pattern_type.65c) = return_slot_pattern [concrete]
@@ -204,7 +204,7 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:       %.loc20_42.2: type = converted %.loc20_42.1, constants.%tuple.type.30b [symbolic = %tuple.type (constants.%tuple.type.30b)]
 // CHECK:STDOUT:       %x.param: @Class.GetNoDeduce.%T (%T) = value_param call_param0
 // CHECK:STDOUT:       %T.ref.loc20_21: type = name_ref T, @Class.%T.loc18_13.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %x: @Class.GetNoDeduce.%T (%T) = bind_name x, %x.param
+// CHECK:STDOUT:       %x: @Class.GetNoDeduce.%T (%T) = value_binding x, %x.param
 // CHECK:STDOUT:       %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %U.loc20_24.2: type = bind_symbolic_name U, 1 [symbolic = %U.loc20_24.1 (constants.%U)]
 // CHECK:STDOUT:       %return.param: ref @Class.GetNoDeduce.%tuple.type (%tuple.type.30b) = out_param call_param1

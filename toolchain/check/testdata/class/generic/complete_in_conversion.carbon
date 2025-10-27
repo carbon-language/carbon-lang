@@ -134,7 +134,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Int.decl: %Int.type.913 = fn_decl @Int.loc2 [concrete = constants.%Int.779] {
-// CHECK:STDOUT:     %N.patt: %pattern_type.dc0 = binding_pattern N [concrete]
+// CHECK:STDOUT:     %N.patt: %pattern_type.dc0 = value_binding_pattern N [concrete]
 // CHECK:STDOUT:     %N.param_patt: %pattern_type.dc0 = value_param_pattern %N.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt, call_param1 [concrete]
@@ -147,7 +147,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:       %.loc2_27.2: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc2_27.3: type = converted %IntLiteral.call, %.loc2_27.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N: Core.IntLiteral = bind_name N, %N.param
+// CHECK:STDOUT:     %N: Core.IntLiteral = value_binding N, %N.param
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param1
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -163,7 +163,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     %N.loc6_9.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc6_9.1 (constants.%N.51e)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.213 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.213 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.213 = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %ptr.b65 = value_param call_param0
@@ -180,7 +180,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:       %A: type = class_type @A, @A(constants.%int_0.6a9) [concrete = constants.%A.6fc]
 // CHECK:STDOUT:       %ptr.loc15: type = ptr_type %A [concrete = constants.%ptr.b65]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %ptr.b65 = bind_name a, %a.param
+// CHECK:STDOUT:     %a: %ptr.b65 = value_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -244,7 +244,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT: fn @F(%a.param: %ptr.b65) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.960 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.960 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %ptr.b65 = name_ref a, %a
 // CHECK:STDOUT:   %.loc20_11: type = splice_block %ptr.loc20 [concrete = constants.%ptr.e79] {
@@ -255,7 +255,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   %.loc20_15.2: ref %B = class_element_access %.loc20_15.1, element0
 // CHECK:STDOUT:   %addr: %ptr.e79 = addr_of %.loc20_15.2
 // CHECK:STDOUT:   %.loc20_15.3: %ptr.e79 = converted %a.ref, %addr
-// CHECK:STDOUT:   %b: %ptr.e79 = bind_name b, %.loc20_15.3
+// CHECK:STDOUT:   %b: %ptr.e79 = value_binding b, %.loc20_15.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

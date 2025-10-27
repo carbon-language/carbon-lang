@@ -16,7 +16,7 @@ impl str as Interface {
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
 // CHECK:STDOUT:           {kind: 'StringTypeLiteral', text: 'str'},
-// CHECK:STDOUT:         {kind: 'TypeImplAs', text: 'as', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},
 // CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'Interface'},
 // CHECK:STDOUT:       {kind: 'ImplDefinitionStart', text: '{', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'ImplDefinition', text: '}', subtree_size: 6},

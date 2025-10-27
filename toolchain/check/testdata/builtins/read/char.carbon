@@ -52,7 +52,7 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ReadChar.ref.loc8: %ReadChar.type.fa8 = name_ref ReadChar, file.%ReadChar.decl [concrete = constants.%ReadChar.7f4]
 // CHECK:STDOUT:   %ReadChar.call.loc8: init %i32 = call %ReadChar.ref.loc8()
@@ -62,9 +62,9 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_25.1: %i32 = value_of_initializer %ReadChar.call.loc8
 // CHECK:STDOUT:   %.loc8_25.2: %i32 = converted %ReadChar.call.loc8, %.loc8_25.1
-// CHECK:STDOUT:   %n: %i32 = bind_name n, %.loc8_25.2
+// CHECK:STDOUT:   %n: %i32 = value_binding n, %.loc8_25.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %m.patt: %pattern_type.7ce = binding_pattern m [concrete]
+// CHECK:STDOUT:     %m.patt: %pattern_type.7ce = value_binding_pattern m [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:   %ReadChar.ref.loc9: %ReadChar.type.9f3 = name_ref ReadChar, imports.%Core.ReadChar [concrete = constants.%ReadChar.01f]
@@ -75,7 +75,7 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_30.1: %i32 = value_of_initializer %ReadChar.call.loc9
 // CHECK:STDOUT:   %.loc9_30.2: %i32 = converted %ReadChar.call.loc9, %.loc9_30.1
-// CHECK:STDOUT:   %m: %i32 = bind_name m, %.loc9_30.2
+// CHECK:STDOUT:   %m: %i32 = value_binding m, %.loc9_30.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

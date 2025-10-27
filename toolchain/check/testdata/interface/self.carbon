@@ -39,7 +39,7 @@ interface UseSelf {
 // CHECK:STDOUT: interface @UseSelf {
 // CHECK:STDOUT:   %Self: %UseSelf.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %UseSelf.F.decl: %UseSelf.F.type = fn_decl @UseSelf.F [concrete = constants.%UseSelf.F] {
-// CHECK:STDOUT:     %self.patt: @UseSelf.F.%pattern_type (%pattern_type) = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: @UseSelf.F.%pattern_type (%pattern_type) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @UseSelf.F.%pattern_type (%pattern_type) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: @UseSelf.F.%pattern_type (%pattern_type) = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: @UseSelf.F.%pattern_type (%pattern_type) = out_param_pattern %return.patt, call_param1 [concrete]
@@ -53,7 +53,7 @@ interface UseSelf {
 // CHECK:STDOUT:       %Self.as_type.loc16_14: type = facet_access_type %Self.ref.loc16_14 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       %.loc16_14.2: type = converted %Self.ref.loc16_14, %Self.as_type.loc16_14 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type) = bind_name self, %self.param
+// CHECK:STDOUT:     %self: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }

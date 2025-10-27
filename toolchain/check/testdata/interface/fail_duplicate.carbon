@@ -154,7 +154,7 @@ interface Class { }
 // CHECK:STDOUT: interface @Interface.loc13 {
 // CHECK:STDOUT:   %Self: %Interface.type.ba0a47.2 = bind_symbolic_name Self, 0 [symbolic = constants.%Self.46e08f.2]
 // CHECK:STDOUT:   %Interface.F.decl: %Interface.F.type = fn_decl @Interface.F [concrete = constants.%Interface.F] {
-// CHECK:STDOUT:     %self.patt: @Interface.F.%pattern_type (%pattern_type) = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: @Interface.F.%pattern_type (%pattern_type) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @Interface.F.%pattern_type (%pattern_type) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @Interface.F.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
@@ -163,7 +163,7 @@ interface Class { }
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       %.loc14_14.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @Interface.F.%Self.binding.as_type (%Self.binding.as_type) = bind_name self, %self.param
+// CHECK:STDOUT:     %self: @Interface.F.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %Interface.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:

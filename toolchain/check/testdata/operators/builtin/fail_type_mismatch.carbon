@@ -69,7 +69,7 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.831 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.831 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.831 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref bool = var %x.var_patt
@@ -82,7 +82,7 @@ fn Main() {
 // CHECK:STDOUT:     %.loc23_10.2: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:     %.loc23_10.3: type = converted %Bool.call, %.loc23_10.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref bool = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref bool = ref_binding x, %x.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %x.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.999
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.999, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

@@ -206,7 +206,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %ConvertCToB.decl: %ConvertCToB.type = fn_decl @ConvertCToB [concrete = constants.%ConvertCToB] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.44a = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.44a = value_binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.44a = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.960 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.960 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -218,12 +218,12 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr.loc19_20: type = ptr_type %C.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.019 = bind_name p, %p.param
+// CHECK:STDOUT:     %p: %ptr.019 = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.e79 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.e79 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertBToA.decl: %ConvertBToA.type = fn_decl @ConvertBToA [concrete = constants.%ConvertBToA] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.960 = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.960 = value_binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.960 = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.5f8 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.5f8 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -235,12 +235,12 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:       %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:       %ptr.loc20_20: type = ptr_type %B.ref [concrete = constants.%ptr.e79]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.e79 = bind_name p, %p.param
+// CHECK:STDOUT:     %p: %ptr.e79 = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.6db = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.6db = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertCToA.decl: %ConvertCToA.type = fn_decl @ConvertCToA [concrete = constants.%ConvertCToA] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.44a = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.44a = value_binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.44a = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.5f8 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.5f8 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -252,20 +252,20 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr.loc21_20: type = ptr_type %C.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.019 = bind_name p, %p.param
+// CHECK:STDOUT:     %p: %ptr.019 = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.6db = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.6db = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertValue.decl: %ConvertValue.type = fn_decl @ConvertValue [concrete = constants.%ConvertValue] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.c48 = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %c: %C = bind_name c, %c.param
+// CHECK:STDOUT:     %c: %C = value_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ConvertRef.decl: %ConvertRef.type = fn_decl @ConvertRef [concrete = constants.%ConvertRef] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.44a = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.44a = value_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.44a = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.5f8 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.5f8 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -277,7 +277,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr.loc27_19: type = ptr_type %C.ref [concrete = constants.%ptr.019]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %ptr.019 = bind_name c, %c.param
+// CHECK:STDOUT:     %c: %ptr.019 = value_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %ptr.6db = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.6db = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -333,7 +333,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT: fn @ConvertValue(%c.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.c10 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.c10 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
@@ -341,7 +341,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %.loc24_14.2: ref %A = class_element_access %.loc24_14.1, element0
 // CHECK:STDOUT:   %.loc24_14.3: ref %A = converted %c.ref, %.loc24_14.2
 // CHECK:STDOUT:   %.loc24_14.4: %A = bind_value %.loc24_14.3
-// CHECK:STDOUT:   %a: %A = bind_name a, %.loc24_14.4
+// CHECK:STDOUT:   %a: %A = value_binding a, %.loc24_14.4
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -365,7 +365,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT: fn @ConvertInit() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.c10 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.c10 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc32_39.1: %struct_type.a.a6c = struct_literal (%int_1)
@@ -413,7 +413,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %.loc32_59.3: ref %A = class_element_access %.loc32_59.2, element0
 // CHECK:STDOUT:   %.loc32_59.4: ref %A = converted %.loc32_59.1, %.loc32_59.3
 // CHECK:STDOUT:   %.loc32_59.5: %A = bind_value %.loc32_59.4
-// CHECK:STDOUT:   %a: %A = bind_name a, %.loc32_59.5
+// CHECK:STDOUT:   %a: %A = value_binding a, %.loc32_59.5
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc32_57.9, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f93
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc32_57.3: <bound method> = bound_method %.loc32_57.9, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

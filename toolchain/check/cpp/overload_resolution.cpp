@@ -8,6 +8,7 @@
 #include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/operators.h"
@@ -88,22 +89,9 @@ static auto CheckOverloadAccess(Context& context, SemIR::LocId loc_id,
                                 const SemIR::CppOverloadSet& overload_set,
                                 clang::DeclAccessPair overload,
                                 SemIR::InstId overload_inst_id) -> void {
-  SemIR::AccessKind member_access_kind;
-  switch (overload->getAccess()) {
-    case clang::AS_none:
-    case clang::AS_public: {
-      return;
-    }
-
-    case clang::AS_protected: {
-      member_access_kind = SemIR::AccessKind::Protected;
-      break;
-    }
-
-    case clang::AS_private: {
-      member_access_kind = SemIR::AccessKind::Private;
-      break;
-    }
+  SemIR::AccessKind member_access_kind = MapCppAccess(overload);
+  if (member_access_kind == SemIR::AccessKind::Public) {
+    return;
   }
 
   auto name_scope_const_id = context.constant_values().Get(

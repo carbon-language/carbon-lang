@@ -221,7 +221,7 @@ static auto MakeLetBinding(Context& context, const ChoiceInfo& choice_info,
       {.name_id = binding.name_component.name_id,
        .parent_scope_id = choice_info.name_scope_id});
   auto bind_name_id = AddInst(context, binding.node_id,
-                              SemIR::BindName{
+                              SemIR::ValueBinding{
                                   .type_id = choice_info.self_type_id,
                                   .entity_name_id = entity_name_id,
                                   .value_id = self_value_id,

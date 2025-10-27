@@ -82,7 +82,7 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -94,7 +94,7 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:       %int_32.loc16_9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc16_9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
+// CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -110,7 +110,7 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %i32.loc17 [symbolic = constants.%T]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.7dcd0a.1 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.7dcd0a.1 = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
 // CHECK:STDOUT:   %T.ref: type = name_ref T, %T [symbolic = constants.%T]
@@ -118,7 +118,7 @@ fn F(a: i32) -> i32 {
 // CHECK:STDOUT:   %.loc25_14.1: %ImplicitAs.assoc_type.ca0d85.2 = specific_constant imports.%Core.import_ref.492, @ImplicitAs(constants.%T) [symbolic = constants.%assoc0.9f5e6b.2]
 // CHECK:STDOUT:   %Convert.ref: %ImplicitAs.assoc_type.ca0d85.2 = name_ref Convert, %.loc25_14.1 [symbolic = constants.%assoc0.9f5e6b.2]
 // CHECK:STDOUT:   %.loc25_14.2: %T = converted %int_5, <error> [concrete = <error>]
-// CHECK:STDOUT:   %x: %T = bind_name x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x: %T = value_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   %x.ref: %T = name_ref x, %x [concrete = <error>]
 // CHECK:STDOUT:   %.loc33: %i32 = converted %x.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error> to %return

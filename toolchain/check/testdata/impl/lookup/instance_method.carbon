@@ -78,7 +78,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %C.decl.loc21: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.c48 = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -87,7 +87,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl.loc15 [concrete = constants.%C]
-// CHECK:STDOUT:     %c: %C = bind_name c, %c.param
+// CHECK:STDOUT:     %c: %C = value_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -96,7 +96,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %I.F.decl: %I.F.type = fn_decl @I.F [concrete = constants.%I.F] {
-// CHECK:STDOUT:     %self.patt: @I.F.%pattern_type (%pattern_type.3f7) = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: @I.F.%pattern_type (%pattern_type.3f7) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @I.F.%pattern_type (%pattern_type.3f7) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -109,7 +109,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       %.loc18_14.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @I.F.%Self.binding.as_type (%Self.binding.as_type) = bind_name self, %self.param
+// CHECK:STDOUT:     %self: @I.F.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -123,7 +123,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %Self.ref as %I.ref {
 // CHECK:STDOUT:   %C.as.I.impl.F.decl: %C.as.I.impl.F.type = fn_decl @C.as.I.impl.F [concrete = constants.%C.as.I.impl.F] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.c48 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.c48 = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -132,7 +132,7 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }

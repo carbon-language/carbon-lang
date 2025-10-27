@@ -133,7 +133,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %InitFromStructGeneric.decl: %InitFromStructGeneric.type = fn_decl @InitFromStructGeneric [concrete = constants.%InitFromStructGeneric] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.322 = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %x.patt: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.17e4b7.1) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.17e4b7.1) = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.17e4b7.1) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.17e4b7.1) = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: @InitFromStructGeneric.%pattern_type.loc9 (%pattern_type.17e4b7.1) = out_param_pattern %return.patt, call_param1 [concrete]
@@ -153,12 +153,12 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:       %T.as_type.loc9_44: type = facet_access_type %T.ref.loc9_44 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %.loc9_44.2: type = converted %T.ref.loc9_44, %T.as_type.loc9_44 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = bind_name x, %x.param
+// CHECK:STDOUT:     %x: @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = value_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromStructSpecific.decl: %InitFromStructSpecific.type = fn_decl @InitFromStructSpecific [concrete = constants.%InitFromStructSpecific] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.7ce = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -170,7 +170,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:       %int_32.loc14_30: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc14_30: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: %i32 = bind_name x, %x.param
+// CHECK:STDOUT:     %x: %i32 = value_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -205,7 +205,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   fn(%x.param: @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type)) -> %return.param: @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %v.patt: @InitFromStructGeneric.%pattern_type.loc10 (%pattern_type.4bf) = binding_pattern v [concrete]
+// CHECK:STDOUT:       %v.patt: @InitFromStructGeneric.%pattern_type.loc10 (%pattern_type.4bf) = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:       %v.var_patt: @InitFromStructGeneric.%pattern_type.loc10 (%pattern_type.4bf) = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v.var: ref @InitFromStructGeneric.%Class.loc10_17.2 (%Class.091) = var %v.var_patt
@@ -228,7 +228,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:       %.loc10_17.2: type = converted %T.ref.loc10, %T.as_type.loc10 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %Class.loc10_17.1: type = class_type @Class, @Class(constants.%T.binding.as_type) [symbolic = %Class.loc10_17.2 (constants.%Class.091)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %v: ref @InitFromStructGeneric.%Class.loc10_17.2 (%Class.091) = bind_name v, %v.var
+// CHECK:STDOUT:     %v: ref @InitFromStructGeneric.%Class.loc10_17.2 (%Class.091) = ref_binding v, %v.var
 // CHECK:STDOUT:     %v.ref: ref @InitFromStructGeneric.%Class.loc10_17.2 (%Class.091) = name_ref v, %v
 // CHECK:STDOUT:     %k.ref: @InitFromStructGeneric.%Class.elem (%Class.elem.bb0) = name_ref k, @Class.%.loc5 [concrete = @Class.%.loc5]
 // CHECK:STDOUT:     %.loc11_11.1: ref @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = class_element_access %v.ref, element0
@@ -252,7 +252,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT: fn @InitFromStructSpecific(%x.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.0fa = binding_pattern v [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.0fa = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.0fa = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %Class.247 = var %v.var_patt
@@ -274,7 +274,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     %i32.loc15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %Class: type = class_type @Class, @Class(constants.%i32) [concrete = constants.%Class.247]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %Class.247 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %Class.247 = ref_binding v, %v.var
 // CHECK:STDOUT:   %v.ref: ref %Class.247 = name_ref v, %v
 // CHECK:STDOUT:   %k.ref: %Class.elem.2d8 = name_ref k, @Class.%.loc5 [concrete = @Class.%.loc5]
 // CHECK:STDOUT:   %.loc16_11.1: ref %i32 = class_element_access %v.ref, element0
@@ -353,7 +353,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %InitFromAdaptedGeneric.decl: %InitFromAdaptedGeneric.type = fn_decl @InitFromAdaptedGeneric [concrete = constants.%InitFromAdaptedGeneric] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.322 = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %x.patt: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.17e4b7.1) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.17e4b7.1) = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.17e4b7.1) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.17e4b7.1) = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: @InitFromAdaptedGeneric.%pattern_type (%pattern_type.17e4b7.1) = out_param_pattern %return.patt, call_param1 [concrete]
@@ -373,12 +373,12 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:       %T.as_type.loc9_45: type = facet_access_type %T.ref.loc9_45 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %.loc9_45.2: type = converted %T.ref.loc9_45, %T.as_type.loc9_45 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @InitFromAdaptedGeneric.%T.binding.as_type (%T.binding.as_type) = bind_name x, %x.param
+// CHECK:STDOUT:     %x: @InitFromAdaptedGeneric.%T.binding.as_type (%T.binding.as_type) = value_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref @InitFromAdaptedGeneric.%T.binding.as_type (%T.binding.as_type) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @InitFromAdaptedGeneric.%T.binding.as_type (%T.binding.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %InitFromAdaptedSpecific.decl: %InitFromAdaptedSpecific.type = fn_decl @InitFromAdaptedSpecific [concrete = constants.%InitFromAdaptedSpecific] {
-// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.7ce = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -390,7 +390,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:       %int_32.loc13_31: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc13_31: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: %i32 = bind_name x, %x.param
+// CHECK:STDOUT:     %x: %i32 = value_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }

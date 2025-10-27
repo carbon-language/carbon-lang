@@ -121,7 +121,7 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt: %pattern_type.cb1 = binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.patt: %pattern_type.cb1 = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc18_18.1: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:   %TrivialRange.ref: type = name_ref TrivialRange, file.%TrivialRange.decl [concrete = constants.%TrivialRange]
@@ -174,7 +174,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc18_35.10: ref %empty_tuple.type = temporary %.loc18_35.9, %Optional.Get.call
 // CHECK:STDOUT:   %tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc18_35.11: %empty_tuple.type = converted %Optional.Get.call, %tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %_: %empty_tuple.type = bind_name _, %.loc18_35.11
+// CHECK:STDOUT:   %_: %empty_tuple.type = value_binding _, %.loc18_35.11
 // CHECK:STDOUT:   %Body.ref: %Body.type = name_ref Body, file.%Body.decl [concrete = constants.%Body]
 // CHECK:STDOUT:   %Body.call: init %empty_tuple.type = call %Body.ref()
 // CHECK:STDOUT:   br !for.next

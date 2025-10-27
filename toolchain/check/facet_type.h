@@ -8,15 +8,26 @@
 #include <compare>
 
 #include "toolchain/check/context.h"
+#include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
-// Create a FacetType typed instruction object consisting of a single
-// interface. The `specific_id` specifies arguments in the case the interface is
-// generic.
+// Create a FacetType typed instruction object consisting of a interface. The
+// `specific_id` specifies arguments in the case the interface is generic.
+//
+// The resulting FacetType may contain multiple interfaces if the named
+// interface contains `require` declarations.
 auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
                             SemIR::SpecificId specific_id) -> SemIR::FacetType;
+
+// Create a FacetType typed instruction object consisting of a named constraint.
+// The `specific_id` specifies arguments in the case the named constraint is
+// generic.
+auto FacetTypeFromNamedConstraint(Context& context,
+                                  SemIR::NamedConstraintId named_constraint_id,
+                                  SemIR::SpecificId specific_id)
+    -> SemIR::FacetType;
 
 // Given an ImplWitnessAccessSubstituted, returns the InstId of the
 // ImplWitnessAccess. Otherwise, returns the input `inst_id` unchanged.

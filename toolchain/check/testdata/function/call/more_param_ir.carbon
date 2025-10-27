@@ -92,9 +92,9 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.7ce = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.7ce = value_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.7ce = value_param_pattern %b.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param0
@@ -102,13 +102,13 @@ fn Main() {
 // CHECK:STDOUT:       %int_32.loc15_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc15_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
+// CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %.loc15_19: type = splice_block %i32.loc15_19 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc15_19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc15_19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
+// CHECK:STDOUT:     %b: %i32 = value_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {} {}
 // CHECK:STDOUT: }
@@ -121,7 +121,7 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.b74 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.b74 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.b74 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %tuple.type.a1c = var %x.var_patt
@@ -142,7 +142,7 @@ fn Main() {
 // CHECK:STDOUT:     %.loc18_15.2: %tuple.type.85c = tuple_literal (%i32)
 // CHECK:STDOUT:     %.loc18_15.3: type = converted %.loc18_15.2, constants.%tuple.type.a1c [concrete = constants.%tuple.type.a1c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %tuple.type.a1c = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %tuple.type.a1c = ref_binding x, %x.var
 // CHECK:STDOUT:   %Foo.ref: %Foo.type = name_ref Foo, file.%Foo.decl [concrete = constants.%Foo]
 // CHECK:STDOUT:   %x.ref: ref %tuple.type.a1c = name_ref x, %x
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]

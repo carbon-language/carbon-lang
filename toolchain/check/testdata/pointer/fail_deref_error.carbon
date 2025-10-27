@@ -51,21 +51,21 @@ let n2: i32 = undeclared->foo;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc19: type = splice_block %i32.loc19 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n: %i32 = bind_name n, <error> [concrete = <error>]
+// CHECK:STDOUT:   %n: %i32 = value_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n2.patt: %pattern_type.7ce = binding_pattern n2 [concrete]
+// CHECK:STDOUT:     %n2.patt: %pattern_type.7ce = value_binding_pattern n2 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc24: type = splice_block %i32.loc24 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n2: %i32 = bind_name n2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %n2: %i32 = value_binding n2, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

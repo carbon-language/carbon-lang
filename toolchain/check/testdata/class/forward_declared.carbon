@@ -57,7 +57,7 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.796 = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.796 = value_binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.796 = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.796 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.796 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -69,7 +69,7 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:       %Class.ref.loc17_9: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:       %ptr.loc17_14: type = ptr_type %Class.ref.loc17_9 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.e71 = bind_name p, %p.param
+// CHECK:STDOUT:     %p: %ptr.e71 = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.e71 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %ptr.e71 = return_slot %return.param
 // CHECK:STDOUT:   }

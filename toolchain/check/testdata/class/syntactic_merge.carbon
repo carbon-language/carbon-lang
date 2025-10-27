@@ -1151,7 +1151,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
 // CHECK:STDOUT:   %Base.F.decl: %Base.F.type.7c6384.2 = fn_decl @Base.F.loc17 [concrete = constants.%Base.F.d17bbc.2] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.1b9 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.1b9 = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.1b9 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %.loc17_11: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
@@ -1160,7 +1160,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:       %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Base.ref [concrete = constants.%ptr.11f]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: %ptr.11f = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %ptr.11f = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1169,7 +1169,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc5_8: %Base.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %Base.F.decl: %Base.F.type.7c6384.1 = fn_decl @Base.F.loc7 [concrete = constants.%Base.F.d17bbc.1] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.1b9 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.1b9 = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.1b9 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %.loc7_8: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
@@ -1178,7 +1178,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Self.ref [concrete = constants.%ptr.11f]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: %ptr.11f = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %ptr.11f = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

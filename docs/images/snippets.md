@@ -98,7 +98,7 @@ fn PrintTotalArea(circles: [Circle]) {
   Print("Total area: {0}", area);
 }
 
-fn Main() -> i32 {
+fn Run() -> i32 {
   // A dynamically sized array, like `std::vector`.
   var circles: array [Circle] = ({.r = 1.0}, {.r = 2.0});
   // Implicitly constructs a slice from the array.

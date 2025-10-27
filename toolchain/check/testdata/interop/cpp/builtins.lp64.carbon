@@ -110,7 +110,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %cpp_long.patt: %pattern_type.95b = binding_pattern cpp_long [concrete]
+// CHECK:STDOUT:     %cpp_long.patt: %pattern_type.95b = value_binding_pattern cpp_long [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1.loc8: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_64.loc8: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
@@ -127,18 +127,18 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %long.ref: type = name_ref long, %i64.1 [concrete = constants.%i64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_long: %i64 = bind_name cpp_long, %.loc8_31.2
+// CHECK:STDOUT:   %cpp_long: %i64 = value_binding cpp_long, %.loc8_31.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %carbon_long.patt: %pattern_type.95b = binding_pattern carbon_long [concrete]
+// CHECK:STDOUT:     %carbon_long.patt: %pattern_type.95b = value_binding_pattern carbon_long [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_long.ref: %i64 = name_ref cpp_long, %cpp_long
 // CHECK:STDOUT:   %.loc9: type = splice_block %i64.loc9 [concrete = constants.%i64] {
 // CHECK:STDOUT:     %int_64.loc9: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %i64.loc9: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %carbon_long: %i64 = bind_name carbon_long, %cpp_long.ref
+// CHECK:STDOUT:   %carbon_long: %i64 = value_binding carbon_long, %cpp_long.ref
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %cpp_unsigned_long.patt: %pattern_type.157 = binding_pattern cpp_unsigned_long [concrete]
+// CHECK:STDOUT:     %cpp_unsigned_long.patt: %pattern_type.157 = value_binding_pattern cpp_unsigned_long [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1.loc11: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_64.loc11: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
@@ -155,16 +155,16 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %unsigned_long.ref: type = name_ref unsigned_long, %u64.1 [concrete = constants.%u64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_unsigned_long: %u64 = bind_name cpp_unsigned_long, %.loc11_49.2
+// CHECK:STDOUT:   %cpp_unsigned_long: %u64 = value_binding cpp_unsigned_long, %.loc11_49.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %carbon_unsigned_long.patt: %pattern_type.157 = binding_pattern carbon_unsigned_long [concrete]
+// CHECK:STDOUT:     %carbon_unsigned_long.patt: %pattern_type.157 = value_binding_pattern carbon_unsigned_long [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_unsigned_long.ref: %u64 = name_ref cpp_unsigned_long, %cpp_unsigned_long
 // CHECK:STDOUT:   %.loc12: type = splice_block %u64.loc12 [concrete = constants.%u64] {
 // CHECK:STDOUT:     %int_64.loc12: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %u64.loc12: type = class_type @UInt, @UInt(constants.%int_64) [concrete = constants.%u64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %carbon_unsigned_long: %u64 = bind_name carbon_unsigned_long, %cpp_unsigned_long.ref
+// CHECK:STDOUT:   %carbon_unsigned_long: %u64 = value_binding carbon_unsigned_long, %cpp_unsigned_long.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -216,7 +216,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %cpp_long_long.patt: <error> = binding_pattern cpp_long_long [concrete]
+// CHECK:STDOUT:     %cpp_long_long.patt: <error> = value_binding_pattern cpp_long_long [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1.loc15: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_64.loc15: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
@@ -229,18 +229,18 @@ fn F() {
 // CHECK:STDOUT:   %.loc15_41.1: %i64 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc15 [concrete = constants.%int_1.41a]
 // CHECK:STDOUT:   %.loc15_41.2: %i64 = converted %int_1.loc15, %.loc15_41.1 [concrete = constants.%int_1.41a]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %cpp_long_long: <error> = bind_name cpp_long_long, <error> [concrete = <error>]
+// CHECK:STDOUT:   %cpp_long_long: <error> = value_binding cpp_long_long, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %carbon_long_long.patt: %pattern_type.95b = binding_pattern carbon_long_long [concrete]
+// CHECK:STDOUT:     %carbon_long_long.patt: %pattern_type.95b = value_binding_pattern carbon_long_long [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_long_long.ref: <error> = name_ref cpp_long_long, %cpp_long_long [concrete = <error>]
 // CHECK:STDOUT:   %.loc16: type = splice_block %i64.loc16 [concrete = constants.%i64] {
 // CHECK:STDOUT:     %int_64.loc16: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %i64.loc16: type = class_type @Int, @Int(constants.%int_64) [concrete = constants.%i64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %carbon_long_long: %i64 = bind_name carbon_long_long, <error> [concrete = <error>]
+// CHECK:STDOUT:   %carbon_long_long: %i64 = value_binding carbon_long_long, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %cpp_unsigned_long_long.patt: <error> = binding_pattern cpp_unsigned_long_long [concrete]
+// CHECK:STDOUT:     %cpp_unsigned_long_long.patt: <error> = value_binding_pattern cpp_unsigned_long_long [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1.loc25: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_64.loc25: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
@@ -253,16 +253,16 @@ fn F() {
 // CHECK:STDOUT:   %.loc25_59.1: %u64 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call.loc25 [concrete = constants.%int_1.f23]
 // CHECK:STDOUT:   %.loc25_59.2: %u64 = converted %int_1.loc25, %.loc25_59.1 [concrete = constants.%int_1.f23]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %cpp_unsigned_long_long: <error> = bind_name cpp_unsigned_long_long, <error> [concrete = <error>]
+// CHECK:STDOUT:   %cpp_unsigned_long_long: <error> = value_binding cpp_unsigned_long_long, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %carbon_unsigned_long_long.patt: %pattern_type.157 = binding_pattern carbon_unsigned_long_long [concrete]
+// CHECK:STDOUT:     %carbon_unsigned_long_long.patt: %pattern_type.157 = value_binding_pattern carbon_unsigned_long_long [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %cpp_unsigned_long_long.ref: <error> = name_ref cpp_unsigned_long_long, %cpp_unsigned_long_long [concrete = <error>]
 // CHECK:STDOUT:   %.loc26: type = splice_block %u64.loc26 [concrete = constants.%u64] {
 // CHECK:STDOUT:     %int_64.loc26: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %u64.loc26: type = class_type @UInt, @UInt(constants.%int_64) [concrete = constants.%u64]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %carbon_unsigned_long_long: %u64 = bind_name carbon_unsigned_long_long, <error> [concrete = <error>]
+// CHECK:STDOUT:   %carbon_unsigned_long_long: %u64 = value_binding carbon_unsigned_long_long, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

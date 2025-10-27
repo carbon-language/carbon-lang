@@ -144,7 +144,7 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %A.patt: %pattern_type.7ce = binding_pattern A [concrete]
+// CHECK:STDOUT:     %A.patt: %pattern_type.7ce = ref_binding_pattern A [concrete]
 // CHECK:STDOUT:     %A.var_patt: %pattern_type.7ce = var_pattern %A.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.var: ref %i32 = var %A.var_patt
@@ -160,7 +160,7 @@ fn N.M.B() -> i32 {
 // CHECK:STDOUT:     %int_32.loc26: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc26: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A: ref %i32 = bind_name A, %A.var
+// CHECK:STDOUT:   %A: ref %i32 = ref_binding A, %A.var
 // CHECK:STDOUT:   %A.ref.loc29: ref %i32 = name_ref A, %A
 // CHECK:STDOUT:   %.loc29: %i32 = bind_value %A.ref.loc29
 // CHECK:STDOUT:   %impl.elem0.loc29: %.7fa = impl_witness_access constants.%Copy.impl_witness.a32, element0 [concrete = constants.%Int.as.Copy.impl.Op.f59]

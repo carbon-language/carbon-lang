@@ -46,7 +46,8 @@ TEST(SemIRTest, Yaml) {
 
   // Matches the ID of an instruction. Instruction counts may change as various
   // support changes, so this code is only doing loose structural checks.
-  auto inst_block_id = Yaml::Scalar(MatchesRegex(R"(inst_block(\d+|_empty))"));
+  auto inst_block_id =
+      Yaml::Scalar(MatchesRegex(R"(inst_block([0-9A-F]+|_empty))"));
   auto inst_id = Yaml::Scalar(MatchesRegex(R"(inst[0-9A-F]+)"));
   auto constant_id =
       Yaml::Scalar(MatchesRegex(R"(concrete_constant\(inst[0-9A-F]+\))"));
@@ -98,11 +99,11 @@ TEST(SemIRTest, Yaml) {
               Pair("exports", Yaml::Mapping(Each(Pair(_, inst_id)))),
               Pair("imports", Yaml::Mapping(IsEmpty())),
               Pair("global_init", Yaml::Mapping(IsEmpty())),
-              Pair("inst_block00000004", Yaml::Mapping(Each(Pair(_, inst_id)))),
-              Pair("inst_block00000005", Yaml::Mapping(Each(Pair(_, inst_id)))),
-              Pair("inst_block00000006", Yaml::Mapping(Each(Pair(_, inst_id)))),
-              Pair("inst_block00000007", Yaml::Mapping(Each(Pair(_, inst_id)))),
-              Pair("inst_block00000008",
+              Pair("inst_block60000004", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block60000005", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block60000006", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block60000007", Yaml::Mapping(Each(Pair(_, inst_id)))),
+              Pair("inst_block60000008",
                    Yaml::Mapping(Each(Pair(_, inst_id)))))))));
 
   auto root = Yaml::Sequence(ElementsAre(Yaml::Mapping(

@@ -97,11 +97,11 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.831 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.831 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.831 = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %c.patt: %pattern_type.831 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.831 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.831 = value_param_pattern %c.patt, call_param2 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param3 [concrete]
@@ -114,21 +114,21 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:       %.loc15_9.2: type = value_of_initializer %Bool.call.loc15_9 [concrete = bool]
 // CHECK:STDOUT:       %.loc15_9.3: type = converted %Bool.call.loc15_9, %.loc15_9.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: bool = bind_name a, %a.param
+// CHECK:STDOUT:     %a: bool = value_binding a, %a.param
 // CHECK:STDOUT:     %b.param: bool = value_param call_param1
 // CHECK:STDOUT:     %.loc15_18.1: type = splice_block %.loc15_18.3 [concrete = bool] {
 // CHECK:STDOUT:       %Bool.call.loc15_18: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:       %.loc15_18.2: type = value_of_initializer %Bool.call.loc15_18 [concrete = bool]
 // CHECK:STDOUT:       %.loc15_18.3: type = converted %Bool.call.loc15_18, %.loc15_18.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: bool = bind_name b, %b.param
+// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
 // CHECK:STDOUT:     %c.param: bool = value_param call_param2
 // CHECK:STDOUT:     %.loc15_27.1: type = splice_block %.loc15_27.3 [concrete = bool] {
 // CHECK:STDOUT:       %Bool.call.loc15_27: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:       %.loc15_27.2: type = value_of_initializer %Bool.call.loc15_27 [concrete = bool]
 // CHECK:STDOUT:       %.loc15_27.3: type = converted %Bool.call.loc15_27, %.loc15_27.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: bool = bind_name c, %c.param
+// CHECK:STDOUT:     %c: bool = value_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param3
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }

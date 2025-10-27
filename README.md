@@ -169,6 +169,9 @@ If you're already a C++ developer, Carbon should have a gentle learning curve.
 It is built out of a consistent set of language constructs that should feel
 familiar and be easy to read and understand.
 
+The Carbon code here is hypothetical and meant to show the look and feel of the
+language.
+
 C++ code like this:
 
 <a href="docs/images/snippets.md#c">

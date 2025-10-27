@@ -186,7 +186,7 @@ extern alias C = Class;
 // CHECK:STDOUT:   %b.ref: type = name_ref b, %b [concrete = constants.%C]
 // CHECK:STDOUT:   %c: type = bind_alias c, %b [concrete = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type = binding_pattern d [concrete]
+// CHECK:STDOUT:     %d.patt: %pattern_type = value_binding_pattern d [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: type = name_ref c, %c [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc10_13.1: ref %C = temporary_storage
@@ -194,7 +194,7 @@ extern alias C = Class;
 // CHECK:STDOUT:   %.loc10_13.3: ref %C = temporary %.loc10_13.1, %.loc10_13.2
 // CHECK:STDOUT:   %.loc10_13.4: ref %C = converted @__global_init.%.loc10, %.loc10_13.3
 // CHECK:STDOUT:   %.loc10_13.5: %C = bind_value %.loc10_13.4
-// CHECK:STDOUT:   %d: %C = bind_name d, %.loc10_13.5
+// CHECK:STDOUT:   %d: %C = value_binding d, %.loc10_13.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

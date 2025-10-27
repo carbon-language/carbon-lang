@@ -79,9 +79,22 @@ auto GetGenericInterfaceType(Context& context, SemIR::InterfaceId interface_id,
                              SemIR::SpecificId enclosing_specific_id)
     -> SemIR::TypeId;
 
+// Gets a generic named constraint type, which is the type of a name of a
+// generic named constraint, such as the type of `AddWith` given `constraint
+// AddWith(T:! type)`. The returned type will be complete.
+auto GetGenericNamedConstraintType(Context& context,
+                                   SemIR::NamedConstraintId named_constraint_id,
+                                   SemIR::SpecificId enclosing_specific_id)
+    -> SemIR::TypeId;
+
 // Gets the facet type corresponding to a particular interface.
 auto GetInterfaceType(Context& context, SemIR::InterfaceId interface_id,
                       SemIR::SpecificId specific_id) -> SemIR::TypeId;
+
+// Gets the facet type corresponding to a particular named constraint.
+auto GetNamedConstraintType(Context& context,
+                            SemIR::NamedConstraintId named_constraint_id,
+                            SemIR::SpecificId specific_id) -> SemIR::TypeId;
 
 // Gets the facet type for the given `info`.
 auto GetFacetType(Context& context, const SemIR::FacetTypeInfo& info)

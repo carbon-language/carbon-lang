@@ -123,7 +123,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %arr.patt: @G.%pattern_type (%pattern_type.d48) = binding_pattern arr [concrete]
+// CHECK:STDOUT:       %arr.patt: @G.%pattern_type (%pattern_type.d48) = ref_binding_pattern arr [concrete]
 // CHECK:STDOUT:       %arr.var_patt: @G.%pattern_type (%pattern_type.d48) = var_pattern %arr.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr.var: ref @G.%array_type.loc7_22.2 (%array_type.281) = var %arr.var_patt
@@ -136,7 +136,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:       %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:       %array_type.loc7_22.1: type = array_type %int_0, %T.ref [symbolic = %array_type.loc7_22.2 (constants.%array_type.281)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %arr: ref @G.%array_type.loc7_22.2 (%array_type.281) = bind_name arr, %arr.var
+// CHECK:STDOUT:     %arr: ref @G.%array_type.loc7_22.2 (%array_type.281) = ref_binding arr, %arr.var
 // CHECK:STDOUT:     %impl.elem0: @G.%.loc7_3.2 (%.dc4) = impl_witness_access constants.%Destroy.impl_witness.5dc, element0 [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.84c)]
 // CHECK:STDOUT:     %bound_method.loc7_3.1: <bound method> = bound_method %arr.var, %impl.elem0
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.bf1) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.9d2)]
@@ -221,7 +221,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %arr.patt: <error> = binding_pattern arr [concrete]
+// CHECK:STDOUT:       %arr.patt: <error> = ref_binding_pattern arr [concrete]
 // CHECK:STDOUT:       %arr.var_patt: <error> = var_pattern %arr.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr.var: ref <error> = var %arr.var_patt [concrete = <error>]
@@ -231,7 +231,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:     %.loc11_36: %tuple.type = tuple_literal (%int_1, %int_2, %int_3)
 // CHECK:STDOUT:     assign %arr.var, <error>
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %arr: <error> = bind_name arr, <error> [concrete = <error>]
+// CHECK:STDOUT:     %arr: ref <error> = ref_binding arr, <error> [concrete = <error>]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

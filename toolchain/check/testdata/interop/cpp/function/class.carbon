@@ -750,7 +750,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc8_24: %ptr.838 = addr_of %.loc8_14.3
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_24)
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.69f = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.69f = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.69f = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %C = var %x.var_patt
@@ -759,7 +759,7 @@ fn F() {
 // CHECK:STDOUT:     %N.ref.loc10: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %C = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %C = ref_binding x, %x.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10: <bound method> = bound_method %x.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b69
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %x.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -897,7 +897,7 @@ fn F() {
 // CHECK:STDOUT:   %addr.loc8_24: %ptr.de2 = addr_of %.loc8_14.3
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr.loc8_24)
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.cff = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.cff = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.cff = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %O = var %x.var_patt
@@ -905,7 +905,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %O.ref.loc9: type = name_ref O, imports.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %O = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %O = ref_binding x, %x.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9: <bound method> = bound_method %x.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.981
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %x.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1

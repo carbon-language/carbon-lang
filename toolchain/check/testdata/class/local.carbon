@@ -181,7 +181,7 @@ class A {
 // CHECK:STDOUT: fn @B.Make() -> %return.param: %B {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.971 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.971 = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.971 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -198,7 +198,7 @@ class A {
 // CHECK:STDOUT:   %.loc19_18: init %B = converted %.loc19_39.1, %.loc19_39.5 [concrete = constants.%B.val]
 // CHECK:STDOUT:   assign %return, %.loc19_18
 // CHECK:STDOUT:   %Self.ref.loc19: type = name_ref Self, constants.%B [concrete = constants.%B]
-// CHECK:STDOUT:   %b: ref %B = bind_name b, %return
+// CHECK:STDOUT:   %b: ref %B = ref_binding b, %return
 // CHECK:STDOUT:   return %b to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

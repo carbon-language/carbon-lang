@@ -1446,6 +1446,40 @@ struct InterfaceDefinition {
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
+// `require`...`impls` statements
+// ------------------------------
+
+// `require`
+using RequireIntroducer =
+    LeafNode<NodeKind::RequireIntroducer, Lex::RequireTokenIndex>;
+
+// `impls` with no type before it
+using RequireDefaultSelfImpls =
+    LeafNode<NodeKind::RequireDefaultSelfImpls, Lex::ImplsTokenIndex,
+             NodeCategory::RequireImpls>;
+
+// `<type> impls`.
+struct RequireTypeImpls {
+  static constexpr auto Kind = NodeKind::RequireTypeImpls.Define(
+      {.category = NodeCategory::RequireImpls, .child_count = 1});
+
+  AnyExprId type_expr;
+  Lex::ImplsTokenIndex token;
+};
+
+// `require T impls I where...`
+struct RequireDecl {
+  static constexpr auto Kind =
+      NodeKind::RequireDecl.Define({.category = NodeCategory::Decl,
+                                    .bracketed_by = RequireIntroducer::Kind});
+
+  RequireIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
+  AnyRequireImplsId impls;
+  AnyExprId facet_type;
+  Lex::SemiTokenIndex token;
+};
+
 // `impl`...`as` declarations and definitions
 // ------------------------------------------
 
@@ -1462,12 +1496,12 @@ struct ImplForall {
 };
 
 // `as` with no type before it
-using DefaultSelfImplAs = LeafNode<NodeKind::DefaultSelfImplAs,
+using ImplDefaultSelfAs = LeafNode<NodeKind::ImplDefaultSelfAs,
                                    Lex::AsTokenIndex, NodeCategory::ImplAs>;
 
 // `<type> as`
-struct TypeImplAs {
-  static constexpr auto Kind = NodeKind::TypeImplAs.Define(
+struct ImplTypeAs {
+  static constexpr auto Kind = NodeKind::ImplTypeAs.Define(
       {.category = NodeCategory::ImplAs, .child_count = 1});
 
   AnyExprId type_expr;

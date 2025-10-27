@@ -224,7 +224,7 @@ fn Main() {
 // CHECK:STDOUT:   %tuple.loc32: %tuple.type.f94 = tuple_value (%int_1.loc32, %int_2.loc32) [concrete = constants.%tuple.ad8]
 // CHECK:STDOUT:   %.loc32_8.2: %tuple.type.f94 = converted %.loc32_8.1, %tuple.loc32 [concrete = constants.%tuple.ad8]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = ref_binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.var_patt: %pattern_type.7ce = var_pattern %n.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %i32 = var %n.var_patt
@@ -240,7 +240,7 @@ fn Main() {
 // CHECK:STDOUT:     %int_32.loc33: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc33: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n: ref %i32 = bind_name n, %n.var
+// CHECK:STDOUT:   %n: ref %i32 = ref_binding n, %n.var
 // CHECK:STDOUT:   %n.ref.loc38_4: ref %i32 = name_ref n, %n
 // CHECK:STDOUT:   %n.ref.loc38_7: ref %i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc38_8.1: %tuple.type.d07 = tuple_literal (%n.ref.loc38_4, %n.ref.loc38_7)
@@ -338,7 +338,7 @@ fn Main() {
 // CHECK:STDOUT:   %.loc53_27: init %i32 = converted %int_3.loc53, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc53_27 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   assign %.loc53_4, %.loc53_27
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.7ce = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt
@@ -346,7 +346,7 @@ fn Main() {
 // CHECK:STDOUT:     %int_32.loc56: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc56: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %i32 = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %i32 = ref_binding a, %a.var
 // CHECK:STDOUT:   %true.loc61: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   if %true.loc61 br !if.expr.then.loc61 else br !if.expr.else.loc61
 // CHECK:STDOUT:

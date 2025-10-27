@@ -35,20 +35,34 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
                                  : LibraryNameId::Default),
       value_stores_(&value_stores),
       filename_(std::move(filename)),
+      entity_names_(check_ir_id),
+      cpp_global_vars_(check_ir_id),
       functions_(check_ir_id),
       cpp_overload_sets_(check_ir_id),
       classes_(check_ir_id),
+      interfaces_(check_ir_id),
       associated_constants_(check_ir_id),
+      facet_types_(check_ir_id),
+      identified_facet_types_(&facet_types_),
       impls_(*this),
-      specific_interfaces_(check_ir_id_),
+      specific_interfaces_(check_ir_id),
+      generics_(check_ir_id),
+      specifics_(check_ir_id),
+      // The `2` prevents adding a tag for the global ids
+      // `ImportIRId::{ApiForImpl,Cpp}`.
+      import_irs_(IdTag(check_ir_id.index, 2)),
+      clang_decls_(check_ir_id),
       // The `+1` prevents adding a tag to the global `NameSpace::PackageInstId`
       // instruction. It's not a "singleton" instruction, but it's a unique
       // instruction id that comes right after the singletons.
       insts_(this, SingletonInstKinds.size() + 1),
-      vtables_(IdTag(check_ir_id.index, 0)),
+      vtables_(check_ir_id),
       constant_values_(ConstantId::NotConstant, &insts_),
-      inst_blocks_(allocator_),
-      constants_(this) {
+      inst_blocks_(allocator_, check_ir_id),
+      constants_(this),
+      // 1 reserved id for `StructTypeFields::Empty`.
+      struct_type_fields_(allocator_, IdTag(check_ir_id.index, 1)),
+      clang_source_locs_(check_ir_id) {
   // `type` and the error type are both complete & concrete types.
   types_.SetComplete(
       TypeType::TypeId,

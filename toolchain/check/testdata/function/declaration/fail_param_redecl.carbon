@@ -49,9 +49,9 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %n.patt.loc22_6: %pattern_type.7ce = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.patt.loc22_6: %pattern_type.7ce = value_binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.param_patt.loc22_7: %pattern_type.7ce = value_param_pattern %n.patt.loc22_6, call_param0 [concrete]
-// CHECK:STDOUT:     %n.patt.loc22_14: %pattern_type.7ce = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.patt.loc22_14: %pattern_type.7ce = value_binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.param_patt.loc22_15: %pattern_type.7ce = value_param_pattern %n.patt.loc22_14, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param.loc22_7: %i32 = value_param call_param0
@@ -59,13 +59,13 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:       %int_32.loc22_9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc22_9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n.loc22_6: %i32 = bind_name n, %n.param.loc22_7
+// CHECK:STDOUT:     %n.loc22_6: %i32 = value_binding n, %n.param.loc22_7
 // CHECK:STDOUT:     %n.param.loc22_15: %i32 = value_param call_param1
 // CHECK:STDOUT:     %.loc22_17: type = splice_block %i32.loc22_17 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc22_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc22_17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n.loc22_14: %i32 = bind_name n, %n.param.loc22_15
+// CHECK:STDOUT:     %n.loc22_14: %i32 = value_binding n, %n.param.loc22_15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

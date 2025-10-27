@@ -153,7 +153,7 @@ fn G() -> C {
 // CHECK:STDOUT: fn @F() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.7ce = binding_pattern v [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.7ce = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.7ce = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %i32 = var %v.var_patt
@@ -169,7 +169,7 @@ fn G() -> C {
 // CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %i32 = ref_binding v, %v.var
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %v.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.a57
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.a57, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
@@ -182,7 +182,7 @@ fn G() -> C {
 // CHECK:STDOUT: fn @G() -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.c48 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -208,7 +208,7 @@ fn G() -> C {
 // CHECK:STDOUT:   %.loc29_12: init %C = converted %.loc29_38.1, %.loc29_38.8 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign %return, %.loc29_12
 // CHECK:STDOUT:   %C.ref.loc29: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %return
+// CHECK:STDOUT:   %c: ref %C = ref_binding c, %return
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

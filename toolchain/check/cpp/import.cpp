@@ -4,6 +4,7 @@
 
 #include "toolchain/check/cpp/import.h"
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <string>
@@ -29,10 +30,12 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/call.h"
 #include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/custom_type_mapping.h"
 #include "toolchain/check/cpp/thunk.h"
 #include "toolchain/check/diagnostic_helpers.h"
@@ -41,6 +44,7 @@
 #include "toolchain/check/import.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
@@ -1221,26 +1225,39 @@ static auto MapQualifiedType(Context& context, clang::QualType type,
   return type_expr;
 }
 
+// Returns the type `Core.Optional(T)`, where  `T` is described by
+// `inner_type_inst_id`.
+static auto MakeOptionalType(Context& context, SemIR::LocId loc_id,
+                             SemIR::InstId inner_type_inst_id) -> TypeExpr {
+  auto fn_inst_id = LookupNameInCore(context, loc_id, "Optional");
+  auto call_id = PerformCall(context, loc_id, fn_inst_id, {inner_type_inst_id});
+  return ExprAsType(context, loc_id, call_id);
+}
+
 // Maps a C++ pointer type to a Carbon pointer type.
-static auto MapPointerType(Context& context, clang::QualType type,
-                           TypeExpr pointee_type_expr) -> TypeExpr {
+static auto MapPointerType(Context& context, SemIR::LocId loc_id,
+                           clang::QualType type, TypeExpr pointee_type_expr)
+    -> TypeExpr {
   CARBON_CHECK(type->isPointerType());
 
+  bool optional = false;
   if (auto nullability = type->getNullability();
       !nullability.has_value() ||
       *nullability != clang::NullabilityKind::NonNull) {
     // If the type was produced by C++ template substitution, then we assume it
     // was deduced from a Carbon pointer type, so it's non-null.
     if (!type->getAs<clang::SubstTemplateTypeParmType>()) {
-      // TODO: Support nullable pointers.
-      return TypeExpr::None;
+      optional = true;
     }
   }
 
-  SemIR::TypeId pointer_type_id =
-      GetPointerType(context, pointee_type_expr.inst_id);
-  return {.inst_id = context.types().GetInstId(pointer_type_id),
-          .type_id = pointer_type_id};
+  TypeExpr pointer_type_expr = TypeExpr::ForUnsugared(
+      context, GetPointerType(context, pointee_type_expr.inst_id));
+  if (optional) {
+    pointer_type_expr =
+        MakeOptionalType(context, loc_id, pointer_type_expr.inst_id);
+  }
+  return pointer_type_expr;
 }
 
 // Maps a C++ reference type to a Carbon type.
@@ -1254,10 +1271,8 @@ static auto MapReferenceType(Context& context, clang::QualType type,
     return referenced_type_expr;
   }
 
-  SemIR::TypeId pointer_type_id =
-      GetPointerType(context, referenced_type_expr.inst_id);
-  return {.inst_id = context.types().GetInstId(pointer_type_id),
-          .type_id = pointer_type_id};
+  return TypeExpr::ForUnsugared(
+      context, GetPointerType(context, referenced_type_expr.inst_id));
 }
 
 // Maps a C++ type to a Carbon type. `type` should not be canonicalized because
@@ -1292,7 +1307,7 @@ static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
     if (wrapper.hasQualifiers()) {
       mapped = MapQualifiedType(context, wrapper, mapped);
     } else if (wrapper->isPointerType()) {
-      mapped = MapPointerType(context, wrapper, mapped);
+      mapped = MapPointerType(context, loc_id, wrapper, mapped);
     } else if (wrapper->isReferenceType()) {
       mapped = MapReferenceType(context, wrapper, mapped);
     } else {
@@ -1425,11 +1440,11 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
 
     // TODO: Fix this once templates are supported.
     bool is_template = false;
-    // TODO: Fix this once generics are supported.
-    bool is_generic = false;
+    // TODO: Model reference parameters as ref bindings.
     SemIR::InstId pattern_id =
         AddBindingPattern(context, param_loc_id, name_id, type_id,
-                          type_expr_region_id, is_generic, is_template)
+                          type_expr_region_id, SemIR::ValueBindingPattern::Kind,
+                          is_template)
             .pattern_id;
     pattern_id = AddPatternInst(
         context, {param_loc_id,
@@ -1857,12 +1872,13 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   context.cpp_global_names().Add({.key = {.entity_name_id = entity_name_id},
                                   .clang_decl_id = clang_decl_id});
 
-  // Create `BindingPattern` and `VarPattern` in a `NameBindingDecl`.
+  // Create `RefBindingPattern` and `VarPattern` in a `NameBindingDecl`.
   context.pattern_block_stack().Push();
   SemIR::TypeId pattern_type_id = GetPatternType(context, var_type_id);
-  SemIR::InstId binding_pattern_inst_id = AddPatternInst<SemIR::BindingPattern>(
-      context, loc_id,
-      {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
+  SemIR::InstId binding_pattern_inst_id =
+      AddPatternInst<SemIR::RefBindingPattern>(
+          context, loc_id,
+          {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
   var_storage.pattern_id = AddPatternInst<SemIR::VarPattern>(
       context, Parse::VariablePatternId::None,
       {.type_id = pattern_type_id, .subpattern_id = binding_pattern_inst_id});
@@ -2001,33 +2017,18 @@ auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
       SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, num_params));
 }
 
-// Maps `clang::AccessSpecifier` to `SemIR::AccessKind`.
-static auto MapAccess(clang::AccessSpecifier access_specifier)
-    -> SemIR::AccessKind {
-  switch (access_specifier) {
-    case clang::AS_public:
-    case clang::AS_none:
-      return SemIR::AccessKind::Public;
-    case clang::AS_protected:
-      return SemIR::AccessKind::Protected;
-    case clang::AS_private:
-      return SemIR::AccessKind::Private;
-  }
-}
-
 // Imports a Clang declaration into Carbon and adds that name into the
 // `NameScope`.
 static auto ImportNameDeclIntoScope(Context& context, SemIR::LocId loc_id,
                                     SemIR::NameScopeId scope_id,
                                     SemIR::NameId name_id,
                                     SemIR::ClangDeclKey key,
-                                    clang::AccessSpecifier access)
+                                    SemIR::AccessKind access_kind)
     -> SemIR::ScopeLookupResult {
   SemIR::InstId inst_id = ImportDeclAndDependencies(context, loc_id, key);
   if (!inst_id.has_value()) {
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
-  SemIR::AccessKind access_kind = MapAccess(access);
   AddNameToScope(context, scope_id, name_id, access_kind, inst_id);
   return SemIR::ScopeLookupResult::MakeWrappedLookupResult(inst_id,
                                                            access_kind);
@@ -2117,16 +2118,14 @@ auto ImportCppOverloadSet(
 // after overload resolution.
 static auto GetOverloadSetAccess(const clang::UnresolvedSet<4>& overload_set)
     -> SemIR::AccessKind {
-  clang::AccessSpecifier access = overload_set.begin().getAccess();
-  for (auto it = overload_set.begin() + 1; it != overload_set.end(); ++it) {
-    CARBON_CHECK(
-        (it.getAccess() == clang::AS_none) == (access == clang::AS_none),
-        "Unexpected mixture of members and non-members");
-    if (it.getAccess() < access) {
-      access = it->getAccess();
+  SemIR::AccessKind access_kind = SemIR::AccessKind::Private;
+  for (clang::DeclAccessPair overload : overload_set.pairs()) {
+    access_kind = std::min(access_kind, MapCppAccess(overload));
+    if (access_kind == SemIR::AccessKind::Public) {
+      break;
     }
   }
-  return MapAccess(access);
+  return access_kind;
 }
 
 // Imports an overload set from Clang to Carbon and adds the name into the
@@ -2247,7 +2246,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
   }
   auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(lookup->getFoundDecl());
   return ImportNameDeclIntoScope(context, loc_id, scope_id, name_id, key,
-                                 lookup->begin().getAccess());
+                                 MapCppAccess(lookup->begin().getPair()));
 }
 
 auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,

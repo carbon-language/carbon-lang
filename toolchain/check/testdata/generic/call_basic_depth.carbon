@@ -79,14 +79,14 @@ fn M() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %x.patt: @F.%pattern_type (%pattern_type.7dc) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: @F.%pattern_type (%pattern_type.7dc) = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: @F.%pattern_type (%pattern_type.7dc) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %T.loc19_6.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc19_6.1 (constants.%T)]
 // CHECK:STDOUT:     %x.param: @F.%T.loc19_6.1 (%T) = value_param call_param0
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc19_6.2 [symbolic = %T.loc19_6.1 (constants.%T)]
-// CHECK:STDOUT:     %x: @F.%T.loc19_6.1 (%T) = bind_name x, %x.param
+// CHECK:STDOUT:     %x: @F.%T.loc19_6.1 (%T) = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

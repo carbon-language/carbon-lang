@@ -214,9 +214,9 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @IndexWith.%IndexWith.type (%IndexWith.type.472) = bind_symbolic_name Self, 2 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %IndexWith.At.decl: @IndexWith.%IndexWith.At.type (%IndexWith.At.type) = fn_decl @IndexWith.At [symbolic = @IndexWith.%IndexWith.At (constants.%IndexWith.At)] {
-// CHECK:STDOUT:       %self.patt: @IndexWith.At.%pattern_type.loc5_9 (%pattern_type.072) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.patt: @IndexWith.At.%pattern_type.loc5_9 (%pattern_type.072) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @IndexWith.At.%pattern_type.loc5_9 (%pattern_type.072) = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:       %subscript.patt: @IndexWith.At.%pattern_type.loc5_21 (%pattern_type.7dc) = binding_pattern subscript [concrete]
+// CHECK:STDOUT:       %subscript.patt: @IndexWith.At.%pattern_type.loc5_21 (%pattern_type.7dc) = value_binding_pattern subscript [concrete]
 // CHECK:STDOUT:       %subscript.param_patt: @IndexWith.At.%pattern_type.loc5_21 (%pattern_type.7dc) = value_param_pattern %subscript.patt, call_param1 [concrete]
 // CHECK:STDOUT:       %return.patt: @IndexWith.At.%pattern_type.loc5_47 (%pattern_type.a32) = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: @IndexWith.At.%pattern_type.loc5_47 (%pattern_type.a32) = out_param_pattern %return.patt, call_param2 [concrete]
@@ -229,10 +229,10 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:         %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:         %.loc5_15.3: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @IndexWith.At.%Self.binding.as_type (%Self.binding.as_type) = bind_name self, %self.param
+// CHECK:STDOUT:       %self: @IndexWith.At.%Self.binding.as_type (%Self.binding.as_type) = value_binding self, %self.param
 // CHECK:STDOUT:       %subscript.param: @IndexWith.At.%SubscriptType (%SubscriptType) = value_param call_param1
 // CHECK:STDOUT:       %SubscriptType.ref: type = name_ref SubscriptType, @IndexWith.%SubscriptType.loc4_21.2 [symbolic = %SubscriptType (constants.%SubscriptType)]
-// CHECK:STDOUT:       %subscript: @IndexWith.At.%SubscriptType (%SubscriptType) = bind_name subscript, %subscript.param
+// CHECK:STDOUT:       %subscript: @IndexWith.At.%SubscriptType (%SubscriptType) = value_binding subscript, %subscript.param
 // CHECK:STDOUT:       %return.param: ref @IndexWith.At.%ElementType (%ElementType) = out_param call_param2
 // CHECK:STDOUT:       %return: ref @IndexWith.At.%ElementType (%ElementType) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -371,9 +371,9 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.IndexWith.impl: %.loc6_7.2 as %IndexWith.type {
 // CHECK:STDOUT:   %empty_tuple.type.as.IndexWith.impl.At.decl: %empty_tuple.type.as.IndexWith.impl.At.type = fn_decl @empty_tuple.type.as.IndexWith.impl.At [concrete = constants.%empty_tuple.type.as.IndexWith.impl.At] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.cb1 = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.cb1 = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %subscript.patt: %pattern_type.cb1 = binding_pattern subscript [concrete]
+// CHECK:STDOUT:     %subscript.patt: %pattern_type.cb1 = value_binding_pattern subscript [concrete]
 // CHECK:STDOUT:     %subscript.param_patt: %pattern_type.cb1 = value_param_pattern %subscript.patt, call_param1 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param2 [concrete]
@@ -382,13 +382,13 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:     %.loc7_40.2: type = converted %.loc7_40.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @empty_tuple.type.as.IndexWith.impl.%.loc6_7.2 [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %self: %empty_tuple.type = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %empty_tuple.type = value_binding self, %self.param
 // CHECK:STDOUT:     %subscript.param: %empty_tuple.type = value_param call_param1
 // CHECK:STDOUT:     %.loc7_33.1: type = splice_block %.loc7_33.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.loc7_33.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc7_33.3: type = converted %.loc7_33.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %subscript: %empty_tuple.type = bind_name subscript, %subscript.param
+// CHECK:STDOUT:     %subscript: %empty_tuple.type = value_binding subscript, %subscript.param
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param2
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }

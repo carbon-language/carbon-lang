@@ -157,7 +157,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [concrete = constants.%Int] {
-// CHECK:STDOUT:     %N.patt: %pattern_type.dc0 = binding_pattern N [concrete]
+// CHECK:STDOUT:     %N.patt: %pattern_type.dc0 = value_binding_pattern N [concrete]
 // CHECK:STDOUT:     %N.param_patt: %pattern_type.dc0 = value_param_pattern %N.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt, call_param1 [concrete]
@@ -169,7 +169,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:       %.loc5_22.2: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
 // CHECK:STDOUT:       %.loc5_22.3: type = converted %IntLiteral.call, %.loc5_22.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N: Core.IntLiteral = bind_name N, %N.param
+// CHECK:STDOUT:     %N: Core.IntLiteral = value_binding N, %N.param
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param1
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -263,9 +263,9 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @AddWith.%AddWith.type (%AddWith.type.483) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.cc4)]
 // CHECK:STDOUT:     %AddWith.Op.decl: @AddWith.%AddWith.Op.type (%AddWith.Op.type.5b7) = fn_decl @AddWith.Op [symbolic = @AddWith.%AddWith.Op (constants.%AddWith.Op.037)] {
-// CHECK:STDOUT:       %self.patt: @AddWith.Op.%pattern_type (%pattern_type.496) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.patt: @AddWith.Op.%pattern_type (%pattern_type.496) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @AddWith.Op.%pattern_type (%pattern_type.496) = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:       %other.patt: @AddWith.Op.%pattern_type (%pattern_type.496) = binding_pattern other [concrete]
+// CHECK:STDOUT:       %other.patt: @AddWith.Op.%pattern_type (%pattern_type.496) = value_binding_pattern other [concrete]
 // CHECK:STDOUT:       %other.param_patt: @AddWith.Op.%pattern_type (%pattern_type.496) = value_param_pattern %other.patt, call_param1 [concrete]
 // CHECK:STDOUT:       %return.patt: @AddWith.Op.%pattern_type (%pattern_type.496) = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: @AddWith.Op.%pattern_type (%pattern_type.496) = out_param_pattern %return.patt, call_param2 [concrete]
@@ -281,7 +281,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:         %Self.as_type.loc8_15: type = facet_access_type %Self.ref.loc8_15 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.9cc)]
 // CHECK:STDOUT:         %.loc8_15.3: type = converted %Self.ref.loc8_15, %Self.as_type.loc8_15 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.9cc)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @AddWith.Op.%Self.binding.as_type (%Self.binding.as_type.9cc) = bind_name self, %self.param
+// CHECK:STDOUT:       %self: @AddWith.Op.%Self.binding.as_type (%Self.binding.as_type.9cc) = value_binding self, %self.param
 // CHECK:STDOUT:       %other.param: @AddWith.Op.%Self.binding.as_type (%Self.binding.as_type.9cc) = value_param call_param1
 // CHECK:STDOUT:       %.loc8_28.1: type = splice_block %.loc8_28.3 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.9cc)] {
 // CHECK:STDOUT:         %.loc8_28.2: @AddWith.Op.%AddWith.type (%AddWith.type.483) = specific_constant @AddWith.%Self.1, @AddWith(constants.%T) [symbolic = %Self (constants.%Self.cc4)]
@@ -289,7 +289,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:         %Self.as_type.loc8_28: type = facet_access_type %Self.ref.loc8_28 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.9cc)]
 // CHECK:STDOUT:         %.loc8_28.3: type = converted %Self.ref.loc8_28, %Self.as_type.loc8_28 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.9cc)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %other: @AddWith.Op.%Self.binding.as_type (%Self.binding.as_type.9cc) = bind_name other, %other.param
+// CHECK:STDOUT:       %other: @AddWith.Op.%Self.binding.as_type (%Self.binding.as_type.9cc) = value_binding other, %other.param
 // CHECK:STDOUT:       %return.param: ref @AddWith.Op.%Self.binding.as_type (%Self.binding.as_type.9cc) = out_param call_param2
 // CHECK:STDOUT:       %return: ref @AddWith.Op.%Self.binding.as_type (%Self.binding.as_type.9cc) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -316,7 +316,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @As.%As.type (%As.type.69b) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.c69)]
 // CHECK:STDOUT:     %As.Convert.decl: @As.%As.Convert.type (%As.Convert.type.ad1) = fn_decl @As.Convert [symbolic = @As.%As.Convert (constants.%As.Convert.0ed)] {
-// CHECK:STDOUT:       %self.patt: @As.Convert.%pattern_type.loc12_14 (%pattern_type.fbf) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.patt: @As.Convert.%pattern_type.loc12_14 (%pattern_type.fbf) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @As.Convert.%pattern_type.loc12_14 (%pattern_type.fbf) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %return.patt: @As.Convert.%pattern_type.loc12_28 (%pattern_type.7dc) = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: @As.Convert.%pattern_type.loc12_28 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
@@ -329,7 +329,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:         %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.077)]
 // CHECK:STDOUT:         %.loc12_20.3: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.077)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @As.Convert.%Self.binding.as_type (%Self.binding.as_type.077) = bind_name self, %self.param
+// CHECK:STDOUT:       %self: @As.Convert.%Self.binding.as_type (%Self.binding.as_type.077) = value_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @As.Convert.%T (%T) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @As.Convert.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -357,7 +357,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.3ac) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.6a1)]
 // CHECK:STDOUT:     %ImplicitAs.Convert.decl: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type.4cf) = fn_decl @ImplicitAs.Convert [symbolic = @ImplicitAs.%ImplicitAs.Convert (constants.%ImplicitAs.Convert.147)] {
-// CHECK:STDOUT:       %self.patt: @ImplicitAs.Convert.%pattern_type.loc16_14 (%pattern_type.f6d) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.patt: @ImplicitAs.Convert.%pattern_type.loc16_14 (%pattern_type.f6d) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @ImplicitAs.Convert.%pattern_type.loc16_14 (%pattern_type.f6d) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %return.patt: @ImplicitAs.Convert.%pattern_type.loc16_28 (%pattern_type.7dc) = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: @ImplicitAs.Convert.%pattern_type.loc16_28 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
@@ -370,7 +370,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:         %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.0ea)]
 // CHECK:STDOUT:         %.loc16_20.3: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.0ea)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @ImplicitAs.Convert.%Self.binding.as_type (%Self.binding.as_type.0ea) = bind_name self, %self.param
+// CHECK:STDOUT:       %self: @ImplicitAs.Convert.%Self.binding.as_type (%Self.binding.as_type.0ea) = value_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @ImplicitAs.Convert.%T (%T) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @ImplicitAs.Convert.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -386,9 +386,9 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @i32.builtin.as.AddWith.impl: %.loc19_6.2 as %AddWith.type {
 // CHECK:STDOUT:   %i32.builtin.as.AddWith.impl.Op.decl: %i32.builtin.as.AddWith.impl.Op.type = fn_decl @i32.builtin.as.AddWith.impl.Op [concrete = constants.%i32.builtin.as.AddWith.impl.Op] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.956 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.956 = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.956 = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %other.patt: %pattern_type.956 = binding_pattern other [concrete]
+// CHECK:STDOUT:     %other.patt: %pattern_type.956 = value_binding_pattern other [concrete]
 // CHECK:STDOUT:     %other.param_patt: %pattern_type.956 = value_param_pattern %other.patt, call_param1 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.956 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.956 = out_param_pattern %return.patt, call_param2 [concrete]
@@ -396,10 +396,10 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     %Self.ref.loc20_37: type = name_ref Self, @i32.builtin.as.AddWith.impl.%.loc19_6.2 [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:     %self.param: %i32.builtin = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc20_15: type = name_ref Self, @i32.builtin.as.AddWith.impl.%.loc19_6.2 [concrete = constants.%i32.builtin]
-// CHECK:STDOUT:     %self: %i32.builtin = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %i32.builtin = value_binding self, %self.param
 // CHECK:STDOUT:     %other.param: %i32.builtin = value_param call_param1
 // CHECK:STDOUT:     %Self.ref.loc20_28: type = name_ref Self, @i32.builtin.as.AddWith.impl.%.loc19_6.2 [concrete = constants.%i32.builtin]
-// CHECK:STDOUT:     %other: %i32.builtin = bind_name other, %other.param
+// CHECK:STDOUT:     %other: %i32.builtin = value_binding other, %other.param
 // CHECK:STDOUT:     %return.param: ref %i32.builtin = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32.builtin = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -411,7 +411,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @Core.IntLiteral.as.As.impl: %.loc23_17.2 as %As.type {
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.decl: %Core.IntLiteral.as.As.impl.Convert.type = fn_decl @Core.IntLiteral.as.As.impl.Convert [concrete = constants.%Core.IntLiteral.as.As.impl.Convert] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.dc0 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.dc0 = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.dc0 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.956 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.956 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -422,7 +422,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     %.loc24_31.2: type = converted %Int.call, %.loc24_31.1 [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:     %self.param: Core.IntLiteral = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @Core.IntLiteral.as.As.impl.%.loc23_17.2 [concrete = Core.IntLiteral]
-// CHECK:STDOUT:     %self: Core.IntLiteral = bind_name self, %self.param
+// CHECK:STDOUT:     %self: Core.IntLiteral = value_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32.builtin = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32.builtin = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -434,7 +434,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @Core.IntLiteral.as.ImplicitAs.impl: %.loc27_17.2 as %ImplicitAs.type {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.decl: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type = fn_decl @Core.IntLiteral.as.ImplicitAs.impl.Convert [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.dc0 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.dc0 = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.dc0 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.956 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.956 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -445,7 +445,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     %.loc28_31.2: type = converted %Int.call, %.loc28_31.1 [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:     %self.param: Core.IntLiteral = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @Core.IntLiteral.as.ImplicitAs.impl.%.loc27_17.2 [concrete = Core.IntLiteral]
-// CHECK:STDOUT:     %self: Core.IntLiteral = bind_name self, %self.param
+// CHECK:STDOUT:     %self: Core.IntLiteral = value_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32.builtin = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32.builtin = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -457,7 +457,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @i32.builtin.as.ImplicitAs.impl: %.loc31_6.2 as %ImplicitAs.type {
 // CHECK:STDOUT:   %i32.builtin.as.ImplicitAs.impl.Convert.decl: %i32.builtin.as.ImplicitAs.impl.Convert.type = fn_decl @i32.builtin.as.ImplicitAs.impl.Convert [concrete = constants.%i32.builtin.as.ImplicitAs.impl.Convert] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.956 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.956 = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.956 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.dc0 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.dc0 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -468,7 +468,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     %.loc32_42.2: type = converted %IntLiteral.call, %.loc32_42.1 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %self.param: %i32.builtin = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @i32.builtin.as.ImplicitAs.impl.%.loc31_6.2 [concrete = constants.%i32.builtin]
-// CHECK:STDOUT:     %self: %i32.builtin = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %i32.builtin = value_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param1
 // CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -821,7 +821,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %arr.patt: %pattern_type.9e2 = binding_pattern arr [concrete]
+// CHECK:STDOUT:     %arr.patt: %pattern_type.9e2 = ref_binding_pattern arr [concrete]
 // CHECK:STDOUT:     %arr.var_patt: %pattern_type.9e2 = var_pattern %arr.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %arr.var: ref %array_type = var %arr.var_patt [concrete]
@@ -862,7 +862,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     %.loc4_32.4: Core.IntLiteral = converted %i32.builtin.as.AddWith.impl.Op.call, %.loc4_32.3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %array_type: type = array_type %.loc4_32.4, %.loc4_16.2 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %arr: ref %array_type = bind_name arr, %arr.var [concrete = %arr.var]
+// CHECK:STDOUT:   %arr: ref %array_type = ref_binding arr, %arr.var [concrete = %arr.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @As(imports.%Core.import_ref.5ab3ec.1: type) [from "core.carbon"] {

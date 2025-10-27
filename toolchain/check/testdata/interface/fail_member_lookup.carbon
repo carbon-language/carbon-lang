@@ -150,7 +150,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %Interface.ref.loc14: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
 // CHECK:STDOUT:   %F.ref: %Interface.assoc_type = name_ref F, @Interface.%assoc0 [concrete = constants.%assoc0.b4c]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: <error> = binding_pattern v [concrete]
+// CHECK:STDOUT:     %v.patt: <error> = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
@@ -159,7 +159,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:     %T.ref: %Interface.assoc_type = name_ref T, @T.%assoc1 [concrete = constants.%assoc1]
 // CHECK:STDOUT:     %.loc23: type = converted %T.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: <error> = bind_name v, <error> [concrete = <error>]
+// CHECK:STDOUT:   %v: ref <error> = ref_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

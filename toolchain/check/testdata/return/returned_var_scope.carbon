@@ -112,7 +112,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %EnclosingButAfter.decl: %EnclosingButAfter.type = fn_decl @EnclosingButAfter [concrete = constants.%EnclosingButAfter] {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -125,7 +125,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:       %.loc25_25.2: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:       %.loc25_25.3: type = converted %Bool.call, %.loc25_25.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: bool = bind_name b, %b.param
+// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -138,7 +138,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc16:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.7ce = binding_pattern v [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.7ce = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.7ce = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %i32 = var %v.var_patt
@@ -154,7 +154,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:     %int_32.loc17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %i32 = ref_binding v, %v.var
 // CHECK:STDOUT:   br !if.else.loc16
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc16:
@@ -163,7 +163,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc19:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %pattern_type.7ce = binding_pattern w [concrete]
+// CHECK:STDOUT:     %w.patt: %pattern_type.7ce = ref_binding_pattern w [concrete]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.7ce = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %i32 = var %w.var_patt
@@ -179,7 +179,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:     %int_32.loc20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w: ref %i32 = bind_name w, %w.var
+// CHECK:STDOUT:   %w: ref %i32 = ref_binding w, %w.var
 // CHECK:STDOUT:   br !if.else.loc19
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc19:
@@ -210,7 +210,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.7ce = binding_pattern v [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.7ce = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.7ce = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %i32 = var %v.var_patt
@@ -226,7 +226,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:     %int_32.loc27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %i32 = ref_binding v, %v.var
 // CHECK:STDOUT:   %.loc27_18: %i32 = bind_value %v
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc27_14.1: <bound method> = bound_method %v.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.a57
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.a57, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
@@ -237,7 +237,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %pattern_type.7ce = binding_pattern w [concrete]
+// CHECK:STDOUT:     %w.patt: %pattern_type.7ce = ref_binding_pattern w [concrete]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.7ce = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %i32 = var %w.var_patt
@@ -253,7 +253,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:     %int_32.loc30: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc30: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w: ref %i32 = bind_name w, %w.var
+// CHECK:STDOUT:   %w: ref %i32 = ref_binding w, %w.var
 // CHECK:STDOUT:   %.loc30_16: %i32 = bind_value %w
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc30: <bound method> = bound_method %w.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.a57
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.a57, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]

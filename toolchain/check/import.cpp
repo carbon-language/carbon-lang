@@ -45,8 +45,9 @@ static auto GetImportName(const SemIR::File& import_sem_ir,
     -> std::pair<SemIR::NameId, SemIR::NameScopeId> {
   CARBON_KIND_SWITCH(import_inst) {
     case SemIR::BindAlias::Kind:
-    case SemIR::BindName::Kind:
+    case SemIR::RefBinding::Kind:
     case SemIR::BindSymbolicName::Kind:
+    case SemIR::ValueBinding::Kind:
     case SemIR::ExportDecl::Kind: {
       auto bind_inst = import_inst.As<SemIR::AnyBindNameOrExportDecl>();
       return GetImportNameForEntity(
@@ -245,8 +246,10 @@ static auto CopySingleNameScopeFromImportIR(
 
   auto namespace_const_id =
       context.constant_values().Get(result.add_result.inst_id);
-  context.import_ir_constant_values()[ir_id.index].Set(import_inst_id,
-                                                       namespace_const_id);
+  context
+      .import_ir_constant_values()[context.sem_ir().import_irs().GetRawIndex(
+          ir_id)]
+      .Set(import_inst_id, namespace_const_id);
 
   if (copied_namespaces) {
     CacheCopiedNamespace(*copied_namespaces, import_scope_id,
@@ -483,9 +486,11 @@ auto ImportLibrariesFromCurrentPackage(
   for (auto import_ir : import_irs) {
     auto ir_id = AddImportIR(context, import_ir);
 
-    context.import_ir_constant_values()[ir_id.index].Set(
-        SemIR::Namespace::PackageInstId,
-        context.constant_values().Get(SemIR::Namespace::PackageInstId));
+    context
+        .import_ir_constant_values()[context.sem_ir().import_irs().GetRawIndex(
+            ir_id)]
+        .Set(SemIR::Namespace::PackageInstId,
+             context.constant_values().Get(SemIR::Namespace::PackageInstId));
 
     for (const auto import_inst_id :
          import_ir.sem_ir->inst_blocks().Get(SemIR::InstBlockId::Exports)) {
@@ -547,8 +552,10 @@ auto ImportLibrariesFromOtherPackage(Context& context,
   for (auto import_ir : import_irs) {
     auto ir_id = AddImportIR(context, import_ir);
     scope.AddImportIRScope({ir_id, SemIR::NameScopeId::Package});
-    context.import_ir_constant_values()[ir_id.index].Set(
-        SemIR::Namespace::PackageInstId, namespace_const_id);
+    context
+        .import_ir_constant_values()[context.sem_ir().import_irs().GetRawIndex(
+            ir_id)]
+        .Set(SemIR::Namespace::PackageInstId, namespace_const_id);
   }
   if (has_load_error) {
     scope.set_has_error();

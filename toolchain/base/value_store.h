@@ -44,7 +44,11 @@ struct IdTag {
          // doesn't collide with anything else (though with the
          // second-highest-bit-tagging this might not be needed).
         id_tag_(llvm::reverseBits((((id_index + 1) << 1) | 1) << 1)),
-        initial_reserved_ids_(initial_reserved_ids) {}
+        initial_reserved_ids_(initial_reserved_ids) {
+    CARBON_CHECK(
+        id_index != -1,
+        "IdTag should be default constructed if no tagging id is available.");
+  }
 
   auto Apply(int32_t index) const -> int32_t {
     if (index < initial_reserved_ids_) {

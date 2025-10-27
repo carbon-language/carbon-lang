@@ -146,7 +146,7 @@ impl i32 as I {
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.7ee]
 // CHECK:STDOUT:   %I.F.decl: %I.F.type = fn_decl @I.F [concrete = constants.%I.F] {
-// CHECK:STDOUT:     %c.patt: @I.F.%pattern_type (%pattern_type.1b2) = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: @I.F.%pattern_type (%pattern_type.1b2) = value_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.param_patt: @I.F.%pattern_type (%pattern_type.1b2) = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: @I.F.%C.loc25_17.1 (%C.b2a) = value_param call_param0
@@ -155,7 +155,7 @@ impl i32 as I {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self.7ee)]
 // CHECK:STDOUT:       %C.loc25_17.2: type = class_type @C, @C(constants.%I.type, constants.%Self.7ee) [symbolic = %C.loc25_17.1 (constants.%C.b2a)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: @I.F.%C.loc25_17.1 (%C.b2a) = bind_name c, %c.param
+// CHECK:STDOUT:     %c: @I.F.%C.loc25_17.1 (%C.b2a) = value_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.F.decl [concrete = constants.%assoc0.82e]
 // CHECK:STDOUT:
@@ -168,7 +168,7 @@ impl i32 as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @bool.as.I.impl: %.loc28_6.2 as %I.ref {
 // CHECK:STDOUT:   %bool.as.I.impl.F.decl: %bool.as.I.impl.F.type = fn_decl @bool.as.I.impl.F [concrete = constants.%bool.as.I.impl.F] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.57d = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.57d = value_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.57d = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C.41d = value_param call_param0
@@ -180,7 +180,7 @@ impl i32 as I {
 // CHECK:STDOUT:       %.loc32_18: %I.type = converted %Bool.call, %I.facet [concrete = constants.%I.facet.acb]
 // CHECK:STDOUT:       %C: type = class_type @C, @C(constants.%I.type, constants.%I.facet.acb) [concrete = constants.%C.41d]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %C.41d = bind_name c, %c.param
+// CHECK:STDOUT:     %c: %C.41d = value_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -192,7 +192,7 @@ impl i32 as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @i32.as.I.impl: %i32 as %I.ref {
 // CHECK:STDOUT:   %i32.as.I.impl.F.decl.loc43_18.1: %i32.as.I.impl.F.type.4dd22d.1 = fn_decl @i32.as.I.impl.F.loc43_18.1 [concrete = constants.%i32.as.I.impl.F.b178b8.1] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.52b = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.52b = value_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.52b = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C.6fb = value_param call_param0
@@ -202,14 +202,14 @@ impl i32 as I {
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %C: type = class_type @C, @C(type, constants.%i32) [concrete = constants.%C.6fb]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %C.6fb = bind_name c, %c.param
+// CHECK:STDOUT:     %c: %C.6fb = value_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i32.as.I.impl.F.decl.loc43_18.2: %i32.as.I.impl.F.type.4dd22d.2 = fn_decl @i32.as.I.impl.F.loc43_18.2 [concrete = constants.%i32.as.I.impl.F.b178b8.2] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.2bf = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.2bf = value_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.2bf = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C.808 = value_param call_param0
-// CHECK:STDOUT:     %c: %C.808 = bind_name c, %c.param
+// CHECK:STDOUT:     %c: %C.808 = value_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

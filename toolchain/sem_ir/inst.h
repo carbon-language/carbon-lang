@@ -674,8 +674,11 @@ class InstBlockStore : public BlockValueStore<InstBlockId, InstId> {
  public:
   using BaseType = BlockValueStore<InstBlockId, InstId>;
 
-  explicit InstBlockStore(llvm::BumpPtrAllocator& allocator)
-      : BaseType(allocator) {
+  explicit InstBlockStore(llvm::BumpPtrAllocator& allocator,
+                          CheckIRId check_ir_id = CheckIRId::None)
+      // 4 reserved ids for the
+      // `InstBlockId::{Empty,Exports,Imports,GlobalInit}` global ids.
+      : BaseType(allocator, IdTag(check_ir_id.index, 4)) {
     auto exports_id = AddPlaceholder();
     CARBON_CHECK(exports_id == InstBlockId::Exports);
     auto imports_id = AddPlaceholder();

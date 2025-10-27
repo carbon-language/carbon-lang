@@ -210,7 +210,7 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.7ce = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.7ce = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %i32 = var %x.var_patt [concrete]
@@ -220,9 +220,9 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %type.ref.loc15: type = name_ref r#type, %i32.2 [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %i32 = bind_name x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %x: ref %i32 = ref_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type.7ce = binding_pattern y [concrete]
+// CHECK:STDOUT:     %y.patt: %pattern_type.7ce = ref_binding_pattern y [concrete]
 // CHECK:STDOUT:     %y.var_patt: %pattern_type.7ce = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %i32 = var %y.var_patt [concrete]
@@ -232,7 +232,7 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %type.ref.loc21: type = name_ref r#type, %i32.1 [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: ref %i32 = bind_name y, %y.var [concrete = %y.var]
+// CHECK:STDOUT:   %y: ref %i32 = ref_binding y, %y.var [concrete = %y.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

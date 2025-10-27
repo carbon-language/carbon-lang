@@ -93,9 +93,9 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [concrete = constants.%Make] {
-// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %next.patt: %pattern_type.796 = binding_pattern next [concrete]
+// CHECK:STDOUT:     %next.patt: %pattern_type.796 = value_binding_pattern next [concrete]
 // CHECK:STDOUT:     %next.param_patt: %pattern_type.796 = value_param_pattern %next.patt, call_param1 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.761 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.761 = out_param_pattern %return.patt, call_param2 [concrete]
@@ -106,20 +106,20 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: %i32 = bind_name n, %n.param
+// CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
 // CHECK:STDOUT:     %next.param: %ptr.e71 = value_param call_param1
 // CHECK:STDOUT:     %.loc20_28: type = splice_block %ptr [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:       %Class.ref.loc20_23: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref.loc20_23 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %next: %ptr.e71 = bind_name next, %next.param
+// CHECK:STDOUT:     %next: %ptr.e71 = value_binding next, %next.param
 // CHECK:STDOUT:     %return.param: ref %Class = out_param call_param2
 // CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %MakeReorder.decl: %MakeReorder.type = fn_decl @MakeReorder [concrete = constants.%MakeReorder] {
-// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %next.patt: %pattern_type.796 = binding_pattern next [concrete]
+// CHECK:STDOUT:     %next.patt: %pattern_type.796 = value_binding_pattern next [concrete]
 // CHECK:STDOUT:     %next.param_patt: %pattern_type.796 = value_param_pattern %next.patt, call_param1 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.761 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.761 = out_param_pattern %return.patt, call_param2 [concrete]
@@ -130,13 +130,13 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: %i32 = bind_name n, %n.param
+// CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
 // CHECK:STDOUT:     %next.param: %ptr.e71 = value_param call_param1
 // CHECK:STDOUT:     %.loc24_35: type = splice_block %ptr [concrete = constants.%ptr.e71] {
 // CHECK:STDOUT:       %Class.ref.loc24_30: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Class.ref.loc24_30 [concrete = constants.%ptr.e71]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %next: %ptr.e71 = bind_name next, %next.param
+// CHECK:STDOUT:     %next: %ptr.e71 = value_binding next, %next.param
 // CHECK:STDOUT:     %return.param: ref %Class = out_param call_param2
 // CHECK:STDOUT:     %return: ref %Class = return_slot %return.param
 // CHECK:STDOUT:   }

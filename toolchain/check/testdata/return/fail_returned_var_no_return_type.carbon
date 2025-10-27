@@ -86,7 +86,7 @@ fn ForgotReturnType() {
 // CHECK:STDOUT: fn @Procedure() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.cb1 = binding_pattern v [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.cb1 = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.cb1 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var %v.var_patt
@@ -98,7 +98,7 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:     %.loc12_20.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc12_20.3: type = converted %.loc12_20.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %empty_tuple.type = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %empty_tuple.type = ref_binding v, %v.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %v.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.93e
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.93e, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %v.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
@@ -145,7 +145,7 @@ fn ForgotReturnType() {
 // CHECK:STDOUT: fn @ForgotReturnType() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.cb1 = binding_pattern v [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.cb1 = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.cb1 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var %v.var_patt
@@ -157,7 +157,7 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:     %.loc12_20.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc12_20.3: type = converted %.loc12_20.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %empty_tuple.type = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %empty_tuple.type = ref_binding v, %v.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %v.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.93e
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.93e, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %v.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

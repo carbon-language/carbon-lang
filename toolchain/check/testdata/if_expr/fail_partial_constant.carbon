@@ -80,7 +80,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ConditionIsNonConstant.decl: %ConditionIsNonConstant.type = fn_decl @ConditionIsNonConstant [concrete = constants.%ConditionIsNonConstant] {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
@@ -89,14 +89,14 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:       %.loc4_30.2: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:       %.loc4_30.3: type = converted %Bool.call, %.loc4_30.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: bool = bind_name b, %b.param
+// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConditionIsNonConstant(%b.param: bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: <error> = binding_pattern v [concrete]
+// CHECK:STDOUT:     %v.patt: <error> = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
@@ -123,7 +123,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   br !.loc12_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc12_7:
-// CHECK:STDOUT:   %v: <error> = bind_name v, <error> [concrete = <error>]
+// CHECK:STDOUT:   %v: ref <error> = ref_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -161,18 +161,18 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ChosenBranchIsNonConstant.decl: %ChosenBranchIsNonConstant.type = fn_decl @ChosenBranchIsNonConstant [concrete = constants.%ChosenBranchIsNonConstant] {
-// CHECK:STDOUT:     %t.patt: %pattern_type.98f = binding_pattern t [concrete]
+// CHECK:STDOUT:     %t.patt: %pattern_type.98f = value_binding_pattern t [concrete]
 // CHECK:STDOUT:     %t.param_patt: %pattern_type.98f = value_param_pattern %t.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %t.param: type = value_param call_param0
-// CHECK:STDOUT:     %t: type = bind_name t, %t.param
+// CHECK:STDOUT:     %t: type = value_binding t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ChosenBranchIsNonConstant(%t.param: type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: <error> = binding_pattern v [concrete]
+// CHECK:STDOUT:     %v.patt: <error> = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
@@ -198,9 +198,9 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   br !.loc9_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc9_7:
-// CHECK:STDOUT:   %v: <error> = bind_name v, <error> [concrete = <error>]
+// CHECK:STDOUT:   %v: ref <error> = ref_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: <error> = binding_pattern w [concrete]
+// CHECK:STDOUT:     %w.patt: <error> = ref_binding_pattern w [concrete]
 // CHECK:STDOUT:     %w.var_patt: <error> = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref <error> = var %w.var_patt [concrete = <error>]
@@ -226,7 +226,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   br !.loc14_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc14_7:
-// CHECK:STDOUT:   %w: <error> = bind_name w, <error> [concrete = <error>]
+// CHECK:STDOUT:   %w: ref <error> = ref_binding w, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

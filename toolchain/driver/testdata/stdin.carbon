@@ -59,7 +59,7 @@
 // CHECK:STDOUT:     exports:         {}
 // CHECK:STDOUT:     imports:         {}
 // CHECK:STDOUT:     global_init:     {}
-// CHECK:STDOUT:     inst_block00000004:
+// CHECK:STDOUT:     inst_block60000004:
 // CHECK:STDOUT:       0:               inst0000000E
 // CHECK:STDOUT: ...
 // CHECK:STDOUT: --- -

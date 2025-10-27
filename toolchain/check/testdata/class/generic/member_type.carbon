@@ -201,7 +201,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %Inner.decl: type = class_decl @Inner [symbolic = @Outer.%Inner (constants.%Inner.6ee)] {} {}
 // CHECK:STDOUT:     %Outer.F.decl: @Outer.%Outer.F.type (%Outer.F.type.f58) = fn_decl @Outer.F [symbolic = @Outer.%Outer.F (constants.%Outer.F.5ba)] {
-// CHECK:STDOUT:       %n.patt: @Outer.F.%pattern_type.loc9_8 (%pattern_type.17e4b7.1) = binding_pattern n [concrete]
+// CHECK:STDOUT:       %n.patt: @Outer.F.%pattern_type.loc9_8 (%pattern_type.17e4b7.1) = value_binding_pattern n [concrete]
 // CHECK:STDOUT:       %n.param_patt: @Outer.F.%pattern_type.loc9_8 (%pattern_type.17e4b7.1) = value_param_pattern %n.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %return.patt: @Outer.F.%pattern_type.loc9_14 (%pattern_type.a9d) = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: @Outer.F.%pattern_type.loc9_14 (%pattern_type.a9d) = out_param_pattern %return.patt, call_param1 [concrete]
@@ -214,7 +214,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:         %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:         %.loc9_11.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %n: @Outer.F.%T.binding.as_type (%T.binding.as_type) = bind_name n, %n.param
+// CHECK:STDOUT:       %n: @Outer.F.%T.binding.as_type (%T.binding.as_type) = value_binding n, %n.param
 // CHECK:STDOUT:       %return.param: ref @Outer.F.%Inner (%Inner.6ee) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Outer.F.%Inner (%Inner.6ee) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -290,7 +290,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT: fn @Test() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.8e8 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.8e8 = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.8e8 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %Inner.d35 = var %c.var_patt
@@ -328,7 +328,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %.loc13_20.2: type = specific_constant @Outer.%Inner.decl, @Outer(constants.%Copy.facet.c49) [concrete = constants.%Inner.d35]
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, %.loc13_20.2 [concrete = constants.%Inner.d35]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %Inner.d35 = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %Inner.d35 = ref_binding c, %c.var
 // CHECK:STDOUT:   %c.ref: ref %Inner.d35 = name_ref c, %c
 // CHECK:STDOUT:   %n.ref: %Inner.elem.7f6 = name_ref n, @Inner.%.loc6_10 [concrete = @Inner.%.loc6_10]
 // CHECK:STDOUT:   %.loc14_11.1: ref %i32 = class_element_access %c.ref, element0
@@ -538,7 +538,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.1: @Inner.%Inner.type (%Inner.type.d07) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self.f03)]
 // CHECK:STDOUT:     %Inner.F.decl: @Inner.%Inner.F.type (%Inner.F.type.0f3) = fn_decl @Inner.F [symbolic = @Inner.%Inner.F (constants.%Inner.F.db9)] {
-// CHECK:STDOUT:       %self.patt: @Inner.F.%pattern_type.loc6_10 (%pattern_type.992) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.patt: @Inner.F.%pattern_type.loc6_10 (%pattern_type.992) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @Inner.F.%pattern_type.loc6_10 (%pattern_type.992) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %return.patt: @Inner.F.%pattern_type.loc6_24 (%pattern_type.7dc) = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: @Inner.F.%pattern_type.loc6_24 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
@@ -551,7 +551,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:         %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.b52)]
 // CHECK:STDOUT:         %.loc6_16.3: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.b52)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @Inner.F.%Self.binding.as_type (%Self.binding.as_type.b52) = bind_name self, %self.param
+// CHECK:STDOUT:       %self: @Inner.F.%Self.binding.as_type (%Self.binding.as_type.b52) = value_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @Inner.F.%T (%T) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Inner.F.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -578,7 +578,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %Self.ref as %Inner.ref {
 // CHECK:STDOUT:     %C.as.Inner.impl.F.decl: @C.as.Inner.impl.%C.as.Inner.impl.F.type (%C.as.Inner.impl.F.type.d1f) = fn_decl @C.as.Inner.impl.F [symbolic = @C.as.Inner.impl.%C.as.Inner.impl.F (constants.%C.as.Inner.impl.F.51e)] {
-// CHECK:STDOUT:       %self.patt: @C.as.Inner.impl.F.%pattern_type.loc11_12 (%pattern_type.e59) = binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.patt: @C.as.Inner.impl.F.%pattern_type.loc11_12 (%pattern_type.e59) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @C.as.Inner.impl.F.%pattern_type.loc11_12 (%pattern_type.e59) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %return.patt: @C.as.Inner.impl.F.%pattern_type.loc11_23 (%pattern_type.7dc) = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: @C.as.Inner.impl.F.%pattern_type.loc11_23 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
@@ -589,7 +589,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:         %.loc11_18.2: type = specific_constant @Outer.%C.decl, @Outer(constants.%T) [symbolic = %C (constants.%C.390)]
 // CHECK:STDOUT:         %C.ref: type = name_ref C, %.loc11_18.2 [symbolic = %C (constants.%C.390)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @C.as.Inner.impl.F.%C (%C.390) = bind_name self, %self.param
+// CHECK:STDOUT:       %self: @C.as.Inner.impl.F.%C (%C.390) = value_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @C.as.Inner.impl.F.%T (%T) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @C.as.Inner.impl.F.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -605,7 +605,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @D.as.Inner.impl: %Self.ref as %Inner.ref {
 // CHECK:STDOUT:   %D.as.Inner.impl.F.decl: %D.as.Inner.impl.F.type = fn_decl @D.as.Inner.impl.F [concrete = constants.%D.as.Inner.impl.F] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.510 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.510 = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.510 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -614,7 +614,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %self.param: %D = value_param call_param0
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:     %self: %D = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %D = value_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -742,7 +742,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT: fn @Test() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.de9 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.de9 = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.de9 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C.70f = var %c.var_patt
@@ -758,7 +758,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %.loc23_20.2: type = specific_constant @Outer.%C.decl, @Outer(constants.%i32) [concrete = constants.%C.70f]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, %.loc23_20.2 [concrete = constants.%C.70f]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C.70f = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C.70f = ref_binding c, %c.var
 // CHECK:STDOUT:   %c.ref: ref %C.70f = name_ref c, %c
 // CHECK:STDOUT:   %Outer.ref.loc24: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
 // CHECK:STDOUT:   %int_32.loc24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

@@ -205,7 +205,7 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %EmptyRange.ref: %EmptyRange.type = name_ref EmptyRange, imports.%Main.EmptyRange [concrete = constants.%EmptyRange.generic]
 // CHECK:STDOUT:   %C.ref.loc10_27: type = name_ref C, imports.%Main.C [concrete = constants.%C]
@@ -261,7 +261,7 @@ fn Run() {
 // CHECK:STDOUT:   %C.ref.loc10_11: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc10_36.10: ref %C = temporary %.loc10_36.8, %Optional.Get.call
 // CHECK:STDOUT:   %.loc10_36.11: %C = bind_value %.loc10_36.10
-// CHECK:STDOUT:   %c: %C = bind_name c, %.loc10_36.11
+// CHECK:STDOUT:   %c: %C = value_binding c, %.loc10_36.11
 // CHECK:STDOUT:   %Body.ref: %Body.type = name_ref Body, file.%Body.decl [concrete = constants.%Body]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %Body.call: init %empty_tuple.type = call %Body.ref(%c.ref)
@@ -379,7 +379,7 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.c48 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %EmptyRange.ref: %EmptyRange.type = name_ref EmptyRange, imports.%Main.EmptyRange [concrete = constants.%EmptyRange.generic]
@@ -436,7 +436,7 @@ fn Run() {
 // CHECK:STDOUT:   %Optional.Get.call: init %C = call %bound_method.loc10_40.6(%.loc10_40.8) to %.loc10_8
 // CHECK:STDOUT:   assign %c.var, %Optional.Get.call
 // CHECK:STDOUT:   %C.ref.loc10_15: type = name_ref C, imports.%Main.C [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var
+// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var
 // CHECK:STDOUT:   %Body.ref: %Body.type = name_ref Body, file.%Body.decl [concrete = constants.%Body]
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:   %addr.loc11: %ptr.019 = addr_of %c.ref
@@ -565,8 +565,8 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.831 = binding_pattern a [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.831 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:     %.loc10_25: %pattern_type.860 = tuple_pattern (%a.patt, %b.patt) [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %EmptyRange.ref: %EmptyRange.type = name_ref EmptyRange, imports.%Main.EmptyRange [concrete = constants.%EmptyRange.generic]
@@ -635,14 +635,14 @@ fn Run() {
 // CHECK:STDOUT:     %.loc10_12.3: type = converted %Bool.call.loc10_12, %.loc10_12.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_61.11: bool = bind_value %tuple.elem0
-// CHECK:STDOUT:   %a: bool = bind_name a, %.loc10_61.11
+// CHECK:STDOUT:   %a: bool = value_binding a, %.loc10_61.11
 // CHECK:STDOUT:   %.loc10_21.1: type = splice_block %.loc10_21.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call.loc10_21: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc10_21.2: type = value_of_initializer %Bool.call.loc10_21 [concrete = bool]
 // CHECK:STDOUT:     %.loc10_21.3: type = converted %Bool.call.loc10_21, %.loc10_21.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_61.12: bool = bind_value %tuple.elem1
-// CHECK:STDOUT:   %b: bool = bind_name b, %.loc10_61.12
+// CHECK:STDOUT:   %b: bool = value_binding b, %.loc10_61.12
 // CHECK:STDOUT:   %Body.ref: %Body.type = name_ref Body, file.%Body.decl [concrete = constants.%Body]
 // CHECK:STDOUT:   %a.ref: bool = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
@@ -771,8 +771,8 @@ fn Run() {
 // CHECK:STDOUT: fn @Run() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.c48 = binding_pattern a [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.c48 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.c48 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.c48 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:     %.loc10_19: %pattern_type.99e = tuple_pattern (%a.patt, %b.patt) [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %EmptyRange.ref: %EmptyRange.type = name_ref EmptyRange, imports.%Main.EmptyRange [concrete = constants.%EmptyRange.generic]
@@ -833,10 +833,10 @@ fn Run() {
 // CHECK:STDOUT:   %tuple.elem1: ref %C = tuple_access %.loc10_49.10, element1
 // CHECK:STDOUT:   %C.ref.loc10_12: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc10_49.11: %C = bind_value %tuple.elem0
-// CHECK:STDOUT:   %a: %C = bind_name a, %.loc10_49.11
+// CHECK:STDOUT:   %a: %C = value_binding a, %.loc10_49.11
 // CHECK:STDOUT:   %C.ref.loc10_18: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc10_49.12: %C = bind_value %tuple.elem1
-// CHECK:STDOUT:   %b: %C = bind_name b, %.loc10_49.12
+// CHECK:STDOUT:   %b: %C = value_binding b, %.loc10_49.12
 // CHECK:STDOUT:   %Body.ref: %Body.type = name_ref Body, file.%Body.decl [concrete = constants.%Body]
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b

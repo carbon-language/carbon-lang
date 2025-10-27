@@ -103,7 +103,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT: fn @Mismatch() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.0ae = binding_pattern v [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.0ae = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.0ae = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %f64.d77 = var %v.var_patt
@@ -119,7 +119,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %f64.d77 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %f64.d77 = ref_binding v, %v.var
 // CHECK:STDOUT:   %.loc23_16: %f64.d77 = bind_value %v
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %v.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b46
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b46, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]

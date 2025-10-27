@@ -54,7 +54,7 @@ var w: () = v;
 // CHECK:STDOUT:     .v = %v
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type = binding_pattern v [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var %v.var_patt [concrete]
@@ -62,7 +62,7 @@ var w: () = v;
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: ref %empty_tuple.type = bind_name v, %v.var [concrete = %v.var]
+// CHECK:STDOUT:   %v: ref %empty_tuple.type = ref_binding v, %v.var [concrete = %v.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export.carbon
@@ -74,7 +74,7 @@ var w: () = v;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.v: ref %empty_tuple.type = import_ref Main//base, v, loaded [concrete = %v.var]
-// CHECK:STDOUT:   %v.patt: %pattern_type = binding_pattern v [concrete]
+// CHECK:STDOUT:   %v.patt: %pattern_type = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:   %v.var_patt: %pattern_type = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var %v.var_patt [concrete]
 // CHECK:STDOUT: }
@@ -97,7 +97,7 @@ var w: () = v;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.v: ref %empty_tuple.type = import_ref Main//export, v, loaded [concrete = %v.var]
-// CHECK:STDOUT:   %v.patt: %pattern_type = binding_pattern v [concrete]
+// CHECK:STDOUT:   %v.patt: %pattern_type = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:   %v.var_patt: %pattern_type = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var %v.var_patt [concrete]
 // CHECK:STDOUT: }
@@ -109,7 +109,7 @@ var w: () = v;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %pattern_type = binding_pattern w [concrete]
+// CHECK:STDOUT:     %w.patt: %pattern_type = ref_binding_pattern w [concrete]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %empty_tuple.type = var %w.var_patt [concrete]
@@ -117,7 +117,7 @@ var w: () = v;
 // CHECK:STDOUT:     %.loc6_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %w: ref %empty_tuple.type = bind_name w, %w.var [concrete = %w.var]
+// CHECK:STDOUT:   %w: ref %empty_tuple.type = ref_binding w, %w.var [concrete = %w.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

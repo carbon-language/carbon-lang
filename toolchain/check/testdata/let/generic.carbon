@@ -83,7 +83,7 @@ fn F() {
 // CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0, %i32 [symbolic = constants.%T]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type.afe = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.afe = ref_binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.var_patt: %pattern_type.afe = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr.79f = var %p.var_patt
@@ -91,16 +91,16 @@ fn F() {
 // CHECK:STDOUT:     %T.ref.loc17: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:     %ptr: type = ptr_type %T.ref.loc17 [symbolic = constants.%ptr.79f]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: ref %ptr.79f = bind_name p, %p.var
+// CHECK:STDOUT:   %p: ref %ptr.79f = ref_binding p, %p.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7dc = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.7dc = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.ref: ref %ptr.79f = name_ref p, %p
 // CHECK:STDOUT:   %.loc18_15: %ptr.79f = bind_value %p.ref
 // CHECK:STDOUT:   %.loc18_14.1: ref %T = deref %.loc18_15
 // CHECK:STDOUT:   %T.ref.loc18: type = name_ref T, %T [symbolic = constants.%T]
 // CHECK:STDOUT:   %.loc18_14.2: %T = bind_value %.loc18_14.1
-// CHECK:STDOUT:   %a: %T = bind_name a, %.loc18_14.2
+// CHECK:STDOUT:   %a: %T = value_binding a, %.loc18_14.2
 // CHECK:STDOUT:   %impl.elem0: %.0f0 = impl_witness_access constants.%Destroy.impl_witness.5e2, element0 [symbolic = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.7c0]
 // CHECK:STDOUT:   %bound_method.loc17_3.1: <bound method> = bound_method %p.var, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [symbolic = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]

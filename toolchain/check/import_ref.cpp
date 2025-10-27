@@ -60,7 +60,7 @@ static auto SetSpecialImportIR(Context& context, SemIR::ImportIR import_ir,
     ir_id = context.import_irs().Add(import_ir);
   }
   CARBON_CHECK(ir_id == expected_import_ir_id,
-               "Actual ImportIRId ($0) != Expected ImportIRId ({1})", ir_id,
+               "Actual ImportIRId ({0}) != Expected ImportIRId ({1})", ir_id,
                expected_import_ir_id);
 }
 
@@ -117,8 +117,10 @@ static auto AddLoadedImportRef(Context& context, SemIR::TypeId type_id,
   context.imports().push_back(inst_id);
 
   context.constant_values().Set(inst_id, const_id);
-  context.import_ir_constant_values()[import_ir_inst.ir_id().index].Set(
-      import_ir_inst.inst_id(), const_id);
+  context
+      .import_ir_constant_values()[context.sem_ir().import_irs().GetRawIndex(
+          import_ir_inst.ir_id())]
+      .Set(import_ir_inst.inst_id(), const_id);
   return inst_id;
 }
 
@@ -290,7 +292,8 @@ class ImportContext {
   // from `InstId`s in the import IR to corresponding `ConstantId`s in the local
   // IR.
   auto local_constant_values_for_import_insts() -> SemIR::ConstantValueStore& {
-    return local_context().import_ir_constant_values()[import_ir_id_.index];
+    return local_context().import_ir_constant_values()
+        [local_context().sem_ir().import_irs().GetRawIndex(import_ir_id_)];
   }
 
   // Returns the file we are importing into.
@@ -636,9 +639,12 @@ class ImportRefResolver : public ImportContext {
       CARBON_CHECK(cursor_ir != prev_ir || cursor_inst_id != prev_inst_id,
                    "{0}", cursor_ir->insts().Get(cursor_inst_id));
 
-      if (auto const_id = local_context()
-                              .import_ir_constant_values()[cursor_ir_id.index]
-                              .GetAttached(cursor_inst_id);
+      if (auto const_id =
+              local_context()
+                  .import_ir_constant_values()
+                      [local_context().sem_ir().import_irs().GetRawIndex(
+                          cursor_ir_id)]
+                  .GetAttached(cursor_inst_id);
           const_id.has_value()) {
         SetResolvedConstId(inst_id, result.indirect_insts, const_id);
         result.const_id = const_id;
@@ -658,7 +664,9 @@ class ImportRefResolver : public ImportContext {
     local_constant_values_for_import_insts().Set(inst_id, const_id);
     for (auto indirect_inst : indirect_insts) {
       local_context()
-          .import_ir_constant_values()[indirect_inst.ir_id().index]
+          .import_ir_constant_values()
+              [local_context().sem_ir().import_irs().GetRawIndex(
+                  indirect_inst.ir_id())]
           .Set(indirect_inst.inst_id(), const_id);
     }
   }
@@ -3191,7 +3199,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
   if (!inst_constant_id.is_constant()) {
     // TODO: Import of non-constant BindNames happens when importing `let`
     // declarations.
-    CARBON_CHECK(resolver.import_insts().Is<SemIR::BindName>(inst_id),
+    CARBON_CHECK(resolver.import_insts().Is<SemIR::AnyBindName>(inst_id),
                  "TryResolveInst on non-constant instruction {0}", inst_id);
     return ResolveResult::Done(SemIR::ConstantId::NotConstant);
   }
@@ -3234,9 +3242,6 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::BindAlias inst): {
       return TryResolveTypedInst(resolver, inst);
-    }
-    case CARBON_KIND(SemIR::BindingPattern inst): {
-      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::BindSymbolicName inst): {
       return TryResolveTypedInst(resolver, inst);
@@ -3343,6 +3348,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::PointerType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
+    case CARBON_KIND(SemIR::RefBindingPattern inst): {
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
+    }
     case CARBON_KIND(SemIR::RefParamPattern inst): {
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
@@ -3387,6 +3395,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::UnboundElementType inst): {
       return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::ValueBindingPattern inst): {
+      return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::ValueParamPattern inst): {
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
@@ -3696,8 +3707,10 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void {
   // Store the constant for both the ImportRefLoaded and indirect instructions.
   context.constant_values().Set(inst_id, constant_id);
   for (const auto& import_ir_inst : indirect_insts) {
-    context.import_ir_constant_values()[import_ir_inst.ir_id().index].Set(
-        import_ir_inst.inst_id(), constant_id);
+    context
+        .import_ir_constant_values()[context.sem_ir().import_irs().GetRawIndex(
+            import_ir_inst.ir_id())]
+        .Set(import_ir_inst.inst_id(), constant_id);
   }
 }
 

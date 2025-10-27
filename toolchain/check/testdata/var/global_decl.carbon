@@ -27,7 +27,7 @@ var x: {.v: ()};
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.v = var %x.var_patt [concrete]
@@ -36,6 +36,6 @@ var x: {.v: ()};
 // CHECK:STDOUT:     %.loc15_14.2: type = converted %.loc15_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete = constants.%struct_type.v]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %struct_type.v = bind_name x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %x: ref %struct_type.v = ref_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

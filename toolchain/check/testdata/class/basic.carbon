@@ -104,7 +104,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
 // CHECK:STDOUT:   %Class.G.decl: %Class.G.type = fn_decl @Class.G [concrete = constants.%Class.G] {
-// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -116,7 +116,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:       %int_32.loc25_15: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc25_15: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n.loc25: %i32 = bind_name n, %n.param.loc25
+// CHECK:STDOUT:     %n.loc25: %i32 = value_binding n, %n.param.loc25
 // CHECK:STDOUT:     %return.param.loc25: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc25: ref %i32 = return_slot %return.param.loc25
 // CHECK:STDOUT:   }
@@ -135,7 +135,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
-// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -147,12 +147,12 @@ fn Run() -> i32 {
 // CHECK:STDOUT:       %int_32.loc16_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc16_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: %i32 = bind_name n, %n.param
+// CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.G.decl: %Class.G.type = fn_decl @Class.G [concrete = constants.%Class.G] {
-// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -164,7 +164,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:       %int_32.loc20_11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc20_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n.loc20: %i32 = bind_name n, %n.param.loc20
+// CHECK:STDOUT:     %n.loc20: %i32 = value_binding n, %n.param.loc20
 // CHECK:STDOUT:     %return.param.loc20: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return.loc20: ref %i32 = return_slot %return.param.loc20
 // CHECK:STDOUT:   }

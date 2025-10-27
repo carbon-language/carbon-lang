@@ -149,7 +149,7 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:     %return: ref %array_type = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %b.patt: %pattern_type.5d8 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.5d8 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.5d8 = value_param_pattern %b.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %array_type = value_param call_param0
@@ -159,10 +159,10 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:       %int_3.loc17: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:       %array_type.loc17: type = array_type %int_3.loc17, %i32.loc17 [concrete = constants.%array_type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: %array_type = bind_name b, %b.param
+// CHECK:STDOUT:     %b: %array_type = value_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ValueBinding.decl: %ValueBinding.type = fn_decl @ValueBinding [concrete = constants.%ValueBinding] {
-// CHECK:STDOUT:     %b.patt: %pattern_type.5d8 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.5d8 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.5d8 = value_param_pattern %b.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %array_type = value_param call_param0
@@ -172,7 +172,7 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:       %int_3.loc25: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:       %array_type.loc25: type = array_type %int_3.loc25, %i32.loc25 [concrete = constants.%array_type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: %array_type = bind_name b, %b.param
+// CHECK:STDOUT:     %b: %array_type = value_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -181,7 +181,7 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT: fn @G(%b.param: %array_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.5d8 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.5d8 = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.5d8 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %array_type = var %a.var_patt
@@ -225,9 +225,9 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:     %int_3.loc18_21: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %array_type.loc18: type = array_type %int_3.loc18_21, %i32.loc18 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %array_type = ref_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %pa.patt: %pattern_type.fe8 = binding_pattern pa [concrete]
+// CHECK:STDOUT:     %pa.patt: %pattern_type.fe8 = ref_binding_pattern pa [concrete]
 // CHECK:STDOUT:     %pa.var_patt: %pattern_type.fe8 = var_pattern %pa.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %pa.var: ref %ptr.235 = var %pa.var_patt
@@ -255,7 +255,7 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:     %i32.loc21_11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc21_11 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %pa: ref %ptr.235 = bind_name pa, %pa.var
+// CHECK:STDOUT:   %pa: ref %ptr.235 = ref_binding pa, %pa.var
 // CHECK:STDOUT:   %a.ref.loc22: ref %array_type = name_ref a, %a
 // CHECK:STDOUT:   %int_0.loc22: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %int_32.loc22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -292,7 +292,7 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT: fn @ValueBinding(%b.param: %array_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.5d8 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.5d8 = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.5d8 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %array_type = var %a.var_patt
@@ -336,7 +336,7 @@ fn ValueBinding(b: array(i32, 3)) {
 // CHECK:STDOUT:     %int_3.loc26_21: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %array_type.loc26: type = array_type %int_3.loc26_21, %i32.loc26 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type = bind_name a, %a.var
+// CHECK:STDOUT:   %a: ref %array_type = ref_binding a, %a.var
 // CHECK:STDOUT:   %a.ref: ref %array_type = name_ref a, %a
 // CHECK:STDOUT:   %int_0.loc30: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %int_32.loc30: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

@@ -40,7 +40,7 @@ fn Run() {
 // CHECK:STDOUT:     .Run = %Run.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %self.patt: %pattern_type = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %empty_tuple.type = value_param call_param0
@@ -48,7 +48,7 @@ fn Run() {
 // CHECK:STDOUT:       %.loc19_13.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:       %.loc19_13.3: type = converted %.loc19_13.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: %empty_tuple.type = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %empty_tuple.type = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Run.decl: %Run.type = fn_decl @Run [concrete = constants.%Run] {} {}
 // CHECK:STDOUT: }

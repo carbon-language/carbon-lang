@@ -25,6 +25,7 @@ namespace Carbon {
 template <typename IdT, typename KeyT, typename ValueT = KeyT>
 class CanonicalValueStore {
  public:
+  using IdType = IdT;
   using KeyType = std::remove_cvref_t<KeyT>;
   using ValueType = ValueStoreTypes<ValueT>::ValueType;
   using RefType = ValueStoreTypes<ValueT>::RefType;
@@ -69,6 +70,8 @@ class CanonicalValueStore {
   }
 
   auto GetRawIndex(IdT id) const -> int32_t { return values_.GetRawIndex(id); }
+
+  auto GetIdTag() const -> IdTag { return values_.GetIdTag(); }
 
  private:
   class KeyContext;

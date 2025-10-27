@@ -61,10 +61,10 @@ let a: T = 0;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = binding_pattern T [concrete]
+// CHECK:STDOUT:     %T.patt: %pattern_type.98f = value_binding_pattern T [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:   %T: type = bind_name T, @__global_init.%i32
+// CHECK:STDOUT:   %T: type = value_binding T, @__global_init.%i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -98,10 +98,10 @@ let a: T = 0;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: <error> = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: <error> = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T.ref: type = name_ref T, imports.%Implicit.T
-// CHECK:STDOUT:   %a: <error> = bind_name a, <error> [concrete = <error>]
+// CHECK:STDOUT:   %a: <error> = value_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

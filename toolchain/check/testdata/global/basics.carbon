@@ -62,7 +62,7 @@ var a: A = Make();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_struct_type = var %a.var_patt [concrete]
@@ -70,7 +70,7 @@ var a: A = Make();
 // CHECK:STDOUT:     %.loc4_9.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %empty_struct_type = bind_name a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %empty_struct_type = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- simple_init.carbon
@@ -83,7 +83,7 @@ var a: A = Make();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_struct_type = var %a.var_patt [concrete]
@@ -91,7 +91,7 @@ var a: A = Make();
 // CHECK:STDOUT:     %.loc4_9.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %empty_struct_type = bind_name a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %empty_struct_type = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -114,7 +114,7 @@ var a: A = Make();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_struct_type = var %a.var_patt [concrete]
@@ -122,7 +122,7 @@ var a: A = Make();
 // CHECK:STDOUT:     %.loc6_9.2: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %empty_struct_type = bind_name a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %empty_struct_type = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -144,12 +144,12 @@ var a: A = Make();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %A = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -172,12 +172,12 @@ var a: A = Make();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %a: ref %A = bind_name a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %A = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

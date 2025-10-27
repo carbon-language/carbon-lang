@@ -144,7 +144,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.f1e = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %A.patt: @F.%pattern_type.loc27_20 (%pattern_type.08e) = symbolic_binding_pattern A, 1 [concrete]
-// CHECK:STDOUT:     %x.patt: @F.%pattern_type.loc27_29 (%pattern_type.ec6) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: @F.%pattern_type.loc27_29 (%pattern_type.ec6) = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: @F.%pattern_type.loc27_29 (%pattern_type.ec6) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc27_17.1: type = splice_block %.loc27_17.3 [concrete = constants.%tuple.type] {
@@ -166,10 +166,10 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:       %T.ref.loc27_42: %tuple.type = name_ref T, %T.loc27_6.2 [symbolic = %T.loc27_6.1 (constants.%T)]
 // CHECK:STDOUT:       %HoldsType.loc27_43.2: type = class_type @HoldsType, @HoldsType(constants.%T) [symbolic = %HoldsType.loc27_43.1 (constants.%HoldsType.cc9)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @F.%HoldsType.loc27_43.1 (%HoldsType.cc9) = bind_name x, %x.param
+// CHECK:STDOUT:     %x: @F.%HoldsType.loc27_43.1 (%HoldsType.cc9) = value_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %holds_to.patt: %pattern_type.a13 = binding_pattern holds_to [concrete]
+// CHECK:STDOUT:     %holds_to.patt: %pattern_type.a13 = value_binding_pattern holds_to [concrete]
 // CHECK:STDOUT:     %holds_to.param_patt: %pattern_type.a13 = value_param_pattern %holds_to.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %holds_to.param: %HoldsType.066 = value_param call_param0
@@ -181,13 +181,13 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:       %.loc29_46.2: %tuple.type = converted %.loc29_45, %tuple [concrete = constants.%tuple]
 // CHECK:STDOUT:       %HoldsType: type = class_type @HoldsType, @HoldsType(constants.%tuple) [concrete = constants.%HoldsType.066]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %holds_to: %HoldsType.066 = bind_name holds_to, %holds_to.param
+// CHECK:STDOUT:     %holds_to: %HoldsType.066 = value_binding holds_to, %holds_to.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @RuntimeConvertFrom.as.ImplicitAs.impl: %RuntimeConvertFrom.ref as %ImplicitAs.type {
 // CHECK:STDOUT:   %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.decl: %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.type = fn_decl @RuntimeConvertFrom.as.ImplicitAs.impl.Convert [concrete = constants.%RuntimeConvertFrom.as.ImplicitAs.impl.Convert] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.f64 = binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.f64 = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.f64 = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.109 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.109 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -195,7 +195,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, ))) {
 // CHECK:STDOUT:     %RuntimeConvertTo.ref: type = name_ref RuntimeConvertTo, file.%RuntimeConvertTo.decl [concrete = constants.%RuntimeConvertTo]
 // CHECK:STDOUT:     %self.param: %RuntimeConvertFrom = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @RuntimeConvertFrom.as.ImplicitAs.impl.%RuntimeConvertFrom.ref [concrete = constants.%RuntimeConvertFrom]
-// CHECK:STDOUT:     %self: %RuntimeConvertFrom = bind_name self, %self.param
+// CHECK:STDOUT:     %self: %RuntimeConvertFrom = value_binding self, %self.param
 // CHECK:STDOUT:     %return.param: ref %RuntimeConvertTo = out_param call_param1
 // CHECK:STDOUT:     %return: ref %RuntimeConvertTo = return_slot %return.param
 // CHECK:STDOUT:   }

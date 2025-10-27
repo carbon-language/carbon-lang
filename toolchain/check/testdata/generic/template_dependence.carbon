@@ -58,7 +58,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0, template [concrete]
-// CHECK:STDOUT:     %x.patt: @F.%pattern_type.loc5_25 (%pattern_type.12d) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: @F.%pattern_type.loc5_25 (%pattern_type.12d) = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: @F.%pattern_type.loc5_25 (%pattern_type.12d) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: @F.%pattern_type.loc5_33 (%pattern_type.afe393.1) = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc5_33 (%pattern_type.afe393.1) = out_param_pattern %return.patt, call_param1 [concrete]
@@ -73,7 +73,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:       %ptr.loc5_29.2: type = ptr_type %T.ref.loc5_28 [template = %ptr.loc5_29.1 (constants.%ptr.79f131.1)]
 // CHECK:STDOUT:       %ptr.loc5_30.2: type = ptr_type %ptr.loc5_29.2 [template = %ptr.loc5_30.1 (constants.%ptr.a13)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @F.%ptr.loc5_30.1 (%ptr.a13) = bind_name x, %x.param
+// CHECK:STDOUT:     %x: @F.%ptr.loc5_30.1 (%ptr.a13) = value_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref @F.%ptr.loc5_29.1 (%ptr.79f131.1) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @F.%ptr.loc5_29.1 (%ptr.79f131.1) = return_slot %return.param
 // CHECK:STDOUT:   }

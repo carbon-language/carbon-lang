@@ -68,9 +68,9 @@ interface Interface {
 // CHECK:STDOUT:   %Interface.F.decl: %Interface.F.type = fn_decl @Interface.F [concrete = constants.%Interface.F] {} {}
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %Interface.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Interface.G.decl: %Interface.G.type = fn_decl @Interface.G [concrete = constants.%Interface.G] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.7ce = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.7ce = value_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.7ce = value_param_pattern %b.patt, call_param1 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param2 [concrete]
@@ -82,13 +82,13 @@ interface Interface {
 // CHECK:STDOUT:       %int_32.loc26_19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc26_19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %i32 = bind_name a, %a.param
+// CHECK:STDOUT:     %a: %i32 = value_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %.loc26_27: type = splice_block %i32.loc26_27 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc26_27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc26_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: %i32 = bind_name b, %b.param
+// CHECK:STDOUT:     %b: %i32 = value_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }

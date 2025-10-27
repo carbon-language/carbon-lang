@@ -303,7 +303,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.217 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.217 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_21: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -318,7 +318,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_26.3: ref %C = temporary %.loc8_26.1, %.loc8_26.2
 // CHECK:STDOUT:   %.loc8_26.4: %C = bind_value %.loc8_26.3
-// CHECK:STDOUT:   %c: %C = bind_name c, %.loc8_26.4
+// CHECK:STDOUT:   %c: %C = value_binding c, %.loc8_26.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_26.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.841
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8_26.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
@@ -384,7 +384,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.217 = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.217 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_21: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -415,7 +415,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_34.3: ref %C = temporary %.loc8_34.1, %.loc8_34.2
 // CHECK:STDOUT:   %.loc8_34.4: %C = bind_value %.loc8_34.3
-// CHECK:STDOUT:   %c: %C = bind_name c, %.loc8_34.4
+// CHECK:STDOUT:   %c: %C = value_binding c, %.loc8_34.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_34.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.841
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8_34: <bound method> = bound_method %.loc8_34.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
@@ -488,7 +488,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c1.patt: %pattern_type.217 = binding_pattern c1 [concrete]
+// CHECK:STDOUT:     %c1.patt: %pattern_type.217 = value_binding_pattern c1 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -503,9 +503,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_27.3: ref %C = temporary %.loc8_27.1, %.loc8_27.2
 // CHECK:STDOUT:   %.loc8_27.4: %C = bind_value %.loc8_27.3
-// CHECK:STDOUT:   %c1: %C = bind_name c1, %.loc8_27.4
+// CHECK:STDOUT:   %c1: %C = value_binding c1, %.loc8_27.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c2.patt: %pattern_type.217 = binding_pattern c2 [concrete]
+// CHECK:STDOUT:     %c2.patt: %pattern_type.217 = value_binding_pattern c2 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc9_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -536,7 +536,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_35.3: ref %C = temporary %.loc9_35.1, %.loc9_35.2
 // CHECK:STDOUT:   %.loc9_35.4: %C = bind_value %.loc9_35.3
-// CHECK:STDOUT:   %c2: %C = bind_name c2, %.loc9_35.4
+// CHECK:STDOUT:   %c2: %C = value_binding c2, %.loc9_35.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9: <bound method> = bound_method %.loc9_35.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.841
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc9_35: <bound method> = bound_method %.loc9_35.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -614,7 +614,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c1.patt: %pattern_type.217 = binding_pattern c1 [concrete]
+// CHECK:STDOUT:     %c1.patt: %pattern_type.217 = value_binding_pattern c1 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -645,9 +645,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_31.3: ref %C = temporary %.loc8_31.1, %.loc8_31.2
 // CHECK:STDOUT:   %.loc8_31.4: %C = bind_value %.loc8_31.3
-// CHECK:STDOUT:   %c1: %C = bind_name c1, %.loc8_31.4
+// CHECK:STDOUT:   %c1: %C = value_binding c1, %.loc8_31.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c2.patt: %pattern_type.217 = binding_pattern c2 [concrete]
+// CHECK:STDOUT:     %c2.patt: %pattern_type.217 = value_binding_pattern c2 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc9_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -670,7 +670,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_28.3: ref %C = temporary %.loc9_28.1, %.loc9_28.2
 // CHECK:STDOUT:   %.loc9_28.4: %C = bind_value %.loc9_28.3
-// CHECK:STDOUT:   %c2: %C = bind_name c2, %.loc9_28.4
+// CHECK:STDOUT:   %c2: %C = value_binding c2, %.loc9_28.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9: <bound method> = bound_method %.loc9_28.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.841
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc9_28: <bound method> = bound_method %.loc9_28.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -766,7 +766,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c1.patt: %pattern_type.217 = binding_pattern c1 [concrete]
+// CHECK:STDOUT:     %c1.patt: %pattern_type.217 = ref_binding_pattern c1 [concrete]
 // CHECK:STDOUT:     %c1.var_patt: %pattern_type.217 = var_pattern %c1.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.var: ref %C = var %c1.var_patt
@@ -790,9 +790,9 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc8_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc8_14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1: ref %C = bind_name c1, %c1.var
+// CHECK:STDOUT:   %c1: ref %C = ref_binding c1, %c1.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c2.patt: %pattern_type.217 = binding_pattern c2 [concrete]
+// CHECK:STDOUT:     %c2.patt: %pattern_type.217 = ref_binding_pattern c2 [concrete]
 // CHECK:STDOUT:     %c2.var_patt: %pattern_type.217 = var_pattern %c2.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c2.var: ref %C = var %c2.var_patt
@@ -815,9 +815,9 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc9_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc9_14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c2: ref %C = bind_name c2, %c2.var
+// CHECK:STDOUT:   %c2: ref %C = ref_binding c2, %c2.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c3.patt: %pattern_type.217 = binding_pattern c3 [concrete]
+// CHECK:STDOUT:     %c3.patt: %pattern_type.217 = ref_binding_pattern c3 [concrete]
 // CHECK:STDOUT:     %c3.var_patt: %pattern_type.217 = var_pattern %c3.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c3.var: ref %C = var %c3.var_patt
@@ -835,7 +835,7 @@ fn F() {
 // CHECK:STDOUT:     %Cpp.ref.loc10_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc10_14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c3: ref %C = bind_name c3, %c3.var
+// CHECK:STDOUT:   %c3: ref %C = ref_binding c3, %c3.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10: <bound method> = bound_method %c3.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.841
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %c3.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
@@ -926,7 +926,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c1.patt: %pattern_type.217 = binding_pattern c1 [concrete]
+// CHECK:STDOUT:     %c1.patt: %pattern_type.217 = value_binding_pattern c1 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -949,9 +949,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_28.3: ref %C = temporary %.loc8_28.1, %.loc8_28.2
 // CHECK:STDOUT:   %.loc8_28.4: %C = bind_value %.loc8_28.3
-// CHECK:STDOUT:   %c1: %C = bind_name c1, %.loc8_28.4
+// CHECK:STDOUT:   %c1: %C = value_binding c1, %.loc8_28.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c2.patt: %pattern_type.217 = binding_pattern c2 [concrete]
+// CHECK:STDOUT:     %c2.patt: %pattern_type.217 = value_binding_pattern c2 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_8.loc16: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -968,7 +968,7 @@ fn F() {
 // CHECK:STDOUT:     %C.ref.loc16: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_21.3: %C = converted %.loc16_21.2, <error> [concrete = <error>]
-// CHECK:STDOUT:   %c2: %C = bind_name c2, <error> [concrete = <error>]
+// CHECK:STDOUT:   %c2: %C = value_binding c2, <error> [concrete = <error>]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_28.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.841
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8_28: <bound method> = bound_method %.loc8_28.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
@@ -1055,7 +1055,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c1.patt: %pattern_type.217 = binding_pattern c1 [concrete]
+// CHECK:STDOUT:     %c1.patt: %pattern_type.217 = value_binding_pattern c1 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc8_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -1086,9 +1086,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc8_31.3: ref %C = temporary %.loc8_31.1, %.loc8_31.2
 // CHECK:STDOUT:   %.loc8_31.4: %C = bind_value %.loc8_31.3
-// CHECK:STDOUT:   %c1: %C = bind_name c1, %.loc8_31.4
+// CHECK:STDOUT:   %c1: %C = value_binding c1, %.loc8_31.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c2.patt: %pattern_type.217 = binding_pattern c2 [concrete]
+// CHECK:STDOUT:     %c2.patt: %pattern_type.217 = value_binding_pattern c2 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9_19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %C.ref.loc9_22: type = name_ref C, imports.%C.decl [concrete = constants.%C]
@@ -1111,9 +1111,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_28.3: ref %C = temporary %.loc9_28.1, %.loc9_28.2
 // CHECK:STDOUT:   %.loc9_28.4: %C = bind_value %.loc9_28.3
-// CHECK:STDOUT:   %c2: %C = bind_name c2, %.loc9_28.4
+// CHECK:STDOUT:   %c2: %C = value_binding c2, %.loc9_28.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c3.patt: %pattern_type.217 = binding_pattern c3 [concrete]
+// CHECK:STDOUT:     %c3.patt: %pattern_type.217 = value_binding_pattern c3 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_8.loc17: Core.IntLiteral = int_value 8 [concrete = constants.%int_8.b85]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -1130,7 +1130,7 @@ fn F() {
 // CHECK:STDOUT:     %C.ref.loc17: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc17_21.3: %C = converted %.loc17_21.2, <error> [concrete = <error>]
-// CHECK:STDOUT:   %c3: %C = bind_name c3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %c3: %C = value_binding c3, <error> [concrete = <error>]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9: <bound method> = bound_method %.loc9_28.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.841
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc9_28: <bound method> = bound_method %.loc9_28.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1

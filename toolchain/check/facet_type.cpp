@@ -8,6 +8,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
@@ -24,8 +25,23 @@ namespace Carbon::Check {
 
 auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
                             SemIR::SpecificId specific_id) -> SemIR::FacetType {
-  auto info =
-      SemIR::FacetTypeInfo{.extend_constraints = {{interface_id, specific_id}}};
+  auto info = SemIR::FacetTypeInfo{};
+
+  info.extend_constraints.push_back({interface_id, specific_id});
+  // TODO: Add `require impls` to the set of constraints.
+
+  info.Canonicalize();
+  SemIR::FacetTypeId facet_type_id = context.facet_types().Add(info);
+  return {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id};
+}
+
+auto FacetTypeFromNamedConstraint(
+    Context& context, SemIR::NamedConstraintId /*named_constraint_id*/,
+    SemIR::SpecificId /*specific_id*/) -> SemIR::FacetType {
+  auto info = SemIR::FacetTypeInfo{};
+
+  // TODO: Add `require impls` to the set of constraints.
+
   info.Canonicalize();
   SemIR::FacetTypeId facet_type_id = context.facet_types().Add(info);
   return {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id};

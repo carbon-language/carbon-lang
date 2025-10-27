@@ -101,11 +101,11 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.831 = value_param_pattern %b.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %m.patt: %pattern_type.7ce = binding_pattern m [concrete]
+// CHECK:STDOUT:     %m.patt: %pattern_type.7ce = value_binding_pattern m [concrete]
 // CHECK:STDOUT:     %m.param_patt: %pattern_type.7ce = value_param_pattern %m.patt, call_param2 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param3 [concrete]
@@ -118,19 +118,19 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:       %.loc15_9.2: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:       %.loc15_9.3: type = converted %Bool.call, %.loc15_9.2 [concrete = bool]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b: bool = bind_name b, %b.param
+// CHECK:STDOUT:     %b: bool = value_binding b, %b.param
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param1
 // CHECK:STDOUT:     %.loc15_18: type = splice_block %i32.loc15_18 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc15_18: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc15_18: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: %i32 = bind_name n, %n.param
+// CHECK:STDOUT:     %n: %i32 = value_binding n, %n.param
 // CHECK:STDOUT:     %m.param: %i32 = value_param call_param2
 // CHECK:STDOUT:     %.loc15_26: type = splice_block %i32.loc15_26 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc15_26: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc15_26: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %m: %i32 = bind_name m, %m.param
+// CHECK:STDOUT:     %m: %i32 = value_binding m, %m.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param3
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -139,7 +139,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT: fn @F(%b.param: bool, %n.param: %i32, %m.param: %i32) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.a98 = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.a98 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.a98 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %array_type = var %x.var_patt
@@ -163,7 +163,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %array_type: type = array_type %int_1, %i32.loc16 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %array_type = bind_name x, %x.var
+// CHECK:STDOUT:   %x: ref %array_type = ref_binding x, %x.var
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:

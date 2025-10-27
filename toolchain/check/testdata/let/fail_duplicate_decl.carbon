@@ -82,7 +82,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt.loc16: %pattern_type.7ce = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt.loc16: %pattern_type.7ce = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc16_10: type = splice_block %i32.loc16 [concrete = constants.%i32] {
@@ -96,9 +96,9 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc16: init %i32 = call %bound_method.loc16_16.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc16_16.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc16 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc16_16.2: %i32 = converted %int_1, %.loc16_16.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %a.loc16: %i32 = bind_name a, %.loc16_16.2
+// CHECK:STDOUT:   %a.loc16: %i32 = value_binding a, %.loc16_16.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt.loc24: %pattern_type.7ce = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt.loc24: %pattern_type.7ce = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc24_10: type = splice_block %i32.loc24 [concrete = constants.%i32] {
@@ -112,7 +112,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc24: init %i32 = call %bound_method.loc24_16.2(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc24_16.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc24 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc24_16.2: %i32 = converted %int_2, %.loc24_16.1 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %a.loc24: %i32 = bind_name a, %.loc24_16.2
+// CHECK:STDOUT:   %a.loc24: %i32 = value_binding a, %.loc24_16.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

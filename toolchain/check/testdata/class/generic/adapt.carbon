@@ -196,7 +196,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Adapter.decl: type = class_decl @Adapter [concrete = constants.%Adapter] {} {}
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [concrete = constants.%Access] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.27e = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.27e = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.27e = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -205,7 +205,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %i32.loc12: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param call_param0
 // CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, file.%Adapter.decl [concrete = constants.%Adapter]
-// CHECK:STDOUT:     %a: %Adapter = bind_name a, %a.param
+// CHECK:STDOUT:     %a: %Adapter = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -356,7 +356,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %ImportedAccess.decl: %ImportedAccess.type = fn_decl @ImportedAccess [concrete = constants.%ImportedAccess] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.27e = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.27e = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.27e = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.501 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.501 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -365,7 +365,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %i32.loc6: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param call_param0
 // CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, imports.%Main.Adapter [concrete = constants.%Adapter]
-// CHECK:STDOUT:     %a: %Adapter = bind_name a, %a.param
+// CHECK:STDOUT:     %a: %Adapter = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -492,7 +492,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Adapter.decl: type = class_decl @Adapter [concrete = constants.%Adapter] {} {}
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [concrete = constants.%Access] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.27e = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.27e = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.27e = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -501,7 +501,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param call_param0
 // CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, file.%Adapter.decl [concrete = constants.%Adapter]
-// CHECK:STDOUT:     %a: %Adapter = bind_name a, %a.param
+// CHECK:STDOUT:     %a: %Adapter = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -734,7 +734,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %ImportedAccess.decl: %ImportedAccess.type = fn_decl @ImportedAccess [concrete = constants.%ImportedAccess] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.27e = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.27e = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.27e = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.501 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.501 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -743,7 +743,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param call_param0
 // CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, imports.%Main.Adapter [concrete = constants.%Adapter]
-// CHECK:STDOUT:     %a: %Adapter = bind_name a, %a.param
+// CHECK:STDOUT:     %a: %Adapter = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -865,7 +865,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %T.loc4_15.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_15.1 (constants.%T.8b3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Convert.decl: %Convert.type = fn_decl @Convert [concrete = constants.%Convert] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.5a0 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.5a0 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.5a0 = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -879,7 +879,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:       %i32.loc8_23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %Adapter: type = class_type @Adapter, @Adapter(constants.%i32) [concrete = constants.%Adapter.e4c]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %Adapter.e4c = bind_name a, %a.param
+// CHECK:STDOUT:     %a: %Adapter.e4c = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1003,7 +1003,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %ImportedConvert.decl: %ImportedConvert.type = fn_decl @ImportedConvert [concrete = constants.%ImportedConvert] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.5a0 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.5a0 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.5a0 = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -1017,13 +1017,13 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:       %i32.loc6_31: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %Adapter: type = class_type @Adapter, @Adapter(constants.%i32) [concrete = constants.%Adapter.e4c]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %Adapter.e4c = bind_name a, %a.param
+// CHECK:STDOUT:     %a: %Adapter.e4c = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %ImportedConvertLocal.decl: %ImportedConvertLocal.type = fn_decl @ImportedConvertLocal [concrete = constants.%ImportedConvertLocal] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.5f8 = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.5f8 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.5f8 = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -1036,7 +1036,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:       %C.ref.loc14: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %Adapter: type = class_type @Adapter, @Adapter(constants.%C) [concrete = constants.%Adapter.58f]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %Adapter.58f = bind_name a, %a.param
+// CHECK:STDOUT:     %a: %Adapter.58f = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }

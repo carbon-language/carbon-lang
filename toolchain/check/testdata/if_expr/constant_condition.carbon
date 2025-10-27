@@ -193,7 +193,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PartiallyConstant.decl: %PartiallyConstant.type = fn_decl @PartiallyConstant [concrete = constants.%PartiallyConstant] {
-// CHECK:STDOUT:     %t.patt: %pattern_type.98f = binding_pattern t [concrete]
+// CHECK:STDOUT:     %t.patt: %pattern_type.98f = value_binding_pattern t [concrete]
 // CHECK:STDOUT:     %t.param_patt: %pattern_type.98f = value_param_pattern %t.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -201,7 +201,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:     %int_32.loc32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %t.param: type = value_param call_param0
-// CHECK:STDOUT:     %t: type = bind_name t, %t.param
+// CHECK:STDOUT:     %t: type = value_binding t, %t.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -292,7 +292,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: fn @Constant() -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.7ce = binding_pattern v [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.7ce = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.7ce = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %i32 = var %v.var_patt
@@ -326,9 +326,9 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   br !.loc27_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc27_7:
-// CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %i32 = ref_binding v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %pattern_type.fe8 = binding_pattern w [concrete]
+// CHECK:STDOUT:     %w.patt: %pattern_type.fe8 = ref_binding_pattern w [concrete]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.fe8 = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %ptr.235 = var %w.var_patt
@@ -362,7 +362,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   br !.loc28_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc28_7:
-// CHECK:STDOUT:   %w: ref %ptr.235 = bind_name w, %w.var
+// CHECK:STDOUT:   %w: ref %ptr.235 = ref_binding w, %w.var
 // CHECK:STDOUT:   %w.ref: ref %ptr.235 = name_ref w, %w
 // CHECK:STDOUT:   %.loc29_11: %ptr.235 = bind_value %w.ref
 // CHECK:STDOUT:   %.loc29_10.1: ref %i32 = deref %.loc29_11
@@ -388,7 +388,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT: fn @PartiallyConstant(%t.param: type) -> %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %v.patt: %pattern_type.7ce = binding_pattern v [concrete]
+// CHECK:STDOUT:     %v.patt: %pattern_type.7ce = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.7ce = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %i32 = var %v.var_patt
@@ -420,9 +420,9 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   br !.loc33_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc33_7:
-// CHECK:STDOUT:   %v: ref %i32 = bind_name v, %v.var
+// CHECK:STDOUT:   %v: ref %i32 = ref_binding v, %v.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %pattern_type.fe8 = binding_pattern w [concrete]
+// CHECK:STDOUT:     %w.patt: %pattern_type.fe8 = ref_binding_pattern w [concrete]
 // CHECK:STDOUT:     %w.var_patt: %pattern_type.fe8 = var_pattern %w.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %ptr.235 = var %w.var_patt
@@ -455,7 +455,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   br !.loc34_7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !.loc34_7:
-// CHECK:STDOUT:   %w: ref %ptr.235 = bind_name w, %w.var
+// CHECK:STDOUT:   %w: ref %ptr.235 = ref_binding w, %w.var
 // CHECK:STDOUT:   %w.ref: ref %ptr.235 = name_ref w, %w
 // CHECK:STDOUT:   %.loc35_11: %ptr.235 = bind_value %w.ref
 // CHECK:STDOUT:   %.loc35_10.1: ref %i32 = deref %.loc35_11

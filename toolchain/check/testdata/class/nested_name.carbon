@@ -93,7 +93,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [concrete = constants.%Outer] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %oi.patt: %pattern_type.906 = binding_pattern oi [concrete]
+// CHECK:STDOUT:     %oi.patt: %pattern_type.906 = value_binding_pattern oi [concrete]
 // CHECK:STDOUT:     %oi.param_patt: %pattern_type.906 = value_param_pattern %oi.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param1 [concrete]
@@ -105,17 +105,17 @@ fn G(o: Outer) {
 // CHECK:STDOUT:       %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
 // CHECK:STDOUT:       %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %oi: %Inner = bind_name oi, %oi.param
+// CHECK:STDOUT:     %oi: %Inner = value_binding oi, %oi.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %o.patt: %pattern_type.e74 = binding_pattern o [concrete]
+// CHECK:STDOUT:     %o.patt: %pattern_type.e74 = value_binding_pattern o [concrete]
 // CHECK:STDOUT:     %o.param_patt: %pattern_type.e74 = value_param_pattern %o.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %o.param: %Outer = value_param call_param0
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
-// CHECK:STDOUT:     %o: %Outer = bind_name o, %o.param
+// CHECK:STDOUT:     %o: %Outer = value_binding o, %o.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -158,7 +158,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT: fn @G(%o.param: %Outer) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %i.patt: %pattern_type.906 = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.patt: %pattern_type.906 = ref_binding_pattern i [concrete]
 // CHECK:STDOUT:     %i.var_patt: %pattern_type.906 = var_pattern %i.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i.var: ref %Inner = var %i.var_patt
@@ -166,7 +166,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:     %o.ref: %Outer = name_ref o, %o
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, @Outer.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i: ref %Inner = bind_name i, %i.var
+// CHECK:STDOUT:   %i: ref %Inner = ref_binding i, %i.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %i.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b22
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b22, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %i.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn

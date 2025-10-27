@@ -103,7 +103,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type.7ce = ref_binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.var_patt: %pattern_type.7ce = var_pattern %n.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %i32 = var %n.var_patt [concrete]
@@ -111,7 +111,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n: ref %i32 = bind_name n, %n.var [concrete = %n.var]
+// CHECK:STDOUT:   %n: ref %i32 = ref_binding n, %n.var [concrete = %n.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Outer(%T.loc4_13.2: %Copy.type) {

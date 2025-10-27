@@ -531,7 +531,7 @@ fn F2(U:! Z) {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.09a = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %x.patt: @Use.%pattern_type (%pattern_type.3f7859.2) = binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: @Use.%pattern_type (%pattern_type.3f7859.2) = value_binding_pattern x [concrete]
 // CHECK:STDOUT:     %x.param_patt: @Use.%pattern_type (%pattern_type.3f7859.2) = value_param_pattern %x.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: @Use.%pattern_type (%pattern_type.3f7859.2) = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: @Use.%pattern_type (%pattern_type.3f7859.2) = out_param_pattern %return.patt, call_param1 [concrete]
@@ -550,7 +550,7 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:       %T.as_type.loc9_18: type = facet_access_type %T.ref.loc9_18 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %.loc9_18.2: type = converted %T.ref.loc9_18, %T.as_type.loc9_18 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: @Use.%T.binding.as_type (%T.binding.as_type) = bind_name x, %x.param
+// CHECK:STDOUT:     %x: @Use.%T.binding.as_type (%T.binding.as_type) = value_binding x, %x.param
 // CHECK:STDOUT:     %return.param: ref @Use.%T.binding.as_type (%T.binding.as_type) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @Use.%T.binding.as_type (%T.binding.as_type) = return_slot %return.param
 // CHECK:STDOUT:   }
