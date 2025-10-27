@@ -677,8 +677,8 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
   auto thunk_return_type_id =
       thunk_function.GetDeclaredReturnType(context.sem_ir());
   if (!thunk_return_type_id.has_value()) {
-    thunk_return_type_id = GetTupleType(context, {});
     CARBON_CHECK(thunk_takes_return_address || !return_type_id.has_value());
+    thunk_return_type_id = GetTupleType(context, {});
   } else {
     CARBON_CHECK(thunk_return_type_id == return_type_id);
   }
