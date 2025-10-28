@@ -37,7 +37,7 @@ fn G(T:! E2) {
 }
 //@dump-sem-ir-end
 
-// --- fail_todo_unspecified.carbon
+// --- unspecified.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {}
