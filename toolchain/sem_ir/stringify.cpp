@@ -378,7 +378,7 @@ class Stringifier {
   }
 
   auto StringifyInst(InstId /*inst_id*/, CustomCppVoidType /*inst*/) -> void {
-    *out_ << "<builtin Cpp.void>";
+    *out_ << "Cpp.void";
   }
 
   auto StringifyInst(InstId /*inst_id*/, FloatType inst) -> void {
