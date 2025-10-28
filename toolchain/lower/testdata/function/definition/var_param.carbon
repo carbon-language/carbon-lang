@@ -31,7 +31,7 @@ fn Call() {
 // CHECK:STDOUT: ; ModuleID = 'var_param.carbon'
 // CHECK:STDOUT: source_filename = "var_param.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @X.val.loc16 = internal constant {} zeroinitializer
+// CHECK:STDOUT: @X.val.loc16_13.2 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_COneVar_i32.Main(ptr %n) !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -60,32 +60,32 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CCall.Main() !dbg !16 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !17
-// CHECK:STDOUT:   %x.var = alloca {}, align 8, !dbg !18
-// CHECK:STDOUT:   %a.var.loc18 = alloca i32, align 4, !dbg !19
-// CHECK:STDOUT:   %b.var.loc18 = alloca {}, align 8, !dbg !20
-// CHECK:STDOUT:   %a.var.loc20 = alloca i32, align 4, !dbg !21
+// CHECK:STDOUT:   %.loc15_15.1.temp = alloca i32, align 4, !dbg !17
+// CHECK:STDOUT:   %.loc16_13.1.temp = alloca {}, align 8, !dbg !18
+// CHECK:STDOUT:   %.loc18_12.1.temp = alloca i32, align 4, !dbg !19
+// CHECK:STDOUT:   %.loc18_24.1.temp = alloca {}, align 8, !dbg !20
+// CHECK:STDOUT:   %.loc20_15.1.temp = alloca i32, align 4, !dbg !21
 // CHECK:STDOUT:   %.loc27_18.2.temp = alloca {}, align 8, !dbg !22
-// CHECK:STDOUT:   %b.var.loc21 = alloca {}, align 8, !dbg !23
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !17
-// CHECK:STDOUT:   store i32 1, ptr %n.var, align 4, !dbg !17
-// CHECK:STDOUT:   call void @_COneVar_i32.Main(ptr %n.var), !dbg !24
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !18
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %x.var, ptr align 1 @X.val.loc16, i64 0, i1 false), !dbg !18
-// CHECK:STDOUT:   call void @_COneVar_X.Main(ptr %x.var), !dbg !25
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var.loc18), !dbg !19
-// CHECK:STDOUT:   store i32 1, ptr %a.var.loc18, align 4, !dbg !19
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var.loc18), !dbg !20
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %b.var.loc18, ptr align 1 @X.val.loc16, i64 0, i1 false), !dbg !20
-// CHECK:STDOUT:   call void @_CTwoVars.Main(ptr %a.var.loc18, ptr %b.var.loc18), !dbg !26
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var.loc20), !dbg !21
-// CHECK:STDOUT:   store i32 1, ptr %a.var.loc20, align 4, !dbg !21
+// CHECK:STDOUT:   %.loc21_23.1.temp = alloca {}, align 8, !dbg !23
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc15_15.1.temp), !dbg !17
+// CHECK:STDOUT:   store i32 1, ptr %.loc15_15.1.temp, align 4, !dbg !17
+// CHECK:STDOUT:   call void @_COneVar_i32.Main(ptr %.loc15_15.1.temp), !dbg !24
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_13.1.temp), !dbg !18
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc16_13.1.temp, ptr align 1 @X.val.loc16_13.2, i64 0, i1 false), !dbg !18
+// CHECK:STDOUT:   call void @_COneVar_X.Main(ptr %.loc16_13.1.temp), !dbg !25
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_12.1.temp), !dbg !19
+// CHECK:STDOUT:   store i32 1, ptr %.loc18_12.1.temp, align 4, !dbg !19
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_24.1.temp), !dbg !20
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc18_24.1.temp, ptr align 1 @X.val.loc16_13.2, i64 0, i1 false), !dbg !20
+// CHECK:STDOUT:   call void @_CTwoVars.Main(ptr %.loc18_12.1.temp, ptr %.loc18_24.1.temp), !dbg !26
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_15.1.temp), !dbg !21
+// CHECK:STDOUT:   store i32 1, ptr %.loc20_15.1.temp, align 4, !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc27_18.2.temp), !dbg !22
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc27_18.2.temp, ptr align 1 @X.val.loc16, i64 0, i1 false), !dbg !22
-// CHECK:STDOUT:   call void @_CVarThenLet.Main(ptr %a.var.loc20, ptr %.loc27_18.2.temp), !dbg !27
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var.loc21), !dbg !23
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %b.var.loc21, ptr align 1 @X.val.loc16, i64 0, i1 false), !dbg !23
-// CHECK:STDOUT:   call void @_CLetThenVar.Main(i32 1, ptr %b.var.loc21), !dbg !28
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc27_18.2.temp, ptr align 1 @X.val.loc16_13.2, i64 0, i1 false), !dbg !22
+// CHECK:STDOUT:   call void @_CVarThenLet.Main(ptr %.loc20_15.1.temp, ptr %.loc27_18.2.temp), !dbg !27
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc21_23.1.temp), !dbg !23
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc21_23.1.temp, ptr align 1 @X.val.loc16_13.2, i64 0, i1 false), !dbg !23
+// CHECK:STDOUT:   call void @_CLetThenVar.Main(i32 1, ptr %.loc21_23.1.temp), !dbg !28
 // CHECK:STDOUT:   ret void, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
