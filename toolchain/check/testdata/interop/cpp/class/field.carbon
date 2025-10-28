@@ -223,6 +223,8 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %OptionalStorage.facet: %OptionalStorage.type = facet_value %ptr.235, (%OptionalStorage.impl_witness.7fc) [concrete]
 // CHECK:STDOUT:   %Optional.884: type = class_type @Optional, @Optional(%OptionalStorage.facet) [concrete]
 // CHECK:STDOUT:   %Struct.elem.98c: type = unbound_element_type %Struct, %Optional.884 [concrete]
+// CHECK:STDOUT:   %const.12f: type = const_type %ptr.235 [concrete]
+// CHECK:STDOUT:   %Struct.elem.93e: type = unbound_element_type %Struct, %const.12f [concrete]
 // CHECK:STDOUT:   %Optional.Get.type.524: type = fn_type @Optional.Get, @Optional(%OptionalStorage.facet) [concrete]
 // CHECK:STDOUT:   %Optional.Get.1ff: %Optional.Get.type.524 = struct_value () [concrete]
 // CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Optional.Get.1ff, @Optional.Get(%OptionalStorage.facet) [concrete]
@@ -277,9 +279,9 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %.loc8_36.2: %ptr.235 = converted %Optional.Get.call, %.loc8_36.1
 // CHECK:STDOUT:   %.loc8_27.1: ref %i32 = deref %.loc8_36.2
 // CHECK:STDOUT:   %s.ref.loc8_40: %Struct = name_ref s, %s
-// CHECK:STDOUT:   %r.ref: %Struct.elem.765 = name_ref r, @Struct.%.6 [concrete = @Struct.%.6]
-// CHECK:STDOUT:   %.loc8_41.1: ref %ptr.235 = class_element_access %s.ref.loc8_40, element4
-// CHECK:STDOUT:   %.loc8_41.2: %ptr.235 = bind_value %.loc8_41.1
+// CHECK:STDOUT:   %r.ref: %Struct.elem.93e = name_ref r, @Struct.%.6 [concrete = @Struct.%.6]
+// CHECK:STDOUT:   %.loc8_41.1: ref %const.12f = class_element_access %s.ref.loc8_40, element4
+// CHECK:STDOUT:   %.loc8_41.2: %const.12f = bind_value %.loc8_41.1
 // CHECK:STDOUT:   %.loc8_39.1: ref %i32 = deref %.loc8_41.2
 // CHECK:STDOUT:   %.loc8_43.1: %tuple.type.a78 = tuple_literal (%.loc8_12.2, %.loc8_17.2, %.loc8_21.1, %.loc8_27.1, %.loc8_39.1)
 // CHECK:STDOUT:   %impl.elem0.loc8_12: %.7fa = impl_witness_access constants.%Copy.impl_witness.a32, element0 [concrete = constants.%Int.as.Copy.impl.Op.f59]

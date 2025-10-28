@@ -1588,9 +1588,11 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
 // CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
+// CHECK:STDOUT:   %pattern_type.259: type = pattern_type %ptr.5c7 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %S.instance_fn.cpp_overload_set.type: type = cpp_overload_set_type @S.instance_fn.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %S.instance_fn.cpp_overload_set.value: %S.instance_fn.cpp_overload_set.type = cpp_overload_set_value @S.instance_fn.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %pattern_type.7da: type = pattern_type %S [concrete]
 // CHECK:STDOUT:   %S.instance_fn.type: type = fn_type @S.instance_fn [concrete]
 // CHECK:STDOUT:   %S.instance_fn: %S.instance_fn.type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.static_fn.cpp_overload_set.type: type = cpp_overload_set_type @S.static_fn.cpp_overload_set [concrete]
@@ -1607,9 +1609,12 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
 // CHECK:STDOUT:   %S.instance_fn.cpp_overload_set.value: %S.instance_fn.cpp_overload_set.type = cpp_overload_set_value @S.instance_fn.cpp_overload_set [concrete = constants.%S.instance_fn.cpp_overload_set.value]
 // CHECK:STDOUT:   %S.instance_fn.decl: %S.instance_fn.type = fn_decl @S.instance_fn [concrete = constants.%S.instance_fn] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %self.patt: %pattern_type.259 = value_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.259 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc8: %pattern_type.7da = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %self.param: %ptr.5c7 = value_param call_param0
+// CHECK:STDOUT:     %self: %ptr.5c7 = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.static_fn.cpp_overload_set.value: %S.static_fn.cpp_overload_set.type = cpp_overload_set_value @S.static_fn.cpp_overload_set [concrete = constants.%S.static_fn.cpp_overload_set.value]
 // CHECK:STDOUT:   %S.static_fn.decl: %S.static_fn.type = fn_decl @S.static_fn [concrete = constants.%S.static_fn] {} {}
@@ -2363,6 +2368,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %Public.PublicInstance.cpp_overload_set.type: type = cpp_overload_set_type @Public.PublicInstance.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Public.PublicInstance.cpp_overload_set.value: %Public.PublicInstance.cpp_overload_set.type = cpp_overload_set_value @Public.PublicInstance.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.fb2: type = ptr_type %Base [concrete]
+// CHECK:STDOUT:   %pattern_type.72a: type = pattern_type %ptr.fb2 [concrete]
+// CHECK:STDOUT:   %pattern_type.a3a: type = pattern_type %Base [concrete]
 // CHECK:STDOUT:   %Base.PublicInstance.type: type = fn_type @Base.PublicInstance [concrete]
 // CHECK:STDOUT:   %Base.PublicInstance: %Base.PublicInstance.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.1e8: type = ptr_type %Public [concrete]
@@ -2384,15 +2391,21 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %Base.ProtectedStatic.decl: %Base.ProtectedStatic.type = fn_decl @Base.ProtectedStatic [concrete = constants.%Base.ProtectedStatic] {} {}
 // CHECK:STDOUT:   %Public.PublicInstance.cpp_overload_set.value: %Public.PublicInstance.cpp_overload_set.type = cpp_overload_set_value @Public.PublicInstance.cpp_overload_set [concrete = constants.%Public.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %Base.PublicInstance.decl: %Base.PublicInstance.type = fn_decl @Base.PublicInstance [concrete = constants.%Base.PublicInstance] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %self.patt: %pattern_type.72a = value_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.72a = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc24: %pattern_type.a3a = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %self.param: %ptr.fb2 = value_param call_param0
+// CHECK:STDOUT:     %self: %ptr.fb2 = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Public.ProtectedInstance.cpp_overload_set.value: %Public.ProtectedInstance.cpp_overload_set.type = cpp_overload_set_value @Public.ProtectedInstance.cpp_overload_set [concrete = constants.%Public.ProtectedInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %Base.ProtectedInstance.decl: %Base.ProtectedInstance.type = fn_decl @Base.ProtectedInstance [concrete = constants.%Base.ProtectedInstance] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %self.patt: %pattern_type.72a = value_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.72a = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc26: %pattern_type.a3a = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %self.param: %ptr.fb2 = value_param call_param0
+// CHECK:STDOUT:     %self: %ptr.fb2 = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2533,6 +2546,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %Protected.PublicInstance.cpp_overload_set.type: type = cpp_overload_set_type @Protected.PublicInstance.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Protected.PublicInstance.cpp_overload_set.value: %Protected.PublicInstance.cpp_overload_set.type = cpp_overload_set_value @Protected.PublicInstance.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.fb2: type = ptr_type %Base [concrete]
+// CHECK:STDOUT:   %pattern_type.72a: type = pattern_type %ptr.fb2 [concrete]
+// CHECK:STDOUT:   %pattern_type.a3a: type = pattern_type %Base [concrete]
 // CHECK:STDOUT:   %Base.PublicInstance.type: type = fn_type @Base.PublicInstance [concrete]
 // CHECK:STDOUT:   %Base.PublicInstance: %Base.PublicInstance.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.f97: type = ptr_type %Protected [concrete]
@@ -2554,15 +2569,21 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %Base.ProtectedStatic.decl: %Base.ProtectedStatic.type = fn_decl @Base.ProtectedStatic [concrete = constants.%Base.ProtectedStatic] {} {}
 // CHECK:STDOUT:   %Protected.PublicInstance.cpp_overload_set.value: %Protected.PublicInstance.cpp_overload_set.type = cpp_overload_set_value @Protected.PublicInstance.cpp_overload_set [concrete = constants.%Protected.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %Base.PublicInstance.decl: %Base.PublicInstance.type = fn_decl @Base.PublicInstance [concrete = constants.%Base.PublicInstance] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %self.patt: %pattern_type.72a = value_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.72a = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc24: %pattern_type.a3a = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %self.param: %ptr.fb2 = value_param call_param0
+// CHECK:STDOUT:     %self: %ptr.fb2 = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Protected.ProtectedInstance.cpp_overload_set.value: %Protected.ProtectedInstance.cpp_overload_set.type = cpp_overload_set_value @Protected.ProtectedInstance.cpp_overload_set [concrete = constants.%Protected.ProtectedInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %Base.ProtectedInstance.decl: %Base.ProtectedInstance.type = fn_decl @Base.ProtectedInstance [concrete = constants.%Base.ProtectedInstance] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %self.patt: %pattern_type.72a = value_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.72a = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc26: %pattern_type.a3a = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %self.param: %ptr.fb2 = value_param call_param0
+// CHECK:STDOUT:     %self: %ptr.fb2 = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2642,6 +2663,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %PublicProtected.PublicInstance.cpp_overload_set.type: type = cpp_overload_set_type @PublicProtected.PublicInstance.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %PublicProtected.PublicInstance.cpp_overload_set.value: %PublicProtected.PublicInstance.cpp_overload_set.type = cpp_overload_set_value @PublicProtected.PublicInstance.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr.fb2: type = ptr_type %Base [concrete]
+// CHECK:STDOUT:   %pattern_type.72a: type = pattern_type %ptr.fb2 [concrete]
+// CHECK:STDOUT:   %pattern_type.a3a: type = pattern_type %Base [concrete]
 // CHECK:STDOUT:   %Base.PublicInstance.type: type = fn_type @Base.PublicInstance [concrete]
 // CHECK:STDOUT:   %Base.PublicInstance: %Base.PublicInstance.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.dc4: type = ptr_type %PublicProtected [concrete]
@@ -2663,15 +2686,21 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %Base.ProtectedStatic.decl: %Base.ProtectedStatic.type = fn_decl @Base.ProtectedStatic [concrete = constants.%Base.ProtectedStatic] {} {}
 // CHECK:STDOUT:   %PublicProtected.PublicInstance.cpp_overload_set.value: %PublicProtected.PublicInstance.cpp_overload_set.type = cpp_overload_set_value @PublicProtected.PublicInstance.cpp_overload_set [concrete = constants.%PublicProtected.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %Base.PublicInstance.decl: %Base.PublicInstance.type = fn_decl @Base.PublicInstance [concrete = constants.%Base.PublicInstance] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %self.patt: %pattern_type.72a = value_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.72a = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc24: %pattern_type.a3a = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %self.param: %ptr.fb2 = value_param call_param0
+// CHECK:STDOUT:     %self: %ptr.fb2 = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PublicProtected.ProtectedInstance.cpp_overload_set.value: %PublicProtected.ProtectedInstance.cpp_overload_set.type = cpp_overload_set_value @PublicProtected.ProtectedInstance.cpp_overload_set [concrete = constants.%PublicProtected.ProtectedInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %Base.ProtectedInstance.decl: %Base.ProtectedInstance.type = fn_decl @Base.ProtectedInstance [concrete = constants.%Base.ProtectedInstance] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %self.patt: %pattern_type.72a = value_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.72a = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc26: %pattern_type.a3a = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %self.param: %ptr.fb2 = value_param call_param0
+// CHECK:STDOUT:     %self: %ptr.fb2 = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

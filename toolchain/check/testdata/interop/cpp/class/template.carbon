@@ -92,11 +92,8 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:   %A.elem.c3f: type = unbound_element_type %A.0bedf0.1, %i32 [concrete]
 // CHECK:STDOUT:   %A.f.cpp_overload_set.type: type = cpp_overload_set_type @A.f.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %A.f.cpp_overload_set.value: %A.f.cpp_overload_set.type = cpp_overload_set_value @A.f.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %const.16f: type = const_type %A.0bedf0.1 [concrete]
-// CHECK:STDOUT:   %ptr.703: type = ptr_type %const.16f [concrete]
 // CHECK:STDOUT:   %f__carbon_thunk.type: type = fn_type @f__carbon_thunk [concrete]
 // CHECK:STDOUT:   %f__carbon_thunk: %f__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.270828.1: type = ptr_type %A.0bedf0.1 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.afd: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
@@ -111,7 +108,7 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:   %.7fa: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.c49 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.f59, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %A.0bedf0.2: type = class_type @A.2 [concrete]
-// CHECK:STDOUT:   %ptr.270828.2: type = ptr_type %A.0bedf0.2 [concrete]
+// CHECK:STDOUT:   %ptr.270: type = ptr_type %A.0bedf0.2 [concrete]
 // CHECK:STDOUT:   %ptr.fb2: type = ptr_type %Base [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.fe1: <witness> = impl_witness imports.%Copy.impl_witness_table.53c, @ptr.as.Copy.impl(%Base) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.2d4: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Base) [concrete]
@@ -139,11 +136,7 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:   %x.ref.loc9: %A.0bedf0.1 = name_ref x, %x
 // CHECK:STDOUT:   %f.ref: %A.f.cpp_overload_set.type = name_ref f, imports.%A.f.cpp_overload_set.value [concrete = constants.%A.f.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %x.ref.loc9, %f.ref
-// CHECK:STDOUT:   %.loc9_3: ref %A.0bedf0.1 = value_as_ref %x.ref.loc9
-// CHECK:STDOUT:   %addr: %ptr.270828.1 = addr_of %.loc9_3
-// CHECK:STDOUT:   %.loc9_7.1: %ptr.703 = as_compatible %addr
-// CHECK:STDOUT:   %.loc9_7.2: %ptr.703 = converted %addr, %.loc9_7.1
-// CHECK:STDOUT:   %f__carbon_thunk.call: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%.loc9_7.2)
+// CHECK:STDOUT:   %f__carbon_thunk.call: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%x.ref.loc9)
 // CHECK:STDOUT:   %x.ref.loc10: %A.0bedf0.1 = name_ref x, %x
 // CHECK:STDOUT:   %n.ref: %A.elem.c3f = name_ref n, @A.1.%.2 [concrete = @A.1.%.2]
 // CHECK:STDOUT:   %.loc10_11.1: ref %i32 = class_element_access %x.ref.loc10, element1
@@ -156,9 +149,9 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p.param: %ptr.270828.2) -> %ptr.fb2 {
+// CHECK:STDOUT: fn @G(%p.param: %ptr.270) -> %ptr.fb2 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %ptr.270828.2 = name_ref p, %p
+// CHECK:STDOUT:   %p.ref: %ptr.270 = name_ref p, %p
 // CHECK:STDOUT:   %.loc17_11.1: ref %A.0bedf0.2 = deref %p.ref
 // CHECK:STDOUT:   %.loc17_11.2: ref %Base = class_element_access %.loc17_11.1, element0
 // CHECK:STDOUT:   %addr: %ptr.fb2 = addr_of %.loc17_11.2
