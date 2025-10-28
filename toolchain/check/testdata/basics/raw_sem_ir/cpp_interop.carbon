@@ -115,7 +115,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     'inst(BoolType)':  {kind: BoolType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(BoundMethodType)': {kind: BoundMethodType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(CharLiteralType)': {kind: CharLiteralType, type: type(TypeType)}
-// CHECK:STDOUT:     'inst(CustomCppVoidType)': {kind: CustomCppVoidType, type: type(TypeType)}
+// CHECK:STDOUT:     'inst(CppVoidType)': {kind: CppVoidType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(ErrorInst)': {kind: ErrorInst, type: type(Error)}
 // CHECK:STDOUT:     'inst(FloatLiteralType)': {kind: FloatLiteralType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(ImplWitnessTablePlaceholder)': {kind: ImplWitnessTablePlaceholder, type: type(TypeType)}
@@ -205,7 +205,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:       'inst(BoolType)':  concrete_constant(inst(BoolType))
 // CHECK:STDOUT:       'inst(BoundMethodType)': concrete_constant(inst(BoundMethodType))
 // CHECK:STDOUT:       'inst(CharLiteralType)': concrete_constant(inst(CharLiteralType))
-// CHECK:STDOUT:       'inst(CustomCppVoidType)': concrete_constant(inst(CustomCppVoidType))
+// CHECK:STDOUT:       'inst(CppVoidType)': concrete_constant(inst(CppVoidType))
 // CHECK:STDOUT:       'inst(ErrorInst)': concrete_constant(inst(ErrorInst))
 // CHECK:STDOUT:       'inst(FloatLiteralType)': concrete_constant(inst(FloatLiteralType))
 // CHECK:STDOUT:       'inst(ImplWitnessTablePlaceholder)': concrete_constant(inst(ImplWitnessTablePlaceholder))

@@ -559,13 +559,12 @@ struct ConvertToValueAction {
 };
 
 // A type for C++ `void`. Should only be used for pointers (`void*`).
-struct CustomCppVoidType {
-  static constexpr auto Kind =
-      InstKind::CustomCppVoidType.Define<Parse::NoneNodeId>(
-          {.ir_name = "custom_cpp_void_type",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always,
-           .is_lowered = false});
+struct CppVoidType {
+  static constexpr auto Kind = InstKind::CppVoidType.Define<Parse::NoneNodeId>(
+      {.ir_name = "cpp_void_type",
+       .is_type = InstIsType::Always,
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
 
   static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
   static constexpr auto TypeId =

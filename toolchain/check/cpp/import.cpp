@@ -1140,7 +1140,7 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
   } else if (type.isVoidType()) {
     return ExprAsType(context, Parse::NodeId::None,
                       context.types().GetInstId(GetSingletonType(
-                          context, SemIR::CustomCppVoidType::TypeInstId)));
+                          context, SemIR::CppVoidType::TypeInstId)));
   }
 
   return TypeExpr::None;

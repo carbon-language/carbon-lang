@@ -185,7 +185,7 @@ static auto MapNonWrapperType(Context& context, SemIR::InstId inst_id,
 static auto TryMapVoidPointer(Context& context, SemIR::TypeId type_id,
                               llvm::SmallVector<SemIR::TypeId>& wrapper_types)
     -> clang::QualType {
-  if (type_id != SemIR::CustomCppVoidType::TypeId) {
+  if (type_id != SemIR::CppVoidType::TypeId) {
     return clang::QualType();
   }
 

@@ -377,7 +377,7 @@ class Stringifier {
     step_stack_->Push(inst.type_inst_id, " as ", inst.type_id);
   }
 
-  auto StringifyInst(InstId /*inst_id*/, CustomCppVoidType /*inst*/) -> void {
+  auto StringifyInst(InstId /*inst_id*/, CppVoidType /*inst*/) -> void {
     *out_ << "Cpp.void";
   }
 
