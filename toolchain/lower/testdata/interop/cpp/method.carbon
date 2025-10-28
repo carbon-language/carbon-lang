@@ -90,11 +90,11 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
-// CHECK:STDOUT: define dso_local i32 @_ZNK1A6by_valEv.carbon_thunk(ptr %this) #0 {
+// CHECK:STDOUT: define dso_local i32 @_ZNK1A6by_valEv.carbon_thunk(ptr nonnull align 8 dereferenceable(12) %this) #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8
-// CHECK:STDOUT:   %0 = load ptr, ptr %this.addr, align 8
+// CHECK:STDOUT:   %0 = load ptr, ptr %this.addr, align 8, !nonnull !9, !align !12
 // CHECK:STDOUT:   %call = call i32 @_ZNK1A6by_valEv(ptr nonnull align 8 dereferenceable(12) %0)
 // CHECK:STDOUT:   ret i32 %call
 // CHECK:STDOUT: }
@@ -128,6 +128,7 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: !9 = !{}
 // CHECK:STDOUT: !10 = !DILocation(line: 7, column: 10, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 7, column: 3, scope: !7)
+// CHECK:STDOUT: !12 = !{i64 8}
 // CHECK:STDOUT: ; ModuleID = 'call_by_ref.carbon'
 // CHECK:STDOUT: source_filename = "call_by_ref.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -235,13 +236,13 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
-// CHECK:STDOUT: define dso_local void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk(ptr %this, ptr %c) #1 {
+// CHECK:STDOUT: define dso_local void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk(ptr nonnull align 1 dereferenceable(1) %this, ptr %c) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %c.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8
 // CHECK:STDOUT:   store ptr %c, ptr %c.addr, align 8
-// CHECK:STDOUT:   %0 = load ptr, ptr %this.addr, align 8
+// CHECK:STDOUT:   %0 = load ptr, ptr %this.addr, align 8, !nonnull !9
 // CHECK:STDOUT:   %1 = load ptr, ptr %c.addr, align 8
 // CHECK:STDOUT:   %2 = load i8, ptr %1, align 1
 // CHECK:STDOUT:   call void @_ZNK9NeedThunk8ImplicitEa(ptr nonnull align 1 dereferenceable(1) %0, i8 signext %2)
