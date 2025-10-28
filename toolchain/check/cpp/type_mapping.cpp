@@ -185,13 +185,12 @@ static auto MapNonWrapperType(Context& context, SemIR::InstId inst_id,
 static auto TryMapVoidPointer(Context& context, SemIR::TypeId type_id,
                               llvm::SmallVector<SemIR::TypeId>& wrapper_types)
     -> clang::QualType {
-  if (type_id != SemIR::CppVoidType::TypeId) {
+  if (type_id != SemIR::CppVoidType::TypeId || wrapper_types.empty()) {
     return clang::QualType();
   }
 
   llvm::SmallVector<SemIR::TypeId>::iterator pointer_iter;
-  if (!wrapper_types.empty() &&
-      context.types().Is<SemIR::PointerType>(wrapper_types.back())) {
+  if (context.types().Is<SemIR::PointerType>(wrapper_types.back())) {
     // `void*`.
     pointer_iter = wrapper_types.end() - 1;
   } else if (wrapper_types.size() >= 2 &&
