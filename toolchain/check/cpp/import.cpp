@@ -1212,8 +1212,7 @@ static auto MapQualifiedType(Context& context, clang::QualType type,
 
   if (quals.hasConst()) {
     auto type_id = GetConstType(context, type_expr.inst_id);
-    type_expr = {.inst_id = context.types().GetInstId(type_id),
-                 .type_id = type_id};
+    type_expr = TypeExpr::ForUnsugared(context, type_id);
     quals.removeConst();
   }
 
@@ -1371,8 +1370,8 @@ static auto MapParameterType(Context& context, SemIR::LocId loc_id,
   info.type = MapType(context, loc_id, param_type);
   if (info.want_addr_pattern && info.type.inst_id.has_value()) {
     info.pointee_type = info.type;
-    info.type.type_id = GetPointerType(context, info.pointee_type.inst_id);
-    info.type.inst_id = context.types().GetInstId(info.type.type_id);
+    info.type = TypeExpr::ForUnsugared(
+        context, GetPointerType(context, info.pointee_type.inst_id));
   }
   return info;
 }
