@@ -1212,8 +1212,7 @@ static auto MapQualifiedType(Context& context, clang::QualType type,
 
   if (quals.hasConst()) {
     auto type_id = GetConstType(context, type_expr.inst_id);
-    type_expr = {.inst_id = context.types().GetInstId(type_id),
-                 .type_id = type_id};
+    type_expr = TypeExpr::ForUnsugared(context, type_id);
     quals.removeConst();
   }
 
@@ -1260,19 +1259,18 @@ static auto MapPointerType(Context& context, SemIR::LocId loc_id,
   return pointer_type_expr;
 }
 
-// Maps a C++ reference type to a Carbon type.
-// We map `T&` to `T*`, and `T&&` to `T`.
+// Maps a C++ reference type to a Carbon type. We map all references to
+// pointers for now. Note that when mapping function parameters and return
+// types, a different rule is used; see MapParameterType for details.
 // TODO: Revisit this and decide what we really want to do here.
 static auto MapReferenceType(Context& context, clang::QualType type,
                              TypeExpr referenced_type_expr) -> TypeExpr {
   CARBON_CHECK(type->isReferenceType());
-
-  if (!type->isLValueReferenceType()) {
-    return referenced_type_expr;
-  }
-
-  return TypeExpr::ForUnsugared(
-      context, GetPointerType(context, referenced_type_expr.inst_id));
+  SemIR::TypeId pointer_type_id =
+      GetPointerType(context, referenced_type_expr.inst_id);
+  pointer_type_id =
+      GetConstType(context, context.types().GetInstId(pointer_type_id));
+  return TypeExpr::ForUnsugared(context, pointer_type_id);
 }
 
 // Maps a C++ type to a Carbon type. `type` should not be canonicalized because
@@ -1318,6 +1316,81 @@ static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
   return mapped;
 }
 
+namespace {
+// Information about how to map a C++ parameter type into Carbon.
+struct ParameterTypeInfo {
+  // The type to use for the Carbon parameter.
+  TypeExpr type;
+  // Whether to build an `addr` pattern.
+  bool want_addr_pattern;
+  // If building an `addr` pattern, the type matched by that pattern.
+  TypeExpr pointee_type;
+};
+}  // namespace
+
+// Given the type of a C++ function parameter, returns information about the
+// type to use for the corresponding Carbon parameter.
+//
+// Note that if the parameter has a type for which `IsSimpleAbiType` returns
+// true, we must produce a parameter type that has the same calling convention
+// as the C++ type.
+//
+// TODO: Use `ref` instead of `addr`.
+static auto MapParameterType(Context& context, SemIR::LocId loc_id,
+                             clang::QualType param_type) -> ParameterTypeInfo {
+  ParameterTypeInfo info = {.type = TypeExpr::None,
+                            .want_addr_pattern = false,
+                            .pointee_type = TypeExpr::None};
+
+  // Perform some custom mapping for parameters of reference type:
+  //
+  //   * `T& x` -> `addr x: T*`.
+  //   * `const T& x` -> `x: T`.
+  //   * `T&& x` -> `x: T`.
+  //
+  // TODO: For the `&&` mapping, we allow an rvalue reference to bind to a
+  // durable reference expression. This should not be allowed.
+  if (param_type->isReferenceType()) {
+    clang::QualType pointee_type = param_type->getPointeeType();
+    if (param_type->isLValueReferenceType()) {
+      if (pointee_type.isConstQualified()) {
+        // TODO: Consider only doing this if `const` is the only qualifier. For
+        // now, any other qualifier will fail when mapping the type.
+        auto split_type = pointee_type.getSplitUnqualifiedType();
+        split_type.Quals.removeConst();
+        pointee_type = context.ast_context().getQualifiedType(split_type);
+      } else {
+        // The reference will map to a pointer. Request an `addr` pattern.
+        info.want_addr_pattern = true;
+      }
+    }
+    param_type = pointee_type;
+  }
+
+  info.type = MapType(context, loc_id, param_type);
+  if (info.want_addr_pattern && info.type.inst_id.has_value()) {
+    info.pointee_type = info.type;
+    info.type = TypeExpr::ForUnsugared(
+        context, GetPointerType(context, info.pointee_type.inst_id));
+  }
+  return info;
+}
+
+// Finishes building the pattern to use for a function parameter, given the
+// binding pattern and information about how the parameter is being mapped into
+// Carbon.
+static auto FinishParameterPattern(Context& context, SemIR::InstId pattern_id,
+                                   ParameterTypeInfo info) -> SemIR::InstId {
+  if (!info.want_addr_pattern || pattern_id == SemIR::ErrorInst::InstId) {
+    return pattern_id;
+  }
+  return AddPatternInst(
+      context, {SemIR::LocId(pattern_id),
+                SemIR::AddrPattern({.type_id = GetPatternType(
+                                        context, info.pointee_type.type_id),
+                                    .inner_id = pattern_id})});
+}
+
 // Returns a block for the implicit parameters of the given function
 // declaration. Because function templates are not yet supported, this currently
 // only contains the `self` parameter. On error, produces a diagnostic and
@@ -1334,32 +1407,10 @@ static auto MakeImplicitParamPatternsBlockId(
   // Build a `self` parameter from the object parameter.
   BeginSubpattern(context);
 
-  // Perform some special-case mapping for the object parameter:
-  //
-  //  - If it's a const reference to T, produce a by-value `self: T` parameter.
-  //  - If it's a non-const reference to T, produce an `addr self: T*`
-  //    parameter.
-  //  - Otherwise, map it directly, which will currently fail for `&&`-qualified
-  //    methods.
-  //
-  // TODO: Some of this mapping should be performed for all parameters.
   clang::QualType param_type =
       method_decl->getFunctionObjectParameterReferenceType();
-  bool addr_self = false;
-  if (param_type->isLValueReferenceType()) {
-    param_type = param_type.getNonReferenceType();
-    if (param_type.isConstQualified()) {
-      // TODO: Consider only doing this if `const` is the only qualifier. For
-      // now, any other qualifier will fail when mapping the type.
-      auto split_type = param_type.getSplitUnqualifiedType();
-      split_type.Quals.removeConst();
-      param_type = method_decl->getASTContext().getQualifiedType(split_type);
-    } else {
-      addr_self = true;
-    }
-  }
-
-  auto [type_inst_id, type_id] = MapType(context, loc_id, param_type);
+  auto param_info = MapParameterType(context, loc_id, param_type);
+  auto [type_inst_id, type_id] = param_info.type;
   SemIR::ExprRegionId type_expr_region_id =
       EndSubpatternAsExpr(context, type_inst_id);
 
@@ -1372,10 +1423,8 @@ static auto MakeImplicitParamPatternsBlockId(
 
   // TODO: Fill in a location once available.
   auto pattern_id =
-      addr_self ? AddAddrSelfParamPattern(context, SemIR::LocId::None,
-                                          type_expr_region_id, type_inst_id)
-                : AddSelfParamPattern(context, SemIR::LocId::None,
-                                      type_expr_region_id, type_id);
+      AddSelfParamPattern(context, loc_id, type_expr_region_id, type_id);
+  pattern_id = FinishParameterPattern(context, pattern_id, param_info);
 
   return context.inst_blocks().Add({pattern_id});
 }
@@ -1409,12 +1458,11 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     // TODO: The presence of qualifiers here is probably a Clang bug.
     clang::QualType param_type = orig_param_type.getUnqualifiedType();
 
-    bool is_ref_param = param_type->isLValueReferenceType();
-
     // Mark the start of a region of insts, needed for the type expression
     // created later with the call of `EndSubpatternAsExpr()`.
     BeginSubpattern(context);
-    auto [orig_type_inst_id, type_id] = MapType(context, loc_id, param_type);
+    auto param_info = MapParameterType(context, loc_id, param_type);
+    auto [orig_type_inst_id, type_id] = param_info.type;
     // Type expression of the binding pattern - a single-entry/single-exit
     // region that allows control flow in the type expression e.g. fn F(x: if C
     // then i32 else i64).
@@ -1452,17 +1500,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
                       {.type_id = context.insts().Get(pattern_id).type_id(),
                        .subpattern_id = pattern_id,
                        .index = SemIR::CallParamIndex::None})});
-    if (is_ref_param) {
-      // We map `T&` parameters to `addr param: T*`.
-      // TODO: Revisit this and decide what we really want to do here.
-      pattern_id = AddPatternInst(
-          context, {param_loc_id,
-                    SemIR::AddrPattern(
-                        {.type_id = GetPatternType(
-                             context, context.types().GetTypeIdForTypeInstId(
-                                          orig_type_inst_id)),
-                         .inner_id = pattern_id})});
-    }
+    pattern_id = FinishParameterPattern(context, pattern_id, param_info);
     params.push_back(pattern_id);
   }
   return context.inst_blocks().Add(params);
@@ -1476,6 +1514,9 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
                               clang::FunctionDecl* clang_decl) -> TypeExpr {
   clang::QualType orig_ret_type = clang_decl->getReturnType();
   if (!orig_ret_type->isVoidType()) {
+    // TODO: We should eventually map reference returns to non-pointer types
+    // here. We should return by `ref` for `T&` return types once `ref` return
+    // is implemented.
     auto [orig_type_inst_id, type_id] = MapType(context, loc_id, orig_ret_type);
     if (!orig_type_inst_id.has_value()) {
       context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",

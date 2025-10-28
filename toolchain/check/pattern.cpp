@@ -157,15 +157,4 @@ auto AddSelfParamPattern(Context& context, SemIR::LocId loc_id,
   return pattern_id;
 }
 
-auto AddAddrSelfParamPattern(Context& context, SemIR::LocId loc_id,
-                             SemIR::ExprRegionId type_expr_region_id,
-                             SemIR::TypeInstId type_inst_id) -> SemIR::InstId {
-  auto pattern_id = AddSelfParamPattern(context, loc_id, type_expr_region_id,
-                                        GetPointerType(context, type_inst_id));
-  return AddPatternInst<SemIR::AddrPattern>(
-      context, loc_id,
-      {.type_id = GetPatternType(context, SemIR::AutoType::TypeId),
-       .inner_id = pattern_id});
-}
-
 }  // namespace Carbon::Check

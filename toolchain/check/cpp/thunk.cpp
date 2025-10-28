@@ -58,9 +58,20 @@ static auto IsSimpleAbiType(clang::ASTContext& ast_context,
     return true;
   }
 
-  if (!for_parameter && type->isLValueReferenceType()) {
-    // An lvalue reference return type maps to a pointer, which uses the same
-    // lowering rule.
+  if (type->isReferenceType()) {
+    if (for_parameter) {
+      // A reference parameter has a simple ABI if it's a non-const lvalue
+      // reference.  Otherwise, we map it to pass-by-value, and it's only simple
+      // if the type uses a pointer value representation.
+      //
+      // TODO: Check whether the pointee type maps to a Carbon type that uses a
+      // pointer value representation, and treat it as simple if so.
+      return type->isLValueReferenceType() &&
+             !type->getPointeeType().isConstQualified();
+    }
+
+    // A reference return type is always mapped to a Carbon pointer, which uses
+    // the same ABI rule as a C++ reference.
     return true;
   }
 
@@ -93,7 +104,8 @@ struct CalleeFunctionInfo {
     bool is_ctor = isa<clang::CXXConstructorDecl>(decl);
     has_object_parameter = method_decl && !method_decl->isStatic() && !is_ctor;
     if (has_object_parameter && method_decl->isImplicitObjectMemberFunction()) {
-      implicit_this_type = method_decl->getThisType();
+      implicit_object_parameter_type =
+          method_decl->getFunctionObjectParameterReferenceType();
     }
     effective_return_type =
         is_ctor ? ast_context.getCanonicalTagType(method_decl->getParent())
@@ -104,7 +116,7 @@ struct CalleeFunctionInfo {
 
   // Returns whether this callee has an implicit `this` parameter.
   auto has_implicit_object_parameter() const -> bool {
-    return !implicit_this_type.isNull();
+    return !implicit_object_parameter_type.isNull();
   }
 
   // Returns whether this callee has an explicit `this` parameter.
@@ -143,9 +155,9 @@ struct CalleeFunctionInfo {
   // implicit.
   bool has_object_parameter;
 
-  // If the callee has an implicit object parameter, the corresponding `this`
-  // type. Otherwise a null type.
-  clang::QualType implicit_this_type;
+  // If the callee has an implicit object parameter, the type of that parameter,
+  // which will always be a reference type. Otherwise a null type.
+  clang::QualType implicit_object_parameter_type;
 
   // The return type that the callee has when viewed from Carbon. This is the
   // C++ return type, except that constructors return the class type in Carbon
@@ -180,16 +192,10 @@ auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
   }
 
   auto& ast_context = context.ast_context();
-  if (callee_info.has_implicit_object_parameter()) {
-    // TODO: The object parameter is a reference parameter, but we don't force a
-    // thunk here like we do for explicit reference parameters in the case where
-    // we would map the parameter to an `addr` parameter. We should make this
-    // behavior consistent.
-    auto* method_decl = cast<clang::CXXMethodDecl>(decl);
-    if (method_decl->getRefQualifier() == clang::RQ_RValue ||
-        method_decl->getMethodQualifiers().hasConst()) {
-      return true;
-    }
+  if (callee_info.has_implicit_object_parameter() &&
+      !IsSimpleAbiType(ast_context, callee_info.implicit_object_parameter_type,
+                       /*for_parameter=*/true)) {
+    return true;
   }
 
   const auto* function_type =
@@ -238,8 +244,7 @@ static auto BuildThunkParameterTypes(clang::ASTContext& ast_context,
   llvm::SmallVector<clang::QualType> thunk_param_types;
   thunk_param_types.reserve(callee_info.num_thunk_params());
   if (callee_info.has_implicit_object_parameter()) {
-    thunk_param_types.push_back(
-        GetNonnullType(ast_context, callee_info.implicit_this_type));
+    thunk_param_types.push_back(callee_info.implicit_object_parameter_type);
   }
 
   const auto* function_type =
@@ -371,22 +376,21 @@ static auto BuildThunkParamRef(clang::Sema& sema,
     clang::ExprResult deref_result =
         sema.BuildUnaryOp(nullptr, clang_loc, clang::UO_Deref, call_arg);
     CARBON_CHECK(deref_result.isUsable());
-
-    // Cast to an rvalue when initializing an rvalue reference. The validity of
-    // the initialization of the reference should be validated by the caller of
-    // the thunk.
-    //
-    // TODO: Consider inserting a cast to an rvalue in more cases. Note that we
-    // currently pass pointers to non-temporary objects as the argument when
-    // calling a thunk, so we'll need to either change that or generate
-    // different thunks depending on whether we're moving from each parameter.
-    if (type->isRValueReferenceType()) {
-      deref_result = clang::ImplicitCastExpr::Create(
-          sema.getASTContext(), deref_result.get()->getType(), clang::CK_NoOp,
-          deref_result.get(), nullptr, clang::ExprValueKind::VK_XValue,
-          clang::FPOptionsOverride());
-    }
     call_arg = deref_result.get();
+  }
+
+  // Cast to an rvalue when initializing an rvalue reference. The validity of
+  // the initialization of the reference should be validated by the caller of
+  // the thunk.
+  //
+  // TODO: Consider inserting a cast to an rvalue in more cases. Note that we
+  // currently pass pointers to non-temporary objects as the argument when
+  // calling a thunk, so we'll need to either change that or generate
+  // different thunks depending on whether we're moving from each parameter.
+  if (!type.isNull() && type->isRValueReferenceType()) {
+    call_arg = clang::ImplicitCastExpr::Create(
+        sema.getASTContext(), call_arg->getType(), clang::CK_NoOp, call_arg,
+        nullptr, clang::ExprValueKind::VK_XValue, clang::FPOptionsOverride());
   }
   return call_arg;
 }
@@ -443,14 +447,14 @@ static auto BuildThunkBody(clang::Sema& sema,
                            callee_info.has_explicit_object_parameter()
                                ? callee_info.decl->getParamDecl(0)->getType()
                                : clang::QualType());
-    bool is_arrow = callee_info.has_implicit_object_parameter();
+    constexpr bool IsArrow = false;
     auto object =
-        sema.PerformMemberExprBaseConversion(object_param_ref, is_arrow);
+        sema.PerformMemberExprBaseConversion(object_param_ref, IsArrow);
     if (object.isInvalid()) {
       return clang::StmtError();
     }
     callee = sema.BuildMemberExpr(
-        object.get(), is_arrow, clang_loc, clang::NestedNameSpecifierLoc(),
+        object.get(), IsArrow, clang_loc, clang::NestedNameSpecifierLoc(),
         clang::SourceLocation(), callee_info.decl,
         clang::DeclAccessPair::make(callee_info.decl, clang::AS_public),
         /*HadMultipleCandidates=*/false, clang::DeclarationNameInfo(),

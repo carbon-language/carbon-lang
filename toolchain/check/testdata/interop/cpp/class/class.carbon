@@ -464,6 +464,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Bar.f.cpp_overload_set.type: type = cpp_overload_set_type @Bar.f.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Bar.f.cpp_overload_set.value: %Bar.f.cpp_overload_set.type = cpp_overload_set_value @Bar.f.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %pattern_type.07b: type = pattern_type %Bar [concrete]
 // CHECK:STDOUT:   %Bar.f.type: type = fn_type @Bar.f [concrete]
 // CHECK:STDOUT:   %Bar.f: %Bar.f.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -476,9 +477,12 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
 // CHECK:STDOUT:   %Bar.f.cpp_overload_set.value: %Bar.f.cpp_overload_set.type = cpp_overload_set_value @Bar.f.cpp_overload_set [concrete = constants.%Bar.f.cpp_overload_set.value]
 // CHECK:STDOUT:   %Bar.f.decl: %Bar.f.type = fn_decl @Bar.f [concrete = constants.%Bar.f] {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %self.patt: %pattern_type.146 = value_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.146 = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %.loc8: %pattern_type.07b = addr_pattern %self.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %self.param: %ptr.f68 = value_param call_param0
+// CHECK:STDOUT:     %self: %ptr.f68 = value_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
