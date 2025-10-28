@@ -86,48 +86,65 @@ static auto ConstraintHasInterface(Context& context,
          !facet_type_info.self_impls_constraints.empty();
 }
 
-static auto TypeOrInterfaceReferencesSelf(Context& context,
-                                          SemIR::TypeInstId inst_id,
-                                          SemIR::FacetType facet_type) -> bool {
+static auto TypeStructureReferencesSelf(Context& context,
+                                        SemIR::TypeInstId inst_id,
+                                        SemIR::FacetType facet_type) -> bool {
   if (inst_id == SemIR::ErrorInst::TypeInstId) {
     // Don't generate more diagnostics.
     return true;
   }
 
-  SemIR::TypeIterator type_iter(&context.sem_ir());
-  type_iter.Add(context.constant_values().GetConstantTypeInstId(inst_id));
+  auto find_self = [&](SemIR::TypeIterator& type_iter) -> bool {
+    while (true) {
+      auto step = type_iter.Next();
+      if (step.Is<SemIR::TypeIterator::Step::Done>()) {
+        break;
+      }
+      CARBON_KIND_SWITCH(step.any) {
+        case CARBON_KIND(SemIR::TypeIterator::Step::Error _): {
+          // Don't generate more diagnostics.
+          return true;
+        }
+        case CARBON_KIND(SemIR::TypeIterator::Step::SymbolicBinding bind): {
+          if (context.entity_names().Get(bind.entity_name_id).name_id ==
+              SemIR::NameId::SelfType) {
+            return true;
+          }
+          break;
+        }
+        default:
+          break;
+      }
+    }
+    return false;
+  };
+
+  {
+    SemIR::TypeIterator type_iter(&context.sem_ir());
+    type_iter.Add(context.constant_values().GetConstantTypeInstId(inst_id));
+    if (find_self(type_iter)) {
+      return true;
+    }
+  }
 
   const auto& facet_type_info =
       context.facet_types().Get(facet_type.facet_type_id);
   for (auto extend : facet_type_info.extend_constraints) {
+    SemIR::TypeIterator type_iter(&context.sem_ir());
     type_iter.Add(extend);
+    if (!find_self(type_iter)) {
+      return false;
+    }
   }
   for (auto self_impls : facet_type_info.self_impls_constraints) {
+    SemIR::TypeIterator type_iter(&context.sem_ir());
     type_iter.Add(self_impls);
+    if (!find_self(type_iter)) {
+      return false;
+    }
   }
 
-  while (true) {
-    auto step = type_iter.Next();
-    if (step.Is<SemIR::TypeIterator::Step::Done>()) {
-      break;
-    }
-    CARBON_KIND_SWITCH(step.any) {
-      case CARBON_KIND(SemIR::TypeIterator::Step::Error _): {
-        // Don't generate more diagnostics.
-        return true;
-      }
-      case CARBON_KIND(SemIR::TypeIterator::Step::SymbolicBinding bind): {
-        if (context.entity_names().Get(bind.entity_name_id).name_id ==
-            SemIR::NameId::SelfType) {
-          return true;
-        }
-        break;
-      }
-      default:
-        break;
-    }
-  }
-  return false;
+  return true;
 }
 
 static auto RequirementReferencesSelf(
@@ -203,12 +220,12 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
         "expected an `interface` or a non-empty `constraint`");
     context.emitter().Emit(constraint_node_id, RequireImplsHasEmptyFacetType);
     constraint_inst_id = self_inst_id = SemIR::ErrorInst::TypeInstId;
-  } else if (!TypeOrInterfaceReferencesSelf(context, self_inst_id,
-                                            *constraint_facet_type)) {
+  } else if (!TypeStructureReferencesSelf(context, self_inst_id,
+                                          *constraint_facet_type)) {
     CARBON_DIAGNOSTIC(RequireImplsMissingSelf, Error,
                       "no `Self` reference found in `require` declaration; "
                       "`Self` must appear in the self-type or as a generic "
-                      "parameter for an `interface` or `constraint`");
+                      "parameter for each `interface` or `constraint`");
     context.emitter().Emit(node_id, RequireImplsMissingSelf);
     constraint_inst_id = self_inst_id = SemIR::ErrorInst::TypeInstId;
   } else if (RequirementReferencesSelf(

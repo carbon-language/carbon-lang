@@ -10,24 +10,24 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/facet/require_invalid.carbon
 
-// --- fail_todo_require_outside_scope.carbon
+// --- fail_require_outside_scope.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {}
 
-// CHECK:STDERR: fail_todo_require_outside_scope.carbon:[[@LINE+4]]:1: error: `require` can only be used in an `interface` or `constraint` [RequireInWrongScope]
+// CHECK:STDERR: fail_require_outside_scope.carbon:[[@LINE+4]]:1: error: `require` can only be used in an `interface` or `constraint` [RequireInWrongScope]
 // CHECK:STDERR: require impls Y;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
 require impls Y;
 
-// --- fail_todo_require_in_class.carbon
+// --- fail_require_in_class.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {}
 
 class C {
-  // CHECK:STDERR: fail_todo_require_in_class.carbon:[[@LINE+4]]:3: error: `require` can only be used in an `interface` or `constraint` [RequireInWrongScope]
+  // CHECK:STDERR: fail_require_in_class.carbon:[[@LINE+4]]:3: error: `require` can only be used in an `interface` or `constraint` [RequireInWrongScope]
   // CHECK:STDERR:   require impls Y;
   // CHECK:STDERR:   ^~~~~~~
   // CHECK:STDERR:

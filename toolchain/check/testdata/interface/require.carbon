@@ -160,19 +160,17 @@ interface Y {
   let Y1:! type;
 }
 
-//@dump-sem-ir-begin
 interface Z(T:! type) {
   // Either the type `T` or the facet type `Y` must mention `Self` in a way that
   // it would appear in the type structure used for impl lookup (so inside a
   // `where` does not count). But they don't.
   //
-  // CHECK:STDERR: fail_require_impls_without_self.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic parameter for an `interface` or `constraint` [RequireImplsMissingSelf]
+  // CHECK:STDERR: fail_require_impls_without_self.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic parameter for each `interface` or `constraint` [RequireImplsMissingSelf]
   // CHECK:STDERR:   require T impls Y where .Y1 = Self;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   require T impls Y where .Y1 = Self;
 }
-//@dump-sem-ir-end
 
 // --- fail_require_self_in_requirement.carbon
 library "[[@TEST_NAME]]";
@@ -181,7 +179,6 @@ interface Y {
   let Y1:! type;
 }
 
-//@dump-sem-ir-begin
 interface Z(T:! type) {
   // Self can not appear in a requirement. It can appear in the self-type or in
   // an interface parameter.
@@ -192,7 +189,21 @@ interface Z(T:! type) {
   // CHECK:STDERR:
   require impls Y where .Y1 = Self;
 }
-//@dump-sem-ir-end
+
+// --- fail_require_impls_without_self_in_one_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface Y(T:! type) {}
+
+interface Z(T:! type) {
+  // Self is in one interface but not the other.
+  //
+  // CHECK:STDERR: fail_require_impls_without_self_in_one_interface.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic parameter for each `interface` or `constraint` [RequireImplsMissingSelf]
+  // CHECK:STDERR:   require T impls Y(Self) & Y({});
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  require T impls Y(Self) & Y({});
+}
 
 // --- fail_self_impls_self.carbon
 library "[[@TEST_NAME]]";
@@ -254,9 +265,11 @@ interface Y {
   require impls Y;
 }
 
+//@dump-sem-ir-begin
 interface Z(T:! type) {
   require impls Z(T);
 }
+//@dump-sem-ir-end
 
 // CHECK:STDOUT: --- fail_todo_extend.carbon
 // CHECK:STDOUT:
@@ -422,21 +435,16 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %T.loc4_13.1 => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_require_impls_without_self.carbon
+// CHECK:STDOUT: --- require_same.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
 // CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Z.type.9fb: type = generic_interface_type @Z [concrete]
 // CHECK:STDOUT:   %Z.generic: %Z.type.9fb = struct_value () [concrete]
 // CHECK:STDOUT:   %Z.type.dd5: type = facet_type <@Z, @Z(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.cbb: %Z.type.dd5 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %.Self.f65: %Y.type = bind_symbolic_name .Self [symbolic_self]
-// CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.f65, @Y [symbolic_self]
-// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic_self]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.cbb [symbolic]
-// CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y where %impl.elem0 = %Self.binding.as_type> [symbolic]
+// CHECK:STDOUT:   %Self.binding.as_type.be9: type = symbolic_binding_type Self, 1, %Self.cbb [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -456,67 +464,15 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y where constants.%impl.elem0 = %Self.binding.as_type> [symbolic = %Y_where.type (constants.%Y_where.type)]
+// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.be9)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Z = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .Y = <poisoned>
-// CHECK:STDOUT:     witness = ()
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(constants.%T) {
-// CHECK:STDOUT:   %T.loc8_13.1 => constants.%T
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_require_self_in_requirement.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %Z.type.9fb: type = generic_interface_type @Z [concrete]
-// CHECK:STDOUT:   %Z.generic: %Z.type.9fb = struct_value () [concrete]
-// CHECK:STDOUT:   %Z.type.dd5: type = facet_type <@Z, @Z(%T)> [symbolic]
-// CHECK:STDOUT:   %Self.cbb: %Z.type.dd5 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.cbb [symbolic]
-// CHECK:STDOUT:   %.Self.f65: %Y.type = bind_symbolic_name .Self [symbolic_self]
-// CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.f65, @Y [symbolic_self]
-// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic_self]
-// CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y where %impl.elem0 = %Self.binding.as_type> [symbolic]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Z.decl: %Z.type.9fb = interface_decl @Z [concrete = constants.%Z.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %T.loc8_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_13.1 (constants.%T)]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Z(%T.loc8_13.2: type) {
-// CHECK:STDOUT:   %T.loc8_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_13.1 (constants.%T)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y where constants.%impl.elem0 = %Self.binding.as_type> [symbolic = %Y_where.type (constants.%Y_where.type)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
-// CHECK:STDOUT:     .Y = <poisoned>
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
