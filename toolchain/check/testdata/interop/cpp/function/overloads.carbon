@@ -139,6 +139,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "int_literal.h";
 
 fn F() {
+  // TODO: get rid of the second error message here.
   // i128_max + 1
   // CHECK:STDERR: fail_import_large_int_literal.carbon:[[@LINE+8]]:25: error: integer value 170141183460469231731687303715884105728 too large to fit in a signed C++ integer type; requires 129 bits, but max is 128 [IntTooLargeForCppType]
   // CHECK:STDERR:   let h: i128 = Cpp.foo(170141183460469231731687303715884105728);
@@ -1465,7 +1466,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %int_170141183460469231731687303715884105728: Core.IntLiteral = int_value 170141183460469231731687303715884105728 [concrete = constants.%int_170141183460469231731687303715884105728]
-// CHECK:STDOUT:   %.loc16: type = splice_block %i128 [concrete = constants.%i128] {
+// CHECK:STDOUT:   %.loc17: type = splice_block %i128 [concrete = constants.%i128] {
 // CHECK:STDOUT:     %int_128: Core.IntLiteral = int_value 128 [concrete = constants.%int_128]
 // CHECK:STDOUT:     %i128: type = class_type @Int, @Int(constants.%int_128) [concrete = constants.%i128]
 // CHECK:STDOUT:   }
