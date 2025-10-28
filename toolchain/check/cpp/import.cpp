@@ -1456,6 +1456,9 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     // The parameter type is decayed but hasn't necessarily had its qualifiers
     // removed.
     // TODO: The presence of qualifiers here is probably a Clang bug.
+    // TODO: For const non nullable pointers (`C* _Nonnull const`), this removes
+    // both the const and the non-nullable attribute. We should probably
+    // preserve the non-nullable attribute.
     clang::QualType param_type = orig_param_type.getUnqualifiedType();
 
     // Mark the start of a region of insts, needed for the type expression
