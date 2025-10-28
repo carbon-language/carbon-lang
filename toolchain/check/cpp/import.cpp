@@ -1139,8 +1139,7 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
     // TODO: Handle floating-point types that map to named aliases.
   } else if (type.isVoidType()) {
     return ExprAsType(context, Parse::NodeId::None,
-                      context.types().GetInstId(GetSingletonType(
-                          context, SemIR::CppVoidType::TypeInstId)));
+                      SemIR::CppVoidType::TypeInstId);
   }
 
   return TypeExpr::None;
