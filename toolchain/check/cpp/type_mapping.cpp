@@ -194,7 +194,6 @@ static auto TryMapVoidPointer(Context& context, SemIR::TypeId type_id,
       context.types().Is<SemIR::PointerType>(wrapper_types.back())) {
     // `void*`.
     pointer_iter = wrapper_types.end() - 1;
-    // pointer_index = wrapper_types.size() - 1;
   } else if (wrapper_types.size() >= 2 &&
              context.types().Is<SemIR::ConstType>(wrapper_types.back()) &&
              context.types().Is<SemIR::PointerType>(
