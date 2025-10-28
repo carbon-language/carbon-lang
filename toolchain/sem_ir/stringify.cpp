@@ -310,6 +310,10 @@ class Stringifier {
     step_stack_->PushInstId(inst.inner_id);
   }
 
+  auto StringifyInst(InstId /*inst_id*/, CppVoidType /*inst*/) -> void {
+    *out_ << "Cpp.void";
+  }
+
   auto StringifyInst(InstId /*inst_id*/, CustomLayoutType inst) -> void {
     auto layout = sem_ir_->custom_layouts().Get(inst.layout_id);
     *out_ << "<size " << layout[CustomLayoutId::SizeIndex] << ", align "
@@ -375,10 +379,6 @@ class Stringifier {
   auto StringifyInst(InstId /*inst_id*/, FacetValue inst) -> void {
     // No need to output the witness.
     step_stack_->Push(inst.type_inst_id, " as ", inst.type_id);
-  }
-
-  auto StringifyInst(InstId /*inst_id*/, CppVoidType /*inst*/) -> void {
-    *out_ << "Cpp.void";
   }
 
   auto StringifyInst(InstId /*inst_id*/, FloatType inst) -> void {
