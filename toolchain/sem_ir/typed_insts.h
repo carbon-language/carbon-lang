@@ -52,7 +52,7 @@
 
 namespace Carbon::SemIR {
 
-// A singleton type.
+// A template for singleton types.
 template <InstKind::RawEnumType KindT, TemplateString IrName>
 struct SingletonTypeInst final {
   static constexpr auto Kind = InstKind::Make(KindT).Define<Parse::NoneNodeId>(
@@ -557,9 +557,6 @@ struct Deref {
 // required. For example, when there is a type checking issue, this will be used
 // in the type_id. It's typically used as a cue that semantic checking doesn't
 // need to issue further diagnostics.
-//
-// This is a singleton instruction. However, it may still evolve into a more
-// standard type and be removed.
 using ErrorInst = SingletonTypeInst<InstKind::ErrorInst, "<error>">;
 
 // An `export bind_name` declaration.
