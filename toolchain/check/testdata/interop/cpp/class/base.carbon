@@ -361,6 +361,7 @@ class V {
 // CHECK:STDOUT: --- use_derived_to_base_conversion.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %ptr.ddb: type = ptr_type %Derived [concrete]
 // CHECK:STDOUT:   %pattern_type.5c8: type = pattern_type %ptr.ddb [concrete]
@@ -368,7 +369,6 @@ class V {
 // CHECK:STDOUT:   %ptr.fb2: type = ptr_type %Base [concrete]
 // CHECK:STDOUT:   %pattern_type.72a: type = pattern_type %ptr.fb2 [concrete]
 // CHECK:STDOUT:   %ConvertPtr.type: type = fn_type @ConvertPtr [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %ConvertPtr: %ConvertPtr.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
@@ -579,8 +579,8 @@ class V {
 // CHECK:STDOUT: --- use_base_method.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %Derived.f.cpp_overload_set.type: type = cpp_overload_set_type @Derived.f.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Derived.f.cpp_overload_set.value: %Derived.f.cpp_overload_set.type = cpp_overload_set_value @Derived.f.cpp_overload_set [concrete]

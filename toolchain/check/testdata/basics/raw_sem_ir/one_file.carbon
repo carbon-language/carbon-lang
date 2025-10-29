@@ -369,6 +369,8 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(symbolic_constant00000004)}
 // CHECK:STDOUT:     'type(symbolic_constant00000008)':
 // CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(symbolic_constant0000000B)}
+// CHECK:STDOUT:     'type(inst(InstType))':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst60000024)}
 // CHECK:STDOUT:     'type(inst60000047)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst60000047)}
 // CHECK:STDOUT:     'type(inst(SpecificFunctionType))':
