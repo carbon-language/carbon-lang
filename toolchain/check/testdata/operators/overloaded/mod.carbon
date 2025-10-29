@@ -57,7 +57,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %C.as.ModAssignWith.impl.Op.type: type = fn_type @C.as.ModAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.ModAssignWith.impl.Op: %C.as.ModAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ModAssignWith.facet: %ModAssignWith.type.444 = facet_value %C, (%ModAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.f86: type = fn_type_with_self_type %ModWith.Op.type.140, %ModWith.facet [concrete]
+// CHECK:STDOUT:   %.e00: type = fn_type_with_self_type %ModWith.Op.type.140, %ModWith.facet [concrete]
 // CHECK:STDOUT:   %.a3f: type = fn_type_with_self_type %ModAssignWith.Op.type.dd0, %ModAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -68,7 +68,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem1: %.f86 = impl_witness_access constants.%ModWith.impl_witness, element1 [concrete = constants.%C.as.ModWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem1: %.e00 = impl_witness_access constants.%ModWith.impl_witness, element1 [concrete = constants.%C.as.ModWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.as.ModWith.impl.Op.call: init %C = call %bound_method(%a.ref, %b.ref) to %.loc30

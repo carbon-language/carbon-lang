@@ -322,13 +322,13 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %.loc13_4.1: ref %HasQualifiers = deref %p.ref.loc13
 // CHECK:STDOUT:   %const_this.ref.loc13: %HasQualifiers.const_this.cpp_overload_set.type = name_ref const_this, imports.%HasQualifiers.const_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.const_this.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %.loc13_4.1, %const_this.ref.loc13
-// CHECK:STDOUT:   %.loc13_4.2: %HasQualifiers = bind_value %.loc13_4.1
+// CHECK:STDOUT:   %.loc13_4.2: %HasQualifiers = acquire_value %.loc13_4.1
 // CHECK:STDOUT:   %const_this__carbon_thunk.call.loc13: init %empty_tuple.type = call imports.%const_this__carbon_thunk.decl(%.loc13_4.2)
 // CHECK:STDOUT:   %p.ref.loc14: %ptr.ec3 = name_ref p, %p
 // CHECK:STDOUT:   %.loc14_4.1: ref %HasQualifiers = deref %p.ref.loc14
 // CHECK:STDOUT:   %const_ref_this.ref.loc14: %HasQualifiers.const_ref_this.cpp_overload_set.type = name_ref const_ref_this, imports.%HasQualifiers.const_ref_this.cpp_overload_set.value [concrete = constants.%HasQualifiers.const_ref_this.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %.loc14_4.1, %const_ref_this.ref.loc14
-// CHECK:STDOUT:   %.loc14_4.2: %HasQualifiers = bind_value %.loc14_4.1
+// CHECK:STDOUT:   %.loc14_4.2: %HasQualifiers = acquire_value %.loc14_4.1
 // CHECK:STDOUT:   %const_ref_this__carbon_thunk.call.loc14: init %empty_tuple.type = call imports.%const_ref_this__carbon_thunk.decl(%.loc14_4.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -354,12 +354,12 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %HasQualifiers.F.efd4e4.2: %HasQualifiers.F.type.d208f0.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %facet_value.380: %type_where = facet_value %ptr.235, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.73d: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.380) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.62d: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.73d = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.00f: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.380) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.6d0: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.00f = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.5d5: type = ptr_type %ptr.235 [concrete]
 // CHECK:STDOUT:   %facet_value.d23: %type_where = facet_value %i32, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.a12: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.d23) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.a57: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.a12 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.d4e: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.d23) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.424: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.d4e = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -417,12 +417,12 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:     %ptr.loc9: type = ptr_type %i32.loc9 [concrete = constants.%ptr.235]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %ptr.235 = ref_binding b, %b.var
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9: <bound method> = bound_method %b.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.62d
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9: <bound method> = bound_method %b.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.6d0
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc9_3: <bound method> = bound_method %b.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc9_3: %ptr.5d5 = addr_of %b.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc9: init %empty_tuple.type = call %bound_method.loc9_3(%addr.loc9_3)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8: <bound method> = bound_method %a.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.a57
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8: <bound method> = bound_method %a.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.424
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8_3: <bound method> = bound_method %a.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc8: %ptr.235 = addr_of %a.var

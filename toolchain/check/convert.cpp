@@ -1015,7 +1015,7 @@ static auto PerformBuiltinConversion(
             {.type_id = target.type_id, .source_id = value_id});
 
         if (need_value_binding) {
-          value_id = AddInst<SemIR::BindValue>(
+          value_id = AddInst<SemIR::AcquireValue>(
               context, loc_id,
               {.type_id = target.type_id, .value_id = value_id});
         }
@@ -1226,9 +1226,9 @@ static auto PerformBuiltinConversion(
       // converting back to the type of the original symbolic binding facet
       // value.
       //
-      // In the case where the FacetAccessType wraps a BindSymbolicName with the
+      // In the case where the FacetAccessType wraps a SymbolicBinding with the
       // exact facet type that we are converting to, the resulting FacetValue
-      // would evaluate back to the original BindSymbolicName as its canonical
+      // would evaluate back to the original SymbolicBinding as its canonical
       // form. We can skip past the whole impl lookup step then and do that
       // here.
       //
@@ -1576,7 +1576,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
       // If we have a reference and don't want one, form a value binding.
       // TODO: Support types with custom value representations.
-      expr_id = AddInst<SemIR::BindValue>(
+      expr_id = AddInst<SemIR::AcquireValue>(
           context, SemIR::LocId(expr_id),
           {.type_id = target.type_id, .value_id = expr_id});
       // We now have a value expression.

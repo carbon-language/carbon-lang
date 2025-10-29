@@ -246,7 +246,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
     value_id = entry.scrutinee_id;
   }
   if (bind_name_id.has_value()) {
-    auto bind_name = context.insts().GetAs<SemIR::AnyBindName>(bind_name_id);
+    auto bind_name = context.insts().GetAs<SemIR::AnyBinding>(bind_name_id);
     CARBON_CHECK(!bind_name.value_id.has_value());
     bind_name.value_id = value_id;
     ReplaceInstBeforeConstantUse(context, bind_name_id, bind_name);

@@ -35,20 +35,20 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete]
-// CHECK:STDOUT:   %Self: %Animal.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Goat: type = class_type @Goat [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness file.%Animal.impl_witness_table [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self]
-// CHECK:STDOUT:   %a: %Animal.type = bind_symbolic_name a, 0 [symbolic]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %a: %Animal.type = symbolic_binding a, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.3c3: type = pattern_type %Animal.type [concrete]
 // CHECK:STDOUT:   %WalkAnimal.type: type = fn_type @WalkAnimal [concrete]
 // CHECK:STDOUT:   %WalkAnimal: %WalkAnimal.type = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %x: type = bind_symbolic_name x, 0 [symbolic]
+// CHECK:STDOUT:   %x: type = symbolic_binding x, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -80,16 +80,16 @@ fn F() {
 // CHECK:STDOUT:     %a.patt: %pattern_type.3c3 = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc20: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
-// CHECK:STDOUT:       %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc20_15.2: %Animal.type = bind_symbolic_name a, 0 [symbolic = %a.loc20_15.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc20_15.2: %Animal.type = symbolic_binding a, 0 [symbolic = %a.loc20_15.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Animal {
-// CHECK:STDOUT:   %Self: %Animal.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -110,7 +110,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @WalkAnimal(%a.loc20_15.2: %Animal.type) {
-// CHECK:STDOUT:   %a.loc20_15.1: %Animal.type = bind_symbolic_name a, 0 [symbolic = %a.loc20_15.1 (constants.%a)]
+// CHECK:STDOUT:   %a.loc20_15.1: %Animal.type = symbolic_binding a, 0 [symbolic = %a.loc20_15.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -126,8 +126,8 @@ fn F() {
 // CHECK:STDOUT:     %x.patt: %pattern_type.98f = symbolic_binding_pattern x, 0 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
-// CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:   %x: type = bind_symbolic_name x, 0, %Goat.ref [symbolic = constants.%x]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:   %x: type = symbolic_binding x, 0, %Goat.ref [symbolic = constants.%x]
 // CHECK:STDOUT:   %WalkAnimal.ref: %WalkAnimal.type = name_ref WalkAnimal, file.%WalkAnimal.decl [concrete = constants.%WalkAnimal]
 // CHECK:STDOUT:   %x.ref: type = name_ref x, %x [symbolic = constants.%x]
 // CHECK:STDOUT:   return

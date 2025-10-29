@@ -53,13 +53,13 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %a: type = bind_alias a, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %a: type = alias_binding a, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %a.ref: type = name_ref a, %a [concrete = constants.%C]
-// CHECK:STDOUT:   %b: type = bind_alias b, %a [concrete = constants.%C]
+// CHECK:STDOUT:   %b: type = alias_binding b, %a [concrete = constants.%C]
 // CHECK:STDOUT:   %b.ref: type = name_ref b, %b [concrete = constants.%C]
-// CHECK:STDOUT:   %c: type = bind_alias c, %b [concrete = constants.%C]
+// CHECK:STDOUT:   %c: type = alias_binding c, %b [concrete = constants.%C]
 // CHECK:STDOUT:   %c.ref: type = name_ref c, %c [concrete = constants.%C]
-// CHECK:STDOUT:   %d: type = bind_alias d, %c [concrete = constants.%C]
+// CHECK:STDOUT:   %d: type = alias_binding d, %c [concrete = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

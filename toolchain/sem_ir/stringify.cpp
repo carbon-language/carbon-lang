@@ -281,7 +281,7 @@ class Stringifier {
   }
 
   template <typename InstT>
-    requires(SameAsOneOf<InstT, BindAlias, BindSymbolicName, ExportDecl>)
+    requires(SameAsOneOf<InstT, AliasBinding, SymbolicBinding, ExportDecl>)
   auto StringifyInst(InstId /*inst_id*/, InstT inst) -> void {
     step_stack_->PushEntityNameId(inst.entity_name_id);
   }
@@ -503,7 +503,7 @@ class Stringifier {
     if (auto lookup =
             sem_ir_->insts().TryGetAs<LookupImplWitness>(witness_inst_id)) {
       bool period_self = false;
-      if (auto sym_name = sem_ir_->insts().TryGetAs<BindSymbolicName>(
+      if (auto sym_name = sem_ir_->insts().TryGetAs<SymbolicBinding>(
               lookup->query_self_inst_id)) {
         auto name_id =
             sem_ir_->entity_names().Get(sym_name->entity_name_id).name_id;
