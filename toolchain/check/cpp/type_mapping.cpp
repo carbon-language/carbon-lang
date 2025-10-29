@@ -189,21 +189,19 @@ static auto TryMapVoidPointer(Context& context, SemIR::TypeId type_id,
     return clang::QualType();
   }
 
-  llvm::SmallVector<SemIR::TypeId>::iterator pointer_iter;
   if (context.types().Is<SemIR::PointerType>(wrapper_types.back())) {
     // `void*`.
-    pointer_iter = wrapper_types.end() - 1;
+    wrapper_types.pop_back();
   } else if (wrapper_types.size() >= 2 &&
              context.types().Is<SemIR::ConstType>(wrapper_types.back()) &&
              context.types().Is<SemIR::PointerType>(
                  wrapper_types[wrapper_types.size() - 2])) {
     // `const void*`.
-    pointer_iter = wrapper_types.end() - 2;
+    wrapper_types.erase(wrapper_types.end() - 2);
   } else {
     return clang::QualType();
   }
 
-  wrapper_types.erase(pointer_iter);
   return context.ast_context().getAttributedType(
       clang::attr::TypeNonNull, context.ast_context().VoidPtrTy,
       context.ast_context().VoidPtrTy);
