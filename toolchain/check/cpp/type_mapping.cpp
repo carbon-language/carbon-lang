@@ -195,6 +195,33 @@ static auto MapNonWrapperType(Context& context, SemIR::InstId inst_id,
   }
 }
 
+// Returns `void*` if the type is a wrapped `Cpp.void*`, consuming the pointer
+// from `wrapper_types`. Otherwise returns no type.
+static auto TryMapVoidPointer(Context& context, SemIR::TypeId type_id,
+                              llvm::SmallVector<SemIR::TypeId>& wrapper_types)
+    -> clang::QualType {
+  if (type_id != SemIR::CppVoidType::TypeId || wrapper_types.empty()) {
+    return clang::QualType();
+  }
+
+  if (context.types().Is<SemIR::PointerType>(wrapper_types.back())) {
+    // `void*`.
+    wrapper_types.pop_back();
+  } else if (wrapper_types.size() >= 2 &&
+             context.types().Is<SemIR::ConstType>(wrapper_types.back()) &&
+             context.types().Is<SemIR::PointerType>(
+                 wrapper_types[wrapper_types.size() - 2])) {
+    // `const void*`.
+    wrapper_types.erase(wrapper_types.end() - 2);
+  } else {
+    return clang::QualType();
+  }
+
+  return context.ast_context().getAttributedType(
+      clang::attr::TypeNonNull, context.ast_context().VoidPtrTy,
+      context.ast_context().VoidPtrTy);
+}
+
 // Maps a Carbon type to a C++ type. Accepts an InstId, representing a value
 // whose type is mapped to a C++ type. Returns `clang::QualType` if the mapping
 // succeeds, or `clang::QualType::isNull()` if the type is not supported.
@@ -219,9 +246,13 @@ static auto MapToCppType(Context& context, SemIR::InstId inst_id)
     wrapper_types.push_back(orig_type_id);
   }
 
-  clang::QualType mapped_type = MapNonWrapperType(context, inst_id, type_id);
+  clang::QualType mapped_type =
+      TryMapVoidPointer(context, type_id, wrapper_types);
   if (mapped_type.isNull()) {
-    return mapped_type;
+    mapped_type = MapNonWrapperType(context, inst_id, type_id);
+    if (mapped_type.isNull()) {
+      return mapped_type;
+    }
   }
 
   for (auto wrapper_type_id : llvm::reverse(wrapper_types)) {

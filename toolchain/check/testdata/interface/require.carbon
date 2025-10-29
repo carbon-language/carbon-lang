@@ -185,7 +185,7 @@ fn F(T:! Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = <unexpected>.inst6000001C
+// CHECK:STDOUT:   .Self = <unexpected>.inst6000001D
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -196,7 +196,7 @@ fn F(T:! Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = <unexpected>.inst5000001C
+// CHECK:STDOUT:   .Self = <unexpected>.inst5000001D
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -207,7 +207,7 @@ fn F(T:! Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = <unexpected>.inst68000022
+// CHECK:STDOUT:   .Self = <unexpected>.inst68000023
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -218,7 +218,7 @@ fn F(T:! Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = <unexpected>.inst58000019
+// CHECK:STDOUT:   .Self = <unexpected>.inst5800001A
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -228,12 +228,12 @@ fn F(T:! Z) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Z(<unexpected>.inst78000016.loc6_13: type) {
+// CHECK:STDOUT: generic interface @Z(<unexpected>.inst78000017.loc6_13: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = <unexpected>.inst78000020
+// CHECK:STDOUT:     .Self = <unexpected>.inst78000021
 // CHECK:STDOUT:     witness = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -248,12 +248,12 @@ fn F(T:! Z) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Z(<unexpected>.inst44000016.loc6_13: type) {
+// CHECK:STDOUT: generic interface @Z(<unexpected>.inst44000017.loc6_13: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = <unexpected>.inst44000020
+// CHECK:STDOUT:     .Self = <unexpected>.inst44000021
 // CHECK:STDOUT:     witness = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -269,7 +269,7 @@ fn F(T:! Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = <unexpected>.inst6400001C
+// CHECK:STDOUT:   .Self = <unexpected>.inst6400001D
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

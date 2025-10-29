@@ -1081,11 +1081,10 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %Foo.decl.loc18: %Foo.type.39e446.2 = class_decl @Foo.loc18 [concrete = constants.%Foo.generic.80461b.2] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc18: type = splice_block %const.loc18_15 [concrete = constants.%const] {
+// CHECK:STDOUT:     %.loc18: type = splice_block %const [concrete = constants.%const] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %const.loc18_22: type = const_type %C.ref [concrete = constants.%const]
-// CHECK:STDOUT:       %const.loc18_15: type = const_type %const.loc18_22 [concrete = constants.%const]
+// CHECK:STDOUT:       %const: type = const_type %C.ref [concrete = constants.%const]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc18_11.2: %const = symbolic_binding a, 0 [symbolic = %a.loc18_11.1 (constants.%a)]
 // CHECK:STDOUT:   }

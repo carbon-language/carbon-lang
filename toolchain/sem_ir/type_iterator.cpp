@@ -86,6 +86,7 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
     case BoolType::Kind:
     case CharLiteralType::Kind:
     case CppOverloadSetType::Kind:
+    case CppVoidType::Kind:
     case FacetType::Kind:
     case FloatLiteralType::Kind:
     case FloatType::Kind:

@@ -1160,11 +1160,10 @@ interface Foo(a:! const (const C)) {}
 // CHECK:STDOUT:   %Foo.decl.loc18: %Foo.type.5380b8.2 = interface_decl @Foo.loc18 [concrete = constants.%Foo.generic.ec3175.2] {
 // CHECK:STDOUT:     %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc18: type = splice_block %const.loc18_19 [concrete = constants.%const] {
+// CHECK:STDOUT:     %.loc18: type = splice_block %const [concrete = constants.%const] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %const.loc18_26: type = const_type %C.ref [concrete = constants.%const]
-// CHECK:STDOUT:       %const.loc18_19: type = const_type %const.loc18_26 [concrete = constants.%const]
+// CHECK:STDOUT:       %const: type = const_type %C.ref [concrete = constants.%const]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc18_15.2: %const = symbolic_binding a, 0 [symbolic = %a.loc18_15.1 (constants.%a)]
 // CHECK:STDOUT:   }

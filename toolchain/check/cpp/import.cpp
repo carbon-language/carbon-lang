@@ -1137,6 +1137,9 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
               context.ints().Add(ast_context.getTypeSize(qual_type))));
     }
     // TODO: Handle floating-point types that map to named aliases.
+  } else if (type.isVoidType()) {
+    return ExprAsType(context, Parse::NodeId::None,
+                      SemIR::CppVoidType::TypeInstId);
   }
 
   return TypeExpr::None;
@@ -1456,6 +1459,9 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     // The parameter type is decayed but hasn't necessarily had its qualifiers
     // removed.
     // TODO: The presence of qualifiers here is probably a Clang bug.
+    // TODO: For const non nullable pointers (`C* _Nonnull const`), this removes
+    // both the const and the non-nullable attribute. We should probably
+    // preserve the non-nullable attribute.
     clang::QualType param_type = orig_param_type.getUnqualifiedType();
 
     // Mark the start of a region of insts, needed for the type expression
@@ -2116,6 +2122,7 @@ static auto LookupBuiltinTypes(Context& context, SemIR::LocId loc_id,
           .Case("float", ast_context.FloatTy)
           .Case("double", ast_context.DoubleTy)
           .Case("long_double", ast_context.LongDoubleTy)
+          .Case("void", ast_context.VoidTy)
           .Default(clang::QualType());
   if (builtin_type.isNull()) {
     return SemIR::InstId::None;
