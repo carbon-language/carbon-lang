@@ -9,7 +9,7 @@
 namespace Carbon::Lower {
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::BindValue inst) -> void {
+                SemIR::AcquireValue inst) -> void {
   auto inst_type = context.GetTypeIdOfInst(inst_id);
   switch (context.GetValueRepr(inst_type).repr.kind) {
     case SemIR::ValueRepr::Unknown:
@@ -34,7 +34,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
       context.SetLocal(inst_id, context.GetValue(inst.value_id));
       break;
     case SemIR::ValueRepr::Custom:
-      CARBON_FATAL("TODO: Add support for BindValue with custom value rep");
+      CARBON_FATAL("TODO: Add support for AcquireValue with custom value rep");
   }
 }
 

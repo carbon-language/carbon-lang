@@ -1013,8 +1013,8 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       return;
     }
 
-    case CARBON_KIND(BindSymbolicName bind): {
-      // A BindSymbolicName with no value is a purely symbolic binding, such as
+    case CARBON_KIND(SymbolicBinding bind): {
+      // A SymbolicBinding with no value is a purely symbolic binding, such as
       // the `Self` in an interface. Don't print out `none` for the value.
       if (bind.value_id.has_value()) {
         FormatArgs(bind.entity_name_id, bind.value_id);

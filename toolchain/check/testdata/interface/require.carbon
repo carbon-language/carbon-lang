@@ -382,14 +382,14 @@ interface Z(T:! type) {
 // CHECK:STDOUT: --- require_impls_self_specific.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Z.type.9fb: type = generic_interface_type @Z [concrete]
 // CHECK:STDOUT:   %Z.generic: %Z.type.9fb = struct_value () [concrete]
-// CHECK:STDOUT:   %Z.type.dd5: type = facet_type <@Z, @Z(%T)> [symbolic]
-// CHECK:STDOUT:   %Self: %Z.type.dd5 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Z.type.4d7: type = facet_type <@Z, @Z(%T)> [symbolic]
+// CHECK:STDOUT:   %Self: %Z.type.4d7 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic]
-// CHECK:STDOUT:   %Z.type.f19: type = facet_type <@Z, @Z(%Self.binding.as_type)> [symbolic]
+// CHECK:STDOUT:   %Z.type.49d: type = facet_type <@Z, @Z(%Self.binding.as_type)> [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -400,17 +400,17 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %T.loc4_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_13.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_13.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_13.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Z(%T.loc4_13.2: type) {
-// CHECK:STDOUT:   %T.loc4_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_13.1 (constants.%T)]
+// CHECK:STDOUT:   %T.loc4_13.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_13.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %Z.type.loc5: type = facet_type <@Z, @Z(%Self.binding.as_type)> [symbolic = %Z.type.loc5 (constants.%Z.type.f19)]
+// CHECK:STDOUT:   %Z.type.loc5: type = facet_type <@Z, @Z(%Self.binding.as_type)> [symbolic = %Z.type.loc5 (constants.%Z.type.49d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     <elided>
@@ -456,13 +456,13 @@ interface Z(T:! type) {
 // CHECK:STDOUT: --- require_same.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Z.type.9fb: type = generic_interface_type @Z [concrete]
 // CHECK:STDOUT:   %Z.generic: %Z.type.9fb = struct_value () [concrete]
-// CHECK:STDOUT:   %Z.type.dd5: type = facet_type <@Z, @Z(%T)> [symbolic]
-// CHECK:STDOUT:   %Self.cbb: %Z.type.dd5 = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type.be9: type = symbolic_binding_type Self, 1, %Self.cbb [symbolic]
+// CHECK:STDOUT:   %Z.type.4d7: type = facet_type <@Z, @Z(%T)> [symbolic]
+// CHECK:STDOUT:   %Self.c41: %Z.type.4d7 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.binding.as_type.6a8: type = symbolic_binding_type Self, 1, %Self.c41 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -473,16 +473,16 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %T.loc8_13.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_13.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_13.2: type = symbolic_binding T, 0 [symbolic = %T.loc8_13.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Z(%T.loc8_13.2: type) {
-// CHECK:STDOUT:   %T.loc8_13.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_13.1 (constants.%T)]
+// CHECK:STDOUT:   %T.loc8_13.1: type = symbolic_binding T, 0 [symbolic = %T.loc8_13.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.be9)]
+// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.6a8)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     <elided>

@@ -57,7 +57,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %C.as.BitOrAssignWith.impl.Op.type: type = fn_type @C.as.BitOrAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.BitOrAssignWith.impl.Op: %C.as.BitOrAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %BitOrAssignWith.facet: %BitOrAssignWith.type.de7 = facet_value %C, (%BitOrAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.9e6: type = fn_type_with_self_type %BitOrWith.Op.type.501, %BitOrWith.facet [concrete]
+// CHECK:STDOUT:   %.6a1: type = fn_type_with_self_type %BitOrWith.Op.type.501, %BitOrWith.facet [concrete]
 // CHECK:STDOUT:   %.59c: type = fn_type_with_self_type %BitOrAssignWith.Op.type.efc, %BitOrAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -68,7 +68,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem1: %.9e6 = impl_witness_access constants.%BitOrWith.impl_witness, element1 [concrete = constants.%C.as.BitOrWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem1: %.6a1 = impl_witness_access constants.%BitOrWith.impl_witness, element1 [concrete = constants.%C.as.BitOrWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.as.BitOrWith.impl.Op.call: init %C = call %bound_method(%a.ref, %b.ref) to %.loc30

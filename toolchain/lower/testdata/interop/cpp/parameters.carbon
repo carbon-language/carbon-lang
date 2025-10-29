@@ -121,49 +121,43 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   %.loc7_22.3.temp = alloca i16, align 2, !dbg !11
 // CHECK:STDOUT:   %.loc9_21.3.temp = alloca i8, align 1, !dbg !12
 // CHECK:STDOUT:   %.loc9_24.3.temp = alloca i16, align 2, !dbg !13
-// CHECK:STDOUT:   %.loc9_27.3.temp = alloca i32, align 4, !dbg !14
-// CHECK:STDOUT:   %.loc9_30.3.temp = alloca i64, align 8, !dbg !15
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_19.3.temp), !dbg !10
 // CHECK:STDOUT:   store i8 1, ptr %.loc7_19.3.temp, align 1, !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_22.3.temp), !dbg !11
 // CHECK:STDOUT:   store i16 2, ptr %.loc7_22.3.temp, align 2, !dbg !11
-// CHECK:STDOUT:   call void @_Z11pass_signedasil.carbon_thunk(ptr %.loc7_19.3.temp, ptr %.loc7_22.3.temp, i32 3, i64 4), !dbg !16
+// CHECK:STDOUT:   call void @_Z11pass_signedasil.carbon_thunk(ptr %.loc7_19.3.temp, ptr %.loc7_22.3.temp, i32 3, i64 4), !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_21.3.temp), !dbg !12
 // CHECK:STDOUT:   store i8 1, ptr %.loc9_21.3.temp, align 1, !dbg !12
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_24.3.temp), !dbg !13
 // CHECK:STDOUT:   store i16 2, ptr %.loc9_24.3.temp, align 2, !dbg !13
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_27.3.temp), !dbg !14
-// CHECK:STDOUT:   store i32 3, ptr %.loc9_27.3.temp, align 4, !dbg !14
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_30.3.temp), !dbg !15
-// CHECK:STDOUT:   store i64 4, ptr %.loc9_30.3.temp, align 4, !dbg !15
-// CHECK:STDOUT:   call void @_Z13pass_unsignedhtjm.carbon_thunk(ptr %.loc9_21.3.temp, ptr %.loc9_24.3.temp, ptr %.loc9_27.3.temp, ptr %.loc9_30.3.temp), !dbg !17
-// CHECK:STDOUT:   ret void, !dbg !18
+// CHECK:STDOUT:   call void @_Z13pass_unsignedhtjm.carbon_thunk(ptr %.loc9_21.3.temp, ptr %.loc9_24.3.temp, i32 3, i64 4), !dbg !15
+// CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i16 @_CMakeShort.Main()
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CPassShort.Main(i16 %a, ptr %b) !dbg !19 {
+// CHECK:STDOUT: define void @_CPassShort.Main(i16 %a, ptr %b) !dbg !17 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc17_18.1.temp = alloca i16, align 2, !dbg !20
-// CHECK:STDOUT:   %.loc18_18.3.temp = alloca i16, align 2, !dbg !21
-// CHECK:STDOUT:   %.loc19_18.2.temp = alloca i16, align 2, !dbg !22
-// CHECK:STDOUT:   %.loc20_28.3.temp = alloca i16, align 2, !dbg !23
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_18.1.temp), !dbg !20
-// CHECK:STDOUT:   store i16 %a, ptr %.loc17_18.1.temp, align 2, !dbg !20
-// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc17_18.1.temp), !dbg !24
-// CHECK:STDOUT:   %.loc18_18.2 = load i16, ptr %b, align 2, !dbg !21
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_18.3.temp), !dbg !21
-// CHECK:STDOUT:   store i16 %.loc18_18.2, ptr %.loc18_18.3.temp, align 2, !dbg !21
-// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc18_18.3.temp), !dbg !25
-// CHECK:STDOUT:   %.loc19_18.1 = load i16, ptr @_Cc.Main, align 2, !dbg !22
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_18.2.temp), !dbg !22
-// CHECK:STDOUT:   store i16 %.loc19_18.1, ptr %.loc19_18.2.temp, align 2, !dbg !22
-// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc19_18.2.temp), !dbg !26
-// CHECK:STDOUT:   %MakeShort.call = call i16 @_CMakeShort.Main(), !dbg !23
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_28.3.temp), !dbg !23
-// CHECK:STDOUT:   store i16 %MakeShort.call, ptr %.loc20_28.3.temp, align 2, !dbg !23
-// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc20_28.3.temp), !dbg !27
-// CHECK:STDOUT:   ret void, !dbg !28
+// CHECK:STDOUT:   %.loc17_18.1.temp = alloca i16, align 2, !dbg !18
+// CHECK:STDOUT:   %.loc18_18.3.temp = alloca i16, align 2, !dbg !19
+// CHECK:STDOUT:   %.loc19_18.2.temp = alloca i16, align 2, !dbg !20
+// CHECK:STDOUT:   %.loc20_28.3.temp = alloca i16, align 2, !dbg !21
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_18.1.temp), !dbg !18
+// CHECK:STDOUT:   store i16 %a, ptr %.loc17_18.1.temp, align 2, !dbg !18
+// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc17_18.1.temp), !dbg !22
+// CHECK:STDOUT:   %.loc18_18.2 = load i16, ptr %b, align 2, !dbg !19
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_18.3.temp), !dbg !19
+// CHECK:STDOUT:   store i16 %.loc18_18.2, ptr %.loc18_18.3.temp, align 2, !dbg !19
+// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc18_18.3.temp), !dbg !23
+// CHECK:STDOUT:   %.loc19_18.1 = load i16, ptr @_Cc.Main, align 2, !dbg !20
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_18.2.temp), !dbg !20
+// CHECK:STDOUT:   store i16 %.loc19_18.1, ptr %.loc19_18.2.temp, align 2, !dbg !20
+// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc19_18.2.temp), !dbg !24
+// CHECK:STDOUT:   %MakeShort.call = call i16 @_CMakeShort.Main(), !dbg !21
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_28.3.temp), !dbg !21
+// CHECK:STDOUT:   store i16 %MakeShort.call, ptr %.loc20_28.3.temp, align 2, !dbg !21
+// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc20_28.3.temp), !dbg !25
+// CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -193,25 +187,23 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: declare void @_Z11pass_signedasil(i8 signext, i16 signext, i32, i64) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
-// CHECK:STDOUT: define dso_local void @_Z13pass_unsignedhtjm.carbon_thunk(ptr %0, ptr %1, ptr %2, ptr %3) #1 {
+// CHECK:STDOUT: define dso_local void @_Z13pass_unsignedhtjm.carbon_thunk(ptr %0, ptr %1, i32 %2, i64 %3) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %.addr1 = alloca ptr, align 8
-// CHECK:STDOUT:   %.addr2 = alloca ptr, align 8
-// CHECK:STDOUT:   %.addr3 = alloca ptr, align 8
+// CHECK:STDOUT:   %.addr2 = alloca i32, align 4
+// CHECK:STDOUT:   %.addr3 = alloca i64, align 8
 // CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8
 // CHECK:STDOUT:   store ptr %1, ptr %.addr1, align 8
-// CHECK:STDOUT:   store ptr %2, ptr %.addr2, align 8
-// CHECK:STDOUT:   store ptr %3, ptr %.addr3, align 8
+// CHECK:STDOUT:   store i32 %2, ptr %.addr2, align 4
+// CHECK:STDOUT:   store i64 %3, ptr %.addr3, align 8
 // CHECK:STDOUT:   %4 = load ptr, ptr %.addr, align 8
 // CHECK:STDOUT:   %5 = load i8, ptr %4, align 1
 // CHECK:STDOUT:   %6 = load ptr, ptr %.addr1, align 8
 // CHECK:STDOUT:   %7 = load i16, ptr %6, align 2
-// CHECK:STDOUT:   %8 = load ptr, ptr %.addr2, align 8
-// CHECK:STDOUT:   %9 = load i32, ptr %8, align 4
-// CHECK:STDOUT:   %10 = load ptr, ptr %.addr3, align 8
-// CHECK:STDOUT:   %11 = load i64, ptr %10, align 8
-// CHECK:STDOUT:   call void @_Z13pass_unsignedhtjm(i8 zeroext %5, i16 zeroext %7, i32 %9, i64 %11)
+// CHECK:STDOUT:   %8 = load i32, ptr %.addr2, align 4
+// CHECK:STDOUT:   %9 = load i64, ptr %.addr3, align 8
+// CHECK:STDOUT:   call void @_Z13pass_unsignedhtjm(i8 zeroext %5, i16 zeroext %7, i32 %8, i64 %9)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -231,7 +223,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: declare void @_Z10pass_shorts(i16 signext) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 7, 6, 5, 4, 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -254,21 +246,19 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !11 = !DILocation(line: 7, column: 22, scope: !7)
 // CHECK:STDOUT: !12 = !DILocation(line: 9, column: 21, scope: !7)
 // CHECK:STDOUT: !13 = !DILocation(line: 9, column: 24, scope: !7)
-// CHECK:STDOUT: !14 = !DILocation(line: 9, column: 27, scope: !7)
-// CHECK:STDOUT: !15 = !DILocation(line: 9, column: 30, scope: !7)
-// CHECK:STDOUT: !16 = !DILocation(line: 7, column: 3, scope: !7)
-// CHECK:STDOUT: !17 = !DILocation(line: 9, column: 3, scope: !7)
-// CHECK:STDOUT: !18 = !DILocation(line: 6, column: 1, scope: !7)
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "PassShort", linkageName: "_CPassShort.Main", scope: null, file: !6, line: 16, type: !8, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !20 = !DILocation(line: 17, column: 18, scope: !19)
-// CHECK:STDOUT: !21 = !DILocation(line: 18, column: 18, scope: !19)
-// CHECK:STDOUT: !22 = !DILocation(line: 19, column: 18, scope: !19)
-// CHECK:STDOUT: !23 = !DILocation(line: 20, column: 18, scope: !19)
-// CHECK:STDOUT: !24 = !DILocation(line: 17, column: 3, scope: !19)
-// CHECK:STDOUT: !25 = !DILocation(line: 18, column: 3, scope: !19)
-// CHECK:STDOUT: !26 = !DILocation(line: 19, column: 3, scope: !19)
-// CHECK:STDOUT: !27 = !DILocation(line: 20, column: 3, scope: !19)
-// CHECK:STDOUT: !28 = !DILocation(line: 16, column: 1, scope: !19)
+// CHECK:STDOUT: !14 = !DILocation(line: 7, column: 3, scope: !7)
+// CHECK:STDOUT: !15 = !DILocation(line: 9, column: 3, scope: !7)
+// CHECK:STDOUT: !16 = !DILocation(line: 6, column: 1, scope: !7)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "PassShort", linkageName: "_CPassShort.Main", scope: null, file: !6, line: 16, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !18 = !DILocation(line: 17, column: 18, scope: !17)
+// CHECK:STDOUT: !19 = !DILocation(line: 18, column: 18, scope: !17)
+// CHECK:STDOUT: !20 = !DILocation(line: 19, column: 18, scope: !17)
+// CHECK:STDOUT: !21 = !DILocation(line: 20, column: 18, scope: !17)
+// CHECK:STDOUT: !22 = !DILocation(line: 17, column: 3, scope: !17)
+// CHECK:STDOUT: !23 = !DILocation(line: 18, column: 3, scope: !17)
+// CHECK:STDOUT: !24 = !DILocation(line: 19, column: 3, scope: !17)
+// CHECK:STDOUT: !25 = !DILocation(line: 20, column: 3, scope: !17)
+// CHECK:STDOUT: !26 = !DILocation(line: 16, column: 1, scope: !17)
 // CHECK:STDOUT: ; ModuleID = 'import_struct.carbon'
 // CHECK:STDOUT: source_filename = "import_struct.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"

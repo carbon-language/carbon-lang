@@ -67,11 +67,11 @@ static auto GetSelfBinding(Context& context,
   auto self_binding_id = bindings[interface_args.size()];
 
   // Check that we found the self binding. The binding might be a
-  // `BindSymbolicName` or an `ImportRef` naming one.
+  // `SymbolicBinding` or an `ImportRef` naming one.
   auto self_binding_const_inst_id =
       context.constant_values().GetConstantInstId(self_binding_id);
-  auto bind_name_inst = context.insts().GetAs<SemIR::BindSymbolicName>(
-      self_binding_const_inst_id);
+  auto bind_name_inst =
+      context.insts().GetAs<SemIR::SymbolicBinding>(self_binding_const_inst_id);
   CARBON_CHECK(
       context.entity_names().Get(bind_name_inst.entity_name_id).name_id ==
           SemIR::NameId::SelfType,
@@ -163,7 +163,7 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
     if (index_delta) {
       // If this parameter would have a new index in the context described by
       // `enclosing_specific_id`, form a new binding with an adjusted index.
-      auto bind_name = context.insts().GetAs<SemIR::BindSymbolicName>(
+      auto bind_name = context.insts().GetAs<SemIR::SymbolicBinding>(
           context.constant_values().GetConstantInstId(arg_id));
       auto entity_name = context.entity_names().Get(bind_name.entity_name_id);
       entity_name.bind_index_value += index_delta;
@@ -230,9 +230,9 @@ auto AddSelfGenericParameter(Context& context, SemIR::TypeId type_id,
       SemIR::NameId::SelfType, scope_id,
       context.scope_stack().AddCompileTimeBinding(), is_template);
   // Because there is no equivalent non-symbolic value, we use `None` as
-  // the `value_id` on the `BindSymbolicName`.
+  // the `value_id` on the `SymbolicBinding`.
   auto self_param_inst_id =
-      AddInst(context, SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>(
+      AddInst(context, SemIR::LocIdAndInst::NoLoc<SemIR::SymbolicBinding>(
                            {.type_id = type_id,
                             .entity_name_id = entity_name_id,
                             .value_id = SemIR::InstId::None}));

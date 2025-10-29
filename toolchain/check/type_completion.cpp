@@ -142,6 +142,13 @@ class TypeCompleter {
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/, SemIR::ConstType inst) const
       -> SemIR::CompleteTypeInfo;
 
+  auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
+                        SemIR::CppVoidType /*inst*/) const
+      -> SemIR::CompleteTypeInfo {
+    // TODO: `CppVoidType` should be always-incomplete.
+    return {.value_repr = MakeEmptyValueRepr()};
+  }
+
   auto BuildInfoForInst(SemIR::TypeId type_id,
                         SemIR::CustomLayoutType inst) const
       -> SemIR::CompleteTypeInfo;

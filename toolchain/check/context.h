@@ -176,7 +176,7 @@ class Context {
   // TODO: Consider putting this behind a narrower API to guard against emitting
   // multiple times.
   struct BindingPatternInfo {
-    // The corresponding AnyBindName inst.
+    // The corresponding AnyBinding inst.
     SemIR::InstId bind_name_id;
     // The region of insts that computes the type of the binding.
     SemIR::ExprRegionId type_expr_region_id;

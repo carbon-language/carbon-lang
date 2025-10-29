@@ -59,11 +59,6 @@ auto AddSelfParamPattern(Context& context, SemIR::LocId loc_id,
                          SemIR::ExprRegionId type_expr_region_id,
                          SemIR::TypeId type_id) -> SemIR::InstId;
 
-// As the above, but for `addr self: Self*`.
-auto AddAddrSelfParamPattern(Context& context, SemIR::LocId loc_id,
-                             SemIR::ExprRegionId type_expr_region_id,
-                             SemIR::TypeInstId type_inst_id) -> SemIR::InstId;
-
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_PATTERN_H_

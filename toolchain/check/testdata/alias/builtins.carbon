@@ -62,7 +62,7 @@ let a_test: bool = a;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %a: <error> = bind_alias a, <error> [concrete = <error>]
+// CHECK:STDOUT:   %a: <error> = alias_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bool.carbon
@@ -77,7 +77,7 @@ let a_test: bool = a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:   %b: <error> = bind_alias b, <error> [concrete = <error>]
+// CHECK:STDOUT:   %b: <error> = alias_binding b, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_bool_value.carbon
@@ -94,7 +94,7 @@ let a_test: bool = a;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:   %a: <error> = bind_alias a, <error> [concrete = <error>]
+// CHECK:STDOUT:   %a: <error> = alias_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a_test.patt: %pattern_type.831 = value_binding_pattern a_test [concrete]
 // CHECK:STDOUT:   }
