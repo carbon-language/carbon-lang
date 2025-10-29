@@ -62,6 +62,20 @@ fn G(T:! Generic(B)) {
   F(T);
 }
 
+// --- fail_args_count_mismatch.carbon
+library "[[@TEST_NAME]]";
+
+interface Generic(T:! type) {}
+
+// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE+7]]:10: error: 2 arguments passed to generic interface expecting 1 argument [CallArgCountMismatch]
+// CHECK:STDERR: fn F(T:! Generic((), ())) {}
+// CHECK:STDERR:          ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE-5]]:1: note: calling generic interface declared here [InCallToEntity]
+// CHECK:STDERR: interface Generic(T:! type) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(T:! Generic((), ())) {}
+
 // CHECK:STDOUT: --- generic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -518,4 +532,75 @@ fn G(T:! Generic(B)) {
 // CHECK:STDOUT: specific @G(constants.%T.7ca) {
 // CHECK:STDOUT:   %T.loc10_6.1 => constants.%T.7ca
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_args_count_mismatch.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %Generic.type.c21: type = generic_interface_type @Generic [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %Generic.generic: %Generic.type.c21 = struct_value () [concrete]
+// CHECK:STDOUT:   %Generic.type.68b: type = facet_type <@Generic, @Generic(%T)> [symbolic]
+// CHECK:STDOUT:   %Self: %Generic.type.68b = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Generic = %Generic.decl
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Generic.decl: %Generic.type.c21 = interface_decl @Generic [concrete = constants.%Generic.generic] {
+// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %T.loc3_19.2: type = symbolic_binding T, 0 [symbolic = %T.loc3_19.1 (constants.%T)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %T.patt: <error> = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %Generic.ref: %Generic.type.c21 = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
+// CHECK:STDOUT:       %.loc12_19: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc12_23: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %T: <error> = symbolic_binding T, 0 [concrete = <error>]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic interface @Generic(%T.loc3_19.2: type) {
+// CHECK:STDOUT:   %T.loc3_19.1: type = symbolic_binding T, 0 [symbolic = %T.loc3_19.1 (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Generic.type: type = facet_type <@Generic, @Generic(%T.loc3_19.1)> [symbolic = %Generic.type (constants.%Generic.type.68b)]
+// CHECK:STDOUT:   %Self.2: @Generic.%Generic.type (%Generic.type.68b) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   interface {
+// CHECK:STDOUT:     %Self.1: @Generic.%Generic.type (%Generic.type.68b) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @F(%T: <error>) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Generic(constants.%T) {
+// CHECK:STDOUT:   %T.loc3_19.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(<error>) {}
 // CHECK:STDOUT:

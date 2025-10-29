@@ -909,7 +909,7 @@ struct ImplWitnessAssociatedConstant {
 // The witness table contains an instruction for each associated constant and
 // function in the impl declaration (and definition, if seen). The `specific_id`
 // from the `ImplWitness` should be applied to those instructions. Instructions
-// will be `ImplWitnessTablePlaceholder` until a value is seen for them.
+// will be `InstId::ImplWitnessTablePlaceholder` until a value is seen for them.
 //
 // An `ImplWitnessTable` can be shared by multiple `ImplWitness` instructions,
 // to avoid the work of importing the full table with each witness.
@@ -949,20 +949,6 @@ struct ImplWitnessTable {
   // instruction (and the `ImplDecl` instruction) in here, as that lets us get
   // the FacetType and its interface names?
   ImplId impl_id;
-};
-
-// A singleton placeholder instruction used in the `ImplWitness` table of
-// instructions for members of the impl. These are replaced as values are seen
-// for the witness table in the impl declaration or definition.
-struct ImplWitnessTablePlaceholder {
-  static constexpr auto Kind =
-      InstKind::ImplWitnessTablePlaceholder.Define<Parse::NodeId>(
-          {.ir_name = "impl_witness_table_placeholder",
-           .constant_kind = InstConstantKind::AlwaysUnique,
-           .is_lowered = false});
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-
-  TypeId type_id;
 };
 
 // An `import Cpp` declaration.

@@ -31,12 +31,19 @@ struct InstId : public IdBase<InstId> {
   // because the name is currently being initialized.
   static const InstId InitTombstone;
 
+  // A placeholder used in the `ImplWitness` table of instructions for members
+  // of the impl. These are replaced as values are seen for the witness table in
+  // the impl declaration or definition. This is distinct from `None` for
+  // debugging purposes.
+  static const InstId ImplWitnessTablePlaceholder;
+
   using IdBase::IdBase;
 
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 constexpr InstId InstId::InitTombstone = InstId(NoneIndex - 1);
+constexpr InstId InstId::ImplWitnessTablePlaceholder = InstId(NoneIndex - 2);
 
 // An InstId whose value is a type. The fact it's a type must be validated
 // before construction, and this allows that validation to be represented in the
