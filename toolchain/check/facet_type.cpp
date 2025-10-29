@@ -135,7 +135,7 @@ auto InitialFacetTypeImplWitness(
         context.inst_blocks().AddUninitialized(assoc_entities.size());
     table = context.inst_blocks().GetMutable(elements_id);
     for (auto& uninit : table) {
-      uninit = SemIR::ImplWitnessTablePlaceholder::TypeInstId;
+      uninit = SemIR::InstId::ImplWitnessTablePlaceholder;
     }
 
     auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
@@ -196,7 +196,7 @@ auto InitialFacetTypeImplWitness(
     // FacetTypes resolution disallows two rewrites to the same associated
     // constant, so we won't ever have a facet write twice to the same position
     // in the witness table.
-    CARBON_CHECK(table_entry == SemIR::ImplWitnessTablePlaceholder::TypeInstId);
+    CARBON_CHECK(table_entry == SemIR::InstId::ImplWitnessTablePlaceholder);
 
     // If the associated constant has a symbolic type, convert the rewrite
     // value to that type now we know the value of `Self`.
@@ -274,7 +274,7 @@ auto AllocateFacetTypeImplWitness(Context& context,
   }
 
   llvm::SmallVector<SemIR::InstId> empty_table(
-      assoc_entities.size(), SemIR::ImplWitnessTablePlaceholder::TypeInstId);
+      assoc_entities.size(), SemIR::InstId::ImplWitnessTablePlaceholder);
   context.inst_blocks().ReplacePlaceholder(witness_id, empty_table);
 }
 

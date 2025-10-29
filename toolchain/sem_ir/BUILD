@@ -26,6 +26,7 @@ cc_library(
         "//common:check",
         "//common:enum_base",
         "//common:ostream",
+        "//common:template_string",
         "//common:type_enum",
         "//toolchain/base:canonical_value_store",
         "//toolchain/base:index_base",

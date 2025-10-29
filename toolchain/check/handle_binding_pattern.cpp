@@ -39,13 +39,18 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   SemIR::ExprRegionId type_expr_region_id =
       EndSubpatternAsExpr(context, cast_type_inst_id);
 
-  // The name in a template binding may be wrapped in `template`.
+  // The name in a generic binding may be wrapped in `template`.
   bool is_generic = node_kind == Parse::NodeKind::CompileTimeBindingPattern;
-  auto is_template =
+  bool is_template =
       context.node_stack()
           .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::TemplateBindingName>();
   // A non-generic template binding is diagnosed by the parser.
   is_template &= is_generic;
+
+  // The name in a runtime binding may be wrapped in `ref`.
+  bool is_ref =
+      context.node_stack()
+          .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::RefBindingName>();
 
   SemIR::InstKind pattern_inst_kind;
   switch (node_kind) {
@@ -53,7 +58,11 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       pattern_inst_kind = SemIR::InstKind::SymbolicBindingPattern;
       break;
     case Parse::NodeKind::LetBindingPattern:
-      pattern_inst_kind = SemIR::InstKind::ValueBindingPattern;
+      if (is_ref) {
+        pattern_inst_kind = SemIR::InstKind::RefBindingPattern;
+      } else {
+        pattern_inst_kind = SemIR::InstKind::ValueBindingPattern;
+      }
       break;
     case Parse::NodeKind::VarBindingPattern:
       pattern_inst_kind = SemIR::InstKind::RefBindingPattern;
@@ -166,16 +175,25 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         result_inst_id = SemIR::ErrorInst::InstId;
       } else {
         result_inst_id = make_binding_pattern();
+
+        // A binding pattern in a function signature is a `Call` parameter
+        // unless it's nested inside a `var` pattern (because then the
+        // enclosing `var` pattern is), or it's a compile-time binding pattern
+        // (because then it's not passed to the `Call` inst).
         if (node_kind == Parse::NodeKind::LetBindingPattern) {
-          // A value binding pattern in a function signature is a `Call`
-          // parameter, but a variable binding pattern is not (instead the
-          // enclosing `var` pattern is), and a symbolic binding pattern is not
-          // (because it's not passed to the `Call` inst).
-          result_inst_id = AddPatternInst<SemIR::ValueParamPattern>(
-              context, node_id,
-              {.type_id = context.insts().Get(result_inst_id).type_id(),
-               .subpattern_id = result_inst_id,
-               .index = SemIR::CallParamIndex::None});
+          if (is_ref) {
+            result_inst_id = AddPatternInst<SemIR::RefParamPattern>(
+                context, node_id,
+                {.type_id = context.insts().Get(result_inst_id).type_id(),
+                 .subpattern_id = result_inst_id,
+                 .index = SemIR::CallParamIndex::None});
+          } else {
+            result_inst_id = AddPatternInst<SemIR::ValueParamPattern>(
+                context, node_id,
+                {.type_id = context.insts().Get(result_inst_id).type_id(),
+                 .subpattern_id = result_inst_id,
+                 .index = SemIR::CallParamIndex::None});
+          }
         }
       }
       context.node_stack().Push(node_id, result_inst_id);
@@ -411,6 +429,12 @@ auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
                            AddrOnNonSelfParam);
     context.node_stack().Push(node_id, param_pattern_id);
   }
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::RefBindingNameId node_id)
+    -> bool {
+  context.node_stack().Push(node_id);
   return true;
 }
 

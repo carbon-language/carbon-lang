@@ -19,9 +19,9 @@ class A {
     return self.v[0];
   }
 
-  fn Use[addr self: Self*]() -> i32 {
-    self->v[0] = 1;
-    return self->v[1];
+  fn Use[ref self: Self]() -> i32 {
+    self.v[0] = 1;
+    return self.v[1];
   }
 }
 
@@ -49,13 +49,13 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define i32 @_CUse.A.Main(ptr %self) !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc23_9.2.v = getelementptr inbounds nuw { [2 x i32] }, ptr %self, i32 0, i32 0, !dbg !14
-// CHECK:STDOUT:   %.loc23_14.array.index = getelementptr inbounds [2 x i32], ptr %.loc23_9.2.v, i32 0, i32 0, !dbg !14
-// CHECK:STDOUT:   store i32 1, ptr %.loc23_14.array.index, align 4, !dbg !14
-// CHECK:STDOUT:   %.loc24_16.2.v = getelementptr inbounds nuw { [2 x i32] }, ptr %self, i32 0, i32 0, !dbg !15
-// CHECK:STDOUT:   %.loc24_21.1.array.index = getelementptr inbounds [2 x i32], ptr %.loc24_16.2.v, i32 0, i32 1, !dbg !15
-// CHECK:STDOUT:   %.loc24_21.2 = load i32, ptr %.loc24_21.1.array.index, align 4, !dbg !15
-// CHECK:STDOUT:   ret i32 %.loc24_21.2, !dbg !16
+// CHECK:STDOUT:   %.loc23_9.v = getelementptr inbounds nuw { [2 x i32] }, ptr %self, i32 0, i32 0, !dbg !14
+// CHECK:STDOUT:   %.loc23_13.array.index = getelementptr inbounds [2 x i32], ptr %.loc23_9.v, i32 0, i32 0, !dbg !14
+// CHECK:STDOUT:   store i32 1, ptr %.loc23_13.array.index, align 4, !dbg !14
+// CHECK:STDOUT:   %.loc24_16.v = getelementptr inbounds nuw { [2 x i32] }, ptr %self, i32 0, i32 0, !dbg !15
+// CHECK:STDOUT:   %.loc24_20.1.array.index = getelementptr inbounds [2 x i32], ptr %.loc24_16.v, i32 0, i32 1, !dbg !15
+// CHECK:STDOUT:   %.loc24_20.2 = load i32, ptr %.loc24_20.1.array.index, align 4, !dbg !15
+// CHECK:STDOUT:   ret i32 %.loc24_20.2, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)

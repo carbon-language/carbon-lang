@@ -375,11 +375,11 @@ constraint Z {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Z.type: type = generic_named_constaint_type @Z [concrete]
 // CHECK:STDOUT:   %empty_struct: %Z.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Self: %type = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self: %type = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -391,12 +391,12 @@ constraint Z {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %T.loc4_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_14.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic constraint @Z(%T.loc4_14.2: type) {
-// CHECK:STDOUT:   %T.loc4_14.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc4_14.1 (constants.%T)]
+// CHECK:STDOUT:   %T.loc4_14.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
@@ -425,15 +425,15 @@ constraint Z {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %Z.type: type = generic_named_constaint_type @Z [concrete]
 // CHECK:STDOUT:   %empty_struct: %Z.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Self.eca: %type = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %.Self.f65: %Y.type = bind_symbolic_name .Self [symbolic_self]
-// CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.f65, @Y [symbolic_self]
+// CHECK:STDOUT:   %Self.aa1: %type = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %.Self.a96: %Y.type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.a96, @Y [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic_self]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.eca [symbolic]
+// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.aa1 [symbolic]
 // CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y where %impl.elem0 = %Self.binding.as_type> [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -445,12 +445,12 @@ constraint Z {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %T.loc8_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_14.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc8_14.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic constraint @Z(%T.loc8_14.2: type) {
-// CHECK:STDOUT:   %T.loc8_14.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_14.1 (constants.%T)]
+// CHECK:STDOUT:   %T.loc8_14.1: type = symbolic_binding T, 0 [symbolic = %T.loc8_14.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>

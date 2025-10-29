@@ -290,6 +290,26 @@ class T2 {
   override fn F();
 }
 
+// --- fail_ref_self_mismatch.carbon
+
+library "[[@TEST_NAME]]";
+
+base class T1 {
+  virtual fn F1[self: Self]();
+}
+
+class T2 {
+  extend base: T1;
+  // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE+7]]:18: error: redeclaration differs at implicit parameter 1 [RedeclParamDiffers]
+  // CHECK:STDERR:   override fn F1[ref self: Self]();
+  // CHECK:STDERR:                  ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE-8]]:17: note: previous declaration's corresponding implicit parameter here [RedeclParamPrevious]
+  // CHECK:STDERR:   virtual fn F1[self: Self]();
+  // CHECK:STDERR:                 ^~~~~~~~~~
+  // CHECK:STDERR:
+  override fn F1[ref self: Self]();
+}
+
 // --- fail_addr_self_mismatch.carbon
 
 library "[[@TEST_NAME]]";
@@ -2557,6 +2577,100 @@ class T2(G2:! type) {
 // CHECK:STDOUT: fn @T1.G();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @T2.F();
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_ref_self_mismatch.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %T1: type = class_type @T1 [concrete]
+// CHECK:STDOUT:   %pattern_type.28b: type = pattern_type %T1 [concrete]
+// CHECK:STDOUT:   %T1.F1.type: type = fn_type @T1.F1 [concrete]
+// CHECK:STDOUT:   %T1.F1: %T1.F1.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
+// CHECK:STDOUT:   %T1.vtable_decl: ref %ptr.454 = vtable_decl @T1.vtable [concrete]
+// CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
+// CHECK:STDOUT:   %complete_type.513: <witness> = complete_type_witness %struct_type.vptr [concrete]
+// CHECK:STDOUT:   %T2: type = class_type @T2 [concrete]
+// CHECK:STDOUT:   %T2.elem: type = unbound_element_type %T2, %T1 [concrete]
+// CHECK:STDOUT:   %pattern_type.682: type = pattern_type %T2 [concrete]
+// CHECK:STDOUT:   %T2.F1.type: type = fn_type @T2.F1 [concrete]
+// CHECK:STDOUT:   %T2.F1: %T2.F1.type = struct_value () [concrete]
+// CHECK:STDOUT:   %T2.vtable_decl: ref %ptr.454 = vtable_decl @T2.vtable [concrete]
+// CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %T1} [concrete]
+// CHECK:STDOUT:   %complete_type.e14: <witness> = complete_type_witness %struct_type.base [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .T1 = %T1.decl
+// CHECK:STDOUT:     .T2 = %T2.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %T1.decl: type = class_decl @T1 [concrete = constants.%T1] {} {}
+// CHECK:STDOUT:   %T2.decl: type = class_decl @T2 [concrete = constants.%T2] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @T1 {
+// CHECK:STDOUT:   %T1.F1.decl: %T1.F1.type = fn_decl @T1.F1 [concrete = constants.%T1.F1] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.28b = value_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.28b = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %T1 = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%T1 [concrete = constants.%T1]
+// CHECK:STDOUT:     %self: %T1 = value_binding self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @T1.vtable [concrete = constants.%T1.vtable_decl]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.vptr [concrete = constants.%complete_type.513]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%T1
+// CHECK:STDOUT:   .F1 = %T1.F1.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @T2 {
+// CHECK:STDOUT:   %T1.ref: type = name_ref T1, file.%T1.decl [concrete = constants.%T1]
+// CHECK:STDOUT:   %.loc9: %T2.elem = base_decl %T1.ref, element0 [concrete]
+// CHECK:STDOUT:   %T2.F1.decl: %T2.F1.type = fn_decl @T2.F1 [concrete = constants.%T2.F1] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.682 = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.682 = ref_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %T2 = ref_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%T2 [concrete = constants.%T2]
+// CHECK:STDOUT:     %self: ref %T2 = ref_binding self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %vtable_decl: ref %ptr.454 = vtable_decl @T2.vtable [concrete = constants.%T2.vtable_decl]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base [concrete = constants.%complete_type.e14]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:   vtable_decl = %vtable_decl
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%T2
+// CHECK:STDOUT:   .T1 = <poisoned>
+// CHECK:STDOUT:   .base = %.loc9
+// CHECK:STDOUT:   .F1 = %T2.F1.decl
+// CHECK:STDOUT:   extend %T1.ref
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: vtable @T1.vtable {
+// CHECK:STDOUT:   @T1.%T1.F1.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: vtable @T2.vtable {
+// CHECK:STDOUT:   @T2.%T2.F1.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: virtual fn @T1.F1(%self.param: %T1);
+// CHECK:STDOUT:
+// CHECK:STDOUT: override fn @T2.F1(%self.param: %T2);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_addr_self_mismatch.carbon
 // CHECK:STDOUT:

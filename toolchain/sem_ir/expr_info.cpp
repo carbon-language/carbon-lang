@@ -135,7 +135,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ImplWitnessAccess::Kind:
       case ImplWitnessAccessSubstituted::Kind:
       case ImplWitnessTable::Kind:
-      case ImplWitnessTablePlaceholder::Kind:
       case ImportCppDecl::Kind:
       case ImportDecl::Kind:
       case InstType::Kind:
