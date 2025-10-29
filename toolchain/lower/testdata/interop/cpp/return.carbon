@@ -76,7 +76,8 @@ struct X {
   X(const X&);
   ~X();
 
-  void *p, *q;
+  void* _Nonnull p;
+  void* _Nonnull q;
 };
 
 X Make();

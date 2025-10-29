@@ -124,16 +124,16 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self]
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %Dest: type = symbolic_binding Dest, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.96f: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.96f = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.3ac: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
-// CHECK:STDOUT:   %Self: %ImplicitAs.type.3ac = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.841: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
+// CHECK:STDOUT:   %Self: %ImplicitAs.type.841 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic]
-// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %Dest [symbolic]
+// CHECK:STDOUT:   %pattern_type.4e2: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %pattern_type.e68: type = pattern_type %Dest [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Dest) [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.Convert: %ImplicitAs.Convert.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
@@ -147,35 +147,35 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.96f = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
 // CHECK:STDOUT:     %Dest.patt: %pattern_type.98f = symbolic_binding_pattern Dest, 0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %Dest.loc3_22.2: type = bind_symbolic_name Dest, 0 [symbolic = %Dest.loc3_22.1 (constants.%Dest)]
+// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %Dest.loc3_22.2: type = symbolic_binding Dest, 0 [symbolic = %Dest.loc3_22.1 (constants.%Dest)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(%Dest.loc3_22.2: type) {
-// CHECK:STDOUT:   %Dest.loc3_22.1: type = bind_symbolic_name Dest, 0 [symbolic = %Dest.loc3_22.1 (constants.%Dest)]
+// CHECK:STDOUT:   %Dest.loc3_22.1: type = symbolic_binding Dest, 0 [symbolic = %Dest.loc3_22.1 (constants.%Dest)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest.loc3_22.1)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.3ac)]
-// CHECK:STDOUT:   %Self.2: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.3ac) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest.loc3_22.1)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.841)]
+// CHECK:STDOUT:   %Self.2: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.841) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Dest.loc3_22.1) [symbolic = %ImplicitAs.Convert.type (constants.%ImplicitAs.Convert.type)]
 // CHECK:STDOUT:   %ImplicitAs.Convert: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type) = struct_value () [symbolic = %ImplicitAs.Convert (constants.%ImplicitAs.Convert)]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest.loc3_22.1) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type)]
 // CHECK:STDOUT:   %assoc0.loc4_35.2: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type) = assoc_entity element0, %ImplicitAs.Convert.decl [symbolic = %assoc0.loc4_35.2 (constants.%assoc0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.3ac) = bind_symbolic_name Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.841) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self)]
 // CHECK:STDOUT:     %ImplicitAs.Convert.decl: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type) = fn_decl @ImplicitAs.Convert [symbolic = @ImplicitAs.%ImplicitAs.Convert (constants.%ImplicitAs.Convert)] {
-// CHECK:STDOUT:       %self.patt: @ImplicitAs.Convert.%pattern_type.loc4_14 (%pattern_type.f6d) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:       %self.param_patt: @ImplicitAs.Convert.%pattern_type.loc4_14 (%pattern_type.f6d) = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:       %return.patt: @ImplicitAs.Convert.%pattern_type.loc4_28 (%pattern_type.7dc) = return_slot_pattern [concrete]
-// CHECK:STDOUT:       %return.param_patt: @ImplicitAs.Convert.%pattern_type.loc4_28 (%pattern_type.7dc) = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:       %self.patt: @ImplicitAs.Convert.%pattern_type.loc4_14 (%pattern_type.4e2) = value_binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @ImplicitAs.Convert.%pattern_type.loc4_14 (%pattern_type.4e2) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %return.patt: @ImplicitAs.Convert.%pattern_type.loc4_28 (%pattern_type.e68) = return_slot_pattern [concrete]
+// CHECK:STDOUT:       %return.param_patt: @ImplicitAs.Convert.%pattern_type.loc4_28 (%pattern_type.e68) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Dest.ref: type = name_ref Dest, @ImplicitAs.%Dest.loc3_22.2 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:       %self.param: @ImplicitAs.Convert.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc4_20.1: type = splice_block %.loc4_20.3 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
-// CHECK:STDOUT:         %.loc4_20.2: @ImplicitAs.Convert.%ImplicitAs.type (%ImplicitAs.type.3ac) = specific_constant @ImplicitAs.%Self.1, @ImplicitAs(constants.%Dest) [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:         %Self.ref: @ImplicitAs.Convert.%ImplicitAs.type (%ImplicitAs.type.3ac) = name_ref Self, %.loc4_20.2 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:         %.loc4_20.2: @ImplicitAs.Convert.%ImplicitAs.type (%ImplicitAs.type.841) = specific_constant @ImplicitAs.%Self.1, @ImplicitAs(constants.%Dest) [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:         %Self.ref: @ImplicitAs.Convert.%ImplicitAs.type (%ImplicitAs.type.841) = name_ref Self, %.loc4_20.2 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:         %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:         %.loc4_20.3: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       }
@@ -193,13 +193,13 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @ImplicitAs.Convert(@ImplicitAs.%Dest.loc3_22.2: type, @ImplicitAs.%Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.3ac)) {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.3ac)]
-// CHECK:STDOUT:   %Self: @ImplicitAs.Convert.%ImplicitAs.type (%ImplicitAs.type.3ac) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT: generic fn @ImplicitAs.Convert(@ImplicitAs.%Dest.loc3_22.2: type, @ImplicitAs.%Self.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.841)) {
+// CHECK:STDOUT:   %Dest: type = symbolic_binding Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.841)]
+// CHECK:STDOUT:   %Self: @ImplicitAs.Convert.%ImplicitAs.type (%ImplicitAs.type.841) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type.loc4_14: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.loc4_14 (constants.%pattern_type.f6d)]
-// CHECK:STDOUT:   %pattern_type.loc4_28: type = pattern_type %Dest [symbolic = %pattern_type.loc4_28 (constants.%pattern_type.7dc)]
+// CHECK:STDOUT:   %pattern_type.loc4_14: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.loc4_14 (constants.%pattern_type.4e2)]
+// CHECK:STDOUT:   %pattern_type.loc4_28: type = pattern_type %Dest [symbolic = %pattern_type.loc4_28 (constants.%pattern_type.e68)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @ImplicitAs.Convert.%Self.binding.as_type (%Self.binding.as_type)) -> @ImplicitAs.Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
@@ -210,18 +210,18 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs.Convert(constants.%Dest, constants.%Self) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.3ac
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.841
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %pattern_type.loc4_14 => constants.%pattern_type.f6d
-// CHECK:STDOUT:   %pattern_type.loc4_28 => constants.%pattern_type.7dc
+// CHECK:STDOUT:   %pattern_type.loc4_14 => constants.%pattern_type.4e2
+// CHECK:STDOUT:   %pattern_type.loc4_28 => constants.%pattern_type.e68
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- non-instance_success.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NonInstance1.type: type = facet_type <@NonInstance1> [concrete]
-// CHECK:STDOUT:   %Self: %NonInstance1.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %NonInstance1.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %NonInstance1.F1.type: type = fn_type @NonInstance1.F1 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %NonInstance1.F1: %NonInstance1.F1.type = struct_value () [concrete]
@@ -255,7 +255,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NonInstance1 {
-// CHECK:STDOUT:   %Self: %NonInstance1.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %NonInstance1.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %NonInstance1.F1.decl: %NonInstance1.F1.type = fn_decl @NonInstance1.F1 [concrete = constants.%NonInstance1.F1] {} {}
 // CHECK:STDOUT:   %assoc0: %NonInstance1.assoc_type = assoc_entity element0, %NonInstance1.F1.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -304,7 +304,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NonInstance2.type: type = facet_type <@NonInstance2> [concrete]
-// CHECK:STDOUT:   %Self.cdb: %NonInstance2.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.2eb: %NonInstance2.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %NonInstance2.F2.type: type = fn_type @NonInstance2.F2 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %NonInstance2.F2: %NonInstance2.F2.type = struct_value () [concrete]
@@ -320,23 +320,23 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %NonInstanceCall2: %NonInstanceCall2.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.edb: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
-// CHECK:STDOUT:   %Self.152: %ImplicitAs.type.edb = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.Convert.type.275: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.Convert.42e: %ImplicitAs.Convert.type.275 = struct_value () [symbolic]
-// CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %Dest [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.152 [symbolic]
-// CHECK:STDOUT:   %pattern_type.519: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type.ca0: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %assoc0.9f5: %ImplicitAs.assoc_type.ca0 = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic]
+// CHECK:STDOUT:   %Dest: type = symbolic_binding Dest, 0 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.2d9: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
+// CHECK:STDOUT:   %Self.4f1: %ImplicitAs.type.2d9 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.4c8: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.Convert.e9f: %ImplicitAs.Convert.type.4c8 = struct_value () [symbolic]
+// CHECK:STDOUT:   %pattern_type.e68: type = pattern_type %Dest [symbolic]
+// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.4f1 [symbolic]
+// CHECK:STDOUT:   %pattern_type.c40: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type.8b5: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %assoc0.f64: %ImplicitAs.assoc_type.8b5 = assoc_entity element0, imports.%Core.import_ref.b91 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.d3c: type = facet_type <@ImplicitAs, @ImplicitAs(%NonInstance2.type)> [concrete]
-// CHECK:STDOUT:   %Self.010: %ImplicitAs.type.d3c = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.29a: %ImplicitAs.type.d3c = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.de0: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%NonInstance2.type) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.Convert.a1a: %ImplicitAs.Convert.type.de0 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.926: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%NonInstance2.type) [concrete]
-// CHECK:STDOUT:   %assoc0.7c8: %ImplicitAs.assoc_type.926 = assoc_entity element0, imports.%Core.import_ref.1c7 [concrete]
-// CHECK:STDOUT:   %assoc0.dc0: %ImplicitAs.assoc_type.ca0 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
+// CHECK:STDOUT:   %assoc0.af3: %ImplicitAs.assoc_type.926 = assoc_entity element0, imports.%Core.import_ref.b91 [concrete]
+// CHECK:STDOUT:   %assoc0.7b6: %ImplicitAs.assoc_type.8b5 = assoc_entity element0, imports.%Core.import_ref.d11 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -345,14 +345,14 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//default, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.e2c = import_ref Core//default, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Core.import_ref.492: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ca0) = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.dc0)]
+// CHECK:STDOUT:   %Core.import_ref.efcd44.1: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Core.import_ref.d6f = import_ref Core//default, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.b9c: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.8b5) = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.7b6)]
 // CHECK:STDOUT:   %Core.Convert = import_ref Core//default, Convert, unloaded
-// CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.b95: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.edb) = import_ref Core//default, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.152)]
-// CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type.275) = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%ImplicitAs.Convert (constants.%ImplicitAs.Convert.42e)]
-// CHECK:STDOUT:   %Core.import_ref.207 = import_ref Core//default, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.efcd44.2: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Core.import_ref.4ff: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2d9) = import_ref Core//default, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.4f1)]
+// CHECK:STDOUT:   %Core.import_ref.b91: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type.4c8) = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%ImplicitAs.Convert (constants.%ImplicitAs.Convert.e9f)]
+// CHECK:STDOUT:   %Core.import_ref.d11 = import_ref Core//default, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -386,7 +386,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NonInstance2 {
-// CHECK:STDOUT:   %Self: %NonInstance2.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.cdb]
+// CHECK:STDOUT:   %Self: %NonInstance2.type = symbolic_binding Self, 0 [symbolic = constants.%Self.2eb]
 // CHECK:STDOUT:   %NonInstance2.F2.decl: %NonInstance2.F2.type = fn_decl @NonInstance2.F2 [concrete = constants.%NonInstance2.F2] {} {}
 // CHECK:STDOUT:   %assoc0: %NonInstance2.assoc_type = assoc_entity element0, %NonInstance2.F2.decl [concrete = constants.%assoc0.92e]
 // CHECK:STDOUT:
@@ -396,21 +396,21 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   witness = (%NonInstance2.F2.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.5ab3ec.1: type) [from "core.carbon"] {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.efcd44.1: type) [from "core.carbon"] {
+// CHECK:STDOUT:   %Dest: type = symbolic_binding Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.edb)]
-// CHECK:STDOUT:   %Self: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.edb) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.152)]
-// CHECK:STDOUT:   %ImplicitAs.Convert.type: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.Convert.type (constants.%ImplicitAs.Convert.type.275)]
-// CHECK:STDOUT:   %ImplicitAs.Convert: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type.275) = struct_value () [symbolic = %ImplicitAs.Convert (constants.%ImplicitAs.Convert.42e)]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.ca0)]
-// CHECK:STDOUT:   %assoc0: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ca0) = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic = %assoc0 (constants.%assoc0.9f5)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2d9)]
+// CHECK:STDOUT:   %Self: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2d9) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.4f1)]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.Convert.type (constants.%ImplicitAs.Convert.type.4c8)]
+// CHECK:STDOUT:   %ImplicitAs.Convert: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type.4c8) = struct_value () [symbolic = %ImplicitAs.Convert (constants.%ImplicitAs.Convert.e9f)]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.8b5)]
+// CHECK:STDOUT:   %assoc0: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.8b5) = assoc_entity element0, imports.%Core.import_ref.b91 [symbolic = %assoc0 (constants.%assoc0.f64)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Core.import_ref.e2c
-// CHECK:STDOUT:     .Convert = imports.%Core.import_ref.492
+// CHECK:STDOUT:     .Self = imports.%Core.import_ref.d6f
+// CHECK:STDOUT:     .Convert = imports.%Core.import_ref.b9c
 // CHECK:STDOUT:     witness = (imports.%Core.Convert)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -441,18 +441,18 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @ImplicitAs.Convert(imports.%Core.import_ref.5ab3ec.2: type, imports.%Core.import_ref.b95: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.edb)) [from "core.carbon"] {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.edb)]
-// CHECK:STDOUT:   %Self: @ImplicitAs.Convert.%ImplicitAs.type (%ImplicitAs.type.edb) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.152)]
+// CHECK:STDOUT: generic fn @ImplicitAs.Convert(imports.%Core.import_ref.efcd44.2: type, imports.%Core.import_ref.4ff: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2d9)) [from "core.carbon"] {
+// CHECK:STDOUT:   %Dest: type = symbolic_binding Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2d9)]
+// CHECK:STDOUT:   %Self: @ImplicitAs.Convert.%ImplicitAs.type (%ImplicitAs.type.2d9) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.4f1)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.519)]
-// CHECK:STDOUT:   %pattern_type.2: type = pattern_type %Dest [symbolic = %pattern_type.2 (constants.%pattern_type.7dc)]
+// CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.c40)]
+// CHECK:STDOUT:   %pattern_type.2: type = pattern_type %Dest [symbolic = %pattern_type.2 (constants.%pattern_type.e68)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NonInstance2.F2(constants.%Self.cdb) {}
+// CHECK:STDOUT: specific @NonInstance2.F2(constants.%Self.2eb) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance2.F2(constants.%NonInstance2.facet) {}
 // CHECK:STDOUT:
@@ -460,13 +460,13 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs.Convert(constants.%Dest, constants.%Self.152) {
+// CHECK:STDOUT: specific @ImplicitAs.Convert(constants.%Dest, constants.%Self.4f1) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.edb
-// CHECK:STDOUT:   %Self => constants.%Self.152
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.2d9
+// CHECK:STDOUT:   %Self => constants.%Self.4f1
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.519
-// CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.7dc
+// CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.c40
+// CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.e68
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%NonInstance2.type) {
@@ -474,18 +474,18 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.d3c
-// CHECK:STDOUT:   %Self => constants.%Self.010
+// CHECK:STDOUT:   %Self => constants.%Self.29a
 // CHECK:STDOUT:   %ImplicitAs.Convert.type => constants.%ImplicitAs.Convert.type.de0
 // CHECK:STDOUT:   %ImplicitAs.Convert => constants.%ImplicitAs.Convert.a1a
 // CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.926
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.7c8
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.af3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_non-instance_indirect.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NonInstance3.type: type = facet_type <@NonInstance3> [concrete]
-// CHECK:STDOUT:   %Self.919: %NonInstance3.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.e5f: %NonInstance3.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %NonInstance3.F3.type: type = fn_type @NonInstance3.F3 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %NonInstance3.F3: %NonInstance3.F3.type = struct_value () [concrete]
@@ -502,23 +502,23 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %NonInstanceCallIndirect: %NonInstanceCallIndirect.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.edb: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
-// CHECK:STDOUT:   %Self.152: %ImplicitAs.type.edb = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.Convert.type.275: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.Convert.42e: %ImplicitAs.Convert.type.275 = struct_value () [symbolic]
-// CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %Dest [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.152 [symbolic]
-// CHECK:STDOUT:   %pattern_type.519: type = pattern_type %Self.binding.as_type [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type.ca0: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
-// CHECK:STDOUT:   %assoc0.9f5: %ImplicitAs.assoc_type.ca0 = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic]
+// CHECK:STDOUT:   %Dest: type = symbolic_binding Dest, 0 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.2d9: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic]
+// CHECK:STDOUT:   %Self.4f1: %ImplicitAs.type.2d9 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.4c8: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.Convert.e9f: %ImplicitAs.Convert.type.4c8 = struct_value () [symbolic]
+// CHECK:STDOUT:   %pattern_type.e68: type = pattern_type %Dest [symbolic]
+// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.4f1 [symbolic]
+// CHECK:STDOUT:   %pattern_type.c40: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type.8b5: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic]
+// CHECK:STDOUT:   %assoc0.f64: %ImplicitAs.assoc_type.8b5 = assoc_entity element0, imports.%Core.import_ref.b91 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.2b7: type = facet_type <@ImplicitAs, @ImplicitAs(%NonInstance3.type)> [concrete]
-// CHECK:STDOUT:   %Self.d7a: %ImplicitAs.type.2b7 = bind_symbolic_name Self, 1 [symbolic]
+// CHECK:STDOUT:   %Self.919: %ImplicitAs.type.2b7 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.162: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%NonInstance3.type) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.Convert.af3: %ImplicitAs.Convert.type.162 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.f78: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%NonInstance3.type) [concrete]
-// CHECK:STDOUT:   %assoc0.78e: %ImplicitAs.assoc_type.f78 = assoc_entity element0, imports.%Core.import_ref.1c7 [concrete]
-// CHECK:STDOUT:   %assoc0.dc0: %ImplicitAs.assoc_type.ca0 = assoc_entity element0, imports.%Core.import_ref.207 [symbolic]
+// CHECK:STDOUT:   %assoc0.da1: %ImplicitAs.assoc_type.f78 = assoc_entity element0, imports.%Core.import_ref.b91 [concrete]
+// CHECK:STDOUT:   %assoc0.7b6: %ImplicitAs.assoc_type.8b5 = assoc_entity element0, imports.%Core.import_ref.d11 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -527,14 +527,14 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:     import Core//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//default, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.5ab3ec.1: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.e2c = import_ref Core//default, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Core.import_ref.492: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ca0) = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.dc0)]
+// CHECK:STDOUT:   %Core.import_ref.efcd44.1: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Core.import_ref.d6f = import_ref Core//default, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.b9c: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.8b5) = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%assoc0 (constants.%assoc0.7b6)]
 // CHECK:STDOUT:   %Core.Convert = import_ref Core//default, Convert, unloaded
-// CHECK:STDOUT:   %Core.import_ref.5ab3ec.2: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
-// CHECK:STDOUT:   %Core.import_ref.b95: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.edb) = import_ref Core//default, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.152)]
-// CHECK:STDOUT:   %Core.import_ref.1c7: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type.275) = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%ImplicitAs.Convert (constants.%ImplicitAs.Convert.42e)]
-// CHECK:STDOUT:   %Core.import_ref.207 = import_ref Core//default, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.efcd44.2: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%Dest (constants.%Dest)]
+// CHECK:STDOUT:   %Core.import_ref.4ff: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2d9) = import_ref Core//default, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = @ImplicitAs.%Self (constants.%Self.4f1)]
+// CHECK:STDOUT:   %Core.import_ref.b91: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type.4c8) = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%ImplicitAs.Convert (constants.%ImplicitAs.Convert.e9f)]
+// CHECK:STDOUT:   %Core.import_ref.d11 = import_ref Core//default, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -569,7 +569,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NonInstance3 {
-// CHECK:STDOUT:   %Self: %NonInstance3.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.919]
+// CHECK:STDOUT:   %Self: %NonInstance3.type = symbolic_binding Self, 0 [symbolic = constants.%Self.e5f]
 // CHECK:STDOUT:   %NonInstance3.F3.decl: %NonInstance3.F3.type = fn_decl @NonInstance3.F3 [concrete = constants.%NonInstance3.F3] {} {}
 // CHECK:STDOUT:   %assoc0: %NonInstance3.assoc_type = assoc_entity element0, %NonInstance3.F3.decl [concrete = constants.%assoc0.2f5]
 // CHECK:STDOUT:
@@ -579,21 +579,21 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   witness = (%NonInstance3.F3.decl)
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.5ab3ec.1: type) [from "core.carbon"] {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.efcd44.1: type) [from "core.carbon"] {
+// CHECK:STDOUT:   %Dest: type = symbolic_binding Dest, 0 [symbolic = %Dest (constants.%Dest)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.edb)]
-// CHECK:STDOUT:   %Self: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.edb) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.152)]
-// CHECK:STDOUT:   %ImplicitAs.Convert.type: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.Convert.type (constants.%ImplicitAs.Convert.type.275)]
-// CHECK:STDOUT:   %ImplicitAs.Convert: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type.275) = struct_value () [symbolic = %ImplicitAs.Convert (constants.%ImplicitAs.Convert.42e)]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.ca0)]
-// CHECK:STDOUT:   %assoc0: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.ca0) = assoc_entity element0, imports.%Core.import_ref.1c7 [symbolic = %assoc0 (constants.%assoc0.9f5)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2d9)]
+// CHECK:STDOUT:   %Self: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2d9) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.4f1)]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.Convert.type (constants.%ImplicitAs.Convert.type.4c8)]
+// CHECK:STDOUT:   %ImplicitAs.Convert: @ImplicitAs.%ImplicitAs.Convert.type (%ImplicitAs.Convert.type.4c8) = struct_value () [symbolic = %ImplicitAs.Convert (constants.%ImplicitAs.Convert.e9f)]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%Dest) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.8b5)]
+// CHECK:STDOUT:   %assoc0: @ImplicitAs.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.8b5) = assoc_entity element0, imports.%Core.import_ref.b91 [symbolic = %assoc0 (constants.%assoc0.f64)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Core.import_ref.e2c
-// CHECK:STDOUT:     .Convert = imports.%Core.import_ref.492
+// CHECK:STDOUT:     .Self = imports.%Core.import_ref.d6f
+// CHECK:STDOUT:     .Convert = imports.%Core.import_ref.b9c
 // CHECK:STDOUT:     witness = (imports.%Core.Convert)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -625,18 +625,18 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @ImplicitAs.Convert(imports.%Core.import_ref.5ab3ec.2: type, imports.%Core.import_ref.b95: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.edb)) [from "core.carbon"] {
-// CHECK:STDOUT:   %Dest: type = bind_symbolic_name Dest, 0 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.edb)]
-// CHECK:STDOUT:   %Self: @ImplicitAs.Convert.%ImplicitAs.type (%ImplicitAs.type.edb) = bind_symbolic_name Self, 1 [symbolic = %Self (constants.%Self.152)]
+// CHECK:STDOUT: generic fn @ImplicitAs.Convert(imports.%Core.import_ref.efcd44.2: type, imports.%Core.import_ref.4ff: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.2d9)) [from "core.carbon"] {
+// CHECK:STDOUT:   %Dest: type = symbolic_binding Dest, 0 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%Dest)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.2d9)]
+// CHECK:STDOUT:   %Self: @ImplicitAs.Convert.%ImplicitAs.type (%ImplicitAs.type.2d9) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.4f1)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.519)]
-// CHECK:STDOUT:   %pattern_type.2: type = pattern_type %Dest [symbolic = %pattern_type.2 (constants.%pattern_type.7dc)]
+// CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.c40)]
+// CHECK:STDOUT:   %pattern_type.2: type = pattern_type %Dest [symbolic = %pattern_type.2 (constants.%pattern_type.e68)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NonInstance3.F3(constants.%Self.919) {}
+// CHECK:STDOUT: specific @NonInstance3.F3(constants.%Self.e5f) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance3.F3(constants.%NonInstance3.facet) {}
 // CHECK:STDOUT:
@@ -644,13 +644,13 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Dest => constants.%Dest
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs.Convert(constants.%Dest, constants.%Self.152) {
+// CHECK:STDOUT: specific @ImplicitAs.Convert(constants.%Dest, constants.%Self.4f1) {
 // CHECK:STDOUT:   %Dest => constants.%Dest
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.edb
-// CHECK:STDOUT:   %Self => constants.%Self.152
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.2d9
+// CHECK:STDOUT:   %Self => constants.%Self.4f1
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.519
-// CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.7dc
+// CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.c40
+// CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.e68
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%NonInstance3.type) {
@@ -658,20 +658,20 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.2b7
-// CHECK:STDOUT:   %Self => constants.%Self.d7a
+// CHECK:STDOUT:   %Self => constants.%Self.919
 // CHECK:STDOUT:   %ImplicitAs.Convert.type => constants.%ImplicitAs.Convert.type.162
 // CHECK:STDOUT:   %ImplicitAs.Convert => constants.%ImplicitAs.Convert.af3
 // CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.f78
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.78e
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.da1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- instance_success.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Instance1.type: type = facet_type <@Instance1> [concrete]
-// CHECK:STDOUT:   %Self: %Instance1.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %Instance1.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
-// CHECK:STDOUT:   %pattern_type.ac5: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %pattern_type.19d: type = pattern_type %Self.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Instance1.G1.type: type = fn_type @Instance1.G1 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Instance1.G1: %Instance1.G1.type = struct_value () [concrete]
@@ -737,10 +737,10 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Instance1 {
-// CHECK:STDOUT:   %Self: %Instance1.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %Instance1.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Instance1.G1.decl: %Instance1.G1.type = fn_decl @Instance1.G1 [concrete = constants.%Instance1.G1] {
-// CHECK:STDOUT:     %self.patt: @Instance1.G1.%pattern_type (%pattern_type.ac5) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: @Instance1.G1.%pattern_type (%pattern_type.ac5) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.patt: @Instance1.G1.%pattern_type (%pattern_type.19d) = value_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: @Instance1.G1.%pattern_type (%pattern_type.19d) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @Instance1.G1.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: type = splice_block %.loc4_15.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
@@ -774,9 +774,9 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Instance1.G1(@Instance1.%Self: %Instance1.type) {
-// CHECK:STDOUT:   %Self: %Instance1.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %Instance1.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.ac5)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.19d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @Instance1.G1.%Self.binding.as_type (%Self.binding.as_type));
 // CHECK:STDOUT: }
@@ -817,7 +817,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: specific @Instance1.G1(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.ac5
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.19d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Instance1.G1(constants.%Instance1.facet) {
@@ -830,9 +830,9 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Instance2.type: type = facet_type <@Instance2> [concrete]
-// CHECK:STDOUT:   %Self: %Instance2.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %Instance2.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
-// CHECK:STDOUT:   %pattern_type.a70: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %pattern_type.e9c: type = pattern_type %Self.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Instance2.G2.type: type = fn_type @Instance2.G2 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Instance2.G2: %Instance2.G2.type = struct_value () [concrete]
@@ -866,10 +866,10 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Instance2 {
-// CHECK:STDOUT:   %Self: %Instance2.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %Instance2.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Instance2.G2.decl: %Instance2.G2.type = fn_decl @Instance2.G2 [concrete = constants.%Instance2.G2] {
-// CHECK:STDOUT:     %self.patt: @Instance2.G2.%pattern_type (%pattern_type.a70) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: @Instance2.G2.%pattern_type (%pattern_type.a70) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.patt: @Instance2.G2.%pattern_type (%pattern_type.e9c) = value_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: @Instance2.G2.%pattern_type (%pattern_type.e9c) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @Instance2.G2.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc4_15.1: type = splice_block %.loc4_15.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
@@ -903,9 +903,9 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Instance2.G2(@Instance2.%Self: %Instance2.type) {
-// CHECK:STDOUT:   %Self: %Instance2.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self: %Instance2.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.a70)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.e9c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @Instance2.G2.%Self.binding.as_type (%Self.binding.as_type));
 // CHECK:STDOUT: }
@@ -928,7 +928,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT: specific @Instance2.G2(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.a70
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e9c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Instance2.G2(constants.%Instance2.facet) {

@@ -29,7 +29,7 @@ interface Modifiers {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Modifiers.type: type = facet_type <@Modifiers> [concrete]
-// CHECK:STDOUT:   %Self: %Modifiers.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %Modifiers.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Modifiers.Final.type: type = fn_type @Modifiers.Final [concrete]
 // CHECK:STDOUT:   %Modifiers.Final: %Modifiers.Final.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Modifiers.assoc_type: type = assoc_entity_type @Modifiers [concrete]
@@ -47,7 +47,7 @@ interface Modifiers {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Modifiers {
-// CHECK:STDOUT:   %Self: %Modifiers.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %Modifiers.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Modifiers.Final.decl: %Modifiers.Final.type = fn_decl @Modifiers.Final [concrete = constants.%Modifiers.Final] {} {}
 // CHECK:STDOUT:   %assoc0: %Modifiers.assoc_type = assoc_entity element0, %Modifiers.Final.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Modifiers.Default.decl: %Modifiers.Default.type = fn_decl @Modifiers.Default [concrete = constants.%Modifiers.Default] {} {}

@@ -108,7 +108,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
-// CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %A.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness file.%A.impl_witness_table [concrete]
 // CHECK:STDOUT: }
@@ -128,7 +128,7 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {
-// CHECK:STDOUT:   %Self: %A.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %A.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -146,7 +146,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.A: type = import_ref Main//decl_in_api_definition_in_impl, A, loaded [concrete = constants.%A.type]
-// CHECK:STDOUT:   %Main.import_ref.9ac = import_ref Main//decl_in_api_definition_in_impl, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.3b8 = import_ref Main//decl_in_api_definition_in_impl, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5c: type = import_ref Main//decl_in_api_definition_in_impl, loc10_7, loaded [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %Main.import_ref.831: type = import_ref Main//decl_in_api_definition_in_impl, loc10_12, loaded [concrete = constants.%A.type]
 // CHECK:STDOUT: }
@@ -171,7 +171,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A [from "fail_decl_in_api_definition_in_impl.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.9ac
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.3b8
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -208,7 +208,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %B.type: type = facet_type <@B> [concrete]
-// CHECK:STDOUT:   %Self: %B.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %B.impl_witness: <witness> = impl_witness file.%B.impl_witness_table [concrete]
 // CHECK:STDOUT: }
@@ -228,7 +228,7 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
-// CHECK:STDOUT:   %Self: %B.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -246,7 +246,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.B = import_ref Main//decl_only_in_api, B, unloaded
-// CHECK:STDOUT:   %Main.import_ref.5bd = import_ref Main//decl_only_in_api, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.5c0 = import_ref Main//decl_only_in_api, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5c: type = import_ref Main//decl_only_in_api, loc10_7, loaded [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %Main.import_ref.171: type = import_ref Main//decl_only_in_api, loc10_12, loaded [concrete = constants.%B.type]
 // CHECK:STDOUT: }
@@ -261,7 +261,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B [from "fail_decl_only_in_api.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.5bd
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.5c0
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -271,7 +271,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C.type: type = facet_type <@C> [concrete]
-// CHECK:STDOUT:   %Self: %C.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %C.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C.impl_witness: <witness> = impl_witness file.%C.impl_witness_table [concrete]
 // CHECK:STDOUT: }
@@ -291,7 +291,7 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @C {
-// CHECK:STDOUT:   %Self: %C.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %C.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -309,7 +309,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//decl_in_api_decl_in_impl, C, loaded [concrete = constants.%C.type]
-// CHECK:STDOUT:   %Main.import_ref.11f = import_ref Main//decl_in_api_decl_in_impl, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.a1a = import_ref Main//decl_in_api_decl_in_impl, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5c: type = import_ref Main//decl_in_api_decl_in_impl, loc10_7, loaded [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %Main.import_ref.653: type = import_ref Main//decl_in_api_decl_in_impl, loc10_12, loaded [concrete = constants.%C.type]
 // CHECK:STDOUT: }
@@ -329,7 +329,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @C [from "fail_decl_in_api_decl_in_impl.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.11f
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.a1a
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -347,7 +347,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %D.type: type = facet_type <@D> [concrete]
-// CHECK:STDOUT:   %Self: %D.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %D.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %D.impl_witness: <witness> = impl_witness file.%D.impl_witness_table [concrete]
 // CHECK:STDOUT: }
@@ -369,7 +369,7 @@ impl () as D;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @D {
-// CHECK:STDOUT:   %Self: %D.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %D.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

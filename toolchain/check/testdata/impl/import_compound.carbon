@@ -102,7 +102,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %NonInstance.type: type = facet_type <@NonInstance> [concrete]
-// CHECK:STDOUT:   %Self.98b: %NonInstance.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.381: %NonInstance.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %NonInstance.F.type: type = fn_type @NonInstance.F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %NonInstance.F: %NonInstance.F.type = struct_value () [concrete]
@@ -114,9 +114,9 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %struct_type.i.as.NonInstance.impl.F: %struct_type.i.as.NonInstance.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %NonInstance.facet: %NonInstance.type = facet_value %struct_type.i, (%NonInstance.impl_witness) [concrete]
 // CHECK:STDOUT:   %Instance.type: type = facet_type <@Instance> [concrete]
-// CHECK:STDOUT:   %Self.c87: %Instance.type = bind_symbolic_name Self, 0 [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.c87 [symbolic]
-// CHECK:STDOUT:   %pattern_type.dbb: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %Self.7d3: %Instance.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.7d3 [symbolic]
+// CHECK:STDOUT:   %pattern_type.710: type = pattern_type %Self.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Instance.G.type: type = fn_type @Instance.G [concrete]
 // CHECK:STDOUT:   %Instance.G: %Instance.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Instance.assoc_type: type = assoc_entity_type @Instance [concrete]
@@ -163,7 +163,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NonInstance {
-// CHECK:STDOUT:   %Self: %NonInstance.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.98b]
+// CHECK:STDOUT:   %Self: %NonInstance.type = symbolic_binding Self, 0 [symbolic = constants.%Self.381]
 // CHECK:STDOUT:   %NonInstance.F.decl: %NonInstance.F.type = fn_decl @NonInstance.F [concrete = constants.%NonInstance.F] {} {}
 // CHECK:STDOUT:   %assoc0: %NonInstance.assoc_type = assoc_entity element0, %NonInstance.F.decl [concrete = constants.%assoc0.525]
 // CHECK:STDOUT:
@@ -174,14 +174,14 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Instance {
-// CHECK:STDOUT:   %Self: %Instance.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.c87]
+// CHECK:STDOUT:   %Self: %Instance.type = symbolic_binding Self, 0 [symbolic = constants.%Self.7d3]
 // CHECK:STDOUT:   %Instance.G.decl: %Instance.G.type = fn_decl @Instance.G [concrete = constants.%Instance.G] {
-// CHECK:STDOUT:     %self.patt: @Instance.G.%pattern_type (%pattern_type.dbb) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: @Instance.G.%pattern_type (%pattern_type.dbb) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %self.patt: @Instance.G.%pattern_type (%pattern_type.710) = value_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: @Instance.G.%pattern_type (%pattern_type.710) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: @Instance.G.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc12_14.1: type = splice_block %.loc12_14.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
-// CHECK:STDOUT:       %Self.ref: %Instance.type = name_ref Self, @Instance.%Self [symbolic = %Self (constants.%Self.c87)]
+// CHECK:STDOUT:       %Self.ref: %Instance.type = name_ref Self, @Instance.%Self [symbolic = %Self (constants.%Self.7d3)]
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       %.loc12_14.2: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     }
@@ -228,9 +228,9 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Instance.G(@Instance.%Self: %Instance.type) {
-// CHECK:STDOUT:   %Self: %Instance.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self.c87)]
+// CHECK:STDOUT:   %Self: %Instance.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.7d3)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.dbb)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.710)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @Instance.G.%Self.binding.as_type (%Self.binding.as_type));
 // CHECK:STDOUT: }
@@ -240,14 +240,14 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NonInstance.F(constants.%Self.98b) {}
+// CHECK:STDOUT: specific @NonInstance.F(constants.%Self.381) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance.F(constants.%NonInstance.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Instance.G(constants.%Self.c87) {
-// CHECK:STDOUT:   %Self => constants.%Self.c87
+// CHECK:STDOUT: specific @Instance.G(constants.%Self.7d3) {
+// CHECK:STDOUT:   %Self => constants.%Self.7d3
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.dbb
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.710
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Instance.G(constants.%Instance.facet) {
@@ -264,7 +264,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %NonInstanceCallImport: %NonInstanceCallImport.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.i: type = struct_type {.i: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %NonInstance.type: type = facet_type <@NonInstance> [concrete]
-// CHECK:STDOUT:   %Self: %NonInstance.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %NonInstance.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %NonInstance.assoc_type: type = assoc_entity_type @NonInstance [concrete]
 // CHECK:STDOUT:   %assoc0: %NonInstance.assoc_type = assoc_entity element0, imports.%Main.import_ref.474 [concrete]
 // CHECK:STDOUT:   %NonInstance.F.type: type = fn_type @NonInstance.F [concrete]
@@ -283,11 +283,11 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.cd2 = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.700 = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e3c: %NonInstance.assoc_type = import_ref Main//lib, loc4_9, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.F = import_ref Main//lib, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.474: %NonInstance.F.type = import_ref Main//lib, loc4_9, loaded [concrete = constants.%NonInstance.F]
-// CHECK:STDOUT:   %Main.import_ref.164: %NonInstance.type = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.1ee: %NonInstance.type = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.890: <witness> = import_ref Main//lib, loc7_30, loaded [concrete = constants.%NonInstance.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.c9a: type = import_ref Main//lib, loc7_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.ef5: type = import_ref Main//lib, loc7_18, loaded [concrete = constants.%NonInstance.type]
@@ -309,7 +309,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NonInstance [from "lib.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.cd2
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.700
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.e3c
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT: }
@@ -333,7 +333,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @NonInstance.F(imports.%Main.import_ref.164: %NonInstance.type) [from "lib.carbon"] {
+// CHECK:STDOUT: generic fn @NonInstance.F(imports.%Main.import_ref.1ee: %NonInstance.type) [from "lib.carbon"] {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -350,7 +350,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %NonInstanceCallImportFail.type: type = fn_type @NonInstanceCallImportFail [concrete]
 // CHECK:STDOUT:   %NonInstanceCallImportFail: %NonInstanceCallImportFail.type = struct_value () [concrete]
 // CHECK:STDOUT:   %NonInstance.type: type = facet_type <@NonInstance> [concrete]
-// CHECK:STDOUT:   %Self.98b: %NonInstance.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.381: %NonInstance.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %NonInstance.assoc_type: type = assoc_entity_type @NonInstance [concrete]
 // CHECK:STDOUT:   %assoc0.8ce: %NonInstance.assoc_type = assoc_entity element0, imports.%Main.import_ref.474 [concrete]
 // CHECK:STDOUT:   %NonInstance.F.type: type = fn_type @NonInstance.F [concrete]
@@ -367,11 +367,11 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.cd2 = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.700 = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e3c: %NonInstance.assoc_type = import_ref Main//lib, loc4_9, loaded [concrete = constants.%assoc0.8ce]
 // CHECK:STDOUT:   %Main.F = import_ref Main//lib, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.474: %NonInstance.F.type = import_ref Main//lib, loc4_9, loaded [concrete = constants.%NonInstance.F]
-// CHECK:STDOUT:   %Main.import_ref.164: %NonInstance.type = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self.98b]
+// CHECK:STDOUT:   %Main.import_ref.1ee: %NonInstance.type = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self.381]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -400,7 +400,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NonInstance [from "lib.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.cd2
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.700
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.e3c
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT: }
@@ -414,11 +414,11 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @NonInstance.F(imports.%Main.import_ref.164: %NonInstance.type) [from "lib.carbon"] {
+// CHECK:STDOUT: generic fn @NonInstance.F(imports.%Main.import_ref.1ee: %NonInstance.type) [from "lib.carbon"] {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NonInstance.F(constants.%Self.98b) {}
+// CHECK:STDOUT: specific @NonInstance.F(constants.%Self.381) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_non-instance_indirect.carbon
 // CHECK:STDOUT:
@@ -430,7 +430,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %NonInstanceCallIndirectImport.type: type = fn_type @NonInstanceCallIndirectImport [concrete]
 // CHECK:STDOUT:   %NonInstanceCallIndirectImport: %NonInstanceCallIndirectImport.type = struct_value () [concrete]
 // CHECK:STDOUT:   %NonInstance.type: type = facet_type <@NonInstance> [concrete]
-// CHECK:STDOUT:   %Self.98b: %NonInstance.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.381: %NonInstance.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %NonInstance.assoc_type: type = assoc_entity_type @NonInstance [concrete]
 // CHECK:STDOUT:   %assoc0.8ce: %NonInstance.assoc_type = assoc_entity element0, imports.%Main.import_ref.474 [concrete]
 // CHECK:STDOUT:   %NonInstance.F.type: type = fn_type @NonInstance.F [concrete]
@@ -447,11 +447,11 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.cd2 = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.700 = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e3c: %NonInstance.assoc_type = import_ref Main//lib, loc4_9, loaded [concrete = constants.%assoc0.8ce]
 // CHECK:STDOUT:   %Main.F = import_ref Main//lib, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.474: %NonInstance.F.type = import_ref Main//lib, loc4_9, loaded [concrete = constants.%NonInstance.F]
-// CHECK:STDOUT:   %Main.import_ref.164: %NonInstance.type = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self.98b]
+// CHECK:STDOUT:   %Main.import_ref.1ee: %NonInstance.type = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self.381]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -481,7 +481,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NonInstance [from "lib.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.cd2
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.700
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.e3c
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT: }
@@ -496,11 +496,11 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @NonInstance.F(imports.%Main.import_ref.164: %NonInstance.type) [from "lib.carbon"] {
+// CHECK:STDOUT: generic fn @NonInstance.F(imports.%Main.import_ref.1ee: %NonInstance.type) [from "lib.carbon"] {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @NonInstance.F(constants.%Self.98b) {}
+// CHECK:STDOUT: specific @NonInstance.F(constants.%Self.381) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_instance_success.carbon
 // CHECK:STDOUT:
@@ -511,13 +511,13 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %InstanceCallImport.type: type = fn_type @InstanceCallImport [concrete]
 // CHECK:STDOUT:   %InstanceCallImport: %InstanceCallImport.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Instance.type: type = facet_type <@Instance> [concrete]
-// CHECK:STDOUT:   %Self: %Instance.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %Instance.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Instance.assoc_type: type = assoc_entity_type @Instance [concrete]
 // CHECK:STDOUT:   %assoc0: %Instance.assoc_type = assoc_entity element0, imports.%Main.import_ref.b4d [concrete]
 // CHECK:STDOUT:   %Instance.G.type: type = fn_type @Instance.G [concrete]
 // CHECK:STDOUT:   %Instance.G: %Instance.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
-// CHECK:STDOUT:   %pattern_type.dbb: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %pattern_type.710: type = pattern_type %Self.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Instance.impl_witness: <witness> = impl_witness imports.%Instance.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Instance.facet: %Instance.type = facet_value %struct_type.i, (%Instance.impl_witness) [concrete]
 // CHECK:STDOUT:   %.41d: type = fn_type_with_self_type %Instance.G.type, %Instance.facet [concrete]
@@ -538,11 +538,11 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.d00 = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.34d = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.124: %Instance.assoc_type = import_ref Main//lib, loc12_21, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.G = import_ref Main//lib, G, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b4d: %Instance.G.type = import_ref Main//lib, loc12_21, loaded [concrete = constants.%Instance.G]
-// CHECK:STDOUT:   %Main.import_ref.334: %Instance.type = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.2d8: %Instance.type = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.4df: <witness> = import_ref Main//lib, loc15_27, loaded [concrete = constants.%Instance.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.c9a: type = import_ref Main//lib, loc15_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.b49: type = import_ref Main//lib, loc15_18, loaded [concrete = constants.%Instance.type]
@@ -589,7 +589,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Instance [from "lib.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.d00
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.34d
 // CHECK:STDOUT:   .G = imports.%Main.import_ref.124
 // CHECK:STDOUT:   witness = (imports.%Main.G)
 // CHECK:STDOUT: }
@@ -610,10 +610,10 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Instance.G(imports.%Main.import_ref.334: %Instance.type) [from "lib.carbon"] {
-// CHECK:STDOUT:   %Self: %Instance.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT: generic fn @Instance.G(imports.%Main.import_ref.2d8: %Instance.type) [from "lib.carbon"] {
+// CHECK:STDOUT:   %Self: %Instance.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.dbb)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.710)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -640,7 +640,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT: specific @Instance.G(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.dbb
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.710
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_instance.carbon
@@ -651,7 +651,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %InstanceCallImportFail: %InstanceCallImportFail.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.i: type = struct_type {.i: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %Instance.type: type = facet_type <@Instance> [concrete]
-// CHECK:STDOUT:   %Self: %Instance.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %Instance.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Instance.assoc_type: type = assoc_entity_type @Instance [concrete]
 // CHECK:STDOUT:   %assoc0: %Instance.assoc_type = assoc_entity element0, imports.%Main.import_ref.b4d [concrete]
 // CHECK:STDOUT:   %Instance.G.type: type = fn_type @Instance.G [concrete]
@@ -667,11 +667,11 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.d00 = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.34d = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.124: %Instance.assoc_type = import_ref Main//lib, loc12_21, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.G = import_ref Main//lib, G, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b4d: %Instance.G.type = import_ref Main//lib, loc12_21, loaded [concrete = constants.%Instance.G]
-// CHECK:STDOUT:   %Main.import_ref.334: %Instance.type = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.2d8: %Instance.type = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.8a7 = import_ref Main//lib, loc15_27, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c9a: type = import_ref Main//lib, loc15_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.b49: type = import_ref Main//lib, loc15_18, loaded [concrete = constants.%Instance.type]
@@ -691,7 +691,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Instance [from "lib.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.d00
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.34d
 // CHECK:STDOUT:   .G = imports.%Main.import_ref.124
 // CHECK:STDOUT:   witness = (imports.%Main.G)
 // CHECK:STDOUT: }
@@ -711,8 +711,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Instance.G(imports.%Main.import_ref.334: %Instance.type) [from "lib.carbon"] {
-// CHECK:STDOUT:   %Self: %Instance.type = bind_symbolic_name Self, 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT: generic fn @Instance.G(imports.%Main.import_ref.2d8: %Instance.type) [from "lib.carbon"] {
+// CHECK:STDOUT:   %Self: %Instance.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type)]
 // CHECK:STDOUT:

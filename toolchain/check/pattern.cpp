@@ -57,7 +57,7 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
       bind_name_kind = SemIR::InstKind::RefBinding;
       break;
     case SemIR::InstKind::SymbolicBindingPattern:
-      bind_name_kind = SemIR::InstKind::BindSymbolicName;
+      bind_name_kind = SemIR::InstKind::SymbolicBinding;
       break;
     case SemIR::InstKind::ValueBindingPattern:
       bind_name_kind = SemIR::InstKind::ValueBinding;
@@ -76,10 +76,10 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
   auto bind_id = AddInstInNoBlock(
       context,
       SemIR::LocIdAndInst::UncheckedLoc(
-          name_loc, SemIR::AnyBindName{.kind = bind_name_kind,
-                                       .type_id = type_id,
-                                       .entity_name_id = entity_name_id,
-                                       .value_id = SemIR::InstId::None}));
+          name_loc, SemIR::AnyBinding{.kind = bind_name_kind,
+                                      .type_id = type_id,
+                                      .entity_name_id = entity_name_id,
+                                      .value_id = SemIR::InstId::None}));
 
   auto pattern_type_id = GetPatternType(context, type_id);
   auto binding_pattern_id = AddPatternInst(
@@ -155,17 +155,6 @@ auto AddSelfParamPattern(Context& context, SemIR::LocId loc_id,
        .index = SemIR::CallParamIndex::None});
 
   return pattern_id;
-}
-
-auto AddAddrSelfParamPattern(Context& context, SemIR::LocId loc_id,
-                             SemIR::ExprRegionId type_expr_region_id,
-                             SemIR::TypeInstId type_inst_id) -> SemIR::InstId {
-  auto pattern_id = AddSelfParamPattern(context, loc_id, type_expr_region_id,
-                                        GetPointerType(context, type_inst_id));
-  return AddPatternInst<SemIR::AddrPattern>(
-      context, loc_id,
-      {.type_id = GetPatternType(context, SemIR::AutoType::TypeId),
-       .inner_id = pattern_id});
 }
 
 }  // namespace Carbon::Check

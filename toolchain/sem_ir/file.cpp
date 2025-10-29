@@ -51,6 +51,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       // The `2` prevents adding a tag for the global ids
       // `ImportIRId::{ApiForImpl,Cpp}`.
       import_irs_(IdTag(check_ir_id.index, 2)),
+      import_cpps_(check_ir_id),
       clang_decls_(check_ir_id),
       // The `+1` prevents adding a tag to the global `NameSpace::PackageInstId`
       // instruction. It's not a "singleton" instruction, but it's a unique
@@ -60,8 +61,10 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       constant_values_(ConstantId::NotConstant, &insts_),
       inst_blocks_(allocator_, check_ir_id),
       constants_(this),
-      // 1 reserved id for `StructTypeFields::Empty`.
+      // 1 reserved id for `StructTypeFieldsId::Empty`.
       struct_type_fields_(allocator_, IdTag(check_ir_id.index, 1)),
+      // 1 reserved id for `CustomLayoutId::Empty`.
+      custom_layouts_(allocator_, IdTag(check_ir_id.index, 1)),
       expr_regions_(check_ir_id),
       clang_source_locs_(check_ir_id) {
   // `type` and the error type are both complete & concrete types.

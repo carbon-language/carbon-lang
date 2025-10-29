@@ -20,7 +20,7 @@
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope00000000: {inst: inst0000000E, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope00000000: {inst: inst0000000F, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:    {}
 // CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:       {}
@@ -42,6 +42,7 @@
 // CHECK:STDOUT:     'inst(BoolType)':  {kind: BoolType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(BoundMethodType)': {kind: BoundMethodType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(CharLiteralType)': {kind: CharLiteralType, type: type(TypeType)}
+// CHECK:STDOUT:     'inst(CppVoidType)': {kind: CppVoidType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(ErrorInst)': {kind: ErrorInst, type: type(Error)}
 // CHECK:STDOUT:     'inst(FloatLiteralType)': {kind: FloatLiteralType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(ImplWitnessTablePlaceholder)': {kind: ImplWitnessTablePlaceholder, type: type(TypeType)}
@@ -51,7 +52,7 @@
 // CHECK:STDOUT:     'inst(SpecificFunctionType)': {kind: SpecificFunctionType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(VtableType)': {kind: VtableType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(WitnessType)': {kind: WitnessType, type: type(TypeType)}
-// CHECK:STDOUT:     inst0000000E:    {kind: Namespace, arg0: name_scope00000000, arg1: inst<none>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst0000000F:    {kind: Namespace, arg0: name_scope00000000, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
 // CHECK:STDOUT:       'inst(TypeType)':  concrete_constant(inst(TypeType))
@@ -59,6 +60,7 @@
 // CHECK:STDOUT:       'inst(BoolType)':  concrete_constant(inst(BoolType))
 // CHECK:STDOUT:       'inst(BoundMethodType)': concrete_constant(inst(BoundMethodType))
 // CHECK:STDOUT:       'inst(CharLiteralType)': concrete_constant(inst(CharLiteralType))
+// CHECK:STDOUT:       'inst(CppVoidType)': concrete_constant(inst(CppVoidType))
 // CHECK:STDOUT:       'inst(ErrorInst)': concrete_constant(inst(ErrorInst))
 // CHECK:STDOUT:       'inst(FloatLiteralType)': concrete_constant(inst(FloatLiteralType))
 // CHECK:STDOUT:       'inst(ImplWitnessTablePlaceholder)': concrete_constant(inst(ImplWitnessTablePlaceholder))
@@ -68,7 +70,7 @@
 // CHECK:STDOUT:       'inst(SpecificFunctionType)': concrete_constant(inst(SpecificFunctionType))
 // CHECK:STDOUT:       'inst(VtableType)': concrete_constant(inst(VtableType))
 // CHECK:STDOUT:       'inst(WitnessType)': concrete_constant(inst(WitnessType))
-// CHECK:STDOUT:       inst0000000E:    concrete_constant(inst0000000E)
+// CHECK:STDOUT:       inst0000000F:    concrete_constant(inst0000000F)
 // CHECK:STDOUT:     symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
@@ -76,5 +78,5 @@
 // CHECK:STDOUT:     imports:         {}
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     inst_block60000004:
-// CHECK:STDOUT:       0:               inst0000000E
+// CHECK:STDOUT:       0:               inst0000000F
 // CHECK:STDOUT: ...

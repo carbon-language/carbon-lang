@@ -199,7 +199,7 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: define void @_CCallCallGeneric.Main(ptr sret({}) %return, ptr %c, ptr %b) !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CCallGeneric.Main.cf772e69bb444ae2(ptr %return, ptr %c, ptr %b), !dbg !13
+// CHECK:STDOUT:   call void @_CCallGeneric.Main.e9553e8b9469ef0b(ptr %return, ptr %c, ptr %b), !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -215,7 +215,7 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CCallGeneric.Main.cf772e69bb444ae2(ptr sret({}) %return, ptr %c, ptr %b) !dbg !17 {
+// CHECK:STDOUT: define linkonce_odr void @_CCallGeneric.Main.e9553e8b9469ef0b(ptr sret({}) %return, ptr %c, ptr %b) !dbg !17 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF:thunk.C.Main:I.Main.e43630e9a6c38c3f"(ptr %return, ptr %c, ptr %b), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
@@ -264,7 +264,7 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: !14 = !DILocation(line: 30, column: 3, scope: !12)
 // CHECK:STDOUT: !15 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main:I.Main.e43630e9a6c38c3f", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !16 = !DILocation(line: 18, column: 33, scope: !15)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "CallGeneric", linkageName: "_CCallGeneric.Main.cf772e69bb444ae2", scope: null, file: !3, line: 25, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "CallGeneric", linkageName: "_CCallGeneric.Main.e9553e8b9469ef0b", scope: null, file: !3, line: 25, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !18 = !DILocation(line: 26, column: 10, scope: !17)
 // CHECK:STDOUT: !19 = !DILocation(line: 26, column: 3, scope: !17)
 // CHECK:STDOUT: !20 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk.C.Main:I.Main.e43630e9a6c38c3f", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
