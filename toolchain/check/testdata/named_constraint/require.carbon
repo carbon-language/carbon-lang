@@ -251,7 +251,7 @@ constraint Z(T:! type) {
   require impls 1;
 }
 
-// --- fail_require_self_in_requirement.carbon
+// --- require_self_in_requirement.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {
@@ -471,7 +471,7 @@ constraint Z {
 // CHECK:STDOUT:   %T.loc8_14.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_require_self_in_requirement.carbon
+// CHECK:STDOUT: --- require_self_in_requirement.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
