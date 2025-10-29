@@ -58,7 +58,7 @@ fn F() {
 }
 
 // ============================================================================
-// Const value pointer as a parameter type
+// Pointer to const as a parameter type
 // ============================================================================
 
 // --- const_value_pointer_param.h
