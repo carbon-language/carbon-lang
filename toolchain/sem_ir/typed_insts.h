@@ -894,7 +894,7 @@ struct ImplWitnessAssociatedConstant {
 // The witness table contains an instruction for each associated constant and
 // function in the impl declaration (and definition, if seen). The `specific_id`
 // from the `ImplWitness` should be applied to those instructions. Instructions
-// will be `InstId::None` until a value is seen for them.
+// will be `InstId::ImplWitnessTablePlaceholder` until a value is seen for them.
 //
 // An `ImplWitnessTable` can be shared by multiple `ImplWitness` instructions,
 // to avoid the work of importing the full table with each witness.
