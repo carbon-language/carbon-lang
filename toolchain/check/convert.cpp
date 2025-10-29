@@ -1529,7 +1529,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   // Now perform any necessary value category conversions.
-  switch (SemIR::GetExprCategory(sem_ir, expr_id)) {
+  // This uses fallthrough to implement a very simple state machine over the
+  // category of expr_id, which is tracked by current_category.
+  switch (auto current_category = SemIR::GetExprCategory(sem_ir, expr_id);
+          current_category) {
     case SemIR::ExprCategory::NotExpr:
     case SemIR::ExprCategory::Mixed:
       CARBON_FATAL("Unexpected expression {0} after builtin conversions",
@@ -1558,15 +1561,16 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       expr_id = FinalizeTemporary(context, expr_id,
                                   target.kind == ConversionTarget::Discarded);
       // We now have an ephemeral reference.
+      current_category = SemIR::ExprCategory::EphemeralRef;
       [[fallthrough]];
 
     case SemIR::ExprCategory::DurableRef:
-      if (target.kind == ConversionTarget::DurableRef) {
+    case SemIR::ExprCategory::EphemeralRef:
+      if (current_category == SemIR::ExprCategory::DurableRef &&
+          target.kind == ConversionTarget::DurableRef) {
         break;
       }
-      [[fallthrough]];
 
-    case SemIR::ExprCategory::EphemeralRef:
       // If a reference expression is an acceptable result, we're done.
       if (target.kind == ConversionTarget::ValueOrRef ||
           target.kind == ConversionTarget::Discarded ||
@@ -1580,6 +1584,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
           context, SemIR::LocId(expr_id),
           {.type_id = target.type_id, .value_id = expr_id});
       // We now have a value expression.
+      current_category = SemIR::ExprCategory::Value;
       [[fallthrough]];
 
     case SemIR::ExprCategory::Value:
@@ -1598,12 +1603,14 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       // When initializing from a value, perform a copy.
       if (target.is_initializer()) {
         expr_id = PerformCopy(context, expr_id, target);
+        current_category = SemIR::ExprCategory::Initializing;
       }
 
       // When initializing a C++ thunk parameter, form a reference, creating a
       // temporary if needed.
       if (target.kind == ConversionTarget::CppThunkRef) {
         expr_id = ConvertValueForCppThunkRef(context, expr_id);
+        current_category = SemIR::ExprCategory::EphemeralRef;
       }
 
       break;

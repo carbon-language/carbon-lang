@@ -170,13 +170,34 @@ library "[[@TEST_NAME]]";
 base class Base {
   var a: ();
 
+  fn F[ref self: Self]();
+}
+
+// CHECK:STDERR: fail_self_type.carbon:[[@LINE+7]]:21: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fn Base.F[ref self: Base]() {
+// CHECK:STDERR:                     ^~~~
+// CHECK:STDERR: fail_self_type.carbon:[[@LINE-6]]:18: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
+// CHECK:STDERR:   fn F[ref self: Self]();
+// CHECK:STDERR:                  ^~~~
+// CHECK:STDERR:
+fn Base.F[ref self: Base]() {
+  self.a = ();
+}
+
+// --- fail_self_type_addr.carbon
+
+library "[[@TEST_NAME]]";
+
+base class Base {
+  var a: ();
+
   fn F[addr self: Self*]();
 }
 
-// CHECK:STDERR: fail_self_type.carbon:[[@LINE+7]]:22: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
+// CHECK:STDERR: fail_self_type_addr.carbon:[[@LINE+7]]:22: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
 // CHECK:STDERR: fn Base.F[addr self: Base*]() {
 // CHECK:STDERR:                      ^~~~
-// CHECK:STDERR: fail_self_type.carbon:[[@LINE-6]]:19: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
+// CHECK:STDERR: fail_self_type_addr.carbon:[[@LINE-6]]:19: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
 // CHECK:STDERR:   fn F[addr self: Self*]();
 // CHECK:STDERR:                   ^~~~
 // CHECK:STDERR:
@@ -1127,6 +1148,73 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_self_type.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Base [concrete]
+// CHECK:STDOUT:   %Base.F.type.7c6384.1: type = fn_type @Base.F.loc7 [concrete]
+// CHECK:STDOUT:   %Base.F.d17bbc.1: %Base.F.type.7c6384.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %empty_tuple.type} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete]
+// CHECK:STDOUT:   %Base.F.type.7c6384.2: type = fn_type @Base.F.loc17 [concrete]
+// CHECK:STDOUT:   %Base.F.d17bbc.2: %Base.F.type.7c6384.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Base = %Base.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
+// CHECK:STDOUT:   %Base.F.decl: %Base.F.type.7c6384.2 = fn_decl @Base.F.loc17 [concrete = constants.%Base.F.d17bbc.2] {
+// CHECK:STDOUT:     %self.patt: %pattern_type = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type = ref_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %Base = ref_param call_param0
+// CHECK:STDOUT:     %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
+// CHECK:STDOUT:     %self: ref %Base = ref_binding self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Base {
+// CHECK:STDOUT:   %.loc5_11.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc5_8: %Base.elem = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %Base.F.decl: %Base.F.type.7c6384.1 = fn_decl @Base.F.loc7 [concrete = constants.%Base.F.d17bbc.1] {
+// CHECK:STDOUT:     %self.patt: %pattern_type = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type = ref_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %Base = ref_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
+// CHECK:STDOUT:     %self: ref %Base = ref_binding self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Base
+// CHECK:STDOUT:   .a = %.loc5_8
+// CHECK:STDOUT:   .F = %Base.F.decl
+// CHECK:STDOUT:   .Base = <poisoned>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Base.F.loc7(%self.param: %Base);
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Base.F.loc17(%self.param: %Base) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %self.ref: ref %Base = name_ref self, %self
+// CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc5_8 [concrete = @Base.%.loc5_8]
+// CHECK:STDOUT:   %.loc18_7: ref %empty_tuple.type = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc18_13.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc18_13.2: init %empty_tuple.type = tuple_init () to %.loc18_7 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc18_10: init %empty_tuple.type = converted %.loc18_13.1, %.loc18_13.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   assign %.loc18_7, %.loc18_10
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_self_type_addr.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]

@@ -46,6 +46,24 @@ base class B { extend base: A; }
 class C { extend base: B; }
 
 interface X {
+  fn F[ref self: Self](other: Self*) -> Self*;
+}
+
+impl B as X {
+  //@dump-sem-ir-begin
+  fn F[ref self: A](other: A*) -> C*;
+  //@dump-sem-ir-end
+}
+
+// --- inheritance_conversion_addr.carbon
+
+library "[[@TEST_NAME]]";
+
+base class A {}
+base class B { extend base: A; }
+class C { extend base: B; }
+
+interface X {
   fn F[addr self: Self*](other: Self*) -> Self*;
 }
 
@@ -73,6 +91,24 @@ impl B as X {
 }
 
 // --- inheritance_value_conversion_pointer.carbon
+
+library "[[@TEST_NAME]]";
+
+base class A {}
+base class B { extend base: A; }
+class C { extend base: B; }
+
+interface X {
+  fn F[ref self: Self](other: Self*) -> Self*;
+}
+
+impl B as X {
+  //@dump-sem-ir-begin
+  fn F[ref self: A](other: A*) -> C*;
+  //@dump-sem-ir-end
+}
+
+// --- inheritance_value_conversion_pointer_addr.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -402,6 +438,99 @@ impl () as I({}) {
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %pattern_type.c10: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %ptr.6db: type = ptr_type %A [concrete]
+// CHECK:STDOUT:   %pattern_type.5f8: type = pattern_type %ptr.6db [concrete]
+// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
+// CHECK:STDOUT:   %B.as.X.impl.F.type.84a1c2.1: type = fn_type @B.as.X.impl.F.loc14_37.1 [concrete]
+// CHECK:STDOUT:   %B.as.X.impl.F.b849c8.1: %B.as.X.impl.F.type.84a1c2.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
+// CHECK:STDOUT:   %B.as.X.impl.F.type.84a1c2.2: type = fn_type @B.as.X.impl.F.loc14_37.2 [concrete]
+// CHECK:STDOUT:   %B.as.X.impl.F.b849c8.2: %B.as.X.impl.F.type.84a1c2.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
+// CHECK:STDOUT:   %T.d9f: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.75b: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.d9f) [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.692: %ptr.as.Copy.impl.Op.type.75b = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.5dd: <witness> = impl_witness imports.%Copy.impl_witness_table.67d, @ptr.as.Copy.impl(%B) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.0a3: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%B) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.8c4: %ptr.as.Copy.impl.Op.type.0a3 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.e79, (%Copy.impl_witness.5dd) [concrete]
+// CHECK:STDOUT:   %.ee7: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.8c4, @ptr.as.Copy.impl.Op(%B) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.import_ref.659: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.75b) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.692)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.67d = impl_witness_table (%Core.import_ref.659), @ptr.as.Copy.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @B.as.X.impl: %B.ref as %X.ref {
+// CHECK:STDOUT:   %B.as.X.impl.F.decl.loc14_37.1: %B.as.X.impl.F.type.84a1c2.1 = fn_decl @B.as.X.impl.F.loc14_37.1 [concrete = constants.%B.as.X.impl.F.b849c8.1] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.c10 = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.c10 = ref_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %other.patt: %pattern_type.5f8 = value_binding_pattern other [concrete]
+// CHECK:STDOUT:     %other.param_patt: %pattern_type.5f8 = value_param_pattern %other.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.44a = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.44a = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %ptr.loc14_36: type = ptr_type %C.ref [concrete = constants.%ptr.019]
+// CHECK:STDOUT:     %self.param: ref %A = ref_param call_param0
+// CHECK:STDOUT:     %A.ref.loc14_18: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     %self: ref %A = ref_binding self, %self.param
+// CHECK:STDOUT:     %other.param: %ptr.6db = value_param call_param1
+// CHECK:STDOUT:     %.loc14: type = splice_block %ptr.loc14_29 [concrete = constants.%ptr.6db] {
+// CHECK:STDOUT:       %A.ref.loc14_28: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:       %ptr.loc14_29: type = ptr_type %A.ref.loc14_28 [concrete = constants.%ptr.6db]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %other: %ptr.6db = value_binding other, %other.param
+// CHECK:STDOUT:     %return.param: ref %ptr.019 = out_param call_param2
+// CHECK:STDOUT:     %return: ref %ptr.019 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %B.as.X.impl.F.decl.loc14_37.2: %B.as.X.impl.F.type.84a1c2.2 = fn_decl @B.as.X.impl.F.loc14_37.2 [concrete = constants.%B.as.X.impl.F.b849c8.2] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .A = <poisoned>
+// CHECK:STDOUT:   .C = <poisoned>
+// CHECK:STDOUT:   .F = %B.as.X.impl.F.decl.loc14_37.1
+// CHECK:STDOUT:   witness = file.%X.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.1(%self.param: %A, %other.param: %ptr.6db) -> %ptr.019;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.2(%self.param: %B, %other.param: %ptr.e79) -> %ptr.e79 [thunk @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1] {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %B.as.X.impl.F.type.84a1c2.1 = name_ref F, @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1 [concrete = constants.%B.as.X.impl.F.b849c8.1]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %B.as.X.impl.F.bound: <bound method> = bound_method %self.ref, %F.ref
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %B.as.X.impl.F.call: init %ptr.019 = call %B.as.X.impl.F.bound(%.loc9_16.2, %.loc9_29.3)
+// CHECK:STDOUT:   %.loc14_37.1: %ptr.019 = value_of_initializer %B.as.X.impl.F.call
+// CHECK:STDOUT:   %.loc14_37.2: %ptr.019 = converted %B.as.X.impl.F.call, %.loc14_37.1
+// CHECK:STDOUT:   %.loc14_37.3: ref %C = deref %.loc14_37.2
+// CHECK:STDOUT:   %.loc14_37.4: ref %B = class_element_access %.loc14_37.3, element0
+// CHECK:STDOUT:   %addr.loc14: %ptr.e79 = addr_of %.loc14_37.4
+// CHECK:STDOUT:   %.loc14_37.5: %ptr.e79 = converted %B.as.X.impl.F.call, %addr.loc14
+// CHECK:STDOUT:   %impl.elem0: %.ee7 = impl_witness_access constants.%Copy.impl_witness.5dd, element0 [concrete = constants.%ptr.as.Copy.impl.Op.8c4]
+// CHECK:STDOUT:   %bound_method.loc14_37.1: <bound method> = bound_method %.loc14_37.5, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%B) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc14_37.2: <bound method> = bound_method %.loc14_37.5, %specific_fn
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.e79 = call %bound_method.loc14_37.2(%.loc14_37.5)
+// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- inheritance_conversion_addr.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %B: type = class_type @B [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
 // CHECK:STDOUT:   %ptr.6db: type = ptr_type %A [concrete]
 // CHECK:STDOUT:   %pattern_type.5f8: type = pattern_type %ptr.6db [concrete]
@@ -548,6 +677,99 @@ impl () as I({}) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- inheritance_value_conversion_pointer.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %B: type = class_type @B [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %pattern_type.c10: type = pattern_type %A [concrete]
+// CHECK:STDOUT:   %ptr.6db: type = ptr_type %A [concrete]
+// CHECK:STDOUT:   %pattern_type.5f8: type = pattern_type %ptr.6db [concrete]
+// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
+// CHECK:STDOUT:   %B.as.X.impl.F.type.84a1c2.1: type = fn_type @B.as.X.impl.F.loc14_37.1 [concrete]
+// CHECK:STDOUT:   %B.as.X.impl.F.b849c8.1: %B.as.X.impl.F.type.84a1c2.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %ptr.e79: type = ptr_type %B [concrete]
+// CHECK:STDOUT:   %B.as.X.impl.F.type.84a1c2.2: type = fn_type @B.as.X.impl.F.loc14_37.2 [concrete]
+// CHECK:STDOUT:   %B.as.X.impl.F.b849c8.2: %B.as.X.impl.F.type.84a1c2.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
+// CHECK:STDOUT:   %T.d9f: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.75b: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.d9f) [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.692: %ptr.as.Copy.impl.Op.type.75b = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.5dd: <witness> = impl_witness imports.%Copy.impl_witness_table.67d, @ptr.as.Copy.impl(%B) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.0a3: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%B) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.8c4: %ptr.as.Copy.impl.Op.type.0a3 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.e79, (%Copy.impl_witness.5dd) [concrete]
+// CHECK:STDOUT:   %.ee7: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.8c4, @ptr.as.Copy.impl.Op(%B) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.import_ref.659: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.75b) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.692)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.67d = impl_witness_table (%Core.import_ref.659), @ptr.as.Copy.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @B.as.X.impl: %B.ref as %X.ref {
+// CHECK:STDOUT:   %B.as.X.impl.F.decl.loc14_37.1: %B.as.X.impl.F.type.84a1c2.1 = fn_decl @B.as.X.impl.F.loc14_37.1 [concrete = constants.%B.as.X.impl.F.b849c8.1] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.c10 = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.c10 = ref_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %other.patt: %pattern_type.5f8 = value_binding_pattern other [concrete]
+// CHECK:STDOUT:     %other.param_patt: %pattern_type.5f8 = value_param_pattern %other.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.44a = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.44a = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %ptr.loc14_36: type = ptr_type %C.ref [concrete = constants.%ptr.019]
+// CHECK:STDOUT:     %self.param: ref %A = ref_param call_param0
+// CHECK:STDOUT:     %A.ref.loc14_18: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:     %self: ref %A = ref_binding self, %self.param
+// CHECK:STDOUT:     %other.param: %ptr.6db = value_param call_param1
+// CHECK:STDOUT:     %.loc14: type = splice_block %ptr.loc14_29 [concrete = constants.%ptr.6db] {
+// CHECK:STDOUT:       %A.ref.loc14_28: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:       %ptr.loc14_29: type = ptr_type %A.ref.loc14_28 [concrete = constants.%ptr.6db]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %other: %ptr.6db = value_binding other, %other.param
+// CHECK:STDOUT:     %return.param: ref %ptr.019 = out_param call_param2
+// CHECK:STDOUT:     %return: ref %ptr.019 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %B.as.X.impl.F.decl.loc14_37.2: %B.as.X.impl.F.type.84a1c2.2 = fn_decl @B.as.X.impl.F.loc14_37.2 [concrete = constants.%B.as.X.impl.F.b849c8.2] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .A = <poisoned>
+// CHECK:STDOUT:   .C = <poisoned>
+// CHECK:STDOUT:   .F = %B.as.X.impl.F.decl.loc14_37.1
+// CHECK:STDOUT:   witness = file.%X.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.1(%self.param: %A, %other.param: %ptr.6db) -> %ptr.019;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.2(%self.param: %B, %other.param: %ptr.e79) -> %ptr.e79 [thunk @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1] {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %B.as.X.impl.F.type.84a1c2.1 = name_ref F, @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1 [concrete = constants.%B.as.X.impl.F.b849c8.1]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %B.as.X.impl.F.bound: <bound method> = bound_method %self.ref, %F.ref
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %B.as.X.impl.F.call: init %ptr.019 = call %B.as.X.impl.F.bound(%.loc9_16.2, %.loc9_29.3)
+// CHECK:STDOUT:   %.loc14_37.1: %ptr.019 = value_of_initializer %B.as.X.impl.F.call
+// CHECK:STDOUT:   %.loc14_37.2: %ptr.019 = converted %B.as.X.impl.F.call, %.loc14_37.1
+// CHECK:STDOUT:   %.loc14_37.3: ref %C = deref %.loc14_37.2
+// CHECK:STDOUT:   %.loc14_37.4: ref %B = class_element_access %.loc14_37.3, element0
+// CHECK:STDOUT:   %addr.loc14: %ptr.e79 = addr_of %.loc14_37.4
+// CHECK:STDOUT:   %.loc14_37.5: %ptr.e79 = converted %B.as.X.impl.F.call, %addr.loc14
+// CHECK:STDOUT:   %impl.elem0: %.ee7 = impl_witness_access constants.%Copy.impl_witness.5dd, element0 [concrete = constants.%ptr.as.Copy.impl.Op.8c4]
+// CHECK:STDOUT:   %bound_method.loc14_37.1: <bound method> = bound_method %.loc14_37.5, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%B) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc14_37.2: <bound method> = bound_method %.loc14_37.5, %specific_fn
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.e79 = call %bound_method.loc14_37.2(%.loc14_37.5)
+// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- inheritance_value_conversion_pointer_addr.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]

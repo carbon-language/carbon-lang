@@ -6,20 +6,20 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/impl/instance_method.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/impl/instance_method_addr.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/impl/instance_method.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/impl/instance_method_addr.carbon
 
 class A;
 
 interface GetSelf {
-  fn Get[ref self: Self]() -> Self*;
+  fn Get[addr self: Self*]() -> Self*;
 }
 
 class A {
   extend impl as GetSelf {
-    fn Get[ref self: Self]() -> Self* {
-      return &self;
+    fn Get[addr self: Self*]() -> Self* {
+      return self;
     }
   }
 }
@@ -28,8 +28,8 @@ fn Call(a: A*) -> A* {
   return (*a).Get();
 }
 
-// CHECK:STDOUT: ; ModuleID = 'instance_method.carbon'
-// CHECK:STDOUT: source_filename = "instance_method.carbon"
+// CHECK:STDOUT: ; ModuleID = 'instance_method_addr.carbon'
+// CHECK:STDOUT: source_filename = "instance_method_addr.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: define ptr @"_CGet.A.Main:GetSelf.Main"(ptr %self) !dbg !4 {
 // CHECK:STDOUT: entry:
@@ -48,7 +48,7 @@ fn Call(a: A*) -> A* {
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "instance_method.carbon", directory: "")
+// CHECK:STDOUT: !3 = !DIFile(filename: "instance_method_addr.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Get", linkageName: "_CGet.A.Main:GetSelf.Main", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}

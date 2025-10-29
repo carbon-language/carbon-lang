@@ -62,13 +62,6 @@ constexpr Kind UntestedKinds[] = {
     // - Require all diagnostics produced by compiling have their first location
     //   be in the file being compiled, never an import.
     Kind::LanguageServerDiagnosticInWrongFile,
-
-    // TODO: This can only fire if we attempt to convert a non-reference
-    // expression to a durable reference binding. At the moment, the only time
-    // we attempt reference binding is within a `var` pattern, where the
-    // conversion cannot fail. This should be covered once we support `ref`
-    // binding syntax.
-    Kind::ConversionFailureNonRefToRef,
 };
 
 // Looks for diagnostic kinds that aren't covered by a file_test.

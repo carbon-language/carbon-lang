@@ -356,7 +356,7 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
     }
     // TODO: Use a more general mechanism to determine if the binding is a
     // reference binding.
-    if (param_pattern_info->var_pattern_id.has_value()) {
+    if (param_pattern_info->inst.kind == SemIR::RefParamPattern::Kind) {
       param_types.push_back(
           llvm::PointerType::get(llvm_context(), /*AddressSpace=*/0));
       param_inst_ids.push_back(param_pattern_id);
