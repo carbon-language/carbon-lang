@@ -57,7 +57,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %C.as.DivAssignWith.impl.Op.type: type = fn_type @C.as.DivAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.DivAssignWith.impl.Op: %C.as.DivAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %DivAssignWith.facet: %DivAssignWith.type.226 = facet_value %C, (%DivAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.b8d: type = fn_type_with_self_type %DivWith.Op.type.c4b, %DivWith.facet [concrete]
+// CHECK:STDOUT:   %.b0b: type = fn_type_with_self_type %DivWith.Op.type.c4b, %DivWith.facet [concrete]
 // CHECK:STDOUT:   %.5f7: type = fn_type_with_self_type %DivAssignWith.Op.type.629, %DivAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -68,7 +68,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem1: %.b8d = impl_witness_access constants.%DivWith.impl_witness, element1 [concrete = constants.%C.as.DivWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem1: %.b0b = impl_witness_access constants.%DivWith.impl_witness, element1 [concrete = constants.%C.as.DivWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.as.DivWith.impl.Op.call: init %C = call %bound_method(%a.ref, %b.ref) to %.loc30

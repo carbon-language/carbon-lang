@@ -63,7 +63,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         continue;
       }
 
-      case CARBON_KIND(BindAlias inst): {
+      case CARBON_KIND(AliasBinding inst): {
         inst_id = inst.value_id;
         continue;
       }
@@ -99,8 +99,8 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case AssociatedEntity::Kind:
       case AssociatedEntityType::Kind:
       case AutoType::Kind:
-      case BindSymbolicName::Kind:
-      case BindValue::Kind:
+      case SymbolicBinding::Kind:
+      case AcquireValue::Kind:
       case ValueBinding::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:

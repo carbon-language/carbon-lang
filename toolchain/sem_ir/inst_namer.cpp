@@ -772,12 +772,12 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddEntityNameAndMaybePush(inst.interface_id, ".assoc_type");
       return;
     }
-    case BindAlias::Kind:
+    case AliasBinding::Kind:
     case RefBinding::Kind:
-    case BindSymbolicName::Kind:
+    case SymbolicBinding::Kind:
     case ValueBinding::Kind:
     case ExportDecl::Kind: {
-      auto inst = inst_.As<AnyBindNameOrExportDecl>();
+      auto inst = inst_.As<AnyBindingOrExportDecl>();
       AddInstNameId(sem_ir().entity_names().Get(inst.entity_name_id).name_id);
       return;
     }
@@ -878,7 +878,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
     }
     case CARBON_KIND(SymbolicBindingType inst): {
       auto bind =
-          sem_ir().insts().GetAs<BindSymbolicName>(inst.facet_value_inst_id);
+          sem_ir().insts().GetAs<SymbolicBinding>(inst.facet_value_inst_id);
       auto name_id = sem_ir().entity_names().Get(bind.entity_name_id).name_id;
       if (name_id.has_value()) {
         AddInstNameId(name_id, ".binding.as_type");

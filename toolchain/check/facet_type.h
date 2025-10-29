@@ -107,7 +107,7 @@ auto ResolveFacetTypeRewriteConstraints(
     -> bool;
 
 // Introduce `.Self` as a symbolic binding into the current scope, and return
-// the `BindSymbolicName` instruction.
+// the `SymbolicBinding` instruction.
 //
 // The `self_type_id` is either a facet type (as `FacetType`) or `type` (as
 // `TypeType`).

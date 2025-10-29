@@ -67,7 +67,7 @@ fn G(T:! Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %T: %type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T: %type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.e25: type = pattern_type %type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -104,12 +104,12 @@ fn G(T:! Z) {
 // CHECK:STDOUT:       %.loc8_12.2: type = value_of_initializer %type.as.BitAndWith.impl.Op.call [concrete = constants.%type]
 // CHECK:STDOUT:       %.loc8_12.3: type = converted %type.as.BitAndWith.impl.Op.call, %.loc8_12.2 [concrete = constants.%type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc8_6.2: %type = bind_symbolic_name T, 0 [symbolic = %T.loc8_6.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc8_6.2: %type = symbolic_binding T, 0 [symbolic = %T.loc8_6.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc8_6.2: %type) {
-// CHECK:STDOUT:   %T.loc8_6.1: %type = bind_symbolic_name T, 0 [symbolic = %T.loc8_6.1 (constants.%T)]
+// CHECK:STDOUT:   %T.loc8_6.1: %type = symbolic_binding T, 0 [symbolic = %T.loc8_6.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.specific_fn.loc9_3.2: <specific function> = specific_function constants.%F, @F(%T.loc8_6.1) [symbolic = %F.specific_fn.loc9_3.2 (constants.%F.specific_fn)]
@@ -132,7 +132,7 @@ fn G(T:! Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %T: %type = bind_symbolic_name T, 0 [symbolic]
+// CHECK:STDOUT:   %T: %type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -153,12 +153,12 @@ fn G(T:! Z) {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %E2.ref: type = name_ref E2, file.%E2.decl [concrete = constants.%type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc9_6.2: %type = bind_symbolic_name T, 0 [symbolic = %T.loc9_6.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc9_6.2: %type = symbolic_binding T, 0 [symbolic = %T.loc9_6.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc9_6.2: %type) {
-// CHECK:STDOUT:   %T.loc9_6.1: %type = bind_symbolic_name T, 0 [symbolic = %T.loc9_6.1 (constants.%T)]
+// CHECK:STDOUT:   %T.loc9_6.1: %type = symbolic_binding T, 0 [symbolic = %T.loc9_6.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %F.specific_fn.loc10_3.2: <specific function> = specific_function constants.%F, @F(%T.loc9_6.1) [symbolic = %F.specific_fn.loc10_3.2 (constants.%F.specific_fn)]

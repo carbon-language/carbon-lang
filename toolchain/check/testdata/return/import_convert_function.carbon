@@ -51,16 +51,16 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %N.51e: %i32 = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %N.fe8: %i32 = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C.506: type = class_type @C, @C(%N.51e) [symbolic]
+// CHECK:STDOUT:   %C.49b: type = class_type @C, @C(%N.fe8) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
@@ -76,17 +76,17 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.d14: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.1b6: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32) [concrete]
-// CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.1c0: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.204: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.9e9, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.584: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.584 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet.7f1: %ImplicitAs.type.d14 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.204) [concrete]
-// CHECK:STDOUT:   %.1df: type = fn_type_with_self_type %ImplicitAs.Convert.type.1b6, %ImplicitAs.facet.7f1 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.931: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
-// CHECK:STDOUT:   %bound_method.c25: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.f51: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.2a1: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.f51 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.bc9: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.132, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.51e: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.51e = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.3ad: %ImplicitAs.type.d14 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.bc9) [concrete]
+// CHECK:STDOUT:   %.322: type = fn_type_with_self_type %ImplicitAs.Convert.type.1b6, %ImplicitAs.facet.3ad [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.0b3: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method.9be: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [concrete]
 // CHECK:STDOUT:   %D.val: %D = struct_value (%int_0.6a9, %int_0.6a9) [concrete]
 // CHECK:STDOUT:   %C.c8d: type = class_type @C, @C(%int_0.6a9) [concrete]
@@ -96,8 +96,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.478: type = fn_type @C.as.ImplicitAs.impl.Convert.loc8 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.97f: %C.as.ImplicitAs.impl.Convert.type.478 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.abf: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0 [concrete]
-// CHECK:STDOUT:   %bound_method.c11: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.265: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b [concrete]
+// CHECK:STDOUT:   %bound_method.dfc: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %C.c02: type = class_type @C, @C(%int_1.5d2) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.358: <witness> = impl_witness file.%ImplicitAs.impl_witness_table.loc9 [concrete]
@@ -105,8 +105,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.9e5: type = fn_type @C.as.ImplicitAs.impl.Convert.loc9 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.dc1: %C.as.ImplicitAs.impl.Convert.type.9e5 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.b82: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0 [concrete]
-// CHECK:STDOUT:   %bound_method.8bd: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.393: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b [concrete]
+// CHECK:STDOUT:   %bound_method.9f7: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %C.70b: type = class_type @C, @C(%int_2.ef8) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.25e: <witness> = impl_witness file.%ImplicitAs.impl_witness_table.loc10 [concrete]
@@ -114,8 +114,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.0da: type = fn_type @C.as.ImplicitAs.impl.Convert.loc10 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.fda: %C.as.ImplicitAs.impl.Convert.type.0da = struct_value () [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.595: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0 [concrete]
-// CHECK:STDOUT:   %bound_method.f36: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.87d: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b [concrete]
+// CHECK:STDOUT:   %bound_method.def: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_3.822: %i32 = int_value 3 [concrete]
 // CHECK:STDOUT:   %C.8cb: type = class_type @C, @C(%int_3.822) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.83b: <witness> = impl_witness file.%ImplicitAs.impl_witness_table.loc11 [concrete]
@@ -123,8 +123,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.7f2: type = fn_type @C.as.ImplicitAs.impl.Convert.loc11 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.803: %C.as.ImplicitAs.impl.Convert.type.7f2 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.5bb: <bound method> = bound_method %int_4.0c1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0 [concrete]
-// CHECK:STDOUT:   %bound_method.9cd: <bound method> = bound_method %int_4.0c1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.0b5: <bound method> = bound_method %int_4.0c1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b [concrete]
+// CHECK:STDOUT:   %bound_method.5dd: <bound method> = bound_method %int_4.0c1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_4.940: %i32 = int_value 4 [concrete]
 // CHECK:STDOUT:   %C.ba2: type = class_type @C, @C(%int_4.940) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.bc0: <witness> = impl_witness file.%ImplicitAs.impl_witness_table.loc12 [concrete]
@@ -132,8 +132,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.d29: type = fn_type @C.as.ImplicitAs.impl.Convert.loc12 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.c16: %C.as.ImplicitAs.impl.Convert.type.d29 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_5.64b: Core.IntLiteral = int_value 5 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.23d: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0 [concrete]
-// CHECK:STDOUT:   %bound_method.724: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.451: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b [concrete]
+// CHECK:STDOUT:   %bound_method.c57: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_5.0f6: %i32 = int_value 5 [concrete]
 // CHECK:STDOUT:   %C.fcd: type = class_type @C, @C(%int_5.0f6) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.b5c: <witness> = impl_witness file.%ImplicitAs.impl_witness_table.loc13 [concrete]
@@ -141,8 +141,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.bba: type = fn_type @C.as.ImplicitAs.impl.Convert.loc13 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.b0d: %C.as.ImplicitAs.impl.Convert.type.bba = struct_value () [concrete]
 // CHECK:STDOUT:   %int_6.462: Core.IntLiteral = int_value 6 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.d66: <bound method> = bound_method %int_6.462, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0 [concrete]
-// CHECK:STDOUT:   %bound_method.0ef: <bound method> = bound_method %int_6.462, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.a4a: <bound method> = bound_method %int_6.462, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b [concrete]
+// CHECK:STDOUT:   %bound_method.b96: <bound method> = bound_method %int_6.462, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_6.e56: %i32 = int_value 6 [concrete]
 // CHECK:STDOUT:   %C.675: type = class_type @C, @C(%int_6.e56) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.5ab: <witness> = impl_witness file.%ImplicitAs.impl_witness_table.loc14 [concrete]
@@ -150,8 +150,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.84f: type = fn_type @C.as.ImplicitAs.impl.Convert.loc14 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.a90: %C.as.ImplicitAs.impl.Convert.type.84f = struct_value () [concrete]
 // CHECK:STDOUT:   %int_7.29f: Core.IntLiteral = int_value 7 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.113: <bound method> = bound_method %int_7.29f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0 [concrete]
-// CHECK:STDOUT:   %bound_method.763: <bound method> = bound_method %int_7.29f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.a66: <bound method> = bound_method %int_7.29f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b [concrete]
+// CHECK:STDOUT:   %bound_method.1db: <bound method> = bound_method %int_7.29f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_7.0b1: %i32 = int_value 7 [concrete]
 // CHECK:STDOUT:   %C.884: type = class_type @C, @C(%int_7.0b1) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.19e: <witness> = impl_witness file.%ImplicitAs.impl_witness_table.loc15 [concrete]
@@ -169,8 +169,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.ee7: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1c0)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.9e9 = impl_witness_table (%Core.import_ref.ee7), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.e24: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.f51) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.2a1)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.132 = impl_witness_table (%Core.import_ref.e24), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -185,11 +185,11 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %N.patt: %pattern_type.7ce = symbolic_binding_pattern N, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4: type = splice_block %i32 [concrete = constants.%i32] {
-// CHECK:STDOUT:       %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc4_9.2: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc4_9.1 (constants.%N.51e)]
+// CHECK:STDOUT:     %N.loc4_9.2: %i32 = symbolic_binding N, 0 [symbolic = %N.loc4_9.1 (constants.%N.fe8)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %Make.decl: %Make.type = fn_decl @Make [concrete = constants.%Make] {
@@ -203,10 +203,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   impl_decl @C.as.ImplicitAs.impl.890 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
-// CHECK:STDOUT:     %impl.elem0: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:     %bound_method.loc8_9.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.931]
+// CHECK:STDOUT:     %impl.elem0: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:     %bound_method.loc8_9.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.0b3]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc8_9.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method.c25]
+// CHECK:STDOUT:     %bound_method.loc8_9.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method.9be]
 // CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc8_9.2(%int_0) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:     %.loc8_9.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:     %.loc8_9.2: %i32 = converted %int_0, %.loc8_9.1 [concrete = constants.%int_0.6a9]
@@ -221,10 +221,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   impl_decl @C.as.ImplicitAs.impl.612 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:     %impl.elem0: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:     %bound_method.loc9_9.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.abf]
+// CHECK:STDOUT:     %impl.elem0: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:     %bound_method.loc9_9.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.265]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc9_9.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method.c11]
+// CHECK:STDOUT:     %bound_method.loc9_9.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method.dfc]
 // CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc9_9.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:     %.loc9_9.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:     %.loc9_9.2: %i32 = converted %int_1, %.loc9_9.1 [concrete = constants.%int_1.5d2]
@@ -239,10 +239,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   impl_decl @C.as.ImplicitAs.impl.39d [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:     %impl.elem0: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:     %bound_method.loc10_9.1: <bound method> = bound_method %int_2, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.b82]
+// CHECK:STDOUT:     %impl.elem0: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:     %bound_method.loc10_9.1: <bound method> = bound_method %int_2, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.393]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc10_9.2: <bound method> = bound_method %int_2, %specific_fn [concrete = constants.%bound_method.8bd]
+// CHECK:STDOUT:     %bound_method.loc10_9.2: <bound method> = bound_method %int_2, %specific_fn [concrete = constants.%bound_method.9f7]
 // CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc10_9.2(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:     %.loc10_9.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:     %.loc10_9.2: %i32 = converted %int_2, %.loc10_9.1 [concrete = constants.%int_2.ef8]
@@ -257,10 +257,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   impl_decl @C.as.ImplicitAs.impl.9d2 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:     %impl.elem0: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:     %bound_method.loc11_9.1: <bound method> = bound_method %int_3, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.595]
+// CHECK:STDOUT:     %impl.elem0: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:     %bound_method.loc11_9.1: <bound method> = bound_method %int_3, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.87d]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc11_9.2: <bound method> = bound_method %int_3, %specific_fn [concrete = constants.%bound_method.f36]
+// CHECK:STDOUT:     %bound_method.loc11_9.2: <bound method> = bound_method %int_3, %specific_fn [concrete = constants.%bound_method.def]
 // CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc11_9.2(%int_3) [concrete = constants.%int_3.822]
 // CHECK:STDOUT:     %.loc11_9.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_3.822]
 // CHECK:STDOUT:     %.loc11_9.2: %i32 = converted %int_3, %.loc11_9.1 [concrete = constants.%int_3.822]
@@ -275,10 +275,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   impl_decl @C.as.ImplicitAs.impl.993 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4.0c1]
-// CHECK:STDOUT:     %impl.elem0: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:     %bound_method.loc12_9.1: <bound method> = bound_method %int_4, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.5bb]
+// CHECK:STDOUT:     %impl.elem0: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:     %bound_method.loc12_9.1: <bound method> = bound_method %int_4, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.0b5]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc12_9.2: <bound method> = bound_method %int_4, %specific_fn [concrete = constants.%bound_method.9cd]
+// CHECK:STDOUT:     %bound_method.loc12_9.2: <bound method> = bound_method %int_4, %specific_fn [concrete = constants.%bound_method.5dd]
 // CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc12_9.2(%int_4) [concrete = constants.%int_4.940]
 // CHECK:STDOUT:     %.loc12_9.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_4.940]
 // CHECK:STDOUT:     %.loc12_9.2: %i32 = converted %int_4, %.loc12_9.1 [concrete = constants.%int_4.940]
@@ -293,10 +293,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   impl_decl @C.as.ImplicitAs.impl.77e [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
-// CHECK:STDOUT:     %impl.elem0: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:     %bound_method.loc13_9.1: <bound method> = bound_method %int_5, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.23d]
+// CHECK:STDOUT:     %impl.elem0: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:     %bound_method.loc13_9.1: <bound method> = bound_method %int_5, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.451]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc13_9.2: <bound method> = bound_method %int_5, %specific_fn [concrete = constants.%bound_method.724]
+// CHECK:STDOUT:     %bound_method.loc13_9.2: <bound method> = bound_method %int_5, %specific_fn [concrete = constants.%bound_method.c57]
 // CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc13_9.2(%int_5) [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:     %.loc13_9.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:     %.loc13_9.2: %i32 = converted %int_5, %.loc13_9.1 [concrete = constants.%int_5.0f6]
@@ -311,10 +311,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   impl_decl @C.as.ImplicitAs.impl.1b5 [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_6: Core.IntLiteral = int_value 6 [concrete = constants.%int_6.462]
-// CHECK:STDOUT:     %impl.elem0: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:     %bound_method.loc14_9.1: <bound method> = bound_method %int_6, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.d66]
+// CHECK:STDOUT:     %impl.elem0: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:     %bound_method.loc14_9.1: <bound method> = bound_method %int_6, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.a4a]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc14_9.2: <bound method> = bound_method %int_6, %specific_fn [concrete = constants.%bound_method.0ef]
+// CHECK:STDOUT:     %bound_method.loc14_9.2: <bound method> = bound_method %int_6, %specific_fn [concrete = constants.%bound_method.b96]
 // CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc14_9.2(%int_6) [concrete = constants.%int_6.e56]
 // CHECK:STDOUT:     %.loc14_9.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_6.e56]
 // CHECK:STDOUT:     %.loc14_9.2: %i32 = converted %int_6, %.loc14_9.1 [concrete = constants.%int_6.e56]
@@ -329,10 +329,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   impl_decl @C.as.ImplicitAs.impl.b0d [concrete] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %int_7: Core.IntLiteral = int_value 7 [concrete = constants.%int_7.29f]
-// CHECK:STDOUT:     %impl.elem0: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:     %bound_method.loc15_9.1: <bound method> = bound_method %int_7, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.113]
+// CHECK:STDOUT:     %impl.elem0: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:     %bound_method.loc15_9.1: <bound method> = bound_method %int_7, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.a66]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc15_9.2: <bound method> = bound_method %int_7, %specific_fn [concrete = constants.%bound_method.763]
+// CHECK:STDOUT:     %bound_method.loc15_9.2: <bound method> = bound_method %int_7, %specific_fn [concrete = constants.%bound_method.1db]
 // CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc15_9.2(%int_7) [concrete = constants.%int_7.0b1]
 // CHECK:STDOUT:     %.loc15_9.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_7.0b1]
 // CHECK:STDOUT:     %.loc15_9.2: %i32 = converted %int_7, %.loc15_9.1 [concrete = constants.%int_7.0b1]
@@ -523,7 +523,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%N.loc4_9.2: %i32) {
-// CHECK:STDOUT:   %N.loc4_9.1: %i32 = bind_symbolic_name N, 0 [symbolic = %N.loc4_9.1 (constants.%N.51e)]
+// CHECK:STDOUT:   %N.loc4_9.1: %i32 = symbolic_binding N, 0 [symbolic = %N.loc4_9.1 (constants.%N.fe8)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -532,7 +532,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.506
+// CHECK:STDOUT:     .Self = constants.%C.49b
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -557,18 +557,18 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %int_0.loc6_31: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %int_0.loc6_39: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc6_40.1: %struct_type.n.m.819 = struct_literal (%int_0.loc6_31, %int_0.loc6_39)
-// CHECK:STDOUT:   %impl.elem0.loc6_40.1: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:   %bound_method.loc6_40.1: <bound method> = bound_method %int_0.loc6_31, %impl.elem0.loc6_40.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.931]
+// CHECK:STDOUT:   %impl.elem0.loc6_40.1: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:   %bound_method.loc6_40.1: <bound method> = bound_method %int_0.loc6_31, %impl.elem0.loc6_40.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.0b3]
 // CHECK:STDOUT:   %specific_fn.loc6_40.1: <specific function> = specific_function %impl.elem0.loc6_40.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc6_40.2: <bound method> = bound_method %int_0.loc6_31, %specific_fn.loc6_40.1 [concrete = constants.%bound_method.c25]
+// CHECK:STDOUT:   %bound_method.loc6_40.2: <bound method> = bound_method %int_0.loc6_31, %specific_fn.loc6_40.1 [concrete = constants.%bound_method.9be]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_40.1: init %i32 = call %bound_method.loc6_40.2(%int_0.loc6_31) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.2: init %i32 = converted %int_0.loc6_31, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_40.1 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.3: ref %i32 = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc6_40.4: init %i32 = initialize_from %.loc6_40.2 to %.loc6_40.3 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %impl.elem0.loc6_40.2: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:   %bound_method.loc6_40.3: <bound method> = bound_method %int_0.loc6_39, %impl.elem0.loc6_40.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.931]
+// CHECK:STDOUT:   %impl.elem0.loc6_40.2: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:   %bound_method.loc6_40.3: <bound method> = bound_method %int_0.loc6_39, %impl.elem0.loc6_40.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.0b3]
 // CHECK:STDOUT:   %specific_fn.loc6_40.2: <specific function> = specific_function %impl.elem0.loc6_40.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc6_40.4: <bound method> = bound_method %int_0.loc6_39, %specific_fn.loc6_40.2 [concrete = constants.%bound_method.c25]
+// CHECK:STDOUT:   %bound_method.loc6_40.4: <bound method> = bound_method %int_0.loc6_39, %specific_fn.loc6_40.2 [concrete = constants.%bound_method.9be]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_40.2: init %i32 = call %bound_method.loc6_40.4(%int_0.loc6_39) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.5: init %i32 = converted %int_0.loc6_39, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_40.2 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.6: ref %i32 = class_element_access %return, element1
@@ -642,8 +642,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%N.51e) {
-// CHECK:STDOUT:   %N.loc4_9.1 => constants.%N.51e
+// CHECK:STDOUT: specific @C(constants.%N.fe8) {
+// CHECK:STDOUT:   %N.loc4_9.1 => constants.%N.fe8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_0.6a9) {
@@ -714,23 +714,23 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %N.51e: %i32 = bind_symbolic_name N, 0 [symbolic]
+// CHECK:STDOUT:   %N.fe8: %i32 = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.d14: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.1b6: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32) [concrete]
-// CHECK:STDOUT:   %To: Core.IntLiteral = bind_symbolic_name To, 0 [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.1c0: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.204: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.9e9, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.584: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.584 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet.7f1: %ImplicitAs.type.d14 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.204) [concrete]
-// CHECK:STDOUT:   %.1df: type = fn_type_with_self_type %ImplicitAs.Convert.type.1b6, %ImplicitAs.facet.7f1 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.931: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
-// CHECK:STDOUT:   %bound_method.c25: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.f51: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.2a1: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.f51 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.bc9: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.132, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.51e: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.51e = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.3ad: %ImplicitAs.type.d14 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.bc9) [concrete]
+// CHECK:STDOUT:   %.322: type = fn_type_with_self_type %ImplicitAs.Convert.type.1b6, %ImplicitAs.facet.3ad [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.0b3: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method.9be: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_0.6a9: %i32 = int_value 0 [concrete]
 // CHECK:STDOUT:   %C.b00: type = class_type @C, @C(%int_0.6a9) [concrete]
 // CHECK:STDOUT:   %C.val.452: %C.b00 = struct_value () [concrete]
@@ -758,13 +758,13 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %facet_value.e56: %type_where = facet_value %C.b00, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.770: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.e56) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.6ee: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.770 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.42c: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.e56) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.9ed: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.42c = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.697: type = ptr_type %C.b00 [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.b72: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.6ee, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.e56) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.67c: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.9ed, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.e56) [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.abf: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0 [concrete]
-// CHECK:STDOUT:   %bound_method.c11: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.265: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b [concrete]
+// CHECK:STDOUT:   %bound_method.dfc: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %C.val.678: %C.674 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.371: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.ff5 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.47a: %ImplicitAs.type.bc5 = facet_value %C.674, (%ImplicitAs.impl_witness.371) [concrete]
@@ -772,13 +772,13 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.f4e: type = fn_type @C.as.ImplicitAs.impl.Convert.2 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.e68: %C.as.ImplicitAs.impl.Convert.type.f4e = struct_value () [concrete]
 // CHECK:STDOUT:   %facet_value.4dd: %type_where = facet_value %C.674, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.9b2: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.4dd) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.461: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.9b2 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.6b5: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.4dd) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.d98: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.6b5 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.625: type = ptr_type %C.674 [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.71f: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.461, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.4dd) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.466: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.d98, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.4dd) [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.b82: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0 [concrete]
-// CHECK:STDOUT:   %bound_method.8bd: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.393: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b [concrete]
+// CHECK:STDOUT:   %bound_method.9f7: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %C.val.fb5: %C.681 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.2a3: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.d32 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.a5f: %ImplicitAs.type.bc5 = facet_value %C.681, (%ImplicitAs.impl_witness.2a3) [concrete]
@@ -786,13 +786,13 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.7cc: type = fn_type @C.as.ImplicitAs.impl.Convert.3 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.cb1: %C.as.ImplicitAs.impl.Convert.type.7cc = struct_value () [concrete]
 // CHECK:STDOUT:   %facet_value.7fe: %type_where = facet_value %C.681, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.784: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.7fe) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.603: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.784 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.6b4: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.7fe) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.ce4: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.6b4 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.3bd: type = ptr_type %C.681 [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.4cd: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.603, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.7fe) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.cfd: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.ce4, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.7fe) [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.595: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0 [concrete]
-// CHECK:STDOUT:   %bound_method.f36: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.87d: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b [concrete]
+// CHECK:STDOUT:   %bound_method.def: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %C.val.fe7: %C.7ac = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.29c: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.056 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.c0d: %ImplicitAs.type.bc5 = facet_value %C.7ac, (%ImplicitAs.impl_witness.29c) [concrete]
@@ -800,13 +800,13 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.cba: type = fn_type @C.as.ImplicitAs.impl.Convert.4 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.67e: %C.as.ImplicitAs.impl.Convert.type.cba = struct_value () [concrete]
 // CHECK:STDOUT:   %facet_value.99b: %type_where = facet_value %C.7ac, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.56e: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.99b) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.b75: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.56e = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.22a: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.99b) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.931: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.22a = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.2b1: type = ptr_type %C.7ac [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.714: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.b75, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.99b) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.20a: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.931, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.99b) [concrete]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.5bb: <bound method> = bound_method %int_4.0c1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0 [concrete]
-// CHECK:STDOUT:   %bound_method.9cd: <bound method> = bound_method %int_4.0c1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.0b5: <bound method> = bound_method %int_4.0c1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b [concrete]
+// CHECK:STDOUT:   %bound_method.5dd: <bound method> = bound_method %int_4.0c1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %C.val.1dd: %C.89d = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.565: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.5ff [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.5f1: %ImplicitAs.type.bc5 = facet_value %C.89d, (%ImplicitAs.impl_witness.565) [concrete]
@@ -814,13 +814,13 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.a2c: type = fn_type @C.as.ImplicitAs.impl.Convert.5 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.58d: %C.as.ImplicitAs.impl.Convert.type.a2c = struct_value () [concrete]
 // CHECK:STDOUT:   %facet_value.b4c: %type_where = facet_value %C.89d, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.806: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.b4c) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.87e: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.806 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.dc5: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.b4c) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.d47: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.dc5 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.c28b: type = ptr_type %C.89d [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.31a: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.87e, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.b4c) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.fe8: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.d47, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.b4c) [concrete]
 // CHECK:STDOUT:   %int_5.64b: Core.IntLiteral = int_value 5 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.23d: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0 [concrete]
-// CHECK:STDOUT:   %bound_method.724: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.451: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b [concrete]
+// CHECK:STDOUT:   %bound_method.c57: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %C.val.a4a: %C.f0a = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.c1a: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.c8d [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.489: %ImplicitAs.type.bc5 = facet_value %C.f0a, (%ImplicitAs.impl_witness.c1a) [concrete]
@@ -828,13 +828,13 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.bf6: type = fn_type @C.as.ImplicitAs.impl.Convert.6 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.a45: %C.as.ImplicitAs.impl.Convert.type.bf6 = struct_value () [concrete]
 // CHECK:STDOUT:   %facet_value.430: %type_where = facet_value %C.f0a, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.1f2: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.430) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.42c: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.1f2 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.3a3: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.430) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.217: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.3a3 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.24c: type = ptr_type %C.f0a [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.e91: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.42c, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.430) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.bcb: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.217, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.430) [concrete]
 // CHECK:STDOUT:   %int_6.462: Core.IntLiteral = int_value 6 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.d66: <bound method> = bound_method %int_6.462, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0 [concrete]
-// CHECK:STDOUT:   %bound_method.0ef: <bound method> = bound_method %int_6.462, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.a4a: <bound method> = bound_method %int_6.462, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b [concrete]
+// CHECK:STDOUT:   %bound_method.b96: <bound method> = bound_method %int_6.462, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %C.val.a4b: %C.c60 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.ebf: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.a9c [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.d57: %ImplicitAs.type.bc5 = facet_value %C.c60, (%ImplicitAs.impl_witness.ebf) [concrete]
@@ -842,13 +842,13 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.e95: type = fn_type @C.as.ImplicitAs.impl.Convert.7 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.ad0: %C.as.ImplicitAs.impl.Convert.type.e95 = struct_value () [concrete]
 // CHECK:STDOUT:   %facet_value.14a: %type_where = facet_value %C.c60, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.f15: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.14a) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.57e: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.f15 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.748: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.14a) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bf7: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.748 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.b5e: type = ptr_type %C.c60 [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.636: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.57e, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.14a) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.5e9: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.bf7, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.14a) [concrete]
 // CHECK:STDOUT:   %int_7.29f: Core.IntLiteral = int_value 7 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.113: <bound method> = bound_method %int_7.29f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0 [concrete]
-// CHECK:STDOUT:   %bound_method.763: <bound method> = bound_method %int_7.29f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.a66: <bound method> = bound_method %int_7.29f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b [concrete]
+// CHECK:STDOUT:   %bound_method.1db: <bound method> = bound_method %int_7.29f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %C.val.f9f: %C.304 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.b93: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.820 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.faa: %ImplicitAs.type.bc5 = facet_value %C.304, (%ImplicitAs.impl_witness.b93) [concrete]
@@ -856,10 +856,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.7ddb0: type = fn_type @C.as.ImplicitAs.impl.Convert.8 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.9be: %C.as.ImplicitAs.impl.Convert.type.7ddb0 = struct_value () [concrete]
 // CHECK:STDOUT:   %facet_value.488: %type_where = facet_value %C.304, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.d42: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.488) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.c1f: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.d42 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.b0c: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.488) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.85d: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.b0c = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.dc3: type = ptr_type %C.304 [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.a6c: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.c1f, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.488) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.eb6: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.85d, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.488) [concrete]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -885,12 +885,12 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %P.import_ref.a525 = import_ref P//library, loc5_16, unloaded
 // CHECK:STDOUT:   %P.import_ref.b4a = import_ref P//library, loc5_28, unloaded
 // CHECK:STDOUT:   %P.C: %C.type = import_ref P//library, C, loaded [concrete = constants.%C.generic]
-// CHECK:STDOUT:   %P.import_ref.1b7: %i32 = import_ref P//library, loc4_9, loaded [symbolic = @C.%N (constants.%N.51e)]
+// CHECK:STDOUT:   %P.import_ref.797: %i32 = import_ref P//library, loc4_9, loaded [symbolic = @C.%N (constants.%N.fe8)]
 // CHECK:STDOUT:   %P.import_ref.8f2: <witness> = import_ref P//library, loc4_19, loaded [concrete = constants.%complete_type.357]
-// CHECK:STDOUT:   %P.import_ref.f65 = import_ref P//library, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %P.import_ref.9b2 = import_ref P//library, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.ee7: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.340) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1c0)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.9e9 = impl_witness_table (%Core.import_ref.ee7), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.e24: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.f51) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.2a1)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.132 = impl_witness_table (%Core.import_ref.e24), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %P.import_ref.cc2: <witness> = import_ref P//library, loc8_33, loaded [concrete = constants.%ImplicitAs.impl_witness.541]
 // CHECK:STDOUT:   %P.import_ref.d2c: type = import_ref P//library, loc8_9, loaded [concrete = constants.%C.b00]
 // CHECK:STDOUT:   %P.import_ref.daf1e3.1: type = import_ref P//library, loc8_31, loaded [concrete = constants.%ImplicitAs.type.bc5]
@@ -1011,8 +1011,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   .m = imports.%P.import_ref.b4a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(imports.%P.import_ref.1b7: %i32) [from "library.carbon"] {
-// CHECK:STDOUT:   %N: %i32 = bind_symbolic_name N, 0 [symbolic = %N (constants.%N.51e)]
+// CHECK:STDOUT: generic class @C(imports.%P.import_ref.797: %i32) [from "library.carbon"] {
+// CHECK:STDOUT:   %N: %i32 = symbolic_binding N, 0 [symbolic = %N (constants.%N.fe8)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -1020,7 +1020,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     complete_type_witness = imports.%P.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%P.import_ref.f65
+// CHECK:STDOUT:     .Self = imports.%P.import_ref.9b2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1034,10 +1034,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %P.ref.loc7: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc7: %C.type = name_ref C, imports.%P.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
-// CHECK:STDOUT:   %impl.elem0.loc7_34: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:   %bound_method.loc7_34.1: <bound method> = bound_method %int_0, %impl.elem0.loc7_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.931]
+// CHECK:STDOUT:   %impl.elem0.loc7_34: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:   %bound_method.loc7_34.1: <bound method> = bound_method %int_0, %impl.elem0.loc7_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.0b3]
 // CHECK:STDOUT:   %specific_fn.loc7: <specific function> = specific_function %impl.elem0.loc7_34, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc7_34.2: <bound method> = bound_method %int_0, %specific_fn.loc7 [concrete = constants.%bound_method.c25]
+// CHECK:STDOUT:   %bound_method.loc7_34.2: <bound method> = bound_method %int_0, %specific_fn.loc7 [concrete = constants.%bound_method.9be]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc7: init %i32 = call %bound_method.loc7_34.2(%int_0) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc7_34.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc7 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc7_34.2: %i32 = converted %int_0, %.loc7_34.1 [concrete = constants.%int_0.6a9]
@@ -1049,11 +1049,11 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %impl.elem0.loc7_35: %.e33 = impl_witness_access constants.%ImplicitAs.impl_witness.541, element0 [concrete = constants.%C.as.ImplicitAs.impl.Convert.43b]
 // CHECK:STDOUT:   %bound_method.loc7_35: <bound method> = bound_method %.loc7_26.1, %impl.elem0.loc7_35
 // CHECK:STDOUT:   %.loc7_35.1: ref %D = temporary_storage
-// CHECK:STDOUT:   %.loc7_26.2: %C.b00 = bind_value %.loc7_26.1
+// CHECK:STDOUT:   %.loc7_26.2: %C.b00 = acquire_value %.loc7_26.1
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc7: init %D = call %bound_method.loc7_35(%.loc7_26.2) to %.loc7_35.1
 // CHECK:STDOUT:   %.loc7_35.2: init %D = converted %.loc7_26.1, %C.as.ImplicitAs.impl.Convert.call.loc7
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7_24.1: <bound method> = bound_method %.loc7_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.6ee
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.6ee, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.e56) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.b72]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7_24.1: <bound method> = bound_method %.loc7_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ed
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ed, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.e56) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.67c]
 // CHECK:STDOUT:   %bound_method.loc7_24.1: <bound method> = bound_method %.loc7_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc7_24.1: %ptr.697 = addr_of %.loc7_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc7_24.1: init %empty_tuple.type = call %bound_method.loc7_24.1(%addr.loc7_24.1)
@@ -1068,10 +1068,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %P.ref.loc8: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc8: %C.type = name_ref C, imports.%P.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0.loc8_34: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:   %bound_method.loc8_34.1: <bound method> = bound_method %int_1, %impl.elem0.loc8_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.abf]
+// CHECK:STDOUT:   %impl.elem0.loc8_34: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:   %bound_method.loc8_34.1: <bound method> = bound_method %int_1, %impl.elem0.loc8_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.265]
 // CHECK:STDOUT:   %specific_fn.loc8: <specific function> = specific_function %impl.elem0.loc8_34, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc8_34.2: <bound method> = bound_method %int_1, %specific_fn.loc8 [concrete = constants.%bound_method.c11]
+// CHECK:STDOUT:   %bound_method.loc8_34.2: <bound method> = bound_method %int_1, %specific_fn.loc8 [concrete = constants.%bound_method.dfc]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8: init %i32 = call %bound_method.loc8_34.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc8_34.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc8_34.2: %i32 = converted %int_1, %.loc8_34.1 [concrete = constants.%int_1.5d2]
@@ -1083,16 +1083,16 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %impl.elem0.loc8_35: %.5da = impl_witness_access constants.%ImplicitAs.impl_witness.371, element0 [concrete = constants.%C.as.ImplicitAs.impl.Convert.e68]
 // CHECK:STDOUT:   %bound_method.loc8_35: <bound method> = bound_method %.loc8_26.1, %impl.elem0.loc8_35
 // CHECK:STDOUT:   %.loc8_35.1: ref %D = temporary_storage
-// CHECK:STDOUT:   %.loc8_26.2: %C.674 = bind_value %.loc8_26.1
+// CHECK:STDOUT:   %.loc8_26.2: %C.674 = acquire_value %.loc8_26.1
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc8: init %D = call %bound_method.loc8_35(%.loc8_26.2) to %.loc8_35.1
 // CHECK:STDOUT:   %.loc8_35.2: init %D = converted %.loc8_26.1, %C.as.ImplicitAs.impl.Convert.call.loc8
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_24.1: <bound method> = bound_method %.loc8_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.461
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.461, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4dd) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.71f]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_24.1: <bound method> = bound_method %.loc8_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d98
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d98, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4dd) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.466]
 // CHECK:STDOUT:   %bound_method.loc8_24.1: <bound method> = bound_method %.loc8_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc8_24.1: %ptr.625 = addr_of %.loc8_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc8_24.1: init %empty_tuple.type = call %bound_method.loc8_24.1(%addr.loc8_24.1)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7_24.2: <bound method> = bound_method %.loc7_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.6ee
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.3: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.6ee, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.e56) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.b72]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7_24.2: <bound method> = bound_method %.loc7_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ed
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.3: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ed, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.e56) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.67c]
 // CHECK:STDOUT:   %bound_method.loc7_24.2: <bound method> = bound_method %.loc7_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.3
 // CHECK:STDOUT:   %addr.loc7_24.2: %ptr.697 = addr_of %.loc7_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc7_24.2: init %empty_tuple.type = call %bound_method.loc7_24.2(%addr.loc7_24.2)
@@ -1107,10 +1107,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %P.ref.loc9: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc9: %C.type = name_ref C, imports.%P.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %impl.elem0.loc9_34: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:   %bound_method.loc9_34.1: <bound method> = bound_method %int_2, %impl.elem0.loc9_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.b82]
+// CHECK:STDOUT:   %impl.elem0.loc9_34: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:   %bound_method.loc9_34.1: <bound method> = bound_method %int_2, %impl.elem0.loc9_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.393]
 // CHECK:STDOUT:   %specific_fn.loc9: <specific function> = specific_function %impl.elem0.loc9_34, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc9_34.2: <bound method> = bound_method %int_2, %specific_fn.loc9 [concrete = constants.%bound_method.8bd]
+// CHECK:STDOUT:   %bound_method.loc9_34.2: <bound method> = bound_method %int_2, %specific_fn.loc9 [concrete = constants.%bound_method.9f7]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9: init %i32 = call %bound_method.loc9_34.2(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc9_34.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc9_34.2: %i32 = converted %int_2, %.loc9_34.1 [concrete = constants.%int_2.ef8]
@@ -1122,21 +1122,21 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %impl.elem0.loc9_35: %.b2b = impl_witness_access constants.%ImplicitAs.impl_witness.2a3, element0 [concrete = constants.%C.as.ImplicitAs.impl.Convert.cb1]
 // CHECK:STDOUT:   %bound_method.loc9_35: <bound method> = bound_method %.loc9_26.1, %impl.elem0.loc9_35
 // CHECK:STDOUT:   %.loc9_35.1: ref %D = temporary_storage
-// CHECK:STDOUT:   %.loc9_26.2: %C.681 = bind_value %.loc9_26.1
+// CHECK:STDOUT:   %.loc9_26.2: %C.681 = acquire_value %.loc9_26.1
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc9: init %D = call %bound_method.loc9_35(%.loc9_26.2) to %.loc9_35.1
 // CHECK:STDOUT:   %.loc9_35.2: init %D = converted %.loc9_26.1, %C.as.ImplicitAs.impl.Convert.call.loc9
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9_24.1: <bound method> = bound_method %.loc9_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.603
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.4: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.603, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.7fe) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.4cd]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9_24.1: <bound method> = bound_method %.loc9_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.ce4
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.4: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.ce4, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.7fe) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.cfd]
 // CHECK:STDOUT:   %bound_method.loc9_24.1: <bound method> = bound_method %.loc9_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.4
 // CHECK:STDOUT:   %addr.loc9_24.1: %ptr.3bd = addr_of %.loc9_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc9_24.1: init %empty_tuple.type = call %bound_method.loc9_24.1(%addr.loc9_24.1)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_24.2: <bound method> = bound_method %.loc8_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.461
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.5: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.461, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4dd) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.71f]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_24.2: <bound method> = bound_method %.loc8_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d98
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.5: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d98, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4dd) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.466]
 // CHECK:STDOUT:   %bound_method.loc8_24.2: <bound method> = bound_method %.loc8_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.5
 // CHECK:STDOUT:   %addr.loc8_24.2: %ptr.625 = addr_of %.loc8_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc8_24.2: init %empty_tuple.type = call %bound_method.loc8_24.2(%addr.loc8_24.2)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7_24.3: <bound method> = bound_method %.loc7_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.6ee
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.6: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.6ee, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.e56) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.b72]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7_24.3: <bound method> = bound_method %.loc7_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ed
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.6: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ed, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.e56) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.67c]
 // CHECK:STDOUT:   %bound_method.loc7_24.3: <bound method> = bound_method %.loc7_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.6
 // CHECK:STDOUT:   %addr.loc7_24.3: %ptr.697 = addr_of %.loc7_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc7_24.3: init %empty_tuple.type = call %bound_method.loc7_24.3(%addr.loc7_24.3)
@@ -1151,10 +1151,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %P.ref.loc10: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc10: %C.type = name_ref C, imports.%P.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:   %impl.elem0.loc10_34: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:   %bound_method.loc10_34.1: <bound method> = bound_method %int_3, %impl.elem0.loc10_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.595]
+// CHECK:STDOUT:   %impl.elem0.loc10_34: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:   %bound_method.loc10_34.1: <bound method> = bound_method %int_3, %impl.elem0.loc10_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.87d]
 // CHECK:STDOUT:   %specific_fn.loc10: <specific function> = specific_function %impl.elem0.loc10_34, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc10_34.2: <bound method> = bound_method %int_3, %specific_fn.loc10 [concrete = constants.%bound_method.f36]
+// CHECK:STDOUT:   %bound_method.loc10_34.2: <bound method> = bound_method %int_3, %specific_fn.loc10 [concrete = constants.%bound_method.def]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10: init %i32 = call %bound_method.loc10_34.2(%int_3) [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc10_34.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc10_34.2: %i32 = converted %int_3, %.loc10_34.1 [concrete = constants.%int_3.822]
@@ -1166,26 +1166,26 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %impl.elem0.loc10_35: %.11b = impl_witness_access constants.%ImplicitAs.impl_witness.29c, element0 [concrete = constants.%C.as.ImplicitAs.impl.Convert.67e]
 // CHECK:STDOUT:   %bound_method.loc10_35: <bound method> = bound_method %.loc10_26.1, %impl.elem0.loc10_35
 // CHECK:STDOUT:   %.loc10_35.1: ref %D = temporary_storage
-// CHECK:STDOUT:   %.loc10_26.2: %C.7ac = bind_value %.loc10_26.1
+// CHECK:STDOUT:   %.loc10_26.2: %C.7ac = acquire_value %.loc10_26.1
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc10: init %D = call %bound_method.loc10_35(%.loc10_26.2) to %.loc10_35.1
 // CHECK:STDOUT:   %.loc10_35.2: init %D = converted %.loc10_26.1, %C.as.ImplicitAs.impl.Convert.call.loc10
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10_24.1: <bound method> = bound_method %.loc10_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b75
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.7: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b75, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.99b) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.714]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10_24.1: <bound method> = bound_method %.loc10_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.931
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.7: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.931, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.99b) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.20a]
 // CHECK:STDOUT:   %bound_method.loc10_24.1: <bound method> = bound_method %.loc10_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.7
 // CHECK:STDOUT:   %addr.loc10_24.1: %ptr.2b1 = addr_of %.loc10_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc10_24.1: init %empty_tuple.type = call %bound_method.loc10_24.1(%addr.loc10_24.1)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9_24.2: <bound method> = bound_method %.loc9_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.603
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.8: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.603, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.7fe) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.4cd]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9_24.2: <bound method> = bound_method %.loc9_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.ce4
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.8: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.ce4, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.7fe) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.cfd]
 // CHECK:STDOUT:   %bound_method.loc9_24.2: <bound method> = bound_method %.loc9_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.8
 // CHECK:STDOUT:   %addr.loc9_24.2: %ptr.3bd = addr_of %.loc9_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc9_24.2: init %empty_tuple.type = call %bound_method.loc9_24.2(%addr.loc9_24.2)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_24.3: <bound method> = bound_method %.loc8_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.461
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.9: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.461, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4dd) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.71f]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_24.3: <bound method> = bound_method %.loc8_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d98
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.9: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d98, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4dd) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.466]
 // CHECK:STDOUT:   %bound_method.loc8_24.3: <bound method> = bound_method %.loc8_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.9
 // CHECK:STDOUT:   %addr.loc8_24.3: %ptr.625 = addr_of %.loc8_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc8_24.3: init %empty_tuple.type = call %bound_method.loc8_24.3(%addr.loc8_24.3)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7_24.4: <bound method> = bound_method %.loc7_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.6ee
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.10: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.6ee, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.e56) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.b72]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7_24.4: <bound method> = bound_method %.loc7_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ed
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.10: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ed, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.e56) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.67c]
 // CHECK:STDOUT:   %bound_method.loc7_24.4: <bound method> = bound_method %.loc7_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.10
 // CHECK:STDOUT:   %addr.loc7_24.4: %ptr.697 = addr_of %.loc7_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc7_24.4: init %empty_tuple.type = call %bound_method.loc7_24.4(%addr.loc7_24.4)
@@ -1200,10 +1200,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %P.ref.loc11: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc11: %C.type = name_ref C, imports.%P.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4.0c1]
-// CHECK:STDOUT:   %impl.elem0.loc11_34: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:   %bound_method.loc11_34.1: <bound method> = bound_method %int_4, %impl.elem0.loc11_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.5bb]
+// CHECK:STDOUT:   %impl.elem0.loc11_34: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:   %bound_method.loc11_34.1: <bound method> = bound_method %int_4, %impl.elem0.loc11_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.0b5]
 // CHECK:STDOUT:   %specific_fn.loc11: <specific function> = specific_function %impl.elem0.loc11_34, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc11_34.2: <bound method> = bound_method %int_4, %specific_fn.loc11 [concrete = constants.%bound_method.9cd]
+// CHECK:STDOUT:   %bound_method.loc11_34.2: <bound method> = bound_method %int_4, %specific_fn.loc11 [concrete = constants.%bound_method.5dd]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc11: init %i32 = call %bound_method.loc11_34.2(%int_4) [concrete = constants.%int_4.940]
 // CHECK:STDOUT:   %.loc11_34.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc11 [concrete = constants.%int_4.940]
 // CHECK:STDOUT:   %.loc11_34.2: %i32 = converted %int_4, %.loc11_34.1 [concrete = constants.%int_4.940]
@@ -1215,31 +1215,31 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %impl.elem0.loc11_35: %.0dc = impl_witness_access constants.%ImplicitAs.impl_witness.565, element0 [concrete = constants.%C.as.ImplicitAs.impl.Convert.58d]
 // CHECK:STDOUT:   %bound_method.loc11_35: <bound method> = bound_method %.loc11_26.1, %impl.elem0.loc11_35
 // CHECK:STDOUT:   %.loc11_35.1: ref %D = temporary_storage
-// CHECK:STDOUT:   %.loc11_26.2: %C.89d = bind_value %.loc11_26.1
+// CHECK:STDOUT:   %.loc11_26.2: %C.89d = acquire_value %.loc11_26.1
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc11: init %D = call %bound_method.loc11_35(%.loc11_26.2) to %.loc11_35.1
 // CHECK:STDOUT:   %.loc11_35.2: init %D = converted %.loc11_26.1, %C.as.ImplicitAs.impl.Convert.call.loc11
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11_24.1: <bound method> = bound_method %.loc11_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.87e
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.11: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.87e, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.b4c) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.31a]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11_24.1: <bound method> = bound_method %.loc11_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d47
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.11: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d47, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.b4c) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.fe8]
 // CHECK:STDOUT:   %bound_method.loc11_24.1: <bound method> = bound_method %.loc11_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.11
 // CHECK:STDOUT:   %addr.loc11_24.1: %ptr.c28b = addr_of %.loc11_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc11_24.1: init %empty_tuple.type = call %bound_method.loc11_24.1(%addr.loc11_24.1)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10_24.2: <bound method> = bound_method %.loc10_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b75
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.12: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b75, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.99b) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.714]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10_24.2: <bound method> = bound_method %.loc10_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.931
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.12: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.931, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.99b) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.20a]
 // CHECK:STDOUT:   %bound_method.loc10_24.2: <bound method> = bound_method %.loc10_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.12
 // CHECK:STDOUT:   %addr.loc10_24.2: %ptr.2b1 = addr_of %.loc10_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc10_24.2: init %empty_tuple.type = call %bound_method.loc10_24.2(%addr.loc10_24.2)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9_24.3: <bound method> = bound_method %.loc9_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.603
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.13: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.603, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.7fe) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.4cd]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9_24.3: <bound method> = bound_method %.loc9_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.ce4
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.13: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.ce4, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.7fe) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.cfd]
 // CHECK:STDOUT:   %bound_method.loc9_24.3: <bound method> = bound_method %.loc9_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.13
 // CHECK:STDOUT:   %addr.loc9_24.3: %ptr.3bd = addr_of %.loc9_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc9_24.3: init %empty_tuple.type = call %bound_method.loc9_24.3(%addr.loc9_24.3)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_24.4: <bound method> = bound_method %.loc8_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.461
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.14: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.461, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4dd) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.71f]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_24.4: <bound method> = bound_method %.loc8_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d98
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.14: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d98, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4dd) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.466]
 // CHECK:STDOUT:   %bound_method.loc8_24.4: <bound method> = bound_method %.loc8_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.14
 // CHECK:STDOUT:   %addr.loc8_24.4: %ptr.625 = addr_of %.loc8_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc8_24.4: init %empty_tuple.type = call %bound_method.loc8_24.4(%addr.loc8_24.4)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7_24.5: <bound method> = bound_method %.loc7_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.6ee
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.15: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.6ee, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.e56) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.b72]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7_24.5: <bound method> = bound_method %.loc7_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ed
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.15: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ed, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.e56) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.67c]
 // CHECK:STDOUT:   %bound_method.loc7_24.5: <bound method> = bound_method %.loc7_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.15
 // CHECK:STDOUT:   %addr.loc7_24.5: %ptr.697 = addr_of %.loc7_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc7_24.5: init %empty_tuple.type = call %bound_method.loc7_24.5(%addr.loc7_24.5)
@@ -1254,10 +1254,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %P.ref.loc12: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc12: %C.type = name_ref C, imports.%P.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
-// CHECK:STDOUT:   %impl.elem0.loc12_34: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:   %bound_method.loc12_34.1: <bound method> = bound_method %int_5, %impl.elem0.loc12_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.23d]
+// CHECK:STDOUT:   %impl.elem0.loc12_34: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:   %bound_method.loc12_34.1: <bound method> = bound_method %int_5, %impl.elem0.loc12_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.451]
 // CHECK:STDOUT:   %specific_fn.loc12: <specific function> = specific_function %impl.elem0.loc12_34, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc12_34.2: <bound method> = bound_method %int_5, %specific_fn.loc12 [concrete = constants.%bound_method.724]
+// CHECK:STDOUT:   %bound_method.loc12_34.2: <bound method> = bound_method %int_5, %specific_fn.loc12 [concrete = constants.%bound_method.c57]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12: init %i32 = call %bound_method.loc12_34.2(%int_5) [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc12_34.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12 [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc12_34.2: %i32 = converted %int_5, %.loc12_34.1 [concrete = constants.%int_5.0f6]
@@ -1269,36 +1269,36 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %impl.elem0.loc12_35: %.332 = impl_witness_access constants.%ImplicitAs.impl_witness.c1a, element0 [concrete = constants.%C.as.ImplicitAs.impl.Convert.a45]
 // CHECK:STDOUT:   %bound_method.loc12_35: <bound method> = bound_method %.loc12_26.1, %impl.elem0.loc12_35
 // CHECK:STDOUT:   %.loc12_35.1: ref %D = temporary_storage
-// CHECK:STDOUT:   %.loc12_26.2: %C.f0a = bind_value %.loc12_26.1
+// CHECK:STDOUT:   %.loc12_26.2: %C.f0a = acquire_value %.loc12_26.1
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc12: init %D = call %bound_method.loc12_35(%.loc12_26.2) to %.loc12_35.1
 // CHECK:STDOUT:   %.loc12_35.2: init %D = converted %.loc12_26.1, %C.as.ImplicitAs.impl.Convert.call.loc12
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc12_24.1: <bound method> = bound_method %.loc12_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.42c
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.16: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.42c, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.430) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.e91]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc12_24.1: <bound method> = bound_method %.loc12_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.217
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.16: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.217, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.430) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.bcb]
 // CHECK:STDOUT:   %bound_method.loc12_24.1: <bound method> = bound_method %.loc12_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.16
 // CHECK:STDOUT:   %addr.loc12_24.1: %ptr.24c = addr_of %.loc12_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc12_24.1: init %empty_tuple.type = call %bound_method.loc12_24.1(%addr.loc12_24.1)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11_24.2: <bound method> = bound_method %.loc11_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.87e
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.17: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.87e, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.b4c) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.31a]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11_24.2: <bound method> = bound_method %.loc11_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d47
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.17: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d47, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.b4c) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.fe8]
 // CHECK:STDOUT:   %bound_method.loc11_24.2: <bound method> = bound_method %.loc11_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.17
 // CHECK:STDOUT:   %addr.loc11_24.2: %ptr.c28b = addr_of %.loc11_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc11_24.2: init %empty_tuple.type = call %bound_method.loc11_24.2(%addr.loc11_24.2)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10_24.3: <bound method> = bound_method %.loc10_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b75
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.18: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b75, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.99b) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.714]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10_24.3: <bound method> = bound_method %.loc10_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.931
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.18: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.931, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.99b) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.20a]
 // CHECK:STDOUT:   %bound_method.loc10_24.3: <bound method> = bound_method %.loc10_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.18
 // CHECK:STDOUT:   %addr.loc10_24.3: %ptr.2b1 = addr_of %.loc10_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc10_24.3: init %empty_tuple.type = call %bound_method.loc10_24.3(%addr.loc10_24.3)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9_24.4: <bound method> = bound_method %.loc9_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.603
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.19: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.603, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.7fe) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.4cd]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9_24.4: <bound method> = bound_method %.loc9_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.ce4
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.19: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.ce4, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.7fe) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.cfd]
 // CHECK:STDOUT:   %bound_method.loc9_24.4: <bound method> = bound_method %.loc9_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.19
 // CHECK:STDOUT:   %addr.loc9_24.4: %ptr.3bd = addr_of %.loc9_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc9_24.4: init %empty_tuple.type = call %bound_method.loc9_24.4(%addr.loc9_24.4)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_24.5: <bound method> = bound_method %.loc8_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.461
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.20: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.461, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4dd) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.71f]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_24.5: <bound method> = bound_method %.loc8_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d98
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.20: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d98, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4dd) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.466]
 // CHECK:STDOUT:   %bound_method.loc8_24.5: <bound method> = bound_method %.loc8_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.20
 // CHECK:STDOUT:   %addr.loc8_24.5: %ptr.625 = addr_of %.loc8_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc8_24.5: init %empty_tuple.type = call %bound_method.loc8_24.5(%addr.loc8_24.5)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7_24.6: <bound method> = bound_method %.loc7_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.6ee
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.21: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.6ee, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.e56) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.b72]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7_24.6: <bound method> = bound_method %.loc7_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ed
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.21: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ed, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.e56) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.67c]
 // CHECK:STDOUT:   %bound_method.loc7_24.6: <bound method> = bound_method %.loc7_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.21
 // CHECK:STDOUT:   %addr.loc7_24.6: %ptr.697 = addr_of %.loc7_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc7_24.6: init %empty_tuple.type = call %bound_method.loc7_24.6(%addr.loc7_24.6)
@@ -1313,10 +1313,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %P.ref.loc13: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc13: %C.type = name_ref C, imports.%P.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [concrete = constants.%int_6.462]
-// CHECK:STDOUT:   %impl.elem0.loc13_34: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:   %bound_method.loc13_34.1: <bound method> = bound_method %int_6, %impl.elem0.loc13_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.d66]
+// CHECK:STDOUT:   %impl.elem0.loc13_34: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:   %bound_method.loc13_34.1: <bound method> = bound_method %int_6, %impl.elem0.loc13_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.a4a]
 // CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13_34, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc13_34.2: <bound method> = bound_method %int_6, %specific_fn.loc13 [concrete = constants.%bound_method.0ef]
+// CHECK:STDOUT:   %bound_method.loc13_34.2: <bound method> = bound_method %int_6, %specific_fn.loc13 [concrete = constants.%bound_method.b96]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc13: init %i32 = call %bound_method.loc13_34.2(%int_6) [concrete = constants.%int_6.e56]
 // CHECK:STDOUT:   %.loc13_34.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc13 [concrete = constants.%int_6.e56]
 // CHECK:STDOUT:   %.loc13_34.2: %i32 = converted %int_6, %.loc13_34.1 [concrete = constants.%int_6.e56]
@@ -1328,41 +1328,41 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %impl.elem0.loc13_35: %.1bb = impl_witness_access constants.%ImplicitAs.impl_witness.ebf, element0 [concrete = constants.%C.as.ImplicitAs.impl.Convert.ad0]
 // CHECK:STDOUT:   %bound_method.loc13_35: <bound method> = bound_method %.loc13_26.1, %impl.elem0.loc13_35
 // CHECK:STDOUT:   %.loc13_35.1: ref %D = temporary_storage
-// CHECK:STDOUT:   %.loc13_26.2: %C.c60 = bind_value %.loc13_26.1
+// CHECK:STDOUT:   %.loc13_26.2: %C.c60 = acquire_value %.loc13_26.1
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc13: init %D = call %bound_method.loc13_35(%.loc13_26.2) to %.loc13_35.1
 // CHECK:STDOUT:   %.loc13_35.2: init %D = converted %.loc13_26.1, %C.as.ImplicitAs.impl.Convert.call.loc13
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc13_24.1: <bound method> = bound_method %.loc13_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.57e
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.22: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.57e, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.14a) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.636]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc13_24.1: <bound method> = bound_method %.loc13_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.bf7
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.22: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.bf7, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.14a) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.5e9]
 // CHECK:STDOUT:   %bound_method.loc13_24.1: <bound method> = bound_method %.loc13_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.22
 // CHECK:STDOUT:   %addr.loc13_24.1: %ptr.b5e = addr_of %.loc13_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc13_24.1: init %empty_tuple.type = call %bound_method.loc13_24.1(%addr.loc13_24.1)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc12_24.2: <bound method> = bound_method %.loc12_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.42c
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.23: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.42c, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.430) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.e91]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc12_24.2: <bound method> = bound_method %.loc12_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.217
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.23: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.217, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.430) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.bcb]
 // CHECK:STDOUT:   %bound_method.loc12_24.2: <bound method> = bound_method %.loc12_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.23
 // CHECK:STDOUT:   %addr.loc12_24.2: %ptr.24c = addr_of %.loc12_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc12_24.2: init %empty_tuple.type = call %bound_method.loc12_24.2(%addr.loc12_24.2)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11_24.3: <bound method> = bound_method %.loc11_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.87e
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.24: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.87e, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.b4c) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.31a]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11_24.3: <bound method> = bound_method %.loc11_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d47
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.24: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d47, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.b4c) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.fe8]
 // CHECK:STDOUT:   %bound_method.loc11_24.3: <bound method> = bound_method %.loc11_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.24
 // CHECK:STDOUT:   %addr.loc11_24.3: %ptr.c28b = addr_of %.loc11_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc11_24.3: init %empty_tuple.type = call %bound_method.loc11_24.3(%addr.loc11_24.3)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10_24.4: <bound method> = bound_method %.loc10_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b75
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.25: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b75, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.99b) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.714]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10_24.4: <bound method> = bound_method %.loc10_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.931
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.25: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.931, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.99b) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.20a]
 // CHECK:STDOUT:   %bound_method.loc10_24.4: <bound method> = bound_method %.loc10_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.25
 // CHECK:STDOUT:   %addr.loc10_24.4: %ptr.2b1 = addr_of %.loc10_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc10_24.4: init %empty_tuple.type = call %bound_method.loc10_24.4(%addr.loc10_24.4)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9_24.5: <bound method> = bound_method %.loc9_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.603
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.26: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.603, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.7fe) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.4cd]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9_24.5: <bound method> = bound_method %.loc9_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.ce4
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.26: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.ce4, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.7fe) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.cfd]
 // CHECK:STDOUT:   %bound_method.loc9_24.5: <bound method> = bound_method %.loc9_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.26
 // CHECK:STDOUT:   %addr.loc9_24.5: %ptr.3bd = addr_of %.loc9_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc9_24.5: init %empty_tuple.type = call %bound_method.loc9_24.5(%addr.loc9_24.5)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_24.6: <bound method> = bound_method %.loc8_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.461
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.27: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.461, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4dd) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.71f]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_24.6: <bound method> = bound_method %.loc8_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d98
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.27: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d98, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4dd) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.466]
 // CHECK:STDOUT:   %bound_method.loc8_24.6: <bound method> = bound_method %.loc8_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.27
 // CHECK:STDOUT:   %addr.loc8_24.6: %ptr.625 = addr_of %.loc8_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc8_24.6: init %empty_tuple.type = call %bound_method.loc8_24.6(%addr.loc8_24.6)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7_24.7: <bound method> = bound_method %.loc7_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.6ee
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.28: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.6ee, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.e56) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.b72]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7_24.7: <bound method> = bound_method %.loc7_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ed
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.28: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ed, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.e56) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.67c]
 // CHECK:STDOUT:   %bound_method.loc7_24.7: <bound method> = bound_method %.loc7_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.28
 // CHECK:STDOUT:   %addr.loc7_24.7: %ptr.697 = addr_of %.loc7_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc7_24.7: init %empty_tuple.type = call %bound_method.loc7_24.7(%addr.loc7_24.7)
@@ -1377,10 +1377,10 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %P.ref.loc14: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc14: %C.type = name_ref C, imports.%P.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [concrete = constants.%int_7.29f]
-// CHECK:STDOUT:   %impl.elem0.loc14_34: %.1df = impl_witness_access constants.%ImplicitAs.impl_witness.204, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0f0]
-// CHECK:STDOUT:   %bound_method.loc14_34.1: <bound method> = bound_method %int_7, %impl.elem0.loc14_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.113]
+// CHECK:STDOUT:   %impl.elem0.loc14_34: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:   %bound_method.loc14_34.1: <bound method> = bound_method %int_7, %impl.elem0.loc14_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.a66]
 // CHECK:STDOUT:   %specific_fn.loc14: <specific function> = specific_function %impl.elem0.loc14_34, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc14_34.2: <bound method> = bound_method %int_7, %specific_fn.loc14 [concrete = constants.%bound_method.763]
+// CHECK:STDOUT:   %bound_method.loc14_34.2: <bound method> = bound_method %int_7, %specific_fn.loc14 [concrete = constants.%bound_method.1db]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc14: init %i32 = call %bound_method.loc14_34.2(%int_7) [concrete = constants.%int_7.0b1]
 // CHECK:STDOUT:   %.loc14_34.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc14 [concrete = constants.%int_7.0b1]
 // CHECK:STDOUT:   %.loc14_34.2: %i32 = converted %int_7, %.loc14_34.1 [concrete = constants.%int_7.0b1]
@@ -1392,46 +1392,46 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %impl.elem0.loc14_35: %.bc1 = impl_witness_access constants.%ImplicitAs.impl_witness.b93, element0 [concrete = constants.%C.as.ImplicitAs.impl.Convert.9be]
 // CHECK:STDOUT:   %bound_method.loc14_35: <bound method> = bound_method %.loc14_26.1, %impl.elem0.loc14_35
 // CHECK:STDOUT:   %.loc14_35.1: ref %D = temporary_storage
-// CHECK:STDOUT:   %.loc14_26.2: %C.304 = bind_value %.loc14_26.1
+// CHECK:STDOUT:   %.loc14_26.2: %C.304 = acquire_value %.loc14_26.1
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc14: init %D = call %bound_method.loc14_35(%.loc14_26.2) to %.loc14_35.1
 // CHECK:STDOUT:   %.loc14_35.2: init %D = converted %.loc14_26.1, %C.as.ImplicitAs.impl.Convert.call.loc14
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc14_24.1: <bound method> = bound_method %.loc14_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.c1f
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.29: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.c1f, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.488) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.a6c]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc14_24.1: <bound method> = bound_method %.loc14_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.85d
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.29: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.85d, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.488) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.eb6]
 // CHECK:STDOUT:   %bound_method.loc14_24.1: <bound method> = bound_method %.loc14_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.29
 // CHECK:STDOUT:   %addr.loc14_24.1: %ptr.dc3 = addr_of %.loc14_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc14_24.1: init %empty_tuple.type = call %bound_method.loc14_24.1(%addr.loc14_24.1)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc13_24.2: <bound method> = bound_method %.loc13_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.57e
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.30: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.57e, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.14a) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.636]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc13_24.2: <bound method> = bound_method %.loc13_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.bf7
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.30: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.bf7, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.14a) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.5e9]
 // CHECK:STDOUT:   %bound_method.loc13_24.2: <bound method> = bound_method %.loc13_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.30
 // CHECK:STDOUT:   %addr.loc13_24.2: %ptr.b5e = addr_of %.loc13_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc13_24.2: init %empty_tuple.type = call %bound_method.loc13_24.2(%addr.loc13_24.2)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc12_24.3: <bound method> = bound_method %.loc12_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.42c
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.31: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.42c, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.430) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.e91]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc12_24.3: <bound method> = bound_method %.loc12_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.217
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.31: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.217, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.430) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.bcb]
 // CHECK:STDOUT:   %bound_method.loc12_24.3: <bound method> = bound_method %.loc12_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.31
 // CHECK:STDOUT:   %addr.loc12_24.3: %ptr.24c = addr_of %.loc12_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc12_24.3: init %empty_tuple.type = call %bound_method.loc12_24.3(%addr.loc12_24.3)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11_24.4: <bound method> = bound_method %.loc11_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.87e
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.32: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.87e, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.b4c) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.31a]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11_24.4: <bound method> = bound_method %.loc11_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d47
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.32: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d47, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.b4c) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.fe8]
 // CHECK:STDOUT:   %bound_method.loc11_24.4: <bound method> = bound_method %.loc11_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.32
 // CHECK:STDOUT:   %addr.loc11_24.4: %ptr.c28b = addr_of %.loc11_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc11_24.4: init %empty_tuple.type = call %bound_method.loc11_24.4(%addr.loc11_24.4)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10_24.5: <bound method> = bound_method %.loc10_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b75
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.33: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b75, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.99b) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.714]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10_24.5: <bound method> = bound_method %.loc10_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.931
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.33: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.931, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.99b) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.20a]
 // CHECK:STDOUT:   %bound_method.loc10_24.5: <bound method> = bound_method %.loc10_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.33
 // CHECK:STDOUT:   %addr.loc10_24.5: %ptr.2b1 = addr_of %.loc10_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc10_24.5: init %empty_tuple.type = call %bound_method.loc10_24.5(%addr.loc10_24.5)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9_24.6: <bound method> = bound_method %.loc9_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.603
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.34: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.603, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.7fe) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.4cd]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9_24.6: <bound method> = bound_method %.loc9_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.ce4
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.34: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.ce4, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.7fe) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.cfd]
 // CHECK:STDOUT:   %bound_method.loc9_24.6: <bound method> = bound_method %.loc9_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.34
 // CHECK:STDOUT:   %addr.loc9_24.6: %ptr.3bd = addr_of %.loc9_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc9_24.6: init %empty_tuple.type = call %bound_method.loc9_24.6(%addr.loc9_24.6)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_24.7: <bound method> = bound_method %.loc8_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.461
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.35: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.461, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4dd) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.71f]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_24.7: <bound method> = bound_method %.loc8_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d98
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.35: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d98, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4dd) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.466]
 // CHECK:STDOUT:   %bound_method.loc8_24.7: <bound method> = bound_method %.loc8_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.35
 // CHECK:STDOUT:   %addr.loc8_24.7: %ptr.625 = addr_of %.loc8_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc8_24.7: init %empty_tuple.type = call %bound_method.loc8_24.7(%addr.loc8_24.7)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7_24.8: <bound method> = bound_method %.loc7_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.6ee
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.36: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.6ee, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.e56) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.b72]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7_24.8: <bound method> = bound_method %.loc7_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ed
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.36: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ed, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.e56) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.67c]
 // CHECK:STDOUT:   %bound_method.loc7_24.8: <bound method> = bound_method %.loc7_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.36
 // CHECK:STDOUT:   %addr.loc7_24.8: %ptr.697 = addr_of %.loc7_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc7_24.8: init %empty_tuple.type = call %bound_method.loc7_24.8(%addr.loc7_24.8)
@@ -1442,43 +1442,43 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, imports.%P.Make [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc6_15: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc6_15
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc14_24.2: <bound method> = bound_method %.loc14_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.c1f
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.37: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.c1f, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.488) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.a6c]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc14_24.2: <bound method> = bound_method %.loc14_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.85d
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.37: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.85d, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.488) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.eb6]
 // CHECK:STDOUT:   %bound_method.loc14_24.2: <bound method> = bound_method %.loc14_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.37
 // CHECK:STDOUT:   %addr.loc14_24.2: %ptr.dc3 = addr_of %.loc14_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc14_24.2: init %empty_tuple.type = call %bound_method.loc14_24.2(%addr.loc14_24.2)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc13_24.3: <bound method> = bound_method %.loc13_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.57e
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.38: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.57e, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.14a) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.636]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc13_24.3: <bound method> = bound_method %.loc13_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.bf7
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.38: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.bf7, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.14a) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.5e9]
 // CHECK:STDOUT:   %bound_method.loc13_24.3: <bound method> = bound_method %.loc13_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.38
 // CHECK:STDOUT:   %addr.loc13_24.3: %ptr.b5e = addr_of %.loc13_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc13_24.3: init %empty_tuple.type = call %bound_method.loc13_24.3(%addr.loc13_24.3)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc12_24.4: <bound method> = bound_method %.loc12_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.42c
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.39: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.42c, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.430) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.e91]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc12_24.4: <bound method> = bound_method %.loc12_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.217
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.39: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.217, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.430) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.bcb]
 // CHECK:STDOUT:   %bound_method.loc12_24.4: <bound method> = bound_method %.loc12_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.39
 // CHECK:STDOUT:   %addr.loc12_24.4: %ptr.24c = addr_of %.loc12_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc12_24.4: init %empty_tuple.type = call %bound_method.loc12_24.4(%addr.loc12_24.4)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11_24.5: <bound method> = bound_method %.loc11_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.87e
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.40: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.87e, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.b4c) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.31a]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11_24.5: <bound method> = bound_method %.loc11_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d47
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.40: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d47, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.b4c) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.fe8]
 // CHECK:STDOUT:   %bound_method.loc11_24.5: <bound method> = bound_method %.loc11_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.40
 // CHECK:STDOUT:   %addr.loc11_24.5: %ptr.c28b = addr_of %.loc11_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc11_24.5: init %empty_tuple.type = call %bound_method.loc11_24.5(%addr.loc11_24.5)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10_24.6: <bound method> = bound_method %.loc10_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b75
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.41: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b75, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.99b) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.714]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10_24.6: <bound method> = bound_method %.loc10_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.931
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.41: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.931, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.99b) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.20a]
 // CHECK:STDOUT:   %bound_method.loc10_24.6: <bound method> = bound_method %.loc10_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.41
 // CHECK:STDOUT:   %addr.loc10_24.6: %ptr.2b1 = addr_of %.loc10_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc10_24.6: init %empty_tuple.type = call %bound_method.loc10_24.6(%addr.loc10_24.6)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9_24.7: <bound method> = bound_method %.loc9_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.603
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.42: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.603, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.7fe) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.4cd]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9_24.7: <bound method> = bound_method %.loc9_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.ce4
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.42: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.ce4, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.7fe) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.cfd]
 // CHECK:STDOUT:   %bound_method.loc9_24.7: <bound method> = bound_method %.loc9_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.42
 // CHECK:STDOUT:   %addr.loc9_24.7: %ptr.3bd = addr_of %.loc9_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc9_24.7: init %empty_tuple.type = call %bound_method.loc9_24.7(%addr.loc9_24.7)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_24.8: <bound method> = bound_method %.loc8_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.461
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.43: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.461, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4dd) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.71f]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_24.8: <bound method> = bound_method %.loc8_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d98
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.43: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d98, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4dd) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.466]
 // CHECK:STDOUT:   %bound_method.loc8_24.8: <bound method> = bound_method %.loc8_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.43
 // CHECK:STDOUT:   %addr.loc8_24.8: %ptr.625 = addr_of %.loc8_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc8_24.8: init %empty_tuple.type = call %bound_method.loc8_24.8(%addr.loc8_24.8)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7_24.9: <bound method> = bound_method %.loc7_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.6ee
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.44: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.6ee, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.e56) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.b72]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7_24.9: <bound method> = bound_method %.loc7_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ed
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.44: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ed, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.e56) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.67c]
 // CHECK:STDOUT:   %bound_method.loc7_24.9: <bound method> = bound_method %.loc7_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.44
 // CHECK:STDOUT:   %addr.loc7_24.9: %ptr.697 = addr_of %.loc7_24.4
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc7_24.9: init %empty_tuple.type = call %bound_method.loc7_24.9(%addr.loc7_24.9)
@@ -1503,8 +1503,8 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make [from "library.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%N.51e) {
-// CHECK:STDOUT:   %N => constants.%N.51e
+// CHECK:STDOUT: specific @C(constants.%N.fe8) {
+// CHECK:STDOUT:   %N => constants.%N.fe8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%int_0.6a9) {

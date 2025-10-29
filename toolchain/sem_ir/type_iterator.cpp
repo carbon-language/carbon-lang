@@ -63,7 +63,7 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
   CARBON_KIND_SWITCH(inst) {
       // ==== Symbolic types ====
 
-    case BindSymbolicName::Kind:
+    case SymbolicBinding::Kind:
     case SymbolicBindingPattern::Kind: {
       return Step::SymbolicType{.facet_type_id = type_id};
     }

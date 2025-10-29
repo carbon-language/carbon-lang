@@ -19,7 +19,7 @@ struct NamedConstraintFields {
   NameScopeId scope_id = NameScopeId::None;
   // The first block of the constraint body.
   InstBlockId body_block_id = InstBlockId::None;
-  // The implicit `Self` parameter. This is a BindSymbolicName instruction.
+  // The implicit `Self` parameter. This is a SymbolicBinding instruction.
   InstId self_param_id = InstId::None;
 
   // The following members are set at the `}` of the constraint definition.

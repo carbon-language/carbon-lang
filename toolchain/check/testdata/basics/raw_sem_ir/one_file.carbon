@@ -384,11 +384,11 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst60000010:    {kind: ImportDecl, arg0: name(Core)}
 // CHECK:STDOUT:     inst60000011:    {kind: Namespace, arg0: name_scope60000001, arg1: inst60000010, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst60000012:    {kind: FacetType, arg0: facet_type60000000, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000013:    {kind: BindSymbolicName, arg0: entity_name60000000, arg1: inst<none>, type: type(inst60000012)}
-// CHECK:STDOUT:     inst60000014:    {kind: BindSymbolicName, arg0: entity_name60000000, arg1: inst<none>, type: type(inst60000012)}
-// CHECK:STDOUT:     inst60000015:    {kind: BindSymbolicName, arg0: entity_name60000001, arg1: inst<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000016:    {kind: BindSymbolicName, arg0: entity_name60000001, arg1: inst<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000017:    {kind: BindSymbolicName, arg0: entity_name60000001, arg1: inst<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst60000013:    {kind: SymbolicBinding, arg0: entity_name60000000, arg1: inst<none>, type: type(inst60000012)}
+// CHECK:STDOUT:     inst60000014:    {kind: SymbolicBinding, arg0: entity_name60000000, arg1: inst<none>, type: type(inst60000012)}
+// CHECK:STDOUT:     inst60000015:    {kind: SymbolicBinding, arg0: entity_name60000001, arg1: inst<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst60000016:    {kind: SymbolicBinding, arg0: entity_name60000001, arg1: inst<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst60000017:    {kind: SymbolicBinding, arg0: entity_name60000001, arg1: inst<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000018:    {kind: PatternType, arg0: inst(TypeType), type: type(TypeType)}
 // CHECK:STDOUT:     inst60000019:    {kind: SymbolicBindingPattern, arg0: entity_name60000001, type: type(inst60000018)}
 // CHECK:STDOUT:     inst6000001A:    {kind: NameRef, arg0: name00000001, arg1: inst60000015, type: type(TypeType)}
@@ -438,7 +438,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst60000046:    {kind: ImportRefLoaded, arg0: import_ir_inst00000000, arg1: entity_name60000003, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000047:    {kind: InterfaceDecl, arg0: interface60000000, arg1: inst_block_empty, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000048:    {kind: FacetType, arg0: facet_type60000001, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000049:    {kind: BindSymbolicName, arg0: entity_name60000004, arg1: inst<none>, type: type(inst60000048)}
+// CHECK:STDOUT:     inst60000049:    {kind: SymbolicBinding, arg0: entity_name60000004, arg1: inst<none>, type: type(inst60000048)}
 // CHECK:STDOUT:     inst6000004A:    {kind: ImportRefUnloaded, arg0: import_ir_inst00000002, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst6000004B:    {kind: ImportRefLoaded, arg0: import_ir_inst00000003, arg1: entity_name<none>, type: type(inst6000004D)}
 // CHECK:STDOUT:     inst6000004C:    {kind: ImportRefUnloaded, arg0: import_ir_inst00000004, arg1: entity_name60000005}
@@ -455,13 +455,13 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst60000057:    {kind: ValueBindingPattern, arg0: entity_name60000008, type: type(symbolic_constant60000013)}
 // CHECK:STDOUT:     inst60000058:    {kind: ValueParamPattern, arg0: inst60000057, arg1: call_param0, type: type(symbolic_constant60000013)}
 // CHECK:STDOUT:     inst60000059:    {kind: ImportRefLoaded, arg0: import_ir_inst0000000B, arg1: entity_name<none>, type: type(inst60000048)}
-// CHECK:STDOUT:     inst6000005A:    {kind: BindSymbolicName, arg0: entity_name60000004, arg1: inst<none>, type: type(inst60000048)}
+// CHECK:STDOUT:     inst6000005A:    {kind: SymbolicBinding, arg0: entity_name60000004, arg1: inst<none>, type: type(inst60000048)}
 // CHECK:STDOUT:     inst6000005B:    {kind: SymbolicBindingType, arg0: entity_name60000004, arg1: inst6000005A, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000005C:    {kind: PatternType, arg0: inst6000005B, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000005D:    {kind: LookupImplWitness, arg0: inst6000001C, arg1: specific_interface60000000, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst6000005E:    {kind: ImportRefUnloaded, arg0: import_ir_inst0000000F, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst6000005F:    {kind: ImplDecl, arg0: impl60000000, arg1: inst_block_empty}
-// CHECK:STDOUT:     inst60000060:    {kind: BindSymbolicName, arg0: entity_name60000001, arg1: inst<none>, type: type(inst60000048)}
+// CHECK:STDOUT:     inst60000060:    {kind: SymbolicBinding, arg0: entity_name60000001, arg1: inst<none>, type: type(inst60000048)}
 // CHECK:STDOUT:     inst60000061:    {kind: SymbolicBindingType, arg0: entity_name60000001, arg1: inst60000060, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000062:    {kind: ConstType, arg0: inst60000061, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000063:    {kind: PatternType, arg0: inst60000048, type: type(TypeType)}
@@ -472,7 +472,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst60000068:    {kind: ImportRefUnloaded, arg0: import_ir_inst00000015, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst60000069:    {kind: ImplWitnessTable, arg0: inst_block6000001E, arg1: impl60000000}
 // CHECK:STDOUT:     inst6000006A:    {kind: ImplWitness, arg0: inst60000069, arg1: specific60000002, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst6000006B:    {kind: BindSymbolicName, arg0: entity_name60000001, arg1: inst<none>, type: type(inst60000048)}
+// CHECK:STDOUT:     inst6000006B:    {kind: SymbolicBinding, arg0: entity_name60000001, arg1: inst<none>, type: type(inst60000048)}
 // CHECK:STDOUT:     inst6000006C:    {kind: SymbolicBindingType, arg0: entity_name60000001, arg1: inst6000006B, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000006D:    {kind: ConstType, arg0: inst6000006C, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000006E:    {kind: ImplWitness, arg0: inst60000069, arg1: specific60000003, type: type(inst(WitnessType))}
@@ -487,7 +487,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst60000077:    {kind: ImportRefLoaded, arg0: import_ir_inst00000020, arg1: entity_name<none>, type: type(inst60000048)}
 // CHECK:STDOUT:     inst60000078:    {kind: FunctionType, arg0: function60000002, arg1: specific60000003, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000079:    {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant6000002D)}
-// CHECK:STDOUT:     inst6000007A:    {kind: BindSymbolicName, arg0: entity_name60000001, arg1: inst<none>, type: type(inst60000048)}
+// CHECK:STDOUT:     inst6000007A:    {kind: SymbolicBinding, arg0: entity_name60000001, arg1: inst<none>, type: type(inst60000048)}
 // CHECK:STDOUT:     inst6000007B:    {kind: SymbolicBindingType, arg0: entity_name60000001, arg1: inst6000007A, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000007C:    {kind: ConstType, arg0: inst6000007B, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000007D:    {kind: PatternType, arg0: inst6000007C, type: type(TypeType)}
@@ -529,7 +529,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst600000A1:    {kind: ImportRefUnloaded, arg0: import_ir_inst00000043, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst600000A2:    {kind: ImplWitnessTable, arg0: inst_block6000002F, arg1: impl60000005}
 // CHECK:STDOUT:     inst600000A3:    {kind: ImplWitness, arg0: inst600000A2, arg1: specific60000007, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst600000A4:    {kind: BindSymbolicName, arg0: entity_name60000001, arg1: inst<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst600000A4:    {kind: SymbolicBinding, arg0: entity_name60000001, arg1: inst<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000A5:    {kind: PointerType, arg0: inst600000A4, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000A6:    {kind: ImplWitness, arg0: inst600000A2, arg1: specific60000008, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst600000A7:    {kind: FunctionDecl, arg0: function60000003, arg1: inst_block_empty, type: type(symbolic_constant60000051)}
@@ -543,7 +543,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst600000AF:    {kind: FunctionType, arg0: function60000003, arg1: specific60000008, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000B0:    {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant60000058)}
 // CHECK:STDOUT:     inst600000B1:    {kind: RequireCompleteType, arg0: inst600000A5, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst600000B2:    {kind: BindSymbolicName, arg0: entity_name60000001, arg1: inst<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst600000B2:    {kind: SymbolicBinding, arg0: entity_name60000001, arg1: inst<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000B3:    {kind: PointerType, arg0: inst600000B2, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000B4:    {kind: PatternType, arg0: inst600000B3, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000B5:    {kind: ImportRefUnloaded, arg0: import_ir_inst00000054, arg1: entity_name<none>}
@@ -556,7 +556,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst600000BC:    {kind: ImportRefLoaded, arg0: import_ir_inst0000005B, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000BD:    {kind: ImportRefUnloaded, arg0: import_ir_inst0000005C, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst600000BE:    {kind: ImplDecl, arg0: impl60000008, arg1: inst_block_empty}
-// CHECK:STDOUT:     inst600000BF:    {kind: BindSymbolicName, arg0: entity_name6000001A, arg1: inst<none>, type: type(inst60000048)}
+// CHECK:STDOUT:     inst600000BF:    {kind: SymbolicBinding, arg0: entity_name6000001A, arg1: inst<none>, type: type(inst60000048)}
 // CHECK:STDOUT:     inst600000C0:    {kind: SymbolicBindingType, arg0: entity_name6000001A, arg1: inst600000BF, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000C1:    {kind: TupleType, arg0: inst_block60000039, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000C2:    {kind: SymbolicBindingPattern, arg0: entity_name6000001C, type: type(inst60000063)}
@@ -568,8 +568,8 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst600000C8:    {kind: ImportRefUnloaded, arg0: import_ir_inst00000064, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst600000C9:    {kind: ImplWitnessTable, arg0: inst_block6000003C, arg1: impl60000008}
 // CHECK:STDOUT:     inst600000CA:    {kind: ImplWitness, arg0: inst600000C9, arg1: specific6000000A, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst600000CB:    {kind: BindSymbolicName, arg0: entity_name60000001, arg1: inst<none>, type: type(inst60000048)}
-// CHECK:STDOUT:     inst600000CC:    {kind: BindSymbolicName, arg0: entity_name6000001A, arg1: inst<none>, type: type(inst60000048)}
+// CHECK:STDOUT:     inst600000CB:    {kind: SymbolicBinding, arg0: entity_name60000001, arg1: inst<none>, type: type(inst60000048)}
+// CHECK:STDOUT:     inst600000CC:    {kind: SymbolicBinding, arg0: entity_name6000001A, arg1: inst<none>, type: type(inst60000048)}
 // CHECK:STDOUT:     inst600000CD:    {kind: SymbolicBindingType, arg0: entity_name60000001, arg1: inst600000CB, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000CE:    {kind: SymbolicBindingType, arg0: entity_name6000001A, arg1: inst600000CC, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000CF:    {kind: TupleType, arg0: inst_block6000003E, type: type(TypeType)}
@@ -586,9 +586,9 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst600000DA:    {kind: ImportRefLoaded, arg0: import_ir_inst00000072, arg1: entity_name<none>, type: type(inst60000048)}
 // CHECK:STDOUT:     inst600000DB:    {kind: FunctionType, arg0: function60000004, arg1: specific6000000B, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000DC:    {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant60000079)}
-// CHECK:STDOUT:     inst600000DD:    {kind: BindSymbolicName, arg0: entity_name60000001, arg1: inst<none>, type: type(inst60000048)}
+// CHECK:STDOUT:     inst600000DD:    {kind: SymbolicBinding, arg0: entity_name60000001, arg1: inst<none>, type: type(inst60000048)}
 // CHECK:STDOUT:     inst600000DE:    {kind: SymbolicBindingType, arg0: entity_name60000001, arg1: inst600000DD, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000DF:    {kind: BindSymbolicName, arg0: entity_name6000001A, arg1: inst<none>, type: type(inst60000048)}
+// CHECK:STDOUT:     inst600000DF:    {kind: SymbolicBinding, arg0: entity_name6000001A, arg1: inst<none>, type: type(inst60000048)}
 // CHECK:STDOUT:     inst600000E0:    {kind: SymbolicBindingType, arg0: entity_name6000001A, arg1: inst600000DF, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000E1:    {kind: TupleType, arg0: inst_block60000046, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000E2:    {kind: PatternType, arg0: inst600000E1, type: type(TypeType)}
@@ -612,7 +612,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst600000F4:    {kind: PatternType, arg0: inst600000C0, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000F5:    {kind: ImportRefUnloaded, arg0: import_ir_inst00000086, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst600000F6:    {kind: ImplDecl, arg0: impl60000009, arg1: inst_block_empty}
-// CHECK:STDOUT:     inst600000F7:    {kind: BindSymbolicName, arg0: entity_name60000029, arg1: inst<none>, type: type(inst60000048)}
+// CHECK:STDOUT:     inst600000F7:    {kind: SymbolicBinding, arg0: entity_name60000029, arg1: inst<none>, type: type(inst60000048)}
 // CHECK:STDOUT:     inst600000F8:    {kind: SymbolicBindingType, arg0: entity_name60000029, arg1: inst600000F7, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000F9:    {kind: TupleType, arg0: inst_block6000004F, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000FA:    {kind: SymbolicBindingPattern, arg0: entity_name6000002B, type: type(inst60000063)}
@@ -626,9 +626,9 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst60000102:    {kind: ImportRefUnloaded, arg0: import_ir_inst00000090, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst60000103:    {kind: ImplWitnessTable, arg0: inst_block60000052, arg1: impl60000009}
 // CHECK:STDOUT:     inst60000104:    {kind: ImplWitness, arg0: inst60000103, arg1: specific60000010, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst60000105:    {kind: BindSymbolicName, arg0: entity_name60000001, arg1: inst<none>, type: type(inst60000048)}
-// CHECK:STDOUT:     inst60000106:    {kind: BindSymbolicName, arg0: entity_name6000001A, arg1: inst<none>, type: type(inst60000048)}
-// CHECK:STDOUT:     inst60000107:    {kind: BindSymbolicName, arg0: entity_name60000029, arg1: inst<none>, type: type(inst60000048)}
+// CHECK:STDOUT:     inst60000105:    {kind: SymbolicBinding, arg0: entity_name60000001, arg1: inst<none>, type: type(inst60000048)}
+// CHECK:STDOUT:     inst60000106:    {kind: SymbolicBinding, arg0: entity_name6000001A, arg1: inst<none>, type: type(inst60000048)}
+// CHECK:STDOUT:     inst60000107:    {kind: SymbolicBinding, arg0: entity_name60000029, arg1: inst<none>, type: type(inst60000048)}
 // CHECK:STDOUT:     inst60000108:    {kind: SymbolicBindingType, arg0: entity_name60000001, arg1: inst60000105, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000109:    {kind: SymbolicBindingType, arg0: entity_name6000001A, arg1: inst60000106, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000010A:    {kind: SymbolicBindingType, arg0: entity_name60000029, arg1: inst60000107, type: type(TypeType)}
@@ -647,11 +647,11 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst60000117:    {kind: ImportRefLoaded, arg0: import_ir_inst000000A1, arg1: entity_name<none>, type: type(inst60000048)}
 // CHECK:STDOUT:     inst60000118:    {kind: FunctionType, arg0: function60000005, arg1: specific60000011, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000119:    {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant600000C1)}
-// CHECK:STDOUT:     inst6000011A:    {kind: BindSymbolicName, arg0: entity_name60000001, arg1: inst<none>, type: type(inst60000048)}
+// CHECK:STDOUT:     inst6000011A:    {kind: SymbolicBinding, arg0: entity_name60000001, arg1: inst<none>, type: type(inst60000048)}
 // CHECK:STDOUT:     inst6000011B:    {kind: SymbolicBindingType, arg0: entity_name60000001, arg1: inst6000011A, type: type(TypeType)}
-// CHECK:STDOUT:     inst6000011C:    {kind: BindSymbolicName, arg0: entity_name6000001A, arg1: inst<none>, type: type(inst60000048)}
+// CHECK:STDOUT:     inst6000011C:    {kind: SymbolicBinding, arg0: entity_name6000001A, arg1: inst<none>, type: type(inst60000048)}
 // CHECK:STDOUT:     inst6000011D:    {kind: SymbolicBindingType, arg0: entity_name6000001A, arg1: inst6000011C, type: type(TypeType)}
-// CHECK:STDOUT:     inst6000011E:    {kind: BindSymbolicName, arg0: entity_name60000029, arg1: inst<none>, type: type(inst60000048)}
+// CHECK:STDOUT:     inst6000011E:    {kind: SymbolicBinding, arg0: entity_name60000029, arg1: inst<none>, type: type(inst60000048)}
 // CHECK:STDOUT:     inst6000011F:    {kind: SymbolicBindingType, arg0: entity_name60000029, arg1: inst6000011E, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000120:    {kind: TupleType, arg0: inst_block6000005C, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000121:    {kind: PatternType, arg0: inst60000120, type: type(TypeType)}

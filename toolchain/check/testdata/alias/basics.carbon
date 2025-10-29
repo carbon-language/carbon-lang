@@ -158,7 +158,7 @@ extern alias C = Class;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %c: type = bind_alias c, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %c: type = alias_binding c, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -180,11 +180,11 @@ extern alias C = Class;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %a: type = bind_alias a, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %a: type = alias_binding a, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %a.ref: type = name_ref a, %a [concrete = constants.%C]
-// CHECK:STDOUT:   %b: type = bind_alias b, %a [concrete = constants.%C]
+// CHECK:STDOUT:   %b: type = alias_binding b, %a [concrete = constants.%C]
 // CHECK:STDOUT:   %b.ref: type = name_ref b, %b [concrete = constants.%C]
-// CHECK:STDOUT:   %c: type = bind_alias c, %b [concrete = constants.%C]
+// CHECK:STDOUT:   %c: type = alias_binding c, %b [concrete = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type = value_binding_pattern d [concrete]
 // CHECK:STDOUT:   }
@@ -193,7 +193,7 @@ extern alias C = Class;
 // CHECK:STDOUT:   %.loc10_13.2: init %C = class_init (), %.loc10_13.1 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc10_13.3: ref %C = temporary %.loc10_13.1, %.loc10_13.2
 // CHECK:STDOUT:   %.loc10_13.4: ref %C = converted @__global_init.%.loc10, %.loc10_13.3
-// CHECK:STDOUT:   %.loc10_13.5: %C = bind_value %.loc10_13.4
+// CHECK:STDOUT:   %.loc10_13.5: %C = acquire_value %.loc10_13.4
 // CHECK:STDOUT:   %d: %C = value_binding d, %.loc10_13.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -750,7 +750,7 @@ export Poison;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [concrete = <error>]
-// CHECK:STDOUT:   %Local: <error> = bind_alias Local, <error> [concrete = <error>]
+// CHECK:STDOUT:   %Local: <error> = alias_binding Local, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_non_export_then_base.carbon

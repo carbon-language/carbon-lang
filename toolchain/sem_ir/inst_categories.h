@@ -81,10 +81,10 @@ struct AnyBindingPattern {
 };
 
 // Common representation for various `bind*` nodes.
-struct AnyBindName {
+struct AnyBinding {
   // TODO: Also handle BindTemplateName once it exists.
   using CategoryInfo =
-      CategoryOf<BindAlias, RefBinding, BindSymbolicName, ValueBinding>;
+      CategoryOf<AliasBinding, RefBinding, SymbolicBinding, ValueBinding>;
 
   InstKind kind;
   TypeId type_id;
@@ -96,9 +96,9 @@ struct AnyBindName {
 };
 
 // Common representation for various `bind*` nodes, and `export name`.
-struct AnyBindNameOrExportDecl {
+struct AnyBindingOrExportDecl {
   // TODO: Also handle BindTemplateName once it exists.
-  using CategoryInfo = CategoryOf<BindAlias, RefBinding, BindSymbolicName,
+  using CategoryInfo = CategoryOf<AliasBinding, RefBinding, SymbolicBinding,
                                   ValueBinding, ExportDecl>;
 
   InstKind kind;

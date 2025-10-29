@@ -191,9 +191,9 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     inst6000004E:    {kind: VarPattern, arg0: inst6000004D, type: type(inst6000003F)}
 // CHECK:STDOUT:     inst6000004F:    {kind: NameBindingDecl, arg0: inst_block60000017}
 // CHECK:STDOUT:     inst60000050:    {kind: NameRef, arg0: name00000005, arg1: inst6000004C, type: type(inst60000020)}
-// CHECK:STDOUT:     inst60000051:    {kind: BindValue, arg0: inst60000050, type: type(inst60000020)}
+// CHECK:STDOUT:     inst60000051:    {kind: AcquireValue, arg0: inst60000050, type: type(inst60000020)}
 // CHECK:STDOUT:     inst60000052:    {kind: Deref, arg0: inst60000051, type: type(inst60000014)}
-// CHECK:STDOUT:     inst60000053:    {kind: BindValue, arg0: inst60000052, type: type(inst60000014)}
+// CHECK:STDOUT:     inst60000053:    {kind: AcquireValue, arg0: inst60000052, type: type(inst60000014)}
 // CHECK:STDOUT:     inst60000054:    {kind: ValueAsRef, arg0: inst60000053, type: type(inst60000014)}
 // CHECK:STDOUT:     inst60000055:    {kind: AddrOf, arg0: inst60000054, type: type(inst60000020)}
 // CHECK:STDOUT:     inst60000056:    {kind: Call, arg0: inst60000043, arg1: inst_block60000019, type: type(inst6000001E)}

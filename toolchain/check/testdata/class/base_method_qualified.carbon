@@ -252,7 +252,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %Base.F.bound: <bound method> = bound_method %a.ref, %F.ref
 // CHECK:STDOUT:   %.loc30_10.1: ref %Base = class_element_access %a.ref, element0
 // CHECK:STDOUT:   %.loc30_10.2: ref %Base = converted %a.ref, %.loc30_10.1
-// CHECK:STDOUT:   %.loc30_10.3: %Base = bind_value %.loc30_10.2
+// CHECK:STDOUT:   %.loc30_10.3: %Base = acquire_value %.loc30_10.2
 // CHECK:STDOUT:   %Base.F.call: init %i32 = call %Base.F.bound(%.loc30_10.3)
 // CHECK:STDOUT:   return %Base.F.call to %return
 // CHECK:STDOUT: }
@@ -266,7 +266,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %Base.F.bound: <bound method> = bound_method %.loc34_11.1, %F.ref
 // CHECK:STDOUT:   %.loc34_11.2: ref %Base = class_element_access %.loc34_11.1, element0
 // CHECK:STDOUT:   %.loc34_11.3: ref %Base = converted %.loc34_11.1, %.loc34_11.2
-// CHECK:STDOUT:   %.loc34_11.4: %Base = bind_value %.loc34_11.3
+// CHECK:STDOUT:   %.loc34_11.4: %Base = acquire_value %.loc34_11.3
 // CHECK:STDOUT:   %Base.F.call: init %i32 = call %Base.F.bound(%.loc34_11.4)
 // CHECK:STDOUT:   return %Base.F.call to %return
 // CHECK:STDOUT: }
@@ -288,7 +288,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %G.ref: %Base.G.type = name_ref G, @Base.%Base.G.decl [concrete = constants.%Base.G]
 // CHECK:STDOUT:   %.loc42_11.1: ref %Derived = deref %p.ref
 // CHECK:STDOUT:   %Base.G.bound: <bound method> = bound_method %.loc42_11.1, %G.ref
-// CHECK:STDOUT:   %.loc42_11.2: %Derived = bind_value %.loc42_11.1
+// CHECK:STDOUT:   %.loc42_11.2: %Derived = acquire_value %.loc42_11.1
 // CHECK:STDOUT:   %Base.G.call: init %i32 = call %Base.G.bound(%.loc42_11.2)
 // CHECK:STDOUT:   return %Base.G.call to %return
 // CHECK:STDOUT: }
