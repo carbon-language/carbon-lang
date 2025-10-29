@@ -33,7 +33,8 @@ struct InstId : public IdBase<InstId> {
 
   // A placeholder used in the `ImplWitness` table of instructions for members
   // of the impl. These are replaced as values are seen for the witness table in
-  // the impl declaration or definition.
+  // the impl declaration or definition. This is distinct from `None` for
+  // debugging purposes.
   static const InstId ImplWitnessTablePlaceholder;
 
   using IdBase::IdBase;
