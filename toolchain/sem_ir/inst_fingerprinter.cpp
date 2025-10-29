@@ -419,8 +419,7 @@ struct Worklist {
         // the `contents`.
         CARBON_KIND_SWITCH(next) {
           case CARBON_KIND(InstId _):
-            // InstId is checked for above.
-            CARBON_FATAL();
+            CARBON_FATAL("InstId is checked for above.");
           case CARBON_KIND(ImplId impl_id):
             Add(impl_id);
             break;
