@@ -185,7 +185,7 @@ fn F(T:! Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = <unexpected>.inst{{[0-9A-F]+}}
+// CHECK:STDOUT:   .Self = <unexpected>.inst{{[0-9A-F]+}}.loc8_13
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -196,7 +196,7 @@ fn F(T:! Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = <unexpected>.inst{{[0-9A-F]+}}
+// CHECK:STDOUT:   .Self = <unexpected>.inst{{[0-9A-F]+}}.loc8_13
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -207,7 +207,7 @@ fn F(T:! Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = <unexpected>.inst{{[0-9A-F]+}}
+// CHECK:STDOUT:   .Self = <unexpected>.inst{{[0-9A-F]+}}.loc8_13
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -218,7 +218,7 @@ fn F(T:! Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = <unexpected>.inst{{[0-9A-F]+}}
+// CHECK:STDOUT:   .Self = <unexpected>.inst{{[0-9A-F]+}}.loc6_13
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -233,7 +233,7 @@ fn F(T:! Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = <unexpected>.inst{{[0-9A-F]+}}
+// CHECK:STDOUT:     .Self = <unexpected>.inst{{[0-9A-F]+}}.loc6_23
 // CHECK:STDOUT:     witness = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -253,7 +253,7 @@ fn F(T:! Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = <unexpected>.inst{{[0-9A-F]+}}
+// CHECK:STDOUT:     .Self = <unexpected>.inst{{[0-9A-F]+}}.loc6_23
 // CHECK:STDOUT:     witness = invalid
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -269,7 +269,7 @@ fn F(T:! Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = <unexpected>.inst{{[0-9A-F]+}}
+// CHECK:STDOUT:   .Self = <unexpected>.inst{{[0-9A-F]+}}.loc8_13
 // CHECK:STDOUT:   witness = invalid
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

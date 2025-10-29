@@ -146,13 +146,13 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %T.loc4_24.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_24.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self.2: %type = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.aa1546.1)]
+// CHECK:STDOUT:   %Self.loc4_34.2: %type = symbolic_binding Self, 1 [symbolic = %Self.loc4_34.2 (constants.%Self.aa1546.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
-// CHECK:STDOUT:     %Self.1: %type = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.aa1546.1)]
+// CHECK:STDOUT:     %Self.loc4_34.1: %type = symbolic_binding Self, 1 [symbolic = %Self.loc4_34.2 (constants.%Self.aa1546.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc4_34.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -160,13 +160,13 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %U.loc7_21.1: %Z.type = symbolic_binding U, 0 [symbolic = %U.loc7_21.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self.2: %type = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.aa1546.2)]
+// CHECK:STDOUT:   %Self.loc7_28.2: %type = symbolic_binding Self, 1 [symbolic = %Self.loc7_28.2 (constants.%Self.aa1546.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
-// CHECK:STDOUT:     %Self.1: %type = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.aa1546.2)]
+// CHECK:STDOUT:     %Self.loc7_28.1: %type = symbolic_binding Self, 1 [symbolic = %Self.loc7_28.2 (constants.%Self.aa1546.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc7_28.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -174,13 +174,13 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %T.loc9_35.1: type = symbolic_binding T, 0 [symbolic = %T.loc9_35.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self.2: %type = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.aa1546.3)]
+// CHECK:STDOUT:   %Self.loc10_45.2: %type = symbolic_binding Self, 1 [symbolic = %Self.loc10_45.2 (constants.%Self.aa1546.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
-// CHECK:STDOUT:     %Self.1: %type = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.aa1546.3)]
+// CHECK:STDOUT:     %Self.loc10_45.1: %type = symbolic_binding Self, 1 [symbolic = %Self.loc10_45.2 (constants.%Self.aa1546.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc10_45.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

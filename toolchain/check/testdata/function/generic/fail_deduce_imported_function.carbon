@@ -148,7 +148,7 @@ fn B() {
 // CHECK:STDOUT:     import Lib//default
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Lib.Z: type = import_ref Lib//default, Z, loaded [concrete = constants.%Z.type]
-// CHECK:STDOUT:   %Lib.import_ref.462 = import_ref Lib//default, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Lib.import_ref.462 = import_ref Lib//default, loc3_13, unloaded
 // CHECK:STDOUT:   %Lib.A: %A.type.fad = import_ref Lib//default, A, loaded [concrete = constants.%A.7a0]
 // CHECK:STDOUT:   %Lib.import_ref.552: %Z.type = import_ref Lib//default, loc4_6, loaded [symbolic = @A.1.%T (constants.%T)]
 // CHECK:STDOUT: }
