@@ -183,26 +183,6 @@ constraint Z(T:! type) {
 }
 //@dump-sem-ir-end
 
-// --- fail_require_self_in_requirement.carbon
-library "[[@TEST_NAME]]";
-
-interface Y {
-  let Y1:! type;
-}
-
-//@dump-sem-ir-begin
-constraint Z(T:! type) {
-  // Self can not appear in a requirement. It can appear in the self-type or in
-  // an interface parameter.
-  //
-  // CHECK:STDERR: fail_require_self_in_requirement.carbon:[[@LINE+4]]:17: error: `require` declaration with `Self` in the `where` expression of the constraint [RequireImplsSelfInWhereExpr]
-  // CHECK:STDERR:   require impls Y where .Y1 = Self;
-  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  require impls Y where .Y1 = Self;
-}
-//@dump-sem-ir-end
-
 // --- fail_require_impls_without_self_in_one_interface.carbon
 library "[[@TEST_NAME]]";
 
@@ -270,6 +250,20 @@ constraint Z(T:! type) {
   // CHECK:STDERR:
   require impls 1;
 }
+
+// --- fail_require_self_in_requirement.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {
+  let Y1:! type;
+}
+
+//@dump-sem-ir-begin
+constraint Z {
+  // Self can appear in a requirement.
+  require impls Y where .Y1 = Self;
+}
+//@dump-sem-ir-end
 
 // CHECK:STDOUT: --- fail_todo_extend.carbon
 // CHECK:STDOUT:
@@ -480,50 +474,21 @@ constraint Z(T:! type) {
 // CHECK:STDOUT: --- fail_require_self_in_requirement.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %Z.type: type = generic_named_constaint_type @Z [concrete]
-// CHECK:STDOUT:   %empty_struct: %Z.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Self.eca: %type = bind_symbolic_name Self, 1 [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.eca [symbolic]
-// CHECK:STDOUT:   %.Self.f65: %Y.type = bind_symbolic_name .Self [symbolic_self]
-// CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.f65, @Y [symbolic_self]
-// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic_self]
-// CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y where %impl.elem0 = %Self.binding.as_type> [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Z.decl: %Z.type = constraint_decl @Z [concrete = constants.%empty_struct] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %T.loc8_14.2: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_14.1 (constants.%T)]
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Z.decl: type = constraint_decl @Z [concrete = constants.%type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic constraint @Z(%T.loc8_14.2: type) {
-// CHECK:STDOUT:   %T.loc8_14.1: type = bind_symbolic_name T, 0 [symbolic = %T.loc8_14.1 (constants.%T)]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: constraint @Z {
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y where constants.%impl.elem0 = %Self.binding.as_type> [symbolic = %Y_where.type (constants.%Y_where.type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   constraint {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
-// CHECK:STDOUT:     .Y = <poisoned>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z(constants.%T) {
-// CHECK:STDOUT:   %T.loc8_14.1 => constants.%T
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

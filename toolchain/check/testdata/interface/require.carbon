@@ -172,24 +172,6 @@ interface Z(T:! type) {
   require T impls Y where .Y1 = Self;
 }
 
-// --- fail_require_self_in_requirement.carbon
-library "[[@TEST_NAME]]";
-
-interface Y {
-  let Y1:! type;
-}
-
-interface Z(T:! type) {
-  // Self can not appear in a requirement. It can appear in the self-type or in
-  // an interface parameter.
-  //
-  // CHECK:STDERR: fail_require_self_in_requirement.carbon:[[@LINE+4]]:17: error: `require` declaration with `Self` in the `where` expression of the constraint [RequireImplsSelfInWhereExpr]
-  // CHECK:STDERR:   require impls Y where .Y1 = Self;
-  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  require impls Y where .Y1 = Self;
-}
-
 // --- fail_require_impls_without_self_in_one_interface.carbon
 library "[[@TEST_NAME]]";
 
@@ -257,6 +239,20 @@ interface Z(T:! type) {
   // CHECK:STDERR:
   require impls 1;
 }
+
+// --- require_self_in_requirement.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {
+  let Y1:! type;
+}
+
+//@dump-sem-ir-begin
+interface Z {
+  // Self can appear in a requirement.
+  require impls Y where .Y1 = Self;
+}
+//@dump-sem-ir-end
 
 // --- require_same.carbon
 library "[[@TEST_NAME]]";
@@ -433,6 +429,28 @@ interface Z(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z(constants.%Self.binding.as_type) {
 // CHECK:STDOUT:   %T.loc4_13.1 => constants.%Self.binding.as_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- require_self_in_requirement.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Z.decl: type = interface_decl @Z [concrete = constants.%Z.type] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @Z {
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Y = <poisoned>
+// CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- require_same.carbon

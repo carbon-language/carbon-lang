@@ -353,7 +353,6 @@ CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessNote)
 CARBON_DIAGNOSTIC_KIND(RequireImplsHasEmptyFacetType)
 CARBON_DIAGNOSTIC_KIND(RequireImplsMissingFacetType)
 CARBON_DIAGNOSTIC_KIND(RequireImplsMissingSelf)
-CARBON_DIAGNOSTIC_KIND(RequireImplsSelfInWhereExpr)
 CARBON_DIAGNOSTIC_KIND(RequireInWrongScope)
 
 // Let declaration checking.

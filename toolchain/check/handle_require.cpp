@@ -147,53 +147,6 @@ static auto TypeStructureReferencesSelf(Context& context,
   return true;
 }
 
-static auto RequirementReferencesSelf(
-    Context& context, const SemIR::FacetTypeInfo& facet_type_info) -> bool {
-  class FindSelfCallbacks : public SubstInstCallbacks {
-   public:
-    explicit FindSelfCallbacks(Context* context, bool* found)
-        : SubstInstCallbacks(context), found_(found) {}
-    auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
-      if (*found_ || context().constant_values().Get(inst_id).is_concrete()) {
-        return FullySubstituted;
-      }
-      if (auto bind =
-              context().insts().TryGetAs<SemIR::SymbolicBindingType>(inst_id)) {
-        const auto& entity_name =
-            context().entity_names().Get(bind->entity_name_id);
-        if (entity_name.name_id == SemIR::NameId::SelfType) {
-          // It would be nice to return a location, but we're working with
-          // canonical instructions so there's no location available here.
-          *found_ = true;
-          return FullySubstituted;
-        }
-      }
-      return SubstOperands;
-    }
-    auto Rebuild(SemIR::InstId /*orig_inst_id*/, SemIR::Inst /*new_inst*/)
-        -> SemIR::InstId override {
-      CARBON_FATAL();
-    }
-
-    bool* found_;
-  };
-
-  bool found = false;
-  FindSelfCallbacks callbacks(&context, &found);
-  for (const auto& rewrite : facet_type_info.rewrite_constraints) {
-    SubstInst(context, rewrite.lhs_id, callbacks);
-    if (found) {
-      return true;
-    }
-    SubstInst(context, rewrite.rhs_id, callbacks);
-    if (found) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   auto [constraint_node_id, constraint_inst_id] =
       context.node_stack().PopExprWithNodeId();
@@ -227,16 +180,6 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
                       "`Self` must appear in the self-type or as a generic "
                       "parameter for each `interface` or `constraint`");
     context.emitter().Emit(node_id, RequireImplsMissingSelf);
-    constraint_inst_id = self_inst_id = SemIR::ErrorInst::TypeInstId;
-  } else if (RequirementReferencesSelf(
-                 context, context.facet_types().Get(
-                              constraint_facet_type->facet_type_id))) {
-    // TODO: Should this be allowed? For now, no, but leads question:
-    // https://github.com/carbon-language/carbon-lang/issues/6285
-    CARBON_DIAGNOSTIC(RequireImplsSelfInWhereExpr, Error,
-                      "`require` declaration with `Self` in the `where` "
-                      "expression of the constraint");
-    context.emitter().Emit(constraint_node_id, RequireImplsSelfInWhereExpr);
     constraint_inst_id = self_inst_id = SemIR::ErrorInst::TypeInstId;
   }
 
