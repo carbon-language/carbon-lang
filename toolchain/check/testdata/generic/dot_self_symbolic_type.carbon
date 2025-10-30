@@ -340,6 +340,7 @@ fn H(T:! type) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %ptr.4f0b5c.2: type = ptr_type %DD [symbolic]
 // CHECK:STDOUT:   %B.type.1e50b2.2: type = facet_type <@B, @B(%ptr.4f0b5c.2)> [symbolic]
+// CHECK:STDOUT:   %.0a8: require_specific_def_type = require_specific_def @BB.as.B.impl(%ptr.4f0b5c.2, %T.b88) [symbolic]
 // CHECK:STDOUT:   %B.lookup_impl_witness.57f: <witness> = lookup_impl_witness %T.b88, @B, @B(%ptr.4f0b5c.2) [symbolic]
 // CHECK:STDOUT:   %B.facet.88e: %B.type.1e50b2.2 = facet_value %T.b88, (%B.lookup_impl_witness.57f) [symbolic]
 // CHECK:STDOUT:   %T.d9f: type = symbolic_binding T, 0 [symbolic]
@@ -347,6 +348,7 @@ fn H(T:! type) {
 // CHECK:STDOUT:   %D.G.54c: %D.G.type.0da = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %B.type.997: type = facet_type <@B, @B(%ptr.c28)> [concrete]
+// CHECK:STDOUT:   %.be0: require_specific_def_type = require_specific_def @BB.as.B.impl(%ptr.c28, %T.d9f) [symbolic]
 // CHECK:STDOUT:   %B.lookup_impl_witness.10f: <witness> = lookup_impl_witness %T.d9f, @B, @B(%ptr.c28) [symbolic]
 // CHECK:STDOUT:   %B.facet.a05: %B.type.997 = facet_value %T.d9f, (%B.lookup_impl_witness.10f) [symbolic]
 // CHECK:STDOUT: }
@@ -442,6 +444,7 @@ fn H(T:! type) {
 // CHECK:STDOUT:   %DD: type = symbolic_binding DD, 0 [symbolic = %DD (constants.%DD)]
 // CHECK:STDOUT:   %ptr.loc21_14.2: type = ptr_type %DD [symbolic = %ptr.loc21_14.2 (constants.%ptr.4f0b5c.2)]
 // CHECK:STDOUT:   %B.type.loc21_15.2: type = facet_type <@B, @B(%ptr.loc21_14.2)> [symbolic = %B.type.loc21_15.2 (constants.%B.type.1e50b2.2)]
+// CHECK:STDOUT:   %.loc21_7.2: require_specific_def_type = require_specific_def @BB.as.B.impl(%ptr.loc21_14.2, %T.loc15_8.1) [symbolic = %.loc21_7.2 (constants.%.0a8)]
 // CHECK:STDOUT:   %B.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc15_8.1, @B, @B(%ptr.loc21_14.2) [symbolic = %B.lookup_impl_witness (constants.%B.lookup_impl_witness.57f)]
 // CHECK:STDOUT:   %B.facet.loc21_7.2: @D.G.%B.type.loc21_15.2 (%B.type.1e50b2.2) = facet_value %T.loc15_8.1, (%B.lookup_impl_witness) [symbolic = %B.facet.loc21_7.2 (constants.%B.facet.88e)]
 // CHECK:STDOUT:
@@ -453,7 +456,7 @@ fn H(T:! type) {
 // CHECK:STDOUT:     %ptr.loc21_14.1: type = ptr_type %DD.ref [symbolic = %ptr.loc21_14.2 (constants.%ptr.4f0b5c.2)]
 // CHECK:STDOUT:     %B.type.loc21_15.1: type = facet_type <@B, @B(constants.%ptr.4f0b5c.2)> [symbolic = %B.type.loc21_15.2 (constants.%B.type.1e50b2.2)]
 // CHECK:STDOUT:     %B.facet.loc21_7.1: @D.G.%B.type.loc21_15.2 (%B.type.1e50b2.2) = facet_value %T.ref, (constants.%B.lookup_impl_witness.57f) [symbolic = %B.facet.loc21_7.2 (constants.%B.facet.88e)]
-// CHECK:STDOUT:     %.loc21: @D.G.%B.type.loc21_15.2 (%B.type.1e50b2.2) = converted %T.ref, %B.facet.loc21_7.1 [symbolic = %B.facet.loc21_7.2 (constants.%B.facet.88e)]
+// CHECK:STDOUT:     %.loc21_7.1: @D.G.%B.type.loc21_15.2 (%B.type.1e50b2.2) = converted %T.ref, %B.facet.loc21_7.1 [symbolic = %B.facet.loc21_7.2 (constants.%B.facet.88e)]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -505,6 +508,7 @@ fn H(T:! type) {
 // CHECK:STDOUT:   %DD => constants.%empty_struct_type
 // CHECK:STDOUT:   %ptr.loc21_14.2 => constants.%ptr.c28
 // CHECK:STDOUT:   %B.type.loc21_15.2 => constants.%B.type.997
+// CHECK:STDOUT:   %.loc21_7.2 => constants.%.be0
 // CHECK:STDOUT:   %B.lookup_impl_witness => constants.%B.lookup_impl_witness.10f
 // CHECK:STDOUT:   %B.facet.loc21_7.2 => constants.%B.facet.a05
 // CHECK:STDOUT: }

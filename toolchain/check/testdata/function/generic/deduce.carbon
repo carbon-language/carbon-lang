@@ -1603,6 +1603,7 @@ fn F() {
 // CHECK:STDOUT:   %CC.type: type = generic_class_type @CC [concrete]
 // CHECK:STDOUT:   %CC.generic: %CC.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CC.218: type = class_type @CC, @CC(%D) [symbolic]
+// CHECK:STDOUT:   %.7ec: require_specific_def_type = require_specific_def @DD.as.Z.impl(%E) [symbolic]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %DD.1e7, @Z [symbolic]
 // CHECK:STDOUT:   %Z.facet.4e5: %Z.type = facet_value %DD.1e7, (%Z.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %CC.fef: type = class_type @CC, @CC(%Z.facet.4e5) [symbolic]
@@ -1611,6 +1612,7 @@ fn F() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %DD.689: type = class_type @DD, @DD(%EE) [concrete]
 // CHECK:STDOUT:   %Z.impl_witness.5de: <witness> = impl_witness file.%Z.impl_witness_table.loc9, @DD.as.Z.impl(%EE) [concrete]
+// CHECK:STDOUT:   %.889: require_specific_def_type = require_specific_def @DD.as.Z.impl(%EE) [concrete]
 // CHECK:STDOUT:   %Z.facet.72a: %Z.type = facet_value %DD.689, (%Z.impl_witness.5de) [concrete]
 // CHECK:STDOUT:   %CC.86a: type = class_type @CC, @CC(%Z.facet.72a) [concrete]
 // CHECK:STDOUT:   %Z.impl_witness.516: <witness> = impl_witness file.%Z.impl_witness_table.loc12, @CC.as.Z.impl(%EE) [concrete]
@@ -1677,7 +1679,7 @@ fn F() {
 // CHECK:STDOUT:     %E.ref: type = name_ref E, %E.loc12_14.1 [symbolic = %E.loc12_14.2 (constants.%E)]
 // CHECK:STDOUT:     %DD.loc12_31.1: type = class_type @DD, @DD(constants.%E) [symbolic = %DD.loc12_31.2 (constants.%DD.1e7)]
 // CHECK:STDOUT:     %Z.facet.loc12_32.1: %Z.type = facet_value %DD.loc12_31.1, (constants.%Z.lookup_impl_witness) [symbolic = %Z.facet.loc12_32.2 (constants.%Z.facet.4e5)]
-// CHECK:STDOUT:     %.loc12: %Z.type = converted %DD.loc12_31.1, %Z.facet.loc12_32.1 [symbolic = %Z.facet.loc12_32.2 (constants.%Z.facet.4e5)]
+// CHECK:STDOUT:     %.loc12_32.1: %Z.type = converted %DD.loc12_31.1, %Z.facet.loc12_32.1 [symbolic = %Z.facet.loc12_32.2 (constants.%Z.facet.4e5)]
 // CHECK:STDOUT:     %CC.loc12_32.1: type = class_type @CC, @CC(constants.%Z.facet.4e5) [symbolic = %CC.loc12_32.2 (constants.%CC.fef)]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -1719,6 +1721,7 @@ fn F() {
 // CHECK:STDOUT: generic impl @CC.as.Z.impl(%E.loc12_14.1: type) {
 // CHECK:STDOUT:   %E.loc12_14.2: type = symbolic_binding E, 0 [symbolic = %E.loc12_14.2 (constants.%E)]
 // CHECK:STDOUT:   %DD.loc12_31.2: type = class_type @DD, @DD(%E.loc12_14.2) [symbolic = %DD.loc12_31.2 (constants.%DD.1e7)]
+// CHECK:STDOUT:   %.loc12_32.2: require_specific_def_type = require_specific_def @DD.as.Z.impl(%E.loc12_14.2) [symbolic = %.loc12_32.2 (constants.%.7ec)]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %DD.loc12_31.2, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
 // CHECK:STDOUT:   %Z.facet.loc12_32.2: %Z.type = facet_value %DD.loc12_31.2, (%Z.lookup_impl_witness) [symbolic = %Z.facet.loc12_32.2 (constants.%Z.facet.4e5)]
 // CHECK:STDOUT:   %CC.loc12_32.2: type = class_type @CC, @CC(%Z.facet.loc12_32.2) [symbolic = %CC.loc12_32.2 (constants.%CC.fef)]
@@ -1806,6 +1809,7 @@ fn F() {
 // CHECK:STDOUT: specific @CC.as.Z.impl(constants.%E) {
 // CHECK:STDOUT:   %E.loc12_14.2 => constants.%E
 // CHECK:STDOUT:   %DD.loc12_31.2 => constants.%DD.1e7
+// CHECK:STDOUT:   %.loc12_32.2 => constants.%.7ec
 // CHECK:STDOUT:   %Z.lookup_impl_witness => constants.%Z.lookup_impl_witness
 // CHECK:STDOUT:   %Z.facet.loc12_32.2 => constants.%Z.facet.4e5
 // CHECK:STDOUT:   %CC.loc12_32.2 => constants.%CC.fef
@@ -1831,6 +1835,7 @@ fn F() {
 // CHECK:STDOUT: specific @CC.as.Z.impl(constants.%EE) {
 // CHECK:STDOUT:   %E.loc12_14.2 => constants.%EE
 // CHECK:STDOUT:   %DD.loc12_31.2 => constants.%DD.689
+// CHECK:STDOUT:   %.loc12_32.2 => constants.%.889
 // CHECK:STDOUT:   %Z.lookup_impl_witness => constants.%Z.impl_witness.5de
 // CHECK:STDOUT:   %Z.facet.loc12_32.2 => constants.%Z.facet.72a
 // CHECK:STDOUT:   %CC.loc12_32.2 => constants.%CC.86a

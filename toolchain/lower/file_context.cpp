@@ -935,7 +935,8 @@ template <typename InstT>
            SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
            SemIR::GenericInterfaceType, SemIR::GenericNamedConstraintType,
            SemIR::InstType, SemIR::IntLiteralType, SemIR::NamespaceType,
-           SemIR::WhereExpr, SemIR::WitnessType, SemIR::UnboundElementType>())
+           SemIR::RequireSpecificDefinitionType, SemIR::UnboundElementType,
+           SemIR::WhereExpr, SemIR::WitnessType>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> llvm::Type* {
   // Return an empty struct as a placeholder.

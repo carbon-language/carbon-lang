@@ -1366,6 +1366,24 @@ struct RequireImplsDecl {
   DeclInstBlockId decl_block_id;
 };
 
+// As part of a generic region, requires that an `impl` which is initially part
+// of a symbolic specific be defined once a concrete specific is formed.
+struct RequireSpecificDefinition {
+  static constexpr auto Kind =
+      InstKind::RequireSpecificDefinition.Define<Parse::NodeId>(
+          {.ir_name = "require_specific_def",
+           .constant_kind = InstConstantKind::Conditional,
+           .is_lowered = false});
+  // Always the builtin `RequireSpecificDefinitionType` type.
+  TypeId type_id;
+  SemIR::SpecificId specific_id;
+};
+
+// A dedicated type for `RequireSpecificDefinition`.
+using RequireSpecificDefinitionType =
+    SingletonTypeInst<InstKind::RequireSpecificDefinitionType,
+                      "require_specific_def_type">;
+
 // A requirement that `.Self` implements a facet type, specified as the first
 // operand of a `where` expression. This is always the first requirement in a
 // requirement block for a `where` expression.
