@@ -1255,10 +1255,7 @@ auto Formatter::FormatImportCppDeclRhs() -> void {
   OpenBrace();
   for (const Parse::Tree::PackagingNames& import :
        sem_ir_->parse_tree().imports()) {
-    if (auto package_ident_id = import.package_id.AsIdentifierId();
-        !package_ident_id.has_value() ||
-        sem_ir_->identifiers().Get(package_ident_id) !=
-            PackageNameId::CppName) {
+    if (import.package_id != PackageNameId::Cpp) {
       continue;
     }
 

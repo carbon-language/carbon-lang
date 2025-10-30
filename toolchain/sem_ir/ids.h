@@ -582,6 +582,8 @@ constexpr FloatKind FloatKind::PPCFloat128 = FloatKind(6);
   X(ChoiceDiscriminant)                                          \
   /* The name of the package `Core`. */                          \
   X(Core)                                                        \
+  /* The name of the package `Cpp`. */                           \
+  X(Cpp)                                                         \
   /* The name of `package`. */                                   \
   X(PackageNamespace)                                            \
   /* The name of `.Self`. */                                     \
