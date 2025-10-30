@@ -12,6 +12,7 @@
 
 // --- a.carbon
 library "[[@TEST_NAME]]";
+
 constraint A;
 
 // --- a.impl.carbon
@@ -20,14 +21,8 @@ impl library "[[@TEST_NAME]]";
 
 // --- b.carbon
 library "[[@TEST_NAME]]";
-interface I {}
-constraint B {
-  // CHECK:STDERR: b.carbon:[[@LINE+4]]:3: error: semantics TODO: `require` [SemanticsTodo]
-  // CHECK:STDERR:   require impls I;
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
-  require impls I;
-}
+
+constraint B {}
 
 // --- b.impl.carbon
 //@include-in-dumps
@@ -61,13 +56,11 @@ fn F(T:! B) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.I = import_ref Main//b, I, unloaded
 // CHECK:STDOUT:   %Main.B: type = import_ref Main//b, B, loaded [concrete = constants.%type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .I = imports.%Main.I
 // CHECK:STDOUT:     .B = imports.%Main.B
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
