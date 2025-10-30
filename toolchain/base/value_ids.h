@@ -83,6 +83,7 @@ struct PackageNameId : public IdBase<PackageNameId> {
   static constexpr llvm::StringLiteral Label = "package";
   static const PackageNameId None;
   static const PackageNameId Core;
+  static constexpr llvm::StringLiteral CppName = "Cpp";
 
   // Returns the PackageNameId corresponding to a particular IdentifierId.
   static auto ForIdentifier(IdentifierId id) -> PackageNameId {

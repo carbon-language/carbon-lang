@@ -523,7 +523,7 @@ struct ConvertToValueAction {
 
 // A type for C++ `void`. Should only be used for pointers (`void*`).
 struct CppVoidType
-    : public SingletonTypeInst<InstKind::CppVoidType, "cpp_void_type"> {
+    : public SingletonTypeInst<InstKind::CppVoidType, "Cpp.void"> {
   // `Cpp.void` is never complete, so `GetSingletonType` won't work.
   static constexpr auto TypeId =
       TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));

@@ -52,7 +52,6 @@ static auto GetImportKey(UnitAndImports& unit_info,
   return {package_name, library_name};
 }
 
-static constexpr llvm::StringLiteral CppPackageName = "Cpp";
 static constexpr llvm::StringLiteral MainPackageName = "Main";
 
 static auto RenderImportKey(ImportKey import_key) -> std::string {
@@ -81,7 +80,7 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
   const auto import_key = GetImportKey(unit_info, file_package_id, import);
   const auto& [import_package_name, import_library_name] = import_key;
 
-  if (import_package_name == CppPackageName) {
+  if (import_package_name == PackageNameId::CppName) {
     if (!explicit_import_map) {
       // Don't diagnose the implicit import in `impl package Cpp`, because we'll
       // have diagnosed the use of `Cpp` in the declaration.
@@ -265,7 +264,8 @@ static auto BuildApiMapAndDiagnosePackaging(
                              import_key.second.empty() ? ExplicitMainPackage
                                                        : ExplicitMainLibrary);
       continue;
-    } else if (import_key.first == CppPackageName) {
+    }
+    if (import_key.first == PackageNameId::CppName) {
       CARBON_DIAGNOSTIC(CppPackageDeclaration, Error,
                         "`Cpp` cannot be used by a `package` declaration");
       unit_info.emitter.Emit(packaging->names.node_id, CppPackageDeclaration);
