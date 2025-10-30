@@ -122,7 +122,15 @@ Selects the amount of optimization to perform.
       [&](auto& arg_b) {
         arg_b.SetOneOf(
             {
-                // We intentionally don't expose O2 and Os.
+                // We intentionally don't expose O2 and Os. The difference
+                // between these levels tends to reflect what achieves the
+                // best speed for a specific application, as they all
+                // largely optimize for speed as the primary factor.
+                //
+                // Instead of controlling this with more nuanced flags, we
+                // plan to support profile and in-source hints to the
+                // optimizer to adjust its strategy in the specific places
+                // where the default doesn't have the desired results.
                 arg_b.OneOfValue("none", llvm::OptimizationLevel::O0),
                 arg_b.OneOfValue("debug", llvm::OptimizationLevel::O1),
                 arg_b.OneOfValue("speed", llvm::OptimizationLevel::O3),
