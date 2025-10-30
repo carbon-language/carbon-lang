@@ -1505,8 +1505,8 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
 }
 
 // Returns the return `TypeExpr` of the given function declaration. In case of
-// an unsupported return type, returns `SemIR::ErrorInst::InstId`.
-// Constructors are treated as returning a class instance.
+// an unsupported return type, returns `SemIR::ErrorInst::InstId`. Constructors
+// are treated as returning a class instance.
 // TODO: Support more return types.
 static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
                               clang::FunctionDecl* clang_decl) -> TypeExpr {
