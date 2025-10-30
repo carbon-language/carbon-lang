@@ -145,7 +145,7 @@ auto CheckFunctionDefinitionSignature(Context& context,
 
   // Check the parameter types are complete.
   for (auto param_ref_id : params_to_complete) {
-    if (param_ref_id == SemIR::ErrorInst::TypeInstId) {
+    if (param_ref_id == SemIR::ErrorInst::InstId) {
       continue;
     }
 

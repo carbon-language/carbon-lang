@@ -36,7 +36,7 @@ enum class AccessKind : int8_t {
 // - Represent that an error has occurred during lookup. This is still
 //   considered found and the error `InstId` is considered existing. Can be
 //   constructed using `MakeError()` or using `MakeWrappedLookupResult()` with
-//   `ErrorInst::TypeInstId`.
+//   `ErrorInst::InstId`.
 class ScopeLookupResult {
  public:
   static auto MakeFound(InstId target_inst_id, AccessKind access_kind)
@@ -54,7 +54,7 @@ class ScopeLookupResult {
   }
 
   static auto MakeError() -> ScopeLookupResult {
-    return MakeFound(ErrorInst::TypeInstId, AccessKind::Public);
+    return MakeFound(ErrorInst::InstId, AccessKind::Public);
   }
 
   static auto MakeWrappedLookupResult(InstId target_inst_id,

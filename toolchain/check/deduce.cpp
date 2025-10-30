@@ -320,7 +320,7 @@ auto DeductionContext::Deduce() -> bool {
                                                 param_type_id)
                          : TryConvertToValueOfType(context(), loc_id_, arg_id,
                                                    param_type_id);
-      if (arg_id == SemIR::ErrorInst::TypeInstId) {
+      if (arg_id == SemIR::ErrorInst::InstId) {
         return false;
       }
     }
@@ -534,7 +534,7 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
                                               deduced_arg_id, binding_type_id);
       // The conversion of the argument to the parameter type can fail after
       // applying the enclosing specific, in which case deduction fails.
-      if (converted_arg_id == SemIR::ErrorInst::TypeInstId) {
+      if (converted_arg_id == SemIR::ErrorInst::InstId) {
         return false;
       }
 
@@ -557,7 +557,7 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
           NoteGenericHere(context(), generic_id_, diag);
           diag.Emit();
         }
-        deduced_arg_id = SemIR::ErrorInst::TypeInstId;
+        deduced_arg_id = SemIR::ErrorInst::InstId;
       }
     }
 

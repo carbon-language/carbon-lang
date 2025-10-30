@@ -178,7 +178,7 @@ auto ScopeStack::LookupInLexicalScopes(SemIR::NameId name_id)
 
   // If we have no lexical results, check all non-lexical scopes.
   if (lexical_results.empty()) {
-    return {LexicalLookupHasLoadError() ? SemIR::ErrorInst::TypeInstId
+    return {LexicalLookupHasLoadError() ? SemIR::ErrorInst::InstId
                                         : SemIR::InstId::None,
             non_lexical_scope_stack_};
   }

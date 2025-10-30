@@ -59,7 +59,7 @@ static auto CheckCompleteAdapterClassType(
         .Build(class_info.adapt_id, AdaptWithBase)
         .Note(class_info.base_id, AdaptWithBaseHere)
         .Emit();
-    return SemIR::ErrorInst::TypeInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   if (!field_decls.empty()) {
@@ -70,7 +70,7 @@ static auto CheckCompleteAdapterClassType(
         .Build(class_info.adapt_id, AdaptWithFields)
         .Note(field_decls.front(), AdaptWithFieldHere)
         .Emit();
-    return SemIR::ErrorInst::TypeInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   for (auto inst_id : body) {
@@ -87,7 +87,7 @@ static auto CheckCompleteAdapterClassType(
             .Build(class_info.adapt_id, AdaptWithVirtual)
             .Note(inst_id, AdaptWithVirtualHere)
             .Emit();
-        return SemIR::ErrorInst::TypeInstId;
+        return SemIR::ErrorInst::InstId;
       }
     }
   }

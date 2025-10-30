@@ -34,7 +34,7 @@ auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
   SemIR::Callee callee = GetCallee(context.sem_ir(), callee_id);
   CARBON_KIND_SWITCH(callee) {
     case CARBON_KIND(SemIR::CalleeError _): {
-      return SemIR::ErrorInst::TypeInstId;
+      return SemIR::ErrorInst::InstId;
     }
     case CARBON_KIND(SemIR::CalleeFunction fn): {
       CARBON_CHECK(!fn.self_id.has_value());

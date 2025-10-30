@@ -251,7 +251,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
   auto deduced_constraint_id =
       context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
           context.sem_ir(), specific_id, impl.constraint_id));
-  if (deduced_constraint_id == SemIR::ErrorInst::TypeInstId) {
+  if (deduced_constraint_id == SemIR::ErrorInst::InstId) {
     return EvalImplLookupResult::MakeNone();
   }
 
@@ -807,7 +807,7 @@ static auto CollectCandidateImplsForQuery(
     // This check comes first to avoid deduction with an invalid impl. We use
     // an error value to indicate an error during creation of the impl, such
     // as a recursive impl which will cause deduction to recurse infinitely.
-    if (impl.witness_id == SemIR::ErrorInst::TypeInstId) {
+    if (impl.witness_id == SemIR::ErrorInst::InstId) {
       continue;
     }
     CARBON_CHECK(impl.witness_id.has_value());

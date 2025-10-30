@@ -119,7 +119,7 @@ auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
         return context.emitter().Build(node_id, StringLiteralTypeIncomplete,
                                        str_type.inst_id);
       })) {
-    return SemIR::ErrorInst::TypeInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   auto repr = GetStringLiteralRepr(context, node_id, str_type.type_id);
@@ -130,7 +130,7 @@ auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
       context.emitter().Emit(node_id, StringLiteralTypeUnexpected,
                              str_type.inst_id);
     }
-    return SemIR::ErrorInst::TypeInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   // The pointer field is a `StringLiteral` object.
@@ -152,7 +152,7 @@ auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
       CARBON_DIAGNOSTIC(StringLiteralTooLong, Error,
                         "string literal is too long");
       context.emitter().Emit(node_id, StringLiteralTooLong);
-      return SemIR::ErrorInst::TypeInstId;
+      return SemIR::ErrorInst::InstId;
     }
   }
   auto size_value_id =

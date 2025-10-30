@@ -64,7 +64,7 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
 
   // Get the transformed type of the binding.
   if (new_pattern_type_id == SemIR::ErrorInst::TypeId) {
-    return SemIR::ErrorInst::TypeInstId;
+    return SemIR::ErrorInst::InstId;
   }
   auto type_inst_id = context.types()
                           .GetAs<SemIR::PatternType>(new_pattern_type_id)
@@ -120,7 +120,7 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
   } else {
     CARBON_CHECK(pattern.Is<SemIR::ErrorInst>(),
                  "Unexpected pattern {0} in function signature", pattern);
-    return SemIR::ErrorInst::TypeInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   // Rebuild parameter.
@@ -255,7 +255,7 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
         context, context.functions().Get(callee.function_id),
         context.functions().Get(signature_id), signature_specific_id);
     CARBON_CHECK(!success, "Return type unexpectedly matches");
-    return SemIR::ErrorInst::TypeInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   // Create a scope for the function's parameters and generic parameters.
@@ -302,12 +302,12 @@ static auto BuildPatternRef(Context& context,
        value_param->kind == SemIR::RefParamPattern::Kind)) {
     pattern_ref_id = arg_ids[value_param->index.index];
   } else {
-    if (pattern_id != SemIR::ErrorInst::TypeInstId) {
+    if (pattern_id != SemIR::ErrorInst::InstId) {
       context.TODO(
           pattern_id,
           "don't know how to build reference to this pattern in thunk");
     }
-    return SemIR::ErrorInst::TypeInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   if (addr) {

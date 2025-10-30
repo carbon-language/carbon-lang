@@ -557,7 +557,8 @@ struct Deref {
 // in the type_id. It's typically used as a cue that semantic checking doesn't
 // need to issue further diagnostics.
 struct ErrorInst : public SingletonTypeInst<InstKind::ErrorInst, "<error>"> {
-  // Convenience for returning error constants directly.
+  // Convenience for returning error InstIds and ConstantIds directly.
+  static constexpr InstId InstId = TypeInstId;
   static constexpr auto ConstantId =
       ConstantId::ForConcreteConstant(TypeInstId);
 

@@ -121,12 +121,12 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
   if (self_id.has_value()) {
     self_expr = InventClangArg(context, self_id);
     if (!self_expr) {
-      return SemIR::ErrorInst::TypeInstId;
+      return SemIR::ErrorInst::InstId;
     }
   }
   auto maybe_arg_exprs = InventClangArgs(context, arg_ids);
   if (!maybe_arg_exprs.has_value()) {
-    return SemIR::ErrorInst::TypeInstId;
+    return SemIR::ErrorInst::InstId;
   }
   auto& arg_exprs = *maybe_arg_exprs;
 
@@ -164,7 +164,7 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
                           clang::getOperatorSpelling(
                               candidate_set.getRewriteInfo().OriginalOperator),
                           best_viable_fn->Function->getNameAsString()));
-        return SemIR::ErrorInst::TypeInstId;
+        return SemIR::ErrorInst::InstId;
       }
       sema.MarkFunctionReferenced(loc, best_viable_fn->Function);
       SemIR::InstId result_id = ImportCppFunctionDecl(
@@ -182,7 +182,7 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
               loc, sema.PDiag(clang::diag::err_ovl_no_viable_function_in_call)
                        << GetCppName(context, overload_set.name_id)),
           sema, clang::OCD_AllCandidates, arg_exprs);
-      return SemIR::ErrorInst::TypeInstId;
+      return SemIR::ErrorInst::InstId;
     }
     case clang::OverloadingResult::OR_Ambiguous: {
       candidate_set.NoteCandidates(
@@ -190,14 +190,14 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
               loc, sema.PDiag(clang::diag::err_ovl_ambiguous_call)
                        << GetCppName(context, overload_set.name_id)),
           sema, clang::OCD_AmbiguousCandidates, arg_exprs);
-      return SemIR::ErrorInst::TypeInstId;
+      return SemIR::ErrorInst::InstId;
     }
     case clang::OverloadingResult::OR_Deleted: {
       sema.DiagnoseUseOfDeletedFunction(
           loc, clang::SourceRange(loc, loc),
           GetCppName(context, overload_set.name_id), candidate_set,
           best_viable_fn->Function, arg_exprs);
-      return SemIR::ErrorInst::TypeInstId;
+      return SemIR::ErrorInst::InstId;
     }
   }
 }

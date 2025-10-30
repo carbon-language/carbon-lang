@@ -189,7 +189,7 @@ static auto InsertHere(Context& context, SemIR::ExprRegionId region_id)
     context.TODO(region.result_id,
                  "Control flow expressions are currently only supported inside "
                  "functions.");
-    return SemIR::ErrorInst::TypeInstId;
+    return SemIR::ErrorInst::InstId;
   }
   AddInst(context, SemIR::LocIdAndInst::NoLoc<SemIR::Branch>(
                        {.target_id = region.block_ids.front()}));
@@ -313,8 +313,8 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
           "Parameters out of order; expecting {0} but got {1}", results_.size(),
           param_pattern.index.index);
       CARBON_CHECK(entry.scrutinee_id.has_value());
-      if (entry.scrutinee_id == SemIR::ErrorInst::TypeInstId) {
-        results_.push_back(SemIR::ErrorInst::TypeInstId);
+      if (entry.scrutinee_id == SemIR::ErrorInst::InstId) {
+        results_.push_back(SemIR::ErrorInst::InstId);
       } else {
         results_.push_back(ConvertToValueOfType(
             context, SemIR::LocId(entry.scrutinee_id), entry.scrutinee_id,
@@ -612,7 +612,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
 
 auto MatchContext::EmitPatternMatch(Context& context,
                                     MatchContext::WorkItem entry) -> void {
-  if (entry.pattern_id == SemIR::ErrorInst::TypeInstId) {
+  if (entry.pattern_id == SemIR::ErrorInst::InstId) {
     return;
   }
   Diagnostics::AnnotationScope annotate_diagnostics(

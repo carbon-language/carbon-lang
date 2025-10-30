@@ -29,7 +29,7 @@ auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
     // This should only happen if the interface is erroneously defined more than
     // once.
     // TODO: Find a way to CHECK this.
-    return SemIR::ErrorInst::TypeInstId;
+    return SemIR::ErrorInst::InstId;
   }
 
   // This associated entity is being declared as a member of the self specific
@@ -187,7 +187,7 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
     -> SemIR::TypeId {
   auto decl_constant_inst_id =
       context.constant_values().GetConstantInstId(decl_id);
-  if (decl_constant_inst_id == SemIR::ErrorInst::TypeInstId) {
+  if (decl_constant_inst_id == SemIR::ErrorInst::InstId) {
     return SemIR::ErrorInst::TypeId;
   }
 

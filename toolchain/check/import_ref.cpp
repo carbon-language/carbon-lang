@@ -1117,7 +1117,7 @@ static auto GetLocalNameScopeIdImpl(ImportRefResolver& resolver,
       break;
     }
     default: {
-      if (const_inst_id == SemIR::ErrorInst::TypeInstId) {
+      if (const_inst_id == SemIR::ErrorInst::InstId) {
         return SemIR::NameScopeId::None;
       }
       break;
@@ -1916,7 +1916,7 @@ static auto HandleUnsupportedCppOverloadSet(ImportRefResolver& resolver,
           resolver.import_ir().names().GetAsStringIfIdentifier(
               resolver.import_ir().cpp_overload_sets().Get(id).name_id)));
   return ResolveResult::Done(SemIR::ErrorInst::ConstantId,
-                             SemIR::ErrorInst::TypeInstId);
+                             SemIR::ErrorInst::InstId);
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

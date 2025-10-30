@@ -36,12 +36,12 @@ TEST(ScopeLookupResult, MakeWrappedLookupResultUsingNoneInstId) {
 }
 
 TEST(ScopeLookupResult, MakeWrappedLookupResultUsingErrorInst) {
-  auto result = ScopeLookupResult::MakeWrappedLookupResult(
-      ErrorInst::TypeInstId, AccessKind::Private);
+  auto result = ScopeLookupResult::MakeWrappedLookupResult(ErrorInst::InstId,
+                                                           AccessKind::Private);
 
   EXPECT_FALSE(result.is_poisoned());
   EXPECT_TRUE(result.is_found());
-  EXPECT_EQ(result.target_inst_id(), ErrorInst::TypeInstId);
+  EXPECT_EQ(result.target_inst_id(), ErrorInst::InstId);
   EXPECT_EQ(result.access_kind(), AccessKind::Private);
   EXPECT_TRUE(result == result);
 }
@@ -82,7 +82,7 @@ TEST(ScopeLookupResult, MakeError) {
 
   EXPECT_FALSE(result.is_poisoned());
   EXPECT_TRUE(result.is_found());
-  EXPECT_EQ(result.target_inst_id(), ErrorInst::TypeInstId);
+  EXPECT_EQ(result.target_inst_id(), ErrorInst::InstId);
   EXPECT_EQ(result.access_kind(), AccessKind::Public);
   EXPECT_TRUE(result == result);
 }

@@ -392,14 +392,14 @@ static auto RequireConstantValue(EvalContext& eval_context,
     return eval_context.constant_values().GetInstId(const_id);
   }
 
-  if (inst_id != SemIR::ErrorInst::TypeInstId) {
+  if (inst_id != SemIR::ErrorInst::InstId) {
     CARBON_DIAGNOSTIC(EvalRequiresConstantValue, Error,
                       "expression is runtime; expected constant");
     eval_context.emitter().Emit(eval_context.GetDiagnosticLoc({inst_id}),
                                 EvalRequiresConstantValue);
   }
   *phase = Phase::UnknownDueToError;
-  return SemIR::ErrorInst::TypeInstId;
+  return SemIR::ErrorInst::InstId;
 }
 
 // If the given instruction is constant, returns its constant value. Otherwise,
@@ -987,10 +987,9 @@ static auto PerformCheckedCharConvert(Context& context, SemIR::LocId loc_id,
 static auto MakeIntTypeResult(Context& context, SemIR::LocId loc_id,
                               SemIR::IntKind int_kind, SemIR::InstId width_id,
                               Phase phase) -> SemIR::ConstantId {
-  auto result = SemIR::IntType{
-      .type_id = GetSingletonType(context, SemIR::TypeType::TypeInstId),
-      .int_kind = int_kind,
-      .bit_width_id = width_id};
+  auto result = SemIR::IntType{.type_id = SemIR::TypeType::TypeId,
+                               .int_kind = int_kind,
+                               .bit_width_id = width_id};
   if (!ValidateIntType(context, loc_id, result)) {
     return SemIR::ErrorInst::ConstantId;
   }
@@ -1002,10 +1001,9 @@ static auto MakeIntTypeResult(Context& context, SemIR::LocId loc_id,
 static auto MakeFloatTypeResult(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId width_id, Phase phase)
     -> SemIR::ConstantId {
-  auto result = SemIR::FloatType{
-      .type_id = GetSingletonType(context, SemIR::TypeType::TypeInstId),
-      .bit_width_id = width_id,
-      .float_kind = SemIR::FloatKind::None};
+  auto result = SemIR::FloatType{.type_id = SemIR::TypeType::TypeId,
+                                 .bit_width_id = width_id,
+                                 .float_kind = SemIR::FloatKind::None};
   if (!ValidateFloatTypeAndSetKind(context, loc_id, result)) {
     return SemIR::ErrorInst::ConstantId;
   }
@@ -2291,7 +2289,7 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
                              typed_inst.period_self_id)) {
           auto rhs_inst_id =
               eval_context.constant_values().GetInstId(rhs_const_id);
-          if (rhs_inst_id == SemIR::ErrorInst::TypeInstId) {
+          if (rhs_inst_id == SemIR::ErrorInst::InstId) {
             // `.Self impls <error>`.
             return SemIR::ErrorInst::ConstantId;
           } else if (rhs_inst_id == SemIR::TypeType::TypeInstId) {
