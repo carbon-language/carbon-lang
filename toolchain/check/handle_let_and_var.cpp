@@ -117,8 +117,8 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
   auto subpattern_id = context.node_stack().PopPattern();
   auto type_id = context.insts().Get(subpattern_id).type_id();
 
-  if (subpattern_id == SemIR::ErrorInst::InstId) {
-    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+  if (subpattern_id == SemIR::ErrorInst::TypeInstId) {
+    context.node_stack().Push(node_id, SemIR::ErrorInst::TypeInstId);
     return true;
   }
 
@@ -306,7 +306,7 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
   // corresponding `AssociatedConstant` entity are built as part of handling the
   // binding pattern, but we still need to finish building the `Generic` object
   // and attach the default value, if any is specified.
-  if (decl_info.pattern_id == SemIR::ErrorInst::InstId) {
+  if (decl_info.pattern_id == SemIR::ErrorInst::TypeInstId) {
     context.name_scopes()
         .Get(context.interfaces().Get(interface_scope->interface_id).scope_id)
         .set_has_error();

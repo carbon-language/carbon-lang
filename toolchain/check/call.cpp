@@ -110,7 +110,7 @@ static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
                           /*self_type_id=*/SemIR::InstId::None,
                           /*self_id=*/SemIR::InstId::None, arg_ids);
   if (!callee_specific_id) {
-    return SemIR::ErrorInst::InstId;
+    return SemIR::ErrorInst::TypeInstId;
   }
   return GetOrAddInst<SemIR::ClassType>(context, loc_id,
                                         {.type_id = SemIR::TypeType::TypeId,
@@ -150,7 +150,7 @@ static auto PerformCallToGenericInterfaceOrNamedConstaint(
                           /*self_type_id=*/SemIR::InstId::None,
                           /*self_id=*/SemIR::InstId::None, arg_ids);
   if (!callee_specific_id) {
-    return SemIR::ErrorInst::InstId;
+    return SemIR::ErrorInst::TypeInstId;
   }
   std::optional<SemIR::FacetType> facet_type;
   if constexpr (std::same_as<IdT, SemIR::InterfaceId>) {
@@ -238,7 +238,7 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
       EntityKind::Function, callee_function.enclosing_specific_id,
       callee_function.self_type_id, callee_function.self_id, arg_ids);
   if (!callee_specific_id) {
-    return SemIR::ErrorInst::InstId;
+    return SemIR::ErrorInst::TypeInstId;
   }
 
   if (callee_specific_id->has_value()) {
@@ -345,7 +345,7 @@ static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
       CARBON_DIAGNOSTIC(CallToNonCallable, Error,
                         "value of type {0} is not callable", TypeOfInstId);
       context.emitter().Emit(loc_id, CallToNonCallable, callee_id);
-      return SemIR::ErrorInst::InstId;
+      return SemIR::ErrorInst::TypeInstId;
     }
   }
 }
@@ -356,7 +356,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
   auto callee = GetCallee(context.sem_ir(), callee_id);
   CARBON_KIND_SWITCH(callee) {
     case CARBON_KIND(SemIR::CalleeError _): {
-      return SemIR::ErrorInst::InstId;
+      return SemIR::ErrorInst::TypeInstId;
     }
     case CARBON_KIND(SemIR::CalleeFunction fn): {
       return PerformCallToFunction(context, loc_id, callee_id, fn, arg_ids);

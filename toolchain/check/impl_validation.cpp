@@ -354,7 +354,7 @@ static auto ImportFinalImplsWithImplInFile(Context& context) -> void {
 
   llvm::SmallVector<InterfaceToImport> interfaces_to_import;
   for (const auto& impl : context.impls().values()) {
-    if (impl.witness_id == SemIR::ErrorInst::InstId) {
+    if (impl.witness_id == SemIR::ErrorInst::TypeInstId) {
       continue;
     }
     auto impl_import_ir_id = GetIRId(context, impl.first_owning_decl_id);
@@ -432,7 +432,7 @@ auto ValidateImplsInFile(Context& context) -> void {
       llvm::make_filter_range(
           context.impls().enumerate(),
           [](std::pair<SemIR::ImplId, const SemIR::Impl&> pair) {
-            return pair.second.witness_id != SemIR::ErrorInst::InstId &&
+            return pair.second.witness_id != SemIR::ErrorInst::TypeInstId &&
                    pair.second.interface.interface_id.has_value();
           }),
       [&](std::pair<SemIR::ImplId, const SemIR::Impl&> pair) {

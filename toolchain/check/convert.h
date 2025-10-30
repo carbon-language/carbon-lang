@@ -138,7 +138,7 @@ struct TypeExpr {
   // sugar.
   static auto ForUnsugared(Context& context, SemIR::TypeId type_id) -> TypeExpr;
 
-  // The converted expression of type `type`, or `ErrorInst::InstId`.
+  // The converted expression of type `type`, or `ErrorInst::TypeInstId`.
   SemIR::TypeInstId inst_id;
   // The corresponding type, or `ErrorInst::TypeId`.
   SemIR::TypeId type_id;

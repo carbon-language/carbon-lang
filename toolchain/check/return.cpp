@@ -144,7 +144,7 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
     auto diag = context.emitter().Build(loc_id, ReturnStatementDisallowExpr);
     NoteNoReturnTypeProvided(diag, function);
     diag.Emit();
-    expr_id = SemIR::ErrorInst::InstId;
+    expr_id = SemIR::ErrorInst::TypeInstId;
   } else if (returned_var_id.has_value()) {
     CARBON_DIAGNOSTIC(
         ReturnExprWithReturnedVar, Error,
@@ -152,11 +152,11 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
     auto diag = context.emitter().Build(loc_id, ReturnExprWithReturnedVar);
     NoteReturnedVar(diag, returned_var_id);
     diag.Emit();
-    expr_id = SemIR::ErrorInst::InstId;
+    expr_id = SemIR::ErrorInst::TypeInstId;
   } else if (!return_info.is_valid()) {
     // We already diagnosed that the return type is invalid. Don't try to
     // convert to it.
-    expr_id = SemIR::ErrorInst::InstId;
+    expr_id = SemIR::ErrorInst::TypeInstId;
   } else {
     return_slot_id = GetCurrentReturnSlot(context);
     CARBON_CHECK(return_slot_id.has_value());
@@ -176,7 +176,7 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
     CARBON_DIAGNOSTIC(ReturnVarWithNoReturnedVar, Error,
                       "`return var;` with no `returned var` in scope");
     context.emitter().Emit(node_id, ReturnVarWithNoReturnedVar);
-    returned_var_id = SemIR::ErrorInst::InstId;
+    returned_var_id = SemIR::ErrorInst::TypeInstId;
   }
 
   auto return_slot_id = GetCurrentReturnSlot(context);

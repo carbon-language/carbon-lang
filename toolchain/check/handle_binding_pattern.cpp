@@ -168,11 +168,11 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       auto result_inst_id = SemIR::InstId::None;
       if (had_error) {
         if (name_id != SemIR::NameId::Underscore) {
-          AddNameToLookup(context, name_id, SemIR::ErrorInst::InstId);
+          AddNameToLookup(context, name_id, SemIR::ErrorInst::TypeInstId);
         }
         // Replace the parameter with `ErrorInst` so that we don't try
         // constructing a generic based on it.
-        result_inst_id = SemIR::ErrorInst::InstId;
+        result_inst_id = SemIR::ErrorInst::TypeInstId;
       } else {
         result_inst_id = make_binding_pattern();
 

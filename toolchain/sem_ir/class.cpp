@@ -16,7 +16,7 @@ static auto GetFoundationType(const File& file, SpecificId specific_id,
   if (!inst_id.has_value()) {
     return TypeId::None;
   }
-  if (inst_id == ErrorInst::InstId) {
+  if (inst_id == ErrorInst::TypeInstId) {
     return ErrorInst::TypeId;
   }
   return TypeId::ForTypeConstant(GetConstantValueInSpecific(

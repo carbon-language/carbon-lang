@@ -59,7 +59,7 @@ static auto CheckAssociatedFunctionImplementation(
                            interface_function_type.function_id);
     builder.Emit();
 
-    return SemIR::ErrorInst::InstId;
+    return SemIR::ErrorInst::TypeInstId;
   }
 
   auto impl_enclosing_specific_id =
@@ -91,7 +91,7 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl,
   auto self_type_id = context.types().GetTypeIdForTypeInstId(impl.self_id);
   if (self_type_id == SemIR::ErrorInst::TypeId) {
     // When 'impl as' is invalid, the self type is an error.
-    return SemIR::ErrorInst::InstId;
+    return SemIR::ErrorInst::TypeInstId;
   }
 
   return InitialFacetTypeImplWitness(
@@ -103,7 +103,7 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl,
 auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   CARBON_CHECK(impl.is_being_defined());
   CARBON_CHECK(impl.witness_id.has_value());
-  if (impl.witness_id == SemIR::ErrorInst::InstId) {
+  if (impl.witness_id == SemIR::ErrorInst::TypeInstId) {
     return;
   }
   auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
@@ -157,7 +157,7 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
             .Note(assoc_entity, AssociatedConstantHere)
             .Emit();
 
-        witness_value = SemIR::ErrorInst::InstId;
+        witness_value = SemIR::ErrorInst::TypeInstId;
       }
     }
   }
@@ -170,7 +170,7 @@ auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void {
 
   CARBON_CHECK(impl.is_being_defined());
   CARBON_CHECK(impl.witness_id.has_value());
-  if (impl.witness_id == SemIR::ErrorInst::InstId) {
+  if (impl.witness_id == SemIR::ErrorInst::TypeInstId) {
     return;
   }
   auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
@@ -195,7 +195,7 @@ auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void {
     CARBON_KIND_SWITCH(decl) {
       case CARBON_KIND(SemIR::StructValue struct_value): {
         if (struct_value.type_id == SemIR::ErrorInst::TypeId) {
-          witness_value = SemIR::ErrorInst::InstId;
+          witness_value = SemIR::ErrorInst::TypeInstId;
           break;
         }
         auto type_inst = context.types().GetAsInst(struct_value.type_id);
@@ -223,7 +223,7 @@ auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void {
           NoteAssociatedFunction(context, builder, fn_type->function_id);
           builder.Emit();
 
-          witness_value = SemIR::ErrorInst::InstId;
+          witness_value = SemIR::ErrorInst::TypeInstId;
         }
         break;
       }
@@ -232,9 +232,9 @@ auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void {
         break;
       }
       default:
-        CARBON_CHECK(decl_id == SemIR::ErrorInst::InstId,
+        CARBON_CHECK(decl_id == SemIR::ErrorInst::TypeInstId,
                      "Unexpected kind of associated entity {0}", decl);
-        witness_value = SemIR::ErrorInst::InstId;
+        witness_value = SemIR::ErrorInst::TypeInstId;
         break;
     }
   }
@@ -243,7 +243,7 @@ auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void {
 }
 
 auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void {
-  if (impl.witness_id == SemIR::ErrorInst::InstId) {
+  if (impl.witness_id == SemIR::ErrorInst::TypeInstId) {
     return;
   }
   auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
@@ -253,15 +253,15 @@ auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void {
       context.inst_blocks().GetMutable(witness_table.elements_id);
   for (auto& elem : witness_block) {
     if (elem == SemIR::InstId::ImplWitnessTablePlaceholder) {
-      elem = SemIR::ErrorInst::InstId;
+      elem = SemIR::ErrorInst::TypeInstId;
     }
   }
-  impl.witness_id = SemIR::ErrorInst::InstId;
+  impl.witness_id = SemIR::ErrorInst::TypeInstId;
 }
 
 auto AssignImplIdInWitness(Context& context, SemIR::ImplId impl_id,
                            SemIR::InstId witness_id) -> void {
-  if (witness_id == SemIR::ErrorInst::InstId) {
+  if (witness_id == SemIR::ErrorInst::TypeInstId) {
     return;
   }
   auto witness = context.insts().GetAs<SemIR::ImplWitness>(witness_id);
@@ -457,7 +457,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     diag.Emit();
   }
 
-  if (impl.witness_id == SemIR::ErrorInst::InstId) {
+  if (impl.witness_id == SemIR::ErrorInst::TypeInstId) {
     parent_scope.set_has_error();
   } else {
     bool is_complete = RequireCompleteType(
@@ -486,7 +486,7 @@ static auto DiagnoseUnusedGenericBinding(Context& context, SemIR::LocId loc_id,
                                          SemIR::ImplId impl_id) -> void {
   auto& impl = context.impls().Get(impl_id);
   if (!impl.generic_id.has_value() ||
-      impl.witness_id == SemIR::ErrorInst::InstId) {
+      impl.witness_id == SemIR::ErrorInst::TypeInstId) {
     return;
   }
 
@@ -530,7 +530,7 @@ auto StartImplDecl(Context& context, SemIR::LocId loc_id,
       } else {
         // IsValidImplRedecl() has issued a diagnostic, avoid generating more
         // diagnostics for this declaration.
-        impl.witness_id = SemIR::ErrorInst::InstId;
+        impl.witness_id = SemIR::ErrorInst::TypeInstId;
       }
       break;
     }
@@ -539,12 +539,12 @@ auto StartImplDecl(Context& context, SemIR::LocId loc_id,
   // Create a new impl if this isn't a valid redeclaration.
   if (!impl_id.has_value()) {
     impl.generic_id = BuildGeneric(context, impl.latest_decl_id());
-    if (impl.witness_id != SemIR::ErrorInst::InstId) {
+    if (impl.witness_id != SemIR::ErrorInst::TypeInstId) {
       if (impl.interface.interface_id.has_value()) {
         impl.witness_id =
             ImplWitnessForDeclaration(context, impl, is_definition);
       } else {
-        impl.witness_id = SemIR::ErrorInst::InstId;
+        impl.witness_id = SemIR::ErrorInst::TypeInstId;
         // TODO: We might also want to mark that the name scope for the impl has
         // an error -- at least once we start making name lookups within the
         // impl also look into the facet (eg, so you can name associated
@@ -568,7 +568,7 @@ auto StartImplDecl(Context& context, SemIR::LocId loc_id,
     if (impl.implicit_param_patterns_id.has_value()) {
       for (auto inst_id :
            context.inst_blocks().Get(impl.implicit_param_patterns_id)) {
-        if (inst_id == SemIR::ErrorInst::InstId) {
+        if (inst_id == SemIR::ErrorInst::TypeInstId) {
           has_error_in_implicit_pattern = true;
           break;
         }
@@ -621,7 +621,7 @@ auto StartImplDecl(Context& context, SemIR::LocId loc_id,
   // there is an error that would prevent the impl from being legal to define.
   if (!is_definition) {
     auto& stored_impl = context.impls().Get(impl_id);
-    if (stored_impl.witness_id != SemIR::ErrorInst::InstId) {
+    if (stored_impl.witness_id != SemIR::ErrorInst::TypeInstId) {
       context.definitions_required_by_decl().push_back(
           stored_impl.latest_decl_id());
     }

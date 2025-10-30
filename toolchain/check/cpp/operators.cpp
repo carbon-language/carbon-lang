@@ -181,13 +181,13 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
           return context.emitter().Build(
               loc_id, IncompleteOperandTypeInCppOperatorLookup, arg_type_id);
         })) {
-      return SemIR::ErrorInst::InstId;
+      return SemIR::ErrorInst::TypeInstId;
     }
   }
 
   auto arg_exprs = InventClangArgs(context, arg_ids);
   if (!arg_exprs.has_value()) {
-    return SemIR::ErrorInst::InstId;
+    return SemIR::ErrorInst::TypeInstId;
   }
 
   clang::SourceLocation loc = GetCppLocation(context, loc_id);

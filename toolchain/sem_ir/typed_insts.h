@@ -67,8 +67,6 @@ struct SingletonTypeInst {
                                .is_type = InstIsType::Always,
                                .constant_kind = InstConstantKind::Always});
   static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-  static constexpr SemIR::InstId InstId = TypeInstId;
-  static constexpr auto ConstantId = ConstantId::ForConcreteConstant(InstId);
 
   // Singleton types have a type of `TypeType`, except for `ErrorInst` which
   // uses itself.
@@ -559,9 +557,12 @@ struct Deref {
 // in the type_id. It's typically used as a cue that semantic checking doesn't
 // need to issue further diagnostics.
 struct ErrorInst : public SingletonTypeInst<InstKind::ErrorInst, "<error>"> {
+  // Convenience for returning error constants directly.
+  static constexpr auto ConstantId =
+      ConstantId::ForConcreteConstant(TypeInstId);
+
   // `ErrorInst` is always set complete in file.cpp.
-  static constexpr auto TypeId =
-      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
+  static constexpr auto TypeId = TypeId::ForTypeConstant(ConstantId);
 };
 
 // An `export bind_name` declaration.

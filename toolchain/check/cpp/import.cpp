@@ -1071,7 +1071,8 @@ static auto ImportEnumConstantDecl(Context& context,
 
 // Mark the given `key` as failed in `clang_decls`.
 static auto MarkFailedDecl(Context& context, SemIR::ClangDeclKey key) {
-  context.clang_decls().Add({.key = key, .inst_id = SemIR::ErrorInst::InstId});
+  context.clang_decls().Add(
+      {.key = key, .inst_id = SemIR::ErrorInst::TypeInstId});
 }
 
 // Creates an integer type of the given size.
@@ -1384,7 +1385,7 @@ static auto MapParameterType(Context& context, SemIR::LocId loc_id,
 // Carbon.
 static auto FinishParameterPattern(Context& context, SemIR::InstId pattern_id,
                                    ParameterTypeInfo info) -> SemIR::InstId {
-  if (!info.want_addr_pattern || pattern_id == SemIR::ErrorInst::InstId) {
+  if (!info.want_addr_pattern || pattern_id == SemIR::ErrorInst::TypeInstId) {
     return pattern_id;
   }
   return AddPatternInst(
@@ -1513,8 +1514,8 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
 }
 
 // Returns the return `TypeExpr` of the given function declaration. In case of
-// an unsupported return type, returns `SemIR::ErrorInst::InstId`. Constructors
-// are treated as returning a class instance.
+// an unsupported return type, returns `SemIR::ErrorInst::TypeInstId`.
+// Constructors are treated as returning a class instance.
 // TODO: Support more return types.
 static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
                               clang::FunctionDecl* clang_decl) -> TypeExpr {
@@ -1550,7 +1551,7 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
 
 // Returns the return pattern of the given function declaration. In case of an
 // unsupported return type, it produces a diagnostic and returns
-// `SemIR::ErrorInst::InstId`. Constructors are treated as returning a class
+// `SemIR::ErrorInst::TypeInstId`. Constructors are treated as returning a class
 // instance.
 static auto GetReturnPattern(Context& context, SemIR::LocId loc_id,
                              clang::FunctionDecl* clang_decl) -> SemIR::InstId {
@@ -1626,7 +1627,7 @@ static auto CreateFunctionParamsInsts(Context& context, SemIR::LocId loc_id,
     return std::nullopt;
   }
   auto return_slot_pattern_id = GetReturnPattern(context, loc_id, clang_decl);
-  if (SemIR::ErrorInst::InstId == return_slot_pattern_id) {
+  if (SemIR::ErrorInst::TypeInstId == return_slot_pattern_id) {
     return std::nullopt;
   }
 
@@ -1757,14 +1758,14 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
   if (clang_decl->isVariadic()) {
     context.TODO(loc_id, "Unsupported: Variadic function");
     MarkFailedDecl(context, key);
-    return SemIR::ErrorInst::InstId;
+    return SemIR::ErrorInst::TypeInstId;
   }
 
   if (clang_decl->getTemplatedKind() ==
       clang::FunctionDecl::TK_FunctionTemplate) {
     context.TODO(loc_id, "Unsupported: Template function");
     MarkFailedDecl(context, key);
-    return SemIR::ErrorInst::InstId;
+    return SemIR::ErrorInst::TypeInstId;
   }
 
   CARBON_CHECK(clang_decl->getFunctionType()->isFunctionProtoType(),
@@ -1773,7 +1774,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
   auto function_id = ImportFunction(context, loc_id, clang_decl, num_params);
   if (!function_id) {
     MarkFailedDecl(context, key);
-    return SemIR::ErrorInst::InstId;
+    return SemIR::ErrorInst::TypeInstId;
   }
 
   SemIR::Function& function_info = context.functions().Get(*function_id);
@@ -1898,7 +1899,7 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   if (!var_type_id.has_value()) {
     context.TODO(loc_id, llvm::formatv("Unsupported: var type: {0}",
                                        var_type.getAsString()));
-    return SemIR::ErrorInst::InstId;
+    return SemIR::ErrorInst::TypeInstId;
   }
   SemIR::NameId var_name_id = AddIdentifierName(context, var_decl->getName());
 
@@ -1962,7 +1963,7 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
       context.TODO(AddImportIRInst(context.sem_ir(), type_decl->getLocation()),
                    llvm::formatv("Unsupported: Type declaration: {0}",
                                  type.getAsString()));
-      return SemIR::ErrorInst::InstId;
+      return SemIR::ErrorInst::TypeInstId;
     }
     context.clang_decls().Add({.key = key, .inst_id = type_inst_id});
     return type_inst_id;
@@ -1975,7 +1976,7 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
     }
     context.TODO(AddImportIRInst(context.sem_ir(), clang_decl->getLocation()),
                  "Unsupported: field declaration has unhandled type or kind");
-    return SemIR::ErrorInst::InstId;
+    return SemIR::ErrorInst::TypeInstId;
   }
   if (auto* enum_const_decl = dyn_cast<clang::EnumConstantDecl>(clang_decl)) {
     return ImportEnumConstantDecl(context, enum_const_decl);
@@ -1987,7 +1988,7 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
   context.TODO(AddImportIRInst(context.sem_ir(), clang_decl->getLocation()),
                llvm::formatv("Unsupported: Declaration type {0}",
                              clang_decl->getDeclKindName()));
-  return SemIR::ErrorInst::InstId;
+  return SemIR::ErrorInst::TypeInstId;
 }
 
 // Attempts to import a set of declarations. Returns `false` if an error was
@@ -2018,7 +2019,7 @@ static auto ImportDeclSet(Context& context, SemIR::LocId loc_id,
       auto decl_key = worklist.pop_back_val().decl_key;
       auto inst_id = ImportDeclAfterDependencies(context, loc_id, decl_key);
       CARBON_CHECK(inst_id.has_value());
-      if (inst_id == SemIR::ErrorInst::InstId) {
+      if (inst_id == SemIR::ErrorInst::TypeInstId) {
         return false;
       }
       CARBON_CHECK(IsClangDeclImported(context, decl_key));
@@ -2038,7 +2039,7 @@ static auto ImportDeclAndDependencies(Context& context, SemIR::LocId loc_id,
   ImportWorklist worklist;
   AddDependentDecl(context, key, worklist);
   if (!ImportDeclSet(context, loc_id, worklist)) {
-    return SemIR::ErrorInst::InstId;
+    return SemIR::ErrorInst::TypeInstId;
   }
   return LookupClangDeclInstId(context, key);
 }
@@ -2133,7 +2134,7 @@ static auto LookupBuiltinTypes(Context& context, SemIR::LocId loc_id,
   if (!inst_id.has_value()) {
     context.TODO(loc_id, llvm::formatv("Unsupported: builtin type: {0}",
                                        builtin_type.getAsString()));
-    return SemIR::ErrorInst::InstId;
+    return SemIR::ErrorInst::TypeInstId;
   }
   return inst_id;
 }
@@ -2286,7 +2287,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                                  static_cast<int>(lookup->getResultKind())));
     }
     context.name_scopes().AddRequiredName(scope_id, name_id,
-                                          SemIR::ErrorInst::InstId);
+                                          SemIR::ErrorInst::TypeInstId);
     return SemIR::ScopeLookupResult::MakeError();
   }
   if (IsDeclInjectedClassName(context, scope_id, name_id,

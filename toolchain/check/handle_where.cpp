@@ -85,7 +85,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
     const auto& base_facet_type_info =
         context.facet_types().Get(self_facet_type->facet_type_id);
     for (const auto& rewrite : base_facet_type_info.rewrite_constraints) {
-      if (rewrite.lhs_id != SemIR::ErrorInst::InstId) {
+      if (rewrite.lhs_id != SemIR::ErrorInst::TypeInstId) {
         context.rewrites_stack().back().Insert(
             context.constant_values().Get(
                 GetImplWitnessAccessWithoutSubstitution(context,
@@ -124,7 +124,7 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
       AddInstInNoBlock<SemIR::RequirementRewrite>(
           context, node_id, {.lhs_id = lhs_id, .rhs_id = rhs_id}));
 
-  if (lhs_id != SemIR::ErrorInst::InstId) {
+  if (lhs_id != SemIR::ErrorInst::TypeInstId) {
     // Track the value of the rewrite so further constraints can use it
     // immediately, before they are evaluated. This happens directly where the
     // `ImplWitnessAccess` that refers to the rewrite constraint would have been

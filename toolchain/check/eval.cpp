@@ -392,14 +392,14 @@ static auto RequireConstantValue(EvalContext& eval_context,
     return eval_context.constant_values().GetInstId(const_id);
   }
 
-  if (inst_id != SemIR::ErrorInst::InstId) {
+  if (inst_id != SemIR::ErrorInst::TypeInstId) {
     CARBON_DIAGNOSTIC(EvalRequiresConstantValue, Error,
                       "expression is runtime; expected constant");
     eval_context.emitter().Emit(eval_context.GetDiagnosticLoc({inst_id}),
                                 EvalRequiresConstantValue);
   }
   *phase = Phase::UnknownDueToError;
-  return SemIR::ErrorInst::InstId;
+  return SemIR::ErrorInst::TypeInstId;
 }
 
 // If the given instruction is constant, returns its constant value. Otherwise,
@@ -2291,7 +2291,7 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
                              typed_inst.period_self_id)) {
           auto rhs_inst_id =
               eval_context.constant_values().GetInstId(rhs_const_id);
-          if (rhs_inst_id == SemIR::ErrorInst::InstId) {
+          if (rhs_inst_id == SemIR::ErrorInst::TypeInstId) {
             // `.Self impls <error>`.
             return SemIR::ErrorInst::ConstantId;
           } else if (rhs_inst_id == SemIR::TypeType::TypeInstId) {

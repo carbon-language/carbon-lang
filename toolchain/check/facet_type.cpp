@@ -114,7 +114,7 @@ auto InitialFacetTypeImplWitness(
             return IncompleteFacetTypeDiagnosticBuilder(
                 context, witness_loc_id, facet_type_inst_id, is_definition);
           })) {
-    return SemIR::ErrorInst::InstId;
+    return SemIR::ErrorInst::TypeInstId;
   }
 
   const auto& interface =
@@ -157,23 +157,23 @@ auto InitialFacetTypeImplWitness(
       continue;
     }
     auto& table_entry = table[access.index.index];
-    if (table_entry == SemIR::ErrorInst::InstId) {
+    if (table_entry == SemIR::ErrorInst::TypeInstId) {
       // Don't overwrite an error value. This prioritizes not generating
       // multiple errors for one associated constant over picking a value
       // for it to use to attempt recovery.
       continue;
     }
     auto rewrite_inst_id = rewrite.rhs_id;
-    if (rewrite_inst_id == SemIR::ErrorInst::InstId) {
-      table_entry = SemIR::ErrorInst::InstId;
+    if (rewrite_inst_id == SemIR::ErrorInst::TypeInstId) {
+      table_entry = SemIR::ErrorInst::TypeInstId;
       continue;
     }
 
     auto decl_id = context.constant_values().GetConstantInstId(
         assoc_entities[access.index.index]);
     CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
-    if (decl_id == SemIR::ErrorInst::InstId) {
-      table_entry = SemIR::ErrorInst::InstId;
+    if (decl_id == SemIR::ErrorInst::TypeInstId) {
+      table_entry = SemIR::ErrorInst::TypeInstId;
       continue;
     }
 
@@ -189,7 +189,7 @@ auto InitialFacetTypeImplWitness(
                         SemIR::NameId);
       context.emitter().Emit(facet_type_inst_id, RewriteForAssociatedFunction,
                              fn.name_id);
-      table_entry = SemIR::ErrorInst::InstId;
+      table_entry = SemIR::ErrorInst::TypeInstId;
       continue;
     }
 
@@ -233,7 +233,7 @@ auto InitialFacetTypeImplWitness(
         context.emitter().Emit(
             facet_type_inst_id, AssociatedConstantNotConstantAfterConversion,
             assoc_const.name_id, rewrite_inst_id, assoc_const_type_id);
-        rewrite_inst_id = SemIR::ErrorInst::InstId;
+        rewrite_inst_id = SemIR::ErrorInst::TypeInstId;
       }
     }
 
@@ -441,7 +441,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       // along with them in the rewrite constraints, and track propagation of
       // locations here, which may imply heap allocations.
       context().emitter().Emit(loc_id_, FacetTypeConstraintCycle, rhs_inst_id);
-      rhs_inst_id = SemIR::ErrorInst::InstId;
+      rhs_inst_id = SemIR::ErrorInst::TypeInstId;
       return SubstResult::FullySubstituted;
     } else if (rewrite_value->state == AccessRewriteValues::FullyRewritten) {
       rhs_inst_id = rewrite_value->inst_id;
@@ -554,7 +554,7 @@ auto ResolveFacetTypeRewriteConstraints(
         SubstImplWitnessAccessCallbacks(&context, loc_id, &rewrite_values);
     auto rhs_subst_inst_id =
         SubstInst(context, constraint.rhs_id, replace_witness_callbacks);
-    if (rhs_subst_inst_id == SemIR::ErrorInst::InstId) {
+    if (rhs_subst_inst_id == SemIR::ErrorInst::TypeInstId) {
       return false;
     }
 

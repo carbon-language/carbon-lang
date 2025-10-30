@@ -59,9 +59,9 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                         SemIR::InstId operand_id,
                         MakeDiagnosticBuilderFn missing_impl_diagnoser)
     -> SemIR::InstId {
-  if (operand_id == SemIR::ErrorInst::InstId) {
+  if (operand_id == SemIR::ErrorInst::TypeInstId) {
     // Exit early for errors, which prevent forming an `Op` function.
-    return SemIR::ErrorInst::InstId;
+    return SemIR::ErrorInst::TypeInstId;
   }
 
   // For unary operators with a C++ class as the operand, try to import and call
@@ -72,8 +72,8 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
     SemIR::InstId cpp_inst_id =
         LookupCppOperator(context, loc_id, op, {operand_id});
     if (cpp_inst_id.has_value()) {
-      if (cpp_inst_id == SemIR::ErrorInst::InstId) {
-        return SemIR::ErrorInst::InstId;
+      if (cpp_inst_id == SemIR::ErrorInst::TypeInstId) {
+        return SemIR::ErrorInst::TypeInstId;
       }
       return PerformCall(context, loc_id, cpp_inst_id, {operand_id});
     }
@@ -85,8 +85,8 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // Form `operand.(Op)`.
   auto bound_op_id = PerformCompoundMemberAccess(context, loc_id, operand_id,
                                                  op_fn, missing_impl_diagnoser);
-  if (bound_op_id == SemIR::ErrorInst::InstId) {
-    return SemIR::ErrorInst::InstId;
+  if (bound_op_id == SemIR::ErrorInst::TypeInstId) {
+    return SemIR::ErrorInst::TypeInstId;
   }
 
   // Form `bound_op()`.
@@ -97,9 +97,9 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                          SemIR::InstId lhs_id, SemIR::InstId rhs_id,
                          MakeDiagnosticBuilderFn missing_impl_diagnoser)
     -> SemIR::InstId {
-  if (lhs_id == SemIR::ErrorInst::InstId) {
+  if (lhs_id == SemIR::ErrorInst::TypeInstId) {
     // Exit early for errors, which prevent forming an `Op` function.
-    return SemIR::ErrorInst::InstId;
+    return SemIR::ErrorInst::TypeInstId;
   }
 
   // For binary operators with a C++ class as at least one of the operands, try
@@ -114,8 +114,8 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
     SemIR::InstId cpp_inst_id =
         LookupCppOperator(context, loc_id, op, {lhs_id, rhs_id});
     if (cpp_inst_id.has_value()) {
-      if (cpp_inst_id == SemIR::ErrorInst::InstId) {
-        return SemIR::ErrorInst::InstId;
+      if (cpp_inst_id == SemIR::ErrorInst::TypeInstId) {
+        return SemIR::ErrorInst::TypeInstId;
       }
       return PerformCall(context, loc_id, cpp_inst_id, {lhs_id, rhs_id});
     }
@@ -127,8 +127,8 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // Form `lhs.(Op)`.
   auto bound_op_id = PerformCompoundMemberAccess(context, loc_id, lhs_id, op_fn,
                                                  missing_impl_diagnoser);
-  if (bound_op_id == SemIR::ErrorInst::InstId) {
-    return SemIR::ErrorInst::InstId;
+  if (bound_op_id == SemIR::ErrorInst::TypeInstId) {
+    return SemIR::ErrorInst::TypeInstId;
   }
 
   // Form `bound_op(rhs)`.

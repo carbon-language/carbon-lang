@@ -117,7 +117,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
     CARBON_CHECK(call_params_id == SemIR::InstBlockId::Empty ||
                  llvm::all_of(context.inst_blocks().Get(call_params_id),
                               [](SemIR::InstId inst_id) {
-                                return inst_id == SemIR::ErrorInst::InstId;
+                                return inst_id == SemIR::ErrorInst::TypeInstId;
                               }));
   }
 
