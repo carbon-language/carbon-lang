@@ -23,8 +23,6 @@ struct NamedConstraintFields {
   InstId self_param_id = InstId::None;
 
   // The following members are set at the `}` of the constraint definition.
-
-  bool complete = false;
 };
 
 // A named constraint. See EntityWithParamsBase regarding the inheritance here.
@@ -35,15 +33,6 @@ struct NamedConstraint : public EntityWithParamsBase,
     out << "{";
     PrintBaseFields(out);
     out << "}";
-  }
-
-  // This is false until we reach the `}` of the constraint definition.
-  auto is_complete() const -> bool { return complete; }
-
-  // Determines whether we're currently defining the constraint. This is true
-  // between the braces of the constraint.
-  auto is_being_defined() const -> bool {
-    return has_definition_started() && !is_complete();
   }
 };
 

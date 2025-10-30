@@ -156,8 +156,8 @@ auto HandleParseNode(Context& context,
           .Pop<Parse::NodeKind::NamedConstraintDefinitionStart>();
   context.inst_block_stack().Pop();
 
-  auto& constraint_info = context.named_constraints().Get(named_constraint_id);
-  constraint_info.complete = true;
+  const auto& constraint_info =
+      context.named_constraints().Get(named_constraint_id);
 
   // TODO: Do something with `require` and `alias` statements in the body of the
   // constraint.
