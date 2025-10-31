@@ -298,12 +298,11 @@ auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
 
   auto identified_id = RequireIdentifiedFacetType(context, *facet_type, [&] {
     CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Error,
-                      "impl as facet type {0} that cannot be identified",
-                      InstIdAsType);
+                      "facet type {0} cannot be identified", InstIdAsType);
     return context.emitter().Build(impl_decl_id, ImplOfUnidentifiedFacetType,
                                    constraint_id);
   });
-  if (identified_id == SemIR::IdentifiedFacetTypeId::None) {
+  if (!identified_id.has_value()) {
     return SemIR::SpecificInterface::None;
   }
   const auto& identified = context.identified_facet_types().Get(identified_id);

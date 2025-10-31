@@ -12,20 +12,12 @@ namespace Carbon::SemIR {
 
 // A pair of a named constraint and a specific for that named constraint.
 struct SpecificNamedConstraint {
-  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
-
   NamedConstraintId named_constraint_id;
   SpecificId specific_id;
-
-  static const SpecificNamedConstraint None;
 
   friend auto operator==(const SpecificNamedConstraint& lhs,
                          const SpecificNamedConstraint& rhs) -> bool = default;
 };
-
-constexpr SpecificNamedConstraint SpecificNamedConstraint::None = {
-    .named_constraint_id = NamedConstraintId::None,
-    .specific_id = SpecificId::None};
 
 }  // namespace Carbon::SemIR
 

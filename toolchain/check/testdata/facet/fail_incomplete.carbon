@@ -63,7 +63,7 @@ fn G[T:! A](t: T) {}
 fn H[T:! A & B](t: T) {}
 
 fn F() {
-  // CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE+7]]:3: error: impl lookup with facet for incomplete type `A` [ImplLookupInIncompleteFacetType]
+  // CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE+7]]:3: error: facet type `A` is incomplete [ImplLookupInIncompleteFacetType]
   // CHECK:STDERR:   C as A;
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE-11]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
@@ -72,7 +72,7 @@ fn F() {
   // CHECK:STDERR:
   C as A;
 
-  // CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE+7]]:3: error: impl lookup with facet for incomplete type `B & A` [ImplLookupInIncompleteFacetType]
+  // CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE+7]]:3: error: facet type `B & A` is incomplete [ImplLookupInIncompleteFacetType]
   // CHECK:STDERR:   C as (A & B);
   // CHECK:STDERR:   ^~~~~~~~~~~~
   // CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE-20]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
@@ -81,7 +81,7 @@ fn F() {
   // CHECK:STDERR:
   C as (A & B);
 
-  // CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE+10]]:3: error: impl lookup with facet for incomplete type `A` [ImplLookupInIncompleteFacetType]
+  // CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE+10]]:3: error: facet type `A` is incomplete [ImplLookupInIncompleteFacetType]
   // CHECK:STDERR:   G({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE-29]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
@@ -93,7 +93,7 @@ fn F() {
   // CHECK:STDERR:
   G({} as C);
 
-  // CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE+10]]:3: error: impl lookup with facet for incomplete type `B & A` [ImplLookupInIncompleteFacetType]
+  // CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE+10]]:3: error: facet type `B & A` is incomplete [ImplLookupInIncompleteFacetType]
   // CHECK:STDERR:   H({} as C);
   // CHECK:STDERR:   ^~~~~~~~~~
   // CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE-41]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]

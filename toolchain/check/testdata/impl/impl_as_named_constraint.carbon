@@ -34,7 +34,7 @@ constraint A;
 
 class C {}
 
-// CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE+7]]:1: error: impl as facet type `A` that cannot be identified [ImplOfUnidentifiedFacetType]
+// CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE+7]]:1: error: facet type `A` cannot be identified [ImplOfUnidentifiedFacetType]
 // CHECK:STDERR: impl C as A {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
 // CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE-7]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]

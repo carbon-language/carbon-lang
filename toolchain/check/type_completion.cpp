@@ -390,7 +390,7 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       // TODO: Get the complete facet type here.
       auto identified_id =
           RequireIdentifiedFacetType(*context_, inst, diagnoser_);
-      if (identified_id == SemIR::IdentifiedFacetTypeId::None) {
+      if (!identified_id.has_value()) {
         return false;
       }
       const auto& identified =

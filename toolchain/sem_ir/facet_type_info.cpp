@@ -14,8 +14,12 @@ CARBON_DEFINE_ENUM_MASK_NAMES(BuiltinConstraintMask) {
   CARBON_BUILTIN_CONSTRAINT_MASK(CARBON_ENUM_MASK_NAME_STRING)
 };
 
-template <typename VecT, typename CompareT>
-static auto SortAndDeduplicate(VecT& vec, CompareT compare) -> void {
+template <typename VecT>
+static auto SortAndDeduplicate(
+    VecT& vec, llvm::function_ref<auto(typename VecT::const_reference,
+                                       typename VecT::const_reference)
+                                      ->bool>
+                   compare) -> void {
   llvm::sort(vec, compare);
   vec.erase(llvm::unique(vec), vec.end());
 }
@@ -51,14 +55,17 @@ static auto RequiredLess(const IdentifiedFacetType::RequiredInterface& lhs,
 
 // Assuming both `a` and `b` are sorted and deduplicated, replaces `a` with `a -
 // b` as sets. Assumes there are few elements between them.
-template <typename ConstraintT, typename CompareT>
-static auto SubtractSorted(llvm::SmallVector<ConstraintT>& a,
-                           const llvm::SmallVector<ConstraintT>& b,
-                           CompareT compare) -> void {
-  using Iter = llvm::SmallVector<ConstraintT>::iterator;
+template <typename VecT>
+static auto SubtractSorted(
+    VecT& a, const VecT& b,
+    llvm::function_ref<auto(typename VecT::const_reference,
+                            typename VecT::const_reference)
+                           ->bool>
+        compare) -> void {
+  using Iter = VecT::iterator;
   Iter a_iter = a.begin();
   Iter a_end = a.end();
-  using ConstIter = llvm::SmallVector<ConstraintT>::const_iterator;
+  using ConstIter = VecT::const_iterator;
   ConstIter b_iter = b.begin();
   ConstIter b_end = b.end();
   // Advance the iterator pointing to the smaller element until we find a match.
@@ -105,37 +112,27 @@ static auto SubtractSorted(llvm::SmallVector<ConstraintT>& a,
   a.erase(a_new_end, a_end);
 }
 
+template <typename VecT>
+static auto CombineVectors(VecT& vec, const VecT& lhs, const VecT& rhs) {
+  vec.reserve(lhs.size() + rhs.size());
+  llvm::append_range(vec,
+                     llvm::concat<const typename VecT::value_type>(lhs, rhs));
+}
+
 auto FacetTypeInfo::Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
     -> FacetTypeInfo {
   FacetTypeInfo info;
-  info.extend_constraints.reserve(lhs.extend_constraints.size() +
-                                  rhs.extend_constraints.size());
-  llvm::append_range(info.extend_constraints, lhs.extend_constraints);
-  llvm::append_range(info.extend_constraints, rhs.extend_constraints);
-  info.self_impls_constraints.reserve(lhs.self_impls_constraints.size() +
-                                      rhs.self_impls_constraints.size());
-  llvm::append_range(info.self_impls_constraints, lhs.self_impls_constraints);
-  llvm::append_range(info.self_impls_constraints, rhs.self_impls_constraints);
-
-  info.extend_named_constraints.reserve(lhs.extend_named_constraints.size() +
-                                        rhs.extend_named_constraints.size());
-  llvm::append_range(info.extend_named_constraints,
-                     lhs.extend_named_constraints);
-  llvm::append_range(info.extend_named_constraints,
-                     rhs.extend_named_constraints);
-  info.self_impls_named_constraints.reserve(
-      lhs.self_impls_named_constraints.size() +
-      rhs.self_impls_named_constraints.size());
-  llvm::append_range(info.self_impls_named_constraints,
-                     lhs.self_impls_named_constraints);
-  llvm::append_range(info.self_impls_named_constraints,
-                     rhs.self_impls_named_constraints);
-
-  info.rewrite_constraints.reserve(lhs.rewrite_constraints.size() +
-                                   rhs.rewrite_constraints.size());
-  llvm::append_range(info.rewrite_constraints, lhs.rewrite_constraints);
-  llvm::append_range(info.rewrite_constraints, rhs.rewrite_constraints);
-
+  CombineVectors(info.extend_constraints, lhs.extend_constraints,
+                 rhs.extend_constraints);
+  CombineVectors(info.self_impls_constraints, lhs.self_impls_constraints,
+                 rhs.self_impls_constraints);
+  CombineVectors(info.extend_named_constraints, lhs.extend_named_constraints,
+                 rhs.extend_named_constraints);
+  CombineVectors(info.self_impls_named_constraints,
+                 lhs.self_impls_named_constraints,
+                 rhs.self_impls_named_constraints);
+  CombineVectors(info.rewrite_constraints, lhs.rewrite_constraints,
+                 rhs.rewrite_constraints);
   info.builtin_constraint_mask =
       lhs.builtin_constraint_mask | rhs.builtin_constraint_mask;
   info.other_requirements = lhs.other_requirements || rhs.other_requirements;
@@ -187,7 +184,7 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
     }
   }
 
-  if (!extend_constraints.empty()) {
+  if (!extend_named_constraints.empty()) {
     out << outer_sep << "extends named constraint: ";
     llvm::ListSeparator sep;
     for (auto extend : extend_named_constraints) {

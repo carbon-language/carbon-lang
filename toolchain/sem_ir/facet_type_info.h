@@ -64,11 +64,6 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // These are the required interfaces that are not lookup contexts.
   llvm::SmallVector<ImplsConstraint> self_impls_constraints;
 
-  // These are the named constraints required by the facet type. The interfaces
-  // required by the named constraint are inlined into the other constraint
-  // types by Identifying the facet type, so this is always empty for an
-  // Identified facet type.
-  //
   // These name constraints add interfaces as lookup contexts, if they are
   // extended in the named constraint.
   llvm::SmallVector<SpecificNamedConstraint> extend_named_constraints;
