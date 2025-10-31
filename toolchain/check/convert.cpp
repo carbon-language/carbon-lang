@@ -1459,9 +1459,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     auto target_type_inst_id = context.types().GetInstId(target.type_id);
     return AddDependentActionSplice(
         context, loc_id,
-        SemIR::ConvertToValueAction{.type_id = SemIR::InstType::TypeId,
-                                    .inst_id = expr_id,
-                                    .target_type_inst_id = target_type_inst_id},
+        SemIR::ConvertToValueAction{
+            .type_id = GetSingletonType(context, SemIR::InstType::TypeInstId),
+            .inst_id = expr_id,
+            .target_type_inst_id = target_type_inst_id},
         target_type_inst_id);
   }
 
@@ -1735,7 +1736,7 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
                 bool diagnose) -> TypeExpr {
   auto type_inst_id =
       ConvertToValueOfType(context, loc_id, value_id, SemIR::TypeType::TypeId);
-  if (type_inst_id == SemIR::ErrorInst::InstId) {
+  if (type_inst_id == SemIR::ErrorInst::TypeInstId) {
     return {.inst_id = SemIR::ErrorInst::TypeInstId,
             .type_id = SemIR::ErrorInst::TypeId};
   }

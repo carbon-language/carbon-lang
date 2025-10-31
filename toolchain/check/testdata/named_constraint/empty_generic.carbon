@@ -37,6 +37,7 @@ fn G(T:! Z, U:! type, V:! Empty(T)) {
 // CHECK:STDOUT:   %Empty.type: type = generic_named_constaint_type @Empty [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_struct: %Empty.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Self.aa1: %type = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %U.d9f: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %T.aa1: %type = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.e25: type = pattern_type %type [concrete]
@@ -110,13 +111,13 @@ fn G(T:! Z, U:! type, V:! Empty(T)) {
 // CHECK:STDOUT:   %T.loc16_18.1: type = symbolic_binding T, 0 [symbolic = %T.loc16_18.1 (constants.%T.d9f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Self.loc16_28.2: %type = symbolic_binding Self, 1 [symbolic = %Self.loc16_28.2 (constants.%Self.aa1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %Self.loc16_28.1: %type = symbolic_binding Self, 1 [symbolic = %Self.loc16_28.2 (constants.%Self.aa1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc16_28.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

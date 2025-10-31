@@ -640,6 +640,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %ptr.454: type = ptr_type <vtable> [concrete]
 // CHECK:STDOUT:   %struct_type.vptr: type = struct_type {.<vptr>: %ptr.454} [concrete]
@@ -647,7 +648,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [concrete]
 // CHECK:STDOUT:   %pattern_type.fb9: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %Derived.H.type: type = fn_type @Derived.H [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Derived.H: %Derived.H.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Base.H.type: type = fn_type @Base.H [concrete]
 // CHECK:STDOUT:   %Base.H: %Base.H.type = struct_value () [concrete]

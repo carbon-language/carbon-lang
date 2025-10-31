@@ -219,11 +219,11 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %Main.import_ref.efcd44.1: type = import_ref Main//import_generic, loc4_9, loaded [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//import_generic, loc4_20, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.034 = import_ref Main//import_generic, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.8df = import_ref Main//import_generic, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8df = import_ref Main//import_generic, loc6_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c44: %I.assoc_type = import_ref Main//import_generic, loc7_9, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.F = import_ref Main//import_generic, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e03: %I.F.type = import_ref Main//import_generic, loc7_9, loaded [concrete = constants.%I.F]
-// CHECK:STDOUT:   %Main.import_ref.e33: %I.type = import_ref Main//import_generic, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.e33: %I.type = import_ref Main//import_generic, loc6_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.bc1: <witness> = import_ref Main//import_generic, loc10_34, loaded [symbolic = @C.as.I.impl.%I.impl_witness (constants.%I.impl_witness.2ba)]
 // CHECK:STDOUT:   %Main.import_ref.efcd44.2: type = import_ref Main//import_generic, loc10_14, loaded [symbolic = @C.as.I.impl.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.4d2: type = import_ref Main//import_generic, loc10_27, loaded [symbolic = @C.as.I.impl.%C (constants.%C.3f0)]

@@ -36,6 +36,7 @@ enum class EntityKind : uint8_t {
   Function = 0,
   GenericClass = 1,
   GenericInterface = 2,
+  GenericNamedConstraint = 3,
 };
 }  // namespace
 
@@ -62,15 +63,16 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
   if (arg_ids.size() != params.size()) {
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
                       "{0} argument{0:s} passed to "
-                      "{1:=0:function|=1:generic class|=2:generic interface}"
+                      "{1:=0:function|=1:generic class|=2:generic "
+                      "interface|=3:generic constraint}"
                       " expecting {2} argument{2:s}",
                       Diagnostics::IntAsSelect, Diagnostics::IntAsSelect,
                       Diagnostics::IntAsSelect);
-    CARBON_DIAGNOSTIC(
-        InCallToEntity, Note,
-        "calling {0:=0:function|=1:generic class|=2:generic interface}"
-        " declared here",
-        Diagnostics::IntAsSelect);
+    CARBON_DIAGNOSTIC(InCallToEntity, Note,
+                      "calling {0:=0:function|=1:generic class|=2:generic "
+                      "interface|=3:generic constraint}"
+                      " declared here",
+                      Diagnostics::IntAsSelect);
     context.emitter()
         .Build(loc_id, CallArgCountMismatch, arg_ids.size(),
                static_cast<int>(entity_kind_for_diagnostic), params.size())
@@ -137,8 +139,13 @@ static auto PerformCallToGenericInterfaceOrNamedConstaint(
     SemIR::SpecificId enclosing_specific_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
   const auto& entity = EntityFromInterfaceOrNamedConstraint(context, id);
+
+  auto entity_kind_for_diagnostic = EntityKind::GenericInterface;
+  if constexpr (std::same_as<IdT, SemIR::NamedConstraintId>) {
+    entity_kind_for_diagnostic = EntityKind::GenericNamedConstraint;
+  }
   auto callee_specific_id =
-      ResolveCalleeInCall(context, loc_id, entity, EntityKind::GenericInterface,
+      ResolveCalleeInCall(context, loc_id, entity, entity_kind_for_diagnostic,
                           enclosing_specific_id,
                           /*self_type_id=*/SemIR::InstId::None,
                           /*self_id=*/SemIR::InstId::None, arg_ids);

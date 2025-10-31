@@ -140,6 +140,8 @@ fn B() {
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000013)}
 // CHECK:STDOUT:     'type(inst50000013)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000013)}
+// CHECK:STDOUT:     'type(inst(InstType))':
+// CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst50000013)}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     inst0000000E:    {kind: Namespace, arg0: name_scope00000000, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst5000000F:    {kind: ImportDecl, arg0: name00000001}

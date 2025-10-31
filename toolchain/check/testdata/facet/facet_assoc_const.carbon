@@ -99,7 +99,7 @@ library "[[@TEST_NAME]]";
 
 interface L { let W:! type; }
 
-// CHECK:STDERR: fail_two_different_combined_from_bitand.carbon:[[@LINE+4]]:10: error: associated constant `.(L.W)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_two_different_combined_from_bitand.carbon:[[@LINE+4]]:10: error: associated constant `.(L.W)` given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: fn F(T:! (L where .W = {}) & (L where .W = ())) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -685,12 +685,12 @@ fn F(T:! I & J where .I1 = .J1.I2) {}
 // CHECK:STDOUT:   %assoc1: %M.assoc_type = assoc_entity element1, @M.%Y [concrete]
 // CHECK:STDOUT:   %assoc2: %M.assoc_type = assoc_entity element2, @M.%Z [concrete]
 // CHECK:STDOUT:   %.Self.5f5: %M.type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.5f5 [symbolic_self]
 // CHECK:STDOUT:   %M.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.5f5, @M [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %M.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %impl.elem1: type = impl_witness_access %M.lookup_impl_witness, element1 [symbolic_self]
 // CHECK:STDOUT:   %impl.elem2: type = impl_witness_access %M.lookup_impl_witness, element2 [symbolic_self]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }

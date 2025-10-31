@@ -20,8 +20,6 @@ struct ImportCpp : Printable<ImportCpp> {
   StringLiteralValueId library_id;
 };
 
-using ImportCppStore = ValueStore<ImportCppId, ImportCpp>;
-
 }  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_IMPORT_CPP_H_

@@ -987,10 +987,9 @@ static auto PerformCheckedCharConvert(Context& context, SemIR::LocId loc_id,
 static auto MakeIntTypeResult(Context& context, SemIR::LocId loc_id,
                               SemIR::IntKind int_kind, SemIR::InstId width_id,
                               Phase phase) -> SemIR::ConstantId {
-  auto result = SemIR::IntType{
-      .type_id = GetSingletonType(context, SemIR::TypeType::TypeInstId),
-      .int_kind = int_kind,
-      .bit_width_id = width_id};
+  auto result = SemIR::IntType{.type_id = SemIR::TypeType::TypeId,
+                               .int_kind = int_kind,
+                               .bit_width_id = width_id};
   if (!ValidateIntType(context, loc_id, result)) {
     return SemIR::ErrorInst::ConstantId;
   }
@@ -1002,10 +1001,9 @@ static auto MakeIntTypeResult(Context& context, SemIR::LocId loc_id,
 static auto MakeFloatTypeResult(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId width_id, Phase phase)
     -> SemIR::ConstantId {
-  auto result = SemIR::FloatType{
-      .type_id = GetSingletonType(context, SemIR::TypeType::TypeInstId),
-      .bit_width_id = width_id,
-      .float_kind = SemIR::FloatKind::None};
+  auto result = SemIR::FloatType{.type_id = SemIR::TypeType::TypeId,
+                                 .bit_width_id = width_id,
+                                 .float_kind = SemIR::FloatKind::None};
   if (!ValidateFloatTypeAndSetKind(context, loc_id, result)) {
     return SemIR::ErrorInst::ConstantId;
   }
@@ -2085,8 +2083,10 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
         // The result is an instruction.
         return MakeConstantResult(
             eval_context.context(),
-            SemIR::InstValue{.type_id = SemIR::InstType::TypeId,
-                             .inst_id = result_inst_id},
+            SemIR::InstValue{
+                .type_id = GetSingletonType(eval_context.context(),
+                                            SemIR::InstType::TypeInstId),
+                .inst_id = result_inst_id},
             Phase::Concrete);
       }
       // Couldn't perform the action because it's still dependent.

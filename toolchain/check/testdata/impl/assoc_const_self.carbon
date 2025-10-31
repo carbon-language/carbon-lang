@@ -558,12 +558,12 @@ fn CallF() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self.3b7: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %IntLiteral.type: type = fn_type @IntLiteral [concrete]
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
 // CHECK:STDOUT:   %I.type.dac: type = generic_interface_type @I [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %I.generic: %I.type.dac = struct_value () [concrete]
 // CHECK:STDOUT:   %I.type.f7b: type = facet_type <@I, @I(%N)> [symbolic]
 // CHECK:STDOUT:   %Self.d78: %I.type.f7b = symbolic_binding Self, 1 [symbolic]
@@ -656,25 +656,25 @@ fn CallF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%N.loc4_13.1)> [symbolic = %I.type (constants.%I.type.f7b)]
-// CHECK:STDOUT:   %Self.2: @I.%I.type (%I.type.f7b) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.d78)]
+// CHECK:STDOUT:   %Self.loc4_36.2: @I.%I.type (%I.type.f7b) = symbolic_binding Self, 1 [symbolic = %Self.loc4_36.2 (constants.%Self.d78)]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I, @I(%N.loc4_13.1) [symbolic = %I.assoc_type (constants.%I.assoc_type.44f)]
 // CHECK:STDOUT:   %assoc0: @I.%I.assoc_type (%I.assoc_type.44f) = assoc_entity element0, %V [symbolic = %assoc0 (constants.%assoc0.8bd)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @I.%I.type (%I.type.f7b) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.d78)]
+// CHECK:STDOUT:     %Self.loc4_36.1: @I.%I.type (%I.type.f7b) = symbolic_binding Self, 1 [symbolic = %Self.loc4_36.2 (constants.%Self.d78)]
 // CHECK:STDOUT:     %V: @V.%array_type (%array_type) = assoc_const_decl @V [concrete] {
 // CHECK:STDOUT:       %assoc0: @I.%I.assoc_type (%I.assoc_type.44f) = assoc_entity element0, @I.%V [symbolic = @I.%assoc0 (constants.%assoc0.8bd)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc4_36.1
 // CHECK:STDOUT:     .N = <poisoned>
 // CHECK:STDOUT:     .V = @V.%assoc0
 // CHECK:STDOUT:     witness = (%V)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @V(@I.%N.loc4_13.2: Core.IntLiteral, @I.%Self.1: @I.%I.type (%I.type.f7b)) {
+// CHECK:STDOUT: generic assoc_const @V(@I.%N.loc4_13.2: Core.IntLiteral, @I.%Self.loc4_36.1: @I.%I.type (%I.type.f7b)) {
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%N)> [symbolic = %I.type (constants.%I.type.f7b)]
 // CHECK:STDOUT:   %Self: @V.%I.type (%I.type.f7b) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.d78)]
@@ -708,7 +708,7 @@ fn CallF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.f11
-// CHECK:STDOUT:   %Self.2 => constants.%Self.623
+// CHECK:STDOUT:   %Self.loc4_36.2 => constants.%Self.623
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.247
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.63a
 // CHECK:STDOUT: }

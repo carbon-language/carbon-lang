@@ -447,13 +447,6 @@ struct GenericInstIndex : public IndexBase<GenericInstIndex> {
 constexpr GenericInstIndex GenericInstIndex::None =
     GenericInstIndex::MakeNone();
 
-// The ID of an `ImportCpp`.
-struct ImportCppId : public IdBase<ImportCppId> {
-  static constexpr llvm::StringLiteral Label = "import_cpp";
-
-  using IdBase::IdBase;
-};
-
 // The ID of an `ImportIR` within the set of imported IRs, both direct and
 // indirect.
 struct ImportIRId : public IdBase<ImportIRId> {

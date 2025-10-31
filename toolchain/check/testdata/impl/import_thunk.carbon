@@ -154,10 +154,10 @@ fn G() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.8df = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8df = import_ref Main//a, loc4_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.507 = import_ref Main//a, loc5_14, unloaded
 // CHECK:STDOUT:   %Main.F: %I.F.type = import_ref Main//a, F, loaded [concrete = constants.%I.F]
-// CHECK:STDOUT:   %Main.import_ref.e33: %I.type = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self.9f2]
+// CHECK:STDOUT:   %Main.import_ref.e33: %I.type = import_ref Main//a, loc4_13, loaded [symbolic = constants.%Self.9f2]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.import_ref.f99: %Destroy.assoc_type = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Core.import_ref.725: %Destroy.Op.type = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [concrete = constants.%Destroy.Op]
@@ -438,11 +438,11 @@ fn G() {
 // CHECK:STDOUT:   %Main.import_ref.7a8327.1: %empty_tuple.type = import_ref Main//b, loc5_9, loaded [symbolic = @C.%X (constants.%X)]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//b, loc5_18, loaded [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   %Main.import_ref.176 = import_ref Main//b, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.8df = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8df = import_ref Main//a, loc4_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c44: %I.assoc_type = import_ref Main//a, loc5_14, loaded [concrete = constants.%assoc0.3f3]
 // CHECK:STDOUT:   %Main.F.8b9 = import_ref Main//a, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e03: %I.F.type = import_ref Main//a, loc5_14, loaded [concrete = constants.%I.F]
-// CHECK:STDOUT:   %Main.import_ref.e33: %I.type = import_ref Main//a, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self.9f2]
+// CHECK:STDOUT:   %Main.import_ref.e33: %I.type = import_ref Main//a, loc4_13, loaded [symbolic = constants.%Self.9f2]
 // CHECK:STDOUT:   %Main.import_ref.c03: <witness> = import_ref Main//b, loc7_32, loaded [symbolic = @C.as.I.impl.%I.impl_witness (constants.%I.impl_witness.9b0)]
 // CHECK:STDOUT:   %Main.import_ref.7a8327.2: %empty_tuple.type = import_ref Main//b, loc7_14, loaded [symbolic = @C.as.I.impl.%Y (constants.%Y)]
 // CHECK:STDOUT:   %Main.import_ref.801: type = import_ref Main//b, loc7_25, loaded [symbolic = @C.as.I.impl.%C (constants.%C.32c8ec.2)]
