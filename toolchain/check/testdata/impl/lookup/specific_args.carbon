@@ -106,21 +106,21 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T.loc4_13.1)> [symbolic = %I.type (constants.%I.type.070)]
-// CHECK:STDOUT:   %Self.2: @I.%I.type (%I.type.070) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:   %Self.loc4_23.2: @I.%I.type (%I.type.070) = symbolic_binding Self, 1 [symbolic = %Self.loc4_23.2 (constants.%Self)]
 // CHECK:STDOUT:   %I.F.type: type = fn_type @I.F, @I(%T.loc4_13.1) [symbolic = %I.F.type (constants.%I.F.type)]
 // CHECK:STDOUT:   %I.F: @I.%I.F.type (%I.F.type) = struct_value () [symbolic = %I.F (constants.%I.F)]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I, @I(%T.loc4_13.1) [symbolic = %I.assoc_type (constants.%I.assoc_type)]
 // CHECK:STDOUT:   %assoc0.loc4_43.2: @I.%I.assoc_type (%I.assoc_type) = assoc_entity element0, %I.F.decl [symbolic = %assoc0.loc4_43.2 (constants.%assoc0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @I.%I.type (%I.type.070) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.loc4_23.1: @I.%I.type (%I.type.070) = symbolic_binding Self, 1 [symbolic = %Self.loc4_23.2 (constants.%Self)]
 // CHECK:STDOUT:     %I.F.decl: @I.%I.F.type (%I.F.type) = fn_decl @I.F [symbolic = @I.%I.F (constants.%I.F)] {
 // CHECK:STDOUT:       %self.patt: @I.F.%pattern_type (%pattern_type.dbc) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @I.F.%pattern_type (%pattern_type.dbc) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @I.F.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc4_36.1: type = splice_block %.loc4_36.3 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
-// CHECK:STDOUT:         %.loc4_36.2: @I.F.%I.type (%I.type.070) = specific_constant @I.%Self.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:         %.loc4_36.2: @I.F.%I.type (%I.type.070) = specific_constant @I.%Self.loc4_23.1, @I(constants.%T) [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:         %Self.ref: @I.F.%I.type (%I.type.070) = name_ref Self, %.loc4_36.2 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:         %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:         %.loc4_36.3: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
@@ -130,7 +130,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:     %assoc0.loc4_43.1: @I.%I.assoc_type (%I.assoc_type) = assoc_entity element0, %I.F.decl [symbolic = %assoc0.loc4_43.2 (constants.%assoc0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc4_23.1
 // CHECK:STDOUT:     .F = %assoc0.loc4_43.1
 // CHECK:STDOUT:     witness = (%I.F.decl)
 // CHECK:STDOUT:   }
@@ -158,7 +158,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   .Self = constants.%X
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @I.F(@I.%T.loc4_13.2: type, @I.%Self.1: @I.%I.type (%I.type.070)) {
+// CHECK:STDOUT: generic fn @I.F(@I.%T.loc4_13.2: type, @I.%Self.loc4_23.1: @I.%I.type (%I.type.070)) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T)> [symbolic = %I.type (constants.%I.type.070)]
 // CHECK:STDOUT:   %Self: @I.F.%I.type (%I.type.070) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
@@ -222,11 +222,11 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//types, loc7_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.acf = import_ref Main//types, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.efcd44.1: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.769 = import_ref Main//types, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.769 = import_ref Main//types, loc4_23, unloaded
 // CHECK:STDOUT:   %Main.import_ref.2de = import_ref Main//types, loc4_43, unloaded
 // CHECK:STDOUT:   %Main.F: @I.%I.F.type (%I.F.type.76d) = import_ref Main//types, F, loaded [symbolic = @I.%I.F (constants.%I.F.dde)]
 // CHECK:STDOUT:   %Main.import_ref.efcd44.2: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.781: @I.%I.type (%I.type.070) = import_ref Main//types, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = @I.%Self (constants.%Self.269)]
+// CHECK:STDOUT:   %Main.import_ref.781: @I.%I.type (%I.type.070) = import_ref Main//types, loc4_23, loaded [symbolic = @I.%Self (constants.%Self.269)]
 // CHECK:STDOUT:   %Main.import_ref.e2f = import_ref Main//types, loc4_43, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -389,11 +389,11 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//types, loc7_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.acf = import_ref Main//types, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.efcd44.1: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.769 = import_ref Main//types, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.769 = import_ref Main//types, loc4_23, unloaded
 // CHECK:STDOUT:   %Main.import_ref.715: @I.%I.assoc_type (%I.assoc_type.b65) = import_ref Main//types, loc4_43, loaded [symbolic = @I.%assoc0 (constants.%assoc0.254)]
 // CHECK:STDOUT:   %Main.F = import_ref Main//types, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.efcd44.2: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.781: @I.%I.type (%I.type.070) = import_ref Main//types, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = @I.%Self (constants.%Self.269)]
+// CHECK:STDOUT:   %Main.import_ref.781: @I.%I.type (%I.type.070) = import_ref Main//types, loc4_23, loaded [symbolic = @I.%Self (constants.%Self.269)]
 // CHECK:STDOUT:   %Main.import_ref.21c: @I.%I.F.type (%I.F.type.76d) = import_ref Main//types, loc4_43, loaded [symbolic = @I.%I.F (constants.%I.F.dde)]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//impl_in_interface_args, loc5_24, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.bf8 = import_ref Main//impl_in_interface_args, inst{{[0-9A-F]+}} [no loc], unloaded
@@ -554,11 +554,11 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.1: <witness> = import_ref Main//types, loc5_20, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.034 = import_ref Main//types, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.efcd44.2: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.769 = import_ref Main//types, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.769 = import_ref Main//types, loc4_23, unloaded
 // CHECK:STDOUT:   %Main.import_ref.2de = import_ref Main//types, loc4_43, unloaded
 // CHECK:STDOUT:   %Main.F: @I.%I.F.type (%I.F.type.76d) = import_ref Main//types, F, loaded [symbolic = @I.%I.F (constants.%I.F.dde)]
 // CHECK:STDOUT:   %Main.import_ref.efcd44.3: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.781: @I.%I.type (%I.type.070) = import_ref Main//types, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = @I.%Self (constants.%Self.269)]
+// CHECK:STDOUT:   %Main.import_ref.781: @I.%I.type (%I.type.070) = import_ref Main//types, loc4_23, loaded [symbolic = @I.%Self (constants.%Self.269)]
 // CHECK:STDOUT:   %Main.import_ref.e2f = import_ref Main//types, loc4_43, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//types, loc7_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.acf = import_ref Main//types, inst{{[0-9A-F]+}} [no loc], unloaded
@@ -754,11 +754,11 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.2: <witness> = import_ref Main//impl_in_class_args, loc5_20, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.683 = import_ref Main//impl_in_class_args, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.efcd44.2: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.769 = import_ref Main//types, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.769 = import_ref Main//types, loc4_23, unloaded
 // CHECK:STDOUT:   %Main.import_ref.715: @I.%I.assoc_type (%I.assoc_type.b65) = import_ref Main//types, loc4_43, loaded [symbolic = @I.%assoc0 (constants.%assoc0.254)]
 // CHECK:STDOUT:   %Main.F = import_ref Main//types, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.efcd44.3: type = import_ref Main//types, loc4_13, loaded [symbolic = @I.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.781: @I.%I.type (%I.type.070) = import_ref Main//types, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = @I.%Self (constants.%Self.269)]
+// CHECK:STDOUT:   %Main.import_ref.781: @I.%I.type (%I.type.070) = import_ref Main//types, loc4_23, loaded [symbolic = @I.%Self (constants.%Self.269)]
 // CHECK:STDOUT:   %Main.import_ref.21c: @I.%I.F.type (%I.F.type.76d) = import_ref Main//types, loc4_43, loaded [symbolic = @I.%I.F (constants.%I.F.dde)]
 // CHECK:STDOUT:   %Main.import_ref.8f24d3.3: <witness> = import_ref Main//types, loc7_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.acf = import_ref Main//types, inst{{[0-9A-F]+}} [no loc], unloaded

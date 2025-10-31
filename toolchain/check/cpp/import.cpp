@@ -440,14 +440,6 @@ static auto GenerateAst(
 static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
                          llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
     -> SemIR::NameScopeId {
-  auto& import_cpps = context.sem_ir().import_cpps();
-  import_cpps.Reserve(imports.size());
-  for (const Parse::Tree::PackagingNames& import : imports) {
-    import_cpps.Add({.node_id = context.parse_tree().As<Parse::ImportDeclId>(
-                         import.node_id),
-                     .library_id = import.library_id});
-  }
-
   return AddImportNamespaceToScope(
              context,
              GetSingletonType(context, SemIR::NamespaceType::TypeInstId),

@@ -48,6 +48,14 @@ interface Z {
   extend require impls Y;
 }
 
+// --- type_and.carbon
+
+interface Y {}
+
+interface Z {
+  require impls Y & Y;
+}
+
 // --- fail_missing_impls.carbon
 
 interface Y {}
@@ -188,6 +196,25 @@ interface Z {
 // CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'Y'},
 // CHECK:STDOUT:       {kind: 'RequireDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 9},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: type_and.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'Y'},
+// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeParams', text: 'Z'},
+// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'RequireIntroducer', text: 'require'},
+// CHECK:STDOUT:         {kind: 'RequireDefaultSelfImpls', text: 'impls'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'Y'},
+// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'Y'},
+// CHECK:STDOUT:         {kind: 'InfixOperatorAmp', text: '&', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'RequireDecl', text: ';', subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 10},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_missing_impls.carbon

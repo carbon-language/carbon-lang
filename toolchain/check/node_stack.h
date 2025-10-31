@@ -397,6 +397,8 @@ class NodeStack {
         Id::KindFor<SemIR::NameId>());
     set_id_if_category_is(Parse::NodeCategory::ImplAs,
                           Id::KindFor<SemIR::TypeInstId>());
+    set_id_if_category_is(Parse::NodeCategory::RequireImpls,
+                          Id::KindFor<SemIR::TypeInstId>());
     set_id_if_category_is(Parse::NodeCategory::Decl |
                               Parse::NodeCategory::Statement |
                               Parse::NodeCategory::Modifier,
@@ -412,6 +414,7 @@ class NodeStack {
       case Parse::NodeKind::CallExprStart:
       case Parse::NodeKind::FieldNameAndType:
       case Parse::NodeKind::IfExprThen:
+      case Parse::NodeKind::RequireIntroducer:
       case Parse::NodeKind::ReturnType:
       case Parse::NodeKind::ShortCircuitOperandAnd:
       case Parse::NodeKind::ShortCircuitOperandOr:
@@ -524,9 +527,6 @@ class NodeStack {
       case Parse::NodeKind::ParenExprStart:
       case Parse::NodeKind::PatternListComma:
       case Parse::NodeKind::Placeholder:
-      case Parse::NodeKind::RequireIntroducer:
-      case Parse::NodeKind::RequireDefaultSelfImpls:
-      case Parse::NodeKind::RequireTypeImpls:
       case Parse::NodeKind::RequirementAnd:
       case Parse::NodeKind::RequirementEqual:
       case Parse::NodeKind::RequirementEqualEqual:

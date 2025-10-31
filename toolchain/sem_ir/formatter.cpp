@@ -1253,13 +1253,21 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
 auto Formatter::FormatImportCppDeclRhs() -> void {
   out_ << " ";
   OpenBrace();
-  for (ImportCpp import_cpp : sem_ir_->import_cpps().values()) {
+  for (const Parse::Tree::PackagingNames& import :
+       sem_ir_->parse_tree().imports()) {
+    if (auto package_ident_id = import.package_id.AsIdentifierId();
+        !package_ident_id.has_value() ||
+        sem_ir_->identifiers().Get(package_ident_id) !=
+            PackageNameId::CppName) {
+      continue;
+    }
+
     Indent();
     out_ << "import Cpp ";
-    if (import_cpp.library_id.has_value()) {
+    if (import.library_id.has_value()) {
       out_ << "\""
            << FormatEscaped(
-                  sem_ir_->string_literal_values().Get(import_cpp.library_id))
+                  sem_ir_->string_literal_values().Get(import.library_id))
            << "\"";
     } else {
       out_ << "inline";

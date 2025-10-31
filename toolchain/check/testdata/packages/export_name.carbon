@@ -958,6 +958,9 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_use_not_reexporting.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C = <poisoned>

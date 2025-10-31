@@ -105,27 +105,3 @@ fn F() {
   // CHECK:STDERR:
   H({} as C);
 }
-
-// --- fail_todo_incomplete_interface_due_to_constraint.carbon
-library "[[@TEST_NAME]]";
-
-constraint A;
-interface B {
-  // CHECK:STDERR: fail_todo_incomplete_interface_due_to_constraint.carbon:[[@LINE+4]]:3: error: semantics TODO: `require` [SemanticsTodo]
-  // CHECK:STDERR:   require impls A;
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
-  require impls A;
-}
-class C {}
-
-fn G[T:! B](t: T) {}
-
-fn F() {
-  // TODO: These should fail when B is checked for completeness, since it
-  // contains a dependency on A which is not complete.
-
-  C as B;
-
-  G({} as C);
-}

@@ -137,7 +137,7 @@ auto HandleParseNode(Context& context,
   SemIR::TypeId self_type_id =
       GetNamedConstraintType(context, named_constraint_id, self_specific_id);
   constraint_info.self_param_id = AddSelfGenericParameter(
-      context, self_type_id, constraint_info.scope_id, is_template);
+      context, node_id, self_type_id, constraint_info.scope_id, is_template);
 
   // Enter the constraint scope.
   context.scope_stack().PushForEntity(decl_inst_id, constraint_info.scope_id,

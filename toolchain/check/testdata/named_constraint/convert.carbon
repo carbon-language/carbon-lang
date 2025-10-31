@@ -37,16 +37,12 @@ fn G(T:! E2) {
 }
 //@dump-sem-ir-end
 
-// --- fail_todo_unspecified.carbon
+// --- unspecified.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {}
 
 constraint E {
-  // CHECK:STDERR: fail_todo_unspecified.carbon:[[@LINE+4]]:3: error: semantics TODO: `require` [SemanticsTodo]
-  // CHECK:STDERR:   require impls Z;
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
   require impls Z;
 }
 

@@ -135,7 +135,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %I.Op.decl: %I.Op.type = fn_decl @I.Op [concrete = constants.%I.Op] {
 // CHECK:STDOUT:     %self.patt: @I.Op.%pattern_type (%pattern_type.89c) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:     %self.param_patt: @I.Op.%pattern_type (%pattern_type.89c) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -210,11 +210,11 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//included_with_range, loc16_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//included_with_range, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.8df = import_ref Main//included_with_range, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.8df = import_ref Main//included_with_range, loc7_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9cd: %I.assoc_type = import_ref Main//included_with_range, loc8_22, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.Op = import_ref Main//included_with_range, Op, unloaded
 // CHECK:STDOUT:   %Main.import_ref.7d9: %I.Op.type = import_ref Main//included_with_range, loc8_22, loaded [concrete = constants.%I.Op]
-// CHECK:STDOUT:   %Main.import_ref.e33: %I.type = import_ref Main//included_with_range, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.e33: %I.type = import_ref Main//included_with_range, loc7_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.3a9: <witness> = import_ref Main//included_with_range, loc13_15, loaded [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.29a: type = import_ref Main//included_with_range, loc13_8, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.301: type = import_ref Main//included_with_range, loc13_13, loaded [concrete = constants.%I.type]

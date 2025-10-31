@@ -290,13 +290,13 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Eats.type: type = facet_type <@Eats, @Eats(%Food.loc21_16.1)> [symbolic = %Eats.type (constants.%Eats.type.c18)]
-// CHECK:STDOUT:   %Self.2: @Eats.%Eats.type (%Eats.type.c18) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.4e3)]
+// CHECK:STDOUT:   %Self.loc21_29.2: @Eats.%Eats.type (%Eats.type.c18) = symbolic_binding Self, 1 [symbolic = %Self.loc21_29.2 (constants.%Self.4e3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @Eats.%Eats.type (%Eats.type.c18) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.4e3)]
+// CHECK:STDOUT:     %Self.loc21_29.1: @Eats.%Eats.type (%Eats.type.c18) = symbolic_binding Self, 1 [symbolic = %Self.loc21_29.2 (constants.%Self.4e3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc21_29.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -444,7 +444,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Eats.type => constants.%Eats.type.98f93b.1
-// CHECK:STDOUT:   %Self.2 => constants.%Self.9eb
+// CHECK:STDOUT:   %Self.loc21_29.2 => constants.%Self.9eb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.binding.as_type.as.Eats.impl(constants.%T.84c, constants.%U) {
@@ -462,7 +462,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Eats.type => constants.%Eats.type.3cc
-// CHECK:STDOUT:   %Self.2 => constants.%Self.7e0
+// CHECK:STDOUT:   %Self.loc21_29.2 => constants.%Self.7e0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%Food.17b, constants.%T.7e0) {
@@ -538,7 +538,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Eats.type => constants.%Eats.type.cee
-// CHECK:STDOUT:   %Self.2 => constants.%Self.026
+// CHECK:STDOUT:   %Self.loc21_29.2 => constants.%Self.026
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.binding.as_type.as.Eats.impl(constants.%Animal.facet, constants.%Edible.facet) {
