@@ -12,11 +12,20 @@ filegroup(
 )
 
 cc_library(
+    name = "options",
+    hdrs = ["options.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "lower",
     srcs = ["lower.cpp"],
     hdrs = ["lower.h"],
     deps = [
         ":context",
+        ":options",
         "//common:vlog",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:file",
@@ -52,6 +61,7 @@ cc_library(
         "specific_coalescer.h",
     ],
     deps = [
+        ":options",
         "//common:check",
         "//common:growing_range",
         "//common:map",

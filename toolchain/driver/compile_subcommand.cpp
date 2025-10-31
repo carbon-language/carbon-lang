@@ -16,6 +16,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/MC/TargetRegistry.h"
+#include "llvm/Passes/OptimizationLevel.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/StandardInstrumentations.h"
 #include "toolchain/base/clang_invocation.h"
@@ -131,10 +132,10 @@ Selects the amount of optimization to perform.
                 // plan to support profile and in-source hints to the
                 // optimizer to adjust its strategy in the specific places
                 // where the default doesn't have the desired results.
-                arg_b.OneOfValue("none", llvm::OptimizationLevel::O0),
-                arg_b.OneOfValue("debug", llvm::OptimizationLevel::O1),
-                arg_b.OneOfValue("speed", llvm::OptimizationLevel::O3),
-                arg_b.OneOfValue("size", llvm::OptimizationLevel::Oz),
+                arg_b.OneOfValue("none", Lower::OptimizationLevel::None),
+                arg_b.OneOfValue("debug", Lower::OptimizationLevel::Debug),
+                arg_b.OneOfValue("speed", Lower::OptimizationLevel::Speed),
+                arg_b.OneOfValue("size", Lower::OptimizationLevel::Size),
             },
             &opt_level);
       });
@@ -818,6 +819,36 @@ auto CompilationUnit::MakeTargetMachine() -> void {
       target_triple, CPU, Features, target_opts, llvm::Reloc::PIC_));
 }
 
+// Get the LLVM optimization level corresponding to a Carbon optimization level.
+static auto GetLLVMOptLevel(Lower::OptimizationLevel opt_level)
+    -> llvm::OptimizationLevel {
+  switch (opt_level) {
+    case Lower::OptimizationLevel::None:
+      return llvm::OptimizationLevel::O0;
+    case Lower::OptimizationLevel::Debug:
+      return llvm::OptimizationLevel::O1;
+    case Lower::OptimizationLevel::Size:
+      return llvm::OptimizationLevel::Oz;
+    case Lower::OptimizationLevel::Speed:
+      return llvm::OptimizationLevel::O3;
+  }
+}
+
+// Get the `-O` flag corresponding to an optimization level.
+static auto GetDashOFlag(Lower::OptimizationLevel opt_level)
+    -> llvm::StringLiteral {
+  switch (opt_level) {
+    case Lower::OptimizationLevel::None:
+      return "-O0";
+    case Lower::OptimizationLevel::Debug:
+      return "-O1";
+    case Lower::OptimizationLevel::Size:
+      return "-Oz";
+    case Lower::OptimizationLevel::Speed:
+      return "-O3";
+  }
+}
+
 auto CompilationUnit::RunOpt() -> void {
   CARBON_CHECK(module_, "Must call RunLower first");
 
@@ -830,17 +861,19 @@ auto CompilationUnit::RunOpt() -> void {
 
   MakeTargetMachine();
 
-  // TODO: There's no way to set these automatically from the OptimizationLevel.
-  // Add such a mechanism to LLVM and use it from here. For now we reconstruct
-  // what Clang does by default.
+  // TODO: There's no way to set these automatically from an
+  // llvm::OptimizationLevel. Add such a mechanism to LLVM and use it from
+  // here. For now we reconstruct what Clang does by default.
   llvm::PipelineTuningOptions pto;
+  bool opt_for_speed = options_->opt_level == Lower::OptimizationLevel::Speed;
+  bool opt_for_size_or_speed =
+      opt_for_speed || options_->opt_level == Lower::OptimizationLevel::Size;
   // Loop unrolling is enabled by `--opt=size` but isn't actually performed
   // because we add `optsize` attributes to the function definitions we emit.
-  pto.LoopUnrolling = options_->opt_level.getSpeedupLevel() > 1;
-  pto.LoopInterleaving = options_->opt_level.getSpeedupLevel() > 1;
-  pto.LoopVectorization = options_->opt_level.getSpeedupLevel() > 1 &&
-                          !options_->opt_level.isOptimizingForSize();
-  pto.SLPVectorization = options_->opt_level.getSpeedupLevel() > 1;
+  pto.LoopUnrolling = opt_for_size_or_speed;
+  pto.LoopInterleaving = opt_for_size_or_speed;
+  pto.LoopVectorization = opt_for_speed;
+  pto.SLPVectorization = opt_for_size_or_speed;
 
   llvm::LoopAnalysisManager lam;
   llvm::FunctionAnalysisManager fam;
@@ -871,8 +904,8 @@ auto CompilationUnit::RunOpt() -> void {
   builder.registerLoopAnalyses(lam);
   builder.crossRegisterProxies(lam, fam, cgam, mam);
 
-  llvm::ModulePassManager pass_manager =
-      builder.buildPerModuleDefaultPipeline(options_->opt_level);
+  llvm::ModulePassManager pass_manager = builder.buildPerModuleDefaultPipeline(
+      GetLLVMOptLevel(options_->opt_level));
 
   if (vlog_stream_) {
     CARBON_VLOG("*** Running pass pipeline: ");
@@ -1025,31 +1058,6 @@ auto CompilationUnit::LogCall(llvm::StringLiteral logging_label,
   Timings::ScopedTiming timing(timings_ ? &*timings_ : nullptr, timing_label);
   fn();
   CARBON_VLOG("*** {0} done ***\n", logging_label);
-}
-
-// Get the `-O` flag corresponding to an optimization level.
-// TODO: Move this into LLVM.
-static auto GetDashOFlag(llvm::OptimizationLevel opt_level)
-    -> llvm::StringLiteral {
-  switch (opt_level.getSizeLevel()) {
-    case 0:
-      switch (opt_level.getSpeedupLevel()) {
-        case 0:
-          return "-O0";
-        case 1:
-          return "-O1";
-        case 2:
-          return "-O2";
-        case 3:
-          return "-O3";
-      }
-      break;
-    case 1:
-      return "-Os";
-    case 2:
-      return "-Oz";
-  }
-  CARBON_FATAL("Unexpected optimization level");
 }
 
 auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {

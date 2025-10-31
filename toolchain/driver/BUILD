@@ -155,6 +155,7 @@ cc_library(
         "//toolchain/language_server",
         "//toolchain/lex",
         "//toolchain/lower",
+        "//toolchain/lower:options",
         "//toolchain/parse",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:file",

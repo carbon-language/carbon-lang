@@ -23,6 +23,7 @@
 #include "toolchain/lower/constant.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/lower/mangler.h"
+#include "toolchain/lower/options.h"
 #include "toolchain/lower/specific_coalescer.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
 #include "toolchain/sem_ir/diagnostic_loc_converter.h"
@@ -626,7 +627,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
 
     // TODO: We should take the opt level from the SemIR file; it might not be
     // the same for all files in a compilation.
-    if (context().opt_level().getSpeedupLevel() == 0) {
+    if (context().opt_level() == Lower::OptimizationLevel::None) {
       // --opt=none disables all optimizations for this function.
       attr_builder.addAttribute(llvm::Attribute::OptimizeNone);
       attr_builder.addAttribute(llvm::Attribute::NoInline);
@@ -638,10 +639,8 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
       }
 
       // Convert --opt=size into optsize and minsize.
-      if (context().opt_level().getSizeLevel() > 0) {
+      if (context().opt_level() == Lower::OptimizationLevel::Size) {
         attr_builder.addAttribute(llvm::Attribute::OptimizeForSize);
-      }
-      if (context().opt_level().getSizeLevel() > 1) {
         attr_builder.addAttribute(llvm::Attribute::MinSize);
       }
 
