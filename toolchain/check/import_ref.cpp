@@ -3187,6 +3187,8 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::InterfaceDecl inst): {
       return TryResolveTypedInst(resolver, inst, const_id);
     }
+    // TODO: Import NamedConstraintDecl once its FacetType constant value
+    // contains the NamedConstraintId.
     default:
       break;
   }
