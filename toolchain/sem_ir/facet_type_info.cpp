@@ -14,12 +14,13 @@ CARBON_DEFINE_ENUM_MASK_NAMES(BuiltinConstraintMask) {
   CARBON_BUILTIN_CONSTRAINT_MASK(CARBON_ENUM_MASK_NAME_STRING)
 };
 
+template <typename T>
+using LessThanFn = llvm::function_ref<auto(const T&, const T&)->bool>;
+
 template <typename VecT>
-static auto SortAndDeduplicate(
-    VecT& vec, llvm::function_ref<auto(typename VecT::const_reference,
-                                       typename VecT::const_reference)
-                                      ->bool>
-                   compare) -> void {
+static auto SortAndDeduplicate(VecT& vec,
+                               LessThanFn<typename VecT::value_type> compare)
+    -> void {
   llvm::sort(vec, compare);
   vec.erase(llvm::unique(vec), vec.end());
 }
@@ -56,12 +57,9 @@ static auto RequiredLess(const IdentifiedFacetType::RequiredInterface& lhs,
 // Assuming both `a` and `b` are sorted and deduplicated, replaces `a` with `a -
 // b` as sets. Assumes there are few elements between them.
 template <typename VecT>
-static auto SubtractSorted(
-    VecT& a, const VecT& b,
-    llvm::function_ref<auto(typename VecT::const_reference,
-                            typename VecT::const_reference)
-                           ->bool>
-        compare) -> void {
+static auto SubtractSorted(VecT& a, const VecT& b,
+                           LessThanFn<typename VecT::value_type> compare)
+    -> void {
   using Iter = VecT::iterator;
   Iter a_iter = a.begin();
   Iter a_end = a.end();
