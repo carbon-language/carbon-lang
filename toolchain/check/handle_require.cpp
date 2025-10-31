@@ -119,15 +119,19 @@ static auto TypeStructureReferencesSelf(
     }
   }
 
+  if (identified_facet_type.required_interfaces().empty()) {
+    return false;
+  }
+
   for (auto specific_interface : identified_facet_type.required_interfaces()) {
     SemIR::TypeIterator type_iter(&context.sem_ir());
     type_iter.Add(specific_interface);
-    if (find_self(type_iter)) {
-      return true;
+    if (!find_self(type_iter)) {
+      return false;
     }
   }
 
-  return false;
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {

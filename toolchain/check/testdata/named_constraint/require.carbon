@@ -209,6 +209,10 @@ interface Y(T:! type) {}
 constraint Z(T:! type) {
   // Self is in one interface but not the other.
   //
+  // CHECK:STDERR: fail_require_impls_without_self_in_one_interface.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic parameter for each `interface` or `constraint` [RequireImplsMissingSelf]
+  // CHECK:STDERR:   require T impls Y(Self) & Y({});
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   require T impls Y(Self) & Y({});
 }
 
