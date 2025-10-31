@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --opt=speed foo.carbon -- -###
+// ARGS: compile --optimize=speed foo.carbon -- -###
 //
 // SET-CAPTURE-CONSOLE-OUTPUT
 // SET-CHECK-SUBSET

@@ -63,7 +63,7 @@ compile to machine code.
                 arg_b.OneOfValue("parse", Phase::Parse),
                 arg_b.OneOfValue("check", Phase::Check),
                 arg_b.OneOfValue("lower", Phase::Lower),
-                arg_b.OneOfValue("opt", Phase::Opt),
+                arg_b.OneOfValue("optimize", Phase::Optimize),
                 arg_b.OneOfValue("codegen", Phase::CodeGen).Default(true),
             },
             &phase);
@@ -115,7 +115,7 @@ object output can be forced by enabling `--force-obj-output`.
 
   b.AddOneOfOption(
       {
-          .name = "opt",
+          .name = "optimize",
           .help = R"""(
 Selects the amount of optimization to perform.
 )""",
@@ -399,8 +399,8 @@ static auto PhaseToString(CompileOptions::Phase phase) -> std::string {
       return "check";
     case CompileOptions::Phase::Lower:
       return "lower";
-    case CompileOptions::Phase::Opt:
-      return "opt";
+    case CompileOptions::Phase::Optimize:
+      return "optimize";
     case CompileOptions::Phase::CodeGen:
       return "codegen";
   }
@@ -441,7 +441,7 @@ auto CompileSubcommand::ValidateOptions(
       }
       [[fallthrough]];
     case Phase::Lower:
-    case Phase::Opt:
+    case Phase::Optimize:
     case Phase::CodeGen:
       // Everything can be dumped in these phases.
       break;
@@ -482,11 +482,11 @@ class CompilationUnit {
   auto RunLower() -> void;
 
   // Runs the optimization pipeline.
-  auto RunOpt() -> void;
+  auto RunOptimize() -> void;
 
   // Runs post-lowering-to-LLVM-IR logic. This is always called if we do any
   // lowering work, after we've finished building the IR in RunLower() and,
-  // optionally, RunOpt().
+  // optionally, RunOptimize().
   auto PostLower() -> void;
 
   auto RunCodeGen() -> void;
@@ -849,7 +849,7 @@ static auto GetDashOFlag(Lower::OptimizationLevel opt_level)
   }
 }
 
-auto CompilationUnit::RunOpt() -> void {
+auto CompilationUnit::RunOptimize() -> void {
   CARBON_CHECK(module_, "Must call RunLower first");
 
   // TODO: A lot of the work done here duplicates work done by Clang setting up
@@ -868,7 +868,7 @@ auto CompilationUnit::RunOpt() -> void {
   bool opt_for_speed = options_->opt_level == Lower::OptimizationLevel::Speed;
   bool opt_for_size_or_speed =
       opt_for_speed || options_->opt_level == Lower::OptimizationLevel::Size;
-  // Loop unrolling is enabled by `--opt=size` but isn't actually performed
+  // Loop unrolling is enabled by `--optimize=size` but isn't actually performed
   // because we add `optsize` attributes to the function definitions we emit.
   pto.LoopUnrolling = opt_for_size_or_speed;
   pto.LoopInterleaving = opt_for_size_or_speed;
@@ -891,7 +891,7 @@ auto CompilationUnit::RunOpt() -> void {
   llvm::PassBuilder builder(target_machine_.get(), pto,
                             /*PGOOpt=*/std::nullopt, &pic);
 
-  // TODO: Add an AssignmentTrackingPass for at least `--opt=debug`.
+  // TODO: Add an AssignmentTrackingPass for at least `--optimize=debug`.
 
   // Set up target library information and add an analysis pass to supply it.
   std::unique_ptr<llvm::TargetLibraryInfoImpl> tlii(llvm::driver::createTLII(
@@ -917,7 +917,7 @@ auto CompilationUnit::RunOpt() -> void {
     CARBON_VLOG(" ***\n");
   }
 
-  LogCall("ModulePassManager::run", "opt",
+  LogCall("ModulePassManager::run", "optimize",
           [&] { pass_manager.run(*module_, mam); });
 
   if (vlog_stream_) {
@@ -1274,13 +1274,13 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     unit->RunLower();
 
     if (options_.phase != CompileOptions::Phase::Lower) {
-      unit->RunOpt();
+      unit->RunOptimize();
     }
 
     unit->PostLower();
   }
   if (options_.phase == CompileOptions::Phase::Lower ||
-      options_.phase == CompileOptions::Phase::Opt) {
+      options_.phase == CompileOptions::Phase::Optimize) {
     return make_result();
   }
   CARBON_CHECK(options_.phase == CompileOptions::Phase::CodeGen,

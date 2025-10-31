@@ -27,7 +27,7 @@ struct CompileOptions {
     Parse,
     Check,
     Lower,
-    Opt,
+    Optimize,
     CodeGen,
   };
 

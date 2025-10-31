@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --opt=speed --clang-arg=-O1 foo.carbon -- -###
+// ARGS: compile --optimize=size foo.carbon -- -###
 //
 // SET-CAPTURE-CONSOLE-OUTPUT
 // SET-CHECK-SUBSET
@@ -11,6 +11,6 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/compile/fail_clang_args.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/compile/fail_clang_args.carbon
-// CHECK:STDERR:  "{{.*}}/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/llvm/bin/clang" "-cc1" {{.*}} "-O3" {{.*}} "-O1" {{.*}}
+// CHECK:STDERR:  "{{.*}}/toolchain/install/prefix_root/lib/carbon/../../lib/carbon/llvm/bin/clang" "-cc1" {{.*}} "-Oz" {{.*}}
 
 // --- foo.carbon

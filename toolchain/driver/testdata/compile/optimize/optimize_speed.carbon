@@ -2,13 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --opt=debug foo.carbon --target=x86_64-unknown-linux-gnu --phase=opt --dump-llvm-ir --exclude-dump-file-prefix=%{core}
+// ARGS: compile --optimize=speed foo.carbon --target=x86_64-unknown-linux-gnu --phase=optimize --dump-llvm-ir --exclude-dump-file-prefix=%{core}
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/compile/opt/opt_debug.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/compile/optimize/optimize_speed.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/compile/opt/opt_debug.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/compile/optimize/optimize_speed.carbon
 
 // --- foo.carbon
 
@@ -21,12 +21,12 @@ fn NoInlineWithOz() -> i32 {
 }
 
 fn CallNoInlineWithOptSize() -> i32 {
-  // Should not be inlined with --opt=size, because the body is larger than the call.
+  // Should not be inlined with --optimize=size, because the body is larger than the call.
   return NoInlineWithOz();
 }
 
 fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
-  // Should be vectorized with --opt=speed, but not in other modes.
+  // Should be vectorized with --optimize=speed, but not in other modes.
   var n: i32 = 0;
   while (n < 65536) {
     (*a)[n] *= 2;
@@ -61,26 +61,42 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: ; Function Attrs: nofree norecurse nosync nounwind memory(argmem: readwrite)
 // CHECK:STDOUT: define void @_CVectorizedWithOptSpeed.Main(ptr captures(none) %a) local_unnamed_addr #1 !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   br label %while.body, !dbg !16
+// CHECK:STDOUT:   br label %vector.body, !dbg !16
 // CHECK:STDOUT:
-// CHECK:STDOUT: while.body:                                       ; preds = %entry, %while.body
-// CHECK:STDOUT:   %n.var.03 = phi i32 [ 0, %entry ], [ %1, %while.body ]
-// CHECK:STDOUT:   %0 = zext nneg i32 %n.var.03 to i64, !dbg !17
-// CHECK:STDOUT:   %.loc19_11.array.index = getelementptr inbounds nuw i32, ptr %a, i64 %0, !dbg !17
-// CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call = load i32, ptr %.loc19_11.array.index, align 4, !dbg !17
-// CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call1 = shl i32 %Int.as.MulAssignWith.impl.Op.call, 1, !dbg !17
-// CHECK:STDOUT:   store i32 %Int.as.MulAssignWith.impl.Op.call1, ptr %.loc19_11.array.index, align 4, !dbg !17
-// CHECK:STDOUT:   %1 = add nuw nsw i32 %n.var.03, 1, !dbg !18
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.call = icmp samesign ult i32 %n.var.03, 65535, !dbg !24
-// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Less.call, label %while.body, label %while.done, !dbg !16
+// CHECK:STDOUT: vector.body:                                      ; preds = %vector.body, %entry
+// CHECK:STDOUT:   %index = phi i32 [ 0, %entry ], [ %index.next.1, %vector.body ], !dbg !17
+// CHECK:STDOUT:   %0 = zext nneg i32 %index to i64, !dbg !23
+// CHECK:STDOUT:   %1 = getelementptr inbounds nuw i32, ptr %a, i64 %0, !dbg !23
+// CHECK:STDOUT:   %2 = getelementptr inbounds nuw i8, ptr %1, i64 16, !dbg !23
+// CHECK:STDOUT:   %wide.load = load <4 x i32>, ptr %1, align 4, !dbg !23
+// CHECK:STDOUT:   %wide.load4 = load <4 x i32>, ptr %2, align 4, !dbg !23
+// CHECK:STDOUT:   %3 = shl <4 x i32> %wide.load, splat (i32 1), !dbg !23
+// CHECK:STDOUT:   %4 = shl <4 x i32> %wide.load4, splat (i32 1), !dbg !23
+// CHECK:STDOUT:   store <4 x i32> %3, ptr %1, align 4, !dbg !23
+// CHECK:STDOUT:   store <4 x i32> %4, ptr %2, align 4, !dbg !23
+// CHECK:STDOUT:   %5 = zext nneg i32 %index to i64, !dbg !23
+// CHECK:STDOUT:   %6 = getelementptr inbounds nuw i32, ptr %a, i64 %5, !dbg !23
+// CHECK:STDOUT:   %7 = getelementptr inbounds nuw i8, ptr %6, i64 32, !dbg !23
+// CHECK:STDOUT:   %8 = getelementptr inbounds nuw i8, ptr %6, i64 48, !dbg !23
+// CHECK:STDOUT:   %wide.load.1 = load <4 x i32>, ptr %7, align 4, !dbg !23
+// CHECK:STDOUT:   %wide.load4.1 = load <4 x i32>, ptr %8, align 4, !dbg !23
+// CHECK:STDOUT:   %9 = shl <4 x i32> %wide.load.1, splat (i32 1), !dbg !23
+// CHECK:STDOUT:   %10 = shl <4 x i32> %wide.load4.1, splat (i32 1), !dbg !23
+// CHECK:STDOUT:   store <4 x i32> %9, ptr %7, align 4, !dbg !23
+// CHECK:STDOUT:   store <4 x i32> %10, ptr %8, align 4, !dbg !23
+// CHECK:STDOUT:   %index.next.1 = add nuw nsw i32 %index, 16, !dbg !17
+// CHECK:STDOUT:   %11 = icmp eq i32 %index.next.1, 65536, !dbg !16
+// CHECK:STDOUT:   br i1 %11, label %while.done, label %vector.body, !dbg !16, !llvm.loop !24
 // CHECK:STDOUT:
-// CHECK:STDOUT: while.done:                                       ; preds = %while.body
-// CHECK:STDOUT:   ret void, !dbg !25
+// CHECK:STDOUT: while.done:                                       ; preds = %vector.body
+// CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT:   uselistorder label %while.body, { 1, 0 }
-// CHECK:STDOUT:   uselistorder i32 %n.var.03, { 0, 2, 1 }
-// CHECK:STDOUT:   uselistorder ptr %.loc19_11.array.index, { 1, 0 }
+// CHECK:STDOUT:   uselistorder i32 %index, { 1, 0, 2 }
+// CHECK:STDOUT:   uselistorder ptr %1, { 1, 2, 0 }
+// CHECK:STDOUT:   uselistorder ptr %2, { 1, 0 }
+// CHECK:STDOUT:   uselistorder ptr %8, { 1, 0 }
+// CHECK:STDOUT:   uselistorder i32 %index.next.1, { 1, 0 }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -106,12 +122,14 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !14 = !DILocation(line: 12, column: 3, scope: !10)
 // CHECK:STDOUT: !15 = distinct !DISubprogram(name: "VectorizedWithOptSpeed", linkageName: "_CVectorizedWithOptSpeed.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !16 = !DILocation(line: 18, column: 9, scope: !15)
-// CHECK:STDOUT: !17 = !DILocation(line: 19, column: 5, scope: !15)
-// CHECK:STDOUT: !18 = !DILocation(line: 275, column: 3, scope: !19, inlinedAt: !21)
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.Core:AddAssignWith.Core.5dfb78ae56583d8e", scope: null, file: !20, line: 275, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !20 = !DIFile(filename: "{{.*}}/prelude/types/int.carbon", directory: "")
-// CHECK:STDOUT: !21 = distinct !DILocation(line: 341, column: 5, scope: !22, inlinedAt: !23)
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Int.Core:Inc.Core.be1e879c1ad406d8", scope: null, file: !20, line: 339, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !23 = distinct !DILocation(line: 20, column: 5, scope: !15)
-// CHECK:STDOUT: !24 = !DILocation(line: 18, column: 10, scope: !15)
-// CHECK:STDOUT: !25 = !DILocation(line: 15, column: 1, scope: !15)
+// CHECK:STDOUT: !17 = !DILocation(line: 275, column: 3, scope: !18, inlinedAt: !20)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.Core:AddAssignWith.Core.5dfb78ae56583d8e", scope: null, file: !19, line: 275, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !19 = !DIFile(filename: "{{.*}}/prelude/types/int.carbon", directory: "")
+// CHECK:STDOUT: !20 = distinct !DILocation(line: 341, column: 5, scope: !21, inlinedAt: !22)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Int.Core:Inc.Core.be1e879c1ad406d8", scope: null, file: !19, line: 339, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !22 = distinct !DILocation(line: 20, column: 5, scope: !15)
+// CHECK:STDOUT: !23 = !DILocation(line: 19, column: 5, scope: !15)
+// CHECK:STDOUT: !24 = distinct !{!24, !25, !26}
+// CHECK:STDOUT: !25 = !{!"llvm.loop.isvectorized", i32 1}
+// CHECK:STDOUT: !26 = !{!"llvm.loop.unroll.runtime.disable"}
+// CHECK:STDOUT: !27 = !DILocation(line: 15, column: 1, scope: !15)

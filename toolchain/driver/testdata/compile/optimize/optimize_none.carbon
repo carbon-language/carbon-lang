@@ -2,13 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --opt=none foo.carbon --target=x86_64-unknown-linux-gnu --phase=opt --dump-llvm-ir --exclude-dump-file-prefix=%{core}
+// ARGS: compile --optimize=none foo.carbon --target=x86_64-unknown-linux-gnu --phase=optimize --dump-llvm-ir --exclude-dump-file-prefix=%{core}
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/compile/opt/opt_none.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/compile/optimize/optimize_none.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/compile/opt/opt_none.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/compile/optimize/optimize_none.carbon
 
 // --- foo.carbon
 
@@ -21,12 +21,12 @@ fn NoInlineWithOz() -> i32 {
 }
 
 fn CallNoInlineWithOptSize() -> i32 {
-  // Should not be inlined with --opt=size, because the body is larger than the call.
+  // Should not be inlined with --optimize=size, because the body is larger than the call.
   return NoInlineWithOz();
 }
 
 fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
-  // Should be vectorized with --opt=speed, but not in other modes.
+  // Should be vectorized with --optimize=speed, but not in other modes.
   var n: i32 = 0;
   while (n < 65536) {
     (*a)[n] *= 2;

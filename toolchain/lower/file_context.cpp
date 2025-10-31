@@ -628,7 +628,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     // TODO: We should take the opt level from the SemIR file; it might not be
     // the same for all files in a compilation.
     if (context().opt_level() == Lower::OptimizationLevel::None) {
-      // --opt=none disables all optimizations for this function.
+      // --optimize=none disables all optimizations for this function.
       attr_builder.addAttribute(llvm::Attribute::OptimizeNone);
       attr_builder.addAttribute(llvm::Attribute::NoInline);
     } else {
@@ -638,7 +638,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
         attr_builder.addAttribute(llvm::Attribute::AlwaysInline);
       }
 
-      // Convert --opt=size into optsize and minsize.
+      // Convert --optimize=size into optsize and minsize.
       if (context().opt_level() == Lower::OptimizationLevel::Size) {
         attr_builder.addAttribute(llvm::Attribute::OptimizeForSize);
         attr_builder.addAttribute(llvm::Attribute::MinSize);
