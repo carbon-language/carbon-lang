@@ -176,12 +176,10 @@ auto File::CollectRefTagsNeeded() const -> Set<SemIR::InstId> {
       }
       case CARBON_KIND(SemIR::CalleeFunction fn): {
         auto function = functions_.Get(fn.function_id);
-        auto param_patterns =
-            inst_blocks_.GetOrEmpty(function.param_patterns_id);
-        // We intentionally omit the implicit param patterns because we don't
-        // require (or allow) `ref` tags on `self` arguments.
         auto args = inst_blocks_.GetOrEmpty(call_inst.args_id);
-        for (auto param_id : param_patterns) {
+        for (auto param_id : llvm::concat<const InstId>(
+                 inst_blocks_.GetOrEmpty(function.implicit_param_patterns_id),
+                 inst_blocks_.GetOrEmpty(function.param_patterns_id))) {
           if (auto ref_param_pattern =
                   insts_.TryGetAs<SemIR::RefParamPattern>(param_id)) {
             ref_tags_needed.Insert(args[ref_param_pattern->index.index]);

@@ -1390,15 +1390,24 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     return SemIR::ErrorInst::InstId;
   }
 
-  if (auto has_ref_tag = static_cast<bool>(context.ref_tags().Lookup(expr_id));
-      target.require_ref_tag && !has_ref_tag) {
-    CARBON_DIAGNOSTIC(RefParamNoRefTag, Error,
-                      "argument to `ref` parameter not marked with `ref`");
-    context.emitter().Emit(expr_id, RefParamNoRefTag);
-  } else if (!target.require_ref_tag && has_ref_tag) {
-    CARBON_DIAGNOSTIC(RefTagNoRefParam, Error,
-                      "`ref` tag not used with a parameter that requires it");
-    context.emitter().Emit(expr_id, RefTagNoRefParam);
+  bool has_ref_tag = false;
+  {
+    auto lookup_result = context.ref_tags().Lookup(expr_id);
+    if (lookup_result) {
+      has_ref_tag = true;
+      if (lookup_result.value() == Context::RefTag::Present &&
+          !target.require_ref_tag) {
+        CARBON_DIAGNOSTIC(RefTagNoRefParam, Error,
+                          "`ref` tag is not an argument to a `ref` parameter");
+        context.emitter().Emit(expr_id, RefTagNoRefParam);
+      }
+    } else {
+      if (target.require_ref_tag) {
+        CARBON_DIAGNOSTIC(RefParamNoRefTag, Error,
+                          "argument to `ref` parameter not marked with `ref`");
+        context.emitter().Emit(expr_id, RefParamNoRefTag);
+      }
+    }
   }
 
   // We can only perform initialization for complete, non-abstract types. Note
@@ -1531,6 +1540,9 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                                         {.type_id = target.type_id,
                                          .original_id = orig_expr_id,
                                          .result_id = expr_id});
+    if (has_ref_tag) {
+      context.ref_tags().Insert(expr_id, Context::RefTag::NotRequired);
+    }
   }
 
   // For `as`, don't perform any value category conversions. In particular, an

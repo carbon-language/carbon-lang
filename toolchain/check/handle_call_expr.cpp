@@ -42,7 +42,6 @@ auto HandleParseNode(Context& context, Parse::CallExprId node_id) -> bool {
 auto HandleParseNode(Context& context, Parse::RefTagId node_id) -> bool {
   auto expr_id = context.node_stack().Peek<Parse::NodeCategory::Expr>();
 
-  // FIXME can we diagnose if it's not paired with a ref pattern?
   if (SemIR::GetExprCategory(context.sem_ir(), expr_id) !=
       SemIR::ExprCategory::DurableRef) {
     CARBON_DIAGNOSTIC(
@@ -50,7 +49,7 @@ auto HandleParseNode(Context& context, Parse::RefTagId node_id) -> bool {
         "expression tagged with `ref` is not a durable reference");
     context.emitter().Emit(node_id, RefTagNotDurableRef);
   }
-  context.ref_tags().Insert(expr_id);
+  context.ref_tags().Insert(expr_id, Context::RefTag::Present);
   return true;
 }
 

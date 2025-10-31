@@ -189,8 +189,12 @@ class Context {
     return var_storage_map_;
   }
 
-  auto ref_tags() -> Set<SemIR::InstId>& { return ref_tags_; }
-  auto ref_tags() const -> const Set<SemIR::InstId>& { return ref_tags_; }
+  enum class RefTag { Present, NotRequired };
+
+  auto ref_tags() -> Map<SemIR::InstId, RefTag>& { return ref_tags_; }
+  auto ref_tags() const -> const Map<SemIR::InstId, RefTag>& {
+    return ref_tags_;
+  }
 
   // During Choice typechecking, each alternative turns into a name binding on
   // the Choice type, but this can't be done until the full Choice type is
@@ -433,8 +437,12 @@ class Context {
   // processing the enclosing full-pattern.
   Map<SemIR::InstId, SemIR::InstId> var_storage_map_;
 
-  // FIXME comments
-  Set<SemIR::InstId> ref_tags_;
+  // Insts in this map are syntactically permitted to be bound to a reference
+  // parameter, either because they've been explicitly tagged with `ref` in the
+  // source code, or because they appear in a position where that tag is not
+  // required, such as an operator operand (the RefTag value indicates which
+  // of those is the case).
+  Map<SemIR::InstId, RefTag> ref_tags_;
 
   // Each alternative in a Choice gets an entry here, they are stored in
   // declaration order. The vector is consumed and emptied at the end of the

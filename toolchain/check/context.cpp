@@ -82,12 +82,13 @@ auto Context::VerifyOnFinish() const -> void {
   if (!sem_ir_->has_errors()) {
     auto ref_tags_needed = sem_ir_->CollectRefTagsNeeded();
 
-    ref_tags_.ForEach([&ref_tags_needed](SemIR::InstId inst_id) {
-      CARBON_CHECK(ref_tags_needed.Erase(inst_id),
-                   "Inst has unnecessary `ref` tag: {0}", inst_id);
+    ref_tags_.ForEach([&ref_tags_needed](SemIR::InstId inst_id, RefTag kind) {
+      CARBON_CHECK(
+          ref_tags_needed.Erase(inst_id) || kind == RefTag::NotRequired,
+          "Inst has unnecessary `ref` tag: {0}", inst_id);
     });
-    ref_tags_needed.ForEach([](SemIR::InstId inst_id) {
-      CARBON_FATAL("Inst missing `ref` tag: {0}", inst_id);
+    ref_tags_needed.ForEach([this](SemIR::InstId inst_id) {
+      CARBON_FATAL("Inst missing `ref` tag: {0}", insts().Get(inst_id));
     });
   }
 #endif
