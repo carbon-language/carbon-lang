@@ -804,8 +804,8 @@ auto CompilationUnit::MakeTargetMachine() -> void {
   CARBON_CHECK(!target_machine_, "Should not call this multiple times");
 
   // Set the target on the module.
-  // TODO: Should we do this earlier? Perhaps Lower should be passed the target
-  // triple so it can create the module with this already set.
+  // TODO: We should do this earlier. Lower should be passed the target triple
+  // so it can create the module with this already set.
   llvm::Triple target_triple(options_->codegen_options.target);
   module_->setTargetTriple(target_triple);
 
