@@ -9,6 +9,7 @@
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/subst.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/named_constraint.h"
 #include "toolchain/sem_ir/type_iterator.h"
@@ -77,18 +78,9 @@ auto HandleParseNode(Context& context, Parse::RequireTypeImplsId node_id)
   return true;
 }
 
-static auto ConstraintHasInterface(Context& context,
-                                   SemIR::FacetType facet_type) -> bool {
-  const auto& facet_type_info =
-      context.facet_types().Get(facet_type.facet_type_id);
-
-  return !facet_type_info.extend_constraints.empty() ||
-         !facet_type_info.self_impls_constraints.empty();
-}
-
-static auto TypeStructureReferencesSelf(Context& context,
-                                        SemIR::TypeInstId inst_id,
-                                        SemIR::FacetType facet_type) -> bool {
+static auto TypeStructureReferencesSelf(
+    Context& context, SemIR::TypeInstId inst_id,
+    const SemIR::IdentifiedFacetType& identified_facet_type) -> bool {
   if (inst_id == SemIR::ErrorInst::TypeInstId) {
     // Don't generate more diagnostics.
     return true;
@@ -127,24 +119,15 @@ static auto TypeStructureReferencesSelf(Context& context,
     }
   }
 
-  const auto& facet_type_info =
-      context.facet_types().Get(facet_type.facet_type_id);
-  for (auto extend : facet_type_info.extend_constraints) {
+  for (auto specific_interface : identified_facet_type.required_interfaces()) {
     SemIR::TypeIterator type_iter(&context.sem_ir());
-    type_iter.Add(extend);
-    if (!find_self(type_iter)) {
-      return false;
-    }
-  }
-  for (auto self_impls : facet_type_info.self_impls_constraints) {
-    SemIR::TypeIterator type_iter(&context.sem_ir());
-    type_iter.Add(self_impls);
-    if (!find_self(type_iter)) {
-      return false;
+    type_iter.Add(specific_interface);
+    if (find_self(type_iter)) {
+      return true;
     }
   }
 
-  return true;
+  return false;
 }
 
 auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
@@ -152,36 +135,6 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
       context.node_stack().PopExprWithNodeId();
   auto [self_node_id, self_inst_id] =
       context.node_stack().PopWithNodeId<Parse::NodeCategory::RequireImpls>();
-
-  auto constraint_constant_value_inst_id =
-      context.constant_values().GetConstantInstId(constraint_inst_id);
-  auto constraint_facet_type = context.insts().TryGetAs<SemIR::FacetType>(
-      constraint_constant_value_inst_id);
-  if (constraint_constant_value_inst_id == SemIR::ErrorInst::InstId) {
-    constraint_inst_id = self_inst_id = SemIR::ErrorInst::TypeInstId;
-  } else if (!constraint_facet_type) {
-    CARBON_DIAGNOSTIC(
-        RequireImplsMissingFacetType, Error,
-        "`require` declaration constrained by a non-facet type; "
-        "expected an `interface` or `constraint` name after `impls`");
-    context.emitter().Emit(constraint_node_id, RequireImplsMissingFacetType);
-    constraint_inst_id = self_inst_id = SemIR::ErrorInst::TypeInstId;
-  } else if (!ConstraintHasInterface(context, *constraint_facet_type)) {
-    CARBON_DIAGNOSTIC(
-        RequireImplsHasEmptyFacetType, Error,
-        "`require` declaration constrained by an empty constraint; "
-        "expected an `interface` or a non-empty `constraint`");
-    context.emitter().Emit(constraint_node_id, RequireImplsHasEmptyFacetType);
-    constraint_inst_id = self_inst_id = SemIR::ErrorInst::TypeInstId;
-  } else if (!TypeStructureReferencesSelf(context, self_inst_id,
-                                          *constraint_facet_type)) {
-    CARBON_DIAGNOSTIC(RequireImplsMissingSelf, Error,
-                      "no `Self` reference found in `require` declaration; "
-                      "`Self` must appear in the self-type or as a generic "
-                      "parameter for each `interface` or `constraint`");
-    context.emitter().Emit(node_id, RequireImplsMissingSelf);
-    constraint_inst_id = self_inst_id = SemIR::ErrorInst::TypeInstId;
-  }
 
   [[maybe_unused]] auto decl_block_id = context.inst_block_stack().Pop();
 
@@ -192,8 +145,44 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
 
   auto scope_inst_id =
       context.node_stack().Pop<Parse::NodeKind::RequireIntroducer>();
+
+  auto constraint_constant_value_inst_id =
+      context.constant_values().GetConstantInstId(constraint_inst_id);
+  auto constraint_facet_type = context.insts().TryGetAs<SemIR::FacetType>(
+      constraint_constant_value_inst_id);
+  if (!constraint_facet_type) {
+    if (constraint_constant_value_inst_id != SemIR::ErrorInst::InstId) {
+      CARBON_DIAGNOSTIC(
+          RequireImplsMissingFacetType, Error,
+          "`require` declaration constrained by a non-facet type; "
+          "expected an `interface` or `constraint` name after `impls`");
+      context.emitter().Emit(constraint_node_id, RequireImplsMissingFacetType);
+    }
+    // Can't continue without a constraint to use.
+    return true;
+  }
+
+  auto identified_facet_type_id =
+      RequireIdentifiedFacetType(context, *constraint_facet_type);
+  const auto& identified =
+      context.identified_facet_types().Get(identified_facet_type_id);
+
+  if (!TypeStructureReferencesSelf(context, self_inst_id, identified)) {
+    CARBON_DIAGNOSTIC(RequireImplsMissingSelf, Error,
+                      "no `Self` reference found in `require` declaration; "
+                      "`Self` must appear in the self-type or as a generic "
+                      "parameter for each `interface` or `constraint`");
+    context.emitter().Emit(node_id, RequireImplsMissingSelf);
+    return true;
+  }
+
   if (scope_inst_id == SemIR::ErrorInst::InstId) {
     // `require` is in the wrong scope.
+    return true;
+  }
+
+  if (identified.required_interfaces().empty()) {
+    // A `require T impls type` adds no actual constraints.
     return true;
   }
 

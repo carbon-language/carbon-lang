@@ -144,19 +144,37 @@ constraint Z {
 }
 //@dump-sem-ir-end
 
-// --- fail_require_impls_self_specific.carbon
+// --- todo_fail_require_impls_incomplete_constraint.carbon
+library "[[@TEST_NAME]]";
+
+constraint Y;
+
+//@dump-sem-ir-begin
+constraint Z {
+  // TODO: This should fail since `Y` cannot be identified.
+  require impls Y;
+}
+//@dump-sem-ir-end
+
+// --- todo_fail_require_impls_incomplete_self.carbon
+library "[[@TEST_NAME]]";
+
+//@dump-sem-ir-begin
+constraint Z {
+  // TODO: This should fail since `Z` cannot be identified.
+  require impls Z;
+}
+//@dump-sem-ir-end
+
+// --- fail_require_impls_incomplete_self_specific.carbon
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
 constraint Z(T:! type) {
-  // Z has no requirements yet, so requiring itself on T adds nothing. We don't
-  // want an error saying `Self` was not used (since the resulting facet type of
-  // `Z(Self)` is empty, dropping the usage of `Self`), as that's confusing. So
-  // we get an error that the constraint is not doing anything.
-  //
-  // CHECK:STDERR: fail_require_impls_self_specific.carbon:[[@LINE+4]]:19: error: `require` declaration constrained by an empty constraint; expected an `interface` or a non-empty `constraint` [RequireImplsHasEmptyFacetType]
+  // TODO: This should fail since `Z` cannot be identified.
+  // CHECK:STDERR: fail_require_impls_incomplete_self_specific.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic parameter for each `interface` or `constraint` [RequireImplsMissingSelf]
   // CHECK:STDERR:   require T impls Z(Self);
-  // CHECK:STDERR:                   ^~~~~~~
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   require T impls Z(Self);
 }
@@ -191,10 +209,6 @@ interface Y(T:! type) {}
 constraint Z(T:! type) {
   // Self is in one interface but not the other.
   //
-  // CHECK:STDERR: fail_require_impls_without_self_in_one_interface.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic parameter for each `interface` or `constraint` [RequireImplsMissingSelf]
-  // CHECK:STDERR:   require T impls Y(Self) & Y({});
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   require T impls Y(Self) & Y({});
 }
 
@@ -371,7 +385,49 @@ constraint Z {
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_require_impls_self_specific.carbon
+// CHECK:STDOUT: --- todo_fail_require_impls_incomplete_constraint.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Z.decl: type = constraint_decl @Z [concrete = constants.%type] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: constraint @Z {
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Y = <poisoned>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- todo_fail_require_impls_incomplete_self.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Z.decl: type = constraint_decl @Z [concrete = constants.%type] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: constraint @Z {
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .Z = <poisoned>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_require_impls_incomplete_self_specific.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]

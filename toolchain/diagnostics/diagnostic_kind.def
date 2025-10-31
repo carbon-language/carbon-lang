@@ -353,7 +353,6 @@ CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessNote)
 
 // Require checking.
-CARBON_DIAGNOSTIC_KIND(RequireImplsHasEmptyFacetType)
 CARBON_DIAGNOSTIC_KIND(RequireImplsMissingFacetType)
 CARBON_DIAGNOSTIC_KIND(RequireImplsMissingSelf)
 CARBON_DIAGNOSTIC_KIND(RequireInWrongScope)
