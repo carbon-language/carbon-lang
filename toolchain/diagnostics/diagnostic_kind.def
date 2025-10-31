@@ -312,6 +312,10 @@ CARBON_DIAGNOSTIC_KIND(ExportPrevious)
 CARBON_DIAGNOSTIC_KIND(InterfaceForwardDeclaredHere)
 CARBON_DIAGNOSTIC_KIND(InterfaceIncompleteWithinDefinition)
 
+// Named constraint checking.
+CARBON_DIAGNOSTIC_KIND(NamedConstraintForwardDeclaredHere)
+CARBON_DIAGNOSTIC_KIND(NamedConstraintIncompleteWithinDefinition)
+
 // Impl checking.
 CARBON_DIAGNOSTIC_KIND(AssociatedConstantHere)
 CARBON_DIAGNOSTIC_KIND(AssociatedFunctionHere)
@@ -327,12 +331,11 @@ CARBON_DIAGNOSTIC_KIND(ImplAsNonFacetType)
 CARBON_DIAGNOSTIC_KIND(ImplAsOutsideClass)
 CARBON_DIAGNOSTIC_KIND(ImplAssociatedConstantNeedsValue)
 CARBON_DIAGNOSTIC_KIND(ImplFunctionWithNonFunction)
-CARBON_DIAGNOSTIC_KIND(ImplLookupCycle)
-CARBON_DIAGNOSTIC_KIND(ImplLookupCycleNote)
 CARBON_DIAGNOSTIC_KIND(ImplMissingDefinition)
 CARBON_DIAGNOSTIC_KIND(ImplMissingFunction)
 CARBON_DIAGNOSTIC_KIND(ImplPreviousDefinition)
 CARBON_DIAGNOSTIC_KIND(ImplRedefinition)
+CARBON_DIAGNOSTIC_KIND(ImplOfUnidentifiedFacetType)
 CARBON_DIAGNOSTIC_KIND(ImplOfNotOneInterface)
 CARBON_DIAGNOSTIC_KIND(ImplUnusedBinding)
 CARBON_DIAGNOSTIC_KIND(PoisonedImplLookupConcreteResult)
@@ -351,6 +354,9 @@ CARBON_DIAGNOSTIC_KIND(FinalImplOverlapsDifferentFileNote)
 // Impl lookup.
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessNote)
+CARBON_DIAGNOSTIC_KIND(ImplLookupCycle)
+CARBON_DIAGNOSTIC_KIND(ImplLookupCycleNote)
+CARBON_DIAGNOSTIC_KIND(ImplLookupInIncompleteFacetType)
 
 // Let declaration checking.
 CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)

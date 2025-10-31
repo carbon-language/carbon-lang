@@ -893,12 +893,21 @@ auto InstNamer::NamingContext::NameInst() -> void {
       bool has_where = facet_type_info.other_requirements ||
                        !facet_type_info.builtin_constraint_mask.empty() ||
                        !facet_type_info.self_impls_constraints.empty() ||
+                       !facet_type_info.self_impls_named_constraints.empty() ||
                        !facet_type_info.rewrite_constraints.empty();
-      if (facet_type_info.extend_constraints.size() == 1) {
+      if (facet_type_info.extend_constraints.size() == 1 &&
+          facet_type_info.extend_named_constraints.empty()) {
         AddEntityNameAndMaybePush(
             facet_type_info.extend_constraints.front().interface_id,
             has_where ? "_where.type" : ".type");
-      } else if (facet_type_info.extend_constraints.empty()) {
+      } else if (facet_type_info.extend_named_constraints.size() == 1 &&
+                 facet_type_info.extend_constraints.empty()) {
+        AddEntityNameAndMaybePush(
+            facet_type_info.extend_named_constraints.front()
+                .named_constraint_id,
+            has_where ? "_where.type" : ".type");
+      } else if (facet_type_info.extend_constraints.empty() &&
+                 facet_type_info.extend_named_constraints.empty()) {
         AddInstName(has_where ? "type_where" : "type");
       } else {
         AddInstName("facet_type");

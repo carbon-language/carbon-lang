@@ -45,6 +45,7 @@ class RelationalValueStore {
   // Given the related ID and a value, stores the value and returns a mapped ID
   // to reference it in the store.
   auto Add(RelatedIdType related_id, ValueType value) -> IdT {
+    CARBON_DCHECK(related_id.index >= 0, "{0}", related_id);
     auto related_index = related_store_->GetRawIndex(related_id);
     if (static_cast<size_t>(related_index) >= values_.size()) {
       values_.resize(related_index + 1);
@@ -59,6 +60,7 @@ class RelationalValueStore {
   // Returns the ID of a value in the store if the `related_id` was previously
   // used to add a value to the store, or None.
   auto TryGetId(RelatedIdType related_id) const -> IdT {
+    CARBON_DCHECK(related_id.index >= 0, "{0}", related_id);
     auto related_index = related_store_->GetRawIndex(related_id);
     if (static_cast<size_t>(related_index) >= values_.size()) {
       return IdT::None;
@@ -72,6 +74,7 @@ class RelationalValueStore {
 
   // Returns a value for an ID.
   auto Get(IdT id) const -> ConstRefType {
+    CARBON_DCHECK(id.index >= 0, "{0}", id);
     auto index = related_store_->GetIdTag().Remove(id.index);
     CARBON_DCHECK(index >= 0, "{0}", id);
     return *values_[index];

@@ -19,6 +19,7 @@ cc_library(
         "inst_kind.h",
         "singleton_insts.h",
         "specific_interface.h",
+        "specific_named_constraint.h",
         "typed_insts.h",
     ],
     textual_hdrs = ["inst_kind.def"],

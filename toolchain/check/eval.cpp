@@ -623,19 +623,36 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
       .other_requirements = orig.other_requirements};
 
   info.extend_constraints.reserve(orig.extend_constraints.size());
-  for (const auto& interface : orig.extend_constraints) {
+  for (const auto& extend : orig.extend_constraints) {
     info.extend_constraints.push_back(
-        {.interface_id = interface.interface_id,
+        {.interface_id = extend.interface_id,
          .specific_id =
-             GetConstantValue(eval_context, interface.specific_id, phase)});
+             GetConstantValue(eval_context, extend.specific_id, phase)});
   }
 
   info.self_impls_constraints.reserve(orig.self_impls_constraints.size());
-  for (const auto& interface : orig.self_impls_constraints) {
+  for (const auto& self_impls : orig.self_impls_constraints) {
     info.self_impls_constraints.push_back(
-        {.interface_id = interface.interface_id,
+        {.interface_id = self_impls.interface_id,
          .specific_id =
-             GetConstantValue(eval_context, interface.specific_id, phase)});
+             GetConstantValue(eval_context, self_impls.specific_id, phase)});
+  }
+
+  info.extend_named_constraints.reserve(orig.extend_named_constraints.size());
+  for (const auto& extend : orig.extend_named_constraints) {
+    info.extend_named_constraints.push_back(
+        {.named_constraint_id = extend.named_constraint_id,
+         .specific_id =
+             GetConstantValue(eval_context, extend.specific_id, phase)});
+  }
+
+  info.self_impls_named_constraints.reserve(
+      orig.self_impls_named_constraints.size());
+  for (const auto& self_impls : orig.self_impls_named_constraints) {
+    info.self_impls_named_constraints.push_back(
+        {.named_constraint_id = self_impls.named_constraint_id,
+         .specific_id =
+             GetConstantValue(eval_context, self_impls.specific_id, phase)});
   }
 
   // Rewrite constraints are resolved first before replacing them with their
