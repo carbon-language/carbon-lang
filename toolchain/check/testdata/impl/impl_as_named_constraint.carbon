@@ -114,8 +114,7 @@ library "[[@TEST_NAME]]";
 
 interface A;
 constraint B {
-  // TODO: This should work as we only require `A` to be identified here.
-  //
+  // TODO: This should fail because A is incomplete.
   // CHECK:STDERR: fail_one_declared_interface_in_constraint_with_rewrite.carbon:[[@LINE+4]]:3: error: semantics TODO: `require` [SemanticsTodo]
   // CHECK:STDERR:   require impls A where .X = {};
   // CHECK:STDERR:   ^~~~~~~
@@ -125,5 +124,4 @@ constraint B {
 
 class C {}
 
-// TODO: This should fail since B is not complete.
 impl C as B {}
