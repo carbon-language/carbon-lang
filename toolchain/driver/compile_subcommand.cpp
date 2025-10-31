@@ -1027,6 +1027,31 @@ auto CompilationUnit::LogCall(llvm::StringLiteral logging_label,
   CARBON_VLOG("*** {0} done ***\n", logging_label);
 }
 
+// Get the `-O` flag corresponding to an optimization level.
+// TODO: Move this into LLVM.
+static auto GetDashOFlag(llvm::OptimizationLevel opt_level)
+    -> llvm::StringLiteral {
+  switch (opt_level.getSizeLevel()) {
+    case 0:
+      switch (opt_level.getSpeedupLevel()) {
+        case 0:
+          return "-O0";
+        case 1:
+          return "-O1";
+        case 2:
+          return "-O2";
+        case 3:
+          return "-O3";
+      }
+      break;
+    case 1:
+      return "-Os";
+    case 2:
+      return "-Oz";
+  }
+  CARBON_FATAL("Unexpected optimization level");
+}
+
 auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   if (!ValidateOptions(driver_env.emitter)) {
     return {.success = false};
@@ -1060,6 +1085,10 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
         // defaults to be more stable.
         // TODO: Decide if we want this.
         "-fPIE",
+        // Propagate our optimization level to Clang as a default. This can be
+        // overridden by Clang arguments, but doing so will only have an effect
+        // if those arguments affect Clang's IR, not its pass pipeline.
+        GetDashOFlag(options_.opt_level).str(),
     };
     if (driver_env.fuzzing && !options_.clang_args.empty()) {
       // Parsing specific Clang arguments can reach deep into
@@ -1075,6 +1104,9 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     if (!clang_invocation) {
       return {.success = false};
     }
+    // We will run our own pass pipeline over the IR in the `opt` phase, so
+    // disable Clang's pipeline to avoid optimizing C++ code twice.
+    clang_invocation->getCodeGenOpts().DisableLLVMPasses = true;
   }
 
   // Find the files comprising the prelude if we are importing it.
