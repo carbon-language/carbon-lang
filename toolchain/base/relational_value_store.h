@@ -26,7 +26,7 @@ namespace Carbon {
 //
 // When adding to the store, the user provides the related
 // `RelatedStoreT::IdType` along with the value being stored, and gets back the
-// ID of the value in the store.
+// ID of the value in the store. The ids share an IdTag with the related store.
 //
 // This store requires more storage space than normal ValueStore does, as it
 // requires storing a bit for presence of each `RelatedStore::IdType`. And it
@@ -45,7 +45,8 @@ class RelationalValueStore {
   // Given the related ID and a value, stores the value and returns a mapped ID
   // to reference it in the store.
   auto Add(RelatedIdType related_id, ValueType value) -> IdT {
-    auto related_index = related_store_->GetRawIndex(related_id);
+    auto related_index = related_store_->TryGetRawIndex(related_id);
+    CARBON_DCHECK(related_index >= 0, "{0}", related_id);
     if (static_cast<size_t>(related_index) >= values_.size()) {
       values_.resize(related_index + 1);
     }
@@ -53,13 +54,14 @@ class RelationalValueStore {
     CARBON_CHECK(!opt.has_value(),
                  "Add with `related_id` that was already added to the store");
     opt.emplace(std::move(value));
-    return IdT(related_store_->GetIdTag().Apply(related_index));
+    return IdT(related_id.index);
   }
 
   // Returns the ID of a value in the store if the `related_id` was previously
   // used to add a value to the store, or None.
   auto TryGetId(RelatedIdType related_id) const -> IdT {
-    auto related_index = related_store_->GetRawIndex(related_id);
+    auto related_index = related_store_->TryGetRawIndex(related_id);
+    CARBON_DCHECK(related_index >= 0, "{0}", related_id);
     if (static_cast<size_t>(related_index) >= values_.size()) {
       return IdT::None;
     }
@@ -67,12 +69,12 @@ class RelationalValueStore {
     if (!opt.has_value()) {
       return IdT::None;
     }
-    return IdT(related_store_->GetIdTag().Apply(related_index));
+    return IdT(related_id.index);
   }
 
   // Returns a value for an ID.
   auto Get(IdT id) const -> ConstRefType {
-    auto index = related_store_->GetIdTag().Remove(id.index);
+    auto index = related_store_->TryGetRawIndex(RelatedIdType(id.index));
     CARBON_DCHECK(index >= 0, "{0}", id);
     return *values_[index];
   }

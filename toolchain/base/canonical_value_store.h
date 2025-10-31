@@ -69,9 +69,11 @@ class CanonicalValueStore {
     mem_usage.Add(MemUsage::ConcatLabel(label, "set_"), bytes, bytes);
   }
 
-  auto GetRawIndex(IdT id) const -> int32_t { return values_.GetRawIndex(id); }
-
   auto GetIdTag() const -> IdTag { return values_.GetIdTag(); }
+  auto GetRawIndex(IdT id) const -> int32_t { return values_.GetRawIndex(id); }
+  auto TryGetRawIndex(IdT id) const -> int32_t {
+    return values_.TryGetRawIndex(id);
+  }
 
  private:
   class KeyContext;

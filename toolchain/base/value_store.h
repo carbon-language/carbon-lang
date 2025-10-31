@@ -209,15 +209,17 @@ class ValueStore
 
   // Returns a mutable value for an ID.
   auto Get(IdType id) -> RefType {
-    CARBON_DCHECK(id.index >= 0, "{0}", id);
-    auto [chunk_index, pos] = IdToChunkIndices(id);
+    auto raw_index = TryGetRawIndex(id);
+    CARBON_DCHECK(raw_index >= 0, "{0}", id);
+    auto [chunk_index, pos] = RawIndexToChunkIndices(raw_index);
     return chunks_[chunk_index].Get(pos);
   }
 
   // Returns the value for an ID.
   auto Get(IdType id) const -> ConstRefType {
-    CARBON_DCHECK(id.index >= 0, "{0}", id);
-    auto [chunk_index, pos] = IdToChunkIndices(id);
+    auto raw_index = TryGetRawIndex(id);
+    CARBON_DCHECK(raw_index >= 0, "{0}", id);
+    auto [chunk_index, pos] = RawIndexToChunkIndices(raw_index);
     return chunks_[chunk_index].Get(pos);
   }
 
@@ -310,9 +312,18 @@ class ValueStore
   }
 
   auto GetIdTag() const -> IdTag { return tag_; }
+  // Removes the IdTag from the `id` and returns the absolute index into the
+  // store. Not valid to call for negative values, which are not part of the
+  // store.
   auto GetRawIndex(IdT id) const -> int32_t {
+    auto index = TryGetRawIndex(id);
+    CARBON_DCHECK(index >= 0);
+    return index;
+  }
+  // Like GetRawIndex() but accepts negative values like `None` and passes them
+  // through, even though they would not be a valid index into an array.
+  auto TryGetRawIndex(IdT id) const -> int32_t {
     auto index = tag_.Remove(id.index);
-    CARBON_DCHECK(index >= 0, "{0}", index);
 #ifndef NDEBUG
     if (index >= size_) {
       // Attempt to decompose id.index to include extra detail in the check
@@ -468,12 +479,6 @@ class ValueStore
     // The index into the chunk is the low bits.
     auto pos = index & ((1 << LowBits) - 1);
     return {chunk, pos};
-  }
-
-  // Converts an id into an index into the set of chunks, and an offset into
-  // that specific chunk.
-  auto IdToChunkIndices(IdType id) const -> std::pair<int32_t, int32_t> {
-    return RawIndexToChunkIndices(GetRawIndex(id));
   }
 
   // Number of elements added to the store. The number should never exceed what
