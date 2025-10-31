@@ -259,6 +259,8 @@ interface Y {
 
 //@dump-sem-ir-begin
 interface Z(T:! type) {
+  // This is okay because an interface Z can be identified before it's complete,
+  // unlike a named constraint.
   require impls Z(T);
 }
 //@dump-sem-ir-end
