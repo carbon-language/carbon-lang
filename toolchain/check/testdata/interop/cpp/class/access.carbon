@@ -1754,7 +1754,6 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
 // CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
-// CHECK:STDOUT:   %pattern_type.259: type = pattern_type %ptr.5c7 [concrete]
 // CHECK:STDOUT:   %S.instance_fn.cpp_overload_set.type: type = cpp_overload_set_type @S.instance_fn.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %S.instance_fn.cpp_overload_set.value: %S.instance_fn.cpp_overload_set.type = cpp_overload_set_value @S.instance_fn.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %pattern_type.7da: type = pattern_type %S [concrete]
@@ -1774,12 +1773,11 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
 // CHECK:STDOUT:   %S.instance_fn.cpp_overload_set.value: %S.instance_fn.cpp_overload_set.type = cpp_overload_set_value @S.instance_fn.cpp_overload_set [concrete = constants.%S.instance_fn.cpp_overload_set.value]
 // CHECK:STDOUT:   %S.instance_fn.decl: %S.instance_fn.type = fn_decl @S.instance_fn [concrete = constants.%S.instance_fn] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.259 = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.259 = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc8: %pattern_type.7da = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.7da = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.7da = ref_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.5c7 = value_param call_param0
-// CHECK:STDOUT:     %self: %ptr.5c7 = value_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %S = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %S = ref_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.static_fn.cpp_overload_set.value: %S.static_fn.cpp_overload_set.type = cpp_overload_set_value @S.static_fn.cpp_overload_set [concrete = constants.%S.static_fn.cpp_overload_set.value]
 // CHECK:STDOUT:   %S.static_fn.decl: %S.static_fn.type = fn_decl @S.static_fn [concrete = constants.%S.static_fn] {} {}
@@ -1791,8 +1789,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %.loc8: ref %S = deref %s.ref
 // CHECK:STDOUT:   %instance_fn.ref: %S.instance_fn.cpp_overload_set.type = name_ref instance_fn, imports.%S.instance_fn.cpp_overload_set.value [concrete = constants.%S.instance_fn.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8, %instance_fn.ref
-// CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of %.loc8
-// CHECK:STDOUT:   %S.instance_fn.call: init %empty_tuple.type = call imports.%S.instance_fn.decl(%addr)
+// CHECK:STDOUT:   %S.instance_fn.call: init %empty_tuple.type = call imports.%S.instance_fn.decl(%.loc8)
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %S.ref.loc9: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   %static_fn.ref: %S.static_fn.cpp_overload_set.type = name_ref static_fn, imports.%S.static_fn.cpp_overload_set.value [concrete = constants.%S.static_fn.cpp_overload_set.value]
@@ -2527,12 +2524,9 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %Base.ProtectedStatic: %Base.ProtectedStatic.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Public.PublicInstance.cpp_overload_set.type: type = cpp_overload_set_type @Public.PublicInstance.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Public.PublicInstance.cpp_overload_set.value: %Public.PublicInstance.cpp_overload_set.type = cpp_overload_set_value @Public.PublicInstance.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ptr.fb2: type = ptr_type %Base [concrete]
-// CHECK:STDOUT:   %pattern_type.72a: type = pattern_type %ptr.fb2 [concrete]
 // CHECK:STDOUT:   %pattern_type.a3a: type = pattern_type %Base [concrete]
 // CHECK:STDOUT:   %Base.PublicInstance.type: type = fn_type @Base.PublicInstance [concrete]
 // CHECK:STDOUT:   %Base.PublicInstance: %Base.PublicInstance.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.1e8: type = ptr_type %Public [concrete]
 // CHECK:STDOUT:   %Public.ProtectedInstance.cpp_overload_set.type: type = cpp_overload_set_type @Public.ProtectedInstance.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Public.ProtectedInstance.cpp_overload_set.value: %Public.ProtectedInstance.cpp_overload_set.type = cpp_overload_set_value @Public.ProtectedInstance.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Base.ProtectedInstance.type: type = fn_type @Base.ProtectedInstance [concrete]
@@ -2551,21 +2545,19 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %Base.ProtectedStatic.decl: %Base.ProtectedStatic.type = fn_decl @Base.ProtectedStatic [concrete = constants.%Base.ProtectedStatic] {} {}
 // CHECK:STDOUT:   %Public.PublicInstance.cpp_overload_set.value: %Public.PublicInstance.cpp_overload_set.type = cpp_overload_set_value @Public.PublicInstance.cpp_overload_set [concrete = constants.%Public.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %Base.PublicInstance.decl: %Base.PublicInstance.type = fn_decl @Base.PublicInstance [concrete = constants.%Base.PublicInstance] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.72a = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.72a = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc24: %pattern_type.a3a = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.a3a = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.a3a = ref_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.fb2 = value_param call_param0
-// CHECK:STDOUT:     %self: %ptr.fb2 = value_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Base = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Base = ref_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Public.ProtectedInstance.cpp_overload_set.value: %Public.ProtectedInstance.cpp_overload_set.type = cpp_overload_set_value @Public.ProtectedInstance.cpp_overload_set [concrete = constants.%Public.ProtectedInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %Base.ProtectedInstance.decl: %Base.ProtectedInstance.type = fn_decl @Base.ProtectedInstance [concrete = constants.%Base.ProtectedInstance] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.72a = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.72a = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc26: %pattern_type.a3a = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.a3a = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.a3a = ref_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.fb2 = value_param call_param0
-// CHECK:STDOUT:     %self: %ptr.fb2 = value_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Base = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Base = ref_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2607,21 +2599,15 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %instance.ref.loc24: ref %Public = name_ref instance, %instance
 // CHECK:STDOUT:   %PublicInstance.ref: %Public.PublicInstance.cpp_overload_set.type = name_ref PublicInstance, imports.%Public.PublicInstance.cpp_overload_set.value [concrete = constants.%Public.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc24: <bound method> = bound_method %instance.ref.loc24, %PublicInstance.ref
-// CHECK:STDOUT:   %addr.loc24_5.1: %ptr.1e8 = addr_of %instance.ref.loc24
-// CHECK:STDOUT:   %.loc24_5.1: ref %Public = deref %addr.loc24_5.1
-// CHECK:STDOUT:   %.loc24_5.2: ref %Base = class_element_access %.loc24_5.1, element0
-// CHECK:STDOUT:   %addr.loc24_5.2: %ptr.fb2 = addr_of %.loc24_5.2
-// CHECK:STDOUT:   %.loc24_5.3: %ptr.fb2 = converted %addr.loc24_5.1, %addr.loc24_5.2
-// CHECK:STDOUT:   %Base.PublicInstance.call: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc24_5.3)
+// CHECK:STDOUT:   %.loc24_5.1: ref %Base = class_element_access %instance.ref.loc24, element0
+// CHECK:STDOUT:   %.loc24_5.2: ref %Base = converted %instance.ref.loc24, %.loc24_5.1
+// CHECK:STDOUT:   %Base.PublicInstance.call: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc24_5.2)
 // CHECK:STDOUT:   %instance.ref.loc26: ref %Public = name_ref instance, %instance
 // CHECK:STDOUT:   %ProtectedInstance.ref: %Public.ProtectedInstance.cpp_overload_set.type = name_ref ProtectedInstance, imports.%Public.ProtectedInstance.cpp_overload_set.value [concrete = constants.%Public.ProtectedInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %instance.ref.loc26, %ProtectedInstance.ref
-// CHECK:STDOUT:   %addr.loc26_5.1: %ptr.1e8 = addr_of %instance.ref.loc26
-// CHECK:STDOUT:   %.loc26_5.1: ref %Public = deref %addr.loc26_5.1
-// CHECK:STDOUT:   %.loc26_5.2: ref %Base = class_element_access %.loc26_5.1, element0
-// CHECK:STDOUT:   %addr.loc26_5.2: %ptr.fb2 = addr_of %.loc26_5.2
-// CHECK:STDOUT:   %.loc26_5.3: %ptr.fb2 = converted %addr.loc26_5.1, %addr.loc26_5.2
-// CHECK:STDOUT:   %Base.ProtectedInstance.call: init %empty_tuple.type = call imports.%Base.ProtectedInstance.decl(%.loc26_5.3)
+// CHECK:STDOUT:   %.loc26_5.1: ref %Base = class_element_access %instance.ref.loc26, element0
+// CHECK:STDOUT:   %.loc26_5.2: ref %Base = converted %instance.ref.loc26, %.loc26_5.1
+// CHECK:STDOUT:   %Base.ProtectedInstance.call: init %empty_tuple.type = call imports.%Base.ProtectedInstance.decl(%.loc26_5.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2637,21 +2623,15 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %instance.ref.loc36: ref %Public = name_ref instance, %instance
 // CHECK:STDOUT:   %PublicInstance.ref.loc36: %Public.PublicInstance.cpp_overload_set.type = name_ref PublicInstance, imports.%Public.PublicInstance.cpp_overload_set.value [concrete = constants.%Public.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc36: <bound method> = bound_method %instance.ref.loc36, %PublicInstance.ref.loc36
-// CHECK:STDOUT:   %addr.loc36_3.1: %ptr.1e8 = addr_of %instance.ref.loc36
-// CHECK:STDOUT:   %.loc36_3.1: ref %Public = deref %addr.loc36_3.1
-// CHECK:STDOUT:   %.loc36_3.2: ref %Base = class_element_access %.loc36_3.1, element0
-// CHECK:STDOUT:   %addr.loc36_3.2: %ptr.fb2 = addr_of %.loc36_3.2
-// CHECK:STDOUT:   %.loc36_3.3: %ptr.fb2 = converted %addr.loc36_3.1, %addr.loc36_3.2
-// CHECK:STDOUT:   %Base.PublicInstance.call.loc36: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc36_3.3)
+// CHECK:STDOUT:   %.loc36_3.1: ref %Base = class_element_access %instance.ref.loc36, element0
+// CHECK:STDOUT:   %.loc36_3.2: ref %Base = converted %instance.ref.loc36, %.loc36_3.1
+// CHECK:STDOUT:   %Base.PublicInstance.call.loc36: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc36_3.2)
 // CHECK:STDOUT:   %instance.ref.loc37: ref %Public = name_ref instance, %instance
 // CHECK:STDOUT:   %PublicInstance.ref.loc37: %Public.PublicInstance.cpp_overload_set.type = name_ref PublicInstance, imports.%Public.PublicInstance.cpp_overload_set.value [concrete = constants.%Public.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc37: <bound method> = bound_method %instance.ref.loc37, %PublicInstance.ref.loc37
-// CHECK:STDOUT:   %addr.loc37_3.1: %ptr.1e8 = addr_of %instance.ref.loc37
-// CHECK:STDOUT:   %.loc37_3.1: ref %Public = deref %addr.loc37_3.1
-// CHECK:STDOUT:   %.loc37_3.2: ref %Base = class_element_access %.loc37_3.1, element0
-// CHECK:STDOUT:   %addr.loc37_3.2: %ptr.fb2 = addr_of %.loc37_3.2
-// CHECK:STDOUT:   %.loc37_3.3: %ptr.fb2 = converted %addr.loc37_3.1, %addr.loc37_3.2
-// CHECK:STDOUT:   %Base.PublicInstance.call.loc37: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc37_3.3)
+// CHECK:STDOUT:   %.loc37_3.1: ref %Base = class_element_access %instance.ref.loc37, element0
+// CHECK:STDOUT:   %.loc37_3.2: ref %Base = converted %instance.ref.loc37, %.loc37_3.1
+// CHECK:STDOUT:   %Base.PublicInstance.call.loc37: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc37_3.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2703,12 +2683,9 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %Base.ProtectedStatic: %Base.ProtectedStatic.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Protected.PublicInstance.cpp_overload_set.type: type = cpp_overload_set_type @Protected.PublicInstance.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Protected.PublicInstance.cpp_overload_set.value: %Protected.PublicInstance.cpp_overload_set.type = cpp_overload_set_value @Protected.PublicInstance.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ptr.fb2: type = ptr_type %Base [concrete]
-// CHECK:STDOUT:   %pattern_type.72a: type = pattern_type %ptr.fb2 [concrete]
 // CHECK:STDOUT:   %pattern_type.a3a: type = pattern_type %Base [concrete]
 // CHECK:STDOUT:   %Base.PublicInstance.type: type = fn_type @Base.PublicInstance [concrete]
 // CHECK:STDOUT:   %Base.PublicInstance: %Base.PublicInstance.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.f97: type = ptr_type %Protected [concrete]
 // CHECK:STDOUT:   %Protected.ProtectedInstance.cpp_overload_set.type: type = cpp_overload_set_type @Protected.ProtectedInstance.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Protected.ProtectedInstance.cpp_overload_set.value: %Protected.ProtectedInstance.cpp_overload_set.type = cpp_overload_set_value @Protected.ProtectedInstance.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Base.ProtectedInstance.type: type = fn_type @Base.ProtectedInstance [concrete]
@@ -2727,21 +2704,19 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %Base.ProtectedStatic.decl: %Base.ProtectedStatic.type = fn_decl @Base.ProtectedStatic [concrete = constants.%Base.ProtectedStatic] {} {}
 // CHECK:STDOUT:   %Protected.PublicInstance.cpp_overload_set.value: %Protected.PublicInstance.cpp_overload_set.type = cpp_overload_set_value @Protected.PublicInstance.cpp_overload_set [concrete = constants.%Protected.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %Base.PublicInstance.decl: %Base.PublicInstance.type = fn_decl @Base.PublicInstance [concrete = constants.%Base.PublicInstance] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.72a = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.72a = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc24: %pattern_type.a3a = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.a3a = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.a3a = ref_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.fb2 = value_param call_param0
-// CHECK:STDOUT:     %self: %ptr.fb2 = value_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Base = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Base = ref_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Protected.ProtectedInstance.cpp_overload_set.value: %Protected.ProtectedInstance.cpp_overload_set.type = cpp_overload_set_value @Protected.ProtectedInstance.cpp_overload_set [concrete = constants.%Protected.ProtectedInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %Base.ProtectedInstance.decl: %Base.ProtectedInstance.type = fn_decl @Base.ProtectedInstance [concrete = constants.%Base.ProtectedInstance] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.72a = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.72a = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc26: %pattern_type.a3a = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.a3a = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.a3a = ref_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.fb2 = value_param call_param0
-// CHECK:STDOUT:     %self: %ptr.fb2 = value_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Base = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Base = ref_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2783,21 +2758,15 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %instance.ref.loc24: ref %Protected = name_ref instance, %instance
 // CHECK:STDOUT:   %PublicInstance.ref: %Protected.PublicInstance.cpp_overload_set.type = name_ref PublicInstance, imports.%Protected.PublicInstance.cpp_overload_set.value [concrete = constants.%Protected.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc24: <bound method> = bound_method %instance.ref.loc24, %PublicInstance.ref
-// CHECK:STDOUT:   %addr.loc24_5.1: %ptr.f97 = addr_of %instance.ref.loc24
-// CHECK:STDOUT:   %.loc24_5.1: ref %Protected = deref %addr.loc24_5.1
-// CHECK:STDOUT:   %.loc24_5.2: ref %Base = class_element_access %.loc24_5.1, element0
-// CHECK:STDOUT:   %addr.loc24_5.2: %ptr.fb2 = addr_of %.loc24_5.2
-// CHECK:STDOUT:   %.loc24_5.3: %ptr.fb2 = converted %addr.loc24_5.1, %addr.loc24_5.2
-// CHECK:STDOUT:   %Base.PublicInstance.call: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc24_5.3)
+// CHECK:STDOUT:   %.loc24_5.1: ref %Base = class_element_access %instance.ref.loc24, element0
+// CHECK:STDOUT:   %.loc24_5.2: ref %Base = converted %instance.ref.loc24, %.loc24_5.1
+// CHECK:STDOUT:   %Base.PublicInstance.call: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc24_5.2)
 // CHECK:STDOUT:   %instance.ref.loc26: ref %Protected = name_ref instance, %instance
 // CHECK:STDOUT:   %ProtectedInstance.ref: %Protected.ProtectedInstance.cpp_overload_set.type = name_ref ProtectedInstance, imports.%Protected.ProtectedInstance.cpp_overload_set.value [concrete = constants.%Protected.ProtectedInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %instance.ref.loc26, %ProtectedInstance.ref
-// CHECK:STDOUT:   %addr.loc26_5.1: %ptr.f97 = addr_of %instance.ref.loc26
-// CHECK:STDOUT:   %.loc26_5.1: ref %Protected = deref %addr.loc26_5.1
-// CHECK:STDOUT:   %.loc26_5.2: ref %Base = class_element_access %.loc26_5.1, element0
-// CHECK:STDOUT:   %addr.loc26_5.2: %ptr.fb2 = addr_of %.loc26_5.2
-// CHECK:STDOUT:   %.loc26_5.3: %ptr.fb2 = converted %addr.loc26_5.1, %addr.loc26_5.2
-// CHECK:STDOUT:   %Base.ProtectedInstance.call: init %empty_tuple.type = call imports.%Base.ProtectedInstance.decl(%.loc26_5.3)
+// CHECK:STDOUT:   %.loc26_5.1: ref %Base = class_element_access %instance.ref.loc26, element0
+// CHECK:STDOUT:   %.loc26_5.2: ref %Base = converted %instance.ref.loc26, %.loc26_5.1
+// CHECK:STDOUT:   %Base.ProtectedInstance.call: init %empty_tuple.type = call imports.%Base.ProtectedInstance.decl(%.loc26_5.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2819,12 +2788,9 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %Base.ProtectedStatic: %Base.ProtectedStatic.type = struct_value () [concrete]
 // CHECK:STDOUT:   %PublicProtected.PublicInstance.cpp_overload_set.type: type = cpp_overload_set_type @PublicProtected.PublicInstance.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %PublicProtected.PublicInstance.cpp_overload_set.value: %PublicProtected.PublicInstance.cpp_overload_set.type = cpp_overload_set_value @PublicProtected.PublicInstance.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ptr.fb2: type = ptr_type %Base [concrete]
-// CHECK:STDOUT:   %pattern_type.72a: type = pattern_type %ptr.fb2 [concrete]
 // CHECK:STDOUT:   %pattern_type.a3a: type = pattern_type %Base [concrete]
 // CHECK:STDOUT:   %Base.PublicInstance.type: type = fn_type @Base.PublicInstance [concrete]
 // CHECK:STDOUT:   %Base.PublicInstance: %Base.PublicInstance.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.dc4: type = ptr_type %PublicProtected [concrete]
 // CHECK:STDOUT:   %PublicProtected.ProtectedInstance.cpp_overload_set.type: type = cpp_overload_set_type @PublicProtected.ProtectedInstance.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %PublicProtected.ProtectedInstance.cpp_overload_set.value: %PublicProtected.ProtectedInstance.cpp_overload_set.type = cpp_overload_set_value @PublicProtected.ProtectedInstance.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Base.ProtectedInstance.type: type = fn_type @Base.ProtectedInstance [concrete]
@@ -2843,21 +2809,19 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %Base.ProtectedStatic.decl: %Base.ProtectedStatic.type = fn_decl @Base.ProtectedStatic [concrete = constants.%Base.ProtectedStatic] {} {}
 // CHECK:STDOUT:   %PublicProtected.PublicInstance.cpp_overload_set.value: %PublicProtected.PublicInstance.cpp_overload_set.type = cpp_overload_set_value @PublicProtected.PublicInstance.cpp_overload_set [concrete = constants.%PublicProtected.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %Base.PublicInstance.decl: %Base.PublicInstance.type = fn_decl @Base.PublicInstance [concrete = constants.%Base.PublicInstance] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.72a = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.72a = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc24: %pattern_type.a3a = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.a3a = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.a3a = ref_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.fb2 = value_param call_param0
-// CHECK:STDOUT:     %self: %ptr.fb2 = value_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Base = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Base = ref_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PublicProtected.ProtectedInstance.cpp_overload_set.value: %PublicProtected.ProtectedInstance.cpp_overload_set.type = cpp_overload_set_value @PublicProtected.ProtectedInstance.cpp_overload_set [concrete = constants.%PublicProtected.ProtectedInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %Base.ProtectedInstance.decl: %Base.ProtectedInstance.type = fn_decl @Base.ProtectedInstance [concrete = constants.%Base.ProtectedInstance] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.72a = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.72a = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc26: %pattern_type.a3a = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.a3a = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.a3a = ref_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.fb2 = value_param call_param0
-// CHECK:STDOUT:     %self: %ptr.fb2 = value_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Base = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Base = ref_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2899,23 +2863,17 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %instance.ref.loc24: ref %PublicProtected = name_ref instance, %instance
 // CHECK:STDOUT:   %PublicInstance.ref: %PublicProtected.PublicInstance.cpp_overload_set.type = name_ref PublicInstance, imports.%PublicProtected.PublicInstance.cpp_overload_set.value [concrete = constants.%PublicProtected.PublicInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc24: <bound method> = bound_method %instance.ref.loc24, %PublicInstance.ref
-// CHECK:STDOUT:   %addr.loc24_5.1: %ptr.dc4 = addr_of %instance.ref.loc24
-// CHECK:STDOUT:   %.loc24_5.1: ref %PublicProtected = deref %addr.loc24_5.1
-// CHECK:STDOUT:   %.loc24_5.2: ref %Protected = class_element_access %.loc24_5.1, element0
-// CHECK:STDOUT:   %.loc24_5.3: ref %Base = class_element_access %.loc24_5.2, element0
-// CHECK:STDOUT:   %addr.loc24_5.2: %ptr.fb2 = addr_of %.loc24_5.3
-// CHECK:STDOUT:   %.loc24_5.4: %ptr.fb2 = converted %addr.loc24_5.1, %addr.loc24_5.2
-// CHECK:STDOUT:   %Base.PublicInstance.call: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc24_5.4)
+// CHECK:STDOUT:   %.loc24_5.1: ref %Protected = class_element_access %instance.ref.loc24, element0
+// CHECK:STDOUT:   %.loc24_5.2: ref %Base = class_element_access %.loc24_5.1, element0
+// CHECK:STDOUT:   %.loc24_5.3: ref %Base = converted %instance.ref.loc24, %.loc24_5.2
+// CHECK:STDOUT:   %Base.PublicInstance.call: init %empty_tuple.type = call imports.%Base.PublicInstance.decl(%.loc24_5.3)
 // CHECK:STDOUT:   %instance.ref.loc26: ref %PublicProtected = name_ref instance, %instance
 // CHECK:STDOUT:   %ProtectedInstance.ref: %PublicProtected.ProtectedInstance.cpp_overload_set.type = name_ref ProtectedInstance, imports.%PublicProtected.ProtectedInstance.cpp_overload_set.value [concrete = constants.%PublicProtected.ProtectedInstance.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %instance.ref.loc26, %ProtectedInstance.ref
-// CHECK:STDOUT:   %addr.loc26_5.1: %ptr.dc4 = addr_of %instance.ref.loc26
-// CHECK:STDOUT:   %.loc26_5.1: ref %PublicProtected = deref %addr.loc26_5.1
-// CHECK:STDOUT:   %.loc26_5.2: ref %Protected = class_element_access %.loc26_5.1, element0
-// CHECK:STDOUT:   %.loc26_5.3: ref %Base = class_element_access %.loc26_5.2, element0
-// CHECK:STDOUT:   %addr.loc26_5.2: %ptr.fb2 = addr_of %.loc26_5.3
-// CHECK:STDOUT:   %.loc26_5.4: %ptr.fb2 = converted %addr.loc26_5.1, %addr.loc26_5.2
-// CHECK:STDOUT:   %Base.ProtectedInstance.call: init %empty_tuple.type = call imports.%Base.ProtectedInstance.decl(%.loc26_5.4)
+// CHECK:STDOUT:   %.loc26_5.1: ref %Protected = class_element_access %instance.ref.loc26, element0
+// CHECK:STDOUT:   %.loc26_5.2: ref %Base = class_element_access %.loc26_5.1, element0
+// CHECK:STDOUT:   %.loc26_5.3: ref %Base = converted %instance.ref.loc26, %.loc26_5.2
+// CHECK:STDOUT:   %Base.ProtectedInstance.call: init %empty_tuple.type = call imports.%Base.ProtectedInstance.decl(%.loc26_5.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

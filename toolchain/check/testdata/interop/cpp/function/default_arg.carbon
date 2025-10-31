@@ -17,7 +17,7 @@ auto GlobalNoReturn(int a, int b, int c = 1, int d = 2) -> void;
 auto GlobalReturnInt(int a, int b, int c = 1, int d = 2) -> int;
 
 struct X {
-  void B(int a, int b = 1);
+  void B(int a, int b = 1) const;
   static void C(int a, int b = 1);
   void D(this X, int a, int b = 1);
 };
@@ -108,7 +108,7 @@ fn Call() {
   // CHECK:STDERR:       |                   ^
   // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE-47]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./functions.h:6:8: note: candidate function not viable: requires at least argument 'a', but no arguments were provided [CppInteropParseNote]
-  // CHECK:STDERR:     6 |   void B(int a, int b = 1);
+  // CHECK:STDERR:     6 |   void B(int a, int b = 1) const;
   // CHECK:STDERR:       |        ^ ~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   ({} as Cpp.X).B();
@@ -182,17 +182,15 @@ fn Call() {
 // CHECK:STDOUT:   %X.val: %X = struct_value () [concrete]
 // CHECK:STDOUT:   %X.B.cpp_overload_set.type: type = cpp_overload_set_type @X.B.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %X.B.cpp_overload_set.value: %X.B.cpp_overload_set.type = cpp_overload_set_value @X.B.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ptr.1f9: type = ptr_type %X [concrete]
-// CHECK:STDOUT:   %pattern_type.45c: type = pattern_type %ptr.1f9 [concrete]
-// CHECK:STDOUT:   %pattern_type.46b: type = pattern_type %X [concrete]
-// CHECK:STDOUT:   %X.B.type: type = fn_type @X.B [concrete]
-// CHECK:STDOUT:   %X.B: %X.B.type = struct_value () [concrete]
+// CHECK:STDOUT:   %B__carbon_thunk.type: type = fn_type @B__carbon_thunk [concrete]
+// CHECK:STDOUT:   %B__carbon_thunk: %B__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %X.C.cpp_overload_set.type: type = cpp_overload_set_type @X.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %X.C.cpp_overload_set.value: %X.C.cpp_overload_set.type = cpp_overload_set_value @X.C.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %X.C.type: type = fn_type @X.C [concrete]
 // CHECK:STDOUT:   %X.C: %X.C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %X.D.cpp_overload_set.type: type = cpp_overload_set_type @X.D.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %X.D.cpp_overload_set.value: %X.D.cpp_overload_set.type = cpp_overload_set_value @X.D.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %ptr.1f9: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %D__carbon_thunk.type: type = fn_type @D__carbon_thunk [concrete]
 // CHECK:STDOUT:   %D__carbon_thunk: %D__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
@@ -224,14 +222,9 @@ fn Call() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
 // CHECK:STDOUT:   %X.B.cpp_overload_set.value: %X.B.cpp_overload_set.type = cpp_overload_set_value @X.B.cpp_overload_set [concrete = constants.%X.B.cpp_overload_set.value]
-// CHECK:STDOUT:   %X.B.decl: %X.B.type = fn_decl @X.B [concrete = constants.%X.B] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.45c = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.45c = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc10: %pattern_type.46b = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:   %B__carbon_thunk.decl: %B__carbon_thunk.type = fn_decl @B__carbon_thunk [concrete = constants.%B__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.1f9 = value_param call_param0
-// CHECK:STDOUT:     %self: %ptr.1f9 = value_binding self, %self.param
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.C.cpp_overload_set.value: %X.C.cpp_overload_set.type = cpp_overload_set_value @X.C.cpp_overload_set [concrete = constants.%X.C.cpp_overload_set.value]
@@ -336,12 +329,12 @@ fn Call() {
 // CHECK:STDOUT:   %.loc10_5.2: ref %X = temporary_storage
 // CHECK:STDOUT:   %.loc10_5.3: init %X = class_init (), %.loc10_5.2 [concrete = constants.%X.val]
 // CHECK:STDOUT:   %.loc10_5.4: ref %X = temporary %.loc10_5.2, %.loc10_5.3
-// CHECK:STDOUT:   %.loc10_7: ref %X = converted %.loc10_5.1, %.loc10_5.4
+// CHECK:STDOUT:   %.loc10_7.1: ref %X = converted %.loc10_5.1, %.loc10_5.4
 // CHECK:STDOUT:   %B.ref: %X.B.cpp_overload_set.type = name_ref B, imports.%X.B.cpp_overload_set.value [concrete = constants.%X.B.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc10_16: <bound method> = bound_method %.loc10_7, %B.ref
+// CHECK:STDOUT:   %bound_method.loc10_16: <bound method> = bound_method %.loc10_7.1, %B.ref
 // CHECK:STDOUT:   %int_1.loc10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc10: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %addr.loc10_7: %ptr.1f9 = addr_of %.loc10_7
+// CHECK:STDOUT:   %.loc10_7.2: %X = acquire_value %.loc10_7.1
 // CHECK:STDOUT:   %impl.elem0.loc10_19: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
 // CHECK:STDOUT:   %bound_method.loc10_19.1: <bound method> = bound_method %int_1.loc10, %impl.elem0.loc10_19 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.265]
 // CHECK:STDOUT:   %specific_fn.loc10_19: <specific function> = specific_function %impl.elem0.loc10_19, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -356,7 +349,7 @@ fn Call() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_22: init %i32 = call %bound_method.loc10_22.2(%int_2.loc10) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc10_22.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_22 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc10_22.2: %i32 = converted %int_2.loc10, %.loc10_22.1 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %X.B.call: init %empty_tuple.type = call imports.%X.B.decl(%addr.loc10_7, %.loc10_19.2, %.loc10_22.2)
+// CHECK:STDOUT:   %B__carbon_thunk.call: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%.loc10_7.2, %.loc10_19.2, %.loc10_22.2)
 // CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %X.ref.loc11: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %C.ref: %X.C.cpp_overload_set.type = name_ref C, imports.%X.C.cpp_overload_set.value [concrete = constants.%X.C.cpp_overload_set.value]
@@ -414,8 +407,8 @@ fn Call() {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10: <bound method> = bound_method %.loc10_5.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.4c7
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10_5: <bound method> = bound_method %.loc10_5.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc10_5: %ptr.1f9 = addr_of %.loc10_5.4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc10: init %empty_tuple.type = call %bound_method.loc10_5(%addr.loc10_5)
+// CHECK:STDOUT:   %addr.loc10: %ptr.1f9 = addr_of %.loc10_5.4
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc10: init %empty_tuple.type = call %bound_method.loc10_5(%addr.loc10)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -471,8 +464,6 @@ fn Call() {
 // CHECK:STDOUT:   %X.val: %X = struct_value () [concrete]
 // CHECK:STDOUT:   %X.B.cpp_overload_set.type: type = cpp_overload_set_type @X.B.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %X.B.cpp_overload_set.value: %X.B.cpp_overload_set.type = cpp_overload_set_value @X.B.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %ptr.1f9: type = ptr_type %X [concrete]
-// CHECK:STDOUT:   %pattern_type.45c: type = pattern_type %ptr.1f9 [concrete]
 // CHECK:STDOUT:   %pattern_type.46b: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %B__carbon_thunk.type: type = fn_type @B__carbon_thunk [concrete]
 // CHECK:STDOUT:   %B__carbon_thunk: %B__carbon_thunk.type = struct_value () [concrete]
@@ -482,6 +473,8 @@ fn Call() {
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %X.D.cpp_overload_set.type: type = cpp_overload_set_type @X.D.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %X.D.cpp_overload_set.value: %X.D.cpp_overload_set.type = cpp_overload_set_value @X.D.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %ptr.1f9: type = ptr_type %X [concrete]
+// CHECK:STDOUT:   %pattern_type.45c: type = pattern_type %ptr.1f9 [concrete]
 // CHECK:STDOUT:   %D__carbon_thunk.type: type = fn_type @D__carbon_thunk [concrete]
 // CHECK:STDOUT:   %D__carbon_thunk: %D__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
@@ -586,16 +579,15 @@ fn Call() {
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
 // CHECK:STDOUT:   %X.B.cpp_overload_set.value: %X.B.cpp_overload_set.type = cpp_overload_set_value @X.B.cpp_overload_set [concrete = constants.%X.B.cpp_overload_set.value]
 // CHECK:STDOUT:   %B__carbon_thunk.decl: %B__carbon_thunk.type = fn_decl @B__carbon_thunk [concrete = constants.%B__carbon_thunk] {
-// CHECK:STDOUT:     %this.patt: %pattern_type.45c = value_binding_pattern this [concrete]
-// CHECK:STDOUT:     %this.param_patt: %pattern_type.45c = value_param_pattern %this.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.1: %pattern_type.46b = addr_pattern %this.param_patt [concrete]
+// CHECK:STDOUT:     %this.patt: %pattern_type.46b = value_binding_pattern this [concrete]
+// CHECK:STDOUT:     %this.param_patt: %pattern_type.46b = value_param_pattern %this.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.7ce = value_param_pattern %a.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %this.param: %ptr.1f9 = value_param call_param0
-// CHECK:STDOUT:     %this: %ptr.1f9 = value_binding this, %this.param
+// CHECK:STDOUT:     %this.param: %X = value_param call_param0
+// CHECK:STDOUT:     %this: %X = value_binding this, %this.param
 // CHECK:STDOUT:     %a.param: %i32 = value_param call_param1
-// CHECK:STDOUT:     %.2: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.1: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
@@ -740,11 +732,11 @@ fn Call() {
 // CHECK:STDOUT:   %.loc11_5.2: ref %X = temporary_storage
 // CHECK:STDOUT:   %.loc11_5.3: init %X = class_init (), %.loc11_5.2 [concrete = constants.%X.val]
 // CHECK:STDOUT:   %.loc11_5.4: ref %X = temporary %.loc11_5.2, %.loc11_5.3
-// CHECK:STDOUT:   %.loc11_7: ref %X = converted %.loc11_5.1, %.loc11_5.4
+// CHECK:STDOUT:   %.loc11_7.1: ref %X = converted %.loc11_5.1, %.loc11_5.4
 // CHECK:STDOUT:   %B.ref: %X.B.cpp_overload_set.type = name_ref B, imports.%X.B.cpp_overload_set.value [concrete = constants.%X.B.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc11_16: <bound method> = bound_method %.loc11_7, %B.ref
+// CHECK:STDOUT:   %bound_method.loc11_16: <bound method> = bound_method %.loc11_7.1, %B.ref
 // CHECK:STDOUT:   %int_1.loc11: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %addr.loc11_7: %ptr.1f9 = addr_of %.loc11_7
+// CHECK:STDOUT:   %.loc11_7.2: %X = acquire_value %.loc11_7.1
 // CHECK:STDOUT:   %impl.elem0.loc11: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
 // CHECK:STDOUT:   %bound_method.loc11_19.1: <bound method> = bound_method %int_1.loc11, %impl.elem0.loc11 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.265]
 // CHECK:STDOUT:   %specific_fn.loc11: <specific function> = specific_function %impl.elem0.loc11, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -752,7 +744,7 @@ fn Call() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc11: init %i32 = call %bound_method.loc11_19.2(%int_1.loc11) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc11_19.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc11 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %int_1.loc11, %.loc11_19.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %B__carbon_thunk.call: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%addr.loc11_7, %.loc11_19.2)
+// CHECK:STDOUT:   %B__carbon_thunk.call: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%.loc11_7.2, %.loc11_19.2)
 // CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %X.ref.loc12: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %C.ref: %X.C.cpp_overload_set.type = name_ref C, imports.%X.C.cpp_overload_set.value [concrete = constants.%X.C.cpp_overload_set.value]
@@ -794,8 +786,8 @@ fn Call() {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11: <bound method> = bound_method %.loc11_5.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.4c7
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.4c7, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc11_5: <bound method> = bound_method %.loc11_5.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc11_5: %ptr.1f9 = addr_of %.loc11_5.4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc11: init %empty_tuple.type = call %bound_method.loc11_5(%addr.loc11_5)
+// CHECK:STDOUT:   %addr.loc11: %ptr.1f9 = addr_of %.loc11_5.4
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc11: init %empty_tuple.type = call %bound_method.loc11_5(%addr.loc11)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -811,9 +803,9 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @GlobalNoReturn__carbon_thunk.2(%a.param: %i32, %b.param: %i32, %c.param: %i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @X.B(%self.param: %ptr.1f9, %a.param: %i32);
+// CHECK:STDOUT: fn @X.B(%self.param: %X, %a.param: %i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B__carbon_thunk(%this.param: %ptr.1f9, %a.param: %i32);
+// CHECK:STDOUT: fn @B__carbon_thunk(%this.param: %X, %a.param: %i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @X.C(%a.param: %i32);
 // CHECK:STDOUT:

@@ -1333,10 +1333,8 @@ namespace {
 struct ParameterTypeInfo {
   // The type to use for the Carbon parameter.
   TypeExpr type;
-  // Whether to build an `addr` pattern.
-  bool want_addr_pattern;
-  // If building an `addr` pattern, the type matched by that pattern.
-  TypeExpr pointee_type;
+  // Whether to build a `ref` pattern.
+  bool want_ref_pattern;
 };
 }  // namespace
 
@@ -1346,17 +1344,13 @@ struct ParameterTypeInfo {
 // Note that if the parameter has a type for which `IsSimpleAbiType` returns
 // true, we must produce a parameter type that has the same calling convention
 // as the C++ type.
-//
-// TODO: Use `ref` instead of `addr`.
 static auto MapParameterType(Context& context, SemIR::LocId loc_id,
                              clang::QualType param_type) -> ParameterTypeInfo {
-  ParameterTypeInfo info = {.type = TypeExpr::None,
-                            .want_addr_pattern = false,
-                            .pointee_type = TypeExpr::None};
+  ParameterTypeInfo info = {.type = TypeExpr::None, .want_ref_pattern = false};
 
   // Perform some custom mapping for parameters of reference type:
   //
-  //   * `T& x` -> `addr x: T*`.
+  //   * `T& x` -> `ref x: T`.
   //   * `const T& x` -> `x: T`.
   //   * `T&& x` -> `x: T`.
   //
@@ -1372,35 +1366,15 @@ static auto MapParameterType(Context& context, SemIR::LocId loc_id,
         split_type.Quals.removeConst();
         pointee_type = context.ast_context().getQualifiedType(split_type);
       } else {
-        // The reference will map to a pointer. Request an `addr` pattern.
-        info.want_addr_pattern = true;
+        // The reference will map to a `ref` pattern.
+        info.want_ref_pattern = true;
       }
     }
     param_type = pointee_type;
   }
 
   info.type = MapType(context, loc_id, param_type);
-  if (info.want_addr_pattern && info.type.inst_id.has_value()) {
-    info.pointee_type = info.type;
-    info.type = TypeExpr::ForUnsugared(
-        context, GetPointerType(context, info.pointee_type.inst_id));
-  }
   return info;
-}
-
-// Finishes building the pattern to use for a function parameter, given the
-// binding pattern and information about how the parameter is being mapped into
-// Carbon.
-static auto FinishParameterPattern(Context& context, SemIR::InstId pattern_id,
-                                   ParameterTypeInfo info) -> SemIR::InstId {
-  if (!info.want_addr_pattern || pattern_id == SemIR::ErrorInst::InstId) {
-    return pattern_id;
-  }
-  return AddPatternInst(
-      context, {SemIR::LocId(pattern_id),
-                SemIR::AddrPattern({.type_id = GetPatternType(
-                                        context, info.pointee_type.type_id),
-                                    .inner_id = pattern_id})});
 }
 
 // Returns a block for the implicit parameters of the given function
@@ -1434,9 +1408,9 @@ static auto MakeImplicitParamPatternsBlockId(
   }
 
   // TODO: Fill in a location once available.
-  auto pattern_id =
-      AddSelfParamPattern(context, loc_id, type_expr_region_id, type_id);
-  pattern_id = FinishParameterPattern(context, pattern_id, param_info);
+  auto pattern_id = AddParamPattern(context, loc_id, SemIR::NameId::SelfValue,
+                                    type_expr_region_id, type_id,
+                                    param_info.want_ref_pattern);
 
   return context.inst_blocks().Add({pattern_id});
 }
@@ -1499,21 +1473,10 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     SemIR::LocId param_loc_id =
         AddImportIRInst(context.sem_ir(), param->getLocation());
 
-    // TODO: Fix this once templates are supported.
-    bool is_template = false;
-    // TODO: Model reference parameters as ref bindings.
+    // TODO: Add template support.
     SemIR::InstId pattern_id =
-        AddBindingPattern(context, param_loc_id, name_id, type_id,
-                          type_expr_region_id, SemIR::ValueBindingPattern::Kind,
-                          is_template)
-            .pattern_id;
-    pattern_id = AddPatternInst(
-        context, {param_loc_id,
-                  SemIR::ValueParamPattern(
-                      {.type_id = context.insts().Get(pattern_id).type_id(),
-                       .subpattern_id = pattern_id,
-                       .index = SemIR::CallParamIndex::None})});
-    pattern_id = FinishParameterPattern(context, pattern_id, param_info);
+        AddParamPattern(context, param_loc_id, name_id, type_expr_region_id,
+                        type_id, param_info.want_ref_pattern);
     params.push_back(pattern_id);
   }
   return context.inst_blocks().Add(params);
