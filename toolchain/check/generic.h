@@ -123,7 +123,7 @@ auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
 // Diagnoses if an entity has implicit parameters, indicating it's generic, but
 // is missing explicit parameters.
 auto DiagnoseIfGenericMissingExplicitParameters(
-    Context& context, SemIR::EntityWithParamsBase& entity_base) -> void;
+    Context& context, const SemIR::EntityWithParamsBase& entity_base) -> void;
 
 }  // namespace Carbon::Check
 

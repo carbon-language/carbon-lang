@@ -27,8 +27,8 @@ fn A() {
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %empty_tuple.type, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.789: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.93e: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.789 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.bb8: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.72f: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.bb8 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.843: type = ptr_type %empty_tuple.type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -41,7 +41,7 @@ fn A() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt.loc18_9: %pattern_type.cb1 = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.patt.loc18_9: %pattern_type.cb1 = ref_binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.var_patt.loc18_5: %pattern_type.cb1 = var_pattern %n.patt.loc18_9 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var.loc18_5: ref %empty_tuple.type = var %n.var_patt.loc18_5
@@ -49,12 +49,12 @@ fn A() {
 // CHECK:STDOUT:     %.loc18_13.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc18_13.3: type = converted %.loc18_13.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.loc18_9: ref %empty_tuple.type = bind_name n, %n.var.loc18_5
+// CHECK:STDOUT:   %n.loc18_9: ref %empty_tuple.type = ref_binding n, %n.var.loc18_5
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt.loc18_29: %pattern_type.cb1 = binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.patt.loc18_29: %pattern_type.cb1 = ref_binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.var_patt.loc18_25: %pattern_type.cb1 = var_pattern %n.patt.loc18_29 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var.loc18_25: ref %empty_tuple.type = var %n.var_patt.loc18_25
@@ -62,16 +62,16 @@ fn A() {
 // CHECK:STDOUT:     %.loc18_33.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc18_33.3: type = converted %.loc18_33.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.loc18_29: ref %empty_tuple.type = bind_name n, %n.var.loc18_25
+// CHECK:STDOUT:   %n.loc18_29: ref %empty_tuple.type = ref_binding n, %n.var.loc18_25
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.done:
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc18_25: <bound method> = bound_method %n.var.loc18_25, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.93e
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc18_25: <bound method> = bound_method %n.var.loc18_25, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.72f
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc18_25: <bound method> = bound_method %n.var.loc18_25, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc18_25: %ptr.843 = addr_of %n.var.loc18_25
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc18_25: init %empty_tuple.type = call %bound_method.loc18_25(%addr.loc18_25)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc18_5: <bound method> = bound_method %n.var.loc18_5, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.93e
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc18_5: <bound method> = bound_method %n.var.loc18_5, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.72f
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc18_5: <bound method> = bound_method %n.var.loc18_5, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %addr.loc18_5: %ptr.843 = addr_of %n.var.loc18_5

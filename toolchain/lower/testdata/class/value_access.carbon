@@ -15,9 +15,9 @@ class C {
 }
 
 fn F(c: C) -> i32 {
-  // TODO: `c.a` is a value expression here, which forces a value binding as
+  // TODO: `c.a` is a value expression here, which forces a value acquisition as
   // part of the member access, creating a tuple value temporary. We could
-  // defer performing the value binding to avoid creating this temporary.
+  // defer performing the value acquisition to avoid creating this temporary.
   return c.a.1;
 }
 

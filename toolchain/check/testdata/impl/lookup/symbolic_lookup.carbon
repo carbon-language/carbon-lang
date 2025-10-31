@@ -23,19 +23,19 @@ class C(T:! X) {}
 
 // The `adapt C(T)` line produces a symbolic impl lookup that `T` impls `X`:
 // - At first the impl lookup query in the eval block has self as
-//   `BindSymbolicName(T:! Y)`.
+//   `SymbolicBinding(T:! Y)`.
 //
 // The call to construct `D` from in `Test()` makes a specific for `D`:
 // - The value of `T` in `D` is deduced to be a `FacetValue` of type `Y & Z`
-//   pointing to the `BindSymbolicName(T:! Y & Z)` from `Test()`. But
+//   pointing to the `SymbolicBinding(T:! Y & Z)` from `Test()`. But
 //   `FacetValue` needs an instruction of type `TypeType` so the
-//   `BindSymbolicName` is wrapped in `FacetAccessType`, meaning it's
-//   `FacetValue(FacetAccessType(BindSymbolicName(T:! Y & Z)))`.
+//   `SymbolicBinding` is wrapped in `FacetAccessType`, meaning it's
+//   `FacetValue(FacetAccessType(SymbolicBinding(T:! Y & Z)))`.
 // - That facet value is written to the specific of `D` constructed from
 //   `Test()`.
 // - The eval block of `D` is run with the above specific. This runs the
 //   symbolic impl lookup that `T` impls `X`. But with the `T` rewritten by the
-//   specific to the `FacetValue(FacetAccessType(BindSymbolicName(T:! Y & Z)))`.
+//   specific to the `FacetValue(FacetAccessType(SymbolicBinding(T:! Y & Z)))`.
 //
 // The impl lookup unwraps the `FacetValue` to get the underlying type as it may
 // have access to a more constrained FacetType (with access to more interfaces)

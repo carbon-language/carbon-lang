@@ -156,7 +156,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Def.type: type = facet_type <@Def> [concrete]
-// CHECK:STDOUT:   %Self: %Def.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %Def.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -167,7 +167,7 @@ private interface Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Def {
-// CHECK:STDOUT:   %Self: %Def.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %Def.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -178,7 +178,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %ForwardWithDef.type: type = facet_type <@ForwardWithDef> [concrete]
-// CHECK:STDOUT:   %Self: %ForwardWithDef.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %ForwardWithDef.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -190,7 +190,7 @@ private interface Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardWithDef {
-// CHECK:STDOUT:   %Self: %ForwardWithDef.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %ForwardWithDef.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -214,7 +214,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Test.Def: type = import_ref Test//def, Def, loaded [concrete = constants.%Def.type]
-// CHECK:STDOUT:   %Test.import_ref = import_ref Test//def, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Test.import_ref = import_ref Test//def, loc4_23, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -225,12 +225,12 @@ private interface Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: %pattern_type = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.patt: %pattern_type = value_binding_pattern i [concrete]
 // CHECK:STDOUT:     %i.param_patt: %pattern_type = value_param_pattern %i.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: %Def.type = value_param call_param0
 // CHECK:STDOUT:     %Def.ref: type = name_ref Def, imports.%Test.Def [concrete = constants.%Def.type]
-// CHECK:STDOUT:     %i: %Def.type = bind_name i, %i.param
+// CHECK:STDOUT:     %i: %Def.type = value_binding i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -259,12 +259,12 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.patt: <error> = value_binding_pattern i [concrete]
 // CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %Def.ref: <error> = name_ref Def, <error> [concrete = <error>]
-// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
+// CHECK:STDOUT:     %i: <error> = value_binding i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -294,7 +294,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.patt: <error> = value_binding_pattern i [concrete]
 // CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
@@ -302,7 +302,7 @@ private interface Redecl {}
 // CHECK:STDOUT:       %Test.ref: <namespace> = name_ref Test, imports.%Test [concrete = imports.%Test]
 // CHECK:STDOUT:       %Def.ref: <error> = name_ref Def, <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
+// CHECK:STDOUT:     %i: <error> = value_binding i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -322,7 +322,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Test.ForwardWithDef: type = import_ref Test//forward_with_def, ForwardWithDef, loaded [concrete = constants.%ForwardWithDef.type]
-// CHECK:STDOUT:   %Test.import_ref = import_ref Test//forward_with_def, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Test.import_ref = import_ref Test//forward_with_def, loc6_26, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -333,12 +333,12 @@ private interface Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: %pattern_type = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.patt: %pattern_type = value_binding_pattern i [concrete]
 // CHECK:STDOUT:     %i.param_patt: %pattern_type = value_param_pattern %i.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: %ForwardWithDef.type = value_param call_param0
 // CHECK:STDOUT:     %ForwardWithDef.ref: type = name_ref ForwardWithDef, imports.%Test.ForwardWithDef [concrete = constants.%ForwardWithDef.type]
-// CHECK:STDOUT:     %i: %ForwardWithDef.type = bind_name i, %i.param
+// CHECK:STDOUT:     %i: %ForwardWithDef.type = value_binding i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -367,12 +367,12 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.patt: <error> = value_binding_pattern i [concrete]
 // CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
 // CHECK:STDOUT:     %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [concrete = <error>]
-// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
+// CHECK:STDOUT:     %i: <error> = value_binding i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -402,7 +402,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.patt: <error> = value_binding_pattern i [concrete]
 // CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
@@ -410,7 +410,7 @@ private interface Redecl {}
 // CHECK:STDOUT:       %Test.ref: <namespace> = name_ref Test, imports.%Test [concrete = imports.%Test]
 // CHECK:STDOUT:       %ForwardWithDef.ref: <error> = name_ref ForwardWithDef, <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
+// CHECK:STDOUT:     %i: <error> = value_binding i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -425,7 +425,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Forward.type: type = facet_type <@Forward> [concrete]
-// CHECK:STDOUT:   %Self: %Forward.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %Forward.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -436,7 +436,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.patt: <error> = value_binding_pattern i [concrete]
 // CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
@@ -444,13 +444,13 @@ private interface Redecl {}
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
+// CHECK:STDOUT:     %i: <error> = value_binding i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Forward.decl: type = interface_decl @Forward [concrete = constants.%Forward.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Forward {
-// CHECK:STDOUT:   %Self: %Forward.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %Forward.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -476,7 +476,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.patt: <error> = value_binding_pattern i [concrete]
 // CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
@@ -484,7 +484,7 @@ private interface Redecl {}
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
+// CHECK:STDOUT:     %i: <error> = value_binding i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -514,7 +514,7 @@ private interface Redecl {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %i.patt: <error> = binding_pattern i [concrete]
+// CHECK:STDOUT:     %i.patt: <error> = value_binding_pattern i [concrete]
 // CHECK:STDOUT:     %i.param_patt: <error> = value_param_pattern %i.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
@@ -522,7 +522,7 @@ private interface Redecl {}
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %i: <error> = bind_name i, %i.param
+// CHECK:STDOUT:     %i: <error> = value_binding i, %i.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -535,7 +535,7 @@ private interface Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Redecl.type: type = facet_type <@Redecl> [concrete]
-// CHECK:STDOUT:   %Self: %Redecl.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %Redecl.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -547,7 +547,7 @@ private interface Redecl {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Redecl {
-// CHECK:STDOUT:   %Self: %Redecl.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %Redecl.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

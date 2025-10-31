@@ -35,16 +35,38 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
                                  : LibraryNameId::Default),
       value_stores_(&value_stores),
       filename_(std::move(filename)),
-      classes_(IdTag(check_ir_id.index, 0)),
-      associated_constants_(IdTag(check_ir_id.index, 0)),
+      entity_names_(check_ir_id),
+      cpp_global_vars_(check_ir_id),
+      functions_(check_ir_id),
+      cpp_overload_sets_(check_ir_id),
+      classes_(check_ir_id),
+      interfaces_(check_ir_id),
+      named_constraints_(check_ir_id),
+      associated_constants_(check_ir_id),
+      facet_types_(check_ir_id),
+      identified_facet_types_(&facet_types_),
       impls_(*this),
+      specific_interfaces_(check_ir_id),
+      generics_(check_ir_id),
+      specifics_(check_ir_id),
+      // The `2` prevents adding a tag for the global ids
+      // `ImportIRId::{ApiForImpl,Cpp}`.
+      import_irs_(IdTag(check_ir_id.index, 2)),
+      clang_decls_(check_ir_id),
       // The `+1` prevents adding a tag to the global `NameSpace::PackageInstId`
       // instruction. It's not a "singleton" instruction, but it's a unique
       // instruction id that comes right after the singletons.
       insts_(this, SingletonInstKinds.size() + 1),
+      vtables_(check_ir_id),
       constant_values_(ConstantId::NotConstant, &insts_),
-      inst_blocks_(allocator_),
-      constants_(this) {
+      inst_blocks_(allocator_, check_ir_id),
+      constants_(this),
+      // 1 reserved id for `StructTypeFieldsId::Empty`.
+      struct_type_fields_(allocator_, IdTag(check_ir_id.index, 1)),
+      // 1 reserved id for `CustomLayoutId::Empty`.
+      custom_layouts_(allocator_, IdTag(check_ir_id.index, 1)),
+      expr_regions_(check_ir_id),
+      clang_source_locs_(check_ir_id) {
   // `type` and the error type are both complete & concrete types.
   types_.SetComplete(
       TypeType::TypeId,
@@ -110,6 +132,7 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
               map.Add("clang_decls", clang_decls_.OutputYaml());
               map.Add("name_scopes", name_scopes_.OutputYaml());
               map.Add("entity_names", entity_names_.OutputYaml());
+              map.Add("cpp_global_vars", cpp_global_vars_.OutputYaml());
               map.Add("functions", functions_.OutputYaml());
               map.Add("classes", classes_.OutputYaml());
               map.Add("generics", generics_.OutputYaml());
@@ -137,6 +160,8 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "entity_names_"),
                     entity_names_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "cpp_global_vars_"),
+                    cpp_global_vars_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "functions_"), functions_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "classes_"), classes_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "interfaces_"), interfaces_);

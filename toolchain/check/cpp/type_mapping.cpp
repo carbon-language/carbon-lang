@@ -28,9 +28,13 @@
 
 namespace Carbon::Check {
 
-// Find the bit width of an integer literal.
-// The default bit width is 32. If the literal's bit width is greater than 32,
-// the bit width is increased to 64.
+// Find the bit width of an integer literal. Following the C++ standard rules
+// for assigning a type to a decimal integer literal, the first signed integer
+// in which the value could fit among bit widths of 32, 64 and 128 is selected.
+// If the value can't fit into a signed integer with width of 128-bits, then a
+// diagnostic is emitted and the function returns IntId::None. Returns
+// IntId::None also if the argument is not a constant integer, if it is an
+// error constant, or if it is a symbolic constant.
 static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id)
     -> IntId {
   auto arg_const_id = context.constant_values().Get(arg_id);
@@ -42,13 +46,24 @@ static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id)
   }
   auto arg = context.insts().GetAs<SemIR::IntValue>(
       context.constant_values().GetInstId(arg_const_id));
-  unsigned arg_non_sign_bits =
-      context.ints().Get(arg.int_id).getSignificantBits() - 1;
+  llvm::APInt arg_val = context.ints().Get(arg.int_id);
+  int arg_non_sign_bits = arg_val.getSignificantBits() - 1;
 
-  // TODO: What if the literal is larger than 64 bits? Currently an error is
-  // reported that the int value is too large for type `i64`. Maybe try to fit
-  // in i128/i256? Try unsigned?
-  return (arg_non_sign_bits <= 32) ? IntId::MakeRaw(32) : IntId::MakeRaw(64);
+  if (arg_non_sign_bits >= 128) {
+    CARBON_DIAGNOSTIC(IntTooLargeForCppType, Error,
+                      "integer value {0} too large to fit in a signed C++ "
+                      "integer type; requires {1} bits, but max is 128",
+                      TypedInt, int);
+    context.emitter().Emit(arg_id, IntTooLargeForCppType,
+                           {.type = arg.type_id, .value = arg_val},
+                           arg_non_sign_bits + 1);
+    return IntId::None;
+  }
+
+  return (arg_non_sign_bits < 32)
+             ? IntId::MakeRaw(32)
+             : ((arg_non_sign_bits < 64) ? IntId::MakeRaw(64)
+                                         : IntId::MakeRaw(128));
 }
 
 // Attempts to look up a type by name, and returns the corresponding `QualType`,
@@ -171,7 +186,6 @@ static auto MapNonWrapperType(Context& context, SemIR::InstId inst_id,
       return context.ast_context().getIntTypeForBitwidth(bit_width_id.AsValue(),
                                                          true);
     }
-    // TODO: What if the value doesn't fit to f64?
     case SemIR::FloatLiteralType::Kind: {
       return context.ast_context().DoubleTy;
     }
@@ -179,6 +193,33 @@ static auto MapNonWrapperType(Context& context, SemIR::InstId inst_id,
       return clang::QualType();
     }
   }
+}
+
+// Returns `void*` if the type is a wrapped `Cpp.void*`, consuming the pointer
+// from `wrapper_types`. Otherwise returns no type.
+static auto TryMapVoidPointer(Context& context, SemIR::TypeId type_id,
+                              llvm::SmallVector<SemIR::TypeId>& wrapper_types)
+    -> clang::QualType {
+  if (type_id != SemIR::CppVoidType::TypeId || wrapper_types.empty()) {
+    return clang::QualType();
+  }
+
+  if (context.types().Is<SemIR::PointerType>(wrapper_types.back())) {
+    // `void*`.
+    wrapper_types.pop_back();
+  } else if (wrapper_types.size() >= 2 &&
+             context.types().Is<SemIR::ConstType>(wrapper_types.back()) &&
+             context.types().Is<SemIR::PointerType>(
+                 wrapper_types[wrapper_types.size() - 2])) {
+    // `const void*`.
+    wrapper_types.erase(wrapper_types.end() - 2);
+  } else {
+    return clang::QualType();
+  }
+
+  return context.ast_context().getAttributedType(
+      clang::attr::TypeNonNull, context.ast_context().VoidPtrTy,
+      context.ast_context().VoidPtrTy);
 }
 
 // Maps a Carbon type to a C++ type. Accepts an InstId, representing a value
@@ -205,9 +246,13 @@ static auto MapToCppType(Context& context, SemIR::InstId inst_id)
     wrapper_types.push_back(orig_type_id);
   }
 
-  clang::QualType mapped_type = MapNonWrapperType(context, inst_id, type_id);
+  clang::QualType mapped_type =
+      TryMapVoidPointer(context, type_id, wrapper_types);
   if (mapped_type.isNull()) {
-    return mapped_type;
+    mapped_type = MapNonWrapperType(context, inst_id, type_id);
+    if (mapped_type.isNull()) {
+      return mapped_type;
+    }
   }
 
   for (auto wrapper_type_id : llvm::reverse(wrapper_types)) {

@@ -108,6 +108,7 @@ using AnyModifierId = NodeIdInCategory<NodeCategory::Modifier>;
 using AnyPatternId = NodeIdInCategory<NodeCategory::Pattern>;
 using AnyStatementId =
     NodeIdInCategory<NodeCategory::Statement | NodeCategory::Decl>;
+using AnyRequireImplsId = NodeIdInCategory<NodeCategory::RequireImpls>;
 using AnyRequirementId = NodeIdInCategory<NodeCategory::Requirement>;
 using AnyNonExprNameId = NodeIdInCategory<NodeCategory::NonExprName>;
 using AnyPackageNameId = NodeIdInCategory<NodeCategory::PackageName>;
@@ -162,6 +163,8 @@ using AnyFunctionDeclId = NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId,
 using AnyImplDeclId = NodeIdOneOf<ImplDeclId, ImplDefinitionStartId>;
 using AnyInterfaceDeclId =
     NodeIdOneOf<InterfaceDeclId, InterfaceDefinitionStartId>;
+using AnyNamedConstraintDeclId =
+    NodeIdOneOf<NamedConstraintDeclId, NamedConstraintDefinitionStartId>;
 using AnyNamespaceId =
     NodeIdOneOf<NamespaceId, ImportDeclId, LibraryDeclId, PackageDeclId>;
 using AnyPackagingDeclId =

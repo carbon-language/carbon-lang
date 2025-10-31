@@ -281,7 +281,7 @@ class Stringifier {
   }
 
   template <typename InstT>
-    requires(SameAsOneOf<InstT, BindAlias, BindSymbolicName, ExportDecl>)
+    requires(SameAsOneOf<InstT, AliasBinding, SymbolicBinding, ExportDecl>)
   auto StringifyInst(InstId /*inst_id*/, InstT inst) -> void {
     step_stack_->PushEntityNameId(inst.entity_name_id);
   }
@@ -437,6 +437,16 @@ class Stringifier {
                       ">");
   }
 
+  auto StringifyInst(InstId /*inst_id*/, GenericNamedConstraintType inst)
+      -> void {
+    const auto& constraint =
+        sem_ir_->named_constraints().Get(inst.named_constraint_id);
+    *out_ << "<type of ";
+    step_stack_->Push(StepStack::QualifiedNameItem{constraint.parent_scope_id,
+                                                   constraint.name_id},
+                      ">");
+  }
+
   // Determine the specific interface that an impl witness instruction provides
   // an implementation of.
   // TODO: Should we track this in the type?
@@ -493,7 +503,7 @@ class Stringifier {
     if (auto lookup =
             sem_ir_->insts().TryGetAs<LookupImplWitness>(witness_inst_id)) {
       bool period_self = false;
-      if (auto sym_name = sem_ir_->insts().TryGetAs<BindSymbolicName>(
+      if (auto sym_name = sem_ir_->insts().TryGetAs<SymbolicBinding>(
               lookup->query_self_inst_id)) {
         auto name_id =
             sem_ir_->entity_names().Get(sym_name->entity_name_id).name_id;

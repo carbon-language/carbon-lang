@@ -99,7 +99,7 @@ var f: () = F();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
+// CHECK:STDOUT:     %f.patt: %pattern_type = ref_binding_pattern f [concrete]
 // CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
@@ -107,7 +107,7 @@ var f: () = F();
 // CHECK:STDOUT:     %.loc6_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "export.carbon"];

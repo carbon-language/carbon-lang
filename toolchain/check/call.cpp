@@ -36,6 +36,7 @@ enum class EntityKind : uint8_t {
   Function = 0,
   GenericClass = 1,
   GenericInterface = 2,
+  GenericNamedConstraint = 3,
 };
 }  // namespace
 
@@ -62,15 +63,16 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
   if (arg_ids.size() != params.size()) {
     CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
                       "{0} argument{0:s} passed to "
-                      "{1:=0:function|=1:generic class|=2:generic interface}"
+                      "{1:=0:function|=1:generic class|=2:generic "
+                      "interface|=3:generic constraint}"
                       " expecting {2} argument{2:s}",
                       Diagnostics::IntAsSelect, Diagnostics::IntAsSelect,
                       Diagnostics::IntAsSelect);
-    CARBON_DIAGNOSTIC(
-        InCallToEntity, Note,
-        "calling {0:=0:function|=1:generic class|=2:generic interface}"
-        " declared here",
-        Diagnostics::IntAsSelect);
+    CARBON_DIAGNOSTIC(InCallToEntity, Note,
+                      "calling {0:=0:function|=1:generic class|=2:generic "
+                      "interface|=3:generic constraint}"
+                      " declared here",
+                      Diagnostics::IntAsSelect);
     context.emitter()
         .Build(loc_id, CallArgCountMismatch, arg_ids.size(),
                static_cast<int>(entity_kind_for_diagnostic), params.size())
@@ -116,24 +118,47 @@ static auto PerformCallToGenericClass(Context& context, SemIR::LocId loc_id,
                                          .specific_id = *callee_specific_id});
 }
 
-// Performs a call where the callee is the name of a generic interface, such as
-// `AddWith(i32)`.
-static auto PerformCallToGenericInterface(
-    Context& context, SemIR::LocId loc_id, SemIR::InterfaceId interface_id,
+static auto EntityFromInterfaceOrNamedConstraint(
+    Context& context, SemIR::InterfaceId interface_id)
+    -> const SemIR::EntityWithParamsBase& {
+  return context.interfaces().Get(interface_id);
+}
+
+static auto EntityFromInterfaceOrNamedConstraint(
+    Context& context, SemIR::NamedConstraintId named_constraint_id)
+    -> const SemIR::EntityWithParamsBase& {
+  return context.named_constraints().Get(named_constraint_id);
+}
+
+// Performs a call where the callee is the name of a generic interface or named
+// constraint, such as `AddWith(i32)`.
+template <typename IdT>
+  requires SameAsOneOf<IdT, SemIR::InterfaceId, SemIR::NamedConstraintId>
+static auto PerformCallToGenericInterfaceOrNamedConstaint(
+    Context& context, SemIR::LocId loc_id, IdT id,
     SemIR::SpecificId enclosing_specific_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
-  const auto& interface = context.interfaces().Get(interface_id);
+  const auto& entity = EntityFromInterfaceOrNamedConstraint(context, id);
+
+  auto entity_kind_for_diagnostic = EntityKind::GenericInterface;
+  if constexpr (std::same_as<IdT, SemIR::NamedConstraintId>) {
+    entity_kind_for_diagnostic = EntityKind::GenericNamedConstraint;
+  }
   auto callee_specific_id =
-      ResolveCalleeInCall(context, loc_id, interface,
-                          EntityKind::GenericInterface, enclosing_specific_id,
+      ResolveCalleeInCall(context, loc_id, entity, entity_kind_for_diagnostic,
+                          enclosing_specific_id,
                           /*self_type_id=*/SemIR::InstId::None,
                           /*self_id=*/SemIR::InstId::None, arg_ids);
   if (!callee_specific_id) {
     return SemIR::ErrorInst::InstId;
   }
-  return GetOrAddInst(
-      context, loc_id,
-      FacetTypeFromInterface(context, interface_id, *callee_specific_id));
+  std::optional<SemIR::FacetType> facet_type;
+  if constexpr (std::same_as<IdT, SemIR::InterfaceId>) {
+    facet_type = FacetTypeFromInterface(context, id, *callee_specific_id);
+  } else {
+    facet_type = FacetTypeFromNamedConstraint(context, id, *callee_specific_id);
+  }
+  return GetOrAddInst(context, loc_id, *facet_type);
 }
 
 // Builds an appropriate specific function for the callee, also handling
@@ -307,9 +332,14 @@ static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
                                        arg_ids);
     }
     case CARBON_KIND(SemIR::GenericInterfaceType generic_interface): {
-      return PerformCallToGenericInterface(
+      return PerformCallToGenericInterfaceOrNamedConstaint(
           context, loc_id, generic_interface.interface_id,
           generic_interface.enclosing_specific_id, arg_ids);
+    }
+    case CARBON_KIND(SemIR::GenericNamedConstraintType generic_constraint): {
+      return PerformCallToGenericInterfaceOrNamedConstaint(
+          context, loc_id, generic_constraint.named_constraint_id,
+          generic_constraint.enclosing_specific_id, arg_ids);
     }
     default: {
       CARBON_DIAGNOSTIC(CallToNonCallable, Error,

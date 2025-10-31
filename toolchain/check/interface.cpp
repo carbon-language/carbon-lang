@@ -7,11 +7,15 @@
 #include <algorithm>
 #include <cstddef>
 
+#include "common/concepts.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/merge.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/type.h"
+#include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -63,11 +67,11 @@ static auto GetSelfBinding(Context& context,
   auto self_binding_id = bindings[interface_args.size()];
 
   // Check that we found the self binding. The binding might be a
-  // `BindSymbolicName` or an `ImportRef` naming one.
+  // `SymbolicBinding` or an `ImportRef` naming one.
   auto self_binding_const_inst_id =
       context.constant_values().GetConstantInstId(self_binding_id);
-  auto bind_name_inst = context.insts().GetAs<SemIR::BindSymbolicName>(
-      self_binding_const_inst_id);
+  auto bind_name_inst =
+      context.insts().GetAs<SemIR::SymbolicBinding>(self_binding_const_inst_id);
   CARBON_CHECK(
       context.entity_names().Get(bind_name_inst.entity_name_id).name_id ==
           SemIR::NameId::SelfType,
@@ -159,7 +163,7 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
     if (index_delta) {
       // If this parameter would have a new index in the context described by
       // `enclosing_specific_id`, form a new binding with an adjusted index.
-      auto bind_name = context.insts().GetAs<SemIR::BindSymbolicName>(
+      auto bind_name = context.insts().GetAs<SemIR::SymbolicBinding>(
           context.constant_values().GetConstantInstId(arg_id));
       auto entity_name = context.entity_names().Get(bind_name.entity_name_id);
       entity_name.bind_index_value += index_delta;
@@ -218,5 +222,132 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
 
   CARBON_FATAL("Unexpected kind for associated constant {0}", decl);
 }
+
+auto AddSelfGenericParameter(Context& context, SemIR::LocId definition_loc_id,
+                             SemIR::TypeId type_id, SemIR::NameScopeId scope_id,
+                             bool is_template) -> SemIR::InstId {
+  auto entity_name_id = context.entity_names().AddSymbolicBindingName(
+      SemIR::NameId::SelfType, scope_id,
+      context.scope_stack().AddCompileTimeBinding(), is_template);
+  // Because there is no equivalent non-symbolic value, we use `None` as
+  // the `value_id` on the `SymbolicBinding`.
+  auto self_param_inst_id =
+      AddInst<SemIR::SymbolicBinding>(context, definition_loc_id,
+                                      {.type_id = type_id,
+                                       .entity_name_id = entity_name_id,
+                                       .value_id = SemIR::InstId::None});
+  context.scope_stack().PushCompileTimeBinding(self_param_inst_id);
+  context.name_scopes().AddRequiredName(scope_id, SemIR::NameId::SelfType,
+                                        self_param_inst_id);
+  return self_param_inst_id;
+}
+
+template <typename EntityT>
+  requires std::same_as<EntityT, SemIR::Interface>
+static auto TryGetEntity(Context& context, SemIR::Inst inst)
+    -> const SemIR::EntityWithParamsBase* {
+  if (auto decl = inst.TryAs<SemIR::InterfaceDecl>()) {
+    return &context.interfaces().Get(decl->interface_id);
+  } else {
+    return nullptr;
+  }
+}
+
+template <typename EntityT>
+  requires std::same_as<EntityT, SemIR::NamedConstraint>
+static auto TryGetEntity(Context& context, SemIR::Inst inst)
+    -> const SemIR::EntityWithParamsBase* {
+  if (auto decl = inst.TryAs<SemIR::NamedConstraintDecl>()) {
+    return &context.named_constraints().Get(decl->named_constraint_id);
+  } else {
+    return nullptr;
+  }
+}
+
+template <typename EntityT>
+  requires std::same_as<EntityT, SemIR::Interface>
+static constexpr auto DeclTokenKind() -> Lex::TokenKind {
+  return Lex::TokenKind::Interface;
+}
+
+template <typename EntityT>
+  requires std::same_as<EntityT, SemIR::NamedConstraint>
+static constexpr auto DeclTokenKind() -> Lex::TokenKind {
+  return Lex::TokenKind::Constraint;
+}
+
+template <typename EntityT>
+  requires SameAsOneOf<EntityT, SemIR::Interface, SemIR::NamedConstraint>
+auto TryGetExistingDecl(Context& context, const NameComponent& name,
+                        SemIR::ScopeLookupResult lookup_result,
+                        const EntityT& entity, bool is_definition)
+    -> std::optional<SemIR::Inst> {
+  if (lookup_result.is_poisoned()) {
+    // This is a declaration of a poisoned name.
+    DiagnosePoisonedName(context, name.name_id,
+                         lookup_result.poisoning_loc_id(), name.name_loc_id);
+    return std::nullopt;
+  }
+
+  if (!lookup_result.is_found()) {
+    return std::nullopt;
+  }
+
+  SemIR::InstId existing_id = lookup_result.target_inst_id();
+  SemIR::Inst existing_decl_inst = context.insts().Get(existing_id);
+  const auto* existing_decl_entity =
+      TryGetEntity<EntityT>(context, existing_decl_inst);
+  if (!existing_decl_entity) {
+    // This is a redeclaration with a different entity kind.
+    DiagnoseDuplicateName(context, name.name_id, name.name_loc_id,
+                          SemIR::LocId(existing_id));
+    return std::nullopt;
+  }
+
+  if (!CheckRedeclParamsMatch(
+          context,
+          DeclParams(SemIR::LocId(entity.latest_decl_id()),
+                     name.first_param_node_id, name.last_param_node_id,
+                     name.implicit_param_patterns_id, name.param_patterns_id),
+          DeclParams(*existing_decl_entity))) {
+    // Mismatch is diagnosed already if found.
+    return std::nullopt;
+  }
+
+  // TODO: This should be refactored a little, particularly for
+  // prev_import_ir_id. See similar logic for classes and functions, which
+  // might also be refactored to merge.
+  DiagnoseIfInvalidRedecl(
+      context, DeclTokenKind<EntityT>(), existing_decl_entity->name_id,
+      RedeclInfo(entity, SemIR::LocId(entity.latest_decl_id()), is_definition),
+      RedeclInfo(*existing_decl_entity,
+                 SemIR::LocId(existing_decl_entity->latest_decl_id()),
+                 existing_decl_entity->has_definition_started()),
+      /*prev_import_ir_id=*/SemIR::ImportIRId::None);
+
+  if (is_definition && existing_decl_entity->has_definition_started()) {
+    // DiagnoseIfInvalidRedecl would diagnose an error in this case, since we'd
+    // have two definitions. Given the declaration parts of the definitions
+    // match, we would be able to use the prior declaration for error recovery,
+    // except that having two definitions causes larger problems for generics.
+    // All interfaces (and named constraints) are generic with an implicit Self
+    // compile time binding.
+    return std::nullopt;
+  }
+
+  // This is a matching redeclaration of an existing entity of the same type.
+  return existing_decl_inst;
+}
+
+template auto TryGetExistingDecl(Context& context, const NameComponent& name,
+                                 SemIR::ScopeLookupResult lookup_result,
+                                 const SemIR::Interface& entity,
+                                 bool is_definition)
+    -> std::optional<SemIR::Inst>;
+template auto TryGetExistingDecl(Context& context, const NameComponent& name,
+                                 SemIR::ScopeLookupResult lookup_result,
+                                 const SemIR::NamedConstraint& entity,
+                                 bool is_definition)
+    -> std::optional<SemIR::Inst>;
 
 }  // namespace Carbon::Check

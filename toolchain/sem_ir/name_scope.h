@@ -312,7 +312,7 @@ class NameScope : public Printable<NameScope> {
 // Provides a ValueStore wrapper for an API specific to name scopes.
 class NameScopeStore {
  public:
-  explicit NameScopeStore(const File* file) : file_(file) {}
+  explicit NameScopeStore(const File* file);
 
   // Adds a name scope, returning an ID to reference it.
   auto Add(InstId inst_id, NameId name_id, NameScopeId parent_scope_id)

@@ -30,8 +30,9 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT, ElementT>> {
   using RefType = llvm::MutableArrayRef<ElementT>;
   using ConstRefType = llvm::ArrayRef<ElementT>;
 
-  explicit BlockValueStore(llvm::BumpPtrAllocator& allocator)
-      : allocator_(&allocator) {
+  explicit BlockValueStore(llvm::BumpPtrAllocator& allocator,
+                           IdTag tag = IdTag())
+      : allocator_(&allocator), values_(tag) {
     auto empty = RefType();
     auto empty_val = canonical_blocks_.Insert(
         empty, [&] { return values_.Add(empty); }, KeyContext(this));
@@ -106,6 +107,8 @@ class BlockValueStore : public Yaml::Printable<BlockValueStore<IdT, ElementT>> {
   }
 
   auto size() const -> int { return values_.size(); }
+
+  auto GetRawIndex(IdT id) const -> int { return values_.GetRawIndex(id); }
 
  protected:
   // Allocates a copy of the given data using our slab allocator.

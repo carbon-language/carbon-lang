@@ -141,7 +141,7 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
     CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
     if (auto decl =
             context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id)) {
-      if (witness_value == SemIR::ImplWitnessTablePlaceholder::TypeInstId) {
+      if (witness_value == SemIR::InstId::ImplWitnessTablePlaceholder) {
         CARBON_DIAGNOSTIC(ImplAssociatedConstantNeedsValue, Error,
                           "associated constant {0} not given a value in impl "
                           "of interface {1}",
@@ -252,7 +252,7 @@ auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void {
   auto witness_block =
       context.inst_blocks().GetMutable(witness_table.elements_id);
   for (auto& elem : witness_block) {
-    if (elem == SemIR::ImplWitnessTablePlaceholder::TypeInstId) {
+    if (elem == SemIR::InstId::ImplWitnessTablePlaceholder) {
       elem = SemIR::ErrorInst::InstId;
     }
   }
@@ -433,7 +433,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
   const auto& impl = context.impls().Get(impl_id);
 
   if (context.parse_tree().node_kind(self_type_node_id) ==
-      Parse::NodeKind::TypeImplAs) {
+      Parse::NodeKind::ImplTypeAs) {
     CARBON_DIAGNOSTIC(ExtendImplSelfAs, Error,
                       "cannot `extend` an `impl` with an explicit self type");
     auto diag = context.emitter().Build(extend_node, ExtendImplSelfAs);
@@ -448,7 +448,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     // The explicit self type is the same as the default self type, so suggest
     // removing it and recover as if it were not present.
     if (auto self_as =
-            context.parse_tree_and_subtrees().ExtractAs<Parse::TypeImplAs>(
+            context.parse_tree_and_subtrees().ExtractAs<Parse::ImplTypeAs>(
                 self_type_node_id)) {
       CARBON_DIAGNOSTIC(ExtendImplSelfAsDefault, Note,
                         "remove the explicit `Self` type here");

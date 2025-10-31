@@ -44,7 +44,11 @@ struct IdTag {
          // doesn't collide with anything else (though with the
          // second-highest-bit-tagging this might not be needed).
         id_tag_(llvm::reverseBits((((id_index + 1) << 1) | 1) << 1)),
-        initial_reserved_ids_(initial_reserved_ids) {}
+        initial_reserved_ids_(initial_reserved_ids) {
+    CARBON_CHECK(
+        id_index != -1,
+        "IdTag should be default constructed if no tagging id is available.");
+  }
 
   auto Apply(int32_t index) const -> int32_t {
     if (index < initial_reserved_ids_) {
@@ -164,9 +168,10 @@ class ValueStore
     static auto MakeFlattenedRange(const ValueStore& store) -> auto {
       // Because indices into `ValueStore` are all sequential values from 0, we
       // can use llvm::seq to walk all indices in the store.
-      return llvm::map_range(
-          llvm::seq(store.size_),
-          [&](int32_t i) -> ConstRefType { return store.Get(IdType(i)); });
+      return llvm::map_range(llvm::seq(store.size_),
+                             [&](int32_t i) -> ConstRefType {
+                               return store.Get(IdType(store.tag_.Apply(i)));
+                             });
     }
 
     using FlattenedRangeType =
@@ -176,6 +181,9 @@ class ValueStore
 
   ValueStore() = default;
   explicit ValueStore(IdTag tag) : tag_(tag) {}
+  template <typename Id>
+  explicit ValueStore(Id id, int32_t initial_reserved_ids = 0)
+      : tag_(id.index, initial_reserved_ids) {}
 
   // Stores the value and returns an ID to reference it.
   auto Add(ValueType value) -> IdType {
@@ -273,8 +281,9 @@ class ValueStore
 
   // Makes an iterable range over references to all values in the ValueStore.
   auto values() [[clang::lifetimebound]] -> auto {
-    return llvm::map_range(
-        llvm::seq(size_), [&](int32_t i) -> RefType { return Get(IdType(i)); });
+    return llvm::map_range(llvm::seq(size_), [&](int32_t i) -> RefType {
+      return Get(IdType(tag_.Apply(i)));
+    });
   }
   auto values() const [[clang::lifetimebound]] -> Range { return Range(*this); }
 

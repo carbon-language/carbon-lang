@@ -60,6 +60,7 @@ using IdKind = TypeEnum<
     MetaInstId,
     NameId,
     NameScopeId,
+    NamedConstraintId,
     SpecificId,
     SpecificInterfaceId,
     StructTypeFieldsId,

@@ -14,15 +14,15 @@ class C {
   var a: i32;
 
   fn Get[self: C]() -> i32;
-  fn Set[addr self: C*]();
+  fn Set[ref self: C]();
 }
 
 fn C.Get[self: C]() -> i32 {
   return self.a;
 }
 
-fn C.Set[addr self: C*]() {
-  (*self).a = 1;
+fn C.Set[ref self: C]() {
+  self.a = 1;
 }
 
 // CHECK:STDOUT: ; ModuleID = 'self.carbon'
@@ -39,8 +39,8 @@ fn C.Set[addr self: C*]() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CSet.C.Main(ptr %self) #0 !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc25_10.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   store i32 1, ptr %.loc25_10.a, align 4, !dbg !10
+// CHECK:STDOUT:   %.loc25_7.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   store i32 1, ptr %.loc25_7.a, align 4, !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

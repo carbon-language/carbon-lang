@@ -54,7 +54,7 @@ fn G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %pattern_type.b5a = binding_pattern w [concrete]
+// CHECK:STDOUT:     %w.patt: %pattern_type.b5a = value_binding_pattern w [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.ref: ref %tuple.type.189 = name_ref v, %v
 // CHECK:STDOUT:   %.loc8_24.1: type = splice_block %.loc8_24.3 [concrete = constants.%tuple.type.189] {
@@ -68,14 +68,14 @@ fn G() {
 // CHECK:STDOUT:     %.loc8_24.3: type = converted %.loc8_24.2, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple.elem0.loc8: ref %i32 = tuple_access %v.ref, element0
-// CHECK:STDOUT:   %.loc8_28.1: %i32 = bind_value %tuple.elem0.loc8
+// CHECK:STDOUT:   %.loc8_28.1: %i32 = acquire_value %tuple.elem0.loc8
 // CHECK:STDOUT:   %tuple.elem1.loc8: ref %i32 = tuple_access %v.ref, element1
-// CHECK:STDOUT:   %.loc8_28.2: %i32 = bind_value %tuple.elem1.loc8
+// CHECK:STDOUT:   %.loc8_28.2: %i32 = acquire_value %tuple.elem1.loc8
 // CHECK:STDOUT:   %tuple.elem2.loc8: ref %i32 = tuple_access %v.ref, element2
-// CHECK:STDOUT:   %.loc8_28.3: %i32 = bind_value %tuple.elem2.loc8
+// CHECK:STDOUT:   %.loc8_28.3: %i32 = acquire_value %tuple.elem2.loc8
 // CHECK:STDOUT:   %tuple: %tuple.type.189 = tuple_value (%.loc8_28.1, %.loc8_28.2, %.loc8_28.3)
 // CHECK:STDOUT:   %.loc8_28.4: %tuple.type.189 = converted %v.ref, %tuple
-// CHECK:STDOUT:   %w: %tuple.type.189 = bind_name w, %.loc8_28.4
+// CHECK:STDOUT:   %w: %tuple.type.189 = value_binding w, %.loc8_28.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

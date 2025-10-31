@@ -31,6 +31,8 @@ fn Call() -> i32 {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
+// CHECK:STDOUT: $_Z1fv = comdat any
+// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: noinline nounwind optnone
 // CHECK:STDOUT: define i32 @_CCall.Main() #0 !dbg !7 {
 // CHECK:STDOUT: entry:
@@ -45,11 +47,15 @@ fn Call() -> i32 {
 // CHECK:STDOUT:   ret i32 %call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i32 @_Z1fv() #2
+// CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
+// CHECK:STDOUT: define linkonce_odr dso_local i32 @_Z1fv() #2 comdat {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret i32 42
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { noinline nounwind optnone }
 // CHECK:STDOUT: attributes #1 = { mustprogress noinline optnone "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #2 = { "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { mustprogress noinline nounwind optnone "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}

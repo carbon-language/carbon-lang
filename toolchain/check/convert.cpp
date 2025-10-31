@@ -799,11 +799,16 @@ static auto CanAddQualifiers(SemIR::TypeQualifiers quals,
 // Determine whether the given set of qualifiers can be removed by a conversion
 // of an expression of the given category.
 static auto CanRemoveQualifiers(SemIR::TypeQualifiers quals,
-                                SemIR::ExprCategory cat, bool allow_unsafe)
-    -> bool {
+                                SemIR::ExprCategory cat,
+                                ConversionTarget::Kind kind) -> bool {
+  bool allow_unsafe = kind == ConversionTarget::ExplicitUnsafeAs;
+
   if (quals.HasAnyOf(SemIR::TypeQualifiers::Const) && !allow_unsafe &&
-      SemIR::IsRefCategory(cat)) {
-    // Removing `const` is an unsafe conversion for a reference expression.
+      SemIR::IsRefCategory(cat) &&
+      IsValidExprCategoryForConversionTarget(cat, kind)) {
+    // Removing `const` is an unsafe conversion for a reference expression. But
+    // it's OK if we will be converting to a different category as part of this
+    // overall conversion anyway.
     return false;
   }
 
@@ -964,21 +969,26 @@ static auto PerformBuiltinConversion(
     }
   }
 
-  // T explicitly converts to U if T is compatible with U, and we're allowed to
+  // T implicitly converts to U if T and U are the same ignoring qualifiers, and
+  // we're allowed to remove / add any qualifiers that differ. Similarly, T
+  // explicitly converts to U if T is compatible with U, and we're allowed to
   // remove / add any qualifiers that differ.
-  if (target.is_explicit_as() && target.type_id != value_type_id) {
+  if (target.type_id != value_type_id) {
     auto [target_foundation_id, target_quals] =
-        context.types().GetTransitiveUnqualifiedAdaptedType(target.type_id);
+        target.is_explicit_as()
+            ? context.types().GetTransitiveUnqualifiedAdaptedType(
+                  target.type_id)
+            : context.types().GetUnqualifiedTypeAndQualifiers(target.type_id);
     auto [value_foundation_id, value_quals] =
-        context.types().GetTransitiveUnqualifiedAdaptedType(value_type_id);
+        target.is_explicit_as()
+            ? context.types().GetTransitiveUnqualifiedAdaptedType(value_type_id)
+            : context.types().GetUnqualifiedTypeAndQualifiers(value_type_id);
     if (target_foundation_id == value_foundation_id) {
       auto category = SemIR::GetExprCategory(context.sem_ir(), value_id);
       auto added_quals = target_quals & ~value_quals;
       auto removed_quals = value_quals & ~target_quals;
       if (CanAddQualifiers(added_quals, category) &&
-          CanRemoveQualifiers(
-              removed_quals, category,
-              target.kind == ConversionTarget::ExplicitUnsafeAs)) {
+          CanRemoveQualifiers(removed_quals, category, target.kind)) {
         // For a struct or tuple literal, perform a category conversion if
         // necessary.
         if (category == SemIR::ExprCategory::Mixed) {
@@ -1005,7 +1015,7 @@ static auto PerformBuiltinConversion(
             {.type_id = target.type_id, .source_id = value_id});
 
         if (need_value_binding) {
-          value_id = AddInst<SemIR::BindValue>(
+          value_id = AddInst<SemIR::AcquireValue>(
               context, loc_id,
               {.type_id = target.type_id, .value_id = value_id});
         }
@@ -1072,6 +1082,9 @@ static auto PerformBuiltinConversion(
     }
 
     // An expression of type T converts to U if T is a class derived from U.
+    //
+    // TODO: Combine this with the qualifiers and adapter conversion logic above
+    // to allow qualifiers and inheritance conversions to be performed together.
     if (auto path = ComputeInheritancePath(context, loc_id, value_type_id,
                                            target.type_id);
         path && !path->empty()) {
@@ -1213,9 +1226,9 @@ static auto PerformBuiltinConversion(
       // converting back to the type of the original symbolic binding facet
       // value.
       //
-      // In the case where the FacetAccessType wraps a BindSymbolicName with the
+      // In the case where the FacetAccessType wraps a SymbolicBinding with the
       // exact facet type that we are converting to, the resulting FacetValue
-      // would evaluate back to the original BindSymbolicName as its canonical
+      // would evaluate back to the original SymbolicBinding as its canonical
       // form. We can skip past the whole impl lookup step then and do that
       // here.
       //
@@ -1446,9 +1459,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     auto target_type_inst_id = context.types().GetInstId(target.type_id);
     return AddDependentActionSplice(
         context, loc_id,
-        SemIR::ConvertToValueAction{.type_id = SemIR::InstType::TypeId,
-                                    .inst_id = expr_id,
-                                    .target_type_inst_id = target_type_inst_id},
+        SemIR::ConvertToValueAction{
+            .type_id = GetSingletonType(context, SemIR::InstType::TypeInstId),
+            .inst_id = expr_id,
+            .target_type_inst_id = target_type_inst_id},
         target_type_inst_id);
   }
 
@@ -1516,7 +1530,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   // Now perform any necessary value category conversions.
-  switch (SemIR::GetExprCategory(sem_ir, expr_id)) {
+  // This uses fallthrough to implement a very simple state machine over the
+  // category of expr_id, which is tracked by current_category.
+  switch (auto current_category = SemIR::GetExprCategory(sem_ir, expr_id);
+          current_category) {
     case SemIR::ExprCategory::NotExpr:
     case SemIR::ExprCategory::Mixed:
       CARBON_FATAL("Unexpected expression {0} after builtin conversions",
@@ -1545,15 +1562,16 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       expr_id = FinalizeTemporary(context, expr_id,
                                   target.kind == ConversionTarget::Discarded);
       // We now have an ephemeral reference.
+      current_category = SemIR::ExprCategory::EphemeralRef;
       [[fallthrough]];
 
     case SemIR::ExprCategory::DurableRef:
-      if (target.kind == ConversionTarget::DurableRef) {
+    case SemIR::ExprCategory::EphemeralRef:
+      if (current_category == SemIR::ExprCategory::DurableRef &&
+          target.kind == ConversionTarget::DurableRef) {
         break;
       }
-      [[fallthrough]];
 
-    case SemIR::ExprCategory::EphemeralRef:
       // If a reference expression is an acceptable result, we're done.
       if (target.kind == ConversionTarget::ValueOrRef ||
           target.kind == ConversionTarget::Discarded ||
@@ -1563,10 +1581,11 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
       // If we have a reference and don't want one, form a value binding.
       // TODO: Support types with custom value representations.
-      expr_id = AddInst<SemIR::BindValue>(
+      expr_id = AddInst<SemIR::AcquireValue>(
           context, SemIR::LocId(expr_id),
           {.type_id = target.type_id, .value_id = expr_id});
       // We now have a value expression.
+      current_category = SemIR::ExprCategory::Value;
       [[fallthrough]];
 
     case SemIR::ExprCategory::Value:
@@ -1585,12 +1604,14 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       // When initializing from a value, perform a copy.
       if (target.is_initializer()) {
         expr_id = PerformCopy(context, expr_id, target);
+        current_category = SemIR::ExprCategory::Initializing;
       }
 
       // When initializing a C++ thunk parameter, form a reference, creating a
       // temporary if needed.
       if (target.kind == ConversionTarget::CppThunkRef) {
         expr_id = ConvertValueForCppThunkRef(context, expr_id);
+        current_category = SemIR::ExprCategory::EphemeralRef;
       }
 
       break;
@@ -1706,11 +1727,16 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                             self_id, arg_refs, return_slot_arg_id);
 }
 
+auto TypeExpr::ForUnsugared(Context& context, SemIR::TypeId type_id)
+    -> TypeExpr {
+  return {.inst_id = context.types().GetInstId(type_id), .type_id = type_id};
+}
+
 auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
                 bool diagnose) -> TypeExpr {
   auto type_inst_id =
       ConvertToValueOfType(context, loc_id, value_id, SemIR::TypeType::TypeId);
-  if (type_inst_id == SemIR::ErrorInst::InstId) {
+  if (type_inst_id == SemIR::ErrorInst::TypeInstId) {
     return {.inst_id = SemIR::ErrorInst::TypeInstId,
             .type_id = SemIR::ErrorInst::TypeId};
   }

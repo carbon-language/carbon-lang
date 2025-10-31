@@ -20,14 +20,15 @@
 // CHECK:STDOUT:   import_ir_insts: {}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: inst0000000E, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope00000000: {inst: inst0000000E, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:    {}
+// CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:       {}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
 // CHECK:STDOUT:   struct_type_fields:
-// CHECK:STDOUT:     struct_type_fields0: {}
+// CHECK:STDOUT:     struct_type_fields00000000: {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     'type(TypeType)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(TypeType)}
@@ -41,16 +42,16 @@
 // CHECK:STDOUT:     'inst(BoolType)':  {kind: BoolType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(BoundMethodType)': {kind: BoundMethodType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(CharLiteralType)': {kind: CharLiteralType, type: type(TypeType)}
+// CHECK:STDOUT:     'inst(CppVoidType)': {kind: CppVoidType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(ErrorInst)': {kind: ErrorInst, type: type(Error)}
 // CHECK:STDOUT:     'inst(FloatLiteralType)': {kind: FloatLiteralType, type: type(TypeType)}
-// CHECK:STDOUT:     'inst(ImplWitnessTablePlaceholder)': {kind: ImplWitnessTablePlaceholder, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(InstType)':  {kind: InstType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(IntLiteralType)': {kind: IntLiteralType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(NamespaceType)': {kind: NamespaceType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(SpecificFunctionType)': {kind: SpecificFunctionType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(VtableType)': {kind: VtableType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(WitnessType)': {kind: WitnessType, type: type(TypeType)}
-// CHECK:STDOUT:     inst0000000E:    {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     inst0000000E:    {kind: Namespace, arg0: name_scope00000000, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
 // CHECK:STDOUT:       'inst(TypeType)':  concrete_constant(inst(TypeType))
@@ -58,9 +59,9 @@
 // CHECK:STDOUT:       'inst(BoolType)':  concrete_constant(inst(BoolType))
 // CHECK:STDOUT:       'inst(BoundMethodType)': concrete_constant(inst(BoundMethodType))
 // CHECK:STDOUT:       'inst(CharLiteralType)': concrete_constant(inst(CharLiteralType))
+// CHECK:STDOUT:       'inst(CppVoidType)': concrete_constant(inst(CppVoidType))
 // CHECK:STDOUT:       'inst(ErrorInst)': concrete_constant(inst(ErrorInst))
 // CHECK:STDOUT:       'inst(FloatLiteralType)': concrete_constant(inst(FloatLiteralType))
-// CHECK:STDOUT:       'inst(ImplWitnessTablePlaceholder)': concrete_constant(inst(ImplWitnessTablePlaceholder))
 // CHECK:STDOUT:       'inst(InstType)':  concrete_constant(inst(InstType))
 // CHECK:STDOUT:       'inst(IntLiteralType)': concrete_constant(inst(IntLiteralType))
 // CHECK:STDOUT:       'inst(NamespaceType)': concrete_constant(inst(NamespaceType))
@@ -74,6 +75,6 @@
 // CHECK:STDOUT:     exports:         {}
 // CHECK:STDOUT:     imports:         {}
 // CHECK:STDOUT:     global_init:     {}
-// CHECK:STDOUT:     inst_block4:
+// CHECK:STDOUT:     inst_block60000004:
 // CHECK:STDOUT:       0:               inst0000000E
 // CHECK:STDOUT: ...

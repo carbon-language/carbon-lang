@@ -24,7 +24,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case AddrPattern::Kind:
       case Assign::Kind:
       case BaseDecl::Kind:
-      case BindingPattern::Kind:
       case Branch::Kind:
       case BranchIf::Kind:
       case BranchWithArg::Kind:
@@ -34,6 +33,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case NameBindingDecl::Kind:
       case Namespace::Kind:
       case OutParamPattern::Kind:
+      case RefBindingPattern::Kind:
       case RefParamPattern::Kind:
       case RequirementBaseFacetType::Kind:
       case RequirementEquivalent::Kind:
@@ -44,6 +44,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ReturnExpr::Kind:
       case SymbolicBindingPattern::Kind:
       case TuplePattern::Kind:
+      case ValueBindingPattern::Kind:
       case ValueParamPattern::Kind:
       case VarPattern::Kind:
         return ExprCategory::NotExpr;
@@ -62,7 +63,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         continue;
       }
 
-      case CARBON_KIND(BindAlias inst): {
+      case CARBON_KIND(AliasBinding inst): {
         inst_id = inst.value_id;
         continue;
       }
@@ -98,8 +99,9 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case AssociatedEntity::Kind:
       case AssociatedEntityType::Kind:
       case AutoType::Kind:
-      case BindSymbolicName::Kind:
-      case BindValue::Kind:
+      case SymbolicBinding::Kind:
+      case AcquireValue::Kind:
+      case ValueBinding::Kind:
       case BlockArg::Kind:
       case BoolLiteral::Kind:
       case BoolType::Kind:
@@ -114,6 +116,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case ConvertToValueAction::Kind:
       case CppOverloadSetType::Kind:
       case CppOverloadSetValue::Kind:
+      case CppVoidType::Kind:
       case CustomLayoutType::Kind:
       case FacetAccessType::Kind:
       case FacetType::Kind:
@@ -126,12 +129,12 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case FunctionTypeWithSelfType::Kind:
       case GenericClassType::Kind:
       case GenericInterfaceType::Kind:
+      case GenericNamedConstraintType::Kind:
       case LookupImplWitness::Kind:
       case ImplWitness::Kind:
       case ImplWitnessAccess::Kind:
       case ImplWitnessAccessSubstituted::Kind:
       case ImplWitnessTable::Kind:
-      case ImplWitnessTablePlaceholder::Kind:
       case ImportCppDecl::Kind:
       case ImportDecl::Kind:
       case InstType::Kind:
@@ -141,6 +144,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case IntValue::Kind:
       case InterfaceDecl::Kind:
       case MaybeUnformedType::Kind:
+      case NamedConstraintDecl::Kind:
       case NamespaceType::Kind:
       case PartialType::Kind:
       case PatternType::Kind:
@@ -169,17 +173,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
 
       case ErrorInst::Kind:
         return ExprCategory::Error;
-
-      case CARBON_KIND(BindName inst): {
-        // TODO: Don't rely on value_id for expression category, since it may
-        // not be valid yet. This workaround only works because we don't support
-        // `var` in function signatures yet.
-        if (!inst.value_id.has_value()) {
-          return value_category;
-        }
-        inst_id = inst.value_id;
-        continue;
-      }
 
       case CARBON_KIND(ArrayIndex inst): {
         inst_id = inst.array_id;
@@ -231,6 +224,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case TupleInit::Kind:
         return ExprCategory::Initializing;
 
+      case RefBinding::Kind:
       case Deref::Kind:
       case VarStorage::Kind:
       case ReturnSlot::Kind:

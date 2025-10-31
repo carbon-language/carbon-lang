@@ -322,17 +322,29 @@ struct Namespace {
 // Pattern nodes
 // -------------
 
-// A pattern binding, such as `name: Type`, that isn't inside a `var` pattern.
+// A ref binding name: `ref name`.
+struct RefBindingName {
+  static constexpr auto Kind =
+      NodeKind::RefBindingName.Define({.child_count = 1});
+
+  Lex::RefTokenIndex token;
+  AnyRuntimeBindingPatternName name;
+};
+
+// A binding pattern, such as `name: Type`, that isn't inside a `var` pattern.
 struct LetBindingPattern {
   static constexpr auto Kind = NodeKind::LetBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
-  AnyRuntimeBindingPatternName name;
+  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
+  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, UnderscoreName,
+              RefBindingName>
+      name;
   Lex::ColonTokenIndex token;
   AnyExprId type;
 };
 
-// A pattern binding, such as `name: Type`, that is inside a `var` pattern.
+// A binding pattern, such as `name: Type`, that is inside a `var` pattern.
 struct VarBindingPattern {
   static constexpr auto Kind = NodeKind::VarBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
@@ -1446,6 +1458,40 @@ struct InterfaceDefinition {
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
+// `require`...`impls` statements
+// ------------------------------
+
+// `require`
+using RequireIntroducer =
+    LeafNode<NodeKind::RequireIntroducer, Lex::RequireTokenIndex>;
+
+// `impls` with no type before it
+using RequireDefaultSelfImpls =
+    LeafNode<NodeKind::RequireDefaultSelfImpls, Lex::ImplsTokenIndex,
+             NodeCategory::RequireImpls>;
+
+// `<type> impls`.
+struct RequireTypeImpls {
+  static constexpr auto Kind = NodeKind::RequireTypeImpls.Define(
+      {.category = NodeCategory::RequireImpls, .child_count = 1});
+
+  AnyExprId type_expr;
+  Lex::ImplsTokenIndex token;
+};
+
+// `require T impls I where...`
+struct RequireDecl {
+  static constexpr auto Kind =
+      NodeKind::RequireDecl.Define({.category = NodeCategory::Decl,
+                                    .bracketed_by = RequireIntroducer::Kind});
+
+  RequireIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
+  AnyRequireImplsId impls;
+  AnyExprId facet_type;
+  Lex::SemiTokenIndex token;
+};
+
 // `impl`...`as` declarations and definitions
 // ------------------------------------------
 
@@ -1462,12 +1508,12 @@ struct ImplForall {
 };
 
 // `as` with no type before it
-using DefaultSelfImplAs = LeafNode<NodeKind::DefaultSelfImplAs,
+using ImplDefaultSelfAs = LeafNode<NodeKind::ImplDefaultSelfAs,
                                    Lex::AsTokenIndex, NodeCategory::ImplAs>;
 
 // `<type> as`
-struct TypeImplAs {
-  static constexpr auto Kind = NodeKind::TypeImplAs.Define(
+struct ImplTypeAs {
+  static constexpr auto Kind = NodeKind::ImplTypeAs.Define(
       {.category = NodeCategory::ImplAs, .child_count = 1});
 
   AnyExprId type_expr;

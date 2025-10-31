@@ -37,10 +37,13 @@ struct BindingPatternInfo {
 
 // Creates a binding pattern. Returns the binding pattern and the bind name
 // instruction.
+// TODO: remove is_template once we have a separate InstKind for template
+// bindings.
 auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                        SemIR::NameId name_id, SemIR::TypeId type_id,
-                       SemIR::ExprRegionId type_region_id, bool is_generic,
-                       bool is_template) -> BindingPatternInfo;
+                       SemIR::ExprRegionId type_region_id,
+                       SemIR::InstKind pattern_kind, bool is_template)
+    -> BindingPatternInfo;
 
 // Creates storage for `var` patterns nested within the given pattern at the
 // current location in the output SemIR. For a `returned var`, this
@@ -55,11 +58,6 @@ auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
 auto AddSelfParamPattern(Context& context, SemIR::LocId loc_id,
                          SemIR::ExprRegionId type_expr_region_id,
                          SemIR::TypeId type_id) -> SemIR::InstId;
-
-// As the above, but for `addr self: Self*`.
-auto AddAddrSelfParamPattern(Context& context, SemIR::LocId loc_id,
-                             SemIR::ExprRegionId type_expr_region_id,
-                             SemIR::TypeInstId type_inst_id) -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

@@ -13,13 +13,13 @@
 class A;
 
 interface GetSelf {
-  fn Get[addr self: Self*]() -> Self*;
+  fn Get[ref self: Self]() -> Self*;
 }
 
 class A {
   extend impl as GetSelf {
-    fn Get[addr self: Self*]() -> Self* {
-      return self;
+    fn Get[ref self: Self]() -> Self* {
+      return &self;
     }
   }
 }

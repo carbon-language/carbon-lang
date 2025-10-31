@@ -55,7 +55,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ConstMismatch.decl: %ConstMismatch.type = fn_decl @ConstMismatch [concrete = constants.%ConstMismatch] {
-// CHECK:STDOUT:     %p.patt: %pattern_type.db0 = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type.db0 = value_binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.db0 = value_param_pattern %p.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.3c6 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.3c6 = out_param_pattern %return.patt, call_param1 [concrete]
@@ -71,7 +71,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:       %const.loc15_21: type = const_type %.loc15_21 [concrete = constants.%const.c48]
 // CHECK:STDOUT:       %ptr.loc15_29: type = ptr_type %const.loc15_21 [concrete = constants.%ptr.bf9]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.bf9 = bind_name p, %p.param
+// CHECK:STDOUT:     %p: %ptr.bf9 = value_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %const.987 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %const.987 = return_slot %return.param
 // CHECK:STDOUT:   }

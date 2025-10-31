@@ -120,7 +120,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %MyCpp: <namespace> = bind_alias MyCpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %MyCpp: <namespace> = alias_binding MyCpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- api_and_impl.carbon

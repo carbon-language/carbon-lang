@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_TYPED_INSTS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_TYPED_INSTS_H_
 
+#include "common/template_string.h"
 #include "toolchain/base/int.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/typed_nodes.h"
@@ -51,6 +52,27 @@
 
 namespace Carbon::SemIR {
 
+// A template for singleton types. Most uses will not add members, and so may
+// apply a `using` alias. Some children add static members; non-static members
+// must not be added.
+//
+// For a `TypeId`, `GetSingletonType` should generally be used so that the type
+// is completed when referenced. In a few cases where completeness is always
+// known (particularly `TypeType` and `ErrorInst`), a `TypeId` may be provided
+// by a child.
+template <InstKind::RawEnumType KindT, TemplateString IrName>
+struct SingletonTypeInst {
+  static constexpr auto Kind = InstKind::Make(KindT).Define<Parse::NoneNodeId>(
+      InstKind::DefinitionInfo{.ir_name = IrName,
+                               .is_type = InstIsType::Always,
+                               .constant_kind = InstConstantKind::Always});
+  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+
+  // Singleton types have a type of `TypeType`, except for `ErrorInst` which
+  // uses itself.
+  SemIR::TypeId type_id;
+};
+
 // An action that performs simple member access, `base.name`.
 struct AccessMemberAction {
   static constexpr auto Kind =
@@ -76,6 +98,16 @@ struct AccessOptionalMemberAction {
   TypeId type_id;
   MetaInstId base_id;
   NameId name_id;
+};
+
+// A value acquisition. Used when an expression contains a reference and we want
+// a value.
+struct AcquireValue {
+  static constexpr auto Kind = InstKind::AcquireValue.Define<Parse::NodeId>(
+      {.ir_name = "acquire_value"});
+
+  TypeId type_id;
+  InstId value_id;
 };
 
 // An adapted type declaration in a class, of the form `adapt T;`.
@@ -114,6 +146,16 @@ struct AddrPattern {
   TypeId type_id;
   // The `self` binding pattern.
   InstId inner_id;
+};
+
+// Binds a name as an alias. See AnyBinding for member documentation.
+struct AliasBinding {
+  static constexpr auto Kind = InstKind::AliasBinding.Define<Parse::NodeId>(
+      {.ir_name = "alias_binding"});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
+  InstId value_id;
 };
 
 // An array indexing operation, such as `array[index]`.
@@ -227,17 +269,7 @@ struct AssociatedEntityType {
 };
 
 // Used for the type of patterns that do not match a fixed type.
-struct AutoType {
-  static constexpr auto Kind = InstKind::AutoType.Define<Parse::NoneNodeId>(
-      {.ir_name = "auto",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always});
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-  static constexpr auto TypeId =
-      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
-
-  SemIR::TypeId type_id;
-};
+using AutoType = SingletonTypeInst<InstKind::AutoType, "auto">;
 
 // A base in a class, of the form `base: base_type;`. A base class is an
 // element of the derived class, and the type of the `BaseDecl` instruction is
@@ -250,63 +282,6 @@ struct BaseDecl {
   TypeId type_id;
   TypeInstId base_type_inst_id;
   ElementIndex index;
-};
-
-// Binds a name as an alias.
-struct BindAlias {
-  static constexpr auto Kind =
-      InstKind::BindAlias.Define<Parse::NodeId>({.ir_name = "bind_alias"});
-
-  TypeId type_id;
-  EntityNameId entity_name_id;
-  InstId value_id;
-};
-
-// Binds a name, such as `x` in `var x: i32`.
-struct BindName {
-  // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind = InstKind::BindName.Define<Parse::NodeId>(
-      {.ir_name = "bind_name", .constant_kind = InstConstantKind::Indirect});
-
-  TypeId type_id;
-  EntityNameId entity_name_id;
-  // The value is inline in the inst so that value access doesn't require an
-  // indirection.
-  InstId value_id;
-};
-
-// Binds a symbolic name, such as `x` in `let x:! i32 = 7;`.
-struct BindSymbolicName {
-  static constexpr auto Kind = InstKind::BindSymbolicName.Define<Parse::NodeId>(
-      {.ir_name = "bind_symbolic_name",
-       .is_type = InstIsType::Maybe,
-       .constant_kind = InstConstantKind::SymbolicOnly});
-
-  TypeId type_id;
-  EntityNameId entity_name_id;
-  InstId value_id;
-};
-
-// A value binding. Used when an expression contains a reference and we want a
-// value.
-struct BindValue {
-  static constexpr auto Kind =
-      InstKind::BindValue.Define<Parse::NodeId>({.ir_name = "bind_value"});
-
-  TypeId type_id;
-  InstId value_id;
-};
-
-// Represents a non-symbolic binding pattern. See `AnyBindingPattern` for member
-// documentation.
-struct BindingPattern {
-  static constexpr auto Kind = InstKind::BindingPattern.Define<Parse::NodeId>(
-      {.ir_name = "binding_pattern",
-       .constant_kind = InstConstantKind::AlwaysUnique,
-       .is_lowered = false});
-
-  TypeId type_id;
-  EntityNameId entity_name_id;
 };
 
 // Reads an argument from `BranchWithArg`.
@@ -329,17 +304,10 @@ struct BoolLiteral {
 };
 
 // The type of bool literals and branch conditions, bool.
-struct BoolType {
-  static constexpr auto Kind = InstKind::BoolType.Define<Parse::NoneNodeId>(
-      {.ir_name = "bool",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always});
-  // This is a singleton instruction. However, it may still evolve into a more
-  // standard type and be removed.
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-
-  TypeId type_id;
-};
+//
+// This is a singleton instruction. However, it may still evolve into a more
+// standard type and be removed.
+using BoolType = SingletonTypeInst<InstKind::BoolType, "bool">;
 
 // For member access such as `object.MethodName`, combines a member function
 // with the value to use for `self`. This is a callable structure; `Call` will
@@ -359,18 +327,11 @@ struct BoundMethod {
 };
 
 // The type of bound method values.
-struct BoundMethodType {
-  static constexpr auto Kind =
-      InstKind::BoundMethodType.Define<Parse::NoneNodeId>(
-          {.ir_name = "<bound method>",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always});
-  // This is a singleton instruction. However, it may still evolve into a more
-  // standard type and be removed.
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-
-  TypeId type_id;
-};
+//
+// This is a singleton instruction. However, it may still evolve into a more
+// standard type and be removed.
+using BoundMethodType =
+    SingletonTypeInst<InstKind::BoundMethodType, "<bound method>">;
 
 // Control flow to branch to the target block.
 struct Branch {
@@ -431,20 +392,11 @@ struct Call {
 
 // A unicode code point character literal. This type only provides compile-time
 // operations, and is represented as an empty type at runtime.
-struct CharLiteralType {
-  static constexpr auto Kind =
-      InstKind::CharLiteralType.Define<Parse::NoneNodeId>(
-          {.ir_name = "Core.CharLiteral",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always});
-  // This is a singleton instruction. However, it may still evolve into a more
-  // standard type and be removed.
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-  static constexpr auto TypeId =
-      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
-
-  SemIR::TypeId type_id;
-};
+//
+// This is a singleton instruction. However, it may still evolve into a more
+// standard type and be removed.
+using CharLiteralType =
+    SingletonTypeInst<InstKind::CharLiteralType, "Core.CharLiteral">;
 
 // A unicode code point character value, whose type is `CharLiteralType`.
 struct CharLiteralValue {
@@ -542,18 +494,6 @@ struct ConstType {
   TypeInstId inner_id;
 };
 
-struct PartialType {
-  static constexpr auto Kind =
-      InstKind::PartialType.Define<Parse::PrefixOperatorPartialId>(
-          {.ir_name = "partial_type",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Conditional,
-           .deduce_through = true});
-
-  TypeId type_id;
-  TypeInstId inner_id;
-};
-
 // Records that a type conversion `original as new_type` was done, producing the
 // result.
 struct Converted {
@@ -579,6 +519,14 @@ struct ConvertToValueAction {
   TypeId type_id;
   MetaInstId inst_id;
   TypeInstId target_type_inst_id;
+};
+
+// A type for C++ `void`. Should only be used for pointers (`void*`).
+struct CppVoidType
+    : public SingletonTypeInst<InstKind::CppVoidType, "Cpp.void"> {
+  // `Cpp.void` is never complete, so `GetSingletonType` won't work.
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
 };
 
 // A type whose layout is determined externally. This is used as the object
@@ -608,17 +556,14 @@ struct Deref {
 // required. For example, when there is a type checking issue, this will be used
 // in the type_id. It's typically used as a cue that semantic checking doesn't
 // need to issue further diagnostics.
-struct ErrorInst {
-  static constexpr auto Kind = InstKind::ErrorInst.Define<Parse::NoneNodeId>(
-      {.ir_name = "<error>",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always});
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-  static constexpr SemIR::InstId InstId = TypeInstId;
-  static constexpr auto ConstantId = ConstantId::ForConcreteConstant(InstId);
-  static constexpr auto TypeId = TypeId::ForTypeConstant(ConstantId);
+struct ErrorInst : public SingletonTypeInst<InstKind::ErrorInst, "<error>"> {
+  // Convenience for returning error InstIds and ConstantIds directly.
+  static constexpr InstId InstId = TypeInstId;
+  static constexpr auto ConstantId =
+      ConstantId::ForConcreteConstant(TypeInstId);
 
-  SemIR::TypeId type_id;
+  // `ErrorInst` is always set complete in file.cpp.
+  static constexpr auto TypeId = TypeId::ForTypeConstant(ConstantId);
 };
 
 // An `export bind_name` declaration.
@@ -665,8 +610,8 @@ struct FacetType {
 // This instruction is never a type. Though it can be converted to type, doing
 // so evaluates to the `type_inst_id` within.
 //
-// If the FacetValue is just a wrapper around a BindSymbolicName (converted to
-// `type` and back, for example), it evaluates back to the BindSymbolicName.
+// If the FacetValue is just a wrapper around a SymbolicBinding (converted to
+// `type` and back, for example), it evaluates back to the SymbolicBinding.
 struct FacetValue {
   static constexpr auto Kind = InstKind::FacetValue.Define<Parse::NodeId>(
       {.ir_name = "facet_value",
@@ -699,18 +644,11 @@ struct FieldDecl {
 
 // The float literal type.
 // TODO: Replace this with a rational number type, following the design.
-struct FloatLiteralType {
-  static constexpr auto Kind =
-      InstKind::FloatLiteralType.Define<Parse::NoneNodeId>(
-          {.ir_name = "Core.FloatLiteral",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always});
-  // This is a singleton instruction. However, it may still evolve into a more
-  // standard type and be removed.
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-
-  TypeId type_id;
-};
+//
+// This is a singleton instruction. However, it may still evolve into a more
+// standard type and be removed.
+using FloatLiteralType =
+    SingletonTypeInst<InstKind::FloatLiteralType, "Core.FloatLiteral">;
 
 // A floating point literal value.
 // TODO: Eventually this should be represented as a rational number, and should
@@ -855,6 +793,21 @@ struct GenericInterfaceType {
   SpecificId enclosing_specific_id;
 };
 
+// The type of the name of a generic named constraint. The corresponding value
+// is an empty `StructValue`.
+struct GenericNamedConstraintType {
+  // This is only ever created as a constant, so doesn't have a location.
+  static constexpr auto Kind =
+      InstKind::GenericNamedConstraintType.Define<Parse::NoneNodeId>(
+          {.ir_name = "generic_named_constaint_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::WheneverPossible});
+
+  TypeId type_id;
+  NamedConstraintId named_constraint_id;
+  SpecificId enclosing_specific_id;
+};
+
 // An `impl` declaration.
 struct ImplDecl {
   static constexpr auto Kind = InstKind::ImplDecl.Define<Parse::AnyImplDeclId>(
@@ -948,7 +901,7 @@ struct ImplWitnessAssociatedConstant {
 // The witness table contains an instruction for each associated constant and
 // function in the impl declaration (and definition, if seen). The `specific_id`
 // from the `ImplWitness` should be applied to those instructions. Instructions
-// will be `ImplWitnessTablePlaceholder` until a value is seen for them.
+// will be `InstId::ImplWitnessTablePlaceholder` until a value is seen for them.
 //
 // An `ImplWitnessTable` can be shared by multiple `ImplWitness` instructions,
 // to avoid the work of importing the full table with each witness.
@@ -988,20 +941,6 @@ struct ImplWitnessTable {
   // instruction (and the `ImplDecl` instruction) in here, as that lets us get
   // the FacetType and its interface names?
   ImplId impl_id;
-};
-
-// A singleton placeholder instruction used in the `ImplWitness` table of
-// instructions for members of the impl. These are replaced as values are seen
-// for the witness table in the impl declaration or definition.
-struct ImplWitnessTablePlaceholder {
-  static constexpr auto Kind =
-      InstKind::ImplWitnessTablePlaceholder.Define<Parse::NodeId>(
-          {.ir_name = "impl_witness_table_placeholder",
-           .constant_kind = InstConstantKind::AlwaysUnique,
-           .is_lowered = false});
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-
-  TypeId type_id;
 };
 
 // An `import Cpp` declaration.
@@ -1083,17 +1022,7 @@ struct InitializeFrom {
 };
 
 // Used as the type of template actions that produce instructions.
-struct InstType {
-  static constexpr auto Kind = InstKind::InstType.Define<Parse::NoneNodeId>(
-      {.ir_name = "<instruction>",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always});
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-  static constexpr auto TypeId =
-      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
-
-  SemIR::TypeId type_id;
-};
+using InstType = SingletonTypeInst<InstKind::InstType, "<instruction>">;
 
 // A value of type `InstType` that refers to an instruction. This is used to
 // represent an instruction as a value for use as a result of a template action.
@@ -1114,6 +1043,7 @@ struct InterfaceDecl {
       InstKind::InterfaceDecl.Define<Parse::AnyInterfaceDeclId>(
           {.ir_name = "interface_decl", .is_lowered = false});
 
+  // Always `type`.
   TypeId type_id;
   InterfaceId interface_id;
   // The declaration block, containing the interface name's qualifiers and the
@@ -1125,18 +1055,11 @@ struct InterfaceDecl {
 // literals and as the parameter type of `Core.Int` and `Core.Float`. This type
 // only provides compile-time operations, and is represented as an empty type at
 // runtime.
-struct IntLiteralType {
-  static constexpr auto Kind =
-      InstKind::IntLiteralType.Define<Parse::NoneNodeId>(
-          {.ir_name = "Core.IntLiteral",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always});
-  // This is a singleton instruction. However, it may still evolve into a more
-  // standard type and be removed.
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-
-  TypeId type_id;
-};
+//
+// This is a singleton instruction. However, it may still evolve into a more
+// standard type and be removed.
+using IntLiteralType =
+    SingletonTypeInst<InstKind::IntLiteralType, "Core.IntLiteral">;
 
 // A primitive integer type whose representation and operations are defined by
 // the toolchain. The `Core.Int` and `Core.UInt` classes are defined as adapters
@@ -1219,6 +1142,20 @@ struct NameBindingDecl {
   InstBlockId pattern_block_id;
 };
 
+// A named constraint declaration.
+struct NamedConstraintDecl {
+  static constexpr auto Kind =
+      InstKind::NamedConstraintDecl.Define<Parse::AnyNamedConstraintDeclId>(
+          {.ir_name = "constraint_decl", .is_lowered = false});
+
+  // Always `type`.
+  TypeId type_id;
+  NamedConstraintId named_constraint_id;
+  // The declaration block, containing the constraint name's qualifiers and the
+  // constraint's generic parameters.
+  DeclInstBlockId decl_block_id;
+};
+
 // A name reference, with the value of the name. This only handles name
 // resolution; the value may be used for reading or writing.
 struct NameRef {
@@ -1251,18 +1188,10 @@ struct Namespace {
 };
 
 // The type of namespace and imported package names.
-struct NamespaceType {
-  static constexpr auto Kind =
-      InstKind::NamespaceType.Define<Parse::NoneNodeId>(
-          {.ir_name = "<namespace>",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always});
-  // This is a singleton instruction. However, it may still evolve into a more
-  // standard type and be removed.
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-
-  TypeId type_id;
-};
+//
+// This is a singleton instruction. However, it may still evolve into a more
+// standard type and be removed.
+using NamespaceType = SingletonTypeInst<InstKind::NamespaceType, "<namespace>">;
 
 // An output `Call` parameter. See AnyParam for member documentation.
 struct OutParam {
@@ -1287,6 +1216,19 @@ struct OutParamPattern {
   TypeId type_id;
   InstId subpattern_id;
   CallParamIndex index;
+};
+
+// Indicates `partial` on a type, such as `partial MyClass`.
+struct PartialType {
+  static constexpr auto Kind =
+      InstKind::PartialType.Define<Parse::PrefixOperatorPartialId>(
+          {.ir_name = "partial_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Conditional,
+           .deduce_through = true});
+
+  TypeId type_id;
+  TypeInstId inner_id;
 };
 
 // The type of a pattern that matches scrutinees of type
@@ -1316,6 +1258,18 @@ struct PointerType {
   TypeInstId pointee_id;
 };
 
+// Binds a name as a reference expression, such as `x` in `var x: i32`.
+// See AnyBinding for member documentation.
+struct RefBinding {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::RefBinding.Define<Parse::NodeId>(
+      {.ir_name = "ref_binding", .constant_kind = InstConstantKind::Indirect});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
+  InstId value_id;
+};
+
 // An action that performs type refinement for an instruction, by creating an
 // instruction that converts from a template symbolic type to a concrete type.
 struct RefineTypeAction {
@@ -1327,6 +1281,19 @@ struct RefineTypeAction {
   TypeId type_id;
   MetaInstId inst_id;
   TypeInstId inst_type_inst_id;
+};
+
+// Represents a reference binding pattern. See `AnyBindingPattern` for member
+// documentation.
+struct RefBindingPattern {
+  static constexpr auto Kind =
+      InstKind::RefBindingPattern.Define<Parse::NodeId>(
+          {.ir_name = "ref_binding_pattern",
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
 };
 
 // A by-reference `Call` parameter. See AnyParam for member documentation.
@@ -1542,18 +1509,11 @@ struct SpecificFunction {
 };
 
 // The type of specific functions.
-struct SpecificFunctionType {
-  static constexpr auto Kind =
-      InstKind::SpecificFunctionType.Define<Parse::NoneNodeId>(
-          {.ir_name = "<specific function>",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Always});
-  // This is a singleton instruction. However, it may still evolve into a more
-  // standard type and be removed.
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-
-  TypeId type_id;
-};
+//
+// This is a singleton instruction. However, it may still evolve into a more
+// standard type and be removed.
+using SpecificFunctionType =
+    SingletonTypeInst<InstKind::SpecificFunctionType, "<specific function>">;
 
 // A specific instance of a function from an impl, named as the function from
 // the interface.
@@ -1672,6 +1632,19 @@ struct StructValue {
 
   TypeId type_id;
   InstBlockId elements_id;
+};
+
+// Binds a symbolic name, such as `x` in `let x:! i32 = 7;`. See AnyBinding for
+// member documentation.
+struct SymbolicBinding {
+  static constexpr auto Kind = InstKind::SymbolicBinding.Define<Parse::NodeId>(
+      {.ir_name = "symbolic_binding",
+       .is_type = InstIsType::Maybe,
+       .constant_kind = InstConstantKind::SymbolicOnly});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
+  InstId value_id;
 };
 
 // Represents a symbolic binding pattern. See `AnyBindingPattern` for member
@@ -1817,16 +1790,10 @@ struct TypeOfInst {
 
 // Tracks expressions which are valid as types. This has a deliberately
 // self-referential type.
-struct TypeType {
-  static constexpr auto Kind = InstKind::TypeType.Define<Parse::NoneNodeId>(
-      {.ir_name = "type",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always});
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+struct TypeType : public SingletonTypeInst<InstKind::TypeType, "type"> {
+  // `TypeType` is always set complete in file.cpp.
   static constexpr auto TypeId =
       TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
-
-  SemIR::TypeId type_id;
 };
 
 // The `not` operator, such as `not operand`.
@@ -1866,6 +1833,32 @@ struct ValueAsRef {
 
   TypeId type_id;
   InstId value_id;
+};
+
+// Binds a name as a value expression, such as `x` in `let x: i32`. See
+// AnyBinding for member documentation.
+struct ValueBinding {
+  // TODO: Make Parse::NodeId more specific.
+  static constexpr auto Kind = InstKind::ValueBinding.Define<Parse::NodeId>(
+      {.ir_name = "value_binding",
+       .constant_kind = InstConstantKind::Indirect});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
+  InstId value_id;
+};
+
+// Represents a value binding pattern. See `AnyBindingPattern` for member
+// documentation.
+struct ValueBindingPattern {
+  static constexpr auto Kind =
+      InstKind::ValueBindingPattern.Define<Parse::NodeId>(
+          {.ir_name = "value_binding_pattern",
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+
+  TypeId type_id;
+  EntityNameId entity_name_id;
 };
 
 // Converts an initializing expression to a value expression, in the case
@@ -1938,17 +1931,10 @@ struct VarStorage {
 };
 
 // The type of virtual function tables.
-struct VtableType {
-  static constexpr auto Kind = InstKind::VtableType.Define<Parse::NoneNodeId>(
-      {.ir_name = "<vtable>",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always});
-  // This is a singleton instruction. However, it may still evolve into a more
-  // standard type and be removed.
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-
-  TypeId type_id;
-};
+//
+// This is a singleton instruction. However, it may still evolve into a more
+// standard type and be removed.
+using VtableType = SingletonTypeInst<InstKind::VtableType, "<vtable>">;
 
 // Initializer for virtual function table pointers in object initialization.
 struct VtablePtr {
@@ -1987,17 +1973,10 @@ struct WhereExpr {
 // their types should not change in the process.
 //
 // Also the type of `RequireCompleteType` instructions.
-struct WitnessType {
-  static constexpr auto Kind = InstKind::WitnessType.Define<Parse::NoneNodeId>(
-      {.ir_name = "<witness>",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always});
-  // This is a singleton instruction. However, it may still evolve into a more
-  // standard type and be removed.
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-
-  TypeId type_id;
-};
+//
+// This is a singleton instruction. However, it may still evolve into a more
+// standard type and be removed.
+using WitnessType = SingletonTypeInst<InstKind::WitnessType, "<witness>">;
 
 // These concepts are an implementation detail of the library, not public API.
 namespace Internal {
@@ -2016,15 +1995,11 @@ concept HasUntypedNodeId =
 // HasKindMemberAsField<T> is true if T has a `InstKind kind` field, as opposed
 // to a `static constexpr InstKind::Definition Kind` member or no kind at all.
 template <typename T>
-concept HasKindMemberAsField = requires {
-  { &T::kind } -> std::same_as<InstKind T::*>;
-};
+concept HasKindMemberAsField = std::same_as<decltype(T::kind), InstKind>;
 
 // HasTypeIdMember<T> is true if T has a `TypeId type_id` field.
 template <typename T>
-concept HasTypeIdMember = requires {
-  { &T::type_id } -> std::same_as<TypeId T::*>;
-};
+concept HasTypeIdMember = std::same_as<decltype(T::type_id), TypeId>;
 
 }  // namespace Internal
 

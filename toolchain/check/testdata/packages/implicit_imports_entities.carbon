@@ -355,19 +355,19 @@ import Other library "o1";
 // CHECK:STDOUT:   %default.import.loc2_35.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_35.2 = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c1.patt: %pattern_type.fec = binding_pattern c1 [concrete]
+// CHECK:STDOUT:     %c1.patt: %pattern_type.fec = ref_binding_pattern c1 [concrete]
 // CHECK:STDOUT:     %c1.var_patt: %pattern_type.fec = var_pattern %c1.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.var: ref %C1 = var %c1.var_patt [concrete]
 // CHECK:STDOUT:   %C1.ref: type = name_ref C1, imports.%Main.C1 [concrete = constants.%C1]
-// CHECK:STDOUT:   %c1: ref %C1 = bind_name c1, %c1.var [concrete = %c1.var]
+// CHECK:STDOUT:   %c1: ref %C1 = ref_binding c1, %c1.var [concrete = %c1.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c2.patt: %pattern_type.838 = binding_pattern c2 [concrete]
+// CHECK:STDOUT:     %c2.patt: %pattern_type.838 = ref_binding_pattern c2 [concrete]
 // CHECK:STDOUT:     %c2.var_patt: %pattern_type.838 = var_pattern %c2.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c2.var: ref %C2 = var %c2.var_patt [concrete]
 // CHECK:STDOUT:   %C2.ref: type = name_ref C2, imports.%Main.C2 [concrete = constants.%C2]
-// CHECK:STDOUT:   %c2: ref %C2 = bind_name c2, %c2.var [concrete = %c2.var]
+// CHECK:STDOUT:   %c2: ref %C2 = ref_binding c2, %c2.var [concrete = %c2.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 [from "c1.carbon"] {
@@ -434,12 +434,12 @@ import Other library "o1";
 // CHECK:STDOUT:   %default.import.loc2_22.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_22.2 = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c1.patt: %pattern_type = binding_pattern c1 [concrete]
+// CHECK:STDOUT:     %c1.patt: %pattern_type = ref_binding_pattern c1 [concrete]
 // CHECK:STDOUT:     %c1.var_patt: %pattern_type = var_pattern %c1.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.var: ref %C1 = var %c1.var_patt [concrete]
 // CHECK:STDOUT:   %C1.ref: type = name_ref C1, imports.%Main.C1 [concrete = constants.%C1]
-// CHECK:STDOUT:   %c1: ref %C1 = bind_name c1, %c1.var [concrete = %c1.var]
+// CHECK:STDOUT:   %c1: ref %C1 = ref_binding c1, %c1.var [concrete = %c1.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C1 [from "c1.carbon"] {
@@ -503,7 +503,7 @@ import Other library "o1";
 // CHECK:STDOUT:   %default.import.loc2_22.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_22.2 = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type = binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
@@ -511,7 +511,7 @@ import Other library "o1";
 // CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, imports.%NS.528 [concrete = imports.%NS.528]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %C = bind_name c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "ns.carbon"] {
@@ -583,7 +583,7 @@ import Other library "o1";
 // CHECK:STDOUT:   %default.import.loc2_25.2 = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %o1.patt: %pattern_type.b5b = binding_pattern o1 [concrete]
+// CHECK:STDOUT:     %o1.patt: %pattern_type.b5b = ref_binding_pattern o1 [concrete]
 // CHECK:STDOUT:     %o1.var_patt: %pattern_type.b5b = var_pattern %o1.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %o1.var: ref %O1 = var %o1.var_patt [concrete]
@@ -591,9 +591,9 @@ import Other library "o1";
 // CHECK:STDOUT:     %Other.ref.loc6: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %O1.ref: type = name_ref O1, imports.%Other.O1 [concrete = constants.%O1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %o1: ref %O1 = bind_name o1, %o1.var [concrete = %o1.var]
+// CHECK:STDOUT:   %o1: ref %O1 = ref_binding o1, %o1.var [concrete = %o1.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %o2.patt: %pattern_type.7dd = binding_pattern o2 [concrete]
+// CHECK:STDOUT:     %o2.patt: %pattern_type.7dd = ref_binding_pattern o2 [concrete]
 // CHECK:STDOUT:     %o2.var_patt: %pattern_type.7dd = var_pattern %o2.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %o2.var: ref %O2 = var %o2.var_patt [concrete]
@@ -601,7 +601,7 @@ import Other library "o1";
 // CHECK:STDOUT:     %Other.ref.loc7: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %O2.ref: type = name_ref O2, imports.%Other.O2 [concrete = constants.%O2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %o2: ref %O2 = bind_name o2, %o2.var [concrete = %o2.var]
+// CHECK:STDOUT:   %o2: ref %O2 = ref_binding o2, %o2.var [concrete = %o2.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O1 [from "o1.carbon"] {
@@ -675,7 +675,7 @@ import Other library "o1";
 // CHECK:STDOUT:   %default.import.loc2_22.2 = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %o1.patt: %pattern_type = binding_pattern o1 [concrete]
+// CHECK:STDOUT:     %o1.patt: %pattern_type = ref_binding_pattern o1 [concrete]
 // CHECK:STDOUT:     %o1.var_patt: %pattern_type = var_pattern %o1.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %o1.var: ref %O1 = var %o1.var_patt [concrete]
@@ -683,7 +683,7 @@ import Other library "o1";
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %O1.ref: type = name_ref O1, imports.%Other.O1 [concrete = constants.%O1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %o1: ref %O1 = bind_name o1, %o1.var [concrete = %o1.var]
+// CHECK:STDOUT:   %o1: ref %O1 = ref_binding o1, %o1.var [concrete = %o1.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @O1 [from "o1.carbon"] {

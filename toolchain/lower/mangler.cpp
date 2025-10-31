@@ -9,6 +9,7 @@
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/lower/clang_global_decl.h"
+#include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/pattern.h"
@@ -208,15 +209,21 @@ auto Mangler::MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string {
     return std::string();
   }
 
-  auto var_name = sem_ir().entity_names().Get(var_name_id);
-  if (var_name.clang_decl_id.has_value()) {
+  SemIR::CppGlobalVarId cpp_global_var_id =
+      sem_ir().cpp_global_vars().Lookup({.entity_name_id = var_name_id});
+  if (cpp_global_var_id.has_value()) {
+    SemIR::ClangDeclId clang_decl_id =
+        sem_ir().cpp_global_vars().Get(cpp_global_var_id).clang_decl_id;
+    CARBON_CHECK(clang_decl_id.has_value(),
+                 "CppGlobalVar should have a clang_decl_id");
     return MangleCppClang(cast<clang::NamedDecl>(
-        sem_ir().clang_decls().Get(var_name.clang_decl_id).key.decl));
+        sem_ir().clang_decls().Get(clang_decl_id).key.decl));
   }
 
   RawStringOstream os;
   os << "_C";
 
+  auto var_name = sem_ir().entity_names().Get(var_name_id);
   MangleNameId(os, var_name.name_id);
   // TODO: If the variable is private, also include the library name as part of
   // the mangling.

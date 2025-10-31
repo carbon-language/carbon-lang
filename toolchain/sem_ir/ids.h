@@ -31,12 +31,19 @@ struct InstId : public IdBase<InstId> {
   // because the name is currently being initialized.
   static const InstId InitTombstone;
 
+  // A placeholder used in the `ImplWitness` table of instructions for members
+  // of the impl. These are replaced as values are seen for the witness table in
+  // the impl declaration or definition. This is distinct from `None` for
+  // debugging purposes.
+  static const InstId ImplWitnessTablePlaceholder;
+
   using IdBase::IdBase;
 
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 constexpr InstId InstId::InitTombstone = InstId(NoneIndex - 1);
+constexpr InstId InstId::ImplWitnessTablePlaceholder = InstId(NoneIndex - 2);
 
 // An InstId whose value is a type. The fact it's a type must be validated
 // before construction, and this allows that validation to be represented in the
@@ -251,6 +258,13 @@ struct EntityNameId : public IdBase<EntityNameId> {
   using IdBase::IdBase;
 };
 
+// The ID of a C++ global variable.
+struct CppGlobalVarId : public IdBase<CppGlobalVarId> {
+  static constexpr llvm::StringLiteral Label = "cpp_global_var";
+
+  using IdBase::IdBase;
+};
+
 // The index of a compile-time binding. This is the de Bruijn level for the
 // binding -- that is, this is the number of other compile time bindings whose
 // scope encloses this binding.
@@ -304,8 +318,6 @@ struct ClassId : public IdBase<ClassId> {
   static constexpr llvm::StringLiteral Label = "class";
 
   using IdBase::IdBase;
-
-  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 // The ID of a `Vtable`.
@@ -322,13 +334,18 @@ struct InterfaceId : public IdBase<InterfaceId> {
   using IdBase::IdBase;
 };
 
+// The ID of a `NamedConstraint`.
+struct NamedConstraintId : public IdBase<NamedConstraintId> {
+  static constexpr llvm::StringLiteral Label = "constraint";
+
+  using IdBase::IdBase;
+};
+
 // The ID of an `AssociatedConstant`.
 struct AssociatedConstantId : public IdBase<AssociatedConstantId> {
   static constexpr llvm::StringLiteral Label = "assoc_const";
 
   using IdBase::IdBase;
-
-  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 // The ID of a `FacetTypeInfo`.
@@ -429,13 +446,6 @@ struct GenericInstIndex : public IndexBase<GenericInstIndex> {
 
 constexpr GenericInstIndex GenericInstIndex::None =
     GenericInstIndex::MakeNone();
-
-// The ID of an `ImportCpp`.
-struct ImportCppId : public IdBase<ImportCppId> {
-  static constexpr llvm::StringLiteral Label = "import_cpp";
-
-  using IdBase::IdBase;
-};
 
 // The ID of an `ImportIR` within the set of imported IRs, both direct and
 // indirect.

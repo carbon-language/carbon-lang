@@ -176,7 +176,7 @@ class Context {
   // TODO: Consider putting this behind a narrower API to guard against emitting
   // multiple times.
   struct BindingPatternInfo {
-    // The corresponding AnyBindName inst.
+    // The corresponding AnyBinding inst.
     SemIR::InstId bind_name_id;
     // The region of insts that computes the type of the binding.
     SemIR::ExprRegionId type_expr_region_id;
@@ -255,6 +255,9 @@ class Context {
   auto entity_names() -> SemIR::EntityNameStore& {
     return sem_ir().entity_names();
   }
+  auto cpp_global_names() -> SemIR::CppGlobalVarStore& {
+    return sem_ir().cpp_global_vars();
+  }
   auto cpp_overload_sets() -> SemIR::CppOverloadSetStore& {
     return sem_ir().cpp_overload_sets();
   }
@@ -262,6 +265,9 @@ class Context {
   auto classes() -> SemIR::ClassStore& { return sem_ir().classes(); }
   auto vtables() -> SemIR::VtableStore& { return sem_ir().vtables(); }
   auto interfaces() -> SemIR::InterfaceStore& { return sem_ir().interfaces(); }
+  auto named_constraints() -> SemIR::NamedConstraintStore& {
+    return sem_ir().named_constraints();
+  }
   auto associated_constants() -> SemIR::AssociatedConstantStore& {
     return sem_ir().associated_constants();
   }

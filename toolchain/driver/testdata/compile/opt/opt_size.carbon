@@ -86,13 +86,13 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: minsize nounwind optsize
 // CHECK:STDOUT: define linkonce_odr void @"_COp.Int.Core:Inc.Core.be1e879c1ad406d8"(ptr %self) #0 !dbg !22 {
-// CHECK:STDOUT:   call void @"_COp:thunk.Int.Core:AddAssignWith.Core.2122e6c8c4f4206d"(ptr %self, i32 1), !dbg !24
+// CHECK:STDOUT:   call void @"_COp:thunk.Int.Core:AddAssignWith.Core.5dfb78ae56583d8e"(ptr %self, i32 1), !dbg !24
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline minsize nounwind optsize
-// CHECK:STDOUT: define linkonce_odr void @"_COp:thunk.Int.Core:AddAssignWith.Core.2122e6c8c4f4206d"(ptr %self, i32 %other) #2 !dbg !26 {
-// CHECK:STDOUT:   %1 = call i32 @"_CConvert.2a0d145dae8e0e7f:ImplicitAs.Core.de631560529e9861"(i32 %other), !dbg !27
+// CHECK:STDOUT: define linkonce_odr void @"_COp:thunk.Int.Core:AddAssignWith.Core.5dfb78ae56583d8e"(ptr %self, i32 %other) #2 !dbg !26 {
+// CHECK:STDOUT:   %1 = call i32 @"_CConvert.225258f1a45e9386:ImplicitAs.Core.5450dc8e8b8e0899"(i32 %other), !dbg !27
 // CHECK:STDOUT:   %2 = load i32, ptr %self, align 4, !dbg !28
 // CHECK:STDOUT:   %3 = add i32 %2, %1, !dbg !28
 // CHECK:STDOUT:   store i32 %3, ptr %self, align 4, !dbg !28
@@ -100,7 +100,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: minsize nounwind optsize
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.2a0d145dae8e0e7f:ImplicitAs.Core.de631560529e9861"(i32 %self) #0 !dbg !29 {
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.225258f1a45e9386:ImplicitAs.Core.5450dc8e8b8e0899"(i32 %self) #0 !dbg !29 {
 // CHECK:STDOUT:   ret i32 %self, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -137,9 +137,9 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !23 = !DIFile(filename: "{{.*}}/prelude/types/int.carbon", directory: "")
 // CHECK:STDOUT: !24 = !DILocation(line: 341, column: 5, scope: !22)
 // CHECK:STDOUT: !25 = !DILocation(line: 339, column: 3, scope: !22)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.Core:AddAssignWith.Core.2122e6c8c4f4206d", scope: null, file: !23, line: 275, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.Core:AddAssignWith.Core.5dfb78ae56583d8e", scope: null, file: !23, line: 275, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !27 = !DILocation(line: 4294967295, scope: !26)
 // CHECK:STDOUT: !28 = !DILocation(line: 275, column: 3, scope: !26)
-// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.2a0d145dae8e0e7f:ImplicitAs.Core.de631560529e9861", scope: null, file: !30, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.225258f1a45e9386:ImplicitAs.Core.5450dc8e8b8e0899", scope: null, file: !30, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !30 = !DIFile(filename: "{{.*}}/prelude/operators/as.carbon", directory: "")
 // CHECK:STDOUT: !31 = !DILocation(line: 24, column: 38, scope: !29)

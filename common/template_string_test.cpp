@@ -15,12 +15,17 @@ namespace {
 using ::testing::StrEq;
 
 template <TemplateString S>
-constexpr auto FromTemplate() -> llvm::StringRef {
+constexpr auto TemplateAsStringRef() -> llvm::StringRef {
   return S;
 }
 
 template <TemplateString S>
-constexpr auto CStrFromTemplate() -> const char* {
+constexpr auto TemplateAsStringLiteral() -> llvm::StringLiteral {
+  return S;
+}
+
+template <TemplateString S>
+constexpr auto TemplateAsCStr() -> const char* {
   return S.c_str();
 }
 
@@ -48,9 +53,11 @@ constexpr auto IsValidTemplateString(...) -> std::false_type {
 }
 
 // Compile time tests with `static_assert`
-static_assert(FromTemplate<"test">().size() == 4,
+static_assert(TemplateAsStringRef<"test">().size() == 4,
               "Not usable in a `constexpr` context.");
-static_assert(__builtin_strlen(CStrFromTemplate<"test">()) == 4,
+static_assert(TemplateAsStringLiteral<"test">().size() == 4,
+              "Not usable in a `constexpr` context.");
+static_assert(__builtin_strlen(TemplateAsCStr<"test">()) == 4,
               "Not usable in a `constexpr` context.");
 
 // The string must not contain embedded nulls.
@@ -63,12 +70,14 @@ static_assert(IsValidTemplateString<FourChars{'t', 'e', 's', 0}>(0));
 static_assert(!IsValidTemplateString<FourChars{'t', 'e', 's', 't'}>(0));
 
 TEST(TemplateStringTest, Test) {
-  EXPECT_THAT(FromTemplate<"test">(), StrEq("test"));
-  EXPECT_THAT(CStrFromTemplate<"test">(), StrEq("test"));
+  EXPECT_THAT(TemplateAsStringRef<"test">(), StrEq("test"));
+  EXPECT_THAT(TemplateAsStringLiteral<"test">(), StrEq("test"));
+  EXPECT_THAT(TemplateAsCStr<"test">(), StrEq("test"));
 
   constexpr char GoodStr[5] = {'t', 'e', 's', 't', '\0'};
   static_assert(IsValidTemplateString<GoodStr>(0));
-  EXPECT_THAT(FromTemplate<GoodStr>(), StrEq("test"));
+  EXPECT_THAT(TemplateAsStringRef<GoodStr>(), StrEq("test"));
+  EXPECT_THAT(TemplateAsStringLiteral<GoodStr>(), StrEq("test"));
 
   constexpr char BadStr[4] = {'t', 'e', 's', 't'};
   static_assert(!IsValidTemplateString<BadStr>(0));

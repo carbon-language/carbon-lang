@@ -21,6 +21,7 @@
 #include "toolchain/sem_ir/associated_constant.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/cpp_global_var.h"
 #include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/entity_name.h"
 #include "toolchain/sem_ir/facet_type_info.h"
@@ -34,6 +35,7 @@
 #include "toolchain/sem_ir/interface.h"
 #include "toolchain/sem_ir/name.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/named_constraint.h"
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
@@ -68,7 +70,7 @@ using CustomLayoutStore = BlockValueStore<CustomLayoutId, uint64_t>;
 class File : public Printable<File> {
  public:
   using IdentifiedFacetTypeStore =
-      RelationalValueStore<FacetTypeId, IdentifiedFacetTypeId,
+      RelationalValueStore<FacetTypeInfoStore, IdentifiedFacetTypeId,
                            IdentifiedFacetType>;
 
   // Starts a new file for Check::CheckParseTree.
@@ -154,6 +156,10 @@ class File : public Printable<File> {
 
   auto entity_names() -> EntityNameStore& { return entity_names_; }
   auto entity_names() const -> const EntityNameStore& { return entity_names_; }
+  auto cpp_global_vars() -> CppGlobalVarStore& { return cpp_global_vars_; }
+  auto cpp_global_vars() const -> const CppGlobalVarStore& {
+    return cpp_global_vars_;
+  }
   auto functions() -> FunctionStore& { return functions_; }
   auto functions() const -> const FunctionStore& { return functions_; }
   auto cpp_overload_sets() -> CppOverloadSetStore& {
@@ -166,6 +172,12 @@ class File : public Printable<File> {
   auto classes() const -> const ClassStore& { return classes_; }
   auto interfaces() -> InterfaceStore& { return interfaces_; }
   auto interfaces() const -> const InterfaceStore& { return interfaces_; }
+  auto named_constraints() -> NamedConstraintStore& {
+    return named_constraints_;
+  }
+  auto named_constraints() const -> const NamedConstraintStore& {
+    return named_constraints_;
+  }
   auto associated_constants() -> AssociatedConstantStore& {
     return associated_constants_;
   }
@@ -199,8 +211,6 @@ class File : public Printable<File> {
   auto import_ir_insts() const -> const ImportIRInstStore& {
     return import_ir_insts_;
   }
-  auto import_cpps() -> ImportCppStore& { return import_cpps_; }
-  auto import_cpps() const -> const ImportCppStore& { return import_cpps_; }
   auto clang_ast_unit() -> clang::ASTUnit* { return clang_ast_unit_; }
   auto clang_ast_unit() const -> const clang::ASTUnit* {
     return clang_ast_unit_;
@@ -301,6 +311,9 @@ class File : public Printable<File> {
   // Storage for EntityNames.
   EntityNameStore entity_names_;
 
+  // For imported C++ global variables, the Clang decl to use for mangling.
+  CppGlobalVarStore cpp_global_vars_;
+
   // Storage for callable objects.
   FunctionStore functions_;
 
@@ -312,6 +325,9 @@ class File : public Printable<File> {
 
   // Storage for interfaces.
   InterfaceStore interfaces_;
+
+  // Storage for named constraints.
+  NamedConstraintStore named_constraints_;
 
   // Storage for associated constants.
   AssociatedConstantStore associated_constants_;
@@ -341,9 +357,6 @@ class File : public Printable<File> {
   // Related IR instructions. These are created for LocIds for instructions
   // that are import-related.
   ImportIRInstStore import_ir_insts_;
-
-  // List of Cpp imports.
-  ImportCppStore import_cpps_;
 
   // The Clang AST to use when looking up `Cpp` names. Null if there are no
   // `Cpp` imports.
@@ -385,7 +398,7 @@ class File : public Printable<File> {
   ConstantStore constants_;
 
   // Storage for StructTypeField lists.
-  StructTypeFieldsStore struct_type_fields_ = StructTypeFieldsStore(allocator_);
+  StructTypeFieldsStore struct_type_fields_;
 
   // Storage for custom layouts.
   CustomLayoutStore custom_layouts_ = CustomLayoutStore(allocator_);

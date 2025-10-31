@@ -58,6 +58,10 @@ class PrecedenceGroup {
   // `impl` and `as`.
   static auto ForImplAs() -> PrecedenceGroup;
 
+  // Get the precedence level at which to parse the type expression between
+  // `require` and `impls`.
+  static auto ForRequireImpls() -> PrecedenceGroup;
+
   // Get the precedence level at which to parse expressions in requirements
   // after `where` or `require`.
   static auto ForRequirements() -> PrecedenceGroup;

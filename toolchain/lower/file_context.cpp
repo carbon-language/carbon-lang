@@ -72,6 +72,26 @@ auto FileContext::PrepareToLower() -> void {
     // const-correct.
     cpp_code_generator_->Initialize(
         const_cast<clang::ASTContext&>(clang_ast_unit()->getASTContext()));
+
+    // Work around `visitLocalTopLevelDecls` not being const. It doesn't modify
+    // the AST unit other than triggering deserialization.
+    auto* non_const_ast_unit = const_cast<clang::ASTUnit*>(clang_ast_unit());
+
+    // Emit any top-level declarations now.
+    // TODO: This may miss things that we need to emit which are handed to the
+    // ASTConsumer in other ways. Instead of doing this, we should create the
+    // CodeGenerator earlier and register it as an ASTConsumer before we parse
+    // the C++ inputs.
+    non_const_ast_unit->visitLocalTopLevelDecls(
+        cpp_code_generator_.get(),
+        [](void* codegen_ptr, const clang::Decl* decl) {
+          auto* codegen = static_cast<clang::CodeGenerator*>(codegen_ptr);
+          // CodeGenerator won't modify the declaration it's given, but we can
+          // only call it via the ASTConsumer interface which doesn't know that.
+          auto* non_const_decl = const_cast<clang::Decl*>(decl);
+          codegen->HandleTopLevelDecl(clang::DeclGroupRef(non_const_decl));
+          return true;
+        });
   }
 
   // Lower all types that were required to be complete.
@@ -336,7 +356,7 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
     }
     // TODO: Use a more general mechanism to determine if the binding is a
     // reference binding.
-    if (param_pattern_info->var_pattern_id.has_value()) {
+    if (param_pattern_info->inst.kind == SemIR::RefParamPattern::Kind) {
       param_types.push_back(
           llvm::PointerType::get(llvm_context(), /*AddressSpace=*/0));
       param_inst_ids.push_back(param_pattern_id);
@@ -396,9 +416,6 @@ auto FileContext::HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
       cpp_code_generator_->GetAddrOfGlobal(CreateGlobalDecl(cpp_def),
                                            /*isForDefinition=*/false);
   CARBON_CHECK(function_address);
-
-  // Emit the function code.
-  cpp_code_generator_->HandleTopLevelDecl(clang::DeclGroupRef(cpp_def));
 }
 
 auto FileContext::HandleReferencedSpecificFunction(
@@ -442,12 +459,6 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   // corresponding C++ function anyway.
   if (function.special_function_kind ==
       SemIR::Function::SpecialFunctionKind::HasCppThunk) {
-    // Make sure Clang emits this function.
-    // TODO: This shouldn't be necessary: Clang should emit definitions of
-    // functions that it emits calls to. But this doesn't currently work.
-    auto clang_decl_id = sem_ir().functions().Get(function_id).clang_decl_id;
-    HandleReferencedCppFunction(cast<clang::FunctionDecl>(
-        sem_ir().clang_decls().Get(clang_decl_id).key.decl));
     return nullptr;
   }
 
@@ -804,11 +815,6 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
       *context.sem_ir().GetArrayBoundValue(inst.bound_id));
 }
 
-static auto BuildTypeForInst(FileContext& /*context*/, SemIR::AutoType inst)
-    -> llvm::Type* {
-  CARBON_FATAL("Unexpected builtin type in lowering: {0}", inst);
-}
-
 static auto BuildTypeForInst(FileContext& context, SemIR::BoolType /*inst*/)
     -> llvm::Type* {
   // TODO: We may want to have different representations for `bool` storage
@@ -921,23 +927,15 @@ static auto BuildTypeForInst(FileContext& context,
 }
 
 template <typename InstT>
-  requires(InstT::Kind
-               .template IsAnyOf<SemIR::BoundMethodType, SemIR::CharLiteralType,
-                                 SemIR::FloatLiteralType, SemIR::IntLiteralType,
-                                 SemIR::NamespaceType, SemIR::WitnessType>())
-static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
-    -> llvm::Type* {
-  // Return an empty struct as a placeholder.
-  return llvm::StructType::get(context.llvm_context());
-}
-
-template <typename InstT>
-  requires(InstT::Kind.template IsAnyOf<
-           SemIR::AssociatedEntityType, SemIR::CppOverloadSetType,
-           SemIR::FacetType, SemIR::FunctionType,
-           SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
-           SemIR::GenericInterfaceType, SemIR::InstType,
-           SemIR::UnboundElementType, SemIR::WhereExpr>())
+  requires(
+      InstT::Kind.template IsAnyOf<
+          SemIR::AssociatedEntityType, SemIR::AutoType, SemIR::BoundMethodType,
+          SemIR::CharLiteralType, SemIR::CppOverloadSetType, SemIR::CppVoidType,
+          SemIR::FacetType, SemIR::FloatLiteralType, SemIR::FunctionType,
+          SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
+          SemIR::GenericInterfaceType, SemIR::GenericNamedConstraintType,
+          SemIR::InstType, SemIR::IntLiteralType, SemIR::NamespaceType,
+          SemIR::WhereExpr, SemIR::WitnessType, SemIR::UnboundElementType>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> llvm::Type* {
   // Return an empty struct as a placeholder.

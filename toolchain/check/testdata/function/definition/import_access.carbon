@@ -216,7 +216,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
+// CHECK:STDOUT:     %f.patt: %pattern_type = ref_binding_pattern f [concrete]
 // CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
@@ -224,7 +224,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Def [from "def.carbon"];
@@ -251,7 +251,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
+// CHECK:STDOUT:     %f.patt: %pattern_type = ref_binding_pattern f [concrete]
 // CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
@@ -259,7 +259,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -290,7 +290,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
+// CHECK:STDOUT:     %f.patt: %pattern_type = ref_binding_pattern f [concrete]
 // CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
@@ -298,7 +298,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -330,7 +330,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
+// CHECK:STDOUT:     %f.patt: %pattern_type = ref_binding_pattern f [concrete]
 // CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
@@ -338,7 +338,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ForwardWithDef [from "forward_with_def.carbon"];
@@ -365,7 +365,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
+// CHECK:STDOUT:     %f.patt: %pattern_type = ref_binding_pattern f [concrete]
 // CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
@@ -373,7 +373,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -404,7 +404,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
+// CHECK:STDOUT:     %f.patt: %pattern_type = ref_binding_pattern f [concrete]
 // CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
@@ -412,7 +412,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -444,7 +444,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
+// CHECK:STDOUT:     %f.patt: %pattern_type = ref_binding_pattern f [concrete]
 // CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
@@ -452,7 +452,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     %.loc4_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT:   %Forward.decl: %Forward.type = fn_decl @Forward [concrete = constants.%Forward] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -483,7 +483,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
+// CHECK:STDOUT:     %f.patt: %pattern_type = ref_binding_pattern f [concrete]
 // CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
@@ -491,7 +491,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -522,7 +522,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %f.patt: %pattern_type = binding_pattern f [concrete]
+// CHECK:STDOUT:     %f.patt: %pattern_type = ref_binding_pattern f [concrete]
 // CHECK:STDOUT:     %f.var_patt: %pattern_type = var_pattern %f.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var %f.var_patt [concrete]
@@ -530,7 +530,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
 // CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f: ref %empty_tuple.type = bind_name f, %f.var [concrete = %f.var]
+// CHECK:STDOUT:   %f: ref %empty_tuple.type = ref_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

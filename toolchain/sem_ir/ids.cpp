@@ -16,7 +16,7 @@ auto InstId::Print(llvm::raw_ostream& out) const -> void {
   if (IsSingletonInstId(*this)) {
     out << Label << "(" << SingletonInstKinds[index] << ")";
   } else {
-    IdBase::PrintHex(out);
+    IdBase::Print(out);
   }
 }
 
@@ -48,14 +48,6 @@ auto CheckIRId::Print(llvm::raw_ostream& out) const -> void {
   } else {
     IdBase::Print(out);
   }
-}
-
-auto ClassId::Print(llvm::raw_ostream& out) const -> void {
-  IdBase::PrintHex(out);
-}
-
-auto AssociatedConstantId::Print(llvm::raw_ostream& out) const -> void {
-  IdBase::PrintHex(out);
 }
 
 auto GenericInstIndex::Print(llvm::raw_ostream& out) const -> void {
@@ -217,8 +209,6 @@ auto TypeId::Print(llvm::raw_ostream& out) const -> void {
   out << Label << "(";
   if (*this == TypeType::TypeId) {
     out << "TypeType";
-  } else if (*this == AutoType::TypeId) {
-    out << "AutoType";
   } else if (*this == ErrorInst::TypeId) {
     out << "Error";
   } else {

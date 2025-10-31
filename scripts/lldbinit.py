@@ -55,8 +55,7 @@ Args:
        the `Label` string in `IdBase` classes to find possible TYPE names,
        though only Id types that have a matching `Make...Id()` function are
        supported.
-  ID is an integer number, such as `42`. This can be in hex (without the typical
-       0x prefix), such as `6000A`.
+  ID is an integer number, such as `42`, in hex, such as in `inst6000000A`.
 
 Example usage:
   # Dumps the `inst_id` local variable, with a `context` local variable.
@@ -75,30 +74,26 @@ Example usage:
 
     context = args[0]
 
-    DECIMAL = 10
-    HEX = 16
-
-    # The set of "Make" functions in dump.cpp, and whether the ids are printed
-    # in decimal or hex.
+    # The set of "Make" functions in dump.cpp.
     id_types = {
-        "class": ("SemIR::MakeClassId", HEX),
-        "constant": ("SemIR::MakeConstantId", DECIMAL),
-        "symbolic_constant": ("SemIR::MakeSymbolicConstantId", DECIMAL),
-        "entity_name": ("SemIR::MakeEntityNameId", DECIMAL),
-        "facet_type": ("SemIR::MakeFacetTypeId", DECIMAL),
-        "function": ("SemIR::MakeFunctionId", DECIMAL),
-        "generic": ("SemIR::MakeGenericId", DECIMAL),
-        "impl": ("SemIR::MakeImplId", DECIMAL),
-        "inst_block": ("SemIR::MakeInstBlockId", DECIMAL),
-        "inst": ("SemIR::MakeInstId", HEX),
-        "interface": ("SemIR::MakeInterfaceId", DECIMAL),
-        "name": ("SemIR::MakeNameId", DECIMAL),
-        "name_scope": ("SemIR::MakeNameScopeId", DECIMAL),
-        "identified_facet_type": ("SemIR::MakeIdentifiedFacetTypeId", DECIMAL),
-        "specific": ("SemIR::MakeSpecificId", DECIMAL),
-        "specific_interface": ("SemIR::MakeSpecificInterfaceId", DECIMAL),
-        "struct_type_fields": ("SemIR::MakeStructTypeFieldsId", DECIMAL),
-        "type": ("SemIR::MakeTypeId", DECIMAL),
+        "class": "SemIR::MakeClassId",
+        "constant": "SemIR::MakeConstantId",
+        "symbolic_constant": "SemIR::MakeSymbolicConstantId",
+        "entity_name": "SemIR::MakeEntityNameId",
+        "facet_type": "SemIR::MakeFacetTypeId",
+        "function": "SemIR::MakeFunctionId",
+        "generic": "SemIR::MakeGenericId",
+        "impl": "SemIR::MakeImplId",
+        "inst_block": "SemIR::MakeInstBlockId",
+        "inst": "SemIR::MakeInstId",
+        "interface": "SemIR::MakeInterfaceId",
+        "name": "SemIR::MakeNameId",
+        "name_scope": "SemIR::MakeNameScopeId",
+        "identified_facet_type": "SemIR::MakeIdentifiedFacetTypeId",
+        "specific": "SemIR::MakeSpecificId",
+        "specific_interface": "SemIR::MakeSpecificInterfaceId",
+        "struct_type_fields": "SemIR::MakeStructTypeFieldsId",
+        "type": "SemIR::MakeTypeId",
     }
 
     def print_dump(context: str, expr: str) -> None:
@@ -123,8 +118,8 @@ Example usage:
             if len(args) != 2:
                 print_usage()
                 return
-            (make_id_fn, base) = id_types[m[1]]
-            id = int(m[2], base)
+            make_id_fn = id_types[m[1]]
+            id = int(m[2], 16)
             print_dump(context, f"{make_id_fn}({id})")
             found_id_type = True
 

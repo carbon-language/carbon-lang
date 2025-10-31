@@ -80,6 +80,11 @@ auto Formatter::Format() -> void {
     FormatInterface(id, interface);
   }
 
+  for (const auto& [id, constraint] :
+       sem_ir_->named_constraints().enumerate()) {
+    FormatNamedConstraint(id, constraint);
+  }
+
   for (const auto& [id, assoc_const] :
        sem_ir_->associated_constants().enumerate()) {
     FormatAssociatedConstant(id, assoc_const);
@@ -415,6 +420,39 @@ auto Formatter::FormatInterface(InterfaceId id, const Interface& interface_info)
   out_ << '\n';
 
   FormatEntityEnd(interface_info.generic_id);
+}
+
+auto Formatter::FormatNamedConstraint(NamedConstraintId id,
+                                      const NamedConstraint& constraint_info)
+    -> void {
+  if (!ShouldFormatEntity(constraint_info)) {
+    return;
+  }
+
+  FormatEntityStart("constraint", constraint_info, id);
+
+  llvm::SaveAndRestore constraint_scope(scope_, inst_namer_.GetScopeFor(id));
+
+  if (constraint_info.scope_id.has_value()) {
+    out_ << ' ';
+    OpenBrace();
+    FormatCodeBlock(constraint_info.body_block_id);
+
+    // Always include the !members label because we always list the witness in
+    // this section.
+    IndentLabel();
+    out_ << "!members:\n";
+    FormatNameScope(constraint_info.scope_id);
+
+    // TODO: Print `require` statements.
+
+    CloseBrace();
+  } else {
+    Semicolon();
+  }
+  out_ << '\n';
+
+  FormatEntityEnd(constraint_info.generic_id);
 }
 
 auto Formatter::FormatAssociatedConstant(AssociatedConstantId id,
@@ -975,8 +1013,8 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       return;
     }
 
-    case CARBON_KIND(BindSymbolicName bind): {
-      // A BindSymbolicName with no value is a purely symbolic binding, such as
+    case CARBON_KIND(SymbolicBinding bind): {
+      // A SymbolicBinding with no value is a purely symbolic binding, such as
       // the `Self` in an interface. Don't print out `none` for the value.
       if (bind.value_id.has_value()) {
         FormatArgs(bind.entity_name_id, bind.value_id);
@@ -1081,6 +1119,15 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
 
     case CARBON_KIND(NameBindingDecl name): {
       FormatTrailingBlock(name.pattern_block_id);
+      return;
+    }
+
+    case CARBON_KIND(NamedConstraintDecl decl): {
+      FormatDeclRhs(decl.named_constraint_id,
+                    sem_ir_->named_constraints()
+                        .Get(decl.named_constraint_id)
+                        .pattern_block_id,
+                    decl.decl_block_id);
       return;
     }
 
@@ -1206,13 +1253,21 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
 auto Formatter::FormatImportCppDeclRhs() -> void {
   out_ << " ";
   OpenBrace();
-  for (ImportCpp import_cpp : sem_ir_->import_cpps().values()) {
+  for (const Parse::Tree::PackagingNames& import :
+       sem_ir_->parse_tree().imports()) {
+    if (auto package_ident_id = import.package_id.AsIdentifierId();
+        !package_ident_id.has_value() ||
+        sem_ir_->identifiers().Get(package_ident_id) !=
+            PackageNameId::CppName) {
+      continue;
+    }
+
     Indent();
     out_ << "import Cpp ";
-    if (import_cpp.library_id.has_value()) {
+    if (import.library_id.has_value()) {
       out_ << "\""
            << FormatEscaped(
-                  sem_ir_->string_literal_values().Get(import_cpp.library_id))
+                  sem_ir_->string_literal_values().Get(import.library_id))
            << "\"";
     } else {
       out_ << "inline";

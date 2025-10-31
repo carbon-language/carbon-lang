@@ -52,12 +52,12 @@ struct TemplateString {
     __builtin_memcpy(storage_, str, N + 1);
   }
 
-  // This type is designed to act as a `StringRef` implicitly while having the
-  // storage necessary to be used as a template parameter.
+  // This type is designed to act as a `StringLiteral` implicitly while having
+  // the storage necessary to be used as a template parameter.
   //
   // NOLINTNEXTLINE(google-explicit-constructor)
-  explicit(false) constexpr operator llvm::StringRef() const {
-    return llvm::StringRef(storage_, N);
+  explicit(false) constexpr operator llvm::StringLiteral() const {
+    return llvm::StringLiteral::withInnerNUL(storage_);
   }
 
   // Accesses the string data directly as a compile-time C string.

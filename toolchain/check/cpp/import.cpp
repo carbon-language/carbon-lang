@@ -4,6 +4,7 @@
 
 #include "toolchain/check/cpp/import.h"
 
+#include <algorithm>
 #include <memory>
 #include <optional>
 #include <string>
@@ -29,10 +30,12 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/call.h"
 #include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/custom_type_mapping.h"
 #include "toolchain/check/cpp/thunk.h"
 #include "toolchain/check/diagnostic_helpers.h"
@@ -41,6 +44,7 @@
 #include "toolchain/check/import.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
@@ -297,7 +301,7 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   // A diagnostics renderer based on clang's TextDiagnostic that captures just
   // the code context (the snippet).
   class CodeContextRenderer : public clang::TextDiagnostic {
-   public:
+   protected:
     using TextDiagnostic::TextDiagnostic;
 
     void emitDiagnosticMessage(
@@ -436,14 +440,6 @@ static auto GenerateAst(
 static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
                          llvm::ArrayRef<Parse::Tree::PackagingNames> imports)
     -> SemIR::NameScopeId {
-  auto& import_cpps = context.sem_ir().import_cpps();
-  import_cpps.Reserve(imports.size());
-  for (const Parse::Tree::PackagingNames& import : imports) {
-    import_cpps.Add({.node_id = context.parse_tree().As<Parse::ImportDeclId>(
-                         import.node_id),
-                     .library_id = import.library_id});
-  }
-
   return AddImportNamespaceToScope(
              context,
              GetSingletonType(context, SemIR::NamespaceType::TypeInstId),
@@ -1133,6 +1129,9 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
               context.ints().Add(ast_context.getTypeSize(qual_type))));
     }
     // TODO: Handle floating-point types that map to named aliases.
+  } else if (type.isVoidType()) {
+    return ExprAsType(context, Parse::NodeId::None,
+                      SemIR::CppVoidType::TypeInstId);
   }
 
   return TypeExpr::None;
@@ -1208,8 +1207,7 @@ static auto MapQualifiedType(Context& context, clang::QualType type,
 
   if (quals.hasConst()) {
     auto type_id = GetConstType(context, type_expr.inst_id);
-    type_expr = {.inst_id = context.types().GetInstId(type_id),
-                 .type_id = type_id};
+    type_expr = TypeExpr::ForUnsugared(context, type_id);
     quals.removeConst();
   }
 
@@ -1221,43 +1219,53 @@ static auto MapQualifiedType(Context& context, clang::QualType type,
   return type_expr;
 }
 
+// Returns the type `Core.Optional(T)`, where  `T` is described by
+// `inner_type_inst_id`.
+static auto MakeOptionalType(Context& context, SemIR::LocId loc_id,
+                             SemIR::InstId inner_type_inst_id) -> TypeExpr {
+  auto fn_inst_id = LookupNameInCore(context, loc_id, "Optional");
+  auto call_id = PerformCall(context, loc_id, fn_inst_id, {inner_type_inst_id});
+  return ExprAsType(context, loc_id, call_id);
+}
+
 // Maps a C++ pointer type to a Carbon pointer type.
-static auto MapPointerType(Context& context, clang::QualType type,
-                           TypeExpr pointee_type_expr) -> TypeExpr {
+static auto MapPointerType(Context& context, SemIR::LocId loc_id,
+                           clang::QualType type, TypeExpr pointee_type_expr)
+    -> TypeExpr {
   CARBON_CHECK(type->isPointerType());
 
+  bool optional = false;
   if (auto nullability = type->getNullability();
       !nullability.has_value() ||
       *nullability != clang::NullabilityKind::NonNull) {
     // If the type was produced by C++ template substitution, then we assume it
     // was deduced from a Carbon pointer type, so it's non-null.
     if (!type->getAs<clang::SubstTemplateTypeParmType>()) {
-      // TODO: Support nullable pointers.
-      return TypeExpr::None;
+      optional = true;
     }
   }
 
-  SemIR::TypeId pointer_type_id =
-      GetPointerType(context, pointee_type_expr.inst_id);
-  return {.inst_id = context.types().GetInstId(pointer_type_id),
-          .type_id = pointer_type_id};
+  TypeExpr pointer_type_expr = TypeExpr::ForUnsugared(
+      context, GetPointerType(context, pointee_type_expr.inst_id));
+  if (optional) {
+    pointer_type_expr =
+        MakeOptionalType(context, loc_id, pointer_type_expr.inst_id);
+  }
+  return pointer_type_expr;
 }
 
-// Maps a C++ reference type to a Carbon type.
-// We map `T&` to `T*`, and `T&&` to `T`.
+// Maps a C++ reference type to a Carbon type. We map all references to
+// pointers for now. Note that when mapping function parameters and return
+// types, a different rule is used; see MapParameterType for details.
 // TODO: Revisit this and decide what we really want to do here.
 static auto MapReferenceType(Context& context, clang::QualType type,
                              TypeExpr referenced_type_expr) -> TypeExpr {
   CARBON_CHECK(type->isReferenceType());
-
-  if (!type->isLValueReferenceType()) {
-    return referenced_type_expr;
-  }
-
   SemIR::TypeId pointer_type_id =
       GetPointerType(context, referenced_type_expr.inst_id);
-  return {.inst_id = context.types().GetInstId(pointer_type_id),
-          .type_id = pointer_type_id};
+  pointer_type_id =
+      GetConstType(context, context.types().GetInstId(pointer_type_id));
+  return TypeExpr::ForUnsugared(context, pointer_type_id);
 }
 
 // Maps a C++ type to a Carbon type. `type` should not be canonicalized because
@@ -1292,7 +1300,7 @@ static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
     if (wrapper.hasQualifiers()) {
       mapped = MapQualifiedType(context, wrapper, mapped);
     } else if (wrapper->isPointerType()) {
-      mapped = MapPointerType(context, wrapper, mapped);
+      mapped = MapPointerType(context, loc_id, wrapper, mapped);
     } else if (wrapper->isReferenceType()) {
       mapped = MapReferenceType(context, wrapper, mapped);
     } else {
@@ -1301,6 +1309,81 @@ static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
   }
 
   return mapped;
+}
+
+namespace {
+// Information about how to map a C++ parameter type into Carbon.
+struct ParameterTypeInfo {
+  // The type to use for the Carbon parameter.
+  TypeExpr type;
+  // Whether to build an `addr` pattern.
+  bool want_addr_pattern;
+  // If building an `addr` pattern, the type matched by that pattern.
+  TypeExpr pointee_type;
+};
+}  // namespace
+
+// Given the type of a C++ function parameter, returns information about the
+// type to use for the corresponding Carbon parameter.
+//
+// Note that if the parameter has a type for which `IsSimpleAbiType` returns
+// true, we must produce a parameter type that has the same calling convention
+// as the C++ type.
+//
+// TODO: Use `ref` instead of `addr`.
+static auto MapParameterType(Context& context, SemIR::LocId loc_id,
+                             clang::QualType param_type) -> ParameterTypeInfo {
+  ParameterTypeInfo info = {.type = TypeExpr::None,
+                            .want_addr_pattern = false,
+                            .pointee_type = TypeExpr::None};
+
+  // Perform some custom mapping for parameters of reference type:
+  //
+  //   * `T& x` -> `addr x: T*`.
+  //   * `const T& x` -> `x: T`.
+  //   * `T&& x` -> `x: T`.
+  //
+  // TODO: For the `&&` mapping, we allow an rvalue reference to bind to a
+  // durable reference expression. This should not be allowed.
+  if (param_type->isReferenceType()) {
+    clang::QualType pointee_type = param_type->getPointeeType();
+    if (param_type->isLValueReferenceType()) {
+      if (pointee_type.isConstQualified()) {
+        // TODO: Consider only doing this if `const` is the only qualifier. For
+        // now, any other qualifier will fail when mapping the type.
+        auto split_type = pointee_type.getSplitUnqualifiedType();
+        split_type.Quals.removeConst();
+        pointee_type = context.ast_context().getQualifiedType(split_type);
+      } else {
+        // The reference will map to a pointer. Request an `addr` pattern.
+        info.want_addr_pattern = true;
+      }
+    }
+    param_type = pointee_type;
+  }
+
+  info.type = MapType(context, loc_id, param_type);
+  if (info.want_addr_pattern && info.type.inst_id.has_value()) {
+    info.pointee_type = info.type;
+    info.type = TypeExpr::ForUnsugared(
+        context, GetPointerType(context, info.pointee_type.inst_id));
+  }
+  return info;
+}
+
+// Finishes building the pattern to use for a function parameter, given the
+// binding pattern and information about how the parameter is being mapped into
+// Carbon.
+static auto FinishParameterPattern(Context& context, SemIR::InstId pattern_id,
+                                   ParameterTypeInfo info) -> SemIR::InstId {
+  if (!info.want_addr_pattern || pattern_id == SemIR::ErrorInst::InstId) {
+    return pattern_id;
+  }
+  return AddPatternInst(
+      context, {SemIR::LocId(pattern_id),
+                SemIR::AddrPattern({.type_id = GetPatternType(
+                                        context, info.pointee_type.type_id),
+                                    .inner_id = pattern_id})});
 }
 
 // Returns a block for the implicit parameters of the given function
@@ -1319,32 +1402,10 @@ static auto MakeImplicitParamPatternsBlockId(
   // Build a `self` parameter from the object parameter.
   BeginSubpattern(context);
 
-  // Perform some special-case mapping for the object parameter:
-  //
-  //  - If it's a const reference to T, produce a by-value `self: T` parameter.
-  //  - If it's a non-const reference to T, produce an `addr self: T*`
-  //    parameter.
-  //  - Otherwise, map it directly, which will currently fail for `&&`-qualified
-  //    methods.
-  //
-  // TODO: Some of this mapping should be performed for all parameters.
   clang::QualType param_type =
       method_decl->getFunctionObjectParameterReferenceType();
-  bool addr_self = false;
-  if (param_type->isLValueReferenceType()) {
-    param_type = param_type.getNonReferenceType();
-    if (param_type.isConstQualified()) {
-      // TODO: Consider only doing this if `const` is the only qualifier. For
-      // now, any other qualifier will fail when mapping the type.
-      auto split_type = param_type.getSplitUnqualifiedType();
-      split_type.Quals.removeConst();
-      param_type = method_decl->getASTContext().getQualifiedType(split_type);
-    } else {
-      addr_self = true;
-    }
-  }
-
-  auto [type_inst_id, type_id] = MapType(context, loc_id, param_type);
+  auto param_info = MapParameterType(context, loc_id, param_type);
+  auto [type_inst_id, type_id] = param_info.type;
   SemIR::ExprRegionId type_expr_region_id =
       EndSubpatternAsExpr(context, type_inst_id);
 
@@ -1357,10 +1418,8 @@ static auto MakeImplicitParamPatternsBlockId(
 
   // TODO: Fill in a location once available.
   auto pattern_id =
-      addr_self ? AddAddrSelfParamPattern(context, SemIR::LocId::None,
-                                          type_expr_region_id, type_inst_id)
-                : AddSelfParamPattern(context, SemIR::LocId::None,
-                                      type_expr_region_id, type_id);
+      AddSelfParamPattern(context, loc_id, type_expr_region_id, type_id);
+  pattern_id = FinishParameterPattern(context, pattern_id, param_info);
 
   return context.inst_blocks().Add({pattern_id});
 }
@@ -1392,14 +1451,16 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     // The parameter type is decayed but hasn't necessarily had its qualifiers
     // removed.
     // TODO: The presence of qualifiers here is probably a Clang bug.
+    // TODO: For const non nullable pointers (`C* _Nonnull const`), this removes
+    // both the const and the non-nullable attribute. We should probably
+    // preserve the non-nullable attribute.
     clang::QualType param_type = orig_param_type.getUnqualifiedType();
-
-    bool is_ref_param = param_type->isLValueReferenceType();
 
     // Mark the start of a region of insts, needed for the type expression
     // created later with the call of `EndSubpatternAsExpr()`.
     BeginSubpattern(context);
-    auto [orig_type_inst_id, type_id] = MapType(context, loc_id, param_type);
+    auto param_info = MapParameterType(context, loc_id, param_type);
+    auto [orig_type_inst_id, type_id] = param_info.type;
     // Type expression of the binding pattern - a single-entry/single-exit
     // region that allows control flow in the type expression e.g. fn F(x: if C
     // then i32 else i64).
@@ -1425,11 +1486,11 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
 
     // TODO: Fix this once templates are supported.
     bool is_template = false;
-    // TODO: Fix this once generics are supported.
-    bool is_generic = false;
+    // TODO: Model reference parameters as ref bindings.
     SemIR::InstId pattern_id =
         AddBindingPattern(context, param_loc_id, name_id, type_id,
-                          type_expr_region_id, is_generic, is_template)
+                          type_expr_region_id, SemIR::ValueBindingPattern::Kind,
+                          is_template)
             .pattern_id;
     pattern_id = AddPatternInst(
         context, {param_loc_id,
@@ -1437,17 +1498,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
                       {.type_id = context.insts().Get(pattern_id).type_id(),
                        .subpattern_id = pattern_id,
                        .index = SemIR::CallParamIndex::None})});
-    if (is_ref_param) {
-      // We map `T&` parameters to `addr param: T*`.
-      // TODO: Revisit this and decide what we really want to do here.
-      pattern_id = AddPatternInst(
-          context, {param_loc_id,
-                    SemIR::AddrPattern(
-                        {.type_id = GetPatternType(
-                             context, context.types().GetTypeIdForTypeInstId(
-                                          orig_type_inst_id)),
-                         .inner_id = pattern_id})});
-    }
+    pattern_id = FinishParameterPattern(context, pattern_id, param_info);
     params.push_back(pattern_id);
   }
   return context.inst_blocks().Add(params);
@@ -1461,6 +1512,9 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
                               clang::FunctionDecl* clang_decl) -> TypeExpr {
   clang::QualType orig_ret_type = clang_decl->getReturnType();
   if (!orig_ret_type->isVoidType()) {
+    // TODO: We should eventually map reference returns to non-pointer types
+    // here. We should return by `ref` for `T&` return types once `ref` return
+    // is implemented.
     auto [orig_type_inst_id, type_id] = MapType(context, loc_id, orig_ret_type);
     if (!orig_type_inst_id.has_value()) {
       context.TODO(loc_id, llvm::formatv("Unsupported: return type: {0}",
@@ -1723,14 +1777,15 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
           builder.Note(loc_id, InCppThunk);
         });
 
-    clang::FunctionDecl* thunk_clang_decl =
-        BuildCppThunk(context, function_info);
-    if (thunk_clang_decl) {
-      SemIR::FunctionId thunk_function_id = *ImportFunction(
-          context, loc_id, thunk_clang_decl, thunk_clang_decl->getNumParams());
-      SemIR::InstId thunk_function_decl_id =
-          context.functions().Get(thunk_function_id).first_owning_decl_id;
-      function_info.SetHasCppThunk(thunk_function_decl_id);
+    if (clang::FunctionDecl* thunk_clang_decl =
+            BuildCppThunk(context, function_info)) {
+      if (auto thunk_function_id =
+              ImportFunction(context, loc_id, thunk_clang_decl,
+                             thunk_clang_decl->getNumParams())) {
+        SemIR::InstId thunk_function_decl_id =
+            context.functions().Get(*thunk_function_id).first_owning_decl_id;
+        function_info.SetHasCppThunk(thunk_function_decl_id);
+      }
     }
   }
 
@@ -1853,14 +1908,17 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   SemIR::EntityNameId entity_name_id =
       context.entity_names().AddSymbolicBindingName(
           var_name_id, GetParentNameScopeId(context, var_decl),
-          SemIR::CompileTimeBindIndex::None, false, clang_decl_id);
+          SemIR::CompileTimeBindIndex::None, false);
+  context.cpp_global_names().Add({.key = {.entity_name_id = entity_name_id},
+                                  .clang_decl_id = clang_decl_id});
 
-  // Create `BindingPattern` and `VarPattern` in a `NameBindingDecl`.
+  // Create `RefBindingPattern` and `VarPattern` in a `NameBindingDecl`.
   context.pattern_block_stack().Push();
   SemIR::TypeId pattern_type_id = GetPatternType(context, var_type_id);
-  SemIR::InstId binding_pattern_inst_id = AddPatternInst<SemIR::BindingPattern>(
-      context, loc_id,
-      {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
+  SemIR::InstId binding_pattern_inst_id =
+      AddPatternInst<SemIR::RefBindingPattern>(
+          context, loc_id,
+          {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
   var_storage.pattern_id = AddPatternInst<SemIR::VarPattern>(
       context, Parse::VariablePatternId::None,
       {.type_id = pattern_type_id, .subpattern_id = binding_pattern_inst_id});
@@ -1999,33 +2057,18 @@ auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
       SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, num_params));
 }
 
-// Maps `clang::AccessSpecifier` to `SemIR::AccessKind`.
-static auto MapAccess(clang::AccessSpecifier access_specifier)
-    -> SemIR::AccessKind {
-  switch (access_specifier) {
-    case clang::AS_public:
-    case clang::AS_none:
-      return SemIR::AccessKind::Public;
-    case clang::AS_protected:
-      return SemIR::AccessKind::Protected;
-    case clang::AS_private:
-      return SemIR::AccessKind::Private;
-  }
-}
-
 // Imports a Clang declaration into Carbon and adds that name into the
 // `NameScope`.
 static auto ImportNameDeclIntoScope(Context& context, SemIR::LocId loc_id,
                                     SemIR::NameScopeId scope_id,
                                     SemIR::NameId name_id,
                                     SemIR::ClangDeclKey key,
-                                    clang::AccessSpecifier access)
+                                    SemIR::AccessKind access_kind)
     -> SemIR::ScopeLookupResult {
   SemIR::InstId inst_id = ImportDeclAndDependencies(context, loc_id, key);
   if (!inst_id.has_value()) {
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
-  SemIR::AccessKind access_kind = MapAccess(access);
   AddNameToScope(context, scope_id, name_id, access_kind, inst_id);
   return SemIR::ScopeLookupResult::MakeWrappedLookupResult(inst_id,
                                                            access_kind);
@@ -2071,6 +2114,7 @@ static auto LookupBuiltinTypes(Context& context, SemIR::LocId loc_id,
           .Case("float", ast_context.FloatTy)
           .Case("double", ast_context.DoubleTy)
           .Case("long_double", ast_context.LongDoubleTy)
+          .Case("void", ast_context.VoidTy)
           .Default(clang::QualType());
   if (builtin_type.isNull()) {
     return SemIR::InstId::None;
@@ -2115,16 +2159,14 @@ auto ImportCppOverloadSet(
 // after overload resolution.
 static auto GetOverloadSetAccess(const clang::UnresolvedSet<4>& overload_set)
     -> SemIR::AccessKind {
-  clang::AccessSpecifier access = overload_set.begin().getAccess();
-  for (auto it = overload_set.begin() + 1; it != overload_set.end(); ++it) {
-    CARBON_CHECK(
-        (it.getAccess() == clang::AS_none) == (access == clang::AS_none),
-        "Unexpected mixture of members and non-members");
-    if (it.getAccess() < access) {
-      access = it->getAccess();
+  SemIR::AccessKind access_kind = SemIR::AccessKind::Private;
+  for (clang::DeclAccessPair overload : overload_set.pairs()) {
+    access_kind = std::min(access_kind, MapCppAccess(overload));
+    if (access_kind == SemIR::AccessKind::Public) {
+      break;
     }
   }
-  return MapAccess(access);
+  return access_kind;
 }
 
 // Imports an overload set from Clang to Carbon and adds the name into the
@@ -2245,7 +2287,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
   }
   auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(lookup->getFoundDecl());
   return ImportNameDeclIntoScope(context, loc_id, scope_id, name_id, key,
-                                 lookup->begin().getAccess());
+                                 MapCppAccess(lookup->begin().getPair()));
 }
 
 auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,

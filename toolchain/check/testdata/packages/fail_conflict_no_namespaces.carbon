@@ -91,7 +91,7 @@ import library "var";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %Foo.patt: %pattern_type.7ce = binding_pattern Foo [concrete]
+// CHECK:STDOUT:     %Foo.patt: %pattern_type.7ce = ref_binding_pattern Foo [concrete]
 // CHECK:STDOUT:     %Foo.var_patt: %pattern_type.7ce = var_pattern %Foo.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.var: ref %i32 = var %Foo.var_patt [concrete]
@@ -99,7 +99,7 @@ import library "var";
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo: ref %i32 = bind_name Foo, %Foo.var [concrete = %Foo.var]
+// CHECK:STDOUT:   %Foo: ref %i32 = ref_binding Foo, %Foo.var [concrete = %Foo.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_conflict.carbon

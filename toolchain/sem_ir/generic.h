@@ -55,6 +55,8 @@ struct Generic : public Printable<Generic> {
 // Provides storage for generics.
 class GenericStore : public ValueStore<GenericId, Generic> {
  public:
+  using ValueStore::ValueStore;
+
   // Get the self specific for a generic, or `None` if the `id` is `None`.
   auto GetSelfSpecific(GenericId id) const -> SpecificId {
     return id.has_value() ? Get(id).self_specific_id : SpecificId::None;
@@ -108,6 +110,8 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
  public:
   using IdType = SpecificId;
 
+  explicit SpecificStore(CheckIRId check_ir_id) : specifics_(check_ir_id) {}
+
   // Adds a new specific, or gets the existing specific for a specified generic
   // and argument list. Returns the ID of the specific. The argument IDs must be
   // for instructions in the constant block, and must be a canonical instruction
@@ -149,7 +153,7 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
     return specifics_.enumerate();
   }
 
-  auto GetIdTag() const { return IdTag(); }
+  auto GetIdTag() const { return specifics_.GetIdTag(); }
 
  private:
   // Context for hashing keys.

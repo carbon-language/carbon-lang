@@ -4,6 +4,7 @@
 
 #include "toolchain/check/cpp/thunk.h"
 
+#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/GlobalDecl.h"
 #include "clang/AST/Mangle.h"
 #include "clang/Sema/Lookup.h"
@@ -49,106 +50,41 @@ static auto GenerateThunkMangledName(
   return mangled_name_stream.TakeStr();
 }
 
-// Returns true if a C++ thunk is required for the given type. A C++ thunk is
-// required for any type except for void, pointer types and signed 32-bit and
-// 64-bit integers.
-static auto IsThunkRequiredForType(Context& context, SemIR::TypeId type_id)
-    -> bool {
-  if (!type_id.has_value() || type_id == SemIR::ErrorInst::TypeId) {
-    return false;
-  }
-
-  type_id = context.types().GetUnqualifiedType(type_id);
-
-  switch (context.types().GetAsInst(type_id).kind()) {
-    case SemIR::PointerType::Kind: {
-      return false;
-    }
-
-    case SemIR::ClassType::Kind: {
-      if (!context.types().IsComplete(type_id)) {
-        // Signed integers of 32 or 64 bits should be completed when imported.
-        return true;
-      }
-
-      auto int_info = context.types().TryGetIntTypeInfo(type_id);
-      if (!int_info || !int_info->bit_width.has_value()) {
-        return true;
-      }
-
-      llvm::APInt bit_width = context.ints().Get(int_info->bit_width);
-      return bit_width != 32 && bit_width != 64;
-    }
-
-    default:
-      return true;
-  }
-}
-
-auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
-    -> bool {
-  if (!function.clang_decl_id.has_value()) {
-    return false;
-  }
-
-  // A thunk is required if any parameter or return type requires it. However,
-  // we don't generate a thunk if any relevant type is erroneous.
-  bool thunk_required = false;
-
-  const auto& decl_info = context.clang_decls().Get(function.clang_decl_id);
-  const auto* decl = cast<clang::FunctionDecl>(decl_info.key.decl);
-  if (decl_info.key.num_params !=
-      static_cast<int>(decl->getNumNonObjectParams())) {
-    // We require a thunk if the number of parameters we want isn't all of them.
-    // This happens if default arguments are in use, or (eventually) when
-    // calling a varargs function.
-    thunk_required = true;
-  } else {
-    // We require a thunk if any parameter is of reference type, even if the
-    // corresponding SemIR function has an acceptable parameter type.
-    // TODO: We should be able to avoid thunks for reference parameters.
-    for (auto* param : decl->parameters()) {
-      if (param->getType()->isReferenceType()) {
-        thunk_required = true;
-        break;
-      }
-    }
-  }
-
-  SemIR::TypeId return_type_id =
-      function.GetDeclaredReturnType(context.sem_ir());
-  if (return_type_id.has_value()) {
-    if (return_type_id == SemIR::ErrorInst::TypeId) {
-      return false;
-    }
-    thunk_required =
-        thunk_required || IsThunkRequiredForType(context, return_type_id);
-  }
-
-  for (auto param_id :
-       context.inst_blocks().GetOrEmpty(function.call_params_id)) {
-    if (param_id == SemIR::ErrorInst::InstId) {
-      return false;
-    }
-    thunk_required =
-        thunk_required ||
-        IsThunkRequiredForType(
-            context, context.insts().GetAs<SemIR::AnyParam>(param_id).type_id);
-  }
-
-  return thunk_required;
-}
-
-// Returns whether the type is void, a pointer, or a signed int of 32 or 64
-// bits.
+// Returns whether the Carbon lowering for a parameter or return of this type is
+// known to match the C++ lowering.
 static auto IsSimpleAbiType(clang::ASTContext& ast_context,
-                            clang::QualType type) -> bool {
+                            clang::QualType type, bool for_parameter) -> bool {
   if (type->isVoidType() || type->isPointerType()) {
     return true;
   }
 
+  if (type->isReferenceType()) {
+    if (for_parameter) {
+      // A reference parameter has a simple ABI if it's a non-const lvalue
+      // reference.  Otherwise, we map it to pass-by-value, and it's only simple
+      // if the type uses a pointer value representation.
+      //
+      // TODO: Check whether the pointee type maps to a Carbon type that uses a
+      // pointer value representation, and treat it as simple if so.
+      return type->isLValueReferenceType() &&
+             !type->getPointeeType().isConstQualified();
+    }
+
+    // A reference return type is always mapped to a Carbon pointer, which uses
+    // the same ABI rule as a C++ reference.
+    return true;
+  }
+
+  if (const auto* enum_decl = type->getAsEnumDecl()) {
+    // An enum type has a simple ABI if its underlying type does.
+    type = enum_decl->getIntegerType();
+    if (type.isNull()) {
+      return false;
+    }
+  }
+
   if (const auto* builtin_type = type->getAs<clang::BuiltinType>()) {
-    if (builtin_type->isSignedInteger()) {
+    if (builtin_type->isIntegerType()) {
       uint64_t type_size = ast_context.getIntWidth(type);
       return type_size == 32 || type_size == 64;
     }
@@ -168,18 +104,19 @@ struct CalleeFunctionInfo {
     bool is_ctor = isa<clang::CXXConstructorDecl>(decl);
     has_object_parameter = method_decl && !method_decl->isStatic() && !is_ctor;
     if (has_object_parameter && method_decl->isImplicitObjectMemberFunction()) {
-      implicit_this_type = method_decl->getThisType();
+      implicit_object_parameter_type =
+          method_decl->getFunctionObjectParameterReferenceType();
     }
     effective_return_type =
         is_ctor ? ast_context.getCanonicalTagType(method_decl->getParent())
                 : decl->getReturnType();
-    has_simple_return_type =
-        IsSimpleAbiType(ast_context, effective_return_type);
+    has_simple_return_type = IsSimpleAbiType(ast_context, effective_return_type,
+                                             /*for_parameter=*/false);
   }
 
   // Returns whether this callee has an implicit `this` parameter.
   auto has_implicit_object_parameter() const -> bool {
-    return !implicit_this_type.isNull();
+    return !implicit_object_parameter_type.isNull();
   }
 
   // Returns whether this callee has an explicit `this` parameter.
@@ -218,9 +155,9 @@ struct CalleeFunctionInfo {
   // implicit.
   bool has_object_parameter;
 
-  // If the callee has an implicit object parameter, the corresponding `this`
-  // type. Otherwise a null type.
-  clang::QualType implicit_this_type;
+  // If the callee has an implicit object parameter, the type of that parameter,
+  // which will always be a reference type. Otherwise a null type.
+  clang::QualType implicit_object_parameter_type;
 
   // The return type that the callee has when viewed from Carbon. This is the
   // C++ return type, except that constructors return the class type in Carbon
@@ -232,6 +169,46 @@ struct CalleeFunctionInfo {
   bool has_simple_return_type;
 };
 }  // namespace
+
+auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
+    -> bool {
+  if (!function.clang_decl_id.has_value()) {
+    return false;
+  }
+
+  const auto& decl_info = context.clang_decls().Get(function.clang_decl_id);
+  auto* decl = cast<clang::FunctionDecl>(decl_info.key.decl);
+  if (decl_info.key.num_params !=
+      static_cast<int>(decl->getNumNonObjectParams())) {
+    // We require a thunk if the number of parameters we want isn't all of them.
+    // This happens if default arguments are in use, or (eventually) when
+    // calling a varargs function.
+    return true;
+  }
+
+  CalleeFunctionInfo callee_info(decl, decl_info.key.num_params);
+  if (!callee_info.has_simple_return_type) {
+    return true;
+  }
+
+  auto& ast_context = context.ast_context();
+  if (callee_info.has_implicit_object_parameter() &&
+      !IsSimpleAbiType(ast_context, callee_info.implicit_object_parameter_type,
+                       /*for_parameter=*/true)) {
+    return true;
+  }
+
+  const auto* function_type =
+      decl->getType()->castAs<clang::FunctionProtoType>();
+  for (int i : llvm::seq(decl->getNumParams())) {
+    if (!IsSimpleAbiType(ast_context, function_type->getParamType(i),
+                         /*for_parameter=*/true)) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 // Given a pointer type, returns the corresponding _Nonnull-qualified pointer
 // type.
@@ -254,7 +231,7 @@ static auto GetNonNullablePointerType(clang::ASTContext& ast_context,
 static auto GetThunkParameterType(clang::ASTContext& ast_context,
                                   clang::QualType callee_type)
     -> clang::QualType {
-  if (IsSimpleAbiType(ast_context, callee_type)) {
+  if (IsSimpleAbiType(ast_context, callee_type, /*for_parameter=*/true)) {
     return callee_type;
   }
   return GetNonNullablePointerType(ast_context, callee_type);
@@ -267,8 +244,7 @@ static auto BuildThunkParameterTypes(clang::ASTContext& ast_context,
   llvm::SmallVector<clang::QualType> thunk_param_types;
   thunk_param_types.reserve(callee_info.num_thunk_params());
   if (callee_info.has_implicit_object_parameter()) {
-    thunk_param_types.push_back(
-        GetNonnullType(ast_context, callee_info.implicit_this_type));
+    thunk_param_types.push_back(callee_info.implicit_object_parameter_type);
   }
 
   const auto* function_type =
@@ -400,22 +376,21 @@ static auto BuildThunkParamRef(clang::Sema& sema,
     clang::ExprResult deref_result =
         sema.BuildUnaryOp(nullptr, clang_loc, clang::UO_Deref, call_arg);
     CARBON_CHECK(deref_result.isUsable());
-
-    // Cast to an rvalue when initializing an rvalue reference. The validity of
-    // the initialization of the reference should be validated by the caller of
-    // the thunk.
-    //
-    // TODO: Consider inserting a cast to an rvalue in more cases. Note that we
-    // currently pass pointers to non-temporary objects as the argument when
-    // calling a thunk, so we'll need to either change that or generate
-    // different thunks depending on whether we're moving from each parameter.
-    if (type->isRValueReferenceType()) {
-      deref_result = clang::ImplicitCastExpr::Create(
-          sema.getASTContext(), deref_result.get()->getType(), clang::CK_NoOp,
-          deref_result.get(), nullptr, clang::ExprValueKind::VK_XValue,
-          clang::FPOptionsOverride());
-    }
     call_arg = deref_result.get();
+  }
+
+  // Cast to an rvalue when initializing an rvalue reference. The validity of
+  // the initialization of the reference should be validated by the caller of
+  // the thunk.
+  //
+  // TODO: Consider inserting a cast to an rvalue in more cases. Note that we
+  // currently pass pointers to non-temporary objects as the argument when
+  // calling a thunk, so we'll need to either change that or generate
+  // different thunks depending on whether we're moving from each parameter.
+  if (!type.isNull() && type->isRValueReferenceType()) {
+    call_arg = clang::ImplicitCastExpr::Create(
+        sema.getASTContext(), call_arg->getType(), clang::CK_NoOp, call_arg,
+        nullptr, clang::ExprValueKind::VK_XValue, clang::FPOptionsOverride());
   }
   return call_arg;
 }
@@ -472,14 +447,14 @@ static auto BuildThunkBody(clang::Sema& sema,
                            callee_info.has_explicit_object_parameter()
                                ? callee_info.decl->getParamDecl(0)->getType()
                                : clang::QualType());
-    bool is_arrow = callee_info.has_implicit_object_parameter();
+    constexpr bool IsArrow = false;
     auto object =
-        sema.PerformMemberExprBaseConversion(object_param_ref, is_arrow);
+        sema.PerformMemberExprBaseConversion(object_param_ref, IsArrow);
     if (object.isInvalid()) {
       return clang::StmtError();
     }
     callee = sema.BuildMemberExpr(
-        object.get(), is_arrow, clang_loc, clang::NestedNameSpecifierLoc(),
+        object.get(), IsArrow, clang_loc, clang::NestedNameSpecifierLoc(),
         clang::SourceLocation(), callee_info.decl,
         clang::DeclAccessPair::make(callee_info.decl, clang::AS_public),
         /*HadMultipleCandidates=*/false, clang::DeclarationNameInfo(),
@@ -569,6 +544,8 @@ auto BuildCppThunk(Context& context, const SemIR::Function& callee_function)
     return nullptr;
   }
 
+  context.clang_sema().getASTConsumer().HandleTopLevelDecl(
+      clang::DeclGroupRef(thunk_function_decl));
   return thunk_function_decl;
 }
 
@@ -666,9 +643,25 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
                           context.insts().Get(return_slot_id).type_id())),
          .lvalue_id = return_slot_id});
     thunk_arg_ids.push_back(arg_id);
+  } else if (return_slot_id.has_value()) {
+    thunk_arg_ids.push_back(return_slot_id);
   }
 
-  auto result_id = PerformCall(context, loc_id, thunk_callee_id, thunk_arg_ids);
+  // Compute the return type of the call to the thunk.
+  auto thunk_return_type_id =
+      thunk_function.GetDeclaredReturnType(context.sem_ir());
+  if (!thunk_return_type_id.has_value()) {
+    CARBON_CHECK(thunk_takes_return_address || !return_type_id.has_value());
+    thunk_return_type_id = GetTupleType(context, {});
+  } else {
+    CARBON_CHECK(thunk_return_type_id == return_type_id);
+  }
+
+  auto result_id = GetOrAddInst<SemIR::Call>(
+      context, loc_id,
+      {.type_id = thunk_return_type_id,
+       .callee_id = thunk_callee_id,
+       .args_id = context.inst_blocks().Add(thunk_arg_ids)});
 
   // Produce the result of the call, taking the value from the return storage.
   if (thunk_takes_return_address) {

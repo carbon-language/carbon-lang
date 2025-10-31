@@ -23,7 +23,7 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%T [concrete]
-// CHECK:STDOUT:   %.Self: %I.type = bind_symbolic_name .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self: %I.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self [symbolic_self]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
@@ -40,7 +40,7 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %NotGenericF.decl: %NotGenericF.type = fn_decl @NotGenericF [concrete = constants.%NotGenericF] {
-// CHECK:STDOUT:     %U.patt: %pattern_type.917 = binding_pattern U [concrete]
+// CHECK:STDOUT:     %U.patt: %pattern_type.917 = value_binding_pattern U [concrete]
 // CHECK:STDOUT:     %U.param_patt: %pattern_type.917 = value_param_pattern %U.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.param: %I_where.type = value_param call_param0
@@ -59,7 +59,7 @@ fn NotGenericF(U: I where .T == i32) {}
 // CHECK:STDOUT:         requirement_equivalent %impl.elem0, %i32
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U: %I_where.type = bind_name U, %U.param
+// CHECK:STDOUT:     %U: %I_where.type = value_binding U, %U.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
