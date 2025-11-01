@@ -21,6 +21,8 @@ struct ConversionTarget {
     ValueOrRef,
     // Convert to a durable reference of type `type_id`.
     DurableRef,
+    // Convert to a reference, suitable for binding to a reference parameter.
+    RefParam,
     // Convert to a reference of type `type_id`, for use as the argument to a
     // C++ thunk.
     CppThunkRef,
@@ -56,8 +58,6 @@ struct ConversionTarget {
   // When looking for a possible conversion but with graceful fallback, diagnose
   // should be false.
   bool diagnose = true;
-
-  bool require_ref_tag = false;
 
   // Are we converting this value into an initializer for an object?
   auto is_initializer() const -> bool {

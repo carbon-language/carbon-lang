@@ -730,6 +730,7 @@ static auto IsValidExprCategoryForConversionTarget(
     case ConversionTarget::Value:
       return category == SemIR::ExprCategory::Value;
     case ConversionTarget::ValueOrRef:
+    case ConversionTarget::RefParam:
     case ConversionTarget::Discarded:
       return category == SemIR::ExprCategory::Value ||
              category == SemIR::ExprCategory::DurableRef ||
@@ -1396,13 +1397,13 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     if (lookup_result) {
       has_ref_tag = true;
       if (lookup_result.value() == Context::RefTag::Present &&
-          !target.require_ref_tag) {
+          target.kind != ConversionTarget::RefParam) {
         CARBON_DIAGNOSTIC(RefTagNoRefParam, Error,
                           "`ref` tag is not an argument to a `ref` parameter");
         context.emitter().Emit(expr_id, RefTagNoRefParam);
       }
     } else {
-      if (target.require_ref_tag) {
+      if (target.kind == ConversionTarget::RefParam) {
         CARBON_DIAGNOSTIC(RefParamNoRefTag, Error,
                           "argument to `ref` parameter not marked with `ref`");
         context.emitter().Emit(expr_id, RefParamNoRefTag);
@@ -1597,7 +1598,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       // If a reference expression is an acceptable result, we're done.
       if (target.kind == ConversionTarget::ValueOrRef ||
           target.kind == ConversionTarget::Discarded ||
-          target.kind == ConversionTarget::CppThunkRef) {
+          target.kind == ConversionTarget::CppThunkRef ||
+          target.kind == ConversionTarget::RefParam) {
         break;
       }
 

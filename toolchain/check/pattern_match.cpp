@@ -374,12 +374,13 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       // We should already have a durable reference (in the case of a
       // VarParamPattern, that's handled by the enclosing VarPattern), but we
       // may need to adjust its type.
-      auto scrutinee_ref_id = Convert(
-          context, SemIR::LocId(entry.scrutinee_id), entry.scrutinee_id,
-          {.kind = ConversionTarget::ValueOrRef,
-           .type_id = scrutinee_type_id,
-           .require_ref_tag =
-               std::is_same_v<RefParamPatternT, SemIR::RefParamPattern>});
+      auto conversion_kind =
+          std::is_same_v<RefParamPatternT, SemIR::RefParamPattern>
+              ? ConversionTarget::RefParam
+              : ConversionTarget::ValueOrRef;
+      auto scrutinee_ref_id =
+          Convert(context, SemIR::LocId(entry.scrutinee_id), entry.scrutinee_id,
+                  {.kind = conversion_kind, .type_id = scrutinee_type_id});
 
       switch (SemIR::GetExprCategory(context.sem_ir(), scrutinee_ref_id)) {
         case SemIR::ExprCategory::Error:
