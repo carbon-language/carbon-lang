@@ -5,12 +5,16 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/subst.h"
+#include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/named_constraint.h"
 #include "toolchain/sem_ir/type_iterator.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -19,6 +23,10 @@ namespace Carbon::Check {
 
 auto HandleParseNode(Context& context, Parse::RequireIntroducerId node_id)
     -> bool {
+  // Require decls are always generic, since everything in an `interface` or
+  // `constraint` is generic over `Self`.
+  StartGenericDecl(context);
+
   // Create an instruction block to hold the instructions created for the type
   // and constraint.
   context.inst_block_stack().Push();
@@ -134,22 +142,18 @@ static auto TypeStructureReferencesSelf(
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
-  auto [constraint_node_id, constraint_inst_id] =
-      context.node_stack().PopExprWithNodeId();
-  auto [self_node_id, self_inst_id] =
-      context.node_stack().PopWithNodeId<Parse::NodeCategory::RequireImpls>();
+struct ValidateRequireResult {
+  SemIR::FacetType facet_type;
+  const SemIR::IdentifiedFacetType* identified;
+};
 
-  [[maybe_unused]] auto decl_block_id = context.inst_block_stack().Pop();
-
-  // Process modifiers.
-  auto introducer =
-      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Require>();
-  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Extend);
-
-  auto scope_inst_id =
-      context.node_stack().Pop<Parse::NodeKind::RequireIntroducer>();
-
+// Returns nullopt if a diagnostic has been emitted and the `require` decl is
+// not valid.
+static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
+                            SemIR::TypeInstId self_inst_id,
+                            SemIR::InstId constraint_inst_id,
+                            SemIR::InstId scope_inst_id)
+    -> std::optional<ValidateRequireResult> {
   auto constraint_constant_value_inst_id =
       context.constant_values().GetConstantInstId(constraint_inst_id);
   auto constraint_facet_type = context.insts().TryGetAs<SemIR::FacetType>(
@@ -160,10 +164,10 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
           RequireImplsMissingFacetType, Error,
           "`require` declaration constrained by a non-facet type; "
           "expected an `interface` or `constraint` name after `impls`");
-      context.emitter().Emit(constraint_node_id, RequireImplsMissingFacetType);
+      context.emitter().Emit(constraint_inst_id, RequireImplsMissingFacetType);
     }
     // Can't continue without a constraint to use.
-    return true;
+    return std::nullopt;
   }
 
   auto identified_facet_type_id =
@@ -172,13 +176,14 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
             RequireImplsUnidentifiedFacetType, Error,
             "facet type {0} cannot be identified in `require` declaration",
             InstIdAsType);
-        return context.emitter().Build(constraint_node_id,
+        return context.emitter().Build(constraint_inst_id,
                                        RequireImplsUnidentifiedFacetType,
                                        constraint_inst_id);
       });
   if (!identified_facet_type_id.has_value()) {
-    // The constraint can't be used.
-    return true;
+    // The constraint can't be used. A diagnostic was emitted by
+    // RequireIdentifiedFacetType().
+    return std::nullopt;
   }
   const auto& identified =
       context.identified_facet_types().Get(identified_facet_type_id);
@@ -188,22 +193,71 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
                       "no `Self` reference found in `require` declaration; "
                       "`Self` must appear in the self-type or as a generic "
                       "parameter for each `interface` or `constraint`");
-    context.emitter().Emit(node_id, RequireImplsMissingSelf);
-    return true;
+    context.emitter().Emit(loc_id, RequireImplsMissingSelf);
+    return std::nullopt;
   }
 
   if (scope_inst_id == SemIR::ErrorInst::InstId) {
     // `require` is in the wrong scope.
+    return std::nullopt;
+  }
+  if (self_inst_id == SemIR::ErrorInst::InstId ||
+      constraint_inst_id == SemIR::ErrorInst::InstId) {
+    // Can't build a useful `require` with an error, it couldn't do anything.
+    return std::nullopt;
+  }
+
+  return ValidateRequireResult{.facet_type = *constraint_facet_type,
+                               .identified = &identified};
+}
+
+auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
+  auto [constraint_node_id, constraint_inst_id] =
+      context.node_stack().PopExprWithNodeId();
+  auto [self_node_id, self_inst_id] =
+      context.node_stack().PopWithNodeId<Parse::NodeCategory::RequireImpls>();
+
+  auto decl_block_id = context.inst_block_stack().Pop();
+
+  // Process modifiers.
+  auto introducer =
+      context.decl_introducer_state_stack().Pop<Lex::TokenKind::Require>();
+  LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Extend);
+
+  auto scope_inst_id =
+      context.node_stack().Pop<Parse::NodeKind::RequireIntroducer>();
+
+  auto validated = ValidateRequire(context, node_id, self_inst_id,
+                                   constraint_inst_id, scope_inst_id);
+  if (!validated) {
+    DiscardGenericDecl(context);
     return true;
   }
 
-  if (identified.required_interfaces().empty()) {
-    // A `require T impls type` adds no actual constraints.
+  auto [constraint_facet_type, identified] = *validated;
+  if (identified->required_interfaces().empty()) {
+    // A `require T impls type` adds no actual constraints, so nothing to do.
+    DiscardGenericDecl(context);
     return true;
   }
 
-  // TODO: Add the `require` constraint to the InterfaceDecl or ConstraintDecl
-  // from `scope_inst_id`.
+  auto require_impls_decl =
+      SemIR::RequireImplsDecl{// To be filled in after.
+                              .require_impls_id = SemIR::RequireImplsId::None,
+                              .decl_block_id = decl_block_id};
+  auto decl_id = AddPlaceholderInst(context, node_id, require_impls_decl);
+  auto require_impls_id = context.require_impls().Add(
+      {.self_id = self_inst_id,
+       .facet_type_inst_id =
+           context.types().GetAsTypeInstId(constraint_inst_id),
+       .facet_type_id = constraint_facet_type.facet_type_id,
+       .decl_id = decl_id,
+       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
+       .body_block_id = decl_block_id,
+       .generic_id = BuildGenericDecl(context, decl_id)});
+
+  require_impls_decl.require_impls_id = require_impls_id;
+  ReplaceInstBeforeConstantUse(context, decl_id, require_impls_decl);
 
   return true;
 }

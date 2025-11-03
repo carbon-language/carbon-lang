@@ -36,6 +36,7 @@
 #include "toolchain/sem_ir/name.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/named_constraint.h"
+#include "toolchain/sem_ir/require_impls.h"
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
@@ -177,6 +178,10 @@ class File : public Printable<File> {
   }
   auto named_constraints() const -> const NamedConstraintStore& {
     return named_constraints_;
+  }
+  auto require_impls() -> RequireImplsStore& { return require_impls_; }
+  auto require_impls() const -> const RequireImplsStore& {
+    return require_impls_;
   }
   auto associated_constants() -> AssociatedConstantStore& {
     return associated_constants_;
@@ -328,6 +333,9 @@ class File : public Printable<File> {
 
   // Storage for named constraints.
   NamedConstraintStore named_constraints_;
+
+  // Storage for interface requirements.
+  RequireImplsStore require_impls_;
 
   // Storage for associated constants.
   AssociatedConstantStore associated_constants_;

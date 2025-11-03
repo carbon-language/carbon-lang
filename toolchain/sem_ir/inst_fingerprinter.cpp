@@ -243,6 +243,16 @@ struct Worklist {
     AddEntity(sem_ir->named_constraints().Get(named_constraint_id));
   }
 
+  auto Add(RequireImplsId require_id) -> void {
+    if (!require_id.has_value()) {
+      AddInvalid();
+      return;
+    }
+    const auto& require = sem_ir->require_impls().Get(require_id);
+    Add(require.self_id);
+    Add(require.facet_type_id);
+  }
+
   auto Add(AssociatedConstantId assoc_const_id) -> void {
     AddEntity<AssociatedConstant>(
         sem_ir->associated_constants().Get(assoc_const_id));

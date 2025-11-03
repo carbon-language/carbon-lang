@@ -922,6 +922,13 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
   }
 };
 
+// The ID of a `RequireImpls`.
+struct RequireImplsId : public IdBase<RequireImplsId> {
+  static constexpr llvm::StringLiteral Label = "require_impls";
+
+  using IdBase::IdBase;
+};
+
 // A SemIR location used as the location of instructions. This contains either a
 // InstId, NodeId, ImportIRInstId, or None. The intent is that any of these can
 // indicate the source of an instruction, and also be used to associate a line

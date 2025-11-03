@@ -61,6 +61,7 @@ using IdKind = TypeEnum<
     NameId,
     NameScopeId,
     NamedConstraintId,
+    RequireImplsId,
     SpecificId,
     SpecificInterfaceId,
     StructTypeFieldsId,

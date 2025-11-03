@@ -39,15 +39,15 @@ class InstNamer {
   // Entities whose scopes get entries from `ScopeId`.
   using ScopeIdTypeEnum =
       TypeEnum<AssociatedConstantId, ClassId, CppOverloadSetId, FunctionId,
-               ImplId, InterfaceId, NamedConstraintId, SpecificInterfaceId,
-               VtableId>;
+               ImplId, InterfaceId, NamedConstraintId, RequireImplsId,
+               SpecificInterfaceId, VtableId>;
 
   // Construct the instruction namer, and assign names to all instructions in
   // the provided file.
   explicit InstNamer(const File* sem_ir, int total_ir_count);
 
-  // Returns the scope ID corresponding to an ID of a function, class, or
-  // interface.
+  // Returns the scope ID corresponding to an ID of a function, class,
+  // interface, or named constraint.
   template <typename IdT>
     requires ScopeIdTypeEnum::Contains<IdT>
   auto GetScopeFor(IdT id) const -> ScopeId {
@@ -66,6 +66,8 @@ class InstNamer {
       index = sem_ir_->interfaces().GetRawIndex(id);
     } else if constexpr (std::is_same_v<IdT, NamedConstraintId>) {
       index = sem_ir_->named_constraints().GetRawIndex(id);
+    } else if constexpr (std::is_same_v<IdT, RequireImplsId>) {
+      index = sem_ir_->require_impls().GetRawIndex(id);
     } else if constexpr (std::is_same_v<IdT, SpecificInterfaceId>) {
       index = sem_ir_->specific_interfaces().GetRawIndex(id);
     } else if constexpr (std::is_same_v<IdT, VtableId>) {
@@ -222,6 +224,8 @@ class InstNamer {
   auto PushEntity(InterfaceId interface_id, ScopeId scope_id, Scope& scope)
       -> void;
   auto PushEntity(NamedConstraintId named_constraint_id, ScopeId scope_id,
+                  Scope& scope) -> void;
+  auto PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
                   Scope& scope) -> void;
   auto PushEntity(VtableId vtable_id, ScopeId scope_id, Scope& scope) -> void;
 

@@ -159,10 +159,10 @@ auto HandleParseNode(Context& context,
   auto& constraint_info = context.named_constraints().Get(named_constraint_id);
   constraint_info.complete = true;
 
+  FinishGenericDefinition(context, constraint_info.generic_id);
+
   // TODO: Do something with `require` and `alias` statements in the body of the
   // constraint.
-
-  FinishGenericDefinition(context, constraint_info.generic_id);
 
   // The decl_name_stack and scopes are popped by `ProcessNodeIds`.
   return true;

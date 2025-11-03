@@ -162,6 +162,10 @@ class Formatter {
   auto FormatNamedConstraint(NamedConstraintId id,
                              const NamedConstraint& constraint_info) -> void;
 
+  // Formats a full require declaration.
+  auto FormatRequireImpls(RequireImplsId id, const RequireImpls& require)
+      -> void;
+
   // Formats an associated constant entity.
   auto FormatAssociatedConstant(AssociatedConstantId id,
                                 const AssociatedConstant& assoc_const) -> void;
@@ -188,7 +192,7 @@ class Formatter {
   template <typename IdT>
   auto FormatEntityStart(llvm::StringRef entity_kind,
                          InstId first_owning_decl_id, GenericId generic_id,
-                         IdT entity_id) -> void;
+                         IdT entity_id, bool has_definition) -> void;
 
   template <typename IdT>
   auto FormatEntityStart(llvm::StringRef entity_kind,
@@ -399,7 +403,8 @@ class Formatter {
 template <typename IdT>
 auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
                                   InstId first_owning_decl_id,
-                                  GenericId generic_id, IdT entity_id) -> void {
+                                  GenericId generic_id, IdT entity_id,
+                                  bool has_definition) -> void {
   // If this entity was imported from a different IR, annotate the name of
   // that IR in the output before the `{` or `;`.
   if (first_owning_decl_id.has_value()) {
@@ -419,16 +424,18 @@ auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
     FormatGenericStart(entity_kind, generic_id);
   }
 
-  out_ << "\n";
-  after_open_brace_ = false;
-  Indent();
-  out_ << entity_kind;
+  if (!generic_id.has_value() || has_definition) {
+    out_ << "\n";
+    after_open_brace_ = false;
+    Indent();
+    out_ << entity_kind;
 
-  // If there's a generic, it will have attached the name. Otherwise, add the
-  // name here.
-  if (!generic_id.has_value()) {
-    out_ << " ";
-    FormatName(entity_id);
+    // If there's a generic, it will have attached the name. Otherwise, add the
+    // name here.
+    if (!generic_id.has_value()) {
+      out_ << " ";
+      FormatName(entity_id);
+    }
   }
 }
 
@@ -437,7 +444,7 @@ auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
                                   const EntityWithParamsBase& entity,
                                   IdT entity_id) -> void {
   FormatEntityStart(entity_kind, entity.first_owning_decl_id, entity.generic_id,
-                    entity_id);
+                    entity_id, /*has_definition=*/true);
 }
 
 template <typename... Types>

@@ -1341,6 +1341,18 @@ struct RequireCompleteType {
   TypeInstId complete_type_inst_id;
 };
 
+// A `require` declaration, such as `require Self impls Z`.
+struct RequireImplsDecl {
+  static constexpr auto Kind =
+      InstKind::RequireImplsDecl.Define<Parse::RequireDeclId>(
+          {.ir_name = "require_decl",
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+
+  RequireImplsId require_impls_id;
+  DeclInstBlockId decl_block_id;
+};
+
 // A requirement that `.Self` implements a facet type, specified as the first
 // operand of a `where` expression. This is always the first requirement in a
 // requirement block for a `where` expression.

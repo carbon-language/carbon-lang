@@ -85,6 +85,10 @@ auto Formatter::Format() -> void {
     FormatNamedConstraint(id, constraint);
   }
 
+  for (const auto& [id, require] : sem_ir_->require_impls().enumerate()) {
+    FormatRequireImpls(id, require);
+  }
+
   for (const auto& [id, assoc_const] :
        sem_ir_->associated_constants().enumerate()) {
     FormatAssociatedConstant(id, assoc_const);
@@ -455,6 +459,17 @@ auto Formatter::FormatNamedConstraint(NamedConstraintId id,
   FormatEntityEnd(constraint_info.generic_id);
 }
 
+auto Formatter::FormatRequireImpls(RequireImplsId id,
+                                   const RequireImpls& require) -> void {
+  if (!ShouldFormatEntity(require.decl_id)) {
+    return;
+  }
+
+  FormatEntityStart("require", require.decl_id, require.generic_id, id,
+                    /*has_definition=*/false);
+  FormatEntityEnd(require.generic_id);
+}
+
 auto Formatter::FormatAssociatedConstant(AssociatedConstantId id,
                                          const AssociatedConstant& assoc_const)
     -> void {
@@ -463,7 +478,7 @@ auto Formatter::FormatAssociatedConstant(AssociatedConstantId id,
   }
 
   FormatEntityStart("assoc_const", assoc_const.decl_id, assoc_const.generic_id,
-                    id);
+                    id, /*has_definition=*/true);
 
   llvm::SaveAndRestore assoc_const_scope(scope_, inst_namer_.GetScopeFor(id));
 
@@ -1137,6 +1152,28 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       } else {
         FormatArgs(ns.name_scope_id);
       }
+      return;
+    }
+
+    case CARBON_KIND(RequireImplsDecl decl): {
+      FormatArgs(decl.require_impls_id);
+
+      const auto& require = sem_ir_->require_impls().Get(decl.require_impls_id);
+
+      llvm::SaveAndRestore scope(
+          scope_, inst_namer_.GetScopeFor(decl.require_impls_id));
+
+      out_ << ' ';
+      OpenBrace();
+      Indent();
+      out_ << "require ";
+      FormatArg(require.self_id);
+      out_ << " impls ";
+      FormatArg(require.facet_type_id);
+      out_ << "\n";
+      CloseBrace();
+
+      FormatTrailingBlock(decl.decl_block_id);
       return;
     }
 

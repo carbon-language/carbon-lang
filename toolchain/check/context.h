@@ -268,6 +268,9 @@ class Context {
   auto named_constraints() -> SemIR::NamedConstraintStore& {
     return sem_ir().named_constraints();
   }
+  auto require_impls() -> SemIR::RequireImplsStore& {
+    return sem_ir().require_impls();
+  }
   auto associated_constants() -> SemIR::AssociatedConstantStore& {
     return sem_ir().associated_constants();
   }
