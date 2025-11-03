@@ -14,7 +14,7 @@
 namespace Carbon::SemIR {
 
 // A function that validates that a builtin was declared properly.
-using ValidateFn = auto(const File& sem_ir, llvm::ArrayRef<TypeId> arg_types,
+using ValidateFn = auto(const File& sem_ir, llvm::ArrayRef<InstId> call_params,
                         TypeId return_type) -> bool;
 
 namespace {
@@ -35,21 +35,33 @@ struct ValidateState {
   TypeId type_params[MaxTypeParams] = {TypeId::None, TypeId::None};
 };
 
-template <typename TypeConstraint>
-auto Check(const File& sem_ir, ValidateState& state, TypeId type_id) -> bool;
+// A constraint that applies to types.
+template <typename T>
+concept TypeConstraint =
+    requires(const File& sem_ir, ValidateState& state, TypeId type_id) {
+      { T::CheckType(sem_ir, state, type_id) } -> std::convertible_to<bool>;
+    };
+
+// A constraint that applies to parameters.
+template <typename T>
+concept ParamConstraint =
+    requires(const File& sem_ir, ValidateState& state, InstId param_id) {
+      { T::CheckParam(sem_ir, state, param_id) } -> std::convertible_to<bool>;
+    };
 
 // Constraint that a type is generic type parameter `I` of the builtin,
-// satisfying `TypeConstraint`. See ValidateSignature for details.
-template <int I, typename TypeConstraint>
+// satisfying `Constraint`. See ValidateSignature for details.
+template <int I, typename Constraint>
+  requires TypeConstraint<Constraint>
 struct TypeParam {
   static_assert(I >= 0 && I < MaxTypeParams);
 
-  static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
-      -> bool {
+  static auto CheckType(const File& sem_ir, ValidateState& state,
+                        TypeId type_id) -> bool {
     if (state.type_params[I].has_value() && type_id != state.type_params[I]) {
       return false;
     }
-    if (!TypeConstraint::Check(sem_ir, state, type_id)) {
+    if (!Constraint::CheckType(sem_ir, state, type_id)) {
       return false;
     }
     state.type_params[I] = type_id;
@@ -61,36 +73,40 @@ struct TypeParam {
 // details.
 template <const TypeInstId& BuiltinId>
 struct BuiltinType {
-  static auto Check(const File& sem_ir, ValidateState& /*state*/,
-                    TypeId type_id) -> bool {
+  static auto CheckType(const File& sem_ir, ValidateState& /*state*/,
+                        TypeId type_id) -> bool {
     return sem_ir.types().GetInstId(type_id) == BuiltinId;
   }
 };
 
 // Constraint that a type is a pointer to another type. See ValidateSignature
 // for details.
+// FIXME most uses of this need to be updated. Also need to plumb `ref` through
+// somehow.
 template <typename PointeeT>
+  requires TypeConstraint<PointeeT>
 struct PointerTo {
-  static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
-      -> bool {
+  static auto CheckType(const File& sem_ir, ValidateState& state,
+                        TypeId type_id) -> bool {
     if (!sem_ir.types().Is<PointerType>(type_id)) {
       return false;
     }
-    return Check<PointeeT>(sem_ir, state, sem_ir.GetPointeeType(type_id));
+    return CheckType<PointeeT>(sem_ir, state, sem_ir.GetPointeeType(type_id));
   }
 };
 
 // Constraint that a type is MaybeUnformed<T>.
 template <typename T>
+  requires TypeConstraint<T>
 struct MaybeUnformed {
-  static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
-      -> bool {
+  static auto CheckType(const File& sem_ir, ValidateState& state,
+                        TypeId type_id) -> bool {
     auto maybe_unformed =
         sem_ir.types().TryGetAs<SemIR::MaybeUnformedType>(type_id);
     if (!maybe_unformed) {
       return false;
     }
-    return Check<T>(
+    return CheckType<T>(
         sem_ir, state,
         sem_ir.types().GetTypeIdForTypeInstId(maybe_unformed->inner_id));
   }
@@ -99,8 +115,8 @@ struct MaybeUnformed {
 // Constraint that a type is `()`, used as the return type of builtin functions
 // with no return value.
 struct NoReturn {
-  static auto Check(const File& sem_ir, ValidateState& /*state*/,
-                    TypeId type_id) -> bool {
+  static auto CheckType(const File& sem_ir, ValidateState& /*state*/,
+                        TypeId type_id) -> bool {
     auto tuple = sem_ir.types().TryGetAs<TupleType>(type_id);
     if (!tuple) {
       return false;
@@ -117,8 +133,8 @@ using CharLiteral = BuiltinType<CharLiteralType::TypeInstId>;
 
 // Constraint that a type is `u8` or an adapted type, including `Core.Char`.
 struct CharCompatible {
-  static auto Check(const File& sem_ir, ValidateState& /*state*/,
-                    TypeId type_id) -> bool {
+  static auto CheckType(const File& sem_ir, ValidateState& /*state*/,
+                        TypeId type_id) -> bool {
     auto int_info = sem_ir.types().TryGetIntTypeInfo(type_id);
     if (!int_info) {
       // Not an integer.
@@ -134,8 +150,8 @@ struct CharCompatible {
 
 // Constraint that requires the type to be a sized integer type.
 struct AnySizedInt {
-  static auto Check(const File& sem_ir, ValidateState& /*state*/,
-                    TypeId type_id) -> bool {
+  static auto CheckType(const File& sem_ir, ValidateState& /*state*/,
+                        TypeId type_id) -> bool {
     return sem_ir.types().Is<IntType>(type_id);
   }
 };
@@ -143,18 +159,18 @@ struct AnySizedInt {
 // Constraint that requires the type to be an integer type: either a sized
 // integer type or a literal.
 struct AnyInt {
-  static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
-      -> bool {
-    return AnySizedInt::Check(sem_ir, state, type_id) ||
-           BuiltinType<IntLiteralType::TypeInstId>::Check(sem_ir, state,
-                                                          type_id);
+  static auto CheckType(const File& sem_ir, ValidateState& state,
+                        TypeId type_id) -> bool {
+    return AnySizedInt::CheckType(sem_ir, state, type_id) ||
+           BuiltinType<IntLiteralType::TypeInstId>::CheckType(sem_ir, state,
+                                                              type_id);
   }
 };
 
 // Constraint that requires the type to be a sized floating-point type.
 struct AnySizedFloat {
-  static auto Check(const File& sem_ir, ValidateState& /*state*/,
-                    TypeId type_id) -> bool {
+  static auto CheckType(const File& sem_ir, ValidateState& /*state*/,
+                        TypeId type_id) -> bool {
     return sem_ir.types().Is<FloatType>(type_id);
   }
 };
@@ -162,18 +178,18 @@ struct AnySizedFloat {
 // Constraint that requires the type to be a float type: either a sized float
 // type or a literal.
 struct AnyFloat {
-  static auto Check(const File& sem_ir, ValidateState& state, TypeId type_id)
-      -> bool {
-    return AnySizedFloat::Check(sem_ir, state, type_id) ||
-           BuiltinType<FloatLiteralType::TypeInstId>::Check(sem_ir, state,
-                                                            type_id);
+  static auto CheckType(const File& sem_ir, ValidateState& state,
+                        TypeId type_id) -> bool {
+    return AnySizedFloat::CheckType(sem_ir, state, type_id) ||
+           BuiltinType<FloatLiteralType::TypeInstId>::CheckType(sem_ir, state,
+                                                                type_id);
   }
 };
 
 // Constraint that allows an arbitrary type.
 struct AnyType {
-  static auto Check(const File& /*sem_ir*/, ValidateState& /*state*/,
-                    TypeId /*type_id*/) -> bool {
+  static auto CheckType(const File& /*sem_ir*/, ValidateState& /*state*/,
+                        TypeId /*type_id*/) -> bool {
     return true;
   }
 };
@@ -184,8 +200,8 @@ using Type = BuiltinType<TypeType::TypeInstId>;
 // Constraint that a type supports a primitive copy. This happens if its
 // initializing representation is a copy of its value representation.
 struct PrimitiveCopyable {
-  static auto Check(const File& sem_ir, ValidateState& /*state*/,
-                    TypeId type_id) -> bool {
+  static auto CheckType(const File& sem_ir, ValidateState& /*state*/,
+                        TypeId type_id) -> bool {
     return InitRepr::ForType(sem_ir, type_id).IsCopyOfObjectRepr() &&
            ValueRepr::ForType(sem_ir, type_id)
                .IsCopyOfObjectRepr(sem_ir, type_id);
@@ -193,16 +209,39 @@ struct PrimitiveCopyable {
 };
 
 // Checks that the specified type matches the given type constraint.
-template <typename TypeConstraint>
-auto Check(const File& sem_ir, ValidateState& state, TypeId type_id) -> bool {
+template <typename Constraint>
+  requires TypeConstraint<Constraint>
+auto CheckType(const File& sem_ir, ValidateState& state, TypeId type_id)
+    -> bool {
   while (type_id.has_value()) {
     // Allow a type that satisfies the constraint.
-    if (TypeConstraint::Check(sem_ir, state, type_id)) {
+    if (Constraint::CheckType(sem_ir, state, type_id)) {
       return true;
     }
 
     // Also allow a class type that adapts a matching type.
     type_id = sem_ir.types().GetAdaptedType(type_id);
+  }
+  return false;
+}
+
+// CheckParam<Constraint> checks that param_id (which must belong to
+// the AnyParam category) matches the given parameter constraint. A type
+// constraint is interpreted as a parameter constraint that requires param_id to
+// be a ValueParam whose type matches the type constraint.
+template <typename Constraint>
+  requires ParamConstraint<Constraint>
+auto CheckParam(const File& sem_ir, ValidateState& state, InstId param_id)
+    -> bool {
+  return Constraint::CheckParam(sem_ir, state, param_id);
+}
+
+template <typename Constraint>
+  requires TypeConstraint<Constraint>
+auto CheckParam(const File& sem_ir, ValidateState& state, InstId param_id)
+    -> bool {
+  if (auto param_pattern = sem_ir.insts().TryGetAs<ValueParam>(param_id)) {
+    return CheckType<Constraint>(sem_ir, state, param_pattern->type_id);
   }
   return false;
 }
@@ -217,7 +256,7 @@ auto Check(const File& sem_ir, ValidateState& state, TypeId type_id) -> bool {
 // value of a third integer type. Types used within the signature should provide
 // a `Check` function that validates that the Carbon type is expected:
 //
-//   auto Check(const File&, ValidateState&, TypeId) -> bool;
+//   auto CheckType(const File&, ValidateState&, TypeId) -> bool;
 //
 // To constrain that the same type is used in multiple places in the signature,
 // `TypeParam<I, T>` can be used. For example:
@@ -229,27 +268,28 @@ auto Check(const File& sem_ir, ValidateState& state, TypeId type_id) -> bool {
 // are used in the descriptions of the builtins.
 template <typename SignatureFnType>
 static auto ValidateSignature(const File& sem_ir,
-                              llvm::ArrayRef<TypeId> arg_types,
+                              llvm::ArrayRef<InstId> call_params,
                               TypeId return_type) -> bool {
   using SignatureTraits = llvm::function_traits<SignatureFnType*>;
   ValidateState state;
 
   // Must have expected number of arguments.
-  if (arg_types.size() != SignatureTraits::num_args) {
+  if (call_params.size() != SignatureTraits::num_args) {
     return false;
   }
 
   // Argument types must match.
   if (![&]<size_t... Indexes>(std::index_sequence<Indexes...>) {
-        return ((Check<typename SignatureTraits::template arg_t<Indexes>>(
-                    sem_ir, state, arg_types[Indexes])) &&
+        return ((CheckParam<typename SignatureTraits::template arg_t<Indexes>>(
+                    sem_ir, state, call_params[Indexes])) &&
                 ...);
       }(std::make_index_sequence<SignatureTraits::num_args>())) {
     return false;
   }
 
   // Result type must match.
-  if (!Check<typename SignatureTraits::result_t>(sem_ir, state, return_type)) {
+  if (!CheckType<typename SignatureTraits::result_t>(sem_ir, state,
+                                                     return_type)) {
     return false;
   }
 
@@ -259,10 +299,10 @@ static auto ValidateSignature(const File& sem_ir,
 // Validates the signature for NoOp. This ignores all arguments, only validating
 // that the return type is compatible.
 static auto ValidateNoOpSignature(const File& sem_ir,
-                                  llvm::ArrayRef<TypeId> /*arg_types*/,
+                                  llvm::ArrayRef<InstId> /*call_params*/,
                                   TypeId return_type) -> bool {
   ValidateState state;
-  return Check<NoReturn>(sem_ir, state, return_type);
+  return CheckType<NoReturn>(sem_ir, state, return_type);
 }
 
 // Descriptions of builtin functions follow. For each builtin, a corresponding
@@ -670,14 +710,14 @@ auto BuiltinFunctionKind::ForBuiltinName(llvm::StringRef name)
 }
 
 auto BuiltinFunctionKind::IsValidType(const File& sem_ir,
-                                      llvm::ArrayRef<TypeId> arg_types,
+                                      llvm::ArrayRef<InstId> call_params,
                                       TypeId return_type) const -> bool {
   static constexpr ValidateFn* ValidateFns[] = {
 #define CARBON_SEM_IR_BUILTIN_FUNCTION_KIND(Name) \
   BuiltinFunctionInfo::Name.validate,
 #include "toolchain/sem_ir/builtin_function_kind.def"
   };
-  return ValidateFns[AsInt()](sem_ir, arg_types, return_type);
+  return ValidateFns[AsInt()](sem_ir, call_params, return_type);
 }
 
 static auto IsLiteralType(const File& sem_ir, TypeId type_id) -> bool {

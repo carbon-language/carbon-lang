@@ -616,22 +616,13 @@ static auto IsValidBuiltinDeclaration(Context& context,
     call_params.consume_back();
   }
 
-  // Form the list of parameter types for the declaration.
-  llvm::SmallVector<SemIR::TypeId> param_type_ids;
-  param_type_ids.reserve(call_params.size());
-  for (auto param_id : call_params) {
-    // TODO: We also need to track whether the parameter is declared with
-    // `var`.
-    param_type_ids.push_back(context.insts().Get(param_id).type_id());
-  }
-
   // Get the return type. This is `()` if none was specified.
   auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
   if (!return_type_id.has_value()) {
     return_type_id = GetTupleType(context, {});
   }
 
-  return builtin_kind.IsValidType(context.sem_ir(), param_type_ids,
+  return builtin_kind.IsValidType(context.sem_ir(), call_params,
                                   return_type_id);
 }
 
