@@ -84,13 +84,18 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_void.carbon
+// --- fail_void.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp inline "";
 
-fn F(x: Cpp.void);
+// CHECK:STDERR: fail_void.carbon:[[@LINE+5]]:6: error: parameter has incomplete type `Cpp.void` in function definition [IncompleteTypeInFunctionParam]
+// CHECK:STDERR: fn F(x: Cpp.void) {}
+// CHECK:STDERR:      ^~~~~~~~~~~
+// CHECK:STDERR: fail_void.carbon: note: `Cpp.void` is always-incomplete [CppVoidIncomplete]
+// CHECK:STDERR:
+fn F(x: Cpp.void) {}
 
 // --- non_nullable_pointer.carbon
 

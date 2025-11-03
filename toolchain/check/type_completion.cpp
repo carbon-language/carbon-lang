@@ -195,8 +195,7 @@ class TypeCompleter {
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
                         SemIR::CppVoidType /*inst*/) const
       -> SemIR::CompleteTypeInfo {
-    // TODO: `CppVoidType` should be always-incomplete.
-    return {.value_repr = MakeEmptyValueRepr()};
+    CARBON_FATAL("`CppVoidType` is always-incomplete");
   }
 
   auto BuildInfoForInst(SemIR::TypeId type_id,
@@ -371,6 +370,17 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
     case CARBON_KIND(SemIR::ConstType inst): {
       Push(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
       break;
+    }
+    case SemIR::CppVoidType::Kind: {
+      // TODO: Consider checking `VoidTy` for completeness and checking whether
+      // this extra check triggers an error. For that, reuse the code in
+      // https://github.com/carbon-language/carbon-lang/blob/ca3f95faa610fdb9412c9e58ece524abf30c7a9e/toolchain/check/cpp/import.cpp#L2317-L2325.
+      if (diagnoser_) {
+        CARBON_DIAGNOSTIC(CppVoidIncomplete, Note,
+                          "`Cpp.void` is always-incomplete");
+        diagnoser_().Note(SemIR::LocId::None, CppVoidIncomplete).Emit();
+      }
+      return false;
     }
     case CARBON_KIND(SemIR::CustomLayoutType inst): {
       for (auto field : context_->struct_type_fields().Get(inst.fields_id)) {
