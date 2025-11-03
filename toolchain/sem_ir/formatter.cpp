@@ -1253,13 +1253,21 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
 auto Formatter::FormatImportCppDeclRhs() -> void {
   out_ << " ";
   OpenBrace();
-  for (ImportCpp import_cpp : sem_ir_->import_cpps().values()) {
+  for (const Parse::Tree::PackagingNames& import :
+       sem_ir_->parse_tree().imports()) {
+    if (auto package_ident_id = import.package_id.AsIdentifierId();
+        !package_ident_id.has_value() ||
+        sem_ir_->identifiers().Get(package_ident_id) !=
+            PackageNameId::CppName) {
+      continue;
+    }
+
     Indent();
     out_ << "import Cpp ";
-    if (import_cpp.library_id.has_value()) {
+    if (import.library_id.has_value()) {
       out_ << "\""
            << FormatEscaped(
-                  sem_ir_->string_literal_values().Get(import_cpp.library_id))
+                  sem_ir_->string_literal_values().Get(import.library_id))
            << "\"";
     } else {
       out_ << "inline";
@@ -1332,15 +1340,24 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
   out_ << "<";
 
   llvm::ListSeparator sep(" & ");
-  if (info.extend_constraints.empty()) {
+  if (info.extend_constraints.empty() &&
+      info.extend_named_constraints.empty()) {
     out_ << "type";
   } else {
-    for (auto interface : info.extend_constraints) {
+    for (auto extend : info.extend_constraints) {
       out_ << sep;
-      FormatName(interface.interface_id);
-      if (interface.specific_id.has_value()) {
+      FormatName(extend.interface_id);
+      if (extend.specific_id.has_value()) {
         out_ << ", ";
-        FormatName(interface.specific_id);
+        FormatName(extend.specific_id);
+      }
+    }
+    for (auto extend : info.extend_named_constraints) {
+      out_ << sep;
+      FormatName(extend.named_constraint_id);
+      if (extend.specific_id.has_value()) {
+        out_ << ", ";
+        FormatName(extend.specific_id);
       }
     }
   }
@@ -1350,15 +1367,24 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
       !info.rewrite_constraints.empty()) {
     out_ << " where ";
     llvm::ListSeparator and_sep(" and ");
-    if (!info.self_impls_constraints.empty()) {
+    if (!info.self_impls_constraints.empty() ||
+        !info.self_impls_named_constraints.empty()) {
       out_ << and_sep << ".Self impls ";
       llvm::ListSeparator amp_sep(" & ");
-      for (auto interface : info.self_impls_constraints) {
+      for (auto self_impls : info.self_impls_constraints) {
         out_ << amp_sep;
-        FormatName(interface.interface_id);
-        if (interface.specific_id.has_value()) {
+        FormatName(self_impls.interface_id);
+        if (self_impls.specific_id.has_value()) {
           out_ << ", ";
-          FormatName(interface.specific_id);
+          FormatName(self_impls.specific_id);
+        }
+      }
+      for (auto self_impls : info.self_impls_named_constraints) {
+        out_ << amp_sep;
+        FormatName(self_impls.named_constraint_id);
+        if (self_impls.specific_id.has_value()) {
+          out_ << ", ";
+          FormatName(self_impls.specific_id);
         }
       }
     }

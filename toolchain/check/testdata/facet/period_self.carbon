@@ -474,24 +474,25 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:   %T.loc4_13.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_13.1 (constants.%T.d9f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T.loc4_13.1)> [symbolic = %I.type (constants.%I.type.070)]
+// CHECK:STDOUT:   %Self.loc4_23.2: @I.%I.type (%I.type.070) = symbolic_binding Self, 1 [symbolic = %Self.loc4_23.2 (constants.%Self.269)]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I, @I(%T.loc4_13.1) [symbolic = %I.assoc_type (constants.%I.assoc_type.b65)]
 // CHECK:STDOUT:   %assoc0: @I.%I.assoc_type (%I.assoc_type.b65) = assoc_entity element0, %I1 [symbolic = %assoc0 (constants.%assoc0.594)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %Self.loc4_23.1: @I.%I.type (%I.type.070) = symbolic_binding Self, 1 [symbolic = %Self.loc4_23.2 (constants.%Self.269)]
 // CHECK:STDOUT:     %I1: type = assoc_const_decl @I1 [concrete] {
 // CHECK:STDOUT:       %assoc0: @I.%I.assoc_type (%I.assoc_type.b65) = assoc_entity element0, @I.%I1 [symbolic = @I.%assoc0 (constants.%assoc0.594)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc4_23.1
 // CHECK:STDOUT:     .I1 = @I1.%assoc0
 // CHECK:STDOUT:     witness = (%I1)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @I1(@I.%T.loc4_13.2: type, @I.%Self.1: @I.%I.type (%I.type.070)) {
+// CHECK:STDOUT: generic assoc_const @I1(@I.%T.loc4_13.2: type, @I.%Self.loc4_23.1: @I.%I.type (%I.type.070)) {
 // CHECK:STDOUT:   assoc_const I1:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -538,7 +539,7 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.cd0
-// CHECK:STDOUT:   %Self.2 => constants.%Self.a38
+// CHECK:STDOUT:   %Self.loc4_23.2 => constants.%Self.a38
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.22b
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.b98
 // CHECK:STDOUT: }

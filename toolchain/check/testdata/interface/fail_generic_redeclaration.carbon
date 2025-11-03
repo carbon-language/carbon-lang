@@ -114,13 +114,13 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %NotGeneric.type: type = facet_type <@NotGeneric.loc23, @NotGeneric.loc23(%T.loc23_22.1)> [symbolic = %NotGeneric.type (constants.%NotGeneric.type.50a)]
-// CHECK:STDOUT:   %Self.2: @NotGeneric.loc23.%NotGeneric.type (%NotGeneric.type.50a) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.242)]
+// CHECK:STDOUT:   %Self.loc23_32.2: @NotGeneric.loc23.%NotGeneric.type (%NotGeneric.type.50a) = symbolic_binding Self, 1 [symbolic = %Self.loc23_32.2 (constants.%Self.242)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @NotGeneric.loc23.%NotGeneric.type (%NotGeneric.type.50a) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.242)]
+// CHECK:STDOUT:     %Self.loc23_32.1: @NotGeneric.loc23.%NotGeneric.type (%NotGeneric.type.50a) = symbolic_binding Self, 1 [symbolic = %Self.loc23_32.2 (constants.%Self.242)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc23_32.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -150,13 +150,13 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %DifferentParams.type: type = facet_type <@DifferentParams.loc43, @DifferentParams.loc43(%T.loc43_27.1)> [symbolic = %DifferentParams.type (constants.%DifferentParams.type.0ec)]
-// CHECK:STDOUT:   %Self.2: @DifferentParams.loc43.%DifferentParams.type (%DifferentParams.type.0ec) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.c69)]
+// CHECK:STDOUT:   %Self.loc43_35.2: @DifferentParams.loc43.%DifferentParams.type (%DifferentParams.type.0ec) = symbolic_binding Self, 1 [symbolic = %Self.loc43_35.2 (constants.%Self.c69)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @DifferentParams.loc43.%DifferentParams.type (%DifferentParams.type.0ec) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.c69)]
+// CHECK:STDOUT:     %Self.loc43_35.1: @DifferentParams.loc43.%DifferentParams.type (%DifferentParams.type.0ec) = symbolic_binding Self, 1 [symbolic = %Self.loc43_35.2 (constants.%Self.c69)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc43_35.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

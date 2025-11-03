@@ -783,11 +783,6 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
       *context.sem_ir().GetArrayBoundValue(inst.bound_id));
 }
 
-static auto BuildTypeForInst(FileContext& /*context*/, SemIR::AutoType inst)
-    -> llvm::Type* {
-  CARBON_FATAL("Unexpected builtin type in lowering: {0}", inst);
-}
-
 static auto BuildTypeForInst(FileContext& context, SemIR::BoolType /*inst*/)
     -> llvm::Type* {
   // TODO: We may want to have different representations for `bool` storage
@@ -900,23 +895,15 @@ static auto BuildTypeForInst(FileContext& context,
 }
 
 template <typename InstT>
-  requires(InstT::Kind
-               .template IsAnyOf<SemIR::BoundMethodType, SemIR::CharLiteralType,
-                                 SemIR::FloatLiteralType, SemIR::IntLiteralType,
-                                 SemIR::NamespaceType, SemIR::WitnessType>())
-static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
-    -> llvm::Type* {
-  // Return an empty struct as a placeholder.
-  return llvm::StructType::get(context.llvm_context());
-}
-
-template <typename InstT>
-  requires(InstT::Kind.template IsAnyOf<
-           SemIR::AssociatedEntityType, SemIR::CppOverloadSetType,
-           SemIR::CppVoidType, SemIR::FacetType, SemIR::FunctionType,
-           SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
-           SemIR::GenericInterfaceType, SemIR::GenericNamedConstraintType,
-           SemIR::InstType, SemIR::UnboundElementType, SemIR::WhereExpr>())
+  requires(
+      InstT::Kind.template IsAnyOf<
+          SemIR::AssociatedEntityType, SemIR::AutoType, SemIR::BoundMethodType,
+          SemIR::CharLiteralType, SemIR::CppOverloadSetType, SemIR::CppVoidType,
+          SemIR::FacetType, SemIR::FloatLiteralType, SemIR::FunctionType,
+          SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
+          SemIR::GenericInterfaceType, SemIR::GenericNamedConstraintType,
+          SemIR::InstType, SemIR::IntLiteralType, SemIR::NamespaceType,
+          SemIR::WhereExpr, SemIR::WitnessType, SemIR::UnboundElementType>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> llvm::Type* {
   // Return an empty struct as a placeholder.

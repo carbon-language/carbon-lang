@@ -203,24 +203,24 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OuterParam: type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam)> [symbolic = %Y.type (constants.%Y.type.c70)]
-// CHECK:STDOUT:   %Self.2: @Y.%Y.type (%Y.type.c70) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.2a9)]
+// CHECK:STDOUT:   %Self.loc50_15.2: @Y.%Y.type (%Y.type.c70) = symbolic_binding Self, 1 [symbolic = %Self.loc50_15.2 (constants.%Self.2a9)]
 // CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type @Y, @Y(%OuterParam) [symbolic = %Y.assoc_type (constants.%Y.assoc_type.f4b)]
 // CHECK:STDOUT:   %assoc0: @Y.%Y.assoc_type (%Y.assoc_type.f4b) = assoc_entity element0, %T [symbolic = %assoc0 (constants.%assoc0.97a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @Y.%Y.type (%Y.type.c70) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.2a9)]
+// CHECK:STDOUT:     %Self.loc50_15.1: @Y.%Y.type (%Y.type.c70) = symbolic_binding Self, 1 [symbolic = %Self.loc50_15.2 (constants.%Self.2a9)]
 // CHECK:STDOUT:     %T: type = assoc_const_decl @T [concrete] {
 // CHECK:STDOUT:       %assoc0: @Y.%Y.assoc_type (%Y.assoc_type.f4b) = assoc_entity element0, @Y.%T [symbolic = @Y.%assoc0 (constants.%assoc0.97a)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc50_15.1
 // CHECK:STDOUT:     .T = @T.%assoc0
 // CHECK:STDOUT:     witness = (%T)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(@Outer.%OuterParam.loc49_13.2: type, @Y.%Self.1: @Y.%Y.type (%Y.type.c70)) {
+// CHECK:STDOUT: generic assoc_const @T(@Outer.%OuterParam.loc49_13.2: type, @Y.%Self.loc50_15.1: @Y.%Y.type (%Y.type.c70)) {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -325,7 +325,7 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OuterParam => constants.%OuterParam
 // CHECK:STDOUT:   %Y.type => constants.%Y.type.c70
-// CHECK:STDOUT:   %Self.2 => constants.%Self.2a9
+// CHECK:STDOUT:   %Self.loc50_15.2 => constants.%Self.2a9
 // CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.f4b
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.97a
 // CHECK:STDOUT: }
@@ -362,7 +362,7 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OuterParam => constants.%empty_tuple.type
 // CHECK:STDOUT:   %Y.type => constants.%Y.type.c91
-// CHECK:STDOUT:   %Self.2 => constants.%Self.d55
+// CHECK:STDOUT:   %Self.loc50_15.2 => constants.%Self.d55
 // CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.06e
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.0a6
 // CHECK:STDOUT: }
@@ -526,24 +526,24 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OuterParam: %Z1.type = symbolic_binding OuterParam, 0 [symbolic = %OuterParam (constants.%OuterParam)]
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y, @Y(%OuterParam)> [symbolic = %Y.type (constants.%Y.type.bfe)]
-// CHECK:STDOUT:   %Self.2: @Y.%Y.type (%Y.type.bfe) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.6b9)]
+// CHECK:STDOUT:   %Self.loc7_15.2: @Y.%Y.type (%Y.type.bfe) = symbolic_binding Self, 1 [symbolic = %Self.loc7_15.2 (constants.%Self.6b9)]
 // CHECK:STDOUT:   %Y.assoc_type: type = assoc_entity_type @Y, @Y(%OuterParam) [symbolic = %Y.assoc_type (constants.%Y.assoc_type.476)]
 // CHECK:STDOUT:   %assoc0: @Y.%Y.assoc_type (%Y.assoc_type.476) = assoc_entity element0, %T [symbolic = %assoc0 (constants.%assoc0.1b6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @Y.%Y.type (%Y.type.bfe) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.6b9)]
+// CHECK:STDOUT:     %Self.loc7_15.1: @Y.%Y.type (%Y.type.bfe) = symbolic_binding Self, 1 [symbolic = %Self.loc7_15.2 (constants.%Self.6b9)]
 // CHECK:STDOUT:     %T: type = assoc_const_decl @T [concrete] {
 // CHECK:STDOUT:       %assoc0: @Y.%Y.assoc_type (%Y.assoc_type.476) = assoc_entity element0, @Y.%T [symbolic = @Y.%assoc0 (constants.%assoc0.1b6)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc7_15.1
 // CHECK:STDOUT:     .T = @T.%assoc0
 // CHECK:STDOUT:     witness = (%T)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(@Outer.%OuterParam.loc6_13.2: %Z1.type, @Y.%Self.1: @Y.%Y.type (%Y.type.bfe)) {
+// CHECK:STDOUT: generic assoc_const @T(@Outer.%OuterParam.loc6_13.2: %Z1.type, @Y.%Self.loc7_15.1: @Y.%Y.type (%Y.type.bfe)) {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -731,7 +731,7 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OuterParam => constants.%OuterParam
 // CHECK:STDOUT:   %Y.type => constants.%Y.type.bfe
-// CHECK:STDOUT:   %Self.2 => constants.%Self.6b9
+// CHECK:STDOUT:   %Self.loc7_15.2 => constants.%Self.6b9
 // CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.476
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.1b6
 // CHECK:STDOUT: }
@@ -787,7 +787,7 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %OuterParam => constants.%Z1.facet
 // CHECK:STDOUT:   %Y.type => constants.%Y.type.048
-// CHECK:STDOUT:   %Self.2 => constants.%Self.ece
+// CHECK:STDOUT:   %Self.loc7_15.2 => constants.%Self.ece
 // CHECK:STDOUT:   %Y.assoc_type => constants.%Y.assoc_type.38c
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.84b
 // CHECK:STDOUT: }

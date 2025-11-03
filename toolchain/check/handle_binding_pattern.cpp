@@ -412,7 +412,8 @@ auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
     if (pointer_type) {
       auto addr_pattern_id = AddPatternInst<SemIR::AddrPattern>(
           context, node_id,
-          {.type_id = GetPatternType(context, SemIR::AutoType::TypeId),
+          {.type_id = GetPatternType(
+               context, GetSingletonType(context, SemIR::AutoType::TypeInstId)),
            .inner_id = param_pattern_id});
       context.node_stack().Push(node_id, addr_pattern_id);
     } else {

@@ -57,8 +57,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %TrivialRange: type = class_type @TrivialRange [concrete]
-// CHECK:STDOUT:   %Iterate.type: type = facet_type <@Iterate> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %Iterate.type: type = facet_type <@Iterate> [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %T.417: %Copy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.c9a: <witness> = impl_witness imports.%Copy.impl_witness_table.955 [concrete]

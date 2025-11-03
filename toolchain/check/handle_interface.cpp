@@ -138,8 +138,9 @@ auto HandleParseNode(Context& context,
   // `require` declarations.
   SemIR::TypeId self_type_id =
       GetInterfaceType(context, interface_id, self_specific_id);
-  interface_info.self_param_id = AddSelfGenericParameter(
-      context, self_type_id, interface_info.scope_id, /*is_template=*/false);
+  interface_info.self_param_id =
+      AddSelfGenericParameter(context, node_id, self_type_id,
+                              interface_info.scope_id, /*is_template=*/false);
 
   // Enter the interface scope.
   context.scope_stack().PushForEntity(decl_inst_id, interface_info.scope_id,

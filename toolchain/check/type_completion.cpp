@@ -12,9 +12,59 @@
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/specific_named_constraint.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
+
+auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,
+                         DiagnosticBuilder& builder) -> void {
+  const auto& class_info = context.classes().Get(class_id);
+  CARBON_CHECK(!class_info.is_complete(), "Class is not incomplete");
+  if (class_info.has_definition_started()) {
+    CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
+                      "class is incomplete within its definition");
+    builder.Note(class_info.definition_id, ClassIncompleteWithinDefinition);
+  } else {
+    CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
+                      "class was forward declared here");
+    builder.Note(class_info.latest_decl_id(), ClassForwardDeclaredHere);
+  }
+}
+
+auto NoteIncompleteInterface(Context& context, SemIR::InterfaceId interface_id,
+                             DiagnosticBuilder& builder) -> void {
+  const auto& interface_info = context.interfaces().Get(interface_id);
+  CARBON_CHECK(!interface_info.is_complete(), "Interface is not incomplete");
+  if (interface_info.is_being_defined()) {
+    CARBON_DIAGNOSTIC(InterfaceIncompleteWithinDefinition, Note,
+                      "interface is currently being defined");
+    builder.Note(interface_info.definition_id,
+                 InterfaceIncompleteWithinDefinition);
+  } else {
+    CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Note,
+                      "interface was forward declared here");
+    builder.Note(interface_info.latest_decl_id(), InterfaceForwardDeclaredHere);
+  }
+}
+
+static auto NoteIncompleteNamedConstraint(
+    Context& context, SemIR::NamedConstraintId named_constraint_id,
+    DiagnosticBuilder& builder) -> void {
+  const auto& constraint = context.named_constraints().Get(named_constraint_id);
+  CARBON_CHECK(!constraint.is_complete(), "Named constraint is not incomplete");
+  if (constraint.is_being_defined()) {
+    CARBON_DIAGNOSTIC(NamedConstraintIncompleteWithinDefinition, Note,
+                      "constraint is currently being defined");
+    builder.Note(constraint.definition_id,
+                 NamedConstraintIncompleteWithinDefinition);
+  } else {
+    CARBON_DIAGNOSTIC(NamedConstraintForwardDeclaredHere, Note,
+                      "constraint was forward declared here");
+    builder.Note(constraint.latest_decl_id(),
+                 NamedConstraintForwardDeclaredHere);
+  }
+}
 
 namespace {
 // Worklist-based type completion mechanism.
@@ -347,7 +397,12 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       break;
     }
     case CARBON_KIND(SemIR::FacetType inst): {
-      auto identified_id = RequireIdentifiedFacetType(*context_, inst);
+      // TODO: Get the complete facet type here.
+      auto identified_id =
+          RequireIdentifiedFacetType(*context_, inst, diagnoser_);
+      if (!identified_id.has_value()) {
+        return false;
+      }
       const auto& identified =
           context_->identified_facet_types().Get(identified_id);
       // Every mentioned interface needs to be complete.
@@ -700,7 +755,8 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
 }
 
 auto RequireIdentifiedFacetType(Context& context,
-                                const SemIR::FacetType& facet_type)
+                                const SemIR::FacetType& facet_type,
+                                MakeDiagnosticBuilderFn diagnoser)
     -> SemIR::IdentifiedFacetTypeId {
   if (auto identified_id =
           context.identified_facet_types().TryGetId(facet_type.facet_type_id);
@@ -709,6 +765,24 @@ auto RequireIdentifiedFacetType(Context& context,
   }
   const auto& facet_type_info =
       context.facet_types().Get(facet_type.facet_type_id);
+
+  auto named_constraint_ids = llvm::map_range(
+      llvm::concat<const SemIR::SpecificNamedConstraint>(
+          facet_type_info.extend_named_constraints,
+          facet_type_info.self_impls_named_constraints),
+      [](SemIR::SpecificNamedConstraint s) { return s.named_constraint_id; });
+  for (auto named_constraint_id : named_constraint_ids) {
+    const auto& constraint =
+        context.named_constraints().Get(named_constraint_id);
+    if (!constraint.is_complete()) {
+      if (diagnoser) {
+        auto builder = diagnoser();
+        NoteIncompleteNamedConstraint(context, named_constraint_id, builder);
+        builder.Emit();
+      }
+      return SemIR::IdentifiedFacetTypeId::None;
+    }
+  }
 
   // TODO: expand named constraints
   // TODO: Process other kinds of requirements.
@@ -736,37 +810,6 @@ auto AsConcreteType(Context& context, SemIR::TypeId type_id,
                              abstract_diagnoser)
              ? type_id
              : SemIR::ErrorInst::TypeId;
-}
-
-auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,
-                         DiagnosticBuilder& builder) -> void {
-  const auto& class_info = context.classes().Get(class_id);
-  CARBON_CHECK(!class_info.is_complete(), "Class is not incomplete");
-  if (class_info.has_definition_started()) {
-    CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Note,
-                      "class is incomplete within its definition");
-    builder.Note(class_info.definition_id, ClassIncompleteWithinDefinition);
-  } else {
-    CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Note,
-                      "class was forward declared here");
-    builder.Note(class_info.latest_decl_id(), ClassForwardDeclaredHere);
-  }
-}
-
-auto NoteIncompleteInterface(Context& context, SemIR::InterfaceId interface_id,
-                             DiagnosticBuilder& builder) -> void {
-  const auto& interface_info = context.interfaces().Get(interface_id);
-  CARBON_CHECK(!interface_info.is_complete(), "Interface is not incomplete");
-  if (interface_info.is_being_defined()) {
-    CARBON_DIAGNOSTIC(InterfaceIncompleteWithinDefinition, Note,
-                      "interface is currently being defined");
-    builder.Note(interface_info.definition_id,
-                 InterfaceIncompleteWithinDefinition);
-  } else {
-    CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Note,
-                      "interface was forward declared here");
-    builder.Note(interface_info.latest_decl_id(), InterfaceForwardDeclaredHere);
-  }
 }
 
 }  // namespace Carbon::Check

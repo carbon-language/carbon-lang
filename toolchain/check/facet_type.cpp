@@ -26,22 +26,18 @@ namespace Carbon::Check {
 auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
                             SemIR::SpecificId specific_id) -> SemIR::FacetType {
   auto info = SemIR::FacetTypeInfo{};
-
   info.extend_constraints.push_back({interface_id, specific_id});
-  // TODO: Add `require impls` to the set of constraints.
-
   info.Canonicalize();
   SemIR::FacetTypeId facet_type_id = context.facet_types().Add(info);
   return {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id};
 }
 
-auto FacetTypeFromNamedConstraint(
-    Context& context, SemIR::NamedConstraintId /*named_constraint_id*/,
-    SemIR::SpecificId /*specific_id*/) -> SemIR::FacetType {
+auto FacetTypeFromNamedConstraint(Context& context,
+                                  SemIR::NamedConstraintId named_constraint_id,
+                                  SemIR::SpecificId specific_id)
+    -> SemIR::FacetType {
   auto info = SemIR::FacetTypeInfo{};
-
-  // TODO: Add `require impls` to the set of constraints.
-
+  info.extend_named_constraints.push_back({named_constraint_id, specific_id});
   info.Canonicalize();
   SemIR::FacetTypeId facet_type_id = context.facet_types().Add(info);
   return {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id};

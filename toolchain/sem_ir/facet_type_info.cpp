@@ -6,14 +6,21 @@
 
 #include <tuple>
 
+#include "toolchain/sem_ir/ids.h"
+
 namespace Carbon::SemIR {
 
 CARBON_DEFINE_ENUM_MASK_NAMES(BuiltinConstraintMask) {
   CARBON_BUILTIN_CONSTRAINT_MASK(CARBON_ENUM_MASK_NAME_STRING)
 };
 
-template <typename VecT, typename CompareT>
-static auto SortAndDeduplicate(VecT& vec, CompareT compare) -> void {
+template <typename T>
+using LessThanFn = llvm::function_ref<auto(const T&, const T&)->bool>;
+
+template <typename VecT>
+static auto SortAndDeduplicate(VecT& vec,
+                               LessThanFn<typename VecT::value_type> compare)
+    -> void {
   llvm::sort(vec, compare);
   vec.erase(llvm::unique(vec), vec.end());
 }
@@ -33,6 +40,13 @@ static auto RewriteLess(const FacetTypeInfo::RewriteConstraint& lhs,
 }
 
 // Canonically ordered by the numerical ids.
+static auto NamedConstraintsLess(const SpecificNamedConstraint& lhs,
+                                 const SpecificNamedConstraint& rhs) -> bool {
+  return std::tie(lhs.named_constraint_id.index, lhs.specific_id.index) <
+         std::tie(rhs.named_constraint_id.index, rhs.specific_id.index);
+}
+
+// Canonically ordered by the numerical ids.
 static auto RequiredLess(const IdentifiedFacetType::RequiredInterface& lhs,
                          const IdentifiedFacetType::RequiredInterface& rhs)
     -> bool {
@@ -42,21 +56,21 @@ static auto RequiredLess(const IdentifiedFacetType::RequiredInterface& lhs,
 
 // Assuming both `a` and `b` are sorted and deduplicated, replaces `a` with `a -
 // b` as sets. Assumes there are few elements between them.
-static auto SubtractSorted(
-    llvm::SmallVector<FacetTypeInfo::ImplsConstraint>& a,
-    const llvm::SmallVector<FacetTypeInfo::ImplsConstraint>& b) -> void {
-  using Iter = llvm::SmallVector<FacetTypeInfo::ImplsConstraint>::iterator;
+template <typename VecT>
+static auto SubtractSorted(VecT& a, const VecT& b,
+                           LessThanFn<typename VecT::value_type> compare)
+    -> void {
+  using Iter = VecT::iterator;
   Iter a_iter = a.begin();
   Iter a_end = a.end();
-  using ConstIter =
-      llvm::SmallVector<FacetTypeInfo::ImplsConstraint>::const_iterator;
+  using ConstIter = VecT::const_iterator;
   ConstIter b_iter = b.begin();
   ConstIter b_end = b.end();
   // Advance the iterator pointing to the smaller element until we find a match.
   while (a_iter != a_end && b_iter != b_end) {
-    if (ImplsLess(*a_iter, *b_iter)) {
+    if (compare(*a_iter, *b_iter)) {
       ++a_iter;
-    } else if (ImplsLess(*b_iter, *a_iter)) {
+    } else if (compare(*b_iter, *a_iter)) {
       ++b_iter;
     } else {
       break;
@@ -74,11 +88,11 @@ static auto SubtractSorted(
   ++a_iter;
   ++b_iter;
   while (a_iter != a_end && b_iter != b_end) {
-    if (ImplsLess(*a_iter, *b_iter)) {
+    if (compare(*a_iter, *b_iter)) {
       *a_new_end = *a_iter;
       ++a_new_end;
       ++a_iter;
-    } else if (ImplsLess(*b_iter, *a_iter)) {
+    } else if (compare(*b_iter, *a_iter)) {
       ++b_iter;
     } else {
       CARBON_DCHECK(*a_iter == *b_iter);
@@ -96,21 +110,27 @@ static auto SubtractSorted(
   a.erase(a_new_end, a_end);
 }
 
+template <typename VecT>
+static auto CombineVectors(VecT& vec, const VecT& lhs, const VecT& rhs) {
+  vec.reserve(lhs.size() + rhs.size());
+  llvm::append_range(vec,
+                     llvm::concat<const typename VecT::value_type>(lhs, rhs));
+}
+
 auto FacetTypeInfo::Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
     -> FacetTypeInfo {
   FacetTypeInfo info;
-  info.extend_constraints.reserve(lhs.extend_constraints.size() +
-                                  rhs.extend_constraints.size());
-  llvm::append_range(info.extend_constraints, lhs.extend_constraints);
-  llvm::append_range(info.extend_constraints, rhs.extend_constraints);
-  info.self_impls_constraints.reserve(lhs.self_impls_constraints.size() +
-                                      rhs.self_impls_constraints.size());
-  llvm::append_range(info.self_impls_constraints, lhs.self_impls_constraints);
-  llvm::append_range(info.self_impls_constraints, rhs.self_impls_constraints);
-  info.rewrite_constraints.reserve(lhs.rewrite_constraints.size() +
-                                   rhs.rewrite_constraints.size());
-  llvm::append_range(info.rewrite_constraints, lhs.rewrite_constraints);
-  llvm::append_range(info.rewrite_constraints, rhs.rewrite_constraints);
+  CombineVectors(info.extend_constraints, lhs.extend_constraints,
+                 rhs.extend_constraints);
+  CombineVectors(info.self_impls_constraints, lhs.self_impls_constraints,
+                 rhs.self_impls_constraints);
+  CombineVectors(info.extend_named_constraints, lhs.extend_named_constraints,
+                 rhs.extend_named_constraints);
+  CombineVectors(info.self_impls_named_constraints,
+                 lhs.self_impls_named_constraints,
+                 rhs.self_impls_named_constraints);
+  CombineVectors(info.rewrite_constraints, lhs.rewrite_constraints,
+                 rhs.rewrite_constraints);
   info.builtin_constraint_mask =
       lhs.builtin_constraint_mask | rhs.builtin_constraint_mask;
   info.other_requirements = lhs.other_requirements || rhs.other_requirements;
@@ -120,7 +140,11 @@ auto FacetTypeInfo::Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
 auto FacetTypeInfo::Canonicalize() -> void {
   SortAndDeduplicate(extend_constraints, ImplsLess);
   SortAndDeduplicate(self_impls_constraints, ImplsLess);
-  SubtractSorted(self_impls_constraints, extend_constraints);
+  SubtractSorted(self_impls_constraints, extend_constraints, ImplsLess);
+  SortAndDeduplicate(extend_named_constraints, NamedConstraintsLess);
+  SortAndDeduplicate(self_impls_named_constraints, NamedConstraintsLess);
+  SubtractSorted(self_impls_named_constraints, extend_named_constraints,
+                 NamedConstraintsLess);
   SortAndDeduplicate(rewrite_constraints, RewriteLess);
 }
 
@@ -155,6 +179,28 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
     llvm::ListSeparator sep;
     for (RewriteConstraint req : rewrite_constraints) {
       out << sep << req.lhs_id << "=" << req.rhs_id;
+    }
+  }
+
+  if (!extend_named_constraints.empty()) {
+    out << outer_sep << "extends named constraint: ";
+    llvm::ListSeparator sep;
+    for (auto extend : extend_named_constraints) {
+      out << sep << extend.named_constraint_id;
+      if (extend.specific_id.has_value()) {
+        out << "(" << extend.specific_id << ")";
+      }
+    }
+  }
+
+  if (!self_impls_constraints.empty()) {
+    out << outer_sep << "self impls named constraint: ";
+    llvm::ListSeparator sep;
+    for (auto self_impls : self_impls_named_constraints) {
+      out << sep << self_impls.named_constraint_id;
+      if (self_impls.specific_id.has_value()) {
+        out << "(" << self_impls.specific_id << ")";
+      }
     }
   }
 

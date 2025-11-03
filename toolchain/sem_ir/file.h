@@ -211,8 +211,6 @@ class File : public Printable<File> {
   auto import_ir_insts() const -> const ImportIRInstStore& {
     return import_ir_insts_;
   }
-  auto import_cpps() -> ImportCppStore& { return import_cpps_; }
-  auto import_cpps() const -> const ImportCppStore& { return import_cpps_; }
   auto clang_ast_unit() -> clang::ASTUnit* { return clang_ast_unit_; }
   auto clang_ast_unit() const -> const clang::ASTUnit* {
     return clang_ast_unit_;
@@ -359,9 +357,6 @@ class File : public Printable<File> {
   // Related IR instructions. These are created for LocIds for instructions
   // that are import-related.
   ImportIRInstStore import_ir_insts_;
-
-  // List of Cpp imports.
-  ImportCppStore import_cpps_;
 
   // The Clang AST to use when looking up `Cpp` names. Null if there are no
   // `Cpp` imports.
