@@ -1112,7 +1112,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     if (!clang_invocation) {
       return {.success = false};
     }
-    // We will run our own pass pipeline over the IR in the `opt` phase, so
+    // We will run our own pass pipeline over the IR in the `Optimize` phase, so
     // disable Clang's pipeline to avoid optimizing C++ code twice.
     clang_invocation->getCodeGenOpts().DisableLLVMPasses = true;
   }
