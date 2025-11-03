@@ -2527,7 +2527,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   const auto& import_interface =
       resolver.import_interfaces().Get(inst.interface_id);
 
-  SemIR::InterfaceId interface_id = SemIR::InterfaceId::None;
+  auto interface_id = SemIR::InterfaceId::None;
   if (!interface_const_id.has_value()) {
     auto import_specific_id = SemIR::SpecificId::None;
     if (auto import_generic_interface_type =
@@ -2674,7 +2674,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   const auto& import_named_constraint =
       resolver.import_named_constraints().Get(inst.named_constraint_id);
 
-  SemIR::NamedConstraintId named_constraint_id = SemIR::NamedConstraintId::None;
+  auto named_constraint_id = SemIR::NamedConstraintId::None;
   if (!named_constraint_const_id.has_value()) {
     auto import_specific_id = SemIR::SpecificId::None;
     if (auto import_generic_named_constraint_type =
