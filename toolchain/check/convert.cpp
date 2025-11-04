@@ -1393,8 +1393,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
   bool has_ref_tag = false;
   {
-    auto lookup_result = context.ref_tags().Lookup(expr_id);
-    if (lookup_result) {
+    if (auto lookup_result = context.ref_tags().Lookup(expr_id)) {
       has_ref_tag = true;
       if (lookup_result.value() == Context::RefTag::Present &&
           target.kind != ConversionTarget::RefParam) {
