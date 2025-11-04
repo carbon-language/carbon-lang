@@ -566,7 +566,6 @@ constraint Z {
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_require_impls_incomplete_self.carbon
@@ -591,7 +590,6 @@ constraint Z {
 // CHECK:STDOUT:   .Z = <poisoned>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_require_impls_incomplete_self_specific.carbon
@@ -634,7 +632,6 @@ constraint Z {
 // CHECK:STDOUT:     .Z = <poisoned>
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -685,7 +682,6 @@ constraint Z {
 // CHECK:STDOUT:     .Y = <poisoned>
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

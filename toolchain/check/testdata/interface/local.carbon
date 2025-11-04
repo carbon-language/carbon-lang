@@ -74,7 +74,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (%I.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.I.impl: %.loc19_9.2 as %I.ref {

@@ -64,7 +64,6 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export.carbon
@@ -92,7 +91,6 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_export.carbon
@@ -131,7 +129,6 @@ fn UseEmpty(i: I) {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UseEmpty(%i.param: %I.type) {

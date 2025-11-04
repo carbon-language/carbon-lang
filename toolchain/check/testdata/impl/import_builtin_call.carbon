@@ -252,7 +252,6 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   witness = (%Add.Op.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @MyInt.as.Add.impl(%N.loc15_14.2: Core.IntLiteral) {
@@ -550,7 +549,6 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   witness = (imports.%Main.Op)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @MyInt.as.Add.impl(imports.%Main.import_ref.40af26.2: Core.IntLiteral) [from "generic_impl.carbon"] {

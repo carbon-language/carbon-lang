@@ -213,7 +213,6 @@ fn F() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A {
@@ -228,7 +227,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (%A.AA.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
@@ -243,7 +241,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (%B.BB.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.Empty.impl: %C.ref as %Empty.ref {

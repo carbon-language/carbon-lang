@@ -149,7 +149,6 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
@@ -160,7 +159,6 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -195,7 +193,6 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   witness = (%Assoc, %I.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @Assoc(@I.%Self: %I.type) {
@@ -439,7 +436,6 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   witness = (imports.%Main.Assoc, imports.%Main.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Y [from "impl_def.carbon"] {
@@ -448,7 +444,6 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z [from "impl_def.carbon"] {
@@ -457,7 +452,6 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @Assoc(imports.%Main.import_ref.e339be.1: %I.type) [from "impl_def.carbon"] {

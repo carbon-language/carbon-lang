@@ -564,7 +564,6 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     witness = (%Inner.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -257,7 +257,6 @@ fn B() {
 // CHECK:STDOUT:     witness = (%Generic.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -560,7 +559,6 @@ fn B() {
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -804,7 +802,6 @@ fn B() {
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1007,7 +1004,6 @@ fn B() {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @C.as.I.impl(%T.loc7_14.1: type) {

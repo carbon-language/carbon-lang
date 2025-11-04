@@ -65,7 +65,6 @@ interface UseSelf {
 // CHECK:STDOUT:   witness = (%UseSelf.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @UseSelf.F(@UseSelf.%Self: %UseSelf.type) {

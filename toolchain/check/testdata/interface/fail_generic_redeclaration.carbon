@@ -124,7 +124,6 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -142,7 +141,6 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @DifferentParams.loc35(%T.loc35_27.2: type) {
@@ -166,7 +164,6 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

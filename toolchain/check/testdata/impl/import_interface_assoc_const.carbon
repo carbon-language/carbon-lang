@@ -246,7 +246,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I3 {
@@ -269,7 +268,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (%T1, %T2, %T3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NonType {
@@ -284,7 +282,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (%Y)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(@I.%Self: %I.type) {
@@ -384,7 +381,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.e33: %I.type) [from "interface.carbon"] {
@@ -491,7 +487,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.e33: %I.type) [from "interface.carbon"] {
@@ -589,7 +584,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.e33: %I.type) [from "interface.carbon"] {
@@ -704,7 +698,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.e33: %I.type) [from "interface.carbon"] {
@@ -860,7 +853,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T1, imports.%Main.T2, imports.%Main.T3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T1(imports.%Main.import_ref.fbb73e.1: %I3.type) [from "interface.carbon"] {
@@ -976,7 +968,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.e33: %I.type) [from "interface.carbon"] {
@@ -1074,7 +1065,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.e33: %I.type) [from "interface.carbon"] {
@@ -1170,7 +1160,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.e33: %I.type) [from "interface.carbon"] {
@@ -1265,7 +1254,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.e33: %I.type) [from "interface.carbon"] {
@@ -1360,7 +1348,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.e33: %I.type) [from "interface.carbon"] {
@@ -1460,7 +1447,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.e33: %I.type) [from "interface.carbon"] {
@@ -1558,7 +1544,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.Y)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @Y(imports.%Main.import_ref.046: %NonType.type) [from "interface.carbon"] {
@@ -1611,7 +1596,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (%IF.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @IF.F(@IF.%Self: %IF.type) {
@@ -1687,7 +1671,6 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @CD.as.IF.impl: %CD.ref as %.loc10_15 {

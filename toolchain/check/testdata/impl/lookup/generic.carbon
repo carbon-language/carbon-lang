@@ -222,7 +222,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   witness = (%HasF.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @T.as.HasF.impl(%T.loc8_14.2: type) {
@@ -457,7 +456,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   witness = (%HasF.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @ptr.as.HasF.impl(%T.loc8_14.2: type) {
@@ -700,7 +698,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   witness = (%HasF.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @C.as.HasF.impl(%T.loc10_14.2: type) {
@@ -958,7 +955,6 @@ fn G(x: A) {
 // CHECK:STDOUT:     witness = (%HasF.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1182,7 +1178,6 @@ fn G(x: A) {
 // CHECK:STDOUT:   witness = (%HasF.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @T.as.HasF.impl(%T.loc12_14.2: type, %U.loc12_24.2: type) {
@@ -1379,7 +1374,6 @@ fn G(x: A) {
 // CHECK:STDOUT:     witness = (%HasF.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

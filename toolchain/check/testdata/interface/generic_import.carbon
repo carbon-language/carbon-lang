@@ -82,7 +82,6 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:     witness = (%AddWith.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -169,7 +168,6 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:     witness = (imports.%Main.F)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

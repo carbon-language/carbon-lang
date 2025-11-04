@@ -346,7 +346,6 @@ fn Works() {
 // CHECK:STDOUT:   witness = (%U)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @U(@J.%Self: %J.type) {
@@ -484,7 +483,6 @@ fn Works() {
 // CHECK:STDOUT:   witness = (%K1.Q1.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @K1.Q1(@K1.%Self: %K1.type) {
@@ -649,7 +647,6 @@ fn Works() {
 // CHECK:STDOUT:   witness = (%K2.Q2.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @K2.Q2(@K2.%Self: %K2.type) {
@@ -875,7 +872,6 @@ fn Works() {
 // CHECK:STDOUT:   witness = (%L1.R1.decl, %L1.S1.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @L1.R1(@L1.%Self: %L1.type) {
@@ -1193,7 +1189,6 @@ fn Works() {
 // CHECK:STDOUT:   witness = (%L1.R1.decl, %L1.S1.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @L1.R1(@L1.%Self: %L1.type) {
@@ -1457,7 +1452,6 @@ fn Works() {
 // CHECK:STDOUT:   witness = (%L2.R2.decl, %L2.S2.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @L2.R2(@L2.%Self: %L2.type) {
@@ -1672,7 +1666,6 @@ fn Works() {
 // CHECK:STDOUT:   witness = (%L2.R2.decl, %L2.S2.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @L2.R2(@L2.%Self: %L2.type) {
@@ -1863,7 +1856,6 @@ fn Works() {
 // CHECK:STDOUT:   witness = (%A.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.A.impl: %C.ref as %A.ref {
@@ -2047,7 +2039,6 @@ fn Works() {
 // CHECK:STDOUT:   witness = (%A.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.A.impl: %C.ref as %A.ref {

@@ -421,14 +421,14 @@ auto Formatter::FormatInterface(InterfaceId id, const Interface& interface_info)
 
     IndentLabel();
     out_ << "!requires:\n";
-    Indent();
     for (auto inst_id :
          sem_ir_->inst_blocks().GetOrEmpty(interface_info.require_decls_id)) {
+      Indent();
       FormatArg(sem_ir_->insts()
                     .GetAs<SemIR::RequireImplsDecl>(inst_id)
                     .require_impls_id);
+      out_ << "\n";
     }
-    out_ << "\n";
 
     CloseBrace();
   } else {
@@ -464,14 +464,14 @@ auto Formatter::FormatNamedConstraint(NamedConstraintId id,
 
     IndentLabel();
     out_ << "!requires:\n";
-    Indent();
     for (auto inst_id :
          sem_ir_->inst_blocks().GetOrEmpty(constraint_info.require_decls_id)) {
+      Indent();
       FormatArg(sem_ir_->insts()
                     .GetAs<SemIR::RequireImplsDecl>(inst_id)
                     .require_impls_id);
+      out_ << "\n";
     }
-    out_ << "\n";
 
     CloseBrace();
   } else {

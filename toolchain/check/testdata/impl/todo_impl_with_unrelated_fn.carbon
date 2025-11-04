@@ -65,7 +65,6 @@ class X {
 // CHECK:STDOUT:   witness = (%A.B.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @X.as.A.impl: %Self.ref as %A.ref {

@@ -56,7 +56,6 @@ interface Interface {
 // CHECK:STDOUT:   witness = (%Interface.F.decl.loc16)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Interface.F.loc16(@Interface.%Self: %Interface.type) {

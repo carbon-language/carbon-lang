@@ -151,7 +151,6 @@ fn G() {
 // CHECK:STDOUT:     witness = (%Generic.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

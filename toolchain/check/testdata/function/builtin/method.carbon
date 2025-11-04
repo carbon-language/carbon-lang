@@ -213,7 +213,6 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:   witness = (%I.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @i32.as.I.impl: %i32 as %I.ref {

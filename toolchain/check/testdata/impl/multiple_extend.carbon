@@ -231,7 +231,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   witness = (%HasF.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasG {
@@ -246,7 +245,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   witness = (%HasG.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.HasF.impl: %Self.ref as %HasF.ref {
@@ -401,7 +399,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   witness = (%HasA1.A.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasA2 {
@@ -415,7 +412,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   witness = (%HasA2.A.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @D.as.HasA1.impl: %Self.ref as %HasA1.ref {
@@ -555,7 +551,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   witness = (%HasI.I.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @E.as.HasI.impl: %Self.ref as %HasI.ref {
@@ -696,7 +691,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   witness = (%HasK.K.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @L.as.HasK.impl: %Self.ref as %HasK.ref {
@@ -841,7 +835,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   witness = (%HasN1.N.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasN2 {
@@ -855,7 +848,6 @@ fn P(o: O) {
 // CHECK:STDOUT:   witness = (%HasN2.N.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @O.as.HasN1.impl: %Self.ref as %HasN1.ref {

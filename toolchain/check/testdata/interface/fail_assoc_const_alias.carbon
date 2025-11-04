@@ -158,7 +158,6 @@ interface C {
 // CHECK:STDOUT:     witness = (%ImplicitAs.Convert.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -231,7 +230,6 @@ interface C {
 // CHECK:STDOUT:   witness = (%T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
@@ -258,7 +256,6 @@ interface C {
 // CHECK:STDOUT:   witness = (%J.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(@I.%Self: %I.type) {
@@ -370,7 +367,6 @@ interface C {
 // CHECK:STDOUT:   witness = (%T2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J2 {
@@ -400,7 +396,6 @@ interface C {
 // CHECK:STDOUT:   witness = (%J2.F2.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T2(@I2.%Self: %I2.type) {
@@ -524,7 +519,6 @@ interface C {
 // CHECK:STDOUT:   witness = (%A.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
@@ -551,7 +545,6 @@ interface C {
 // CHECK:STDOUT:   witness = (%B.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @A.F(@A.%Self: %A.type) {
@@ -653,7 +646,6 @@ interface C {
 // CHECK:STDOUT:   witness = (%C.F.decl, %C.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @C.F(@C.%Self: %C.type) {
