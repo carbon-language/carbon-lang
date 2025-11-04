@@ -820,7 +820,7 @@ auto CompilationUnit::MakeTargetMachine() -> void {
 }
 
 // Get the LLVM optimization level corresponding to a Carbon optimization level.
-static auto GetLLVMOptLevel(Lower::OptimizationLevel opt_level)
+static auto GetLLVMOptimizationLevel(Lower::OptimizationLevel opt_level)
     -> llvm::OptimizationLevel {
   switch (opt_level) {
     case Lower::OptimizationLevel::None:
@@ -905,7 +905,7 @@ auto CompilationUnit::RunOptimize() -> void {
   builder.crossRegisterProxies(lam, fam, cgam, mam);
 
   llvm::ModulePassManager pass_manager = builder.buildPerModuleDefaultPipeline(
-      GetLLVMOptLevel(options_->opt_level));
+      GetLLVMOptimizationLevel(options_->opt_level));
 
   if (vlog_stream_) {
     CARBON_VLOG("*** Running pass pipeline: ");
