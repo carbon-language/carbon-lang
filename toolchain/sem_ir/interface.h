@@ -24,6 +24,9 @@ struct InterfaceFields {
   InstId self_param_id = InstId::None;
 
   // The following members are set at the `}` of the interface definition.
+
+  // TODO: Should this be a block of `RequireImplsId` to avoid an indirection?
+  InstBlockId require_decls_id = InstBlockId::None;
   InstBlockId associated_entities_id = InstBlockId::None;
 };
 
@@ -34,6 +37,7 @@ struct Interface : public EntityWithParamsBase,
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{";
     PrintBaseFields(out);
+    out << ", require_decls_id: " << require_decls_id;
     out << "}";
   }
 

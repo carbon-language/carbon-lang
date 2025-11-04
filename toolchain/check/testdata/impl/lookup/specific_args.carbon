@@ -133,6 +133,9 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:     .Self = %Self.loc4_23.1
 // CHECK:STDOUT:     .F = %assoc0.loc4_43.1
 // CHECK:STDOUT:     witness = (%I.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -265,6 +268,9 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.769
 // CHECK:STDOUT:     .F = imports.%Main.import_ref.2de
 // CHECK:STDOUT:     witness = (imports.%Main.F)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -440,6 +446,9 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.769
 // CHECK:STDOUT:     .F = imports.%Main.import_ref.715
 // CHECK:STDOUT:     witness = (imports.%Main.F)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -601,6 +610,9 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.769
 // CHECK:STDOUT:     .F = imports.%Main.import_ref.2de
 // CHECK:STDOUT:     witness = (imports.%Main.F)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -809,6 +821,9 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.769
 // CHECK:STDOUT:     .F = imports.%Main.import_ref.715
 // CHECK:STDOUT:     witness = (imports.%Main.F)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
