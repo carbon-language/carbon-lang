@@ -244,10 +244,7 @@ struct Worklist {
   }
 
   auto Add(RequireImplsId require_id) -> void {
-    if (!require_id.has_value()) {
-      AddInvalid();
-      return;
-    }
+    CARBON_CHECK(require_id.has_value());
     const auto& require = sem_ir->require_impls().Get(require_id);
     Add(require.self_id);
     Add(require.facet_type_id);
