@@ -78,6 +78,7 @@ Example usage:
     id_types = {
         "class": "SemIR::MakeClassId",
         "constant": "SemIR::MakeConstantId",
+        "constraint": "SemIR::MakeNamedConstraintId",
         "symbolic_constant": "SemIR::MakeSymbolicConstantId",
         "entity_name": "SemIR::MakeEntityNameId",
         "facet_type": "SemIR::MakeFacetTypeId",
