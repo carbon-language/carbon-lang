@@ -125,7 +125,6 @@ fn G(T:! Z, U:! Empty(T), V:! type) {
 // CHECK:STDOUT:     .Self = %Self.loc16_28.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -129,7 +129,6 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   witness = (%Interface.F.decl, %T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Different {
@@ -140,7 +139,6 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(@Interface.%Self: %Interface.type) {

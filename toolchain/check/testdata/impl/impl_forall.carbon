@@ -67,7 +67,6 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   witness = (%Simple.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @T.as.Simple.impl(%T.loc19_14.2: type) {

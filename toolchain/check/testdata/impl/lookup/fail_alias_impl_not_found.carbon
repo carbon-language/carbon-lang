@@ -79,7 +79,6 @@ fn F(c: C) {
 // CHECK:STDOUT:   witness = (%I.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

@@ -128,7 +128,6 @@ impl C as B {}
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc4_6.2: %B.type) {

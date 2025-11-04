@@ -96,7 +96,6 @@ class C {
 // CHECK:STDOUT:     witness = (%GenericInterface.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

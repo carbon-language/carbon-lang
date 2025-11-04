@@ -313,7 +313,6 @@ fn CallIndirect() {
 // CHECK:STDOUT:     witness = (%A.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -896,7 +895,6 @@ fn CallIndirect() {
 // CHECK:STDOUT:     witness = (%A.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -179,7 +179,6 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     witness = (%ImplicitAs.Convert.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -324,7 +323,6 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     witness = (%Action.Op.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -536,7 +534,6 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     witness = (imports.%Main.Op)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -719,7 +716,6 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     witness = (imports.%Main.Op)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -937,7 +933,6 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     witness = (%Factory.Make.decl, %Factory.Method.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1200,7 +1195,6 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     witness = (imports.%Main.Make, imports.%Main.Method)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1457,7 +1451,6 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     witness = (imports.%Main.Make, imports.%Main.Method)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     {{}}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

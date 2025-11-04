@@ -60,7 +60,6 @@ interface Modifiers {
 // CHECK:STDOUT:   witness = (%Modifiers.Final.decl, %Modifiers.Default.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Modifiers.Final(@Modifiers.%Self: %Modifiers.type) {

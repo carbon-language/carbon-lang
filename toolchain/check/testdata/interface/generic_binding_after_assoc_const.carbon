@@ -74,7 +74,6 @@ interface I {
 // CHECK:STDOUT:   witness = (%I.F.decl, %U, %I.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @U(@I.%Self: %I.type) {

@@ -488,7 +488,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (%U, %J.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @U(@J.%Self: %J.type) {
@@ -796,7 +795,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (%U, %J.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @U(@J.%Self: %J.type) {
@@ -1153,7 +1151,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (%U, %J.F.decl, %J.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @U(@J.%Self: %J.type) {
@@ -1681,7 +1678,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (%I.Op.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
@@ -1720,7 +1716,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (%U, %J.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @U(@J.%Self: %J.type) {
@@ -1997,7 +1992,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (%U, %J.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @U(@J.%Self: %J.type) {
@@ -2223,7 +2217,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (%U, %J.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @U(@J.%Self: %J.type) {
@@ -2384,7 +2377,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (%U, %J.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @U(@J.%Self: %J.type) {
@@ -2632,7 +2624,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (%U2, %J2.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @U2(@J2.%Self: %J2.type) {
@@ -2924,7 +2915,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (%V, %K.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @V(@K.%Self: %K.type) {
@@ -3130,7 +3120,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (%Z, %M.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @Z(@M.%Self: %M.type) {
@@ -3334,7 +3323,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (%Z, %M.G.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @Z(@M.%Self: %M.type) {
@@ -3633,7 +3621,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (%N, %I.F.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @N(@I.%Self: %I.type) {
@@ -3839,7 +3826,6 @@ fn F() {
 // CHECK:STDOUT:   witness = (%X)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @X(@Z.%Self: %Z.type) {
