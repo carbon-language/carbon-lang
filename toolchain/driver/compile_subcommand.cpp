@@ -835,7 +835,7 @@ static auto GetLLVMOptLevel(Lower::OptimizationLevel opt_level)
 }
 
 // Get the `-O` flag corresponding to an optimization level.
-static auto GetDashOFlag(Lower::OptimizationLevel opt_level)
+static auto GetClangOptimizationFlag(Lower::OptimizationLevel opt_level)
     -> llvm::StringLiteral {
   switch (opt_level) {
     case Lower::OptimizationLevel::None:
@@ -1096,7 +1096,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
         // Propagate our optimization level to Clang as a default. This can be
         // overridden by Clang arguments, but doing so will only have an effect
         // if those arguments affect Clang's IR, not its pass pipeline.
-        GetDashOFlag(options_.opt_level).str(),
+        GetClangOptimizationFlag(options_.opt_level).str(),
     };
     if (driver_env.fuzzing && !options_.clang_args.empty()) {
       // Parsing specific Clang arguments can reach deep into
