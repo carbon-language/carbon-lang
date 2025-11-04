@@ -275,6 +275,10 @@ class Formatter {
   // may fall back to printing location information from the import source.
   auto FormatImportRefRhs(AnyImportRef inst) -> void;
 
+  // Format a block of `require` declarations from their `RequireImplsDecl`
+  // instructions.
+  auto FormatRequireImplsBlock(InstBlockId inst_block_id) -> void;
+
   template <typename... Args>
   auto FormatArgs(Args... args) -> void {
     out_ << ' ';

@@ -421,14 +421,7 @@ auto Formatter::FormatInterface(InterfaceId id, const Interface& interface_info)
 
     IndentLabel();
     out_ << "!requires:\n";
-    for (auto inst_id :
-         sem_ir_->inst_blocks().GetOrEmpty(interface_info.require_decls_id)) {
-      Indent();
-      FormatArg(sem_ir_->insts()
-                    .GetAs<SemIR::RequireImplsDecl>(inst_id)
-                    .require_impls_id);
-      out_ << "\n";
-    }
+    FormatRequireImplsBlock(interface_info.require_decls_id);
 
     CloseBrace();
   } else {
@@ -464,14 +457,7 @@ auto Formatter::FormatNamedConstraint(NamedConstraintId id,
 
     IndentLabel();
     out_ << "!requires:\n";
-    for (auto inst_id :
-         sem_ir_->inst_blocks().GetOrEmpty(constraint_info.require_decls_id)) {
-      Indent();
-      FormatArg(sem_ir_->insts()
-                    .GetAs<SemIR::RequireImplsDecl>(inst_id)
-                    .require_impls_id);
-      out_ << "\n";
-    }
+    FormatRequireImplsBlock(constraint_info.require_decls_id);
 
     CloseBrace();
   } else {
@@ -1396,6 +1382,16 @@ auto Formatter::FormatImportRefRhs(AnyImportRef inst) -> void {
   }
   out_ << ", "
        << (inst.kind == InstKind::ImportRefLoaded ? "loaded" : "unloaded");
+}
+
+auto Formatter::FormatRequireImplsBlock(InstBlockId inst_block_id) -> void {
+  for (auto inst_id : sem_ir_->inst_blocks().GetOrEmpty(inst_block_id)) {
+    Indent();
+    FormatArg(sem_ir_->insts()
+                  .GetAs<SemIR::RequireImplsDecl>(inst_id)
+                  .require_impls_id);
+    out_ << "\n";
+  }
 }
 
 auto Formatter::FormatArg(EntityNameId id) -> void {
