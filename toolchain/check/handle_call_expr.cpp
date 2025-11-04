@@ -18,12 +18,6 @@ auto HandleParseNode(Context& context, Parse::CallExprStartId node_id) -> bool {
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::CallExprCommaId /*node_id*/)
-    -> bool {
-  context.param_and_arg_refs_stack().ApplyComma();
-  return true;
-}
-
 auto HandleParseNode(Context& context, Parse::CallExprId node_id) -> bool {
   // Process the final explicit call argument now, but leave the arguments
   // block on the stack until the end of this function.

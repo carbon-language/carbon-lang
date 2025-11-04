@@ -1366,6 +1366,28 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
                       action.target_type_inst_id)});
 }
 
+// Diagnoses a missing or unnecessary `ref` tag when converting `expr_id` to
+// `target`, and returns whether a `ref` tag is present.
+static auto CheckRefTag(Context& context, SemIR::InstId expr_id,
+                        ConversionTarget target) -> bool {
+  if (auto lookup_result = context.ref_tags().Lookup(expr_id)) {
+    if (lookup_result.value() == Context::RefTag::Present &&
+        target.kind != ConversionTarget::RefParam) {
+      CARBON_DIAGNOSTIC(RefTagNoRefParam, Error,
+                        "`ref` tag is not an argument to a `ref` parameter");
+      context.emitter().Emit(expr_id, RefTagNoRefParam);
+    }
+    return true;
+  } else {
+    if (target.kind == ConversionTarget::RefParam) {
+      CARBON_DIAGNOSTIC(RefParamNoRefTag, Error,
+                        "argument to `ref` parameter not marked with `ref`");
+      context.emitter().Emit(expr_id, RefParamNoRefTag);
+    }
+    return false;
+  }
+}
+
 auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
              ConversionTarget target, SemIR::ClassType* vtable_class_type)
     -> SemIR::InstId {
@@ -1391,24 +1413,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     return SemIR::ErrorInst::InstId;
   }
 
-  bool has_ref_tag = false;
-  {
-    if (auto lookup_result = context.ref_tags().Lookup(expr_id)) {
-      has_ref_tag = true;
-      if (lookup_result.value() == Context::RefTag::Present &&
-          target.kind != ConversionTarget::RefParam) {
-        CARBON_DIAGNOSTIC(RefTagNoRefParam, Error,
-                          "`ref` tag is not an argument to a `ref` parameter");
-        context.emitter().Emit(expr_id, RefTagNoRefParam);
-      }
-    } else {
-      if (target.kind == ConversionTarget::RefParam) {
-        CARBON_DIAGNOSTIC(RefParamNoRefTag, Error,
-                          "argument to `ref` parameter not marked with `ref`");
-        context.emitter().Emit(expr_id, RefParamNoRefTag);
-      }
-    }
-  }
+  bool has_ref_tag = CheckRefTag(context, expr_id, target);
 
   // We can only perform initialization for complete, non-abstract types. Note
   // that `RequireConcreteType` returns true for facet types, since their

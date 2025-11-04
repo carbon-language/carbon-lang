@@ -95,7 +95,8 @@ class File : public Printable<File> {
 
   // Returns the set of all insts corresponding to expressions that are used
   // in positions where a `ref` tag is needed. Should only be called if
-  // has_errors is false.
+  // has_errors is false. This is intended for validation purposes, and should
+  // only be called if !NDEBUG, because it walks the entire IR.
   auto CollectRefTagsNeeded() const -> Set<SemIR::InstId>;
 
   // Collects memory usage of members.

@@ -994,15 +994,13 @@ struct CallExprStart {
   Lex::OpenParenTokenIndex token;
 };
 
-using CallExprComma = LeafNode<NodeKind::CallExprComma, Lex::CommaTokenIndex>;
-
 // A call expression: `F(a, b, c)`.
 struct CallExpr {
   static constexpr auto Kind = NodeKind::CallExpr.Define(
       {.category = NodeCategory::Expr, .bracketed_by = CallExprStart::Kind});
 
   CallExprStartId start;
-  CommaSeparatedList<AnyExprId, CallExprCommaId> arguments;
+  CommaSeparatedList<AnyExprId, TupleLiteralCommaId> arguments;
   Lex::CloseParenTokenIndex token;
 };
 

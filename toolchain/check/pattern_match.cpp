@@ -371,9 +371,6 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
           context.sem_ir(),
           SemIR::GetTypeOfInstInSpecific(context.sem_ir(), callee_specific_id_,
                                          pattern_inst_id));
-      // We should already have a durable reference (in the case of a
-      // VarParamPattern, that's handled by the enclosing VarPattern), but we
-      // may need to adjust its type.
       auto conversion_kind =
           std::is_same_v<RefParamPatternT, SemIR::RefParamPattern>
               ? ConversionTarget::RefParam
@@ -388,9 +385,16 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
         case SemIR::ExprCategory::EphemeralRef:
           break;
         default:
-          CARBON_DIAGNOSTIC(ValueForRefParam, Error,
-                            "value expression passed to reference parameter");
-          context.emitter().Emit(entry.scrutinee_id, ValueForRefParam);
+          // Don't diagnose a non-reference scrutinee if it has a user-written
+          // `ref` tag, because that's diagnosed in `Convert`.
+          if (auto lookup_result =
+                  context.ref_tags().Lookup(entry.scrutinee_id);
+              !lookup_result ||
+              lookup_result.value() != Context::RefTag::Present) {
+            CARBON_DIAGNOSTIC(ValueForRefParam, Error,
+                              "value expression passed to reference parameter");
+            context.emitter().Emit(entry.scrutinee_id, ValueForRefParam);
+          }
           // Add fake reference expression to preserve invariants.
           auto scrutinee = context.insts().GetWithLocId(entry.scrutinee_id);
           scrutinee_ref_id = AddInst<SemIR::TemporaryStorage>(

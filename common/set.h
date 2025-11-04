@@ -95,7 +95,7 @@ class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
 
   // Run the provided callback for every key in the set.
   template <typename CallbackT>
-  auto ForEach(CallbackT callback) const -> void
+  auto ForEach(CallbackT callback) -> void
     requires(std::invocable<CallbackT, KeyT&>);
 
   // This routine is relatively inefficient and only intended for use in
@@ -186,7 +186,7 @@ class SetBase
 
   // Convenience forwarder to the view type.
   template <typename CallbackT>
-  auto ForEach(CallbackT callback) const -> void
+  auto ForEach(CallbackT callback) -> void
     requires(std::invocable<CallbackT, KeyT&>)
   {
     return ViewT(*this).ForEach(callback);
@@ -328,8 +328,7 @@ auto SetView<InputKeyT, InputKeyContextT>::Lookup(LookupKeyT lookup_key,
 
 template <typename InputKeyT, typename InputKeyContextT>
 template <typename CallbackT>
-auto SetView<InputKeyT, InputKeyContextT>::ForEach(CallbackT callback) const
-    -> void
+auto SetView<InputKeyT, InputKeyContextT>::ForEach(CallbackT callback) -> void
   requires(std::invocable<CallbackT, KeyT&>)
 {
   this->ForEachEntry([callback](EntryT& entry) { callback(entry.key()); },

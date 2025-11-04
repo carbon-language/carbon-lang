@@ -135,7 +135,7 @@ static auto HandleBraceExprParamAfterDesignator(Context& context,
   context.PushState(state, param_finish_kind);
   if (param_finish_kind == StateKind::BraceExprParamFinishAsValue &&
       context.PositionIs(Lex::TokenKind::Ref)) {
-    context.PushState(StateKind::RefTagFinish);
+    context.PushState(StateKind::RefTagFinishAsRegular);
     context.ConsumeChecked(Lex::TokenKind::Ref);
   }
   context.PushState(StateKind::Expr);

@@ -49,16 +49,9 @@ fn F(ref x: i32);
 
 fn G() {
   let y: i32 = 0;
-  // CHECK:STDERR: fail_ref_not_durable_ref.carbon:[[@LINE+11]]:5: error: expression tagged with `ref` is not a durable reference [RefTagNotDurableRef]
+  // CHECK:STDERR: fail_ref_not_durable_ref.carbon:[[@LINE+4]]:5: error: expression tagged with `ref` is not a durable reference [RefTagNotDurableRef]
   // CHECK:STDERR:   F(ref y);
   // CHECK:STDERR:     ^~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_ref_not_durable_ref.carbon:[[@LINE+7]]:9: error: value expression passed to reference parameter [ValueForRefParam]
-  // CHECK:STDERR:   F(ref y);
-  // CHECK:STDERR:         ^
-  // CHECK:STDERR: fail_ref_not_durable_ref.carbon:[[@LINE-11]]:6: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fn F(ref x: i32);
-  // CHECK:STDERR:      ^~~~~~~~~~
   // CHECK:STDERR:
   F(ref y);
 }

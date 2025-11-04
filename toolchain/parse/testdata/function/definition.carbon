@@ -107,7 +107,7 @@ fn TestRecoveryFromSpuriousEquals();
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'foo'},
 // CHECK:STDOUT:           {kind: 'CallExprStart', text: '(', subtree_size: 2},
 // CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'baz'},
-// CHECK:STDOUT:           {kind: 'CallExprComma', text: ','},
+// CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'bar'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'baz'},
 // CHECK:STDOUT:           {kind: 'InfixOperatorPlus', text: '+', subtree_size: 3},
