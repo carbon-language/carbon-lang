@@ -115,6 +115,20 @@ fn F() {
   //@dump-sem-ir-end
 }
 
+// ============================================================================
+// Import C++ without a header
+// ============================================================================
+
+// --- no_header.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+fn F(input: Cpp.int) {
+  let output: i32 = input;
+}
+
 // CHECK:STDOUT: --- fail_todo_import_struct_api.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

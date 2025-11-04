@@ -10,16 +10,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/bad_import.carbon
 
-// --- fail_import_cpp.carbon
-
-library "[[@TEST_NAME]]";
-
-// CHECK:STDERR: fail_import_cpp.carbon:[[@LINE+4]]:1: error: `Cpp` import without `library` or `inline` [CppInteropMissingLibrary]
-// CHECK:STDERR: import Cpp;
-// CHECK:STDERR: ^~~~~~~~~~~
-// CHECK:STDERR:
-import Cpp;
-
 // --- fail_import_cpp_library_empty.carbon
 
 library "[[@TEST_NAME]]";

@@ -102,7 +102,7 @@ static auto GenerateCppIncludesHeaderCode(
                   << "\n";
       // TODO: Inject a clang pragma here to produce an error if there are
       // unclosed scopes at the end of this inline C++ fragment.
-    } else {
+    } else if (import.library_id.has_value()) {
       // Translate `import Cpp library "foo.h";` into `#include "foo.h"`.
       GenerateLineMarker(context, code_stream,
                          context.tokens().GetLineNumber(
