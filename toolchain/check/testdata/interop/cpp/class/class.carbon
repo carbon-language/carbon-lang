@@ -456,11 +456,11 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: --- call_dynamic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %ptr.f68: type = ptr_type %Bar [concrete]
 // CHECK:STDOUT:   %pattern_type.146: type = pattern_type %ptr.f68 [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Bar.f.cpp_overload_set.type: type = cpp_overload_set_type @Bar.f.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Bar.f.cpp_overload_set.value: %Bar.f.cpp_overload_set.type = cpp_overload_set_value @Bar.f.cpp_overload_set [concrete]
@@ -516,8 +516,8 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
-// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Bar [concrete]
 // CHECK:STDOUT:   %struct_type.base.36d: type = struct_type {.base: %Bar} [concrete]
 // CHECK:STDOUT:   %complete_type.fff: <witness> = complete_type_witness %struct_type.base.36d [concrete]

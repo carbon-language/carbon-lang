@@ -211,8 +211,6 @@ auto TypeId::Print(llvm::raw_ostream& out) const -> void {
   out << Label << "(";
   if (*this == TypeType::TypeId) {
     out << "TypeType";
-  } else if (*this == AutoType::TypeId) {
-    out << "AutoType";
   } else if (*this == ErrorInst::TypeId) {
     out << "Error";
   } else {

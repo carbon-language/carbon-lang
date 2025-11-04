@@ -58,10 +58,10 @@ class StepStack {
 
   // The full set of things which can be pushed, including all members of
   // `Step`.
-  using PushItem =
-      std::variant<InstId, llvm::StringRef, NameId, ElementIndex,
-                   QualifiedNameItem, EntityNameItem, EntityNameId, TypeId,
-                   SpecificInterface, llvm::ListSeparator*>;
+  using PushItem = std::variant<InstId, llvm::StringRef, NameId, ElementIndex,
+                                QualifiedNameItem, EntityNameItem, EntityNameId,
+                                SpecificNamedConstraint, SpecificInterface,
+                                TypeId, llvm::ListSeparator*>;
 
   // Starts a new stack, which always contains the first instruction to
   // stringify.
@@ -109,10 +109,18 @@ class StepStack {
     PushInstId(sem_ir_->types().GetInstId(type_id));
   }
 
-  // Pushes a specific interface.
+  // Pushes a specific interface by the interface's entity name.
   auto PushSpecificInterface(SpecificInterface specific_interface) -> void {
     PushEntityName(sem_ir_->interfaces().Get(specific_interface.interface_id),
                    specific_interface.specific_id);
+  }
+
+  // Pushes a specific named constraint by the constraint's entity name.
+  auto PushSpecificNamedConstraint(
+      SpecificNamedConstraint specific_named_constraint) -> void {
+    PushEntityName(sem_ir_->named_constraints().Get(
+                       specific_named_constraint.named_constraint_id),
+                   specific_named_constraint.specific_id);
   }
 
   // Pushes a sequence of items onto the stack. This handles reversal, such that
@@ -158,6 +166,10 @@ class StepStack {
         }
         case CARBON_KIND(SpecificInterface specific_interface): {
           PushSpecificInterface(specific_interface);
+          break;
+        }
+        case CARBON_KIND(SpecificNamedConstraint specific_named_constraint): {
+          PushSpecificNamedConstraint(specific_named_constraint);
           break;
         }
         case CARBON_KIND(llvm::ListSeparator * sep): {
@@ -345,11 +357,16 @@ class Stringifier {
       step_stack_->Push(" ", rewrite.lhs_id, " = ", rewrite.rhs_id);
       some_where = true;
     }
-    if (!facet_type_info.self_impls_constraints.empty()) {
+    if (!facet_type_info.self_impls_constraints.empty() ||
+        !facet_type_info.self_impls_named_constraints.empty()) {
       if (some_where) {
         step_stack_->PushString(" and");
       }
       llvm::ListSeparator sep(" & ");
+      for (auto impls :
+           llvm::reverse(facet_type_info.self_impls_named_constraints)) {
+        step_stack_->Push(impls, &sep);
+      }
       for (auto impls : llvm::reverse(facet_type_info.self_impls_constraints)) {
         step_stack_->Push(impls, &sep);
       }
@@ -361,14 +378,19 @@ class Stringifier {
       step_stack_->PushString(" where");
     }
 
-    // Output extend interface requirements.
-    if (facet_type_info.extend_constraints.empty()) {
+    // Output extend interface and named constraint requirements.
+    if (facet_type_info.extend_constraints.empty() &&
+        facet_type_info.extend_named_constraints.empty()) {
       step_stack_->PushString("type");
       return;
     }
     llvm::ListSeparator sep(" & ");
-    for (auto impls : llvm::reverse(facet_type_info.extend_constraints)) {
-      step_stack_->Push(impls, &sep);
+    for (auto extend :
+         llvm::reverse(facet_type_info.extend_named_constraints)) {
+      step_stack_->Push(extend, &sep);
+    }
+    for (auto extend : llvm::reverse(facet_type_info.extend_constraints)) {
+      step_stack_->Push(extend, &sep);
     }
   }
 

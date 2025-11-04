@@ -55,19 +55,19 @@ constraint Declared {}
 // CHECK:STDOUT: --- definition.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %Self: %type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Declared.type: type = facet_type <@Declared> [concrete]
+// CHECK:STDOUT:   %Self: %Declared.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Declared = %Declared.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Declared.decl: type = constraint_decl @Declared [concrete = constants.%type] {} {}
+// CHECK:STDOUT:   %Declared.decl: type = constraint_decl @Declared [concrete = constants.%Declared.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @Declared {
-// CHECK:STDOUT:   %Self: %type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %Declared.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -76,20 +76,20 @@ constraint Declared {}
 // CHECK:STDOUT: --- forward_declaration.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %Self: %type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %ForwardDeclared.type: type = facet_type <@ForwardDeclared> [concrete]
+// CHECK:STDOUT:   %Self: %ForwardDeclared.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .ForwardDeclared = %ForwardDeclared.decl.loc4
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc4: type = constraint_decl @ForwardDeclared [concrete = constants.%type] {} {}
-// CHECK:STDOUT:   %ForwardDeclared.decl.loc6: type = constraint_decl @ForwardDeclared [concrete = constants.%type] {} {}
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc4: type = constraint_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
+// CHECK:STDOUT:   %ForwardDeclared.decl.loc6: type = constraint_decl @ForwardDeclared [concrete = constants.%ForwardDeclared.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @ForwardDeclared {
-// CHECK:STDOUT:   %Self: %type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %ForwardDeclared.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

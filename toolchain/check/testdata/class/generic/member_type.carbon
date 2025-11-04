@@ -61,11 +61,11 @@ fn Test() -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %T.417: %Copy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.322: type = pattern_type %Copy.type [concrete]
 // CHECK:STDOUT:   %Outer.type: type = generic_class_type @Outer [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Outer.generic: %Outer.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Outer.8c0: type = class_type @Outer, @Outer(%T.417) [symbolic]
 // CHECK:STDOUT:   %Inner.bd5: type = class_type @Inner, @Inner(%T.417) [symbolic]
@@ -529,14 +529,14 @@ fn Test() -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Inner.type: type = facet_type <@Inner, @Inner(%T)> [symbolic = %Inner.type (constants.%Inner.type.5f4)]
-// CHECK:STDOUT:   %Self.2: @Inner.%Inner.type (%Inner.type.5f4) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.1ac)]
+// CHECK:STDOUT:   %Self.loc5_19.2: @Inner.%Inner.type (%Inner.type.5f4) = symbolic_binding Self, 1 [symbolic = %Self.loc5_19.2 (constants.%Self.1ac)]
 // CHECK:STDOUT:   %Inner.F.type: type = fn_type @Inner.F, @Inner(%T) [symbolic = %Inner.F.type (constants.%Inner.F.type.b25)]
 // CHECK:STDOUT:   %Inner.F: @Inner.%Inner.F.type (%Inner.F.type.b25) = struct_value () [symbolic = %Inner.F (constants.%Inner.F.88e)]
 // CHECK:STDOUT:   %Inner.assoc_type: type = assoc_entity_type @Inner, @Inner(%T) [symbolic = %Inner.assoc_type (constants.%Inner.assoc_type.b54)]
 // CHECK:STDOUT:   %assoc0.loc6_28.2: @Inner.%Inner.assoc_type (%Inner.assoc_type.b54) = assoc_entity element0, %Inner.F.decl [symbolic = %assoc0.loc6_28.2 (constants.%assoc0.dc7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @Inner.%Inner.type (%Inner.type.5f4) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.1ac)]
+// CHECK:STDOUT:     %Self.loc5_19.1: @Inner.%Inner.type (%Inner.type.5f4) = symbolic_binding Self, 1 [symbolic = %Self.loc5_19.2 (constants.%Self.1ac)]
 // CHECK:STDOUT:     %Inner.F.decl: @Inner.%Inner.F.type (%Inner.F.type.b25) = fn_decl @Inner.F [symbolic = @Inner.%Inner.F (constants.%Inner.F.88e)] {
 // CHECK:STDOUT:       %self.patt: @Inner.F.%pattern_type.loc6_10 (%pattern_type.0d2) = value_binding_pattern self [concrete]
 // CHECK:STDOUT:       %self.param_patt: @Inner.F.%pattern_type.loc6_10 (%pattern_type.0d2) = value_param_pattern %self.patt, call_param0 [concrete]
@@ -546,7 +546,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Outer.%T.loc4_13.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %self.param: @Inner.F.%Self.binding.as_type (%Self.binding.as_type.bfd) = value_param call_param0
 // CHECK:STDOUT:       %.loc6_16.1: type = splice_block %.loc6_16.3 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.bfd)] {
-// CHECK:STDOUT:         %.loc6_16.2: @Inner.F.%Inner.type (%Inner.type.5f4) = specific_constant @Inner.%Self.1, @Inner(constants.%T) [symbolic = %Self (constants.%Self.1ac)]
+// CHECK:STDOUT:         %.loc6_16.2: @Inner.F.%Inner.type (%Inner.type.5f4) = specific_constant @Inner.%Self.loc5_19.1, @Inner(constants.%T) [symbolic = %Self (constants.%Self.1ac)]
 // CHECK:STDOUT:         %Self.ref: @Inner.F.%Inner.type (%Inner.type.5f4) = name_ref Self, %.loc6_16.2 [symbolic = %Self (constants.%Self.1ac)]
 // CHECK:STDOUT:         %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.bfd)]
 // CHECK:STDOUT:         %.loc6_16.3: type = converted %Self.ref, %Self.as_type [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.bfd)]
@@ -558,7 +558,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %assoc0.loc6_28.1: @Inner.%Inner.assoc_type (%Inner.assoc_type.b54) = assoc_entity element0, %Inner.F.decl [symbolic = %assoc0.loc6_28.2 (constants.%assoc0.dc7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc5_19.1
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .F = %assoc0.loc6_28.1
 // CHECK:STDOUT:     witness = (%Inner.F.decl)
@@ -689,7 +689,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   .D = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Inner.F(@Outer.%T.loc4_13.2: type, @Inner.%Self.1: @Inner.%Inner.type (%Inner.type.5f4)) {
+// CHECK:STDOUT: generic fn @Inner.F(@Outer.%T.loc4_13.2: type, @Inner.%Self.loc5_19.1: @Inner.%Inner.type (%Inner.type.5f4)) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Inner.type: type = facet_type <@Inner, @Inner(%T)> [symbolic = %Inner.type (constants.%Inner.type.5f4)]
 // CHECK:STDOUT:   %Self: @Inner.F.%Inner.type (%Inner.type.5f4) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.1ac)]
@@ -794,7 +794,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.5f4
-// CHECK:STDOUT:   %Self.2 => constants.%Self.1ac
+// CHECK:STDOUT:   %Self.loc5_19.2 => constants.%Self.1ac
 // CHECK:STDOUT:   %Inner.F.type => constants.%Inner.F.type.b25
 // CHECK:STDOUT:   %Inner.F => constants.%Inner.F.88e
 // CHECK:STDOUT:   %Inner.assoc_type => constants.%Inner.assoc_type.b54
@@ -863,7 +863,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%i32
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.56c
-// CHECK:STDOUT:   %Self.2 => constants.%Self.d26
+// CHECK:STDOUT:   %Self.loc5_19.2 => constants.%Self.d26
 // CHECK:STDOUT:   %Inner.F.type => constants.%Inner.F.type.86e
 // CHECK:STDOUT:   %Inner.F => constants.%Inner.F.11d
 // CHECK:STDOUT:   %Inner.assoc_type => constants.%Inner.assoc_type.215

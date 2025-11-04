@@ -296,7 +296,16 @@ auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
     return SemIR::SpecificInterface::None;
   }
 
-  auto identified_id = RequireIdentifiedFacetType(context, *facet_type);
+  auto identified_id = RequireIdentifiedFacetType(context, *facet_type, [&] {
+    CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Error,
+                      "facet type {0} cannot be identified in `impl as`",
+                      InstIdAsType);
+    return context.emitter().Build(impl_decl_id, ImplOfUnidentifiedFacetType,
+                                   constraint_id);
+  });
+  if (!identified_id.has_value()) {
+    return SemIR::SpecificInterface::None;
+  }
   const auto& identified = context.identified_facet_types().Get(identified_id);
   if (!identified.is_valid_impl_as_target()) {
     CARBON_DIAGNOSTIC(ImplOfNotOneInterface, Error,

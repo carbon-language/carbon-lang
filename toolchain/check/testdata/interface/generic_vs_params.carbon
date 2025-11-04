@@ -207,13 +207,13 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %GenericAndParams.type: type = facet_type <@GenericAndParams.loc6, @GenericAndParams.loc6(%T.loc6_28.1)> [symbolic = %GenericAndParams.type (constants.%GenericAndParams.type.741)]
-// CHECK:STDOUT:   %Self.2: @GenericAndParams.loc6.%GenericAndParams.type (%GenericAndParams.type.741) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.a56)]
+// CHECK:STDOUT:   %Self.loc6_38.2: @GenericAndParams.loc6.%GenericAndParams.type (%GenericAndParams.type.741) = symbolic_binding Self, 1 [symbolic = %Self.loc6_38.2 (constants.%Self.a56)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @GenericAndParams.loc6.%GenericAndParams.type (%GenericAndParams.type.741) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.a56)]
+// CHECK:STDOUT:     %Self.loc6_38.1: @GenericAndParams.loc6.%GenericAndParams.type (%GenericAndParams.type.741) = symbolic_binding Self, 1 [symbolic = %Self.loc6_38.2 (constants.%Self.a56)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc6_38.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -222,13 +222,13 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %GenericNoParams.type: type = facet_type <@GenericNoParams, @GenericNoParams(%T)> [symbolic = %GenericNoParams.type (constants.%GenericNoParams.type.672)]
-// CHECK:STDOUT:   %Self.2: @GenericNoParams.%GenericNoParams.type (%GenericNoParams.type.672) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.ed2)]
+// CHECK:STDOUT:   %Self.loc9_29.2: @GenericNoParams.%GenericNoParams.type (%GenericNoParams.type.672) = symbolic_binding Self, 1 [symbolic = %Self.loc9_29.2 (constants.%Self.ed2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @GenericNoParams.%GenericNoParams.type (%GenericNoParams.type.672) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.ed2)]
+// CHECK:STDOUT:     %Self.loc9_29.1: @GenericNoParams.%GenericNoParams.type (%GenericNoParams.type.672) = symbolic_binding Self, 1 [symbolic = %Self.loc9_29.2 (constants.%Self.ed2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc9_29.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -239,13 +239,13 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %GenericAndParams.type: type = facet_type <@GenericAndParams.loc10, @GenericAndParams.loc10(%T, %U.loc10_30.1)> [symbolic = %GenericAndParams.type (constants.%GenericAndParams.type.506)]
-// CHECK:STDOUT:   %Self.2: @GenericAndParams.loc10.%GenericAndParams.type (%GenericAndParams.type.506) = symbolic_binding Self, 2 [symbolic = %Self.2 (constants.%Self.202)]
+// CHECK:STDOUT:   %Self.loc10_40.2: @GenericAndParams.loc10.%GenericAndParams.type (%GenericAndParams.type.506) = symbolic_binding Self, 2 [symbolic = %Self.loc10_40.2 (constants.%Self.202)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @GenericAndParams.loc10.%GenericAndParams.type (%GenericAndParams.type.506) = symbolic_binding Self, 2 [symbolic = %Self.2 (constants.%Self.202)]
+// CHECK:STDOUT:     %Self.loc10_40.1: @GenericAndParams.loc10.%GenericAndParams.type (%GenericAndParams.type.506) = symbolic_binding Self, 2 [symbolic = %Self.loc10_40.2 (constants.%Self.202)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc10_40.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -328,7 +328,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %GenericAndParams.type => constants.%GenericAndParams.type.674
-// CHECK:STDOUT:   %Self.2 => constants.%Self.1d4
+// CHECK:STDOUT:   %Self.loc6_38.2 => constants.%Self.1d4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%X) {
@@ -344,7 +344,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%X
 // CHECK:STDOUT:   %GenericNoParams.type => constants.%GenericNoParams.type.7ce
-// CHECK:STDOUT:   %Self.2 => constants.%Self.96e
+// CHECK:STDOUT:   %Self.loc9_29.2 => constants.%Self.96e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericAndParams.loc10(constants.%X, constants.%X) {
@@ -353,7 +353,7 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%X
 // CHECK:STDOUT:   %GenericAndParams.type => constants.%GenericAndParams.type.e77
-// CHECK:STDOUT:   %Self.2 => constants.%Self.b70
+// CHECK:STDOUT:   %Self.loc10_40.2 => constants.%Self.b70
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_non_generic_implicit_params.carbon
@@ -458,13 +458,13 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Bar.type: type = facet_type <@Bar, @Bar(%T.loc8_15.1)> [symbolic = %Bar.type (constants.%Bar.type.70d)]
-// CHECK:STDOUT:   %Self.2: @Bar.%Bar.type (%Bar.type.70d) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:   %Self.loc8_25.2: @Bar.%Bar.type (%Bar.type.70d) = symbolic_binding Self, 1 [symbolic = %Self.loc8_25.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @Bar.%Bar.type (%Bar.type.70d) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.loc8_25.1: @Bar.%Bar.type (%Bar.type.70d) = symbolic_binding Self, 1 [symbolic = %Self.loc8_25.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc8_25.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

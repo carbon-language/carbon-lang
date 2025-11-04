@@ -52,18 +52,21 @@
 
 namespace Carbon::SemIR {
 
-// A template for singleton types.
+// A template for singleton types. Most uses will not add members, and so may
+// apply a `using` alias. Some children add static members; non-static members
+// must not be added.
+//
+// For a `TypeId`, `GetSingletonType` should generally be used so that the type
+// is completed when referenced. In a few cases where completeness is always
+// known (particularly `TypeType` and `ErrorInst`), a `TypeId` may be provided
+// by a child.
 template <InstKind::RawEnumType KindT, TemplateString IrName>
-struct SingletonTypeInst final {
+struct SingletonTypeInst {
   static constexpr auto Kind = InstKind::Make(KindT).Define<Parse::NoneNodeId>(
       InstKind::DefinitionInfo{.ir_name = IrName,
                                .is_type = InstIsType::Always,
                                .constant_kind = InstConstantKind::Always});
   static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
-  static constexpr SemIR::InstId InstId = TypeInstId;
-  static constexpr auto ConstantId = ConstantId::ForConcreteConstant(InstId);
-  static constexpr auto TypeId =
-      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
 
   // Singleton types have a type of `TypeType`, except for `ErrorInst` which
   // uses itself.
@@ -491,18 +494,6 @@ struct ConstType {
   TypeInstId inner_id;
 };
 
-struct PartialType {
-  static constexpr auto Kind =
-      InstKind::PartialType.Define<Parse::PrefixOperatorPartialId>(
-          {.ir_name = "partial_type",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::Conditional,
-           .deduce_through = true});
-
-  TypeId type_id;
-  TypeInstId inner_id;
-};
-
 // Records that a type conversion `original as new_type` was done, producing the
 // result.
 struct Converted {
@@ -531,18 +522,11 @@ struct ConvertToValueAction {
 };
 
 // A type for C++ `void`. Should only be used for pointers (`void*`).
-struct CppVoidType {
-  static constexpr auto Kind = InstKind::CppVoidType.Define<Parse::NoneNodeId>(
-      {.ir_name = "Cpp.void",
-       .is_type = InstIsType::Always,
-       .constant_kind = InstConstantKind::Always,
-       .is_lowered = false});
-
-  static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
+struct CppVoidType
+    : public SingletonTypeInst<InstKind::CppVoidType, "Cpp.void"> {
+  // `Cpp.void` is never complete, so `GetSingletonType` won't work.
   static constexpr auto TypeId =
       TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
-
-  SemIR::TypeId type_id;
 };
 
 // A type whose layout is determined externally. This is used as the object
@@ -572,7 +556,15 @@ struct Deref {
 // required. For example, when there is a type checking issue, this will be used
 // in the type_id. It's typically used as a cue that semantic checking doesn't
 // need to issue further diagnostics.
-using ErrorInst = SingletonTypeInst<InstKind::ErrorInst, "<error>">;
+struct ErrorInst : public SingletonTypeInst<InstKind::ErrorInst, "<error>"> {
+  // Convenience for returning error InstIds and ConstantIds directly.
+  static constexpr InstId InstId = TypeInstId;
+  static constexpr auto ConstantId =
+      ConstantId::ForConcreteConstant(TypeInstId);
+
+  // `ErrorInst` is always set complete in file.cpp.
+  static constexpr auto TypeId = TypeId::ForTypeConstant(ConstantId);
+};
 
 // An `export bind_name` declaration.
 struct ExportDecl {
@@ -1226,6 +1218,19 @@ struct OutParamPattern {
   CallParamIndex index;
 };
 
+// Indicates `partial` on a type, such as `partial MyClass`.
+struct PartialType {
+  static constexpr auto Kind =
+      InstKind::PartialType.Define<Parse::PrefixOperatorPartialId>(
+          {.ir_name = "partial_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Conditional,
+           .deduce_through = true});
+
+  TypeId type_id;
+  TypeInstId inner_id;
+};
+
 // The type of a pattern that matches scrutinees of type
 // `scrutinee_type_inst_id`.
 struct PatternType {
@@ -1785,7 +1790,11 @@ struct TypeOfInst {
 
 // Tracks expressions which are valid as types. This has a deliberately
 // self-referential type.
-using TypeType = SingletonTypeInst<InstKind::TypeType, "type">;
+struct TypeType : public SingletonTypeInst<InstKind::TypeType, "type"> {
+  // `TypeType` is always set complete in file.cpp.
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
+};
 
 // The `not` operator, such as `not operand`.
 struct UnaryOperatorNot {
@@ -1986,15 +1995,11 @@ concept HasUntypedNodeId =
 // HasKindMemberAsField<T> is true if T has a `InstKind kind` field, as opposed
 // to a `static constexpr InstKind::Definition Kind` member or no kind at all.
 template <typename T>
-concept HasKindMemberAsField = requires {
-  { &T::kind } -> std::same_as<InstKind T::*>;
-};
+concept HasKindMemberAsField = std::same_as<decltype(T::kind), InstKind>;
 
 // HasTypeIdMember<T> is true if T has a `TypeId type_id` field.
 template <typename T>
-concept HasTypeIdMember = requires {
-  { &T::type_id } -> std::same_as<TypeId T::*>;
-};
+concept HasTypeIdMember = std::same_as<decltype(T::type_id), TypeId>;
 
 }  // namespace Internal
 

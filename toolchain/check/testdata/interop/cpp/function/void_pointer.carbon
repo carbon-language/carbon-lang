@@ -84,13 +84,18 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_void.carbon
+// --- fail_void.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp inline "";
 
-fn F(x: Cpp.void);
+// CHECK:STDERR: fail_void.carbon:[[@LINE+5]]:6: error: parameter has incomplete type `Cpp.void` in function definition [IncompleteTypeInFunctionParam]
+// CHECK:STDERR: fn F(x: Cpp.void) {}
+// CHECK:STDERR:      ^~~~~~~~~~~
+// CHECK:STDERR: fail_void.carbon: note: `Cpp.void` is always-incomplete [CppVoidIncomplete]
+// CHECK:STDERR:
+fn F(x: Cpp.void) {}
 
 // --- non_nullable_pointer.carbon
 
@@ -127,8 +132,8 @@ fn F() {
 // CHECK:STDOUT: --- non_nullable_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %ptr: type = ptr_type Cpp.void [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type Cpp.void [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
@@ -205,8 +210,8 @@ fn F() {
 // CHECK:STDOUT: --- nullable_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %ptr.03c: type = ptr_type Cpp.void [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %ptr.03c: type = ptr_type Cpp.void [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %OptionalStorage.type: type = facet_type <@OptionalStorage> [concrete]

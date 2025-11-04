@@ -137,7 +137,7 @@ auto HandleParseNode(Context& context,
   SemIR::TypeId self_type_id =
       GetNamedConstraintType(context, named_constraint_id, self_specific_id);
   constraint_info.self_param_id = AddSelfGenericParameter(
-      context, self_type_id, constraint_info.scope_id, is_template);
+      context, node_id, self_type_id, constraint_info.scope_id, is_template);
 
   // Enter the constraint scope.
   context.scope_stack().PushForEntity(decl_inst_id, constraint_info.scope_id,
@@ -156,8 +156,8 @@ auto HandleParseNode(Context& context,
           .Pop<Parse::NodeKind::NamedConstraintDefinitionStart>();
   context.inst_block_stack().Pop();
 
-  const auto& constraint_info =
-      context.named_constraints().Get(named_constraint_id);
+  auto& constraint_info = context.named_constraints().Get(named_constraint_id);
+  constraint_info.complete = true;
 
   // TODO: Do something with `require` and `alias` statements in the body of the
   // constraint.

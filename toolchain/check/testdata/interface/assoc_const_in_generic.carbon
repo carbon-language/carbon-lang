@@ -89,14 +89,14 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T.loc15_13.1)> [symbolic = %I.type (constants.%I.type.070)]
-// CHECK:STDOUT:   %Self.2: @I.%I.type (%I.type.070) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.269)]
+// CHECK:STDOUT:   %Self.loc15_23.2: @I.%I.type (%I.type.070) = symbolic_binding Self, 1 [symbolic = %Self.loc15_23.2 (constants.%Self.269)]
 // CHECK:STDOUT:   %I.F.type: type = fn_type @I.F, @I(%T.loc15_13.1) [symbolic = %I.F.type (constants.%I.F.type.76d)]
 // CHECK:STDOUT:   %I.F: @I.%I.F.type (%I.F.type.76d) = struct_value () [symbolic = %I.F (constants.%I.F.dde)]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I, @I(%T.loc15_13.1) [symbolic = %I.assoc_type (constants.%I.assoc_type.b65)]
 // CHECK:STDOUT:   %assoc0.loc16_22.2: @I.%I.assoc_type (%I.assoc_type.b65) = assoc_entity element0, %I.F.decl [symbolic = %assoc0.loc16_22.2 (constants.%assoc0.b4f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @I.%I.type (%I.type.070) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.269)]
+// CHECK:STDOUT:     %Self.loc15_23.1: @I.%I.type (%I.type.070) = symbolic_binding Self, 1 [symbolic = %Self.loc15_23.2 (constants.%Self.269)]
 // CHECK:STDOUT:     %I.F.decl: @I.%I.F.type (%I.F.type.76d) = fn_decl @I.F [symbolic = @I.%I.F (constants.%I.F.dde)] {
 // CHECK:STDOUT:       %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 2 [concrete]
 // CHECK:STDOUT:       %return.patt: @I.F.%pattern_type (%pattern_type.533) = return_slot_pattern [concrete]
@@ -111,13 +111,13 @@ fn H() {
 // CHECK:STDOUT:     %assoc0.loc16_22.1: @I.%I.assoc_type (%I.assoc_type.b65) = assoc_entity element0, %I.F.decl [symbolic = %assoc0.loc16_22.2 (constants.%assoc0.b4f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc15_23.1
 // CHECK:STDOUT:     .F = %assoc0.loc16_22.1
 // CHECK:STDOUT:     witness = (%I.F.decl)
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @I.F(@I.%T.loc15_13.2: type, @I.%Self.1: @I.%I.type (%I.type.070), %U.loc16_8.2: type) {
+// CHECK:STDOUT: generic fn @I.F(@I.%T.loc15_13.2: type, @I.%Self.loc15_23.1: @I.%I.type (%I.type.070), %U.loc16_8.2: type) {
 // CHECK:STDOUT:   %U.loc16_8.1: type = symbolic_binding U, 2 [symbolic = %U.loc16_8.1 (constants.%U)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %U.loc16_8.1 [symbolic = %pattern_type (constants.%pattern_type.533)]
 // CHECK:STDOUT:
@@ -160,7 +160,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.070
-// CHECK:STDOUT:   %Self.2 => constants.%Self.269
+// CHECK:STDOUT:   %Self.loc15_23.2 => constants.%Self.269
 // CHECK:STDOUT:   %I.F.type => constants.%I.F.type.76d
 // CHECK:STDOUT:   %I.F => constants.%I.F.dde
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.b65
@@ -192,7 +192,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.type => constants.%I.type.399
-// CHECK:STDOUT:   %Self.2 => constants.%Self.32d
+// CHECK:STDOUT:   %Self.loc15_23.2 => constants.%Self.32d
 // CHECK:STDOUT:   %I.F.type => constants.%I.F.type.684
 // CHECK:STDOUT:   %I.F => constants.%I.F.a8d
 // CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.22c

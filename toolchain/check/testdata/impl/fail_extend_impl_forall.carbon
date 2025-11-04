@@ -71,14 +71,14 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %GenericInterface.type: type = facet_type <@GenericInterface, @GenericInterface(%T.loc15_28.1)> [symbolic = %GenericInterface.type (constants.%GenericInterface.type.114)]
-// CHECK:STDOUT:   %Self.2: @GenericInterface.%GenericInterface.type (%GenericInterface.type.114) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:   %Self.loc15_38.2: @GenericInterface.%GenericInterface.type (%GenericInterface.type.114) = symbolic_binding Self, 1 [symbolic = %Self.loc15_38.2 (constants.%Self)]
 // CHECK:STDOUT:   %GenericInterface.F.type: type = fn_type @GenericInterface.F, @GenericInterface(%T.loc15_28.1) [symbolic = %GenericInterface.F.type (constants.%GenericInterface.F.type)]
 // CHECK:STDOUT:   %GenericInterface.F: @GenericInterface.%GenericInterface.F.type (%GenericInterface.F.type) = struct_value () [symbolic = %GenericInterface.F (constants.%GenericInterface.F)]
 // CHECK:STDOUT:   %GenericInterface.assoc_type: type = assoc_entity_type @GenericInterface, @GenericInterface(%T.loc15_28.1) [symbolic = %GenericInterface.assoc_type (constants.%GenericInterface.assoc_type)]
 // CHECK:STDOUT:   %assoc0.loc16_13.2: @GenericInterface.%GenericInterface.assoc_type (%GenericInterface.assoc_type) = assoc_entity element0, %GenericInterface.F.decl [symbolic = %assoc0.loc16_13.2 (constants.%assoc0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @GenericInterface.%GenericInterface.type (%GenericInterface.type.114) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.loc15_38.1: @GenericInterface.%GenericInterface.type (%GenericInterface.type.114) = symbolic_binding Self, 1 [symbolic = %Self.loc15_38.2 (constants.%Self)]
 // CHECK:STDOUT:     %GenericInterface.F.decl: @GenericInterface.%GenericInterface.F.type (%GenericInterface.F.type) = fn_decl @GenericInterface.F [symbolic = @GenericInterface.%GenericInterface.F (constants.%GenericInterface.F)] {
 // CHECK:STDOUT:       %x.patt: @GenericInterface.F.%pattern_type (%pattern_type.e68) = value_binding_pattern x [concrete]
 // CHECK:STDOUT:       %x.param_patt: @GenericInterface.F.%pattern_type (%pattern_type.e68) = value_param_pattern %x.patt, call_param0 [concrete]
@@ -90,7 +90,7 @@ class C {
 // CHECK:STDOUT:     %assoc0.loc16_13.1: @GenericInterface.%GenericInterface.assoc_type (%GenericInterface.assoc_type) = assoc_entity element0, %GenericInterface.F.decl [symbolic = %assoc0.loc16_13.2 (constants.%assoc0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc15_38.1
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .F = %assoc0.loc16_13.1
 // CHECK:STDOUT:     witness = (%GenericInterface.F.decl)
@@ -147,7 +147,7 @@ class C {
 // CHECK:STDOUT:   has_error
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @GenericInterface.F(@GenericInterface.%T.loc15_28.2: type, @GenericInterface.%Self.1: @GenericInterface.%GenericInterface.type (%GenericInterface.type.114)) {
+// CHECK:STDOUT: generic fn @GenericInterface.F(@GenericInterface.%T.loc15_28.2: type, @GenericInterface.%Self.loc15_38.1: @GenericInterface.%GenericInterface.type (%GenericInterface.type.114)) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.e68)]
 // CHECK:STDOUT:
@@ -172,7 +172,7 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %GenericInterface.type => constants.%GenericInterface.type.114
-// CHECK:STDOUT:   %Self.2 => constants.%Self
+// CHECK:STDOUT:   %Self.loc15_38.2 => constants.%Self
 // CHECK:STDOUT:   %GenericInterface.F.type => constants.%GenericInterface.F.type
 // CHECK:STDOUT:   %GenericInterface.F => constants.%GenericInterface.F
 // CHECK:STDOUT:   %GenericInterface.assoc_type => constants.%GenericInterface.assoc_type
