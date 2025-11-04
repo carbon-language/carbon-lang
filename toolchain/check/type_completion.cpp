@@ -372,9 +372,6 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       break;
     }
     case SemIR::CppVoidType::Kind: {
-      // TODO: Consider checking `VoidTy` for completeness and checking whether
-      // this extra check triggers an error. For that, reuse the code in
-      // https://github.com/carbon-language/carbon-lang/blob/ca3f95faa610fdb9412c9e58ece524abf30c7a9e/toolchain/check/cpp/import.cpp#L2317-L2325.
       if (diagnoser_) {
         CARBON_DIAGNOSTIC(CppVoidIncomplete, Note,
                           "`Cpp.void` is always-incomplete");
