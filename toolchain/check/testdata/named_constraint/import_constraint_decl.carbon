@@ -22,13 +22,55 @@ impl library "[[@TEST_NAME]]";
 // --- b.carbon
 library "[[@TEST_NAME]]";
 
-constraint B {}
+interface I {}
+constraint B {
+  extend require impls I;
+}
 
 // --- b.impl.carbon
 //@include-in-dumps
 impl library "[[@TEST_NAME]]";
 
 fn F(T:! B) {}
+
+// --- fail_import_not_identified.carbon
+library "[[@TEST_NAME]]";
+
+import library "a";
+
+class C {}
+// CHECK:STDERR: fail_import_not_identified.carbon:[[@LINE+8]]:1: error: facet type `A` cannot be identified in `impl as` [ImplOfUnidentifiedFacetType]
+// CHECK:STDERR: impl C as A;
+// CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR: fail_import_not_identified.carbon:[[@LINE-6]]:1: in import [InImport]
+// CHECK:STDERR: a.carbon:3:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
+// CHECK:STDERR: constraint A;
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
+impl C as A;
+
+// --- fail_todo_import_complete.carbon
+library "[[@TEST_NAME]]";
+
+import library "b";
+
+class C {}
+
+// This requires that B is identified.
+// TODO: This should work.
+// CHECK:STDERR: fail_todo_import_complete.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR: impl C as B;
+// CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR:
+impl C as B;
+
+// This requires that B is complete.
+// TODO: This should work.
+// CHECK:STDERR: fail_todo_import_complete.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR: impl C as B {}
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
+impl C as B {}
 
 // CHECK:STDOUT: --- a.impl.carbon
 // CHECK:STDOUT:
@@ -57,12 +99,14 @@ fn F(T:! B) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Main.I = import_ref Main//b, I, unloaded
 // CHECK:STDOUT:   %Main.B: type = import_ref Main//b, B, loaded [concrete = constants.%B.type]
-// CHECK:STDOUT:   %Main.import_ref = import_ref Main//b, loc3_14, unloaded
+// CHECK:STDOUT:   %Main.import_ref = import_ref Main//b, loc4_14, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .I = imports.%Main.I
 // CHECK:STDOUT:     .B = imports.%Main.B
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
