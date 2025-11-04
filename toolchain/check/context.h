@@ -354,9 +354,10 @@ class Context {
 
   // The stack of instruction blocks being used for type information while
   // processing arguments. This is used in parallel with
-  // param_and_arg_refs_stack_. It's currently only used for struct literals,
-  // where we need to track names for a type separate from the literal
-  // arguments.
+  // param_and_arg_refs_stack_. It's used for:
+  // - struct literals, where we need to track names for a type separate from
+  //   the literal arguments.
+  // - the associated entries witness table, while parsing an interface.
   InstBlockStack args_type_info_stack_;
 
   // The stack of StructTypeFields for in-progress StructTypeLiterals.

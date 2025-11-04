@@ -419,6 +419,17 @@ auto Formatter::FormatInterface(InterfaceId id, const Interface& interface_info)
     FormatArg(interface_info.associated_entities_id);
     out_ << "\n";
 
+    IndentLabel();
+    out_ << "!requires:\n";
+    Indent();
+    for (auto inst_id :
+         sem_ir_->inst_blocks().GetOrEmpty(interface_info.require_decls_id)) {
+      FormatArg(sem_ir_->insts()
+                    .GetAs<SemIR::RequireImplsDecl>(inst_id)
+                    .require_impls_id);
+    }
+    out_ << "\n";
+
     CloseBrace();
   } else {
     Semicolon();
@@ -451,7 +462,16 @@ auto Formatter::FormatNamedConstraint(NamedConstraintId id,
     out_ << "!members:\n";
     FormatNameScope(constraint_info.scope_id);
 
-    // TODO: Print `require` statements.
+    IndentLabel();
+    out_ << "!requires:\n";
+    Indent();
+    for (auto inst_id :
+         sem_ir_->inst_blocks().GetOrEmpty(constraint_info.require_decls_id)) {
+      FormatArg(sem_ir_->insts()
+                    .GetAs<SemIR::RequireImplsDecl>(inst_id)
+                    .require_impls_id);
+    }
+    out_ << "\n";
 
     CloseBrace();
   } else {

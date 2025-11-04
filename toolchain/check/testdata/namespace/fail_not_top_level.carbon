@@ -88,6 +88,9 @@ interface I {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .N = %N
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
+// CHECK:STDOUT:   {{}}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

@@ -24,6 +24,8 @@ struct NamedConstraintFields {
 
   // The following members are set at the `}` of the constraint definition.
 
+  // TODO: Should this be a block of `RequireImplsId` to avoid an indirection?
+  InstBlockId require_decls_id = InstBlockId::None;
   bool complete = false;
 };
 
@@ -34,6 +36,7 @@ struct NamedConstraint : public EntityWithParamsBase,
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{";
     PrintBaseFields(out);
+    out << ", require_decls_id: " << require_decls_id;
     out << "}";
   }
 
