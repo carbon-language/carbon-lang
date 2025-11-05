@@ -108,13 +108,11 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc20_19.1.temp = alloca { i32 }, align 8, !dbg !19
 // CHECK:STDOUT:   %.loc16_9.1.temp = alloca { i32 }, align 8, !dbg !20
-// CHECK:STDOUT:   %.loc20_19.2.temp = alloca { i32 }, align 8, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_19.1.temp), !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_9.1.temp), !dbg !20
 // CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.Core"(ptr %.loc16_9.1.temp, ptr %a), !dbg !20
 // CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc20_19.1.temp, ptr %.loc16_9.1.temp), !dbg !19
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_19.2.temp), !dbg !19
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc20_19.2.temp, ptr %.loc20_19.1.temp), !dbg !19
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %return, ptr %.loc20_19.1.temp), !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -124,14 +122,12 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT:   %.loc24_20.1.temp = alloca { i32 }, align 8, !dbg !22
 // CHECK:STDOUT:   %.loc24_20.2.temp = alloca { i32 }, align 8, !dbg !22
 // CHECK:STDOUT:   %.loc24_19.1.temp = alloca { i32 }, align 8, !dbg !23
-// CHECK:STDOUT:   %.loc24_21.1.temp = alloca { i32 }, align 8, !dbg !24
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_20.1.temp), !dbg !22
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_20.2.temp), !dbg !22
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_19.1.temp), !dbg !23
 // CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.Core"(ptr %.loc24_19.1.temp, ptr %a), !dbg !23
 // CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc24_20.2.temp, ptr %.loc24_19.1.temp), !dbg !22
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_21.1.temp), !dbg !24
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc24_21.1.temp, ptr %.loc24_20.2.temp), !dbg !24
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %return, ptr %.loc24_20.2.temp), !dbg !24
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -139,7 +135,7 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 6, 5, 4, 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 4, 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline nounwind }
@@ -193,7 +189,6 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT:   %.loc22_23.3.temp = alloca {}, align 8, !dbg !9
 // CHECK:STDOUT:   %.loc22_23.7.temp = alloca {}, align 8, !dbg !9
 // CHECK:STDOUT:   %.loc22_22.1.temp = alloca {}, align 8, !dbg !10
-// CHECK:STDOUT:   %.loc22_24.1.temp = alloca {}, align 8, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_23.1.temp), !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_23.3.temp), !dbg !9
 // CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc22_23.3.temp, ptr %b), !dbg !9
@@ -201,8 +196,7 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_22.1.temp), !dbg !10
 // CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc22_22.1.temp, ptr %b), !dbg !10
 // CHECK:STDOUT:   call void @"_CF.C.Main:I.Main.e43630e9a6c38c3f"(ptr %.loc22_23.7.temp, ptr %c, ptr %.loc22_22.1.temp), !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_24.1.temp), !dbg !11
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc22_24.1.temp, ptr %.loc22_23.7.temp), !dbg !11
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %return, ptr %.loc22_23.7.temp), !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -239,20 +233,18 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT:   %.loc18_31.2.temp = alloca {}, align 8, !dbg !21
 // CHECK:STDOUT:   %.loc18_31.6.temp = alloca {}, align 8, !dbg !21
 // CHECK:STDOUT:   %.loc12_21.1.temp = alloca {}, align 8, !dbg !22
-// CHECK:STDOUT:   %.loc18_31.7.temp = alloca {}, align 8, !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_31.2.temp), !dbg !21
 // CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc18_31.2.temp, ptr %x), !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_31.6.temp), !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_21.1.temp), !dbg !22
 // CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc12_21.1.temp, ptr %x), !dbg !22
 // CHECK:STDOUT:   call void @"_CF.C.Main:I.Main.e43630e9a6c38c3f"(ptr %.loc18_31.6.temp, ptr %self, ptr %.loc12_21.1.temp), !dbg !21
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_31.7.temp), !dbg !21
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc18_31.7.temp, ptr %.loc18_31.6.temp), !dbg !21
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %return, ptr %.loc18_31.6.temp), !dbg !21
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 1, 2, 3, 8, 7, 6, 5, 4 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 1, 2, 6, 5, 4, 3 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
