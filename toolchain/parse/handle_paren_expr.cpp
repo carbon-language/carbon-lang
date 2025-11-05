@@ -79,6 +79,9 @@ auto HandleParenExpr(Context& context) -> void {
   context.AddLeafNode(NodeKind::Placeholder,
                       context.ConsumeChecked(Lex::TokenKind::OpenParen));
 
+  if (context.PositionIs(Lex::TokenKind::CloseParen)) {
+    context.PushState(state, StateKind::TupleLiteralFinish);
+  } else {
     context.PushState(state, StateKind::ParenExprFinish);
     context.PushState(StateKind::ExprAfterOpenParenFinish);
     if (context.PositionIs(Lex::TokenKind::Ref)) {
