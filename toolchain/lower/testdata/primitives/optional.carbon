@@ -21,6 +21,8 @@ fn Convert(o: Core.Optional(i32*)) -> Core.Optional(i32) {
 }
 
 fn AddOrRemoveConst(a: i32, b: const i32) {
+  // TODO: The code generated for these conversions is wrong: we initialize a
+  // temporary rather than the local variable.
   var oa: Core.Optional(i32) = a;
   var coa: const Core.Optional(i32) = a;
   var oca: Core.Optional(const i32) = a;
@@ -55,45 +57,45 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT: define void @_CAddOrRemoveConst.Main(i32 %a, i32 %b) !dbg !14 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %oa.var = alloca { i32, i1 }, align 8, !dbg !15
-// CHECK:STDOUT:   %.loc24_3.1.temp = alloca { i32, i1 }, align 8, !dbg !15
+// CHECK:STDOUT:   %.loc26_3.1.temp = alloca { i32, i1 }, align 8, !dbg !15
 // CHECK:STDOUT:   %coa.var = alloca { i32, i1 }, align 8, !dbg !16
-// CHECK:STDOUT:   %.loc25_3.1.temp = alloca { i32, i1 }, align 8, !dbg !16
+// CHECK:STDOUT:   %.loc27_3.1.temp = alloca { i32, i1 }, align 8, !dbg !16
 // CHECK:STDOUT:   %oca.var = alloca { i32, i1 }, align 8, !dbg !17
-// CHECK:STDOUT:   %.loc26_3.1.temp = alloca { i32, i1 }, align 8, !dbg !17
+// CHECK:STDOUT:   %.loc28_3.1.temp = alloca { i32, i1 }, align 8, !dbg !17
 // CHECK:STDOUT:   %coca.var = alloca { i32, i1 }, align 8, !dbg !18
-// CHECK:STDOUT:   %.loc27_3.1.temp = alloca { i32, i1 }, align 8, !dbg !18
+// CHECK:STDOUT:   %.loc29_3.1.temp = alloca { i32, i1 }, align 8, !dbg !18
 // CHECK:STDOUT:   %ob.var = alloca { i32, i1 }, align 8, !dbg !19
-// CHECK:STDOUT:   %.loc28_3.1.temp = alloca { i32, i1 }, align 8, !dbg !19
+// CHECK:STDOUT:   %.loc30_3.1.temp = alloca { i32, i1 }, align 8, !dbg !19
 // CHECK:STDOUT:   %cob.var = alloca { i32, i1 }, align 8, !dbg !20
-// CHECK:STDOUT:   %.loc29_3.1.temp = alloca { i32, i1 }, align 8, !dbg !20
+// CHECK:STDOUT:   %.loc31_3.1.temp = alloca { i32, i1 }, align 8, !dbg !20
 // CHECK:STDOUT:   %ocb.var = alloca { i32, i1 }, align 8, !dbg !21
-// CHECK:STDOUT:   %.loc30_3.1.temp = alloca { i32, i1 }, align 8, !dbg !21
+// CHECK:STDOUT:   %.loc32_3.1.temp = alloca { i32, i1 }, align 8, !dbg !21
 // CHECK:STDOUT:   %cocb.var = alloca { i32, i1 }, align 8, !dbg !22
-// CHECK:STDOUT:   %.loc31_3.1.temp = alloca { i32, i1 }, align 8, !dbg !22
+// CHECK:STDOUT:   %.loc33_3.1.temp = alloca { i32, i1 }, align 8, !dbg !22
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %oa.var), !dbg !15
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_3.1.temp), !dbg !15
-// CHECK:STDOUT:   call void @"_CConvert.f82b7327366b1770:ImplicitAs.Core.dbc2dba5c3cff15b"(ptr %.loc24_3.1.temp, i32 %a), !dbg !15
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc26_3.1.temp), !dbg !15
+// CHECK:STDOUT:   call void @"_CConvert.f82b7327366b1770:ImplicitAs.Core.dbc2dba5c3cff15b"(ptr %.loc26_3.1.temp, i32 %a), !dbg !15
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %coa.var), !dbg !16
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_3.1.temp), !dbg !16
-// CHECK:STDOUT:   call void @"_CConvert.ab0f2d07242360d7:ImplicitAs.Core.7bf331f068e9c2df"(ptr %.loc25_3.1.temp, i32 %a), !dbg !16
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc27_3.1.temp), !dbg !16
+// CHECK:STDOUT:   call void @"_CConvert.ab0f2d07242360d7:ImplicitAs.Core.7bf331f068e9c2df"(ptr %.loc27_3.1.temp, i32 %a), !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %oca.var), !dbg !17
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc26_3.1.temp), !dbg !17
-// CHECK:STDOUT:   call void @"_CConvert.f82b7327366b1770:ImplicitAs.Core.aa7929136b20b999"(ptr %.loc26_3.1.temp, i32 %a), !dbg !17
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc28_3.1.temp), !dbg !17
+// CHECK:STDOUT:   call void @"_CConvert.f82b7327366b1770:ImplicitAs.Core.aa7929136b20b999"(ptr %.loc28_3.1.temp, i32 %a), !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %coca.var), !dbg !18
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc27_3.1.temp), !dbg !18
-// CHECK:STDOUT:   call void @"_CConvert.ab0f2d07242360d7:ImplicitAs.Core.988e6ea8b7110d27"(ptr %.loc27_3.1.temp, i32 %a), !dbg !18
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_3.1.temp), !dbg !18
+// CHECK:STDOUT:   call void @"_CConvert.ab0f2d07242360d7:ImplicitAs.Core.988e6ea8b7110d27"(ptr %.loc29_3.1.temp, i32 %a), !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ob.var), !dbg !19
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc28_3.1.temp), !dbg !19
-// CHECK:STDOUT:   call void @"_CConvert.4a889a7251a91071:ImplicitAs.Core.7bf331f068e9c2df"(ptr %.loc28_3.1.temp, i32 %b), !dbg !19
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc30_3.1.temp), !dbg !19
+// CHECK:STDOUT:   call void @"_CConvert.4a889a7251a91071:ImplicitAs.Core.7bf331f068e9c2df"(ptr %.loc30_3.1.temp, i32 %b), !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %cob.var), !dbg !20
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_3.1.temp), !dbg !20
-// CHECK:STDOUT:   call void @"_CConvert.4a889a7251a91071:ImplicitAs.Core.af35f070baa4994b"(ptr %.loc29_3.1.temp, i32 %b), !dbg !20
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc31_3.1.temp), !dbg !20
+// CHECK:STDOUT:   call void @"_CConvert.4a889a7251a91071:ImplicitAs.Core.af35f070baa4994b"(ptr %.loc31_3.1.temp, i32 %b), !dbg !20
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ocb.var), !dbg !21
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc30_3.1.temp), !dbg !21
-// CHECK:STDOUT:   call void @"_CConvert.4a889a7251a91071:ImplicitAs.Core.988e6ea8b7110d27"(ptr %.loc30_3.1.temp, i32 %b), !dbg !21
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc32_3.1.temp), !dbg !21
+// CHECK:STDOUT:   call void @"_CConvert.4a889a7251a91071:ImplicitAs.Core.988e6ea8b7110d27"(ptr %.loc32_3.1.temp, i32 %b), !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %cocb.var), !dbg !22
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc31_3.1.temp), !dbg !22
-// CHECK:STDOUT:   call void @"_CConvert.4a889a7251a91071:ImplicitAs.Core.42efcbde6ff4083b"(ptr %.loc31_3.1.temp, i32 %b), !dbg !22
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc33_3.1.temp), !dbg !22
+// CHECK:STDOUT:   call void @"_CConvert.4a889a7251a91071:ImplicitAs.Core.42efcbde6ff4083b"(ptr %.loc33_3.1.temp, i32 %b), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -252,14 +254,14 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT: !12 = !DILocation(line: 20, column: 10, scope: !4)
 // CHECK:STDOUT: !13 = !DILocation(line: 20, column: 3, scope: !4)
 // CHECK:STDOUT: !14 = distinct !DISubprogram(name: "AddOrRemoveConst", linkageName: "_CAddOrRemoveConst.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !15 = !DILocation(line: 24, column: 3, scope: !14)
-// CHECK:STDOUT: !16 = !DILocation(line: 25, column: 3, scope: !14)
-// CHECK:STDOUT: !17 = !DILocation(line: 26, column: 3, scope: !14)
-// CHECK:STDOUT: !18 = !DILocation(line: 27, column: 3, scope: !14)
-// CHECK:STDOUT: !19 = !DILocation(line: 28, column: 3, scope: !14)
-// CHECK:STDOUT: !20 = !DILocation(line: 29, column: 3, scope: !14)
-// CHECK:STDOUT: !21 = !DILocation(line: 30, column: 3, scope: !14)
-// CHECK:STDOUT: !22 = !DILocation(line: 31, column: 3, scope: !14)
+// CHECK:STDOUT: !15 = !DILocation(line: 26, column: 3, scope: !14)
+// CHECK:STDOUT: !16 = !DILocation(line: 27, column: 3, scope: !14)
+// CHECK:STDOUT: !17 = !DILocation(line: 28, column: 3, scope: !14)
+// CHECK:STDOUT: !18 = !DILocation(line: 29, column: 3, scope: !14)
+// CHECK:STDOUT: !19 = !DILocation(line: 30, column: 3, scope: !14)
+// CHECK:STDOUT: !20 = !DILocation(line: 31, column: 3, scope: !14)
+// CHECK:STDOUT: !21 = !DILocation(line: 32, column: 3, scope: !14)
+// CHECK:STDOUT: !22 = !DILocation(line: 33, column: 3, scope: !14)
 // CHECK:STDOUT: !23 = !DILocation(line: 23, column: 1, scope: !14)
 // CHECK:STDOUT: !24 = distinct !DISubprogram(name: "HasValue", linkageName: "_CHasValue.Optional.Core.217efae529e578bc", scope: null, file: !25, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !25 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
