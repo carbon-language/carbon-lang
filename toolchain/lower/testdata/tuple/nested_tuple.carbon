@@ -18,10 +18,13 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'nested_tuple.carbon'
 // CHECK:STDOUT: source_filename = "nested_tuple.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 0, !dbg !7
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

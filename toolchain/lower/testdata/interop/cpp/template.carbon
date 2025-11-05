@@ -41,20 +41,22 @@ fn PassClass(a: Cpp.Class) -> Cpp.Class {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_Z8identityIiET_S0_ = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CPassI32.Main(i32 %a) !dbg !7 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_CPassI32.Main(i32 %a) #0 !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %identity.call = call i32 @_Z8identityIiET_S0_(i32 %a), !dbg !10
 // CHECK:STDOUT:   ret i32 %identity.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CPassClass.Main(ptr sret({}) %return, ptr %a) !dbg !12 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CPassClass.Main(ptr sret({}) %return, ptr %a) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_Z8identityI5ClassET_S1_.carbon_thunk(ptr %a, ptr %return), !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
-// CHECK:STDOUT: define dso_local void @_Z8identityI5ClassET_S1_.carbon_thunk(ptr %x, ptr %return) #0 {
+// CHECK:STDOUT: define dso_local void @_Z8identityI5ClassET_S1_.carbon_thunk(ptr %x, ptr %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
@@ -69,14 +71,14 @@ fn PassClass(a: Cpp.Class) -> Cpp.Class {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
-// CHECK:STDOUT: define linkonce_odr dso_local void @_Z8identityI5ClassET_S1_() #1 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z8identityI5ClassET_S1_() #2 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x = alloca %class.Class, align 1
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
-// CHECK:STDOUT: define linkonce_odr dso_local i32 @_Z8identityIiET_S0_(i32 %x) #1 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local i32 @_Z8identityIiET_S0_(i32 %x) #2 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.addr = alloca i32, align 4
 // CHECK:STDOUT:   store i32 %x, ptr %x.addr, align 4
@@ -84,8 +86,9 @@ fn PassClass(a: Cpp.Class) -> Cpp.Class {
 // CHECK:STDOUT:   ret i32 %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #1 = { mustprogress noinline nounwind optnone "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { mustprogress noinline nounwind optnone "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}

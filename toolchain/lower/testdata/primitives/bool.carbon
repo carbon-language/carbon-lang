@@ -27,17 +27,20 @@ fn LoadStore(p: bool*, b: bool) -> bool {
 // CHECK:STDOUT: ; ModuleID = 'bool.carbon'
 // CHECK:STDOUT: source_filename = "bool.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CF.Main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CF.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i1 false, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CT.Main() !dbg !8 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CT.Main() #0 !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i1 true, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CLoadStore.Main(ptr %p, i1 %b) !dbg !10 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CLoadStore.Main(ptr %p, i1 %b) #0 !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc22_17.2 = load i8, ptr %p, align 1, !dbg !11
 // CHECK:STDOUT:   %.loc22_17.21 = trunc i8 %.loc22_17.2 to i1, !dbg !11
@@ -45,6 +48,8 @@ fn LoadStore(p: bool*, b: bool) -> bool {
 // CHECK:STDOUT:   store i8 %0, ptr %p, align 1, !dbg !12
 // CHECK:STDOUT:   ret i1 %.loc22_17.21, !dbg !13
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

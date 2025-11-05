@@ -31,16 +31,20 @@ fn Call(a: A*) -> A* {
 // CHECK:STDOUT: ; ModuleID = 'instance_method.carbon'
 // CHECK:STDOUT: source_filename = "instance_method.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @"_CGet.A.Main:GetSelf.Main"(ptr %self) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define ptr @"_CGet.A.Main:GetSelf.Main"(ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret ptr %self, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define ptr @_CCall.Main(ptr %a) !dbg !8 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define ptr @_CCall.Main(ptr %a) #0 !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %A.as.GetSelf.impl.Get.call = call ptr @"_CGet.A.Main:GetSelf.Main"(ptr %a), !dbg !9
 // CHECK:STDOUT:   ret ptr %A.as.GetSelf.impl.Get.call, !dbg !10
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

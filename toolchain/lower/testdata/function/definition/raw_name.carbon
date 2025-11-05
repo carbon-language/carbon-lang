@@ -16,10 +16,13 @@ fn r#self() {}
 // CHECK:STDOUT: ; ModuleID = 'raw_name.carbon'
 // CHECK:STDOUT: source_filename = "raw_name.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_Cself.Main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_Cself.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

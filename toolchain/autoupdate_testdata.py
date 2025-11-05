@@ -51,10 +51,10 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.non_fatal_checks:
-        if build_mode == "opt":
+        if build_mode == "optimize":
             exit(
                 "`--non-fatal-checks` is incompatible with inferred "
-                "`-c opt` build mode"
+                "`-c optimize` build mode"
             )
         configs.append("--config=non-fatal-checks")
 

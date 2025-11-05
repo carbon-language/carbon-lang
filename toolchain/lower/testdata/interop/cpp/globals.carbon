@@ -38,10 +38,13 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @global = dso_local global %class.C zeroinitializer, align 1
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMyF.Main() !dbg !7 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}

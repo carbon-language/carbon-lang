@@ -67,113 +67,133 @@ fn TestGreaterEq(a: u64, b: u64) -> bool { return GreaterEq(a, b); }
 // CHECK:STDOUT: ; ModuleID = 'uint.carbon'
 // CHECK:STDOUT: source_filename = "uint.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @_CTestNegate.Main(i64 %a) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i64 @_CTestNegate.Main(i64 %a) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Negate.call = sub i64 0, %a, !dbg !7
 // CHECK:STDOUT:   ret i64 %Negate.call, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @_CTestAdd.Main(i64 %a, i64 %b) !dbg !9 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i64 @_CTestAdd.Main(i64 %a, i64 %b) #0 !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Add.call = add i64 %a, %b, !dbg !10
 // CHECK:STDOUT:   ret i64 %Add.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @_CTestSub.Main(i64 %a, i64 %b) !dbg !12 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i64 @_CTestSub.Main(i64 %a, i64 %b) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Sub.call = sub i64 %a, %b, !dbg !13
 // CHECK:STDOUT:   ret i64 %Sub.call, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @_CTestMul.Main(i64 %a, i64 %b) !dbg !15 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i64 @_CTestMul.Main(i64 %a, i64 %b) #0 !dbg !15 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Mul.call = mul i64 %a, %b, !dbg !16
 // CHECK:STDOUT:   ret i64 %Mul.call, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @_CTestDiv.Main(i64 %a, i64 %b) !dbg !18 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i64 @_CTestDiv.Main(i64 %a, i64 %b) #0 !dbg !18 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Div.call = udiv i64 %a, %b, !dbg !19
 // CHECK:STDOUT:   ret i64 %Div.call, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @_CTestMod.Main(i64 %a, i64 %b) !dbg !21 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i64 @_CTestMod.Main(i64 %a, i64 %b) #0 !dbg !21 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Mod.call = urem i64 %a, %b, !dbg !22
 // CHECK:STDOUT:   ret i64 %Mod.call, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @_CTestComplement.Main(i64 %a) !dbg !24 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i64 @_CTestComplement.Main(i64 %a) #0 !dbg !24 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Complement.call = xor i64 -1, %a, !dbg !25
 // CHECK:STDOUT:   ret i64 %Complement.call, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @_CTestAnd.Main(i64 %a, i64 %b) !dbg !27 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i64 @_CTestAnd.Main(i64 %a, i64 %b) #0 !dbg !27 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %And.call = and i64 %a, %b, !dbg !28
 // CHECK:STDOUT:   ret i64 %And.call, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @_CTestOr.Main(i64 %a, i64 %b) !dbg !30 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i64 @_CTestOr.Main(i64 %a, i64 %b) #0 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Or.call = or i64 %a, %b, !dbg !31
 // CHECK:STDOUT:   ret i64 %Or.call, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @_CTestXor.Main(i64 %a, i64 %b) !dbg !33 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i64 @_CTestXor.Main(i64 %a, i64 %b) #0 !dbg !33 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Xor.call = xor i64 %a, %b, !dbg !34
 // CHECK:STDOUT:   ret i64 %Xor.call, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @_CTestLeftShift.Main(i64 %a, i64 %b) !dbg !36 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i64 @_CTestLeftShift.Main(i64 %a, i64 %b) #0 !dbg !36 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %LeftShift.call = shl i64 %a, %b, !dbg !37
 // CHECK:STDOUT:   ret i64 %LeftShift.call, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @_CTestRightShift.Main(i64 %a, i64 %b) !dbg !39 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i64 @_CTestRightShift.Main(i64 %a, i64 %b) #0 !dbg !39 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %RightShift.call = lshr i64 %a, %b, !dbg !40
 // CHECK:STDOUT:   ret i64 %RightShift.call, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestEq.Main(i64 %a, i64 %b) !dbg !42 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CTestEq.Main(i64 %a, i64 %b) #0 !dbg !42 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Eq.call = icmp eq i64 %a, %b, !dbg !43
 // CHECK:STDOUT:   ret i1 %Eq.call, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestNeq.Main(i64 %a, i64 %b) !dbg !45 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CTestNeq.Main(i64 %a, i64 %b) #0 !dbg !45 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Neq.call = icmp ne i64 %a, %b, !dbg !46
 // CHECK:STDOUT:   ret i1 %Neq.call, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestLess.Main(i64 %a, i64 %b) !dbg !48 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CTestLess.Main(i64 %a, i64 %b) #0 !dbg !48 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Less.call = icmp ult i64 %a, %b, !dbg !49
 // CHECK:STDOUT:   ret i1 %Less.call, !dbg !50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestLessEq.Main(i64 %a, i64 %b) !dbg !51 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CTestLessEq.Main(i64 %a, i64 %b) #0 !dbg !51 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %LessEq.call = icmp ule i64 %a, %b, !dbg !52
 // CHECK:STDOUT:   ret i1 %LessEq.call, !dbg !53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestGreater.Main(i64 %a, i64 %b) !dbg !54 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CTestGreater.Main(i64 %a, i64 %b) #0 !dbg !54 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Greater.call = icmp ugt i64 %a, %b, !dbg !55
 // CHECK:STDOUT:   ret i1 %Greater.call, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestGreaterEq.Main(i64 %a, i64 %b) !dbg !57 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CTestGreaterEq.Main(i64 %a, i64 %b) #0 !dbg !57 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %GreaterEq.call = icmp uge i64 %a, %b, !dbg !58
 // CHECK:STDOUT:   ret i1 %GreaterEq.call, !dbg !59
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

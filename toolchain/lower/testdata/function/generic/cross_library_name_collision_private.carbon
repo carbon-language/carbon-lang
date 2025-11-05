@@ -74,29 +74,35 @@ fn Run() {
 // CHECK:STDOUT: ; ModuleID = 'todo_use.carbon'
 // CHECK:STDOUT: source_filename = "todo_use.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Lib1CallF.call = call i32 @_CLib1CallF.Main.99cfc57c95d4cf0a(i32 1, i32 2), !dbg !7
 // CHECK:STDOUT:   %Lib2CallF.call = call i32 @_CLib2CallF.Main.99cfc57c95d4cf0a(i32 1, i32 2), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CLib1CallF.Main.99cfc57c95d4cf0a(i32 %a, i32 %b) !dbg !10 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CLib1CallF.Main.99cfc57c95d4cf0a(i32 %a, i32 %b) #0 !dbg !10 {
 // CHECK:STDOUT:   %1 = call i32 @_CF.Main.99cfc57c95d4cf0a(i32 %a, i32 %b), !dbg !12
 // CHECK:STDOUT:   ret i32 %1, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CLib2CallF.Main.99cfc57c95d4cf0a(i32 %a, i32 %b) !dbg !14 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CLib2CallF.Main.99cfc57c95d4cf0a(i32 %a, i32 %b) #0 !dbg !14 {
 // CHECK:STDOUT:   %1 = call i32 @_CF.Main.99cfc57c95d4cf0a(i32 %a, i32 %b), !dbg !16
 // CHECK:STDOUT:   ret i32 %1, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.99cfc57c95d4cf0a(i32 %a, i32 %b) !dbg !18 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.99cfc57c95d4cf0a(i32 %a, i32 %b) #0 !dbg !18 {
 // CHECK:STDOUT:   ret i32 %a, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_CF.Main.99cfc57c95d4cf0a, { 1, 0 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

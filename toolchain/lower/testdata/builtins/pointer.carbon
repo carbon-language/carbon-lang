@@ -27,18 +27,22 @@ fn Check(p: MakeUnformed(C*)) -> bool {
 // CHECK:STDOUT: ; ModuleID = 'pointer.carbon'
 // CHECK:STDOUT: source_filename = "pointer.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CNull.Main(ptr sret(ptr) %return) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CNull.Main(ptr sret(ptr) %return) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   store ptr null, ptr %return, align 8, !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CCheck.Main(ptr %p) !dbg !9 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CCheck.Main(ptr %p) #0 !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %IsNull.call = load ptr, ptr %p, align 8, !dbg !10
 // CHECK:STDOUT:   %IsNull.call1 = icmp eq ptr %IsNull.call, null, !dbg !10
 // CHECK:STDOUT:   ret i1 %IsNull.call1, !dbg !11
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

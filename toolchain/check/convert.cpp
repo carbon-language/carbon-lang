@@ -722,14 +722,16 @@ static auto ConvertDerivedPointerToBasePointer(
 }
 
 // Returns whether `category` is a valid expression category to produce as a
-// result of a conversion with kind `target_kind`, or at most needs a temporary
-// to be materialized.
+// result of a conversion with kind `target_kind`.
 static auto IsValidExprCategoryForConversionTarget(
     SemIR::ExprCategory category, ConversionTarget::Kind target_kind) -> bool {
   switch (target_kind) {
     case ConversionTarget::Value:
       return category == SemIR::ExprCategory::Value;
     case ConversionTarget::ValueOrRef:
+      return category == SemIR::ExprCategory::Value ||
+             category == SemIR::ExprCategory::DurableRef ||
+             category == SemIR::ExprCategory::EphemeralRef;
     case ConversionTarget::Discarded:
       return category == SemIR::ExprCategory::Value ||
              category == SemIR::ExprCategory::DurableRef ||
@@ -908,6 +910,12 @@ static auto PerformBuiltinConversion(
         CanUseValueOfInitializer(sem_ir, value_type_id, target.kind)) {
       return AddInst<SemIR::ValueOfInitializer>(
           context, loc_id, {.type_id = value_type_id, .init_id = value_id});
+    }
+
+    // Materialization is handled as part of the enclosing conversion.
+    if (value_cat == SemIR::ExprCategory::Initializing &&
+        target.kind == ConversionTarget::ValueOrRef) {
+      return value_id;
     }
 
     // PerformBuiltinConversion converts each part of a tuple or struct, even

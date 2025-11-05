@@ -39,89 +39,105 @@ fn div_u16(a: u16, b: u16) -> u16 { return a / b; }
 // CHECK:STDOUT: ; ModuleID = 'arithmetic.carbon'
 // CHECK:STDOUT: source_filename = "arithmetic.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_Cadd_i32.Main(i32 %a, i32 %b) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_Cadd_i32.Main(i32 %a, i32 %b) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %a, %b, !dbg !7
 // CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_Cadd_u32.Main(i32 %a, i32 %b) !dbg !9 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_Cadd_u32.Main(i32 %a, i32 %b) #0 !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %UInt.as.AddWith.impl.Op.call = add i32 %a, %b, !dbg !10
 // CHECK:STDOUT:   ret i32 %UInt.as.AddWith.impl.Op.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_Cdiv_i32.Main(i32 %a, i32 %b) !dbg !12 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_Cdiv_i32.Main(i32 %a, i32 %b) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.DivWith.impl.Op.call = sdiv i32 %a, %b, !dbg !13
 // CHECK:STDOUT:   ret i32 %Int.as.DivWith.impl.Op.call, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_Cdiv_u32.Main(i32 %a, i32 %b) !dbg !15 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_Cdiv_u32.Main(i32 %a, i32 %b) #0 !dbg !15 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %UInt.as.DivWith.impl.Op.call = udiv i32 %a, %b, !dbg !16
 // CHECK:STDOUT:   ret i32 %UInt.as.DivWith.impl.Op.call, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_Cmod_i32.Main(i32 %a, i32 %b) !dbg !18 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_Cmod_i32.Main(i32 %a, i32 %b) #0 !dbg !18 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.ModWith.impl.Op.call = srem i32 %a, %b, !dbg !19
 // CHECK:STDOUT:   ret i32 %Int.as.ModWith.impl.Op.call, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_Cmod_u32.Main(i32 %a, i32 %b) !dbg !21 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_Cmod_u32.Main(i32 %a, i32 %b) #0 !dbg !21 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %UInt.as.ModWith.impl.Op.call = urem i32 %a, %b, !dbg !22
 // CHECK:STDOUT:   ret i32 %UInt.as.ModWith.impl.Op.call, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_Cmul_i32.Main(i32 %a, i32 %b) !dbg !24 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_Cmul_i32.Main(i32 %a, i32 %b) #0 !dbg !24 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.MulWith.impl.Op.call = mul i32 %a, %b, !dbg !25
 // CHECK:STDOUT:   ret i32 %Int.as.MulWith.impl.Op.call, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_Cmul_u32.Main(i32 %a, i32 %b) !dbg !27 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_Cmul_u32.Main(i32 %a, i32 %b) #0 !dbg !27 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %UInt.as.MulWith.impl.Op.call = mul i32 %a, %b, !dbg !28
 // CHECK:STDOUT:   ret i32 %UInt.as.MulWith.impl.Op.call, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_Cneg_i32.Main(i32 %a) !dbg !30 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_Cneg_i32.Main(i32 %a) #0 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.Negate.impl.Op.call = sub i32 0, %a, !dbg !31
 // CHECK:STDOUT:   ret i32 %Int.as.Negate.impl.Op.call, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_Cneg_u32.Main(i32 %a) !dbg !33 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_Cneg_u32.Main(i32 %a) #0 !dbg !33 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %UInt.as.Negate.impl.Op.call = sub i32 0, %a, !dbg !34
 // CHECK:STDOUT:   ret i32 %UInt.as.Negate.impl.Op.call, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_Csub_i32.Main(i32 %a, i32 %b) !dbg !36 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_Csub_i32.Main(i32 %a, i32 %b) #0 !dbg !36 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.SubWith.impl.Op.call = sub i32 %a, %b, !dbg !37
 // CHECK:STDOUT:   ret i32 %Int.as.SubWith.impl.Op.call, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_Csub_u32.Main(i32 %a, i32 %b) !dbg !39 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_Csub_u32.Main(i32 %a, i32 %b) #0 !dbg !39 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %UInt.as.SubWith.impl.Op.call = sub i32 %a, %b, !dbg !40
 // CHECK:STDOUT:   ret i32 %UInt.as.SubWith.impl.Op.call, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i16 @_Cdiv_i16.Main(i16 %a, i16 %b) !dbg !42 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i16 @_Cdiv_i16.Main(i16 %a, i16 %b) #0 !dbg !42 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.DivWith.impl.Op.call = sdiv i16 %a, %b, !dbg !43
 // CHECK:STDOUT:   ret i16 %Int.as.DivWith.impl.Op.call, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i16 @_Cdiv_u16.Main(i16 %a, i16 %b) !dbg !45 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i16 @_Cdiv_u16.Main(i16 %a, i16 %b) #0 !dbg !45 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %UInt.as.DivWith.impl.Op.call = udiv i16 %a, %b, !dbg !46
 // CHECK:STDOUT:   ret i16 %UInt.as.DivWith.impl.Op.call, !dbg !47
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

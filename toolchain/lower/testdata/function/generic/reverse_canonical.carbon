@@ -50,7 +50,8 @@ fn Main() {
 // CHECK:STDOUT: ; ModuleID = 'reverse_canonical.carbon'
 // CHECK:STDOUT: source_filename = "reverse_canonical.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMain.Main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca i1, align 1, !dbg !7
 // CHECK:STDOUT:   %y.var = alloca ptr, align 8, !dbg !8
@@ -66,9 +67,10 @@ fn Main() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_Cfirst.Main.36f5e0b0ce09cb9a(i1 %arg1, i1 %arg2, ptr %arg3) !dbg !14 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_Cfirst.Main.36f5e0b0ce09cb9a(i1 %arg1, i1 %arg2, ptr %arg3) #0 !dbg !14 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %local_name.var = alloca ptr, align 8, !dbg !15
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local_name.var), !dbg !15
@@ -77,7 +79,8 @@ fn Main() {
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_Csecond.Main.e20e3db21e34eb80(i1 %arg1, i1 %arg2, ptr %arg3) !dbg !19 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_Csecond.Main.e20e3db21e34eb80(i1 %arg1, i1 %arg2, ptr %arg3) #0 !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %local_name.var = alloca ptr, align 8, !dbg !20
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local_name.var), !dbg !20
@@ -87,7 +90,8 @@ fn Main() {
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_Cfirst.Main.140560e2430fc2f7(ptr %arg1, ptr %arg2, i1 %arg3) !dbg !25 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_Cfirst.Main.140560e2430fc2f7(ptr %arg1, ptr %arg2, i1 %arg3) #0 !dbg !25 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %local_name.var = alloca ptr, align 8, !dbg !26
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local_name.var), !dbg !26
@@ -96,7 +100,8 @@ fn Main() {
 // CHECK:STDOUT:   ret void, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_Cthird.Main.e20e3db21e34eb80(i1 %arg1, i1 %arg2, ptr %arg3) !dbg !30 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_Cthird.Main.e20e3db21e34eb80(i1 %arg1, i1 %arg2, ptr %arg3) #0 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %local_name.var = alloca ptr, align 8, !dbg !31
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local_name.var), !dbg !31
@@ -107,7 +112,8 @@ fn Main() {
 // CHECK:STDOUT:   ret void, !dbg !36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_Csecond.Main.f9ad2587bfb58bac(ptr %arg1, ptr %arg2, ptr %arg3) !dbg !37 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_Csecond.Main.f9ad2587bfb58bac(ptr %arg1, ptr %arg2, ptr %arg3) #0 !dbg !37 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %local_name.var = alloca ptr, align 8, !dbg !38
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local_name.var), !dbg !38
@@ -117,12 +123,14 @@ fn Main() {
 // CHECK:STDOUT:   ret void, !dbg !42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_Cfourth.Main.9260a3b095cb39ed(ptr %arg1, ptr %arg2, i1 %arg3) !dbg !43 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_Cfourth.Main.9260a3b095cb39ed(ptr %arg1, ptr %arg2, i1 %arg3) #0 !dbg !43 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_Cfirst.Main.f9ad2587bfb58bac(ptr %arg1, ptr %arg2, ptr %arg3) !dbg !45 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_Cfirst.Main.f9ad2587bfb58bac(ptr %arg1, ptr %arg2, ptr %arg3) #0 !dbg !45 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %local_name.var = alloca ptr, align 8, !dbg !46
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local_name.var), !dbg !46
@@ -131,7 +139,8 @@ fn Main() {
 // CHECK:STDOUT:   ret void, !dbg !49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_Cthird.Main.f9ad2587bfb58bac(ptr %arg1, ptr %arg2, ptr %arg3) !dbg !50 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_Cthird.Main.f9ad2587bfb58bac(ptr %arg1, ptr %arg2, ptr %arg3) #0 !dbg !50 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %local_name.var = alloca ptr, align 8, !dbg !51
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local_name.var), !dbg !51
@@ -142,7 +151,8 @@ fn Main() {
 // CHECK:STDOUT:   ret void, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_Cfourth.Main.880241312efeb323(ptr %arg1, ptr %arg2, ptr %arg3) !dbg !57 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_Cfourth.Main.880241312efeb323(ptr %arg1, ptr %arg2, ptr %arg3) #0 !dbg !57 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !58
 // CHECK:STDOUT: }
@@ -152,7 +162,8 @@ fn Main() {
 // CHECK:STDOUT: uselistorder ptr @_Cfourth.Main.9260a3b095cb39ed, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_Cfourth.Main.880241312efeb323, { 1, 0 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
