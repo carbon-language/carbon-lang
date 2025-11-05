@@ -23,3 +23,11 @@ interface ImplicitAs(Dest:! type) {
 impl forall [T:! Copy] T as ImplicitAs(T) {
   fn Convert[self: Self]() -> Self { return self.(Copy.Op)(); }
 }
+
+impl forall [T:! type, U:! ImplicitAs(T)] U as ImplicitAs(const T) {
+  fn Convert[self: U]() -> const T { return self.Convert(); }
+}
+
+impl forall [T:! type, U:! ImplicitAs(T)] const U as ImplicitAs(T) {
+  fn Convert[self: const U]() -> T { return (self as U).Convert(); }
+}
