@@ -64,13 +64,15 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @C.val.loc15_44 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @"_COp.C.Main:Copy.Core"(ptr sret({}) %return, ptr %self) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @"_COp.C.Main:Copy.Core"(ptr sret({}) %return, ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.loc15_44, i64 0, i1 false), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CM.Main() !dbg !8 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CM.Main() #0 !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !9
 // CHECK:STDOUT:   %m.var = alloca i32, align 4, !dbg !10
@@ -96,17 +98,19 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #0
+// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.b88d1103f417c6d4(i32 %x) !dbg !24 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.b88d1103f417c6d4(i32 %x) #0 !dbg !24 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.d756e33fa3337243(i32 %x) !dbg !26 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.d756e33fa3337243(i32 %x) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc29_6.3.temp = alloca i32, align 4, !dbg !27
 // CHECK:STDOUT:   %.loc31_8.3.temp = alloca i32, align 4, !dbg !28
@@ -146,12 +150,14 @@ fn M() {
 // CHECK:STDOUT:   ret i32 %x, !dbg !45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.d4b5665541d5d7a8(double %x) !dbg !46 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.d4b5665541d5d7a8(double %x) #0 !dbg !46 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr double @_CG.Main.6765264419ed942e(double %x) !dbg !48 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr double @_CG.Main.6765264419ed942e(double %x) #0 !dbg !48 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc29_6.3.temp = alloca double, align 8, !dbg !49
 // CHECK:STDOUT:   %.loc31_8.3.temp = alloca double, align 8, !dbg !50
@@ -191,27 +197,32 @@ fn M() {
 // CHECK:STDOUT:   ret double %x, !dbg !67
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CH.Main.5450dc8e8b8e0899(i32 %x) !dbg !68 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CH.Main.5450dc8e8b8e0899(i32 %x) #0 !dbg !68 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %x, !dbg !69
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr %type @_CH.Main.402deed6b8733082(%type %x) !dbg !70 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr %type @_CH.Main.402deed6b8733082(%type %x) #0 !dbg !70 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret %type %x, !dbg !71
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr double @_CH.Main.83aece103b0a8681(double %x) !dbg !72 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr double @_CH.Main.83aece103b0a8681(double %x) #0 !dbg !72 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret double %x, !dbg !73
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr ptr @_CH.Main.0a952f8bcc623ce6(ptr %x) !dbg !74 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr ptr @_CH.Main.0a952f8bcc623ce6(ptr %x) #0 !dbg !74 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret ptr %x, !dbg !75
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CH.Main.936d996ea935415c(ptr sret({}) %return, ptr %x) !dbg !76 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CH.Main.936d996ea935415c(ptr sret({}) %return, ptr %x) #0 !dbg !76 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_COp.C.Main:Copy.Core"(ptr %return, ptr %x), !dbg !77
 // CHECK:STDOUT:   ret void, !dbg !78
@@ -225,8 +236,9 @@ fn M() {
 // CHECK:STDOUT: uselistorder ptr @_CH.Main.0a952f8bcc623ce6, { 5, 2, 0, 4, 3, 1 }
 // CHECK:STDOUT: uselistorder ptr @_CH.Main.936d996ea935415c, { 1, 0 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { nocallback nofree nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

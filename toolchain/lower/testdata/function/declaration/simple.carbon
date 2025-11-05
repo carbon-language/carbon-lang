@@ -23,7 +23,8 @@ fn I() -> A;
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CF.Main(i32)
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CG.Main(i32 %n) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CG.Main(i32 %n) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Main(i32 %n), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
@@ -32,6 +33,8 @@ fn I() -> A;
 // CHECK:STDOUT: declare void @_CH.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CI.Main()
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

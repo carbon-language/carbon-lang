@@ -17,7 +17,8 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT: ; ModuleID = 'partially_const.carbon'
 // CHECK:STDOUT: source_filename = "partially_const.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMake.Main(ptr sret({ i32, i32, i32 }) %return, i32 %n) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMake.Main(ptr sret({ i32, i32, i32 }) %return, i32 %n) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc14_33.3.a = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 0, !dbg !7
 // CHECK:STDOUT:   %.loc14_33.5.b = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 1, !dbg !7
@@ -27,6 +28,8 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT:   store i32 0, ptr %.loc14_33.8.c, align 4, !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

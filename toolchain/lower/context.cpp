@@ -19,10 +19,11 @@ Context::Context(
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, bool want_debug_info,
     const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
     llvm::StringRef module_name, int total_ir_count,
-    llvm::raw_ostream* vlog_stream)
+    Lower::OptimizationLevel opt_level, llvm::raw_ostream* vlog_stream)
     : llvm_context_(llvm_context),
       llvm_module_(std::make_unique<llvm::Module>(module_name, *llvm_context)),
       file_system_(std::move(fs)),
+      opt_level_(opt_level),
       di_builder_(*llvm_module_),
       di_compile_unit_(
           want_debug_info

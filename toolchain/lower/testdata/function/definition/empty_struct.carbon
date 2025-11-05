@@ -16,10 +16,13 @@ fn Echo(a: {}) {
 // CHECK:STDOUT: ; ModuleID = 'empty_struct.carbon'
 // CHECK:STDOUT: source_filename = "empty_struct.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CEcho.Main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CEcho.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

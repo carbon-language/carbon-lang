@@ -38,19 +38,22 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @printf.int.format = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @"_CF.X.Main:I.Main"() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @"_CF.X.Main:I.Main"() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @"_CF.Y.Main:I.Main"() !dbg !9 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @"_CF.Y.Main:I.Main"() #0 !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 2), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @main() !dbg !12 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CG.Main.4d3c36eeac175c1f(), !dbg !13
 // CHECK:STDOUT:   call void @_CG.Main.7abe23e63361d139(), !dbg !14
@@ -59,13 +62,15 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @printf(ptr, ...)
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.4d3c36eeac175c1f() !dbg !16 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.4d3c36eeac175c1f() #0 !dbg !16 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_CG.Main.7abe23e63361d139() !dbg !19 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.7abe23e63361d139() #0 !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF.Y.Main:I.Main"(), !dbg !20
 // CHECK:STDOUT:   ret void, !dbg !21
@@ -73,6 +78,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @printf, { 1, 0 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

@@ -20,17 +20,20 @@ fn And() -> bool {
 // CHECK:STDOUT: ; ModuleID = 'and.carbon'
 // CHECK:STDOUT: source_filename = "and.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CF.Main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CF.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i1 true, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CG.Main() !dbg !8 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CG.Main() #0 !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i1 true, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CAnd.Main() !dbg !10 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CAnd.Main() #0 !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %F.call = call i1 @_CF.Main(), !dbg !11
 // CHECK:STDOUT:   br i1 %F.call, label %and.rhs, label %and.result, !dbg !11
@@ -43,6 +46,8 @@ fn And() -> bool {
 // CHECK:STDOUT:   %0 = phi i1 [ false, %entry ], [ %G.call, %and.rhs ]
 // CHECK:STDOUT:   ret i1 %0, !dbg !13
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

@@ -20,17 +20,21 @@ fn Main() {
 // CHECK:STDOUT: ; ModuleID = 'params_one_comma.carbon'
 // CHECK:STDOUT: source_filename = "params_one_comma.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CFoo.Main(i32 %a) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CFoo.Main(i32 %a) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMain.Main() !dbg !8 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CFoo.Main(i32 1), !dbg !9
 // CHECK:STDOUT:   call void @_CFoo.Main(i32 1), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

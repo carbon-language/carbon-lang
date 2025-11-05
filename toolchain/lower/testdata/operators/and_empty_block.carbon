@@ -19,7 +19,8 @@ fn And(b: bool, c: bool) -> bool {
 // CHECK:STDOUT: ; ModuleID = 'and_empty_block.carbon'
 // CHECK:STDOUT: source_filename = "and_empty_block.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CAnd.Main(i1 %b, i1 %c) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CAnd.Main(i1 %b, i1 %c) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   br i1 %b, label %and.rhs, label %and.result, !dbg !7
 // CHECK:STDOUT:
@@ -30,6 +31,8 @@ fn And(b: bool, c: bool) -> bool {
 // CHECK:STDOUT:   %0 = phi i1 [ false, %entry ], [ %c, %and.rhs ]
 // CHECK:STDOUT:   ret i1 %0, !dbg !8
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

@@ -24,7 +24,8 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'value_access.carbon'
 // CHECK:STDOUT: source_filename = "value_access.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CF.Main(ptr %c) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_CF.Main(ptr %c) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc21_11.1.a = getelementptr inbounds nuw { { i32, i32, i32 } }, ptr %c, i32 0, i32 0, !dbg !7
 // CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %.loc21_11.1.a, i32 0, i32 0, !dbg !7
@@ -44,6 +45,8 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %tuple.elem1.loc21_13.tuple.elem.load = load i32, ptr %tuple.elem1.loc21_13.tuple.elem, align 4, !dbg !7
 // CHECK:STDOUT:   ret i32 %tuple.elem1.loc21_13.tuple.elem.load, !dbg !8
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

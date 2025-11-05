@@ -24,7 +24,8 @@ fn Make() -> C {
 // CHECK:STDOUT: ; ModuleID = 'return_var.carbon'
 // CHECK:STDOUT: source_filename = "return_var.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMake.Main(ptr sret({ i32, ptr }) %return) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMake.Main(ptr sret({ i32, ptr }) %return) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc20_30.3.data = getelementptr inbounds nuw { i32, ptr }, ptr %return, i32 0, i32 0, !dbg !7
 // CHECK:STDOUT:   %.loc20_30.5.next = getelementptr inbounds nuw { i32, ptr }, ptr %return, i32 0, i32 1, !dbg !7
@@ -32,6 +33,8 @@ fn Make() -> C {
 // CHECK:STDOUT:   store i32 42, ptr %.loc20_30.3.data, align 4, !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

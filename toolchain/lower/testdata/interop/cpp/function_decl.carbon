@@ -136,13 +136,16 @@ fn MyF() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMyF.Main() !dbg !7 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_Z3foov(), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z3foov()
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -166,19 +169,21 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_Z3foov = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMyF.Main() !dbg !7 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_Z3foov(), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
-// CHECK:STDOUT: define linkonce_odr dso_local void @_Z3foov() #0 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z3foov() #1 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { mustprogress noinline nounwind optnone "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { mustprogress noinline nounwind optnone "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -204,14 +209,15 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @llvm.compiler.used = appending global [1 x ptr] [ptr @_Z3foov], section "llvm.metadata"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMyF.Main() !dbg !7 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_Z3foov(), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
-// CHECK:STDOUT: define linkonce_odr dso_local void @_Z3foov() #0 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z3foov() #1 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -219,7 +225,8 @@ fn MyF() {
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_Z3foov, { 1, 0 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { mustprogress noinline nounwind optnone "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { mustprogress noinline nounwind optnone "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -247,7 +254,8 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_Z4foo3v = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMyF.Main() !dbg !7 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_Z4foo1v(), !dbg !10
 // CHECK:STDOUT:   call void @_Z4foo2v(), !dbg !11
@@ -256,24 +264,25 @@ fn MyF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
-// CHECK:STDOUT: define linkonce_odr dso_local void @_Z4foo1v() #0 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z4foo1v() #1 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
-// CHECK:STDOUT: define linkonce_odr dso_local void @_Z4foo2v() #0 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z4foo2v() #1 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
-// CHECK:STDOUT: define linkonce_odr dso_local void @_Z4foo3v() #0 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z4foo3v() #1 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { mustprogress noinline nounwind optnone "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { mustprogress noinline nounwind optnone "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -301,27 +310,29 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_Z4foo1v = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMyF.Main() !dbg !7 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_Z4foo2v(), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline optnone
-// CHECK:STDOUT: define linkonce_odr dso_local void @_Z4foo2v() #0 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z4foo2v() #1 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_Z4foo1v()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
-// CHECK:STDOUT: define linkonce_odr dso_local void @_Z4foo1v() #1 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z4foo1v() #2 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { mustprogress noinline optnone "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #1 = { mustprogress noinline nounwind optnone "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { mustprogress noinline optnone "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { mustprogress noinline nounwind optnone "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -343,7 +354,8 @@ fn MyF() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMyF.Main() !dbg !7 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %value.var = alloca i32, align 4, !dbg !10
 // CHECK:STDOUT:   call void @_Z13NoReturnValueii.carbon_thunk0(), !dbg !11
@@ -364,17 +376,17 @@ fn MyF() {
 // CHECK:STDOUT: declare i32 @_Z17SimpleReturnValueii(i32, i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
-// CHECK:STDOUT: define dso_local void @_Z13NoReturnValueii.carbon_thunk0() #1 {
+// CHECK:STDOUT: define dso_local void @_Z13NoReturnValueii.carbon_thunk0() #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_Z13NoReturnValueii(i32 1, i32 2)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
-// CHECK:STDOUT: define dso_local void @_Z13NoReturnValueii.carbon_thunk1(i32 %a) #1 {
+// CHECK:STDOUT: define dso_local void @_Z13NoReturnValueii.carbon_thunk1(i32 %a) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.addr = alloca i32, align 4
 // CHECK:STDOUT:   store i32 %a, ptr %a.addr, align 4
@@ -384,14 +396,14 @@ fn MyF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
-// CHECK:STDOUT: define dso_local i32 @_Z17SimpleReturnValueii.carbon_thunk0() #1 {
+// CHECK:STDOUT: define dso_local i32 @_Z17SimpleReturnValueii.carbon_thunk0() #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %call = call i32 @_Z17SimpleReturnValueii(i32 1, i32 2)
 // CHECK:STDOUT:   ret i32 %call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
-// CHECK:STDOUT: define dso_local i32 @_Z17SimpleReturnValueii.carbon_thunk1(i32 %a) #1 {
+// CHECK:STDOUT: define dso_local i32 @_Z17SimpleReturnValueii.carbon_thunk1(i32 %a) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.addr = alloca i32, align 4
 // CHECK:STDOUT:   store i32 %a, ptr %a.addr, align 4
@@ -400,8 +412,9 @@ fn MyF() {
 // CHECK:STDOUT:   ret i32 %call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #2 = { alwaysinline mustprogress "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}

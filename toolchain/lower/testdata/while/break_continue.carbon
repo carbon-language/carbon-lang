@@ -30,7 +30,8 @@ fn While() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i1 @_CC.Main()
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CWhile.Main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CWhile.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   br label %while.cond
 // CHECK:STDOUT:
@@ -61,6 +62,8 @@ fn While() {
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT:   uselistorder label %while.cond, { 1, 2, 0 }
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
