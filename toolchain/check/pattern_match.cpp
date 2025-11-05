@@ -367,38 +367,24 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
           param_pattern.index.index);
       CARBON_CHECK(entry.scrutinee_id.has_value());
 
+      if (std::is_same_v<RefParamPatternT, SemIR::VarParamPattern>) {
+        results_.push_back(entry.scrutinee_id);
+        break;
+      }
       auto scrutinee_type_id = ExtractScrutineeType(
           context.sem_ir(),
           SemIR::GetTypeOfInstInSpecific(context.sem_ir(), callee_specific_id_,
                                          pattern_inst_id));
-      auto conversion_kind =
-          std::is_same_v<RefParamPatternT, SemIR::RefParamPattern>
-              ? ConversionTarget::RefParam
-              : ConversionTarget::ValueOrRef;
-      auto scrutinee_ref_id =
-          Convert(context, SemIR::LocId(entry.scrutinee_id), entry.scrutinee_id,
-                  {.kind = conversion_kind, .type_id = scrutinee_type_id});
-
+      auto scrutinee_ref_id = Convert(
+          context, SemIR::LocId(entry.scrutinee_id), entry.scrutinee_id,
+          {.kind = ConversionTarget::RefParam, .type_id = scrutinee_type_id});
       switch (SemIR::GetExprCategory(context.sem_ir(), scrutinee_ref_id)) {
         case SemIR::ExprCategory::Error:
         case SemIR::ExprCategory::DurableRef:
         case SemIR::ExprCategory::EphemeralRef:
           break;
         default:
-          // Don't diagnose a non-reference scrutinee if it has a user-written
-          // `ref` tag, because that's diagnosed in `Convert`.
-          if (auto lookup_result =
-                  context.ref_tags().Lookup(entry.scrutinee_id);
-              !lookup_result ||
-              lookup_result.value() != Context::RefTag::Present) {
-            CARBON_DIAGNOSTIC(ValueForRefParam, Error,
-                              "value expression passed to reference parameter");
-            context.emitter().Emit(entry.scrutinee_id, ValueForRefParam);
-          }
-          // Add fake reference expression to preserve invariants.
-          auto scrutinee = context.insts().GetWithLocId(entry.scrutinee_id);
-          scrutinee_ref_id = AddInst<SemIR::TemporaryStorage>(
-              context, scrutinee.loc_id, {.type_id = scrutinee.inst.type_id()});
+          scrutinee_ref_id = SemIR::ErrorInst::InstId;
       }
       results_.push_back(scrutinee_ref_id);
       // Do not traverse farther, because the caller side of the pattern

@@ -730,10 +730,13 @@ static auto IsValidExprCategoryForConversionTarget(
     case ConversionTarget::Value:
       return category == SemIR::ExprCategory::Value;
     case ConversionTarget::ValueOrRef:
-    case ConversionTarget::RefParam:
     case ConversionTarget::Discarded:
       return category == SemIR::ExprCategory::Value ||
              category == SemIR::ExprCategory::DurableRef ||
+             category == SemIR::ExprCategory::EphemeralRef ||
+             category == SemIR::ExprCategory::Initializing;
+    case ConversionTarget::RefParam:
+      return category == SemIR::ExprCategory::DurableRef ||
              category == SemIR::ExprCategory::EphemeralRef ||
              category == SemIR::ExprCategory::Initializing;
     case ConversionTarget::DurableRef:
@@ -1627,6 +1630,17 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                                  target.type_id);
         }
         return SemIR::ErrorInst::InstId;
+      }
+      if (target.kind == ConversionTarget::RefParam) {
+        // Don't diagnose a non-reference scrutinee if it has a user-written
+        // `ref` tag, because that's diagnosed in `Convert`.
+        if (auto lookup_result = context.ref_tags().Lookup(expr_id);
+            !lookup_result ||
+            lookup_result.value() != Context::RefTag::Present) {
+          CARBON_DIAGNOSTIC(ValueForRefParam, Error,
+                            "value expression passed to reference parameter");
+          context.emitter().Emit(loc_id, ValueForRefParam);
+        }
       }
 
       // When initializing from a value, perform a copy.
