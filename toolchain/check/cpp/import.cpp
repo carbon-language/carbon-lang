@@ -27,6 +27,7 @@
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/kind_switch.h"
@@ -37,6 +38,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/custom_type_mapping.h"
+#include "toolchain/check/cpp/macros.h"
 #include "toolchain/check/cpp/thunk.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
@@ -382,6 +384,27 @@ class ShallowCopyCompilerInvocation : public clang::CompilerInvocation {
 
 }  // namespace
 
+// Builds a map of all macros defined in the given preprocessor that are not
+// function-like macros, predefined macros or macros used for header guards.
+// These macros are added to the SemIR as a mapping from macro name to macro
+// info.
+// TODO: Function-like macros and predefined macros are currently not
+// supported and their support still needs to be clarified.
+static auto BuildMacrosMap(Context& context, clang::Preprocessor& preprocessor)
+    -> llvm::StringMap<clang::MacroInfo*> {
+  llvm::StringMap<clang::MacroInfo*>& macros = context.sem_ir().cpp_macros();
+  for (auto it = preprocessor.macro_begin(), it_end = preprocessor.macro_end();
+       it != it_end; ++it) {
+    clang::MacroDefinition def = preprocessor.getMacroDefinition(it->first);
+    clang::MacroInfo* macro_info = def.getMacroInfo();
+    if (macro_info && !macro_info->isUsedForHeaderGuard() &&
+        !macro_info->isFunctionLike() && !macro_info->isBuiltinMacro()) {
+      macros[it->first->getName()] = macro_info;
+    }
+  }
+  return macros;
+}
+
 // Returns an AST for the C++ imports and a bool that represents whether
 // compilation errors where encountered or the generated AST is null due to an
 // error. Sets the AST in the context's `sem_ir`.
@@ -424,6 +447,10 @@ static auto GenerateAst(
   auto ast = clang::ASTUnit::LoadFromCompilerInvocation(
       invocation, std::make_shared<clang::PCHContainerOperations>(), nullptr,
       diags, new clang::FileManager(invocation->getFileSystemOpts(), fs));
+
+  if (ast) {
+    BuildMacrosMap(context, ast->getPreprocessor());
+  }
 
   // Attach the AST to SemIR. This needs to be done before we can emit any
   // diagnostics, so their locations can be properly interpreted by our
@@ -2242,6 +2269,73 @@ static auto IsIncompleteClass(Context& context, SemIR::NameScopeId scope_id)
              context.classes().Get(class_decl->class_id).self_type_id);
 }
 
+// Maps a Clang constant expression to a Carbon constant. Currently supports
+// only integer constants.
+// TODO: Add support for the other constant types for which a C++ to Carbon type
+// mapping exists.
+static auto MapConstant(Context& context, SemIR::LocId loc_id,
+                        clang::Expr* expr) -> SemIR::InstId {
+  CARBON_CHECK(expr, "empty expression");
+  auto* integer_literal = dyn_cast<clang::IntegerLiteral>(expr);
+  if (!integer_literal) {
+    context.TODO(
+        loc_id, "Unsupported: constant type: " + expr->getType().getAsString());
+    return SemIR::ErrorInst::InstId;
+  }
+  SemIR::TypeId type_id =
+      MapType(context, loc_id, integer_literal->getType()).type_id;
+  if (!type_id.has_value()) {
+    CARBON_DIAGNOSTIC(InCppConstantMapping, Error, "invalid integer type");
+    context.emitter().Emit(loc_id, InCppConstantMapping);
+    return SemIR::ErrorInst::InstId;
+  }
+  auto int_id = context.ints().Add(integer_literal->getValue().getSExtValue());
+  auto inst_id = AddInstInNoBlock<SemIR::IntValue>(
+      context, loc_id, {.type_id = type_id, .int_id = int_id});
+  context.imports().push_back(inst_id);
+  return inst_id;
+}
+
+// Imports a macro definition into the scope. Currently supports only simple
+// object-like macros that expand to a constant integer value.
+// TODO: Add support for other macro types and non-integer literal values.
+static auto ImportMacro(Context& context, SemIR::LocId loc_id,
+                        SemIR::NameScopeId scope_id, SemIR::NameId name_id,
+                        clang::MacroInfo* macro_info)
+    -> SemIR::ScopeLookupResult {
+  clang::Expr* macro_expr =
+      TryEvaluateMacroToConstant(context, loc_id, name_id, macro_info);
+
+  if (!macro_expr) {
+    return SemIR::ScopeLookupResult::MakeNotFound();
+  }
+
+  auto inst_id = MapConstant(context, loc_id, macro_expr);
+  if (inst_id == SemIR::ErrorInst::InstId) {
+    return SemIR::ScopeLookupResult::MakeNotFound();
+  }
+
+  AddNameToScope(context, scope_id, name_id, SemIR::AccessKind::Public,
+                 inst_id);
+  return SemIR::ScopeLookupResult::MakeWrappedLookupResult(
+      inst_id, SemIR::AccessKind::Public);
+}
+
+// Looks up a macro definition in the top-level `Cpp` scope. Returns nullptr if
+// the macro is not found or the scope is not the top-level `Cpp` scope.
+static auto LookupMacro(Context& context, SemIR::NameScopeId scope_id,
+                        SemIR::NameId name_id) -> clang::MacroInfo* {
+  auto name_str_opt = context.names().GetAsStringIfIdentifier(name_id);
+  if (!name_str_opt || !IsTopCppScope(context, scope_id)) {
+    return nullptr;
+  }
+  auto macro_info = context.sem_ir().cpp_macros().find(*name_str_opt);
+  if (macro_info != context.sem_ir().cpp_macros().end()) {
+    return macro_info->second;
+  }
+  return nullptr;
+}
+
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> SemIR::ScopeLookupResult {
@@ -2256,6 +2350,10 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
   }
   auto lookup = ClangLookupName(context, scope_id, name_id);
   if (!lookup) {
+    if (clang::MacroInfo* macro_info =
+            LookupMacro(context, scope_id, name_id)) {
+      return ImportMacro(context, loc_id, scope_id, name_id, macro_info);
+    }
     return ImportBuiltinTypesIntoScope(context, loc_id, scope_id, name_id);
   }
   // Access checks are performed separately by the Carbon name lookup logic.
@@ -2270,6 +2368,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                                       lookup->getNamingClass(),
                                       std::move(overload_set));
   }
+
   if (!lookup->isSingleResult()) {
     // Clang will diagnose ambiguous lookup results for us.
     if (!lookup->isAmbiguous()) {

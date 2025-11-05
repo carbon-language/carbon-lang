@@ -8,6 +8,7 @@
 #include "clang/Frontend/ASTUnit.h"
 #include "common/error.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/FormatVariadic.h"
@@ -159,6 +160,12 @@ class File : public Printable<File> {
   auto cpp_global_vars() -> CppGlobalVarStore& { return cpp_global_vars_; }
   auto cpp_global_vars() const -> const CppGlobalVarStore& {
     return cpp_global_vars_;
+  }
+  auto cpp_macros() -> llvm::StringMap<clang::MacroInfo*>& {
+    return cpp_macros_;
+  }
+  auto cpp_macros() const -> const llvm::StringMap<clang::MacroInfo*>& {
+    return cpp_macros_;
   }
   auto functions() -> FunctionStore& { return functions_; }
   auto functions() const -> const FunctionStore& { return functions_; }
@@ -315,6 +322,9 @@ class File : public Printable<File> {
 
   // For imported C++ global variables, the Clang decl to use for mangling.
   CppGlobalVarStore cpp_global_vars_;
+
+  // Cpp macros
+  llvm::StringMap<clang::MacroInfo*> cpp_macros_;
 
   // Storage for callable objects.
   FunctionStore functions_;
