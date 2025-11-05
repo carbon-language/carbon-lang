@@ -30,34 +30,40 @@ fn LoadStore_NotBytes(p: Core.Int(13)*, n: Core.Int(13)) -> Core.Int(13) {
 // CHECK:STDOUT: ; ModuleID = 'int_types.carbon'
 // CHECK:STDOUT: source_filename = "int_types.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i8 @_CF_i8.Main(i8 %a) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i8 @_CF_i8.Main(i8 %a) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i8 %a, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i16 @_CF_u16.Main(i16 %a) !dbg !8 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i16 @_CF_u16.Main(i16 %a) #0 !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i16 %a, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i64 @_CF_i64.Main(i64 %a) !dbg !10 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i64 @_CF_i64.Main(i64 %a) #0 !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i64 %a, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i65536 @_CF_u65536.Main(i65536 %a) !dbg !12 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i65536 @_CF_u65536.Main(i65536 %a) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i65536 %a, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i24 @_CLoadStore_Bytes.Main(ptr %p, i24 %n) !dbg !14 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i24 @_CLoadStore_Bytes.Main(ptr %p, i24 %n) #0 !dbg !14 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc19_25.2 = load i24, ptr %p, align 4, !dbg !15
 // CHECK:STDOUT:   store i24 %n, ptr %p, align 4, !dbg !16
 // CHECK:STDOUT:   ret i24 %.loc19_25.2, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i13 @_CLoadStore_NotBytes.Main(ptr %p, i13 %n) !dbg !18 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i13 @_CLoadStore_NotBytes.Main(ptr %p, i13 %n) #0 !dbg !18 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc25_25.2 = load i16, ptr %p, align 2, !dbg !19
 // CHECK:STDOUT:   %.loc25_25.21 = trunc i16 %.loc25_25.2 to i13, !dbg !19
@@ -65,6 +71,8 @@ fn LoadStore_NotBytes(p: Core.Int(13)*, n: Core.Int(13)) -> Core.Int(13) {
 // CHECK:STDOUT:   store i16 %0, ptr %p, align 2, !dbg !20
 // CHECK:STDOUT:   ret i13 %.loc25_25.21, !dbg !21
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

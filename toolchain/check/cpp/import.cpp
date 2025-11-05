@@ -1219,6 +1219,26 @@ static auto MapQualifiedType(Context& context, clang::QualType type,
   return type_expr;
 }
 
+// Returns true if the type has the `_Nonnull` attribute.
+static auto IsClangTypeNonNull(clang::QualType type) -> bool {
+  auto nullability = type->getNullability();
+  return nullability.has_value() &&
+         *nullability == clang::NullabilityKind::NonNull;
+}
+
+// Like `clang::QualType::getUnqualifiedType()`, retrieves the unqualified
+// variant of the given type, but preserves `_Nonnull`.
+static auto ClangGetUnqualifiedTypePreserveNonNull(
+    Context& context, clang::QualType original_type) -> clang::QualType {
+  clang::QualType type = original_type.getUnqualifiedType();
+  // Preserve non-nullability.
+  if (IsClangTypeNonNull(original_type) && !IsClangTypeNonNull(type)) {
+    type = context.ast_context().getAttributedType(
+        clang::NullabilityKind::NonNull, type, type);
+  }
+  return type;
+}
+
 // Returns the type `Core.Optional(T)`, where  `T` is described by
 // `inner_type_inst_id`.
 static auto MakeOptionalType(Context& context, SemIR::LocId loc_id,
@@ -1234,16 +1254,11 @@ static auto MapPointerType(Context& context, SemIR::LocId loc_id,
     -> TypeExpr {
   CARBON_CHECK(type->isPointerType());
 
-  bool optional = false;
-  if (auto nullability = type->getNullability();
-      !nullability.has_value() ||
-      *nullability != clang::NullabilityKind::NonNull) {
-    // If the type was produced by C++ template substitution, then we assume it
-    // was deduced from a Carbon pointer type, so it's non-null.
-    if (!type->getAs<clang::SubstTemplateTypeParmType>()) {
-      optional = true;
-    }
-  }
+  bool optional =
+      !IsClangTypeNonNull(type) &&
+      // If the type was produced by C++ template substitution, then we assume
+      // it was deduced from a Carbon pointer type, so it's non-null.
+      !type->getAs<clang::SubstTemplateTypeParmType>();
 
   TypeExpr pointer_type_expr = TypeExpr::ForUnsugared(
       context, GetPointerType(context, pointee_type_expr.inst_id));
@@ -1278,7 +1293,7 @@ static auto MapType(Context& context, SemIR::LocId loc_id, clang::QualType type)
   while (true) {
     clang::QualType orig_type = type;
     if (type.hasQualifiers()) {
-      type = type.getUnqualifiedType();
+      type = ClangGetUnqualifiedTypePreserveNonNull(context, type);
     } else if (type->isPointerType()) {
       type = type->getPointeeType();
     } else if (type->isReferenceType()) {
@@ -1451,10 +1466,8 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     // The parameter type is decayed but hasn't necessarily had its qualifiers
     // removed.
     // TODO: The presence of qualifiers here is probably a Clang bug.
-    // TODO: For const non nullable pointers (`C* _Nonnull const`), this removes
-    // both the const and the non-nullable attribute. We should probably
-    // preserve the non-nullable attribute.
-    clang::QualType param_type = orig_param_type.getUnqualifiedType();
+    clang::QualType param_type =
+        ClangGetUnqualifiedTypePreserveNonNull(context, orig_param_type);
 
     // Mark the start of a region of insts, needed for the type expression
     // created later with the call of `EndSubpatternAsExpr()`.
@@ -2131,8 +2144,9 @@ static auto LookupBuiltinTypes(Context& context, SemIR::LocId loc_id,
 }
 
 auto ImportCppOverloadSet(
-    Context& context, SemIR::NameScopeId scope_id, SemIR::NameId name_id,
-    clang::CXXRecordDecl* naming_class, clang::UnresolvedSet<4>&& overload_set,
+    Context& context, SemIR::LocId loc_id, SemIR::NameScopeId scope_id,
+    SemIR::NameId name_id, clang::CXXRecordDecl* naming_class,
+    clang::UnresolvedSet<4>&& overload_set,
     clang::OverloadCandidateSet::OperatorRewriteInfo operator_rewrite_info)
     -> SemIR::InstId {
   SemIR::CppOverloadSetId overload_set_id = context.cpp_overload_sets().Add(
@@ -2141,14 +2155,11 @@ auto ImportCppOverloadSet(
                             .naming_class = naming_class,
                             .candidate_functions = std::move(overload_set),
                             .operator_rewrite_info = operator_rewrite_info});
-
-  auto overload_set_inst_id =
-      // TODO: Add a location.
-      AddInstInNoBlock<SemIR::CppOverloadSetValue>(
-          context, Parse::NodeId::None,
-          {.type_id = GetCppOverloadSetType(context, overload_set_id,
-                                            SemIR::SpecificId::None),
-           .overload_set_id = overload_set_id});
+  auto overload_set_inst_id = AddInstInNoBlock<SemIR::CppOverloadSetValue>(
+      context, loc_id,
+      {.type_id = GetCppOverloadSetType(context, overload_set_id,
+                                        SemIR::SpecificId::None),
+       .overload_set_id = overload_set_id});
 
   context.imports().push_back(overload_set_inst_id);
   return overload_set_inst_id;
@@ -2171,7 +2182,7 @@ static auto GetOverloadSetAccess(const clang::UnresolvedSet<4>& overload_set)
 
 // Imports an overload set from Clang to Carbon and adds the name into the
 // `NameScope`.
-static auto ImportOverloadSetIntoScope(Context& context,
+static auto ImportOverloadSetIntoScope(Context& context, SemIR::LocId loc_id,
                                        SemIR::NameScopeId scope_id,
                                        SemIR::NameId name_id,
                                        clang::CXXRecordDecl* naming_class,
@@ -2179,7 +2190,7 @@ static auto ImportOverloadSetIntoScope(Context& context,
     -> SemIR::ScopeLookupResult {
   SemIR::AccessKind access_kind = GetOverloadSetAccess(overload_set);
   SemIR::InstId inst_id = ImportCppOverloadSet(
-      context, scope_id, name_id, naming_class, std::move(overload_set),
+      context, loc_id, scope_id, name_id, naming_class, std::move(overload_set),
       /*operator_rewrite_info=*/{});
   AddNameToScope(context, scope_id, name_id, access_kind, inst_id);
   return SemIR::ScopeLookupResult::MakeWrappedLookupResult(inst_id,
@@ -2189,7 +2200,7 @@ static auto ImportOverloadSetIntoScope(Context& context,
 // Imports the constructors for a given class name. The found constructors are
 // imported as part of an overload set into the scope. Currently copy/move
 // constructors are not imported.
-static auto ImportConstructorsIntoScope(Context& context,
+static auto ImportConstructorsIntoScope(Context& context, SemIR::LocId loc_id,
                                         SemIR::NameScopeId scope_id,
                                         SemIR::NameId name_id)
     -> SemIR::ScopeLookupResult {
@@ -2210,8 +2221,8 @@ static auto ImportConstructorsIntoScope(Context& context,
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
 
-  return ImportOverloadSetIntoScope(context, scope_id, name_id, naming_class,
-                                    std::move(overload_set));
+  return ImportOverloadSetIntoScope(context, loc_id, scope_id, name_id,
+                                    naming_class, std::move(overload_set));
 }
 
 // Imports a builtin type from Clang to Carbon and adds the name into the
@@ -2265,7 +2276,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
        lookup->getFoundDecl()->isFunctionOrFunctionTemplate())) {
     clang::UnresolvedSet<4> overload_set;
     overload_set.append(lookup->begin(), lookup->end());
-    return ImportOverloadSetIntoScope(context, scope_id, name_id,
+    return ImportOverloadSetIntoScope(context, loc_id, scope_id, name_id,
                                       lookup->getNamingClass(),
                                       std::move(overload_set));
   }
@@ -2283,7 +2294,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
   }
   if (IsDeclInjectedClassName(context, scope_id, name_id,
                               lookup->getFoundDecl())) {
-    return ImportConstructorsIntoScope(context, scope_id, name_id);
+    return ImportConstructorsIntoScope(context, loc_id, scope_id, name_id);
   }
   auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(lookup->getFoundDecl());
   return ImportNameDeclIntoScope(context, loc_id, scope_id, name_id, key,

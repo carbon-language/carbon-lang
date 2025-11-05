@@ -203,13 +203,13 @@ struct DeclName {
 // Library, package, import, export
 // --------------------------------
 
-// The `package` keyword in an expression.
-using PackageExpr =
-    LeafNode<NodeKind::PackageExpr, Lex::PackageTokenIndex, NodeCategory::Expr>;
-
-// The `Core` keyword in an expression.
+// Various keywords in an expression.
 using CoreNameExpr =
     LeafNode<NodeKind::CoreNameExpr, Lex::CoreTokenIndex, NodeCategory::Expr>;
+using CppNameExpr =
+    LeafNode<NodeKind::CppNameExpr, Lex::CppTokenIndex, NodeCategory::Expr>;
+using PackageExpr =
+    LeafNode<NodeKind::PackageExpr, Lex::PackageTokenIndex, NodeCategory::Expr>;
 
 // The name of a package or library for `package`, `import`, and `library`.
 using IdentifierPackageName =
@@ -217,6 +217,8 @@ using IdentifierPackageName =
              NodeCategory::PackageName>;
 using CorePackageName = LeafNode<NodeKind::CorePackageName, Lex::CoreTokenIndex,
                                  NodeCategory::PackageName>;
+using CppPackageName = LeafNode<NodeKind::CppPackageName, Lex::CppTokenIndex,
+                                NodeCategory::PackageName>;
 using LibraryName =
     LeafNode<NodeKind::LibraryName, Lex::StringLiteralTokenIndex>;
 using DefaultLibrary =

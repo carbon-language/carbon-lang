@@ -23,6 +23,7 @@
 #include "toolchain/lower/constant.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/lower/mangler.h"
+#include "toolchain/lower/options.h"
 #include "toolchain/lower/specific_coalescer.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
 #include "toolchain/sem_ir/diagnostic_loc_converter.h"
@@ -617,6 +618,36 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     // TODO: We should track this in the definition context instead so that we
     // can deduplicate specifics from different files.
     AddLoweredSpecificForGeneric(declaration_function.generic_id, specific_id);
+  }
+
+  // Set attributes on the function definition.
+  {
+    llvm::AttrBuilder attr_builder(llvm_context());
+    attr_builder.addAttribute(llvm::Attribute::NoUnwind);
+
+    // TODO: We should take the opt level from the SemIR file; it might not be
+    // the same for all files in a compilation.
+    if (context().opt_level() == Lower::OptimizationLevel::None) {
+      // --optimize=none disables all optimizations for this function.
+      attr_builder.addAttribute(llvm::Attribute::OptimizeNone);
+      attr_builder.addAttribute(llvm::Attribute::NoInline);
+    } else {
+      // Otherwise, always inline thunks.
+      if (definition_function.special_function_kind ==
+          SemIR::Function::SpecialFunctionKind::Thunk) {
+        attr_builder.addAttribute(llvm::Attribute::AlwaysInline);
+      }
+
+      // Convert --optimize=size into optsize and minsize.
+      if (context().opt_level() == Lower::OptimizationLevel::Size) {
+        attr_builder.addAttribute(llvm::Attribute::OptimizeForSize);
+        attr_builder.addAttribute(llvm::Attribute::MinSize);
+      }
+
+      // TODO: Should we generate an InlineHint for some functions? Perhaps for
+      // those defined in the API file?
+    }
+    llvm_function->addFnAttrs(attr_builder);
   }
 
   FunctionContext function_lowering(

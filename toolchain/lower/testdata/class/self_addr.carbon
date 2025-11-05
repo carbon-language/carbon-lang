@@ -28,19 +28,23 @@ fn C.Set[addr self: C*]() {
 // CHECK:STDOUT: ; ModuleID = 'self_addr.carbon'
 // CHECK:STDOUT: source_filename = "self_addr.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CGet.C.Main(ptr %self) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_CGet.C.Main(ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc21_14.1.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !7
 // CHECK:STDOUT:   %.loc21_14.2 = load i32, ptr %.loc21_14.1.a, align 4, !dbg !7
 // CHECK:STDOUT:   ret i32 %.loc21_14.2, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CSet.C.Main(ptr %self) !dbg !9 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CSet.C.Main(ptr %self) #0 !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc25_10.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !10
 // CHECK:STDOUT:   store i32 1, ptr %.loc25_10.a, align 4, !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

@@ -16,6 +16,9 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/MC/TargetRegistry.h"
+#include "llvm/Passes/OptimizationLevel.h"
+#include "llvm/Passes/PassBuilder.h"
+#include "llvm/Passes/StandardInstrumentations.h"
 #include "toolchain/base/clang_invocation.h"
 #include "toolchain/base/timings.h"
 #include "toolchain/check/check.h"
@@ -60,6 +63,7 @@ compile to machine code.
                 arg_b.OneOfValue("parse", Phase::Parse),
                 arg_b.OneOfValue("check", Phase::Check),
                 arg_b.OneOfValue("lower", Phase::Lower),
+                arg_b.OneOfValue("optimize", Phase::Optimize),
                 arg_b.OneOfValue("codegen", Phase::CodeGen).Default(true),
             },
             &phase);
@@ -108,6 +112,33 @@ object output can be forced by enabling `--force-obj-output`.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&output_filename); });
+
+  b.AddOneOfOption(
+      {
+          .name = "optimize",
+          .help = R"""(
+Selects the amount of optimization to perform.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.SetOneOf(
+            {
+                // We intentionally don't expose O2 and Os. The difference
+                // between these levels tends to reflect what achieves the
+                // best speed for a specific application, as they all
+                // largely optimize for speed as the primary factor.
+                //
+                // Instead of controlling this with more nuanced flags, we
+                // plan to support profile and in-source hints to the
+                // optimizer to adjust its strategy in the specific places
+                // where the default doesn't have the desired results.
+                arg_b.OneOfValue("none", Lower::OptimizationLevel::None),
+                arg_b.OneOfValue("debug", Lower::OptimizationLevel::Debug),
+                arg_b.OneOfValue("speed", Lower::OptimizationLevel::Speed),
+                arg_b.OneOfValue("size", Lower::OptimizationLevel::Size),
+            },
+            &opt_level);
+      });
 
   // Include the common code generation options at this point to render it
   // after the more common options above, but before the more unusual options
@@ -368,6 +399,8 @@ static auto PhaseToString(CompileOptions::Phase phase) -> std::string {
       return "check";
     case CompileOptions::Phase::Lower:
       return "lower";
+    case CompileOptions::Phase::Optimize:
+      return "optimize";
     case CompileOptions::Phase::CodeGen:
       return "codegen";
   }
@@ -408,6 +441,7 @@ auto CompileSubcommand::ValidateOptions(
       }
       [[fallthrough]];
     case Phase::Lower:
+    case Phase::Optimize:
     case Phase::CodeGen:
       // Everything can be dumped in these phases.
       break;
@@ -422,11 +456,12 @@ class MultiUnitCache;
 // Ties together information for a file being compiled.
 class CompilationUnit {
  public:
-  // `driver_env`, `options`, and `consumer` must be non-null.
+  // `driver_env`, `options`, `consumer`, and `target` must be non-null.
   explicit CompilationUnit(SemIR::CheckIRId check_ir_id, int total_ir_count,
                            DriverEnv* driver_env, const CompileOptions* options,
                            Diagnostics::Consumer* consumer,
-                           llvm::StringRef input_filename);
+                           llvm::StringRef input_filename,
+                           const llvm::Target* target);
 
   // Sets the multi-unit cache and initializes dependent member state.
   auto SetMultiUnitCache(MultiUnitCache* cache) -> void;
@@ -445,6 +480,14 @@ class CompilationUnit {
 
   // Lower SemIR to LLVM IR.
   auto RunLower() -> void;
+
+  // Runs the optimization pipeline.
+  auto RunOptimize() -> void;
+
+  // Runs post-lowering-to-LLVM-IR logic. This is always called if we do any
+  // lowering work, after we've finished building the IR in RunLower() and,
+  // optionally, RunOptimize().
+  auto PostLower() -> void;
 
   auto RunCodeGen() -> void;
 
@@ -484,6 +527,9 @@ class CompilationUnit {
   // Returns true if the current file should be included in debug dumps.
   auto IncludeInDumps() -> bool;
 
+  // Builds the LLVM target machine.
+  auto MakeTargetMachine() -> void;
+
   // The index of the unit amongst all units.
   SemIR::CheckIRId check_ir_id_;
   // The number of units in total.
@@ -491,6 +537,7 @@ class CompilationUnit {
 
   DriverEnv* driver_env_;
   const CompileOptions* options_;
+  const llvm::Target* target_;
 
   SharedValueStores value_stores_;
 
@@ -527,6 +574,7 @@ class CompilationUnit {
   std::unique_ptr<clang::ASTUnit> clang_ast_unit_;
   std::unique_ptr<llvm::LLVMContext> llvm_context_;
   std::unique_ptr<llvm::Module> module_;
+  std::unique_ptr<llvm::TargetMachine> target_machine_;
 };
 
 // Caches lists that are shared cross-unit. Accessors do lazy caching because
@@ -611,11 +659,13 @@ CompilationUnit::CompilationUnit(SemIR::CheckIRId check_ir_id,
                                  int total_ir_count, DriverEnv* driver_env,
                                  const CompileOptions* options,
                                  Diagnostics::Consumer* consumer,
-                                 llvm::StringRef input_filename)
+                                 llvm::StringRef input_filename,
+                                 const llvm::Target* target)
     : check_ir_id_(check_ir_id),
       total_ir_count_(total_ir_count),
       driver_env_(driver_env),
       options_(options),
+      target_(target),
       input_filename_(input_filename),
       vlog_stream_(driver_env_->vlog_stream) {
   if (vlog_stream_ != nullptr || options_->stream_errors) {
@@ -743,13 +793,147 @@ auto CompilationUnit::RunLower() -> void {
         options_->run_llvm_verifier ? driver_env_->error_stream : nullptr;
     options.want_debug_info = options_->include_debug_info;
     options.vlog_stream = vlog_stream_;
-    if (options_->dump_llvm_ir && IncludeInDumps()) {
-      options.dump_stream = driver_env_->output_stream;
-    }
+    options.opt_level = options_->opt_level;
     module_ = Lower::LowerToLLVM(*llvm_context_, driver_env_->fs,
                                  cache_->tree_and_subtrees_getters(), *sem_ir_,
                                  total_ir_count_, options);
   });
+}
+
+auto CompilationUnit::MakeTargetMachine() -> void {
+  CARBON_CHECK(module_, "Must call RunLower first");
+  CARBON_CHECK(!target_machine_, "Should not call this multiple times");
+
+  // Set the target on the module.
+  // TODO: We should do this earlier. Lower should be passed the target triple
+  // so it can create the module with this already set.
+  llvm::Triple target_triple(options_->codegen_options.target);
+  module_->setTargetTriple(target_triple);
+
+  // TODO: Provide flags to control these.
+  constexpr llvm::StringLiteral CPU = "generic";
+  constexpr llvm::StringLiteral Features = "";
+
+  llvm::TargetOptions target_opts;
+  target_machine_.reset(target_->createTargetMachine(
+      target_triple, CPU, Features, target_opts, llvm::Reloc::PIC_));
+}
+
+// Get the LLVM optimization level corresponding to a Carbon optimization level.
+static auto GetLLVMOptimizationLevel(Lower::OptimizationLevel opt_level)
+    -> llvm::OptimizationLevel {
+  switch (opt_level) {
+    case Lower::OptimizationLevel::None:
+      return llvm::OptimizationLevel::O0;
+    case Lower::OptimizationLevel::Debug:
+      return llvm::OptimizationLevel::O1;
+    case Lower::OptimizationLevel::Size:
+      return llvm::OptimizationLevel::Oz;
+    case Lower::OptimizationLevel::Speed:
+      return llvm::OptimizationLevel::O3;
+  }
+}
+
+// Get the `-O` flag corresponding to an optimization level.
+static auto GetClangOptimizationFlag(Lower::OptimizationLevel opt_level)
+    -> llvm::StringLiteral {
+  switch (opt_level) {
+    case Lower::OptimizationLevel::None:
+      return "-O0";
+    case Lower::OptimizationLevel::Debug:
+      return "-O1";
+    case Lower::OptimizationLevel::Size:
+      return "-Oz";
+    case Lower::OptimizationLevel::Speed:
+      return "-O3";
+  }
+}
+
+auto CompilationUnit::RunOptimize() -> void {
+  CARBON_CHECK(module_, "Must call RunLower first");
+
+  // TODO: A lot of the work done here duplicates work done by Clang setting up
+  // its pass manager. Moreover, we probably want to pick up Clang's
+  // customizations and make use of its flags for controlling LLVM passes. We
+  // should consider whether we would be better off running Clang's pass
+  // pipeline rather than building one of our own, or factoring out enough of
+  // Clang's pipeline builder that we can reuse and further customize it.
+
+  MakeTargetMachine();
+
+  // TODO: There's no way to set these automatically from an
+  // llvm::OptimizationLevel. Add such a mechanism to LLVM and use it from
+  // here. For now we reconstruct what Clang does by default.
+  llvm::PipelineTuningOptions pto;
+  bool opt_for_speed = options_->opt_level == Lower::OptimizationLevel::Speed;
+  bool opt_for_size_or_speed =
+      opt_for_speed || options_->opt_level == Lower::OptimizationLevel::Size;
+  // Loop unrolling is enabled by `--optimize=size` but isn't actually performed
+  // because we add `optsize` attributes to the function definitions we emit.
+  pto.LoopUnrolling = opt_for_size_or_speed;
+  pto.LoopInterleaving = opt_for_size_or_speed;
+  pto.LoopVectorization = opt_for_speed;
+  pto.SLPVectorization = opt_for_size_or_speed;
+
+  llvm::LoopAnalysisManager lam;
+  llvm::FunctionAnalysisManager fam;
+  llvm::CGSCCAnalysisManager cgam;
+  llvm::ModuleAnalysisManager mam;
+
+  llvm::PassInstrumentationCallbacks pic;
+
+  // Register standard pass instrumentations. This adds support for things like
+  // `-print-after-all`.
+  llvm::StandardInstrumentations si(module_->getContext(),
+                                    /*DebugLogging=*/false);
+  si.registerCallbacks(pic);
+
+  llvm::PassBuilder builder(target_machine_.get(), pto,
+                            /*PGOOpt=*/std::nullopt, &pic);
+
+  // TODO: Add an AssignmentTrackingPass for at least `--optimize=debug`.
+
+  // Set up target library information and add an analysis pass to supply it.
+  std::unique_ptr<llvm::TargetLibraryInfoImpl> tlii(llvm::driver::createTLII(
+      module_->getTargetTriple(), llvm::driver::VectorLibrary::NoLibrary));
+  fam.registerPass([&] { return llvm::TargetLibraryAnalysis(*tlii); });
+
+  builder.registerModuleAnalyses(mam);
+  builder.registerCGSCCAnalyses(cgam);
+  builder.registerFunctionAnalyses(fam);
+  builder.registerLoopAnalyses(lam);
+  builder.crossRegisterProxies(lam, fam, cgam, mam);
+
+  llvm::ModulePassManager pass_manager = builder.buildPerModuleDefaultPipeline(
+      GetLLVMOptimizationLevel(options_->opt_level));
+
+  if (vlog_stream_) {
+    CARBON_VLOG("*** Running pass pipeline: ");
+    pass_manager.printPipeline(
+        *vlog_stream_, [&pic](llvm::StringRef class_name) {
+          auto pass_name = pic.getPassNameForClassName(class_name);
+          return pass_name.empty() ? class_name : pass_name;
+        });
+    CARBON_VLOG(" ***\n");
+  }
+
+  LogCall("ModulePassManager::run", "optimize",
+          [&] { pass_manager.run(*module_, mam); });
+
+  if (vlog_stream_) {
+    CARBON_VLOG("*** Optimized llvm::Module ***\n");
+    module_->print(*vlog_stream_, /*AAW=*/nullptr,
+                   /*ShouldPreserveUseListOrder=*/false,
+                   /*IsForDebug=*/true);
+  }
+}
+
+auto CompilationUnit::PostLower() -> void {
+  CARBON_CHECK(module_, "Must call RunLower first");
+  if (options_->dump_llvm_ir && IncludeInDumps()) {
+    module_->print(*driver_env_->output_stream, /*AAW=*/nullptr,
+                   /*ShouldPreserveUseListOrder=*/true);
+  }
 }
 
 auto CompilationUnit::RunCodeGen() -> void {
@@ -778,14 +962,13 @@ auto CompilationUnit::PostCompile() -> void {
 }
 
 auto CompilationUnit::RunCodeGenHelper() -> bool {
-  std::optional<CodeGen> codegen =
-      CodeGen::Make(module_.get(), options_->codegen_options.target, consumer_);
-  if (!codegen) {
-    return false;
-  }
+  CARBON_CHECK(module_, "Must call RunLower first");
+  CARBON_CHECK(target_machine_, "Must call MakeTargetMachine first");
+
+  CodeGen codegen(module_.get(), target_machine_.get(), consumer_);
   if (vlog_stream_) {
     CARBON_VLOG("*** Assembly ***\n");
-    codegen->EmitAssembly(*vlog_stream_);
+    codegen.EmitAssembly(*vlog_stream_);
   }
 
   if (options_->output_filename == "-") {
@@ -793,11 +976,11 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
     // textual assembly output are all somewhat linked flags. We should add
     // some validation that they are used correctly.
     if (options_->force_obj_output) {
-      if (!codegen->EmitObject(*driver_env_->output_stream)) {
+      if (!codegen.EmitObject(*driver_env_->output_stream)) {
         return false;
       }
     } else {
-      if (!codegen->EmitAssembly(*driver_env_->output_stream)) {
+      if (!codegen.EmitAssembly(*driver_env_->output_stream)) {
         return false;
       }
     }
@@ -841,11 +1024,11 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
       return false;
     }
     if (options_->asm_output) {
-      if (!codegen->EmitAssembly(output_file)) {
+      if (!codegen.EmitAssembly(output_file)) {
         return false;
       }
     } else {
-      if (!codegen->EmitObject(output_file)) {
+      if (!codegen.EmitObject(output_file)) {
         return false;
       }
     }
@@ -910,6 +1093,10 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
         // defaults to be more stable.
         // TODO: Decide if we want this.
         "-fPIE",
+        // Propagate our optimization level to Clang as a default. This can be
+        // overridden by Clang arguments, but doing so will only have an effect
+        // if those arguments affect Clang's IR, not its pass pipeline.
+        GetClangOptimizationFlag(options_.opt_level).str(),
     };
     if (driver_env.fuzzing && !options_.clang_args.empty()) {
       // Parsing specific Clang arguments can reach deep into
@@ -925,6 +1112,9 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     if (!clang_invocation) {
       return {.success = false};
     }
+    // We will run our own pass pipeline over the IR in the `Optimize` phase, so
+    // disable Clang's pipeline to avoid optimizing C++ code twice.
+    clang_invocation->getCodeGenOpts().DisableLLVMPasses = true;
   }
 
   // Find the files comprising the prelude if we are importing it.
@@ -952,7 +1142,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     ++unit_index;
     return std::make_unique<CompilationUnit>(
         SemIR::CheckIRId(unit_index), total_unit_count, &driver_env, &options_,
-        &driver_env.consumer, filename);
+        &driver_env.consumer, filename, target);
   };
   llvm::append_range(units, llvm::map_range(prelude, unit_builder));
   llvm::append_range(units,
@@ -1079,11 +1269,18 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     return make_result();
   }
 
-  // Lower.
+  // Lower and optimize.
   for (const auto& unit : units) {
     unit->RunLower();
+
+    if (options_.phase != CompileOptions::Phase::Lower) {
+      unit->RunOptimize();
+    }
+
+    unit->PostLower();
   }
-  if (options_.phase == CompileOptions::Phase::Lower) {
+  if (options_.phase == CompileOptions::Phase::Lower ||
+      options_.phase == CompileOptions::Phase::Optimize) {
     return make_result();
   }
   CARBON_CHECK(options_.phase == CompileOptions::Phase::CodeGen,

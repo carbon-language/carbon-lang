@@ -40,13 +40,16 @@ fn Uses() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CBoolParam.Main(i1)
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CUses.Main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CUses.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CIntParam.Main(i32 1), !dbg !7
 // CHECK:STDOUT:   call void @_CFloatParam.Main(half 0xH3C00, float 1.000000e+00, double 1.000000e+00, fp128 0xL00000000000000003FFF000000000000), !dbg !8
 // CHECK:STDOUT:   call void @_CBoolParam.Main(i1 false), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

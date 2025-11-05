@@ -14,6 +14,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "toolchain/base/fixed_size_value_store.h"
+#include "toolchain/lower/options.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
 #include "toolchain/sem_ir/ids.h"
@@ -49,7 +50,7 @@ class Context {
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, bool want_debug_info,
       const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
       llvm::StringRef module_name, int total_ir_count,
-      llvm::raw_ostream* vlog_stream);
+      Lower::OptimizationLevel opt_level, llvm::raw_ostream* vlog_stream);
 
   // Gets or creates the `FileContext` for a given SemIR file. If an
   // `inst_namer` is specified the first time this is called for a file, it will
@@ -97,6 +98,7 @@ class Context {
   auto file_system() -> llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem>& {
     return file_system_;
   }
+  auto opt_level() -> Lower::OptimizationLevel { return opt_level_; }
   auto di_builder() -> llvm::DIBuilder& { return di_builder_; }
   auto di_compile_unit() -> llvm::DICompileUnit* { return di_compile_unit_; }
   auto tree_and_subtrees_getters() -> const Parse::GetTreeAndSubtreesStore& {
@@ -129,6 +131,9 @@ class Context {
 
   // The filesystem for source code.
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> file_system_;
+
+  // The optimization level to specify for lowered function definitions.
+  Lower::OptimizationLevel opt_level_;
 
   // State for building the LLVM IR debug info metadata.
   llvm::DIBuilder di_builder_;

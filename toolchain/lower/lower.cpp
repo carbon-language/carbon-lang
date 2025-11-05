@@ -22,7 +22,7 @@ auto LowerToLLVM(
     const LowerToLLVMOptions& options) -> std::unique_ptr<llvm::Module> {
   Context context(&llvm_context, std::move(fs), options.want_debug_info,
                   &tree_and_subtrees_getters, sem_ir.filename(), total_ir_count,
-                  options.vlog_stream);
+                  options.opt_level, options.vlog_stream);
 
   // TODO: Consider disabling instruction naming by default if we're not
   // producing textual LLVM IR.
@@ -36,10 +36,6 @@ auto LowerToLLVM(
     module->print(*options.vlog_stream, /*AAW=*/nullptr,
                   /*ShouldPreserveUseListOrder=*/false,
                   /*IsForDebug=*/true);
-  }
-  if (options.dump_stream) {
-    module->print(*options.dump_stream, /*AAW=*/nullptr,
-                  /*ShouldPreserveUseListOrder=*/true);
   }
 
   if (options.llvm_verifier_stream) {

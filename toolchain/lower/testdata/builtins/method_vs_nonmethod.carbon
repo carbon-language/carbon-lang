@@ -19,17 +19,21 @@ fn TestAddMethod(a: i32, b: i32) -> i32 { return a.(AddMethod)(b); }
 // CHECK:STDOUT: ; ModuleID = 'method_vs_nonmethod.carbon'
 // CHECK:STDOUT: source_filename = "method_vs_nonmethod.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestAddNonmethod.Main(i32 %a, i32 %b) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_CTestAddNonmethod.Main(i32 %a, i32 %b) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %AddNonmethod.call = add i32 %a, %b, !dbg !7
 // CHECK:STDOUT:   ret i32 %AddNonmethod.call, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CTestAddMethod.Main(i32 %a, i32 %b) !dbg !9 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_CTestAddMethod.Main(i32 %a, i32 %b) #0 !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %AddMethod.call = add i32 %a, %b, !dbg !10
 // CHECK:STDOUT:   ret i32 %AddMethod.call, !dbg !11
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

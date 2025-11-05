@@ -61,7 +61,8 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: @printf.int.format = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CM.Main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CM.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !7
 // CHECK:STDOUT:   %m.var = alloca double, align 8, !dbg !8
@@ -85,9 +86,10 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CA.Main.5450dc8e8b8e0899(i32 %x, i32 %count) !dbg !20 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CA.Main.5450dc8e8b8e0899(i32 %x, i32 %count) #0 !dbg !20 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 4, !dbg !21
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then.loc22, label %if.else.loc22, !dbg !22
@@ -109,7 +111,8 @@ fn M() {
 // CHECK:STDOUT:   ret i32 %C.call, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr double @_CA.Main.83aece103b0a8681(double %x, i32 %count) !dbg !30 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr double @_CA.Main.83aece103b0a8681(double %x, i32 %count) #0 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 4, !dbg !31
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then.loc22, label %if.else.loc22, !dbg !32
@@ -131,7 +134,8 @@ fn M() {
 // CHECK:STDOUT:   ret double %C.call, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr ptr @_CA.Main.0a952f8bcc623ce6(ptr %x, i32 %count) !dbg !40 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr ptr @_CA.Main.0a952f8bcc623ce6(ptr %x, i32 %count) #0 !dbg !40 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 4, !dbg !41
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then.loc22, label %if.else.loc22, !dbg !42
@@ -153,42 +157,48 @@ fn M() {
 // CHECK:STDOUT:   ret ptr %C.call, !dbg !49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CB.Main.5450dc8e8b8e0899(i32 %x, i32 %count) !dbg !50 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CB.Main.5450dc8e8b8e0899(i32 %x, i32 %count) #0 !dbg !50 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !51
 // CHECK:STDOUT:   %D.call = call i32 @_CD.Main.5450dc8e8b8e0899(i32 %x, i32 %count), !dbg !52
 // CHECK:STDOUT:   ret i32 %D.call, !dbg !53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CC.Main.5450dc8e8b8e0899(i32 %x, i32 %count) !dbg !54 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CC.Main.5450dc8e8b8e0899(i32 %x, i32 %count) #0 !dbg !54 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 2), !dbg !55
 // CHECK:STDOUT:   %D.call = call i32 @_CD.Main.5450dc8e8b8e0899(i32 %x, i32 %count), !dbg !56
 // CHECK:STDOUT:   ret i32 %D.call, !dbg !57
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr double @_CB.Main.83aece103b0a8681(double %x, i32 %count) !dbg !58 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr double @_CB.Main.83aece103b0a8681(double %x, i32 %count) #0 !dbg !58 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !59
 // CHECK:STDOUT:   %D.call = call double @_CD.Main.83aece103b0a8681(double %x, i32 %count), !dbg !60
 // CHECK:STDOUT:   ret double %D.call, !dbg !61
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr double @_CC.Main.83aece103b0a8681(double %x, i32 %count) !dbg !62 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr double @_CC.Main.83aece103b0a8681(double %x, i32 %count) #0 !dbg !62 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 2), !dbg !63
 // CHECK:STDOUT:   %D.call = call double @_CD.Main.83aece103b0a8681(double %x, i32 %count), !dbg !64
 // CHECK:STDOUT:   ret double %D.call, !dbg !65
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr ptr @_CB.Main.0a952f8bcc623ce6(ptr %x, i32 %count) !dbg !66 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr ptr @_CB.Main.0a952f8bcc623ce6(ptr %x, i32 %count) #0 !dbg !66 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 1), !dbg !67
 // CHECK:STDOUT:   %D.call = call ptr @_CD.Main.0a952f8bcc623ce6(ptr %x, i32 %count), !dbg !68
 // CHECK:STDOUT:   ret ptr %D.call, !dbg !69
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr ptr @_CC.Main.0a952f8bcc623ce6(ptr %x, i32 %count) !dbg !70 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr ptr @_CC.Main.0a952f8bcc623ce6(ptr %x, i32 %count) #0 !dbg !70 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Print.call = call i32 (ptr, ...) @printf(ptr @printf.int.format, i32 2), !dbg !71
 // CHECK:STDOUT:   %D.call = call ptr @_CD.Main.0a952f8bcc623ce6(ptr %x, i32 %count), !dbg !72
@@ -197,21 +207,24 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @printf(ptr, ...)
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CD.Main.5450dc8e8b8e0899(i32 %x, i32 %count) !dbg !74 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CD.Main.5450dc8e8b8e0899(i32 %x, i32 %count) #0 !dbg !74 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !75
 // CHECK:STDOUT:   %A.call = call i32 @_CA.Main.5450dc8e8b8e0899(i32 %x, i32 %Int.as.AddWith.impl.Op.call), !dbg !76
 // CHECK:STDOUT:   ret i32 %A.call, !dbg !77
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr double @_CD.Main.83aece103b0a8681(double %x, i32 %count) !dbg !78 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr double @_CD.Main.83aece103b0a8681(double %x, i32 %count) #0 !dbg !78 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !79
 // CHECK:STDOUT:   %A.call = call double @_CA.Main.83aece103b0a8681(double %x, i32 %Int.as.AddWith.impl.Op.call), !dbg !80
 // CHECK:STDOUT:   ret double %A.call, !dbg !81
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr ptr @_CD.Main.0a952f8bcc623ce6(ptr %x, i32 %count) !dbg !82 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr ptr @_CD.Main.0a952f8bcc623ce6(ptr %x, i32 %count) #0 !dbg !82 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !83
 // CHECK:STDOUT:   %A.call = call ptr @_CA.Main.0a952f8bcc623ce6(ptr %x, i32 %Int.as.AddWith.impl.Op.call), !dbg !84
@@ -226,7 +239,8 @@ fn M() {
 // CHECK:STDOUT: uselistorder ptr @_CD.Main.83aece103b0a8681, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_CD.Main.0a952f8bcc623ce6, { 1, 0 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

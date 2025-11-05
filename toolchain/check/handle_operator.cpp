@@ -252,13 +252,6 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorAmpId node_id)
     case SemIR::ExprCategory::DurableRef:
     case SemIR::ExprCategory::Error:
       break;
-    case SemIR::ExprCategory::EphemeralRef:
-      CARBON_DIAGNOSTIC(AddrOfEphemeralRef, Error,
-                        "cannot take the address of a temporary object");
-      context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
-                             AddrOfEphemeralRef);
-      value_id = SemIR::ErrorInst::InstId;
-      break;
     default:
       CARBON_DIAGNOSTIC(AddrOfNonRef, Error,
                         "cannot take the address of non-reference expression");

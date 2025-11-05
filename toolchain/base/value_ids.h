@@ -83,7 +83,7 @@ struct PackageNameId : public IdBase<PackageNameId> {
   static constexpr llvm::StringLiteral Label = "package";
   static const PackageNameId None;
   static const PackageNameId Core;
-  static constexpr llvm::StringLiteral CppName = "Cpp";
+  static const PackageNameId Cpp;
 
   // Returns the PackageNameId corresponding to a particular IdentifierId.
   static auto ForIdentifier(IdentifierId id) -> PackageNameId {
@@ -101,17 +101,30 @@ struct PackageNameId : public IdBase<PackageNameId> {
   // Returns the special package name corresponding to this PackageNameId.
   // Requires that this name is not an identifier name.
   auto AsSpecialName() const -> llvm::StringLiteral {
+    CARBON_CHECK(index <= NoneIndex);
     if (*this == None) {
       return "Main";
     }
     if (*this == Core) {
       return "Core";
     }
-    CARBON_FATAL("Unknown special package name kind {0}", *this);
+    if (*this == Cpp) {
+      return "Cpp";
+    }
+    CARBON_FATAL("Unknown special package name kind {0}", index);
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    if (index <= NoneIndex) {
+      out << Label << AsSpecialName();
+    } else {
+      IdBase::Print(out);
+    }
   }
 };
 constexpr PackageNameId PackageNameId::None(PackageNameId::NoneIndex);
 constexpr PackageNameId PackageNameId::Core(PackageNameId::NoneIndex - 1);
+constexpr PackageNameId PackageNameId::Cpp(PackageNameId::NoneIndex - 2);
 
 // Corresponds to StringRefs for string literals.
 struct StringLiteralValueId : public IdBase<StringLiteralValueId> {

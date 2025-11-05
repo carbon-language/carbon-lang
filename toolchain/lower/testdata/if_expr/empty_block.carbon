@@ -17,7 +17,8 @@ fn Select(b: bool, c: bool, d: bool) -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'empty_block.carbon'
 // CHECK:STDOUT: source_filename = "empty_block.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CSelect.Main(i1 %b, i1 %c, i1 %d) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_CSelect.Main(i1 %b, i1 %c, i1 %d) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   br i1 %b, label %if.expr.then.loc14_10, label %if.expr.else.loc14_10, !dbg !7
 // CHECK:STDOUT:
@@ -51,6 +52,8 @@ fn Select(b: bool, c: bool, d: bool) -> i32 {
 // CHECK:STDOUT:   %2 = phi i32 [ %0, %if.expr.result.loc14_20 ], [ %1, %if.expr.result.loc14_51 ]
 // CHECK:STDOUT:   ret i32 %2, !dbg !10
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

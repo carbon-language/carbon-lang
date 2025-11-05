@@ -7,6 +7,7 @@ package Core library "prelude/types/optional";
 import library "prelude/copy";
 import library "prelude/destroy";
 import library "prelude/operators/as";
+import library "prelude/operators/bitwise";
 import library "prelude/types/bool";
 import library "prelude/types/maybe_unformed";
 
@@ -35,14 +36,52 @@ class Optional(T:! OptionalStorage) {
     return T.Get(self as T.Type);
   }
 
-  impl T as ImplicitAs(Optional(T)) {
-    fn Convert[self: T]() -> Optional(T) {
-      return Some(self);
-    }
-  }
-
   // TODO: Use `private adapt` or `unsafe adapt` once available.
   adapt T.Type;
+}
+
+// Support for converting a `T` to an `Optional(U)` if `T` converts to `U`.
+// Once we have match_first, this can be rewritten more simply as:
+//
+// match_first {
+//   impl forall [T:! OptionalStorage]
+//       T as ImplicitAs(Optional(T)) {
+//     fn Convert[self: T]() -> Optional(T) {
+//       return Optional(T).Some(self);
+//     }
+//   }
+//
+//   impl forall [T:! Destroy & OptionalStorage, U:! ImplicitAs(T)]
+//       U as ImplicitAs(Optional(T)) {
+//     fn Convert[self: U]() -> Optional(T) {
+//       return Optional(T).Some(self.Convert());
+//     }
+//   }
+// }
+
+private interface OptionalAs(T:! OptionalStorage) {
+  fn Convert[self: Self]() -> Optional(T);
+}
+
+final impl forall [T:! OptionalStorage]
+    T as OptionalAs(T) {
+  fn Convert[self: Self]() -> Optional(T) {
+    return Optional(T).Some(self);
+  }
+}
+
+impl forall [T:! Destroy & OptionalStorage, U:! ImplicitAs(T)]
+    U as OptionalAs(T) {
+  fn Convert[self: Self]() -> Optional(T) {
+    return Optional(T).Some(self.Convert());
+  }
+}
+
+impl forall [T:! OptionalStorage, U:! OptionalAs(T)]
+    U as ImplicitAs(Optional(T)) {
+  fn Convert[self: Self]() -> Optional(T) {
+    return self.Convert();
+  }
 }
 
 // By default, an `Optional(T)` is stored as a pair of a `bool` and a

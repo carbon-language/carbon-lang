@@ -208,7 +208,7 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
   }
 
   return ImportCppOverloadSet(
-      context, SemIR::NameScopeId::None, SemIR::NameId::CppOperator,
+      context, loc_id, SemIR::NameScopeId::None, SemIR::NameId::CppOperator,
       /*naming_class=*/nullptr, std::move(functions), operator_rewrite_info);
 }
 
