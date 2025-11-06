@@ -313,12 +313,10 @@ fn Use() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %value.ref: %MaybeUnformed.275 = name_ref value, file.%value
 // CHECK:STDOUT:   %X.ref.loc13_30: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %.loc13_27.1: ref %MaybeUnformed.275 = value_as_ref %value.ref
-// CHECK:STDOUT:   %.loc13_27.2: ref %X = as_compatible %.loc13_27.1
-// CHECK:STDOUT:   %.loc13_27.3: %X = acquire_value %.loc13_27.2
-// CHECK:STDOUT:   %.loc13_27.4: %X = converted %value.ref, %.loc13_27.3
+// CHECK:STDOUT:   %.loc13_27.1: %X = as_compatible %value.ref
+// CHECK:STDOUT:   %.loc13_27.2: %X = converted %value.ref, %.loc13_27.1
 // CHECK:STDOUT:   %X.ref.loc13_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %v: %X = value_binding v, %.loc13_27.4
+// CHECK:STDOUT:   %v: %X = value_binding v, %.loc13_27.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.1c6 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
