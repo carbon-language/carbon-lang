@@ -23,16 +23,20 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT: ; ModuleID = 'nested.carbon'
 // CHECK:STDOUT: source_filename = "nested.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CWiz.Bar.Foo.Main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CWiz.Bar.Foo.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CBaz.Bar.Foo.Main() !dbg !8 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CBaz.Bar.Foo.Main() #0 !dbg !8 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CWiz.Bar.Foo.Main(), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

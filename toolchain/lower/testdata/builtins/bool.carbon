@@ -26,19 +26,22 @@ fn IfEq(a: Bool(), b: Bool()) -> Bool() {
 // CHECK:STDOUT: ; ModuleID = 'bool.carbon'
 // CHECK:STDOUT: source_filename = "bool.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestEq.Main(i1 %a, i1 %b) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CTestEq.Main(i1 %a, i1 %b) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Eq.call = icmp eq i1 %a, %b, !dbg !7
 // CHECK:STDOUT:   ret i1 %Eq.call, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestNeq.Main(i1 %a, i1 %b) !dbg !9 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CTestNeq.Main(i1 %a, i1 %b) #0 !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Neq.call = icmp ne i1 %a, %b, !dbg !10
 // CHECK:STDOUT:   ret i1 %Neq.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CIfEq.Main(i1 %a, i1 %b) !dbg !12 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CIfEq.Main(i1 %a, i1 %b) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Eq.call = icmp eq i1 %a, %b, !dbg !13
 // CHECK:STDOUT:   br i1 %Eq.call, label %if.then, label %if.else, !dbg !14
@@ -49,6 +52,8 @@ fn IfEq(a: Bool(), b: Bool()) -> Bool() {
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
 // CHECK:STDOUT:   ret i1 false, !dbg !16
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

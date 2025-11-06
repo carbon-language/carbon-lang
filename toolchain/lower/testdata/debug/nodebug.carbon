@@ -17,7 +17,10 @@ fn F() {
 // CHECK:STDOUT: ; ModuleID = 'nodebug.carbon'
 // CHECK:STDOUT: source_filename = "nodebug.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CF.Main() {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CF.Main() #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }

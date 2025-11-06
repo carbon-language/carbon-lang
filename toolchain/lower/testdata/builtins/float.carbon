@@ -82,71 +82,84 @@ fn TestF128(a: f128, b: f128) -> f128 { return F128(a, b); }
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @_CTestNegate.Main(double %a) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define double @_CTestNegate.Main(double %a) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Negate.call = fneg double %a, !dbg !7
 // CHECK:STDOUT:   ret double %Negate.call, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @_CTestAdd.Main(double %a, double %b) !dbg !9 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define double @_CTestAdd.Main(double %a, double %b) #0 !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Add.call = fadd double %a, %b, !dbg !10
 // CHECK:STDOUT:   ret double %Add.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @_CTestSub.Main(double %a, double %b) !dbg !12 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define double @_CTestSub.Main(double %a, double %b) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Sub.call = fsub double %a, %b, !dbg !13
 // CHECK:STDOUT:   ret double %Sub.call, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @_CTestMul.Main(double %a, double %b) !dbg !15 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define double @_CTestMul.Main(double %a, double %b) #0 !dbg !15 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Mul.call = fmul double %a, %b, !dbg !16
 // CHECK:STDOUT:   ret double %Mul.call, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @_CTestDiv.Main(double %a, double %b) !dbg !18 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define double @_CTestDiv.Main(double %a, double %b) #0 !dbg !18 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Div.call = fdiv double %a, %b, !dbg !19
 // CHECK:STDOUT:   ret double %Div.call, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestEq.Main(double %a, double %b) !dbg !21 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CTestEq.Main(double %a, double %b) #0 !dbg !21 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Eq.call = fcmp oeq double %a, %b, !dbg !22
 // CHECK:STDOUT:   ret i1 %Eq.call, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestNeq.Main(double %a, double %b) !dbg !24 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CTestNeq.Main(double %a, double %b) #0 !dbg !24 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Neq.call = fcmp one double %a, %b, !dbg !25
 // CHECK:STDOUT:   ret i1 %Neq.call, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestLess.Main(double %a, double %b) !dbg !27 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CTestLess.Main(double %a, double %b) #0 !dbg !27 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Less.call = fcmp olt double %a, %b, !dbg !28
 // CHECK:STDOUT:   ret i1 %Less.call, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestLessEq.Main(double %a, double %b) !dbg !30 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CTestLessEq.Main(double %a, double %b) #0 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %LessEq.call = fcmp ole double %a, %b, !dbg !31
 // CHECK:STDOUT:   ret i1 %LessEq.call, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestGreater.Main(double %a, double %b) !dbg !33 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CTestGreater.Main(double %a, double %b) #0 !dbg !33 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Greater.call = fcmp ogt double %a, %b, !dbg !34
 // CHECK:STDOUT:   ret i1 %Greater.call, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i1 @_CTestGreaterEq.Main(double %a, double %b) !dbg !36 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i1 @_CTestGreaterEq.Main(double %a, double %b) #0 !dbg !36 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %GreaterEq.call = fcmp oge double %a, %b, !dbg !37
 // CHECK:STDOUT:   ret i1 %GreaterEq.call, !dbg !38
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -193,7 +206,8 @@ fn TestF128(a: f128, b: f128) -> f128 { return F128(a, b); }
 // CHECK:STDOUT: ; ModuleID = 'compound_assign.carbon'
 // CHECK:STDOUT: source_filename = "compound_assign.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CTestAdd.Main(ptr %a, double %b) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CTestAdd.Main(ptr %a, double %b) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Add.call = load double, ptr %a, align 8, !dbg !7
 // CHECK:STDOUT:   %Add.call1 = fadd double %Add.call, %b, !dbg !7
@@ -201,7 +215,8 @@ fn TestF128(a: f128, b: f128) -> f128 { return F128(a, b); }
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CTestSub.Main(ptr %a, double %b) !dbg !9 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CTestSub.Main(ptr %a, double %b) #0 !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Sub.call = load double, ptr %a, align 8, !dbg !10
 // CHECK:STDOUT:   %Sub.call1 = fsub double %Sub.call, %b, !dbg !10
@@ -209,7 +224,8 @@ fn TestF128(a: f128, b: f128) -> f128 { return F128(a, b); }
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CTestMul.Main(ptr %a, double %b) !dbg !12 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CTestMul.Main(ptr %a, double %b) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Mul.call = load double, ptr %a, align 8, !dbg !13
 // CHECK:STDOUT:   %Mul.call1 = fmul double %Mul.call, %b, !dbg !13
@@ -217,13 +233,16 @@ fn TestF128(a: f128, b: f128) -> f128 { return F128(a, b); }
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CTestDiv.Main(ptr %a, double %b) !dbg !15 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CTestDiv.Main(ptr %a, double %b) #0 !dbg !15 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Div.call = load double, ptr %a, align 8, !dbg !16
 // CHECK:STDOUT:   %Div.call1 = fdiv double %Div.call, %b, !dbg !16
 // CHECK:STDOUT:   store double %Div.call1, ptr %a, align 8, !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -249,29 +268,35 @@ fn TestF128(a: f128, b: f128) -> f128 { return F128(a, b); }
 // CHECK:STDOUT: ; ModuleID = 'types.carbon'
 // CHECK:STDOUT: source_filename = "types.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define half @_CTestF16.Main(half %a, half %b) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define half @_CTestF16.Main(half %a, half %b) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %F16.call = fadd half %a, %b, !dbg !7
 // CHECK:STDOUT:   ret half %F16.call, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define float @_CTestF32.Main(float %a, float %b) !dbg !9 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define float @_CTestF32.Main(float %a, float %b) #0 !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %F32.call = fadd float %a, %b, !dbg !10
 // CHECK:STDOUT:   ret float %F32.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define double @_CTestF64.Main(double %a, double %b) !dbg !12 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define double @_CTestF64.Main(double %a, double %b) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %F64.call = fadd double %a, %b, !dbg !13
 // CHECK:STDOUT:   ret double %F64.call, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define fp128 @_CTestF128.Main(fp128 %a, fp128 %b) !dbg !15 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define fp128 @_CTestF128.Main(fp128 %a, fp128 %b) #0 !dbg !15 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %F128.call = fadd fp128 %a, %b, !dbg !16
 // CHECK:STDOUT:   ret fp128 %F128.call, !dbg !17
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

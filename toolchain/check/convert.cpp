@@ -722,14 +722,16 @@ static auto ConvertDerivedPointerToBasePointer(
 }
 
 // Returns whether `category` is a valid expression category to produce as a
-// result of a conversion with kind `target_kind`, or at most needs a temporary
-// to be materialized.
+// result of a conversion with kind `target_kind`.
 static auto IsValidExprCategoryForConversionTarget(
     SemIR::ExprCategory category, ConversionTarget::Kind target_kind) -> bool {
   switch (target_kind) {
     case ConversionTarget::Value:
       return category == SemIR::ExprCategory::Value;
     case ConversionTarget::ValueOrRef:
+      return category == SemIR::ExprCategory::Value ||
+             category == SemIR::ExprCategory::DurableRef ||
+             category == SemIR::ExprCategory::EphemeralRef;
     case ConversionTarget::Discarded:
       return category == SemIR::ExprCategory::Value ||
              category == SemIR::ExprCategory::DurableRef ||
@@ -910,6 +912,12 @@ static auto PerformBuiltinConversion(
           context, loc_id, {.type_id = value_type_id, .init_id = value_id});
     }
 
+    // Materialization is handled as part of the enclosing conversion.
+    if (value_cat == SemIR::ExprCategory::Initializing &&
+        target.kind == ConversionTarget::ValueOrRef) {
+      return value_id;
+    }
+
     // PerformBuiltinConversion converts each part of a tuple or struct, even
     // when the types are the same. This is not done for classes since they have
     // to define their conversions as part of their api.
@@ -1015,7 +1023,7 @@ static auto PerformBuiltinConversion(
             {.type_id = target.type_id, .source_id = value_id});
 
         if (need_value_binding) {
-          value_id = AddInst<SemIR::BindValue>(
+          value_id = AddInst<SemIR::AcquireValue>(
               context, loc_id,
               {.type_id = target.type_id, .value_id = value_id});
         }
@@ -1226,9 +1234,9 @@ static auto PerformBuiltinConversion(
       // converting back to the type of the original symbolic binding facet
       // value.
       //
-      // In the case where the FacetAccessType wraps a BindSymbolicName with the
+      // In the case where the FacetAccessType wraps a SymbolicBinding with the
       // exact facet type that we are converting to, the resulting FacetValue
-      // would evaluate back to the original BindSymbolicName as its canonical
+      // would evaluate back to the original SymbolicBinding as its canonical
       // form. We can skip past the whole impl lookup step then and do that
       // here.
       //
@@ -1443,6 +1451,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   if (expr_id == SemIR::ErrorInst::InstId) {
     return expr_id;
   }
+  bool performed_builtin_conversion = expr_id != orig_expr_id;
 
   // Defer the action if it's dependent. We do this now rather than before
   // attempting any conversion so that we can still perform builtin conversions
@@ -1459,9 +1468,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     auto target_type_inst_id = context.types().GetInstId(target.type_id);
     return AddDependentActionSplice(
         context, loc_id,
-        SemIR::ConvertToValueAction{.type_id = SemIR::InstType::TypeId,
-                                    .inst_id = expr_id,
-                                    .target_type_inst_id = target_type_inst_id},
+        SemIR::ConvertToValueAction{
+            .type_id = GetSingletonType(context, SemIR::InstType::TypeInstId),
+            .inst_id = expr_id,
+            .target_type_inst_id = target_type_inst_id},
         target_type_inst_id);
   }
 
@@ -1529,7 +1539,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   // Now perform any necessary value category conversions.
-  switch (SemIR::GetExprCategory(sem_ir, expr_id)) {
+  // This uses fallthrough to implement a very simple state machine over the
+  // category of expr_id, which is tracked by current_category.
+  switch (auto current_category = SemIR::GetExprCategory(sem_ir, expr_id);
+          current_category) {
     case SemIR::ExprCategory::NotExpr:
     case SemIR::ExprCategory::Mixed:
       CARBON_FATAL("Unexpected expression {0} after builtin conversions",
@@ -1540,10 +1553,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
     case SemIR::ExprCategory::Initializing:
       if (target.is_initializer()) {
-        if (orig_expr_id == expr_id) {
+        if (!performed_builtin_conversion) {
           // Don't fill in the return slot if we created the expression through
-          // a conversion. In that case, we will have created it with the
-          // target already set.
+          // a builtin conversion. In that case, we will have created it with
+          // the target already set.
           // TODO: Find a better way to track whether we need to do this.
           MarkInitializerFor(sem_ir, expr_id, target);
         }
@@ -1558,15 +1571,16 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       expr_id = FinalizeTemporary(context, expr_id,
                                   target.kind == ConversionTarget::Discarded);
       // We now have an ephemeral reference.
+      current_category = SemIR::ExprCategory::EphemeralRef;
       [[fallthrough]];
 
     case SemIR::ExprCategory::DurableRef:
-      if (target.kind == ConversionTarget::DurableRef) {
+    case SemIR::ExprCategory::EphemeralRef:
+      if (current_category == SemIR::ExprCategory::DurableRef &&
+          target.kind == ConversionTarget::DurableRef) {
         break;
       }
-      [[fallthrough]];
 
-    case SemIR::ExprCategory::EphemeralRef:
       // If a reference expression is an acceptable result, we're done.
       if (target.kind == ConversionTarget::ValueOrRef ||
           target.kind == ConversionTarget::Discarded ||
@@ -1576,10 +1590,11 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
       // If we have a reference and don't want one, form a value binding.
       // TODO: Support types with custom value representations.
-      expr_id = AddInst<SemIR::BindValue>(
+      expr_id = AddInst<SemIR::AcquireValue>(
           context, SemIR::LocId(expr_id),
           {.type_id = target.type_id, .value_id = expr_id});
       // We now have a value expression.
+      current_category = SemIR::ExprCategory::Value;
       [[fallthrough]];
 
     case SemIR::ExprCategory::Value:
@@ -1598,12 +1613,14 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       // When initializing from a value, perform a copy.
       if (target.is_initializer()) {
         expr_id = PerformCopy(context, expr_id, target);
+        current_category = SemIR::ExprCategory::Initializing;
       }
 
       // When initializing a C++ thunk parameter, form a reference, creating a
       // temporary if needed.
       if (target.kind == ConversionTarget::CppThunkRef) {
         expr_id = ConvertValueForCppThunkRef(context, expr_id);
+        current_category = SemIR::ExprCategory::EphemeralRef;
       }
 
       break;
@@ -1728,7 +1745,7 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
                 bool diagnose) -> TypeExpr {
   auto type_inst_id =
       ConvertToValueOfType(context, loc_id, value_id, SemIR::TypeType::TypeId);
-  if (type_inst_id == SemIR::ErrorInst::InstId) {
+  if (type_inst_id == SemIR::ErrorInst::TypeInstId) {
     return {.inst_id = SemIR::ErrorInst::TypeInstId,
             .type_id = SemIR::ErrorInst::TypeId};
   }

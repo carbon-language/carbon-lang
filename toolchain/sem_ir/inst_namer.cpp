@@ -772,12 +772,12 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddEntityNameAndMaybePush(inst.interface_id, ".assoc_type");
       return;
     }
-    case BindAlias::Kind:
+    case AliasBinding::Kind:
     case RefBinding::Kind:
-    case BindSymbolicName::Kind:
+    case SymbolicBinding::Kind:
     case ValueBinding::Kind:
     case ExportDecl::Kind: {
-      auto inst = inst_.As<AnyBindNameOrExportDecl>();
+      auto inst = inst_.As<AnyBindingOrExportDecl>();
       AddInstNameId(sem_ir().entity_names().Get(inst.entity_name_id).name_id);
       return;
     }
@@ -878,7 +878,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
     }
     case CARBON_KIND(SymbolicBindingType inst): {
       auto bind =
-          sem_ir().insts().GetAs<BindSymbolicName>(inst.facet_value_inst_id);
+          sem_ir().insts().GetAs<SymbolicBinding>(inst.facet_value_inst_id);
       auto name_id = sem_ir().entity_names().Get(bind.entity_name_id).name_id;
       if (name_id.has_value()) {
         AddInstNameId(name_id, ".binding.as_type");
@@ -893,12 +893,21 @@ auto InstNamer::NamingContext::NameInst() -> void {
       bool has_where = facet_type_info.other_requirements ||
                        !facet_type_info.builtin_constraint_mask.empty() ||
                        !facet_type_info.self_impls_constraints.empty() ||
+                       !facet_type_info.self_impls_named_constraints.empty() ||
                        !facet_type_info.rewrite_constraints.empty();
-      if (facet_type_info.extend_constraints.size() == 1) {
+      if (facet_type_info.extend_constraints.size() == 1 &&
+          facet_type_info.extend_named_constraints.empty()) {
         AddEntityNameAndMaybePush(
             facet_type_info.extend_constraints.front().interface_id,
             has_where ? "_where.type" : ".type");
-      } else if (facet_type_info.extend_constraints.empty()) {
+      } else if (facet_type_info.extend_named_constraints.size() == 1 &&
+                 facet_type_info.extend_constraints.empty()) {
+        AddEntityNameAndMaybePush(
+            facet_type_info.extend_named_constraints.front()
+                .named_constraint_id,
+            has_where ? "_where.type" : ".type");
+      } else if (facet_type_info.extend_constraints.empty() &&
+                 facet_type_info.extend_named_constraints.empty()) {
         AddInstName(has_where ? "type_where" : "type");
       } else {
         AddInstName("facet_type");

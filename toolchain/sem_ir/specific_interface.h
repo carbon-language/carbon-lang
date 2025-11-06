@@ -14,10 +14,10 @@ namespace Carbon::SemIR {
 struct SpecificInterface {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
+  static const SpecificInterface None;
+
   InterfaceId interface_id;
   SpecificId specific_id;
-
-  static const SpecificInterface None;
 
   friend auto operator==(const SpecificInterface& lhs,
                          const SpecificInterface& rhs) -> bool = default;

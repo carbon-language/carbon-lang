@@ -156,7 +156,7 @@ fn MyF() {
 // CHECK:STDOUT:     %Cpp.ref.loc7_14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %C.ref.loc7: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7_25: %C = bind_value %global.ref
+// CHECK:STDOUT:   %.loc7_25: %C = acquire_value %global.ref
 // CHECK:STDOUT:   %local: %C = value_binding local, %.loc7_25
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %local_ptr.patt: %pattern_type.a31 = value_binding_pattern local_ptr [concrete]
@@ -168,7 +168,7 @@ fn MyF() {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %ptr.loc8: type = ptr_type %C.ref.loc8 [concrete = constants.%ptr.d9e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_30: %ptr.d9e = bind_value %global_ptr.ref
+// CHECK:STDOUT:   %.loc8_30: %ptr.d9e = acquire_value %global_ptr.ref
 // CHECK:STDOUT:   %local_ptr: %ptr.d9e = value_binding local_ptr, %.loc8_30
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %local_ref.patt: %pattern_type.a31 = value_binding_pattern local_ref [concrete]
@@ -182,7 +182,7 @@ fn MyF() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc9_30.1: ref %ptr.d9e = as_compatible %global_ref.ref [concrete = constants.%global_ref.var]
 // CHECK:STDOUT:   %.loc9_30.2: ref %ptr.d9e = converted %global_ref.ref, %.loc9_30.1 [concrete = constants.%global_ref.var]
-// CHECK:STDOUT:   %.loc9_30.3: %ptr.d9e = bind_value %.loc9_30.2
+// CHECK:STDOUT:   %.loc9_30.3: %ptr.d9e = acquire_value %.loc9_30.2
 // CHECK:STDOUT:   %local_ref: %ptr.d9e = value_binding local_ref, %.loc9_30.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -251,7 +251,7 @@ fn MyF() {
 // CHECK:STDOUT:     %N.ref.loc7_17: <namespace> = name_ref N, imports.%N [concrete = imports.%N]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7_29: %C = bind_value %global.ref
+// CHECK:STDOUT:   %.loc7_29: %C = acquire_value %global.ref
 // CHECK:STDOUT:   %local: %C = value_binding local, %.loc7_29
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

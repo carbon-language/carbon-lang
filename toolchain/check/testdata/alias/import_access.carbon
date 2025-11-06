@@ -71,7 +71,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %A: type = bind_alias A, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %A: type = alias_binding A, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

@@ -50,7 +50,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Interface.type: type = facet_type <@Interface> [concrete]
-// CHECK:STDOUT:   %Self.46e: %Interface.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.7fe: %Interface.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Interface.F.type: type = fn_type @Interface.F [concrete]
 // CHECK:STDOUT:   %Interface.F: %Interface.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface [concrete]
@@ -62,10 +62,10 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Different.type: type = facet_type <@Different> [concrete]
-// CHECK:STDOUT:   %Self.b8f: %Different.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.c20: %Different.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self]
-// CHECK:STDOUT:   %U: %Different.type = bind_symbolic_name U, 0 [symbolic]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %U: %Different.type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.fa7: type = pattern_type %Different.type [concrete]
 // CHECK:STDOUT:   %U.binding.as_type: type = symbolic_binding_type U, 0, %U [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
@@ -105,17 +105,17 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:     %T.ref: %Interface.assoc_type = name_ref T, @T.%assoc1 [concrete = constants.%assoc1]
 // CHECK:STDOUT:     %U.as_type: type = facet_access_type %U.ref [symbolic = %U.binding.as_type (constants.%U.binding.as_type)]
 // CHECK:STDOUT:     %.loc32: type = splice_block %Different.ref [concrete = constants.%Different.type] {
-// CHECK:STDOUT:       %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Different.ref: type = name_ref Different, file.%Different.decl [concrete = constants.%Different.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc32_6.2: %Different.type = bind_symbolic_name U, 0 [symbolic = %U.loc32_6.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc32_6.2: %Different.type = symbolic_binding U, 0 [symbolic = %U.loc32_6.1 (constants.%U)]
 // CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Interface {
-// CHECK:STDOUT:   %Self: %Interface.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.46e]
+// CHECK:STDOUT:   %Self: %Interface.type = symbolic_binding Self, 0 [symbolic = constants.%Self.7fe]
 // CHECK:STDOUT:   %Interface.F.decl: %Interface.F.type = fn_decl @Interface.F [concrete = constants.%Interface.F] {} {}
 // CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %Interface.F.decl [concrete = constants.%assoc0.b4c]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {
@@ -130,7 +130,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Different {
-// CHECK:STDOUT:   %Self: %Different.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self.b8f]
+// CHECK:STDOUT:   %Self: %Different.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c20]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -164,15 +164,15 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%U.loc32_6.2: %Different.type) {
-// CHECK:STDOUT:   %U.loc32_6.1: %Different.type = bind_symbolic_name U, 0 [symbolic = %U.loc32_6.1 (constants.%U)]
+// CHECK:STDOUT:   %U.loc32_6.1: %Different.type = symbolic_binding U, 0 [symbolic = %U.loc32_6.1 (constants.%U)]
 // CHECK:STDOUT:   %U.binding.as_type: type = symbolic_binding_type U, 0, %U.loc32_6.1 [symbolic = %U.binding.as_type (constants.%U.binding.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> <error>;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Interface.F(constants.%Self.46e) {}
+// CHECK:STDOUT: specific @Interface.F(constants.%Self.7fe) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self.46e) {}
+// CHECK:STDOUT: specific @T(constants.%Self.7fe) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%U) {
 // CHECK:STDOUT:   %U.loc32_6.1 => constants.%U

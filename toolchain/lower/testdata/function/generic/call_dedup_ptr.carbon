@@ -26,36 +26,39 @@ fn M() {
 // CHECK:STDOUT: ; ModuleID = 'call_dedup_ptr.carbon'
 // CHECK:STDOUT: source_filename = "call_dedup_ptr.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CM.Main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CM.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %ptr_i32.var = alloca ptr, align 8, !dbg !7
 // CHECK:STDOUT:   %ptr_f64.var = alloca ptr, align 8, !dbg !8
 // CHECK:STDOUT:   %ptr_i8.var = alloca ptr, align 8, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i32.var), !dbg !7
 // CHECK:STDOUT:   %.loc19_5 = load ptr, ptr %ptr_i32.var, align 8, !dbg !10
-// CHECK:STDOUT:   %F.call.loc19 = call ptr @_CF.Main.a194de4a3b8dbd0c(ptr %.loc19_5), !dbg !11
+// CHECK:STDOUT:   %F.call.loc19 = call ptr @_CF.Main.0a952f8bcc623ce6(ptr %.loc19_5), !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_f64.var), !dbg !8
 // CHECK:STDOUT:   %.loc21_5 = load ptr, ptr %ptr_f64.var, align 8, !dbg !12
-// CHECK:STDOUT:   %F.call.loc21 = call ptr @_CF.Main.a194de4a3b8dbd0c(ptr %.loc21_5), !dbg !13
+// CHECK:STDOUT:   %F.call.loc21 = call ptr @_CF.Main.0a952f8bcc623ce6(ptr %.loc21_5), !dbg !13
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i8.var), !dbg !9
 // CHECK:STDOUT:   %.loc23_5 = load ptr, ptr %ptr_i8.var, align 8, !dbg !14
-// CHECK:STDOUT:   %F.call.loc23 = call ptr @_CF.Main.a194de4a3b8dbd0c(ptr %.loc23_5), !dbg !15
+// CHECK:STDOUT:   %F.call.loc23 = call ptr @_CF.Main.0a952f8bcc623ce6(ptr %.loc23_5), !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr ptr @_CF.Main.a194de4a3b8dbd0c(ptr %x) !dbg !17 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr ptr @_CF.Main.0a952f8bcc623ce6(ptr %x) #0 !dbg !17 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret ptr %x, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CF.Main.a194de4a3b8dbd0c, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CF.Main.0a952f8bcc623ce6, { 2, 1, 0 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
@@ -77,5 +80,5 @@ fn M() {
 // CHECK:STDOUT: !14 = !DILocation(line: 23, column: 5, scope: !4)
 // CHECK:STDOUT: !15 = !DILocation(line: 23, column: 3, scope: !4)
 // CHECK:STDOUT: !16 = !DILocation(line: 17, column: 1, scope: !4)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.a194de4a3b8dbd0c", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.0a952f8bcc623ce6", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !18 = !DILocation(line: 14, column: 3, scope: !17)

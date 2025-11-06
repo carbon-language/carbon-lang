@@ -24,10 +24,10 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = bind_symbolic_name .Self [symbolic_self]
-// CHECK:STDOUT:   %T: type = bind_symbolic_name T, 1 [symbolic]
+// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %I.F.type: type = fn_type @I.F [concrete]
 // CHECK:STDOUT:   %I.F: %I.F.type = struct_value () [concrete]
@@ -47,12 +47,12 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %I.type = bind_symbolic_name Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %I.F.decl: %I.F.type = fn_decl @I.F [concrete = constants.%I.F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %T.loc16_8.2: type = bind_symbolic_name T, 1 [symbolic = %T.loc16_8.1 (constants.%T)]
+// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %T.loc16_8.2: type = symbolic_binding T, 1 [symbolic = %T.loc16_8.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %U: type = assoc_const_decl @U [concrete] {
@@ -61,8 +61,8 @@ interface I {
 // CHECK:STDOUT:   %I.G.decl: %I.G.type = fn_decl @I.G [concrete = constants.%I.G] {
 // CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.Self: %type = bind_symbolic_name .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %T.loc20_8.2: type = bind_symbolic_name T, 1 [symbolic = %T.loc20_8.1 (constants.%T)]
+// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %T.loc20_8.2: type = symbolic_binding T, 1 [symbolic = %T.loc20_8.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc2: %I.assoc_type = assoc_entity element2, %I.G.decl [concrete = constants.%assoc2]
 // CHECK:STDOUT:
@@ -79,13 +79,13 @@ interface I {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.F(@I.%Self: %I.type, %T.loc16_8.2: type) {
-// CHECK:STDOUT:   %T.loc16_8.1: type = bind_symbolic_name T, 1 [symbolic = %T.loc16_8.1 (constants.%T)]
+// CHECK:STDOUT:   %T.loc16_8.1: type = symbolic_binding T, 1 [symbolic = %T.loc16_8.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.G(@I.%Self: %I.type, %T.loc20_8.2: type) {
-// CHECK:STDOUT:   %T.loc20_8.1: type = bind_symbolic_name T, 1 [symbolic = %T.loc20_8.1 (constants.%T)]
+// CHECK:STDOUT:   %T.loc20_8.1: type = symbolic_binding T, 1 [symbolic = %T.loc20_8.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }

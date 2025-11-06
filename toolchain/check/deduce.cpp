@@ -375,7 +375,7 @@ auto DeductionContext::Deduce() -> bool {
       // Deducing a symbolic binding appearing within an expression against a
       // constant value deduces the binding as having that value. For example,
       // deducing `[T:! type](x: T)` against `("foo")` deduces `T` as `String`.
-      case CARBON_KIND(SemIR::BindSymbolicName bind): {
+      case CARBON_KIND(SemIR::SymbolicBinding bind): {
         auto& entity_name = context().entity_names().Get(bind.entity_name_id);
         auto index = entity_name.bind_index();
         if (!index.has_value() || index < first_deduced_index_ ||
@@ -465,7 +465,7 @@ static auto GetEntityNameForGenericBinding(Context& context,
   binding_id = context.constant_values().GetConstantInstId(binding_id);
 
   if (auto bind_name =
-          context.insts().TryGetAs<SemIR::AnyBindName>(binding_id)) {
+          context.insts().TryGetAs<SemIR::AnyBinding>(binding_id)) {
     return context.entity_names().Get(bind_name->entity_name_id).name_id;
   } else {
     CARBON_FATAL("Instruction without entity name in generic binding position");

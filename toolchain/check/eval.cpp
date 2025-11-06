@@ -85,7 +85,7 @@ class EvalContext {
 
   // Gets the value of the specified compile-time binding in this context.
   // Returns `None` if the value is not fixed in this context.
-  auto GetCompileTimeBindValue(SemIR::CompileTimeBindIndex bind_index)
+  auto GetCompileTimeAcquireValue(SemIR::CompileTimeBindIndex bind_index)
       -> SemIR::ConstantId {
     if (!bind_index.has_value() || !specific_id_.has_value()) {
       return SemIR::ConstantId::None;
@@ -623,19 +623,36 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
       .other_requirements = orig.other_requirements};
 
   info.extend_constraints.reserve(orig.extend_constraints.size());
-  for (const auto& interface : orig.extend_constraints) {
+  for (const auto& extend : orig.extend_constraints) {
     info.extend_constraints.push_back(
-        {.interface_id = interface.interface_id,
+        {.interface_id = extend.interface_id,
          .specific_id =
-             GetConstantValue(eval_context, interface.specific_id, phase)});
+             GetConstantValue(eval_context, extend.specific_id, phase)});
   }
 
   info.self_impls_constraints.reserve(orig.self_impls_constraints.size());
-  for (const auto& interface : orig.self_impls_constraints) {
+  for (const auto& self_impls : orig.self_impls_constraints) {
     info.self_impls_constraints.push_back(
-        {.interface_id = interface.interface_id,
+        {.interface_id = self_impls.interface_id,
          .specific_id =
-             GetConstantValue(eval_context, interface.specific_id, phase)});
+             GetConstantValue(eval_context, self_impls.specific_id, phase)});
+  }
+
+  info.extend_named_constraints.reserve(orig.extend_named_constraints.size());
+  for (const auto& extend : orig.extend_named_constraints) {
+    info.extend_named_constraints.push_back(
+        {.named_constraint_id = extend.named_constraint_id,
+         .specific_id =
+             GetConstantValue(eval_context, extend.specific_id, phase)});
+  }
+
+  info.self_impls_named_constraints.reserve(
+      orig.self_impls_named_constraints.size());
+  for (const auto& self_impls : orig.self_impls_named_constraints) {
+    info.self_impls_named_constraints.push_back(
+        {.named_constraint_id = self_impls.named_constraint_id,
+         .specific_id =
+             GetConstantValue(eval_context, self_impls.specific_id, phase)});
   }
 
   // Rewrite constraints are resolved first before replacing them with their
@@ -987,10 +1004,9 @@ static auto PerformCheckedCharConvert(Context& context, SemIR::LocId loc_id,
 static auto MakeIntTypeResult(Context& context, SemIR::LocId loc_id,
                               SemIR::IntKind int_kind, SemIR::InstId width_id,
                               Phase phase) -> SemIR::ConstantId {
-  auto result = SemIR::IntType{
-      .type_id = GetSingletonType(context, SemIR::TypeType::TypeInstId),
-      .int_kind = int_kind,
-      .bit_width_id = width_id};
+  auto result = SemIR::IntType{.type_id = SemIR::TypeType::TypeId,
+                               .int_kind = int_kind,
+                               .bit_width_id = width_id};
   if (!ValidateIntType(context, loc_id, result)) {
     return SemIR::ErrorInst::ConstantId;
   }
@@ -1002,10 +1018,9 @@ static auto MakeIntTypeResult(Context& context, SemIR::LocId loc_id,
 static auto MakeFloatTypeResult(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId width_id, Phase phase)
     -> SemIR::ConstantId {
-  auto result = SemIR::FloatType{
-      .type_id = GetSingletonType(context, SemIR::TypeType::TypeInstId),
-      .bit_width_id = width_id,
-      .float_kind = SemIR::FloatKind::None};
+  auto result = SemIR::FloatType{.type_id = SemIR::TypeType::TypeId,
+                                 .bit_width_id = width_id,
+                                 .float_kind = SemIR::FloatKind::None};
   if (!ValidateFloatTypeAndSetKind(context, loc_id, result)) {
     return SemIR::ErrorInst::ConstantId;
   }
@@ -2085,8 +2100,10 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
         // The result is an instruction.
         return MakeConstantResult(
             eval_context.context(),
-            SemIR::InstValue{.type_id = SemIR::InstType::TypeId,
-                             .inst_id = result_inst_id},
+            SemIR::InstValue{
+                .type_id = GetSingletonType(eval_context.context(),
+                                            SemIR::InstType::TypeInstId),
+                .inst_id = result_inst_id},
             Phase::Concrete);
       }
       // Couldn't perform the action because it's still dependent.
@@ -2142,18 +2159,18 @@ auto TryEvalTypedInst<SemIR::ImportRefLoaded>(EvalContext& /*eval_context*/,
 // Symbolic bindings are a special case because they can reach into the eval
 // context and produce a context-specific value.
 template <>
-auto TryEvalTypedInst<SemIR::BindSymbolicName>(EvalContext& eval_context,
-                                               SemIR::InstId inst_id,
-                                               SemIR::Inst inst)
+auto TryEvalTypedInst<SemIR::SymbolicBinding>(EvalContext& eval_context,
+                                              SemIR::InstId inst_id,
+                                              SemIR::Inst inst)
     -> SemIR::ConstantId {
-  auto bind = inst.As<SemIR::BindSymbolicName>();
+  auto bind = inst.As<SemIR::SymbolicBinding>();
 
   // If we know which specific we're evaluating within and this is an argument
   // of that specific, its constant value is the corresponding argument value.
   const auto& bind_name = eval_context.entity_names().Get(bind.entity_name_id);
   if (bind_name.bind_index().has_value()) {
     if (auto value =
-            eval_context.GetCompileTimeBindValue(bind_name.bind_index());
+            eval_context.GetCompileTimeAcquireValue(bind_name.bind_index());
         value.has_value()) {
       return value;
     }
@@ -2165,7 +2182,7 @@ auto TryEvalTypedInst<SemIR::BindSymbolicName>(EvalContext& eval_context,
   bind.value_id = SemIR::InstId::None;
   if (!ReplaceTypeWithConstantValue(eval_context, inst_id, &bind, &phase) ||
       !ReplaceFieldWithConstantValue(eval_context, &bind,
-                                     &SemIR::BindSymbolicName::entity_name_id,
+                                     &SemIR::SymbolicBinding::entity_name_id,
                                      &phase)) {
     return SemIR::ConstantId::NotConstant;
   }
@@ -2184,14 +2201,14 @@ auto TryEvalTypedInst<SemIR::SymbolicBindingType>(EvalContext& eval_context,
       inst.As<SemIR::SymbolicBindingType>().entity_name_id);
   if (bind_name.bind_index().has_value()) {
     if (auto value =
-            eval_context.GetCompileTimeBindValue(bind_name.bind_index());
+            eval_context.GetCompileTimeAcquireValue(bind_name.bind_index());
         value.has_value()) {
       auto value_inst_id = eval_context.constant_values().GetInstId(value);
 
       // A SymbolicBindingType can evaluate to a FacetAccessType if the new
       // value of the entity is a facet value that that does not have a concrete
       // type (a FacetType) and does not have a new EntityName to point to (a
-      // BindSymbolicName).
+      // SymbolicBinding).
       auto access = SemIR::FacetAccessType{
           .type_id = SemIR::TypeType::TypeId,
           .facet_value_inst_id = value_inst_id,

@@ -416,7 +416,7 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
         substitutions_(substitutions) {}
 
   // Applies the given Substitutions to an instruction, in order to replace
-  // BindSymbolicName instructions with the value of the binding.
+  // SymbolicBinding instructions with the value of the binding.
   auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
     if (context().constant_values().Get(inst_id).is_concrete()) {
       // This instruction is a concrete constant, so can't contain any
@@ -447,7 +447,7 @@ class SubstConstantCallbacks final : public SubstInstCallbacks {
 
     auto entity_name_id = SemIR::EntityNameId::None;
     if (auto bind =
-            context().insts().TryGetAs<SemIR::BindSymbolicName>(inst_id)) {
+            context().insts().TryGetAs<SemIR::SymbolicBinding>(inst_id)) {
       entity_name_id = bind->entity_name_id;
     } else if (auto bind =
                    context().insts().TryGetAs<SemIR::SymbolicBindingPattern>(

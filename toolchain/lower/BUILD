@@ -12,16 +12,26 @@ filegroup(
 )
 
 cc_library(
+    name = "options",
+    hdrs = ["options.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "lower",
     srcs = ["lower.cpp"],
     hdrs = ["lower.h"],
     deps = [
         ":context",
+        ":options",
         "//common:vlog",
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:inst_namer",
         "@llvm-project//llvm:Core",
+        "@llvm-project//llvm:Passes",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -51,6 +61,7 @@ cc_library(
         "specific_coalescer.h",
     ],
     deps = [
+        ":options",
         "//common:check",
         "//common:growing_range",
         "//common:map",
@@ -75,6 +86,7 @@ cc_library(
         "@llvm-project//clang:lex",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Linker",
+        "@llvm-project//llvm:Passes",
         "@llvm-project//llvm:Support",
         "@llvm-project//llvm:TransformUtils",
     ],

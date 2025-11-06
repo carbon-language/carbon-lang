@@ -83,14 +83,15 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZNK1A6by_valEv = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CUseVal.Main(ptr %a) !dbg !7 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_CUseVal.Main(ptr %a) #0 !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %by_val__carbon_thunk.call = call i32 @_ZNK1A6by_valEv.carbon_thunk(ptr %a), !dbg !10
 // CHECK:STDOUT:   ret i32 %by_val__carbon_thunk.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
-// CHECK:STDOUT: define dso_local i32 @_ZNK1A6by_valEv.carbon_thunk(ptr nonnull align 8 dereferenceable(12) %this) #0 {
+// CHECK:STDOUT: define dso_local i32 @_ZNK1A6by_valEv.carbon_thunk(ptr nonnull align 8 dereferenceable(12) %this) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8
@@ -100,7 +101,7 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
-// CHECK:STDOUT: define linkonce_odr dso_local i32 @_ZNK1A6by_valEv(ptr nonnull align 8 dereferenceable(12) %this) #1 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local i32 @_ZNK1A6by_valEv(ptr nonnull align 8 dereferenceable(12) %this) #2 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8
@@ -110,8 +111,9 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT:   ret i32 %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #1 = { mustprogress noinline nounwind optnone "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { mustprogress noinline nounwind optnone "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -139,14 +141,15 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN1A6by_refEv = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CUseVal.Main(ptr %a) !dbg !7 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_CUseVal.Main(ptr %a) #0 !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %A.by_ref.call = call i32 @_ZN1A6by_refEv(ptr %a), !dbg !10
 // CHECK:STDOUT:   ret i32 %A.by_ref.call, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
-// CHECK:STDOUT: define linkonce_odr dso_local i32 @_ZN1A6by_refEv(ptr nonnull align 8 dereferenceable(12) %this) #0 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local i32 @_ZN1A6by_refEv(ptr nonnull align 8 dereferenceable(12) %this) #1 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8
@@ -156,7 +159,8 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT:   ret i32 %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { mustprogress noinline nounwind optnone "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { mustprogress noinline nounwind optnone "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -178,7 +182,8 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CUseVal.Main(ptr %a) !dbg !7 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CUseVal.Main(ptr %a) #0 !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc7_4.3.base = getelementptr inbounds nuw [16 x i8], ptr %a, i32 0, i32 0, !dbg !10
 // CHECK:STDOUT:   %Base.virt0.call.vtable = load ptr, ptr %.loc7_4.3.base, align 8, !dbg !10
@@ -195,6 +200,8 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: declare void @_ZN4Base5virt0Ev(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_ZN1A5virt1Ev(ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
@@ -219,7 +226,8 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: %struct.NeedThunk = type { i8 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CCall.Main(ptr %n) !dbg !7 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CCall.Main(ptr %n) #0 !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc7_14.3.temp = alloca i8, align 1, !dbg !10
 // CHECK:STDOUT:   %.loc8_14.3.temp = alloca i8, align 1, !dbg !11
@@ -233,10 +241,10 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
-// CHECK:STDOUT: define dso_local void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk(ptr nonnull align 1 dereferenceable(1) %this, ptr %c) #1 {
+// CHECK:STDOUT: define dso_local void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk(ptr nonnull align 1 dereferenceable(1) %this, ptr %c) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %c.addr = alloca ptr, align 8
@@ -249,10 +257,10 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZNK9NeedThunk8ImplicitEa(ptr nonnull align 1 dereferenceable(1), i8 signext) #2
+// CHECK:STDOUT: declare void @_ZNK9NeedThunk8ImplicitEa(ptr nonnull align 1 dereferenceable(1), i8 signext) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
-// CHECK:STDOUT: define dso_local void @_ZNH9NeedThunk8ExplicitES_a.carbon_thunk(ptr %0, ptr %c) #1 {
+// CHECK:STDOUT: define dso_local void @_ZNH9NeedThunk8ExplicitES_a.carbon_thunk(ptr %0, ptr %c) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %c.addr = alloca ptr, align 8
@@ -266,14 +274,15 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZNH9NeedThunk8ExplicitES_a(i8 signext) #2
+// CHECK:STDOUT: declare void @_ZNH9NeedThunk8ExplicitES_a(i8 signext) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #2 = { "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #2 = { alwaysinline mustprogress "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #3 = { "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}

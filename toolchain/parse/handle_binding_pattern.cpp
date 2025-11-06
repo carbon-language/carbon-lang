@@ -34,6 +34,12 @@ auto HandleBindingPattern(Context& context) -> void {
 
   // A `template` keyword may precede the name.
   auto template_token = context.ConsumeIf(Lex::TokenKind::Template);
+  auto ref_token = context.ConsumeIf(Lex::TokenKind::Ref);
+  if (ref_token && state.in_var_pattern) {
+    CARBON_DIAGNOSTIC(RefInsideVar, Error, "found `ref` inside `var` pattern");
+    context.emitter().Emit(*ref_token, RefInsideVar);
+    state.has_error = true;
+  }
 
   // The first item should be an identifier, the placeholder `_`, or `self`.
   if (auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier)) {
@@ -66,6 +72,16 @@ auto HandleBindingPattern(Context& context) -> void {
       }
       context.AddNode(NodeKind::TemplateBindingName, *template_token,
                       state.has_error);
+    }
+    if (ref_token) {
+      if (token_kind != Lex::TokenKind::Colon && !state.has_error) {
+        CARBON_DIAGNOSTIC(ExpectedRuntimeBindingPatternAfterRef, Error,
+                          "expected `:` binding after `ref`");
+        context.emitter().Emit(*ref_token,
+                               ExpectedRuntimeBindingPatternAfterRef);
+        state.has_error = true;
+      }
+      context.AddNode(NodeKind::RefBindingName, *ref_token, state.has_error);
     }
 
     state.kind = token_kind == Lex::TokenKind::Colon

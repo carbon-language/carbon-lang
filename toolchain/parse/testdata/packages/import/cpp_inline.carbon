@@ -76,17 +76,17 @@ int n;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Cpp'},
+// CHECK:STDOUT:       {kind: 'CppPackageName', text: 'Cpp'},
 // CHECK:STDOUT:         {kind: 'InlineImportBody', text: ';', has_error: yes},
 // CHECK:STDOUT:       {kind: 'InlineImportSpecifier', text: 'inline', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Cpp'},
+// CHECK:STDOUT:       {kind: 'CppPackageName', text: 'Cpp'},
 // CHECK:STDOUT:         {kind: 'InlineImportBody', text: 'library', has_error: yes},
 // CHECK:STDOUT:       {kind: 'InlineImportSpecifier', text: 'inline', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Cpp'},
+// CHECK:STDOUT:       {kind: 'CppPackageName', text: 'Cpp'},
 // CHECK:STDOUT:         {kind: 'LibraryName', text: '"foo.h"'},
 // CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 5},
@@ -100,7 +100,7 @@ int n;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Cpp'},
+// CHECK:STDOUT:       {kind: 'CppPackageName', text: 'Cpp'},
 // CHECK:STDOUT:         {kind: 'InlineImportBody', text: '', has_error: yes},
 // CHECK:STDOUT:       {kind: 'InlineImportSpecifier', text: 'inline', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: 'inline', has_error: yes, subtree_size: 5},
@@ -136,12 +136,12 @@ int n;
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Cpp'},
+// CHECK:STDOUT:       {kind: 'CppPackageName', text: 'Cpp'},
 // CHECK:STDOUT:         {kind: 'InlineImportBody', text: '"int m;"'},
 // CHECK:STDOUT:       {kind: 'InlineImportSpecifier', text: 'inline', subtree_size: 2},
 // CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Cpp'},
+// CHECK:STDOUT:       {kind: 'CppPackageName', text: 'Cpp'},
 // CHECK:STDOUT:         {kind: 'InlineImportBody', text: ''''
 // CHECK:STDOUT: // C++ comment.
 // CHECK:STDOUT: int n;

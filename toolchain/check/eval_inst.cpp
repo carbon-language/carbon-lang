@@ -98,7 +98,7 @@ auto EvalConstantInst(Context& context, SemIR::AsCompatible inst)
   return ConstantEvalResult::NewAnyPhase(value_inst);
 }
 
-auto EvalConstantInst(Context& context, SemIR::BindAlias inst)
+auto EvalConstantInst(Context& context, SemIR::AliasBinding inst)
     -> ConstantEvalResult {
   // An alias evaluates to the value it's bound to.
   return ConstantEvalResult::Existing(
@@ -121,7 +121,7 @@ auto EvalConstantInst(Context& /*context*/, SemIR::ValueBinding /*inst*/)
   return ConstantEvalResult::NotConstant;
 }
 
-auto EvalConstantInst(Context& /*context*/, SemIR::BindValue /*inst*/)
+auto EvalConstantInst(Context& /*context*/, SemIR::AcquireValue /*inst*/)
     -> ConstantEvalResult {
   // TODO: Handle this once we've decided how to represent constant values of
   // reference expressions.
@@ -204,7 +204,7 @@ auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
         context.constant_values().Get(facet_value->type_inst_id));
   }
 
-  if (auto bind_name = context.insts().TryGetAs<SemIR::BindSymbolicName>(
+  if (auto bind_name = context.insts().TryGetAs<SemIR::SymbolicBinding>(
           inst.facet_value_inst_id)) {
     return ConstantEvalResult::NewSamePhase(SemIR::SymbolicBindingType{
         .type_id = SemIR::TypeType::TypeId,
@@ -233,13 +233,13 @@ auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
 
 auto EvalConstantInst(Context& context, SemIR::FacetValue inst)
     -> ConstantEvalResult {
-  // A FacetValue that just wraps a BindSymbolicName without adding/removing any
-  // witnesses is evaluated back to the BindSymbolicName itself.
+  // A FacetValue that just wraps a SymbolicBinding without adding/removing any
+  // witnesses is evaluated back to the SymbolicBinding itself.
   if (auto bind_as_type = context.insts().TryGetAs<SemIR::SymbolicBindingType>(
           inst.type_inst_id)) {
     // TODO: Look in ScopeStack with the entity_name_id to find the facet value.
     auto bind_id = bind_as_type->facet_value_inst_id;
-    auto bind = context.insts().GetAs<SemIR::BindSymbolicName>(bind_id);
+    auto bind = context.insts().GetAs<SemIR::SymbolicBinding>(bind_id);
     // If the FacetTypes are the same, then the FacetValue didn't add/remove
     // any witnesses.
     if (bind.type_id == inst.type_id) {
@@ -448,7 +448,8 @@ auto EvalConstantInst(Context& context, SemIR::InterfaceDecl inst)
         .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
   }
 
-  // A non-parameterized interface declaration evaluates to a facet type.
+  // A non-parameterized interface declaration evaluates to a declared facet
+  // type containing just the interface.
   return ConstantEvalResult::NewAnyPhase(FacetTypeFromInterface(
       context, inst.interface_id,
       context.generics().GetSelfSpecific(interface_info.generic_id)));
@@ -467,7 +468,8 @@ auto EvalConstantInst(Context& context, SemIR::NamedConstraintDecl inst)
         .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
   }
 
-  // A non-parameterized named constraint declaration evaluates to a facet type.
+  // A non-parameterized named constraint declaration evaluates to a declared
+  // facet type containing just the named constraint.
   return ConstantEvalResult::NewAnyPhase(FacetTypeFromNamedConstraint(
       context, inst.named_constraint_id,
       context.generics().GetSelfSpecific(named_constraint_info.generic_id)));

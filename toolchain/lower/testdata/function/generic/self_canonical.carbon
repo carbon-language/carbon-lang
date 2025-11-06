@@ -85,7 +85,8 @@ fn Main_method_no_template () {
 // CHECK:STDOUT: ; ModuleID = 'self_canonical.carbon'
 // CHECK:STDOUT: source_filename = "self_canonical.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CMain_method_no_template.Main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CMain_method_no_template.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %local1.var = alloca ptr, align 8, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local1.var), !dbg !7
@@ -95,9 +96,10 @@ fn Main_method_no_template () {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_Cfourth_function.Main.a95d5636f2d020e8(ptr %arg) !dbg !11 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_Cfourth_function.Main.a95d5636f2d020e8(ptr %arg) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %local1.var = alloca ptr, align 8, !dbg !12
 // CHECK:STDOUT:   %local2.var = alloca ptr, align 8, !dbg !13
@@ -110,7 +112,8 @@ fn Main_method_no_template () {
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_Cfirst_function.Main.308f7be7cd8574f7(ptr %arg) !dbg !19 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_Cfirst_function.Main.308f7be7cd8574f7(ptr %arg) #0 !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %local1.var = alloca ptr, align 8, !dbg !20
 // CHECK:STDOUT:   %local2.var = alloca ptr, align 8, !dbg !21
@@ -122,7 +125,8 @@ fn Main_method_no_template () {
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_Csecond_function.Main.6e67709fb5f3d893(ptr %arg1, ptr %arg2, ptr %arg3) !dbg !26 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_Csecond_function.Main.6e67709fb5f3d893(ptr %arg1, ptr %arg2, ptr %arg3) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %local1.var = alloca ptr, align 8, !dbg !27
 // CHECK:STDOUT:   %local2.var = alloca ptr, align 8, !dbg !28
@@ -138,7 +142,8 @@ fn Main_method_no_template () {
 // CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr void @_Cthird_function.Main.bd8cd068af0bdf76(ptr %arg1, ptr %arg2, ptr %arg3) !dbg !36 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_Cthird_function.Main.bd8cd068af0bdf76(ptr %arg1, ptr %arg2, ptr %arg3) #0 !dbg !36 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %local1.var = alloca ptr, align 8, !dbg !37
 // CHECK:STDOUT:   %local2.var = alloca ptr, align 8, !dbg !38
@@ -154,7 +159,8 @@ fn Main_method_no_template () {
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_Cfirst_function.Main.308f7be7cd8574f7, { 1, 2, 0 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

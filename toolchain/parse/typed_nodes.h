@@ -203,13 +203,13 @@ struct DeclName {
 // Library, package, import, export
 // --------------------------------
 
-// The `package` keyword in an expression.
-using PackageExpr =
-    LeafNode<NodeKind::PackageExpr, Lex::PackageTokenIndex, NodeCategory::Expr>;
-
-// The `Core` keyword in an expression.
+// Various keywords in an expression.
 using CoreNameExpr =
     LeafNode<NodeKind::CoreNameExpr, Lex::CoreTokenIndex, NodeCategory::Expr>;
+using CppNameExpr =
+    LeafNode<NodeKind::CppNameExpr, Lex::CppTokenIndex, NodeCategory::Expr>;
+using PackageExpr =
+    LeafNode<NodeKind::PackageExpr, Lex::PackageTokenIndex, NodeCategory::Expr>;
 
 // The name of a package or library for `package`, `import`, and `library`.
 using IdentifierPackageName =
@@ -217,6 +217,8 @@ using IdentifierPackageName =
              NodeCategory::PackageName>;
 using CorePackageName = LeafNode<NodeKind::CorePackageName, Lex::CoreTokenIndex,
                                  NodeCategory::PackageName>;
+using CppPackageName = LeafNode<NodeKind::CppPackageName, Lex::CppTokenIndex,
+                                NodeCategory::PackageName>;
 using LibraryName =
     LeafNode<NodeKind::LibraryName, Lex::StringLiteralTokenIndex>;
 using DefaultLibrary =
@@ -322,17 +324,29 @@ struct Namespace {
 // Pattern nodes
 // -------------
 
-// A pattern binding, such as `name: Type`, that isn't inside a `var` pattern.
+// A ref binding name: `ref name`.
+struct RefBindingName {
+  static constexpr auto Kind =
+      NodeKind::RefBindingName.Define({.child_count = 1});
+
+  Lex::RefTokenIndex token;
+  AnyRuntimeBindingPatternName name;
+};
+
+// A binding pattern, such as `name: Type`, that isn't inside a `var` pattern.
 struct LetBindingPattern {
   static constexpr auto Kind = NodeKind::LetBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
-  AnyRuntimeBindingPatternName name;
+  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
+  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, UnderscoreName,
+              RefBindingName>
+      name;
   Lex::ColonTokenIndex token;
   AnyExprId type;
 };
 
-// A pattern binding, such as `name: Type`, that is inside a `var` pattern.
+// A binding pattern, such as `name: Type`, that is inside a `var` pattern.
 struct VarBindingPattern {
   static constexpr auto Kind = NodeKind::VarBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});

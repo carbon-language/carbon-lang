@@ -958,6 +958,9 @@ private export C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_use_not_reexporting.carbon
 // CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .C = <poisoned>
@@ -967,10 +970,10 @@ private export C;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C.ref: <error> = name_ref C, <error> [concrete = <error>]
-// CHECK:STDOUT:   %Local: <error> = bind_alias Local, <error> [concrete = <error>]
+// CHECK:STDOUT:   %Local: <error> = alias_binding Local, <error> [concrete = <error>]
 // CHECK:STDOUT:   %NS.ref: <error> = name_ref NS, <error> [concrete = <error>]
 // CHECK:STDOUT:   %NSC.ref: <error> = name_ref NSC, <error> [concrete = <error>]
-// CHECK:STDOUT:   %NSLocal: <error> = bind_alias NSLocal, <error> [concrete = <error>]
+// CHECK:STDOUT:   %NSLocal: <error> = alias_binding NSLocal, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- repeat_export.carbon
