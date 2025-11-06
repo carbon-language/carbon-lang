@@ -162,6 +162,8 @@ auto NameId::ForPackageName(PackageNameId id) -> NameId {
     return ForIdentifier(identifier_id);
   } else if (id == PackageNameId::Core) {
     return NameId::Core;
+  } else if (id == PackageNameId::Cpp) {
+    return NameId::Cpp;
   } else if (!id.has_value()) {
     return NameId::None;
   } else {

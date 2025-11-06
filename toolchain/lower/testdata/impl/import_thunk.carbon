@@ -104,13 +104,11 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc20_19.1.temp = alloca { i32 }, align 8, !dbg !19
 // CHECK:STDOUT:   %.loc16_9.1.temp = alloca { i32 }, align 8, !dbg !20
-// CHECK:STDOUT:   %.loc20_19.2.temp = alloca { i32 }, align 8, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_19.1.temp), !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_9.1.temp), !dbg !20
 // CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.Core"(ptr %.loc16_9.1.temp, ptr %a), !dbg !20
 // CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc20_19.1.temp, ptr %.loc16_9.1.temp), !dbg !19
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_19.2.temp), !dbg !19
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc20_19.2.temp, ptr %.loc20_19.1.temp), !dbg !19
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %return, ptr %.loc20_19.1.temp), !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -118,7 +116,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline nounwind }
@@ -157,14 +155,12 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:   %.loc7_20.1.temp = alloca { i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   %.loc7_20.2.temp = alloca { i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   %.loc7_19.1.temp = alloca { i32 }, align 8, !dbg !8
-// CHECK:STDOUT:   %.loc7_21.1.temp = alloca { i32 }, align 8, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_20.1.temp), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_20.2.temp), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_19.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.Core"(ptr %.loc7_19.1.temp, ptr %a), !dbg !8
 // CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc7_20.2.temp, ptr %.loc7_19.1.temp), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_21.1.temp), !dbg !9
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc7_21.1.temp, ptr %.loc7_20.2.temp), !dbg !9
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %return, ptr %.loc7_20.2.temp), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -180,7 +176,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -216,13 +212,11 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc9_19.1.temp = alloca { i32 }, align 8, !dbg !11
 // CHECK:STDOUT:   %.2.temp = alloca { i32 }, align 8
-// CHECK:STDOUT:   %.loc9_19.2.temp = alloca { i32 }, align 8, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_19.1.temp), !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.2.temp)
 // CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.Core"(ptr %.2.temp, ptr %a), !dbg !12
 // CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(ptr %.loc9_19.1.temp, ptr %.2.temp), !dbg !11
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_19.2.temp), !dbg !11
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc9_19.2.temp, ptr %.loc9_19.1.temp), !dbg !11
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %return, ptr %.loc9_19.1.temp), !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -234,7 +228,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline nounwind }
@@ -265,14 +259,12 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:   %.loc8_19.1.temp = alloca { i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   %.loc8_19.2.temp = alloca { i32 }, align 8, !dbg !7
 // CHECK:STDOUT:   %.loc8_18.1.temp = alloca { i32 }, align 8, !dbg !8
-// CHECK:STDOUT:   %.loc8_20.1.temp = alloca { i32 }, align 8, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_19.1.temp), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_19.2.temp), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_18.1.temp), !dbg !8
 // CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.Core"(ptr %.loc8_18.1.temp, ptr %a), !dbg !8
 // CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(ptr %.loc8_19.2.temp, ptr %.loc8_18.1.temp), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_20.1.temp), !dbg !9
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %.loc8_20.1.temp, ptr %.loc8_19.2.temp), !dbg !9
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.Core"(ptr %return, ptr %.loc8_19.2.temp), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -288,7 +280,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }

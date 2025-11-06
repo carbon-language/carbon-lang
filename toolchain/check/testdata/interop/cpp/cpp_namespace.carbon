@@ -18,25 +18,32 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "header.h";
 
-// CHECK:STDERR: fail_duplicate_cpp_name.carbon:[[@LINE+7]]:11: error: duplicate name `Cpp` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_duplicate_cpp_name.carbon:[[@LINE+8]]:11: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR: namespace Cpp;
 // CHECK:STDERR:           ^~~
-// CHECK:STDERR: fail_duplicate_cpp_name.carbon:[[@LINE-5]]:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: import Cpp library "header.h";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_duplicate_cpp_name.carbon:[[@LINE+4]]:11: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: namespace Cpp;
+// CHECK:STDERR:           ^~~
 // CHECK:STDERR:
 namespace Cpp;
 
-// --- cpp_in_inner_namespace.carbon
+// --- fail_cpp_in_inner_namespace.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "header.h";
 
-//@dump-sem-ir-begin
 namespace N;
+// CHECK:STDERR: fail_cpp_in_inner_namespace.carbon:[[@LINE+8]]:13: error: `.` should be followed by a name [ExpectedDeclNameAfterPeriod]
+// CHECK:STDERR: namespace N.Cpp;
+// CHECK:STDERR:             ^~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_cpp_in_inner_namespace.carbon:[[@LINE+4]]:13: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: namespace N.Cpp;
+// CHECK:STDERR:             ^~~
+// CHECK:STDERR:
 namespace N.Cpp;
-//@dump-sem-ir-end
 
 // --- alias.carbon
 
@@ -54,12 +61,13 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "header.h";
 
-// CHECK:STDERR: fail_add_name_to_cpp_namespace.carbon:[[@LINE+7]]:7: error: imported packages cannot be used for declarations [QualifiedDeclOutsidePackage]
+// CHECK:STDERR: fail_add_name_to_cpp_namespace.carbon:[[@LINE+8]]:7: error: `class` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR: class Cpp.C {};
 // CHECK:STDERR:       ^~~
-// CHECK:STDERR: fail_add_name_to_cpp_namespace.carbon:[[@LINE-5]]:1: note: package imported here [QualifiedDeclOutsidePackageSource]
-// CHECK:STDERR: import Cpp library "header.h";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_add_name_to_cpp_namespace.carbon:[[@LINE+4]]:7: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: class Cpp.C {};
+// CHECK:STDERR:       ^~~
 // CHECK:STDERR:
 class Cpp.C {};
 
@@ -98,18 +106,6 @@ fn F() {
 //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- cpp_in_inner_namespace.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .Cpp = %Cpp
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: --- alias.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {

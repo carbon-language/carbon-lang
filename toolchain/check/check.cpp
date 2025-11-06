@@ -73,14 +73,7 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
                         UnitAndImports& unit_info,
                         Parse::Tree::PackagingNames import, bool fuzzing)
     -> void {
-  const auto& packaging = unit_info.parse_tree().packaging_decl();
-
-  PackageNameId file_package_id =
-      packaging ? packaging->names.package_id : PackageNameId::None;
-  const auto import_key = GetImportKey(unit_info, file_package_id, import);
-  const auto& [import_package_name, import_library_name] = import_key;
-
-  if (import_package_name == PackageNameId::CppName) {
+  if (import.package_id == PackageNameId::Cpp) {
     if (!explicit_import_map) {
       // Don't diagnose the implicit import in `impl package Cpp`, because we'll
       // have diagnosed the use of `Cpp` in the declaration.
@@ -108,9 +101,14 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
     return;
   }
 
+  const auto& packaging = unit_info.parse_tree().packaging_decl();
+  PackageNameId file_package_id =
+      packaging ? packaging->names.package_id : PackageNameId::None;
+  const auto import_key = GetImportKey(unit_info, file_package_id, import);
+
   // True if the import has `Main` as the package name, even if it comes from
   // the file's packaging (diagnostics may differentiate).
-  bool is_explicit_main = import_package_name == MainPackageName;
+  bool is_explicit_main = import_key.first == MainPackageName;
 
   // Explicit imports need more validation than implicit ones. We try to do
   // these in an order of imports that should be removed, followed by imports
@@ -265,7 +263,7 @@ static auto BuildApiMapAndDiagnosePackaging(
                                                        : ExplicitMainLibrary);
       continue;
     }
-    if (import_key.first == PackageNameId::CppName) {
+    if (packaging && packaging->names.package_id == PackageNameId::Cpp) {
       CARBON_DIAGNOSTIC(CppPackageDeclaration, Error,
                         "`Cpp` cannot be used by a `package` declaration");
       unit_info.emitter.Emit(packaging->names.node_id, CppPackageDeclaration);

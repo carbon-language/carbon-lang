@@ -174,6 +174,34 @@ LLVM_DUMP_METHOD auto Dump(const File& file, GenericId generic_id)
   return out.TakeStr();
 }
 
+LLVM_DUMP_METHOD auto Dump(const File& file,
+                           IdentifiedFacetTypeId identified_facet_type_id)
+    -> std::string {
+  RawStringOstream out;
+  out << identified_facet_type_id;
+  if (!identified_facet_type_id.has_value()) {
+    return out.TakeStr();
+  }
+
+  const auto& identified_facet_type =
+      file.identified_facet_types().Get(identified_facet_type_id);
+  for (auto [i, req_interface] :
+       llvm::enumerate(identified_facet_type.required_interfaces())) {
+    out << "\n  - " << Dump(file, req_interface.interface_id);
+    if (req_interface.specific_id.has_value()) {
+      out << "; " << DumpSpecificSummary(file, req_interface.specific_id);
+    }
+    if (req_interface == identified_facet_type.impl_as_target_interface()) {
+      out << " (to impl)";
+    }
+  }
+  if (!identified_facet_type.is_valid_impl_as_target()) {
+    out << "\n  - (" << identified_facet_type.num_interfaces_to_impl()
+        << " to impl)\n";
+  }
+  return out.TakeStr();
+}
+
 LLVM_DUMP_METHOD auto Dump(const File& file, ImplId impl_id) -> std::string {
   RawStringOstream out;
   out << impl_id;
@@ -248,6 +276,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InterfaceId interface_id)
   if (interface_id.has_value()) {
     const auto& interface = file.interfaces().Get(interface_id);
     out << ": " << interface << DumpNameIfValid(file, interface.name_id);
+    out << "\n  - complete: " << (interface.is_complete() ? "true" : "false");
   }
   return out.TakeStr();
 }
@@ -335,29 +364,14 @@ LLVM_DUMP_METHOD auto Dump(const File& file, NameScopeId name_scope_id)
 }
 
 LLVM_DUMP_METHOD auto Dump(const File& file,
-                           IdentifiedFacetTypeId identified_facet_type_id)
+                           NamedConstraintId named_constraint_id)
     -> std::string {
   RawStringOstream out;
-  out << identified_facet_type_id;
-  if (!identified_facet_type_id.has_value()) {
-    return out.TakeStr();
-  }
-
-  const auto& identified_facet_type =
-      file.identified_facet_types().Get(identified_facet_type_id);
-  for (auto [i, req_interface] :
-       llvm::enumerate(identified_facet_type.required_interfaces())) {
-    out << "\n  - " << Dump(file, req_interface.interface_id);
-    if (req_interface.specific_id.has_value()) {
-      out << "; " << DumpSpecificSummary(file, req_interface.specific_id);
-    }
-    if (req_interface == identified_facet_type.impl_as_target_interface()) {
-      out << " (to impl)";
-    }
-  }
-  if (!identified_facet_type.is_valid_impl_as_target()) {
-    out << "\n  - (" << identified_facet_type.num_interfaces_to_impl()
-        << " to impl)\n";
+  out << named_constraint_id;
+  if (named_constraint_id.has_value()) {
+    const auto& constraint = file.named_constraints().Get(named_constraint_id);
+    out << ": " << constraint << DumpNameIfValid(file, constraint.name_id);
+    out << "\n  - complete: " << (constraint.is_complete() ? "true" : "false");
   }
   return out.TakeStr();
 }
@@ -463,6 +477,10 @@ LLVM_DUMP_METHOD static auto MakeNameScopeId(int id) -> NameScopeId {
 LLVM_DUMP_METHOD static auto MakeIdentifiedFacetTypeId(int id)
     -> IdentifiedFacetTypeId {
   return IdentifiedFacetTypeId(id);
+}
+LLVM_DUMP_METHOD static auto MakeNamedConstraintId(int id)
+    -> NamedConstraintId {
+  return NamedConstraintId(id);
 }
 LLVM_DUMP_METHOD static auto MakeSpecificId(int id) -> SpecificId {
   return SpecificId(id);

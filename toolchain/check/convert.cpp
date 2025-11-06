@@ -1451,6 +1451,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   if (expr_id == SemIR::ErrorInst::InstId) {
     return expr_id;
   }
+  bool performed_builtin_conversion = expr_id != orig_expr_id;
 
   // Defer the action if it's dependent. We do this now rather than before
   // attempting any conversion so that we can still perform builtin conversions
@@ -1552,10 +1553,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
     case SemIR::ExprCategory::Initializing:
       if (target.is_initializer()) {
-        if (orig_expr_id == expr_id) {
+        if (!performed_builtin_conversion) {
           // Don't fill in the return slot if we created the expression through
-          // a conversion. In that case, we will have created it with the
-          // target already set.
+          // a builtin conversion. In that case, we will have created it with
+          // the target already set.
           // TODO: Find a better way to track whether we need to do this.
           MarkInitializerFor(sem_ir, expr_id, target);
         }

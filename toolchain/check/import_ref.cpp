@@ -2658,13 +2658,14 @@ static auto AddNamedConstraintDefinition(
                                    new_named_constraint.first_owning_decl_id,
                                    SemIR::NameId::None,
                                    new_named_constraint.parent_scope_id);
-  new_scope.set_is_interface_definition();
   new_named_constraint.body_block_id =
       context.local_context().inst_block_stack().Pop();
   new_named_constraint.self_param_id = self_param_id;
+  new_named_constraint.complete = import_named_constraint.complete;
 
-  CARBON_CHECK(import_scope.extended_scopes().empty(),
-               "Interfaces don't currently have extended scopes to support.");
+  CARBON_CHECK(
+      import_scope.extended_scopes().empty(),
+      "Named constraints don't currently have extended scopes to support.");
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

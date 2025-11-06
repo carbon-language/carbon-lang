@@ -553,7 +553,6 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Derived
-// CHECK:STDOUT:   .Cpp = <poisoned>
 // CHECK:STDOUT:   .base = %.loc8
 // CHECK:STDOUT:   .foo = <poisoned>
 // CHECK:STDOUT:   extend %Bar.ref

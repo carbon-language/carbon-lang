@@ -71,13 +71,8 @@ package Cpp;
 // CHECK:STDERR:
 impl package Cpp;
 
-// --- fail_raw_cpp.carbon
+// --- raw_cpp.carbon
 
-// `cpp` isn't a keyword, so this fails the same way.
-// CHECK:STDERR: fail_raw_cpp.carbon:[[@LINE+4]]:1: error: `Cpp` cannot be used by a `package` declaration [CppPackageDeclaration]
-// CHECK:STDERR: package r#Cpp;
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR:
 package r#Cpp;
 
 // --- fail_cpp_lib.carbon
@@ -134,9 +129,11 @@ package Cpp library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   %Cpp.import = import Cpp
+// CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_raw_cpp.carbon
+// CHECK:STDOUT: --- raw_cpp.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
