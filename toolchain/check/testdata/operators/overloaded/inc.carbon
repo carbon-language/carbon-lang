@@ -38,9 +38,11 @@ fn TestOp() {
 // CHECK:STDOUT:   %Inc.Op.type: type = fn_type @Inc.Op [concrete]
 // CHECK:STDOUT:   %Inc.impl_witness: <witness> = impl_witness file.%Inc.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %C.as.Inc.impl.Op.type: type = fn_type @C.as.Inc.impl.Op [concrete]
-// CHECK:STDOUT:   %C.as.Inc.impl.Op: %C.as.Inc.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.as.Inc.impl.Op.type.739936.1: type = fn_type @C.as.Inc.impl.Op.loc22_25.1 [concrete]
+// CHECK:STDOUT:   %C.as.Inc.impl.Op.6c8e2d.1: %C.as.Inc.impl.Op.type.739936.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Inc.facet: %Inc.type = facet_value %C, (%Inc.impl_witness) [concrete]
+// CHECK:STDOUT:   %C.as.Inc.impl.Op.type.739936.2: type = fn_type @C.as.Inc.impl.Op.loc22_25.2 [concrete]
+// CHECK:STDOUT:   %C.as.Inc.impl.Op.6c8e2d.2: %C.as.Inc.impl.Op.type.739936.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %.35f: type = fn_type_with_self_type %Inc.Op.type, %Inc.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -51,10 +53,12 @@ fn TestOp() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
-// CHECK:STDOUT:   %impl.elem0: %.35f = impl_witness_access constants.%Inc.impl_witness, element0 [concrete = constants.%C.as.Inc.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.35f = impl_witness_access constants.%Inc.impl_witness, element0 [concrete = constants.%C.as.Inc.impl.Op.6c8e2d.2]
 // CHECK:STDOUT:   %bound_method.loc28: <bound method> = bound_method %c.ref, %impl.elem0
-// CHECK:STDOUT:   %addr.loc28: %ptr.019 = addr_of %c.ref
-// CHECK:STDOUT:   %C.as.Inc.impl.Op.call: init %empty_tuple.type = call %bound_method.loc28(%addr.loc28)
+// CHECK:STDOUT:   %Op.ref: %C.as.Inc.impl.Op.type.739936.1 = name_ref Op, @C.as.Inc.impl.%C.as.Inc.impl.Op.decl.loc22_25.1 [concrete = constants.%C.as.Inc.impl.Op.6c8e2d.1]
+// CHECK:STDOUT:   %C.as.Inc.impl.Op.bound: <bound method> = bound_method %c.ref, %Op.ref
+// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %c.ref
+// CHECK:STDOUT:   %C.as.Inc.impl.Op.call: init %empty_tuple.type = call %C.as.Inc.impl.Op.bound(%addr)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

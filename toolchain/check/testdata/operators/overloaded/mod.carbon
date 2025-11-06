@@ -54,9 +54,11 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %ModAssignWith.Op.type.dd0: type = fn_type @ModAssignWith.Op, @ModAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %ModAssignWith.impl_witness: <witness> = impl_witness file.%ModAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %C.as.ModAssignWith.impl.Op.type: type = fn_type @C.as.ModAssignWith.impl.Op [concrete]
-// CHECK:STDOUT:   %C.as.ModAssignWith.impl.Op: %C.as.ModAssignWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.as.ModAssignWith.impl.Op.type.c83a47.1: type = fn_type @C.as.ModAssignWith.impl.Op.loc27_34.1 [concrete]
+// CHECK:STDOUT:   %C.as.ModAssignWith.impl.Op.e210c4.1: %C.as.ModAssignWith.impl.Op.type.c83a47.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %ModAssignWith.facet: %ModAssignWith.type.444 = facet_value %C, (%ModAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %C.as.ModAssignWith.impl.Op.type.c83a47.2: type = fn_type @C.as.ModAssignWith.impl.Op.loc27_34.2 [concrete]
+// CHECK:STDOUT:   %C.as.ModAssignWith.impl.Op.e210c4.2: %C.as.ModAssignWith.impl.Op.type.c83a47.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %.e00: type = fn_type_with_self_type %ModWith.Op.type.140, %ModWith.facet [concrete]
 // CHECK:STDOUT:   %.a3f: type = fn_type_with_self_type %ModAssignWith.Op.type.dd0, %ModAssignWith.facet [concrete]
 // CHECK:STDOUT: }
@@ -80,10 +82,12 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %ptr.019 = name_ref a, %a
 // CHECK:STDOUT:   %.loc38: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.a3f = impl_witness_access constants.%ModAssignWith.impl_witness, element0 [concrete = constants.%C.as.ModAssignWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.a3f = impl_witness_access constants.%ModAssignWith.impl_witness, element0 [concrete = constants.%C.as.ModAssignWith.impl.Op.e210c4.2]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc38, %impl.elem0
+// CHECK:STDOUT:   %Op.ref: %C.as.ModAssignWith.impl.Op.type.c83a47.1 = name_ref Op, @C.as.ModAssignWith.impl.%C.as.ModAssignWith.impl.Op.decl.loc27_34.1 [concrete = constants.%C.as.ModAssignWith.impl.Op.e210c4.1]
+// CHECK:STDOUT:   %C.as.ModAssignWith.impl.Op.bound: <bound method> = bound_method %.loc38, %Op.ref
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc38
-// CHECK:STDOUT:   %C.as.ModAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr, %b.ref)
+// CHECK:STDOUT:   %C.as.ModAssignWith.impl.Op.call: init %empty_tuple.type = call %C.as.ModAssignWith.impl.Op.bound(%addr, %b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

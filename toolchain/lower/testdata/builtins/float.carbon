@@ -51,17 +51,17 @@ fn TestGreaterEq(a: f64, b: f64) -> bool { return GreaterEq(a, b); }
 
 library "[[@TEST_NAME]]";
 
-fn Add(a: f64*, b: f64) = "float.add_assign";
-fn TestAdd(a: f64*, b: f64) { Add(a, b); }
+fn Add(ref a: f64, b: f64) = "float.add_assign";
+fn TestAdd(ref a: f64, b: f64) { Add(ref a, b); }
 
-fn Sub(a: f64*, b: f64) = "float.sub_assign";
-fn TestSub(a: f64*, b: f64) { Sub(a, b); }
+fn Sub(ref a: f64, b: f64) = "float.sub_assign";
+fn TestSub(ref a: f64, b: f64) { Sub(ref a, b); }
 
-fn Mul(a: f64*, b: f64) = "float.mul_assign";
-fn TestMul(a: f64*, b: f64) { Mul(a, b); }
+fn Mul(ref a: f64, b: f64) = "float.mul_assign";
+fn TestMul(ref a: f64, b: f64) { Mul(ref a, b); }
 
-fn Div(a: f64*, b: f64) = "float.div_assign";
-fn TestDiv(a: f64*, b: f64) { Div(a, b); }
+fn Div(ref a: f64, b: f64) = "float.div_assign";
+fn TestDiv(ref a: f64, b: f64) { Div(ref a, b); }
 
 // --- types.carbon
 
@@ -254,16 +254,16 @@ fn TestF128(a: f128, b: f128) -> f128 { return F128(a, b); }
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestAdd", linkageName: "_CTestAdd.Main", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 5, column: 31, scope: !4)
+// CHECK:STDOUT: !7 = !DILocation(line: 5, column: 34, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 5, column: 1, scope: !4)
 // CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TestSub", linkageName: "_CTestSub.Main", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 8, column: 31, scope: !9)
+// CHECK:STDOUT: !10 = !DILocation(line: 8, column: 34, scope: !9)
 // CHECK:STDOUT: !11 = !DILocation(line: 8, column: 1, scope: !9)
 // CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestMul", linkageName: "_CTestMul.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = !DILocation(line: 11, column: 31, scope: !12)
+// CHECK:STDOUT: !13 = !DILocation(line: 11, column: 34, scope: !12)
 // CHECK:STDOUT: !14 = !DILocation(line: 11, column: 1, scope: !12)
 // CHECK:STDOUT: !15 = distinct !DISubprogram(name: "TestDiv", linkageName: "_CTestDiv.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !16 = !DILocation(line: 14, column: 31, scope: !15)
+// CHECK:STDOUT: !16 = !DILocation(line: 14, column: 34, scope: !15)
 // CHECK:STDOUT: !17 = !DILocation(line: 14, column: 1, scope: !15)
 // CHECK:STDOUT: ; ModuleID = 'types.carbon'
 // CHECK:STDOUT: source_filename = "types.carbon"

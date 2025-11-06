@@ -229,9 +229,6 @@ static auto CreateBinaryOperatorForBuiltin(
       auto lhs_id = context.sem_ir().inst_blocks().Get(
           context.sem_ir().insts().GetAs<SemIR::Call>(inst_id).args_id)[0];
       auto [lhs_type_file, lhs_type_id] = context.GetTypeIdOfInst(lhs_id);
-      if (builtin_kind == SemIR::BuiltinFunctionKind::IntRightShiftAssign) {
-        lhs_type_id = lhs_type_file->GetPointeeType(lhs_type_id);
-      }
       return CreateIntShift(context,
                             lhs_type_file->types().IsSignedInt(lhs_type_id)
                                 ? llvm::Instruction::AShr
@@ -417,12 +414,11 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     case SemIR::BuiltinFunctionKind::FloatDivAssign: {
       auto* lhs_ptr = context.GetValue(arg_ids[0]);
       auto lhs_type = context.GetTypeIdOfInst(arg_ids[0]);
-      auto pointee_type = lhs_type.GetPointeeType();
-      auto* lhs_value = context.LoadObject(pointee_type, lhs_ptr);
+      auto* lhs_value = context.LoadObject(lhs_type, lhs_ptr);
       auto* result = CreateBinaryOperatorForBuiltin(
           context, inst_id, builtin_kind, lhs_value,
           context.GetValue(arg_ids[1]));
-      context.StoreObject(pointee_type, result, lhs_ptr);
+      context.StoreObject(lhs_type, result, lhs_ptr);
       // TODO: Add a helper to get a "no value representation" value.
       context.SetLocal(inst_id,
                        llvm::PoisonValue::get(context.GetTypeOfInst(inst_id)));

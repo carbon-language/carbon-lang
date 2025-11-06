@@ -81,8 +81,6 @@ struct BuiltinType {
 
 // Constraint that a type is a pointer to another type. See ValidateSignature
 // for details.
-// FIXME most uses of this need to be updated. Also need to plumb `ref` through
-// somehow.
 template <typename PointeeT>
   requires TypeConstraint<PointeeT>
 struct PointerTo {
@@ -205,6 +203,19 @@ struct PrimitiveCopyable {
     return InitRepr::ForType(sem_ir, type_id).IsCopyOfObjectRepr() &&
            ValueRepr::ForType(sem_ir, type_id)
                .IsCopyOfObjectRepr(sem_ir, type_id);
+  }
+};
+
+// Constraint that a parameter is passed by reference.
+template <typename Constraint>
+  requires TypeConstraint<Constraint>
+struct ByRef {
+  static auto CheckParam(const File& sem_ir, ValidateState& state,
+                         InstId param_id) -> bool {
+    if (auto ref_param = sem_ir.insts().TryGetAs<RefParam>(param_id)) {
+      return CheckType<Constraint>(sem_ir, state, ref_param->type_id);
+    }
+    return false;
   }
 };
 
@@ -483,77 +494,77 @@ constexpr BuiltinInfo IntRightShift = {
 // "int.sadd_assign": integer in-place addition.
 constexpr BuiltinInfo IntSAddAssign = {
     "int.sadd_assign",
-    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+    ValidateSignature<auto(ByRef<SizedIntT>, SizedIntT)->NoReturn>};
 
 // "int.ssub_assign": integer in-place subtraction.
 constexpr BuiltinInfo IntSSubAssign = {
     "int.ssub_assign",
-    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+    ValidateSignature<auto(ByRef<SizedIntT>, SizedIntT)->NoReturn>};
 
 // "int.smul_assign": integer in-place multiplication.
 constexpr BuiltinInfo IntSMulAssign = {
     "int.smul_assign",
-    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+    ValidateSignature<auto(ByRef<SizedIntT>, SizedIntT)->NoReturn>};
 
 // "int.sdiv_assign": integer in-place division.
 constexpr BuiltinInfo IntSDivAssign = {
     "int.sdiv_assign",
-    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+    ValidateSignature<auto(ByRef<SizedIntT>, SizedIntT)->NoReturn>};
 
 // "int.smod_assign": integer in-place modulo.
 constexpr BuiltinInfo IntSModAssign = {
     "int.smod_assign",
-    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+    ValidateSignature<auto(ByRef<SizedIntT>, SizedIntT)->NoReturn>};
 
 // "int.uadd_assign": unsigned integer in-place addition.
 constexpr BuiltinInfo IntUAddAssign = {
     "int.uadd_assign",
-    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+    ValidateSignature<auto(ByRef<SizedIntT>, SizedIntT)->NoReturn>};
 
 // "int.usub_assign": unsigned integer in-place subtraction.
 constexpr BuiltinInfo IntUSubAssign = {
     "int.usub_assign",
-    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+    ValidateSignature<auto(ByRef<SizedIntT>, SizedIntT)->NoReturn>};
 
 // "int.umul_assign": unsigned integer in-place multiplication.
 constexpr BuiltinInfo IntUMulAssign = {
     "int.umul_assign",
-    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+    ValidateSignature<auto(ByRef<SizedIntT>, SizedIntT)->NoReturn>};
 
 // "int.udiv_assign": unsigned integer in-place division.
 constexpr BuiltinInfo IntUDivAssign = {
     "int.udiv_assign",
-    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+    ValidateSignature<auto(ByRef<SizedIntT>, SizedIntT)->NoReturn>};
 
 // "int.mod_assign": integer in-place modulo.
 constexpr BuiltinInfo IntUModAssign = {
     "int.umod_assign",
-    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+    ValidateSignature<auto(ByRef<SizedIntT>, SizedIntT)->NoReturn>};
 
 // "int.and_assign": integer in-place bitwise and.
 constexpr BuiltinInfo IntAndAssign = {
     "int.and_assign",
-    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+    ValidateSignature<auto(ByRef<SizedIntT>, SizedIntT)->NoReturn>};
 
 // "int.or_assign": integer in-place bitwise or.
 constexpr BuiltinInfo IntOrAssign = {
     "int.or_assign",
-    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+    ValidateSignature<auto(ByRef<SizedIntT>, SizedIntT)->NoReturn>};
 
 // "int.xor_assign": integer in-place bitwise xor.
 constexpr BuiltinInfo IntXorAssign = {
     "int.xor_assign",
-    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntT)->NoReturn>};
+    ValidateSignature<auto(ByRef<SizedIntT>, SizedIntT)->NoReturn>};
 
 // "int.left_shift_assign": integer in-place left shift.
 constexpr BuiltinInfo IntLeftShiftAssign = {
     "int.left_shift_assign",
-    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntU)->NoReturn>};
+    ValidateSignature<auto(ByRef<SizedIntT>, SizedIntU)->NoReturn>};
 
 // "int.right_shift_assign": integer in-place right shift.
 constexpr BuiltinInfo IntRightShiftAssign = {
     "int.right_shift_assign",
-    ValidateSignature<auto(PointerTo<SizedIntT>, SizedIntU)->NoReturn>};
+    ValidateSignature<auto(ByRef<SizedIntT>, SizedIntU)->NoReturn>};
 
 // "int.eq": integer equality comparison.
 constexpr BuiltinInfo IntEq = {"int.eq",
@@ -606,22 +617,22 @@ constexpr BuiltinInfo FloatDiv = {
 // "float.add_assign": float in-place addition.
 constexpr BuiltinInfo FloatAddAssign = {
     "float.add_assign",
-    ValidateSignature<auto(PointerTo<SizedFloatT>, SizedFloatT)->NoReturn>};
+    ValidateSignature<auto(ByRef<SizedFloatT>, SizedFloatT)->NoReturn>};
 
 // "float.sub_assign": float in-place subtraction.
 constexpr BuiltinInfo FloatSubAssign = {
     "float.sub_assign",
-    ValidateSignature<auto(PointerTo<SizedFloatT>, SizedFloatT)->NoReturn>};
+    ValidateSignature<auto(ByRef<SizedFloatT>, SizedFloatT)->NoReturn>};
 
 // "float.mul_assign": float in-place multiplication.
 constexpr BuiltinInfo FloatMulAssign = {
     "float.mul_assign",
-    ValidateSignature<auto(PointerTo<SizedFloatT>, SizedFloatT)->NoReturn>};
+    ValidateSignature<auto(ByRef<SizedFloatT>, SizedFloatT)->NoReturn>};
 
 // "float.div_assign": float in-place division.
 constexpr BuiltinInfo FloatDivAssign = {
     "float.div_assign",
-    ValidateSignature<auto(PointerTo<SizedFloatT>, SizedFloatT)->NoReturn>};
+    ValidateSignature<auto(ByRef<SizedFloatT>, SizedFloatT)->NoReturn>};
 
 // Converts between floating-point types, with a diagnostic if the value doesn't
 // fit.
@@ -679,10 +690,8 @@ constexpr BuiltinInfo TypeAnd = {"type.and",
 
 // The implementation of `Destroy` for a type. The argument must be checked with
 // `type.can_destroy` first.
-// TODO: The argument should be `addr self: Self*`. Consider modifying
-// `ValidateSignature` to more fully enforce the structure.
 constexpr BuiltinInfo TypeDestroy = {
-    "type.destroy", ValidateSignature<auto(PointerTo<AnyType>)->NoReturn>};
+    "type.destroy", ValidateSignature<auto(ByRef<AnyType>)->NoReturn>};
 
 // Returns a facet type that's used to determine whether a type can use
 // `type.destroy`.

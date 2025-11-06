@@ -23,11 +23,11 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 interface DestroyLike {
-  fn Op[addr self: Self*]();
+  fn Op[ref self: Self]();
 }
 
 impl forall [T:! type] T as DestroyLike {
-  fn Op[addr self: Self*]() = "type.destroy";
+  fn Op[ref self: Self]() = "type.destroy";
 }
 
 var a: ();

@@ -54,9 +54,11 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %RightShiftAssignWith.Op.type.ae9: type = fn_type @RightShiftAssignWith.Op, @RightShiftAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %RightShiftAssignWith.impl_witness: <witness> = impl_witness file.%RightShiftAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %C.as.RightShiftAssignWith.impl.Op.type: type = fn_type @C.as.RightShiftAssignWith.impl.Op [concrete]
-// CHECK:STDOUT:   %C.as.RightShiftAssignWith.impl.Op: %C.as.RightShiftAssignWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.as.RightShiftAssignWith.impl.Op.type.be40ae.1: type = fn_type @C.as.RightShiftAssignWith.impl.Op.loc27_34.1 [concrete]
+// CHECK:STDOUT:   %C.as.RightShiftAssignWith.impl.Op.4f8a47.1: %C.as.RightShiftAssignWith.impl.Op.type.be40ae.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %RightShiftAssignWith.facet: %RightShiftAssignWith.type.df5 = facet_value %C, (%RightShiftAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %C.as.RightShiftAssignWith.impl.Op.type.be40ae.2: type = fn_type @C.as.RightShiftAssignWith.impl.Op.loc27_34.2 [concrete]
+// CHECK:STDOUT:   %C.as.RightShiftAssignWith.impl.Op.4f8a47.2: %C.as.RightShiftAssignWith.impl.Op.type.be40ae.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %.919: type = fn_type_with_self_type %RightShiftWith.Op.type.19b, %RightShiftWith.facet [concrete]
 // CHECK:STDOUT:   %.a3c: type = fn_type_with_self_type %RightShiftAssignWith.Op.type.ae9, %RightShiftAssignWith.facet [concrete]
 // CHECK:STDOUT: }
@@ -80,10 +82,12 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %ptr.019 = name_ref a, %a
 // CHECK:STDOUT:   %.loc38: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.a3c = impl_witness_access constants.%RightShiftAssignWith.impl_witness, element0 [concrete = constants.%C.as.RightShiftAssignWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.a3c = impl_witness_access constants.%RightShiftAssignWith.impl_witness, element0 [concrete = constants.%C.as.RightShiftAssignWith.impl.Op.4f8a47.2]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc38, %impl.elem0
+// CHECK:STDOUT:   %Op.ref: %C.as.RightShiftAssignWith.impl.Op.type.be40ae.1 = name_ref Op, @C.as.RightShiftAssignWith.impl.%C.as.RightShiftAssignWith.impl.Op.decl.loc27_34.1 [concrete = constants.%C.as.RightShiftAssignWith.impl.Op.4f8a47.1]
+// CHECK:STDOUT:   %C.as.RightShiftAssignWith.impl.Op.bound: <bound method> = bound_method %.loc38, %Op.ref
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc38
-// CHECK:STDOUT:   %C.as.RightShiftAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr, %b.ref)
+// CHECK:STDOUT:   %C.as.RightShiftAssignWith.impl.Op.call: init %empty_tuple.type = call %C.as.RightShiftAssignWith.impl.Op.bound(%addr, %b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

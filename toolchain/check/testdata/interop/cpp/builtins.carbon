@@ -599,8 +599,8 @@ fn F() {
 // CHECK:STDOUT:   %unsigned_int.ref.loc13: ref %unsigned_int = name_ref unsigned_int, %unsigned_int
 // CHECK:STDOUT:   %foo.ref: %unsigned_int.foo.cpp_overload_set.type = name_ref foo, imports.%unsigned_int.foo.cpp_overload_set.value [concrete = constants.%unsigned_int.foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %unsigned_int.ref.loc13, %foo.ref
-// CHECK:STDOUT:   %addr.loc13: %ptr.d47 = addr_of %unsigned_int.ref.loc13
-// CHECK:STDOUT:   %unsigned_int.foo.call: init %u32 = call imports.%unsigned_int.foo.decl(%addr.loc13)
+// CHECK:STDOUT:   %addr: %ptr.d47 = addr_of %unsigned_int.ref.loc13
+// CHECK:STDOUT:   %unsigned_int.foo.call: init %u32 = call imports.%unsigned_int.foo.decl(%addr)
 // CHECK:STDOUT:   %.loc13_10: type = splice_block %u32 [concrete = constants.%u32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
@@ -611,8 +611,7 @@ fn F() {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %unsigned_int.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b85
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %unsigned_int.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc12: %ptr.d47 = addr_of %unsigned_int.var
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc12(%addr.loc12)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc12(%unsigned_int.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

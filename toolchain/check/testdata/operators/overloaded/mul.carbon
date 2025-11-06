@@ -54,9 +54,11 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %MulAssignWith.Op.type.5c8: type = fn_type @MulAssignWith.Op, @MulAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %MulAssignWith.impl_witness: <witness> = impl_witness file.%MulAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %C.as.MulAssignWith.impl.Op.type: type = fn_type @C.as.MulAssignWith.impl.Op [concrete]
-// CHECK:STDOUT:   %C.as.MulAssignWith.impl.Op: %C.as.MulAssignWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.as.MulAssignWith.impl.Op.type.3680c3.1: type = fn_type @C.as.MulAssignWith.impl.Op.loc27_34.1 [concrete]
+// CHECK:STDOUT:   %C.as.MulAssignWith.impl.Op.594175.1: %C.as.MulAssignWith.impl.Op.type.3680c3.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %MulAssignWith.facet: %MulAssignWith.type.c63 = facet_value %C, (%MulAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %C.as.MulAssignWith.impl.Op.type.3680c3.2: type = fn_type @C.as.MulAssignWith.impl.Op.loc27_34.2 [concrete]
+// CHECK:STDOUT:   %C.as.MulAssignWith.impl.Op.594175.2: %C.as.MulAssignWith.impl.Op.type.3680c3.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %.498: type = fn_type_with_self_type %MulWith.Op.type.2c9, %MulWith.facet [concrete]
 // CHECK:STDOUT:   %.78a: type = fn_type_with_self_type %MulAssignWith.Op.type.5c8, %MulAssignWith.facet [concrete]
 // CHECK:STDOUT: }
@@ -80,10 +82,12 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %ptr.019 = name_ref a, %a
 // CHECK:STDOUT:   %.loc38: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.78a = impl_witness_access constants.%MulAssignWith.impl_witness, element0 [concrete = constants.%C.as.MulAssignWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.78a = impl_witness_access constants.%MulAssignWith.impl_witness, element0 [concrete = constants.%C.as.MulAssignWith.impl.Op.594175.2]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc38, %impl.elem0
+// CHECK:STDOUT:   %Op.ref: %C.as.MulAssignWith.impl.Op.type.3680c3.1 = name_ref Op, @C.as.MulAssignWith.impl.%C.as.MulAssignWith.impl.Op.decl.loc27_34.1 [concrete = constants.%C.as.MulAssignWith.impl.Op.594175.1]
+// CHECK:STDOUT:   %C.as.MulAssignWith.impl.Op.bound: <bound method> = bound_method %.loc38, %Op.ref
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc38
-// CHECK:STDOUT:   %C.as.MulAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr, %b.ref)
+// CHECK:STDOUT:   %C.as.MulAssignWith.impl.Op.call: init %empty_tuple.type = call %C.as.MulAssignWith.impl.Op.bound(%addr, %b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

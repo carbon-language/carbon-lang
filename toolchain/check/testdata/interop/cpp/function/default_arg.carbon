@@ -341,7 +341,7 @@ fn Call() {
 // CHECK:STDOUT:   %bound_method.loc10_16: <bound method> = bound_method %.loc10_7, %B.ref
 // CHECK:STDOUT:   %int_1.loc10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc10: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %addr.loc10_7: %ptr.1f9 = addr_of %.loc10_7
+// CHECK:STDOUT:   %addr.loc10: %ptr.1f9 = addr_of %.loc10_7
 // CHECK:STDOUT:   %impl.elem0.loc10_19: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
 // CHECK:STDOUT:   %bound_method.loc10_19.1: <bound method> = bound_method %int_1.loc10, %impl.elem0.loc10_19 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.265]
 // CHECK:STDOUT:   %specific_fn.loc10_19: <specific function> = specific_function %impl.elem0.loc10_19, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -356,7 +356,7 @@ fn Call() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_22: init %i32 = call %bound_method.loc10_22.2(%int_2.loc10) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc10_22.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_22 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc10_22.2: %i32 = converted %int_2.loc10, %.loc10_22.1 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %X.B.call: init %empty_tuple.type = call imports.%X.B.decl(%addr.loc10_7, %.loc10_19.2, %.loc10_22.2)
+// CHECK:STDOUT:   %X.B.call: init %empty_tuple.type = call imports.%X.B.decl(%addr.loc10, %.loc10_19.2, %.loc10_22.2)
 // CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %X.ref.loc11: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %C.ref: %X.C.cpp_overload_set.type = name_ref C, imports.%X.C.cpp_overload_set.value [concrete = constants.%X.C.cpp_overload_set.value]
@@ -404,18 +404,16 @@ fn Call() {
 // CHECK:STDOUT:   %.loc12_22.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12_22 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc12_22.2: %i32 = converted %int_2.loc12, %.loc12_22.1 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc12_7.3: ref %X = value_as_ref %.loc12_7.2
-// CHECK:STDOUT:   %addr.loc12_23: %ptr.1f9 = addr_of %.loc12_7.3
-// CHECK:STDOUT:   %D__carbon_thunk.call: init %empty_tuple.type = call imports.%D__carbon_thunk.decl(%addr.loc12_23, %.loc12_19.2, %.loc12_22.2)
+// CHECK:STDOUT:   %addr.loc12: %ptr.1f9 = addr_of %.loc12_7.3
+// CHECK:STDOUT:   %D__carbon_thunk.call: init %empty_tuple.type = call imports.%D__carbon_thunk.decl(%addr.loc12, %.loc12_19.2, %.loc12_22.2)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc12: <bound method> = bound_method %.loc12_5.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.4c7
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc12_5: <bound method> = bound_method %.loc12_5.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc12_5: %ptr.1f9 = addr_of %.loc12_5.4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc12: init %empty_tuple.type = call %bound_method.loc12_5(%addr.loc12_5)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc12: init %empty_tuple.type = call %bound_method.loc12_5(%.loc12_5.4)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc10: <bound method> = bound_method %.loc10_5.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.4c7
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10_5: <bound method> = bound_method %.loc10_5.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc10_5: %ptr.1f9 = addr_of %.loc10_5.4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc10: init %empty_tuple.type = call %bound_method.loc10_5(%addr.loc10_5)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc10: init %empty_tuple.type = call %bound_method.loc10_5(%.loc10_5.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -744,7 +742,7 @@ fn Call() {
 // CHECK:STDOUT:   %B.ref: %X.B.cpp_overload_set.type = name_ref B, imports.%X.B.cpp_overload_set.value [concrete = constants.%X.B.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc11_16: <bound method> = bound_method %.loc11_7, %B.ref
 // CHECK:STDOUT:   %int_1.loc11: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %addr.loc11_7: %ptr.1f9 = addr_of %.loc11_7
+// CHECK:STDOUT:   %addr.loc11: %ptr.1f9 = addr_of %.loc11_7
 // CHECK:STDOUT:   %impl.elem0.loc11: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
 // CHECK:STDOUT:   %bound_method.loc11_19.1: <bound method> = bound_method %int_1.loc11, %impl.elem0.loc11 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.265]
 // CHECK:STDOUT:   %specific_fn.loc11: <specific function> = specific_function %impl.elem0.loc11, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -752,7 +750,7 @@ fn Call() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc11: init %i32 = call %bound_method.loc11_19.2(%int_1.loc11) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc11_19.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc11 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %int_1.loc11, %.loc11_19.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %B__carbon_thunk.call: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%addr.loc11_7, %.loc11_19.2)
+// CHECK:STDOUT:   %B__carbon_thunk.call: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%addr.loc11, %.loc11_19.2)
 // CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %X.ref.loc12: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %C.ref: %X.C.cpp_overload_set.type = name_ref C, imports.%X.C.cpp_overload_set.value [concrete = constants.%X.C.cpp_overload_set.value]
@@ -784,18 +782,16 @@ fn Call() {
 // CHECK:STDOUT:   %.loc13_19.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc13 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc13_19.2: %i32 = converted %int_1.loc13, %.loc13_19.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc13_7.3: ref %X = value_as_ref %.loc13_7.2
-// CHECK:STDOUT:   %addr.loc13_20: %ptr.1f9 = addr_of %.loc13_7.3
-// CHECK:STDOUT:   %D__carbon_thunk.call: init %empty_tuple.type = call imports.%D__carbon_thunk.decl(%addr.loc13_20, %.loc13_19.2)
+// CHECK:STDOUT:   %addr.loc13: %ptr.1f9 = addr_of %.loc13_7.3
+// CHECK:STDOUT:   %D__carbon_thunk.call: init %empty_tuple.type = call imports.%D__carbon_thunk.decl(%addr.loc13, %.loc13_19.2)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc13: <bound method> = bound_method %.loc13_5.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.4c7
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.4c7, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc13_5: <bound method> = bound_method %.loc13_5.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc13_5: %ptr.1f9 = addr_of %.loc13_5.4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc13: init %empty_tuple.type = call %bound_method.loc13_5(%addr.loc13_5)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc13: init %empty_tuple.type = call %bound_method.loc13_5(%.loc13_5.4)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11: <bound method> = bound_method %.loc11_5.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.4c7
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.4c7, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc11_5: <bound method> = bound_method %.loc11_5.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc11_5: %ptr.1f9 = addr_of %.loc11_5.4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc11: init %empty_tuple.type = call %bound_method.loc11_5(%addr.loc11_5)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc11: init %empty_tuple.type = call %bound_method.loc11_5(%.loc11_5.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -845,7 +841,6 @@ fn Call() {
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %X, () [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.ca9: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.4c7: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.ca9 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.1f9: type = ptr_type %X [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -899,13 +894,11 @@ fn Call() {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc76: <bound method> = bound_method %.loc76_5.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.4c7
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc76_5: <bound method> = bound_method %.loc76_5.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc76: %ptr.1f9 = addr_of %.loc76_5.4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc76: init %empty_tuple.type = call %bound_method.loc76_5(%addr.loc76)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc76: init %empty_tuple.type = call %bound_method.loc76_5(%.loc76_5.4)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc56: <bound method> = bound_method %.loc56_5.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.4c7
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc56_5: <bound method> = bound_method %.loc56_5.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc56: %ptr.1f9 = addr_of %.loc56_5.4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc56: init %empty_tuple.type = call %bound_method.loc56_5(%addr.loc56)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc56: init %empty_tuple.type = call %bound_method.loc56_5(%.loc56_5.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

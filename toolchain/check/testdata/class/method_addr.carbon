@@ -403,8 +403,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc39_18.7, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.378
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.378, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc39_18.3: <bound method> = bound_method %.loc39_18.7, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc39_18.7
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc39_18.3(%addr)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc39_18.3(%.loc39_18.7)
 // CHECK:STDOUT:   return %Class.F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -420,13 +419,12 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %c.ref: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %G.ref: %Class.G.type = name_ref G, @Class.%Class.G.decl [concrete = constants.%Class.G]
 // CHECK:STDOUT:   %Class.G.bound: <bound method> = bound_method %c.ref, %G.ref
-// CHECK:STDOUT:   %addr.loc44: %ptr.e71 = addr_of %c.ref
-// CHECK:STDOUT:   %Class.G.call: init %i32 = call %Class.G.bound(%addr.loc44)
+// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %c.ref
+// CHECK:STDOUT:   %Class.G.call: init %i32 = call %Class.G.bound(%addr)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %c.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.378
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.378, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc43: %ptr.e71 = addr_of %c.var
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc43)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%c.var)
 // CHECK:STDOUT:   return %Class.G.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -467,8 +465,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc58_15.2, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.378
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.378, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc58_15.2, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc58_15.2
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc58_15.2)
 // CHECK:STDOUT:   return %Class.F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -480,13 +477,12 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %.loc62_15.2: ref %Class = temporary %.loc62_15.1, %Make.call
 // CHECK:STDOUT:   %G.ref: %Class.G.type = name_ref G, @Class.%Class.G.decl [concrete = constants.%Class.G]
 // CHECK:STDOUT:   %Class.G.bound: <bound method> = bound_method %.loc62_15.2, %G.ref
-// CHECK:STDOUT:   %addr.loc62_15.1: %ptr.e71 = addr_of %.loc62_15.2
-// CHECK:STDOUT:   %Class.G.call: init %i32 = call %Class.G.bound(%addr.loc62_15.1)
+// CHECK:STDOUT:   %addr: %ptr.e71 = addr_of %.loc62_15.2
+// CHECK:STDOUT:   %Class.G.call: init %i32 = call %Class.G.bound(%addr)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc62_15.2, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.378
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.378, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc62_15.2, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc62_15.2: %ptr.e71 = addr_of %.loc62_15.2
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc62_15.2)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc62_15.2)
 // CHECK:STDOUT:   return %Class.G.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

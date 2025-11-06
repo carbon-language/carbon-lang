@@ -54,9 +54,11 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %BitXorAssignWith.Op.type.ad0: type = fn_type @BitXorAssignWith.Op, @BitXorAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %BitXorAssignWith.impl_witness: <witness> = impl_witness file.%BitXorAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %C.as.BitXorAssignWith.impl.Op.type: type = fn_type @C.as.BitXorAssignWith.impl.Op [concrete]
-// CHECK:STDOUT:   %C.as.BitXorAssignWith.impl.Op: %C.as.BitXorAssignWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.as.BitXorAssignWith.impl.Op.type.82422e.1: type = fn_type @C.as.BitXorAssignWith.impl.Op.loc27_34.1 [concrete]
+// CHECK:STDOUT:   %C.as.BitXorAssignWith.impl.Op.0d9889.1: %C.as.BitXorAssignWith.impl.Op.type.82422e.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %BitXorAssignWith.facet: %BitXorAssignWith.type.38a = facet_value %C, (%BitXorAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %C.as.BitXorAssignWith.impl.Op.type.82422e.2: type = fn_type @C.as.BitXorAssignWith.impl.Op.loc27_34.2 [concrete]
+// CHECK:STDOUT:   %C.as.BitXorAssignWith.impl.Op.0d9889.2: %C.as.BitXorAssignWith.impl.Op.type.82422e.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %.afd: type = fn_type_with_self_type %BitXorWith.Op.type.502, %BitXorWith.facet [concrete]
 // CHECK:STDOUT:   %.d84: type = fn_type_with_self_type %BitXorAssignWith.Op.type.ad0, %BitXorAssignWith.facet [concrete]
 // CHECK:STDOUT: }
@@ -80,10 +82,12 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %ptr.019 = name_ref a, %a
 // CHECK:STDOUT:   %.loc38: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.d84 = impl_witness_access constants.%BitXorAssignWith.impl_witness, element0 [concrete = constants.%C.as.BitXorAssignWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.d84 = impl_witness_access constants.%BitXorAssignWith.impl_witness, element0 [concrete = constants.%C.as.BitXorAssignWith.impl.Op.0d9889.2]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc38, %impl.elem0
+// CHECK:STDOUT:   %Op.ref: %C.as.BitXorAssignWith.impl.Op.type.82422e.1 = name_ref Op, @C.as.BitXorAssignWith.impl.%C.as.BitXorAssignWith.impl.Op.decl.loc27_34.1 [concrete = constants.%C.as.BitXorAssignWith.impl.Op.0d9889.1]
+// CHECK:STDOUT:   %C.as.BitXorAssignWith.impl.Op.bound: <bound method> = bound_method %.loc38, %Op.ref
 // CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc38
-// CHECK:STDOUT:   %C.as.BitXorAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr, %b.ref)
+// CHECK:STDOUT:   %C.as.BitXorAssignWith.impl.Op.call: init %empty_tuple.type = call %C.as.BitXorAssignWith.impl.Op.bound(%addr, %b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

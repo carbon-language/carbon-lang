@@ -313,52 +313,52 @@ impl forall [N:! IntLiteral(), T:! ImplicitAs(UInt(N))]
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(UInt(N))]
     UInt(N) as AddAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.uadd_assign";
+  fn Op[ref self: Self](other: Self) = "int.uadd_assign";
 }
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(UInt(N))]
     UInt(N) as BitAndAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.and_assign";
+  fn Op[ref self: Self](other: Self) = "int.and_assign";
 }
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(UInt(N))]
     UInt(N) as BitOrAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.or_assign";
+  fn Op[ref self: Self](other: Self) = "int.or_assign";
 }
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(UInt(N))]
     UInt(N) as BitXorAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.xor_assign";
+  fn Op[ref self: Self](other: Self) = "int.xor_assign";
 }
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(UInt(N))]
     UInt(N) as DivAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.udiv_assign";
+  fn Op[ref self: Self](other: Self) = "int.udiv_assign";
 }
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(UInt(N))]
     UInt(N) as LeftShiftAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.left_shift_assign";
+  fn Op[ref self: Self](other: Self) = "int.left_shift_assign";
 }
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(UInt(N))]
     UInt(N) as ModAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.umod_assign";
+  fn Op[ref self: Self](other: Self) = "int.umod_assign";
 }
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(UInt(N))]
     UInt(N) as MulAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.umul_assign";
+  fn Op[ref self: Self](other: Self) = "int.umul_assign";
 }
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(UInt(N))]
     UInt(N) as RightShiftAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.right_shift_assign";
+  fn Op[ref self: Self](other: Self) = "int.right_shift_assign";
 }
 
 impl forall [N:! IntLiteral(), U:! ImplicitAs(UInt(N))]
     UInt(N) as SubAssignWith(U) {
-  fn Op[addr self: Self*](other: Self) = "int.usub_assign";
+  fn Op[ref self: Self](other: Self) = "int.usub_assign";
 }
 
 // Increment and decrement.
@@ -366,19 +366,19 @@ impl forall [N:! IntLiteral(), U:! ImplicitAs(UInt(N))]
 // TODO: Add builtins for these to avoid emitting a call.
 
 impl forall [N:! IntLiteral()] UInt(N) as Dec {
-  fn Op[addr self: Self*]() {
-    // TODO: `*self -= 1;` should work, but fails because the `impl IntLiteral
+  fn Op[ref self: Self]() {
+    // TODO: `self -= 1;` should work, but fails because the `impl IntLiteral
     // as ImplicitAs(Int(N))` is not final, which causes us to not attempt the
     // conversion from `1` to `Int(N)` until runtime, when we've lost the
     // constant value.
     fn AsUInt(n: IntLiteral()) -> UInt(N) = "int.convert_checked";
-    *self -= AsUInt(1);
+    self -= AsUInt(1);
   }
 }
 
 impl forall [N:! IntLiteral()] UInt(N) as Inc {
-  fn Op[addr self: Self*]() {
+  fn Op[ref self: Self]() {
     fn AsUInt(n: IntLiteral()) -> UInt(N) = "int.convert_checked";
-    *self += AsUInt(1);
+    self += AsUInt(1);
   }
 }
