@@ -139,6 +139,36 @@ fn F() {
   let b: i32 = Cpp.N.CONFIG_VALUE;
 }
 
+// --- macro_and_non_macro_same_name.h
+
+namespace X {
+  float n;
+}
+float n;
+#define n 1
+
+// --- fail_import_macro_and_non_macro_same_name.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "macro_and_non_macro_same_name.h";
+
+fn F() {
+  // When the same macro name and non-macro name exist in the global C++ scope, the macro name is selected.
+  let a: i32 = Cpp.n;
+
+  // CHECK:STDERR: fail_import_macro_and_non_macro_same_name.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `i32` to `f32` [ConversionFailure]
+  // CHECK:STDERR:   let b: f32 = Cpp.n;
+  // CHECK:STDERR:                ^~~~~
+  // CHECK:STDERR: fail_import_macro_and_non_macro_same_name.carbon:[[@LINE+4]]:16: note: type `i32` does not implement interface `Core.ImplicitAs(f32)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let b: f32 = Cpp.n;
+  // CHECK:STDERR:                ^~~~~
+  // CHECK:STDERR:
+  let b: f32 = Cpp.n;
+
+  let c: f32 = Cpp.X.n;
+}
+
 // --- no_replacement_token.h
 #define MACRO_NAME
 
@@ -239,6 +269,70 @@ fn F() {
   let a: f64 = Cpp.PI;
 }
 
+// --- macro_undefined.h
+
+#define CONFIG_VALUE 1
+#undef CONFIG_VALUE
+
+// --- fail_macro_undefined.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "macro_undefined.h";
+
+fn F() {
+ // CHECK:STDERR: fail_macro_undefined.carbon:[[@LINE+4]]:15: error: member name `CONFIG_VALUE` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  let a: i32 = Cpp.CONFIG_VALUE;
+ // CHECK:STDERR:               ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ let a: i32 = Cpp.CONFIG_VALUE;
+}
+
+// --- macro_redefined.h
+
+#define CONFIG_VALUE 1
+#undef CONFIG_VALUE
+
+#define CONFIG_VALUE 2
+
+// --- import_macro_redefined.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "macro_redefined.h";
+
+fn F() {
+ let a: i32 = Cpp.CONFIG_VALUE;
+}
+
+// --- macro_defined_twice.h
+
+#define CONFIG_VALUE 1
+#define CONFIG_VALUE 2
+
+// --- import_macro_defined_twice.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: import_macro_defined_twice.carbon:[[@LINE+9]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./macro_defined_twice.h:3:9: warning: 'CONFIG_VALUE' macro redefined [CppInteropParseWarning]
+// CHECK:STDERR:     3 | #define CONFIG_VALUE 2
+// CHECK:STDERR:       |         ^
+// CHECK:STDERR: import_macro_defined_twice.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./macro_defined_twice.h:2:9: note: previous definition is here [CppInteropParseNote]
+// CHECK:STDERR:     2 | #define CONFIG_VALUE 1
+// CHECK:STDERR:       |         ^
+// CHECK:STDERR:
+import Cpp library "macro_defined_twice.h";
+
+fn F() {
+ let a: i32 = Cpp.CONFIG_VALUE;
+}
+
+// ============================================================================
+// function-like macros
+// ============================================================================
+
 // --- function_like_macros.h
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -257,6 +351,10 @@ fn F() {
   let a: i32 = Cpp.MAX(1,2);
 }
 
+// ============================================================================
+// predefined macros
+// ============================================================================
+
 // --- predefined_macros.h
 
 auto foo() -> void;
@@ -274,6 +372,10 @@ fn F() {
   // CHECK:STDERR:
   let line_num: i32 = Cpp.__LINE__;
 }
+
+// ============================================================================
+// macros used as header guards
+// ============================================================================
 
 // --- header_guard_macros.h
 

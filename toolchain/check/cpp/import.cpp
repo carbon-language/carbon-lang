@@ -384,27 +384,6 @@ class ShallowCopyCompilerInvocation : public clang::CompilerInvocation {
 
 }  // namespace
 
-// Builds a map of all macros defined in the given preprocessor that are not
-// function-like macros, predefined macros or macros used for header guards.
-// These macros are added to the SemIR as a mapping from macro name to macro
-// info.
-// TODO: Function-like macros and predefined macros are currently not
-// supported and their support still needs to be clarified.
-static auto BuildMacrosMap(Context& context, clang::Preprocessor& preprocessor)
-    -> llvm::StringMap<clang::MacroInfo*> {
-  llvm::StringMap<clang::MacroInfo*>& macros = context.sem_ir().cpp_macros();
-  for (auto it = preprocessor.macro_begin(), it_end = preprocessor.macro_end();
-       it != it_end; ++it) {
-    clang::MacroDefinition def = preprocessor.getMacroDefinition(it->first);
-    clang::MacroInfo* macro_info = def.getMacroInfo();
-    if (macro_info && !macro_info->isUsedForHeaderGuard() &&
-        !macro_info->isFunctionLike() && !macro_info->isBuiltinMacro()) {
-      macros[it->first->getName()] = macro_info;
-    }
-  }
-  return macros;
-}
-
 // Returns an AST for the C++ imports and a bool that represents whether
 // compilation errors where encountered or the generated AST is null due to an
 // error. Sets the AST in the context's `sem_ir`.
@@ -447,10 +426,6 @@ static auto GenerateAst(
   auto ast = clang::ASTUnit::LoadFromCompilerInvocation(
       invocation, std::make_shared<clang::PCHContainerOperations>(), nullptr,
       diags, new clang::FileManager(invocation->getFileSystemOpts(), fs));
-
-  if (ast) {
-    BuildMacrosMap(context, ast->getPreprocessor());
-  }
 
   // Attach the AST to SemIR. This needs to be done before we can emit any
   // diagnostics, so their locations can be properly interpreted by our
@@ -2329,10 +2304,21 @@ static auto LookupMacro(Context& context, SemIR::NameScopeId scope_id,
   if (!name_str_opt || !IsTopCppScope(context, scope_id)) {
     return nullptr;
   }
-  auto macro_info = context.sem_ir().cpp_macros().find(*name_str_opt);
-  if (macro_info != context.sem_ir().cpp_macros().end()) {
-    return macro_info->second;
+
+  clang::Preprocessor& preprocessor = context.clang_sema().getPreprocessor();
+  clang::IdentifierInfo* identifier_info =
+      preprocessor.getIdentifierInfo(*name_str_opt);
+
+  if (!identifier_info) {
+    return nullptr;
   }
+
+  clang::MacroInfo* macro_info = preprocessor.getMacroInfo(identifier_info);
+  if (macro_info && !macro_info->isUsedForHeaderGuard() &&
+      !macro_info->isFunctionLike() && !macro_info->isBuiltinMacro()) {
+    return macro_info;
+  }
+
   return nullptr;
 }
 
@@ -2348,12 +2334,11 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
   if (IsIncompleteClass(context, scope_id)) {
     return SemIR::ScopeLookupResult::MakeError();
   }
+  if (clang::MacroInfo* macro_info = LookupMacro(context, scope_id, name_id)) {
+    return ImportMacro(context, loc_id, scope_id, name_id, macro_info);
+  }
   auto lookup = ClangLookupName(context, scope_id, name_id);
   if (!lookup) {
-    if (clang::MacroInfo* macro_info =
-            LookupMacro(context, scope_id, name_id)) {
-      return ImportMacro(context, loc_id, scope_id, name_id, macro_info);
-    }
     return ImportBuiltinTypesIntoScope(context, loc_id, scope_id, name_id);
   }
   // Access checks are performed separately by the Carbon name lookup logic.
