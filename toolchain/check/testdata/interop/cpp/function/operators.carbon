@@ -20,8 +20,9 @@
 class C {};
 
 // Increment and Decrement.
-auto operator++(C& operand) -> C&;
-auto operator--(C& operand) -> C&;
+// TODO: Change return value to reference when it is supported.
+auto operator++(C& operand) -> C;
+auto operator--(C& operand) -> C;
 
 // Arithmetic.
 auto operator-(C operand) -> C;
@@ -52,8 +53,9 @@ fn F() {
 // --- prefix_inc_and_dec.h
 
 class Prefix {};
-auto operator++(Prefix& operand) -> Prefix&;
-auto operator--(Prefix& operand) -> Prefix&;
+// TODO: Change return value to reference when it is supported.
+auto operator++(Prefix& operand) -> Prefix;
+auto operator--(Prefix& operand) -> Prefix;
 
 // --- fail_prefix_calling_postfix.carbon
 
@@ -82,8 +84,9 @@ fn F() {
 // --- postfix_inc_and_dec.h
 
 class Postfix {};
-auto operator++(Postfix& operand, int) -> Postfix&;
-auto operator--(Postfix& operand, int) -> Postfix&;
+// TODO: Change return value to reference when it is supported.
+auto operator++(Postfix& operand, int) -> Postfix;
+auto operator--(Postfix& operand, int) -> Postfix;
 
 // --- fail_postfix_calling_prefix.carbon
 
@@ -97,8 +100,8 @@ fn F() {
   // CHECK:STDERR:    16 |   ++postfix;
   // CHECK:STDERR:       |   ^
   // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./postfix_inc_and_dec.h:3:6: note: candidate function not viable: requires 2 arguments, but 1 was provided [CppInteropParseNote]
-  // CHECK:STDERR:     3 | auto operator++(Postfix& operand, int) -> Postfix&;
+  // CHECK:STDERR: ./postfix_inc_and_dec.h:4:6: note: candidate function not viable: requires 2 arguments, but 1 was provided [CppInteropParseNote]
+  // CHECK:STDERR:     4 | auto operator++(Postfix& operand, int) -> Postfix;
   // CHECK:STDERR:       |      ^          ~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   ++postfix;
@@ -106,8 +109,8 @@ fn F() {
   // CHECK:STDERR:    25 |   --postfix;
   // CHECK:STDERR:       |   ^
   // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./postfix_inc_and_dec.h:4:6: note: candidate function not viable: requires 2 arguments, but 1 was provided [CppInteropParseNote]
-  // CHECK:STDERR:     4 | auto operator--(Postfix& operand, int) -> Postfix&;
+  // CHECK:STDERR: ./postfix_inc_and_dec.h:5:6: note: candidate function not viable: requires 2 arguments, but 1 was provided [CppInteropParseNote]
+  // CHECK:STDERR:     5 | auto operator--(Postfix& operand, int) -> Postfix;
   // CHECK:STDERR:       |      ^          ~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   --postfix;
@@ -136,16 +139,18 @@ auto operator<<(C lhs, int num_bits) -> C;
 auto operator>>(C lhs, int num_bits) -> C;
 
 // Compound Assignment Arithmetic.
-auto operator+=(C& lhs, C rhs) -> C&;
-auto operator-=(C& lhs, C rhs) -> C&;
-auto operator*=(C& lhs, C rhs) -> C&;
-auto operator/=(C& lhs, C rhs) -> C&;
-auto operator%=(C& lhs, C rhs) -> C&;
+// TODO: Change the return value to reference when it is supported.
+auto operator+=(C& lhs, C rhs) -> C;
+auto operator-=(C& lhs, C rhs) -> C;
+auto operator*=(C& lhs, C rhs) -> C;
+auto operator/=(C& lhs, C rhs) -> C;
+auto operator%=(C& lhs, C rhs) -> C;
 
 // Compound Assignment Bitwuse.
-auto operator&=(C& lhs, C rhs) -> C&;
-auto operator|=(C& lhs, C rhs) -> C&;
-auto operator^=(C& lhs, C rhs) -> C&;
+// TODO: Change the return value to reference when it is supported.
+auto operator&=(C& lhs, C rhs) -> C;
+auto operator|=(C& lhs, C rhs) -> C;
+auto operator^=(C& lhs, C rhs) -> C;
 auto operator<<=(C& lhs, int num_bites) -> C&;
 auto operator>>=(C& lhs, int num_bites) -> C&;
 
@@ -432,8 +437,9 @@ class C {};
 auto operator+(C operand) -> C;
 
 // Increment and Decrement.
-auto operator++(C& operand, int) -> C&;
-auto operator--(C& operand, int) -> C&;
+// TODO: Change the return value to reference when it is supported.
+auto operator++(C& operand, int) -> C;
+auto operator--(C& operand, int) -> C;
 
 // Bitwise.
 auto operator~(C operand) -> C;
@@ -1015,11 +1021,10 @@ fn F() {
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %const: type = const_type %ptr.d9e [concrete]
-// CHECK:STDOUT:   %cpp_operator.type.1ea478.1: type = fn_type @cpp_operator.1 [concrete]
-// CHECK:STDOUT:   %cpp_operator.0a3797.1: %cpp_operator.type.1ea478.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %cpp_operator.type.1ea478.2: type = fn_type @cpp_operator.2 [concrete]
-// CHECK:STDOUT:   %cpp_operator.0a3797.2: %cpp_operator.type.1ea478.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %operator++__carbon_thunk.type: type = fn_type @operator++__carbon_thunk [concrete]
+// CHECK:STDOUT:   %operator++__carbon_thunk: %operator++__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %operator--__carbon_thunk.type: type = fn_type @operator--__carbon_thunk [concrete]
+// CHECK:STDOUT:   %operator--__carbon_thunk: %operator--__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %operator-__carbon_thunk.type: type = fn_type @operator-__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator-__carbon_thunk: %operator-__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
@@ -1040,12 +1045,12 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_operator.decl.4206c9.1: %cpp_operator.type.1ea478.1 = fn_decl @cpp_operator.1 [concrete = constants.%cpp_operator.0a3797.1] {
+// CHECK:STDOUT:   %operator++__carbon_thunk.decl: %operator++__carbon_thunk.type = fn_decl @operator++__carbon_thunk [concrete = constants.%operator++__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %cpp_operator.decl.4206c9.2: %cpp_operator.type.1ea478.2 = fn_decl @cpp_operator.2 [concrete = constants.%cpp_operator.0a3797.2] {
+// CHECK:STDOUT:   %operator--__carbon_thunk.decl: %operator--__carbon_thunk.type = fn_decl @operator--__carbon_thunk [concrete = constants.%operator--__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -1078,11 +1083,19 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var
 // CHECK:STDOUT:   %c.ref.loc11: ref %C = name_ref c, %c
-// CHECK:STDOUT:   %addr.loc11: %ptr.d9e = addr_of %c.ref.loc11
-// CHECK:STDOUT:   %cpp_operator.call.loc11: init %const = call imports.%cpp_operator.decl.4206c9.1(%addr.loc11)
+// CHECK:STDOUT:   %.loc11_3.1: ref %C = temporary_storage
+// CHECK:STDOUT:   %addr.loc11_5: %ptr.d9e = addr_of %c.ref.loc11
+// CHECK:STDOUT:   %addr.loc11_3.1: %ptr.d9e = addr_of %.loc11_3.1
+// CHECK:STDOUT:   %operator++__carbon_thunk.call: init %empty_tuple.type = call imports.%operator++__carbon_thunk.decl(%addr.loc11_5, %addr.loc11_3.1)
+// CHECK:STDOUT:   %.loc11_3.2: init %C = in_place_init %operator++__carbon_thunk.call, %.loc11_3.1
+// CHECK:STDOUT:   %.loc11_3.3: ref %C = temporary %.loc11_3.1, %.loc11_3.2
 // CHECK:STDOUT:   %c.ref.loc12: ref %C = name_ref c, %c
-// CHECK:STDOUT:   %addr.loc12: %ptr.d9e = addr_of %c.ref.loc12
-// CHECK:STDOUT:   %cpp_operator.call.loc12: init %const = call imports.%cpp_operator.decl.4206c9.2(%addr.loc12)
+// CHECK:STDOUT:   %.loc12_3.1: ref %C = temporary_storage
+// CHECK:STDOUT:   %addr.loc12_5: %ptr.d9e = addr_of %c.ref.loc12
+// CHECK:STDOUT:   %addr.loc12_3.1: %ptr.d9e = addr_of %.loc12_3.1
+// CHECK:STDOUT:   %operator--__carbon_thunk.call: init %empty_tuple.type = call imports.%operator--__carbon_thunk.decl(%addr.loc12_5, %addr.loc12_3.1)
+// CHECK:STDOUT:   %.loc12_3.2: init %C = in_place_init %operator--__carbon_thunk.call, %.loc12_3.1
+// CHECK:STDOUT:   %.loc12_3.3: ref %C = temporary %.loc12_3.1, %.loc12_3.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %minus.patt: %pattern_type.217 = value_binding_pattern minus [concrete]
 // CHECK:STDOUT:   }
@@ -1106,9 +1119,19 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc15: <bound method> = bound_method %.loc15_22.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %addr.loc15_22.3: %ptr.d9e = addr_of %.loc15_22.3
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc15: init %empty_tuple.type = call %bound_method.loc15(%addr.loc15_22.3)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc12: <bound method> = bound_method %.loc12_3.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %.loc12_3.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
+// CHECK:STDOUT:   %addr.loc12_3.2: %ptr.d9e = addr_of %.loc12_3.3
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc12: init %empty_tuple.type = call %bound_method.loc12(%addr.loc12_3.2)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11: <bound method> = bound_method %.loc11_3.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method.loc11: <bound method> = bound_method %.loc11_3.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.3
+// CHECK:STDOUT:   %addr.loc11_3.2: %ptr.d9e = addr_of %.loc11_3.3
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc11: init %empty_tuple.type = call %bound_method.loc11(%addr.loc11_3.2)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8: <bound method> = bound_method %c.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %c.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
+// CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %c.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.4
 // CHECK:STDOUT:   %addr.loc8_3: %ptr.d9e = addr_of %c.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc8: init %empty_tuple.type = call %bound_method.loc8(%addr.loc8_3)
 // CHECK:STDOUT:   <elided>
@@ -1166,7 +1189,6 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.451: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b [concrete]
 // CHECK:STDOUT:   %bound_method.c57: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_5.0f6: %i32 = int_value 5 [concrete]
-// CHECK:STDOUT:   %const.7c5: type = const_type %ptr.d9e [concrete]
 // CHECK:STDOUT:   %operator+=__carbon_thunk.type: type = fn_type @operator+=__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator+=__carbon_thunk: %operator+=__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %operator-=__carbon_thunk.type: type = fn_type @operator-=__carbon_thunk [concrete]
@@ -1183,6 +1205,7 @@ fn F() {
 // CHECK:STDOUT:   %operator|=__carbon_thunk: %operator|=__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %operator^=__carbon_thunk.type: type = fn_type @operator^=__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator^=__carbon_thunk: %operator^=__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %const.7c5: type = const_type %ptr.d9e [concrete]
 // CHECK:STDOUT:   %cpp_operator.type.1ea478.19: type = fn_type @cpp_operator.19 [concrete]
 // CHECK:STDOUT:   %cpp_operator.0a3797.19: %cpp_operator.type.1ea478.19 = struct_value () [concrete]
 // CHECK:STDOUT:   %cpp_operator.type.1ea478.20: type = fn_type @cpp_operator.20 [concrete]
@@ -1623,60 +1646,92 @@ fn F() {
 // CHECK:STDOUT:   %right_shift: %C = value_binding right_shift, %.loc23_31.4
 // CHECK:STDOUT:   %c1.ref.loc26: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc26: ref %C = name_ref c2, %c2
+// CHECK:STDOUT:   %.loc26_6.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc26_3: %ptr.d9e = addr_of %c1.ref.loc26
 // CHECK:STDOUT:   %.loc26_9.1: %C = acquire_value %c2.ref.loc26
 // CHECK:STDOUT:   %.loc26_9.2: ref %C = value_as_ref %.loc26_9.1
-// CHECK:STDOUT:   %addr.loc26_6: %ptr.d9e = addr_of %.loc26_9.2
-// CHECK:STDOUT:   %operator+=__carbon_thunk.call: init %const.7c5 = call imports.%operator+=__carbon_thunk.decl(%addr.loc26_3, %addr.loc26_6)
+// CHECK:STDOUT:   %addr.loc26_6.1: %ptr.d9e = addr_of %.loc26_9.2
+// CHECK:STDOUT:   %addr.loc26_6.2: %ptr.d9e = addr_of %.loc26_6.1
+// CHECK:STDOUT:   %operator+=__carbon_thunk.call: init %empty_tuple.type = call imports.%operator+=__carbon_thunk.decl(%addr.loc26_3, %addr.loc26_6.1, %addr.loc26_6.2)
+// CHECK:STDOUT:   %.loc26_6.2: init %C = in_place_init %operator+=__carbon_thunk.call, %.loc26_6.1
+// CHECK:STDOUT:   %.loc26_6.3: ref %C = temporary %.loc26_6.1, %.loc26_6.2
 // CHECK:STDOUT:   %c1.ref.loc27: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc27: ref %C = name_ref c2, %c2
+// CHECK:STDOUT:   %.loc27_6.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc27_3: %ptr.d9e = addr_of %c1.ref.loc27
 // CHECK:STDOUT:   %.loc27_9.1: %C = acquire_value %c2.ref.loc27
 // CHECK:STDOUT:   %.loc27_9.2: ref %C = value_as_ref %.loc27_9.1
-// CHECK:STDOUT:   %addr.loc27_6: %ptr.d9e = addr_of %.loc27_9.2
-// CHECK:STDOUT:   %operator-=__carbon_thunk.call: init %const.7c5 = call imports.%operator-=__carbon_thunk.decl(%addr.loc27_3, %addr.loc27_6)
+// CHECK:STDOUT:   %addr.loc27_6.1: %ptr.d9e = addr_of %.loc27_9.2
+// CHECK:STDOUT:   %addr.loc27_6.2: %ptr.d9e = addr_of %.loc27_6.1
+// CHECK:STDOUT:   %operator-=__carbon_thunk.call: init %empty_tuple.type = call imports.%operator-=__carbon_thunk.decl(%addr.loc27_3, %addr.loc27_6.1, %addr.loc27_6.2)
+// CHECK:STDOUT:   %.loc27_6.2: init %C = in_place_init %operator-=__carbon_thunk.call, %.loc27_6.1
+// CHECK:STDOUT:   %.loc27_6.3: ref %C = temporary %.loc27_6.1, %.loc27_6.2
 // CHECK:STDOUT:   %c1.ref.loc28: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc28: ref %C = name_ref c2, %c2
+// CHECK:STDOUT:   %.loc28_6.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc28_3: %ptr.d9e = addr_of %c1.ref.loc28
 // CHECK:STDOUT:   %.loc28_9.1: %C = acquire_value %c2.ref.loc28
 // CHECK:STDOUT:   %.loc28_9.2: ref %C = value_as_ref %.loc28_9.1
-// CHECK:STDOUT:   %addr.loc28_6: %ptr.d9e = addr_of %.loc28_9.2
-// CHECK:STDOUT:   %operator*=__carbon_thunk.call: init %const.7c5 = call imports.%operator*=__carbon_thunk.decl(%addr.loc28_3, %addr.loc28_6)
+// CHECK:STDOUT:   %addr.loc28_6.1: %ptr.d9e = addr_of %.loc28_9.2
+// CHECK:STDOUT:   %addr.loc28_6.2: %ptr.d9e = addr_of %.loc28_6.1
+// CHECK:STDOUT:   %operator*=__carbon_thunk.call: init %empty_tuple.type = call imports.%operator*=__carbon_thunk.decl(%addr.loc28_3, %addr.loc28_6.1, %addr.loc28_6.2)
+// CHECK:STDOUT:   %.loc28_6.2: init %C = in_place_init %operator*=__carbon_thunk.call, %.loc28_6.1
+// CHECK:STDOUT:   %.loc28_6.3: ref %C = temporary %.loc28_6.1, %.loc28_6.2
 // CHECK:STDOUT:   %c1.ref.loc29: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc29: ref %C = name_ref c2, %c2
+// CHECK:STDOUT:   %.loc29_6.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc29_3: %ptr.d9e = addr_of %c1.ref.loc29
 // CHECK:STDOUT:   %.loc29_9.1: %C = acquire_value %c2.ref.loc29
 // CHECK:STDOUT:   %.loc29_9.2: ref %C = value_as_ref %.loc29_9.1
-// CHECK:STDOUT:   %addr.loc29_6: %ptr.d9e = addr_of %.loc29_9.2
-// CHECK:STDOUT:   %operator/=__carbon_thunk.call: init %const.7c5 = call imports.%operator/=__carbon_thunk.decl(%addr.loc29_3, %addr.loc29_6)
+// CHECK:STDOUT:   %addr.loc29_6.1: %ptr.d9e = addr_of %.loc29_9.2
+// CHECK:STDOUT:   %addr.loc29_6.2: %ptr.d9e = addr_of %.loc29_6.1
+// CHECK:STDOUT:   %operator/=__carbon_thunk.call: init %empty_tuple.type = call imports.%operator/=__carbon_thunk.decl(%addr.loc29_3, %addr.loc29_6.1, %addr.loc29_6.2)
+// CHECK:STDOUT:   %.loc29_6.2: init %C = in_place_init %operator/=__carbon_thunk.call, %.loc29_6.1
+// CHECK:STDOUT:   %.loc29_6.3: ref %C = temporary %.loc29_6.1, %.loc29_6.2
 // CHECK:STDOUT:   %c1.ref.loc30: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc30: ref %C = name_ref c2, %c2
+// CHECK:STDOUT:   %.loc30_6.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc30_3: %ptr.d9e = addr_of %c1.ref.loc30
 // CHECK:STDOUT:   %.loc30_9.1: %C = acquire_value %c2.ref.loc30
 // CHECK:STDOUT:   %.loc30_9.2: ref %C = value_as_ref %.loc30_9.1
-// CHECK:STDOUT:   %addr.loc30_6: %ptr.d9e = addr_of %.loc30_9.2
-// CHECK:STDOUT:   %operator%=__carbon_thunk.call: init %const.7c5 = call imports.%operator%=__carbon_thunk.decl(%addr.loc30_3, %addr.loc30_6)
+// CHECK:STDOUT:   %addr.loc30_6.1: %ptr.d9e = addr_of %.loc30_9.2
+// CHECK:STDOUT:   %addr.loc30_6.2: %ptr.d9e = addr_of %.loc30_6.1
+// CHECK:STDOUT:   %operator%=__carbon_thunk.call: init %empty_tuple.type = call imports.%operator%=__carbon_thunk.decl(%addr.loc30_3, %addr.loc30_6.1, %addr.loc30_6.2)
+// CHECK:STDOUT:   %.loc30_6.2: init %C = in_place_init %operator%=__carbon_thunk.call, %.loc30_6.1
+// CHECK:STDOUT:   %.loc30_6.3: ref %C = temporary %.loc30_6.1, %.loc30_6.2
 // CHECK:STDOUT:   %c1.ref.loc33: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc33: ref %C = name_ref c2, %c2
+// CHECK:STDOUT:   %.loc33_6.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc33_3: %ptr.d9e = addr_of %c1.ref.loc33
 // CHECK:STDOUT:   %.loc33_9.1: %C = acquire_value %c2.ref.loc33
 // CHECK:STDOUT:   %.loc33_9.2: ref %C = value_as_ref %.loc33_9.1
-// CHECK:STDOUT:   %addr.loc33_6: %ptr.d9e = addr_of %.loc33_9.2
-// CHECK:STDOUT:   %operator&=__carbon_thunk.call: init %const.7c5 = call imports.%operator&=__carbon_thunk.decl(%addr.loc33_3, %addr.loc33_6)
+// CHECK:STDOUT:   %addr.loc33_6.1: %ptr.d9e = addr_of %.loc33_9.2
+// CHECK:STDOUT:   %addr.loc33_6.2: %ptr.d9e = addr_of %.loc33_6.1
+// CHECK:STDOUT:   %operator&=__carbon_thunk.call: init %empty_tuple.type = call imports.%operator&=__carbon_thunk.decl(%addr.loc33_3, %addr.loc33_6.1, %addr.loc33_6.2)
+// CHECK:STDOUT:   %.loc33_6.2: init %C = in_place_init %operator&=__carbon_thunk.call, %.loc33_6.1
+// CHECK:STDOUT:   %.loc33_6.3: ref %C = temporary %.loc33_6.1, %.loc33_6.2
 // CHECK:STDOUT:   %c1.ref.loc34: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc34: ref %C = name_ref c2, %c2
+// CHECK:STDOUT:   %.loc34_6.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc34_3: %ptr.d9e = addr_of %c1.ref.loc34
 // CHECK:STDOUT:   %.loc34_9.1: %C = acquire_value %c2.ref.loc34
 // CHECK:STDOUT:   %.loc34_9.2: ref %C = value_as_ref %.loc34_9.1
-// CHECK:STDOUT:   %addr.loc34_6: %ptr.d9e = addr_of %.loc34_9.2
-// CHECK:STDOUT:   %operator|=__carbon_thunk.call: init %const.7c5 = call imports.%operator|=__carbon_thunk.decl(%addr.loc34_3, %addr.loc34_6)
+// CHECK:STDOUT:   %addr.loc34_6.1: %ptr.d9e = addr_of %.loc34_9.2
+// CHECK:STDOUT:   %addr.loc34_6.2: %ptr.d9e = addr_of %.loc34_6.1
+// CHECK:STDOUT:   %operator|=__carbon_thunk.call: init %empty_tuple.type = call imports.%operator|=__carbon_thunk.decl(%addr.loc34_3, %addr.loc34_6.1, %addr.loc34_6.2)
+// CHECK:STDOUT:   %.loc34_6.2: init %C = in_place_init %operator|=__carbon_thunk.call, %.loc34_6.1
+// CHECK:STDOUT:   %.loc34_6.3: ref %C = temporary %.loc34_6.1, %.loc34_6.2
 // CHECK:STDOUT:   %c1.ref.loc35: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc35: ref %C = name_ref c2, %c2
+// CHECK:STDOUT:   %.loc35_6.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %addr.loc35_3: %ptr.d9e = addr_of %c1.ref.loc35
 // CHECK:STDOUT:   %.loc35_9.1: %C = acquire_value %c2.ref.loc35
 // CHECK:STDOUT:   %.loc35_9.2: ref %C = value_as_ref %.loc35_9.1
-// CHECK:STDOUT:   %addr.loc35_6: %ptr.d9e = addr_of %.loc35_9.2
-// CHECK:STDOUT:   %operator^=__carbon_thunk.call: init %const.7c5 = call imports.%operator^=__carbon_thunk.decl(%addr.loc35_3, %addr.loc35_6)
+// CHECK:STDOUT:   %addr.loc35_6.1: %ptr.d9e = addr_of %.loc35_9.2
+// CHECK:STDOUT:   %addr.loc35_6.2: %ptr.d9e = addr_of %.loc35_6.1
+// CHECK:STDOUT:   %operator^=__carbon_thunk.call: init %empty_tuple.type = call imports.%operator^=__carbon_thunk.decl(%addr.loc35_3, %addr.loc35_6.1, %addr.loc35_6.2)
+// CHECK:STDOUT:   %.loc35_6.2: init %C = in_place_init %operator^=__carbon_thunk.call, %.loc35_6.1
+// CHECK:STDOUT:   %.loc35_6.3: ref %C = temporary %.loc35_6.1, %.loc35_6.2
 // CHECK:STDOUT:   %c1.ref.loc36: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %int_3.loc36: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %addr.loc36: %ptr.d9e = addr_of %c1.ref.loc36
@@ -1837,64 +1892,104 @@ fn F() {
 // CHECK:STDOUT:   %.loc45_37.3: bool = value_of_initializer %.loc45_37.2
 // CHECK:STDOUT:   %.loc45_37.4: bool = converted %.loc45_37.2, %.loc45_37.3
 // CHECK:STDOUT:   %less_than_or_equal: bool = value_binding less_than_or_equal, %.loc45_37.4
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc35: <bound method> = bound_method %.loc35_6.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method.loc35: <bound method> = bound_method %.loc35_6.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %addr.loc35_6.3: %ptr.d9e = addr_of %.loc35_6.3
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc35: init %empty_tuple.type = call %bound_method.loc35(%addr.loc35_6.3)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc34: <bound method> = bound_method %.loc34_6.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method.loc34: <bound method> = bound_method %.loc34_6.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
+// CHECK:STDOUT:   %addr.loc34_6.3: %ptr.d9e = addr_of %.loc34_6.3
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc34: init %empty_tuple.type = call %bound_method.loc34(%addr.loc34_6.3)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc33: <bound method> = bound_method %.loc33_6.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method.loc33: <bound method> = bound_method %.loc33_6.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.3
+// CHECK:STDOUT:   %addr.loc33_6.3: %ptr.d9e = addr_of %.loc33_6.3
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc33: init %empty_tuple.type = call %bound_method.loc33(%addr.loc33_6.3)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc30: <bound method> = bound_method %.loc30_6.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method.loc30: <bound method> = bound_method %.loc30_6.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.4
+// CHECK:STDOUT:   %addr.loc30_6.3: %ptr.d9e = addr_of %.loc30_6.3
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc30: init %empty_tuple.type = call %bound_method.loc30(%addr.loc30_6.3)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc29: <bound method> = bound_method %.loc29_6.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method.loc29: <bound method> = bound_method %.loc29_6.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.5
+// CHECK:STDOUT:   %addr.loc29_6.3: %ptr.d9e = addr_of %.loc29_6.3
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc29: init %empty_tuple.type = call %bound_method.loc29(%addr.loc29_6.3)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc28: <bound method> = bound_method %.loc28_6.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method.loc28: <bound method> = bound_method %.loc28_6.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.6
+// CHECK:STDOUT:   %addr.loc28_6.3: %ptr.d9e = addr_of %.loc28_6.3
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc28: init %empty_tuple.type = call %bound_method.loc28(%addr.loc28_6.3)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc27: <bound method> = bound_method %.loc27_6.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method.loc27: <bound method> = bound_method %.loc27_6.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.7
+// CHECK:STDOUT:   %addr.loc27_6.3: %ptr.d9e = addr_of %.loc27_6.3
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc27: init %empty_tuple.type = call %bound_method.loc27(%addr.loc27_6.3)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc26: <bound method> = bound_method %.loc26_6.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %.loc26_6.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.8
+// CHECK:STDOUT:   %addr.loc26_6.3: %ptr.d9e = addr_of %.loc26_6.3
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc26: init %empty_tuple.type = call %bound_method.loc26(%addr.loc26_6.3)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc23: <bound method> = bound_method %.loc23_31.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc23_31: <bound method> = bound_method %.loc23_31.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
+// CHECK:STDOUT:   %bound_method.loc23_31: <bound method> = bound_method %.loc23_31.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.9
 // CHECK:STDOUT:   %addr.loc23_31.3: %ptr.d9e = addr_of %.loc23_31.3
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc23: init %empty_tuple.type = call %bound_method.loc23_31(%addr.loc23_31.3)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc22: <bound method> = bound_method %.loc22_30.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc22_30: <bound method> = bound_method %.loc22_30.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
+// CHECK:STDOUT:   %bound_method.loc22_30: <bound method> = bound_method %.loc22_30.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.10
 // CHECK:STDOUT:   %addr.loc22_30.3: %ptr.d9e = addr_of %.loc22_30.3
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc22: init %empty_tuple.type = call %bound_method.loc22_30(%addr.loc22_30.3)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc21: <bound method> = bound_method %.loc21_31.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc21: <bound method> = bound_method %.loc21_31.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.3
+// CHECK:STDOUT:   %bound_method.loc21: <bound method> = bound_method %.loc21_31.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.11
 // CHECK:STDOUT:   %addr.loc21_31.4: %ptr.d9e = addr_of %.loc21_31.3
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc21: init %empty_tuple.type = call %bound_method.loc21(%addr.loc21_31.4)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc20: <bound method> = bound_method %.loc20_30.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc20: <bound method> = bound_method %.loc20_30.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.4
+// CHECK:STDOUT:   %bound_method.loc20: <bound method> = bound_method %.loc20_30.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.12
 // CHECK:STDOUT:   %addr.loc20_30.4: %ptr.d9e = addr_of %.loc20_30.3
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc20: init %empty_tuple.type = call %bound_method.loc20(%addr.loc20_30.4)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc19: <bound method> = bound_method %.loc19_31.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc19: <bound method> = bound_method %.loc19_31.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.5
+// CHECK:STDOUT:   %bound_method.loc19: <bound method> = bound_method %.loc19_31.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.13
 // CHECK:STDOUT:   %addr.loc19_31.4: %ptr.d9e = addr_of %.loc19_31.3
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc19: init %empty_tuple.type = call %bound_method.loc19(%addr.loc19_31.4)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc16: <bound method> = bound_method %.loc16_26.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc16: <bound method> = bound_method %.loc16_26.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.6
+// CHECK:STDOUT:   %bound_method.loc16: <bound method> = bound_method %.loc16_26.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.14
 // CHECK:STDOUT:   %addr.loc16_26.4: %ptr.d9e = addr_of %.loc16_26.3
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc16: init %empty_tuple.type = call %bound_method.loc16(%addr.loc16_26.4)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc15: <bound method> = bound_method %.loc15_28.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc15: <bound method> = bound_method %.loc15_28.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.7
+// CHECK:STDOUT:   %bound_method.loc15: <bound method> = bound_method %.loc15_28.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.15
 // CHECK:STDOUT:   %addr.loc15_28.4: %ptr.d9e = addr_of %.loc15_28.3
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc15: init %empty_tuple.type = call %bound_method.loc15(%addr.loc15_28.4)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc14: <bound method> = bound_method %.loc14_34.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %.loc14_34.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.8
+// CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %.loc14_34.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.16
 // CHECK:STDOUT:   %addr.loc14_34.4: %ptr.d9e = addr_of %.loc14_34.3
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc14: init %empty_tuple.type = call %bound_method.loc14(%addr.loc14_34.4)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc13: <bound method> = bound_method %.loc13_31.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %.loc13_31.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.9
+// CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %.loc13_31.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.17
 // CHECK:STDOUT:   %addr.loc13_31.4: %ptr.d9e = addr_of %.loc13_31.3
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc13: init %empty_tuple.type = call %bound_method.loc13(%addr.loc13_31.4)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc12: <bound method> = bound_method %.loc12_28.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %.loc12_28.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.10
+// CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %.loc12_28.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.18
 // CHECK:STDOUT:   %addr.loc12_28.4: %ptr.d9e = addr_of %.loc12_28.3
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc12: init %empty_tuple.type = call %bound_method.loc12(%addr.loc12_28.4)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9: <bound method> = bound_method %c2.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %c2.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.11
+// CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %c2.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.19
 // CHECK:STDOUT:   %addr.loc9_3: %ptr.d9e = addr_of %c2.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc9: init %empty_tuple.type = call %bound_method.loc9(%addr.loc9_3)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8: <bound method> = bound_method %c1.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %c1.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.12
+// CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %c1.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.20
 // CHECK:STDOUT:   %addr.loc8_3: %ptr.d9e = addr_of %c1.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc8: init %empty_tuple.type = call %bound_method.loc8(%addr.loc8_3)
 // CHECK:STDOUT:   <elided>
