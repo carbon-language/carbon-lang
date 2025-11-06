@@ -8,7 +8,6 @@
 #include "clang/Frontend/ASTUnit.h"
 #include "common/error.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/FormatVariadic.h"
