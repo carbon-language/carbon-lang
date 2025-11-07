@@ -618,7 +618,8 @@ auto InstNamer::PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
       llvm::formatv("{0}{1}require{2}", scope_prefix,
                     scope_prefix.empty() ? "" : ".", require_impls_id.index));
 
-  AddBlockLabel(scope_id, require.body_block_id, "require", require_loc);
+  auto decl = sem_ir_->insts().GetAs<SemIR::RequireImplsDecl>(require.decl_id);
+  AddBlockLabel(scope_id, decl.decl_block_id, "require", require_loc);
 
   // Push blocks in reverse order.
   PushGeneric(scope_id, require.generic_id);

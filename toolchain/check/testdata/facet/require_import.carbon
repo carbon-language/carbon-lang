@@ -35,9 +35,13 @@ fn F(A:! X, B:! Y) {}
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %X.type: type = facet_type <@X> [concrete]
+// CHECK:STDOUT:   %Self.861: %type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.binding.as_type.1a1: type = symbolic_binding_type Self, 0, %Self.861 [symbolic]
 // CHECK:STDOUT:   %A: %X.type = symbolic_binding A, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.e25: type = pattern_type %X.type [concrete]
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
+// CHECK:STDOUT:   %Self.29b: %Y.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.binding.as_type.384: type = symbolic_binding_type Self, 0, %Self.29b [symbolic]
 // CHECK:STDOUT:   %B: %Y.type = symbolic_binding B, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.6e5: type = pattern_type %Y.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -48,7 +52,12 @@ fn F(A:! X, B:! Y) {}
 // CHECK:STDOUT:   %Main.Z = import_ref Main//a, Z, unloaded
 // CHECK:STDOUT:   %Main.Y: type = import_ref Main//a, Y, loaded [concrete = constants.%Y.type]
 // CHECK:STDOUT:   %Main.X: type = import_ref Main//a, X, loaded [concrete = constants.%X.type]
+// CHECK:STDOUT:   %Main.import_ref.462 = import_ref Main//a, loc3_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.b7c: type = import_ref Main//a, loc10_18, loaded [symbolic = constants.%Self.binding.as_type.1a1]
+// CHECK:STDOUT:   %Main.import_ref.dec: %type = import_ref Main//a, loc9_14, loaded [symbolic = constants.%Self.861]
 // CHECK:STDOUT:   %Main.import_ref.cae = import_ref Main//a, loc9_14, unloaded
+// CHECK:STDOUT:   %Main.import_ref.3e6: type = import_ref Main//a, loc6_11, loaded [symbolic = constants.%Self.binding.as_type.384]
+// CHECK:STDOUT:   %Main.import_ref.35b: %Y.type = import_ref Main//a, loc5_13, loaded [symbolic = constants.%Self.29b]
 // CHECK:STDOUT:   %Main.import_ref.581 = import_ref Main//a, loc5_13, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -78,12 +87,23 @@ fn F(A:! X, B:! Y) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: interface @Z [from "a.carbon"] {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.462
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: interface @Y [from "a.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.581
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:   @Y.require1 {
+// CHECK:STDOUT:     require imports.%Main.import_ref.3e6 impls <@Z>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @X [from "a.carbon"] {
@@ -91,6 +111,19 @@ fn F(A:! X, B:! Y) {}
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.cae
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
+// CHECK:STDOUT:   @X.require0 {
+// CHECK:STDOUT:     require imports.%Main.import_ref.b7c impls <@Z>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic require @X.require0(imports.%Main.import_ref.dec: %type) [from "a.carbon"] {
+// CHECK:STDOUT:   %Self: %type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.861)]
+// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.1a1)]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic require @Y.require1(imports.%Main.import_ref.35b: %Y.type) [from "a.carbon"] {
+// CHECK:STDOUT:   %Self: %Y.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.29b)]
+// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.384)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%A.loc4_6.2: %X.type, %B.loc4_13.2: %Y.type) {
@@ -103,6 +136,16 @@ fn F(A:! X, B:! Y) {}
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @X.require0(constants.%Self.861) {
+// CHECK:STDOUT:   %Self => constants.%Self.861
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.1a1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Y.require1(constants.%Self.29b) {
+// CHECK:STDOUT:   %Self => constants.%Self.29b
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.384
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%A, constants.%B) {

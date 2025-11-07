@@ -225,6 +225,9 @@ class Formatter {
   // Prints the contents of a name scope, with an optional label.
   auto FormatNameScope(NameScopeId id, llvm::StringRef label = "") -> void;
 
+  // Prints the contents of a require impls as a block.
+  auto FormatRequireImpls(RequireImplsId id) -> void;
+
   // Prints a single instruction. This typically formats as:
   //   `FormatInstLhs()` `<ir_name>` `FormatInstRhs()` `<constant>`
   //

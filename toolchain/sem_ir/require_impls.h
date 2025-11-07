@@ -29,9 +29,6 @@ struct RequireImpls : Printable<RequireImpls> {
   InstId decl_id;
   // The interface or named constraint which contains the `require` declaration.
   NameScopeId parent_scope_id;
-  // The instructions that make up the `require` declaration. It will contain
-  // instructions that provide the `self_id` and `facet_type_inst_id`.
-  InstBlockId body_block_id;
   // A `require` declaration is always generic over `Self` since it's inside an
   // interface or named constraint definition.
   GenericId generic_id;
