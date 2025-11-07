@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_REQUIRE_IMPLS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_REQUIRE_IMPLS_H_
 
+#include "toolchain/base/block_value_store.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -45,6 +46,9 @@ struct RequireImpls : Printable<RequireImpls> {
 };
 
 using RequireImplsStore = ValueStore<RequireImplsId, RequireImpls>;
+
+using RequireImplsBlockStore =
+    BlockValueStore<RequireImplsBlockId, RequireImplsId>;
 
 }  // namespace Carbon::SemIR
 

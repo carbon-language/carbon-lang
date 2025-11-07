@@ -259,6 +259,8 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   require_impls_decl.require_impls_id = require_impls_id;
   ReplaceInstBeforeConstantUse(context, decl_id, require_impls_decl);
 
+  context.require_impls_stack().AppendToTop(require_impls_id);
+
   return true;
 }
 

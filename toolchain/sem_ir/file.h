@@ -183,6 +183,12 @@ class File : public Printable<File> {
   auto require_impls() const -> const RequireImplsStore& {
     return require_impls_;
   }
+  auto require_impls_blocks() -> RequireImplsBlockStore& {
+    return require_impls_blocks_;
+  }
+  auto require_impls_blocks() const -> const RequireImplsBlockStore& {
+    return require_impls_blocks_;
+  }
   auto associated_constants() -> AssociatedConstantStore& {
     return associated_constants_;
   }
@@ -336,6 +342,9 @@ class File : public Printable<File> {
 
   // Storage for interface requirements.
   RequireImplsStore require_impls_;
+
+  // Storage for blocks of RequireImpls.
+  RequireImplsBlockStore require_impls_blocks_;
 
   // Storage for associated constants.
   AssociatedConstantStore associated_constants_;

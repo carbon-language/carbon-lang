@@ -929,6 +929,20 @@ struct RequireImplsId : public IdBase<RequireImplsId> {
   using IdBase::IdBase;
 };
 
+// The ID of a `RequireImplsId` block.
+struct RequireImplsBlockId : public IdBase<RequireImplsBlockId> {
+  static constexpr llvm::StringLiteral Label = "require_impls_block";
+
+  // The canonical empty block, reused to avoid allocating empty vectors. Always
+  // the 0-index block.
+  static const RequireImplsBlockId Empty;
+
+  using IdBase::IdBase;
+};
+
+constexpr RequireImplsBlockId RequireImplsBlockId::Empty =
+    RequireImplsBlockId(0);
+
 // A SemIR location used as the location of instructions. This contains either a
 // InstId, NodeId, ImportIRInstId, or None. The intent is that any of these can
 // indicate the source of an instruction, and also be used to associate a line
