@@ -37,6 +37,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/custom_type_mapping.h"
+#include "toolchain/check/cpp/macros.h"
 #include "toolchain/check/cpp/thunk.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
@@ -2252,6 +2253,84 @@ static auto IsIncompleteClass(Context& context, SemIR::NameScopeId scope_id)
              context.classes().Get(class_decl->class_id).self_type_id);
 }
 
+// Maps a Clang constant expression to a Carbon constant. Currently supports
+// only integer constants.
+// TODO: Add support for the other constant types for which a C++ to Carbon type
+// mapping exists.
+static auto MapConstant(Context& context, SemIR::LocId loc_id,
+                        clang::Expr* expr) -> SemIR::InstId {
+  CARBON_CHECK(expr, "empty expression");
+  auto* integer_literal = dyn_cast<clang::IntegerLiteral>(expr);
+  if (!integer_literal) {
+    context.TODO(loc_id, "Unsupported: constant type: " +
+                             integer_literal->getType().getAsString());
+    return SemIR::ErrorInst::InstId;
+  }
+  SemIR::TypeId type_id =
+      MapType(context, loc_id, integer_literal->getType()).type_id;
+  if (!type_id.has_value()) {
+    CARBON_DIAGNOSTIC(InCppConstantMapping, Error, "invalid integer type");
+    context.emitter().Emit(loc_id, InCppConstantMapping);
+    return SemIR::ErrorInst::InstId;
+  }
+  auto int_id = context.ints().Add(integer_literal->getValue().getSExtValue());
+  auto inst_id = AddInstInNoBlock<SemIR::IntValue>(
+      context, loc_id, {.type_id = type_id, .int_id = int_id});
+  context.imports().push_back(inst_id);
+  return inst_id;
+}
+
+// Imports a macro definition into the scope. Currently supports only simple
+// object-like macros that expand to a constant integer value.
+// TODO: Add support for other macro types and non-integer literal values.
+static auto ImportMacro(Context& context, SemIR::LocId loc_id,
+                        SemIR::NameScopeId scope_id, SemIR::NameId name_id,
+                        clang::MacroInfo* macro_info)
+    -> SemIR::ScopeLookupResult {
+  clang::Expr* macro_expr =
+      TryEvaluateMacroToConstant(context, loc_id, name_id, macro_info);
+
+  if (!macro_expr) {
+    return SemIR::ScopeLookupResult::MakeNotFound();
+  }
+
+  auto inst_id = MapConstant(context, loc_id, macro_expr);
+  if (inst_id == SemIR::ErrorInst::InstId) {
+    return SemIR::ScopeLookupResult::MakeNotFound();
+  }
+
+  AddNameToScope(context, scope_id, name_id, SemIR::AccessKind::Public,
+                 inst_id);
+  return SemIR::ScopeLookupResult::MakeWrappedLookupResult(
+      inst_id, SemIR::AccessKind::Public);
+}
+
+// Looks up a macro definition in the top-level `Cpp` scope. Returns nullptr if
+// the macro is not found or the scope is not the top-level `Cpp` scope.
+static auto LookupMacro(Context& context, SemIR::NameScopeId scope_id,
+                        SemIR::NameId name_id) -> clang::MacroInfo* {
+  auto name_str_opt = context.names().GetAsStringIfIdentifier(name_id);
+  if (!name_str_opt || !IsTopCppScope(context, scope_id)) {
+    return nullptr;
+  }
+
+  clang::Preprocessor& preprocessor = context.clang_sema().getPreprocessor();
+  clang::IdentifierInfo* identifier_info =
+      preprocessor.getIdentifierInfo(*name_str_opt);
+
+  if (!identifier_info) {
+    return nullptr;
+  }
+
+  clang::MacroInfo* macro_info = preprocessor.getMacroInfo(identifier_info);
+  if (macro_info && !macro_info->isUsedForHeaderGuard() &&
+      !macro_info->isFunctionLike() && !macro_info->isBuiltinMacro()) {
+    return macro_info;
+  }
+
+  return nullptr;
+}
+
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> SemIR::ScopeLookupResult {
@@ -2263,6 +2342,9 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
       });
   if (IsIncompleteClass(context, scope_id)) {
     return SemIR::ScopeLookupResult::MakeError();
+  }
+  if (clang::MacroInfo* macro_info = LookupMacro(context, scope_id, name_id)) {
+    return ImportMacro(context, loc_id, scope_id, name_id, macro_info);
   }
   auto lookup = ClangLookupName(context, scope_id, name_id);
   if (!lookup) {
