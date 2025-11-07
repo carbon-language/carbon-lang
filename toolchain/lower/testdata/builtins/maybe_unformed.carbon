@@ -24,15 +24,16 @@ fn PassI32() {
 }
 
 fn PassBool() {
-  // This is passed as an i8 to preserve all the bits.
+  // This is passed by pointer to preserve all the bits.
   TakeBool(MakeBool());
 }
 
-fn MakeUnformedBool(var b: bool) {
+fn ConvertBoolToUnformedBool(var b: bool) {
   TakeBool(b);
 }
 
-// Also test that an adapter wrapped around the builtin behaves the same.
+// Also test that an adapter wrapped around the builtin is passed appropriately,
+// using the same calling convention as the adapted type.
 
 class MaybeUnformedAdapter(T:! type) {
   adapt MaybeUnformedBuiltin(T);
@@ -42,6 +43,8 @@ fn TakeAdapterI32(x: MaybeUnformedAdapter(i32)) {}
 fn MakeAdapterI32() -> MaybeUnformedAdapter(i32);
 
 fn PassAdapterI32() {
+  // TODO: The `value_of_initializer` optimization doesn't get used here, so we
+  // unnecessarily round-trip this value through memory.
   TakeAdapterI32(MakeAdapterI32());
 }
 
@@ -90,7 +93,7 @@ fn PassAdapterBool() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMakeUnformedBool.Main(ptr %b) #0 !dbg !18 {
+// CHECK:STDOUT: define void @_CConvertBoolToUnformedBool.Main(ptr %b) #0 !dbg !18 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CTakeBool.Main(ptr %b), !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !20
@@ -107,12 +110,12 @@ fn PassAdapterBool() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassAdapterI32.Main() #0 !dbg !23 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc45_33.1.temp = alloca i32, align 4, !dbg !24
+// CHECK:STDOUT:   %.loc48_33.1.temp = alloca i32, align 4, !dbg !24
 // CHECK:STDOUT:   %MakeAdapterI32.call = call i32 @_CMakeAdapterI32.Main(), !dbg !24
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc45_33.1.temp), !dbg !24
-// CHECK:STDOUT:   store i32 %MakeAdapterI32.call, ptr %.loc45_33.1.temp, align 4, !dbg !24
-// CHECK:STDOUT:   %.loc45_33.3 = load i32, ptr %.loc45_33.1.temp, align 4, !dbg !24
-// CHECK:STDOUT:   call void @_CTakeAdapterI32.Main(i32 %.loc45_33.3), !dbg !25
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc48_33.1.temp), !dbg !24
+// CHECK:STDOUT:   store i32 %MakeAdapterI32.call, ptr %.loc48_33.1.temp, align 4, !dbg !24
+// CHECK:STDOUT:   %.loc48_33.3 = load i32, ptr %.loc48_33.1.temp, align 4, !dbg !24
+// CHECK:STDOUT:   call void @_CTakeAdapterI32.Main(i32 %.loc48_33.3), !dbg !25
 // CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -127,10 +130,10 @@ fn PassAdapterBool() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassAdapterBool.Main() #0 !dbg !29 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc52_35.1.temp = alloca i1, align 1, !dbg !30
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc52_35.1.temp), !dbg !30
-// CHECK:STDOUT:   call void @_CMakeAdapterBool.Main(ptr %.loc52_35.1.temp), !dbg !30
-// CHECK:STDOUT:   call void @_CTakeAdapterBool.Main(ptr %.loc52_35.1.temp), !dbg !31
+// CHECK:STDOUT:   %.loc55_35.1.temp = alloca i1, align 1, !dbg !30
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc55_35.1.temp), !dbg !30
+// CHECK:STDOUT:   call void @_CMakeAdapterBool.Main(ptr %.loc55_35.1.temp), !dbg !30
+// CHECK:STDOUT:   call void @_CTakeAdapterBool.Main(ptr %.loc55_35.1.temp), !dbg !31
 // CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -164,18 +167,18 @@ fn PassAdapterBool() {
 // CHECK:STDOUT: !15 = !DILocation(line: 28, column: 12, scope: !14)
 // CHECK:STDOUT: !16 = !DILocation(line: 28, column: 3, scope: !14)
 // CHECK:STDOUT: !17 = !DILocation(line: 26, column: 1, scope: !14)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "MakeUnformedBool", linkageName: "_CMakeUnformedBool.Main", scope: null, file: !3, line: 31, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "ConvertBoolToUnformedBool", linkageName: "_CConvertBoolToUnformedBool.Main", scope: null, file: !3, line: 31, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !19 = !DILocation(line: 32, column: 3, scope: !18)
 // CHECK:STDOUT: !20 = !DILocation(line: 31, column: 1, scope: !18)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "TakeAdapterI32", linkageName: "_CTakeAdapterI32.Main", scope: null, file: !3, line: 41, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !22 = !DILocation(line: 41, column: 1, scope: !21)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "PassAdapterI32", linkageName: "_CPassAdapterI32.Main", scope: null, file: !3, line: 44, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !24 = !DILocation(line: 45, column: 18, scope: !23)
-// CHECK:STDOUT: !25 = !DILocation(line: 45, column: 3, scope: !23)
-// CHECK:STDOUT: !26 = !DILocation(line: 44, column: 1, scope: !23)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "TakeAdapterBool", linkageName: "_CTakeAdapterBool.Main", scope: null, file: !3, line: 48, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !28 = !DILocation(line: 48, column: 1, scope: !27)
-// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "PassAdapterBool", linkageName: "_CPassAdapterBool.Main", scope: null, file: !3, line: 51, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !30 = !DILocation(line: 52, column: 19, scope: !29)
-// CHECK:STDOUT: !31 = !DILocation(line: 52, column: 3, scope: !29)
-// CHECK:STDOUT: !32 = !DILocation(line: 51, column: 1, scope: !29)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "TakeAdapterI32", linkageName: "_CTakeAdapterI32.Main", scope: null, file: !3, line: 42, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !22 = !DILocation(line: 42, column: 1, scope: !21)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "PassAdapterI32", linkageName: "_CPassAdapterI32.Main", scope: null, file: !3, line: 45, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !24 = !DILocation(line: 48, column: 18, scope: !23)
+// CHECK:STDOUT: !25 = !DILocation(line: 48, column: 3, scope: !23)
+// CHECK:STDOUT: !26 = !DILocation(line: 45, column: 1, scope: !23)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "TakeAdapterBool", linkageName: "_CTakeAdapterBool.Main", scope: null, file: !3, line: 51, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !28 = !DILocation(line: 51, column: 1, scope: !27)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "PassAdapterBool", linkageName: "_CPassAdapterBool.Main", scope: null, file: !3, line: 54, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !30 = !DILocation(line: 55, column: 19, scope: !29)
+// CHECK:STDOUT: !31 = !DILocation(line: 55, column: 3, scope: !29)
+// CHECK:STDOUT: !32 = !DILocation(line: 54, column: 1, scope: !29)
