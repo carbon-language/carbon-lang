@@ -276,8 +276,8 @@ class Formatter {
   auto FormatImportRefRhs(AnyImportRef inst) -> void;
 
   // Format a block of `require` declarations from their `RequireImplsDecl`
-  // instructions.
-  auto FormatRequireImplsBlock(InstBlockId inst_block_id) -> void;
+  // instructions. Starts with a `!requires:` label.
+  auto FormatRequireImplsBlock(RequireImplsBlockId block_id) -> void;
 
   template <typename... Args>
   auto FormatArgs(Args... args) -> void {

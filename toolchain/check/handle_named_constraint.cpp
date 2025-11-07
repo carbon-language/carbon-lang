@@ -130,6 +130,7 @@ auto HandleParseNode(Context& context,
   StartGenericDefinition(context, constraint_info.generic_id);
 
   context.inst_block_stack().Push();
+  context.require_impls_stack().PushArray();
 
   // Declare and introduce `Self`. We model `Self` as a symbolic binding whose
   // type is the named constraint, excluding any other interfaces mentioned by
@@ -154,17 +155,15 @@ auto HandleParseNode(Context& context,
   auto named_constraint_id =
       context.node_stack()
           .Pop<Parse::NodeKind::NamedConstraintDefinitionStart>();
-  auto inst_block_id = context.inst_block_stack().Pop();
+  context.inst_block_stack().Pop();
 
-  llvm::SmallVector<SemIR::InstId> require_decls(llvm::make_filter_range(
-      context.inst_blocks().Get(inst_block_id), [&](SemIR::InstId inst_id) {
-        return context.insts().Is<SemIR::RequireImplsDecl>(inst_id);
-      }));
-  auto require_decls_id = context.inst_blocks().Add(require_decls);
+  auto require_impls_block_id = context.require_impls_blocks().Add(
+      context.require_impls_stack().PeekArray());
+  context.require_impls_stack().PopArray();
 
   auto& constraint_info = context.named_constraints().Get(named_constraint_id);
   if (!constraint_info.complete) {
-    constraint_info.require_decls_id = require_decls_id;
+    constraint_info.require_impls_block_id = require_impls_block_id;
     // TODO: Do something with `alias` statements in the body of the
     // constraint.
     constraint_info.complete = true;

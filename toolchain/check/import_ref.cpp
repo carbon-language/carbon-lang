@@ -2593,6 +2593,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       implicit_param_patterns);
   new_interface.param_patterns_id = GetLocalCanonicalInstBlockId(
       resolver, import_interface.param_patterns_id, param_patterns);
+  // TODO: Import require_impls_block_id.
   SetGenericData(resolver, import_interface.generic_id,
                  new_interface.generic_id, generic_data);
 
@@ -2749,6 +2750,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
           implicit_param_patterns);
   new_named_constraint.param_patterns_id = GetLocalCanonicalInstBlockId(
       resolver, import_named_constraint.param_patterns_id, param_patterns);
+  // TODO: Import require_impls_block_id.
   SetGenericData(resolver, import_named_constraint.generic_id,
                  import_named_constraint.generic_id, generic_data);
 
