@@ -35,7 +35,7 @@ fn F(input: Cpp.S*) {
 
 library "[[@TEST_NAME]]";
 
-import Cpp inline "";
+import Cpp;
 
 class C {}
 
@@ -77,7 +77,7 @@ fn F(input: Cpp.void*) {
 
 library "[[@TEST_NAME]]";
 
-import Cpp inline "";
+import Cpp;
 
 class C {}
 

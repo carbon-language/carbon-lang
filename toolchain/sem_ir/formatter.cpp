@@ -1260,14 +1260,14 @@ auto Formatter::FormatImportCppDeclRhs() -> void {
     }
 
     Indent();
-    out_ << "import Cpp ";
+    out_ << "import Cpp";
     if (import.library_id.has_value()) {
-      out_ << "\""
+      out_ << " \""
            << FormatEscaped(
                   sem_ir_->string_literal_values().Get(import.library_id))
            << "\"";
-    } else {
-      out_ << "inline";
+    } else if (import.inline_body_id.has_value()) {
+      out_ << " inline";
     }
     out_ << "\n";
   }

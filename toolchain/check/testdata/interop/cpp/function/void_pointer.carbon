@@ -88,7 +88,7 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-import Cpp inline "";
+import Cpp;
 
 // CHECK:STDERR: fail_void.carbon:[[@LINE+5]]:6: error: parameter has incomplete type `Cpp.void` in function definition [IncompleteTypeInFunctionParam]
 // CHECK:STDERR: fn F(x: Cpp.void) {}

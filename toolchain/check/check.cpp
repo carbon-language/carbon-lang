@@ -79,12 +79,6 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
       // have diagnosed the use of `Cpp` in the declaration.
       return;
     }
-    if (!import.library_id.has_value() && !import.inline_body_id.has_value()) {
-      CARBON_DIAGNOSTIC(CppInteropMissingLibrary, Error,
-                        "`Cpp` import without `library` or `inline`");
-      unit_info.emitter.Emit(import.node_id, CppInteropMissingLibrary);
-      return;
-    }
     if (fuzzing) {
       // Clang is not crash-resilient.
       CARBON_DIAGNOSTIC(CppInteropFuzzing, Error,
@@ -94,7 +88,8 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
     }
     unit_info.cpp_imports.push_back(import);
     return;
-  } else if (import.inline_body_id.has_value()) {
+  }
+  if (import.inline_body_id.has_value()) {
     CARBON_DIAGNOSTIC(InlineImportNotCpp, Error,
                       "`inline` import not in package `Cpp`");
     unit_info.emitter.Emit(import.node_id, InlineImportNotCpp);

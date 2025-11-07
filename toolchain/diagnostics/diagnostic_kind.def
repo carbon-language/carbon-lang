@@ -190,7 +190,6 @@ CARBON_DIAGNOSTIC_KIND(InCppTypeCompletion)
 
 // Package/import checking diagnostics.
 CARBON_DIAGNOSTIC_KIND(CppInteropFuzzing)
-CARBON_DIAGNOSTIC_KIND(CppInteropMissingLibrary)
 CARBON_DIAGNOSTIC_KIND(CppInteropDriverError)
 CARBON_DIAGNOSTIC_KIND(CppInteropDriverWarning)
 CARBON_DIAGNOSTIC_KIND(CppInteropParseError)

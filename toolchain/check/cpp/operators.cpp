@@ -125,9 +125,14 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
     CARBON_CHECK(op_name == "Op");
     return clang::OO_CaretEqual;
   }
-  // TODO: Add support for `LeftShiftAssignWith` (`OO_LessLessEqual`) and
-  // `RightShiftAssignWith` (`OO_GreaterGreaterEqual`) when references are
-  // supported.
+  if (interface_name == "LeftShiftAssignWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_LessLessEqual;
+  }
+  if (interface_name == "RightShiftAssignWith") {
+    CARBON_CHECK(op_name == "Op");
+    return clang::OO_GreaterGreaterEqual;
+  }
 
   // Relational Operators.
   if (interface_name == "EqWith") {
