@@ -110,3 +110,16 @@ class C {
   // CHECK:STDERR:
   require impls Y;
 }
+
+// --- fail_extend_require_type.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+
+interface Z {
+  // CHECK:STDERR: fail_extend_require_type.carbon:[[@LINE+4]]:18: error: `extend require impls` with explicit type [RequireImplsExtendWithExplicitSelf]
+  // CHECK:STDERR:   extend require () impls Y;
+  // CHECK:STDERR:                  ^~
+  // CHECK:STDERR:
+  extend require () impls Y;
+}

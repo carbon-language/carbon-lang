@@ -49,7 +49,7 @@ class C {}
 // CHECK:STDERR:
 impl C as A;
 
-// --- fail_todo_import_complete.carbon
+// --- import_complete.carbon
 library "[[@TEST_NAME]]";
 
 import library "b";
@@ -57,19 +57,9 @@ import library "b";
 class C {}
 
 // This requires that B is identified.
-// TODO: This should work.
-// CHECK:STDERR: fail_todo_import_complete.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl C as B;
-// CHECK:STDERR: ^~~~~~~~~~~~
-// CHECK:STDERR:
 impl C as B;
 
 // This requires that B is complete.
-// TODO: This should work.
-// CHECK:STDERR: fail_todo_import_complete.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl C as B {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR:
 impl C as B {}
 
 // CHECK:STDOUT: --- a.impl.carbon

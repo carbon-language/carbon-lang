@@ -2414,6 +2414,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver.local_insts().GetAs<SemIR::FacetType>(
           new_canonical_facet_type_inst_id);
   new_require.facet_type_id = new_canonical_facet_type.facet_type_id;
+  new_require.extend_self = import_require.extend_self;
   new_require.parent_scope_id = parent_scope_id;
 
   SetGenericData(resolver, import_require.generic_id, new_require.generic_id,

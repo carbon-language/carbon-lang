@@ -24,6 +24,8 @@ struct RequireImpls : Printable<RequireImpls> {
   TypeInstId facet_type_inst_id;
   // The `FacetTypeInfo` derived from the `facet_type_inst_id` instruction.
   FacetTypeId facet_type_id;
+  // If the facet type extends `Self`. When true, the `self_id` will be `Self`.
+  bool extend_self;
 
   // The location of the `require` declaration.
   InstId decl_id;

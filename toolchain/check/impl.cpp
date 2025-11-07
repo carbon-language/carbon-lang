@@ -121,6 +121,7 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
       witness_block.empty()) {
     if (!RequireCompleteFacetTypeForImplDefinition(
             context, SemIR::LocId(impl.latest_decl_id()), impl.constraint_id)) {
+      FillImplWitnessWithErrors(context, impl);
       return;
     }
 
