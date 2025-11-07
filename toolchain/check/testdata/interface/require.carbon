@@ -301,7 +301,9 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require0
+// CHECK:STDOUT:   @Z.require0 {
+// CHECK:STDOUT:     require @Z.require0.%Self.as_type impls <@Y>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @Z.require0(@Z.%Self: %Z.type) {
@@ -345,7 +347,9 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require0
+// CHECK:STDOUT:   @Z.require0 {
+// CHECK:STDOUT:     require @Z.require0.%Self.as_type impls <@Y>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @Z.require0(@Z.%Self: %Z.type) {
@@ -391,7 +395,9 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require0
+// CHECK:STDOUT:   @Z.require0 {
+// CHECK:STDOUT:     require @Z.require0.%.loc9 impls <@Y>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @Z.require0(@Z.%Self: %Z.type) {
@@ -443,7 +449,9 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require0
+// CHECK:STDOUT:   @Z.require0 {
+// CHECK:STDOUT:     require @Z.require0.%C.loc9_17.1 impls <@Y>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @Z.require0(@Z.%Self: %Z.type) {
@@ -510,7 +518,9 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require0
+// CHECK:STDOUT:   @Z.require0 {
+// CHECK:STDOUT:     require @Z.require0.%Self.as_type impls <@Y where constants.%impl.elem0 = constants.%empty_tuple.type>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @Z.require0(@Z.%Self: %Z.type) {
@@ -576,7 +586,9 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     @Z.require0
+// CHECK:STDOUT:     @Z.require0 {
+// CHECK:STDOUT:       require @Z.require0.%T.ref impls <@Z, @Z(constants.%Self.binding.as_type)>
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -655,7 +667,9 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require0
+// CHECK:STDOUT:   @Z.require0 {
+// CHECK:STDOUT:     require @Z.require0.%Self.as_type.loc10_11 impls <@Y where constants.%impl.elem0 = constants.%Self.binding.as_type>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @Z.require0(@Z.%Self: %Z.type) {
@@ -719,7 +733,9 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
-// CHECK:STDOUT:     @Z.require1
+// CHECK:STDOUT:     @Z.require1 {
+// CHECK:STDOUT:       require @Z.require1.%Self.as_type impls <@Z, @Z(constants.%T)>
+// CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

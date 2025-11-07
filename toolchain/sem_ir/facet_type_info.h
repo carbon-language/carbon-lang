@@ -113,6 +113,17 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
     return std::nullopt;
   }
 
+  auto TryAsSingleNamedConstraint() const
+      -> std::optional<SpecificNamedConstraint> {
+    if (extend_constraints.empty() && self_impls_constraints.empty() &&
+        extend_named_constraints.size() == 1 &&
+        self_impls_named_constraints.empty() && rewrite_constraints.empty() &&
+        builtin_constraint_mask.empty() && !other_requirements) {
+      return extend_named_constraints.front();
+    }
+    return std::nullopt;
+  }
+
   friend auto operator==(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
       -> bool {
     return lhs.extend_constraints == rhs.extend_constraints &&

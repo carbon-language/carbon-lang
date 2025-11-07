@@ -253,7 +253,6 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
        .facet_type_id = constraint_facet_type.facet_type_id,
        .decl_id = decl_id,
        .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-       .body_block_id = decl_block_id,
        .generic_id = BuildGenericDecl(context, decl_id)});
 
   require_impls_decl.require_impls_id = require_impls_id;
