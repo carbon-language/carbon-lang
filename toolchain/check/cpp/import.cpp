@@ -1104,6 +1104,11 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
   return TypeExpr::None;
 }
 
+static auto MapNullptrType(Context& context, SemIR::LocId loc_id) -> TypeExpr {
+  return ExprAsType(context, loc_id,
+                    LookupNameInCore(context, loc_id, "CppNullptrT"));
+}
+
 // Maps a C++ builtin type to a Carbon type.
 // TODO: Support more builtin types.
 static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
@@ -1132,6 +1137,8 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
   } else if (type.isVoidType()) {
     return ExprAsType(context, Parse::NodeId::None,
                       SemIR::CppVoidType::TypeInstId);
+  } else if (type.isNullPtrType()) {
+    return MapNullptrType(context, loc_id);
   }
 
   return TypeExpr::None;
