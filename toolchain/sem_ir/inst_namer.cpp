@@ -868,9 +868,16 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(FacetAccessType inst): {
+      auto name_id = SemIR::NameId::None;
       if (auto name =
               sem_ir().insts().TryGetAs<NameRef>(inst.facet_value_inst_id)) {
-        AddInstNameId(name->name_id, ".as_type");
+        name_id = name->name_id;
+      } else if (auto bind = sem_ir().insts().TryGetAs<SymbolicBinding>(
+                     inst.facet_value_inst_id)) {
+        name_id = sem_ir().entity_names().Get(bind->entity_name_id).name_id;
+      }
+      if (name_id.has_value()) {
+        AddInstNameId(name_id, ".as_type");
       } else {
         AddInstName("as_type");
       }

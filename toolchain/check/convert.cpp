@@ -32,6 +32,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/type.h"
+#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 // TODO: This contains a lot of recursion. Consider removing it in order to
@@ -1006,16 +1007,23 @@ static auto PerformBuiltinConversion(
                                                .diagnose = target.diagnose});
         }
 
-        // `MaybeUnformed(T)` has a pointer value representation, and `T` might
-        // not, so convert as needed when removing `MaybeUnformed`.
+        // `MaybeUnformed(T)` might have a pointer value representation when `T`
+        // does not, so convert as needed when removing `MaybeUnformed`.
         bool need_value_binding = false;
         if ((removed_quals & SemIR::TypeQualifiers::MaybeUnformed) !=
                 SemIR::TypeQualifiers::None &&
             category == SemIR::ExprCategory::Value) {
-          value_id = AddInst<SemIR::ValueAsRef>(
-              context, loc_id,
-              {.type_id = value_type_id, .value_id = value_id});
-          need_value_binding = true;
+          auto value_rep =
+              SemIR::ValueRepr::ForType(context.sem_ir(), value_type_id);
+          auto unformed_value_rep =
+              SemIR::ValueRepr::ForType(context.sem_ir(), target.type_id);
+          if (value_rep.kind != unformed_value_rep.kind) {
+            CARBON_CHECK(unformed_value_rep.kind == SemIR::ValueRepr::Pointer);
+            value_id = AddInst<SemIR::ValueAsRef>(
+                context, loc_id,
+                {.type_id = value_type_id, .value_id = value_id});
+            need_value_binding = true;
+          }
         }
 
         value_id = AddInst<SemIR::AsCompatible>(

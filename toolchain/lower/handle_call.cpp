@@ -470,22 +470,16 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
     }
 
     case SemIR::BuiltinFunctionKind::PointerMakeNull: {
-      // MaybeUnformed(T*) has an in-place initializing representation, so an
-      // out parameter will be passed.
-      context.builder().CreateStore(
-          llvm::ConstantPointerNull::get(
-              llvm::PointerType::get(context.llvm_context(),
-                                     /*AddressSpace=*/0)),
-          context.GetValue(arg_ids[0]));
       context.SetLocal(inst_id,
-                       llvm::PoisonValue::get(context.GetTypeOfInst(inst_id)));
+                       llvm::ConstantPointerNull::get(
+                           llvm::PointerType::get(context.llvm_context(),
+                                                  /*AddressSpace=*/0)));
       return;
     }
 
     case SemIR::BuiltinFunctionKind::PointerIsNull: {
-      auto* ptr = context.builder().CreateLoad(
-          context.GetTypeOfInst(arg_ids[0]), context.GetValue(arg_ids[0]));
-      context.SetLocal(inst_id, context.builder().CreateIsNull(ptr));
+      context.SetLocal(inst_id, context.builder().CreateIsNull(
+                                    context.GetValue(arg_ids[0])));
       return;
     }
 
