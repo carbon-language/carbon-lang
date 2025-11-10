@@ -9,10 +9,13 @@
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/literal.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/specific_named_constraint.h"
+#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -625,11 +628,28 @@ auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
 }
 
 auto TypeCompleter::BuildInfoForInst(SemIR::TypeId type_id,
-                                     SemIR::MaybeUnformedType /*inst*/) const
+                                     SemIR::MaybeUnformedType inst) const
     -> SemIR::CompleteTypeInfo {
-  // `MaybeUnformed(T)` always has a pointer value representation, regardless of
-  // `T`'s value representation.
-  return {.value_repr = MakePointerValueRepr(type_id)};
+  // `MaybeUnformed(T)` has the same value representation as `T` if that value
+  // representation preserves all the bytes of the value, including any padding
+  // bits. Otherwise we need to use a different representation.
+  auto inner_type_id = context_->types().GetTypeIdForTypeInstId(inst.inner_id);
+  auto nested = GetNestedInfo(inner_type_id);
+  if (nested.value_repr.kind == SemIR::ValueRepr::Custom) {
+    nested.value_repr = MakePointerValueRepr(type_id);
+  } else if (nested.value_repr.kind == SemIR::ValueRepr::Copy) {
+    auto type_inst = context_->types().GetAsInst(nested.value_repr.type_id);
+    // TODO: Should ValueRepr::IsCopyOfObjectRepr return false for `bool`?
+    if (!nested.value_repr.IsCopyOfObjectRepr(context_->sem_ir(),
+                                              inner_type_id) ||
+        type_inst.Is<SemIR::BoolType>()) {
+      nested.value_repr = MakePointerValueRepr(type_id);
+    }
+    // TODO: Handle any other types that we treat as having discarded padding
+    // bits. For now there are no such types, as all class types and all structs
+    // and tuples with more than one element are passed indirectly.
+  }
+  return nested;
 }
 
 auto TypeCompleter::BuildInfoForInst(SemIR::TypeId /*type_id*/,

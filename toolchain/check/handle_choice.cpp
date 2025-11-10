@@ -291,6 +291,10 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
 
   for (auto [i, deferred_binding] :
        llvm::enumerate(context.choice_deferred_bindings())) {
+    // TODO: This requires the class to be complete, but we've not yet called
+    // `FinishGenericDefinition`, so we can't use it as a complete type yet. But
+    // this also potentially adds things to the generic definition, so we can't
+    // call `FinsihGenericDefinition` before this call, either.
     MakeLetBinding(context,
                    ChoiceInfo{.self_type_id = class_info.self_type_id,
                               .name_scope_id = class_info.scope_id,

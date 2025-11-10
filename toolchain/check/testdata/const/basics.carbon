@@ -304,7 +304,8 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc11_36: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %const.loc11_30: type = const_type %C.ref.loc11_36 [concrete = constants.%const.668]
-// CHECK:STDOUT:     %ptr.loc11_38: type = ptr_type %const.loc11_30 [concrete = constants.%ptr.801]
+// CHECK:STDOUT:     %const.loc11_23: type = const_type %const.loc11_30 [concrete = constants.%const.668]
+// CHECK:STDOUT:     %ptr.loc11_38: type = ptr_type %const.loc11_23 [concrete = constants.%ptr.801]
 // CHECK:STDOUT:     %ptr.loc11_39: type = ptr_type %ptr.loc11_38 [concrete = constants.%ptr.564]
 // CHECK:STDOUT:     %p.param: %ptr.564 = value_param call_param0
 // CHECK:STDOUT:     %.loc11: type = splice_block %ptr.loc11_17 [concrete = constants.%ptr.564] {
