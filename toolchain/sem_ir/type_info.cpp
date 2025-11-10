@@ -157,6 +157,7 @@ auto TypeLiteralInfo::ForType(const File& file, ClassType class_type)
 
   Kind kind = llvm::StringSwitch<Kind>(*name_ident)
                   .Case("Char", Char)
+                  .Case("CppNullptrT", CppNullptrT)
                   .Case("String", Str)
                   .Default(None);
   return {.kind = kind};
@@ -172,6 +173,9 @@ auto TypeLiteralInfo::PrintLiteral(const File& file,
       break;
     case Char:
       out << "char";
+      break;
+    case CppNullptrT:
+      out << "Cpp.nullptr_t";
       break;
     case Str:
       out << "str";
