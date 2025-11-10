@@ -29,6 +29,9 @@ class BuildRuntimesSubcommand : public DriverSubcommand {
  public:
   explicit BuildRuntimesSubcommand();
 
+  // For manual construction of subcommands.
+  explicit BuildRuntimesSubcommand(BuildRuntimesOptions options);
+
   auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
     options_.Build(b);
   }

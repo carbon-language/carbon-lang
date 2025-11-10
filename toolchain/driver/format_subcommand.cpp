@@ -5,6 +5,7 @@
 #include "toolchain/driver/format_subcommand.h"
 
 #include <string>
+#include <utility>
 
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/shared_value_stores.h"
@@ -50,7 +51,10 @@ Format Carbon source code.
 )""",
 };
 
-FormatSubcommand::FormatSubcommand() : DriverSubcommand(SubcommandInfo) {}
+FormatSubcommand::FormatSubcommand() : FormatSubcommand({}) {}
+
+FormatSubcommand::FormatSubcommand(FormatOptions options)
+    : DriverSubcommand(SubcommandInfo), options_(std::move(options)) {}
 
 auto FormatSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   DriverResult result = {.success = true};

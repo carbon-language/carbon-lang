@@ -4,6 +4,8 @@
 
 #include "toolchain/driver/llvm_subcommand.h"
 
+#include <utility>
+
 #include "common/command_line.h"
 #include "llvm/TargetParser/Host.h"
 #include "llvm/TargetParser/Triple.h"
@@ -57,7 +59,10 @@ Arguments passed to the LLVM tool.
   b.RequiresSubcommand();
 }
 
-LLVMSubcommand::LLVMSubcommand() : DriverSubcommand(SubcommandInfo) {}
+LLVMSubcommand::LLVMSubcommand() : LLVMSubcommand({}) {}
+
+LLVMSubcommand::LLVMSubcommand(LLVMOptions options)
+    : DriverSubcommand(SubcommandInfo), options_(std::move(options)) {}
 
 auto LLVMSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   LLVMRunner runner(driver_env.installation, driver_env.vlog_stream);

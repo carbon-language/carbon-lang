@@ -75,6 +75,9 @@ class CompileSubcommand : public DriverSubcommand {
  public:
   explicit CompileSubcommand();
 
+  // For manual construction of subcommands.
+  explicit CompileSubcommand(CompileOptions options);
+
   auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
     options_.Build(b);
   }

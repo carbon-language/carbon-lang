@@ -26,6 +26,9 @@ class FormatSubcommand : public DriverSubcommand {
  public:
   explicit FormatSubcommand();
 
+  // For manual construction of subcommands.
+  explicit FormatSubcommand(FormatOptions options);
+
   auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
     options_.Build(b);
   }

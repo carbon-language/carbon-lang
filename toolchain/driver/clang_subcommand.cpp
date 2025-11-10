@@ -5,6 +5,7 @@
 #include "toolchain/driver/clang_subcommand.h"
 
 #include <string>
+#include <utility>
 
 #include "llvm/TargetParser/Host.h"
 #include "toolchain/driver/clang_runner.h"
@@ -63,7 +64,10 @@ results in an indirect Clang invocation.
 )""",
 };
 
-ClangSubcommand::ClangSubcommand() : DriverSubcommand(SubcommandInfo) {}
+ClangSubcommand::ClangSubcommand() : ClangSubcommand({}) {}
+
+ClangSubcommand::ClangSubcommand(ClangOptions options)
+    : DriverSubcommand(SubcommandInfo), options_(std::move(options)) {}
 
 // TODO: This lacks a lot of features from the main driver code. We may need to
 // add more.

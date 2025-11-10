@@ -4,6 +4,7 @@
 
 #include "toolchain/driver/build_runtimes_subcommand.h"
 
+#include <utility>
 #include <variant>
 
 #include "llvm/TargetParser/Triple.h"
@@ -42,7 +43,10 @@ generation flags, and used explicitly when linking.
 };
 
 BuildRuntimesSubcommand::BuildRuntimesSubcommand()
-    : DriverSubcommand(SubcommandInfo) {}
+    : BuildRuntimesSubcommand({}) {}
+
+BuildRuntimesSubcommand::BuildRuntimesSubcommand(BuildRuntimesOptions options)
+    : DriverSubcommand(SubcommandInfo), options_(std::move(options)) {}
 
 auto BuildRuntimesSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // Don't run Clang when fuzzing, it is known to not be reliable under fuzzing

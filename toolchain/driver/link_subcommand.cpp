@@ -4,6 +4,8 @@
 
 #include "toolchain/driver/link_subcommand.h"
 
+#include <utility>
+
 #include "llvm/TargetParser/Triple.h"
 #include "toolchain/driver/clang_runner.h"
 
@@ -80,7 +82,10 @@ TODO: Support linking against binary libraries.
 )""",
 };
 
-LinkSubcommand::LinkSubcommand() : DriverSubcommand(SubcommandInfo) {}
+LinkSubcommand::LinkSubcommand() : LinkSubcommand({}) {}
+
+LinkSubcommand::LinkSubcommand(LinkOptions options)
+    : DriverSubcommand(SubcommandInfo), options_(std::move(options)) {}
 
 auto LinkSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // TODO: Currently we use the Clang driver to link. This works well on Unix

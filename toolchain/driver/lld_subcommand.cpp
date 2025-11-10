@@ -5,6 +5,7 @@
 #include "toolchain/driver/lld_subcommand.h"
 
 #include <string>
+#include <utility>
 
 #include "llvm/TargetParser/Host.h"
 #include "llvm/TargetParser/Triple.h"
@@ -85,7 +86,10 @@ syntaxes, as well as testing and debugging of the underlying tool.
 )""",
 };
 
-LldSubcommand::LldSubcommand() : DriverSubcommand(SubcommandInfo) {}
+LldSubcommand::LldSubcommand() : LldSubcommand({}) {}
+
+LldSubcommand::LldSubcommand(LldOptions options)
+    : DriverSubcommand(SubcommandInfo), options_(std::move(options)) {}
 
 // TODO: This lacks a lot of features from the main driver code. We may need to
 // add more.

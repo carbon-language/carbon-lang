@@ -29,6 +29,9 @@ class ClangSubcommand : public DriverSubcommand {
  public:
   explicit ClangSubcommand();
 
+  // For manual construction of subcommands.
+  explicit ClangSubcommand(ClangOptions options);
+
   auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
     options_.Build(b);
   }

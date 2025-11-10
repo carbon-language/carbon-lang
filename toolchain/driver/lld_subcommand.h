@@ -39,6 +39,9 @@ class LldSubcommand : public DriverSubcommand {
  public:
   explicit LldSubcommand();
 
+  // For manual construction of subcommands.
+  explicit LldSubcommand(LldOptions options);
+
   auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
     options_.Build(b);
   }

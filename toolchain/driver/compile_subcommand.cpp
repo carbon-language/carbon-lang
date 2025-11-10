@@ -386,7 +386,10 @@ can be written to standard output as these phases progress.
 )""",
 };
 
-CompileSubcommand::CompileSubcommand() : DriverSubcommand(SubcommandInfo) {}
+CompileSubcommand::CompileSubcommand() : CompileSubcommand({}) {}
+
+CompileSubcommand::CompileSubcommand(CompileOptions options)
+    : DriverSubcommand(SubcommandInfo), options_(std::move(options)) {}
 
 // Returns a string for printing the phase in a diagnostic.
 static auto PhaseToString(CompileOptions::Phase phase) -> std::string {

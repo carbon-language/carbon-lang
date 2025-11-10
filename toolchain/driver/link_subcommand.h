@@ -30,6 +30,9 @@ class LinkSubcommand : public DriverSubcommand {
  public:
   explicit LinkSubcommand();
 
+  // For manual construction of subcommands.
+  explicit LinkSubcommand(LinkOptions options);
+
   auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
     options_.Build(b);
   }

@@ -37,6 +37,9 @@ class LLVMSubcommand : public DriverSubcommand {
  public:
   explicit LLVMSubcommand();
 
+  // For manual construction of subcommands.
+  explicit LLVMSubcommand(LLVMOptions options);
+
   // The LLVM subcommand uses a custom subcommand structure, so `BuildOptions`
   // is a no-op and we override the more complex layer.
   auto BuildOptions(CommandLine::CommandBuilder& /*b*/) -> void override {
