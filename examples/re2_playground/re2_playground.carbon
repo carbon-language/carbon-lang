@@ -35,6 +35,12 @@ fn Run() -> i32 {
   var editor: Cpp.llvm.LineEditor = Cpp.llvm.LineEditor.LineEditor("re2_playground");
   editor.setPrompt(Cpp.std.string.basic_string("re2> "));
 
+  Print('''
+    Usage:
+      /regex/        -- sets the current regular expression to regex
+      anything else  -- matches the entered text against the specified regex
+    ''');
+
   var re: RE2 = RE2.Make("^a*$");
   while (true) {
     var line: Cpp.OptionalString = editor.readLine();
