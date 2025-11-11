@@ -1633,7 +1633,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       }
       if (target.kind == ConversionTarget::RefParam) {
         // Don't diagnose a non-reference scrutinee if it has a user-written
-        // `ref` tag, because that's diagnosed in `Convert`.
+        // `ref` tag, because that's diagnosed in `CheckRefTag`.
         if (target.diagnose) {
           if (auto lookup_result = context.ref_tags().Lookup(expr_id);
               !lookup_result ||
