@@ -2139,12 +2139,10 @@ static auto LookupBuiltinName(Context& context, SemIR::LocId loc_id,
           .Default(clang::QualType());
   if (builtin_type.isNull()) {
     if (*name == "nullptr") {
-      // Map `Cpp.nullptr` to `Core.CppNullptrT.Make()`.
-      auto type_inst_id = MapNullptrType(context, loc_id).inst_id;
-      auto make_fn_id = PerformMemberAccess(
-          context, loc_id, type_inst_id,
-          SemIR::NameId::ForIdentifier(context.identifiers().Add("Make")));
-      return PerformCall(context, loc_id, make_fn_id, {});
+      // Map `Cpp.nullptr` to an uninitialized value of type `Core.CppNullptrT`.
+      auto type_id = MapNullptrType(context, loc_id).type_id;
+      return GetOrAddInst<SemIR::UninitializedValue>(
+          context, SemIR::LocId::None, {.type_id = type_id});
     }
     return SemIR::InstId::None;
   }
