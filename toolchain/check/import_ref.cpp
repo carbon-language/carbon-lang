@@ -264,6 +264,9 @@ class ImportContext {
   auto import_interfaces() -> const SemIR::InterfaceStore& {
     return import_ir().interfaces();
   }
+  auto import_named_constraints() -> const SemIR::NamedConstraintStore& {
+    return import_ir().named_constraints();
+  }
   auto import_ints() -> const SharedValueStores::IntStore& {
     return import_ir().ints();
   }
@@ -336,6 +339,9 @@ class ImportContext {
   auto local_insts() -> SemIR::InstStore& { return local_ir().insts(); }
   auto local_interfaces() -> SemIR::InterfaceStore& {
     return local_ir().interfaces();
+  }
+  auto local_named_constraints() -> SemIR::NamedConstraintStore& {
+    return local_ir().named_constraints();
   }
   auto local_ints() -> SharedValueStores::IntStore& {
     return local_ir().ints();
@@ -2521,7 +2527,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   const auto& import_interface =
       resolver.import_interfaces().Get(inst.interface_id);
 
-  SemIR::InterfaceId interface_id = SemIR::InterfaceId::None;
+  auto interface_id = SemIR::InterfaceId::None;
   if (!interface_const_id.has_value()) {
     auto import_specific_id = SemIR::SpecificId::None;
     if (auto import_generic_interface_type =
@@ -2587,6 +2593,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       implicit_param_patterns);
   new_interface.param_patterns_id = GetLocalCanonicalInstBlockId(
       resolver, import_interface.param_patterns_id, param_patterns);
+  // TODO: Import require_impls_block_id.
   SetGenericData(resolver, import_interface.generic_id,
                  new_interface.generic_id, generic_data);
 
@@ -2596,6 +2603,164 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                            *self_param_id);
   }
   return ResolveResult::Done(interface_const_id, new_interface.first_decl_id());
+}
+
+// Make a declaration of a named constraint. This is done as a separate step
+// from importing the constraint definition in order to resolve cycles.
+static auto MakeNamedConstraintDecl(
+    ImportContext& context,
+    const SemIR::NamedConstraint& import_named_constraint,
+    SemIR::SpecificId enclosing_specific_id)
+    -> std::pair<SemIR::NamedConstraintId, SemIR::ConstantId> {
+  SemIR::NamedConstraintDecl named_constraint_decl = {
+      .type_id = SemIR::TypeType::TypeId,
+      .named_constraint_id = SemIR::NamedConstraintId::None,
+      .decl_block_id = SemIR::InstBlockId::Empty};
+  auto named_constraint_decl_id = AddPlaceholderImportedInst(
+      context, import_named_constraint.first_owning_decl_id,
+      named_constraint_decl);
+
+  // Start with an incomplete interface.
+  named_constraint_decl.named_constraint_id =
+      context.local_named_constraints().Add(
+          {GetIncompleteLocalEntityBase(context, named_constraint_decl_id,
+                                        import_named_constraint),
+           {.scope_id = import_named_constraint.is_complete()
+                            ? AddPlaceholderNameScope(context)
+                            : SemIR::NameScopeId::None}});
+
+  if (import_named_constraint.has_parameters()) {
+    named_constraint_decl.type_id = GetGenericNamedConstraintType(
+        context.local_context(), named_constraint_decl.named_constraint_id,
+        enclosing_specific_id);
+  }
+
+  // Write the interface ID into the InterfaceDecl.
+  auto interface_const_id = ReplacePlaceholderImportedInst(
+      context, named_constraint_decl_id, named_constraint_decl);
+  return {named_constraint_decl.named_constraint_id, interface_const_id};
+}
+
+// Imports the definition for a named constraint that has been imported as a
+// forward declaration.
+static auto AddNamedConstraintDefinition(
+    ImportContext& context,
+    const SemIR::NamedConstraint& import_named_constraint,
+    SemIR::NamedConstraint& new_named_constraint, SemIR::InstId self_param_id)
+    -> void {
+  auto& new_scope =
+      context.local_name_scopes().Get(new_named_constraint.scope_id);
+  const auto& import_scope =
+      context.import_name_scopes().Get(import_named_constraint.scope_id);
+
+  // Push a block so that we can add scoped instructions to it.
+  context.local_context().inst_block_stack().Push();
+  InitializeNameScopeAndImportRefs(context, import_scope, new_scope,
+                                   new_named_constraint.first_owning_decl_id,
+                                   SemIR::NameId::None,
+                                   new_named_constraint.parent_scope_id);
+  new_named_constraint.body_block_id =
+      context.local_context().inst_block_stack().Pop();
+  new_named_constraint.self_param_id = self_param_id;
+  new_named_constraint.complete = import_named_constraint.complete;
+
+  CARBON_CHECK(
+      import_scope.extended_scopes().empty(),
+      "Named constraints don't currently have extended scopes to support.");
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::NamedConstraintDecl inst,
+                                SemIR::ConstantId named_constraint_const_id)
+    -> ResolveResult {
+  const auto& import_named_constraint =
+      resolver.import_named_constraints().Get(inst.named_constraint_id);
+
+  auto named_constraint_id = SemIR::NamedConstraintId::None;
+  if (!named_constraint_const_id.has_value()) {
+    auto import_specific_id = SemIR::SpecificId::None;
+    if (auto import_generic_named_constraint_type =
+            resolver.import_types().TryGetAs<SemIR::GenericNamedConstraintType>(
+                inst.type_id)) {
+      import_specific_id =
+          import_generic_named_constraint_type->enclosing_specific_id;
+    }
+    auto specific_data = GetLocalSpecificData(resolver, import_specific_id);
+    if (resolver.HasNewWork()) {
+      // This is the end of the first phase. Don't make a new interface yet if
+      // we already have new work.
+      return ResolveResult::Retry();
+    }
+
+    // On the second phase, create a forward declaration of the interface.
+    auto enclosing_specific_id =
+        GetOrAddLocalSpecific(resolver, import_specific_id, specific_data);
+    std::tie(named_constraint_id, named_constraint_const_id) =
+        MakeNamedConstraintDecl(resolver, import_named_constraint,
+                                enclosing_specific_id);
+  } else {
+    // On the third phase, compute the interface ID from the constant value of
+    // the declaration.
+    auto named_constraint_const_inst = resolver.local_insts().Get(
+        resolver.local_constant_values().GetInstId(named_constraint_const_id));
+    if (auto facet_type =
+            named_constraint_const_inst.TryAs<SemIR::FacetType>()) {
+      const SemIR::FacetTypeInfo& facet_type_info =
+          resolver.local_facet_types().Get(facet_type->facet_type_id);
+      CARBON_CHECK(facet_type_info.extend_named_constraints.size() == 1);
+      CARBON_CHECK(facet_type_info.extend_constraints.empty());
+      CARBON_CHECK(facet_type_info.self_impls_constraints.empty());
+      CARBON_CHECK(facet_type_info.self_impls_named_constraints.empty());
+      named_constraint_id =
+          facet_type_info.extend_named_constraints.front().named_constraint_id;
+    } else {
+      auto generic_named_constraint_type =
+          resolver.local_types().GetAs<SemIR::GenericNamedConstraintType>(
+              named_constraint_const_inst.type_id());
+      named_constraint_id = generic_named_constraint_type.named_constraint_id;
+    }
+  }
+
+  auto parent_scope_id =
+      GetLocalNameScopeId(resolver, import_named_constraint.parent_scope_id);
+  auto implicit_param_patterns = GetLocalInstBlockContents(
+      resolver, import_named_constraint.implicit_param_patterns_id);
+  auto param_patterns = GetLocalInstBlockContents(
+      resolver, import_named_constraint.param_patterns_id);
+  auto generic_data =
+      GetLocalGenericData(resolver, import_named_constraint.generic_id);
+
+  std::optional<SemIR::InstId> self_param_id;
+  if (import_named_constraint.is_complete()) {
+    self_param_id =
+        GetLocalConstantInstId(resolver, import_named_constraint.self_param_id);
+  }
+  auto& new_named_constraint =
+      resolver.local_named_constraints().Get(named_constraint_id);
+
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry(named_constraint_const_id,
+                                new_named_constraint.first_decl_id());
+  }
+
+  new_named_constraint.parent_scope_id = parent_scope_id;
+  new_named_constraint.implicit_param_patterns_id =
+      GetLocalCanonicalInstBlockId(
+          resolver, import_named_constraint.implicit_param_patterns_id,
+          implicit_param_patterns);
+  new_named_constraint.param_patterns_id = GetLocalCanonicalInstBlockId(
+      resolver, import_named_constraint.param_patterns_id, param_patterns);
+  // TODO: Import require_impls_block_id.
+  SetGenericData(resolver, import_named_constraint.generic_id,
+                 import_named_constraint.generic_id, generic_data);
+
+  if (import_named_constraint.is_complete()) {
+    CARBON_CHECK(self_param_id);
+    AddNamedConstraintDefinition(resolver, import_named_constraint,
+                                 new_named_constraint, *self_param_id);
+  }
+  return ResolveResult::Done(named_constraint_const_id,
+                             new_named_constraint.first_decl_id());
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -3185,6 +3350,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst, const_id);
     }
     case CARBON_KIND(SemIR::InterfaceDecl inst): {
+      return TryResolveTypedInst(resolver, inst, const_id);
+    }
+    case CARBON_KIND(SemIR::NamedConstraintDecl inst): {
       return TryResolveTypedInst(resolver, inst, const_id);
     }
     default:

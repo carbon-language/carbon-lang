@@ -141,7 +141,7 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
     CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
     if (auto decl =
             context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id)) {
-      if (witness_value == SemIR::ImplWitnessTablePlaceholder::TypeInstId) {
+      if (witness_value == SemIR::InstId::ImplWitnessTablePlaceholder) {
         CARBON_DIAGNOSTIC(ImplAssociatedConstantNeedsValue, Error,
                           "associated constant {0} not given a value in impl "
                           "of interface {1}",
@@ -252,7 +252,7 @@ auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void {
   auto witness_block =
       context.inst_blocks().GetMutable(witness_table.elements_id);
   for (auto& elem : witness_block) {
-    if (elem == SemIR::ImplWitnessTablePlaceholder::TypeInstId) {
+    if (elem == SemIR::InstId::ImplWitnessTablePlaceholder) {
       elem = SemIR::ErrorInst::InstId;
     }
   }
@@ -296,7 +296,16 @@ auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
     return SemIR::SpecificInterface::None;
   }
 
-  auto identified_id = RequireIdentifiedFacetType(context, *facet_type);
+  auto identified_id = RequireIdentifiedFacetType(context, *facet_type, [&] {
+    CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Error,
+                      "facet type {0} cannot be identified in `impl as`",
+                      InstIdAsType);
+    return context.emitter().Build(impl_decl_id, ImplOfUnidentifiedFacetType,
+                                   constraint_id);
+  });
+  if (!identified_id.has_value()) {
+    return SemIR::SpecificInterface::None;
+  }
   const auto& identified = context.identified_facet_types().Get(identified_id);
   if (!identified.is_valid_impl_as_target()) {
     CARBON_DIAGNOSTIC(ImplOfNotOneInterface, Error,

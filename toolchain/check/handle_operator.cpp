@@ -252,13 +252,6 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorAmpId node_id)
     case SemIR::ExprCategory::DurableRef:
     case SemIR::ExprCategory::Error:
       break;
-    case SemIR::ExprCategory::EphemeralRef:
-      CARBON_DIAGNOSTIC(AddrOfEphemeralRef, Error,
-                        "cannot take the address of a temporary object");
-      context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
-                             AddrOfEphemeralRef);
-      value_id = SemIR::ErrorInst::InstId;
-      break;
     default:
       CARBON_DIAGNOSTIC(AddrOfNonRef, Error,
                         "cannot take the address of non-reference expression");
@@ -293,8 +286,6 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorConstId node_id)
                       "`const` applied repeatedly to the same type has no "
                       "additional effect");
     context.emitter().Emit(node_id, RepeatedConst);
-    context.node_stack().Push(node_id, value_id);
-    return true;
   }
   auto inner_type = ExprAsType(context, node_id, value_id);
   AddInstAndPush<SemIR::ConstType>(

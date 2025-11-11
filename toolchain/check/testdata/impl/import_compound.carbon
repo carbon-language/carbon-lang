@@ -171,6 +171,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   witness = (%NonInstance.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Instance {
@@ -193,6 +195,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .G = %assoc0
 // CHECK:STDOUT:   witness = (%Instance.G.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @struct_type.i.as.NonInstance.impl: %struct_type.i as %NonInstance.ref {
@@ -283,11 +287,11 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.700 = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.700 = import_ref Main//lib, loc3_23, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e3c: %NonInstance.assoc_type = import_ref Main//lib, loc4_9, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.F = import_ref Main//lib, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.474: %NonInstance.F.type = import_ref Main//lib, loc4_9, loaded [concrete = constants.%NonInstance.F]
-// CHECK:STDOUT:   %Main.import_ref.1ee: %NonInstance.type = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.1ee: %NonInstance.type = import_ref Main//lib, loc3_23, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.890: <witness> = import_ref Main//lib, loc7_30, loaded [concrete = constants.%NonInstance.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.c9a: type = import_ref Main//lib, loc7_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.ef5: type = import_ref Main//lib, loc7_18, loaded [concrete = constants.%NonInstance.type]
@@ -312,6 +316,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.700
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.e3c
 // CHECK:STDOUT:   witness = (imports.%Main.F)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @struct_type.i.as.NonInstance.impl: imports.%Main.import_ref.c9a as imports.%Main.import_ref.ef5 [from "lib.carbon"] {
@@ -367,11 +373,11 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.700 = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.700 = import_ref Main//lib, loc3_23, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e3c: %NonInstance.assoc_type = import_ref Main//lib, loc4_9, loaded [concrete = constants.%assoc0.8ce]
 // CHECK:STDOUT:   %Main.F = import_ref Main//lib, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.474: %NonInstance.F.type = import_ref Main//lib, loc4_9, loaded [concrete = constants.%NonInstance.F]
-// CHECK:STDOUT:   %Main.import_ref.1ee: %NonInstance.type = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self.381]
+// CHECK:STDOUT:   %Main.import_ref.1ee: %NonInstance.type = import_ref Main//lib, loc3_23, loaded [symbolic = constants.%Self.381]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -403,6 +409,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.700
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.e3c
 // CHECK:STDOUT:   witness = (imports.%Main.F)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonInstanceCallImportFail(%n.param: %struct_type.i) {
@@ -447,11 +455,11 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.700 = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.700 = import_ref Main//lib, loc3_23, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e3c: %NonInstance.assoc_type = import_ref Main//lib, loc4_9, loaded [concrete = constants.%assoc0.8ce]
 // CHECK:STDOUT:   %Main.F = import_ref Main//lib, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.474: %NonInstance.F.type = import_ref Main//lib, loc4_9, loaded [concrete = constants.%NonInstance.F]
-// CHECK:STDOUT:   %Main.import_ref.1ee: %NonInstance.type = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self.381]
+// CHECK:STDOUT:   %Main.import_ref.1ee: %NonInstance.type = import_ref Main//lib, loc3_23, loaded [symbolic = constants.%Self.381]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -484,6 +492,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.700
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.e3c
 // CHECK:STDOUT:   witness = (imports.%Main.F)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonInstanceCallIndirectImport(%p.param: %ptr) {
@@ -538,11 +548,11 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.34d = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.34d = import_ref Main//lib, loc11_20, unloaded
 // CHECK:STDOUT:   %Main.import_ref.124: %Instance.assoc_type = import_ref Main//lib, loc12_21, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.G = import_ref Main//lib, G, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b4d: %Instance.G.type = import_ref Main//lib, loc12_21, loaded [concrete = constants.%Instance.G]
-// CHECK:STDOUT:   %Main.import_ref.2d8: %Instance.type = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.2d8: %Instance.type = import_ref Main//lib, loc11_20, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.4df: <witness> = import_ref Main//lib, loc15_27, loaded [concrete = constants.%Instance.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.c9a: type = import_ref Main//lib, loc15_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.b49: type = import_ref Main//lib, loc15_18, loaded [concrete = constants.%Instance.type]
@@ -592,6 +602,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.34d
 // CHECK:STDOUT:   .G = imports.%Main.import_ref.124
 // CHECK:STDOUT:   witness = (imports.%Main.G)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @struct_type.i.as.Instance.impl: imports.%Main.import_ref.c9a as imports.%Main.import_ref.b49 [from "lib.carbon"] {
@@ -667,11 +679,11 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.34d = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.34d = import_ref Main//lib, loc11_20, unloaded
 // CHECK:STDOUT:   %Main.import_ref.124: %Instance.assoc_type = import_ref Main//lib, loc12_21, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.G = import_ref Main//lib, G, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b4d: %Instance.G.type = import_ref Main//lib, loc12_21, loaded [concrete = constants.%Instance.G]
-// CHECK:STDOUT:   %Main.import_ref.2d8: %Instance.type = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.2d8: %Instance.type = import_ref Main//lib, loc11_20, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.8a7 = import_ref Main//lib, loc15_27, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c9a: type = import_ref Main//lib, loc15_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.b49: type = import_ref Main//lib, loc15_18, loaded [concrete = constants.%Instance.type]
@@ -694,6 +706,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.34d
 // CHECK:STDOUT:   .G = imports.%Main.import_ref.124
 // CHECK:STDOUT:   witness = (imports.%Main.G)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @struct_type.i.as.Instance.impl: imports.%Main.import_ref.c9a as imports.%Main.import_ref.b49 [from "lib.carbon"] {

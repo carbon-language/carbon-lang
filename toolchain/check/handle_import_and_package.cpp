@@ -73,6 +73,11 @@ auto HandleParseNode(Context& /*context*/, Parse::CorePackageNameId /*node_id*/)
   return true;
 }
 
+auto HandleParseNode(Context& /*context*/, Parse::CppPackageNameId /*node_id*/)
+    -> bool {
+  return true;
+}
+
 auto HandleParseNode(Context& context, Parse::LibraryNameId node_id) -> bool {
   // This is discarded in this file's uses, but is used by modifiers for `extern
   // library`.

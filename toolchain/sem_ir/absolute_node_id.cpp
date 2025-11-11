@@ -16,7 +16,6 @@ static auto FollowImportRef(
     ImportIRInstId import_ir_inst_id) -> bool {
   auto import_ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
   if (import_ir_inst.ir_id() == ImportIRId::Cpp) {
-    CARBON_CHECK(cursor_ir->import_cpps().size() > 0);
     absolute_node_ids.push_back(
         AbsoluteNodeId(import_ir_inst.clang_source_loc_id()));
     return true;

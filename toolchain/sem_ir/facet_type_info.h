@@ -11,6 +11,7 @@
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/specific_interface.h"
+#include "toolchain/sem_ir/specific_named_constraint.h"
 
 namespace Carbon::SemIR {
 
@@ -63,6 +64,12 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // These are the required interfaces that are not lookup contexts.
   llvm::SmallVector<ImplsConstraint> self_impls_constraints;
 
+  // These name constraints add interfaces as lookup contexts, if they are
+  // extended in the named constraint.
+  llvm::SmallVector<SpecificNamedConstraint> extend_named_constraints;
+  // These name constraints don't add interfaces as lookup contexts.
+  llvm::SmallVector<SpecificNamedConstraint> self_impls_named_constraints;
+
   // Rewrite constraints of the form `.T = U`.
   //
   // The InstIds here must be canonical instructions (which come from the
@@ -98,8 +105,9 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // represents, or `std::nullopt` if it has any other constraints.
   auto TryAsSingleInterface() const -> std::optional<ImplsConstraint> {
     if (extend_constraints.size() == 1 && self_impls_constraints.empty() &&
-        rewrite_constraints.empty() && builtin_constraint_mask.empty() &&
-        !other_requirements) {
+        extend_named_constraints.empty() &&
+        self_impls_named_constraints.empty() && rewrite_constraints.empty() &&
+        builtin_constraint_mask.empty() && !other_requirements) {
       return extend_constraints.front();
     }
     return std::nullopt;
@@ -109,6 +117,9 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
       -> bool {
     return lhs.extend_constraints == rhs.extend_constraints &&
            lhs.self_impls_constraints == rhs.self_impls_constraints &&
+           lhs.extend_named_constraints == rhs.extend_named_constraints &&
+           lhs.self_impls_named_constraints ==
+               rhs.self_impls_named_constraints &&
            lhs.rewrite_constraints == rhs.rewrite_constraints &&
            lhs.builtin_constraint_mask == rhs.builtin_constraint_mask &&
            lhs.other_requirements == rhs.other_requirements;
@@ -179,13 +190,18 @@ struct IdentifiedFacetType {
 inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
     -> HashCode {
   Hasher hasher(seed);
-  hasher.HashSizedBytes(llvm::ArrayRef(value.extend_constraints));
-  hasher.HashSizedBytes(llvm::ArrayRef(value.self_impls_constraints));
-  hasher.HashSizedBytes(llvm::ArrayRef(value.rewrite_constraints));
+  hasher.HashArray(llvm::ArrayRef(value.extend_constraints));
+  hasher.HashArray(llvm::ArrayRef(value.self_impls_constraints));
+  hasher.HashArray(llvm::ArrayRef(value.extend_named_constraints));
+  hasher.HashArray(llvm::ArrayRef(value.self_impls_named_constraints));
+  hasher.HashArray(llvm::ArrayRef(value.rewrite_constraints));
   hasher.HashRaw(value.builtin_constraint_mask);
   hasher.HashRaw(value.other_requirements);
   return static_cast<HashCode>(hasher);
 }
+
+// Declared:
+// (Carbon::HashCode)  (value_ = 12557349131240970624)
 
 }  // namespace Carbon::SemIR
 

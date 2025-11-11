@@ -14,6 +14,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StableHashing.h"
 #include "toolchain/base/fixed_size_value_store.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
@@ -242,6 +243,13 @@ struct Worklist {
     AddEntity(sem_ir->named_constraints().Get(named_constraint_id));
   }
 
+  auto Add(RequireImplsId require_id) -> void {
+    CARBON_CHECK(require_id.has_value());
+    const auto& require = sem_ir->require_impls().Get(require_id);
+    Add(require.self_id);
+    Add(require.facet_type_id);
+  }
+
   auto Add(AssociatedConstantId assoc_const_id) -> void {
     AddEntity<AssociatedConstant>(
         sem_ir->associated_constants().Get(assoc_const_id));
@@ -416,10 +424,18 @@ struct Worklist {
       if (!std::holds_alternative<InstId>(next)) {
         // Add the contents of the `next` instruction so they all contribute to
         // the `contents`.
-        if (auto* impl_id = std::get_if<ImplId>(&next)) {
-          Add(*impl_id);
-        } else if (auto* inst_block_id = std::get_if<InstBlockId>(&next)) {
-          Add(*inst_block_id);
+        CARBON_KIND_SWITCH(next) {
+          case CARBON_KIND(InstId _):
+            CARBON_FATAL("InstId is checked for above.");
+          case CARBON_KIND(ImplId impl_id):
+            Add(impl_id);
+            break;
+          case CARBON_KIND(InstBlockId inst_block_id):
+            Add(inst_block_id);
+            break;
+          case CARBON_KIND(CppOverloadSetId overload_set_id):
+            Add(overload_set_id);
+            break;
         }
 
         // If we didn't add any more work, then we have a fingerprint for the

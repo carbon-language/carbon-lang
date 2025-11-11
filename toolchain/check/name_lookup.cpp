@@ -161,6 +161,8 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
     DiagnoseNameNotFound(context, loc_id, name_id);
   }
 
+  // TODO: Should this return MakeNotFound if `required` is false, so that
+  // `is_found()` would be false?
   return {.specific_id = SemIR::SpecificId::None,
           .scope_result = SemIR::ScopeLookupResult::MakeError()};
 }

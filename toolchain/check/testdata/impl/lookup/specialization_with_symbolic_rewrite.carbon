@@ -250,24 +250,26 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z, @Z(%T.loc3_13.1)> [symbolic = %Z.type (constants.%Z.type.4d7)]
-// CHECK:STDOUT:   %Self.2: @Z.%Z.type (%Z.type.4d7) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.c41)]
+// CHECK:STDOUT:   %Self.loc3_23.2: @Z.%Z.type (%Z.type.4d7) = symbolic_binding Self, 1 [symbolic = %Self.loc3_23.2 (constants.%Self.c41)]
 // CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z, @Z(%T.loc3_13.1) [symbolic = %Z.assoc_type (constants.%Z.assoc_type.815)]
 // CHECK:STDOUT:   %assoc0: @Z.%Z.assoc_type (%Z.assoc_type.815) = assoc_entity element0, %X [symbolic = %assoc0 (constants.%assoc0.6bf)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @Z.%Z.type (%Z.type.4d7) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.c41)]
+// CHECK:STDOUT:     %Self.loc3_23.1: @Z.%Z.type (%Z.type.4d7) = symbolic_binding Self, 1 [symbolic = %Self.loc3_23.2 (constants.%Self.c41)]
 // CHECK:STDOUT:     %X: type = assoc_const_decl @X [concrete] {
 // CHECK:STDOUT:       %assoc0: @Z.%Z.assoc_type (%Z.assoc_type.815) = assoc_entity element0, @Z.%X [symbolic = @Z.%assoc0 (constants.%assoc0.6bf)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc3_23.1
 // CHECK:STDOUT:     .X = @X.%assoc0
 // CHECK:STDOUT:     witness = (%X)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @X(@Z.%T.loc3_13.2: type, @Z.%Self.1: @Z.%Z.type (%Z.type.4d7)) {
+// CHECK:STDOUT: generic assoc_const @X(@Z.%T.loc3_13.2: type, @Z.%Self.loc3_23.1: @Z.%Z.type (%Z.type.4d7)) {
 // CHECK:STDOUT:   assoc_const X:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -355,7 +357,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Z.type => constants.%Z.type.c56
-// CHECK:STDOUT:   %Self.2 => constants.%Self.af2
+// CHECK:STDOUT:   %Self.loc3_23.2 => constants.%Self.af2
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.fae
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.175
 // CHECK:STDOUT: }
@@ -383,7 +385,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Z.type => constants.%Z.type.a71
-// CHECK:STDOUT:   %Self.2 => constants.%Self.6ec
+// CHECK:STDOUT:   %Self.loc3_23.2 => constants.%Self.6ec
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.252
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.ea4
 // CHECK:STDOUT: }
@@ -591,20 +593,22 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z, @Z(%T.loc3_13.1)> [symbolic = %Z.type (constants.%Z.type.4d7)]
-// CHECK:STDOUT:   %Self.2: @Z.%Z.type (%Z.type.4d7) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.c41)]
+// CHECK:STDOUT:   %Self.loc3_23.2: @Z.%Z.type (%Z.type.4d7) = symbolic_binding Self, 1 [symbolic = %Self.loc3_23.2 (constants.%Self.c41)]
 // CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z, @Z(%T.loc3_13.1) [symbolic = %Z.assoc_type (constants.%Z.assoc_type.815)]
 // CHECK:STDOUT:   %assoc0: @Z.%Z.assoc_type (%Z.assoc_type.815) = assoc_entity element0, %X [symbolic = %assoc0 (constants.%assoc0.6bf)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.1: @Z.%Z.type (%Z.type.4d7) = symbolic_binding Self, 1 [symbolic = %Self.2 (constants.%Self.c41)]
+// CHECK:STDOUT:     %Self.loc3_23.1: @Z.%Z.type (%Z.type.4d7) = symbolic_binding Self, 1 [symbolic = %Self.loc3_23.2 (constants.%Self.c41)]
 // CHECK:STDOUT:     %X: type = assoc_const_decl @X [concrete] {
 // CHECK:STDOUT:       %assoc0: @Z.%Z.assoc_type (%Z.assoc_type.815) = assoc_entity element0, @Z.%X [symbolic = @Z.%assoc0 (constants.%assoc0.6bf)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.1
+// CHECK:STDOUT:     .Self = %Self.loc3_23.1
 // CHECK:STDOUT:     .X = @X.%assoc0
 // CHECK:STDOUT:     witness = (%X)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -614,9 +618,11 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @X(@Z.%T.loc3_13.2: type, @Z.%Self.1: @Z.%Z.type (%Z.type.4d7)) {
+// CHECK:STDOUT: generic assoc_const @X(@Z.%T.loc3_13.2: type, @Z.%Self.loc3_23.1: @Z.%Z.type (%Z.type.4d7)) {
 // CHECK:STDOUT:   assoc_const X:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -715,7 +721,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Z.type => constants.%Z.type.c56
-// CHECK:STDOUT:   %Self.2 => constants.%Self.af2
+// CHECK:STDOUT:   %Self.loc3_23.2 => constants.%Self.af2
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.fae
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.175
 // CHECK:STDOUT: }
@@ -743,7 +749,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Z.type => constants.%Z.type.a71
-// CHECK:STDOUT:   %Self.2 => constants.%Self.6ec
+// CHECK:STDOUT:   %Self.loc3_23.2 => constants.%Self.6ec
 // CHECK:STDOUT:   %Z.assoc_type => constants.%Z.assoc_type.252
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.ea4
 // CHECK:STDOUT: }
@@ -879,6 +885,8 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Type = @Type.%assoc0
 // CHECK:STDOUT:   witness = (%Type)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @Type(@Ptr.%Self: %Ptr.type) {
@@ -1084,6 +1092,8 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Type = @Type.%assoc0
 // CHECK:STDOUT:   witness = (%Type)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @Type(@Ptr.%Self: %Ptr.type) {
@@ -1288,6 +1298,8 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Type = @Type.%assoc0
 // CHECK:STDOUT:   witness = (%Type)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @Type(@Ptr.%Self: %Ptr.type) {

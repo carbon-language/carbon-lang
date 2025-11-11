@@ -59,7 +59,7 @@ struct IdBase : public AnyIdBase, public Printable<IdT> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << IdT::Label;
     if (has_value()) {
-      out << llvm::format_hex_no_prefix(index, 8, /*Upper=*/true);
+      out << llvm::format_hex_no_prefix(index, 0, /*Upper=*/true);
     } else {
       out << "<none>";
     }

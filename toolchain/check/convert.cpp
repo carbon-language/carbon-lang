@@ -32,6 +32,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/type.h"
+#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 // TODO: This contains a lot of recursion. Consider removing it in order to
@@ -722,14 +723,16 @@ static auto ConvertDerivedPointerToBasePointer(
 }
 
 // Returns whether `category` is a valid expression category to produce as a
-// result of a conversion with kind `target_kind`, or at most needs a temporary
-// to be materialized.
+// result of a conversion with kind `target_kind`.
 static auto IsValidExprCategoryForConversionTarget(
     SemIR::ExprCategory category, ConversionTarget::Kind target_kind) -> bool {
   switch (target_kind) {
     case ConversionTarget::Value:
       return category == SemIR::ExprCategory::Value;
     case ConversionTarget::ValueOrRef:
+      return category == SemIR::ExprCategory::Value ||
+             category == SemIR::ExprCategory::DurableRef ||
+             category == SemIR::ExprCategory::EphemeralRef;
     case ConversionTarget::Discarded:
       return category == SemIR::ExprCategory::Value ||
              category == SemIR::ExprCategory::DurableRef ||
@@ -914,6 +917,12 @@ static auto PerformBuiltinConversion(
           context, loc_id, {.type_id = value_type_id, .init_id = value_id});
     }
 
+    // Materialization is handled as part of the enclosing conversion.
+    if (value_cat == SemIR::ExprCategory::Initializing &&
+        target.kind == ConversionTarget::ValueOrRef) {
+      return value_id;
+    }
+
     // PerformBuiltinConversion converts each part of a tuple or struct, even
     // when the types are the same. This is not done for classes since they have
     // to define their conversions as part of their api.
@@ -1002,16 +1011,23 @@ static auto PerformBuiltinConversion(
                                                .diagnose = target.diagnose});
         }
 
-        // `MaybeUnformed(T)` has a pointer value representation, and `T` might
-        // not, so convert as needed when removing `MaybeUnformed`.
+        // `MaybeUnformed(T)` might have a pointer value representation when `T`
+        // does not, so convert as needed when removing `MaybeUnformed`.
         bool need_value_binding = false;
         if ((removed_quals & SemIR::TypeQualifiers::MaybeUnformed) !=
                 SemIR::TypeQualifiers::None &&
             category == SemIR::ExprCategory::Value) {
-          value_id = AddInst<SemIR::ValueAsRef>(
-              context, loc_id,
-              {.type_id = value_type_id, .value_id = value_id});
-          need_value_binding = true;
+          auto value_rep =
+              SemIR::ValueRepr::ForType(context.sem_ir(), value_type_id);
+          auto unformed_value_rep =
+              SemIR::ValueRepr::ForType(context.sem_ir(), target.type_id);
+          if (value_rep.kind != unformed_value_rep.kind) {
+            CARBON_CHECK(unformed_value_rep.kind == SemIR::ValueRepr::Pointer);
+            value_id = AddInst<SemIR::ValueAsRef>(
+                context, loc_id,
+                {.type_id = value_type_id, .value_id = value_id});
+            need_value_binding = true;
+          }
         }
 
         value_id = AddInst<SemIR::AsCompatible>(
@@ -1471,6 +1487,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   if (expr_id == SemIR::ErrorInst::InstId) {
     return expr_id;
   }
+  bool performed_builtin_conversion = expr_id != orig_expr_id;
 
   // Defer the action if it's dependent. We do this now rather than before
   // attempting any conversion so that we can still perform builtin conversions
@@ -1487,9 +1504,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     auto target_type_inst_id = context.types().GetInstId(target.type_id);
     return AddDependentActionSplice(
         context, loc_id,
-        SemIR::ConvertToValueAction{.type_id = SemIR::InstType::TypeId,
-                                    .inst_id = expr_id,
-                                    .target_type_inst_id = target_type_inst_id},
+        SemIR::ConvertToValueAction{
+            .type_id = GetSingletonType(context, SemIR::InstType::TypeInstId),
+            .inst_id = expr_id,
+            .target_type_inst_id = target_type_inst_id},
         target_type_inst_id);
   }
 
@@ -1574,10 +1592,10 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
 
     case SemIR::ExprCategory::Initializing:
       if (target.is_initializer()) {
-        if (orig_expr_id == expr_id) {
+        if (!performed_builtin_conversion) {
           // Don't fill in the return slot if we created the expression through
-          // a conversion. In that case, we will have created it with the
-          // target already set.
+          // a builtin conversion. In that case, we will have created it with
+          // the target already set.
           // TODO: Find a better way to track whether we need to do this.
           MarkInitializerFor(sem_ir, expr_id, target);
         }
@@ -1781,7 +1799,7 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
                 bool diagnose) -> TypeExpr {
   auto type_inst_id =
       ConvertToValueOfType(context, loc_id, value_id, SemIR::TypeType::TypeId);
-  if (type_inst_id == SemIR::ErrorInst::InstId) {
+  if (type_inst_id == SemIR::ErrorInst::TypeInstId) {
     return {.inst_id = SemIR::ErrorInst::TypeInstId,
             .type_id = SemIR::ErrorInst::TypeId};
   }

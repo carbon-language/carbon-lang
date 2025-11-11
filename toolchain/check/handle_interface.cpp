@@ -129,7 +129,7 @@ auto HandleParseNode(Context& context,
   StartGenericDefinition(context, interface_info.generic_id);
 
   context.inst_block_stack().Push();
-
+  context.require_impls_stack().PushArray();
   // We use the arg stack to build the witness table type.
   context.args_type_info_stack().Push();
 
@@ -138,8 +138,9 @@ auto HandleParseNode(Context& context,
   // `require` declarations.
   SemIR::TypeId self_type_id =
       GetInterfaceType(context, interface_id, self_specific_id);
-  interface_info.self_param_id = AddSelfGenericParameter(
-      context, self_type_id, interface_info.scope_id, /*is_template=*/false);
+  interface_info.self_param_id =
+      AddSelfGenericParameter(context, node_id, self_type_id,
+                              interface_info.scope_id, /*is_template=*/false);
 
   // Enter the interface scope.
   context.scope_stack().PushForEntity(decl_inst_id, interface_info.scope_id,
@@ -167,9 +168,14 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId /*node_id*/)
   context.inst_block_stack().Pop();
   auto associated_entities_id = context.args_type_info_stack().Pop();
 
-  // The interface type is now fully defined.
+  auto require_impls_block_id = context.require_impls_blocks().Add(
+      context.require_impls_stack().PeekArray());
+  context.require_impls_stack().PopArray();
+
   auto& interface_info = context.interfaces().Get(interface_id);
   if (!interface_info.associated_entities_id.has_value()) {
+    interface_info.require_impls_block_id = require_impls_block_id;
+    // This marks the interface type as fully defined.
     interface_info.associated_entities_id = associated_entities_id;
   }
 

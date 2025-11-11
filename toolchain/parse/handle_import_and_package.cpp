@@ -48,7 +48,7 @@ static auto HandleDeclContent(Context& context, Context::State state,
     // This is either `library ...` or `import library ...`, so no package name
     // is expected.
   } else {
-    // We require a package name. This is either an identifier or the `Core`
+    // We require a package name. This is either an identifier or package name
     // keyword.
     auto package_name_position = *context.position();
     if (auto ident = context.ConsumeIf(Lex::TokenKind::Identifier)) {
@@ -56,9 +56,11 @@ static auto HandleDeclContent(Context& context, Context::State state,
           PackageNameId::ForIdentifier(context.tokens().GetIdentifier(*ident));
       context.AddLeafNode(NodeKind::IdentifierPackageName, *ident);
     } else if (auto core = context.ConsumeIf(Lex::TokenKind::Core)) {
-      // TODO: Model `Cpp` as a keyword too.
       names.package_id = PackageNameId::Core;
       context.AddLeafNode(NodeKind::CorePackageName, *core);
+    } else if (auto cpp = context.ConsumeIf(Lex::TokenKind::Cpp)) {
+      names.package_id = PackageNameId::Cpp;
+      context.AddLeafNode(NodeKind::CppPackageName, *cpp);
     } else {
       CARBON_DIAGNOSTIC(ExpectedIdentifierAfterPackage, Error,
                         "expected identifier after `package`");

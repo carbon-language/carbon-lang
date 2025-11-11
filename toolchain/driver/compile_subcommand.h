@@ -14,6 +14,7 @@
 #include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"
+#include "toolchain/lower/options.h"
 
 namespace Carbon {
 
@@ -26,6 +27,7 @@ struct CompileOptions {
     Parse,
     Check,
     Lower,
+    Optimize,
     CodeGen,
   };
 
@@ -34,6 +36,7 @@ struct CompileOptions {
 
   auto Build(CommandLine::CommandBuilder& b) -> void;
 
+  Lower::OptimizationLevel opt_level = Lower::OptimizationLevel::Debug;
   CodegenOptions codegen_options;
 
   Phase phase;

@@ -36,6 +36,7 @@
 #include "toolchain/sem_ir/name.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/named_constraint.h"
+#include "toolchain/sem_ir/require_impls.h"
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
@@ -184,6 +185,16 @@ class File : public Printable<File> {
   auto named_constraints() const -> const NamedConstraintStore& {
     return named_constraints_;
   }
+  auto require_impls() -> RequireImplsStore& { return require_impls_; }
+  auto require_impls() const -> const RequireImplsStore& {
+    return require_impls_;
+  }
+  auto require_impls_blocks() -> RequireImplsBlockStore& {
+    return require_impls_blocks_;
+  }
+  auto require_impls_blocks() const -> const RequireImplsBlockStore& {
+    return require_impls_blocks_;
+  }
   auto associated_constants() -> AssociatedConstantStore& {
     return associated_constants_;
   }
@@ -217,8 +228,6 @@ class File : public Printable<File> {
   auto import_ir_insts() const -> const ImportIRInstStore& {
     return import_ir_insts_;
   }
-  auto import_cpps() -> ImportCppStore& { return import_cpps_; }
-  auto import_cpps() const -> const ImportCppStore& { return import_cpps_; }
   auto clang_ast_unit() -> clang::ASTUnit* { return clang_ast_unit_; }
   auto clang_ast_unit() const -> const clang::ASTUnit* {
     return clang_ast_unit_;
@@ -337,6 +346,12 @@ class File : public Printable<File> {
   // Storage for named constraints.
   NamedConstraintStore named_constraints_;
 
+  // Storage for interface requirements.
+  RequireImplsStore require_impls_;
+
+  // Storage for blocks of RequireImpls.
+  RequireImplsBlockStore require_impls_blocks_;
+
   // Storage for associated constants.
   AssociatedConstantStore associated_constants_;
 
@@ -365,9 +380,6 @@ class File : public Printable<File> {
   // Related IR instructions. These are created for LocIds for instructions
   // that are import-related.
   ImportIRInstStore import_ir_insts_;
-
-  // List of Cpp imports.
-  ImportCppStore import_cpps_;
 
   // The Clang AST to use when looking up `Cpp` names. Null if there are no
   // `Cpp` imports.

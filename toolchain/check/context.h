@@ -115,6 +115,10 @@ class Context {
     return field_decls_stack_;
   }
 
+  auto require_impls_stack() -> ArrayStack<SemIR::RequireImplsId>& {
+    return require_impls_stack_;
+  }
+
   auto decl_name_stack() -> DeclNameStack& { return decl_name_stack_; }
 
   auto decl_introducer_state_stack() -> DeclIntroducerStateStack& {
@@ -275,6 +279,12 @@ class Context {
   auto named_constraints() -> SemIR::NamedConstraintStore& {
     return sem_ir().named_constraints();
   }
+  auto require_impls() -> SemIR::RequireImplsStore& {
+    return sem_ir().require_impls();
+  }
+  auto require_impls_blocks() -> SemIR::RequireImplsBlockStore& {
+    return sem_ir().require_impls_blocks();
+  }
   auto associated_constants() -> SemIR::AssociatedConstantStore& {
     return sem_ir().associated_constants();
   }
@@ -358,9 +368,10 @@ class Context {
 
   // The stack of instruction blocks being used for type information while
   // processing arguments. This is used in parallel with
-  // param_and_arg_refs_stack_. It's currently only used for struct literals,
-  // where we need to track names for a type separate from the literal
-  // arguments.
+  // param_and_arg_refs_stack_. It's used for:
+  // - Struct literals, where we need to track names for a type separate from
+  //   the literal arguments.
+  // - The associated entries witness table, while parsing an interface.
   InstBlockStack args_type_info_stack_;
 
   // The stack of StructTypeFields for in-progress StructTypeLiterals.
@@ -368,6 +379,10 @@ class Context {
 
   // The stack of FieldDecls for in-progress Class definitions.
   ArrayStack<SemIR::InstId> field_decls_stack_;
+
+  // The stack of RequireImpls for in-progress Interface and Constraint
+  // definitions.
+  ArrayStack<SemIR::RequireImplsId> require_impls_stack_;
 
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;

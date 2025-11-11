@@ -24,19 +24,23 @@ fn F() -> i32 {
 // CHECK:STDOUT: @_Cb.Main = global i32 0
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
-// CHECK:STDOUT: define i32 @_CF.Main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_CF.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc17 = load i32, ptr @_Ca.Main, align 4, !dbg !7
 // CHECK:STDOUT:   ret i32 %.loc17, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_C__global_init.Main() !dbg !9 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   store i32 5, ptr @_Ca.Main, align 4, !dbg !10
 // CHECK:STDOUT:   %.loc14 = load i32, ptr @_Ca.Main, align 4, !dbg !11
 // CHECK:STDOUT:   store i32 %.loc14, ptr @_Cb.Main, align 4, !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

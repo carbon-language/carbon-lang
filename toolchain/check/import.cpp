@@ -74,6 +74,11 @@ static auto GetImportName(const SemIR::File& import_sem_ir,
           import_sem_ir.name_scopes().Get(ns.name_scope_id));
     }
 
+    case CARBON_KIND(SemIR::NamedConstraintDecl named_constraint_decl): {
+      return GetImportNameForEntity(import_sem_ir.named_constraints().Get(
+          named_constraint_decl.named_constraint_id));
+    }
+
     default:
       CARBON_FATAL("Unsupported export kind: {0}", import_inst);
   }

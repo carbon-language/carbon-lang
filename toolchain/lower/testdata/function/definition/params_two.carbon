@@ -15,10 +15,13 @@ fn Foo(a: i32, b: i32) {}
 // CHECK:STDOUT: ; ModuleID = 'params_two.carbon'
 // CHECK:STDOUT: source_filename = "params_two.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CFoo.Main(i32 %a, i32 %b) !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CFoo.Main(i32 %a, i32 %b) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}

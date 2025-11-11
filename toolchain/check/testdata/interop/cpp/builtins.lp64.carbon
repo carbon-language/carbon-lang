@@ -15,7 +15,7 @@
 
 library "[[@TEST_NAME]]";
 
-import Cpp inline "";
+import Cpp;
 
 fn F() {
   //@dump-sem-ir-begin
@@ -31,7 +31,7 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-import Cpp inline "";
+import Cpp;
 
 fn F() {
   //@dump-sem-ir-begin
