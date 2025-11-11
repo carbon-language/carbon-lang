@@ -173,6 +173,12 @@ auto AddPlaceholderInstInNoBlock(Context& context, LocT loc, InstT inst)
   return AddPlaceholderInstInNoBlock(context, SemIR::LocIdAndInst(loc, inst));
 }
 
+// Similar to `AddPlaceholderInstInNoBlock`, but also tracks the instruction as
+// an import.
+auto AddPlaceholderImportedInstInNoBlock(Context& context,
+                                         SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::InstId;
+
 // Replaces the instruction at `inst_id` with `loc_id_and_inst`. The
 // instruction is required to not have been used in any constant evaluation,
 // either because it's newly created and entirely unused, or because it's only

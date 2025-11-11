@@ -680,10 +680,9 @@ static auto BuildClassDecl(Context& context,
   auto class_decl = SemIR::ClassDecl{.type_id = SemIR::TypeType::TypeId,
                                      .class_id = SemIR::ClassId::None,
                                      .decl_block_id = SemIR::InstBlockId::None};
-  auto class_decl_id = AddPlaceholderInstInNoBlock(
+  auto class_decl_id = AddPlaceholderImportedInstInNoBlock(
       context,
-      SemIR::LocIdAndInst::UncheckedLoc(import_ir_inst_id, class_decl));
-  context.imports().push_back(class_decl_id);
+      MakeImportedLocIdAndInst(context, import_ir_inst_id, class_decl));
 
   SemIR::Class class_info = {
       {.name_id = name_id,
@@ -1028,8 +1027,8 @@ static auto BuildEnumDefinition(Context& context,
   auto object_repr_id =
       ImportEnumObjectRepresentation(context, import_ir_inst_id, enum_decl);
   class_info.adapt_id = AddInst(
-      context, SemIR::LocIdAndInst::UncheckedLoc(
-                   import_ir_inst_id,
+      context, MakeImportedLocIdAndInst(
+                   context, import_ir_inst_id,
                    SemIR::AdaptDecl{.adapted_type_inst_id = object_repr_id}));
   class_info.complete_type_witness_id = AddInst<SemIR::CompleteTypeWitness>(
       context, import_ir_inst_id,
@@ -1695,9 +1694,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
 
   auto function_decl = SemIR::FunctionDecl{
       SemIR::TypeId::None, SemIR::FunctionId::None, decl_block_id};
-  auto decl_id =
-      AddPlaceholderInstInNoBlock(context, Parse::NodeId::None, function_decl);
-  context.imports().push_back(decl_id);
+  auto decl_id = AddPlaceholderImportedInstInNoBlock(
+      context, SemIR::LocIdAndInst::NoLoc(function_decl));
 
   auto virtual_modifier = SemIR::Function::VirtualModifier::None;
   int32_t virtual_index = -1;
@@ -1914,7 +1912,7 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   // We can't use the convenience for `AddPlaceholderInstInNoBlock()` with typed
   // nodes because it doesn't support insts with cleanup.
   SemIR::InstId var_storage_inst_id =
-      AddPlaceholderInstInNoBlock(context, {loc_id, var_storage});
+      AddPlaceholderImportedInstInNoBlock(context, {loc_id, var_storage});
 
   auto clang_decl_id = context.clang_decls().Add(
       {.key = SemIR::ClangDeclKey(var_decl), .inst_id = var_storage_inst_id});
@@ -1943,7 +1941,6 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
 
   // Finalize the `VarStorage` instruction.
   ReplaceInstBeforeConstantUse(context, var_storage_inst_id, var_storage);
-  context.imports().push_back(var_storage_inst_id);
 
   return var_storage_inst_id;
 }

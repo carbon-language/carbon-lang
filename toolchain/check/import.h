@@ -104,16 +104,15 @@ auto CheckCompatibleImportedNodeKind(Context& context,
 
 // Returns a LocIdAndInst for an instruction with an imported location. Checks
 // that the imported location is compatible with the kind of instruction being
-// created.
+// created. Only used when `UncheckedLoc` would otherwise be called.
 template <typename InstT>
-  requires SemIR::Internal::HasNodeId<InstT>
+  requires(SemIR::Internal::HasNodeId<InstT> &&
+           !SemIR::Internal::HasUntypedNodeId<InstT>)
 auto MakeImportedLocIdAndInst(Context& context,
                               SemIR::ImportIRInstId imported_loc_id, InstT inst)
     -> SemIR::LocIdAndInst {
-  if constexpr (!SemIR::Internal::HasUntypedNodeId<InstT>) {
-    Internal::CheckCompatibleImportedNodeKind(context, imported_loc_id,
-                                              InstT::Kind);
-  }
+  Internal::CheckCompatibleImportedNodeKind(context, imported_loc_id,
+                                            InstT::Kind);
   return SemIR::LocIdAndInst::UncheckedLoc(imported_loc_id, inst);
 }
 

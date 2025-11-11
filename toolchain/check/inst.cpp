@@ -203,6 +203,14 @@ auto AddPlaceholderInstInNoBlock(Context& context,
   return inst_id;
 }
 
+auto AddPlaceholderImportedInstInNoBlock(Context& context,
+                                         SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::InstId {
+  auto inst_id = AddPlaceholderInstInNoBlock(context, loc_id_and_inst);
+  context.imports().push_back(inst_id);
+  return inst_id;
+}
+
 auto AddPlaceholderInst(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = AddPlaceholderInstInNoBlock(context, loc_id_and_inst);
