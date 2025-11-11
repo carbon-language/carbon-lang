@@ -7,6 +7,10 @@ load("//bazel/carbon_rules:defs.bzl", "carbon_binary")
 carbon_binary(
     name = "re2_playground",
     srcs = ["re2_playground.carbon"],
+    flags = ["--clang-arg=-std=c++20"],
     tags = ["manual"],
-    deps = ["@re2"],
+    deps = [
+        "@llvm-project//llvm:LineEditor",
+        "@re2",
+    ],
 )

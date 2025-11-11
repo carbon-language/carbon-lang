@@ -27,6 +27,7 @@
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/kind_switch.h"
@@ -2262,8 +2263,8 @@ static auto MapConstant(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(expr, "empty expression");
   auto* integer_literal = dyn_cast<clang::IntegerLiteral>(expr);
   if (!integer_literal) {
-    context.TODO(loc_id, "Unsupported: constant type: " +
-                             integer_literal->getType().getAsString());
+    context.TODO(
+        loc_id, "Unsupported: constant type: " + expr->getType().getAsString());
     return SemIR::ErrorInst::InstId;
   }
   SemIR::TypeId type_id =
@@ -2315,6 +2316,8 @@ static auto LookupMacro(Context& context, SemIR::NameScopeId scope_id,
   }
 
   clang::Preprocessor& preprocessor = context.clang_sema().getPreprocessor();
+  // TODO: Do the identifier lookup only once, rather than both here and in
+  // ClangLookupName.
   clang::IdentifierInfo* identifier_info =
       preprocessor.getIdentifierInfo(*name_str_opt);
 
@@ -2362,6 +2365,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                                       lookup->getNamingClass(),
                                       std::move(overload_set));
   }
+
   if (!lookup->isSingleResult()) {
     // Clang will diagnose ambiguous lookup results for us.
     if (!lookup->isAmbiguous()) {

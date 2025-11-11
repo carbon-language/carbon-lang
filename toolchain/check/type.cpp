@@ -236,7 +236,7 @@ auto GetFacetType(Context& context, const SemIR::FacetTypeInfo& info)
 
 auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
     -> SemIR::TypeId {
-  return GetTypeImpl<SemIR::PointerType>(context, pointee_type_id);
+  return GetCompleteTypeImpl<SemIR::PointerType>(context, pointee_type_id);
 }
 
 auto GetPatternType(Context& context, SemIR::TypeId scrutinee_type_id)

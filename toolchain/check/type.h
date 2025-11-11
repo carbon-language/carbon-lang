@@ -100,7 +100,8 @@ auto GetNamedConstraintType(Context& context,
 auto GetFacetType(Context& context, const SemIR::FacetTypeInfo& info)
     -> SemIR::TypeId;
 
-// Returns a pointer type whose pointee type is `pointee_type_id`.
+// Returns a pointer type whose pointee type is `pointee_type_id`. The returned
+// type will be complete.
 auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
     -> SemIR::TypeId;
 

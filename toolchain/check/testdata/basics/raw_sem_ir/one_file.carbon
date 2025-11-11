@@ -351,18 +351,18 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     'type(inst60000024)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst60000024)}
-// CHECK:STDOUT:     'type(inst60000026)':
-// CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(inst60000028)}
 // CHECK:STDOUT:     'type(inst60000028)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst60000028)}
+// CHECK:STDOUT:     'type(inst60000026)':
+// CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(inst60000028)}
 // CHECK:STDOUT:     'type(inst60000036)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst60000024)}
 // CHECK:STDOUT:     'type(symbolic_constant3)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(symbolic_constant3)}
-// CHECK:STDOUT:     'type(symbolic_constant7)':
-// CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(symbolic_constantB)}
 // CHECK:STDOUT:     'type(symbolic_constantB)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(symbolic_constantB)}
+// CHECK:STDOUT:     'type(symbolic_constant7)':
+// CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(symbolic_constantB)}
 // CHECK:STDOUT:     'type(inst(WitnessType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     'type(symbolic_constant4)':

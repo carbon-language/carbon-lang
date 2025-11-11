@@ -286,8 +286,6 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorConstId node_id)
                       "`const` applied repeatedly to the same type has no "
                       "additional effect");
     context.emitter().Emit(node_id, RepeatedConst);
-    context.node_stack().Push(node_id, value_id);
-    return true;
   }
   auto inner_type = ExprAsType(context, node_id, value_id);
   AddInstAndPush<SemIR::ConstType>(
