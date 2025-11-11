@@ -699,7 +699,7 @@ static auto AddLoadedImportRef(ImportContext& context,
 
 // Like `AddLoadedImportRef`, but only for types, and returns a `TypeInstId`.
 static auto AddLoadedImportRefForType(ImportContext& context,
-                                      SemIR::InstId import_inst_id,
+                                      SemIR::TypeInstId import_inst_id,
                                       SemIR::ConstantId local_const_id)
     -> SemIR::TypeInstId {
   return context.local_types().GetAsTypeInstId(AddLoadedImportRef(
