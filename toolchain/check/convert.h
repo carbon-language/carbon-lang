@@ -22,6 +22,9 @@ struct ConversionTarget {
     // Convert to a durable reference of type `type_id`.
     DurableRef,
     // Convert to a reference, suitable for binding to a reference parameter.
+    // This allows both durable and ephemeral references. The restriction that
+    // only a `ref self` parameter can bind to an ephemeral reference is
+    // enforced separately when handling `ref` tags on call arguments.
     RefParam,
     // Convert to a reference of type `type_id`, for use as the argument to a
     // C++ thunk.
