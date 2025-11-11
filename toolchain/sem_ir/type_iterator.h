@@ -40,7 +40,8 @@ class TypeIterator {
   // The iterator will visit things in the reverse order that they are added.
   auto Add(InstId inst_id) -> void {
     auto type_id = sem_ir_->insts().Get(inst_id).type_id();
-    CARBON_CHECK(sem_ir_->types().IsFacetType(type_id),
+    CARBON_CHECK(sem_ir_->types().IsFacetType(type_id) ||
+                     type_id == SemIR::ErrorInst::TypeId,
                  "Type {0} of type inst is not a facet type",
                  sem_ir_->types().GetAsInst(type_id).kind());
     PushInstId(inst_id);

@@ -201,7 +201,6 @@ static auto GetInterfacesFromConstantId(
       context.insts().GetAs<SemIR::FacetType>(facet_type_inst_id);
   const auto& facet_type_info =
       context.facet_types().Get(facet_type_inst.facet_type_id);
-  // TODO: Get the complete facet type here.
   auto identified_id =
       RequireIdentifiedFacetType(context, facet_type_inst, [&] {
         CARBON_DIAGNOSTIC(ImplLookupInIncompleteFacetType, Error,
@@ -324,8 +323,6 @@ static auto LookupImplWitnessInSelfFacetValue(
   // position of the witness for that interface in `FacetValue`. The
   // `FacetValue` witnesses are the output of an impl lookup, which finds and
   // returns witnesses in the same order.
-  //
-  // TODO: Get the complete facet type here.
   auto identified_id =
       RequireIdentifiedFacetType(context, *facet_type, nullptr);
   // This should not be possible as FacetValue is constructed by a conversion
@@ -803,6 +800,8 @@ static auto CollectCandidateImplsForQuery(
 
   llvm::SmallVector<CandidateImpl> candidate_impls;
   for (auto [id, impl] : context.impls().enumerate()) {
+    CARBON_CHECK(impl.witness_id.has_value());
+
     if (final_only && !IsImplEffectivelyFinal(context, impl)) {
       continue;
     }
@@ -826,14 +825,6 @@ static auto CollectCandidateImplsForQuery(
         impl.interface.specific_id != query_specific_interface.specific_id) {
       continue;
     }
-
-    // This check comes first to avoid deduction with an invalid impl. We use
-    // an error value to indicate an error during creation of the impl, such
-    // as a recursive impl which will cause deduction to recurse infinitely.
-    if (impl.witness_id == SemIR::ErrorInst::InstId) {
-      continue;
-    }
-    CARBON_CHECK(impl.witness_id.has_value());
 
     // Build the type structure used for choosing the best the candidate.
     auto type_structure =
