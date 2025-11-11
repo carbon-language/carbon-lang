@@ -1634,13 +1634,16 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       if (target.kind == ConversionTarget::RefParam) {
         // Don't diagnose a non-reference scrutinee if it has a user-written
         // `ref` tag, because that's diagnosed in `Convert`.
-        if (auto lookup_result = context.ref_tags().Lookup(expr_id);
-            !lookup_result ||
-            lookup_result.value() != Context::RefTag::Present) {
-          CARBON_DIAGNOSTIC(ValueForRefParam, Error,
-                            "value expression passed to reference parameter");
-          context.emitter().Emit(loc_id, ValueForRefParam);
+        if (target.diagnose) {
+          if (auto lookup_result = context.ref_tags().Lookup(expr_id);
+              !lookup_result ||
+              lookup_result.value() != Context::RefTag::Present) {
+            CARBON_DIAGNOSTIC(ValueForRefParam, Error,
+                              "value expression passed to reference parameter");
+            context.emitter().Emit(loc_id, ValueForRefParam);
+          }
         }
+        return SemIR::ErrorInst::InstId;
       }
 
       // When initializing from a value, perform a copy.

@@ -375,18 +375,9 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
           context.sem_ir(),
           SemIR::GetTypeOfInstInSpecific(context.sem_ir(), callee_specific_id_,
                                          pattern_inst_id));
-      auto scrutinee_ref_id = Convert(
+      results_.push_back(Convert(
           context, SemIR::LocId(entry.scrutinee_id), entry.scrutinee_id,
-          {.kind = ConversionTarget::RefParam, .type_id = scrutinee_type_id});
-      switch (SemIR::GetExprCategory(context.sem_ir(), scrutinee_ref_id)) {
-        case SemIR::ExprCategory::Error:
-        case SemIR::ExprCategory::DurableRef:
-        case SemIR::ExprCategory::EphemeralRef:
-          break;
-        default:
-          scrutinee_ref_id = SemIR::ErrorInst::InstId;
-      }
-      results_.push_back(scrutinee_ref_id);
+          {.kind = ConversionTarget::RefParam, .type_id = scrutinee_type_id}));
       // Do not traverse farther, because the caller side of the pattern
       // ends here.
       break;
