@@ -2316,6 +2316,8 @@ static auto LookupMacro(Context& context, SemIR::NameScopeId scope_id,
   }
 
   clang::Preprocessor& preprocessor = context.clang_sema().getPreprocessor();
+  // TODO: Do the identifier lookup only once, rather than both here and in
+  // ClangLookupName.
   clang::IdentifierInfo* identifier_info =
       preprocessor.getIdentifierInfo(*name_str_opt);
 

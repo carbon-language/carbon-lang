@@ -147,7 +147,7 @@ namespace X {
 float n;
 #define n 1
 
-// --- fail_import_macro_and_non_macro_same_name.carbon
+// --- import_macro_and_non_macro_same_name.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -155,18 +155,10 @@ import Cpp library "macro_and_non_macro_same_name.h";
 
 fn F() {
   // When the same macro name and non-macro name exist in the global C++ scope, the macro name is selected.
-  let a: i32 = Cpp.n;
+  // Cpp.n is treated as an integer constant with value 1.
+  var a: array(f32, Cpp.n) = (1.0,);
 
-  // CHECK:STDERR: fail_import_macro_and_non_macro_same_name.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `i32` to `f32` [ConversionFailure]
-  // CHECK:STDERR:   let b: f32 = Cpp.n;
-  // CHECK:STDERR:                ^~~~~
-  // CHECK:STDERR: fail_import_macro_and_non_macro_same_name.carbon:[[@LINE+4]]:16: note: type `i32` does not implement interface `Core.ImplicitAs(f32)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let b: f32 = Cpp.n;
-  // CHECK:STDERR:                ^~~~~
-  // CHECK:STDERR:
-  let b: f32 = Cpp.n;
-
-  let c: f32 = Cpp.X.n;
+  let b: f32 = Cpp.X.n;
 }
 
 // --- no_replacement_token.h
