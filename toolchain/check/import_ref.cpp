@@ -1343,9 +1343,8 @@ static auto ResolveAsUnique(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::AdaptDecl inst,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
-  auto adapted_type_const_id = GetLocalConstantId(
-      resolver,
-      resolver.import_constant_values().GetAttached(inst.adapted_type_inst_id));
+  auto adapted_type_const_id =
+      GetLocalConstantId(resolver, inst.adapted_type_inst_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -1528,9 +1527,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::BaseDecl inst,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
   auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
-  auto base_type_const_id = GetLocalConstantId(
-      resolver,
-      resolver.import_constant_values().GetAttached(inst.base_type_inst_id));
+  auto base_type_const_id =
+      GetLocalConstantId(resolver, inst.base_type_inst_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -2164,9 +2162,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   llvm::SmallVector<SemIR::InstId> lazy_virtual_functions;
   lazy_virtual_functions.reserve(virtual_functions.size());
   for (auto vtable_entry_id : virtual_functions) {
-    auto local_attached_constant_id = GetLocalConstantId(
-        resolver,
-        resolver.import_constant_values().GetAttached(vtable_entry_id));
+    auto local_attached_constant_id =
+        GetLocalConstantId(resolver, vtable_entry_id);
     lazy_virtual_functions.push_back(
         resolver.local_constant_values().GetInstIdIfValid(
             local_attached_constant_id));
@@ -2400,12 +2397,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto implicit_param_patterns = GetLocalInstBlockContents(
       resolver, import_impl.implicit_param_patterns_id);
   auto generic_data = GetLocalGenericData(resolver, import_impl.generic_id);
-  auto self_const_id = GetLocalConstantId(
-      resolver,
-      resolver.import_constant_values().GetAttached(import_impl.self_id));
-  auto constraint_const_id = GetLocalConstantId(
-      resolver,
-      resolver.import_constant_values().GetAttached(import_impl.constraint_id));
+  auto self_const_id = GetLocalConstantId(resolver, import_impl.self_id);
+  auto constraint_const_id =
+      GetLocalConstantId(resolver, import_impl.constraint_id);
   auto& new_impl = resolver.local_impls().Get(impl_id);
 
   if (resolver.HasNewWork()) {
@@ -2456,8 +2450,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Done(constant_id);
   }
 
-  auto new_constant_id = GetLocalConstantId(
-      resolver, resolver.import_constant_values().GetInstId(constant_id));
+  auto new_constant_id = GetLocalConstantId(resolver, constant_id);
   return RetryOrDone(resolver, new_constant_id);
 }
 
