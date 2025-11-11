@@ -1154,10 +1154,10 @@ struct ResolveResult {
   // Adds `inst` to the local context as a deduplicated constant and returns a
   // successful `ResolveResult`. Requires that there is no new work.
   //
-  // This implements phases 2 and 3 of resolving the inst (as described above)
-  // for the common case where those phases are combined. Cases where that isn't
-  // applicable should instead use `AddPlaceholderImportedInst` and
-  // `ReplacePlaceholderImportedInst`.
+  // This implements phases 2 and 3 of resolving the inst (as described on
+  // `ImportRefResolver`) for the common case where those phases are combined.
+  // Cases where that isn't applicable should instead use
+  // `AddPlaceholderImportedInst` and `ReplacePlaceholderImportedInst`.
   //
   // This should not be used for instructions that represent declarations, or
   // other instructions with `constant_kind == InstConstantKind::Unique`,
@@ -1180,10 +1180,10 @@ struct ResolveResult {
   // successful `ResolveResult`. `import_inst_id` is the corresponding inst ID
   // in the local context. Requires that there is no new work.
   //
-  // This implements phases 2 and 3 of resolving the inst (as described above)
-  // for the common case where those phases are combined. Cases where that isn't
-  // applicable should instead use `AddPlaceholderImportedInst` and
-  // `ReplacePlaceholderImportedInst`.
+  // This implements phases 2 and 3 of resolving the inst (as described on
+  // `ImportRefResolver`) for the common case where those phases are combined.
+  // Cases where that isn't applicable should instead use
+  // `AddPlaceholderImportedInst` and `ReplacePlaceholderImportedInst`.
   //
   // This should only be used for instructions that represent declarations, or
   // other instructions with `constant_kind == InstConstantKind::Unique`,
