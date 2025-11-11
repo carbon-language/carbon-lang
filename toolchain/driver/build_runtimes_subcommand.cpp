@@ -7,7 +7,9 @@
 #include <utility>
 #include <variant>
 
+#include "common/error.h"
 #include "llvm/TargetParser/Triple.h"
+#include "toolchain/driver/carbon_runner.h"
 #include "toolchain/driver/clang_runner.h"
 
 namespace Carbon {
@@ -72,9 +74,6 @@ auto BuildRuntimesSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
 auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
     -> ErrorOr<std::filesystem::path> {
-  ClangRunner runner(driver_env.installation, driver_env.fs,
-                     driver_env.vlog_stream);
-
   Runtimes::Cache::Features features = {
       .target = options_.codegen_options.target.str()};
 
@@ -96,8 +95,17 @@ auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
                : Runtimes::Make(explicit_output_path, driver_env.vlog_stream));
   CARBON_ASSIGN_OR_RETURN(auto tmp_dir, Filesystem::MakeTmpDir());
 
-  return runner.BuildTargetResourceDir(features, runtimes, tmp_dir.abs_path(),
-                                       *driver_env.thread_pool);
+  ClangRunner clang_runner(driver_env.installation, driver_env.fs,
+                           driver_env.vlog_stream);
+
+  CARBON_RETURN_IF_ERROR(clang_runner.BuildTargetResourceDir(
+      features, runtimes, tmp_dir.abs_path(), *driver_env.thread_pool));
+
+  CarbonRunner carbon_runner(&driver_env);
+
+  CARBON_RETURN_IF_ERROR(carbon_runner.BuildCoreLibraries(features, runtimes));
+
+  return runtimes.base_path();
 }
 
 }  // namespace Carbon

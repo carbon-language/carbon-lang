@@ -102,6 +102,8 @@ cc_library(
     srcs = [
         "build_runtimes_subcommand.cpp",
         "build_runtimes_subcommand.h",
+        "carbon_runner.cpp",
+        "carbon_runner.h",
         "clang_subcommand.cpp",
         "clang_subcommand.h",
         "codegen_options.cpp",
