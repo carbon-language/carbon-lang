@@ -1106,8 +1106,9 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
 }
 
 static auto MapNullptrType(Context& context, SemIR::LocId loc_id) -> TypeExpr {
-  return ExprAsType(context, loc_id,
-                    LookupNameInCore(context, loc_id, "CppNullptrT"));
+  return ExprAsType(
+      context, loc_id,
+      LookupNameInCore(context, loc_id, {"CppCompat", "NullptrT"}));
 }
 
 // Maps a C++ builtin type to a Carbon type.

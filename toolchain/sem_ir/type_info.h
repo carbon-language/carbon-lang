@@ -235,7 +235,7 @@ struct TypeLiteralInfo {
     Numeric,
     // `char` / `Core.Char`.
     Char,
-    // `Cpp.nullptr_t` / `Core.CppNullptrT`.
+    // `Cpp.nullptr_t` / `Core.CppCompat.NullptrT`.
     // TODO: This isn't a type literal.
     CppNullptrT,
     // `str` / `Core.String`.
