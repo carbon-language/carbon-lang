@@ -166,8 +166,6 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::NameId name_id,
 }
 
 namespace {
-class ImportRefResolver;
-
 // The result of attempting to resolve an imported instruction to a constant.
 struct ResolveResult {
   // The new constant value, if known.
@@ -196,9 +194,6 @@ struct ResolveResult {
   }
 };
 }  // namespace
-
-static auto TryResolveInst(ImportRefResolver& resolver, SemIR::InstId inst_id,
-                           SemIR::ConstantId const_id) -> ResolveResult;
 
 namespace {
 // A context within which we are performing an import. Tracks information about
@@ -478,45 +473,7 @@ class ImportRefResolver : public ImportContext {
   // Iteratively resolves an imported instruction's inner references until a
   // constant ID referencing the current IR is produced. See the class comment
   // for more details.
-  auto ResolveOneInst(SemIR::InstId inst_id) -> SemIR::ConstantId {
-    work_stack_.push_back({.inst_id = inst_id});
-    while (!work_stack_.empty()) {
-      auto work = work_stack_.back();
-      CARBON_CHECK(work.inst_id.has_value());
-
-      // Step 1: check for a constant value.
-      auto existing = FindResolvedConstId(work.inst_id);
-      if (existing.const_id.has_value() && !work.retry_with_constant_value) {
-        work_stack_.pop_back();
-        continue;
-      }
-
-      // Step 2: resolve the instruction.
-      initial_work_ = work_stack_.size();
-      auto [new_const_id, _, retry] =
-          TryResolveInst(*this, work.inst_id, existing.const_id);
-      CARBON_CHECK(!HasNewWork() || retry);
-
-      CARBON_CHECK(
-          !existing.const_id.has_value() || existing.const_id == new_const_id,
-          "Constant value changed in third phase.");
-      if (!existing.const_id.has_value()) {
-        SetResolvedConstId(work.inst_id, existing.indirect_insts, new_const_id);
-      }
-
-      // Step 3: pop or retry.
-      if (retry) {
-        work_stack_[initial_work_ - 1].retry_with_constant_value =
-            new_const_id.has_value();
-      } else {
-        work_stack_.pop_back();
-      }
-    }
-    auto constant_id =
-        local_constant_values_for_import_insts().GetAttached(inst_id);
-    CARBON_CHECK(constant_id.has_value());
-    return constant_id;
-  }
+  auto ResolveOneInst(SemIR::InstId inst_id) -> SemIR::ConstantId;
 
   // Performs resolution for one instruction and then performs all work we
   // deferred.
@@ -534,26 +491,7 @@ class ImportRefResolver : public ImportContext {
   }
 
   // Wraps constant evaluation with logic to handle types.
-  // NOLINTNEXTLINE(misc-no-recursion)
-  auto ResolveType(SemIR::TypeId import_type_id) -> SemIR::TypeId {
-    if (!import_type_id.has_value()) {
-      return import_type_id;
-    }
-
-    auto import_type_const_id =
-        import_ir().types().GetConstantId(import_type_id);
-    CARBON_CHECK(import_type_const_id.has_value());
-
-    if (auto import_type_inst_id = import_ir().types().GetAsTypeInstId(
-            import_ir().constant_values().GetInstId(import_type_const_id));
-        SemIR::IsSingletonInstId(import_type_inst_id)) {
-      // Builtins don't require constant resolution; we can use them directly.
-      return GetSingletonType(local_context(), import_type_inst_id);
-    } else {
-      return local_context().types().GetTypeIdForTypeConstantId(
-          ResolveConstant(import_type_id.AsConstantId()));
-    }
-  }
+  auto ResolveType(SemIR::TypeId import_type_id) -> SemIR::TypeId;
 
   // Returns true if new unresolved constants were found as part of this
   // `Resolve` step.
@@ -565,17 +503,7 @@ class ImportRefResolver : public ImportContext {
 
   // Returns the ConstantId for an InstId. Adds unresolved constants to
   // work_stack_.
-  auto GetLocalConstantValueOrPush(SemIR::InstId inst_id) -> SemIR::ConstantId {
-    if (!inst_id.has_value()) {
-      return SemIR::ConstantId::None;
-    }
-    auto const_id =
-        local_constant_values_for_import_insts().GetAttached(inst_id);
-    if (!const_id.has_value()) {
-      work_stack_.push_back({.inst_id = inst_id});
-    }
-    return const_id;
-  }
+  auto GetLocalConstantValueOrPush(SemIR::InstId inst_id) -> SemIR::ConstantId;
 
  private:
   // A step in work_stack_.
@@ -602,80 +530,12 @@ class ImportRefResolver : public ImportContext {
   // found indirectly, sets the constant for any indirect steps that don't
   // already have the constant. If a constant isn't found, returns the indirect
   // instructions so that they can have the resolved constant assigned later.
-  auto FindResolvedConstId(SemIR::InstId inst_id) -> ResolvedConstId {
-    ResolvedConstId result;
-
-    if (auto existing_const_id =
-            local_constant_values_for_import_insts().GetAttached(inst_id);
-        existing_const_id.has_value()) {
-      result.const_id = existing_const_id;
-      return result;
-    }
-
-    const auto* cursor_ir = &import_ir();
-    auto cursor_inst_id = inst_id;
-
-    while (true) {
-      auto import_ir_inst_id =
-          cursor_ir->insts().GetImportSource(cursor_inst_id);
-      if (!import_ir_inst_id.has_value()) {
-        return result;
-      }
-      auto ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
-      if (ir_inst.ir_id() == SemIR::ImportIRId::Cpp) {
-        local_context().TODO(SemIR::LocId::None,
-                             "Unsupported: Importing C++ indirectly");
-        SetResolvedConstId(inst_id, result.indirect_insts,
-                           SemIR::ErrorInst::ConstantId);
-        result.const_id = SemIR::ErrorInst::ConstantId;
-        result.indirect_insts.clear();
-        return result;
-      }
-
-      const auto* prev_ir = cursor_ir;
-      auto prev_inst_id = cursor_inst_id;
-
-      cursor_ir = cursor_ir->import_irs().Get(ir_inst.ir_id()).sem_ir;
-      auto cursor_ir_id =
-          AddImportIR(local_context(), {.decl_id = SemIR::InstId::None,
-                                        .is_export = false,
-                                        .sem_ir = cursor_ir});
-      cursor_inst_id = ir_inst.inst_id();
-
-      CARBON_CHECK(cursor_ir != prev_ir || cursor_inst_id != prev_inst_id,
-                   "{0}", cursor_ir->insts().Get(cursor_inst_id));
-
-      if (auto const_id =
-              local_context()
-                  .import_ir_constant_values()
-                      [local_context().sem_ir().import_irs().GetRawIndex(
-                          cursor_ir_id)]
-                  .GetAttached(cursor_inst_id);
-          const_id.has_value()) {
-        SetResolvedConstId(inst_id, result.indirect_insts, const_id);
-        result.const_id = const_id;
-        result.indirect_insts.clear();
-        return result;
-      } else {
-        result.indirect_insts.push_back(
-            SemIR::ImportIRInst(cursor_ir_id, cursor_inst_id));
-      }
-    }
-  }
+  auto FindResolvedConstId(SemIR::InstId inst_id) -> ResolvedConstId;
 
   // Sets a resolved constant into the current and indirect instructions.
   auto SetResolvedConstId(SemIR::InstId inst_id,
                           llvm::ArrayRef<SemIR::ImportIRInst> indirect_insts,
-                          SemIR::ConstantId const_id) -> void {
-    local_constant_values_for_import_insts().Set(inst_id, const_id);
-    for (auto indirect_inst : indirect_insts) {
-      local_context()
-          .import_ir_constant_values()
-              [local_context().sem_ir().import_irs().GetRawIndex(
-                  indirect_inst.ir_id())]
-          .Set(indirect_inst.inst_id(), const_id);
-    }
-  }
+                          SemIR::ConstantId const_id) -> void;
 
   auto PerformPendingWork() -> void;
 
@@ -3657,6 +3517,154 @@ static auto TryResolveInst(ImportRefResolver& resolver, SemIR::InstId inst_id,
   }
 
   return result;
+}
+
+auto ImportRefResolver::ResolveOneInst(SemIR::InstId inst_id)
+    -> SemIR::ConstantId {
+  work_stack_.push_back({.inst_id = inst_id});
+  while (!work_stack_.empty()) {
+    auto work = work_stack_.back();
+    CARBON_CHECK(work.inst_id.has_value());
+
+    // Step 1: check for a constant value.
+    auto existing = FindResolvedConstId(work.inst_id);
+    if (existing.const_id.has_value() && !work.retry_with_constant_value) {
+      work_stack_.pop_back();
+      continue;
+    }
+
+    // Step 2: resolve the instruction.
+    initial_work_ = work_stack_.size();
+    auto [new_const_id, _, retry] =
+        TryResolveInst(*this, work.inst_id, existing.const_id);
+    CARBON_CHECK(!HasNewWork() || retry);
+
+    CARBON_CHECK(
+        !existing.const_id.has_value() || existing.const_id == new_const_id,
+        "Constant value changed in third phase.");
+    if (!existing.const_id.has_value()) {
+      SetResolvedConstId(work.inst_id, existing.indirect_insts, new_const_id);
+    }
+
+    // Step 3: pop or retry.
+    if (retry) {
+      work_stack_[initial_work_ - 1].retry_with_constant_value =
+          new_const_id.has_value();
+    } else {
+      work_stack_.pop_back();
+    }
+  }
+  auto constant_id =
+      local_constant_values_for_import_insts().GetAttached(inst_id);
+  CARBON_CHECK(constant_id.has_value());
+  return constant_id;
+}
+
+// NOLINTNEXTLINE(misc-no-recursion)
+auto ImportRefResolver::ResolveType(SemIR::TypeId import_type_id)
+    -> SemIR::TypeId {
+  if (!import_type_id.has_value()) {
+    return import_type_id;
+  }
+
+  auto import_type_const_id = import_ir().types().GetConstantId(import_type_id);
+  CARBON_CHECK(import_type_const_id.has_value());
+
+  if (auto import_type_inst_id = import_ir().types().GetAsTypeInstId(
+          import_ir().constant_values().GetInstId(import_type_const_id));
+      SemIR::IsSingletonInstId(import_type_inst_id)) {
+    // Builtins don't require constant resolution; we can use them directly.
+    return GetSingletonType(local_context(), import_type_inst_id);
+  } else {
+    return local_context().types().GetTypeIdForTypeConstantId(
+        ResolveConstant(import_type_id.AsConstantId()));
+  }
+}
+
+auto ImportRefResolver::GetLocalConstantValueOrPush(SemIR::InstId inst_id)
+    -> SemIR::ConstantId {
+  if (!inst_id.has_value()) {
+    return SemIR::ConstantId::None;
+  }
+  auto const_id = local_constant_values_for_import_insts().GetAttached(inst_id);
+  if (!const_id.has_value()) {
+    work_stack_.push_back({.inst_id = inst_id});
+  }
+  return const_id;
+}
+
+auto ImportRefResolver::FindResolvedConstId(SemIR::InstId inst_id)
+    -> ResolvedConstId {
+  ResolvedConstId result;
+
+  if (auto existing_const_id =
+          local_constant_values_for_import_insts().GetAttached(inst_id);
+      existing_const_id.has_value()) {
+    result.const_id = existing_const_id;
+    return result;
+  }
+
+  const auto* cursor_ir = &import_ir();
+  auto cursor_inst_id = inst_id;
+
+  while (true) {
+    auto import_ir_inst_id = cursor_ir->insts().GetImportSource(cursor_inst_id);
+    if (!import_ir_inst_id.has_value()) {
+      return result;
+    }
+    auto ir_inst = cursor_ir->import_ir_insts().Get(import_ir_inst_id);
+    if (ir_inst.ir_id() == SemIR::ImportIRId::Cpp) {
+      local_context().TODO(SemIR::LocId::None,
+                           "Unsupported: Importing C++ indirectly");
+      SetResolvedConstId(inst_id, result.indirect_insts,
+                         SemIR::ErrorInst::ConstantId);
+      result.const_id = SemIR::ErrorInst::ConstantId;
+      result.indirect_insts.clear();
+      return result;
+    }
+
+    const auto* prev_ir = cursor_ir;
+    auto prev_inst_id = cursor_inst_id;
+
+    cursor_ir = cursor_ir->import_irs().Get(ir_inst.ir_id()).sem_ir;
+    auto cursor_ir_id =
+        AddImportIR(local_context(), {.decl_id = SemIR::InstId::None,
+                                      .is_export = false,
+                                      .sem_ir = cursor_ir});
+    cursor_inst_id = ir_inst.inst_id();
+
+    CARBON_CHECK(cursor_ir != prev_ir || cursor_inst_id != prev_inst_id, "{0}",
+                 cursor_ir->insts().Get(cursor_inst_id));
+
+    if (auto const_id =
+            local_context()
+                .import_ir_constant_values()
+                    [local_context().sem_ir().import_irs().GetRawIndex(
+                        cursor_ir_id)]
+                .GetAttached(cursor_inst_id);
+        const_id.has_value()) {
+      SetResolvedConstId(inst_id, result.indirect_insts, const_id);
+      result.const_id = const_id;
+      result.indirect_insts.clear();
+      return result;
+    } else {
+      result.indirect_insts.push_back(
+          SemIR::ImportIRInst(cursor_ir_id, cursor_inst_id));
+    }
+  }
+}
+
+auto ImportRefResolver::SetResolvedConstId(
+    SemIR::InstId inst_id, llvm::ArrayRef<SemIR::ImportIRInst> indirect_insts,
+    SemIR::ConstantId const_id) -> void {
+  local_constant_values_for_import_insts().Set(inst_id, const_id);
+  for (auto indirect_inst : indirect_insts) {
+    local_context()
+        .import_ir_constant_values()
+            [local_context().sem_ir().import_irs().GetRawIndex(
+                indirect_inst.ir_id())]
+        .Set(indirect_inst.inst_id(), const_id);
+  }
 }
 
 // Resolves and returns the local contents for an imported instruction block
