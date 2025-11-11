@@ -357,10 +357,12 @@ class ViewImpl {
   using KeyT = InputKeyT;
   using ValueT = InputValueT;
   using KeyContextT = InputKeyContextT;
-  using EntryT = StorageEntry<KeyT, ValueT>;
+  using EntryT =
+      StorageEntry<std::remove_const_t<KeyT>, std::remove_const_t<ValueT>>;
   using MetricsT = Metrics;
 
-  friend class BaseImpl<KeyT, ValueT, KeyContextT>;
+  template <typename KeyT, typename ValueT, typename KeyContextT>
+  friend class BaseImpl;
   template <typename InputBaseT, ssize_t SmallSize>
   friend class TableImpl;
 
@@ -474,6 +476,7 @@ class BaseImpl {
   using ValueT = InputValueT;
   using KeyContextT = InputKeyContextT;
   using ViewImplT = ViewImpl<KeyT, ValueT, KeyContextT>;
+  using ConstViewImplT = ViewImpl<const KeyT, const ValueT, KeyContextT>;
   using EntryT = typename ViewImplT::EntryT;
   using MetricsT = typename ViewImplT::MetricsT;
 
@@ -493,9 +496,12 @@ class BaseImpl {
   ~BaseImpl() = default;
 
   // NOLINTNEXTLINE(google-explicit-constructor): Designed to implicitly decay.
-  explicit(false) operator ViewImplT() const { return view_impl(); }
+  explicit(false) operator ViewImplT() { return view_impl(); }
+  // NOLINTNEXTLINE(google-explicit-constructor): Designed to implicitly decay.
+  explicit(false) operator ConstViewImplT() const { return view_impl(); }
 
-  auto view_impl() const -> ViewImplT { return view_impl_; }
+  auto view_impl() -> ViewImplT { return view_impl_; }
+  auto view_impl() const -> ConstViewImplT { return view_impl_; }
 
   // Looks up the provided key in the hashtable. If found, returns a pointer to
   // that entry and `false`.
@@ -537,8 +543,8 @@ class BaseImpl {
   template <typename InputBaseT, ssize_t SmallSize>
   friend class TableImpl;
 
-  static constexpr ssize_t Alignment = std::max<ssize_t>(
-      alignof(MetadataGroup), alignof(StorageEntry<KeyT, ValueT>));
+  static constexpr ssize_t Alignment =
+      std::max<ssize_t>(alignof(MetadataGroup), alignof(EntryT));
 
   // Implementation of inline small storage for the provided key type, value
   // type, and small size. Specialized for a zero small size to be an empty
@@ -546,7 +552,7 @@ class BaseImpl {
   template <ssize_t SmallSize>
   struct SmallStorage : Storage {
     alignas(Alignment) uint8_t metadata[SmallSize];
-    mutable StorageEntry<KeyT, ValueT> entries[SmallSize];
+    mutable EntryT entries[SmallSize];
   };
   // Specialized storage with no inline buffer to avoid any extra alignment.
   template <>
@@ -1690,7 +1696,7 @@ auto TableImpl<InputBaseT, SmallSize>::small_storage() const -> Storage* {
     static_assert(SmallSize >= GroupSize);
     static_assert((SmallSize % GroupSize) == 0);
 
-    static_assert(SmallSize >= alignof(StorageEntry<KeyT, ValueT>),
+    static_assert(SmallSize >= alignof(EntryT),
                   "Requested a small size that would require padding between "
                   "metadata bytes and correctly aligned key and value types. "
                   "Either a larger small size or a zero small size and heap "

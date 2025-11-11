@@ -808,6 +808,66 @@ TYPED_TEST(MapCollisionTest, Basic) {
       m, MakeKeyValues([](int k) { return k * 100 + 2; }, llvm::seq(1, 256)));
 }
 
+struct KeyValue {
+  explicit KeyValue(int i) : key(i), value(i) {}
+
+  int key;
+  int value;
+
+  friend auto operator==(const KeyValue& lhs, const KeyValue& rhs) {
+    return lhs.key == rhs.key;
+  }
+
+  auto CarbonHashValue(const KeyValue& value, uint64_t seed) -> HashCode {
+    Hasher hasher(seed);
+    hasher.Hash(value.key);
+    return static_cast<HashCode>(hasher);
+  }
+};
+
+TEST(ConstMapTest, Basic) {
+  Map<KeyValue, int> map;
+  for (int i : llvm::seq(1, 42)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_TRUE(map.Insert(KeyValue(i), i).is_inserted());
+  }
+  auto view = MapView<KeyValue, int>(map);
+  for (int i : llvm::seq(1, 42)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_TRUE(map.Contains(KeyValue(i)));
+    EXPECT_TRUE(view.Contains(KeyValue(i)));
+
+    auto result = map.Lookup(KeyValue(i));
+    ASSERT_TRUE(result);
+    ++result.key().value;
+    ++result.value();
+
+    result = view.Lookup(KeyValue(i));
+    ASSERT_TRUE(result);
+    ++result.key().value;
+    ++result.value();
+  }
+  map.ForEach([](KeyValue& key, int& value) {
+    ++key.value;
+    ++value;
+  });
+
+  const Map<KeyValue, int>& const_map = map;
+  for (int i : llvm::seq(1, 42)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_TRUE(const_map.Contains(KeyValue(i)));
+  }
+  auto const_view = MapView<const KeyValue, const int>(map);
+  auto view_of_const = MapView<const KeyValue, const int>(const_map);
+  for (int i : llvm::seq(1, 42)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_TRUE(const_map.Lookup(KeyValue(i)));
+    EXPECT_TRUE(const_view.Lookup(KeyValue(i)));
+    EXPECT_TRUE(view_of_const.Lookup(KeyValue(i)));
+  }
+  const_map.ForEach([](const KeyValue&, const int&) {});
+}
+
 TEST(MapContextTest, Basic) {
   llvm::SmallVector<TestData> keys;
   for (int i : llvm::seq(0, 513)) {

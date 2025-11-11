@@ -26,6 +26,23 @@ template <typename KeyT, typename ValueT, ssize_t SmallSize,
           typename KeyContextT>
 class Map;
 
+// This type represents the result of map lookup operations. It encodes whether
+// the lookup was a success as well as accessors for the key and value.
+template <typename KeyT, typename ValueT, typename EntryT>
+class MapLookupResult {
+ public:
+  MapLookupResult() = default;
+  explicit MapLookupResult(EntryT* entry) : entry_(entry) {}
+
+  explicit operator bool() const { return entry_ != nullptr; }
+
+  auto key() const -> KeyT& { return entry_->key(); }
+  auto value() const -> ValueT& { return entry_->value(); }
+
+ private:
+  EntryT* entry_ = nullptr;
+};
+
 // A read-only view type for a map from key to value.
 //
 // This view is a cheap-to-copy type that should be passed by value, but
@@ -69,22 +86,6 @@ class MapView
   using KeyContextT = typename ImplT::KeyContextT;
   using MetricsT = typename ImplT::MetricsT;
 
-  // This type represents the result of lookup operations. It encodes whether
-  // the lookup was a success as well as accessors for the key and value.
-  class LookupKVResult {
-   public:
-    LookupKVResult() = default;
-    explicit LookupKVResult(EntryT* entry) : entry_(entry) {}
-
-    explicit operator bool() const { return entry_ != nullptr; }
-
-    auto key() const -> KeyT& { return entry_->key(); }
-    auto value() const -> ValueT& { return entry_->value(); }
-
-   private:
-    EntryT* entry_ = nullptr;
-  };
-
   // Enable implicit conversions that add `const`-ness to either key or value
   // type. This is always safe to do with a view. We use a template to avoid
   // needing all 3 versions.
@@ -103,7 +104,8 @@ class MapView
   // Lookup a key in the map.
   template <typename LookupKeyT>
   auto Lookup(LookupKeyT lookup_key,
-              KeyContextT key_context = KeyContextT()) const -> LookupKVResult;
+              KeyContextT key_context = KeyContextT()) const
+      -> MapLookupResult<KeyT, ValueT, EntryT>;
 
   // Lookup a key in the map and try to return a pointer to its value. Returns
   // null on a missing key.
@@ -113,7 +115,7 @@ class MapView
 
   // Run the provided callback for every key and value in the map.
   template <typename CallbackT>
-  auto ForEach(CallbackT callback) -> void
+  auto ForEach(CallbackT callback) const -> void
     requires(std::invocable<CallbackT, KeyT&, ValueT&>);
 
   // This routine is relatively inefficient and only intended for use in
@@ -129,6 +131,8 @@ class MapView
             typename KeyContextT>
   friend class Map;
   friend class MapBase<KeyT, ValueT, KeyContextT>;
+  friend class MapBase<std::remove_const_t<KeyT>, std::remove_const_t<ValueT>,
+                       KeyContextT>;
   friend class MapView<const KeyT, ValueT, KeyContextT>;
   friend class MapView<KeyT, const ValueT, KeyContextT>;
   friend class MapView<const KeyT, const ValueT, KeyContextT>;
@@ -159,7 +163,7 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
   using ValueT = typename ImplT::ValueT;
   using KeyContextT = typename ImplT::KeyContextT;
   using ViewT = MapView<KeyT, ValueT, KeyContextT>;
-  using LookupKVResult = typename ViewT::LookupKVResult;
+  using ConstViewT = MapView<const KeyT, const ValueT, KeyContextT>;
   using MetricsT = typename ImplT::MetricsT;
 
   // The result type for insertion operations both indicates whether an insert
@@ -184,13 +188,15 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
   // Implicitly convertible to the relevant view type.
   //
   // NOLINTNEXTLINE(google-explicit-constructor): Designed to implicitly decay.
-  explicit(false) operator ViewT() const { return this->view_impl(); }
+  explicit(false) operator ViewT() { return this->view_impl(); }
+  // NOLINTNEXTLINE(google-explicit-constructor): Designed to implicitly decay.
+  explicit(false) operator ConstViewT() const { return this->view_impl(); }
 
   // We can't chain the above conversion with the conversions on `ViewT` to add
   // const, so explicitly support adding const to produce a view here.
   template <typename OtherKeyT, typename OtherValueT>
   // NOLINTNEXTLINE(google-explicit-constructor)
-  explicit(false) operator MapView<OtherKeyT, OtherValueT, KeyContextT>() const
+  explicit(false) operator MapView<OtherKeyT, OtherValueT, KeyContextT>()
     requires(SameAsOneOf<OtherKeyT, KeyT, const KeyT> &&
              SameAsOneOf<OtherValueT, ValueT, const ValueT>)
   {
@@ -201,35 +207,51 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
   template <typename LookupKeyT>
   auto Contains(LookupKeyT lookup_key,
                 KeyContextT key_context = KeyContextT()) const -> bool {
-    return ViewT(*this).Contains(lookup_key, key_context);
+    return ConstViewT(*this).Contains(lookup_key, key_context);
   }
 
   // Convenience forwarder to the view type.
   template <typename LookupKeyT>
-  auto Lookup(LookupKeyT lookup_key,
-              KeyContextT key_context = KeyContextT()) const -> LookupKVResult {
+  auto Lookup(LookupKeyT lookup_key, KeyContextT key_context = KeyContextT())
+      -> MapLookupResult<KeyT, ValueT, EntryT> {
     return ViewT(*this).Lookup(lookup_key, key_context);
   }
+  template <typename LookupKeyT>
+  auto Lookup(LookupKeyT lookup_key,
+              KeyContextT key_context = KeyContextT()) const
+      -> MapLookupResult<const KeyT, const ValueT, EntryT> {
+    return ConstViewT(*this).Lookup(lookup_key, key_context);
+  }
 
   // Convenience forwarder to the view type.
   template <typename LookupKeyT>
-  auto operator[](LookupKeyT lookup_key) const
+  auto operator[](LookupKeyT lookup_key)
       -> ValueT* requires(std::default_initializable<KeyContextT>) {
         return ViewT(*this)[lookup_key];
+      } template <typename LookupKeyT>
+      auto operator[](LookupKeyT lookup_key) const
+      -> const ValueT* requires(std::default_initializable<KeyContextT>) {
+        return ConstViewT(*this)[lookup_key];
       }
 
   // Convenience forwarder to the view type.
   template <typename CallbackT>
-  auto ForEach(CallbackT callback) const -> void
+  auto ForEach(CallbackT callback) -> void
     requires(std::invocable<CallbackT, KeyT&, ValueT&>)
   {
     return ViewT(*this).ForEach(callback);
+  }
+  template <typename CallbackT>
+  auto ForEach(CallbackT callback) const -> void
+    requires(std::invocable<CallbackT, const KeyT&, const ValueT&>)
+  {
+    return ConstViewT(*this).ForEach(callback);
   }
 
   // Convenience forwarder to the view type.
   auto ComputeMetrics(KeyContextT key_context = KeyContextT()) const
       -> MetricsT {
-    return ViewT(*this).ComputeMetrics(key_context);
+    return ConstViewT(*this).ComputeMetrics(key_context);
   }
 
   // Insert a key and value into the map. If the key is already present, the new
@@ -399,8 +421,10 @@ auto MapView<InputKeyT, InputValueT, InputKeyContextT>::Contains(
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename LookupKeyT>
 auto MapView<InputKeyT, InputValueT, InputKeyContextT>::Lookup(
-    LookupKeyT lookup_key, KeyContextT key_context) const -> LookupKVResult {
-  return LookupKVResult(this->LookupEntry(lookup_key, key_context));
+    LookupKeyT lookup_key, KeyContextT key_context) const
+    -> MapLookupResult<KeyT, ValueT, EntryT> {
+  return MapLookupResult<KeyT, ValueT, EntryT>(
+      this->LookupEntry(lookup_key, key_context));
 }
 
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
@@ -415,7 +439,7 @@ auto MapView<InputKeyT, InputValueT, InputKeyContextT>::operator[](
 template <typename InputKeyT, typename InputValueT, typename InputKeyContextT>
 template <typename CallbackT>
 auto MapView<InputKeyT, InputValueT, InputKeyContextT>::ForEach(
-    CallbackT callback) -> void
+    CallbackT callback) const -> void
   requires(std::invocable<CallbackT, KeyT&, ValueT&>)
 {
   this->ForEachEntry(

@@ -23,6 +23,22 @@ class SetBase;
 template <typename KeyT, ssize_t SmallSize, typename KeyContextT>
 class Set;
 
+// This type represents the result of set lookup operations. It encodes whether
+// the lookup was a success as well as accessors for the key.
+template <typename KeyT>
+class SetLookupResult {
+ public:
+  SetLookupResult() = default;
+  explicit SetLookupResult(KeyT& key) : key_(&key) {}
+
+  explicit operator bool() const { return key_ != nullptr; }
+
+  auto key() const -> KeyT& { return *key_; }
+
+ private:
+  KeyT* key_ = nullptr;
+};
+
 // A read-only view type for a set of keys.
 //
 // This view is a cheap-to-copy type that should be passed by value, but
@@ -54,28 +70,14 @@ class Set;
 // hashing and comparing keys. For more details about the key context, see
 // `hashtable_key_context.h`.
 template <typename InputKeyT, typename InputKeyContextT = DefaultKeyContext>
-class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
-  using ImplT = RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT>;
+class SetView
+    : RawHashtable::ViewImpl<InputKeyT, const void, InputKeyContextT> {
+  using ImplT = RawHashtable::ViewImpl<InputKeyT, const void, InputKeyContextT>;
 
  public:
   using KeyT = typename ImplT::KeyT;
   using KeyContextT = typename ImplT::KeyContextT;
   using MetricsT = typename ImplT::MetricsT;
-
-  // This type represents the result of lookup operations. It encodes whether
-  // the lookup was a success as well as accessors for the key.
-  class LookupResult {
-   public:
-    LookupResult() = default;
-    explicit LookupResult(KeyT& key) : key_(&key) {}
-
-    explicit operator bool() const { return key_ != nullptr; }
-
-    auto key() const -> KeyT& { return *key_; }
-
-   private:
-    KeyT* key_ = nullptr;
-  };
 
   // Enable implicit conversions that add `const`-ness to the key type.
   explicit(false)
@@ -91,7 +93,8 @@ class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
   // Lookup a key in the set.
   template <typename LookupKeyT>
   auto Lookup(LookupKeyT lookup_key,
-              KeyContextT key_context = KeyContextT()) const -> LookupResult;
+              KeyContextT key_context = KeyContextT()) const
+      -> SetLookupResult<KeyT>;
 
   // Run the provided callback for every key in the set.
   template <typename CallbackT>
@@ -110,6 +113,8 @@ class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
   template <typename SetKeyT, ssize_t SmallSize, typename KeyContextT>
   friend class Set;
   friend class SetBase<KeyT, KeyContextT>;
+  friend class SetBase<std::remove_const_t<KeyT>, KeyContextT>;
+  friend class SetBase<const KeyT, KeyContextT>;
   friend class SetView<const KeyT, KeyContextT>;
 
   using EntryT = typename ImplT::EntryT;
@@ -127,16 +132,16 @@ class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
 // handle to a `Set` type across API boundaries as it avoids encoding specific
 // SSO sizing information while providing a near-complete mutable API.
 template <typename InputKeyT, typename InputKeyContextT>
-class SetBase
-    : protected RawHashtable::BaseImpl<InputKeyT, void, InputKeyContextT> {
+class SetBase : protected RawHashtable::BaseImpl<InputKeyT, const void,
+                                                 InputKeyContextT> {
  protected:
-  using ImplT = RawHashtable::BaseImpl<InputKeyT, void, InputKeyContextT>;
+  using ImplT = RawHashtable::BaseImpl<InputKeyT, const void, InputKeyContextT>;
 
  public:
   using KeyT = typename ImplT::KeyT;
   using KeyContextT = typename ImplT::KeyContextT;
   using ViewT = SetView<KeyT, KeyContextT>;
-  using LookupResult = typename ViewT::LookupResult;
+  using ConstViewT = SetView<const KeyT, KeyContextT>;
   using MetricsT = typename ImplT::MetricsT;
 
   // The result type for insertion operations both indicates whether an insert
@@ -160,27 +165,27 @@ class SetBase
   // Implicitly convertible to the relevant view type.
   //
   // NOLINTNEXTLINE(google-explicit-constructor): Designed to implicitly decay.
-  explicit(false) operator ViewT() const { return this->view_impl(); }
-
-  // We can't chain the above conversion with the conversions on `ViewT` to add
-  // const, so explicitly support adding const to produce a view here.
-  //
+  explicit(false) operator ViewT() { return this->view_impl(); }
   // NOLINTNEXTLINE(google-explicit-constructor): Designed to implicitly decay.
-  explicit(false) operator SetView<const KeyT, KeyContextT>() const {
-    return ViewT(*this);
-  }
+  explicit(false) operator ConstViewT() const { return this->view_impl(); }
 
   // Convenience forwarder to the view type.
   template <typename LookupKeyT>
   auto Contains(LookupKeyT lookup_key,
                 KeyContextT key_context = KeyContextT()) const -> bool {
-    return ViewT(*this).Contains(lookup_key, key_context);
+    return ConstViewT(*this).Contains(lookup_key, key_context);
   }
 
   // Convenience forwarder to the view type.
   template <typename LookupKeyT>
   auto Lookup(LookupKeyT lookup_key,
-              KeyContextT key_context = KeyContextT()) const -> LookupResult {
+              KeyContextT key_context = KeyContextT()) const
+      -> SetLookupResult<const KeyT> {
+    return ConstViewT(*this).Lookup(lookup_key, key_context);
+  }
+  template <typename LookupKeyT>
+  auto Lookup(LookupKeyT lookup_key, KeyContextT key_context = KeyContextT())
+      -> SetLookupResult<KeyT> {
     return ViewT(*this).Lookup(lookup_key, key_context);
   }
 
@@ -191,11 +196,17 @@ class SetBase
   {
     return ViewT(*this).ForEach(callback);
   }
+  template <typename CallbackT>
+  auto ForEach(CallbackT callback) const -> void
+    requires(std::invocable<CallbackT, KeyT&>)
+  {
+    return ConstViewT(*this).ForEach(callback);
+  }
 
   // Convenience forwarder to the view type.
   auto ComputeMetrics(KeyContextT key_context = KeyContextT()) const
       -> MetricsT {
-    return ViewT(*this).ComputeMetrics(key_context);
+    return ConstViewT(*this).ComputeMetrics(key_context);
   }
 
   // Insert a key into the set. If the key is already present, no insertion is
@@ -317,13 +328,13 @@ template <typename InputKeyT, typename InputKeyContextT>
 template <typename LookupKeyT>
 auto SetView<InputKeyT, InputKeyContextT>::Lookup(LookupKeyT lookup_key,
                                                   KeyContextT key_context) const
-    -> LookupResult {
+    -> SetLookupResult<KeyT> {
   EntryT* entry = this->LookupEntry(lookup_key, key_context);
   if (!entry) {
-    return LookupResult();
+    return SetLookupResult<KeyT>();
   }
 
-  return LookupResult(entry->key());
+  return SetLookupResult<KeyT>(entry->key());
 }
 
 template <typename InputKeyT, typename InputKeyContextT>

@@ -388,6 +388,62 @@ TYPED_TEST(SetTest, GrowForInsert) {
   EXPECT_EQ(storage_bytes, s.ComputeMetrics().storage_bytes);
 }
 
+struct KeyValue {
+  explicit KeyValue(int i) : key(i), value(i) {}
+
+  int key;
+  int value;
+
+  friend auto operator==(const KeyValue& lhs, const KeyValue& rhs) {
+    return lhs.key == rhs.key;
+  }
+
+  auto CarbonHashValue(const KeyValue& value, uint64_t seed) -> HashCode {
+    Hasher hasher(seed);
+    hasher.Hash(value.key);
+    return static_cast<HashCode>(hasher);
+  }
+};
+
+TEST(ConstSetTest, Basic) {
+  Set<KeyValue> set;
+  for (int i : llvm::seq(1, 42)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_TRUE(set.Insert(KeyValue(i)).is_inserted());
+  }
+  auto view = SetView<KeyValue>(set);
+  for (int i : llvm::seq(1, 42)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_TRUE(set.Contains(KeyValue(i)));
+    EXPECT_TRUE(view.Contains(KeyValue(i)));
+
+    auto result = set.Lookup(KeyValue(i));
+    ASSERT_TRUE(result);
+    ++result.key().value;
+
+    result = view.Lookup(KeyValue(i));
+    ASSERT_TRUE(result);
+    ++result.key().value;
+  }
+  set.ForEach([](KeyValue& entry) { ++entry.value; });
+  [[]]
+
+      const Set<KeyValue>& const_set = set;
+  for (int i : llvm::seq(1, 42)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_TRUE(const_set.Contains(KeyValue(i)));
+  }
+  auto const_view = SetView<const KeyValue>(set);
+  auto view_of_const = SetView<const KeyValue>(const_set);
+  for (int i : llvm::seq(1, 42)) {
+    SCOPED_TRACE(llvm::formatv("Key: {0}", i).str());
+    EXPECT_TRUE(const_set.Lookup(KeyValue(i)));
+    EXPECT_TRUE(const_view.Lookup(KeyValue(i)));
+    EXPECT_TRUE(view_of_const.Lookup(KeyValue(i)));
+  }
+  const_set.ForEach([](const KeyValue&) {});
+}
+
 TEST(SetContextTest, Basic) {
   llvm::SmallVector<TestData> keys;
   for (int i : llvm::seq(0, 513)) {
