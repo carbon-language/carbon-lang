@@ -345,6 +345,7 @@ auto Formatter::FormatClass(ClassId id, const Class& class_info) -> void {
     return;
   }
 
+  PrepareToFormatDecl(class_info.first_owning_decl_id);
   FormatEntityStart("class", class_info, id);
 
   llvm::SaveAndRestore class_scope(scope_, inst_namer_.GetScopeFor(id));
@@ -397,6 +398,7 @@ auto Formatter::FormatInterface(InterfaceId id, const Interface& interface_info)
     return;
   }
 
+  PrepareToFormatDecl(interface_info.first_owning_decl_id);
   FormatEntityStart("interface", interface_info, id);
 
   llvm::SaveAndRestore interface_scope(scope_, inst_namer_.GetScopeFor(id));
@@ -433,6 +435,7 @@ auto Formatter::FormatNamedConstraint(NamedConstraintId id,
     return;
   }
 
+  PrepareToFormatDecl(constraint_info.first_owning_decl_id);
   FormatEntityStart("constraint", constraint_info, id);
 
   llvm::SaveAndRestore constraint_scope(scope_, inst_namer_.GetScopeFor(id));
@@ -459,15 +462,15 @@ auto Formatter::FormatNamedConstraint(NamedConstraintId id,
   FormatEntityEnd(constraint_info.generic_id);
 }
 
-auto Formatter::FormatRequireImpls(RequireImplsId id,
+auto Formatter::FormatRequireImpls(RequireImplsId /*id*/,
                                    const RequireImpls& require) -> void {
   if (!ShouldFormatEntity(require.decl_id)) {
     return;
   }
 
-  FormatEntityStart("require", require.decl_id, require.generic_id, id,
-                    /*has_definition=*/false);
-  FormatEntityEnd(require.generic_id);
+  PrepareToFormatDecl(require.decl_id);
+  FormatGenericStart("require", require.generic_id);
+  FormatGenericEnd();
 }
 
 auto Formatter::FormatAssociatedConstant(AssociatedConstantId id,
@@ -477,8 +480,8 @@ auto Formatter::FormatAssociatedConstant(AssociatedConstantId id,
     return;
   }
 
-  FormatEntityStart("assoc_const", assoc_const.decl_id, assoc_const.generic_id,
-                    id, /*has_definition=*/true);
+  PrepareToFormatDecl(assoc_const.decl_id);
+  FormatEntityStart("assoc_const", assoc_const.generic_id, id);
 
   llvm::SaveAndRestore assoc_const_scope(scope_, inst_namer_.GetScopeFor(id));
 
@@ -500,6 +503,7 @@ auto Formatter::FormatImpl(ImplId id, const Impl& impl_info) -> void {
     return;
   }
 
+  PrepareToFormatDecl(impl_info.first_owning_decl_id);
   FormatEntityStart("impl", impl_info, id);
 
   llvm::SaveAndRestore impl_scope(scope_, inst_namer_.GetScopeFor(id));
@@ -559,6 +563,7 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
     function_start += "extern ";
   }
   function_start += "fn";
+  PrepareToFormatDecl(fn.first_owning_decl_id);
   FormatEntityStart(function_start, fn, id);
 
   llvm::SaveAndRestore function_scope(scope_, inst_namer_.GetScopeFor(id));
@@ -667,6 +672,23 @@ auto Formatter::FormatSpecific(SpecificId id, const Specific& specific)
   out_ << "\n";
 }
 
+auto Formatter::PrepareToFormatDecl(InstId first_owning_decl_id) -> void {
+  // If this decl was imported from a different IR, annotate the name of
+  // that IR in the output before the `{` or `;`.
+  if (first_owning_decl_id.has_value()) {
+    auto import_ir_inst_id =
+        sem_ir_->insts().GetImportSource(first_owning_decl_id);
+    if (import_ir_inst_id.has_value()) {
+      auto import_ir_id =
+          sem_ir_->import_ir_insts().Get(import_ir_inst_id).ir_id();
+      if (const auto* import_file =
+              sem_ir_->import_irs().Get(import_ir_id).sem_ir) {
+        pending_imported_from_ = import_file->filename();
+      }
+    }
+  }
+}
+
 auto Formatter::FormatGenericStart(llvm::StringRef entity_kind,
                                    GenericId generic_id) -> void {
   const auto& generic = sem_ir_->generics().Get(generic_id);
@@ -692,9 +714,13 @@ auto Formatter::FormatGenericStart(llvm::StringRef entity_kind,
 
 auto Formatter::FormatEntityEnd(GenericId generic_id) -> void {
   if (generic_id.has_value()) {
-    CloseBrace();
-    out_ << '\n';
+    FormatGenericEnd();
   }
+}
+
+auto Formatter::FormatGenericEnd() -> void {
+  CloseBrace();
+  out_ << '\n';
 }
 
 auto Formatter::FormatParamList(InstBlockId params_id, bool has_return_slot)

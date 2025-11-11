@@ -188,11 +188,14 @@ class Formatter {
   auto FormatGenericStart(llvm::StringRef entity_kind, GenericId generic_id)
       -> void;
 
+  // Before formatting a decl (typically an Entity), collect import information
+  // (if there is any) needed to format it.
+  auto PrepareToFormatDecl(InstId first_owning_decl_id) -> void;
+
   // Provides common formatting for entities, paired with FormatEntityEnd.
   template <typename IdT>
-  auto FormatEntityStart(llvm::StringRef entity_kind,
-                         InstId first_owning_decl_id, GenericId generic_id,
-                         IdT entity_id, bool has_definition) -> void;
+  auto FormatEntityStart(llvm::StringRef entity_kind, GenericId generic_id,
+                         IdT entity_id) -> void;
 
   template <typename IdT>
   auto FormatEntityStart(llvm::StringRef entity_kind,
@@ -201,6 +204,11 @@ class Formatter {
 
   // Provides common formatting for entities, paired with FormatEntityStart.
   auto FormatEntityEnd(GenericId generic_id) -> void;
+
+  // Provides common formatting for generics, paired with FormatGenericStart.
+  // Normally this is just called from FormatEntityEnd, as most generics are
+  // entities.
+  auto FormatGenericEnd() -> void;
 
   // Formats parameters, eliding them completely if they're empty. Wraps input
   // parameters in parentheses. Formats output parameter as a return type.
@@ -402,40 +410,21 @@ class Formatter {
 
 template <typename IdT>
 auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
-                                  InstId first_owning_decl_id,
-                                  GenericId generic_id, IdT entity_id,
-                                  bool has_definition) -> void {
-  // If this entity was imported from a different IR, annotate the name of
-  // that IR in the output before the `{` or `;`.
-  if (first_owning_decl_id.has_value()) {
-    auto import_ir_inst_id =
-        sem_ir_->insts().GetImportSource(first_owning_decl_id);
-    if (import_ir_inst_id.has_value()) {
-      auto import_ir_id =
-          sem_ir_->import_ir_insts().Get(import_ir_inst_id).ir_id();
-      if (const auto* import_file =
-              sem_ir_->import_irs().Get(import_ir_id).sem_ir) {
-        pending_imported_from_ = import_file->filename();
-      }
-    }
-  }
-
+                                  GenericId generic_id, IdT entity_id) -> void {
   if (generic_id.has_value()) {
     FormatGenericStart(entity_kind, generic_id);
   }
 
-  if (!generic_id.has_value() || has_definition) {
-    out_ << "\n";
-    after_open_brace_ = false;
-    Indent();
-    out_ << entity_kind;
+  out_ << "\n";
+  after_open_brace_ = false;
+  Indent();
+  out_ << entity_kind;
 
-    // If there's a generic, it will have attached the name. Otherwise, add the
-    // name here.
-    if (!generic_id.has_value()) {
-      out_ << " ";
-      FormatName(entity_id);
-    }
+  // If there's a generic, it will have attached the name. Otherwise, add the
+  // name here.
+  if (!generic_id.has_value()) {
+    out_ << " ";
+    FormatName(entity_id);
   }
 }
 
@@ -443,8 +432,7 @@ template <typename IdT>
 auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
                                   const EntityWithParamsBase& entity,
                                   IdT entity_id) -> void {
-  FormatEntityStart(entity_kind, entity.first_owning_decl_id, entity.generic_id,
-                    entity_id, /*has_definition=*/true);
+  FormatEntityStart(entity_kind, entity.generic_id, entity_id);
 }
 
 template <typename... Types>
