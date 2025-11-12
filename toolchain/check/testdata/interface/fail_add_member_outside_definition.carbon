@@ -70,6 +70,8 @@ interface Outer {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = file.%Interface.F.decl
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Outer {
@@ -81,6 +83,8 @@ interface Outer {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Inner = %Inner.decl
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Inner(@Outer.%Self: %Outer.type) {
@@ -99,6 +103,8 @@ interface Outer {
 // CHECK:STDOUT:     .Self = %Self.loc25_19.1
 // CHECK:STDOUT:     .F = @Outer.%Inner.F.decl
 // CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

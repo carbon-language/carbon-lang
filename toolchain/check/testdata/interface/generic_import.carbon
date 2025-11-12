@@ -80,6 +80,8 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:     .Self = %Self.loc4_29.1
 // CHECK:STDOUT:     .F = %assoc0.loc5_9.1
 // CHECK:STDOUT:     witness = (%AddWith.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -164,6 +166,8 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.833
 // CHECK:STDOUT:     .F = imports.%Main.import_ref.073
 // CHECK:STDOUT:     witness = (imports.%Main.F)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

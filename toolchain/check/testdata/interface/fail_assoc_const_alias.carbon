@@ -156,6 +156,8 @@ interface C {
 // CHECK:STDOUT:     .Dest = <poisoned>
 // CHECK:STDOUT:     .Convert = %assoc0.loc4_35.1
 // CHECK:STDOUT:     witness = (%ImplicitAs.Convert.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -226,6 +228,8 @@ interface C {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .T = @T.%assoc0
 // CHECK:STDOUT:   witness = (%T)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
@@ -250,6 +254,8 @@ interface C {
 // CHECK:STDOUT:   .U = %U
 // CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   witness = (%J.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(@I.%Self: %I.type) {
@@ -359,6 +365,8 @@ interface C {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .T2 = @T2.%assoc0
 // CHECK:STDOUT:   witness = (%T2)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J2 {
@@ -386,6 +394,8 @@ interface C {
 // CHECK:STDOUT:   .U2 = %U2
 // CHECK:STDOUT:   .F2 = %assoc0
 // CHECK:STDOUT:   witness = (%J2.F2.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T2(@I2.%Self: %I2.type) {
@@ -507,6 +517,8 @@ interface C {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   witness = (%A.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
@@ -531,6 +543,8 @@ interface C {
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   .G = %assoc0
 // CHECK:STDOUT:   witness = (%B.G.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @A.F(@A.%Self: %A.type) {
@@ -630,6 +644,8 @@ interface C {
 // CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   .G = %assoc1
 // CHECK:STDOUT:   witness = (%C.F.decl, %C.G.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @C.F(@C.%Self: %C.type) {

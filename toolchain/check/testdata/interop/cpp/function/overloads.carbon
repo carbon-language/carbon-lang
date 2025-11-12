@@ -2548,6 +2548,8 @@ fn F() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @EchoValue(%ValueT.loc10_14.2: %I.type, %value.loc10_26.2: @EchoValue.%ValueT.binding.as_type (%ValueT.binding.as_type)) {

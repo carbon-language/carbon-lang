@@ -936,6 +936,8 @@ impl i32 as Empty {
 // CHECK:STDOUT:   .T = @T.%assoc0
 // CHECK:STDOUT:   .F = %assoc1
 // CHECK:STDOUT:   witness = (%T, %I.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(@I.%Self: %I.type) {
@@ -1145,6 +1147,8 @@ impl i32 as Empty {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @i32.as.Empty.impl: %i32.loc6 as %Empty.ref {

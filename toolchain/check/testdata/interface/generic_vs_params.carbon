@@ -192,6 +192,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NotGenericButParams {
@@ -200,6 +202,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @GenericAndParams.loc6(%T.loc6_28.2: type) {
@@ -215,6 +219,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc6_38.1
 // CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -230,6 +236,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc9_29.1
 // CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -247,6 +255,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc10_40.1
 // CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -378,6 +388,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_non_generic_params.carbon
@@ -402,6 +414,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_implicit_params_only_empty.carbon
@@ -426,6 +440,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_implicit_params_only.carbon
@@ -466,6 +482,8 @@ interface Bar[T:! type] {}
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc8_25.1
 // CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

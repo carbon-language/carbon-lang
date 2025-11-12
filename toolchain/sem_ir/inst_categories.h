@@ -157,11 +157,10 @@ struct AnyParam {
 };
 
 // A pattern that represents a `Call` parameter. It delegates to subpattern_id
-// in pattern matching. The sub-kinds differ only in the expression category
-// of the corresponding parameter inst.
+// in pattern matching.
 struct AnyParamPattern {
-  using CategoryInfo =
-      CategoryOf<OutParamPattern, RefParamPattern, ValueParamPattern>;
+  using CategoryInfo = CategoryOf<OutParamPattern, RefParamPattern,
+                                  ValueParamPattern, VarParamPattern>;
 
   InstKind kind;
 

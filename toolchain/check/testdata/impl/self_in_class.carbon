@@ -78,6 +78,8 @@ class A {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Make = %assoc0
 // CHECK:STDOUT:   witness = (%DefaultConstructible.Make.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.DefaultConstructible.impl: %C.ref as %DefaultConstructible.ref {

@@ -177,6 +177,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     .Dest = <poisoned>
 // CHECK:STDOUT:     .Convert = %assoc0.loc4_35.1
 // CHECK:STDOUT:     witness = (%ImplicitAs.Convert.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -319,6 +321,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     .Self = %Self.loc4_28.1
 // CHECK:STDOUT:     .Op = %assoc0.loc5_22.1
 // CHECK:STDOUT:     witness = (%Action.Op.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -528,6 +532,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.0fd
 // CHECK:STDOUT:     .Op = imports.%Main.import_ref.2c8
 // CHECK:STDOUT:     witness = (imports.%Main.Op)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -708,6 +714,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.0fd
 // CHECK:STDOUT:     .Op = imports.%Main.import_ref.2c8
 // CHECK:STDOUT:     witness = (imports.%Main.Op)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -923,6 +931,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     .Make = %assoc0.loc6_17.1
 // CHECK:STDOUT:     .Method = %assoc1.loc8_31.1
 // CHECK:STDOUT:     witness = (%Factory.Make.decl, %Factory.Method.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1183,6 +1193,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     .Make = imports.%Main.import_ref.2a0
 // CHECK:STDOUT:     .Method = imports.%Main.import_ref.da9
 // CHECK:STDOUT:     witness = (imports.%Main.Make, imports.%Main.Method)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1437,6 +1449,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     .Make = imports.%Main.import_ref.2a0
 // CHECK:STDOUT:     .Method = imports.%Main.import_ref.da9
 // CHECK:STDOUT:     witness = (imports.%Main.Make, imports.%Main.Method)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -233,6 +233,8 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .X = @X.%assoc0
 // CHECK:STDOUT:   witness = (%X)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @X(@I.%Self: %I.type) {
@@ -409,6 +411,8 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .X = @X.%assoc0
 // CHECK:STDOUT:   witness = (%X)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @X(@I.%Self: %I.type) {

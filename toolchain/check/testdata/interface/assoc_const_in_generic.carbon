@@ -114,6 +114,8 @@ fn H() {
 // CHECK:STDOUT:     .Self = %Self.loc15_23.1
 // CHECK:STDOUT:     .F = %assoc0.loc16_22.1
 // CHECK:STDOUT:     witness = (%I.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

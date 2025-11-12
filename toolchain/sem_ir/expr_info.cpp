@@ -35,6 +35,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case OutParamPattern::Kind:
       case RefBindingPattern::Kind:
       case RefParamPattern::Kind:
+      case RequireImplsDecl::Kind:
       case RequirementBaseFacetType::Kind:
       case RequirementEquivalent::Kind:
       case RequirementImpls::Kind:
@@ -46,6 +47,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case TuplePattern::Kind:
       case ValueBindingPattern::Kind:
       case ValueParamPattern::Kind:
+      case VarParamPattern::Kind:
       case VarPattern::Kind:
         return ExprCategory::NotExpr;
 

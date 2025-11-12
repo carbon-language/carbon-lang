@@ -58,6 +58,8 @@ impl () as I {}
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .T = @T.%assoc0
 // CHECK:STDOUT:   witness = (%T)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(@I.%Self: %I.type) {

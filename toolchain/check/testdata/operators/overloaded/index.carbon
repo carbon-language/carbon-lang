@@ -244,6 +244,8 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:     .ElementType = <poisoned>
 // CHECK:STDOUT:     .At = %assoc0.loc5_61.1
 // CHECK:STDOUT:     witness = (%IndexWith.At.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -366,6 +368,8 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:     .Self = imports.%Core.import_ref.05e
 // CHECK:STDOUT:     .At = imports.%Core.import_ref.1bb
 // CHECK:STDOUT:     witness = (imports.%Core.At)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -96,6 +96,8 @@ fn Call() {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   witness = (%I.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.F(@I.%Self: %I.type) {
@@ -165,6 +167,8 @@ fn Call() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.8df
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.507
 // CHECK:STDOUT:   witness = (imports.%Main.F)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %C.ref as %I.ref {
@@ -336,6 +340,8 @@ fn Call() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.8df
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.c44
 // CHECK:STDOUT:   witness = (imports.%Main.F)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: imports.%Main.import_ref.29a as imports.%Main.import_ref.f50 [from "c.carbon"] {

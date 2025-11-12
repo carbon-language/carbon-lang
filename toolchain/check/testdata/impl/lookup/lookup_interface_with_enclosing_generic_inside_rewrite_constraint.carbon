@@ -217,6 +217,8 @@ fn F() {
 // CHECK:STDOUT:     .Self = %Self.loc50_15.1
 // CHECK:STDOUT:     .T = @T.%assoc0
 // CHECK:STDOUT:     witness = (%T)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -512,6 +514,8 @@ fn F() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z2 {
@@ -520,6 +524,8 @@ fn F() {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Y(@Outer.%OuterParam.loc6_13.2: %Z1.type) {
@@ -540,6 +546,8 @@ fn F() {
 // CHECK:STDOUT:     .Self = %Self.loc7_15.1
 // CHECK:STDOUT:     .T = @T.%assoc0
 // CHECK:STDOUT:     witness = (%T)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

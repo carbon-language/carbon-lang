@@ -738,6 +738,10 @@ static auto IsValidExprCategoryForConversionTarget(
              category == SemIR::ExprCategory::DurableRef ||
              category == SemIR::ExprCategory::EphemeralRef ||
              category == SemIR::ExprCategory::Initializing;
+    case ConversionTarget::RefParam:
+      return category == SemIR::ExprCategory::DurableRef ||
+             category == SemIR::ExprCategory::EphemeralRef ||
+             category == SemIR::ExprCategory::Initializing;
     case ConversionTarget::DurableRef:
       return category == SemIR::ExprCategory::DurableRef;
     case ConversionTarget::CppThunkRef:
@@ -1381,6 +1385,28 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
                       action.target_type_inst_id)});
 }
 
+// Diagnoses a missing or unnecessary `ref` tag when converting `expr_id` to
+// `target`, and returns whether a `ref` tag is present.
+static auto CheckRefTag(Context& context, SemIR::InstId expr_id,
+                        ConversionTarget target) -> bool {
+  if (auto lookup_result = context.ref_tags().Lookup(expr_id)) {
+    if (lookup_result.value() == Context::RefTag::Present &&
+        target.kind != ConversionTarget::RefParam) {
+      CARBON_DIAGNOSTIC(RefTagNoRefParam, Error,
+                        "`ref` tag is not an argument to a `ref` parameter");
+      context.emitter().Emit(expr_id, RefTagNoRefParam);
+    }
+    return true;
+  } else {
+    if (target.kind == ConversionTarget::RefParam) {
+      CARBON_DIAGNOSTIC(RefParamNoRefTag, Error,
+                        "argument to `ref` parameter not marked with `ref`");
+      context.emitter().Emit(expr_id, RefParamNoRefTag);
+    }
+    return false;
+  }
+}
+
 auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
              ConversionTarget target, SemIR::ClassType* vtable_class_type)
     -> SemIR::InstId {
@@ -1405,6 +1431,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     }
     return SemIR::ErrorInst::InstId;
   }
+
+  bool has_ref_tag = CheckRefTag(context, expr_id, target);
 
   // We can only perform initialization for complete, non-abstract types. Note
   // that `RequireConcreteType` returns true for facet types, since their
@@ -1538,6 +1566,9 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                                         {.type_id = target.type_id,
                                          .original_id = orig_expr_id,
                                          .result_id = expr_id});
+    if (has_ref_tag) {
+      context.ref_tags().Insert(expr_id, Context::RefTag::NotRequired);
+    }
   }
 
   // For `as`, don't perform any value category conversions. In particular, an
@@ -1592,7 +1623,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
       // If a reference expression is an acceptable result, we're done.
       if (target.kind == ConversionTarget::ValueOrRef ||
           target.kind == ConversionTarget::Discarded ||
-          target.kind == ConversionTarget::CppThunkRef) {
+          target.kind == ConversionTarget::CppThunkRef ||
+          target.kind == ConversionTarget::RefParam) {
         break;
       }
 
@@ -1614,6 +1646,20 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                             SemIR::TypeId);
           context.emitter().Emit(loc_id, ConversionFailureNonRefToRef,
                                  target.type_id);
+        }
+        return SemIR::ErrorInst::InstId;
+      }
+      if (target.kind == ConversionTarget::RefParam) {
+        // Don't diagnose a non-reference scrutinee if it has a user-written
+        // `ref` tag, because that's diagnosed in `CheckRefTag`.
+        if (target.diagnose) {
+          if (auto lookup_result = context.ref_tags().Lookup(expr_id);
+              !lookup_result ||
+              lookup_result.value() != Context::RefTag::Present) {
+            CARBON_DIAGNOSTIC(ValueForRefParam, Error,
+                              "value expression passed to reference parameter");
+            context.emitter().Emit(loc_id, ValueForRefParam);
+          }
         }
         return SemIR::ErrorInst::InstId;
       }

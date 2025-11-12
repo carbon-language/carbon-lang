@@ -149,6 +149,8 @@ fn G() {
 // CHECK:STDOUT:     .Self = %Self.loc15_34.1
 // CHECK:STDOUT:     .F = %assoc0.loc16_9.1
 // CHECK:STDOUT:     witness = (%Generic.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

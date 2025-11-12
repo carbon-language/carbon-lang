@@ -133,6 +133,11 @@ static auto HandleBraceExprParamAfterDesignator(Context& context,
   // that one has a `:` separator and the other has an `=` separator.
   state.token = context.Consume();
   context.PushState(state, param_finish_kind);
+  if (param_finish_kind == StateKind::BraceExprParamFinishAsValue &&
+      context.PositionIs(Lex::TokenKind::Ref)) {
+    context.PushState(StateKind::RefTagFinishAsRegular);
+    context.ConsumeChecked(Lex::TokenKind::Ref);
+  }
   context.PushState(StateKind::Expr);
 }
 

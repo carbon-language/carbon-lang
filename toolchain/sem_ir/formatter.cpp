@@ -85,6 +85,10 @@ auto Formatter::Format() -> void {
     FormatNamedConstraint(id, constraint);
   }
 
+  for (const auto& [id, require] : sem_ir_->require_impls().enumerate()) {
+    FormatRequireImpls(id, require);
+  }
+
   for (const auto& [id, assoc_const] :
        sem_ir_->associated_constants().enumerate()) {
     FormatAssociatedConstant(id, assoc_const);
@@ -341,6 +345,7 @@ auto Formatter::FormatClass(ClassId id, const Class& class_info) -> void {
     return;
   }
 
+  PrepareToFormatDecl(class_info.first_owning_decl_id);
   FormatEntityStart("class", class_info, id);
 
   llvm::SaveAndRestore class_scope(scope_, inst_namer_.GetScopeFor(id));
@@ -393,6 +398,7 @@ auto Formatter::FormatInterface(InterfaceId id, const Interface& interface_info)
     return;
   }
 
+  PrepareToFormatDecl(interface_info.first_owning_decl_id);
   FormatEntityStart("interface", interface_info, id);
 
   llvm::SaveAndRestore interface_scope(scope_, inst_namer_.GetScopeFor(id));
@@ -413,6 +419,8 @@ auto Formatter::FormatInterface(InterfaceId id, const Interface& interface_info)
     FormatArg(interface_info.associated_entities_id);
     out_ << "\n";
 
+    FormatRequireImplsBlock(interface_info.require_impls_block_id);
+
     CloseBrace();
   } else {
     Semicolon();
@@ -429,6 +437,7 @@ auto Formatter::FormatNamedConstraint(NamedConstraintId id,
     return;
   }
 
+  PrepareToFormatDecl(constraint_info.first_owning_decl_id);
   FormatEntityStart("constraint", constraint_info, id);
 
   llvm::SaveAndRestore constraint_scope(scope_, inst_namer_.GetScopeFor(id));
@@ -444,7 +453,7 @@ auto Formatter::FormatNamedConstraint(NamedConstraintId id,
     out_ << "!members:\n";
     FormatNameScope(constraint_info.scope_id);
 
-    // TODO: Print `require` statements.
+    FormatRequireImplsBlock(constraint_info.require_impls_block_id);
 
     CloseBrace();
   } else {
@@ -455,6 +464,17 @@ auto Formatter::FormatNamedConstraint(NamedConstraintId id,
   FormatEntityEnd(constraint_info.generic_id);
 }
 
+auto Formatter::FormatRequireImpls(RequireImplsId /*id*/,
+                                   const RequireImpls& require) -> void {
+  if (!ShouldFormatEntity(require.decl_id)) {
+    return;
+  }
+
+  PrepareToFormatDecl(require.decl_id);
+  FormatGenericStart("require", require.generic_id);
+  FormatGenericEnd();
+}
+
 auto Formatter::FormatAssociatedConstant(AssociatedConstantId id,
                                          const AssociatedConstant& assoc_const)
     -> void {
@@ -462,8 +482,8 @@ auto Formatter::FormatAssociatedConstant(AssociatedConstantId id,
     return;
   }
 
-  FormatEntityStart("assoc_const", assoc_const.decl_id, assoc_const.generic_id,
-                    id);
+  PrepareToFormatDecl(assoc_const.decl_id);
+  FormatEntityStart("assoc_const", assoc_const.generic_id, id);
 
   llvm::SaveAndRestore assoc_const_scope(scope_, inst_namer_.GetScopeFor(id));
 
@@ -485,6 +505,7 @@ auto Formatter::FormatImpl(ImplId id, const Impl& impl_info) -> void {
     return;
   }
 
+  PrepareToFormatDecl(impl_info.first_owning_decl_id);
   FormatEntityStart("impl", impl_info, id);
 
   llvm::SaveAndRestore impl_scope(scope_, inst_namer_.GetScopeFor(id));
@@ -544,6 +565,7 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
     function_start += "extern ";
   }
   function_start += "fn";
+  PrepareToFormatDecl(fn.first_owning_decl_id);
   FormatEntityStart(function_start, fn, id);
 
   llvm::SaveAndRestore function_scope(scope_, inst_namer_.GetScopeFor(id));
@@ -652,6 +674,23 @@ auto Formatter::FormatSpecific(SpecificId id, const Specific& specific)
   out_ << "\n";
 }
 
+auto Formatter::PrepareToFormatDecl(InstId first_owning_decl_id) -> void {
+  // If this decl was imported from a different IR, annotate the name of
+  // that IR in the output before the `{` or `;`.
+  if (first_owning_decl_id.has_value()) {
+    auto import_ir_inst_id =
+        sem_ir_->insts().GetImportSource(first_owning_decl_id);
+    if (import_ir_inst_id.has_value()) {
+      auto import_ir_id =
+          sem_ir_->import_ir_insts().Get(import_ir_inst_id).ir_id();
+      if (const auto* import_file =
+              sem_ir_->import_irs().Get(import_ir_id).sem_ir) {
+        pending_imported_from_ = import_file->filename();
+      }
+    }
+  }
+}
+
 auto Formatter::FormatGenericStart(llvm::StringRef entity_kind,
                                    GenericId generic_id) -> void {
   const auto& generic = sem_ir_->generics().Get(generic_id);
@@ -677,9 +716,13 @@ auto Formatter::FormatGenericStart(llvm::StringRef entity_kind,
 
 auto Formatter::FormatEntityEnd(GenericId generic_id) -> void {
   if (generic_id.has_value()) {
-    CloseBrace();
-    out_ << '\n';
+    FormatGenericEnd();
   }
+}
+
+auto Formatter::FormatGenericEnd() -> void {
+  CloseBrace();
+  out_ << '\n';
 }
 
 auto Formatter::FormatParamList(InstBlockId params_id, bool has_return_slot)
@@ -1140,6 +1183,28 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       return;
     }
 
+    case CARBON_KIND(RequireImplsDecl decl): {
+      FormatArgs(decl.require_impls_id);
+
+      const auto& require = sem_ir_->require_impls().Get(decl.require_impls_id);
+
+      llvm::SaveAndRestore scope(
+          scope_, inst_namer_.GetScopeFor(decl.require_impls_id));
+
+      out_ << ' ';
+      OpenBrace();
+      Indent();
+      out_ << "require ";
+      FormatArg(require.self_id);
+      out_ << " impls ";
+      FormatArg(require.facet_type_id);
+      out_ << "\n";
+      CloseBrace();
+
+      FormatTrailingBlock(decl.decl_block_id);
+      return;
+    }
+
     case CARBON_KIND(ReturnExpr ret): {
       FormatArgs(ret.expr_id);
       if (ret.dest_id.has_value()) {
@@ -1313,6 +1378,19 @@ auto Formatter::FormatImportRefRhs(AnyImportRef inst) -> void {
   }
   out_ << ", "
        << (inst.kind == InstKind::ImportRefLoaded ? "loaded" : "unloaded");
+}
+
+auto Formatter::FormatRequireImplsBlock(RequireImplsBlockId block_id) -> void {
+  IndentLabel();
+  out_ << "!requires:\n";
+  if (!block_id.has_value()) {
+    return;
+  }
+  for (auto require_impls_id : sem_ir_->require_impls_blocks().Get(block_id)) {
+    Indent();
+    FormatArg(require_impls_id);
+    out_ << "\n";
+  }
 }
 
 auto Formatter::FormatArg(EntityNameId id) -> void {

@@ -298,8 +298,7 @@ static auto BuildPatternRef(Context& context,
   auto pattern_ref_id = SemIR::InstId::None;
   if (auto value_param = pattern.TryAs<SemIR::AnyParamPattern>();
       value_param.has_value() &&
-      (value_param->kind == SemIR::ValueParamPattern::Kind ||
-       value_param->kind == SemIR::RefParamPattern::Kind)) {
+      value_param->kind != SemIR::OutParamPattern::Kind) {
     pattern_ref_id = arg_ids[value_param->index.index];
   } else {
     if (pattern_id != SemIR::ErrorInst::InstId) {

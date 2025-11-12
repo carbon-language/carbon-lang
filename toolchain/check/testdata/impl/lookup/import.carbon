@@ -288,6 +288,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   witness = (%HasF.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.HasF.impl: %C.ref as %HasF.ref {
@@ -448,6 +450,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .G = %assoc0
 // CHECK:STDOUT:   witness = (%HasG.G.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @HasF [from "package_a.carbon"] {
@@ -455,6 +459,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   .Self = imports.%PackageA.import_ref.2fb
 // CHECK:STDOUT:   .F = imports.%PackageA.import_ref.c63
 // CHECK:STDOUT:   witness = (imports.%PackageA.F)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.HasG.impl: %C.ref as %HasG.ref {
@@ -655,6 +661,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   .Self = imports.%PackageA.import_ref.2fb
 // CHECK:STDOUT:   .F = imports.%PackageA.import_ref.b36
 // CHECK:STDOUT:   witness = (imports.%PackageA.F)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.HasF.impl: imports.%PackageA.import_ref.29a as imports.%PackageA.import_ref.e8c [from "package_a.carbon"] {
@@ -785,6 +793,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   .Self = imports.%PackageA.import_ref.2fb
 // CHECK:STDOUT:   .F = imports.%PackageA.import_ref.b36
 // CHECK:STDOUT:   witness = (imports.%PackageA.F)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.HasF.impl: imports.%PackageA.import_ref.29a as imports.%PackageA.import_ref.e8c [from "package_a.carbon"] {
@@ -927,6 +937,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   .Self = imports.%PackageB.import_ref.103
 // CHECK:STDOUT:   .G = imports.%PackageB.import_ref.6c2
 // CHECK:STDOUT:   witness = (imports.%PackageB.G)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.HasG.impl: imports.%PackageB.import_ref.dfb as imports.%PackageB.import_ref.cee586.1 [from "package_b.carbon"] {
@@ -1064,6 +1076,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   .Self = imports.%PackageB.import_ref.103
 // CHECK:STDOUT:   .G = imports.%PackageB.import_ref.6c2
 // CHECK:STDOUT:   witness = (imports.%PackageB.G)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.HasG.impl: imports.%PackageB.import_ref.dfb as imports.%PackageB.import_ref.cee586.1 [from "package_b.carbon"] {
@@ -1180,6 +1194,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .H = %assoc0
 // CHECK:STDOUT:   witness = (%Z.H.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.Z.impl: %.loc8_7.2 as %Z.ref {
@@ -1282,6 +1298,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   .Self = imports.%PackageAssociatedInterface.import_ref.462
 // CHECK:STDOUT:   .H = imports.%PackageAssociatedInterface.import_ref.609
 // CHECK:STDOUT:   witness = (imports.%PackageAssociatedInterface.H)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.Z.impl: imports.%PackageAssociatedInterface.import_ref.e5c as imports.%PackageAssociatedInterface.import_ref.df1 [from "associated_interface.carbon"] {
@@ -1393,6 +1411,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .K = %assoc0
 // CHECK:STDOUT:   witness = (%Y.K.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @AnyParam(%T.loc4_16.2: type, %X.loc4_26.2: @AnyParam.%T.loc4_16.1 (%T)) {
@@ -1551,6 +1571,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc6_38.1
 // CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1559,6 +1581,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   .Self = imports.%PackageHasParam.import_ref.581
 // CHECK:STDOUT:   .K = imports.%PackageHasParam.import_ref.f69
 // CHECK:STDOUT:   witness = (imports.%PackageHasParam.K)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @AnyParam.as.Y.impl: %AnyParam as %Y.ref {
@@ -1777,6 +1801,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%PackageGenericInterface.import_ref.4d7
 // CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1785,6 +1811,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   .Self = imports.%PackageHasParam.import_ref.581
 // CHECK:STDOUT:   .K = imports.%PackageHasParam.import_ref.f69
 // CHECK:STDOUT:   witness = (imports.%PackageHasParam.K)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @AnyParam.as.Y.impl: imports.%PackageGenericInterface.import_ref.321 as imports.%PackageGenericInterface.import_ref.ca6 [from "has_generic_interface.carbon"] {
@@ -1984,6 +2012,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   .Self = imports.%PackageHasParam.import_ref.581
 // CHECK:STDOUT:   .K = imports.%PackageHasParam.import_ref.f69
 // CHECK:STDOUT:   witness = (imports.%PackageHasParam.K)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @AnyParam.as.Y.impl: %AnyParam as %Y.ref {
@@ -2209,6 +2239,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   .Self = imports.%PackageHasParam.import_ref.581
 // CHECK:STDOUT:   .K = imports.%PackageHasParam.import_ref.f69
 // CHECK:STDOUT:   witness = (imports.%PackageHasParam.K)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @AnyParam.as.Y.impl: imports.%PackageGenericClass.import_ref.a0e as imports.%PackageGenericClass.import_ref.ca6 [from "has_generic_class.carbon"] {
@@ -2424,6 +2456,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra2 {
@@ -2432,6 +2466,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra3 {
@@ -2440,6 +2476,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra4 {
@@ -2448,6 +2486,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra5 {
@@ -2456,6 +2496,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra6 {
@@ -2464,6 +2506,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra7 {
@@ -2472,6 +2516,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra8 {
@@ -2480,6 +2526,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -2502,6 +2550,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   witness = (%I.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %C as %I.ref {
@@ -2660,54 +2710,72 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   .Self = imports.%HasExtraInterfaces.import_ref.8df
 // CHECK:STDOUT:   .F = imports.%HasExtraInterfaces.import_ref.be9
 // CHECK:STDOUT:   witness = (imports.%HasExtraInterfaces.F)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra8 [from "has_extra_interfaces.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%HasExtraInterfaces.import_ref.c8c
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra7 [from "has_extra_interfaces.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%HasExtraInterfaces.import_ref.591
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra6 [from "has_extra_interfaces.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%HasExtraInterfaces.import_ref.16e
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra5 [from "has_extra_interfaces.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%HasExtraInterfaces.import_ref.e5e
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra4 [from "has_extra_interfaces.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%HasExtraInterfaces.import_ref.178
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra3 [from "has_extra_interfaces.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%HasExtraInterfaces.import_ref.e5d
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra2 [from "has_extra_interfaces.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%HasExtraInterfaces.import_ref.7fd
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Extra1 [from "has_extra_interfaces.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%HasExtraInterfaces.import_ref.642
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: imports.%HasExtraInterfaces.import_ref.ef7 as imports.%HasExtraInterfaces.import_ref.301 [from "has_extra_interfaces.carbon"] {

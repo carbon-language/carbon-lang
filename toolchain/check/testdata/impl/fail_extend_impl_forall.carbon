@@ -94,6 +94,8 @@ class C {
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .F = %assoc0.loc16_13.1
 // CHECK:STDOUT:     witness = (%GenericInterface.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

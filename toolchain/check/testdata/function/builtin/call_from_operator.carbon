@@ -299,6 +299,8 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     .Self = %Self.loc7_29.1
 // CHECK:STDOUT:     .Op = %assoc0.loc8_41.1
 // CHECK:STDOUT:     witness = (%AddWith.Op.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -340,6 +342,8 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .Convert = %assoc0.loc12_32.1
 // CHECK:STDOUT:     witness = (%As.Convert.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -381,6 +385,8 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .Convert = %assoc0.loc16_32.1
 // CHECK:STDOUT:     witness = (%ImplicitAs.Convert.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -881,6 +887,8 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     .Self = imports.%Core.import_ref.375
 // CHECK:STDOUT:     .Convert = imports.%Core.import_ref.471
 // CHECK:STDOUT:     witness = (imports.%Core.Convert.924)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -900,6 +908,8 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     .Self = imports.%Core.import_ref.833
 // CHECK:STDOUT:     .Op = imports.%Core.import_ref.d7c
 // CHECK:STDOUT:     witness = (imports.%Core.Op)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -919,6 +929,8 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:     .Self = imports.%Core.import_ref.d6f
 // CHECK:STDOUT:     .Convert = imports.%Core.import_ref.b9c
 // CHECK:STDOUT:     witness = (imports.%Core.Convert.acf)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

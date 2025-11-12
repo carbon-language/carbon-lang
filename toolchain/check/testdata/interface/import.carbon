@@ -112,6 +112,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Basic {
@@ -127,6 +129,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   .T = @T.loc8.%assoc0
 // CHECK:STDOUT:   .F = %assoc1
 // CHECK:STDOUT:   witness = (%T, %Basic.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared {
@@ -142,6 +146,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   .T = @T.loc16.%assoc0
 // CHECK:STDOUT:   .F = %assoc1
 // CHECK:STDOUT:   witness = (%T, %ForwardDeclared.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T.loc8(@Basic.%Self: %Basic.type) {
@@ -313,6 +319,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.257
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Basic [from "a.carbon"] {
@@ -321,6 +329,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   .T = imports.%Main.import_ref.3d5
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.760
 // CHECK:STDOUT:   witness = (imports.%Main.T.44f, imports.%Main.F.eea)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @ForwardDeclared [from "a.carbon"] {
@@ -329,6 +339,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   .T = imports.%Main.import_ref.ad1
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.339
 // CHECK:STDOUT:   witness = (imports.%Main.T.6ee, imports.%Main.F.5d0)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @UseEmpty(%e.param: %Empty.type) {
