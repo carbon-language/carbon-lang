@@ -131,6 +131,8 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Animal {
@@ -139,6 +141,8 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @A.binding.as_type.as.Eats.impl(%A.loc18_14.1: %Animal.type) {

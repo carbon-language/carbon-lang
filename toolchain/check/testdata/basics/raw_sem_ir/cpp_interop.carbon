@@ -91,14 +91,14 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst60000012)}
 // CHECK:STDOUT:     'type(inst6000001D)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst60000012)}
-// CHECK:STDOUT:     'type(inst(WitnessType))':
-// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     'type(inst6000001F)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst6000001F)}
-// CHECK:STDOUT:     'type(inst60000023)':
-// CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(inst60000026)}
+// CHECK:STDOUT:     'type(inst(WitnessType))':
+// CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     'type(inst60000026)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst60000026)}
+// CHECK:STDOUT:     'type(inst60000023)':
+// CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(inst60000026)}
 // CHECK:STDOUT:     'type(inst60000014)':
 // CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(inst60000026)}
 // CHECK:STDOUT:     'type(inst60000028)':

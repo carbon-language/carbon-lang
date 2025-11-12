@@ -300,8 +300,6 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
     }
 
     case SemIR::Function::SpecialFunctionKind::HasCppThunk: {
-      // This recurses back into `PerformCall`. However, we never form a C++
-      // thunk to a C++ thunk, so we only recurse once.
       return PerformCppThunkCall(context, loc_id, callee_function.function_id,
                                  context.inst_blocks().Get(converted_args_id),
                                  callee.cpp_thunk_decl_id());
@@ -359,6 +357,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
       return SemIR::ErrorInst::InstId;
     }
     case CARBON_KIND(SemIR::CalleeFunction fn): {
+      context.ref_tags().Insert(fn.self_id, Context::RefTag::NotRequired);
       return PerformCallToFunction(context, loc_id, callee_id, fn, arg_ids);
     }
     case CARBON_KIND(SemIR::CalleeNonFunction _): {
@@ -366,6 +365,7 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
     }
 
     case CARBON_KIND(SemIR::CalleeCppOverloadSet overload): {
+      context.ref_tags().Insert(overload.self_id, Context::RefTag::NotRequired);
       return PerformCallToCppFunction(context, loc_id,
                                       overload.cpp_overload_set_id,
                                       overload.self_id, arg_ids);

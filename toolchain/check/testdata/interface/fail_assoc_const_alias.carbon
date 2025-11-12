@@ -156,6 +156,8 @@ interface C {
 // CHECK:STDOUT:     .Dest = <poisoned>
 // CHECK:STDOUT:     .Convert = %assoc0.loc4_35.1
 // CHECK:STDOUT:     witness = (%ImplicitAs.Convert.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -226,6 +228,8 @@ interface C {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .T = @T.%assoc0
 // CHECK:STDOUT:   witness = (%T)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J {
@@ -237,7 +241,7 @@ interface C {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %as_type: type = facet_access_type @J.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:     %Self.as_type: type = facet_access_type @J.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %U.ref: <error> = name_ref U, <error> [concrete = <error>]
 // CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
@@ -250,6 +254,8 @@ interface C {
 // CHECK:STDOUT:   .U = %U
 // CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   witness = (%J.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(@I.%Self: %I.type) {
@@ -359,6 +365,8 @@ interface C {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .T2 = @T2.%assoc0
 // CHECK:STDOUT:   witness = (%T2)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @J2 {
@@ -370,8 +378,8 @@ interface C {
 // CHECK:STDOUT:     %return.patt: @J2.F2.%pattern_type (%pattern_type.f94) = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: @J2.F2.%pattern_type (%pattern_type.f94) = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %as_type: type = facet_access_type @J2.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:     %I2.facet.loc15_14.2: %I2.type = facet_value %as_type, (constants.%I2.lookup_impl_witness.1de) [symbolic = %I2.facet.loc15_14.1 (constants.%I2.facet)]
+// CHECK:STDOUT:     %Self.as_type: type = facet_access_type @J2.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:     %I2.facet.loc15_14.2: %I2.type = facet_value %Self.as_type, (constants.%I2.lookup_impl_witness.1de) [symbolic = %I2.facet.loc15_14.1 (constants.%I2.facet)]
 // CHECK:STDOUT:     %.loc15: %I2.type = converted @J2.%Self, %I2.facet.loc15_14.2 [symbolic = %I2.facet.loc15_14.1 (constants.%I2.facet)]
 // CHECK:STDOUT:     %impl.elem0.loc15_14.2: type = impl_witness_access constants.%I2.lookup_impl_witness.1de, element0 [symbolic = %impl.elem0.loc15_14.1 (constants.%impl.elem0.804)]
 // CHECK:STDOUT:     %U2.ref: type = name_ref U2, %impl.elem0.loc15_14.2 [symbolic = %impl.elem0.loc15_14.1 (constants.%impl.elem0.804)]
@@ -386,6 +394,8 @@ interface C {
 // CHECK:STDOUT:   .U2 = %U2
 // CHECK:STDOUT:   .F2 = %assoc0
 // CHECK:STDOUT:   witness = (%J2.F2.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T2(@I2.%Self: %I2.type) {
@@ -507,6 +517,8 @@ interface C {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   witness = (%A.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
@@ -518,7 +530,7 @@ interface C {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %as_type: type = facet_access_type @B.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.322)]
+// CHECK:STDOUT:     %Self.as_type: type = facet_access_type @B.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.322)]
 // CHECK:STDOUT:     %F.ref: <error> = name_ref F, <error> [concrete = <error>]
 // CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
 // CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
@@ -531,6 +543,8 @@ interface C {
 // CHECK:STDOUT:   .F = %F
 // CHECK:STDOUT:   .G = %assoc0
 // CHECK:STDOUT:   witness = (%B.G.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @A.F(@A.%Self: %A.type) {
@@ -630,6 +644,8 @@ interface C {
 // CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   .G = %assoc1
 // CHECK:STDOUT:   witness = (%C.F.decl, %C.G.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @C.F(@C.%Self: %C.type) {

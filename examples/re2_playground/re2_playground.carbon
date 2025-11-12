@@ -2,41 +2,60 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+import Cpp library "llvm/LineEditor/LineEditor.h";
+import Cpp library "llvm/Support/raw_ostream.h";
 import Cpp library "re2/re2.h";
 
-import Cpp inline '''c++
-// A wrapper around RE2 working around lack of:
-//
-// * Overloading support for the constructor.
-// * Non-null pointer support for the `submatch` parameter.
-struct WrapRE2 : re2::RE2 {
-  WrapRE2(std::string_view v) : RE2(v) {}
-  bool Match(absl::string_view text, size_t startpos, size_t endpos,
-             Anchor re_anchor, absl::string_view* _Nonnull submatch,
-             int nsubmatch) const {
-    return RE2::Match(text, startpos, endpos, re_anchor, submatch, nsubmatch);
-  }
-};
-''';
+import Cpp inline "using OptionalString = std::optional<std::string>;";
+import Cpp inline "std::string_view AsStringView(const std::string &s) { return s; }";
+
+import Core library "io";
 
 class RE2 {
-  extend adapt Cpp.WrapRE2;
+  extend adapt Cpp.re2.RE2;
   fn Make(re: str) -> Self {
-    return WrapRE2(re) as Self;
+    return RE2(re) as Self;
   }
   fn Match[self: Self](text: str) -> bool {
-    var submatches: str;
-    return (self as Cpp.WrapRE2).Match(text, 0, text.Size(), UNANCHORED, &submatches, 0);
+    return FullMatch(text, self as Cpp.re2.RE2);
   }
 }
 
-fn Run() -> i32 {
-  var re: RE2 = RE2.Make("^a*$");
-  if (re.Match("aaaaaaaab")) {
-    return 1;
+impl str as Core.ImplicitAs(Cpp.llvm.StringRef) {
+  fn Convert[self: Self]() -> Cpp.llvm.StringRef {
+    return Cpp.llvm.StringRef.StringRef(self);
   }
-  if (not re.Match("aaaaaaaaa")) {
-    return 1;
+}
+
+fn Print(var s: str) {
+  *Cpp.llvm.outs() << s;
+}
+
+fn Run() -> i32 {
+  var editor: Cpp.llvm.LineEditor = Cpp.llvm.LineEditor.LineEditor("re2_playground");
+  editor.setPrompt(Cpp.std.string.basic_string("re2> "));
+
+  Print('''
+    Usage:
+      /regex/        -- sets the current regular expression to regex
+      anything else  -- matches the entered text against the specified regex
+    ''');
+
+  var re: RE2 = RE2.Make("^a*$");
+  while (true) {
+    var line: Cpp.OptionalString = editor.readLine();
+    if (not line.has_value()) {
+      break;
+    }
+    if (line.value()->starts_with("/") and line.value()->ends_with("/")) {
+      re = RE2.Make(Cpp.AsStringView(line.value()->substr(1, line.value()->size() - 2)));
+      continue;
+    }
+    if (re.Match(Cpp.AsStringView(*line.value()))) {
+      Print("Match\n");
+    } else {
+      Print("No match\n");
+    }
   }
   return 0;
 }

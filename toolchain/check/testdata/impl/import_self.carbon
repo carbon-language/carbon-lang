@@ -99,6 +99,8 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Op = %assoc0
 // CHECK:STDOUT:   witness = (%Add.Op.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Add.Op(@Add.%Self: %Add.type) {
@@ -198,6 +200,8 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.c52
 // CHECK:STDOUT:   .Op = imports.%Main.import_ref.f99
 // CHECK:STDOUT:   witness = (imports.%Main.Op)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.Add.impl: %.loc6_7.2 as %Add.ref {

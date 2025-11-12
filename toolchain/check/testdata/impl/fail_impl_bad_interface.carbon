@@ -222,6 +222,8 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @struct_type.a.as.<error>.impl: %struct_type.a as %.loc10_25 {

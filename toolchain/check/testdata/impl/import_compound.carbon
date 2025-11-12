@@ -171,6 +171,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   witness = (%NonInstance.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Instance {
@@ -193,6 +195,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .G = %assoc0
 // CHECK:STDOUT:   witness = (%Instance.G.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @struct_type.i.as.NonInstance.impl: %struct_type.i as %NonInstance.ref {
@@ -312,6 +316,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.700
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.e3c
 // CHECK:STDOUT:   witness = (imports.%Main.F)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @struct_type.i.as.NonInstance.impl: imports.%Main.import_ref.c9a as imports.%Main.import_ref.ef5 [from "lib.carbon"] {
@@ -403,6 +409,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.700
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.e3c
 // CHECK:STDOUT:   witness = (imports.%Main.F)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonInstanceCallImportFail(%n.param: %struct_type.i) {
@@ -484,6 +492,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.700
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.e3c
 // CHECK:STDOUT:   witness = (imports.%Main.F)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonInstanceCallIndirectImport(%p.param: %ptr) {
@@ -592,6 +602,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.34d
 // CHECK:STDOUT:   .G = imports.%Main.import_ref.124
 // CHECK:STDOUT:   witness = (imports.%Main.G)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @struct_type.i.as.Instance.impl: imports.%Main.import_ref.c9a as imports.%Main.import_ref.b49 [from "lib.carbon"] {
@@ -694,6 +706,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.34d
 // CHECK:STDOUT:   .G = imports.%Main.import_ref.124
 // CHECK:STDOUT:   witness = (imports.%Main.G)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @struct_type.i.as.Instance.impl: imports.%Main.import_ref.c9a as imports.%Main.import_ref.b49 [from "lib.carbon"] {

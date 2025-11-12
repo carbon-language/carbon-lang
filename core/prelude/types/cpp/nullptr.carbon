@@ -5,6 +5,7 @@
 package Core library "prelude/types/cpp/nullptr";
 
 import library "prelude/copy";
+import library "prelude/destroy";
 import library "prelude/operators/as";
 import library "prelude/types/optional";
 import library "prelude/types/maybe_unformed";

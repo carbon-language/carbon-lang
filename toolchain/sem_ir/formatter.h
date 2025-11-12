@@ -162,6 +162,10 @@ class Formatter {
   auto FormatNamedConstraint(NamedConstraintId id,
                              const NamedConstraint& constraint_info) -> void;
 
+  // Formats a full require declaration.
+  auto FormatRequireImpls(RequireImplsId id, const RequireImpls& require)
+      -> void;
+
   // Formats an associated constant entity.
   auto FormatAssociatedConstant(AssociatedConstantId id,
                                 const AssociatedConstant& assoc_const) -> void;
@@ -184,10 +188,13 @@ class Formatter {
   auto FormatGenericStart(llvm::StringRef entity_kind, GenericId generic_id)
       -> void;
 
+  // Before formatting a decl (typically an Entity), collect import information
+  // (if there is any) needed to format it.
+  auto PrepareToFormatDecl(InstId first_owning_decl_id) -> void;
+
   // Provides common formatting for entities, paired with FormatEntityEnd.
   template <typename IdT>
-  auto FormatEntityStart(llvm::StringRef entity_kind,
-                         InstId first_owning_decl_id, GenericId generic_id,
+  auto FormatEntityStart(llvm::StringRef entity_kind, GenericId generic_id,
                          IdT entity_id) -> void;
 
   template <typename IdT>
@@ -197,6 +204,11 @@ class Formatter {
 
   // Provides common formatting for entities, paired with FormatEntityStart.
   auto FormatEntityEnd(GenericId generic_id) -> void;
+
+  // Provides common formatting for generics, paired with FormatGenericStart.
+  // Normally this is just called from FormatEntityEnd, as most generics are
+  // entities.
+  auto FormatGenericEnd() -> void;
 
   // Formats parameters, eliding them completely if they're empty. Wraps input
   // parameters in parentheses. Formats output parameter as a return type.
@@ -262,6 +274,10 @@ class Formatter {
   // name>, <loaded|unloaded>". However, if the entity name isn't present, this
   // may fall back to printing location information from the import source.
   auto FormatImportRefRhs(AnyImportRef inst) -> void;
+
+  // Format a block of `require` declarations from their `RequireImplsDecl`
+  // instructions. Starts with a `!requires:` label.
+  auto FormatRequireImplsBlock(RequireImplsBlockId block_id) -> void;
 
   template <typename... Args>
   auto FormatArgs(Args... args) -> void {
@@ -398,23 +414,7 @@ class Formatter {
 
 template <typename IdT>
 auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
-                                  InstId first_owning_decl_id,
                                   GenericId generic_id, IdT entity_id) -> void {
-  // If this entity was imported from a different IR, annotate the name of
-  // that IR in the output before the `{` or `;`.
-  if (first_owning_decl_id.has_value()) {
-    auto import_ir_inst_id =
-        sem_ir_->insts().GetImportSource(first_owning_decl_id);
-    if (import_ir_inst_id.has_value()) {
-      auto import_ir_id =
-          sem_ir_->import_ir_insts().Get(import_ir_inst_id).ir_id();
-      if (const auto* import_file =
-              sem_ir_->import_irs().Get(import_ir_id).sem_ir) {
-        pending_imported_from_ = import_file->filename();
-      }
-    }
-  }
-
   if (generic_id.has_value()) {
     FormatGenericStart(entity_kind, generic_id);
   }
@@ -436,8 +436,7 @@ template <typename IdT>
 auto Formatter::FormatEntityStart(llvm::StringRef entity_kind,
                                   const EntityWithParamsBase& entity,
                                   IdT entity_id) -> void {
-  FormatEntityStart(entity_kind, entity.first_owning_decl_id, entity.generic_id,
-                    entity_id);
+  FormatEntityStart(entity_kind, entity.generic_id, entity_id);
 }
 
 template <typename... Types>

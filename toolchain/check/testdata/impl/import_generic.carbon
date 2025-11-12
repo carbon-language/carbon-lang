@@ -186,6 +186,8 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc5_23.1
 // CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -360,6 +362,8 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.769
 // CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -563,6 +567,8 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc5_23.1
 // CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -711,6 +717,8 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.b3b
 // CHECK:STDOUT:     witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

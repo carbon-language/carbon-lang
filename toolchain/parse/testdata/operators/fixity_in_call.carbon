@@ -24,7 +24,7 @@ fn F() {
 // CHECK:STDOUT:           {kind: 'CallExprStart', text: '(', subtree_size: 2},
 // CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:           {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'CallExprComma', text: ','},
+// CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'n'},
 // CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'n'},
 // CHECK:STDOUT:           {kind: 'InfixOperatorStar', text: '*', subtree_size: 3},

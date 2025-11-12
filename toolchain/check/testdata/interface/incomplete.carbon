@@ -99,6 +99,8 @@ interface B {
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .T = @T.%assoc0
 // CHECK:STDOUT:   witness = (%T)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @T(@I.%Self: %I.type) {
@@ -133,6 +135,8 @@ interface B {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @A;
@@ -143,6 +147,7 @@ interface B {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
 // CHECK:STDOUT:   %B.type: type = facet_type <@B> [concrete]
 // CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -158,11 +163,30 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
 // CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %B.require0.decl = require_decl @B.require0 [concrete] {
+// CHECK:STDOUT:     require %Self.as_type impls <@A>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Self.as_type: type = facet_access_type @B.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
+// CHECK:STDOUT:   @B.require0
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic require @B.require0(@B.%Self: %B.type) {
+// CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @B.require0(constants.%Self) {
+// CHECK:STDOUT:   %Self => constants.%Self
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_incomplete_interface_in_where.carbon
@@ -191,5 +215,7 @@ interface B {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -71,6 +71,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.5c0
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.B.impl: imports.%Main.import_ref.e5c as imports.%Main.import_ref.171 [from "fail_b.carbon"];

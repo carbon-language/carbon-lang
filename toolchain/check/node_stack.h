@@ -485,7 +485,6 @@ class NodeStack {
       case Parse::NodeKind::BaseColon:
       case Parse::NodeKind::BaseIntroducer:
       case Parse::NodeKind::BreakStatementStart:
-      case Parse::NodeKind::CallExprComma:
       case Parse::NodeKind::ChoiceAlternativeListComma:
       case Parse::NodeKind::CodeBlock:
       case Parse::NodeKind::CompileTimeBindingPatternStart:

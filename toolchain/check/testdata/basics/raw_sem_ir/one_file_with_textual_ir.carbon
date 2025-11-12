@@ -46,10 +46,10 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     'type(inst6000000F)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst6000000F)}
-// CHECK:STDOUT:     'type(inst60000018)':
-// CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(inst6000001A)}
 // CHECK:STDOUT:     'type(inst6000001A)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst6000001A)}
+// CHECK:STDOUT:     'type(inst60000018)':
+// CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(inst6000001A)}
 // CHECK:STDOUT:     'type(inst60000026)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst6000000F)}
 // CHECK:STDOUT:   insts:

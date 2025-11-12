@@ -106,6 +106,7 @@ cc_library(
         "name_scope.h",
         "named_constraint.h",
         "pattern.h",
+        "require_impls.h",
         "struct_type_field.h",
         "type.h",
         "type_info.h",

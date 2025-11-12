@@ -257,7 +257,8 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
       }
       case SemIR::OutParamPattern::Kind:
       case SemIR::RefParamPattern::Kind:
-      case SemIR::ValueParamPattern::Kind: {
+      case SemIR::ValueParamPattern::Kind:
+      case SemIR::VarParamPattern::Kind: {
         pattern_stack.push_back(
             {.prev_id =
                  prev_param_pattern.As<SemIR::AnyParamPattern>().subpattern_id,

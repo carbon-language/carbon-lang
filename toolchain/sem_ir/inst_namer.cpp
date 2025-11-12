@@ -59,6 +59,16 @@ class InstNamer::NamingContext {
   auto AddWitnessTableName(InstId witness_table_inst_id, std::string name)
       -> void;
 
+  auto AddBlockLabel(ScopeId scope_id, InstBlockId block_id, std::string name,
+                     LocId loc_id) -> void {
+    inst_namer_->AddBlockLabel(scope_id, block_id, name, loc_id);
+  }
+
+  // Pushes all instructions in a generic, by ID.
+  auto PushGeneric(ScopeId scope_id, GenericId generic_id) -> void {
+    inst_namer_->PushGeneric(scope_id, generic_id);
+  }
+
   // Pushes all instructions in a block, by ID.
   auto PushBlockId(ScopeId scope_id, InstBlockId block_id) -> void {
     inst_namer_->PushBlockId(scope_id, block_id);
@@ -158,6 +168,10 @@ auto InstNamer::GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int {
       offset += sem_ir_->named_constraints().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<NamedConstraintId>:
+
+      offset += sem_ir_->require_impls().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<RequireImplsId>:
 
       offset += sem_ir_->specific_interfaces().size();
       [[fallthrough]];
@@ -590,6 +604,26 @@ auto InstNamer::PushEntity(FunctionId function_id, ScopeId scope_id,
   PushBlockId(scope_id, fn.call_params_id);
 }
 
+auto InstNamer::PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
+                           Scope& scope) -> void {
+  const auto& require = sem_ir_->require_impls().Get(require_impls_id);
+  LocId require_loc(require.decl_id);
+
+  auto scope_prefix = GetNameForParentNameScope(require.parent_scope_id);
+
+  scope.name = globals_.AllocateName(
+      *this, require_loc,
+      // TODO: Include the Interface being required if there's only one, instead
+      // of the index.
+      llvm::formatv("{0}{1}require{2}", scope_prefix,
+                    scope_prefix.empty() ? "" : ".", require_impls_id.index));
+
+  AddBlockLabel(scope_id, require.body_block_id, "require", require_loc);
+
+  // Push blocks in reverse order.
+  PushGeneric(scope_id, require.generic_id);
+}
+
 auto InstNamer::PushEntity(CppOverloadSetId cpp_overload_set_id,
                            ScopeId /*scope_id*/, Scope& scope) -> void {
   const CppOverloadSet& overload_set =
@@ -868,9 +902,16 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(FacetAccessType inst): {
+      auto name_id = SemIR::NameId::None;
       if (auto name =
               sem_ir().insts().TryGetAs<NameRef>(inst.facet_value_inst_id)) {
-        AddInstNameId(name->name_id, ".as_type");
+        name_id = name->name_id;
+      } else if (auto bind = sem_ir().insts().TryGetAs<SymbolicBinding>(
+                     inst.facet_value_inst_id)) {
+        name_id = sem_ir().entity_names().Get(bind->entity_name_id).name_id;
+      }
+      if (name_id.has_value()) {
+        AddInstNameId(name_id, ".as_type");
       } else {
         AddInstName("as_type");
       }
@@ -1112,7 +1153,8 @@ auto InstNamer::NamingContext::NameInst() -> void {
     }
     case OutParamPattern::Kind:
     case RefParamPattern::Kind:
-    case ValueParamPattern::Kind: {
+    case ValueParamPattern::Kind:
+    case VarParamPattern::Kind: {
       AddInstNameId(GetPrettyNameFromPatternId(sem_ir(), inst_id_),
                     ".param_patt");
       return;
@@ -1127,6 +1169,12 @@ auto InstNamer::NamingContext::NameInst() -> void {
     }
     case RequireCompleteType::Kind: {
       AddInstName("require_complete");
+      return;
+    }
+    case CARBON_KIND(RequireImplsDecl inst): {
+      AddEntityNameAndMaybePush(inst.require_impls_id, ".decl");
+      auto require_scope_id = inst_namer_->GetScopeFor(inst.require_impls_id);
+      PushBlockId(require_scope_id, inst.decl_block_id);
       return;
     }
     case ReturnSlotPattern::Kind: {

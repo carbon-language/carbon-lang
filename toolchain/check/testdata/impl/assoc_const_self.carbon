@@ -227,6 +227,8 @@ fn CallF() {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .V = @V.%assoc0
 // CHECK:STDOUT:   witness = (%V)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @V(@I.%Self: %I.type) {
@@ -343,6 +345,8 @@ fn CallF() {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .V = @V.%assoc0
 // CHECK:STDOUT:   witness = (%V)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @V(@I.%Self: %I.type) {
@@ -480,6 +484,8 @@ fn CallF() {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .V = @V.%assoc0
 // CHECK:STDOUT:   witness = (%V)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @V(@I.%Self: %I.type) {
@@ -671,6 +677,8 @@ fn CallF() {
 // CHECK:STDOUT:     .N = <poisoned>
 // CHECK:STDOUT:     .V = @V.%assoc0
 // CHECK:STDOUT:     witness = (%V)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -814,6 +822,8 @@ fn CallF() {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .V = @V.%assoc0
 // CHECK:STDOUT:   witness = (%V)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @V(@I.%Self: %I.type) {

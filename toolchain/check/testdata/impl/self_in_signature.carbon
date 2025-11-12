@@ -171,6 +171,8 @@ impl D as SelfNested {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   witness = (%UseSelf.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @SelfNested {
@@ -202,6 +204,8 @@ impl D as SelfNested {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .F = %assoc0
 // CHECK:STDOUT:   witness = (%SelfNested.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.UseSelf.impl: %C.ref as %UseSelf.ref {

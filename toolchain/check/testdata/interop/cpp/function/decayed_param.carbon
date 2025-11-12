@@ -112,6 +112,7 @@ fn F() {
 // CHECK:STDOUT:   %ptr.as.OptionalStorage.impl.None.41a: %ptr.as.OptionalStorage.impl.None.type.8ed = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.as.OptionalStorage.impl.Some.type.911: type = fn_type @ptr.as.OptionalStorage.impl.Some, @ptr.as.OptionalStorage.impl(%T.d9f) [symbolic]
 // CHECK:STDOUT:   %ptr.as.OptionalStorage.impl.Some.2a0: %ptr.as.OptionalStorage.impl.Some.type.911 = struct_value () [symbolic]
+// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %OptionalStorage.impl_witness.d16: <witness> = impl_witness imports.%OptionalStorage.impl_witness_table.f03, @ptr.as.OptionalStorage.impl(%i32) [concrete]
 // CHECK:STDOUT:   %OptionalStorage.facet.083: %OptionalStorage.type = facet_value %ptr.235, (%OptionalStorage.impl_witness.d16) [concrete]
 // CHECK:STDOUT:   %Optional.97d: type = class_type @Optional, @Optional(%OptionalStorage.facet.083) [concrete]
@@ -146,7 +147,6 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %uninit, %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.83e [concrete]
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.83e, @Cpp.nullptr_t.as.ImplicitAs.impl.Convert(%i32) [concrete]
 // CHECK:STDOUT:   %bound_method.ed9: <bound method> = bound_method %uninit, %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.specific_fn [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %facet_value.c1c: %type_where = facet_value %Optional.97d, () [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.b8d: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.c1c) [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.9b6: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.b8d = struct_value () [concrete]
@@ -224,10 +224,10 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc11_18.1: <bound method> = bound_method %addr.loc11_18.1, %impl.elem0.loc11_18
 // CHECK:STDOUT:   %specific_fn.loc11_18: <specific function> = specific_function %impl.elem0.loc11_18, @U.binding.as_type.as.ImplicitAs.impl.Convert.2(constants.%OptionalStorage.facet.083, constants.%OptionalAs.facet) [concrete = constants.%U.binding.as_type.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc11_18.2: <bound method> = bound_method %addr.loc11_18.1, %specific_fn.loc11_18
-// CHECK:STDOUT:   %.loc11_18.1: ref %Optional.97d = temporary_storage
-// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call: init %Optional.97d = call %bound_method.loc11_18.2(%addr.loc11_18.1) to %.loc11_18.1
-// CHECK:STDOUT:   %.loc11_18.2: init %Optional.97d = converted %addr.loc11_18.1, %U.binding.as_type.as.ImplicitAs.impl.Convert.call
-// CHECK:STDOUT:   %.loc11_18.3: ref %Optional.97d = temporary %.loc11_18.1, %.loc11_18.2
+// CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.call: init %Optional.97d = call %bound_method.loc11_18.2(%addr.loc11_18.1)
+// CHECK:STDOUT:   %.loc11_18.1: init %Optional.97d = converted %addr.loc11_18.1, %U.binding.as_type.as.ImplicitAs.impl.Convert.call
+// CHECK:STDOUT:   %.loc11_18.2: ref %Optional.97d = temporary_storage
+// CHECK:STDOUT:   %.loc11_18.3: ref %Optional.97d = temporary %.loc11_18.2, %.loc11_18.1
 // CHECK:STDOUT:   %.loc11_18.4: %Optional.97d = acquire_value %.loc11_18.3
 // CHECK:STDOUT:   %TakesArray.call.loc11: init %empty_tuple.type = call imports.%TakesArray.decl(%.loc11_18.4)
 // CHECK:STDOUT:   %Cpp.ref.loc13_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -239,10 +239,10 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.loc13_21.1: <bound method> = bound_method %nullptr.ref, %impl.elem0.loc13 [concrete = constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13, @Cpp.nullptr_t.as.ImplicitAs.impl.Convert(constants.%i32) [concrete = constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc13_21.2: <bound method> = bound_method %nullptr.ref, %specific_fn.loc13 [concrete = constants.%bound_method.ed9]
-// CHECK:STDOUT:   %.loc13_21.1: ref %Optional.97d = temporary_storage
-// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call: init %Optional.97d = call %bound_method.loc13_21.2(%nullptr.ref) to %.loc13_21.1
-// CHECK:STDOUT:   %.loc13_21.2: init %Optional.97d = converted %nullptr.ref, %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call
-// CHECK:STDOUT:   %.loc13_21.3: ref %Optional.97d = temporary %.loc13_21.1, %.loc13_21.2
+// CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call: init %Optional.97d = call %bound_method.loc13_21.2(%nullptr.ref)
+// CHECK:STDOUT:   %.loc13_21.1: init %Optional.97d = converted %nullptr.ref, %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call
+// CHECK:STDOUT:   %.loc13_21.2: ref %Optional.97d = temporary_storage
+// CHECK:STDOUT:   %.loc13_21.3: ref %Optional.97d = temporary %.loc13_21.2, %.loc13_21.1
 // CHECK:STDOUT:   %.loc13_21.4: %Optional.97d = acquire_value %.loc13_21.3
 // CHECK:STDOUT:   %TakesArray.call.loc13: init %empty_tuple.type = call imports.%TakesArray.decl(%.loc13_21.4)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc13: <bound method> = bound_method %.loc13_21.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9b6
