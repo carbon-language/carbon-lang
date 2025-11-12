@@ -18,7 +18,7 @@ struct CodegenOptions {
   auto Build(CommandLine::CommandBuilder& b) -> void;
 
   std::string host = llvm::sys::getDefaultTargetTriple();
-  llvm::StringRef target;
+  llvm::StringRef target = host;
 };
 
 }  // namespace Carbon

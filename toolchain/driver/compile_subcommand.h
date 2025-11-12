@@ -39,8 +39,9 @@ struct CompileOptions {
   Lower::OptimizationLevel opt_level = Lower::OptimizationLevel::Debug;
   CodegenOptions codegen_options;
 
-  Phase phase;
-  Check::CheckParseTreesOptions::DumpSemIRRanges dump_sem_ir_ranges;
+  Phase phase = Phase::CodeGen;
+  Check::CheckParseTreesOptions::DumpSemIRRanges dump_sem_ir_ranges =
+      Check::CheckParseTreesOptions::DumpSemIRRanges::IfPresent;
 
   llvm::StringRef output_filename;
   llvm::SmallVector<llvm::StringRef> input_filenames;
