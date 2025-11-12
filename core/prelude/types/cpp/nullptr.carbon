@@ -28,6 +28,8 @@ class CppCompat.NullptrT {
     }
   }
 
+  // TODO: impl as EqWith(Self)
+
   impl forall [T:! type] as ImplicitAs(Optional(T*)) {
     fn Convert[self: Self]() -> Optional(T*) {
       return Optional(T*).None();

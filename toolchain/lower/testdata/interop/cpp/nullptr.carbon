@@ -27,12 +27,21 @@ fn PassNullptr() {
   Cpp.TakeNullptr(Cpp.nullptr);
 }
 
-fn ReturnNullptrIndirectly() -> Core.Optional(i32*) {
+fn ReturnNullptr() -> Cpp.nullptr_t {
+  return Cpp.nullptr;
+}
+
+fn ReturnNullptrCopy() -> Cpp.nullptr_t {
+  var a: Cpp.nullptr_t = Cpp.nullptr;
+  return a;
+}
+
+fn ReturnConvertedNullptrIndirectly() -> Core.Optional(i32*) {
   var a: Cpp.nullptr_t = Cpp.ReturnNullptr();
   return a;
 }
 
-fn ReturnNullptrDirectly() -> Core.Optional(i32*) {
+fn ReturnConvertedNullptrDirectly() -> Core.Optional(i32*) {
   return Cpp.ReturnNullptr();
 }
 
@@ -45,65 +54,82 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @.1bd.nullptr.ref.loc12 = internal constant ptr poison
+// CHECK:STDOUT: @uninit.nullptr.ref.loc12 = internal constant ptr poison
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassNullptr.Main() #0 !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc12_18.1.temp = alloca ptr, align 8, !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_18.1.temp), !dbg !10
-// CHECK:STDOUT:   call void @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.Core.b88d1103f417c6d4"(ptr %.loc12_18.1.temp, ptr @.1bd.nullptr.ref.loc12), !dbg !10
+// CHECK:STDOUT:   call void @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.Core.b88d1103f417c6d4"(ptr %.loc12_18.1.temp, ptr @uninit.nullptr.ref.loc12), !dbg !10
 // CHECK:STDOUT:   call void @_Z7TakePtrPi(ptr %.loc12_18.1.temp), !dbg !11
-// CHECK:STDOUT:   call void @_Z11TakeNullptrDn.carbon_thunk(ptr @.1bd.nullptr.ref.loc12), !dbg !12
+// CHECK:STDOUT:   call void @_Z11TakeNullptrDn.carbon_thunk(ptr @uninit.nullptr.ref.loc12), !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z7TakePtrPi(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CReturnNullptrIndirectly.Main(ptr sret(ptr) %return) #0 !dbg !14 {
+// CHECK:STDOUT: define void @_CReturnNullptr.Main(ptr sret(ptr) %return) #0 !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %a.var = alloca ptr, align 8, !dbg !15
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !15
-// CHECK:STDOUT:   call void @_Z13ReturnNullptrv.carbon_thunk(ptr %a.var), !dbg !16
-// CHECK:STDOUT:   call void @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.Core.b88d1103f417c6d4"(ptr %return, ptr %a.var), !dbg !17
-// CHECK:STDOUT:   ret void, !dbg !17
+// CHECK:STDOUT:   call void @"_COp.NullptrT.CppCompat.Core:Copy.Core"(ptr %return, ptr @uninit.nullptr.ref.loc12), !dbg !15
+// CHECK:STDOUT:   ret void, !dbg !16
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_COp.NullptrT.CppCompat.Core:Copy.Core"(ptr sret(ptr), ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CReturnNullptrCopy.Main(ptr sret(ptr) %return) #0 !dbg !17 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %a.var = alloca ptr, align 8, !dbg !18
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !18
+// CHECK:STDOUT:   call void @"_COp.NullptrT.CppCompat.Core:Copy.Core"(ptr %a.var, ptr @uninit.nullptr.ref.loc12), !dbg !19
+// CHECK:STDOUT:   call void @"_COp.NullptrT.CppCompat.Core:Copy.Core"(ptr %return, ptr %a.var), !dbg !20
+// CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CReturnNullptrDirectly.Main(ptr sret(ptr) %return) #0 !dbg !18 {
+// CHECK:STDOUT: define void @_CReturnConvertedNullptrIndirectly.Main(ptr sret(ptr) %return) #0 !dbg !22 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc23_28.1.temp = alloca ptr, align 8, !dbg !19
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc23_28.1.temp), !dbg !19
-// CHECK:STDOUT:   call void @_Z13ReturnNullptrv.carbon_thunk(ptr %.loc23_28.1.temp), !dbg !19
-// CHECK:STDOUT:   call void @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.Core.b88d1103f417c6d4"(ptr %return, ptr %.loc23_28.1.temp), !dbg !20
-// CHECK:STDOUT:   ret void, !dbg !20
+// CHECK:STDOUT:   %a.var = alloca ptr, align 8, !dbg !23
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !23
+// CHECK:STDOUT:   call void @_Z13ReturnNullptrv.carbon_thunk(ptr %a.var), !dbg !24
+// CHECK:STDOUT:   call void @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.Core.b88d1103f417c6d4"(ptr %return, ptr %a.var), !dbg !25
+// CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CConvertNullptrConstant.Main(ptr sret(ptr) %return) #0 !dbg !21 {
+// CHECK:STDOUT: define void @_CReturnConvertedNullptrDirectly.Main(ptr sret(ptr) %return) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.Core.b88d1103f417c6d4"(ptr %return, ptr @.1bd.nullptr.ref.loc12), !dbg !22
-// CHECK:STDOUT:   ret void, !dbg !22
+// CHECK:STDOUT:   %.loc32_28.1.temp = alloca ptr, align 8, !dbg !27
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc32_28.1.temp), !dbg !27
+// CHECK:STDOUT:   call void @_Z13ReturnNullptrv.carbon_thunk(ptr %.loc32_28.1.temp), !dbg !27
+// CHECK:STDOUT:   call void @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.Core.b88d1103f417c6d4"(ptr %return, ptr %.loc32_28.1.temp), !dbg !28
+// CHECK:STDOUT:   ret void, !dbg !28
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CConvertNullptrConstant.Main(ptr sret(ptr) %return) #0 !dbg !29 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.Core.b88d1103f417c6d4"(ptr %return, ptr @uninit.nullptr.ref.loc12), !dbg !30
+// CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.Core.b88d1103f417c6d4"(ptr sret(ptr) %return, ptr %self) #0 !dbg !23 {
-// CHECK:STDOUT:   call void @_CNone.Optional.Core.e49c05a5c9dc9c86(ptr %return), !dbg !25
-// CHECK:STDOUT:   ret void, !dbg !26
+// CHECK:STDOUT: define linkonce_odr void @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.Core.b88d1103f417c6d4"(ptr sret(ptr) %return, ptr %self) #0 !dbg !31 {
+// CHECK:STDOUT:   call void @_CNone.Optional.Core.e49c05a5c9dc9c86(ptr %return), !dbg !33
+// CHECK:STDOUT:   ret void, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CMake.NullptrT.CppCompat.Core(ptr sret(ptr))
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_COp.NullptrT.CppCompat.Core:Copy.Core"(ptr sret(ptr), ptr)
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CNone.Optional.Core.e49c05a5c9dc9c86(ptr sret(ptr) %return) #0 !dbg !27 {
-// CHECK:STDOUT:   store ptr null, ptr %return, align 8, !dbg !29
-// CHECK:STDOUT:   ret void, !dbg !30
+// CHECK:STDOUT: define linkonce_odr void @_CNone.Optional.Core.e49c05a5c9dc9c86(ptr sret(ptr) %return) #0 !dbg !35 {
+// CHECK:STDOUT:   store ptr null, ptr %return, align 8, !dbg !37
+// CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
@@ -132,7 +158,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: declare ptr @_Z13ReturnNullptrv() #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.Core.b88d1103f417c6d4", { 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -157,20 +183,28 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: !11 = !DILocation(line: 12, column: 3, scope: !7)
 // CHECK:STDOUT: !12 = !DILocation(line: 14, column: 3, scope: !7)
 // CHECK:STDOUT: !13 = !DILocation(line: 11, column: 1, scope: !7)
-// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "ReturnNullptrIndirectly", linkageName: "_CReturnNullptrIndirectly.Main", scope: null, file: !6, line: 17, type: !8, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !15 = !DILocation(line: 18, column: 3, scope: !14)
-// CHECK:STDOUT: !16 = !DILocation(line: 18, column: 26, scope: !14)
-// CHECK:STDOUT: !17 = !DILocation(line: 19, column: 3, scope: !14)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "ReturnNullptrDirectly", linkageName: "_CReturnNullptrDirectly.Main", scope: null, file: !6, line: 22, type: !8, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !19 = !DILocation(line: 23, column: 10, scope: !18)
-// CHECK:STDOUT: !20 = !DILocation(line: 23, column: 3, scope: !18)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "ConvertNullptrConstant", linkageName: "_CConvertNullptrConstant.Main", scope: null, file: !6, line: 26, type: !8, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !22 = !DILocation(line: 27, column: 3, scope: !21)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.NullptrT.CppCompat.Core:ImplicitAs.Core.b88d1103f417c6d4", scope: null, file: !24, line: 32, type: !8, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !24 = !DIFile(filename: "{{.*}}/prelude/types/cpp/nullptr.carbon", directory: "")
-// CHECK:STDOUT: !25 = !DILocation(line: 33, column: 14, scope: !23)
-// CHECK:STDOUT: !26 = !DILocation(line: 33, column: 7, scope: !23)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "None", linkageName: "_CNone.Optional.Core.e49c05a5c9dc9c86", scope: null, file: !28, line: 26, type: !8, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !28 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
-// CHECK:STDOUT: !29 = !DILocation(line: 27, column: 12, scope: !27)
-// CHECK:STDOUT: !30 = !DILocation(line: 27, column: 5, scope: !27)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "ReturnNullptr", linkageName: "_CReturnNullptr.Main", scope: null, file: !6, line: 17, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !15 = !DILocation(line: 18, column: 10, scope: !14)
+// CHECK:STDOUT: !16 = !DILocation(line: 18, column: 3, scope: !14)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "ReturnNullptrCopy", linkageName: "_CReturnNullptrCopy.Main", scope: null, file: !6, line: 21, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !18 = !DILocation(line: 22, column: 3, scope: !17)
+// CHECK:STDOUT: !19 = !DILocation(line: 22, column: 26, scope: !17)
+// CHECK:STDOUT: !20 = !DILocation(line: 23, column: 10, scope: !17)
+// CHECK:STDOUT: !21 = !DILocation(line: 23, column: 3, scope: !17)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "ReturnConvertedNullptrIndirectly", linkageName: "_CReturnConvertedNullptrIndirectly.Main", scope: null, file: !6, line: 26, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !23 = !DILocation(line: 27, column: 3, scope: !22)
+// CHECK:STDOUT: !24 = !DILocation(line: 27, column: 26, scope: !22)
+// CHECK:STDOUT: !25 = !DILocation(line: 28, column: 3, scope: !22)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "ReturnConvertedNullptrDirectly", linkageName: "_CReturnConvertedNullptrDirectly.Main", scope: null, file: !6, line: 31, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !27 = !DILocation(line: 32, column: 10, scope: !26)
+// CHECK:STDOUT: !28 = !DILocation(line: 32, column: 3, scope: !26)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "ConvertNullptrConstant", linkageName: "_CConvertNullptrConstant.Main", scope: null, file: !6, line: 35, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !30 = !DILocation(line: 36, column: 3, scope: !29)
+// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.NullptrT.CppCompat.Core:ImplicitAs.Core.b88d1103f417c6d4", scope: null, file: !32, line: 34, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !32 = !DIFile(filename: "{{.*}}/prelude/types/cpp/nullptr.carbon", directory: "")
+// CHECK:STDOUT: !33 = !DILocation(line: 35, column: 14, scope: !31)
+// CHECK:STDOUT: !34 = !DILocation(line: 35, column: 7, scope: !31)
+// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "None", linkageName: "_CNone.Optional.Core.e49c05a5c9dc9c86", scope: null, file: !36, line: 26, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !36 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
+// CHECK:STDOUT: !37 = !DILocation(line: 27, column: 12, scope: !35)
+// CHECK:STDOUT: !38 = !DILocation(line: 27, column: 5, scope: !35)
