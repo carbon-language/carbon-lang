@@ -153,7 +153,7 @@ fn Call() {
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
 // CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "pass_as_arg.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Pass", linkageName: "_CPass.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
@@ -233,7 +233,7 @@ fn Call() {
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
 // CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "convert.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "PassEnum", linkageName: "_CPassEnum.Main", scope: null, file: !6, line: 8, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
@@ -271,7 +271,7 @@ fn Call() {
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
 // CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "use_bitmask.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !6, line: 10, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)

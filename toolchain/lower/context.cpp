@@ -81,8 +81,8 @@ auto Context::BuildDICompileUnit(llvm::StringRef module_name,
   // it's something debuggers will already know/have support for at least.
   // Probably have to bump to C++ at some point for virtual functions,
   // templates, etc.
-  return di_builder.createCompileUnit(llvm::dwarf::DW_LANG_C, compile_unit_file,
-                                      "carbon",
+  return di_builder.createCompileUnit(llvm::dwarf::DW_LANG_C_plus_plus,
+                                      compile_unit_file, "carbon",
                                       /*isOptimized=*/false, /*Flags=*/"",
                                       /*RV=*/0);
 }
