@@ -288,14 +288,8 @@ class SetBase
 // allocations the performance of hashtable routines may be unacceptably bad and
 // another data structure or key design is likely preferable.
 //
-// Note that `Set` has "shallow" const semantics: a `const Set<T>&` can't be
-// used to mutate the set data structure itself (e.g. by changing the number of
-// elements), but it can be used to mutate the `T` elements it contains. The
-// user is responsible for avoiding mutations that would change the hash value
-// or equality of an element. A `SetView<const T>` can be used to provide
-// read-only access to the elements of a `Set<T>`.
-//
-// Note that this type should typically not appear on API boundaries; either
+// Note that `Set`, like `SetBase`, has "shallow" const semantics. Note also
+// that this type should typically not appear on API boundaries; either
 // `SetBase` or `SetView` should be used instead.
 template <typename InputKeyT, ssize_t SmallSize = 0,
           typename InputKeyContextT = DefaultKeyContext>

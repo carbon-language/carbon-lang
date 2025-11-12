@@ -373,15 +373,9 @@ class MapBase : protected RawHashtable::BaseImpl<InputKeyT, InputValueT,
 // allocations the performance of hashtable routines may be unacceptably bad and
 // another data structure or key design is likely preferable.
 //
-// Note that `Map` has "shallow" const semantics: a `const Map<K, V>&` can't be
-// used to mutate the map data structure itself (e.g. by changing the number of
-// elements), but it can be used to mutate the keys and values it contains. The
-// user is responsible for avoiding mutations that would change the hash value
-// or equality of a key. A `MapView` with const-qualified key and value types
-// can be used to provide read-only access to the elements of a `Map<T>`.
-//
-// Note that this type should typically not appear on API boundaries; either
-// `MapBase` or `MapView` should be used instead.
+// Note that like `MapBase`, `Map` has "shallow" const semantics. Note also that
+// this type should typically not appear on API boundaries; either `MapBase` or
+// `MapView` should be used instead.
 template <typename InputKeyT, typename InputValueT, ssize_t SmallSize = 0,
           typename InputKeyContextT = DefaultKeyContext>
 class Map : public RawHashtable::TableImpl<
