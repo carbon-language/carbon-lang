@@ -236,11 +236,12 @@ static auto CopySingleNameScopeFromImportIR(
         {.name_id = name_id, .parent_scope_id = parent_scope_id});
     auto import_ir_inst_id = context.import_ir_insts().Add(
         SemIR::ImportIRInst(ir_id, import_inst_id));
-    auto inst_id = AddInstInNoBlock<SemIR::ImportRefLoaded>(
-        context, import_ir_inst_id,
-        {.type_id = namespace_type_id,
-         .import_ir_inst_id = import_ir_inst_id,
-         .entity_name_id = entity_name_id});
+    auto inst_id = AddInstInNoBlock(
+        context, MakeImportedLocIdAndInst<SemIR::ImportRefLoaded>(
+                     context, import_ir_inst_id,
+                     {.type_id = namespace_type_id,
+                      .import_ir_inst_id = import_ir_inst_id,
+                      .entity_name_id = entity_name_id}));
     context.imports().push_back(inst_id);
     return inst_id;
   };

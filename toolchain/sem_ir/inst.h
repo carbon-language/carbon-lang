@@ -411,8 +411,12 @@ struct LocIdAndInst {
   }
 
   // Unsafely form a pair of a location and an instruction. Used in the cases
-  // where we can't statically enforce the type matches.
-  static auto UncheckedLoc(LocId loc_id, Inst inst) -> LocIdAndInst {
+  // where we can't statically enforce the type matches. For `ImportIRInstId`,
+  // use `MakeImportedLocIdAndInst` in `import.h`.
+  template <typename LocT>
+    requires(std::convertible_to<LocT, LocId> &&
+             !std::same_as<LocT, ImportIRInstId>)
+  static auto UncheckedLoc(LocT loc_id, Inst inst) -> LocIdAndInst {
     return LocIdAndInst(loc_id, inst, /*is_unchecked=*/true);
   }
 
@@ -427,6 +431,10 @@ struct LocIdAndInst {
   template <typename InstT>
     requires(Internal::HasUntypedNodeId<InstT>)
   LocIdAndInst(LocId loc_id, InstT inst) : loc_id(loc_id), inst(inst) {}
+
+  // For `ImportIRInstId`, use `MakeImportedLocIdAndInst` in `import.h`.
+  template <typename InstT>
+  LocIdAndInst(ImportIRInstId loc_id, InstT inst) = delete;
 
   LocId loc_id;
   Inst inst;

@@ -949,11 +949,12 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
   // TODO: Add a field to prevent tail padding reuse if necessary.
 
-  return AddTypeInst<SemIR::CustomLayoutType>(
-      context, import_ir_inst_id,
-      {.type_id = SemIR::TypeType::TypeId,
-       .fields_id = context.struct_type_fields().Add(fields),
-       .layout_id = context.custom_layouts().Add(layout)});
+  return AddTypeInst(context,
+                     MakeImportedLocIdAndInst<SemIR::CustomLayoutType>(
+                         context, import_ir_inst_id,
+                         {.type_id = SemIR::TypeType::TypeId,
+                          .fields_id = context.struct_type_fields().Add(fields),
+                          .layout_id = context.custom_layouts().Add(layout)}));
 }
 
 // Creates a Carbon class definition based on the information in the given Clang
@@ -974,10 +975,12 @@ static auto BuildClassDefinition(Context& context,
   // Compute the class's object representation.
   auto object_repr_id = ImportClassObjectRepr(
       context, class_id, import_ir_inst_id, class_inst_id, clang_def);
-  class_info.complete_type_witness_id = AddInst<SemIR::CompleteTypeWitness>(
-      context, import_ir_inst_id,
-      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-       .object_repr_type_inst_id = object_repr_id});
+  class_info.complete_type_witness_id = AddInst(
+      context,
+      MakeImportedLocIdAndInst<SemIR::CompleteTypeWitness>(
+          context, import_ir_inst_id,
+          {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+           .object_repr_type_inst_id = object_repr_id}));
 
   class_info.body_block_id = context.inst_block_stack().Pop();
 }
@@ -994,11 +997,13 @@ static auto ImportEnumObjectRepresentation(
 
   auto int_kind = int_type->isSignedIntegerType() ? SemIR::IntKind::Signed
                                                   : SemIR::IntKind::Unsigned;
-  auto bit_width_id = GetOrAddInst<SemIR::IntValue>(
-      context, import_ir_inst_id,
-      {.type_id = GetSingletonType(context, SemIR::IntLiteralType::TypeInstId),
-       .int_id = context.ints().AddUnsigned(
-           llvm::APInt(64, context.ast_context().getIntWidth(int_type)))});
+  auto bit_width_id = GetOrAddInst(
+      context, MakeImportedLocIdAndInst<SemIR::IntValue>(
+                   context, import_ir_inst_id,
+                   {.type_id = GetSingletonType(
+                        context, SemIR::IntLiteralType::TypeInstId),
+                    .int_id = context.ints().AddUnsigned(llvm::APInt(
+                        64, context.ast_context().getIntWidth(int_type)))}));
   return context.types().GetAsTypeInstId(
       GetOrAddInst(context, SemIR::LocIdAndInst::NoLoc(SemIR::IntType{
                                 .type_id = SemIR::TypeType::TypeId,
@@ -1030,10 +1035,12 @@ static auto BuildEnumDefinition(Context& context,
       context, MakeImportedLocIdAndInst(
                    context, import_ir_inst_id,
                    SemIR::AdaptDecl{.adapted_type_inst_id = object_repr_id}));
-  class_info.complete_type_witness_id = AddInst<SemIR::CompleteTypeWitness>(
-      context, import_ir_inst_id,
-      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-       .object_repr_type_inst_id = object_repr_id});
+  class_info.complete_type_witness_id = AddInst(
+      context,
+      MakeImportedLocIdAndInst<SemIR::CompleteTypeWitness>(
+          context, import_ir_inst_id,
+          {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+           .object_repr_type_inst_id = object_repr_id}));
 
   class_info.body_block_id = context.inst_block_stack().Pop();
 }
@@ -1053,10 +1060,12 @@ static auto ImportEnumConstantDecl(Context& context,
 
   // Build a corresponding IntValue.
   auto int_id = context.ints().Add(enumerator_decl->getInitVal());
-  auto loc_id =
+  auto import_ir_inst_id =
       AddImportIRInst(context.sem_ir(), enumerator_decl->getLocation());
-  auto inst_id = AddInstInNoBlock<SemIR::IntValue>(
-      context, loc_id, {.type_id = type_id, .int_id = int_id});
+  auto inst_id = AddInstInNoBlock(
+      context,
+      MakeImportedLocIdAndInst<SemIR::IntValue>(
+          context, import_ir_inst_id, {.type_id = type_id, .int_id = int_id}));
   context.imports().push_back(inst_id);
   context.clang_decls().Add({.key = key, .inst_id = inst_id});
   return inst_id;

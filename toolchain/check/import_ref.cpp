@@ -90,10 +90,11 @@ auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
                       SemIR::EntityNameId::None) -> SemIR::InstId {
   auto import_ir_inst_id = context.import_ir_insts().Add(import_ir_inst);
   auto import_ref_id = AddPlaceholderImportedInstInNoBlock(
-      context, SemIR::LocIdAndInst(import_ir_inst_id,
-                                   SemIR::ImportRefUnloaded{
-                                       .import_ir_inst_id = import_ir_inst_id,
-                                       .entity_name_id = entity_name_id}));
+      context,
+      MakeImportedLocIdAndInst(
+          context, import_ir_inst_id,
+          SemIR::ImportRefUnloaded{.import_ir_inst_id = import_ir_inst_id,
+                                   .entity_name_id = entity_name_id}));
   return import_ref_id;
 }
 
@@ -542,7 +543,9 @@ static auto AddLoadedImportRef(ImportContext& context,
                                  .import_ir_inst_id = import_ir_inst_id,
                                  .entity_name_id = SemIR::EntityNameId::None};
   auto inst_id = AddPlaceholderImportedInstInNoBlock(
-      context.local_context(), SemIR::LocIdAndInst(import_ir_inst_id, inst));
+      context.local_context(),
+      MakeImportedLocIdAndInst(context.local_context(), import_ir_inst_id,
+                               inst));
 
   context.local_constant_values().Set(inst_id, local_const_id);
   context.local_constant_values_for_import_insts().Set(import_inst_id,
@@ -585,15 +588,10 @@ static auto AddPlaceholderImportedInst(ImportContext& context,
                                        SemIR::InstId import_inst_id, InstT inst)
     -> SemIR::InstId {
   auto import_ir_inst_id = AddImportIRInst(context, import_inst_id);
-  if constexpr (SemIR::Internal::HasUntypedNodeId<InstT>) {
-    return AddPlaceholderImportedInstInNoBlock(
-        context.local_context(), SemIR::LocIdAndInst(import_ir_inst_id, inst));
-  } else {
-    return AddPlaceholderImportedInstInNoBlock(
-        context.local_context(),
-        MakeImportedLocIdAndInst(context.local_context(), import_ir_inst_id,
-                                 inst));
-  }
+  return AddPlaceholderImportedInstInNoBlock(
+      context.local_context(),
+      MakeImportedLocIdAndInst(context.local_context(), import_ir_inst_id,
+                               inst));
 }
 
 // Replace an imported instruction that was added by
