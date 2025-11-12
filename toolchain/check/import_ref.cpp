@@ -101,29 +101,6 @@ auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
   return import_ref_id;
 }
 
-// Adds an import_ref instruction for an instruction that we have already loaded
-// from an imported IR, with a known constant value. This is useful when the
-// instruction has a symbolic constant value, in order to produce an instruction
-// that hold that symbolic constant.
-static auto AddLoadedImportRef(Context& context, SemIR::TypeId type_id,
-                               SemIR::ImportIRInst import_ir_inst,
-                               SemIR::ConstantId const_id) -> SemIR::InstId {
-  auto import_ir_inst_id = context.import_ir_insts().Add(import_ir_inst);
-  SemIR::ImportRefLoaded inst = {.type_id = type_id,
-                                 .import_ir_inst_id = import_ir_inst_id,
-                                 .entity_name_id = SemIR::EntityNameId::None};
-  auto inst_id = AddPlaceholderInstInNoBlock(
-      context, MakeImportedLocIdAndInst(context, import_ir_inst_id, inst));
-  context.imports().push_back(inst_id);
-
-  context.constant_values().Set(inst_id, const_id);
-  context
-      .import_ir_constant_values()[context.sem_ir().import_irs().GetRawIndex(
-          import_ir_inst.ir_id())]
-      .Set(import_ir_inst.inst_id(), const_id);
-  return inst_id;
-}
-
 static auto GetCanonicalImportIRInst(Context& context,
                                      const SemIR::File* target_ir,
                                      SemIR::InstId target_inst_id)
@@ -515,6 +492,7 @@ class ImportRefResolver : public ImportContext {
 };
 }  // namespace
 
+// Wrapper for `AddImportRef` that provides the `import_ir_id`.
 static auto AddImportRef(ImportContext& context, SemIR::InstId inst_id,
                          SemIR::EntityNameId entity_name_id =
                              SemIR::EntityNameId::None) -> SemIR::InstId {
@@ -523,12 +501,39 @@ static auto AddImportRef(ImportContext& context, SemIR::InstId inst_id,
                       entity_name_id);
 }
 
-static auto AddLoadedImportRef(ImportContext& context, SemIR::TypeId type_id,
-                               SemIR::InstId inst_id,
-                               SemIR::ConstantId const_id) -> SemIR::InstId {
-  return AddLoadedImportRef(
-      context.local_context(), type_id,
-      SemIR::ImportIRInst(context.import_ir_id(), inst_id), const_id);
+// Adds an import_ref instruction for an instruction that we have already loaded
+// from an imported IR, with a known constant value. This is useful when the
+// instruction has a symbolic constant value, in order to produce an instruction
+// that hold that symbolic constant.
+static auto AddLoadedImportRef(ImportContext& context,
+                               SemIR::TypeId local_type_id,
+                               SemIR::InstId import_inst_id,
+                               SemIR::ConstantId local_const_id)
+    -> SemIR::InstId {
+  auto import_ir_inst_id = context.local_import_ir_insts().Add(
+      SemIR::ImportIRInst(context.import_ir_id(), import_inst_id));
+  SemIR::ImportRefLoaded inst = {.type_id = local_type_id,
+                                 .import_ir_inst_id = import_ir_inst_id,
+                                 .entity_name_id = SemIR::EntityNameId::None};
+  auto inst_id = AddPlaceholderInstInNoBlock(
+      context.local_context(),
+      MakeImportedLocIdAndInst(context.local_context(), import_ir_inst_id,
+                               inst));
+  context.local_context().imports().push_back(inst_id);
+
+  context.local_constant_values().Set(inst_id, local_const_id);
+  context.local_constant_values_for_import_insts().Set(import_inst_id,
+                                                       local_const_id);
+  return inst_id;
+}
+
+// Like `AddLoadedImportRef`, but only for types, and returns a `TypeInstId`.
+static auto AddLoadedImportRefForType(ImportContext& context,
+                                      SemIR::TypeInstId import_inst_id,
+                                      SemIR::ConstantId local_const_id)
+    -> SemIR::TypeInstId {
+  return context.local_types().GetAsTypeInstId(AddLoadedImportRef(
+      context, SemIR::TypeType::TypeId, import_inst_id, local_const_id));
 }
 
 static auto AddImportIRInst(ImportContext& context, SemIR::InstId inst_id)
@@ -1204,16 +1209,14 @@ struct ResolveResult {
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::AdaptDecl inst,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
-  auto adapted_type_const_id = GetLocalConstantId(
-      resolver,
-      resolver.import_constant_values().GetAttached(inst.adapted_type_inst_id));
+  auto adapted_type_const_id =
+      GetLocalConstantId(resolver, inst.adapted_type_inst_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
 
-  auto adapted_type_inst_id = resolver.local_ir().types().GetAsTypeInstId(
-      AddLoadedImportRef(resolver, SemIR::TypeType::TypeId,
-                         inst.adapted_type_inst_id, adapted_type_const_id));
+  auto adapted_type_inst_id = AddLoadedImportRefForType(
+      resolver, inst.adapted_type_inst_id, adapted_type_const_id);
 
   // Create a corresponding instruction to represent the declaration.
   return ResolveResult::Unique<SemIR::AdaptDecl>(
@@ -1389,16 +1392,14 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::BaseDecl inst,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
   auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
-  auto base_type_const_id = GetLocalConstantId(
-      resolver,
-      resolver.import_constant_values().GetAttached(inst.base_type_inst_id));
+  auto base_type_const_id =
+      GetLocalConstantId(resolver, inst.base_type_inst_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
 
-  auto base_type_inst_id = resolver.local_ir().types().GetAsTypeInstId(
-      AddLoadedImportRef(resolver, SemIR::TypeType::TypeId,
-                         inst.base_type_inst_id, base_type_const_id));
+  auto base_type_inst_id = AddLoadedImportRefForType(
+      resolver, inst.base_type_inst_id, base_type_const_id);
 
   // Create a corresponding instruction to represent the declaration.
   return ResolveResult::Unique<SemIR::BaseDecl>(
@@ -2025,9 +2026,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   llvm::SmallVector<SemIR::InstId> lazy_virtual_functions;
   lazy_virtual_functions.reserve(virtual_functions.size());
   for (auto vtable_entry_id : virtual_functions) {
-    auto local_attached_constant_id = GetLocalConstantId(
-        resolver,
-        resolver.import_constant_values().GetAttached(vtable_entry_id));
+    auto local_attached_constant_id =
+        GetLocalConstantId(resolver, vtable_entry_id);
     lazy_virtual_functions.push_back(
         resolver.local_constant_values().GetInstIdIfValid(
             local_attached_constant_id));
@@ -2261,12 +2261,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto implicit_param_patterns = GetLocalInstBlockContents(
       resolver, import_impl.implicit_param_patterns_id);
   auto generic_data = GetLocalGenericData(resolver, import_impl.generic_id);
-  auto self_const_id = GetLocalConstantId(
-      resolver,
-      resolver.import_constant_values().GetAttached(import_impl.self_id));
-  auto constraint_const_id = GetLocalConstantId(
-      resolver,
-      resolver.import_constant_values().GetAttached(import_impl.constraint_id));
+  auto self_const_id = GetLocalConstantId(resolver, import_impl.self_id);
+  auto constraint_const_id =
+      GetLocalConstantId(resolver, import_impl.constraint_id);
   auto& new_impl = resolver.local_impls().Get(impl_id);
 
   if (resolver.HasNewWork()) {
@@ -2282,12 +2279,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   // Create instructions for self and constraint to hold the symbolic constant
   // value for a generic impl.
-  new_impl.self_id = resolver.local_ir().types().GetAsTypeInstId(
-      AddLoadedImportRef(resolver, SemIR::TypeType::TypeId, import_impl.self_id,
-                         self_const_id));
-  new_impl.constraint_id = resolver.local_ir().types().GetAsTypeInstId(
-      AddLoadedImportRef(resolver, SemIR::TypeType::TypeId,
-                         import_impl.constraint_id, constraint_const_id));
+  new_impl.self_id =
+      AddLoadedImportRefForType(resolver, import_impl.self_id, self_const_id);
+  new_impl.constraint_id = AddLoadedImportRefForType(
+      resolver, import_impl.constraint_id, constraint_const_id);
   new_impl.interface = GetLocalSpecificInterface(
       resolver, import_impl.interface, specific_interface_data);
   if (import_impl.is_complete()) {
@@ -2317,8 +2312,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Done(constant_id);
   }
 
-  auto new_constant_id = GetLocalConstantId(
-      resolver, resolver.import_constant_values().GetInstId(constant_id));
+  auto new_constant_id = GetLocalConstantId(resolver, constant_id);
   return ResolveResult::RetryOrDone(resolver, new_constant_id);
 }
 

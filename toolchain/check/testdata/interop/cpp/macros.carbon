@@ -186,29 +186,71 @@ fn F() {
   Cpp.MACRO_NAME;
 }
 
-// --- multiple_replacement_tokens_object_like_macro.h
-#define CONFIG_VALUE 1+2
+// --- unary_operator.h
+#define NEGATIVE -1
 
-// --- fail_todo_import_multiple_replacement_tokens_object_like_macro.carbon
+// --- import_unary_operator.carbon
 
 library "[[@TEST_NAME]]";
 
-import Cpp library "multiple_replacement_tokens_object_like_macro.h";
+import Cpp library "unary_operator.h";
 
 fn F() {
-  // TODO: Get rid of the second error.
-  // CHECK:STDERR: fail_todo_import_multiple_replacement_tokens_object_like_macro.carbon:[[@LINE+11]]:16: error: semantics TODO: `Unsupported: macro with 3 replacement tokens` [SemanticsTodo]
-  // CHECK:STDERR:   let a: i32 = Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_multiple_replacement_tokens_object_like_macro.carbon:[[@LINE+8]]:16: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
-  // CHECK:STDERR:   let a: i32 = Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_multiple_replacement_tokens_object_like_macro.carbon:[[@LINE+4]]:16: error: member name `CONFIG_VALUE` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let a: i32 = Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  let a: i32 = Cpp.CONFIG_VALUE;
+  //@dump-sem-ir-begin
+  let a: i32 = Cpp.NEGATIVE;
+  //@dump-sem-ir-end
+}
+
+// --- binary_operator.h
+#define ADDITION 1+2
+
+// --- import_binary_operator.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "binary_operator.h";
+
+fn F() {
+  //@dump-sem-ir-begin
+  let a: i32 = Cpp.ADDITION;
+  //@dump-sem-ir-end
+}
+
+// --- casting.h
+#define CAST_UNSIGNED (unsigned int)1
+#define CAST_STATIC static_cast<int>(100.5)
+#define CAST_FUNCTIONAL int(99.9)
+#define CAST_BOOL_TO_INT (int)true
+
+// --- import_casting.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "casting.h";
+
+fn F() {
+  //@dump-sem-ir-begin
+  let a: u32 = Cpp.CAST_UNSIGNED;
+  let b: i32 = Cpp.CAST_STATIC;
+  let c: i32 = Cpp.CAST_FUNCTIONAL;
+  let d: i32 = Cpp.CAST_BOOL_TO_INT;
+  //@dump-sem-ir-end
+}
+
+// --- nested_macros.h
+#define ONE 1
+#define INDIRECT_ONE ONE
+
+// --- import_nested_macros.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "nested_macros.h";
+
+fn F() {
+  //@dump-sem-ir-begin
+  let a: i32 = Cpp.INDIRECT_ONE;
+  //@dump-sem-ir-end
 }
 
 // --- string_literal_object_like_macro.h
@@ -222,7 +264,7 @@ import Cpp library "string_literal_object_like_macro.h";
 
 fn F() {
   // TODO: Get rid of the second error.
-  // CHECK:STDERR: fail_todo_import_string_literal_object_like_macro.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: macro replacement token kind: string_literal` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_string_literal_object_like_macro.carbon:[[@LINE+11]]:3: error: semantics TODO: `non-integer constant expression in macro.` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.CONFIG_VALUE;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_import_string_literal_object_like_macro.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
@@ -247,7 +289,7 @@ import Cpp library "floating_point_literal_macro.h";
 
 fn F() {
   // TODO: Get rid of the second error.
-  // CHECK:STDERR: fail_todo_floating_point_literal_macro.carbon:[[@LINE+11]]:16: error: semantics TODO: `Unsupported: constant type: double` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_floating_point_literal_macro.carbon:[[@LINE+11]]:16: error: semantics TODO: `non-integer constant expression in macro.` [SemanticsTodo]
   // CHECK:STDERR:   let a: f64 = Cpp.PI;
   // CHECK:STDERR:                ^~~~~~
   // CHECK:STDERR: fail_todo_floating_point_literal_macro.carbon:[[@LINE+8]]:16: note: in `Cpp` name lookup for `PI` [InCppNameLookup]
@@ -273,19 +315,19 @@ library "[[@TEST_NAME]]";
 import Cpp library "macro_undefined.h";
 
 fn F() {
- // CHECK:STDERR: fail_macro_undefined.carbon:[[@LINE+4]]:15: error: member name `CONFIG_VALUE` not found in `Cpp` [MemberNameNotFoundInInstScope]
- // CHECK:STDERR:  let a: i32 = Cpp.CONFIG_VALUE;
- // CHECK:STDERR:               ^~~~~~~~~~~~~~~~
- // CHECK:STDERR:
- let a: i32 = Cpp.CONFIG_VALUE;
+  // CHECK:STDERR: fail_macro_undefined.carbon:[[@LINE+4]]:16: error: member name `CONFIG_VALUE` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   let a: i32 = Cpp.CONFIG_VALUE;
+  // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  let a: i32 = Cpp.CONFIG_VALUE;
 }
 
 // --- macro_redefined.h
 
-#define CONFIG_VALUE 1
-#undef CONFIG_VALUE
+#define REDEF_NAME 1
+#undef REDEF_NAME
 
-#define CONFIG_VALUE 2
+#define REDEF_NAME 2
 
 // --- import_macro_redefined.carbon
 
@@ -294,31 +336,35 @@ library "[[@TEST_NAME]]";
 import Cpp library "macro_redefined.h";
 
 fn F() {
- let a: i32 = Cpp.CONFIG_VALUE;
+  //@dump-sem-ir-begin
+  let a: i32 = Cpp.REDEF_NAME;
+  //@dump-sem-ir-end
 }
 
 // --- macro_defined_twice.h
 
-#define CONFIG_VALUE 1
-#define CONFIG_VALUE 2
+#define TWICE_DEF 1
+#define TWICE_DEF 2
 
 // --- import_macro_defined_twice.carbon
 
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: import_macro_defined_twice.carbon:[[@LINE+9]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./macro_defined_twice.h:3:9: warning: 'CONFIG_VALUE' macro redefined [CppInteropParseWarning]
-// CHECK:STDERR:     3 | #define CONFIG_VALUE 2
+// CHECK:STDERR: ./macro_defined_twice.h:3:9: warning: 'TWICE_DEF' macro redefined [CppInteropParseWarning]
+// CHECK:STDERR:     3 | #define TWICE_DEF 2
 // CHECK:STDERR:       |         ^
 // CHECK:STDERR: import_macro_defined_twice.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./macro_defined_twice.h:2:9: note: previous definition is here [CppInteropParseNote]
-// CHECK:STDERR:     2 | #define CONFIG_VALUE 1
+// CHECK:STDERR:     2 | #define TWICE_DEF 1
 // CHECK:STDERR:       |         ^
 // CHECK:STDERR:
 import Cpp library "macro_defined_twice.h";
 
 fn F() {
- let a: i32 = Cpp.CONFIG_VALUE;
+  //@dump-sem-ir-begin
+  let a: i32 = Cpp.TWICE_DEF;
+  //@dump-sem-ir-end
 }
 
 // ============================================================================
@@ -497,6 +543,248 @@ fn F() {
 // CHECK:STDOUT:     %i32.loc13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: %i32 = value_binding f, %CONFIG_VALUE_BINARY.ref
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_unary_operator.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %int_-1: %i32 = int_value -1 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .NEGATIVE = %int_-1
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_-1: %i32 = int_value -1 [concrete = constants.%int_-1]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %NEGATIVE.ref: %i32 = name_ref NEGATIVE, imports.%int_-1 [concrete = constants.%int_-1]
+// CHECK:STDOUT:   %.loc8: type = splice_block %i32.loc8 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: %i32 = value_binding a, %NEGATIVE.ref
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_binary_operator.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %int_3: %i32 = int_value 3 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .ADDITION = %int_3
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_3: %i32 = int_value 3 [concrete = constants.%int_3]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %ADDITION.ref: %i32 = name_ref ADDITION, imports.%int_3 [concrete = constants.%int_3]
+// CHECK:STDOUT:   %.loc8: type = splice_block %i32.loc8 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: %i32 = value_binding a, %ADDITION.ref
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_casting.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.4a9: type = pattern_type %u32 [concrete]
+// CHECK:STDOUT:   %int_1.c1d: %u32 = int_value 1 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %int_100: %i32 = int_value 100 [concrete]
+// CHECK:STDOUT:   %int_99: %i32 = int_value 99 [concrete]
+// CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .CAST_UNSIGNED = %int_1.c1d
+// CHECK:STDOUT:     .CAST_STATIC = %int_100
+// CHECK:STDOUT:     .CAST_FUNCTIONAL = %int_99
+// CHECK:STDOUT:     .CAST_BOOL_TO_INT = %int_1.5d2
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_1.c1d: %u32 = int_value 1 [concrete = constants.%int_1.c1d]
+// CHECK:STDOUT:   %int_100: %i32 = int_value 100 [concrete = constants.%int_100]
+// CHECK:STDOUT:   %int_99: %i32 = int_value 99 [concrete = constants.%int_99]
+// CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.4a9 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %CAST_UNSIGNED.ref: %u32 = name_ref CAST_UNSIGNED, imports.%int_1.c1d [concrete = constants.%int_1.c1d]
+// CHECK:STDOUT:   %.loc8: type = splice_block %u32.loc8 [concrete = constants.%u32] {
+// CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %u32.loc8: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: %u32 = value_binding a, %CAST_UNSIGNED.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type.7ce = value_binding_pattern b [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %CAST_STATIC.ref: %i32 = name_ref CAST_STATIC, imports.%int_100 [concrete = constants.%int_100]
+// CHECK:STDOUT:   %.loc9: type = splice_block %i32.loc9 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b: %i32 = value_binding b, %CAST_STATIC.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.7ce = value_binding_pattern c [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %CAST_FUNCTIONAL.ref: %i32 = name_ref CAST_FUNCTIONAL, imports.%int_99 [concrete = constants.%int_99]
+// CHECK:STDOUT:   %.loc10: type = splice_block %i32.loc10 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc10: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c: %i32 = value_binding c, %CAST_FUNCTIONAL.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: %pattern_type.7ce = value_binding_pattern d [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %CAST_BOOL_TO_INT.ref: %i32 = name_ref CAST_BOOL_TO_INT, imports.%int_1.5d2 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc11: type = splice_block %i32.loc11 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %d: %i32 = value_binding d, %CAST_BOOL_TO_INT.ref
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_nested_macros.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %int_1: %i32 = int_value 1 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .INDIRECT_ONE = %int_1
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_1: %i32 = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %INDIRECT_ONE.ref: %i32 = name_ref INDIRECT_ONE, imports.%int_1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %.loc8: type = splice_block %i32.loc8 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: %i32 = value_binding a, %INDIRECT_ONE.ref
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_macro_redefined.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %int_2: %i32 = int_value 2 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .REDEF_NAME = %int_2
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_2: %i32 = int_value 2 [concrete = constants.%int_2]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %REDEF_NAME.ref: %i32 = name_ref REDEF_NAME, imports.%int_2 [concrete = constants.%int_2]
+// CHECK:STDOUT:   %.loc8: type = splice_block %i32.loc8 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: %i32 = value_binding a, %REDEF_NAME.ref
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_macro_defined_twice.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %int_2: %i32 = int_value 2 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .TWICE_DEF = %int_2
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_2: %i32 = int_value 2 [concrete = constants.%int_2]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %TWICE_DEF.ref: %i32 = name_ref TWICE_DEF, imports.%int_2 [concrete = constants.%int_2]
+// CHECK:STDOUT:   %.loc17: type = splice_block %i32.loc17 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: %i32 = value_binding a, %TWICE_DEF.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

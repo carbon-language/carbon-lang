@@ -11,9 +11,8 @@ namespace Carbon::Check {
 
 // Tries to evaluate the given macro to a constant expression. Returns the
 // evaluated expression on success or nullptr otherwise. Currently supports only
-// simple object-like macros with a single replacement token that is a numeric
-// literal token.
-// TODO: Add support for multiple tokens and other literal types.
+// object-like macros that evaluate to an integer constant.
+// TODO: Add support for other literal types.
 auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
                                 SemIR::NameId name_id,
                                 clang::MacroInfo* macro_info) -> clang::Expr*;
