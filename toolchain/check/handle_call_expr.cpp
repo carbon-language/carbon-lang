@@ -33,18 +33,4 @@ auto HandleParseNode(Context& context, Parse::CallExprId node_id) -> bool {
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::RefTagId node_id) -> bool {
-  auto expr_id = context.node_stack().Peek<Parse::NodeCategory::Expr>();
-
-  if (SemIR::GetExprCategory(context.sem_ir(), expr_id) !=
-      SemIR::ExprCategory::DurableRef) {
-    CARBON_DIAGNOSTIC(
-        RefTagNotDurableRef, Error,
-        "expression tagged with `ref` is not a durable reference");
-    context.emitter().Emit(node_id, RefTagNotDurableRef);
-  }
-  context.ref_tags().Insert(expr_id, Context::RefTag::Present);
-  return true;
-}
-
 }  // namespace Carbon::Check

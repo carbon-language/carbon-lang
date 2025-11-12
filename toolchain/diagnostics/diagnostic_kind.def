@@ -119,7 +119,6 @@ CARBON_DIAGNOSTIC_KIND(UnaryOperatorRequiresWhitespace)
 CARBON_DIAGNOSTIC_KIND(UnexpectedTokenAfterListElement)
 CARBON_DIAGNOSTIC_KIND(UnrecognizedDecl)
 CARBON_DIAGNOSTIC_KIND(UnexpectedTokenInCompoundMemberAccess)
-CARBON_DIAGNOSTIC_KIND(UnexpectedRef)
 
 // Match diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedMatchCaseArrow)

@@ -43,34 +43,6 @@ auto HandleOnlyParenExprFinish(Context& context) -> void {
   FinishParenExpr(context, state);
 }
 
-static auto HandleRefTagFinish(Context& context, StateKind state_kind) -> void {
-  auto state = context.PopState();
-  if (state_kind == StateKind::RefTagFinishAsAfterOpenParen &&
-      !context.PositionIs(Lex::TokenKind::Comma)) {
-    CARBON_DIAGNOSTIC(UnexpectedRef, Error,
-                      "found `ref` in unexpected position");
-    context.emitter().Emit(state.token, UnexpectedRef);
-  }
-  context.AddNode(NodeKind::RefTag, state.token, state.has_error);
-}
-
-auto HandleRefTagFinishAsRegular(Context& context) -> void {
-  HandleRefTagFinish(context, StateKind::RefTagFinishAsRegular);
-}
-
-auto HandleRefTagFinishAsAfterOpenParen(Context& context) -> void {
-  HandleRefTagFinish(context, StateKind::RefTagFinishAsAfterOpenParen);
-}
-
-static auto StartTupleLiteralElement(Context& context) -> void {
-  context.PushState(StateKind::TupleLiteralElementFinish);
-  if (context.PositionIs(Lex::TokenKind::Ref)) {
-    context.PushState(StateKind::RefTagFinishAsRegular);
-    context.ConsumeChecked(Lex::TokenKind::Ref);
-  }
-  context.PushState(StateKind::Expr);
-}
-
 auto HandleParenExpr(Context& context) -> void {
   auto state = context.PopState();
 
@@ -84,10 +56,6 @@ auto HandleParenExpr(Context& context) -> void {
   } else {
     context.PushState(state, StateKind::ParenExprFinish);
     context.PushState(StateKind::ExprAfterOpenParenFinish);
-    if (context.PositionIs(Lex::TokenKind::Ref)) {
-      context.PushState(StateKind::RefTagFinishAsAfterOpenParen);
-      context.ConsumeChecked(Lex::TokenKind::Ref);
-    }
     context.PushState(StateKind::Expr);
   }
 }
@@ -110,7 +78,8 @@ auto HandleExprAfterOpenParenFinish(Context& context) -> void {
   // If the comma is not immediately followed by a close paren, push handlers
   // for the next tuple element.
   if (list_token_kind != Context::ListTokenKind::CommaClose) {
-    StartTupleLiteralElement(context);
+    context.PushState(StateKind::TupleLiteralElementFinish);
+    context.PushState(StateKind::Expr);
   }
 }
 
@@ -124,7 +93,8 @@ auto HandleTupleLiteralElementFinish(Context& context) -> void {
   if (context.ConsumeListToken(NodeKind::TupleLiteralComma,
                                Lex::TokenKind::CloseParen, state.has_error) ==
       Context::ListTokenKind::Comma) {
-    StartTupleLiteralElement(context);
+    context.PushState(StateKind::TupleLiteralElementFinish);
+    context.PushState(StateKind::Expr);
   }
 }
 
@@ -149,7 +119,8 @@ auto HandleCallExpr(Context& context) -> void {
 
   context.AddNode(NodeKind::CallExprStart, context.Consume(), state.has_error);
   if (!context.PositionIs(Lex::TokenKind::CloseParen)) {
-    StartTupleLiteralElement(context);
+    context.PushState(StateKind::TupleLiteralElementFinish);
+    context.PushState(StateKind::Expr);
   }
 }
 

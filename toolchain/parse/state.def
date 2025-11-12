@@ -125,12 +125,6 @@ CARBON_PARSE_STATE_VARIANTS3(BraceExprParam, Type, Value, Unknown)
 // Handles a brace expression parameter after the initial designator. This
 // should be at a `:` or `=`, depending on whether it's a type or value literal.
 //
-// { .foo = ref bar ... }
-//        ^~~~~
-//   1. Expr
-//   2. RefTagFinishAsRegular
-//   3. BraceExprParamFinishAsValue
-//
 // { .foo = bar ... }
 //        ^
 //   1. Expr
@@ -173,27 +167,11 @@ CARBON_PARSE_STATE_VARIANTS3(BraceExprParamFinish, Type, Value, Unknown)
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS3(BraceExprFinish, Type, Value, Unknown)
 
-// Handles the end of an argument expression tagged with `ref`. The
-// `AfterOpenParen` variant diagnoses if the expression is not followed by `,`.
-//
-// ref ...
-//        ^
-//   (state done)
-CARBON_PARSE_STATE_VARIANTS2(RefTagFinish, Regular, AfterOpenParen)
-
-// Handles a call expression `(...)`, including the initial `ref`, if any.
+// Handles a call expression `(...)`.
 //
 // F()
 //  ^
 //   1. CallExprFinish
-//
-// F(ref ...
-//  ^~~~
-//
-// 1. Expr
-// 2. RefTagFinishAsRegular
-// 2. TupleLiteralElementFinish
-// 3. CallExprFinish
 //
 // F( ...
 //  ^
@@ -936,21 +914,10 @@ CARBON_PARSE_STATE(OnlyParenExprFinish)
 
 // Handles the `(` of an expression that's presumed to be a parenthesized
 // single expression, but may later be reclassified as a tuple literal.
-// This also handles a `ref` following the `(`, if present. That's only
-// valid in tuple literals, but doesn't cause the expression to be a tuple
-// literal.
 //
 // ( )
 // ^
 //   1. TupleLiteralFinish
-//
-// (ref ... )
-// ^~~~
-//
-//   1. Expr
-//   2. RefTagFinishAsAfterOpenParen
-//   3. ExprAfterOpenParenFinish
-//   4. ParenExprFinish             (SPECIAL: may be replaced)
 //
 // ( ... )
 // ^
@@ -973,13 +940,6 @@ CARBON_PARSE_STATE(TupleLiteralFinish)
 //   (state done)
 //   SPECIAL: parent becomes TupleLiteralFinish
 //
-// ( ... , ref ... )
-//       ^~~~~
-//   1. Expr
-//   2. RefTagFinishAsRegular
-//   3. TupleLiteralElementFinish
-//   SPECIAL: parent becomes TupleLiteralFinish
-//
 // ( ... , ... )
 //       ^
 //   1. Expr
@@ -997,12 +957,6 @@ CARBON_PARSE_STATE(ExprAfterOpenParenFinish)
 // ( ... , )
 //       ^
 //   (state done)
-//
-// ( ... , ref ... )
-//       ^~~~~
-//   1. Expr
-//   2. RefTagFinishAsRegular
-//   3. TupleLiteralElementFinish
 //
 // ( ... , ... )
 //       ^
@@ -1043,6 +997,9 @@ CARBON_PARSE_STATE(Pattern)
 
 // Handles the initial part of a binding pattern, enqueuing type expression
 // processing.
+//
+// TODO: treat `ref` as a unary pattern operator in order to avoid ambiguity
+// with `ref` in expression patterns. See issue #6342.
 //
 // [ref] name: ...
 // ^~~~~
