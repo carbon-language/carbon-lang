@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_DRIVER_LINK_SUBCOMMAND_H_
 
 #include "common/command_line.h"
+#include "common/error.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/driver/codegen_options.h"
@@ -40,6 +41,8 @@ class LinkSubcommand : public DriverSubcommand {
   auto Run(DriverEnv& driver_env) -> DriverResult override;
 
  private:
+  auto RunInternal(DriverEnv& driver_env) -> ErrorOr<bool>;
+
   LinkOptions options_;
 };
 

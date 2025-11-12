@@ -57,13 +57,12 @@ TEST_F(CarbonRunnerTest, BuildCoreLibraries) {
   auto runtimes = *runtimes_cache_.Lookup(features);
   auto build_result = runner.BuildCoreLibraries(features, runtimes);
   ASSERT_TRUE(build_result.ok()) << build_result.error();
-  std::filesystem::path core_dir_path = std::move(*build_result);
+  std::filesystem::path archive_path = std::move(*build_result);
 
-  // Across all targets, check that the Core archive exists, and contains
-  // a relevant symbol by running the `llvm-nm` tool over it. Using `nm`
-  // rather than directly inspecting the objects is a bit awkward, but lets us
-  // easily ignore the wrapping in an archive file.
-  std::filesystem::path archive_path = core_dir_path / "carbon_core.a";
+  // Check that the Core archive exists and contains a relevant symbol by
+  // running the `llvm-nm` tool over it. Using `nm` rather than directly
+  // inspecting the objects is a bit awkward, but lets us easily ignore the
+  // wrapping in an archive file.
   LLVMRunner llvm_runner(driver_env_.installation, &llvm::errs());
   std::string out;
   std::string err;

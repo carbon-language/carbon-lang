@@ -36,12 +36,14 @@ CarbonRunner::CarbonRunner(DriverEnv* driver_env)
 auto CarbonRunner::BuildCoreLibraries(const Runtimes::Cache::Features& features,
                                       Runtimes& runtimes)
     -> ErrorOr<std::filesystem::path> {
+  std::filesystem::path core_a_path = "carbon_core.a";
+
   // Build directory for core libs.
   CARBON_ASSIGN_OR_RETURN(auto build_dir,
                           runtimes.Build(Runtimes::CoreLibraries));
   if (std::holds_alternative<std::filesystem::path>(build_dir)) {
     // Found cached build.
-    return std::get<std::filesystem::path>(std::move(build_dir));
+    return std::get<std::filesystem::path>(std::move(build_dir)) / core_a_path;
   }
 
   std::string target = features.target;
@@ -120,7 +122,6 @@ auto CarbonRunner::BuildCoreLibraries(const Runtimes::Cache::Features& features,
   // Build archive.
   auto builder = std::get<Runtimes::Builder>(std::move(build_dir));
 
-  std::filesystem::path core_a_path = "carbon_core.a";
   CARBON_ASSIGN_OR_RETURN(
       Filesystem::WriteFile core_a_file,
       builder.dir().OpenWriteOnly(core_a_path, Filesystem::CreateAlways));
@@ -139,7 +140,10 @@ auto CarbonRunner::BuildCoreLibraries(const Runtimes::Cache::Features& features,
   }
   CARBON_RETURN_IF_ERROR(std::move(core_a_file).Close());
 
-  return std::move(builder).Commit();
+  CARBON_ASSIGN_OR_RETURN(std::filesystem::path cached_core_path,
+                          std::move(builder).Commit());
+
+  return cached_core_path / core_a_path;
 }
 
 auto CarbonRunner::Compile(

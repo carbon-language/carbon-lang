@@ -4,9 +4,12 @@
 
 #include "toolchain/driver/link_subcommand.h"
 
+#include <string>
 #include <utility>
 
+#include "common/error.h"
 #include "llvm/TargetParser/Triple.h"
+#include "toolchain/driver/carbon_runner.h"
 #include "toolchain/driver/clang_runner.h"
 
 namespace Carbon {
@@ -88,6 +91,23 @@ LinkSubcommand::LinkSubcommand(LinkOptions options)
     : DriverSubcommand(SubcommandInfo), options_(std::move(options)) {}
 
 auto LinkSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
+  ErrorOr<bool> run_result = RunInternal(driver_env);
+
+  if (!run_result.ok()) {
+    // This is not a Clang failure, but a failure to even run Clang, so we need
+    // to diagnose it here.
+    CARBON_DIAGNOSTIC(FailureRunningClangToLink, Error,
+                      "failure running `clang` to perform linking: {0}",
+                      std::string);
+    driver_env.emitter.Emit(FailureRunningClangToLink,
+                            run_result.error().message());
+  }
+
+  // Successfully ran Clang to perform the link, return its result.
+  return {.success = *run_result};
+}
+
+auto LinkSubcommand::RunInternal(DriverEnv& driver_env) -> ErrorOr<bool> {
   // TODO: Currently we use the Clang driver to link. This works well on Unix
   // OSes but we likely need to directly build logic to invoke `link.exe` on
   // Windows where `cl.exe` doesn't typically cover that logic.
@@ -120,25 +140,28 @@ auto LinkSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   clang_args.push_back("-o");
   clang_args.push_back(options_.output_filename);
+
+  // Build Carbon Core archive.
+  CarbonRunner carbon_runner(&driver_env);
+  Runtimes::Cache::Features features = {
+      .target = std::string(options_.codegen_options.target)};
+  CARBON_ASSIGN_OR_RETURN(Runtimes runtimes,
+                          driver_env.runtimes_cache.Lookup(features));
+
+  CARBON_ASSIGN_OR_RETURN(std::filesystem::path core_archive,
+                          carbon_runner.BuildCoreLibraries(features, runtimes));
+  std::string core_archive_arg = core_archive;
+
+  clang_args.push_back(core_archive_arg);
+
+  // Add objects to link.
   clang_args.append(options_.object_filenames.begin(),
                     options_.object_filenames.end());
 
   ClangRunner runner(driver_env.installation, driver_env.fs,
                      driver_env.vlog_stream);
-  ErrorOr<bool> run_result = runner.Run(clang_args, driver_env.runtimes_cache,
-                                        *driver_env.thread_pool);
-  if (!run_result.ok()) {
-    // This is not a Clang failure, but a failure to even run Clang, so we need
-    // to diagnose it here.
-    CARBON_DIAGNOSTIC(FailureRunningClangToLink, Error,
-                      "failure running `clang` to perform linking: {0}",
-                      std::string);
-    driver_env.emitter.Emit(FailureRunningClangToLink,
-                            run_result.error().message());
-    return {.success = false};
-  }
-  // Successfully ran Clang to perform the link, return its result.
-  return {.success = *run_result};
+  return runner.Run(clang_args, driver_env.runtimes_cache,
+                    *driver_env.thread_pool);
 }
 
 }  // namespace Carbon
