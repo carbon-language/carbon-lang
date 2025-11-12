@@ -56,10 +56,17 @@ class FileContext {
 
   // Returns a lowered type for the given type_id.
   auto GetType(SemIR::TypeId type_id) -> llvm::Type* {
+    return GetTypes(type_id).first;
+  }
+
+  // Returns both the lowered llvm IR type and the lowered llvm IR debug info
+  // type for the given type_id.
+  auto GetTypes(SemIR::TypeId type_id) const
+      -> std::pair<llvm::Type*, llvm::DIType*> {
     CARBON_CHECK(type_id.has_value(), "Should not be called with `None`");
     CARBON_CHECK(type_id.is_concrete(), "Lowering symbolic type {0}: {1}",
                  type_id, sem_ir().types().GetAsInst(type_id));
-    CARBON_CHECK(types_.Get(type_id), "Missing type {0}: {1}", type_id,
+    CARBON_CHECK(types_.Get(type_id).first, "Missing type {0}: {1}", type_id,
                  sem_ir().types().GetAsInst(type_id));
     return types_.Get(type_id);
   }
@@ -99,6 +106,7 @@ class FileContext {
   auto GetTypeType() -> llvm::StructType* { return context().GetTypeType(); }
 
   auto context() -> Context& { return *context_; }
+  auto context() const -> Context& { return *context_; }
   auto llvm_context() -> llvm::LLVMContext& { return context().llvm_context(); }
   auto llvm_module() -> llvm::Module& { return context().llvm_module(); }
   auto cpp_code_generator() -> clang::CodeGenerator& {
@@ -188,12 +196,20 @@ class FileContext {
 
   // Build the DISubprogram metadata for the given function.
   auto BuildDISubprogram(const SemIR::Function& function,
+                         SemIR::SpecificId specific_id,
                          const llvm::Function* llvm_function)
       -> llvm::DISubprogram*;
 
+  auto BuildDISubroutineType(
+      const SemIR::Function&, SemIR::SpecificId specific_id,
+      llvm::SmallVectorImpl<llvm::DIType*>& debug_parameter_types) const
+      -> llvm::DISubroutineType*;
+  auto BuildDIType(SemIR::TypeId type_id) const -> llvm::DIType*;
+
   // Builds the type for the given instruction, which should then be cached by
   // the caller.
-  auto BuildType(SemIR::InstId inst_id) -> llvm::Type*;
+  auto BuildType(SemIR::InstId inst_id)
+      -> std::pair<llvm::Type*, llvm::DIType*>;
 
   auto BuildVtable(const SemIR::Vtable& vtable, SemIR::SpecificId specific_id)
       -> llvm::GlobalVariable*;
@@ -237,7 +253,8 @@ class FileContext {
   FixedSizeValueStore<SemIR::SpecificId, llvm::Function*> specific_functions_;
 
   // Provides lowered versions of types. Entries are non-symbolic types.
-  using LoweredTypeStore = FixedSizeValueStore<SemIR::TypeId, llvm::Type*>;
+  using LoweredTypeStore =
+      FixedSizeValueStore<SemIR::TypeId, std::pair<llvm::Type*, llvm::DIType*>>;
   LoweredTypeStore types_;
 
   // Maps constants to their lowered values. Indexes are the `InstId` for

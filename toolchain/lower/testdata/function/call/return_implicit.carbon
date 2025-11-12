@@ -51,7 +51,7 @@ fn Main() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "return_implicit.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "MakeImplicitEmptyTuple", linkageName: "_CMakeImplicitEmptyTuple.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 14, column: 1, scope: !4)
 // CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !9 = !DILocation(line: 18, column: 3, scope: !8)

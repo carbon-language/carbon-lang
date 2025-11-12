@@ -74,24 +74,24 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CF.Main(ptr %c) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc10_13.1.b = getelementptr inbounds nuw { i32, ptr }, ptr %c, i32 0, i32 1, !dbg !7
-// CHECK:STDOUT:   %.loc10_13.2 = load ptr, ptr %.loc10_13.1.b, align 8, !dbg !7
-// CHECK:STDOUT:   %.loc10_16.1.a = getelementptr inbounds nuw { i32, ptr }, ptr %.loc10_13.2, i32 0, i32 0, !dbg !8
-// CHECK:STDOUT:   %.loc10_16.2 = load i32, ptr %.loc10_16.1.a, align 4, !dbg !8
-// CHECK:STDOUT:   ret i32 %.loc10_16.2, !dbg !9
+// CHECK:STDOUT:   %.loc10_13.1.b = getelementptr inbounds nuw { i32, ptr }, ptr %c, i32 0, i32 1, !dbg !11
+// CHECK:STDOUT:   %.loc10_13.2 = load ptr, ptr %.loc10_13.1.b, align 8, !dbg !11
+// CHECK:STDOUT:   %.loc10_16.1.a = getelementptr inbounds nuw { i32, ptr }, ptr %.loc10_13.2, i32 0, i32 0, !dbg !12
+// CHECK:STDOUT:   %.loc10_16.2 = load i32, ptr %.loc10_16.1.a, align 4, !dbg !12
+// CHECK:STDOUT:   ret i32 %.loc10_16.2, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @main() #0 !dbg !10 {
+// CHECK:STDOUT: define i32 @main() #0 !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca { i32, ptr }, align 8, !dbg !11
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !11
-// CHECK:STDOUT:   %.loc15_4.a = getelementptr inbounds nuw { i32, ptr }, ptr %c.var, i32 0, i32 0, !dbg !12
-// CHECK:STDOUT:   store i32 1, ptr %.loc15_4.a, align 4, !dbg !12
-// CHECK:STDOUT:   %.loc16.b = getelementptr inbounds nuw { i32, ptr }, ptr %c.var, i32 0, i32 1, !dbg !13
-// CHECK:STDOUT:   store ptr %c.var, ptr %.loc16.b, align 8, !dbg !13
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr %c.var), !dbg !14
-// CHECK:STDOUT:   ret i32 %F.call, !dbg !15
+// CHECK:STDOUT:   %c.var = alloca { i32, ptr }, align 8, !dbg !17
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !17
+// CHECK:STDOUT:   %.loc15_4.a = getelementptr inbounds nuw { i32, ptr }, ptr %c.var, i32 0, i32 0, !dbg !18
+// CHECK:STDOUT:   store i32 1, ptr %.loc15_4.a, align 4, !dbg !18
+// CHECK:STDOUT:   %.loc16.b = getelementptr inbounds nuw { i32, ptr }, ptr %c.var, i32 0, i32 1, !dbg !19
+// CHECK:STDOUT:   store ptr %c.var, ptr %.loc16.b, align 8, !dbg !19
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr %c.var), !dbg !20
+// CHECK:STDOUT:   ret i32 %F.call, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -107,18 +107,24 @@ fn Run() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "basic.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !9)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 10, column: 12, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 10, column: 10, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 10, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !11 = !DILocation(line: 14, column: 3, scope: !10)
-// CHECK:STDOUT: !12 = !DILocation(line: 15, column: 3, scope: !10)
-// CHECK:STDOUT: !13 = !DILocation(line: 16, column: 3, scope: !10)
-// CHECK:STDOUT: !14 = !DILocation(line: 17, column: 10, scope: !10)
-// CHECK:STDOUT: !15 = !DILocation(line: 17, column: 3, scope: !10)
+// CHECK:STDOUT: !6 = !{!7, !8}
+// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !8 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !9 = !{!10}
+// CHECK:STDOUT: !10 = !DILocalVariable(arg: 1, scope: !4, type: !8)
+// CHECK:STDOUT: !11 = !DILocation(line: 10, column: 12, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 10, column: 10, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 10, column: 3, scope: !4)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 13, type: !15, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !15 = !DISubroutineType(types: !16)
+// CHECK:STDOUT: !16 = !{!7}
+// CHECK:STDOUT: !17 = !DILocation(line: 14, column: 3, scope: !14)
+// CHECK:STDOUT: !18 = !DILocation(line: 15, column: 3, scope: !14)
+// CHECK:STDOUT: !19 = !DILocation(line: 16, column: 3, scope: !14)
+// CHECK:STDOUT: !20 = !DILocation(line: 17, column: 10, scope: !14)
+// CHECK:STDOUT: !21 = !DILocation(line: 17, column: 3, scope: !14)
 // CHECK:STDOUT: ; ModuleID = 'inplace_init_with_nonconst.carbon'
 // CHECK:STDOUT: source_filename = "inplace_init_with_nonconst.carbon"
 // CHECK:STDOUT:
@@ -160,7 +166,7 @@ fn Run() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "inplace_init_with_nonconst.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 12, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 15, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 15, column: 16, scope: !4)
@@ -207,7 +213,7 @@ fn Run() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "implicit_init_with_nonempty_nonconst.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 17, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 17, column: 16, scope: !4)

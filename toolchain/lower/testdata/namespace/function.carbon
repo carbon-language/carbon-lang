@@ -56,7 +56,7 @@ fn Bar() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "function.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Baz", linkageName: "_CBaz.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 16, column: 1, scope: !4)
 // CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Baz", linkageName: "_CBaz.Foo.Main", scope: null, file: !3, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !9 = !DILocation(line: 19, column: 1, scope: !8)

@@ -29,28 +29,28 @@ fn IfEq(a: Bool(), b: Bool()) -> Bool() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i1 @_CTestEq.Main(i1 %a, i1 %b) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Eq.call = icmp eq i1 %a, %b, !dbg !7
-// CHECK:STDOUT:   ret i1 %Eq.call, !dbg !8
+// CHECK:STDOUT:   %Eq.call = icmp eq i1 %a, %b, !dbg !11
+// CHECK:STDOUT:   ret i1 %Eq.call, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i1 @_CTestNeq.Main(i1 %a, i1 %b) #0 !dbg !9 {
+// CHECK:STDOUT: define i1 @_CTestNeq.Main(i1 %a, i1 %b) #0 !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Neq.call = icmp ne i1 %a, %b, !dbg !10
-// CHECK:STDOUT:   ret i1 %Neq.call, !dbg !11
+// CHECK:STDOUT:   %Neq.call = icmp ne i1 %a, %b, !dbg !17
+// CHECK:STDOUT:   ret i1 %Neq.call, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i1 @_CIfEq.Main(i1 %a, i1 %b) #0 !dbg !12 {
+// CHECK:STDOUT: define i1 @_CIfEq.Main(i1 %a, i1 %b) #0 !dbg !19 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Eq.call = icmp eq i1 %a, %b, !dbg !13
-// CHECK:STDOUT:   br i1 %Eq.call, label %if.then, label %if.else, !dbg !14
+// CHECK:STDOUT:   %Eq.call = icmp eq i1 %a, %b, !dbg !23
+// CHECK:STDOUT:   br i1 %Eq.call, label %if.then, label %if.else, !dbg !24
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   ret i1 true, !dbg !15
+// CHECK:STDOUT:   ret i1 true, !dbg !25
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   ret i1 false, !dbg !16
+// CHECK:STDOUT:   ret i1 false, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -62,16 +62,26 @@ fn IfEq(a: Bool(), b: Bool()) -> Bool() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "bool.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestEq", linkageName: "_CTestEq.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestEq", linkageName: "_CTestEq.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 16, column: 52, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 16, column: 45, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TestNeq", linkageName: "_CTestNeq.Main", scope: null, file: !3, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 19, column: 53, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 19, column: 46, scope: !9)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "IfEq", linkageName: "_CIfEq.Main", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = !DILocation(line: 22, column: 7, scope: !12)
-// CHECK:STDOUT: !14 = !DILocation(line: 22, column: 6, scope: !12)
-// CHECK:STDOUT: !15 = !DILocation(line: 22, column: 19, scope: !12)
-// CHECK:STDOUT: !16 = !DILocation(line: 23, column: 3, scope: !12)
+// CHECK:STDOUT: !6 = !{!7, !7, !7}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !8 = !{!9, !10}
+// CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
+// CHECK:STDOUT: !10 = !DILocalVariable(arg: 2, scope: !4, type: !7)
+// CHECK:STDOUT: !11 = !DILocation(line: 16, column: 52, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 16, column: 45, scope: !4)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "TestNeq", linkageName: "_CTestNeq.Main", scope: null, file: !3, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
+// CHECK:STDOUT: !14 = !{!15, !16}
+// CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !13, type: !7)
+// CHECK:STDOUT: !16 = !DILocalVariable(arg: 2, scope: !13, type: !7)
+// CHECK:STDOUT: !17 = !DILocation(line: 19, column: 53, scope: !13)
+// CHECK:STDOUT: !18 = !DILocation(line: 19, column: 46, scope: !13)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "IfEq", linkageName: "_CIfEq.Main", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !20)
+// CHECK:STDOUT: !20 = !{!21, !22}
+// CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !19, type: !7)
+// CHECK:STDOUT: !22 = !DILocalVariable(arg: 2, scope: !19, type: !7)
+// CHECK:STDOUT: !23 = !DILocation(line: 22, column: 7, scope: !19)
+// CHECK:STDOUT: !24 = !DILocation(line: 22, column: 6, scope: !19)
+// CHECK:STDOUT: !25 = !DILocation(line: 22, column: 19, scope: !19)
+// CHECK:STDOUT: !26 = !DILocation(line: 23, column: 3, scope: !19)

@@ -163,13 +163,13 @@ fn Make() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CFn.Intermediate.Classes(ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !7
+// CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CFn.Derived.Classes(ptr %self) #0 !dbg !8 {
+// CHECK:STDOUT: define void @_CFn.Derived.Classes(ptr %self) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !9
+// CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -181,12 +181,17 @@ fn Make() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "classes.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Fn", linkageName: "_CFn.Intermediate.Classes", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Fn", linkageName: "_CFn.Intermediate.Classes", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 9, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Fn", linkageName: "_CFn.Derived.Classes", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 14, column: 3, scope: !8)
+// CHECK:STDOUT: !6 = !{null, !7}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !8 = !{!9}
+// CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
+// CHECK:STDOUT: !10 = !DILocation(line: 9, column: 3, scope: !4)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Fn", linkageName: "_CFn.Derived.Classes", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !12)
+// CHECK:STDOUT: !12 = !{!13}
+// CHECK:STDOUT: !13 = !DILocalVariable(arg: 1, scope: !11, type: !7)
+// CHECK:STDOUT: !14 = !DILocation(line: 14, column: 3, scope: !11)
 // CHECK:STDOUT: ; ModuleID = 'create.carbon'
 // CHECK:STDOUT: source_filename = "create.carbon"
 // CHECK:STDOUT:
@@ -225,10 +230,10 @@ fn Make() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CUse.Create(ptr %v) #0 !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Intermediate.Fn.call.vtable = load ptr, ptr %v, align 8, !dbg !16
-// CHECK:STDOUT:   %Intermediate.Fn.call = call ptr @llvm.load.relative.i32(ptr %Intermediate.Fn.call.vtable, i32 0), !dbg !16
-// CHECK:STDOUT:   call void %Intermediate.Fn.call(ptr %v), !dbg !16
-// CHECK:STDOUT:   ret void, !dbg !17
+// CHECK:STDOUT:   %Intermediate.Fn.call.vtable = load ptr, ptr %v, align 8, !dbg !21
+// CHECK:STDOUT:   %Intermediate.Fn.call = call ptr @llvm.load.relative.i32(ptr %Intermediate.Fn.call.vtable, i32 0), !dbg !21
+// CHECK:STDOUT:   call void %Intermediate.Fn.call(ptr %v), !dbg !21
+// CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -258,7 +263,7 @@ fn Make() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "create.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Create", linkageName: "_CCreate.Create", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 7, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 8, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 9, column: 3, scope: !4)
@@ -267,9 +272,14 @@ fn Make() {
 // CHECK:STDOUT: !12 = !DILocation(line: 9, column: 28, scope: !4)
 // CHECK:STDOUT: !13 = !DILocation(line: 9, column: 37, scope: !4)
 // CHECK:STDOUT: !14 = !DILocation(line: 6, column: 1, scope: !4)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Create", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !16 = !DILocation(line: 16, column: 3, scope: !15)
-// CHECK:STDOUT: !17 = !DILocation(line: 15, column: 1, scope: !15)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Create", scope: null, file: !3, line: 15, type: !16, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !19)
+// CHECK:STDOUT: !16 = !DISubroutineType(types: !17)
+// CHECK:STDOUT: !17 = !{null, !18}
+// CHECK:STDOUT: !18 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !19 = !{!20}
+// CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !15, type: !18)
+// CHECK:STDOUT: !21 = !DILocation(line: 16, column: 3, scope: !15)
+// CHECK:STDOUT: !22 = !DILocation(line: 15, column: 1, scope: !15)
 // CHECK:STDOUT: ; ModuleID = 'member_init.carbon'
 // CHECK:STDOUT: source_filename = "member_init.carbon"
 // CHECK:STDOUT:
@@ -279,30 +289,30 @@ fn Make() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CFn.Base.MemberInit(ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !7
+// CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CFn.MemberInit() #0 !dbg !8 {
+// CHECK:STDOUT: define void @_CFn.MemberInit() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %i.var = alloca i32, align 4, !dbg !9
-// CHECK:STDOUT:   %v.var = alloca { ptr, i32 }, align 8, !dbg !10
-// CHECK:STDOUT:   %u.var = alloca { ptr, i32 }, align 8, !dbg !11
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %i.var), !dbg !9
-// CHECK:STDOUT:   store i32 3, ptr %i.var, align 4, !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !10
-// CHECK:STDOUT:   %.loc11_24.2.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 0, !dbg !12
-// CHECK:STDOUT:   %.loc11_23 = load i32, ptr %i.var, align 4, !dbg !13
-// CHECK:STDOUT:   %.loc11_24.4.m = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 1, !dbg !12
-// CHECK:STDOUT:   store i32 %.loc11_23, ptr %.loc11_24.4.m, align 4, !dbg !12
-// CHECK:STDOUT:   store ptr @"_CBase.MemberInit.$vtable", ptr %.loc11_24.2.vptr, align 8, !dbg !12
-// CHECK:STDOUT:   %.loc12_4.m = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 1, !dbg !14
-// CHECK:STDOUT:   store i32 5, ptr %.loc12_4.m, align 4, !dbg !14
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %u.var), !dbg !11
-// CHECK:STDOUT:   %.loc13_24.2.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %u.var, i32 0, i32 0, !dbg !15
-// CHECK:STDOUT:   %.loc13_24.5.m = getelementptr inbounds nuw { ptr, i32 }, ptr %u.var, i32 0, i32 1, !dbg !15
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %u.var, ptr align 8 @Base.val.loc13_3, i64 16, i1 false), !dbg !11
-// CHECK:STDOUT:   ret void, !dbg !16
+// CHECK:STDOUT:   %i.var = alloca i32, align 4, !dbg !14
+// CHECK:STDOUT:   %v.var = alloca { ptr, i32 }, align 8, !dbg !15
+// CHECK:STDOUT:   %u.var = alloca { ptr, i32 }, align 8, !dbg !16
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %i.var), !dbg !14
+// CHECK:STDOUT:   store i32 3, ptr %i.var, align 4, !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !15
+// CHECK:STDOUT:   %.loc11_24.2.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 0, !dbg !17
+// CHECK:STDOUT:   %.loc11_23 = load i32, ptr %i.var, align 4, !dbg !18
+// CHECK:STDOUT:   %.loc11_24.4.m = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 1, !dbg !17
+// CHECK:STDOUT:   store i32 %.loc11_23, ptr %.loc11_24.4.m, align 4, !dbg !17
+// CHECK:STDOUT:   store ptr @"_CBase.MemberInit.$vtable", ptr %.loc11_24.2.vptr, align 8, !dbg !17
+// CHECK:STDOUT:   %.loc12_4.m = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 1, !dbg !19
+// CHECK:STDOUT:   store i32 5, ptr %.loc12_4.m, align 4, !dbg !19
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %u.var), !dbg !16
+// CHECK:STDOUT:   %.loc13_24.2.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %u.var, i32 0, i32 0, !dbg !20
+// CHECK:STDOUT:   %.loc13_24.5.m = getelementptr inbounds nuw { ptr, i32 }, ptr %u.var, i32 0, i32 1, !dbg !20
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %u.var, ptr align 8 @Base.val.loc13_3, i64 16, i1 false), !dbg !16
+// CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -325,19 +335,24 @@ fn Make() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "member_init.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Fn", linkageName: "_CFn.Base.MemberInit", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Fn", linkageName: "_CFn.Base.MemberInit", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 6, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Fn", linkageName: "_CFn.MemberInit", scope: null, file: !3, line: 9, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 10, column: 3, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 11, column: 3, scope: !8)
-// CHECK:STDOUT: !11 = !DILocation(line: 13, column: 3, scope: !8)
-// CHECK:STDOUT: !12 = !DILocation(line: 11, column: 17, scope: !8)
-// CHECK:STDOUT: !13 = !DILocation(line: 11, column: 23, scope: !8)
-// CHECK:STDOUT: !14 = !DILocation(line: 12, column: 3, scope: !8)
-// CHECK:STDOUT: !15 = !DILocation(line: 13, column: 17, scope: !8)
-// CHECK:STDOUT: !16 = !DILocation(line: 9, column: 1, scope: !8)
+// CHECK:STDOUT: !6 = !{null, !7}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !8 = !{!9}
+// CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
+// CHECK:STDOUT: !10 = !DILocation(line: 6, column: 3, scope: !4)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Fn", linkageName: "_CFn.MemberInit", scope: null, file: !3, line: 9, type: !12, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
+// CHECK:STDOUT: !13 = !{null}
+// CHECK:STDOUT: !14 = !DILocation(line: 10, column: 3, scope: !11)
+// CHECK:STDOUT: !15 = !DILocation(line: 11, column: 3, scope: !11)
+// CHECK:STDOUT: !16 = !DILocation(line: 13, column: 3, scope: !11)
+// CHECK:STDOUT: !17 = !DILocation(line: 11, column: 17, scope: !11)
+// CHECK:STDOUT: !18 = !DILocation(line: 11, column: 23, scope: !11)
+// CHECK:STDOUT: !19 = !DILocation(line: 12, column: 3, scope: !11)
+// CHECK:STDOUT: !20 = !DILocation(line: 13, column: 17, scope: !11)
+// CHECK:STDOUT: !21 = !DILocation(line: 9, column: 1, scope: !11)
 // CHECK:STDOUT: ; ModuleID = 'member_brace_init.carbon'
 // CHECK:STDOUT: source_filename = "member_brace_init.carbon"
 // CHECK:STDOUT:
@@ -377,7 +392,7 @@ fn Make() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "member_brace_init.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 13, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 13, column: 21, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 13, column: 30, scope: !4)
@@ -392,10 +407,10 @@ fn Make() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CUse.Main(ptr %b) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Base.F.call.vtable = load ptr, ptr %b, align 8, !dbg !7
-// CHECK:STDOUT:   %Base.F.call = call ptr @llvm.load.relative.i32(ptr %Base.F.call.vtable, i32 0), !dbg !7
-// CHECK:STDOUT:   call void %Base.F.call(ptr %b), !dbg !7
-// CHECK:STDOUT:   ret void, !dbg !8
+// CHECK:STDOUT:   %Base.F.call.vtable = load ptr, ptr %b, align 8, !dbg !10
+// CHECK:STDOUT:   %Base.F.call = call ptr @llvm.load.relative.i32(ptr %Base.F.call.vtable, i32 0), !dbg !10
+// CHECK:STDOUT:   call void %Base.F.call(ptr %b), !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: read)
@@ -411,11 +426,14 @@ fn Make() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "call.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 9, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 8, column: 1, scope: !4)
+// CHECK:STDOUT: !6 = !{null, !7}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !8 = !{!9}
+// CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
+// CHECK:STDOUT: !10 = !DILocation(line: 9, column: 3, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 8, column: 1, scope: !4)
 // CHECK:STDOUT: ; ModuleID = 'call_impl.carbon'
 // CHECK:STDOUT: source_filename = "call_impl.carbon"
 // CHECK:STDOUT:
@@ -464,7 +482,7 @@ fn Make() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "call_impl.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 14, column: 21, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 14, column: 30, scope: !4)
@@ -505,17 +523,17 @@ fn Make() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.b29a32b2b49cc0f3(ptr %self) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %v.var = alloca {}, align 8, !dbg !13
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !13
-// CHECK:STDOUT:   ret void, !dbg !14
+// CHECK:STDOUT:   %v.var = alloca {}, align 8, !dbg !18
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !18
+// CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.aa6c84e7fdd60e03(ptr %self) #0 !dbg !15 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.aa6c84e7fdd60e03(ptr %self) #0 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %v.var = alloca { {} }, align 8, !dbg !16
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !16
-// CHECK:STDOUT:   ret void, !dbg !17
+// CHECK:STDOUT:   %v.var = alloca { {} }, align 8, !dbg !23
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !23
+// CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -541,18 +559,25 @@ fn Make() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "generic_use.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 16, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 17, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 16, column: 22, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 17, column: 22, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 15, column: 1, scope: !4)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main.b29a32b2b49cc0f3", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = !DILocation(line: 6, column: 5, scope: !12)
-// CHECK:STDOUT: !14 = !DILocation(line: 5, column: 3, scope: !12)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main.aa6c84e7fdd60e03", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !16 = !DILocation(line: 6, column: 5, scope: !15)
-// CHECK:STDOUT: !17 = !DILocation(line: 5, column: 3, scope: !15)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main.b29a32b2b49cc0f3", scope: null, file: !3, line: 5, type: !13, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !16)
+// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
+// CHECK:STDOUT: !14 = !{null, !15}
+// CHECK:STDOUT: !15 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !16 = !{!17}
+// CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !12, type: !15)
+// CHECK:STDOUT: !18 = !DILocation(line: 6, column: 5, scope: !12)
+// CHECK:STDOUT: !19 = !DILocation(line: 5, column: 3, scope: !12)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main.aa6c84e7fdd60e03", scope: null, file: !3, line: 5, type: !13, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !21)
+// CHECK:STDOUT: !21 = !{!22}
+// CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !20, type: !15)
+// CHECK:STDOUT: !23 = !DILocation(line: 6, column: 5, scope: !20)
+// CHECK:STDOUT: !24 = !DILocation(line: 5, column: 3, scope: !20)
 // CHECK:STDOUT: ; ModuleID = 'generic_base.carbon'
 // CHECK:STDOUT: source_filename = "generic_base.carbon"
 // CHECK:STDOUT:
@@ -569,7 +594,7 @@ fn Make() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.4d2ffa01ebfb7a1d(ptr %self) #0 !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -587,8 +612,13 @@ fn Make() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "generic_base.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 15, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 14, column: 1, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main.4d2ffa01ebfb7a1d", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 5, column: 3, scope: !9)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main.4d2ffa01ebfb7a1d", scope: null, file: !3, line: 5, type: !10, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !13)
+// CHECK:STDOUT: !10 = !DISubroutineType(types: !11)
+// CHECK:STDOUT: !11 = !{null, !12}
+// CHECK:STDOUT: !12 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !13 = !{!14}
+// CHECK:STDOUT: !14 = !DILocalVariable(arg: 1, scope: !9, type: !12)
+// CHECK:STDOUT: !15 = !DILocation(line: 5, column: 3, scope: !9)

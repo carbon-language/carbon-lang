@@ -30,15 +30,15 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CCallF.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !7
-// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !7
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc20_3, i64 0, i1 false), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !8
-// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !8
-// CHECK:STDOUT:   %.loc22_14 = load i32, ptr %n.var, align 4, !dbg !9
-// CHECK:STDOUT:   %C.F.call = call i32 @_CF.C.Main.5450dc8e8b8e0899(ptr %c.var, i32 %.loc22_14), !dbg !10
-// CHECK:STDOUT:   ret i32 %C.F.call, !dbg !11
+// CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !8
+// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc20_3, i64 0, i1 false), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !9
+// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !9
+// CHECK:STDOUT:   %.loc22_14 = load i32, ptr %n.var, align 4, !dbg !10
+// CHECK:STDOUT:   %C.F.call = call i32 @_CF.C.Main.5450dc8e8b8e0899(ptr %c.var, i32 %.loc22_14), !dbg !11
+// CHECK:STDOUT:   ret i32 %C.F.call, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -48,9 +48,9 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.C.Main.5450dc8e8b8e0899(ptr %self, i32 %x) #0 !dbg !12 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.C.Main.5450dc8e8b8e0899(ptr %self, i32 %x) #0 !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %x, !dbg !13
+// CHECK:STDOUT:   ret i32 %x, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -69,11 +69,18 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: !3 = !DIFile(filename: "call_method.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "CallF", linkageName: "_CCallF.Main", scope: null, file: !3, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 20, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 21, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 22, column: 14, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 22, column: 10, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 22, column: 3, scope: !4)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.5450dc8e8b8e0899", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = !DILocation(line: 15, column: 5, scope: !12)
+// CHECK:STDOUT: !6 = !{!7}
+// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !8 = !DILocation(line: 20, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 21, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 22, column: 14, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 22, column: 10, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 22, column: 3, scope: !4)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.5450dc8e8b8e0899", scope: null, file: !3, line: 14, type: !14, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !17)
+// CHECK:STDOUT: !14 = !DISubroutineType(types: !15)
+// CHECK:STDOUT: !15 = !{!7, !16, !7}
+// CHECK:STDOUT: !16 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !17 = !{!18, !19}
+// CHECK:STDOUT: !18 = !DILocalVariable(arg: 1, scope: !13, type: !16)
+// CHECK:STDOUT: !19 = !DILocalVariable(arg: 2, scope: !13, type: !7)
+// CHECK:STDOUT: !20 = !DILocation(line: 15, column: 5, scope: !13)

@@ -27,11 +27,11 @@ fn Make() -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMake.Main(ptr sret({ i32, ptr }) %return) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc20_30.3.data = getelementptr inbounds nuw { i32, ptr }, ptr %return, i32 0, i32 0, !dbg !7
-// CHECK:STDOUT:   %.loc20_30.5.next = getelementptr inbounds nuw { i32, ptr }, ptr %return, i32 0, i32 1, !dbg !7
-// CHECK:STDOUT:   store ptr %return, ptr %.loc20_30.5.next, align 8, !dbg !7
-// CHECK:STDOUT:   store i32 42, ptr %.loc20_30.3.data, align 4, !dbg !7
-// CHECK:STDOUT:   ret void, !dbg !8
+// CHECK:STDOUT:   %.loc20_30.3.data = getelementptr inbounds nuw { i32, ptr }, ptr %return, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %.loc20_30.5.next = getelementptr inbounds nuw { i32, ptr }, ptr %return, i32 0, i32 1, !dbg !8
+// CHECK:STDOUT:   store ptr %return, ptr %.loc20_30.5.next, align 8, !dbg !8
+// CHECK:STDOUT:   store i32 42, ptr %.loc20_30.3.data, align 4, !dbg !8
+// CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -45,6 +45,7 @@ fn Make() -> C {
 // CHECK:STDOUT: !3 = !DIFile(filename: "return_var.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 20, column: 7, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 21, column: 3, scope: !4)
+// CHECK:STDOUT: !6 = !{!7}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !8 = !DILocation(line: 20, column: 7, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 21, column: 3, scope: !4)

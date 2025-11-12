@@ -23,20 +23,20 @@ fn F(p: i32**) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CF.Main(ptr %p) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %a.var = alloca ptr, align 8, !dbg !7
-// CHECK:STDOUT:   %b.var = alloca ptr, align 8, !dbg !8
-// CHECK:STDOUT:   %c.var = alloca ptr, align 8, !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !7
-// CHECK:STDOUT:   store ptr %p, ptr %a.var, align 8, !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !8
-// CHECK:STDOUT:   %.loc15_17.2 = load ptr, ptr %p, align 8, !dbg !10
-// CHECK:STDOUT:   store ptr %.loc15_17.2, ptr %b.var, align 8, !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !9
-// CHECK:STDOUT:   store ptr %b.var, ptr %c.var, align 8, !dbg !9
-// CHECK:STDOUT:   %.loc17_12 = load ptr, ptr %c.var, align 8, !dbg !11
-// CHECK:STDOUT:   %.loc17_11.2 = load ptr, ptr %.loc17_12, align 8, !dbg !12
-// CHECK:STDOUT:   %.loc17_10.2 = load i32, ptr %.loc17_11.2, align 4, !dbg !13
-// CHECK:STDOUT:   ret i32 %.loc17_10.2, !dbg !14
+// CHECK:STDOUT:   %a.var = alloca ptr, align 8, !dbg !11
+// CHECK:STDOUT:   %b.var = alloca ptr, align 8, !dbg !12
+// CHECK:STDOUT:   %c.var = alloca ptr, align 8, !dbg !13
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !11
+// CHECK:STDOUT:   store ptr %p, ptr %a.var, align 8, !dbg !11
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !12
+// CHECK:STDOUT:   %.loc15_17.2 = load ptr, ptr %p, align 8, !dbg !14
+// CHECK:STDOUT:   store ptr %.loc15_17.2, ptr %b.var, align 8, !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !13
+// CHECK:STDOUT:   store ptr %b.var, ptr %c.var, align 8, !dbg !13
+// CHECK:STDOUT:   %.loc17_12 = load ptr, ptr %c.var, align 8, !dbg !15
+// CHECK:STDOUT:   %.loc17_11.2 = load ptr, ptr %.loc17_12, align 8, !dbg !16
+// CHECK:STDOUT:   %.loc17_10.2 = load i32, ptr %.loc17_11.2, align 4, !dbg !17
+// CHECK:STDOUT:   ret i32 %.loc17_10.2, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -55,14 +55,18 @@ fn F(p: i32**) -> i32 {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "pointer_to_pointer.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !9)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 15, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 17, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 17, column: 12, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 17, column: 11, scope: !4)
-// CHECK:STDOUT: !13 = !DILocation(line: 17, column: 10, scope: !4)
-// CHECK:STDOUT: !14 = !DILocation(line: 17, column: 3, scope: !4)
+// CHECK:STDOUT: !6 = !{!7, !8}
+// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !8 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !9 = !{!10}
+// CHECK:STDOUT: !10 = !DILocalVariable(arg: 1, scope: !4, type: !8)
+// CHECK:STDOUT: !11 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 15, column: 3, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 16, column: 3, scope: !4)
+// CHECK:STDOUT: !14 = !DILocation(line: 15, column: 17, scope: !4)
+// CHECK:STDOUT: !15 = !DILocation(line: 17, column: 12, scope: !4)
+// CHECK:STDOUT: !16 = !DILocation(line: 17, column: 11, scope: !4)
+// CHECK:STDOUT: !17 = !DILocation(line: 17, column: 10, scope: !4)
+// CHECK:STDOUT: !18 = !DILocation(line: 17, column: 3, scope: !4)
