@@ -12,6 +12,16 @@ import library "prelude/types/maybe_unformed";
 
 namespace CppCompat;
 
+// C++ `std::nullptr_t` as a Carbon type.
+//
+// The C++ type `decltype(nullptr)`, also known by the library-provided alias
+// `std::nullptr_t`, is a fundamental type, not a class type, so it needs a
+// custom mapping as part of C++ interoperability.  We map it to this class
+// type. After a suitable import, this class can be named as
+// `Cpp.std.nullptr_t`. This is also the type of the constant `Cpp.nullptr`.
+//
+// This type supports implicit conversion to any optional pointer type, and
+// produces the `None` value of that type.
 class CppCompat.NullptrT {
   // nullptr_t has the same size and alignment as a pointer, but the
   // corresponding pointer is always unformed.
