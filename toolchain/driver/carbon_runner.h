@@ -10,6 +10,7 @@
 #include "common/error.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/TargetParser/Triple.h"
 #include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"
@@ -29,11 +30,11 @@ class CarbonRunner : ToolRunnerBase {
   auto BuildCoreLibraries(const Runtimes::Cache::Features& features,
                           Runtimes& runtimes) -> ErrorOr<std::filesystem::path>;
 
-  auto Compile(llvm::SmallVector<std::string> input_filenames,
-               Lower::OptimizationLevel opt_level, llvm::StringRef target,
+ private:
+  auto Compile(llvm::SmallVector<std::filesystem::path> input_filenames,
+               Lower::OptimizationLevel opt_level, llvm::Triple target,
                bool prelude_import) -> DriverResult;
 
- private:
   DriverEnv* driver_env_;
 };
 }  // namespace Carbon

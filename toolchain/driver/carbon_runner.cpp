@@ -17,6 +17,7 @@
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/TargetParser/Triple.h"
+#include "toolchain/driver/build_runtimes_subcommand.h"
 #include "toolchain/driver/compile_subcommand.h"
 #include "toolchain/driver/driver.h"
 #include "toolchain/driver/driver_env.h"
@@ -44,6 +45,8 @@ auto CarbonRunner::BuildCoreLibraries(const Runtimes::Cache::Features& features,
   }
 
   std::string target = features.target;
+  llvm::Triple target_triple(target);
+
   CARBON_VLOG("Building Carbon core libraries for target '{0}'", target);
 
   // Create temporary directory.
@@ -65,7 +68,7 @@ auto CarbonRunner::BuildCoreLibraries(const Runtimes::Cache::Features& features,
   }
 
   // Copy files into the temporary directory.
-  llvm::SmallVector<std::string> tmp_src_files;
+  llvm::SmallVector<std::filesystem::path> tmp_src_files;
   for (const auto& core_src_file : core_src_files) {
     // Add parent directories.
     std::filesystem::path relative_core_src_file =
@@ -92,7 +95,7 @@ auto CarbonRunner::BuildCoreLibraries(const Runtimes::Cache::Features& features,
 
   // Compile object files.
   DriverResult result =
-      Compile(tmp_src_files, Lower::OptimizationLevel::Debug, target,
+      Compile(tmp_src_files, Lower::OptimizationLevel::Debug, target_triple,
               /*prelude_import=*/false);
   if (!result.success) {
     return Error("Failed to compile Core libraries.");
@@ -122,7 +125,6 @@ auto CarbonRunner::BuildCoreLibraries(const Runtimes::Cache::Features& features,
       Filesystem::WriteFile core_a_file,
       builder.dir().OpenWriteOnly(core_a_path, Filesystem::CreateAlways));
 
-  llvm::Triple target_triple(target);
   {
     llvm::raw_fd_ostream core_a_os = core_a_file.WriteStream();
     llvm::Error archive_err = llvm::writeArchiveToStream(
@@ -140,21 +142,23 @@ auto CarbonRunner::BuildCoreLibraries(const Runtimes::Cache::Features& features,
   return std::move(builder).Commit();
 }
 
-auto CarbonRunner::Compile(llvm::SmallVector<std::string> input_filenames,
-                           Lower::OptimizationLevel opt_level,
-                           llvm::StringRef target, bool prelude_import)
-    -> DriverResult {
+auto CarbonRunner::Compile(
+    llvm::SmallVector<std::filesystem::path> input_filenames,
+    Lower::OptimizationLevel opt_level, llvm::Triple target,
+    bool prelude_import) -> DriverResult {
   // Convert to StringRef vector for options.
   llvm::SmallVector<llvm::StringRef> input_filename_refs;
   for (const auto& filename : input_filenames) {
-    input_filename_refs.push_back(filename);
+    // Keep StringRef valid by using c_str() and length().
+    input_filename_refs.push_back(
+        llvm::StringRef(filename.c_str(), filename.string().length()));
   }
 
   CompileOptions options = {.opt_level = opt_level,
-                            .codegen_options = {.target = target},
+                            .codegen_options = {.target = target.str()},
                             .input_filenames = input_filename_refs,
                             .prelude_import = prelude_import};
-  CompileSubcommand subcommand(options);
+  CompileSubcommand subcommand(std::move(options));
   return subcommand.Run(*driver_env_);
 }
 
