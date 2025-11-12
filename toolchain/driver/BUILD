@@ -17,6 +17,25 @@ filegroup(
     ]),
 )
 
+cc_test(
+  name = "carbon_runner_test",
+    size = "small",
+    srcs = ["carbon_runner_test.cpp"],
+    deps = [
+        ":driver",
+        ":llvm_runner",
+        ":runtimes_cache",
+        "//common:all_llvm_targets",
+        "//common:raw_string_ostream",
+        "//testing/base:gtest_main",
+        "//testing/base:capture_std_streams",
+        "//testing/base:global_exe_path",
+        "//toolchain/install:install_paths",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:TargetParser",
+    ],
+)
+
 cc_library(
     name = "clang_runner",
     srcs = ["clang_runner.cpp"],
