@@ -8,6 +8,13 @@ import library "prelude/copy";
 import library "prelude/destroy";
 import library "prelude/types/char";
 import library "prelude/types/uint";
+import library "prelude/operators/index";
+import library "prelude/types/int";
+
+class String;
+
+// Forward declaration for builtin function
+fn StringAt(s: String, index: i32) -> Char;
 
 class String {
   fn Size[self: Self]() -> u64 { return self.size; }
@@ -16,8 +23,15 @@ class String {
     fn Op[self: Self]() -> Self { return {.ptr = self.ptr, .size = self.size}; }
   }
 
+  impl as IndexWith(i32) where .ElementType = Char {
+    fn At[self: Self](subscript: i32) -> Char {
+      return StringAt(self, subscript);
+    }
+  }
   // TODO: This should be an array iterator.
   private var ptr: Char*;
   // TODO: This should be a word-sized integer.
   private var size: u64;
 }
+
+fn StringAt(s: String, index: i32) -> Char = "string.at";
