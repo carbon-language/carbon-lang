@@ -218,6 +218,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %AdaptWithBaseAndFields.elem.ddf: type = unbound_element_type %AdaptWithBaseAndFields, %i32 [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -254,7 +255,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc8: %AdaptWithBaseAndFields.elem.ddf = field_decl n, element<none> [concrete]
-// CHECK:STDOUT:   %.loc16_10: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc16_10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc16_11: type = converted %.loc16_10, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   adapt_decl %.loc16_11 [concrete]
 // CHECK:STDOUT:   complete_type_witness = <error>

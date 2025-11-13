@@ -129,6 +129,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %int_5.0f6: %i32 = int_value 5 [concrete]
 // CHECK:STDOUT:   %Class.f29: type = class_type @Class, @Class(%ptr.235, %int_5.0f6) [concrete]
 // CHECK:STDOUT:   %pattern_type.d51: type = pattern_type %Class.f29 [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.0b3: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b [concrete]
 // CHECK:STDOUT:   %bound_method.9be: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -199,7 +200,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %b.var: ref %Class.dd4 = var %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc9_19.1: type = splice_block %Class.loc9 [concrete = constants.%Class.dd4] {
 // CHECK:STDOUT:     %Class.ref.loc9: %Class.type = name_ref Class, %Class.decl [concrete = constants.%Class.generic]
-// CHECK:STDOUT:     %.loc9_15: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc9_15: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:     %.loc9_19.2: type = converted %.loc9_15, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %impl.elem0.loc9: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
@@ -542,6 +543,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %require_complete.799: <witness> = require_complete_type %Outer.d8f [symbolic]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Outer.val.f34: %Outer.d8f = struct_value () [symbolic]
 // CHECK:STDOUT:   %Inner.type.2d0: type = generic_class_type @Inner, @Outer(%U) [symbolic]
 // CHECK:STDOUT:   %Inner.generic.489: %Inner.type.2d0 = struct_value () [symbolic]
@@ -691,7 +693,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %return.param: @Inner.A.%Outer.loc4_22.1 (%Outer.d8f) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc5_15.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc5_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc5_15.2: init @Inner.A.%Outer.loc4_22.1 (%Outer.d8f) = class_init (), %return [symbolic = %Outer.val (constants.%Outer.val.f34)]
 // CHECK:STDOUT:     %.loc5_16: init @Inner.A.%Outer.loc4_22.1 (%Outer.d8f) = converted %.loc5_15.1, %.loc5_15.2 [symbolic = %Outer.val (constants.%Outer.val.f34)]
 // CHECK:STDOUT:     return %.loc5_16 to %return
@@ -709,7 +711,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %return.param: @Inner.B.%Outer.loc7_22.1 (%Outer.680) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc8_15.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc8_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc8_15.2: init @Inner.B.%Outer.loc7_22.1 (%Outer.680) = class_init (), %return [symbolic = %Outer.val (constants.%Outer.val.268)]
 // CHECK:STDOUT:     %.loc8_16: init @Inner.B.%Outer.loc7_22.1 (%Outer.680) = converted %.loc8_15.1, %.loc8_15.2 [symbolic = %Outer.val (constants.%Outer.val.268)]
 // CHECK:STDOUT:     return %.loc8_16 to %return
@@ -729,7 +731,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %return.param: @Inner.C.%Inner.loc10_22.1 (%Inner.514) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc11_15.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc11_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc11_15.2: init @Inner.C.%Inner.loc10_22.1 (%Inner.514) = class_init (), %return [symbolic = %Inner.val (constants.%Inner.val.39c)]
 // CHECK:STDOUT:     %.loc11_16: init @Inner.C.%Inner.loc10_22.1 (%Inner.514) = converted %.loc11_15.1, %.loc11_15.2 [symbolic = %Inner.val (constants.%Inner.val.39c)]
 // CHECK:STDOUT:     return %.loc11_16 to %return
@@ -750,7 +752,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %return.param: @Inner.D.%Inner.loc13_22.1 (%Inner.f6c) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc14_15.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc14_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc14_15.2: init @Inner.D.%Inner.loc13_22.1 (%Inner.f6c) = class_init (), %return [symbolic = %Inner.val (constants.%Inner.val.6e7)]
 // CHECK:STDOUT:     %.loc14_16: init @Inner.D.%Inner.loc13_22.1 (%Inner.f6c) = converted %.loc14_15.1, %.loc14_15.2 [symbolic = %Inner.val (constants.%Inner.val.6e7)]
 // CHECK:STDOUT:     return %.loc14_16 to %return

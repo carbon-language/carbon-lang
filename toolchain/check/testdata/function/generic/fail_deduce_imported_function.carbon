@@ -138,7 +138,9 @@ fn B() {
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: %empty_struct_type} [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.b = struct_value (%empty_struct) [concrete]
 // CHECK:STDOUT:   %A.type.fad: type = fn_type @A.1 [concrete]
 // CHECK:STDOUT:   %A.7a0: %A.type.fad = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -211,12 +213,12 @@ fn B() {
 // CHECK:STDOUT: fn @B() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref.loc14: %A.type.00d = name_ref A, file.%A.decl [concrete = constants.%A.1db]
-// CHECK:STDOUT:   %.loc14_12: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc14_13: %struct_type.b = struct_literal (%.loc14_12)
+// CHECK:STDOUT:   %.loc14_12: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc14_13: %struct_type.b = struct_literal (%.loc14_12) [concrete = constants.%struct]
 // CHECK:STDOUT:   %Lib.ref: <namespace> = name_ref Lib, imports.%Lib [concrete = imports.%Lib]
 // CHECK:STDOUT:   %A.ref.loc24: %A.type.fad = name_ref A, imports.%Lib.A [concrete = constants.%A.7a0]
-// CHECK:STDOUT:   %.loc24_16: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc24_17: %struct_type.b = struct_literal (%.loc24_16)
+// CHECK:STDOUT:   %.loc24_16: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc24_17: %struct_type.b = struct_literal (%.loc24_16) [concrete = constants.%struct]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

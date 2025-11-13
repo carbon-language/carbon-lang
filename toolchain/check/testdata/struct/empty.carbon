@@ -19,8 +19,8 @@ var y: {} = x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -34,7 +34,7 @@ var y: {} = x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %empty_struct_type = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %.loc15_9.1: type = splice_block %.loc15_9.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc15_9.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc15_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc15_9.3: type = converted %.loc15_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_struct_type = ref_binding x, %x.var [concrete = %x.var]
@@ -44,7 +44,7 @@ var y: {} = x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %empty_struct_type = var %y.var_patt [concrete]
 // CHECK:STDOUT:   %.loc16_9.1: type = splice_block %.loc16_9.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc16_9.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc16_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc16_9.3: type = converted %.loc16_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %empty_struct_type = ref_binding y, %y.var [concrete = %y.var]
@@ -52,7 +52,7 @@ var y: {} = x;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_14.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc15_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc15_14.2: init %empty_struct_type = struct_init () to file.%x.var [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc15_1: init %empty_struct_type = converted %.loc15_14.1, %.loc15_14.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc15_1

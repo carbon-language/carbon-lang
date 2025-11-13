@@ -55,8 +55,8 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %Constant.type: type = fn_type @Constant [concrete]
 // CHECK:STDOUT:   %Constant: %Constant.type = struct_value () [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
-// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %facet_value.ff9: %type_where = facet_value %empty_tuple.type, () [concrete]
@@ -221,7 +221,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   br !if.expr.result.loc23(%.loc23_31.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc23:
-// CHECK:STDOUT:   %.loc23_42: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc23_42: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc23_36: type = converted %.loc23_42, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   br !if.expr.result.loc23(%.loc23_36)
 // CHECK:STDOUT:
@@ -264,7 +264,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   br !if.expr.result.loc24(%.loc24_32.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc24:
-// CHECK:STDOUT:   %.loc24_43: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc24_43: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc24_37: type = converted %.loc24_43, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   br !if.expr.result.loc24(%.loc24_37)
 // CHECK:STDOUT:
@@ -307,7 +307,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   br !if.expr.result.loc25(%.loc25_32.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc25:
-// CHECK:STDOUT:   %.loc25_43: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc25_43: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc25_37: type = converted %.loc25_43, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   br !if.expr.result.loc25(%.loc25_37)
 // CHECK:STDOUT:
@@ -322,7 +322,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.cb1 = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var %d.var_patt
-// CHECK:STDOUT:   %.loc26_49.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc26_49.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc26_49.2: init %empty_tuple.type = tuple_init () to %d.var [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc26_3: init %empty_tuple.type = converted %.loc26_49.1, %.loc26_49.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %d.var, %.loc26_3
@@ -349,7 +349,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   br !if.expr.result.loc26(%.loc26_33.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc26:
-// CHECK:STDOUT:   %.loc26_44: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc26_44: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc26_38: type = converted %.loc26_44, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   br !if.expr.result.loc26(%.loc26_38)
 // CHECK:STDOUT:
@@ -417,7 +417,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   br !if.expr.result(%.loc30_28.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else:
-// CHECK:STDOUT:   %.loc30_39: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc30_39: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc30_33: type = converted %.loc30_39, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   br !if.expr.result(%.loc30_33)
 // CHECK:STDOUT:

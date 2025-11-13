@@ -30,6 +30,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %pattern_type.8ce: type = pattern_type %struct_type.a.5e8 [concrete]
 // CHECK:STDOUT:   %float.126: Core.FloatLiteral = float_literal_value 40e-1 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b4b: type = struct_type {.a: Core.FloatLiteral} [concrete]
+// CHECK:STDOUT:   %struct.ea2: %struct_type.a.b4b = struct_value (%float.126) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.73d: type = facet_type <@ImplicitAs, @ImplicitAs(%f64.d77)> [concrete]
@@ -46,7 +47,7 @@ var y: i32 = x.b;
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.ImplicitAs.impl.Convert.d57, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(%int_64) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float.126, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %float.d15: %f64.d77 = float_value 4 [concrete]
-// CHECK:STDOUT:   %struct: %struct_type.a.5e8 = struct_value (%float.d15) [concrete]
+// CHECK:STDOUT:   %struct.d6a: %struct_type.a.5e8 = struct_value (%float.d15) [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
@@ -102,15 +103,15 @@ var y: i32 = x.b;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 40e-1 [concrete = constants.%float.126]
-// CHECK:STDOUT:   %.loc15_29.1: %struct_type.a.b4b = struct_literal (%float)
+// CHECK:STDOUT:   %.loc15_29.1: %struct_type.a.b4b = struct_literal (%float) [concrete = constants.%struct.ea2]
 // CHECK:STDOUT:   %impl.elem0: %.c02 = impl_witness_access constants.%ImplicitAs.impl_witness.9db, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.d57]
 // CHECK:STDOUT:   %bound_method.loc15_29.1: <bound method> = bound_method %float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc15_29.2: <bound method> = bound_method %float, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f64.d77 = call %bound_method.loc15_29.2(%float) [concrete = constants.%float.d15]
 // CHECK:STDOUT:   %.loc15_29.2: init %f64.d77 = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.d15]
-// CHECK:STDOUT:   %.loc15_29.3: init %struct_type.a.5e8 = struct_init (%.loc15_29.2) to file.%x.var [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc15_1: init %struct_type.a.5e8 = converted %.loc15_29.1, %.loc15_29.3 [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc15_29.3: init %struct_type.a.5e8 = struct_init (%.loc15_29.2) to file.%x.var [concrete = constants.%struct.d6a]
+// CHECK:STDOUT:   %.loc15_1: init %struct_type.a.5e8 = converted %.loc15_29.1, %.loc15_29.3 [concrete = constants.%struct.d6a]
 // CHECK:STDOUT:   assign file.%x.var, %.loc15_1
 // CHECK:STDOUT:   %x.ref: ref %struct_type.a.5e8 = name_ref x, file.%x [concrete = file.%x.var]
 // CHECK:STDOUT:   assign file.%y.var, <error>

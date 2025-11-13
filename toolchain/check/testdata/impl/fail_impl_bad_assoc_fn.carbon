@@ -347,6 +347,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %struct_type.x.y.c4d: type = struct_type {.x: %Self.binding.as_type.49d, .y: %i32} [symbolic]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
+// CHECK:STDOUT:   %tuple.d1f: %tuple.type.24b = tuple_value (%ptr.e7a, %struct_type.x.y.c4d) [symbolic]
 // CHECK:STDOUT:   %tuple.type.82c: type = tuple_type (%ptr.e7a, %struct_type.x.y.c4d) [symbolic]
 // CHECK:STDOUT:   %pattern_type.b78: type = pattern_type %tuple.type.82c [symbolic]
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete]
@@ -360,6 +361,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %SelfNested.impl_witness.eb9: <witness> = impl_witness @SelfNestedBadParam.%SelfNested.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.4cd: type = ptr_type %SelfNestedBadParam [concrete]
 // CHECK:STDOUT:   %struct_type.x.y.871: type = struct_type {.x: %i32, .y: %i32} [concrete]
+// CHECK:STDOUT:   %tuple.660: %tuple.type.24b = tuple_value (%ptr.4cd, %struct_type.x.y.871) [concrete]
 // CHECK:STDOUT:   %tuple.type.a7d: type = tuple_type (%ptr.4cd, %struct_type.x.y.871) [concrete]
 // CHECK:STDOUT:   %pattern_type.714: type = pattern_type %tuple.type.a7d [concrete]
 // CHECK:STDOUT:   %array_type.a41: type = array_type %int_4, %SelfNestedBadParam [concrete]
@@ -368,6 +370,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %SelfNestedBadParam.as.SelfNested.impl.F.72ff49.1: %SelfNestedBadParam.as.SelfNested.impl.F.type.56b7c1.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %SelfNested.facet.182: %SelfNested.type = facet_value %SelfNestedBadParam, (%SelfNested.impl_witness.eb9) [concrete]
 // CHECK:STDOUT:   %struct_type.x.y.a89: type = struct_type {.x: %SelfNestedBadParam, .y: %i32} [concrete]
+// CHECK:STDOUT:   %tuple.bce: %tuple.type.24b = tuple_value (%ptr.4cd, %struct_type.x.y.a89) [concrete]
 // CHECK:STDOUT:   %tuple.type.9c9: type = tuple_type (%ptr.4cd, %struct_type.x.y.a89) [concrete]
 // CHECK:STDOUT:   %pattern_type.a5c: type = pattern_type %tuple.type.9c9 [concrete]
 // CHECK:STDOUT:   %SelfNestedBadParam.as.SelfNested.impl.F.type.56b7c1.2: type = fn_type @SelfNestedBadParam.as.SelfNested.impl.F.loc223_87.2 [concrete]
@@ -376,6 +379,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %SelfNested.impl_witness.c55: <witness> = impl_witness @SelfNestedBadReturnType.%SelfNested.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ptr.612: type = ptr_type %SelfNestedBadReturnType [concrete]
 // CHECK:STDOUT:   %struct_type.x.y.ac5: type = struct_type {.x: %SelfNestedBadReturnType, .y: %i32} [concrete]
+// CHECK:STDOUT:   %tuple.034: %tuple.type.24b = tuple_value (%ptr.612, %struct_type.x.y.ac5) [concrete]
 // CHECK:STDOUT:   %tuple.type.eb9: type = tuple_type (%ptr.612, %struct_type.x.y.ac5) [concrete]
 // CHECK:STDOUT:   %pattern_type.23f: type = pattern_type %tuple.type.eb9 [concrete]
 // CHECK:STDOUT:   %SelfNestedBadReturnType.as.SelfNested.impl.F.type.054b04.1: type = fn_type @SelfNestedBadReturnType.as.SelfNested.impl.F.loc239_112.1 [concrete]
@@ -521,7 +525,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %struct_type.x.y.loc211_37.2: type = struct_type {.x: @SelfNested.F.%Self.binding.as_type (%Self.binding.as_type.49d), .y: %i32} [symbolic = %struct_type.x.y.loc211_37.1 (constants.%struct_type.x.y.c4d)]
-// CHECK:STDOUT:       %.loc211_38.2: %tuple.type.24b = tuple_literal (%ptr.loc211_16.2, %struct_type.x.y.loc211_37.2)
+// CHECK:STDOUT:       %.loc211_38.2: %tuple.type.24b = tuple_literal (%ptr.loc211_16.2, %struct_type.x.y.loc211_37.2) [symbolic = %tuple (constants.%tuple.d1f)]
 // CHECK:STDOUT:       %.loc211_38.3: type = converted %.loc211_38.2, constants.%tuple.type.82c [symbolic = %tuple.type (constants.%tuple.type.82c)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @SelfNested.F.%tuple.type (%tuple.type.82c) = value_binding x, %x.param
@@ -899,7 +903,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:       %int_32.loc223_49: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc223_49: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %struct_type.x.y: type = struct_type {.x: %i32, .y: %i32} [concrete = constants.%struct_type.x.y.871]
-// CHECK:STDOUT:       %.loc223_53.2: %tuple.type.24b = tuple_literal (%ptr, %struct_type.x.y)
+// CHECK:STDOUT:       %.loc223_53.2: %tuple.type.24b = tuple_literal (%ptr, %struct_type.x.y) [concrete = constants.%tuple.660]
 // CHECK:STDOUT:       %.loc223_53.3: type = converted %.loc223_53.2, constants.%tuple.type.a7d [concrete = constants.%tuple.type.a7d]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %tuple.type.a7d = value_binding x, %x.param
@@ -942,7 +946,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %struct_type.x.y: type = struct_type {.x: %SelfNestedBadReturnType, .y: %i32} [concrete = constants.%struct_type.x.y.ac5]
-// CHECK:STDOUT:       %.loc239_78.2: %tuple.type.24b = tuple_literal (%ptr, %struct_type.x.y)
+// CHECK:STDOUT:       %.loc239_78.2: %tuple.type.24b = tuple_literal (%ptr, %struct_type.x.y) [concrete = constants.%tuple.034]
 // CHECK:STDOUT:       %.loc239_78.3: type = converted %.loc239_78.2, constants.%tuple.type.eb9 [concrete = constants.%tuple.type.eb9]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %tuple.type.eb9 = value_binding x, %x.param
@@ -1299,6 +1303,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.49d)]
 // CHECK:STDOUT:   %ptr.loc211_16.1: type = ptr_type %Self.binding.as_type [symbolic = %ptr.loc211_16.1 (constants.%ptr.e7a)]
 // CHECK:STDOUT:   %struct_type.x.y.loc211_37.1: type = struct_type {.x: @SelfNested.F.%Self.binding.as_type (%Self.binding.as_type.49d), .y: %i32} [symbolic = %struct_type.x.y.loc211_37.1 (constants.%struct_type.x.y.c4d)]
+// CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%ptr.loc211_16.1, %struct_type.x.y.loc211_37.1) [symbolic = %tuple (constants.%tuple.d1f)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%ptr.loc211_16.1, %struct_type.x.y.loc211_37.1) [symbolic = %tuple.type (constants.%tuple.type.82c)]
 // CHECK:STDOUT:   %pattern_type.loc211_8: type = pattern_type %tuple.type [symbolic = %pattern_type.loc211_8 (constants.%pattern_type.b78)]
 // CHECK:STDOUT:   %array_type.loc211_57.1: type = array_type constants.%int_4, %Self.binding.as_type [symbolic = %array_type.loc211_57.1 (constants.%array_type.023)]
@@ -1363,6 +1368,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.49d
 // CHECK:STDOUT:   %ptr.loc211_16.1 => constants.%ptr.e7a
 // CHECK:STDOUT:   %struct_type.x.y.loc211_37.1 => constants.%struct_type.x.y.c4d
+// CHECK:STDOUT:   %tuple => constants.%tuple.d1f
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.82c
 // CHECK:STDOUT:   %pattern_type.loc211_8 => constants.%pattern_type.b78
 // CHECK:STDOUT:   %array_type.loc211_57.1 => constants.%array_type.023
@@ -1374,6 +1380,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%SelfNestedBadParam
 // CHECK:STDOUT:   %ptr.loc211_16.1 => constants.%ptr.4cd
 // CHECK:STDOUT:   %struct_type.x.y.loc211_37.1 => constants.%struct_type.x.y.a89
+// CHECK:STDOUT:   %tuple => constants.%tuple.bce
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.9c9
 // CHECK:STDOUT:   %pattern_type.loc211_8 => constants.%pattern_type.a5c
 // CHECK:STDOUT:   %array_type.loc211_57.1 => constants.%array_type.a41
@@ -1385,6 +1392,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%SelfNestedBadReturnType
 // CHECK:STDOUT:   %ptr.loc211_16.1 => constants.%ptr.612
 // CHECK:STDOUT:   %struct_type.x.y.loc211_37.1 => constants.%struct_type.x.y.ac5
+// CHECK:STDOUT:   %tuple => constants.%tuple.034
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.eb9
 // CHECK:STDOUT:   %pattern_type.loc211_8 => constants.%pattern_type.23f
 // CHECK:STDOUT:   %array_type.loc211_57.1 => constants.%array_type.126

@@ -190,6 +190,7 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:   %array_type: type = array_type %int_3.1ba, %i32.builtin [concrete]
 // CHECK:STDOUT:   %pattern_type.9e2: type = pattern_type %array_type [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%i32.builtin, %i32.builtin, %i32.builtin) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%int_1.f38, %int_2.5a1, %int_3.a0f) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %array: %array_type = tuple_value (%int_1.f38, %int_2.5a1, %int_3.a0f) [concrete]
 // CHECK:STDOUT: }
@@ -273,7 +274,7 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:   %AsI32.ref.loc4_121: %AsI32.type = name_ref AsI32, imports.%Core.AsI32 [concrete = constants.%AsI32]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %AsI32.call.loc4_129: init %i32.builtin = call %AsI32.ref.loc4_121(%int_3) [concrete = constants.%int_3.a0f]
-// CHECK:STDOUT:   %.loc4_130.1: %tuple.type = tuple_literal (%AsI32.call.loc4_99, %AsI32.call.loc4_114, %AsI32.call.loc4_129)
+// CHECK:STDOUT:   %.loc4_130.1: %tuple.type = tuple_literal (%AsI32.call.loc4_99, %AsI32.call.loc4_114, %AsI32.call.loc4_129) [concrete = constants.%tuple]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc4_130.2: ref %i32.builtin = array_index file.%arr.var, %int_0
 // CHECK:STDOUT:   %.loc4_130.3: init %i32.builtin = initialize_from %AsI32.call.loc4_99 to %.loc4_130.2 [concrete = constants.%int_1.f38]

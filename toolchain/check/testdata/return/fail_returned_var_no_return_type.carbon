@@ -54,8 +54,8 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:   %Procedure.type: type = fn_type @Procedure [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Procedure: %Procedure.type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %empty_tuple.type, () [concrete]
@@ -90,12 +90,12 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.cb1 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var %v.var_patt
-// CHECK:STDOUT:   %.loc12_25.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc12_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc12_25.2: init %empty_tuple.type = tuple_init () to %v.var [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc12_12: init %empty_tuple.type = converted %.loc12_25.1, %.loc12_25.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %v.var, %.loc12_12
 // CHECK:STDOUT:   %.loc12_20.1: type = splice_block %.loc12_20.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc12_20.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc12_20.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc12_20.3: type = converted %.loc12_20.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %empty_tuple.type = ref_binding v, %v.var
@@ -113,8 +113,8 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:   %ForgotReturnType.type: type = fn_type @ForgotReturnType [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %ForgotReturnType: %ForgotReturnType.type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %empty_tuple.type, () [concrete]
@@ -149,12 +149,12 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.cb1 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var %v.var_patt
-// CHECK:STDOUT:   %.loc12_25.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc12_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc12_25.2: init %empty_tuple.type = tuple_init () to %v.var [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc12_12: init %empty_tuple.type = converted %.loc12_25.1, %.loc12_25.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %v.var, %.loc12_12
 // CHECK:STDOUT:   %.loc12_20.1: type = splice_block %.loc12_20.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc12_20.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc12_20.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc12_20.3: type = converted %.loc12_20.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %empty_tuple.type = ref_binding v, %v.var

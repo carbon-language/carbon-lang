@@ -471,6 +471,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [concrete]
 // CHECK:STDOUT:   %pattern_type.de9: type = pattern_type %C.70f [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C.70f = struct_value () [concrete]
 // CHECK:STDOUT:   %complete_type.619: <witness> = complete_type_witness %Inner.type.56c [concrete]
 // CHECK:STDOUT:   %Inner.impl_witness.f06: <witness> = impl_witness @C.%Inner.impl_witness_table, @C.as.Inner.impl(%i32) [concrete]
@@ -748,7 +749,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.de9 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C.70f = var %c.var_patt
-// CHECK:STDOUT:   %.loc23_26.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc23_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc23_26.2: init %C.70f = class_init (), %c.var [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc23_3: init %C.70f = converted %.loc23_26.1, %.loc23_26.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign %c.var, %.loc23_3

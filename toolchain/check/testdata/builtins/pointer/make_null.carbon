@@ -70,6 +70,7 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %MakeUnformed.type: type = fn_type @MakeUnformed [concrete]
 // CHECK:STDOUT:   %MakeUnformed: %MakeUnformed.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %.b2d: type = maybe_unformed_type %ptr.c28 [concrete]
 // CHECK:STDOUT:   %pattern_type.b42: type = pattern_type %.b2d [concrete]
@@ -88,7 +89,7 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11_24.1: type = splice_block %.loc11_24.3 [concrete = constants.%.b2d] {
 // CHECK:STDOUT:     %MakeUnformed.ref.loc11: %MakeUnformed.type = name_ref MakeUnformed, %MakeUnformed.decl [concrete = constants.%MakeUnformed]
-// CHECK:STDOUT:     %.loc11_22: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc11_22: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc11_23: type = converted %.loc11_22, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %ptr.loc11: type = ptr_type %.loc11_23 [concrete = constants.%ptr.c28]
 // CHECK:STDOUT:     %MakeUnformed.call.loc11: init type = call %MakeUnformed.ref.loc11(%ptr.loc11) [concrete = constants.%.b2d]
@@ -132,6 +133,7 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:   %MakeNull: %MakeNull.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %.b2d: type = maybe_unformed_type %ptr.c28 [concrete]
 // CHECK:STDOUT:   %pattern_type.b42: type = pattern_type %.b2d [concrete]
@@ -148,7 +150,7 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc10_24.1: type = splice_block %.loc10_24.3 [concrete = constants.%.b2d] {
 // CHECK:STDOUT:     %MakeUnformed.ref.loc10: %MakeUnformed.type = name_ref MakeUnformed, %MakeUnformed.decl [concrete = constants.%MakeUnformed]
-// CHECK:STDOUT:     %.loc10_22: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc10_22: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc10_23: type = converted %.loc10_22, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %ptr.loc10: type = ptr_type %.loc10_23 [concrete = constants.%ptr.c28]
 // CHECK:STDOUT:     %MakeUnformed.call.loc10: init type = call %MakeUnformed.ref.loc10(%ptr.loc10) [concrete = constants.%.b2d]
@@ -177,7 +179,7 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %MakeNull.ref.loc10: %MakeNull.type = name_ref MakeNull, file.%MakeNull.decl [concrete = constants.%MakeNull]
-// CHECK:STDOUT:   %.loc10_38: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc10_38: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc10_39: type = converted %.loc10_38, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %MakeNull.specific_fn.loc10: <specific function> = specific_function %MakeNull.ref.loc10, @MakeNull(constants.%empty_struct_type) [concrete = constants.%MakeNull.specific_fn.7cb]
 // CHECK:STDOUT:   %MakeNull.call.loc10: init %.b2d = call %MakeNull.specific_fn.loc10()

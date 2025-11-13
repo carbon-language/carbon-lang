@@ -66,6 +66,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %ptr.a86: type = ptr_type %array_type.512 [symbolic]
 // CHECK:STDOUT:   %require_complete.cec: <witness> = require_complete_type %array_type.512 [symbolic]
 // CHECK:STDOUT:   %pattern_type.b5c: type = pattern_type %array_type.512 [symbolic]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %array.8ba: %array_type.512 = tuple_value () [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
@@ -127,7 +128,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:       %arr.var_patt: @G.%pattern_type (%pattern_type.b5c) = var_pattern %arr.patt [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr.var: ref @G.%array_type.loc7_22.2 (%array_type.512) = var %arr.var_patt
-// CHECK:STDOUT:     %.loc7_27.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc7_27.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc7_27.2: init @G.%array_type.loc7_22.2 (%array_type.512) = array_init () to %arr.var [symbolic = %array (constants.%array.8ba)]
 // CHECK:STDOUT:     %.loc7_3.1: init @G.%array_type.loc7_22.2 (%array_type.512) = converted %.loc7_27.1, %.loc7_27.2 [symbolic = %array (constants.%array.8ba)]
 // CHECK:STDOUT:     assign %arr.var, %.loc7_3.1
@@ -180,6 +181,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.IntLiteral, Core.IntLiteral, Core.IntLiteral) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%int_1, %int_2, %int_3.1ba) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.7a9: type = facet_type <@ImplicitAs, @ImplicitAs(Core.IntLiteral)> [concrete]
 // CHECK:STDOUT:   %From: Core.IntLiteral = symbolic_binding From, 0 [symbolic]
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.type.2c2: type = fn_type @Int.as.ImplicitAs.impl.Convert, @Int.as.ImplicitAs.impl(%From) [symbolic]
@@ -228,7 +230,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:     %.loc11_36: %tuple.type = tuple_literal (%int_1, %int_2, %int_3)
+// CHECK:STDOUT:     %.loc11_36: %tuple.type = tuple_literal (%int_1, %int_2, %int_3) [concrete = constants.%tuple]
 // CHECK:STDOUT:     assign %arr.var, <error>
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %arr: ref <error> = ref_binding arr, <error> [concrete = <error>]

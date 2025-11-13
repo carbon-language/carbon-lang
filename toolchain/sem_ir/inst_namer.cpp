@@ -1212,6 +1212,20 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstName("str");
       return;
     }
+    case CARBON_KIND(StructType inst): {
+      const auto& fields = sem_ir().struct_type_fields().Get(inst.fields_id);
+      if (fields.empty()) {
+        AddInstName("empty_struct_type");
+        return;
+      }
+      std::string name = "struct_type";
+      for (auto field : fields) {
+        name += ".";
+        name += sem_ir().names().GetIRBaseName(field.name_id).str();
+      }
+      AddInstName(std::move(name));
+      return;
+    }
     case CARBON_KIND(StructValue inst): {
       if (auto fn_ty = sem_ir().types().TryGetAs<FunctionType>(inst.type_id)) {
         AddEntityNameAndMaybePush(fn_ty->function_id);
@@ -1237,20 +1251,6 @@ auto InstNamer::NamingContext::NameInst() -> void {
           AddInstName("struct");
         }
       }
-      return;
-    }
-    case CARBON_KIND(StructType inst): {
-      const auto& fields = sem_ir().struct_type_fields().Get(inst.fields_id);
-      if (fields.empty()) {
-        AddInstName("empty_struct_type");
-        return;
-      }
-      std::string name = "struct_type";
-      for (auto field : fields) {
-        name += ".";
-        name += sem_ir().names().GetIRBaseName(field.name_id).str();
-      }
-      AddInstName(std::move(name));
       return;
     }
     case CARBON_KIND(TupleAccess inst): {

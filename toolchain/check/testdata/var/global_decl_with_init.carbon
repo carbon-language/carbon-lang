@@ -34,11 +34,11 @@ var (x: (), y: ()) = ((), ());
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.v [concrete]
-// CHECK:STDOUT:   %.2d8: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.v = struct_value (%empty_tuple) [concrete]
+// CHECK:STDOUT:   %.2d8: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -51,7 +51,7 @@ var (x: (), y: ()) = ((), ());
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.v = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %.loc4_15: type = splice_block %struct_type.v [concrete = constants.%struct_type.v] {
-// CHECK:STDOUT:     %.loc4_14.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_14.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc4_14.2: type = converted %.loc4_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete = constants.%struct_type.v]
 // CHECK:STDOUT:   }
@@ -60,8 +60,8 @@ var (x: (), y: ()) = ((), ());
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_26.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_27.1: %struct_type.v = struct_literal (%.loc4_26.1)
+// CHECK:STDOUT:   %.loc4_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc4_27.1: %struct_type.v = struct_literal (%.loc4_26.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc4_27.2: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete = constants.%.2d8]
 // CHECK:STDOUT:   %.loc4_26.2: init %empty_tuple.type = tuple_init () to %.loc4_27.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_27.3: init %empty_tuple.type = converted %.loc4_26.1, %.loc4_26.2 [concrete = constants.%empty_tuple]
@@ -75,10 +75,11 @@ var (x: (), y: ()) = ((), ());
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %pattern_type.5b8: type = pattern_type %tuple.type [concrete]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%empty_tuple, %empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -94,14 +95,14 @@ var (x: (), y: ()) = ((), ());
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %empty_tuple.type = var %y.var_patt [concrete]
 // CHECK:STDOUT:   %.loc4_10.1: type = splice_block %.loc4_10.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc4_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc4_10.3: type = converted %.loc4_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_28: %empty_tuple.type = converted @__global_init.%.loc4_28, %empty_tuple [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %x: %empty_tuple.type = value_binding x, %.loc4_28
 // CHECK:STDOUT:   %.loc4_21.1: type = splice_block %.loc4_21.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc4_21.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_21.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc4_21.3: type = converted %.loc4_21.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %empty_tuple.type = ref_binding y, %y.var [concrete = %y.var]
@@ -109,9 +110,9 @@ var (x: (), y: ()) = ((), ());
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_28: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_32.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_33: %tuple.type = tuple_literal (%.loc4_28, %.loc4_32.1)
+// CHECK:STDOUT:   %.loc4_28: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc4_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc4_33: %tuple.type = tuple_literal (%.loc4_28, %.loc4_32.1) [concrete = constants.%tuple]
 // CHECK:STDOUT:   %.loc4_32.2: init %empty_tuple.type = tuple_init () to file.%y.var [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_13: init %empty_tuple.type = converted %.loc4_32.1, %.loc4_32.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%y.var, %.loc4_13
@@ -122,13 +123,13 @@ var (x: (), y: ()) = ((), ());
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %pattern_type.5b8: type = pattern_type %tuple.type [concrete]
-// CHECK:STDOUT:   %tuple.elem0: ref %empty_tuple.type = tuple_access file.%.var, element0 [concrete]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %tuple.elem1: ref %empty_tuple.type = tuple_access file.%.var, element1 [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%empty_tuple, %empty_tuple) [concrete]
+// CHECK:STDOUT:   %tuple.elem0: ref %empty_tuple.type = tuple_access file.%.var, element0 [concrete]
+// CHECK:STDOUT:   %tuple.elem1: ref %empty_tuple.type = tuple_access file.%.var, element1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -146,12 +147,12 @@ var (x: (), y: ()) = ((), ());
 // CHECK:STDOUT:   %tuple.elem0: ref %empty_tuple.type = tuple_access %.var, element0 [concrete = constants.%tuple.elem0]
 // CHECK:STDOUT:   %tuple.elem1: ref %empty_tuple.type = tuple_access %.var, element1 [concrete = constants.%tuple.elem1]
 // CHECK:STDOUT:   %.loc4_10.1: type = splice_block %.loc4_10.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc4_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc4_10.3: type = converted %.loc4_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = ref_binding x, %tuple.elem0 [concrete = constants.%tuple.elem0]
 // CHECK:STDOUT:   %.loc4_17.1: type = splice_block %.loc4_17.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc4_17.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc4_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc4_17.3: type = converted %.loc4_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %empty_tuple.type = ref_binding y, %tuple.elem1 [concrete = constants.%tuple.elem1]
@@ -159,9 +160,9 @@ var (x: (), y: ()) = ((), ());
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_24.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_28.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_29.1: %tuple.type = tuple_literal (%.loc4_24.1, %.loc4_28.1)
+// CHECK:STDOUT:   %.loc4_24.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc4_28.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc4_29.1: %tuple.type = tuple_literal (%.loc4_24.1, %.loc4_28.1) [concrete = constants.%tuple]
 // CHECK:STDOUT:   %tuple.elem0: ref %empty_tuple.type = tuple_access file.%.var, element0 [concrete = constants.%tuple.elem0]
 // CHECK:STDOUT:   %.loc4_24.2: init %empty_tuple.type = tuple_init () to %tuple.elem0 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_29.2: init %empty_tuple.type = converted %.loc4_24.1, %.loc4_24.2 [concrete = constants.%empty_tuple]

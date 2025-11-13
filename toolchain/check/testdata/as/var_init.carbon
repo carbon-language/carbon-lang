@@ -32,6 +32,7 @@ fn Convert(t: ()) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.179: type = facet_type <@ImplicitAs, @ImplicitAs(%X)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.665: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%X) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness @X.%ImplicitAs.impl_witness_table [concrete]
@@ -40,7 +41,7 @@ fn Convert(t: ()) {
 // CHECK:STDOUT:   %empty_tuple.type.as.ImplicitAs.impl.Convert: %empty_tuple.type.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.179 = facet_value %empty_tuple.type, (%ImplicitAs.impl_witness) [concrete]
 // CHECK:STDOUT:   %.f5e: type = fn_type_with_self_type %ImplicitAs.Convert.type.665, %ImplicitAs.facet [concrete]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %empty_tuple.type.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %empty_tuple, %empty_tuple.type.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %X, () [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.bd5: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
@@ -58,9 +59,9 @@ fn Convert(t: ()) {
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.019 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %X = var %x.var_patt
-// CHECK:STDOUT:   %.loc12_15.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc12_15.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %impl.elem0: %.f5e = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%empty_tuple.type.as.ImplicitAs.impl.Convert]
-// CHECK:STDOUT:   %bound_method.loc12_3.1: <bound method> = bound_method %.loc12_15.1, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc12_3.1: <bound method> = bound_method %.loc12_15.1, %impl.elem0 [concrete = constants.%empty_tuple.type.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %.loc12_3.1: ref %X = splice_block %x.var {}
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc12_15.2: %empty_tuple.type = converted %.loc12_15.1, %empty_tuple [concrete = constants.%empty_tuple]

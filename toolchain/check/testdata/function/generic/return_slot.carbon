@@ -61,6 +61,7 @@ fn G() {
 // CHECK:STDOUT:   %Wrap.Make.type.572: type = fn_type @Wrap.Make, @Wrap(%i32) [concrete]
 // CHECK:STDOUT:   %Wrap.Make.2c5: %Wrap.Make.type.572 = struct_value () [concrete]
 // CHECK:STDOUT:   %Wrap.Make.specific_fn.783: <specific function> = specific_function %Wrap.Make.2c5, @Wrap.Make(%i32) [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %Wrap.1aa: type = class_type @Wrap, @Wrap(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %Wrap.Make.type.20e: type = fn_type @Wrap.Make, @Wrap(%empty_tuple.type) [concrete]
@@ -208,7 +209,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var %b.var_patt
 // CHECK:STDOUT:   %Wrap.ref.loc23: %Wrap.type = name_ref Wrap, file.%Wrap.decl [concrete = constants.%Wrap.generic]
-// CHECK:STDOUT:   %.loc23_21: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc23_21: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc23_22: type = converted %.loc23_21, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %Wrap.loc23: type = class_type @Wrap, @Wrap(constants.%empty_tuple.type) [concrete = constants.%Wrap.1aa]
 // CHECK:STDOUT:   %.loc23_23: %Wrap.Make.type.20e = specific_constant @Wrap.%Wrap.Make.decl, @Wrap(constants.%empty_tuple.type) [concrete = constants.%Wrap.Make.de0]
@@ -217,7 +218,7 @@ fn G() {
 // CHECK:STDOUT:   %Wrap.Make.call.loc23: init %empty_tuple.type = call %Wrap.Make.specific_fn.loc23()
 // CHECK:STDOUT:   assign %b.var, %Wrap.Make.call.loc23
 // CHECK:STDOUT:   %.loc23_11.1: type = splice_block %.loc23_11.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc23_11.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc23_11.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc23_11.3: type = converted %.loc23_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %empty_tuple.type = ref_binding b, %b.var

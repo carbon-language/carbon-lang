@@ -101,6 +101,7 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
@@ -137,7 +138,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_struct_type = var %v.var_patt
 // CHECK:STDOUT:   %.loc9_19.1: type = splice_block %.loc9_19.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc9_19.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc9_19.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc9_19.3: type = converted %.loc9_19.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %empty_struct_type = ref_binding v, %v.var
@@ -147,7 +148,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w.var: ref %empty_struct_type = var %w.var_patt
 // CHECK:STDOUT:   %.loc14_21.1: type = splice_block %.loc14_21.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc14_21.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc14_21.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc14_21.3: type = converted %.loc14_21.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w: ref %empty_struct_type = ref_binding w, %w.var

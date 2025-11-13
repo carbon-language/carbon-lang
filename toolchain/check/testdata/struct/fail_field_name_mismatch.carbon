@@ -35,6 +35,7 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   %pattern_type.268: type = pattern_type %struct_type.a [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %struct_type.b.a15: type = struct_type {.b: Core.IntLiteral} [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.b.a15 = struct_value (%int_1) [concrete]
 // CHECK:STDOUT:   %struct_type.b.0a3: type = struct_type {.b: %i32} [concrete]
 // CHECK:STDOUT:   %pattern_type.f4b: type = pattern_type %struct_type.b.0a3 [concrete]
 // CHECK:STDOUT: }
@@ -82,7 +83,7 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc19: %struct_type.b.a15 = struct_literal (%int_1)
+// CHECK:STDOUT:   %.loc19: %struct_type.b.a15 = struct_literal (%int_1) [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   %x.ref: ref %struct_type.a = name_ref x, file.%x [concrete = file.%x.var]
 // CHECK:STDOUT:   assign file.%y.var, <error>

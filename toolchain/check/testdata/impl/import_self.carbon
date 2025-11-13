@@ -121,6 +121,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [concrete]
 // CHECK:STDOUT:   %Self: %Add.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Add.Op.type: type = fn_type @Add.Op [concrete]
@@ -132,7 +133,6 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %empty_tuple.type.as.Add.impl.Op.type: type = fn_type @empty_tuple.type.as.Add.impl.Op [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.Add.impl.Op: %empty_tuple.type.as.Add.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Add.facet: %Add.type = facet_value %empty_tuple.type, (%Add.impl_witness) [concrete]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type @Add [concrete]
@@ -162,7 +162,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   impl_decl @empty_tuple.type.as.Add.impl [concrete] {} {
-// CHECK:STDOUT:     %.loc6_7.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc6_7.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, imports.%Main.Add [concrete = constants.%Add.type]
 // CHECK:STDOUT:   }
@@ -176,17 +176,17 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc10_24.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_24.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc10_24.2: type = converted %.loc10_24.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc10_10.1: type = splice_block %.loc10_10.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc10_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc10_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc10_10.3: type = converted %.loc10_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_tuple.type = value_binding x, %x.param
 // CHECK:STDOUT:     %y.param: %empty_tuple.type = value_param call_param1
 // CHECK:STDOUT:     %.loc10_17.1: type = splice_block %.loc10_17.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc10_17.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc10_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc10_17.3: type = converted %.loc10_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %y: %empty_tuple.type = value_binding y, %y.param
@@ -239,7 +239,7 @@ fn F(x: (), y: ()) -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @empty_tuple.type.as.Add.impl.Op(%self.param: %empty_tuple.type, %other.param: %empty_tuple.type) -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_52.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc7_52.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_52.2: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_53: init %empty_tuple.type = converted %.loc7_52.1, %.loc7_52.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   return %.loc7_53 to %return

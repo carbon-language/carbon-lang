@@ -72,6 +72,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %struct_type.n.m.819: type = struct_type {.n: Core.IntLiteral, .m: Core.IntLiteral} [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.n.m.819 = struct_value (%int_0.5c6, %int_0.5c6) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.d14: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
@@ -556,7 +557,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0.loc6_31: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %int_0.loc6_39: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
-// CHECK:STDOUT:   %.loc6_40.1: %struct_type.n.m.819 = struct_literal (%int_0.loc6_31, %int_0.loc6_39)
+// CHECK:STDOUT:   %.loc6_40.1: %struct_type.n.m.819 = struct_literal (%int_0.loc6_31, %int_0.loc6_39) [concrete = constants.%struct]
 // CHECK:STDOUT:   %impl.elem0.loc6_40.1: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
 // CHECK:STDOUT:   %bound_method.loc6_40.1: <bound method> = bound_method %int_0.loc6_31, %impl.elem0.loc6_40.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.0b3]
 // CHECK:STDOUT:   %specific_fn.loc6_40.1: <specific function> = specific_function %impl.elem0.loc6_40.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -711,6 +712,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %F0: %F0.type = struct_value () [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -1030,7 +1032,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   if %false.loc7 br !if.then.loc7 else br !if.else.loc7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc7:
-// CHECK:STDOUT:   %.loc7_24.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc7_24.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %P.ref.loc7: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc7: %C.type = name_ref C, imports.%P.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
@@ -1064,7 +1066,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   if %false.loc8 br !if.then.loc8 else br !if.else.loc8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc8:
-// CHECK:STDOUT:   %.loc8_24.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc8_24.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %P.ref.loc8: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc8: %C.type = name_ref C, imports.%P.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -1103,7 +1105,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   if %false.loc9 br !if.then.loc9 else br !if.else.loc9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc9:
-// CHECK:STDOUT:   %.loc9_24.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc9_24.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %P.ref.loc9: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc9: %C.type = name_ref C, imports.%P.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
@@ -1147,7 +1149,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   if %false.loc10 br !if.then.loc10 else br !if.else.loc10
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc10:
-// CHECK:STDOUT:   %.loc10_24.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc10_24.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %P.ref.loc10: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc10: %C.type = name_ref C, imports.%P.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -1196,7 +1198,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   if %false.loc11 br !if.then.loc11 else br !if.else.loc11
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc11:
-// CHECK:STDOUT:   %.loc11_24.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc11_24.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %P.ref.loc11: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc11: %C.type = name_ref C, imports.%P.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4.0c1]
@@ -1250,7 +1252,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   if %false.loc12 br !if.then.loc12 else br !if.else.loc12
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc12:
-// CHECK:STDOUT:   %.loc12_24.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc12_24.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %P.ref.loc12: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc12: %C.type = name_ref C, imports.%P.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
@@ -1309,7 +1311,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   if %false.loc13 br !if.then.loc13 else br !if.else.loc13
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc13:
-// CHECK:STDOUT:   %.loc13_24.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc13_24.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %P.ref.loc13: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc13: %C.type = name_ref C, imports.%P.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [concrete = constants.%int_6.462]
@@ -1373,7 +1375,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   if %false.loc14 br !if.then.loc14 else br !if.else.loc14
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then.loc14:
-// CHECK:STDOUT:   %.loc14_24.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc14_24.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %P.ref.loc14: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
 // CHECK:STDOUT:   %C.ref.loc14: %C.type = name_ref C, imports.%P.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [concrete = constants.%int_7.29f]

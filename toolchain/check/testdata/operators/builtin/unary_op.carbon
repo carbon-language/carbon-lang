@@ -44,8 +44,8 @@ fn Constant() {
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT:   %Constant.type: type = fn_type @Constant [concrete]
 // CHECK:STDOUT:   %Constant: %Constant.type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.bound: <bound method> = bound_method %true, %bool.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
@@ -142,7 +142,7 @@ fn Constant() {
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.cb1 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var %a.var_patt
-// CHECK:STDOUT:   %.loc23_43.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc23_43.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc23_43.2: init %empty_tuple.type = tuple_init () to %a.var [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc23_3: init %empty_tuple.type = converted %.loc23_43.1, %.loc23_43.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %a.var, %.loc23_3
@@ -160,7 +160,7 @@ fn Constant() {
 // CHECK:STDOUT:   br !if.expr.result.loc23(%.loc23_27.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc23:
-// CHECK:STDOUT:   %.loc23_38: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc23_38: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc23_32: type = converted %.loc23_38, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   br !if.expr.result.loc23(%.loc23_32)
 // CHECK:STDOUT:
@@ -194,7 +194,7 @@ fn Constant() {
 // CHECK:STDOUT:   br !if.expr.result.loc24(%.loc24_28.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc24:
-// CHECK:STDOUT:   %.loc24_39: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc24_39: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc24_33: type = converted %.loc24_39, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   br !if.expr.result.loc24(%.loc24_33)
 // CHECK:STDOUT:
