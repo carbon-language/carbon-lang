@@ -25,6 +25,8 @@
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/singleton_insts.h"
+#include "toolchain/sem_ir/specific_interface.h"
+#include "toolchain/sem_ir/specific_named_constraint.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -961,8 +963,18 @@ auto InstNamer::NamingContext::NameInst() -> void {
               sem_ir().types().TryGetAs<FacetType>(inst.type_id)) {
         const auto& facet_type_info =
             sem_ir().facet_types().Get(facet_type->facet_type_id);
-        if (auto interface = facet_type_info.TryAsSingleInterface()) {
-          AddEntityNameAndMaybePush(interface->interface_id, ".facet");
+        if (auto single = facet_type_info.TryAsSingleExtend()) {
+          CARBON_KIND_SWITCH(*single) {
+            case CARBON_KIND(SemIR::SpecificInterface interface): {
+              AddEntityNameAndMaybePush(interface.interface_id, ".facet");
+              break;
+            }
+            case CARBON_KIND(SemIR::SpecificNamedConstraint constraint): {
+              AddEntityNameAndMaybePush(constraint.named_constraint_id,
+                                        ".facet");
+              break;
+            }
+          }
           return;
         }
       }
