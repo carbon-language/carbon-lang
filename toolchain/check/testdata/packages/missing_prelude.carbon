@@ -167,10 +167,10 @@ var n: {} = i32;
 // CHECK:STDOUT:   %N: %T = symbolic_binding N, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.e68: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [concrete]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -183,7 +183,7 @@ var n: {} = i32;
 // CHECK:STDOUT:     %return.patt: %pattern_type.a96 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.a96 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc4_29.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc4_29.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc4_29.2: type = converted %.loc4_29.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc4_8.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_8.1 (constants.%T)]
@@ -206,7 +206,7 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %empty_struct_type {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc4_41.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc4_41.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc4_41.2: init %empty_struct_type = struct_init () to %return [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc4_42: init %empty_struct_type = converted %.loc4_41.1, %.loc4_41.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     return %.loc4_42 to %return
@@ -223,6 +223,7 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [concrete]
@@ -256,7 +257,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %empty_struct_type = var %n.var_patt [concrete]
 // CHECK:STDOUT:   %.loc6_9.1: type = splice_block %.loc6_9.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc6_9.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc6_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc6_9.3: type = converted %.loc6_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: ref %empty_struct_type = ref_binding n, %n.var [concrete = %n.var]
@@ -305,10 +306,10 @@ var n: {} = i32;
 // CHECK:STDOUT:   %N: %T = symbolic_binding N, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.e68: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [concrete]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
 // CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %int_32) [concrete]
@@ -325,7 +326,7 @@ var n: {} = i32;
 // CHECK:STDOUT:     %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc8_29.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc8_29.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_29.2: type = converted %.loc8_29.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc8_8.2: type = symbolic_binding T, 0 [symbolic = %T.loc8_8.1 (constants.%T)]
@@ -343,7 +344,7 @@ var n: {} = i32;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref %empty_tuple.type = var %n.var_patt [concrete]
 // CHECK:STDOUT:   %.loc10_9.1: type = splice_block %.loc10_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc10_9.3: type = converted %.loc10_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n: ref %empty_tuple.type = ref_binding n, %n.var [concrete = %n.var]
@@ -358,7 +359,7 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %empty_tuple.type {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc8_41.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc8_41.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_41.2: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_42: init %empty_tuple.type = converted %.loc8_41.1, %.loc8_41.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     return %.loc8_42 to %return

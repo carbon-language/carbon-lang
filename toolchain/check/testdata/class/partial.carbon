@@ -316,6 +316,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%C, %C) [concrete]
 // CHECK:STDOUT:   %tuple.type.56b: type = tuple_type (%C, %C) [concrete]
 // CHECK:STDOUT:   %.62c: type = partial_type %tuple.type.56b [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %.62c [concrete]
@@ -335,7 +336,7 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:     %.loc10_9.1: type = splice_block %.loc10_9.3 [concrete = constants.%.62c] {
 // CHECK:STDOUT:       %C.ref.loc10_18: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %C.ref.loc10_21: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %.loc10_22: %tuple.type.24b = tuple_literal (%C.ref.loc10_18, %C.ref.loc10_21)
+// CHECK:STDOUT:       %.loc10_22: %tuple.type.24b = tuple_literal (%C.ref.loc10_18, %C.ref.loc10_21) [concrete = constants.%tuple]
 // CHECK:STDOUT:       %.loc10_9.2: type = converted %.loc10_22, constants.%tuple.type.56b [concrete = constants.%tuple.type.56b]
 // CHECK:STDOUT:       %.loc10_9.3: type = partial_type %.loc10_9.2 [concrete = constants.%.62c]
 // CHECK:STDOUT:     }

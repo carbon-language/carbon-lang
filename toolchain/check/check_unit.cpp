@@ -529,6 +529,11 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
         /*poison_final_results=*/false);
     CARBON_CHECK(witness_result.has_final_value());
     auto found_witness_id = witness_result.final_witness();
+    if (found_witness_id == SemIR::ErrorInst::InstId) {
+      // Errors may have been diagnosed with the impl used in the poisoned query
+      // in the meantime (such as a missing definition).
+      continue;
+    }
     if (found_witness_id != poison.impl_witness) {
       auto witness_to_impl_id = [&](SemIR::InstId witness_id) {
         auto table_id = context_.insts()

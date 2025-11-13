@@ -22,6 +22,7 @@ fn F((a: {}, b: {}), c: {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_struct_type, %empty_struct_type) [concrete]
 // CHECK:STDOUT:   %pattern_type.de4: type = pattern_type %tuple.type [concrete]
@@ -44,7 +45,7 @@ fn F((a: {}, b: {}), c: {});
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %empty_struct_type = value_param call_param0
 // CHECK:STDOUT:     %.loc19_26.1: type = splice_block %.loc19_26.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:       %.loc19_26.2: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:       %.loc19_26.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:       %.loc19_26.3: type = converted %.loc19_26.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %empty_struct_type = value_binding c, %c.param

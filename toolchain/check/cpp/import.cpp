@@ -681,10 +681,9 @@ static auto BuildClassDecl(Context& context,
   auto class_decl = SemIR::ClassDecl{.type_id = SemIR::TypeType::TypeId,
                                      .class_id = SemIR::ClassId::None,
                                      .decl_block_id = SemIR::InstBlockId::None};
-  auto class_decl_id = AddPlaceholderInstInNoBlock(
+  auto class_decl_id = AddPlaceholderImportedInstInNoBlock(
       context,
-      SemIR::LocIdAndInst::UncheckedLoc(import_ir_inst_id, class_decl));
-  context.imports().push_back(class_decl_id);
+      MakeImportedLocIdAndInst(context, import_ir_inst_id, class_decl));
 
   SemIR::Class class_info = {
       {.name_id = name_id,
@@ -951,11 +950,12 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
   // TODO: Add a field to prevent tail padding reuse if necessary.
 
-  return AddTypeInst<SemIR::CustomLayoutType>(
-      context, import_ir_inst_id,
-      {.type_id = SemIR::TypeType::TypeId,
-       .fields_id = context.struct_type_fields().Add(fields),
-       .layout_id = context.custom_layouts().Add(layout)});
+  return AddTypeInst(context,
+                     MakeImportedLocIdAndInst<SemIR::CustomLayoutType>(
+                         context, import_ir_inst_id,
+                         {.type_id = SemIR::TypeType::TypeId,
+                          .fields_id = context.struct_type_fields().Add(fields),
+                          .layout_id = context.custom_layouts().Add(layout)}));
 }
 
 // Creates a Carbon class definition based on the information in the given Clang
@@ -976,10 +976,12 @@ static auto BuildClassDefinition(Context& context,
   // Compute the class's object representation.
   auto object_repr_id = ImportClassObjectRepr(
       context, class_id, import_ir_inst_id, class_inst_id, clang_def);
-  class_info.complete_type_witness_id = AddInst<SemIR::CompleteTypeWitness>(
-      context, import_ir_inst_id,
-      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-       .object_repr_type_inst_id = object_repr_id});
+  class_info.complete_type_witness_id = AddInst(
+      context,
+      MakeImportedLocIdAndInst<SemIR::CompleteTypeWitness>(
+          context, import_ir_inst_id,
+          {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+           .object_repr_type_inst_id = object_repr_id}));
 
   class_info.body_block_id = context.inst_block_stack().Pop();
 }
@@ -996,11 +998,13 @@ static auto ImportEnumObjectRepresentation(
 
   auto int_kind = int_type->isSignedIntegerType() ? SemIR::IntKind::Signed
                                                   : SemIR::IntKind::Unsigned;
-  auto bit_width_id = GetOrAddInst<SemIR::IntValue>(
-      context, import_ir_inst_id,
-      {.type_id = GetSingletonType(context, SemIR::IntLiteralType::TypeInstId),
-       .int_id = context.ints().AddUnsigned(
-           llvm::APInt(64, context.ast_context().getIntWidth(int_type)))});
+  auto bit_width_id = GetOrAddInst(
+      context, MakeImportedLocIdAndInst<SemIR::IntValue>(
+                   context, import_ir_inst_id,
+                   {.type_id = GetSingletonType(
+                        context, SemIR::IntLiteralType::TypeInstId),
+                    .int_id = context.ints().AddUnsigned(llvm::APInt(
+                        64, context.ast_context().getIntWidth(int_type)))}));
   return context.types().GetAsTypeInstId(
       GetOrAddInst(context, SemIR::LocIdAndInst::NoLoc(SemIR::IntType{
                                 .type_id = SemIR::TypeType::TypeId,
@@ -1029,13 +1033,15 @@ static auto BuildEnumDefinition(Context& context,
   auto object_repr_id =
       ImportEnumObjectRepresentation(context, import_ir_inst_id, enum_decl);
   class_info.adapt_id = AddInst(
-      context, SemIR::LocIdAndInst::UncheckedLoc(
-                   import_ir_inst_id,
+      context, MakeImportedLocIdAndInst(
+                   context, import_ir_inst_id,
                    SemIR::AdaptDecl{.adapted_type_inst_id = object_repr_id}));
-  class_info.complete_type_witness_id = AddInst<SemIR::CompleteTypeWitness>(
-      context, import_ir_inst_id,
-      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-       .object_repr_type_inst_id = object_repr_id});
+  class_info.complete_type_witness_id = AddInst(
+      context,
+      MakeImportedLocIdAndInst<SemIR::CompleteTypeWitness>(
+          context, import_ir_inst_id,
+          {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+           .object_repr_type_inst_id = object_repr_id}));
 
   class_info.body_block_id = context.inst_block_stack().Pop();
 }
@@ -1055,10 +1061,12 @@ static auto ImportEnumConstantDecl(Context& context,
 
   // Build a corresponding IntValue.
   auto int_id = context.ints().Add(enumerator_decl->getInitVal());
-  auto loc_id =
+  auto import_ir_inst_id =
       AddImportIRInst(context.sem_ir(), enumerator_decl->getLocation());
-  auto inst_id = AddInstInNoBlock<SemIR::IntValue>(
-      context, loc_id, {.type_id = type_id, .int_id = int_id});
+  auto inst_id = AddInstInNoBlock(
+      context,
+      MakeImportedLocIdAndInst<SemIR::IntValue>(
+          context, import_ir_inst_id, {.type_id = type_id, .int_id = int_id}));
   context.imports().push_back(inst_id);
   context.clang_decls().Add({.key = key, .inst_id = inst_id});
   return inst_id;
@@ -1342,10 +1350,8 @@ namespace {
 struct ParameterTypeInfo {
   // The type to use for the Carbon parameter.
   TypeExpr type;
-  // Whether to build an `addr` pattern.
-  bool want_addr_pattern;
-  // If building an `addr` pattern, the type matched by that pattern.
-  TypeExpr pointee_type;
+  // Whether to build a `ref` pattern.
+  bool want_ref_pattern;
 };
 }  // namespace
 
@@ -1355,17 +1361,13 @@ struct ParameterTypeInfo {
 // Note that if the parameter has a type for which `IsSimpleAbiType` returns
 // true, we must produce a parameter type that has the same calling convention
 // as the C++ type.
-//
-// TODO: Use `ref` instead of `addr`.
 static auto MapParameterType(Context& context, SemIR::LocId loc_id,
                              clang::QualType param_type) -> ParameterTypeInfo {
-  ParameterTypeInfo info = {.type = TypeExpr::None,
-                            .want_addr_pattern = false,
-                            .pointee_type = TypeExpr::None};
+  ParameterTypeInfo info = {.type = TypeExpr::None, .want_ref_pattern = false};
 
   // Perform some custom mapping for parameters of reference type:
   //
-  //   * `T& x` -> `addr x: T*`.
+  //   * `T& x` -> `ref x: T`.
   //   * `const T& x` -> `x: T`.
   //   * `T&& x` -> `x: T`.
   //
@@ -1381,35 +1383,15 @@ static auto MapParameterType(Context& context, SemIR::LocId loc_id,
         split_type.Quals.removeConst();
         pointee_type = context.ast_context().getQualifiedType(split_type);
       } else {
-        // The reference will map to a pointer. Request an `addr` pattern.
-        info.want_addr_pattern = true;
+        // The reference will map to a `ref` pattern.
+        info.want_ref_pattern = true;
       }
     }
     param_type = pointee_type;
   }
 
   info.type = MapType(context, loc_id, param_type);
-  if (info.want_addr_pattern && info.type.inst_id.has_value()) {
-    info.pointee_type = info.type;
-    info.type = TypeExpr::ForUnsugared(
-        context, GetPointerType(context, info.pointee_type.inst_id));
-  }
   return info;
-}
-
-// Finishes building the pattern to use for a function parameter, given the
-// binding pattern and information about how the parameter is being mapped into
-// Carbon.
-static auto FinishParameterPattern(Context& context, SemIR::InstId pattern_id,
-                                   ParameterTypeInfo info) -> SemIR::InstId {
-  if (!info.want_addr_pattern || pattern_id == SemIR::ErrorInst::InstId) {
-    return pattern_id;
-  }
-  return AddPatternInst(
-      context, {SemIR::LocId(pattern_id),
-                SemIR::AddrPattern({.type_id = GetPatternType(
-                                        context, info.pointee_type.type_id),
-                                    .inner_id = pattern_id})});
 }
 
 // Returns a block for the implicit parameters of the given function
@@ -1443,9 +1425,9 @@ static auto MakeImplicitParamPatternsBlockId(
   }
 
   // TODO: Fill in a location once available.
-  auto pattern_id =
-      AddSelfParamPattern(context, loc_id, type_expr_region_id, type_id);
-  pattern_id = FinishParameterPattern(context, pattern_id, param_info);
+  auto pattern_id = AddParamPattern(context, loc_id, SemIR::NameId::SelfValue,
+                                    type_expr_region_id, type_id,
+                                    param_info.want_ref_pattern);
 
   return context.inst_blocks().Add({pattern_id});
 }
@@ -1508,21 +1490,10 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
     SemIR::LocId param_loc_id =
         AddImportIRInst(context.sem_ir(), param->getLocation());
 
-    // TODO: Fix this once templates are supported.
-    bool is_template = false;
-    // TODO: Model reference parameters as ref bindings.
+    // TODO: Add template support.
     SemIR::InstId pattern_id =
-        AddBindingPattern(context, param_loc_id, name_id, type_id,
-                          type_expr_region_id, SemIR::ValueBindingPattern::Kind,
-                          is_template)
-            .pattern_id;
-    pattern_id = AddPatternInst(
-        context, {param_loc_id,
-                  SemIR::ValueParamPattern(
-                      {.type_id = context.insts().Get(pattern_id).type_id(),
-                       .subpattern_id = pattern_id,
-                       .index = SemIR::CallParamIndex::None})});
-    pattern_id = FinishParameterPattern(context, pattern_id, param_info);
+        AddParamPattern(context, param_loc_id, name_id, type_expr_region_id,
+                        type_id, param_info.want_ref_pattern);
     params.push_back(pattern_id);
   }
   return context.inst_blocks().Add(params);
@@ -1574,6 +1545,9 @@ static auto GetReturnPattern(Context& context, SemIR::LocId loc_id,
   if (!type_inst_id.has_value()) {
     // void.
     return SemIR::InstId::None;
+  }
+  if (type_inst_id == SemIR::ErrorInst::TypeInstId) {
+    return SemIR::ErrorInst::InstId;
   }
   auto pattern_type_id = GetPatternType(context, type_id);
   clang::SourceLocation return_type_loc =
@@ -1704,9 +1678,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
 
   auto function_decl = SemIR::FunctionDecl{
       SemIR::TypeId::None, SemIR::FunctionId::None, decl_block_id};
-  auto decl_id =
-      AddPlaceholderInstInNoBlock(context, Parse::NodeId::None, function_decl);
-  context.imports().push_back(decl_id);
+  auto decl_id = AddPlaceholderImportedInstInNoBlock(
+      context, SemIR::LocIdAndInst::NoLoc(function_decl));
 
   auto virtual_modifier = SemIR::Function::VirtualModifier::None;
   int32_t virtual_index = -1;
@@ -1923,7 +1896,7 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   // We can't use the convenience for `AddPlaceholderInstInNoBlock()` with typed
   // nodes because it doesn't support insts with cleanup.
   SemIR::InstId var_storage_inst_id =
-      AddPlaceholderInstInNoBlock(context, {loc_id, var_storage});
+      AddPlaceholderImportedInstInNoBlock(context, {loc_id, var_storage});
 
   auto clang_decl_id = context.clang_decls().Add(
       {.key = SemIR::ClangDeclKey(var_decl), .inst_id = var_storage_inst_id});
@@ -1952,7 +1925,6 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
 
   // Finalize the `VarStorage` instruction.
   ReplaceInstBeforeConstantUse(context, var_storage_inst_id, var_storage);
-  context.imports().push_back(var_storage_inst_id);
 
   return var_storage_inst_id;
 }

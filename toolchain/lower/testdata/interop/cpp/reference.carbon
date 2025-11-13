@@ -32,12 +32,12 @@ auto TakeConstIntRef(const int&) -> void;
 
 fn PassRefs() {
   var c: Cpp.C;
-  Cpp.TakeCRef(c);
+  Cpp.TakeCRef(ref c);
   Cpp.TakeCRRef({} as Cpp.C);
   Cpp.TakeConstCRef(c);
 
   var n: i32;
-  Cpp.TakeIntRef(n);
+  Cpp.TakeIntRef(ref n);
   Cpp.TakeIntRRef(42 as i32);
   Cpp.TakeConstIntRef(n);
 }
@@ -61,12 +61,12 @@ auto TakeConstIntRef(const int&, ForceThunk = {}) -> void;
 
 fn PassRefs() {
   var c: Cpp.C;
-  Cpp.TakeCRef(c);
+  Cpp.TakeCRef(ref c);
   Cpp.TakeCRRef({} as Cpp.C);
   Cpp.TakeConstCRef(c);
 
   var n: i32;
-  Cpp.TakeIntRef(n);
+  Cpp.TakeIntRef(ref n);
   Cpp.TakeIntRRef(42 as i32);
   Cpp.TakeConstIntRef(n);
 }

@@ -121,6 +121,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %.Self.binding.as_type.7e8: type = symbolic_binding_type .Self, %.Self.fe7 [symbolic]
 // CHECK:STDOUT:   %Z.lookup_impl_witness.c15: <witness> = lookup_impl_witness %.Self.fe7, @Z, @Z(%S) [symbolic]
 // CHECK:STDOUT:   %impl.elem0.b31: type = impl_witness_access %Z.lookup_impl_witness.c15, element0 [symbolic]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %Z_where.type.d64: type = facet_type <@Z, @Z(%S) where %impl.elem0.b31 = %empty_tuple.type> [symbolic]
 // CHECK:STDOUT:   %require_complete.d2e: <witness> = require_complete_type %Z_where.type.d64 [symbolic]
 // CHECK:STDOUT:   %Z.impl_witness.aba: <witness> = impl_witness file.%Z.impl_witness_table.loc9, @T.as.Z.impl.008(%T.d9f, %S) [symbolic]
@@ -184,7 +185,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type.7e8)]
 // CHECK:STDOUT:     %.loc9_50.2: type = converted %.Self.ref, %.Self.as_type [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type.7e8)]
 // CHECK:STDOUT:     %impl.elem0.loc9_50.1: type = impl_witness_access constants.%Z.lookup_impl_witness.c15, element0 [symbolic = %impl.elem0.loc9_50.2 (constants.%impl.elem0.b31)]
-// CHECK:STDOUT:     %.loc9_56.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc9_56.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc9_56.2: type = converted %.loc9_56.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc9_44: type = where_expr %.Self.1 [symbolic = %Z_where.type (constants.%Z_where.type.d64)] {
 // CHECK:STDOUT:       requirement_base_facet_type constants.%Z.type.c56
@@ -445,6 +446,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %.Self.binding.as_type.7e8: type = symbolic_binding_type .Self, %.Self.fe7 [symbolic]
 // CHECK:STDOUT:   %Z.lookup_impl_witness.c15: <witness> = lookup_impl_witness %.Self.fe7, @Z, @Z(%S) [symbolic]
 // CHECK:STDOUT:   %impl.elem0.b31: type = impl_witness_access %Z.lookup_impl_witness.c15, element0 [symbolic]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %Z_where.type.d64: type = facet_type <@Z, @Z(%S) where %impl.elem0.b31 = %empty_tuple.type> [symbolic]
 // CHECK:STDOUT:   %require_complete.d2e: <witness> = require_complete_type %Z_where.type.d64 [symbolic]
 // CHECK:STDOUT:   %Z.impl_witness.aba: <witness> = impl_witness file.%Z.impl_witness_table.loc10, @T.as.Z.impl.008(%T.d9f, %S) [symbolic]
@@ -527,7 +529,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type.7e8)]
 // CHECK:STDOUT:     %.loc10_50.2: type = converted %.Self.ref, %.Self.as_type [symbolic = %.Self.binding.as_type (constants.%.Self.binding.as_type.7e8)]
 // CHECK:STDOUT:     %impl.elem0.loc10_50.1: type = impl_witness_access constants.%Z.lookup_impl_witness.c15, element0 [symbolic = %impl.elem0.loc10_50.2 (constants.%impl.elem0.b31)]
-// CHECK:STDOUT:     %.loc10_56.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc10_56.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc10_56.2: type = converted %.loc10_56.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc10_44: type = where_expr %.Self.1 [symbolic = %Z_where.type (constants.%Z_where.type.d64)] {
 // CHECK:STDOUT:       requirement_base_facet_type constants.%Z.type.c56

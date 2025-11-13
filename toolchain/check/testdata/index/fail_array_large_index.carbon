@@ -39,6 +39,7 @@ var c: i32 = a[0x7FFF_FFFF];
 // CHECK:STDOUT:   %pattern_type.a98: type = pattern_type %array_type [concrete]
 // CHECK:STDOUT:   %int_12.6a3: Core.IntLiteral = int_value 12 [concrete]
 // CHECK:STDOUT:   %tuple.type.985: type = tuple_type (Core.IntLiteral) [concrete]
+// CHECK:STDOUT:   %tuple.3bc: %tuple.type.985 = tuple_value (%int_12.6a3) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
@@ -139,7 +140,7 @@ var c: i32 = a[0x7FFF_FFFF];
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [concrete = constants.%int_12.6a3]
-// CHECK:STDOUT:   %.loc15_28.1: %tuple.type.985 = tuple_literal (%int_12)
+// CHECK:STDOUT:   %.loc15_28.1: %tuple.type.985 = tuple_literal (%int_12) [concrete = constants.%tuple.3bc]
 // CHECK:STDOUT:   %impl.elem0.loc15: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
 // CHECK:STDOUT:   %bound_method.loc15_28.1: <bound method> = bound_method %int_12, %impl.elem0.loc15 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.8b3]
 // CHECK:STDOUT:   %specific_fn.loc15: <specific function> = specific_function %impl.elem0.loc15, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]

@@ -36,13 +36,14 @@ fn F() {
 // CHECK:STDOUT:   %I.G: %I.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%I.G.decl [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @F.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.G.type: type = fn_type @empty_tuple.type.as.I.impl.G [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.G: %empty_tuple.type.as.I.impl.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %empty_tuple.type, (%I.impl_witness) [concrete]
 // CHECK:STDOUT:   %.3db: type = fn_type_with_self_type %I.G.type, %I.facet [concrete]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %empty_tuple.type.as.I.impl.G.bound: <bound method> = bound_method %empty_tuple, %empty_tuple.type.as.I.impl.G [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -95,17 +96,17 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @empty_tuple.type.as.I.impl [concrete] {} {
-// CHECK:STDOUT:     %.loc19_9.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc19_9.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc19_9.2: type = converted %.loc19_9.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @F.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (@empty_tuple.type.as.I.impl.%empty_tuple.type.as.I.impl.G.decl), @empty_tuple.type.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
-// CHECK:STDOUT:   %.loc22_4.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc22_4.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, %I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   %G.ref: %I.assoc_type = name_ref G, @I.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %.3db = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%empty_tuple.type.as.I.impl.G]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc22_4.1, %impl.elem0
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc22_4.1, %impl.elem0 [concrete = constants.%empty_tuple.type.as.I.impl.G.bound]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc22_4.2: %empty_tuple.type = converted %.loc22_4.1, %empty_tuple [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.G.call: init %empty_tuple.type = call %bound_method(%.loc22_4.2)

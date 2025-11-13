@@ -80,6 +80,7 @@ impl C as J where .Self impls Incomplete and .T = ();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -88,7 +89,7 @@ impl C as J where .Self impls Incomplete and .T = ();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @empty_struct_type.as.I.impl [concrete] {} {
-// CHECK:STDOUT:     %.loc12_7.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc12_7.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc12_7.2: type = converted %.loc12_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -217,6 +218,7 @@ impl C as J where .Self impls Incomplete and .T = ();
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %J.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @J [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %J.lookup_impl_witness, element0 [symbolic_self]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %J_where.type: type = facet_type <@J where .Self impls @Incomplete and %impl.elem0 = %empty_tuple.type> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -242,7 +244,7 @@ impl C as J where .Self impls Incomplete and .T = ();
 // CHECK:STDOUT:     %.Self.as_type.loc15_46: type = facet_access_type %.Self.ref.loc15_46 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %.loc15_46: type = converted %.Self.ref.loc15_46, %.Self.as_type.loc15_46 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%J.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
-// CHECK:STDOUT:     %.loc15_52.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc15_52.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc15_52.2: type = converted %.loc15_52.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc15_13: type = where_expr %.Self [concrete = constants.%J_where.type] {
 // CHECK:STDOUT:       requirement_base_facet_type constants.%J.type

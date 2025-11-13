@@ -31,6 +31,7 @@ var d: i32 = a[b];
 // CHECK:STDOUT:   %int_12.6a3: Core.IntLiteral = int_value 12 [concrete]
 // CHECK:STDOUT:   %int_24.e3c: Core.IntLiteral = int_value 24 [concrete]
 // CHECK:STDOUT:   %tuple.type.f94: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [concrete]
+// CHECK:STDOUT:   %tuple.dac: %tuple.type.f94 = tuple_value (%int_12.6a3, %int_24.e3c) [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
@@ -146,7 +147,7 @@ var d: i32 = a[b];
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [concrete = constants.%int_12.6a3]
 // CHECK:STDOUT:   %int_24: Core.IntLiteral = int_value 24 [concrete = constants.%int_24.e3c]
-// CHECK:STDOUT:   %.loc15_31.1: %tuple.type.f94 = tuple_literal (%int_12, %int_24)
+// CHECK:STDOUT:   %.loc15_31.1: %tuple.type.f94 = tuple_literal (%int_12, %int_24) [concrete = constants.%tuple.dac]
 // CHECK:STDOUT:   %impl.elem0.loc15_31.1: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
 // CHECK:STDOUT:   %bound_method.loc15_31.1: <bound method> = bound_method %int_12, %impl.elem0.loc15_31.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.8b3]
 // CHECK:STDOUT:   %specific_fn.loc15_31.1: <specific function> = specific_function %impl.elem0.loc15_31.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]

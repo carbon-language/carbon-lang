@@ -164,10 +164,13 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %ConvertInit: %ConvertInit.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %struct_type.a.a6c: type = struct_type {.a: Core.IntLiteral} [concrete]
+// CHECK:STDOUT:   %struct.48c: %struct_type.a.a6c = struct_value (%int_1.5b8) [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %struct_type.base.b.bf0: type = struct_type {.base: %struct_type.a.a6c, .b: Core.IntLiteral} [concrete]
+// CHECK:STDOUT:   %struct.ff9: %struct_type.base.b.bf0 = struct_value (%struct.48c, %int_2.ecc) [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %struct_type.base.c.136: type = struct_type {.base: %struct_type.base.b.bf0, .c: Core.IntLiteral} [concrete]
+// CHECK:STDOUT:   %struct.2aa: %struct_type.base.c.136 = struct_value (%struct.ff9, %int_3.1ba) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.d14: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.1b6: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
@@ -368,11 +371,11 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:     %a.patt: %pattern_type.c10 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc32_39.1: %struct_type.a.a6c = struct_literal (%int_1)
+// CHECK:STDOUT:   %.loc32_39.1: %struct_type.a.a6c = struct_literal (%int_1) [concrete = constants.%struct.48c]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %.loc32_48.1: %struct_type.base.b.bf0 = struct_literal (%.loc32_39.1, %int_2)
+// CHECK:STDOUT:   %.loc32_48.1: %struct_type.base.b.bf0 = struct_literal (%.loc32_39.1, %int_2) [concrete = constants.%struct.ff9]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:   %.loc32_57.1: %struct_type.base.c.136 = struct_literal (%.loc32_48.1, %int_3)
+// CHECK:STDOUT:   %.loc32_57.1: %struct_type.base.c.136 = struct_literal (%.loc32_48.1, %int_3) [concrete = constants.%struct.2aa]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %impl.elem0.loc32_39: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
 // CHECK:STDOUT:   %bound_method.loc32_39.1: <bound method> = bound_method %int_1, %impl.elem0.loc32_39 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.265]

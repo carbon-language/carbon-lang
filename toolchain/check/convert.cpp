@@ -402,6 +402,61 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
   }
 }
 
+// Converts a tuple of elements that are convertible to `type` into a `type`
+// that is a tuple of types.
+static auto ConvertTupleToType(Context& context, SemIR::LocId loc_id,
+                               SemIR::InstId value_id,
+                               SemIR::TypeId value_type_id,
+                               ConversionTarget target) -> SemIR::TypeInstId {
+  auto value_const_id = context.constant_values().Get(value_id);
+  if (!value_const_id.is_constant()) {
+    // Types are constants. The input value must have a constant value to
+    // convert.
+    return SemIR::TypeInstId::None;
+  }
+
+  llvm::SmallVector<SemIR::InstId> type_inst_ids;
+
+  auto value_const_inst_id =
+      context.constant_values().GetInstId(value_const_id);
+  if (auto tuple_value =
+          context.insts().TryGetAs<SemIR::TupleValue>(value_const_inst_id)) {
+    for (auto tuple_inst_id :
+         context.inst_blocks().Get(tuple_value->elements_id)) {
+      // TODO: This call recurses back into conversion. Switch to an
+      // iterative approach.
+      type_inst_ids.push_back(
+          ExprAsType(context, loc_id, tuple_inst_id, target.diagnose).inst_id);
+    }
+  } else {
+    // A value of type TupleType that isn't a TupleValue must be a symbolic
+    // binding.
+    CARBON_CHECK(
+        context.insts().Is<SemIR::SymbolicBinding>(value_const_inst_id));
+    // Form a TupleAccess for each element in the symbolic value, which is then
+    // converted to a `type` or diagnosed as an error.
+    auto tuple_type = context.types().GetAs<SemIR::TupleType>(value_type_id);
+    auto type_elements = context.types().GetBlockAsTypeIds(
+        context.inst_blocks().Get(tuple_type.type_elements_id));
+    for (auto [i, type_id] : llvm::enumerate(type_elements)) {
+      auto access_inst_id =
+          GetOrAddInst<SemIR::TupleAccess>(context, loc_id,
+                                           {.type_id = type_id,
+                                            .tuple_id = value_id,
+                                            .index = SemIR::ElementIndex(i)});
+      // TODO: This call recurses back into conversion. Switch to an
+      // iterative approach.
+      type_inst_ids.push_back(
+          ExprAsType(context, loc_id, access_inst_id, target.diagnose).inst_id);
+    }
+  }
+
+  // TODO: Should we add this as an instruction? It will contain
+  // references to local InstIds.
+  auto tuple_type_id = GetTupleType(context, type_inst_ids);
+  return context.types().GetInstId(tuple_type_id);
+}
+
 // Common implementation for ConvertStructToStruct and ConvertStructToClass.
 template <typename TargetAccessInstT>
 static auto ConvertStructToStructOrClass(
@@ -1165,35 +1220,21 @@ static auto PerformBuiltinConversion(
     }
   }
 
-  if (target.type_id == SemIR::TypeType::TypeId ||
-      sem_ir.types().Is<SemIR::FacetType>(target.type_id)) {
-    auto type_value_id = SemIR::InstId::None;
+  if (sem_ir.types().IsFacetType(target.type_id)) {
+    auto type_value_id = SemIR::TypeInstId::None;
 
     // A tuple of types converts to type `type`.
-    // TODO: This should apply even for non-literal tuples.
-    if (auto tuple_literal = value.TryAs<SemIR::TupleLiteral>()) {
-      llvm::SmallVector<SemIR::InstId> type_inst_ids;
-      for (auto tuple_inst_id :
-           sem_ir.inst_blocks().Get(tuple_literal->elements_id)) {
-        // TODO: This call recurses back into conversion. Switch to an
-        // iterative approach.
-        type_inst_ids.push_back(
-            ExprAsType(context, loc_id, tuple_inst_id, target.diagnose)
-                .inst_id);
-      }
-      // TODO: Should we add this as an instruction? It will contain references
-      // to local InstIds.
-      auto tuple_type_id = GetTupleType(context, type_inst_ids);
-      type_value_id = sem_ir.types().GetInstId(tuple_type_id);
+    if (sem_ir.types().Is<SemIR::TupleType>(value_type_id)) {
+      type_value_id =
+          ConvertTupleToType(context, loc_id, value_id, value_type_id, target);
     }
 
     // `{}` converts to `{} as type`.
-    // TODO: This conversion should also be performed for a non-literal value
-    // of type `{}`.
-    if (auto struct_literal = value.TryAs<SemIR::StructLiteral>();
-        struct_literal &&
-        struct_literal->elements_id == SemIR::InstBlockId::Empty) {
-      type_value_id = sem_ir.types().GetInstId(value_type_id);
+    if (auto struct_type =
+            sem_ir.types().TryGetAs<SemIR::StructType>(value_type_id)) {
+      if (struct_type->fields_id == SemIR::StructTypeFieldsId::Empty) {
+        type_value_id = sem_ir.types().GetInstId(value_type_id);
+      }
     }
 
     if (type_value_id != SemIR::InstId::None) {

@@ -71,8 +71,10 @@ class Derived {
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [concrete]
 // CHECK:STDOUT:   %struct_type.b.a15: type = struct_type {.b: Core.IntLiteral} [concrete]
+// CHECK:STDOUT:   %struct.a2e: %struct_type.b.a15 = struct_value (%int_4.0c1) [concrete]
 // CHECK:STDOUT:   %int_7.29f: Core.IntLiteral = int_value 7 [concrete]
 // CHECK:STDOUT:   %struct_type.base.d.a20: type = struct_type {.base: %struct_type.b.a15, .d: Core.IntLiteral} [concrete]
+// CHECK:STDOUT:   %struct.ab7: %struct_type.base.d.a20 = struct_value (%struct.a2e, %int_7.29f) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.d14: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
@@ -95,6 +97,7 @@ class Derived {
 // CHECK:STDOUT:   %int_7.0b1: %i32 = int_value 7 [concrete]
 // CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%Base.val, %int_7.0b1) [concrete]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
+// CHECK:STDOUT:   %tuple.95a: %tuple.type.24b = tuple_value (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.511: type = pattern_type %tuple.type.d07 [concrete]
 // CHECK:STDOUT:   %Access.type: type = fn_type @Access [concrete]
@@ -157,7 +160,7 @@ class Derived {
 // CHECK:STDOUT:     %i32.loc17_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc17_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc17_32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc17_35.1: %tuple.type.24b = tuple_literal (%i32.loc17_27, %i32.loc17_32)
+// CHECK:STDOUT:     %.loc17_35.1: %tuple.type.24b = tuple_literal (%i32.loc17_27, %i32.loc17_32) [concrete = constants.%tuple.95a]
 // CHECK:STDOUT:     %.loc17_35.2: type = converted %.loc17_35.1, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:     %d.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
@@ -199,9 +202,9 @@ class Derived {
 // CHECK:STDOUT: fn @Make() -> %return.param: %Derived {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4.0c1]
-// CHECK:STDOUT:   %.loc14_26.1: %struct_type.b.a15 = struct_literal (%int_4)
+// CHECK:STDOUT:   %.loc14_26.1: %struct_type.b.a15 = struct_literal (%int_4) [concrete = constants.%struct.a2e]
 // CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [concrete = constants.%int_7.29f]
-// CHECK:STDOUT:   %.loc14_35.1: %struct_type.base.d.a20 = struct_literal (%.loc14_26.1, %int_7)
+// CHECK:STDOUT:   %.loc14_35.1: %struct_type.base.d.a20 = struct_literal (%.loc14_26.1, %int_7) [concrete = constants.%struct.ab7]
 // CHECK:STDOUT:   %impl.elem0.loc14_26: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
 // CHECK:STDOUT:   %bound_method.loc14_26.1: <bound method> = bound_method %int_4, %impl.elem0.loc14_26 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.0b5]
 // CHECK:STDOUT:   %specific_fn.loc14_26: <specific function> = specific_function %impl.elem0.loc14_26, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]

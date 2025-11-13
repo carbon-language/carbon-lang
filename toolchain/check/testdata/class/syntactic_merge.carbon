@@ -1153,6 +1153,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Base [concrete]
 // CHECK:STDOUT:   %Base.F.type.7c6384.1: type = fn_type @Base.F.loc7 [concrete]
@@ -1161,7 +1162,6 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete]
 // CHECK:STDOUT:   %Base.F.type.7c6384.2: type = fn_type @Base.F.loc17 [concrete]
 // CHECK:STDOUT:   %Base.F.d17bbc.2: %Base.F.type.7c6384.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1180,7 +1180,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %.loc5_11.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc5_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc5_8: %Base.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %Base.F.decl: %Base.F.type.7c6384.1 = fn_decl @Base.F.loc7 [concrete = constants.%Base.F.d17bbc.1] {
@@ -1208,7 +1208,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %self.ref: ref %Base = name_ref self, %self
 // CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc5_8 [concrete = @Base.%.loc5_8]
 // CHECK:STDOUT:   %.loc18_7: ref %empty_tuple.type = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc18_13.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc18_13.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc18_13.2: init %empty_tuple.type = tuple_init () to %.loc18_7 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc18_10: init %empty_tuple.type = converted %.loc18_13.1, %.loc18_13.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %.loc18_7, %.loc18_10
@@ -1220,6 +1220,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %ptr.11f: type = ptr_type %Base [concrete]
 // CHECK:STDOUT:   %pattern_type.1b9: type = pattern_type %ptr.11f [concrete]
@@ -1230,7 +1231,6 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [concrete]
 // CHECK:STDOUT:   %Base.F.type.7c6384.2: type = fn_type @Base.F.loc17 [concrete]
 // CHECK:STDOUT:   %Base.F.d17bbc.2: %Base.F.type.7c6384.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1253,7 +1253,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Base {
-// CHECK:STDOUT:   %.loc5_11.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc5_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc5_8: %Base.elem = field_decl a, element0 [concrete]
 // CHECK:STDOUT:   %Base.F.decl: %Base.F.type.7c6384.1 = fn_decl @Base.F.loc7 [concrete = constants.%Base.F.d17bbc.1] {
@@ -1286,7 +1286,7 @@ fn Base.F[addr self: Base*]() {
 // CHECK:STDOUT:   %.loc18_4: ref %Base = deref %self.ref
 // CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc5_8 [concrete = @Base.%.loc5_8]
 // CHECK:STDOUT:   %.loc18_10: ref %empty_tuple.type = class_element_access %.loc18_4, element0
-// CHECK:STDOUT:   %.loc18_16.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc18_16.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc18_16.2: init %empty_tuple.type = tuple_init () to %.loc18_10 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc18_13: init %empty_tuple.type = converted %.loc18_16.1, %.loc18_16.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %.loc18_10, %.loc18_13

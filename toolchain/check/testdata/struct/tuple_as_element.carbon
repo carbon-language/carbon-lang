@@ -24,13 +24,16 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
+// CHECK:STDOUT:   %tuple.896: %tuple.type.85c = tuple_value (%i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.a1c: type = tuple_type (%i32) [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.3d5: type = struct_type {.a: %i32, .b: %tuple.type.a1c} [concrete]
 // CHECK:STDOUT:   %pattern_type.b4d: type = pattern_type %struct_type.a.b.3d5 [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %tuple.type.985: type = tuple_type (Core.IntLiteral) [concrete]
+// CHECK:STDOUT:   %tuple.e7e: %tuple.type.985 = tuple_value (%int_2.ecc) [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.057: type = struct_type {.a: Core.IntLiteral, .b: %tuple.type.985} [concrete]
+// CHECK:STDOUT:   %struct.60a: %struct_type.a.b.057 = struct_value (%int_1.5b8, %tuple.e7e) [concrete]
 // CHECK:STDOUT:   %.680: ref %i32 = struct_access file.%x.var, element0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
@@ -53,8 +56,8 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.393: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b [concrete]
 // CHECK:STDOUT:   %bound_method.9f7: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_2.ef8: %i32 = int_value 2 [concrete]
-// CHECK:STDOUT:   %tuple: %tuple.type.a1c = tuple_value (%int_2.ef8) [concrete]
-// CHECK:STDOUT:   %struct: %struct_type.a.b.3d5 = struct_value (%int_1.5d2, %tuple) [concrete]
+// CHECK:STDOUT:   %tuple.092: %tuple.type.a1c = tuple_value (%int_2.ef8) [concrete]
+// CHECK:STDOUT:   %struct.646: %struct_type.a.b.3d5 = struct_value (%int_1.5d2, %tuple.092) [concrete]
 // CHECK:STDOUT:   %.9df: ref %i32 = struct_access file.%y.var, element0 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
@@ -103,7 +106,7 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:     %i32.loc15_13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc15_23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc15_23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc15_27.1: %tuple.type.85c = tuple_literal (%i32.loc15_23)
+// CHECK:STDOUT:     %.loc15_27.1: %tuple.type.85c = tuple_literal (%i32.loc15_23) [concrete = constants.%tuple.896]
 // CHECK:STDOUT:     %.loc15_27.2: type = converted %.loc15_27.1, constants.%tuple.type.a1c [concrete = constants.%tuple.type.a1c]
 // CHECK:STDOUT:     %struct_type.a.b.loc15: type = struct_type {.a: %i32, .b: %tuple.type.a1c} [concrete = constants.%struct_type.a.b.3d5]
 // CHECK:STDOUT:   }
@@ -118,7 +121,7 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:     %i32.loc16_13: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc16_23: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc16_23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc16_27.1: %tuple.type.85c = tuple_literal (%i32.loc16_23)
+// CHECK:STDOUT:     %.loc16_27.1: %tuple.type.85c = tuple_literal (%i32.loc16_23) [concrete = constants.%tuple.896]
 // CHECK:STDOUT:     %.loc16_27.2: type = converted %.loc16_27.1, constants.%tuple.type.a1c [concrete = constants.%tuple.type.a1c]
 // CHECK:STDOUT:     %struct_type.a.b.loc16: type = struct_type {.a: %i32, .b: %tuple.type.a1c} [concrete = constants.%struct_type.a.b.3d5]
 // CHECK:STDOUT:   }
@@ -129,8 +132,8 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %.loc15_49.1: %tuple.type.985 = tuple_literal (%int_2)
-// CHECK:STDOUT:   %.loc15_50.1: %struct_type.a.b.057 = struct_literal (%int_1, %.loc15_49.1)
+// CHECK:STDOUT:   %.loc15_49.1: %tuple.type.985 = tuple_literal (%int_2) [concrete = constants.%tuple.e7e]
+// CHECK:STDOUT:   %.loc15_50.1: %struct_type.a.b.057 = struct_literal (%int_1, %.loc15_49.1) [concrete = constants.%struct.60a]
 // CHECK:STDOUT:   %impl.elem0.loc15_50: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
 // CHECK:STDOUT:   %bound_method.loc15_50.1: <bound method> = bound_method %int_1, %impl.elem0.loc15_50 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.265]
 // CHECK:STDOUT:   %specific_fn.loc15_50: <specific function> = specific_function %impl.elem0.loc15_50, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -146,11 +149,11 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc15_49: init %i32 = call %bound_method.loc15_49.2(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc15_49.2: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc15_49 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc15_50.5: ref %tuple.type.a1c = struct_access file.%x.var, element1 [concrete = constants.%.627]
-// CHECK:STDOUT:   %.loc15_49.3: init %tuple.type.a1c = tuple_init (%.loc15_49.2) to %.loc15_50.5 [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc15_50.6: init %tuple.type.a1c = converted %.loc15_49.1, %.loc15_49.3 [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc15_50.7: init %tuple.type.a1c = initialize_from %.loc15_50.6 to %.loc15_50.5 [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc15_50.8: init %struct_type.a.b.3d5 = struct_init (%.loc15_50.4, %.loc15_50.7) to file.%x.var [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc15_1: init %struct_type.a.b.3d5 = converted %.loc15_50.1, %.loc15_50.8 [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc15_49.3: init %tuple.type.a1c = tuple_init (%.loc15_49.2) to %.loc15_50.5 [concrete = constants.%tuple.092]
+// CHECK:STDOUT:   %.loc15_50.6: init %tuple.type.a1c = converted %.loc15_49.1, %.loc15_49.3 [concrete = constants.%tuple.092]
+// CHECK:STDOUT:   %.loc15_50.7: init %tuple.type.a1c = initialize_from %.loc15_50.6 to %.loc15_50.5 [concrete = constants.%tuple.092]
+// CHECK:STDOUT:   %.loc15_50.8: init %struct_type.a.b.3d5 = struct_init (%.loc15_50.4, %.loc15_50.7) to file.%x.var [concrete = constants.%struct.646]
+// CHECK:STDOUT:   %.loc15_1: init %struct_type.a.b.3d5 = converted %.loc15_50.1, %.loc15_50.8 [concrete = constants.%struct.646]
 // CHECK:STDOUT:   assign file.%x.var, %.loc15_1
 // CHECK:STDOUT:   %x.ref: ref %struct_type.a.b.3d5 = name_ref x, file.%x [concrete = file.%x.var]
 // CHECK:STDOUT:   %.loc16_32.1: ref %i32 = struct_access %x.ref, element0 [concrete = constants.%.680]

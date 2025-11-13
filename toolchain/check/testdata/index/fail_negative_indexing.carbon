@@ -33,6 +33,7 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   %pattern_type.ae7: type = pattern_type %array_type [concrete]
 // CHECK:STDOUT:   %int_42.20e: Core.IntLiteral = int_value 42 [concrete]
 // CHECK:STDOUT:   %tuple.type.f94: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [concrete]
+// CHECK:STDOUT:   %tuple.df5b: %tuple.type.f94 = tuple_value (%int_42.20e, %int_42.20e) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
@@ -135,7 +136,7 @@ var d: i32 = c[-10];
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_42.loc15_25: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]
 // CHECK:STDOUT:   %int_42.loc15_29: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]
-// CHECK:STDOUT:   %.loc15_31.1: %tuple.type.f94 = tuple_literal (%int_42.loc15_25, %int_42.loc15_29)
+// CHECK:STDOUT:   %.loc15_31.1: %tuple.type.f94 = tuple_literal (%int_42.loc15_25, %int_42.loc15_29) [concrete = constants.%tuple.df5b]
 // CHECK:STDOUT:   %impl.elem0.loc15_31.1: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
 // CHECK:STDOUT:   %bound_method.loc15_31.1: <bound method> = bound_method %int_42.loc15_25, %impl.elem0.loc15_31.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.134]
 // CHECK:STDOUT:   %specific_fn.loc15_31.1: <specific function> = specific_function %impl.elem0.loc15_31.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]

@@ -27,10 +27,10 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [concrete]
@@ -49,11 +49,11 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc14_17.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc14_17.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc14_17.2: type = converted %.loc14_17.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %n.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc14_10.1: type = splice_block %.loc14_10.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc14_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc14_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc14_10.3: type = converted %.loc14_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %empty_tuple.type = value_binding n, %n.param
@@ -66,11 +66,11 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc18_19.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc18_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc18_19.2: type = converted %.loc18_19.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %n.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc18_12.1: type = splice_block %.loc18_12.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc18_12.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc18_12.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc18_12.3: type = converted %.loc18_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %n: %empty_tuple.type = value_binding n, %n.param
@@ -83,11 +83,11 @@ fn C(r#if: ()) -> () {
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc22_20.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc22_20.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc22_20.2: type = converted %.loc22_20.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %if.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc22_13.1: type = splice_block %.loc22_13.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc22_13.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc22_13.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc22_13.3: type = converted %.loc22_13.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %if: %empty_tuple.type = value_binding r#if, %if.param

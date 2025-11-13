@@ -89,6 +89,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -125,7 +126,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_16.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc4_16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc4_16.2: init %C = class_init (), file.%inst.var [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc4_1: init %C = converted %.loc4_16.1, %.loc4_16.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%inst.var, %.loc4_1
@@ -136,6 +137,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -160,7 +162,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%inst.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -169,6 +171,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -198,7 +201,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%inst.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

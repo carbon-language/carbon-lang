@@ -263,6 +263,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:   %C.F.type: type = fn_type @C.F, @C(%T) [symbolic]
 // CHECK:STDOUT:   %C.F: %C.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %empty_struct_type [symbolic]
 // CHECK:STDOUT:   %struct_type.data: type = struct_type {.data: %empty_struct_type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.data [concrete]
@@ -301,7 +302,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %C.F.decl: @C.%C.F.type (%C.F.type) = fn_decl @C.F [symbolic = @C.%C.F (constants.%C.F)] {} {}
-// CHECK:STDOUT:     %.loc13_14.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc13_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc13_14.2: type = converted %.loc13_14.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %.loc13_11: @C.%C.elem (%C.elem) = field_decl data, element0 [concrete]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.data [concrete = constants.%complete_type]

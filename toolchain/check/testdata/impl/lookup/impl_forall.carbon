@@ -93,6 +93,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %specific_impl_fn.2e3: <specific function> = specific_impl_function %impl.elem0.a9e, @I.F(%W, %I.facet.84d) [symbolic]
 // CHECK:STDOUT:   %require_complete.f6b5ff.2: <witness> = require_complete_type %A.2ddf89.3 [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %A.235: type = class_type @A, @A(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %ptr.197: type = ptr_type %A.235 [concrete]
 // CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
@@ -248,7 +249,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %ptr.197 = name_ref a, %a
 // CHECK:STDOUT:   %I.ref: %I.type.dac = name_ref I, file.%I.decl [concrete = constants.%I.generic]
-// CHECK:STDOUT:   %.loc27_17: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc27_17: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc27_18: type = converted %.loc27_17, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(constants.%empty_struct_type)> [concrete = constants.%I.type.399]
 // CHECK:STDOUT:   %.loc27_19: %I.assoc_type.22c = specific_constant @I.%assoc0.loc8_31.1, @I(constants.%empty_struct_type) [concrete = constants.%assoc0.a7f]

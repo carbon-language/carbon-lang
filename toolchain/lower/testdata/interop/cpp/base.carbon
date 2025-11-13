@@ -141,8 +141,8 @@ fn Call(b: Cpp.B*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCall.Main(ptr %b) #0 !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_4.3.base = getelementptr inbounds nuw [8 x i8], ptr %b, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   call void @_ZN1A1fEv(ptr %.loc7_4.3.base), !dbg !10
+// CHECK:STDOUT:   %.loc7_4.2.base = getelementptr inbounds nuw [8 x i8], ptr %b, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   call void @_ZN1A1fEv(ptr %.loc7_4.2.base), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

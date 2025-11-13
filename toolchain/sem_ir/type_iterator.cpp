@@ -79,6 +79,10 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
     case CARBON_KIND(SemIR::SymbolicBindingType bind): {
       return Step::SymbolicBinding{.entity_name_id = bind.entity_name_id};
     }
+    case CARBON_KIND(TupleAccess access): {
+      auto facet_type_id = sem_ir_->insts().Get(access.tuple_id).type_id();
+      return Step::SymbolicType{.facet_type_id = facet_type_id};
+    }
 
       // ==== Concrete types ====
 

@@ -1618,7 +1618,8 @@ struct StructLiteral {
   static constexpr auto Kind = InstKind::StructLiteral.Define<
       Parse::NodeIdOneOf<Parse::ChoiceAlternativeListCommaId,
                          Parse::ChoiceDefinitionId, Parse::StructLiteralId>>(
-      {.ir_name = "struct_literal", .constant_kind = InstConstantKind::Never});
+      {.ir_name = "struct_literal",
+       .constant_kind = InstConstantKind::Indirect});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -1740,7 +1741,8 @@ struct TupleLiteral {
   static constexpr auto Kind = InstKind::TupleLiteral.Define<
       Parse::NodeIdOneOf<Parse::ChoiceAlternativeListCommaId,
                          Parse::ChoiceDefinitionId, Parse::TupleLiteralId>>(
-      {.ir_name = "tuple_literal", .constant_kind = InstConstantKind::Never});
+      {.ir_name = "tuple_literal",
+       .constant_kind = InstConstantKind::Indirect});
 
   TypeId type_id;
   InstBlockId elements_id;

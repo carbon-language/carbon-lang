@@ -533,6 +533,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %complete_type.65d: <witness> = complete_type_witness %tuple.type.d07 [concrete]
 // CHECK:STDOUT:   %pattern_type.ee1: type = pattern_type %TupleAdapter [concrete]
@@ -580,7 +581,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %i32.loc5_17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   %int_32.loc5_22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc5_22: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc5_25: %tuple.type.24b = tuple_literal (%i32.loc5_17, %i32.loc5_22)
+// CHECK:STDOUT:   %.loc5_25: %tuple.type.24b = tuple_literal (%i32.loc5_17, %i32.loc5_22) [concrete = constants.%tuple]
 // CHECK:STDOUT:   %.loc5_26: type = converted %.loc5_25, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:   adapt_decl %.loc5_26 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%tuple.type.d07 [concrete = constants.%complete_type.65d]

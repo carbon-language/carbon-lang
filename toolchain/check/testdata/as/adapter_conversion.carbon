@@ -319,9 +319,9 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %D [concrete]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %D.val: %D = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -338,7 +338,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10_13: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc10_13: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc10_15.1: %D = as_compatible %empty_struct [concrete = constants.%D.val]
@@ -357,6 +357,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %struct_type.x.y.4cf: type = struct_type {.x: Core.IntLiteral, .y: Core.IntLiteral} [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.x.y.4cf = struct_value (%int_1.5b8, %int_2.ecc) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.d14: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.1b6: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
@@ -395,7 +396,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %.loc14_34.1: %struct_type.x.y.4cf = struct_literal (%int_1, %int_2)
+// CHECK:STDOUT:   %.loc14_34.1: %struct_type.x.y.4cf = struct_literal (%int_1, %int_2) [concrete = constants.%struct]
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %impl.elem0.loc14_34.1: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
 // CHECK:STDOUT:   %bound_method.loc14_34.1: <bound method> = bound_method %int_1, %impl.elem0.loc14_34.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.265]
@@ -429,7 +430,9 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %Noncopyable: type = class_type @Noncopyable [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %tuple.type.c8c: type = tuple_type (%empty_struct_type, type) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.c8c = tuple_value (%empty_struct, %Noncopyable) [concrete]
 // CHECK:STDOUT:   %tuple.type.a10: type = tuple_type (%empty_struct_type, %Noncopyable) [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %A [concrete]
 // CHECK:STDOUT: }
@@ -443,10 +446,10 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:     %a_value.patt: %pattern_type = value_binding_pattern a_value [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
-// CHECK:STDOUT:   %.loc14_28: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc14_28: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Noncopyable.ref: type = name_ref Noncopyable, file.%Noncopyable.decl [concrete = constants.%Noncopyable]
-// CHECK:STDOUT:   %.loc14_42.1: %tuple.type.c8c = tuple_literal (%.loc14_28, %Noncopyable.ref)
-// CHECK:STDOUT:   %.loc14_42.2: type = converted %.loc14_28, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc14_42.1: %tuple.type.c8c = tuple_literal (%.loc14_28, %Noncopyable.ref) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc14_42.2: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %.loc14_42.3: type = converted %.loc14_42.1, constants.%tuple.type.a10 [concrete = constants.%tuple.type.a10]
 // CHECK:STDOUT:   %.loc14_23.1: %tuple.type.a10 = as_compatible %a.ref
 // CHECK:STDOUT:   %.loc14_23.2: %tuple.type.a10 = converted %a.ref, %.loc14_23.1

@@ -81,7 +81,7 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   %b_ref.var: ref <error> = var %b_ref.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %x.ref.loc13: <error> = name_ref x, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc13: <error> = struct_literal (%x.ref.loc13)
+// CHECK:STDOUT:     %.loc13: <error> = struct_literal (%x.ref.loc13) [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_ref: ref <error> = ref_binding b_ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
@@ -91,7 +91,7 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   %c_ref.var: ref <error> = var %c_ref.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.2: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %x.ref.loc18: <error> = name_ref x, <error> [concrete = <error>]
-// CHECK:STDOUT:     %.loc18: <error> = tuple_literal (%x.ref.loc18)
+// CHECK:STDOUT:     %.loc18: <error> = tuple_literal (%x.ref.loc18) [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c_ref: ref <error> = ref_binding c_ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {

@@ -772,6 +772,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -812,7 +813,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo() -> %return.param.loc8: %C {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_25.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc8_25.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_25.2: init %C = class_init (), %return.loc8 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc8_26: init %C = converted %.loc8_25.1, %.loc8_25.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   return %.loc8_26 to %return.loc8

@@ -26,6 +26,7 @@ fn Class.F[self: Self](b: ()) {}
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
 // CHECK:STDOUT:   %pattern_type.761: type = pattern_type %Class [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F [concrete]
 // CHECK:STDOUT:   %Class.F: %Class.F.type = struct_value () [concrete]
@@ -59,7 +60,7 @@ fn Class.F[self: Self](b: ()) {}
 // CHECK:STDOUT:     %self.loc21: %Class = value_binding self, %self.param.loc21
 // CHECK:STDOUT:     %b.param.loc21: %empty_tuple.type = value_param call_param1
 // CHECK:STDOUT:     %.loc21_28.1: type = splice_block %.loc21_28.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc21_28.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc21_28.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc21_28.3: type = converted %.loc21_28.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b.loc21: %empty_tuple.type = value_binding b, %b.param.loc21
@@ -78,7 +79,7 @@ fn Class.F[self: Self](b: ()) {}
 // CHECK:STDOUT:     %self.loc18: %Class = value_binding self, %self.param.loc18
 // CHECK:STDOUT:     %b.param.loc18: %empty_tuple.type = value_param call_param1
 // CHECK:STDOUT:     %.loc18_24.1: type = splice_block %.loc18_24.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc18_24.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc18_24.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc18_24.3: type = converted %.loc18_24.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %b.loc18: %empty_tuple.type = value_binding b, %b.param.loc18

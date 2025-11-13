@@ -52,6 +52,7 @@ fn H() {
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G, @G(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %I.type.399: type = facet_type <@I, @I(%empty_struct_type)> [concrete]
 // CHECK:STDOUT:   %Self.32d: %I.type.399 = symbolic_binding Self, 1 [symbolic]
@@ -150,7 +151,7 @@ fn H() {
 // CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
-// CHECK:STDOUT:   %.loc27_6: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc27_6: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc27_7: type = converted %.loc27_6, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G.ref, @G(constants.%empty_struct_type) [concrete = constants.%G.specific_fn]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.specific_fn()

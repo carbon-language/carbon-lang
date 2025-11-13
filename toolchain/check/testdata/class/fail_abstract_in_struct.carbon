@@ -296,6 +296,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct_type.m6.c1.489: type = struct_type {.m6: %Abstract6, .c1: %empty_tuple.type} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -312,7 +313,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   %v3.var: ref <error> = var %v3.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.loc12_33: type = splice_block %struct_type.m6.c1 [concrete = constants.%struct_type.m6.c1.489] {
 // CHECK:STDOUT:     %Abstract6.ref: type = name_ref Abstract6, %Abstract6.decl [concrete = constants.%Abstract6]
-// CHECK:STDOUT:     %.loc12_32.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc12_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc12_32.2: type = converted %.loc12_32.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.m6.c1: type = struct_type {.m6: %Abstract6, .c1: %empty_tuple.type} [concrete = constants.%struct_type.m6.c1.489]
 // CHECK:STDOUT:   }
@@ -334,6 +335,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct_type.c2.m7.4a7: type = struct_type {.c2: %empty_tuple.type, .m7: %Abstract7} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -349,7 +351,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v4.var: ref <error> = var %v4.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.loc12_33: type = splice_block %struct_type.c2.m7 [concrete = constants.%struct_type.c2.m7.4a7] {
-// CHECK:STDOUT:     %.loc12_16.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc12_16.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc12_16.2: type = converted %.loc12_16.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %Abstract7.ref: type = name_ref Abstract7, %Abstract7.decl [concrete = constants.%Abstract7]
 // CHECK:STDOUT:     %struct_type.c2.m7: type = struct_type {.c2: %empty_tuple.type, .m7: %Abstract7} [concrete = constants.%struct_type.c2.m7.4a7]

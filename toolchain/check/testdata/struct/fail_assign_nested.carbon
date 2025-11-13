@@ -22,9 +22,11 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.a.225: type = struct_type {.a: %empty_struct_type} [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.a.225 [concrete]
 // CHECK:STDOUT:   %struct_type.b.347: type = struct_type {.b: %empty_struct_type} [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.b.347 = struct_value (%empty_struct) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -37,7 +39,7 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.225 = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %.loc19_15: type = splice_block %struct_type.a [concrete = constants.%struct_type.a.225] {
-// CHECK:STDOUT:     %.loc19_14.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc19_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc19_14.2: type = converted %.loc19_14.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %empty_struct_type} [concrete = constants.%struct_type.a.225]
 // CHECK:STDOUT:   }
@@ -46,8 +48,8 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_26: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:   %.loc19_27: %struct_type.b.347 = struct_literal (%.loc19_26)
+// CHECK:STDOUT:   %.loc19_26: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc19_27: %struct_type.b.347 = struct_literal (%.loc19_26) [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

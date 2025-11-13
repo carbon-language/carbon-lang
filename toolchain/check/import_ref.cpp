@@ -89,15 +89,12 @@ auto AddImportRef(Context& context, SemIR::ImportIRInst import_ir_inst,
                   SemIR::EntityNameId entity_name_id =
                       SemIR::EntityNameId::None) -> SemIR::InstId {
   auto import_ir_inst_id = context.import_ir_insts().Add(import_ir_inst);
-  SemIR::ImportRefUnloaded inst = {.import_ir_inst_id = import_ir_inst_id,
-                                   .entity_name_id = entity_name_id};
-  auto import_ref_id = AddPlaceholderInstInNoBlock(
-      context, MakeImportedLocIdAndInst(context, import_ir_inst_id, inst));
-
-  // ImportRefs have a dedicated block because this may be called during
-  // processing where the instruction shouldn't be inserted in the current inst
-  // block.
-  context.imports().push_back(import_ref_id);
+  auto import_ref_id = AddPlaceholderImportedInstInNoBlock(
+      context,
+      MakeImportedLocIdAndInst(
+          context, import_ir_inst_id,
+          SemIR::ImportRefUnloaded{.import_ir_inst_id = import_ir_inst_id,
+                                   .entity_name_id = entity_name_id}));
   return import_ref_id;
 }
 
@@ -515,11 +512,10 @@ static auto AddLoadedImportRef(ImportContext& context,
   SemIR::ImportRefLoaded inst = {.type_id = local_type_id,
                                  .import_ir_inst_id = import_ir_inst_id,
                                  .entity_name_id = SemIR::EntityNameId::None};
-  auto inst_id = AddPlaceholderInstInNoBlock(
+  auto inst_id = AddPlaceholderImportedInstInNoBlock(
       context.local_context(),
       MakeImportedLocIdAndInst(context.local_context(), import_ir_inst_id,
                                inst));
-  context.local_context().imports().push_back(inst_id);
 
   context.local_constant_values().Set(inst_id, local_const_id);
   context.local_constant_values_for_import_insts().Set(import_inst_id,
@@ -561,14 +557,11 @@ template <typename InstT>
 static auto AddPlaceholderImportedInst(ImportContext& context,
                                        SemIR::InstId import_inst_id, InstT inst)
     -> SemIR::InstId {
-  auto inst_id = context.local_insts().AddInNoBlock(MakeImportedLocIdAndInst(
-      context.local_context(), AddImportIRInst(context, import_inst_id), inst));
-  CARBON_VLOG_TO(context.local_context().vlog_stream(),
-                 "AddPlaceholderImportedInst: {0}\n", inst);
-  // Track the instruction in the imports block so that it's included in
-  // formatted SemIR if it's referenced.
-  context.local_context().imports().push_back(inst_id);
-  return inst_id;
+  auto import_ir_inst_id = AddImportIRInst(context, import_inst_id);
+  return AddPlaceholderImportedInstInNoBlock(
+      context.local_context(),
+      MakeImportedLocIdAndInst(context.local_context(), import_ir_inst_id,
+                               inst));
 }
 
 // Replace an imported instruction that was added by
@@ -583,7 +576,7 @@ static auto ReplacePlaceholderImportedInst(ImportContext& context,
   context.local_insts().Set(inst_id, inst);
 
   CARBON_CHECK(context.local_constant_values().Get(inst_id) ==
-               SemIR::ConstantId::NotConstant);
+               SemIR::ConstantId::None);
   return SetConstantValue(context.local_context(), inst_id, inst);
 }
 

@@ -250,6 +250,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -265,7 +266,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
 // CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc4_10.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc4_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc4_10.3: type = converted %.loc4_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %empty_tuple.type = value_binding x, %x.param

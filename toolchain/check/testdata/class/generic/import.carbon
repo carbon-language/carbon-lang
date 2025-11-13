@@ -296,6 +296,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.F.971: %CompleteClass.F.type.0aa = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %struct_type.n.44a: type = struct_type {.n: Core.IntLiteral} [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.n.44a = struct_value (%int_1.5b8) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.774: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.ea0: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%i32) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.a38: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.99d, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
@@ -411,7 +412,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: fn @F() -> %return.param: %CompleteClass.a06 [from "foo.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc9_17.1: %struct_type.n.44a = struct_literal (%int_1)
+// CHECK:STDOUT:   %.loc9_17.1: %struct_type.n.44a = struct_literal (%int_1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %impl.elem0: %.dc8 = impl_witness_access constants.%ImplicitAs.impl_witness.a38, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.a89]
 // CHECK:STDOUT:   %bound_method.loc9_17.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]

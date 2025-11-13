@@ -538,8 +538,8 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.impl_witness.f6038c.1: <witness> = impl_witness file.%I.impl_witness_table.loc9 [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (type, type) [concrete]
-// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%C, %C) [concrete]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %I.impl_witness.f6038c.2: <witness> = impl_witness file.%I.impl_witness_table.loc17 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -568,7 +568,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   impl_decl @C.as.I.impl.7de31e.2 [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc17_7: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc17_10: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc17_11.1: %tuple.type = tuple_literal (%C.ref.loc17_7, %C.ref.loc17_10)
+// CHECK:STDOUT:     %.loc17_11.1: %tuple.type = tuple_literal (%C.ref.loc17_7, %C.ref.loc17_10) [concrete = constants.%tuple]
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:     %tuple: %tuple.type = tuple_value (%C.ref.loc17_7, %C.ref.loc17_10) [concrete = constants.%tuple]
 // CHECK:STDOUT:     %.loc17_11.2: %tuple.type = converted %.loc17_11.1, %tuple [concrete = constants.%tuple]
@@ -616,12 +616,12 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:   %T.as.I.impl.A: %T.as.I.impl.A.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.as.I.impl.B.type: type = fn_type @T.as.I.impl.B, @T.as.I.impl.381c92.2(%T) [symbolic]
 // CHECK:STDOUT:   %T.as.I.impl.B: %T.as.I.impl.B.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %T.as.I.impl.C.type: type = fn_type @T.as.I.impl.C, @T.as.I.impl.381c92.2(%T) [symbolic]
 // CHECK:STDOUT:   %T.as.I.impl.C: %T.as.I.impl.C.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.as.I.impl.D.type: type = fn_type @T.as.I.impl.D, @T.as.I.impl.381c92.2(%T) [symbolic]
 // CHECK:STDOUT:   %T.as.I.impl.D: %T.as.I.impl.D.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %T.as.I.impl.C.specific_fn: <specific function> = specific_function %T.as.I.impl.C, @T.as.I.impl.C(%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -703,7 +703,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:       %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %.loc19_14.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc19_14.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc19_14.2: type = converted %.loc19_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:       %return: ref %empty_tuple.type = return_slot %return.param
@@ -712,7 +712,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:       %return.patt: %pattern_type.cb1 = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: %pattern_type.cb1 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %.loc20_14.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc20_14.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc20_14.2: type = converted %.loc20_14.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:       %return: ref %empty_tuple.type = return_slot %return.param
@@ -749,7 +749,7 @@ impl forall [T:! type] T as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %empty_tuple.type {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc19_26.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc19_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc19_26.2: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc19_27: init %empty_tuple.type = converted %.loc19_26.1, %.loc19_26.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     return %.loc19_27 to %return

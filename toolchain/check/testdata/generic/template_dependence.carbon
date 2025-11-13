@@ -124,6 +124,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 1 [symbolic]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%T, %U) [template]
 // CHECK:STDOUT:   %tuple.type.d18: type = tuple_type (%T, %U) [template]
 // CHECK:STDOUT:   %pattern_type.b8b: type = pattern_type %tuple.type.d18 [template]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -144,7 +145,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc5: type = name_ref T, %T.loc5_15.2 [template = %T.loc5_15.1 (constants.%T)]
 // CHECK:STDOUT:     %U.ref.loc5: type = name_ref U, %U.loc5_25.2 [symbolic = %U.loc5_25.1 (constants.%U)]
-// CHECK:STDOUT:     %.loc5_43.1: %tuple.type.24b = tuple_literal (%T.ref.loc5, %U.ref.loc5)
+// CHECK:STDOUT:     %.loc5_43.1: %tuple.type.24b = tuple_literal (%T.ref.loc5, %U.ref.loc5) [template = %tuple (constants.%tuple)]
 // CHECK:STDOUT:     %.loc5_43.2: type = converted %.loc5_43.1, constants.%tuple.type.d18 [template = %tuple.type (constants.%tuple.type.d18)]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %T.loc5_15.2: type = symbolic_binding T, 0, template [template = %T.loc5_15.1 (constants.%T)]
@@ -158,6 +159,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT: generic fn @F(%T.loc5_15.2: type, %U.loc5_25.2: type) {
 // CHECK:STDOUT:   %T.loc5_15.1: type = symbolic_binding T, 0, template [template = %T.loc5_15.1 (constants.%T)]
 // CHECK:STDOUT:   %U.loc5_25.1: type = symbolic_binding U, 1 [symbolic = %U.loc5_25.1 (constants.%U)]
+// CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%T.loc5_15.1, %U.loc5_25.1) [template = %tuple (constants.%tuple)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%T.loc5_15.1, %U.loc5_25.1) [template = %tuple.type (constants.%tuple.type.d18)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %tuple.type [template = %pattern_type (constants.%pattern_type.b8b)]
 // CHECK:STDOUT:
@@ -180,6 +182,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T.loc5_15.1 => constants.%T
 // CHECK:STDOUT:   %U.loc5_25.1 => constants.%U
+// CHECK:STDOUT:   %tuple => constants.%tuple
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.d18
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b8b
 // CHECK:STDOUT:

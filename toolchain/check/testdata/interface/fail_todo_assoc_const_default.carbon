@@ -37,6 +37,7 @@ interface I {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, @I.%N [concrete]
 // CHECK:STDOUT:   %int_42.20e: Core.IntLiteral = int_value 42 [concrete]
@@ -88,7 +89,7 @@ interface I {
 // CHECK:STDOUT:     %i32.loc20_27: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc20_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc20_32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc20_35: %tuple.type.24b = tuple_literal (%i32.loc20_27, %i32.loc20_32)
+// CHECK:STDOUT:     %.loc20_35: %tuple.type.24b = tuple_literal (%i32.loc20_27, %i32.loc20_32) [concrete = constants.%tuple]
 // CHECK:STDOUT:     %.loc20_36: type = converted %.loc20_35, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %N: %i32 = assoc_const_decl @N [concrete] {

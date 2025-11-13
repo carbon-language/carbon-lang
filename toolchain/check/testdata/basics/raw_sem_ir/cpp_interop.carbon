@@ -281,8 +281,8 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:       4:               inst6000002F
 // CHECK:STDOUT:       5:               inst6000003A
 // CHECK:STDOUT:       6:               inst60000042
-// CHECK:STDOUT:       7:               inst6000004E
-// CHECK:STDOUT:       8:               inst6000004B
+// CHECK:STDOUT:       7:               inst6000004B
+// CHECK:STDOUT:       8:               inst6000004E
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     inst_block60000004:
 // CHECK:STDOUT:       0:               inst60000011

@@ -70,6 +70,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 1 [symbolic]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
+// CHECK:STDOUT:   %tuple.225: %tuple.type.24b = tuple_value (%T, %U) [symbolic]
 // CHECK:STDOUT:   %tuple.type.d18: type = tuple_type (%T, %U) [symbolic]
 // CHECK:STDOUT:   %pattern_type.b8b: type = pattern_type %tuple.type.d18 [symbolic]
 // CHECK:STDOUT:   %pattern_type.984: type = pattern_type %U [symbolic]
@@ -78,6 +79,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %require_complete.162: <witness> = require_complete_type %U [symbolic]
 // CHECK:STDOUT:   %require_complete.fdf: <witness> = require_complete_type %tuple.type.d18 [symbolic]
 // CHECK:STDOUT:   %F.specific_fn.b44: <specific function> = specific_function %F, @F(%T, %U) [symbolic]
+// CHECK:STDOUT:   %tuple.f3a: %tuple.type.24b = tuple_value (%C, %D) [concrete]
 // CHECK:STDOUT:   %tuple.type.e8a: type = tuple_type (%C, %D) [concrete]
 // CHECK:STDOUT:   %pattern_type.9ec: type = pattern_type %tuple.type.e8a [concrete]
 // CHECK:STDOUT:   %pattern_type.510: type = pattern_type %D [concrete]
@@ -122,7 +124,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %.loc7_37.1: type = splice_block %.loc7_37.3 [symbolic = %tuple.type (constants.%tuple.type.d18)] {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc7_6.2 [symbolic = %T.loc7_6.1 (constants.%T)]
 // CHECK:STDOUT:       %U.ref.loc7_36: type = name_ref U, %U.loc7_16.2 [symbolic = %U.loc7_16.1 (constants.%U)]
-// CHECK:STDOUT:       %.loc7_37.2: %tuple.type.24b = tuple_literal (%T.ref, %U.ref.loc7_36)
+// CHECK:STDOUT:       %.loc7_37.2: %tuple.type.24b = tuple_literal (%T.ref, %U.ref.loc7_36) [symbolic = %tuple (constants.%tuple.225)]
 // CHECK:STDOUT:       %.loc7_37.3: type = converted %.loc7_37.2, constants.%tuple.type.d18 [symbolic = %tuple.type (constants.%tuple.type.d18)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %pair: @F.%tuple.type (%tuple.type.d18) = value_binding pair, %pair.param
@@ -140,7 +142,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %.loc9_17.1: type = splice_block %.loc9_17.3 [concrete = constants.%tuple.type.e8a] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %D.ref.loc9_16: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:       %.loc9_17.2: %tuple.type.24b = tuple_literal (%C.ref, %D.ref.loc9_16)
+// CHECK:STDOUT:       %.loc9_17.2: %tuple.type.24b = tuple_literal (%C.ref, %D.ref.loc9_16) [concrete = constants.%tuple.f3a]
 // CHECK:STDOUT:       %.loc9_17.3: type = converted %.loc9_17.2, constants.%tuple.type.e8a [concrete = constants.%tuple.type.e8a]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %pair: %tuple.type.e8a = value_binding pair, %pair.param
@@ -168,6 +170,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: generic fn @F(%T.loc7_6.2: type, %U.loc7_16.2: type) {
 // CHECK:STDOUT:   %T.loc7_6.1: type = symbolic_binding T, 0 [symbolic = %T.loc7_6.1 (constants.%T)]
 // CHECK:STDOUT:   %U.loc7_16.1: type = symbolic_binding U, 1 [symbolic = %U.loc7_16.1 (constants.%U)]
+// CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%T.loc7_6.1, %U.loc7_16.1) [symbolic = %tuple (constants.%tuple.225)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%T.loc7_6.1, %U.loc7_16.1) [symbolic = %tuple.type (constants.%tuple.type.d18)]
 // CHECK:STDOUT:   %pattern_type.loc7_26: type = pattern_type %tuple.type [symbolic = %pattern_type.loc7_26 (constants.%pattern_type.b8b)]
 // CHECK:STDOUT:   %pattern_type.loc7_40: type = pattern_type %U.loc7_16.1 [symbolic = %pattern_type.loc7_40 (constants.%pattern_type.984)]
@@ -201,6 +204,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: specific @F(constants.%T, constants.%U) {
 // CHECK:STDOUT:   %T.loc7_6.1 => constants.%T
 // CHECK:STDOUT:   %U.loc7_16.1 => constants.%U
+// CHECK:STDOUT:   %tuple => constants.%tuple.225
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.d18
 // CHECK:STDOUT:   %pattern_type.loc7_26 => constants.%pattern_type.b8b
 // CHECK:STDOUT:   %pattern_type.loc7_40 => constants.%pattern_type.984
@@ -214,6 +218,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT: specific @F(constants.%C, constants.%D) {
 // CHECK:STDOUT:   %T.loc7_6.1 => constants.%C
 // CHECK:STDOUT:   %U.loc7_16.1 => constants.%D
+// CHECK:STDOUT:   %tuple => constants.%tuple.f3a
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.e8a
 // CHECK:STDOUT:   %pattern_type.loc7_26 => constants.%pattern_type.9ec
 // CHECK:STDOUT:   %pattern_type.loc7_40 => constants.%pattern_type.510
@@ -235,6 +240,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
+// CHECK:STDOUT:   %tuple.95a: %tuple.type.24b = tuple_value (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %Pair: %tuple.type.d07 = symbolic_binding Pair, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.511: type = pattern_type %tuple.type.d07 [concrete]
@@ -267,6 +273,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %tuple.type.f94: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [concrete]
+// CHECK:STDOUT:   %tuple.ad8: %tuple.type.f94 = tuple_value (%int_1.5b8, %int_2.ecc) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.d14: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
@@ -330,7 +337,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:       %i32.loc4_23: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:       %int_32.loc4_28: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc4_28: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:       %.loc4_31.2: %tuple.type.24b = tuple_literal (%i32.loc4_23, %i32.loc4_28)
+// CHECK:STDOUT:       %.loc4_31.2: %tuple.type.24b = tuple_literal (%i32.loc4_23, %i32.loc4_28) [concrete = constants.%tuple.95a]
 // CHECK:STDOUT:       %.loc4_31.3: type = converted %.loc4_31.2, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Pair.loc4_15.2: %tuple.type.d07 = symbolic_binding Pair, 0 [symbolic = %Pair.loc4_15.1 (constants.%Pair)]
@@ -362,7 +369,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:       %HasPair.ref: %HasPair.type = name_ref HasPair, file.%HasPair.decl [concrete = constants.%HasPair.generic]
 // CHECK:STDOUT:       %A.ref: %i32 = name_ref A, %A.loc6_6.2 [symbolic = %A.loc6_6.1 (constants.%A)]
 // CHECK:STDOUT:       %B.ref.loc6_39: %i32 = name_ref B, %B.loc6_15.2 [symbolic = %B.loc6_15.1 (constants.%B)]
-// CHECK:STDOUT:       %.loc6_40: %tuple.type.d07 = tuple_literal (%A.ref, %B.ref.loc6_39)
+// CHECK:STDOUT:       %.loc6_40: %tuple.type.d07 = tuple_literal (%A.ref, %B.ref.loc6_39) [symbolic = %tuple.loc6_40.1 (constants.%tuple.878)]
 // CHECK:STDOUT:       %tuple.loc6_40.2: %tuple.type.d07 = tuple_value (%A.ref, %B.ref.loc6_39) [symbolic = %tuple.loc6_40.1 (constants.%tuple.878)]
 // CHECK:STDOUT:       %.loc6_41.2: %tuple.type.d07 = converted %.loc6_40, %tuple.loc6_40.2 [symbolic = %tuple.loc6_40.1 (constants.%tuple.878)]
 // CHECK:STDOUT:       %HasPair.loc6_41.2: type = class_type @HasPair, @HasPair(constants.%tuple.878) [symbolic = %HasPair.loc6_41.1 (constants.%HasPair.e70)]
@@ -384,7 +391,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:       %HasPair.ref: %HasPair.type = name_ref HasPair, file.%HasPair.decl [concrete = constants.%HasPair.generic]
 // CHECK:STDOUT:       %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:       %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:       %.loc8_22.1: %tuple.type.f94 = tuple_literal (%int_1, %int_2)
+// CHECK:STDOUT:       %.loc8_22.1: %tuple.type.f94 = tuple_literal (%int_1, %int_2) [concrete = constants.%tuple.ad8]
 // CHECK:STDOUT:       %impl.elem0.loc8_22.1: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
 // CHECK:STDOUT:       %bound_method.loc8_22.1: <bound method> = bound_method %int_1, %impl.elem0.loc8_22.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.265]
 // CHECK:STDOUT:       %specific_fn.loc8_22.1: <specific function> = specific_function %impl.elem0.loc8_22.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -505,11 +512,13 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
+// CHECK:STDOUT:   %tuple.2bc: %tuple.type.24b = tuple_value (%T, %T) [symbolic]
 // CHECK:STDOUT:   %tuple.type.39d: type = tuple_type (%T, %T) [symbolic]
 // CHECK:STDOUT:   %pattern_type.5ea: type = pattern_type %tuple.type.39d [symbolic]
 // CHECK:STDOUT:   %pattern_type.e68: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %tuple.f3a: %tuple.type.24b = tuple_value (%C, %D) [concrete]
 // CHECK:STDOUT:   %tuple.type.e8a: type = tuple_type (%C, %D) [concrete]
 // CHECK:STDOUT:   %pattern_type.9ec: type = pattern_type %tuple.type.e8a [concrete]
 // CHECK:STDOUT:   %pattern_type.510: type = pattern_type %D [concrete]
@@ -549,7 +558,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %.loc7_27.1: type = splice_block %.loc7_27.3 [symbolic = %tuple.type (constants.%tuple.type.39d)] {
 // CHECK:STDOUT:       %T.ref.loc7_23: type = name_ref T, %T.loc7_6.2 [symbolic = %T.loc7_6.1 (constants.%T)]
 // CHECK:STDOUT:       %T.ref.loc7_26: type = name_ref T, %T.loc7_6.2 [symbolic = %T.loc7_6.1 (constants.%T)]
-// CHECK:STDOUT:       %.loc7_27.2: %tuple.type.24b = tuple_literal (%T.ref.loc7_23, %T.ref.loc7_26)
+// CHECK:STDOUT:       %.loc7_27.2: %tuple.type.24b = tuple_literal (%T.ref.loc7_23, %T.ref.loc7_26) [symbolic = %tuple (constants.%tuple.2bc)]
 // CHECK:STDOUT:       %.loc7_27.3: type = converted %.loc7_27.2, constants.%tuple.type.39d [symbolic = %tuple.type (constants.%tuple.type.39d)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %pair: @F.%tuple.type (%tuple.type.39d) = value_binding pair, %pair.param
@@ -567,7 +576,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %.loc9_17.1: type = splice_block %.loc9_17.3 [concrete = constants.%tuple.type.e8a] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %D.ref.loc9_16: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:       %.loc9_17.2: %tuple.type.24b = tuple_literal (%C.ref, %D.ref.loc9_16)
+// CHECK:STDOUT:       %.loc9_17.2: %tuple.type.24b = tuple_literal (%C.ref, %D.ref.loc9_16) [concrete = constants.%tuple.f3a]
 // CHECK:STDOUT:       %.loc9_17.3: type = converted %.loc9_17.2, constants.%tuple.type.e8a [concrete = constants.%tuple.type.e8a]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %pair: %tuple.type.e8a = value_binding pair, %pair.param
@@ -594,6 +603,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc7_6.2: type) {
 // CHECK:STDOUT:   %T.loc7_6.1: type = symbolic_binding T, 0 [symbolic = %T.loc7_6.1 (constants.%T)]
+// CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%T.loc7_6.1, %T.loc7_6.1) [symbolic = %tuple (constants.%tuple.2bc)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%T.loc7_6.1, %T.loc7_6.1) [symbolic = %tuple.type (constants.%tuple.type.39d)]
 // CHECK:STDOUT:   %pattern_type.loc7_16: type = pattern_type %tuple.type [symbolic = %pattern_type.loc7_16 (constants.%pattern_type.5ea)]
 // CHECK:STDOUT:   %pattern_type.loc7_30: type = pattern_type %T.loc7_6.1 [symbolic = %pattern_type.loc7_30 (constants.%pattern_type.e68)]
@@ -610,6 +620,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_6.1 => constants.%T
+// CHECK:STDOUT:   %tuple => constants.%tuple.2bc
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.39d
 // CHECK:STDOUT:   %pattern_type.loc7_16 => constants.%pattern_type.5ea
 // CHECK:STDOUT:   %pattern_type.loc7_30 => constants.%pattern_type.e68

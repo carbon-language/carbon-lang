@@ -372,6 +372,7 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:   %.Self.binding.as_type.ce6: type = symbolic_binding_type .Self, %.Self.f26 [symbolic_self]
 // CHECK:STDOUT:   %I.lookup_impl_witness.c5b: <witness> = lookup_impl_witness %.Self.f26, @I, @I(%.Self.binding.as_type.5c8) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness.c5b, element0 [symbolic_self]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I, @I(%.Self.binding.as_type.5c8) where %impl.elem0 = %empty_tuple.type> [symbolic_self]
 // CHECK:STDOUT:   %T.14f: %I_where.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.878: type = pattern_type %I_where.type [symbolic_self]
@@ -381,7 +382,6 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -421,7 +421,7 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:       %.Self.as_type.loc8_25: type = facet_access_type %.Self.ref.loc8_25 [symbolic_self = constants.%.Self.binding.as_type.ce6]
 // CHECK:STDOUT:       %.loc8_25.2: type = converted %.Self.ref.loc8_25, %.Self.as_type.loc8_25 [symbolic_self = constants.%.Self.binding.as_type.ce6]
 // CHECK:STDOUT:       %impl.elem0.loc8_25: type = impl_witness_access constants.%I.lookup_impl_witness.c5b, element0 [symbolic_self = constants.%impl.elem0]
-// CHECK:STDOUT:       %.loc8_32.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc8_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc8_32.2: type = converted %.loc8_32.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %.loc8_19.2: type = where_expr %.Self.2 [symbolic_self = constants.%I_where.type] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%I.type.cd0
@@ -457,7 +457,7 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:       %.Self.as_type.loc12_33: type = facet_access_type %.Self.ref.loc12_33 [symbolic_self = constants.%.Self.binding.as_type.ce6]
 // CHECK:STDOUT:       %.loc12_33.2: type = converted %.Self.ref.loc12_33, %.Self.as_type.loc12_33 [symbolic_self = constants.%.Self.binding.as_type.ce6]
 // CHECK:STDOUT:       %impl.elem0.loc12_33: type = impl_witness_access constants.%I.lookup_impl_witness.c5b, element0 [symbolic_self = constants.%impl.elem0]
-// CHECK:STDOUT:       %.loc12_40.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc12_40.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc12_40.2: type = converted %.loc12_40.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %.loc12_27.2: type = where_expr %.Self.2 [symbolic_self = constants.%I_where.type] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%I.type.cd0
@@ -507,7 +507,7 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %empty_tuple.type {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc9_11.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc9_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc9_11.2: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc9_12: init %empty_tuple.type = converted %.loc9_11.1, %.loc9_11.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     return %.loc9_12 to %return
@@ -523,7 +523,7 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %empty_tuple.type {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc13_11.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc13_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc13_11.2: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc13_12: init %empty_tuple.type = converted %.loc13_11.1, %.loc13_11.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     return %.loc13_12 to %return

@@ -195,6 +195,7 @@ export Poison;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete]
@@ -208,7 +209,7 @@ export Poison;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc5_11.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc5_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc5_8: %C.elem = field_decl x, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x [concrete = constants.%complete_type]
@@ -298,8 +299,9 @@ export Poison;
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.x = struct_value (%empty_tuple) [concrete]
+// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -335,8 +337,8 @@ export Poison;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6_19.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc6_20.1: %struct_type.x = struct_literal (%.loc6_19.1)
+// CHECK:STDOUT:   %.loc6_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_20.1: %struct_type.x = struct_literal (%.loc6_19.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc6_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.b62]
 // CHECK:STDOUT:   %.loc6_19.2: init %empty_tuple.type = tuple_init () to %.loc6_20.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_20.3: init %empty_tuple.type = converted %.loc6_19.1, %.loc6_19.2 [concrete = constants.%empty_tuple]
@@ -356,8 +358,9 @@ export Poison;
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.x = struct_value (%empty_tuple) [concrete]
+// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -394,8 +397,8 @@ export Poison;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4_19.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc4_20.1: %struct_type.x = struct_literal (%.loc4_19.1)
+// CHECK:STDOUT:   %.loc4_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc4_20.1: %struct_type.x = struct_literal (%.loc4_19.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc4_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.b62]
 // CHECK:STDOUT:   %.loc4_19.2: init %empty_tuple.type = tuple_init () to %.loc4_20.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_20.3: init %empty_tuple.type = converted %.loc4_19.1, %.loc4_19.2 [concrete = constants.%empty_tuple]
@@ -413,8 +416,9 @@ export Poison;
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.x = struct_value (%empty_tuple) [concrete]
+// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -450,8 +454,8 @@ export Poison;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6_19.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc6_20.1: %struct_type.x = struct_literal (%.loc6_19.1)
+// CHECK:STDOUT:   %.loc6_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_20.1: %struct_type.x = struct_literal (%.loc6_19.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc6_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.b62]
 // CHECK:STDOUT:   %.loc6_19.2: init %empty_tuple.type = tuple_init () to %.loc6_20.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_20.3: init %empty_tuple.type = converted %.loc6_19.1, %.loc6_19.2 [concrete = constants.%empty_tuple]
@@ -469,8 +473,9 @@ export Poison;
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.x = struct_value (%empty_tuple) [concrete]
+// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -506,8 +511,8 @@ export Poison;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6_19.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc6_20.1: %struct_type.x = struct_literal (%.loc6_19.1)
+// CHECK:STDOUT:   %.loc6_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_20.1: %struct_type.x = struct_literal (%.loc6_19.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc6_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.b62]
 // CHECK:STDOUT:   %.loc6_19.2: init %empty_tuple.type = tuple_init () to %.loc6_20.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_20.3: init %empty_tuple.type = converted %.loc6_19.1, %.loc6_19.2 [concrete = constants.%empty_tuple]
@@ -525,8 +530,9 @@ export Poison;
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.x = struct_value (%empty_tuple) [concrete]
+// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -562,8 +568,8 @@ export Poison;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6_19.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc6_20.1: %struct_type.x = struct_literal (%.loc6_19.1)
+// CHECK:STDOUT:   %.loc6_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_20.1: %struct_type.x = struct_literal (%.loc6_19.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc6_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.b62]
 // CHECK:STDOUT:   %.loc6_19.2: init %empty_tuple.type = tuple_init () to %.loc6_20.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_20.3: init %empty_tuple.type = converted %.loc6_19.1, %.loc6_19.2 [concrete = constants.%empty_tuple]
@@ -581,8 +587,9 @@ export Poison;
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.x = struct_value (%empty_tuple) [concrete]
+// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -618,8 +625,8 @@ export Poison;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_19.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc7_20.1: %struct_type.x = struct_literal (%.loc7_19.1)
+// CHECK:STDOUT:   %.loc7_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_20.1: %struct_type.x = struct_literal (%.loc7_19.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc7_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.b62]
 // CHECK:STDOUT:   %.loc7_19.2: init %empty_tuple.type = tuple_init () to %.loc7_20.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_20.3: init %empty_tuple.type = converted %.loc7_19.1, %.loc7_19.2 [concrete = constants.%empty_tuple]
@@ -637,8 +644,9 @@ export Poison;
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.x = struct_value (%empty_tuple) [concrete]
+// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -674,8 +682,8 @@ export Poison;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_19.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc7_20.1: %struct_type.x = struct_literal (%.loc7_19.1)
+// CHECK:STDOUT:   %.loc7_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_20.1: %struct_type.x = struct_literal (%.loc7_19.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc7_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.b62]
 // CHECK:STDOUT:   %.loc7_19.2: init %empty_tuple.type = tuple_init () to %.loc7_20.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_20.3: init %empty_tuple.type = converted %.loc7_19.1, %.loc7_19.2 [concrete = constants.%empty_tuple]
@@ -693,8 +701,9 @@ export Poison;
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.x = struct_value (%empty_tuple) [concrete]
+// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -730,8 +739,8 @@ export Poison;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_19.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc7_20.1: %struct_type.x = struct_literal (%.loc7_19.1)
+// CHECK:STDOUT:   %.loc7_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_20.1: %struct_type.x = struct_literal (%.loc7_19.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc7_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.b62]
 // CHECK:STDOUT:   %.loc7_19.2: init %empty_tuple.type = tuple_init () to %.loc7_20.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_20.3: init %empty_tuple.type = converted %.loc7_19.1, %.loc7_19.2 [concrete = constants.%empty_tuple]
@@ -761,8 +770,9 @@ export Poison;
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.x = struct_value (%empty_tuple) [concrete]
+// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -798,8 +808,8 @@ export Poison;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_19.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc7_20.1: %struct_type.x = struct_literal (%.loc7_19.1)
+// CHECK:STDOUT:   %.loc7_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_20.1: %struct_type.x = struct_literal (%.loc7_19.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc7_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.b62]
 // CHECK:STDOUT:   %.loc7_19.2: init %empty_tuple.type = tuple_init () to %.loc7_20.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_20.3: init %empty_tuple.type = converted %.loc7_19.1, %.loc7_19.2 [concrete = constants.%empty_tuple]
@@ -817,8 +827,9 @@ export Poison;
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %.960: ref %empty_tuple.type = class_element_access file.%indirect_c.var, element0 [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.x = struct_value (%empty_tuple) [concrete]
+// CHECK:STDOUT:   %.960: ref %empty_tuple.type = class_element_access file.%indirect_c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -856,8 +867,8 @@ export Poison;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc6_28.1: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:   %.loc6_29.1: %struct_type.x = struct_literal (%.loc6_28.1)
+// CHECK:STDOUT:   %.loc6_28.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_29.1: %struct_type.x = struct_literal (%.loc6_28.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc6_29.2: ref %empty_tuple.type = class_element_access file.%indirect_c.var, element0 [concrete = constants.%.960]
 // CHECK:STDOUT:   %.loc6_28.2: init %empty_tuple.type = tuple_init () to %.loc6_29.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_29.3: init %empty_tuple.type = converted %.loc6_28.1, %.loc6_28.2 [concrete = constants.%empty_tuple]

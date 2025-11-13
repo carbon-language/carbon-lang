@@ -96,20 +96,20 @@ fn Deref(n: i32) {
 // CHECK:STDOUT:   %n.ref.loc25: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc25: ref <error> = deref %n.ref.loc25
 // CHECK:STDOUT:   %foo.ref.loc25: <error> = name_ref foo, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc30_5.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc30_5.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %empty_tuple.loc30: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc30_5.2: %empty_tuple.type = converted %.loc30_5.1, %empty_tuple.loc30 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc30_3: ref <error> = deref %.loc30_5.2 [concrete = <error>]
-// CHECK:STDOUT:   %.loc35_4.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc35_4.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %empty_tuple.loc35: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc35_4.2: %empty_tuple.type = converted %.loc35_4.1, %empty_tuple.loc35 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc35_5: ref <error> = deref %.loc35_4.2 [concrete = <error>]
 // CHECK:STDOUT:   %foo.ref.loc35: <error> = name_ref foo, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc40_5.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc40_5.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %empty_struct.loc40: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc40_5.2: %empty_struct_type = converted %.loc40_5.1, %empty_struct.loc40 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc40_3: ref <error> = deref %.loc40_5.2 [concrete = <error>]
-// CHECK:STDOUT:   %.loc45_4.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc45_4.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %empty_struct.loc45: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc45_4.2: %empty_struct_type = converted %.loc45_4.1, %empty_struct.loc45 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc45_5: ref <error> = deref %.loc45_4.2 [concrete = <error>]

@@ -61,6 +61,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   %Self.36a: %Generic.type.29a = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %DifferentParams.type.d40e5c.1: type = generic_interface_type @DifferentParams.loc35 [concrete]
 // CHECK:STDOUT:   %DifferentParams.generic.d33670.1: %DifferentParams.type.d40e5c.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %T.d76: %empty_tuple.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %DifferentParams.type.d40e5c.2: type = generic_interface_type @DifferentParams.loc43 [concrete]
@@ -100,7 +101,7 @@ interface DifferentParams(T:! ()) {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc43_32.1: type = splice_block %.loc43_32.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc43_32.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc43_32.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc43_32.3: type = converted %.loc43_32.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc43_27.2: %empty_tuple.type = symbolic_binding T, 0 [symbolic = %T.loc43_27.1 (constants.%T.d76)]

@@ -634,6 +634,12 @@ auto EvalConstantInst(Context& /*context*/, SemIR::StructInit inst)
       .type_id = inst.type_id, .elements_id = inst.elements_id});
 }
 
+auto EvalConstantInst(Context& /*context*/, SemIR::StructLiteral inst)
+    -> ConstantEvalResult {
+  return ConstantEvalResult::NewSamePhase(SemIR::StructValue{
+      .type_id = inst.type_id, .elements_id = inst.elements_id});
+}
+
 auto EvalConstantInst(Context& /*context*/, SemIR::Temporary /*inst*/)
     -> ConstantEvalResult {
   // TODO: Handle this. Can we just return the value of `init_id`?
@@ -646,6 +652,12 @@ auto EvalConstantInst(Context& context, SemIR::TupleAccess inst)
 }
 
 auto EvalConstantInst(Context& /*context*/, SemIR::TupleInit inst)
+    -> ConstantEvalResult {
+  return ConstantEvalResult::NewSamePhase(SemIR::TupleValue{
+      .type_id = inst.type_id, .elements_id = inst.elements_id});
+}
+
+auto EvalConstantInst(Context& /*context*/, SemIR::TupleLiteral inst)
     -> ConstantEvalResult {
   return ConstantEvalResult::NewSamePhase(SemIR::TupleValue{
       .type_id = inst.type_id, .elements_id = inst.elements_id});

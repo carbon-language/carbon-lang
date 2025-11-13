@@ -144,8 +144,8 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
       MakeImportedNamespaceLocIdAndInst(context, import_id, namespace_inst);
   AddImportNamespaceResult result = {
       .name_scope_id = SemIR::NameScopeId::None,
-      .inst_id = AddPlaceholderInstInNoBlock(context, namespace_inst_and_loc)};
-  context.imports().push_back(result.inst_id);
+      .inst_id =
+          AddPlaceholderImportedInstInNoBlock(context, namespace_inst_and_loc)};
   namespace_inst.name_scope_id =
       context.name_scopes().Add(result.inst_id, name_id, parent_scope_id);
   result.name_scope_id = namespace_inst.name_scope_id;

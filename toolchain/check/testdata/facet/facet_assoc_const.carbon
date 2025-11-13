@@ -691,6 +691,7 @@ fn F(T:! I & J where .I1 = .J1.I2) {}
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %M.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %impl.elem1: type = impl_witness_access %M.lookup_impl_witness, element1 [symbolic_self]
 // CHECK:STDOUT:   %impl.elem2: type = impl_witness_access %M.lookup_impl_witness, element2 [symbolic_self]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -732,7 +733,7 @@ fn F(T:! I & J where .I1 = .J1.I2) {}
 // CHECK:STDOUT:       %.Self.as_type.loc13_42: type = facet_access_type %.Self.ref.loc13_42 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %.loc13_42: type = converted %.Self.ref.loc13_42, %.Self.as_type.loc13_42 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:       %impl.elem2: type = impl_witness_access constants.%M.lookup_impl_witness, element2 [symbolic_self = constants.%impl.elem2]
-// CHECK:STDOUT:       %.loc13_48.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc13_48.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc13_48.2: type = converted %.loc13_48.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:       %.loc13_12.2: type = where_expr %.Self.2 [concrete = <error>] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%M.type

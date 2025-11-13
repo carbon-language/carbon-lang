@@ -27,6 +27,7 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:   %pattern_type.268: type = pattern_type %struct_type.a.ba9 [concrete]
 // CHECK:STDOUT:   %int_4.0c1: Core.IntLiteral = int_value 4 [concrete]
 // CHECK:STDOUT:   %struct_type.a.a6c: type = struct_type {.a: Core.IntLiteral} [concrete]
+// CHECK:STDOUT:   %struct.2cb: %struct_type.a.a6c = struct_value (%int_4.0c1) [concrete]
 // CHECK:STDOUT:   %.0db: ref %i32 = struct_access file.%x.var, element0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
@@ -44,7 +45,7 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_4.0c1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_4.940: %i32 = int_value 4 [concrete]
-// CHECK:STDOUT:   %struct: %struct_type.a.ba9 = struct_value (%int_4.940) [concrete]
+// CHECK:STDOUT:   %struct.a51: %struct_type.a.ba9 = struct_value (%int_4.940) [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.24b: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
@@ -108,15 +109,15 @@ var y: {.a: i32} = x;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4.0c1]
-// CHECK:STDOUT:   %.loc15_27.1: %struct_type.a.a6c = struct_literal (%int_4)
+// CHECK:STDOUT:   %.loc15_27.1: %struct_type.a.a6c = struct_literal (%int_4) [concrete = constants.%struct.2cb]
 // CHECK:STDOUT:   %impl.elem0.loc15: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
 // CHECK:STDOUT:   %bound_method.loc15_27.1: <bound method> = bound_method %int_4, %impl.elem0.loc15 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn.loc15: <specific function> = specific_function %impl.elem0.loc15, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc15_27.2: <bound method> = bound_method %int_4, %specific_fn.loc15 [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc15_27.2(%int_4) [concrete = constants.%int_4.940]
 // CHECK:STDOUT:   %.loc15_27.2: init %i32 = converted %int_4, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_4.940]
-// CHECK:STDOUT:   %.loc15_27.3: init %struct_type.a.ba9 = struct_init (%.loc15_27.2) to file.%x.var [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc15_1: init %struct_type.a.ba9 = converted %.loc15_27.1, %.loc15_27.3 [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc15_27.3: init %struct_type.a.ba9 = struct_init (%.loc15_27.2) to file.%x.var [concrete = constants.%struct.a51]
+// CHECK:STDOUT:   %.loc15_1: init %struct_type.a.ba9 = converted %.loc15_27.1, %.loc15_27.3 [concrete = constants.%struct.a51]
 // CHECK:STDOUT:   assign file.%x.var, %.loc15_1
 // CHECK:STDOUT:   %x.ref: ref %struct_type.a.ba9 = name_ref x, file.%x [concrete = file.%x.var]
 // CHECK:STDOUT:   %.loc16_20.1: ref %i32 = struct_access %x.ref, element0 [concrete = constants.%.0db]

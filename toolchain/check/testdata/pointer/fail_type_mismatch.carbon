@@ -27,6 +27,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %const.c48: type = const_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %ptr.bf9: type = ptr_type %const.c48 [concrete]
 // CHECK:STDOUT:   %pattern_type.db0: type = pattern_type %ptr.bf9 [concrete]
@@ -60,13 +61,13 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:     %return.patt: %pattern_type.3c6 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.3c6 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc15_43: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc15_43: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc15_44: type = converted %.loc15_43, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %ptr.loc15_44: type = ptr_type %.loc15_44 [concrete = constants.%ptr.c28]
 // CHECK:STDOUT:     %const.loc15_35: type = const_type %ptr.loc15_44 [concrete = constants.%const.987]
 // CHECK:STDOUT:     %p.param: %ptr.bf9 = value_param call_param0
 // CHECK:STDOUT:     %.loc15_29: type = splice_block %ptr.loc15_29 [concrete = constants.%ptr.bf9] {
-// CHECK:STDOUT:       %.loc15_28: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:       %.loc15_28: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:       %.loc15_21: type = converted %.loc15_28, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:       %const.loc15_21: type = const_type %.loc15_21 [concrete = constants.%const.c48]
 // CHECK:STDOUT:       %ptr.loc15_29: type = ptr_type %const.loc15_21 [concrete = constants.%ptr.bf9]

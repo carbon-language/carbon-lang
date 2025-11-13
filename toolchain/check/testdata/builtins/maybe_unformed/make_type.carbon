@@ -59,6 +59,7 @@ fn ColonBangParam(T:! type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %.a8d: type = maybe_unformed_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %.2ba: type = maybe_unformed_type %.a8d [concrete]
 // CHECK:STDOUT:   %pattern_type.ce6: type = pattern_type %.2ba [concrete]
@@ -77,7 +78,7 @@ fn ColonBangParam(T:! type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT:   %.loc7_21.1: type = splice_block %.loc7_21.3 [concrete = constants.%.2ba] {
 // CHECK:STDOUT:     %Make.ref.loc7_8: %Make.type = name_ref Make, imports.%Main.Make [concrete = constants.%Make]
 // CHECK:STDOUT:     %Make.ref.loc7_13: %Make.type = name_ref Make, imports.%Main.Make [concrete = constants.%Make]
-// CHECK:STDOUT:     %.loc7_19.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:     %.loc7_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc7_19.2: type = converted %.loc7_19.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %Make.call.loc7_20: init type = call %Make.ref.loc7_13(%.loc7_19.2) [concrete = constants.%.a8d]
 // CHECK:STDOUT:     %.loc7_20.1: type = value_of_initializer %Make.call.loc7_20 [concrete = constants.%.a8d]
@@ -94,6 +95,7 @@ fn ColonBangParam(T:! type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -118,7 +120,7 @@ fn ColonBangParam(T:! type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc7: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, imports.%Main.Make [concrete = constants.%Make]
 // CHECK:STDOUT:   %t.ref: type = name_ref t, file.%t
 // CHECK:STDOUT:   %Make.call: init type = call %Make.ref(%t.ref)

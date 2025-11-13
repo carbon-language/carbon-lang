@@ -61,6 +61,7 @@ fn F() {
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.7da: type = pattern_type %S [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
 // CHECK:STDOUT:   %TakesConstS.cpp_overload_set.type: type = cpp_overload_set_type @TakesConstS.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %TakesConstS.cpp_overload_set.value: %TakesConstS.cpp_overload_set.type = cpp_overload_set_value @TakesConstS.cpp_overload_set [concrete]
@@ -117,7 +118,7 @@ fn F() {
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.7da = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
-// CHECK:STDOUT:   %.loc10_19.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc10_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc10_19.2: init %S = class_init (), %s.var [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc10_3: init %S = converted %.loc10_19.1, %.loc10_19.2 [concrete = constants.%S.val]
 // CHECK:STDOUT:   assign %s.var, %.loc10_3

@@ -36,6 +36,7 @@ fn G() {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%empty_struct_type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -67,7 +68,7 @@ fn G() {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc8_6: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc8_6: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_7: type = converted %.loc8_6, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()

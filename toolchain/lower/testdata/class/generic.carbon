@@ -159,7 +159,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: ; ModuleID = 'create_generic.carbon'
 // CHECK:STDOUT: source_filename = "create_generic.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @tuple.loc22_28.6 = internal constant { i32, i32 } { i32 1, i32 2 }
+// CHECK:STDOUT: @tuple.21c.loc22_28.6 = internal constant { i32, i32 } { i32 1, i32 2 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CInts.Main(ptr sret({ i32, i32 }) %return) #0 !dbg !4 {
@@ -178,7 +178,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CTuples.Main(ptr sret({ { i32, i32 }, { i32, i32 } }) %return) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CMake.Main.a862d5c8b748242e(ptr %return, ptr @tuple.loc22_28.6, ptr @tuple.loc22_28.6), !dbg !13
+// CHECK:STDOUT:   call void @_CMake.Main.a862d5c8b748242e(ptr %return, ptr @tuple.21c.loc22_28.6, ptr @tuple.21c.loc22_28.6), !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -114,6 +114,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %C.as.WithAssocFn.impl.F.type: type = fn_type @C.as.WithAssocFn.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.WithAssocFn.impl.F: %C.as.WithAssocFn.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %WithAssocFn.facet: %WithAssocFn.type.fc9 = facet_value %C, (%WithAssocFn.impl_witness) [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %X.val: %X = struct_value () [concrete]
 // CHECK:STDOUT:   %N: %T.d9f = symbolic_binding N, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.e68: type = pattern_type %T.d9f [symbolic]
@@ -310,7 +311,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.WithAssocFn.impl.F() -> %return.param: %X {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_15.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc17_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc17_15.2: init %X = class_init (), %return [concrete = constants.%X.val]
 // CHECK:STDOUT:   %.loc17_16: init %X = converted %.loc17_15.1, %.loc17_15.2 [concrete = constants.%X.val]
 // CHECK:STDOUT:   return %.loc17_16 to %return
@@ -551,6 +552,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %Generic.generic: %Generic.type.c21 = struct_value () [concrete]
 // CHECK:STDOUT:   %Generic.type.68b: type = facet_type <@Generic, @Generic(%T)> [symbolic]
 // CHECK:STDOUT:   %Self: %Generic.type.68b = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -572,8 +574,8 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Generic.ref: %Generic.type.c21 = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
-// CHECK:STDOUT:       %.loc12_19: %empty_tuple.type = tuple_literal ()
-// CHECK:STDOUT:       %.loc12_23: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc12_19: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc12_23: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T: <error> = symbolic_binding T, 0 [concrete = <error>]
 // CHECK:STDOUT:   }

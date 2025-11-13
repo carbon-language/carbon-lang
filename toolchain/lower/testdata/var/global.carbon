@@ -129,7 +129,7 @@ var (_: i32, _: i32) = (3, 4);
 // CHECK:STDOUT: source_filename = "tuple_in_var.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @_Cd.Main = global { i32, i32 } zeroinitializer
-// CHECK:STDOUT: @tuple.loc4_1 = internal constant { i32, i32 } { i32 4, i32 5 }
+// CHECK:STDOUT: @tuple.0a0.loc4_1 = internal constant { i32, i32 } { i32 4, i32 5 }
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -147,7 +147,7 @@ var (_: i32, _: i32) = (3, 4);
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cd.Main, ptr align 4 @tuple.loc4_1, i64 8, i1 false), !dbg !11
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cd.Main, ptr align 4 @tuple.0a0.loc4_1, i64 8, i1 false), !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

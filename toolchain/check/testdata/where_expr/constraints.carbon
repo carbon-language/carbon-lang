@@ -308,6 +308,7 @@ fn F() {
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%Member [concrete]
 // CHECK:STDOUT:   %.Self.420: %I.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %I_where.type.a09: type = facet_type <@I where TODO> [concrete]
 // CHECK:STDOUT:   %U: %I_where.type.a09 = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.917: type = pattern_type %I_where.type.a09 [concrete]
@@ -342,7 +343,7 @@ fn F() {
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.420]
-// CHECK:STDOUT:       %.loc12_37: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc12_37: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc12_21.2: type = where_expr %.Self.2 [concrete = constants.%I_where.type.a09] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%I.type
 // CHECK:STDOUT:         requirement_equivalent %.Self.ref, %.loc12_37
@@ -384,7 +385,7 @@ fn F() {
 // CHECK:STDOUT:       %.Self.as_type.loc16_38: type = facet_access_type %.Self.ref.loc16_38 [symbolic_self = constants.%.Self.binding.as_type.765]
 // CHECK:STDOUT:       %.loc16_38: type = converted %.Self.ref.loc16_38, %.Self.as_type.loc16_38 [symbolic_self = constants.%.Self.binding.as_type.765]
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
-// CHECK:STDOUT:       %.loc16_50: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:       %.loc16_50: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc16_14.2: type = where_expr %.Self.2 [concrete = constants.%I_where.type.e04] {
 // CHECK:STDOUT:         requirement_base_facet_type constants.%I.type
 // CHECK:STDOUT:         requirement_impls %.loc16_20, %J.ref
@@ -521,6 +522,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %WithError.type: type = fn_type @WithError [concrete]
 // CHECK:STDOUT:   %WithError: %WithError.type = struct_value () [concrete]
@@ -536,9 +538,9 @@ fn F() {
 // CHECK:STDOUT:     %x.patt: %pattern_type = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %WithError.ref: %WithError.type = name_ref WithError, imports.%Main.WithError [concrete = constants.%WithError]
-// CHECK:STDOUT:   %.loc8_26: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc8_26: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_11.1: type = splice_block %.loc8_11.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc8_11.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc8_11.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_11.3: type = converted %.loc8_11.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: %empty_tuple.type = value_binding x, <error> [concrete = <error>]
