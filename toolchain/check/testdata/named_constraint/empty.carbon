@@ -49,23 +49,11 @@ fn G(T:! Z, U:! type, V:! Empty) {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-<<<<<<< HEAD
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %facet_value.6fa: %Empty.type = facet_value %empty_struct_type, () [concrete]
-// CHECK:STDOUT:   %F.specific_fn.007: <specific function> = specific_function %F, @F(%facet_value.6fa) [concrete]
-// CHECK:STDOUT:   %facet_value.832: %Empty.type = facet_value type, () [concrete]
-// CHECK:STDOUT:   %F.specific_fn.7db: <specific function> = specific_function %F, @F(%facet_value.832) [concrete]
-||||||| parent of bd89af4f7 (review)
-// CHECK:STDOUT:   %facet_value.6fa: %Empty.type = facet_value %empty_struct_type, () [concrete]
-// CHECK:STDOUT:   %F.specific_fn.007: <specific function> = specific_function %F, @F(%facet_value.6fa) [concrete]
-// CHECK:STDOUT:   %facet_value.832: %Empty.type = facet_value type, () [concrete]
-// CHECK:STDOUT:   %F.specific_fn.7db: <specific function> = specific_function %F, @F(%facet_value.832) [concrete]
-=======
 // CHECK:STDOUT:   %Empty.facet.6fa: %Empty.type = facet_value %empty_struct_type, () [concrete]
 // CHECK:STDOUT:   %F.specific_fn.007: <specific function> = specific_function %F, @F(%Empty.facet.6fa) [concrete]
 // CHECK:STDOUT:   %Empty.facet.832: %Empty.type = facet_value type, () [concrete]
 // CHECK:STDOUT:   %F.specific_fn.7db: <specific function> = specific_function %F, @F(%Empty.facet.832) [concrete]
->>>>>>> bd89af4f7 (review)
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.3b3 [symbolic]
 // CHECK:STDOUT:   %Empty.facet.146: %Empty.type = facet_value %T.binding.as_type, () [symbolic]
 // CHECK:STDOUT:   %F.specific_fn.2bd: <specific function> = specific_function %F, @F(%Empty.facet.146) [symbolic]
@@ -131,22 +119,10 @@ fn G(T:! Z, U:! type, V:! Empty) {
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref.loc26: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-<<<<<<< HEAD
 // CHECK:STDOUT:     %.loc26_6: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %facet_value.loc26: %Empty.type = facet_value constants.%empty_struct_type, () [concrete = constants.%facet_value.6fa]
-// CHECK:STDOUT:     %.loc26_7: %Empty.type = converted %.loc26_6, %facet_value.loc26 [concrete = constants.%facet_value.6fa]
-// CHECK:STDOUT:     %F.specific_fn.loc26: <specific function> = specific_function %F.ref.loc26, @F(constants.%facet_value.6fa) [concrete = constants.%F.specific_fn.007]
-||||||| parent of bd89af4f7 (review)
-// CHECK:STDOUT:     %.loc26_6: %empty_struct_type = struct_literal ()
-// CHECK:STDOUT:     %facet_value.loc26: %Empty.type = facet_value constants.%empty_struct_type, () [concrete = constants.%facet_value.6fa]
-// CHECK:STDOUT:     %.loc26_7: %Empty.type = converted %.loc26_6, %facet_value.loc26 [concrete = constants.%facet_value.6fa]
-// CHECK:STDOUT:     %F.specific_fn.loc26: <specific function> = specific_function %F.ref.loc26, @F(constants.%facet_value.6fa) [concrete = constants.%F.specific_fn.007]
-=======
-// CHECK:STDOUT:     %.loc26_6: %empty_struct_type = struct_literal ()
 // CHECK:STDOUT:     %Empty.facet.loc26: %Empty.type = facet_value constants.%empty_struct_type, () [concrete = constants.%Empty.facet.6fa]
 // CHECK:STDOUT:     %.loc26_7: %Empty.type = converted %.loc26_6, %Empty.facet.loc26 [concrete = constants.%Empty.facet.6fa]
 // CHECK:STDOUT:     %F.specific_fn.loc26: <specific function> = specific_function %F.ref.loc26, @F(constants.%Empty.facet.6fa) [concrete = constants.%F.specific_fn.007]
->>>>>>> bd89af4f7 (review)
 // CHECK:STDOUT:     %F.call.loc26: init %empty_tuple.type = call %F.specific_fn.loc26()
 // CHECK:STDOUT:     %F.ref.loc27: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %Empty.facet.loc27: %Empty.type = facet_value type, () [concrete = constants.%Empty.facet.832]
