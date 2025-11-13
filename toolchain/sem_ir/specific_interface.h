@@ -23,7 +23,7 @@ struct SpecificInterface {
                          const SpecificInterface& rhs) -> bool = default;
 };
 
-constexpr SpecificInterface SpecificInterface::None = {
+inline constexpr SpecificInterface SpecificInterface::None = {
     .interface_id = InterfaceId::None, .specific_id = SpecificId::None};
 
 using SpecificInterfaceStore =

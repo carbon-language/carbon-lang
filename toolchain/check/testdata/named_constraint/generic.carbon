@@ -151,11 +151,11 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %T.loc4_24.1: type = symbolic_binding T, 0 [symbolic = %T.loc4_24.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %type: type = facet_type <type> [symbolic = %type (constants.%GenericType.type.b8d)]
-// CHECK:STDOUT:   %Self.loc4_34.2: @GenericType.%type (%GenericType.type.b8d) = symbolic_binding Self, 1 [symbolic = %Self.loc4_34.2 (constants.%Self.aa1546.1)]
+// CHECK:STDOUT:   %GenericType.type: type = facet_type <@GenericType, @GenericType(%T.loc4_24.1)> [symbolic = %GenericType.type (constants.%GenericType.type.b8d)]
+// CHECK:STDOUT:   %Self.loc4_34.2: @GenericType.%GenericType.type (%GenericType.type.b8d) = symbolic_binding Self, 1 [symbolic = %Self.loc4_34.2 (constants.%Self.aa1546.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
-// CHECK:STDOUT:     %Self.loc4_34.1: @GenericType.%type (%GenericType.type.b8d) = symbolic_binding Self, 1 [symbolic = %Self.loc4_34.2 (constants.%Self.aa1546.1)]
+// CHECK:STDOUT:     %Self.loc4_34.1: @GenericType.%GenericType.type (%GenericType.type.b8d) = symbolic_binding Self, 1 [symbolic = %Self.loc4_34.2 (constants.%Self.aa1546.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc4_34.1
@@ -168,11 +168,11 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %U.loc7_21.1: %Z.type = symbolic_binding U, 0 [symbolic = %U.loc7_21.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %type: type = facet_type <type> [symbolic = %type (constants.%GenericZ.type.b8d)]
-// CHECK:STDOUT:   %Self.loc7_28.2: @GenericZ.%type (%GenericZ.type.b8d) = symbolic_binding Self, 1 [symbolic = %Self.loc7_28.2 (constants.%Self.aa1546.2)]
+// CHECK:STDOUT:   %GenericZ.type: type = facet_type <@GenericZ, @GenericZ(%U.loc7_21.1)> [symbolic = %GenericZ.type (constants.%GenericZ.type.b8d)]
+// CHECK:STDOUT:   %Self.loc7_28.2: @GenericZ.%GenericZ.type (%GenericZ.type.b8d) = symbolic_binding Self, 1 [symbolic = %Self.loc7_28.2 (constants.%Self.aa1546.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
-// CHECK:STDOUT:     %Self.loc7_28.1: @GenericZ.%type (%GenericZ.type.b8d) = symbolic_binding Self, 1 [symbolic = %Self.loc7_28.2 (constants.%Self.aa1546.2)]
+// CHECK:STDOUT:     %Self.loc7_28.1: @GenericZ.%GenericZ.type (%GenericZ.type.b8d) = symbolic_binding Self, 1 [symbolic = %Self.loc7_28.2 (constants.%Self.aa1546.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc7_28.1
@@ -185,11 +185,11 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %T.loc9_35.1: type = symbolic_binding T, 0 [symbolic = %T.loc9_35.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %type: type = facet_type <type> [symbolic = %type (constants.%ForwardDeclaredGeneric.type.b8d)]
-// CHECK:STDOUT:   %Self.loc10_45.2: @ForwardDeclaredGeneric.%type (%ForwardDeclaredGeneric.type.b8d) = symbolic_binding Self, 1 [symbolic = %Self.loc10_45.2 (constants.%Self.aa1546.3)]
+// CHECK:STDOUT:   %ForwardDeclaredGeneric.type: type = facet_type <@ForwardDeclaredGeneric, @ForwardDeclaredGeneric(%T.loc9_35.1)> [symbolic = %ForwardDeclaredGeneric.type (constants.%ForwardDeclaredGeneric.type.b8d)]
+// CHECK:STDOUT:   %Self.loc10_45.2: @ForwardDeclaredGeneric.%ForwardDeclaredGeneric.type (%ForwardDeclaredGeneric.type.b8d) = symbolic_binding Self, 1 [symbolic = %Self.loc10_45.2 (constants.%Self.aa1546.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   constraint {
-// CHECK:STDOUT:     %Self.loc10_45.1: @ForwardDeclaredGeneric.%type (%ForwardDeclaredGeneric.type.b8d) = symbolic_binding Self, 1 [symbolic = %Self.loc10_45.2 (constants.%Self.aa1546.3)]
+// CHECK:STDOUT:     %Self.loc10_45.1: @ForwardDeclaredGeneric.%ForwardDeclaredGeneric.type (%ForwardDeclaredGeneric.type.b8d) = symbolic_binding Self, 1 [symbolic = %Self.loc10_45.2 (constants.%Self.aa1546.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = %Self.loc10_45.1

@@ -139,6 +139,12 @@ static auto PushOperand(Context& context, Worklist& worklist,
       for (auto interface : facet_type_info.self_impls_constraints) {
         push_specific(interface.specific_id);
       }
+      for (auto interface : facet_type_info.extend_named_constraints) {
+        push_specific(interface.specific_id);
+      }
+      for (auto interface : facet_type_info.self_impls_named_constraints) {
+        push_specific(interface.specific_id);
+      }
       for (auto rewrite : facet_type_info.rewrite_constraints) {
         worklist.Push(rewrite.lhs_id);
         worklist.Push(rewrite.rhs_id);
@@ -242,6 +248,26 @@ static auto PopOperand(Context& context, Worklist& worklist,
         auto rhs_id = worklist.Pop();
         auto lhs_id = worklist.Pop();
         new_constraint = {.lhs_id = lhs_id, .rhs_id = rhs_id};
+      }
+      new_facet_type_info.self_impls_named_constraints.resize(
+          old_facet_type_info.self_impls_named_constraints.size(),
+          SemIR::SpecificNamedConstraint::None);
+      for (auto [old_constraint, new_constraint] : llvm::reverse(
+               llvm::zip(old_facet_type_info.self_impls_named_constraints,
+                         new_facet_type_info.self_impls_named_constraints))) {
+        new_constraint = {
+            .named_constraint_id = old_constraint.named_constraint_id,
+            .specific_id = pop_specific(old_constraint.specific_id)};
+      }
+      new_facet_type_info.extend_named_constraints.resize(
+          old_facet_type_info.extend_named_constraints.size(),
+          SemIR::SpecificNamedConstraint::None);
+      for (auto [old_constraint, new_constraint] : llvm::reverse(
+               llvm::zip(old_facet_type_info.extend_named_constraints,
+                         new_facet_type_info.extend_named_constraints))) {
+        new_constraint = {
+            .named_constraint_id = old_constraint.named_constraint_id,
+            .specific_id = pop_specific(old_constraint.specific_id)};
       }
       new_facet_type_info.self_impls_constraints.resize(
           old_facet_type_info.self_impls_constraints.size(),
