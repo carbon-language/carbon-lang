@@ -49,10 +49,12 @@ class MatchContext {
     // `None` when processing the callee side.
     SemIR::InstId scrutinee_id;
 
-    bool is_self = false;
+    // If true, disables diagnostics that would otherwise require scrutinee_id
+    // to be tagged with `ref`. Only affects caller pattern matching.
+    bool allow_unmarked_ref = false;
     auto Print(llvm::raw_ostream& out) const -> void {
       out << "{pattern_id: " << pattern_id << ", scrutinee_id: " << scrutinee_id
-          << ", is_self = " << is_self << "}";
+          << ", allow_unmarked_ref = " << allow_unmarked_ref << "}";
     }
   };
 
@@ -323,7 +325,9 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                                          entry.pattern_id));
       results_.push_back(Convert(
           context, SemIR::LocId(entry.scrutinee_id), entry.scrutinee_id,
-          {.kind = ConversionTarget::RefParam, .type_id = scrutinee_type_id}));
+          {.kind = entry.allow_unmarked_ref ? ConversionTarget::UnmarkedRefParam
+                                            : ConversionTarget::RefParam,
+           .type_id = scrutinee_type_id}));
       // Do not traverse farther, because the caller side of the pattern
       // ends here.
       break;
@@ -645,8 +649,8 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
                         SemIR::InstBlockId return_patterns_id,
                         SemIR::InstId self_arg_id,
                         llvm::ArrayRef<SemIR::InstId> arg_refs,
-                        SemIR::InstId return_slot_arg_id)
-    -> SemIR::InstBlockId {
+                        SemIR::InstId return_slot_arg_id,
+                        bool is_operator_syntax) -> SemIR::InstBlockId {
   MatchContext match(MatchKind::Caller, specific_id);
 
   auto return_patterns = context.inst_blocks().GetOrEmpty(return_patterns_id);
@@ -661,13 +665,15 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
   // Check type conversions per-element.
   for (auto [arg_id, param_pattern_id] : llvm::reverse(llvm::zip_equal(
            arg_refs, context.inst_blocks().GetOrEmpty(param_patterns_id)))) {
-    match.AddWork({.pattern_id = param_pattern_id, .scrutinee_id = arg_id});
+    match.AddWork({.pattern_id = param_pattern_id,
+                   .scrutinee_id = arg_id,
+                   .allow_unmarked_ref = is_operator_syntax});
   }
 
   if (self_pattern_id.has_value()) {
     match.AddWork({.pattern_id = self_pattern_id,
                    .scrutinee_id = self_arg_id,
-                   .is_self = true});
+                   .allow_unmarked_ref = true});
   }
 
   return match.DoWork(context);

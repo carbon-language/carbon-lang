@@ -1368,6 +1368,26 @@ struct RefParamPattern {
   CallParamIndex index;
 };
 
+// A `ref x` expression. The semantics of this instruction depend on the usage
+// context:
+// - As an argument to a `ref` parameter, it evaluates to `x`, but requires
+//   `x` to be a durable reference expression.
+// - In a return type expression or form literal, it evaluates to a `Core.Form`
+//   value representing a reference to `x`, which must be a type.
+// - In any other context, it's an error.
+//
+// See issue #6342 for background.
+struct RefTagExpr {
+  static constexpr auto Kind =
+      InstKind::RefTagExpr.Define<Parse::PrefixOperatorRefId>(
+          {.ir_name = "ref_tag",
+           .expr_category = ExprCategory::RefTagged,
+           .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+  InstId expr_id;
+};
+
 // Requires a type to be complete. This is only created for generic types and
 // produces a witness that the type is complete.
 //

@@ -318,6 +318,7 @@ auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr* {
       CARBON_FATAL("Passing a pattern as a function argument");
 
     case SemIR::ExprCategory::DurableRef:
+    case SemIR::ExprCategory::RefTagged:
       value_kind = clang::ExprValueKind::VK_LValue;
       break;
 

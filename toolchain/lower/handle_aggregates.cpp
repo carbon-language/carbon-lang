@@ -62,6 +62,7 @@ static auto GetAggregateElement(FunctionContext& context,
   auto* aggr_value = context.GetValue(aggr_inst_id);
 
   switch (SemIR::GetExprCategory(context.sem_ir(), aggr_inst_id)) {
+    case SemIR::ExprCategory::RefTagged:
     case SemIR::ExprCategory::Error:
     case SemIR::ExprCategory::NotExpr:
     case SemIR::ExprCategory::Pattern:

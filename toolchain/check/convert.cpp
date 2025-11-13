@@ -795,6 +795,7 @@ static auto IsValidExprCategoryForConversionTarget(
              category == SemIR::ExprCategory::EphemeralRef ||
              category == SemIR::ExprCategory::Initializing;
     case ConversionTarget::RefParam:
+    case ConversionTarget::UnmarkedRefParam:
       return category == SemIR::ExprCategory::DurableRef ||
              category == SemIR::ExprCategory::EphemeralRef ||
              category == SemIR::ExprCategory::Initializing;
@@ -1428,28 +1429,6 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
                       action.target_type_inst_id)});
 }
 
-// Diagnoses a missing or unnecessary `ref` tag when converting `expr_id` to
-// `target`, and returns whether a `ref` tag is present.
-static auto CheckRefTag(Context& context, SemIR::InstId expr_id,
-                        ConversionTarget target) -> bool {
-  if (auto lookup_result = context.ref_tags().Lookup(expr_id)) {
-    if (lookup_result.value() == Context::RefTag::Present &&
-        target.kind != ConversionTarget::RefParam) {
-      CARBON_DIAGNOSTIC(RefTagNoRefParam, Error,
-                        "`ref` tag is not an argument to a `ref` parameter");
-      context.emitter().Emit(expr_id, RefTagNoRefParam);
-    }
-    return true;
-  } else {
-    if (target.kind == ConversionTarget::RefParam) {
-      CARBON_DIAGNOSTIC(RefParamNoRefTag, Error,
-                        "argument to `ref` parameter not marked with `ref`");
-      context.emitter().Emit(expr_id, RefParamNoRefTag);
-    }
-    return false;
-  }
-}
-
 // State machine for performing category conversions.
 class CategoryConverter {
  public:
@@ -1558,8 +1537,41 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
                         .category = SemIR::ExprCategory::EphemeralRef};
       }
 
+    case SemIR::ExprCategory::RefTagged: {
+      auto tagged_expr_id =
+          sem_ir_.insts().GetAs<SemIR::RefTagExpr>(expr_id).expr_id;
+      auto tagged_expr_category =
+          SemIR::GetExprCategory(sem_ir_, tagged_expr_id);
+      if (target_.diagnose &&
+          tagged_expr_category != SemIR::ExprCategory::DurableRef) {
+        CARBON_DIAGNOSTIC(
+            RefTagNotDurableRef, Error,
+            "expression tagged with `ref` is not a durable reference");
+        context_.emitter().Emit(tagged_expr_id, RefTagNotDurableRef);
+      }
+
+      if (target_.kind == ConversionTarget::RefParam) {
+        return Done{expr_id};
+      }
+
+      // If the target isn't a reference parameter, ignore the `ref` tag.
+      // Unnecessary `ref` tags are diagnosed earlier.
+      return NextStep{.expr_id = tagged_expr_id,
+                      .category = tagged_expr_category};
+    }
+
     case SemIR::ExprCategory::DurableRef:
-      if (target_.kind == ConversionTarget::DurableRef) {
+      if (target_.kind == ConversionTarget::DurableRef ||
+          target_.kind == ConversionTarget::UnmarkedRefParam) {
+        return Done{expr_id};
+      }
+      if (target_.kind == ConversionTarget::RefParam) {
+        if (target_.diagnose) {
+          CARBON_DIAGNOSTIC(
+              RefParamNoRefTag, Error,
+              "argument to `ref` parameter not marked with `ref`");
+          context_.emitter().Emit(expr_id, RefParamNoRefTag);
+        }
         return Done{expr_id};
       }
       [[fallthrough]];
@@ -1569,7 +1581,8 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
       if (target_.kind == ConversionTarget::ValueOrRef ||
           target_.kind == ConversionTarget::Discarded ||
           target_.kind == ConversionTarget::CppThunkRef ||
-          target_.kind == ConversionTarget::RefParam) {
+          target_.kind == ConversionTarget::RefParam ||
+          target_.kind == ConversionTarget::UnmarkedRefParam) {
         return Done{expr_id};
       }
 
@@ -1592,17 +1605,12 @@ auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
         }
         return Done{SemIR::ErrorInst::InstId};
       }
-      if (target_.kind == ConversionTarget::RefParam) {
-        // Don't diagnose a non-reference scrutinee if it has a user-written
-        // `ref` tag, because that's diagnosed in `CheckRefTag`.
+      if (target_.kind == ConversionTarget::RefParam ||
+          target_.kind == ConversionTarget::UnmarkedRefParam) {
         if (target_.diagnose) {
-          if (auto lookup_result = context_.ref_tags().Lookup(expr_id);
-              !lookup_result ||
-              lookup_result.value() != Context::RefTag::Present) {
-            CARBON_DIAGNOSTIC(ValueForRefParam, Error,
-                              "value expression passed to reference parameter");
-            context_.emitter().Emit(loc_id_, ValueForRefParam);
-          }
+          CARBON_DIAGNOSTIC(ValueForRefParam, Error,
+                            "value expression passed to reference parameter");
+          context_.emitter().Emit(loc_id_, ValueForRefParam);
         }
         return Done{SemIR::ErrorInst::InstId};
       }
@@ -1635,7 +1643,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     return SemIR::ErrorInst::InstId;
   }
 
-  if (SemIR::GetExprCategory(sem_ir, expr_id) == SemIR::ExprCategory::NotExpr) {
+  auto starting_category = SemIR::GetExprCategory(sem_ir, expr_id);
+  if (starting_category == SemIR::ExprCategory::NotExpr) {
     // TODO: We currently encounter this for use of namespaces and functions.
     // We should provide a better diagnostic for inappropriate use of
     // namespace names, and allow use of functions as values.
@@ -1647,7 +1656,14 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     return SemIR::ErrorInst::InstId;
   }
 
-  bool has_ref_tag = CheckRefTag(context, expr_id, target);
+  // Diagnose unnecessary `ref` tags early, so that they're not obscured by
+  // conversions.
+  if (starting_category == SemIR::ExprCategory::RefTagged &&
+      target.kind != ConversionTarget::RefParam && target.diagnose) {
+    CARBON_DIAGNOSTIC(RefTagNoRefParam, Error,
+                      "`ref` tag is not an argument to a `ref` parameter");
+    context.emitter().Emit(expr_id, RefTagNoRefParam);
+  }
 
   // We can only perform initialization for complete, non-abstract types. Note
   // that `RequireConcreteType` returns true for facet types, since their
@@ -1781,9 +1797,6 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                                         {.type_id = target.type_id,
                                          .original_id = orig_expr_id,
                                          .result_id = expr_id});
-    if (has_ref_tag) {
-      context.ref_tags().Insert(expr_id, Context::RefTag::NotRequired);
-    }
   }
 
   // For `as`, don't perform any value category conversions. In particular, an
@@ -1882,8 +1895,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
                      SemIR::InstId return_slot_arg_id,
                      const SemIR::Function& callee,
-                     SemIR::SpecificId callee_specific_id)
-    -> SemIR::InstBlockId {
+                     SemIR::SpecificId callee_specific_id,
+                     bool is_operator_syntax) -> SemIR::InstBlockId {
   auto param_patterns =
       context.inst_blocks().GetOrEmpty(callee.param_patterns_id);
   auto return_patterns_id = callee.return_patterns_id;
@@ -1904,7 +1917,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
   return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
                             callee.param_patterns_id, return_patterns_id,
-                            self_id, arg_refs, return_slot_arg_id);
+                            self_id, arg_refs, return_slot_arg_id,
+                            is_operator_syntax);
 }
 
 auto TypeExpr::ForUnsugared(Context& context, SemIR::TypeId type_id)

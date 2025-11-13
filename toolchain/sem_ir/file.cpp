@@ -157,43 +157,6 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
   });
 }
 
-auto File::CollectRefTagsNeeded() const -> Set<SemIR::InstId> {
-  CARBON_CHECK(!has_errors_);
-  Set<SemIR::InstId> ref_tags_needed;
-  for (auto [id, inst] : insts_.enumerate()) {
-    if (inst.kind() != SemIR::InstKind::Call) {
-      continue;
-    }
-    auto call_inst = inst.As<SemIR::Call>();
-    auto callee = SemIR::GetCallee(*this, call_inst.callee_id);
-    CARBON_KIND_SWITCH(callee) {
-      case CARBON_KIND(SemIR::CalleeError _):
-        break;
-      case CARBON_KIND(SemIR::CalleeNonFunction _):
-        break;
-      case CARBON_KIND(SemIR::CalleeCppOverloadSet _): {
-        // TODO: Perform validation here once we model C++ ref parameters as
-        // Carbon ref parameters.
-        break;
-      }
-      case CARBON_KIND(SemIR::CalleeFunction fn): {
-        auto function = functions_.Get(fn.function_id);
-        auto args = inst_blocks_.GetOrEmpty(call_inst.args_id);
-        for (auto param_id : llvm::concat<const InstId>(
-                 inst_blocks_.GetOrEmpty(function.implicit_param_patterns_id),
-                 inst_blocks_.GetOrEmpty(function.param_patterns_id))) {
-          if (auto ref_param_pattern =
-                  insts_.TryGetAs<SemIR::RefParamPattern>(param_id)) {
-            ref_tags_needed.Insert(args[ref_param_pattern->index.index]);
-          }
-        }
-        break;
-      }
-    }
-  }
-  return ref_tags_needed;
-}
-
 auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
     -> void {
   mem_usage.Collect(MemUsage::ConcatLabel(label, "allocator_"), allocator_);

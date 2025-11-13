@@ -34,14 +34,17 @@ auto CalleePatternMatch(Context& context,
 
 // Emits the pattern-match IR for matching the given arguments with the given
 // parameter patterns, and returns an inst block of the arguments that should
-// be passed to the `Call` inst.
+// be passed to the `Call` inst. `is_operator_syntax` indicates that this call
+// was generated from an operator rather than from function call syntax, so
+// arguments to `ref` parameters aren't required to have `ref` tags.
 auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
                         SemIR::InstId self_pattern_id,
                         SemIR::InstBlockId param_patterns_id,
                         SemIR::InstBlockId return_patterns_id,
                         SemIR::InstId self_arg_id,
                         llvm::ArrayRef<SemIR::InstId> arg_refs,
-                        SemIR::InstId return_slot_arg_id) -> SemIR::InstBlockId;
+                        SemIR::InstId return_slot_arg_id,
+                        bool is_operator_syntax) -> SemIR::InstBlockId;
 
 // Emits the pattern-match IR for a local pattern matching operation with the
 // given pattern and scrutinee.

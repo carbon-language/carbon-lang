@@ -1005,6 +1005,7 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
       case ExprCategory::Value:
       case ExprCategory::Pattern:
       case ExprCategory::Mixed:
+      case ExprCategory::RefTagged:
         break;
       case ExprCategory::DurableRef:
       case ExprCategory::EphemeralRef:

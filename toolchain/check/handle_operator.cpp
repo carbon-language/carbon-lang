@@ -359,16 +359,11 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorPlusPlusId node_id)
 
 auto HandleParseNode(Context& context, Parse::PrefixOperatorRefId node_id)
     -> bool {
-  auto expr_id = context.node_stack().Peek<Parse::NodeCategory::Expr>();
-
-  if (SemIR::GetExprCategory(context.sem_ir(), expr_id) !=
-      SemIR::ExprCategory::DurableRef) {
-    CARBON_DIAGNOSTIC(
-        RefTagNotDurableRef, Error,
-        "expression tagged with `ref` is not a durable reference");
-    context.emitter().Emit(node_id, RefTagNotDurableRef);
-  }
-  context.ref_tags().Insert(expr_id, Context::RefTag::Present);
+  auto expr_id = context.node_stack().PopExpr();
+  auto ref_id = AddInst<SemIR::RefTagExpr>(
+      context, node_id,
+      {.type_id = context.insts().Get(expr_id).type_id(), .expr_id = expr_id});
+  context.node_stack().Push(node_id, ref_id);
   return true;
 }
 

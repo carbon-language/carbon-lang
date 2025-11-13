@@ -64,9 +64,6 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
     return SemIR::ErrorInst::InstId;
   }
 
-  // Operator operands don't require `ref` tags.
-  context.ref_tags().Insert(operand_id, Context::RefTag::NotRequired);
-
   SemIR::InstId op_fn_id = SemIR::InstId::None;
 
   // For unary operators with a C++ class as the operand, try to import and call
@@ -79,7 +76,8 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
     // If C++ operator lookup found a non-method operator, call it with one call
     // argument. Otherwise fall through to call it with a self argument.
     if (op_fn_id.has_value() && !IsCppOperatorMethod(context, op_fn_id)) {
-      return PerformCall(context, loc_id, op_fn_id, {operand_id});
+      return PerformCall(context, loc_id, op_fn_id, {operand_id},
+                         /*is_operator_syntax=*/true);
     }
   }
 
@@ -96,7 +94,8 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   }
 
   // Form `bound_op()`.
-  return PerformCall(context, loc_id, bound_op_id, {});
+  return PerformCall(context, loc_id, bound_op_id, {},
+                     /*is_operator_syntax=*/true);
 }
 
 auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
@@ -107,10 +106,6 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
     // Exit early for errors, which prevent forming an `Op` function.
     return SemIR::ErrorInst::InstId;
   }
-
-  // Operator operands don't require `ref` tags.
-  context.ref_tags().Insert(lhs_id, Context::RefTag::NotRequired);
-  context.ref_tags().Insert(rhs_id, Context::RefTag::NotRequired);
 
   SemIR::InstId op_fn_id = SemIR::InstId::None;
 
@@ -129,7 +124,8 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
     // arguments. Otherwise fall through to call it with a self argument and one
     // call argument.
     if (op_fn_id.has_value() && !IsCppOperatorMethod(context, op_fn_id)) {
-      return PerformCall(context, loc_id, op_fn_id, {lhs_id, rhs_id});
+      return PerformCall(context, loc_id, op_fn_id, {lhs_id, rhs_id},
+                         /*is_operator_syntax=*/true);
     }
   }
 
@@ -146,7 +142,8 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   }
 
   // Form `bound_op(rhs)`.
-  return PerformCall(context, loc_id, bound_op_id, {rhs_id});
+  return PerformCall(context, loc_id, bound_op_id, {rhs_id},
+                     /*is_operator_syntax=*/true);
 }
 
 }  // namespace Carbon::Check
