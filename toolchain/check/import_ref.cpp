@@ -852,6 +852,11 @@ static auto GetLocalGenericId(ImportContext& context,
           .Get(interface_type.interface_id)
           .generic_id;
     }
+    case CARBON_KIND(SemIR::GenericNamedConstraintType constraint_type): {
+      return context.local_named_constraints()
+          .Get(constraint_type.named_constraint_id)
+          .generic_id;
+    }
     case CARBON_KIND(SemIR::ImplDecl impl_decl): {
       return context.local_impls().Get(impl_decl.impl_id).generic_id;
     }
@@ -1069,6 +1074,11 @@ static auto GetLocalNameScopeIdImpl(ImportRefResolver& resolver,
         }
         case CARBON_KIND(SemIR::GenericInterfaceType inst): {
           return resolver.local_interfaces().Get(inst.interface_id).scope_id;
+        }
+        case CARBON_KIND(SemIR::GenericNamedConstraintType inst): {
+          return resolver.local_named_constraints()
+              .Get(inst.named_constraint_id)
+              .scope_id;
         }
         default: {
           break;
@@ -2288,6 +2298,24 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver.local_types().GetConstantId(interface_val.type_id()));
 }
 
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::GenericNamedConstraintType inst)
+    -> ResolveResult {
+  CARBON_CHECK(inst.type_id == SemIR::TypeType::TypeId);
+  auto constraint_val_id =
+      GetLocalConstantInstId(resolver, resolver.import_named_constraints()
+                                           .Get(inst.named_constraint_id)
+                                           .first_owning_decl_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+  auto constraint_val = resolver.local_insts().Get(constraint_val_id);
+  CARBON_CHECK(resolver.local_types().Is<SemIR::GenericNamedConstraintType>(
+      constraint_val.type_id()));
+  return ResolveResult::Done(
+      resolver.local_types().GetConstantId(constraint_val.type_id()));
+}
+
 // Make a declaration of an impl. This is done as a separate step from
 // importing the impl definition in order to resolve cycles.
 static auto MakeImplDeclaration(ImportContext& context,
@@ -2791,7 +2819,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
           resolver, import_named_constraint.require_impls_block_id,
           require_impls);
   SetGenericData(resolver, import_named_constraint.generic_id,
-                 import_named_constraint.generic_id, generic_data);
+                 new_named_constraint.generic_id, generic_data);
 
   if (import_named_constraint.is_complete()) {
     CARBON_CHECK(self_param_id);
@@ -3539,6 +3567,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::GenericInterfaceType inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::GenericNamedConstraintType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::LookupImplWitness inst): {
