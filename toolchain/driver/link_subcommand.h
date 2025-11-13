@@ -9,6 +9,7 @@
 #include "common/error.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "toolchain/driver/carbon_runner.h"
 #include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"
@@ -28,11 +29,10 @@ struct LinkOptions {
 
 // Implements the link subcommand of the driver.
 class LinkSubcommand : public DriverSubcommand {
+  friend CarbonRunner;
+
  public:
   explicit LinkSubcommand();
-
-  // For manual construction of subcommands.
-  explicit LinkSubcommand(LinkOptions options);
 
   auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
     options_.Build(b);
@@ -41,6 +41,9 @@ class LinkSubcommand : public DriverSubcommand {
   auto Run(DriverEnv& driver_env) -> DriverResult override;
 
  private:
+  // For manual construction of subcommands.
+  explicit LinkSubcommand(LinkOptions options);
+
   auto RunInternal(DriverEnv& driver_env) -> ErrorOr<bool>;
 
   LinkOptions options_;

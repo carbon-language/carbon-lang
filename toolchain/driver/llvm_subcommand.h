@@ -9,6 +9,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/base/llvm_tools.h"
+#include "toolchain/driver/carbon_runner.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"
 
@@ -34,11 +35,10 @@ struct LLVMOptions {
 //
 // This provides access to the full collection of LLVM command line tools.
 class LLVMSubcommand : public DriverSubcommand {
+  friend CarbonRunner;
+
  public:
   explicit LLVMSubcommand();
-
-  // For manual construction of subcommands.
-  explicit LLVMSubcommand(LLVMOptions options);
 
   // The LLVM subcommand uses a custom subcommand structure, so `BuildOptions`
   // is a no-op and we override the more complex layer.
@@ -54,6 +54,9 @@ class LLVMSubcommand : public DriverSubcommand {
   auto Run(DriverEnv& driver_env) -> DriverResult override;
 
  private:
+  // For manual construction of subcommands.
+  explicit LLVMSubcommand(LLVMOptions options);
+
   LLVMOptions options_;
 };
 

@@ -8,6 +8,7 @@
 #include "common/command_line.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "toolchain/driver/carbon_runner.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"
 
@@ -36,11 +37,10 @@ struct LldOptions {
 
 // Implements the LLD subcommand of the driver.
 class LldSubcommand : public DriverSubcommand {
+  friend CarbonRunner;
+
  public:
   explicit LldSubcommand();
-
-  // For manual construction of subcommands.
-  explicit LldSubcommand(LldOptions options);
 
   auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
     options_.Build(b);
@@ -49,6 +49,9 @@ class LldSubcommand : public DriverSubcommand {
   auto Run(DriverEnv& driver_env) -> DriverResult override;
 
  private:
+  // For manual construction of subcommands.
+  explicit LldSubcommand(LldOptions options);
+
   LldOptions options_;
 };
 

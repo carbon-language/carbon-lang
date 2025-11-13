@@ -11,6 +11,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/check/check.h"
+#include "toolchain/driver/carbon_runner.h"
 #include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"
@@ -73,11 +74,10 @@ struct CompileOptions {
 
 // Implements the compile subcommand of the driver.
 class CompileSubcommand : public DriverSubcommand {
+  friend CarbonRunner;
+
  public:
   explicit CompileSubcommand();
-
-  // For manual construction of subcommands.
-  explicit CompileSubcommand(CompileOptions options);
 
   auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
     options_.Build(b);
@@ -86,6 +86,9 @@ class CompileSubcommand : public DriverSubcommand {
   auto Run(DriverEnv& driver_env) -> DriverResult override;
 
  private:
+  // For manual construction of subcommands.
+  explicit CompileSubcommand(CompileOptions options);
+
   // Does custom validation of the compile-subcommand options structure beyond
   // what the command line parsing library supports. Diagnoses and returns false
   // on failure.

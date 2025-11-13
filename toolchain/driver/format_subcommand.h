@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_DRIVER_FORMAT_SUBCOMMAND_H_
 
 #include "common/command_line.h"
+#include "toolchain/driver/carbon_runner.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"
 
@@ -23,11 +24,10 @@ struct FormatOptions {
 
 // Implements the format subcommand of the driver.
 class FormatSubcommand : public DriverSubcommand {
+  friend CarbonRunner;
+
  public:
   explicit FormatSubcommand();
-
-  // For manual construction of subcommands.
-  explicit FormatSubcommand(FormatOptions options);
 
   auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
     options_.Build(b);
@@ -36,6 +36,9 @@ class FormatSubcommand : public DriverSubcommand {
   auto Run(DriverEnv& driver_env) -> DriverResult override;
 
  private:
+  // For manual construction of subcommands.
+  explicit FormatSubcommand(FormatOptions options);
+
   FormatOptions options_;
 };
 
