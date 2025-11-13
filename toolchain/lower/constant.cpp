@@ -283,6 +283,11 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::StringLiteral inst)
           /*name=*/"", /*address_space=*/0, &context.llvm_module());
 }
 
+static auto EmitAsConstant(ConstantContext& context,
+                           SemIR::UninitializedValue inst) -> llvm::Constant* {
+  return llvm::PoisonValue::get(context.GetType(inst.type_id));
+}
+
 static auto EmitAsConstant(ConstantContext& context, SemIR::VarStorage inst)
     -> llvm::Constant* {
   // Create the corresponding global variable declaration.

@@ -1836,6 +1836,16 @@ struct UnboundElementType {
   TypeInstId element_type_inst_id;
 };
 
+// An uninitialized constant value.
+struct UninitializedValue {
+  static constexpr auto Kind =
+      InstKind::UninitializedValue.Define<Parse::NodeId>(
+          {.ir_name = "uninitialized_value",
+           .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+};
+
 // Converts from a value expression to an ephemeral reference expression, in
 // the case where the value representation of the type is a pointer. For
 // example, when indexing a value expression of array type, this is used to

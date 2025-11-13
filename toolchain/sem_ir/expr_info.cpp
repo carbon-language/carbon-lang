@@ -166,6 +166,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
       case TypeType::Kind:
       case UnaryOperatorNot::Kind:
       case UnboundElementType::Kind:
+      case UninitializedValue::Kind:
       case ValueOfInitializer::Kind:
       case ValueParam::Kind:
       case VtableType::Kind:

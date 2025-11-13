@@ -1286,6 +1286,10 @@ auto InstNamer::NamingContext::NameInst() -> void {
       }
       return;
     }
+    case UninitializedValue::Kind: {
+      AddInstName("uninit");
+      return;
+    }
     case VarPattern::Kind: {
       AddInstNameId(GetPrettyNameFromPatternId(sem_ir(), inst_id_),
                     ".var_patt");

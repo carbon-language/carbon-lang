@@ -143,10 +143,19 @@ auto TypeLiteralInfo::ForType(const File& file, ClassType class_type)
     return {.kind = None};
   }
 
-  // The class must be declared in the `Core` package.
+  // The class must be declared in the `Core` package. We check for up to one
+  // level of enclosing namespace.
   const auto& class_info = file.classes().Get(class_type.class_id);
+  auto parent_scope_name_id = SemIR::NameId::None;
   if (!file.name_scopes().IsInCorePackageRoot(class_info.scope_id)) {
-    return {.kind = None};
+    if (!file.name_scopes().IsInCorePackageRoot(class_info.parent_scope_id)) {
+      return {.kind = None};
+    }
+    parent_scope_name_id =
+        file.name_scopes().Get(class_info.parent_scope_id).name_id();
+    if (!parent_scope_name_id.has_value()) {
+      return {.kind = None};
+    }
   }
 
   // The class's name must be the name corresponding to a type literal.
@@ -155,11 +164,24 @@ auto TypeLiteralInfo::ForType(const File& file, ClassType class_type)
     return {.kind = None};
   }
 
-  Kind kind = llvm::StringSwitch<Kind>(*name_ident)
-                  .Case("Char", Char)
-                  .Case("String", Str)
-                  .Default(None);
-  return {.kind = kind};
+  if (!parent_scope_name_id.has_value()) {
+    Kind kind = llvm::StringSwitch<Kind>(*name_ident)
+                    .Case("Char", Char)
+                    .Case("String", Str)
+                    .Default(None);
+    return {.kind = kind};
+  }
+
+  auto parent_name_ident =
+      file.names().GetAsStringIfIdentifier(parent_scope_name_id);
+  if (parent_name_ident == "CppCompat") {
+    Kind kind = llvm::StringSwitch<Kind>(*name_ident)
+                    .Case("NullptrT", CppNullptrT)
+                    .Default(None);
+    return {.kind = kind};
+  }
+
+  return {.kind = None};
 }
 
 auto TypeLiteralInfo::PrintLiteral(const File& file,
@@ -172,6 +194,9 @@ auto TypeLiteralInfo::PrintLiteral(const File& file,
       break;
     case Char:
       out << "char";
+      break;
+    case CppNullptrT:
+      out << "Cpp.nullptr_t";
       break;
     case Str:
       out << "str";

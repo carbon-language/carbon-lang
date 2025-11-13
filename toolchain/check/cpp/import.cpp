@@ -46,6 +46,7 @@
 #include "toolchain/check/import.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
+#include "toolchain/check/member_access.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern.h"
@@ -1106,6 +1107,12 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
   return TypeExpr::None;
 }
 
+static auto MapNullptrType(Context& context, SemIR::LocId loc_id) -> TypeExpr {
+  return ExprAsType(
+      context, loc_id,
+      LookupNameInCore(context, loc_id, {"CppCompat", "NullptrT"}));
+}
+
 // Maps a C++ builtin type to a Carbon type.
 // TODO: Support more builtin types.
 static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
@@ -1134,6 +1141,8 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
   } else if (type.isVoidType()) {
     return ExprAsType(context, Parse::NodeId::None,
                       SemIR::CppVoidType::TypeInstId);
+  } else if (type.isNullPtrType()) {
+    return MapNullptrType(context, loc_id);
   }
 
   return TypeExpr::None;
@@ -2097,10 +2106,10 @@ static auto IsTopCppScope(Context& context, SemIR::NameScopeId scope_id)
   return name_scope.parent_scope_id() == SemIR::NameScopeId::Package;
 }
 
-// For builtin names like `Cpp.long`, return the associated types.
-static auto LookupBuiltinTypes(Context& context, SemIR::LocId loc_id,
-                               SemIR::NameScopeId scope_id,
-                               SemIR::NameId name_id) -> SemIR::InstId {
+// For a builtin name like `Cpp.long`, returns the associated type.
+static auto LookupBuiltinName(Context& context, SemIR::LocId loc_id,
+                              SemIR::NameScopeId scope_id,
+                              SemIR::NameId name_id) -> SemIR::InstId {
   if (!IsTopCppScope(context, scope_id)) {
     return SemIR::InstId::None;
   }
@@ -2132,6 +2141,12 @@ static auto LookupBuiltinTypes(Context& context, SemIR::LocId loc_id,
           .Case("void", ast_context.VoidTy)
           .Default(clang::QualType());
   if (builtin_type.isNull()) {
+    if (*name == "nullptr") {
+      // Map `Cpp.nullptr` to an uninitialized value of type `Core.CppNullptrT`.
+      auto type_id = MapNullptrType(context, loc_id).type_id;
+      return GetOrAddInst<SemIR::UninitializedValue>(
+          context, SemIR::LocId::None, {.type_id = type_id});
+    }
     return SemIR::InstId::None;
   }
 
@@ -2227,14 +2242,14 @@ static auto ImportConstructorsIntoScope(Context& context, SemIR::LocId loc_id,
                                     naming_class, std::move(overload_set));
 }
 
-// Imports a builtin type from Clang to Carbon and adds the name into the
-// scope.
-static auto ImportBuiltinTypesIntoScope(Context& context, SemIR::LocId loc_id,
-                                        SemIR::NameScopeId scope_id,
-                                        SemIR::NameId name_id)
+// Attempts to import a builtin name from Clang to Carbon and adds the name into
+// the scope.
+static auto ImportBuiltinNameIntoScope(Context& context, SemIR::LocId loc_id,
+                                       SemIR::NameScopeId scope_id,
+                                       SemIR::NameId name_id)
     -> SemIR::ScopeLookupResult {
   SemIR::InstId builtin_inst_id =
-      LookupBuiltinTypes(context, loc_id, scope_id, name_id);
+      LookupBuiltinName(context, loc_id, scope_id, name_id);
   if (builtin_inst_id.has_value()) {
     AddNameToScope(context, scope_id, name_id, SemIR::AccessKind::Public,
                    builtin_inst_id);
@@ -2351,7 +2366,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
   }
   auto lookup = ClangLookupName(context, scope_id, name_id);
   if (!lookup) {
-    return ImportBuiltinTypesIntoScope(context, loc_id, scope_id, name_id);
+    return ImportBuiltinNameIntoScope(context, loc_id, scope_id, name_id);
   }
   // Access checks are performed separately by the Carbon name lookup logic.
   lookup->suppressAccessDiagnostics();
