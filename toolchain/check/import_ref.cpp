@@ -1288,22 +1288,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, import_inst_id, {.adapted_type_inst_id = adapted_type_inst_id});
 }
 
-static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::AddrPattern inst,
-                                SemIR::InstId import_inst_id) -> ResolveResult {
-  auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
-  auto inner_id = GetLocalConstantInstId(resolver, inst.inner_id);
-  if (resolver.HasNewWork()) {
-    return ResolveResult::Retry();
-  }
-
-  return ResolveResult::Unique<SemIR::AddrPattern>(
-      resolver, import_inst_id,
-      {.type_id = resolver.local_context().types().GetTypeIdForTypeConstantId(
-           type_const_id),
-       .inner_id = inner_id});
-}
-
 template <typename ParamPatternT>
   requires SemIR::Internal::HasInstCategory<SemIR::AnyParamPattern,
                                             ParamPatternT>
@@ -3376,9 +3360,6 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       resolver.import_insts().GetWithAttachedType(constant_inst_id);
   CARBON_KIND_SWITCH(untyped_constant_inst) {
     case CARBON_KIND(SemIR::AdaptDecl inst): {
-      return TryResolveTypedInst(resolver, inst, constant_inst_id);
-    }
-    case CARBON_KIND(SemIR::AddrPattern inst): {
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::ArrayType inst): {

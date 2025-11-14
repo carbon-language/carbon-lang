@@ -168,7 +168,6 @@ CARBON_TOKEN_WITH_VIRTUAL_NODE(
   CARBON_DECL_INTRODUCER_TOKEN(Var,       "var"))
 
 CARBON_KEYWORD_TOKEN(Abstract,            "abstract")
-CARBON_KEYWORD_TOKEN(Addr,                "addr")
 CARBON_TOKEN_WITH_VIRTUAL_NODE(
   CARBON_KEYWORD_TOKEN(And,               "and"))
 CARBON_KEYWORD_TOKEN(Array,               "array")

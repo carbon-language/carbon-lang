@@ -24,7 +24,7 @@ impl C as Core.DivWith(C) where .Result = C {
   }
 }
 impl C as Core.DivAssignWith(C) {
-  fn Op[addr self: C*](other: C) {}
+  fn Op[ref self: C](other: C) {}
 }
 
 fn TestOp(a: C, b: C) -> C {
@@ -53,13 +53,11 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %DivAssignWith.type.226: type = facet_type <@DivAssignWith, @DivAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %DivAssignWith.Op.type.629: type = fn_type @DivAssignWith.Op, @DivAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %DivAssignWith.impl_witness: <witness> = impl_witness file.%DivAssignWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %C.as.DivAssignWith.impl.Op.type.5f57b0.1: type = fn_type @C.as.DivAssignWith.impl.Op.loc27_34.1 [concrete]
-// CHECK:STDOUT:   %C.as.DivAssignWith.impl.Op.2223e8.1: %C.as.DivAssignWith.impl.Op.type.5f57b0.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %C.as.DivAssignWith.impl.Op.type: type = fn_type @C.as.DivAssignWith.impl.Op [concrete]
+// CHECK:STDOUT:   %C.as.DivAssignWith.impl.Op: %C.as.DivAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %DivAssignWith.facet: %DivAssignWith.type.226 = facet_value %C, (%DivAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %C.as.DivAssignWith.impl.Op.type.5f57b0.2: type = fn_type @C.as.DivAssignWith.impl.Op.loc27_34.2 [concrete]
-// CHECK:STDOUT:   %C.as.DivAssignWith.impl.Op.2223e8.2: %C.as.DivAssignWith.impl.Op.type.5f57b0.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %.b0b: type = fn_type_with_self_type %DivWith.Op.type.c4b, %DivWith.facet [concrete]
+// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %.5f7: type = fn_type_with_self_type %DivAssignWith.Op.type.629, %DivAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -82,12 +80,9 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %ptr.019 = name_ref a, %a
 // CHECK:STDOUT:   %.loc38: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.5f7 = impl_witness_access constants.%DivAssignWith.impl_witness, element0 [concrete = constants.%C.as.DivAssignWith.impl.Op.2223e8.2]
+// CHECK:STDOUT:   %impl.elem0: %.5f7 = impl_witness_access constants.%DivAssignWith.impl_witness, element0 [concrete = constants.%C.as.DivAssignWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc38, %impl.elem0
-// CHECK:STDOUT:   %Op.ref: %C.as.DivAssignWith.impl.Op.type.5f57b0.1 = name_ref Op, @C.as.DivAssignWith.impl.%C.as.DivAssignWith.impl.Op.decl.loc27_34.1 [concrete = constants.%C.as.DivAssignWith.impl.Op.2223e8.1]
-// CHECK:STDOUT:   %C.as.DivAssignWith.impl.Op.bound: <bound method> = bound_method %.loc38, %Op.ref
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc38
-// CHECK:STDOUT:   %C.as.DivAssignWith.impl.Op.call: init %empty_tuple.type = call %C.as.DivAssignWith.impl.Op.bound(%addr, %b.ref)
+// CHECK:STDOUT:   %C.as.DivAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc38, %b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -21,7 +21,6 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
     auto untyped_inst = ir->insts().Get(inst_id);
     CARBON_KIND_SWITCH(untyped_inst) {
       case AdaptDecl::Kind:
-      case AddrPattern::Kind:
       case Assign::Kind:
       case BaseDecl::Kind:
       case Branch::Kind:

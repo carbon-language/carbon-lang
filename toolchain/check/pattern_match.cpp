@@ -98,8 +98,6 @@ class MatchContext {
   auto DoEmitPatternMatch(Context& context,
                           SemIR::AnyBindingPattern binding_pattern,
                           WorkItem entry) -> void;
-  auto DoEmitPatternMatch(Context& context, SemIR::AddrPattern addr_pattern,
-                          WorkItem entry) -> void;
   auto DoEmitPatternMatch(Context& context,
                           SemIR::ValueParamPattern param_pattern,
                           WorkItem entry) -> void;
@@ -252,44 +250,6 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
     ReplaceInstBeforeConstantUse(context, bind_name_id, bind_name);
     context.inst_block_stack().AddInstId(bind_name_id);
   }
-}
-
-auto MatchContext::DoEmitPatternMatch(Context& context,
-                                      SemIR::AddrPattern addr_pattern,
-                                      WorkItem entry) -> void {
-  CARBON_CHECK(kind_ != MatchKind::Local);
-  if (kind_ == MatchKind::Callee) {
-    // We're emitting pattern-match IR for the callee, but we're still on
-    // the caller side of the pattern, so we traverse without emitting any
-    // insts.
-    AddWork({.pattern_id = addr_pattern.inner_id,
-             .scrutinee_id = SemIR::InstId::None});
-    return;
-  }
-  CARBON_CHECK(entry.scrutinee_id.has_value());
-  auto scrutinee_ref_id = ConvertToValueOrRefExpr(context, entry.scrutinee_id);
-  switch (SemIR::GetExprCategory(context.sem_ir(), scrutinee_ref_id)) {
-    case SemIR::ExprCategory::Error:
-    case SemIR::ExprCategory::DurableRef:
-    case SemIR::ExprCategory::EphemeralRef:
-      break;
-    default:
-      CARBON_DIAGNOSTIC(AddrSelfIsNonRef, Error,
-                        "`addr self` method cannot be invoked on a value");
-      context.emitter().Emit(entry.scrutinee_id, AddrSelfIsNonRef);
-      // Add fake reference expression to preserve invariants.
-      auto scrutinee = context.insts().GetWithLocId(entry.scrutinee_id);
-      scrutinee_ref_id = AddInst<SemIR::TemporaryStorage>(
-          context, scrutinee.loc_id, {.type_id = scrutinee.inst.type_id()});
-  }
-  auto scrutinee_ref = context.insts().Get(scrutinee_ref_id);
-  auto scrutinee_ref_type_inst_id =
-      context.types().GetInstId(scrutinee_ref.type_id());
-  auto new_scrutinee = AddInst<SemIR::AddrOf>(
-      context, SemIR::LocId(scrutinee_ref_id),
-      {.type_id = GetPointerType(context, scrutinee_ref_type_inst_id),
-       .lvalue_id = scrutinee_ref_id});
-  AddWork({.pattern_id = addr_pattern.inner_id, .scrutinee_id = new_scrutinee});
 }
 
 auto MatchContext::DoEmitPatternMatch(Context& context,
@@ -604,10 +564,6 @@ auto MatchContext::EmitPatternMatch(Context& context,
     case SemIR::ValueBindingPattern::Kind: {
       DoEmitPatternMatch(context, pattern.As<SemIR::AnyBindingPattern>(),
                          entry);
-      break;
-    }
-    case CARBON_KIND(SemIR::AddrPattern addr_pattern): {
-      DoEmitPatternMatch(context, addr_pattern, entry);
       break;
     }
     case CARBON_KIND(SemIR::ValueParamPattern param_pattern): {
