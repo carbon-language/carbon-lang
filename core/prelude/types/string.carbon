@@ -10,7 +10,6 @@ import library "prelude/types/char";
 import library "prelude/types/uint";
 import library "prelude/operators/index";
 import library "prelude/types/int";
-import library "prelude/types/int_literal";
 import library "prelude/operators/as";
 
 class String;
