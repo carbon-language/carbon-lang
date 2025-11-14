@@ -147,7 +147,6 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
     }
 
     case CARBON_KIND(SemIR::ClassType class_type): {
-      // Perform bounds checking for String types if the index is constant.
       if (IsStringType(context, class_type)) {
         auto index_const_id = context.constant_values().Get(index_inst_id);
         if (index_const_id.is_constant()) {
