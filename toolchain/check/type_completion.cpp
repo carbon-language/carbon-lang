@@ -435,13 +435,6 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
           ResolveSpecificDefinition(*context_, loc_id_,
                                     req_interface.specific_id);
         }
-
-        ForEachRequireImpls(*context_, interface,
-                            [&](const SemIR::RequireImpls& require) {
-                              // TODO: Identify cycles.
-                              Push(context_->types().GetTypeIdForTypeInstId(
-                                  require.facet_type_inst_id));
-                            });
       }
       break;
     }
@@ -791,7 +784,9 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
   return true;
 }
 
-static auto RequireCompleteNamedConstraints(
+// Require all named constraints in the facet type are identified. For a named
+// constraint, this means the constraint definition is complete.
+static auto RequireIdentifiedNamedConstraints(
     Context& context, const SemIR::FacetTypeInfo& facet_type_info,
     MakeDiagnosticBuilderFn diagnoser) -> bool {
   auto named_constraint_ids = llvm::map_range(
@@ -848,7 +843,8 @@ auto RequireIdentifiedFacetType(Context& context,
 
     const auto& facet_type_info = context.facet_types().Get(next_facet_type_id);
 
-    if (!RequireCompleteNamedConstraints(context, facet_type_info, diagnoser)) {
+    if (!RequireIdentifiedNamedConstraints(context, facet_type_info,
+                                           diagnoser)) {
       return SemIR::IdentifiedFacetTypeId::None;
     }
 

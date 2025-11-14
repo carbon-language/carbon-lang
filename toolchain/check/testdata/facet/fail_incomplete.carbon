@@ -61,7 +61,7 @@ class C {}
 // CHECK:STDERR:
 impl C as X;
 
-// --- fail_incomplete_nested_require.carbon
+// --- nested_require_incomplete_interface.carbon
 library "[[@TEST_NAME]]";
 
 interface Z;
@@ -78,34 +78,27 @@ class C {}
 impl C as X;
 
 // Requires X complete.
-// CHECK:STDERR: fail_incomplete_nested_require.carbon:[[@LINE+7]]:1: error: definition of impl as incomplete facet type `X` [ImplAsIncompleteFacetTypeDefinition]
-// CHECK:STDERR: impl C as X {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_incomplete_nested_require.carbon:[[@LINE-17]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface Z;
-// CHECK:STDERR: ^~~~~~~~~~~~
-// CHECK:STDERR:
 impl C as X {}
 
-// --- fail_incomplete_nested_require_without_forward_decl.carbon
+// --- fail_incomplete_through_constraint.carbon
 library "[[@TEST_NAME]]";
 
 interface Z;
 constraint Y {
-  require impls Z;
-}
-interface X {
-  require impls Y;
+  extend require impls Z;
 }
 
 class C {}
 
-// Requires X complete.
-// CHECK:STDERR: fail_incomplete_nested_require_without_forward_decl.carbon:[[@LINE+7]]:1: error: definition of impl as incomplete facet type `X` [ImplAsIncompleteFacetTypeDefinition]
-// CHECK:STDERR: impl C as X {}
+// Requires Y identified.
+impl C as Y;
+
+// Requires Y complete.
+// CHECK:STDERR: fail_incomplete_through_constraint.carbon:[[@LINE+7]]:1: error: definition of impl as incomplete facet type `Y` [ImplAsIncompleteFacetTypeDefinition]
+// CHECK:STDERR: impl C as Y {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_incomplete_nested_require_without_forward_decl.carbon:[[@LINE-14]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: fail_incomplete_through_constraint.carbon:[[@LINE-14]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
 // CHECK:STDERR: interface Z;
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
-impl C as X {}
+impl C as Y {}
