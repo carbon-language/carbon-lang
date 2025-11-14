@@ -87,7 +87,7 @@ TEST(LatchTest, MultiThreaded) {
     called = true;
   });
 
-  std::deque<std::jthread> threads;
+  std::deque<std::thread> threads;
   for (int i = 0; i < NumThreads; ++i) {
     threads.emplace_back([&, handle_copy = handle] {
       // Each thread has its own copy of the handle.
@@ -101,9 +101,9 @@ TEST(LatchTest, MultiThreaded) {
   // Drop the main thread's handle.
   std::move(handle).Drop();
 
-  // Join the threads.
-  threads.clear();
-
+  for (auto& thread : threads) {
+    thread.join();
+  }
   EXPECT_TRUE(called);
 }
 
