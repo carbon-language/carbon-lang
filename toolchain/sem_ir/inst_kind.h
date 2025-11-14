@@ -6,9 +6,90 @@
 #define CARBON_TOOLCHAIN_SEM_IR_INST_KIND_H_
 
 #include <cstdint>
+#include <optional>
 
 #include "common/enum_base.h"
+#include "toolchain/parse/node_ids.h"
+
 namespace Carbon::SemIR {
+
+// Forward-declared to avoid a cycle.
+struct TypeId;
+
+// The expression category of a sem_ir instruction. See /docs/design/values.md
+// for details.
+enum class ExprCategory : int8_t {
+  // This instruction does not correspond to an expression, and as such has no
+  // category.
+  NotExpr,
+  // The category of this instruction is not known due to an error.
+  Error,
+  // This instruction represents a pattern, not an expression.
+  Pattern,
+  // This instruction represents a value expression.
+  Value,
+  // This instruction represents a durable reference expression, that denotes an
+  // object that outlives the current full expression context.
+  DurableRef,
+  // This instruction represents an ephemeral reference expression, that denotes
+  // an object that does not outlive the current full expression context.
+  EphemeralRef,
+  // This instruction represents an initializing expression, that describes how
+  // to initialize an object.
+  Initializing,
+  // This instruction represents a syntactic combination of expressions that are
+  // permitted to have different expression categories. This is used for tuple
+  // and struct literals, where the subexpressions for different elements can
+  // have different categories.
+  Mixed,
+  Last = Mixed
+};
+
+// What kind of expression category an instruction kind produces. The expression
+// category in general may depend on the operands of the instruction, but we can
+// handle most cases based on the instruction kind alone.
+class InstExprCategory {
+ public:
+  // The kind of category for this instruction. This includes all values in
+  // `ExprCategory`, for the case where the category of the instruction only
+  // depedns on its kind, plus some additional kinds.
+  enum Kind : int8_t {
+    // The expression category is `Value` if the instruction has a `type_id`
+    // field, and `NotExpr` otherwise. This is the default, and is used for
+    // convenience because it does the right thing for most instructions.
+    ValueIfHasType = -1,
+    // The expression category is the same as that of the first operand, which
+    // is an `InstId`.
+    SameAsFirstOperand = -2,
+    // The expression category is the same as that of the first operand, which
+    // is an `InstId`.
+    SameAsSecondOperand = -3,
+    // The expression category depends on the operands in some way not covered
+    // by the above options. The category is determined by custom logic in
+    // `GetExprCategory`.
+    DependsOnOperands = -4,
+  };
+
+  constexpr explicit(false) InstExprCategory(Kind kind) : kind_(kind) {}
+  constexpr explicit(false) InstExprCategory(ExprCategory cat)
+      : kind_(static_cast<Kind>(cat)) {}
+
+  // If this instruction always has the same category, returns that category.
+  // Otherwise returns nullopt.
+  constexpr auto AsFixedCategory() const -> std::optional<ExprCategory> {
+    return kind_ >= 0 ? std::optional(static_cast<ExprCategory>(kind_))
+                      : std::nullopt;
+  }
+
+  // If the category of this instruction depends on its operands, returns the
+  // corresponding Kind value. Otherwise returns nullopt.
+  constexpr auto AsInstDependentKind() const -> std::optional<Kind> {
+    return kind_ < 0 ? std::optional(kind_) : std::nullopt;
+  }
+
+ private:
+  Kind kind_;
+};
 
 // Whether an instruction defines a type.
 enum class InstIsType : int8_t {
@@ -139,6 +220,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   // comments.
   struct DefinitionInfo {
     llvm::StringLiteral ir_name;
+    InstExprCategory expr_category = InstExprCategory::ValueIfHasType;
     InstIsType is_type = InstIsType::Never;
     InstConstantKind constant_kind = InstConstantKind::Indirect;
     InstConstantNeedsInstIdKind constant_needs_inst_id =
@@ -169,6 +251,11 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   // Returns the name to use for this instruction kind in Semantics IR.
   auto ir_name() const -> llvm::StringLiteral {
     return definition_info(*this).ir_name;
+  }
+
+  // Returns the category of expression represented by this instruction kind.
+  auto expr_category() const -> InstExprCategory {
+    return definition_info(*this).expr_category;
   }
 
   // Returns whether this instruction kind defines a type.
@@ -248,6 +335,11 @@ class InstKind::Definition : public InstKind {
   // Returns the name to use for this instruction kind in Semantics IR.
   constexpr auto ir_name() const -> llvm::StringLiteral {
     return info_.ir_name;
+  }
+
+  // Returns the category of expression represented by this instruction kind.
+  constexpr auto expr_category() const -> InstExprCategory {
+    return info_.expr_category;
   }
 
   // Returns whether this instruction kind defines a type.
