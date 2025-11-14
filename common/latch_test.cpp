@@ -40,7 +40,7 @@ TEST(LatchTest, OnZeroCallback) {
   EXPECT_FALSE(called);
   EXPECT_FALSE(std::move(handle2).Drop());
   EXPECT_FALSE(called);
-  EXPECT_FALSE(std::move(handle3).Drop());
+  EXPECT_TRUE(std::move(handle3).Drop());
   EXPECT_TRUE(called);
 }
 
