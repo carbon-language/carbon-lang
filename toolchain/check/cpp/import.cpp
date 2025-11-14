@@ -1095,7 +1095,7 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
   unsigned width = ast_context.getIntWidth(qual_type);
   bool is_signed = type.isSignedInteger();
   auto int_n_type = ast_context.getIntTypeForBitwidth(width, is_signed);
-  if (ast_context.hasSameType(qual_type, int_n_type)) {
+  if (clang::ASTContext::hasSameType(qual_type, int_n_type)) {
     TypeExpr type_expr =
         MakeIntType(context, context.ints().Add(width), is_signed);
     // Try to make sure integer types of 32 or 64 bits are complete so we can
@@ -1108,7 +1108,7 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
     }
     return type_expr;
   }
-  if (ast_context.hasSameType(qual_type, ast_context.CharTy)) {
+  if (clang::ASTContext::hasSameType(qual_type, ast_context.CharTy)) {
     return ExprAsType(context, Parse::NodeId::None,
                       MakeCharTypeLiteral(context, Parse::NodeId::None));
   }
