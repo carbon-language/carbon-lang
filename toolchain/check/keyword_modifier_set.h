@@ -112,15 +112,19 @@ class KeywordModifierSet : public CARBON_ENUM_MASK_BASE(KeywordModifierSet) {
 CARBON_KEYWORD_MODIFIER_SET(CARBON_KEYWORD_MODIFIER_SET_WITH_TYPE)
 #undef CARBON_KEYWORD_MODIFIER_SET_WITH_TYPE
 
-constexpr KeywordModifierSet KeywordModifierSet::Access(Private | Protected);
-constexpr KeywordModifierSet KeywordModifierSet::Class(Abstract | Base);
-constexpr KeywordModifierSet KeywordModifierSet::Method(Abstract | Override |
-                                                        Virtual);
-constexpr KeywordModifierSet KeywordModifierSet::ImplDecl(Extend | Final);
-constexpr KeywordModifierSet KeywordModifierSet::Interface(Default | Final);
-constexpr KeywordModifierSet KeywordModifierSet::Decl(Class | Method | Impl |
-                                                      Interface | Export |
-                                                      Returned);
+inline constexpr KeywordModifierSet KeywordModifierSet::Access(Private |
+                                                               Protected);
+inline constexpr KeywordModifierSet KeywordModifierSet::Class(Abstract | Base);
+inline constexpr KeywordModifierSet KeywordModifierSet::Method(Abstract |
+                                                               Override |
+                                                               Virtual);
+inline constexpr KeywordModifierSet KeywordModifierSet::ImplDecl(Extend |
+                                                                 Final);
+inline constexpr KeywordModifierSet KeywordModifierSet::Interface(Default |
+                                                                  Final);
+inline constexpr KeywordModifierSet KeywordModifierSet::Decl(Class | Method |
+                                                             Impl | Interface |
+                                                             Export | Returned);
 
 static_assert(
     !KeywordModifierSet::Access.HasAnyOf(KeywordModifierSet::Extern) &&

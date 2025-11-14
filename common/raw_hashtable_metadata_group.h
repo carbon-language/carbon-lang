@@ -43,7 +43,7 @@ namespace Carbon::RawHashtable {
 // We define a constant max group size. The particular group size used in
 // practice may vary, but we want to have some upper bound used to ensure
 // memory allocation is done consistently across different architectures.
-constexpr ssize_t MaxGroupSize = 16;
+inline constexpr ssize_t MaxGroupSize = 16;
 
 // This takes a collection of bits representing the results of looking for a
 // particular tag in this metadata group and determines the first position with

@@ -147,7 +147,7 @@ namespace Carbon::RawHashtable {
 
 // If allocating storage, allocate a minimum of one cacheline of group metadata
 // or a minimum of one group, whichever is larger.
-constexpr ssize_t MinAllocatedSize = std::max<ssize_t>(64, MaxGroupSize);
+inline constexpr ssize_t MinAllocatedSize = std::max<ssize_t>(64, MaxGroupSize);
 
 // An entry in the hashtable storage of a `KeyT` and `ValueT` object.
 //

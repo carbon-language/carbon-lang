@@ -54,34 +54,34 @@ _TEMPLATE = """
 
 namespace Carbon::RuntimeSources {{
 
-constexpr inline llvm::StringLiteral CrtBegin = {crtbegin_src};
-constexpr inline llvm::StringLiteral CrtEnd = {crtend_src};
+inline constexpr llvm::StringLiteral CrtBegin = {crtbegin_src};
+inline constexpr llvm::StringLiteral CrtEnd = {crtend_src};
 
-constexpr inline llvm::StringLiteral BuiltinsGenericSrcs[] = {{
+inline constexpr llvm::StringLiteral BuiltinsGenericSrcs[] = {{
 {generic_srcs}
 }};
-constexpr inline llvm::StringLiteral BuiltinsMacosSrcs[] = {{
+inline constexpr llvm::StringLiteral BuiltinsMacosSrcs[] = {{
 {macos_srcs}
 }};
-constexpr inline llvm::StringLiteral BuiltinsBf16Srcs[] = {{
+inline constexpr llvm::StringLiteral BuiltinsBf16Srcs[] = {{
 {bf16_srcs}
 }};
-constexpr inline llvm::StringLiteral BuiltinsTfSrcs[] = {{
+inline constexpr llvm::StringLiteral BuiltinsTfSrcs[] = {{
 {tf_srcs}
 }};
-constexpr inline llvm::StringLiteral BuiltinsX86ArchSrcs[] = {{
+inline constexpr llvm::StringLiteral BuiltinsX86ArchSrcs[] = {{
 {x86_arch_srcs}
 }};
-constexpr inline llvm::StringLiteral BuiltinsX86Fp80Srcs[] = {{
+inline constexpr llvm::StringLiteral BuiltinsX86Fp80Srcs[] = {{
 {x86_fp80_srcs}
 }};
-constexpr inline llvm::StringLiteral BuiltinsAarch64Srcs[] = {{
+inline constexpr llvm::StringLiteral BuiltinsAarch64Srcs[] = {{
 {aarch64_srcs}
 }};
-constexpr inline llvm::StringLiteral BuiltinsX86_64Srcs[] = {{
+inline constexpr llvm::StringLiteral BuiltinsX86_64Srcs[] = {{
 {x86_64_srcs}
 }};
-constexpr inline llvm::StringLiteral BuiltinsI386Srcs[] = {{
+inline constexpr llvm::StringLiteral BuiltinsI386Srcs[] = {{
 {i386_srcs}
 }};
 

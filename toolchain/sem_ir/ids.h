@@ -42,8 +42,9 @@ struct InstId : public IdBase<InstId> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr InstId InstId::InitTombstone = InstId(NoneIndex - 1);
-constexpr InstId InstId::ImplWitnessTablePlaceholder = InstId(NoneIndex - 2);
+inline constexpr InstId InstId::InitTombstone = InstId(NoneIndex - 1);
+inline constexpr InstId InstId::ImplWitnessTablePlaceholder =
+    InstId(NoneIndex - 2);
 
 // An InstId whose value is a type. The fact it's a type must be validated
 // before construction, and this allows that validation to be represented in the
@@ -63,7 +64,8 @@ struct TypeInstId : public InstId {
       : InstId(id) {}
 };
 
-constexpr TypeInstId TypeInstId::None = TypeInstId::UnsafeMake(InstId::None);
+inline constexpr TypeInstId TypeInstId::None =
+    TypeInstId::UnsafeMake(InstId::None);
 
 // An InstId whose type is known to be T. The fact it's a type must be validated
 // before construction, and this allows that validation to be represented in the
@@ -89,7 +91,7 @@ struct KnownInstId : public InstId {
 };
 
 template <typename T>
-constexpr KnownInstId<T> KnownInstId<T>::None =
+inline constexpr KnownInstId<T> KnownInstId<T>::None =
     KnownInstId<T>::UnsafeMake(InstId::None);
 
 // An ID of an instruction that is referenced absolutely by another instruction.
@@ -249,7 +251,8 @@ struct ConstantId : public IdBase<ConstantId> {
   static constexpr int32_t FirstSymbolicId = NoneIndex - 2;
 };
 
-constexpr ConstantId ConstantId::NotConstant = ConstantId(NotConstantIndex);
+inline constexpr ConstantId ConstantId::NotConstant =
+    ConstantId(NotConstantIndex);
 
 // The ID of a `EntityName`.
 struct EntityNameId : public IdBase<EntityNameId> {
@@ -311,7 +314,7 @@ struct CheckIRId : public IdBase<CheckIRId> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr CheckIRId CheckIRId::Cpp = CheckIRId(NoneIndex - 1);
+inline constexpr CheckIRId CheckIRId::Cpp = CheckIRId(NoneIndex - 1);
 
 // The ID of a `Class`.
 struct ClassId : public IdBase<ClassId> {
@@ -444,7 +447,7 @@ struct GenericInstIndex : public IndexBase<GenericInstIndex> {
   static constexpr int32_t FirstDefinitionIndex = NoneIndex - 1;
 };
 
-constexpr GenericInstIndex GenericInstIndex::None =
+inline constexpr GenericInstIndex GenericInstIndex::None =
     GenericInstIndex::MakeNone();
 
 // The ID of an `ImportIR` within the set of imported IRs, both direct and
@@ -465,8 +468,8 @@ struct ImportIRId : public IdBase<ImportIRId> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr ImportIRId ImportIRId::ApiForImpl = ImportIRId(0);
-constexpr ImportIRId ImportIRId::Cpp = ImportIRId(ApiForImpl.index + 1);
+inline constexpr ImportIRId ImportIRId::ApiForImpl = ImportIRId(0);
+inline constexpr ImportIRId ImportIRId::Cpp = ImportIRId(ApiForImpl.index + 1);
 
 // A boolean value.
 struct BoolValue : public IdBase<BoolValue> {
@@ -490,8 +493,8 @@ struct BoolValue : public IdBase<BoolValue> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr BoolValue BoolValue::False = BoolValue(0);
-constexpr BoolValue BoolValue::True = BoolValue(1);
+inline constexpr BoolValue BoolValue::False = BoolValue(0);
+inline constexpr BoolValue BoolValue::True = BoolValue(1);
 
 // A character literal value as a unicode codepoint.
 struct CharId : public IdBase<CharId> {
@@ -521,8 +524,8 @@ struct IntKind : public IdBase<IntKind> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr IntKind IntKind::Unsigned = IntKind(0);
-constexpr IntKind IntKind::Signed = IntKind(1);
+inline constexpr IntKind IntKind::Unsigned = IntKind(0);
+inline constexpr IntKind IntKind::Signed = IntKind(1);
 
 // A float kind value. This describes the semantics of the floating-point type.
 // This represents very similar information to the bit-width, but is more
@@ -560,15 +563,15 @@ struct FloatKind : public IdBase<FloatKind> {
   auto Semantics() const -> const llvm::fltSemantics&;
 };
 
-constexpr FloatKind FloatKind::None = FloatKind(NoneIndex);
+inline constexpr FloatKind FloatKind::None = FloatKind(NoneIndex);
 
-constexpr FloatKind FloatKind::Binary16 = FloatKind(0);
-constexpr FloatKind FloatKind::Binary32 = FloatKind(1);
-constexpr FloatKind FloatKind::Binary64 = FloatKind(2);
-constexpr FloatKind FloatKind::Binary128 = FloatKind(3);
-constexpr FloatKind FloatKind::BFloat16 = FloatKind(4);
-constexpr FloatKind FloatKind::X87Float80 = FloatKind(5);
-constexpr FloatKind FloatKind::PPCFloat128 = FloatKind(6);
+inline constexpr FloatKind FloatKind::Binary16 = FloatKind(0);
+inline constexpr FloatKind FloatKind::Binary32 = FloatKind(1);
+inline constexpr FloatKind FloatKind::Binary64 = FloatKind(2);
+inline constexpr FloatKind FloatKind::Binary128 = FloatKind(3);
+inline constexpr FloatKind FloatKind::BFloat16 = FloatKind(4);
+inline constexpr FloatKind FloatKind::X87Float80 = FloatKind(5);
+inline constexpr FloatKind FloatKind::PPCFloat128 = FloatKind(6);
 
 // An X-macro for special names. Uses should look like:
 //
@@ -654,14 +657,14 @@ struct NameId : public IdBase<NameId> {
 
 // Define the special `static const NameId` values.
 #define CARBON_SPECIAL_NAME_ID_FOR_DEF(Name) \
-  constexpr NameId NameId::Name =            \
+  inline constexpr NameId NameId::Name =     \
       NameId(NoneIndex - 1 - static_cast<int>(NameId::SpecialNameId::Name));
 CARBON_SPECIAL_NAME_ID(CARBON_SPECIAL_NAME_ID_FOR_DEF)
 #undef CARBON_SPECIAL_NAME_ID_FOR_DEF
 
 // Count non-index values, including `None` and special names.
 #define CARBON_SPECIAL_NAME_ID_FOR_COUNT(...) +1
-constexpr int NameId::NonIndexValueCount =
+inline constexpr int NameId::NonIndexValueCount =
     1 CARBON_SPECIAL_NAME_ID(CARBON_SPECIAL_NAME_ID_FOR_COUNT);
 #undef CARBON_SPECIAL_NAME_ID_FOR_COUNT
 
@@ -675,7 +678,7 @@ struct NameScopeId : public IdBase<NameScopeId> {
   using IdBase::IdBase;
 };
 
-constexpr NameScopeId NameScopeId::Package = NameScopeId(0);
+inline constexpr NameScopeId NameScopeId::Package = NameScopeId(0);
 
 // The ID of an `InstId` block.
 struct InstBlockId : public IdBase<InstBlockId> {
@@ -705,11 +708,12 @@ struct InstBlockId : public IdBase<InstBlockId> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
-constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
-constexpr InstBlockId InstBlockId::Imports = InstBlockId(2);
-constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
-constexpr InstBlockId InstBlockId::Unreachable = InstBlockId(NoneIndex - 1);
+inline constexpr InstBlockId InstBlockId::Empty = InstBlockId(0);
+inline constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
+inline constexpr InstBlockId InstBlockId::Imports = InstBlockId(2);
+inline constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(3);
+inline constexpr InstBlockId InstBlockId::Unreachable =
+    InstBlockId(NoneIndex - 1);
 
 // Contains either an `InstBlockId` value, an error value, or
 // `InstBlockId::None`.
@@ -817,7 +821,8 @@ struct StructTypeFieldsId : public IdBase<StructTypeFieldsId> {
   using IdBase::IdBase;
 };
 
-constexpr StructTypeFieldsId StructTypeFieldsId::Empty = StructTypeFieldsId(0);
+inline constexpr StructTypeFieldsId StructTypeFieldsId::Empty =
+    StructTypeFieldsId(0);
 
 // The ID of a `CustomLayout` block.
 struct CustomLayoutId : public IdBase<CustomLayoutId> {
@@ -837,7 +842,7 @@ struct CustomLayoutId : public IdBase<CustomLayoutId> {
   using IdBase::IdBase;
 };
 
-constexpr CustomLayoutId CustomLayoutId::Empty = CustomLayoutId(0);
+inline constexpr CustomLayoutId CustomLayoutId::Empty = CustomLayoutId(0);
 
 // The ID of a type.
 struct TypeId : public IdBase<TypeId> {
@@ -906,8 +911,10 @@ struct LibraryNameId : public IdBase<LibraryNameId> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-constexpr LibraryNameId LibraryNameId::Default = LibraryNameId(NoneIndex - 1);
-constexpr LibraryNameId LibraryNameId::Error = LibraryNameId(NoneIndex - 2);
+inline constexpr LibraryNameId LibraryNameId::Default =
+    LibraryNameId(NoneIndex - 1);
+inline constexpr LibraryNameId LibraryNameId::Error =
+    LibraryNameId(NoneIndex - 2);
 
 // The ID of an `ImportIRInst`.
 struct ImportIRInstId : public IdBase<ImportIRInstId> {
@@ -940,7 +947,7 @@ struct RequireImplsBlockId : public IdBase<RequireImplsBlockId> {
   using IdBase::IdBase;
 };
 
-constexpr RequireImplsBlockId RequireImplsBlockId::Empty =
+inline constexpr RequireImplsBlockId RequireImplsBlockId::Empty =
     RequireImplsBlockId(0);
 
 // A SemIR location used as the location of instructions. This contains either a

@@ -637,7 +637,7 @@ class NodeStack {
   llvm::SmallVector<Entry> stack_;
 };
 
-constexpr NodeStack::IdKindTableType NodeStack::IdKindTable =
+inline constexpr NodeStack::IdKindTableType NodeStack::IdKindTable =
     ComputeIdKindTable();
 
 inline auto NodeStack::PopExprWithNodeId()

@@ -214,7 +214,7 @@ class ImplStore {
   llvm::SmallVector<llvm::SmallVector<ImplId, 2>> lookup_buckets_;
 };
 
-constexpr inline ImplStore::ImplOrLookupBucketId
+inline constexpr ImplStore::ImplOrLookupBucketId
     ImplStore::ImplOrLookupBucketId::None(NoneIndex);
 
 }  // namespace Carbon::SemIR
