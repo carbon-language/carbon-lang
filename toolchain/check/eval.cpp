@@ -1710,30 +1710,6 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       auto index_inst = eval_context.insts().GetAs<SemIR::IntValue>(index_id);
       const auto& index_val = eval_context.ints().Get(index_inst.int_id);
 
-      // Check bounds
-      if (index_val.isNegative()) {
-        CARBON_DIAGNOSTIC(ArrayIndexNegative, Error, "index `{0}` is negative.",
-                          TypedInt);
-        eval_context.emitter().Emit(
-            eval_context.GetDiagnosticLoc(index_id), ArrayIndexNegative,
-            {.type = eval_context.insts().Get(index_id).type_id(),
-             .value = index_val});
-        return SemIR::ErrorInst::ConstantId;
-      }
-
-      // Check for out of bounds
-      if (index_val.getActiveBits() > 64 ||
-          index_val.getZExtValue() >= string_value.size()) {
-        CARBON_DIAGNOSTIC(StringAtIndexOutOfBounds, Error,
-                          "string index `{0}` is past the end of the string.",
-                          TypedInt);
-        eval_context.emitter().Emit(
-            eval_context.GetDiagnosticLoc(index_id), StringAtIndexOutOfBounds,
-            {.type = eval_context.insts().Get(index_id).type_id(),
-             .value = index_val});
-        return SemIR::ErrorInst::ConstantId;
-      }
-
       auto char_value =
           static_cast<uint8_t>(string_value[index_val.getZExtValue()]);
 

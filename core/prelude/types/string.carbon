@@ -10,6 +10,8 @@ import library "prelude/types/char";
 import library "prelude/types/uint";
 import library "prelude/operators/index";
 import library "prelude/types/int";
+import library "prelude/types/int_literal";
+import library "prelude/operators/as";
 
 class String;
 
@@ -23,8 +25,8 @@ class String {
     fn Op[self: Self]() -> Self { return {.ptr = self.ptr, .size = self.size}; }
   }
 
-  impl as IndexWith(i32) where .ElementType = Char {
-    fn At[self: Self](subscript: i32) -> Char {
+  impl forall [T:! ImplicitAs(i32)] as IndexWith(T) where .ElementType = Char {
+    fn At[self: Self](subscript: T) -> Char {
       return StringAt(self, subscript);
     }
   }

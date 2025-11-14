@@ -18,4 +18,3 @@ fn TestWrongType() {
   // CHECK:STDERR:
   var c: Core.Char = x[0];
 }
-

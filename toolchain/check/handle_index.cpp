@@ -26,6 +26,68 @@ auto HandleParseNode(Context& /*context*/, Parse::IndexExprStartId /*node_id*/)
   return true;
 }
 
+// Performs bounds checking for string indexing when the index is a constant.
+static auto CheckStringIndexBounds(Context& context,
+                                   SemIR::InstId operand_inst_id,
+                                   SemIR::InstId index_inst_id,
+                                   const llvm::APInt& index_int) -> void {
+  if (index_int.isNegative()) {
+    CARBON_DIAGNOSTIC(ArrayIndexNegative, Error, "index `{0}` is negative.",
+                      TypedInt);
+    context.emitter().Emit(
+        SemIR::LocId(index_inst_id), ArrayIndexNegative,
+        {.type = context.insts().Get(index_inst_id).type_id(),
+         .value = index_int});
+    return;
+  }
+
+  auto operand_const_id = context.constant_values().Get(operand_inst_id);
+  if (!operand_const_id.is_constant()) {
+    return;
+  }
+
+  auto operand_const_inst_id =
+      context.constant_values().GetInstId(operand_const_id);
+  auto str_struct =
+      context.insts().TryGetAs<SemIR::StructValue>(operand_const_inst_id);
+  if (!str_struct) {
+    return;
+  }
+
+  auto elements = context.inst_blocks().Get(str_struct->elements_id);
+  CARBON_CHECK(elements.size() == 2, "String struct should have 2 fields.");
+
+  auto ptr_const_id = context.constant_values().Get(elements[0]);
+  auto ptr_inst_id = context.constant_values().GetInstId(ptr_const_id);
+  auto string_literal =
+      context.insts().TryGetAs<SemIR::StringLiteral>(ptr_inst_id);
+  if (!string_literal) {
+    return;
+  }
+
+  auto string_value = context.sem_ir().string_literal_values().Get(
+      string_literal->string_literal_id);
+  if (index_int.getActiveBits() > 64 ||
+      index_int.getZExtValue() >= string_value.size()) {
+    CARBON_DIAGNOSTIC(StringAtIndexOutOfBounds, Error,
+                      "string index `{0}` is past the end of the string.",
+                      TypedInt);
+    context.emitter().Emit(
+        SemIR::LocId(index_inst_id), StringAtIndexOutOfBounds,
+        {.type = context.insts().Get(index_inst_id).type_id(),
+         .value = index_int});
+  }
+}
+
+// Checks if the given ClassType is the String class.
+static auto IsStringType(Context& context, SemIR::ClassType class_type)
+    -> bool {
+  auto& class_info = context.classes().Get(class_type.class_id);
+  auto identifier_id = class_info.name_id.AsIdentifierId();
+  return identifier_id.has_value() &&
+         context.identifiers().Get(identifier_id) == "String";
+}
+
 // Performs an index with base expression `operand_inst_id` and
 // `operand_type_id` for types that are not an array. This checks if
 // the base expression implements the `IndexWith` interface; if so, uses the
@@ -80,6 +142,28 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
         // and `IndirectIndexWith`.
         elem_id = ConvertToValueExpr(context, elem_id);
       }
+      context.node_stack().Push(node_id, elem_id);
+      return true;
+    }
+
+    case CARBON_KIND(SemIR::ClassType class_type): {
+      // Perform bounds checking for String types if the index is constant.
+      if (IsStringType(context, class_type)) {
+        auto index_const_id = context.constant_values().Get(index_inst_id);
+        if (index_const_id.is_constant()) {
+          auto index_const_inst_id =
+              context.constant_values().GetInstId(index_const_id);
+          if (auto index_val = context.insts().TryGetAs<SemIR::IntValue>(
+                  index_const_inst_id)) {
+            const auto& index_int = context.ints().Get(index_val->int_id);
+            CheckStringIndexBounds(context, operand_inst_id, index_inst_id,
+                                   index_int);
+          }
+        }
+      }
+
+      auto elem_id =
+          PerformIndexWith(context, node_id, operand_inst_id, index_inst_id);
       context.node_stack().Push(node_id, elem_id);
       return true;
     }
