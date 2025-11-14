@@ -360,7 +360,7 @@ CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessNote)
 CARBON_DIAGNOSTIC_KIND(ImplLookupCycle)
 CARBON_DIAGNOSTIC_KIND(ImplLookupCycleNote)
-CARBON_DIAGNOSTIC_KIND(ImplLookupInIncompleteFacetType)
+CARBON_DIAGNOSTIC_KIND(ImplLookupInUnidentifiedFacetType)
 
 // Require checking.
 CARBON_DIAGNOSTIC_KIND(RequireImplsExtendWithExplicitSelf)

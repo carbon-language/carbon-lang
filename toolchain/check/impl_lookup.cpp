@@ -203,10 +203,10 @@ static auto GetInterfacesFromConstantId(
       context.facet_types().Get(facet_type_inst.facet_type_id);
   auto identified_id =
       RequireIdentifiedFacetType(context, facet_type_inst, [&] {
-        CARBON_DIAGNOSTIC(ImplLookupInIncompleteFacetType, Error,
-                          "facet type {0} is incomplete", InstIdAsType);
-        return context.emitter().Build(loc_id, ImplLookupInIncompleteFacetType,
-                                       facet_type_inst_id);
+        CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetType, Error,
+                          "facet type {0} can not be identified", InstIdAsType);
+        return context.emitter().Build(
+            loc_id, ImplLookupInUnidentifiedFacetType, facet_type_inst_id);
       });
   if (!identified_id.has_value()) {
     return std::nullopt;
