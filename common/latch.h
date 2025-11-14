@@ -20,9 +20,9 @@ namespace Carbon {
 //
 // The latch synchronizes between every destruction of a handle and the
 // destruction of the last handle, allowing code that runs after the latch is
-// satisfied to access everything written by any thread that destroyed a handle. For
-// more details of the synchronization mechanics, see the comments on `Inc` and
-// `Dec` that implement this logic.
+// satisfied to access everything written by any thread that destroyed a handle.
+// For more details of the synchronization mechanics, see the comments on `Inc`
+// and `Dec` that implement this logic.
 //
 // This type also supports holding a closure to run when satisfied to simplify
 // patterns where that body of code is easier to express at the start of work
