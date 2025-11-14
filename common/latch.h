@@ -14,13 +14,13 @@ namespace Carbon {
 // A synchronization primitive similar to `std::latch` to coordinate starting
 // some action once all of a set of other actions complete.
 //
-// Users initialize the latch (with `Init), and receive a handle RAII object.
+// Users initialize the latch (with `Init`), and receive a handle RAII object.
 // This handle can be copied, and the latch is satisfied when the last copy of
 // the handle returned by `Init` is destroyed.
 //
 // The latch synchronizes between every destruction of a handle and the
 // destruction of the last handle, allowing code that runs after the latch is
-// satisfied to access everything written by threads that destroy a handle. For
+// satisfied to access everything written by any thread that destroyed a handle. For
 // more details of the synchronization mechanics, see the comments on `Inc` and
 // `Dec` that implement this logic.
 //

@@ -36,11 +36,11 @@ TEST(LatchTest, OnZeroCallback) {
   Latch::Handle handle3 = handle;
 
   EXPECT_FALSE(called);
-  ASSERT_FALSE(std::move(handle).Drop());
+  EXPECT_FALSE(std::move(handle).Drop());
   EXPECT_FALSE(called);
-  ASSERT_FALSE(std::move(handle2).Drop());
+  EXPECT_FALSE(std::move(handle2).Drop());
   EXPECT_FALSE(called);
-  ASSERT_TRUE(std::move(handle3).Drop());
+  EXPECT_FALSE(std::move(handle3).Drop());
   EXPECT_TRUE(called);
 }
 
@@ -53,7 +53,7 @@ TEST(LatchTest, MoveHandle) {
 
   // Check that dropping the new handle satisfies the latch.
   EXPECT_FALSE(called);
-  std::move(handle2).Drop();
+  EXPECT_TRUE(std::move(handle2).Drop());
   EXPECT_TRUE(called);
 }
 
@@ -68,7 +68,7 @@ TEST(LatchTest, Destructor) {
     EXPECT_FALSE(called);
   }
   EXPECT_FALSE(called);
-  std::move(handle).Drop();
+  EXPECT_TRUE(std::move(handle).Drop());
   EXPECT_TRUE(called);
 }
 
