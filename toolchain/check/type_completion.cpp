@@ -14,7 +14,9 @@
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/specific_named_constraint.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -80,6 +82,128 @@ static auto ForEachRequireImpls(
     const auto& require = context.require_impls().Get(require_impls_id);
     f(require);
   }
+}
+
+static auto MakeSpecificForRequireDecl(Context& context, SemIR::LocId loc_id,
+                                       SemIR::SpecificId entity_specific_id,
+                                       SemIR::GenericId require_generic_id)
+    -> SemIR::SpecificId {
+  auto entity_specific_args_id =
+      context.specifics().GetArgsOrEmpty(entity_specific_id);
+  auto entity_specific_args =
+      context.inst_blocks().Get(entity_specific_args_id);
+
+  const auto& require_generic = context.generics().Get(require_generic_id);
+  const auto& require_self_specific =
+      context.specifics().Get(require_generic.self_specific_id);
+  auto require_self_specific_args =
+      context.inst_blocks().Get(require_self_specific.args_id);
+
+  llvm::SmallVector<SemIR::InstId> arg_ids;
+  arg_ids.reserve(entity_specific_args.size() + 1);
+  // Start with the enclosing arguments from the entity.
+  llvm::append_range(arg_ids, entity_specific_args);
+  // Add the `Self` argument from the require decl.
+  arg_ids.push_back(require_self_specific_args.back());
+
+  return MakeSpecific(context, loc_id, require_generic_id, arg_ids);
+}
+
+static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
+                                     const SemIR::FacetType& facet_type,
+                                     MakeDiagnosticBuilderFn diagnoser)
+    -> bool {
+  llvm::SmallVector<SemIR::FacetTypeId> work = {facet_type.facet_type_id};
+  while (!work.empty()) {
+    auto next_facet_type_id = work.pop_back_val();
+    const auto& facet_type_info = context.facet_types().Get(next_facet_type_id);
+
+    auto require_complete_interface =
+        [&](SemIR::SpecificInterface req_interface) -> bool {
+      auto interface_id = req_interface.interface_id;
+      const auto& interface = context.interfaces().Get(interface_id);
+      if (!interface.is_complete()) {
+        if (diagnoser) {
+          auto builder = diagnoser();
+          NoteIncompleteInterface(context, interface_id, builder);
+          builder.Emit();
+        }
+        return false;
+      }
+
+      ForEachRequireImpls(
+          context, interface, [&](const SemIR::RequireImpls& require) {
+            if (require.extend_self) {
+              auto require_specific_id = MakeSpecificForRequireDecl(
+                  context, loc_id, req_interface.specific_id,
+                  require.generic_id);
+              auto const_facet_type = SemIR::GetConstantValueInSpecific(
+                  context.sem_ir(), require_specific_id,
+                  require.facet_type_inst_id);
+              if (const_facet_type != SemIR::ErrorInst::ConstantId) {
+                auto facet_type = context.insts().GetAs<SemIR::FacetType>(
+                    context.constant_values().GetInstId(const_facet_type));
+                work.push_back(facet_type.facet_type_id);
+              }
+            }
+          });
+
+      if (req_interface.specific_id.has_value()) {
+        ResolveSpecificDefinition(context, loc_id, req_interface.specific_id);
+      }
+      return true;
+    };
+
+    auto require_complete_named_constraint =
+        [&](SemIR::SpecificNamedConstraint req_constraint) -> bool {
+      auto named_constraint_id = req_constraint.named_constraint_id;
+      const auto& constraint =
+          context.named_constraints().Get(named_constraint_id);
+      if (!constraint.is_complete()) {
+        if (diagnoser) {
+          auto builder = diagnoser();
+          NoteIncompleteNamedConstraint(context, named_constraint_id, builder);
+          builder.Emit();
+        }
+        return false;
+      }
+
+      ForEachRequireImpls(
+          context, constraint, [&](const SemIR::RequireImpls& require) {
+            if (require.extend_self) {
+              auto require_specific_id = MakeSpecificForRequireDecl(
+                  context, loc_id, req_constraint.specific_id,
+                  require.generic_id);
+              auto const_facet_type = SemIR::GetConstantValueInSpecific(
+                  context.sem_ir(), require_specific_id,
+                  require.facet_type_inst_id);
+              if (const_facet_type != SemIR::ErrorInst::ConstantId) {
+                auto facet_type = context.insts().GetAs<SemIR::FacetType>(
+                    context.constant_values().GetInstId(const_facet_type));
+                work.push_back(facet_type.facet_type_id);
+              }
+            }
+          });
+
+      if (req_constraint.specific_id.has_value()) {
+        ResolveSpecificDefinition(context, loc_id, req_constraint.specific_id);
+      }
+      return true;
+    };
+
+    for (auto extends : facet_type_info.extend_constraints) {
+      if (!require_complete_interface(extends)) {
+        return false;
+      }
+    }
+    for (auto extends : facet_type_info.extend_named_constraints) {
+      if (!require_complete_named_constraint(extends)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 namespace {
@@ -396,31 +520,8 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       break;
     }
     case CARBON_KIND(SemIR::FacetType inst): {
-      auto identified_id =
-          RequireIdentifiedFacetType(*context_, inst, diagnoser_);
-      if (!identified_id.has_value()) {
+      if (!RequireCompleteFacetType(*context_, loc_id_, inst, diagnoser_)) {
         return false;
-      }
-
-      const auto& identified =
-          context_->identified_facet_types().Get(identified_id);
-
-      for (auto req_interface : identified.required_interfaces()) {
-        auto interface_id = req_interface.interface_id;
-        const auto& interface = context_->interfaces().Get(interface_id);
-        if (!interface.is_complete()) {
-          if (diagnoser_) {
-            auto builder = diagnoser_();
-            NoteIncompleteInterface(*context_, interface_id, builder);
-            builder.Emit();
-          }
-          return false;
-        }
-
-        if (req_interface.specific_id.has_value()) {
-          ResolveSpecificDefinition(*context_, loc_id_,
-                                    req_interface.specific_id);
-        }
       }
       break;
     }

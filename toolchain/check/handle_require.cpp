@@ -154,6 +154,7 @@ static auto TypeStructureReferencesSelf(
 
 struct ValidateRequireResult {
   SemIR::FacetType facet_type;
+  SemIR::TypeId facet_type_type_id;
   const SemIR::IdentifiedFacetType* identified;
 };
 
@@ -164,12 +165,14 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
                             SemIR::InstId constraint_inst_id,
                             SemIR::InstId scope_inst_id)
     -> std::optional<ValidateRequireResult> {
-  auto constraint_constant_value_inst_id =
-      context.constant_values().GetConstantInstId(constraint_inst_id);
-  auto constraint_facet_type = context.insts().TryGetAs<SemIR::FacetType>(
-      constraint_constant_value_inst_id);
+  auto constraint_constant_value_id =
+      context.constant_values().Get(constraint_inst_id);
+  auto constraint_type_id =
+      SemIR::TypeId::ForTypeConstant(constraint_constant_value_id);
+  auto constraint_facet_type =
+      context.types().TryGetAs<SemIR::FacetType>(constraint_type_id);
   if (!constraint_facet_type) {
-    if (constraint_constant_value_inst_id != SemIR::ErrorInst::InstId) {
+    if (constraint_constant_value_id != SemIR::ErrorInst::ConstantId) {
       CARBON_DIAGNOSTIC(
           RequireImplsMissingFacetType, Error,
           "`require` declaration constrained by a non-facet type; "
@@ -218,6 +221,7 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
   }
 
   return ValidateRequireResult{.facet_type = *constraint_facet_type,
+                               .facet_type_type_id = constraint_type_id,
                                .identified = &identified};
 }
 
@@ -244,7 +248,7 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
     return true;
   }
 
-  auto [constraint_facet_type, identified] = *validated;
+  auto [constraint_facet_type, constraint_type_id, identified] = *validated;
   if (identified->required_interfaces().empty()) {
     // A `require T impls type` adds no actual constraints, so nothing to do.
     DiscardGenericDecl(context);
