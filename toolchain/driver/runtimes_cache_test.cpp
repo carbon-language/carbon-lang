@@ -609,9 +609,11 @@ TEST_F(RuntimesCacheTest, LookupWithManyStaleRuntimes) {
   // Get the Unix-like inode of the directories so we can check whether
   // subsequent lookups create a new directory.
   auto runtimes1_inode = runtimes1.base_dir().Stat()->unix_inode();
-  auto stale_runtimes_0_inode =
-      stale_runtimes[0].base_dir().Stat()->unix_inode();
   auto runtimes2_inode = runtimes2.base_dir().Stat()->unix_inode();
+
+  // Use the modification time for the stale runtime as comparing inodes gives a
+  // false failure when the filesystem reuses the inode.
+  auto stale_runtimes_0_mtime = stale_runtimes[0].base_dir().Stat()->mtime();
 
   // Now adjust their age backwards in time by two years to make them very, very
   // stale.
@@ -640,8 +642,8 @@ TEST_F(RuntimesCacheTest, LookupWithManyStaleRuntimes) {
   EXPECT_THAT(runtimes2.base_dir().Stat()->unix_inode(), Eq(runtimes2_inode));
 
   // One of the stale runtimes should be freshly created though.
-  EXPECT_THAT(stale_runtimes_0.base_dir().Stat()->unix_inode(),
-              Ne(stale_runtimes_0_inode));
+  EXPECT_THAT(stale_runtimes_0.base_dir().Stat()->mtime(),
+              Ne(stale_runtimes_0_mtime));
 }
 
 TEST_F(RuntimesCacheTest, LookupWithTooManyRuntimes) {
