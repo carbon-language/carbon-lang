@@ -642,8 +642,10 @@ TEST_F(RuntimesCacheTest, LookupWithManyStaleRuntimes) {
   EXPECT_THAT(runtimes2.base_dir().Stat()->unix_inode(), Eq(runtimes2_inode));
 
   // One of the stale runtimes should be freshly created though.
-  EXPECT_THAT(stale_runtimes_0.base_dir().Stat()->mtime(),
-              Ne(stale_runtimes_0_mtime));
+  EXPECT_FALSE(stale_runtimes_0.base_dir().Stat()->unix_inode()
+               == stale_runtimes_0_inode &&
+               stale_runtimes_0.base_dir().Stat()->mtime()
+               == stale_runtimes_0_mtime);
 }
 
 TEST_F(RuntimesCacheTest, LookupWithTooManyRuntimes) {
