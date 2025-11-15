@@ -50,8 +50,11 @@ class Latch {
   // destroyed. Note that the closure will run on whatever thread executes the
   // last handle destruction. Typically, the closure here should _schedule_ the
   // next step of work on some thread pool rather than performing it directly.
-  template <typename CallableT = decltype([] {})>
-  auto Init(CallableT on_zero = {}) -> Handle;
+  //
+  // Once this method is called, it cannot be called again until all handles are
+  // destroyed and the latch is satisfied. It can then be called again to get a
+  // fresh handle (and provide a new closure if desired).
+  auto Init(llvm::unique_function<auto()->void> on_zero = [] {}) -> Handle;
 
  private:
   // Increments the latch's counter.
@@ -122,16 +125,10 @@ class Latch::Handle {
 
   // Private constructor used by `Latch::Init` to create the initial handle for
   // a latch.
-  explicit Handle(Latch* latch);
+  explicit Handle(Latch* latch) : latch_(latch) { latch_->Inc(); }
 
   Latch* latch_ = nullptr;
 };
-
-template <typename CallableT>
-inline auto Latch::Init(CallableT on_zero) -> Handle {
-  on_zero_ = std::move(on_zero);
-  return Handle(this);
-}
 
 }  // namespace Carbon
 

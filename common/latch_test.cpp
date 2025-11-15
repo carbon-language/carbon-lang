@@ -72,6 +72,31 @@ TEST(LatchTest, Destructor) {
   EXPECT_TRUE(called);
 }
 
+// Tests calling `Init` more than once.
+TEST(LatchTest, Reuse) {
+  Latch latch;
+  bool called = false;
+  Latch::Handle handle = latch.Init([&] { called = true; });
+  Latch::Handle handle2 = handle;
+
+  EXPECT_FALSE(called);
+  EXPECT_FALSE(std::move(handle).Drop());
+  EXPECT_FALSE(called);
+  EXPECT_TRUE(std::move(handle2).Drop());
+  EXPECT_TRUE(called);
+
+  // Now initialize the latch again with a new closure.
+  bool called2 = false;
+  Latch::Handle handle3 = latch.Init([&] { called2 = true; });
+  Latch::Handle handle4 = handle3;
+
+  EXPECT_FALSE(called2);
+  EXPECT_FALSE(std::move(handle3).Drop());
+  EXPECT_FALSE(called2);
+  EXPECT_TRUE(std::move(handle4).Drop());
+  EXPECT_TRUE(called2);
+}
+
 // Tests the latch with multiple threads.
 TEST(LatchTest, MultiThreaded) {
   Latch latch;
@@ -87,7 +112,8 @@ TEST(LatchTest, MultiThreaded) {
     called = true;
   });
 
-  std::deque<std::thread> threads;
+  std::vector<std::thread> threads;
+  threads.reserve(NumThreads);
   for (int i = 0; i < NumThreads; ++i) {
     threads.emplace_back([&, handle_copy = handle] {
       // Each thread has its own copy of the handle.

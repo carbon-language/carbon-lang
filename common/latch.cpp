@@ -51,9 +51,10 @@ auto Latch::Dec() -> bool {
   return false;
 }
 
-Latch::Handle::Handle(Latch* latch) : latch_(latch) {
-  CARBON_CHECK(latch_->count_ == 0);
-  latch_->Inc();
+auto Latch::Init(llvm::unique_function<auto()->void> on_zero) -> Handle {
+  CARBON_CHECK(count_ == 0);
+  on_zero_ = std::move(on_zero);
+  return Handle(this);
 }
 
 }  // namespace Carbon
