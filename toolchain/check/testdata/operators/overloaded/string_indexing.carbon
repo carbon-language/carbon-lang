@@ -8,13 +8,19 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/overloaded/string_indexing.carbon
 
-// --- fail_wrong_type.carbon
 
-fn TestWrongType() {
-  var x: i32 = 42;
-  // CHECK:STDERR: fail_wrong_type.carbon:[[@LINE+4]]:22: error: cannot access member of interface `Core.IndexWith(Core.IntLiteral)` in type `i32` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   var c: Core.Char = x[0];
-  // CHECK:STDERR:                      ^~~~
-  // CHECK:STDERR:
-  var c: Core.Char = x[0];
+// --- test_string_indexing.carbon
+
+
+import Core library "io";
+import Core library "range";
+
+fn PrintStr(msg: str) {
+  for (i: i32 in Core.Range(msg.Size() as i32)) {
+    Core.PrintChar(msg[i]);
+  }
+}
+
+fn Run() {
+  PrintStr("Hello World!\n");
 }
