@@ -206,8 +206,11 @@ class ClangRuntimesBuilderBase::ArchiveBuilder {
 // A class template to build runtimes consisting of a single archive.
 //
 // The template argument comes from the `Runtimes::Component` enum, but is only
-// intended for Clang-runtimes that consist of a single archive.
+// intended for Clang-runtimes that consist of a single archive. We use a
+// requires to enforce that the components used are exactly one of those
+// supported so we can also move instantiation into the `.cpp` file.
 template <Runtimes::Component Component>
+  requires(Component == Runtimes::LibUnwind)
 class ClangArchiveRuntimesBuilder : public ClangRuntimesBuilderBase {
  public:
   // Constructing this class will attempt to build the `Component` archive into

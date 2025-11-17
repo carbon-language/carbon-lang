@@ -34,6 +34,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/TargetParser/Host.h"
 #include "llvm/TargetParser/Triple.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/base/runtime_sources.h"
 #include "toolchain/driver/clang_runner.h"
 #include "toolchain/driver/runtimes_cache.h"
@@ -211,6 +212,7 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::CompileMember(
 }
 
 template <Runtimes::Component Component>
+  requires(Component == Runtimes::LibUnwind)
 ClangArchiveRuntimesBuilder<Component>::ClangArchiveRuntimesBuilder(
     ClangRunner* clang, llvm::ThreadPoolInterface* threads,
     llvm::Triple target_triple, Runtimes* runtimes)
@@ -228,10 +230,17 @@ ClangArchiveRuntimesBuilder<Component>::ClangArchiveRuntimesBuilder(
     return;
   }
   auto build_dir = *(std::move(build_dir_or_error));
-  if (std::holds_alternative<std::filesystem::path>(build_dir)) {
-    // Found cached build.
-    result_ = std::get<std::filesystem::path>(std::move(build_dir));
-    return;
+  CARBON_KIND_SWITCH(std::move(build_dir)) {
+    case CARBON_KIND(std::filesystem::path build_dir_path): {
+      // Found cached build.
+      result_ = std::move(build_dir_path);
+      return;
+    }
+    case CARBON_KIND(Runtimes::Builder builder): {
+      runtimes_builder_ = std::move(builder);
+      // Building the runtimes is handled below.
+      break;
+    }
   }
 
   if constexpr (Component == Runtimes::LibUnwind) {
@@ -243,13 +252,13 @@ ClangArchiveRuntimesBuilder<Component>::ClangArchiveRuntimesBuilder(
                   "Invalid runtimes component for an archive runtime builder.");
   }
 
-  runtimes_builder_ = std::get<Runtimes::Builder>(std::move(build_dir));
   archive_.emplace(this, archive_path_, srcs_path_, CollectSrcFiles(),
                    CollectCflags());
   tasks_.async([this]() mutable { Setup(); });
 }
 
 template <Runtimes::Component Component>
+  requires(Component == Runtimes::LibUnwind)
 auto ClangArchiveRuntimesBuilder<Component>::CollectSrcFiles()
     -> llvm::SmallVector<llvm::StringRef> {
   if constexpr (Component == Runtimes::LibUnwind) {
@@ -265,6 +274,7 @@ auto ClangArchiveRuntimesBuilder<Component>::CollectSrcFiles()
 }
 
 template <Runtimes::Component Component>
+  requires(Component == Runtimes::LibUnwind)
 auto ClangArchiveRuntimesBuilder<Component>::CollectCflags()
     -> llvm::SmallVector<llvm::StringRef> {
   if constexpr (Component == Runtimes::LibUnwind) {
@@ -288,6 +298,7 @@ auto ClangArchiveRuntimesBuilder<Component>::CollectCflags()
 }
 
 template <Runtimes::Component Component>
+  requires(Component == Runtimes::LibUnwind)
 auto ClangArchiveRuntimesBuilder<Component>::Setup() -> void {
   // Symlink the installation's `include` into the runtime.
   CARBON_CHECK(include_path_.is_absolute(),
@@ -307,6 +318,7 @@ auto ClangArchiveRuntimesBuilder<Component>::Setup() -> void {
 }
 
 template <Runtimes::Component Component>
+  requires(Component == Runtimes::LibUnwind)
 auto ClangArchiveRuntimesBuilder<Component>::Finish() -> void {
   CARBON_VLOG("Finished building {0}...\n", archive_path_);
   if (!archive_->result().ok()) {
