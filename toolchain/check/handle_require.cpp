@@ -109,11 +109,6 @@ auto HandleParseNode(Context& context, Parse::RequireTypeImplsId node_id)
 static auto TypeStructureReferencesSelf(
     Context& context, SemIR::TypeInstId inst_id,
     const SemIR::IdentifiedFacetType& identified_facet_type) -> bool {
-  if (inst_id == SemIR::ErrorInst::TypeInstId) {
-    // Don't generate more diagnostics.
-    return true;
-  }
-
   auto find_self = [&](SemIR::TypeIterator& type_iter) -> bool {
     while (true) {
       auto step = type_iter.Next();
@@ -147,11 +142,11 @@ static auto TypeStructureReferencesSelf(
     }
   }
 
-  if (identified_facet_type.required_interfaces().empty()) {
+  if (identified_facet_type.required_impls().empty()) {
     return false;
   }
 
-  for (auto specific_interface : identified_facet_type.required_interfaces()) {
+  for (auto [_, specific_interface] : identified_facet_type.required_impls()) {
     SemIR::TypeIterator type_iter(&context.sem_ir());
     type_iter.Add(specific_interface);
     if (!find_self(type_iter)) {
@@ -175,26 +170,35 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
                             SemIR::InstId constraint_inst_id,
                             SemIR::InstId scope_inst_id)
     -> std::optional<ValidateRequireResult> {
+  auto self_constant_value_id = context.constant_values().Get(self_inst_id);
   auto constraint_constant_value_id =
       context.constant_values().Get(constraint_inst_id);
+
+  if (self_constant_value_id == SemIR::ErrorInst::ConstantId ||
+      constraint_constant_value_id == SemIR::ErrorInst::ConstantId ||
+      scope_inst_id == SemIR::ErrorInst::InstId) {
+    // An error was already diagnosed, don't diagnose another. We can't build a
+    // useful `require` with an error, it couldn't do anything.
+    return std::nullopt;
+  }
+
   auto constraint_type_id =
       SemIR::TypeId::ForTypeConstant(constraint_constant_value_id);
   auto constraint_facet_type =
       context.types().TryGetAs<SemIR::FacetType>(constraint_type_id);
   if (!constraint_facet_type) {
-    if (constraint_constant_value_id != SemIR::ErrorInst::ConstantId) {
-      CARBON_DIAGNOSTIC(
-          RequireImplsMissingFacetType, Error,
-          "`require` declaration constrained by a non-facet type; "
-          "expected an `interface` or `constraint` name after `impls`");
-      context.emitter().Emit(constraint_inst_id, RequireImplsMissingFacetType);
-    }
+    CARBON_DIAGNOSTIC(
+        RequireImplsMissingFacetType, Error,
+        "`require` declaration constrained by a non-facet type; "
+        "expected an `interface` or `constraint` name after `impls`");
+    context.emitter().Emit(constraint_inst_id, RequireImplsMissingFacetType);
     // Can't continue without a constraint to use.
     return std::nullopt;
   }
 
   auto identified_facet_type_id = RequireIdentifiedFacetType(
-      context, SemIR::LocId(constraint_inst_id), *constraint_facet_type, [&] {
+      context, SemIR::LocId(constraint_inst_id), self_constant_value_id,
+      *constraint_facet_type, [&] {
         CARBON_DIAGNOSTIC(
             RequireImplsUnidentifiedFacetType, Error,
             "facet type {0} cannot be identified in `require` declaration",
@@ -217,16 +221,6 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
                       "`Self` must appear in the self-type or as a generic "
                       "parameter for each `interface` or `constraint`");
     context.emitter().Emit(loc_id, RequireImplsMissingSelf);
-    return std::nullopt;
-  }
-
-  if (scope_inst_id == SemIR::ErrorInst::InstId) {
-    // `require` is in the wrong scope.
-    return std::nullopt;
-  }
-  if (self_inst_id == SemIR::ErrorInst::InstId ||
-      constraint_inst_id == SemIR::ErrorInst::InstId) {
-    // Can't build a useful `require` with an error, it couldn't do anything.
     return std::nullopt;
   }
 
@@ -265,7 +259,7 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   }
 
   auto [constraint_type_id, identified_facet_type] = *validated;
-  if (identified_facet_type->required_interfaces().empty()) {
+  if (identified_facet_type->required_impls().empty()) {
     // A `require T impls type` adds no actual constraints, so nothing to do.
     // This is not an error though.
     DiscardGenericDecl(context);

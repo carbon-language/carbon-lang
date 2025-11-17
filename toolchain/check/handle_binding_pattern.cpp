@@ -302,7 +302,8 @@ auto HandleParseNode(Context& context, Parse::VarBindingPatternId node_id)
 }
 
 auto HandleParseNode(Context& context,
-                     Parse::CompileTimeBindingPatternStartId node_id) -> bool {
+                     Parse::CompileTimeBindingPatternStartId /*node_id*/)
+    -> bool {
   // Make a scope to contain the `.Self` facet value for use in the type of the
   // compile time binding. This is popped when handling the
   // CompileTimeBindingPatternId.
@@ -312,12 +313,7 @@ auto HandleParseNode(Context& context,
   // `FacetAccessType` when used in a type position, such as in `U:! I(.Self)`.
   // This allows substitution with other facet values without requiring an
   // additional `FacetAccessType` to be inserted.
-  SemIR::FacetTypeId facet_type_id =
-      context.facet_types().Add(SemIR::FacetTypeInfo{});
-  auto const_id = EvalOrAddInst<SemIR::FacetType>(
-      context, node_id,
-      {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id});
-  auto type_id = context.types().GetTypeIdForTypeConstantId(const_id);
+  auto type_id = GetEmptyFacetType(context);
 
   MakePeriodSelfFacetValue(context, type_id);
   return true;

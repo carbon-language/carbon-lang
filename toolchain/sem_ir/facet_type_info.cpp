@@ -46,11 +46,14 @@ static auto NamedConstraintsLess(const SpecificNamedConstraint& lhs,
 }
 
 // Canonically ordered by the numerical ids.
-static auto RequiredLess(const IdentifiedFacetType::RequiredInterface& lhs,
-                         const IdentifiedFacetType::RequiredInterface& rhs)
-    -> bool {
-  return std::tie(lhs.interface_id.index, lhs.specific_id.index) <
-         std::tie(rhs.interface_id.index, rhs.specific_id.index);
+static auto RequiredLess(const IdentifiedFacetType::RequiredImpl& lhs,
+                         const IdentifiedFacetType::RequiredImpl& rhs) -> bool {
+  return std::tie(lhs.self_facet_value.index,
+                  lhs.specific_interface.interface_id.index,
+                  lhs.specific_interface.specific_id.index) <
+         std::tie(rhs.self_facet_value.index,
+                  rhs.specific_interface.interface_id.index,
+                  rhs.specific_interface.specific_id.index);
 }
 
 // Assuming both `a` and `b` are sorted and deduplicated, replaces `a` with `a -
@@ -209,20 +212,21 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
 }
 
 IdentifiedFacetType::IdentifiedFacetType(
-    llvm::ArrayRef<RequiredInterface> extends,
-    llvm::ArrayRef<RequiredInterface> self_impls) {
+    IdentifiedFacetTypeKey key, llvm::ArrayRef<RequiredImpl> extends,
+    llvm::ArrayRef<RequiredImpl> self_impls)
+    : key_(key) {
   if (extends.size() == 1) {
-    interface_id_ = extends.front().interface_id;
-    specific_id_ = extends.front().specific_id;
+    interface_id_ = extends.front().specific_interface.interface_id;
+    specific_id_ = extends.front().specific_interface.specific_id;
   } else {
     interface_id_ = InterfaceId::None;
     num_interface_to_impl_ = extends.size();
   }
 
-  required_interfaces_.reserve(extends.size() + self_impls.size());
-  llvm::append_range(required_interfaces_, extends);
-  llvm::append_range(required_interfaces_, self_impls);
-  SortAndDeduplicate(required_interfaces_, RequiredLess);
+  required_impls_.reserve(extends.size() + self_impls.size());
+  llvm::append_range(required_impls_, extends);
+  llvm::append_range(required_impls_, self_impls);
+  SortAndDeduplicate(required_impls_, RequiredLess);
 }
 
 auto AddCanonicalWitnessesBlock(File& sem_ir,

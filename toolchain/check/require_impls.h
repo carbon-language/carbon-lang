@@ -26,19 +26,11 @@ auto GetRequireImplsSpecificFromEnclosingSpecific(
     SemIR::SpecificId enclosing_specific_id) -> RequireImplsSpecific;
 
 // Like GetRequireImplsSpecificFromEnclosingSpecific but the `Self` value in the
-// specific is replaced by a facet value.
-//
-// The self facet value must have a facet type to match the type of `Self` in
-// specific, which will be a facet type for the enclosing interface. The self
-// type comes from `self_id`, and the `witness_id` must be an impl witness for
-// the enclosing interface.
-//
-// This is only possible for an enclosing interface since we do not ever have an
-// impl witness for a named constraint.
-auto GetRequireImplsSpecificFromEnclosingSpecificWithSelfType(
+// specific is replaced by a given facet value.
+auto GetRequireImplsSpecificFromEnclosingSpecificWithSelfFacetValue(
     Context& context, const SemIR::RequireImpls& require,
-    SemIR::SpecificId enclosing_specific_id, SemIR::TypeInstId self_id,
-    SemIR::InstId witness_id) -> RequireImplsSpecific;
+    SemIR::SpecificId enclosing_specific_id,
+    SemIR::ConstantId self_facet_value_id) -> RequireImplsSpecific;
 
 // Returns the constant value of `inst_id` from inside a RequireImpls
 // declaration, mapped into `enclosing_specific_id`. If an error results, it

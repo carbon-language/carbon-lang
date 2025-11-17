@@ -70,10 +70,6 @@ using CustomLayoutStore = BlockValueStore<CustomLayoutId, uint64_t>;
 // The semantic IR for a single file.
 class File : public Printable<File> {
  public:
-  using IdentifiedFacetTypeStore =
-      RelationalValueStore<FacetTypeInfoStore, IdentifiedFacetTypeId,
-                           IdentifiedFacetType>;
-
   // Starts a new file for Check::CheckParseTree.
   explicit File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
                 const std::optional<Parse::Tree::PackagingDecl>& packaging_decl,

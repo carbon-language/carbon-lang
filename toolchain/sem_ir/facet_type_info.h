@@ -97,6 +97,15 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
     return std::nullopt;
   }
 
+  // Returns whether the facet type has no constraints, making it the facet type
+  // version of `TypeType`.
+  auto HasNoConstraints() const -> bool {
+    return extend_constraints.empty() && extend_named_constraints.empty() &&
+           self_impls_constraints.empty() &&
+           self_impls_named_constraints.empty() &&
+           rewrite_constraints.empty() && !other_requirements;
+  }
+
   friend auto operator==(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
       -> bool {
     return lhs.extend_constraints == rhs.extend_constraints &&
@@ -115,15 +124,31 @@ constexpr FacetTypeInfo::RewriteConstraint
 
 using FacetTypeInfoStore = CanonicalValueStore<FacetTypeId, FacetTypeInfo>;
 
-struct IdentifiedFacetType {
-  using RequiredInterface = SpecificInterface;
+struct IdentifiedFacetTypeKey {
+  FacetTypeId facet_type_id;
+  ConstantId self_const_id;
 
-  IdentifiedFacetType(llvm::ArrayRef<RequiredInterface> extends,
-                      llvm::ArrayRef<RequiredInterface> self_impls);
+  friend auto operator==(const IdentifiedFacetTypeKey& lhs,
+                         const IdentifiedFacetTypeKey& rhs) -> bool = default;
+};
+
+struct IdentifiedFacetType {
+  // A requirement that `self_facet_value` implements the `specific_interface`.
+  struct RequiredImpl {
+    ConstantId self_facet_value;
+    SpecificInterface specific_interface;
+
+    friend auto operator==(const RequiredImpl& lhs, const RequiredImpl& rhs)
+        -> bool = default;
+  };
+
+  IdentifiedFacetType(IdentifiedFacetTypeKey key,
+                      llvm::ArrayRef<RequiredImpl> extends,
+                      llvm::ArrayRef<RequiredImpl> self_impls);
 
   // The order here defines the order of impl witnesses for this facet type.
-  auto required_interfaces() const -> llvm::ArrayRef<RequiredInterface> {
-    return required_interfaces_;
+  auto required_impls() const -> llvm::ArrayRef<RequiredImpl> {
+    return required_impls_;
   }
 
   // Can this be used to the right of an `as` in an `impl` declaration?
@@ -149,12 +174,17 @@ struct IdentifiedFacetType {
     }
   }
 
- private:
-  // Interfaces mentioned explicitly in the facet type expression, or
-  // transitively through a named constraint. Sorted and deduplicated.
-  llvm::SmallVector<RequiredInterface> required_interfaces_;
+  auto GetAsKey() const -> IdentifiedFacetTypeKey { return key_; }
 
-  // The single interface from `required_interfaces` to implement if this is
+ private:
+  IdentifiedFacetTypeKey key_;
+
+  // Requirements that a facet value implements an interface, mentioned
+  // explicitly in the facet type expression or transitively through a named
+  // constraint. Sorted and deduplicated.
+  llvm::SmallVector<RequiredImpl> required_impls_;
+
+  // The single interface from `required_impls` to implement if this is
   // the facet type to the right of an `impl`...`as`, or `None` if no such
   // single interface.
   InterfaceId interface_id_ = InterfaceId::None;
@@ -166,6 +196,10 @@ struct IdentifiedFacetType {
     SpecificId specific_id_;
   };
 };
+
+using IdentifiedFacetTypeStore =
+    CanonicalValueStore<IdentifiedFacetTypeId, IdentifiedFacetTypeKey,
+                        IdentifiedFacetType>;
 
 // See common/hashing.h.
 inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)

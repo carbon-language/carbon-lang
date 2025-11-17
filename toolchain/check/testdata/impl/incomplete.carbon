@@ -866,6 +866,11 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X1(constants.%Self.e52) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Y.require54000000(constants.%Self.e52) {
+// CHECK:STDOUT:   %Self => constants.%Self.e52
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.806
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @X.require54000001(constants.%Self.e52) {
 // CHECK:STDOUT:   %Self => constants.%Self.e52
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.806

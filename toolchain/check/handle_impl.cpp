@@ -230,8 +230,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
 
   // This requires that the facet type is identified. It returns None if an
   // error was diagnosed.
-  auto specific_interface = CheckConstraintIsInterface(context, impl_decl_id,
-                                                       constraint_type_inst_id);
+  auto specific_interface = CheckConstraintIsInterface(
+      context, impl_decl_id, self_type_inst_id, constraint_type_inst_id);
 
   auto impl_id = SemIR::ImplId::None;
   {

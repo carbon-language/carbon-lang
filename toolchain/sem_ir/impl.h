@@ -213,7 +213,7 @@ class ImplStore {
  private:
   File& sem_ir_;
   ValueStore<ImplId, Impl> values_;
-  Map<std::pair<InstId, SpecificInterface>, ImplOrLookupBucketId> lookup_;
+  Map<std::pair<ConstantId, SpecificInterface>, ImplOrLookupBucketId> lookup_;
   // Buckets with at least 2 entries, which will be rare; see LookupBucketRef.
   llvm::SmallVector<llvm::SmallVector<ImplId, 2>> lookup_buckets_;
 };

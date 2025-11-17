@@ -326,7 +326,7 @@ class Context {
   auto facet_types() -> SemIR::FacetTypeInfoStore& {
     return sem_ir().facet_types();
   }
-  auto identified_facet_types() -> SemIR::File::IdentifiedFacetTypeStore& {
+  auto identified_facet_types() -> SemIR::IdentifiedFacetTypeStore& {
     return sem_ir().identified_facet_types();
   }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }

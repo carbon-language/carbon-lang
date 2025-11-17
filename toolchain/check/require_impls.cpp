@@ -5,8 +5,10 @@
 #include "toolchain/check/require_impls.h"
 
 #include "toolchain/check/generic.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -68,28 +70,19 @@ auto GetRequireImplsSpecificFromEnclosingSpecific(
   return {.specific_id = specific_id};
 }
 
-auto GetRequireImplsSpecificFromEnclosingSpecificWithSelfType(
+auto GetRequireImplsSpecificFromEnclosingSpecificWithSelfFacetValue(
     Context& context, const SemIR::RequireImpls& require,
-    SemIR::SpecificId enclosing_specific_id, SemIR::TypeInstId self_id,
-    SemIR::InstId witness_id) -> RequireImplsSpecific {
-  if (enclosing_specific_id.has_value()) {
-    auto enclosing_generic_decl =
-        GetEnclosingDeclFromEnclosingSpecificId(context, enclosing_specific_id);
-    CARBON_CHECK(enclosing_generic_decl.Is<SemIR::InterfaceDecl>(),
-                 "Incorrect enclosing specific for RequireImpls with explicit "
-                 "self type. Expected an interface. Found {0}.",
-                 enclosing_generic_decl);
-  }
-
-  // Construct a facet value around the `self_id` type of the correct facet
-  // type for the `Self` in the require's self-specific.
-  auto self_facet_value = GetSelfFacetValueForInterfaceMemberSpecific(
-      context, enclosing_specific_id, require.generic_id,
-      context.types().GetTypeIdForTypeInstId(self_id), witness_id);
+    SemIR::SpecificId enclosing_specific_id,
+    SemIR::ConstantId self_facet_value_id) -> RequireImplsSpecific {
+  auto self_facet_value_inst_id =
+      context.constant_values().GetInstId(self_facet_value_id);
+  auto self_facet_value = context.insts().Get(self_facet_value_inst_id);
+  CARBON_CHECK(context.types().Is<SemIR::FacetType>(self_facet_value.type_id()),
+               "{0}", self_facet_value);
 
   auto arg_ids =
       GetSpecificArgsFromEnclosingSpecific(context, enclosing_specific_id);
-  arg_ids.push_back(self_facet_value);
+  arg_ids.push_back(self_facet_value_inst_id);
 
   auto specific_id = MakeSpecific(context, SemIR::LocId(require.decl_id),
                                   require.generic_id, arg_ids);

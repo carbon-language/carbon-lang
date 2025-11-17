@@ -327,7 +327,8 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness @C.as.J.impl.%J.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.9e4: %J.type.d6f = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %complete_type.5b1: <witness> = complete_type_witness %I.type.ab5 [concrete]
-// CHECK:STDOUT:   %J.facet: %J.type.d6f = facet_value %C, (%J.impl_witness) [concrete]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %C.type.facet: %type = facet_value %C, () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -475,10 +476,10 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.5b1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J.require50000000(constants.%empty_struct_type, constants.%J.facet) {
+// CHECK:STDOUT: specific @J.require50000000(constants.%empty_struct_type, constants.%C.type.facet) {
 // CHECK:STDOUT:   %T => constants.%empty_struct_type
 // CHECK:STDOUT:   %J.type => constants.%J.type.d6f
-// CHECK:STDOUT:   %Self => constants.%J.facet
+// CHECK:STDOUT:   %Self => constants.%C.type.facet
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%C
 // CHECK:STDOUT:   %I.type => constants.%I.type.ab5
 // CHECK:STDOUT: }
@@ -616,6 +617,8 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.1ab [symbolic]
 // CHECK:STDOUT:   %empty_struct.a40: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %J.type.d682d6.2: type = facet_type <@J, @J(%empty_struct_type)> [concrete]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %C.type.facet: %type = facet_value %C, () [concrete]
 // CHECK:STDOUT:   %I.type.ab5: type = facet_type <@I, @I(%empty_struct_type)> [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.e1f642.2: %J.type.d682d6.2 = symbolic_binding Self, 1 [symbolic]
@@ -744,11 +747,11 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.5b1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J.require48000000(constants.%empty_struct_type, constants.%Self.e1f642.1) {
+// CHECK:STDOUT: specific @J.require48000000(constants.%empty_struct_type, constants.%C.type.facet) {
 // CHECK:STDOUT:   %T => constants.%empty_struct_type
 // CHECK:STDOUT:   %J.type => constants.%J.type.d682d6.2
-// CHECK:STDOUT:   %Self => constants.%Self.e1f642.1
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
+// CHECK:STDOUT:   %Self => constants.%C.type.facet
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%C
 // CHECK:STDOUT:   %I.type => constants.%I.type.ab5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1008,6 +1011,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %N.type.d682d6.1: type = facet_type <@N, @N(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.e1f: %N.type.d682d6.1 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.e1f [symbolic]
+// CHECK:STDOUT:   %C.type.facet: %type = facet_value %C, () [concrete]
 // CHECK:STDOUT:   %N.type.d682d6.2: type = facet_type <@N, @N(%ptr)> [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1308,6 +1312,14 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %I.type => constants.%I.type.1ab
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @N.require58000000(constants.%T, constants.%C.type.facet) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %N.type => constants.%N.type.d682d6.1
+// CHECK:STDOUT:   %Self => constants.%C.type.facet
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%C
+// CHECK:STDOUT:   %I.type => constants.%I.type.1ab
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.I.impl.c9332a.1(constants.%T) {
 // CHECK:STDOUT:   %T.loc32_14.2 => constants.%T
 // CHECK:STDOUT:   %N.type.loc32_32.2 => constants.%N.type.d682d6.1
@@ -1317,11 +1329,11 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %T => constants.%ptr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.require58000000(constants.%ptr, constants.%Self.e1f) {
+// CHECK:STDOUT: specific @N.require58000000(constants.%ptr, constants.%C.type.facet) {
 // CHECK:STDOUT:   %T => constants.%ptr
 // CHECK:STDOUT:   %N.type => constants.%N.type.d682d6.2
-// CHECK:STDOUT:   %Self => constants.%Self.e1f
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
+// CHECK:STDOUT:   %Self => constants.%C.type.facet
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%C
 // CHECK:STDOUT:   %I.type => constants.%I.type.e19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1522,6 +1534,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.e1f642.1 [symbolic]
 // CHECK:STDOUT:   %ptr.125: type = ptr_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %N.type.d682d6.2: type = facet_type <@N, @N(%ptr.125)> [symbolic]
+// CHECK:STDOUT:   %C.type.facet: %type = facet_value %C, () [concrete]
 // CHECK:STDOUT:   %I.type.08a: type = facet_type <@I, @I(%ptr.125)> [symbolic]
 // CHECK:STDOUT:   %I.impl_witness.d57: <witness> = impl_witness @C.as.I.impl.c93.%I.impl_witness_table, @C.as.I.impl.c93(%T) [symbolic]
 // CHECK:STDOUT:   %Self.e1f642.2: %N.type.d682d6.2 = symbolic_binding Self, 1 [symbolic]
@@ -1736,11 +1749,11 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.ea6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.require44000000(constants.%ptr.125, constants.%Self.e1f642.1) {
+// CHECK:STDOUT: specific @N.require44000000(constants.%ptr.125, constants.%C.type.facet) {
 // CHECK:STDOUT:   %T => constants.%ptr.125
 // CHECK:STDOUT:   %N.type => constants.%N.type.d682d6.2
-// CHECK:STDOUT:   %Self => constants.%Self.e1f642.1
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
+// CHECK:STDOUT:   %Self => constants.%C.type.facet
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%C
 // CHECK:STDOUT:   %I.type => constants.%I.type.08a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1968,6 +1981,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.e1f: %N.type.d682d6.1 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.e1f [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %J.type.04e [symbolic]
+// CHECK:STDOUT:   %D.type.facet: %type = facet_value %D, () [concrete]
 // CHECK:STDOUT:   %N.type.d682d6.2: type = facet_type <@N, @N(%ptr)> [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2260,6 +2274,14 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %J.type => constants.%J.type.04e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @N.require54000000(constants.%T, constants.%D.type.facet) {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %N.type => constants.%N.type.d682d6.1
+// CHECK:STDOUT:   %Self => constants.%D.type.facet
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%D
+// CHECK:STDOUT:   %J.type => constants.%J.type.04e
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.as.J.impl.e28c26.1(constants.%T) {
 // CHECK:STDOUT:   %T.loc32_14.2 => constants.%T
 // CHECK:STDOUT:   %N.type.loc32_32.2 => constants.%N.type.d682d6.1
@@ -2269,11 +2291,11 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %T => constants.%ptr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.require54000000(constants.%ptr, constants.%Self.e1f) {
+// CHECK:STDOUT: specific @N.require54000000(constants.%ptr, constants.%D.type.facet) {
 // CHECK:STDOUT:   %T => constants.%ptr
 // CHECK:STDOUT:   %N.type => constants.%N.type.d682d6.2
-// CHECK:STDOUT:   %Self => constants.%Self.e1f
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
+// CHECK:STDOUT:   %Self => constants.%D.type.facet
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%D
 // CHECK:STDOUT:   %J.type => constants.%J.type.80f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

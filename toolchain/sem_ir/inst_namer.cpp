@@ -988,6 +988,38 @@ auto InstNamer::NamingContext::NameInst() -> void {
           }
           return;
         }
+        if (facet_type_info.HasNoConstraints()) {
+          if (auto class_ty =
+                  sem_ir().insts().TryGetAs<ClassType>(inst.type_inst_id)) {
+            AddEntityNameAndMaybePush(class_ty->class_id, ".type.facet");
+            return;
+          }
+          if (auto tuple_ty = sem_ir().insts().TryGetAs<SemIR::TupleType>(
+                  inst.type_inst_id)) {
+            if (tuple_ty->type_elements_id == InstBlockId::Empty) {
+              AddInstName("empty_tuple.type.facet");
+            } else {
+              AddInstName("tuple.type.facet");
+            }
+            return;
+          }
+          if (auto struct_ty = sem_ir().insts().TryGetAs<SemIR::StructType>(
+                  inst.type_inst_id)) {
+            const auto& fields =
+                sem_ir().struct_type_fields().Get(struct_ty->fields_id);
+            if (fields.empty()) {
+              AddInstName("empty_struct.type.facet");
+            } else {
+              std::string name = "struct";
+              for (auto field : fields) {
+                name += ".";
+                name += sem_ir().names().GetIRBaseName(field.name_id).str();
+              }
+              AddInstName(name + ".type.facet");
+            }
+            return;
+          }
+        }
       }
       AddInstName("facet_value");
       return;

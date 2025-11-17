@@ -25,23 +25,6 @@ namespace Carbon::Check {
 auto BuildAssociatedEntity(Context& context, SemIR::InterfaceId interface_id,
                            SemIR::InstId decl_id) -> SemIR::InstId;
 
-// Construct a facet value that can be used for the `Self` binding of entities
-// inside an interface.
-//
-// The `interface_specific_id` is the specific of the interface around the
-// `Self`. The `generic_id` is for member of the interface that the `Self` value
-// will be for. The `self_witness_id` is an impl witness for the interface that
-// the `self_type_id` implements that interface. It should come from an impl
-// definition with the given self-type and the interface as its constraint.
-//
-// The returned facet value can be used as the `Self` value in a specific for
-// the generic member of the interface, and can appear in its specific. As such,
-// this is a building block of GetSelfSpecificForInterfaceMemberWithSelfType.
-auto GetSelfFacetValueForInterfaceMemberSpecific(
-    Context& context, SemIR::SpecificId interface_specific_id,
-    SemIR::GenericId generic_id, SemIR::TypeId self_type_id,
-    SemIR::InstId self_witness_id) -> SemIR::InstId;
-
 // Gets the self specific of a generic declaration that is an interface member,
 // given a specific for the interface plus a type to use as `Self`.
 auto GetSelfSpecificForInterfaceMemberWithSelfType(

@@ -88,6 +88,7 @@ auto CheckAssociatedFunctionImplementation(
 // Returns the interface that the impl implements. On error, issues a diagnostic
 // and returns `None`.
 auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
+                                SemIR::InstId self_id,
                                 SemIR::TypeInstId constraint_id)
     -> SemIR::SpecificInterface;
 

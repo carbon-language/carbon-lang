@@ -671,13 +671,19 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::Impl& impl) -> void {
   const auto& interface = context.interfaces().Get(impl.interface.interface_id);
   auto require_ids =
       context.require_impls_blocks().Get(interface.require_impls_block_id);
+  if (require_ids.empty()) {
+    return;
+  }
+
+  // Make a facet value for the self type.
+  auto self_facet_value = GetConstantFacetValueForType(context, impl.self_id);
+
   for (auto require_id : require_ids) {
     const auto& require = context.require_impls().Get(require_id);
 
     auto require_specific =
-        GetRequireImplsSpecificFromEnclosingSpecificWithSelfType(
-            context, require, impl.interface.specific_id, impl.self_id,
-            impl.witness_id);
+        GetRequireImplsSpecificFromEnclosingSpecificWithSelfFacetValue(
+            context, require, impl.interface.specific_id, self_facet_value);
     auto self_const_id = GetConstantValueInRequireImplsSpecific(
         context, require_specific, require.self_id);
     auto facet_type_const_id = GetConstantValueInRequireImplsSpecific(
@@ -740,6 +746,7 @@ auto IsImplEffectivelyFinal(Context& context, const SemIR::Impl& impl) -> bool {
 }
 
 auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
+                                SemIR::InstId self_id,
                                 SemIR::TypeInstId constraint_id)
     -> SemIR::SpecificInterface {
   auto facet_type_id = context.types().GetTypeIdForTypeInstId(constraint_id);
@@ -755,7 +762,8 @@ auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
   }
 
   auto identified_id = RequireIdentifiedFacetType(
-      context, SemIR::LocId(constraint_id), *facet_type, [&] {
+      context, SemIR::LocId(constraint_id),
+      context.constant_values().Get(self_id), *facet_type, [&] {
         CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Error,
                           "facet type {0} cannot be identified in `impl as`",
                           InstIdAsType);

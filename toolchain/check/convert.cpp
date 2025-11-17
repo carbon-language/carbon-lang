@@ -1318,7 +1318,8 @@ static auto PerformBuiltinConversion(
         // Note that `FacetValue`'s type is the same `FacetType` that was used
         // to construct the set of witnesses, ie. the query to
         // `LookupImplWitness()`. This ensures that the witnesses are in the
-        // same order as the `required_interfaces()` in the `FacetValue`'s type.
+        // same order as the `required_impls()` in the `IdentifiedFacetType` of
+        // the `FacetValue`'s type.
         return AddInst<SemIR::FacetValue>(
             context, loc_id,
             {.type_id = target.type_id,

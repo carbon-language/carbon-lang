@@ -72,6 +72,16 @@ auto ResolveFacetTypeRewriteConstraints(
 auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
     -> SemIR::InstId;
 
+// Get a FacetType instruction for an empty FacetType. This is the facet
+// equivalent to TypeType.
+auto GetEmptyFacetType(Context& context) -> SemIR::TypeId;
+
+// Make a facet value for a type value, which has an empty FacetType as its
+// type. Returns a constant value, whose instruction payload is a FacetValue.
+auto GetConstantFacetValueForType(Context& context,
+                                  SemIR::TypeInstId type_inst_id)
+    -> SemIR::ConstantId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_FACET_TYPE_H_

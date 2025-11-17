@@ -2620,7 +2620,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   if (auto facet_type = resolver.local_insts().TryGetAs<SemIR::FacetType>(
           resolver.local_constant_values().GetInstId(constraint_const_id))) {
     RequireIdentifiedFacetType(resolver.local_context(), SemIR::LocId::None,
-                               *facet_type, nullptr);
+                               self_const_id, *facet_type, nullptr);
   }
   if (import_impl.is_complete()) {
     AddImplDefinition(resolver, import_impl, new_impl);

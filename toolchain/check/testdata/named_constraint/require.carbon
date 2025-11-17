@@ -285,6 +285,140 @@ constraint Z {
 }
 //@dump-sem-ir-end
 
+// --- require_self.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+
+constraint N {
+  require impls Z(Self);
+}
+
+impl () as Z(()) {}
+
+fn F() {
+  () as N;
+}
+
+// --- fail_require_different_self.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+
+constraint N {
+  require impls Z(Self);
+}
+
+impl () as Z({}) {}
+
+fn F() {
+  // N requires () impls Z(Self) which is Z(()) for this query, but it impls
+  // Z({}).
+  //
+  // CHECK:STDERR: fail_require_different_self.carbon:[[@LINE+4]]:3: error: cannot convert type `()` into type implementing `N` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   () as N;
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
+  () as N;
+}
+
+// --- fail_require_different_parameter.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+
+constraint N {
+  require impls Z({});
+}
+
+impl () as Z(()) {}
+
+fn F() {
+  // N requires () impls Z({}) but it impls Z(()).
+  //
+  // CHECK:STDERR: fail_require_different_parameter.carbon:[[@LINE+4]]:3: error: cannot convert type `()` into type implementing `N` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   () as N;
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
+  () as N;
+}
+
+// --- require_different_type_impls.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+
+constraint N {
+  require {} impls Z(Self);
+}
+
+impl {} as Z(()) {}
+
+fn F() {
+  () as N;
+}
+
+// --- fail_require_different_type_impls_different_parameter.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+
+constraint N {
+  require {} impls Z(Self);
+}
+
+impl {} as Z({}) {}
+
+fn F() {
+  // N requires {} impls Z(Self) which is Z(()) for this query, but it impls
+  // Z({}).
+  //
+  // CHECK:STDERR: fail_require_different_type_impls_different_parameter.carbon:[[@LINE+4]]:3: error: cannot convert type `()` into type implementing `N` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   () as N;
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
+  () as N;
+}
+
+// --- require_with_rewrite_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+  let X:! type;
+}
+
+constraint N {
+  require {} impls Z(Self) where .X = Self;
+}
+
+// Will satisfy `() as N`.
+impl {} as Z(()) where .X = () {}
+
+fn F() {
+  () as N;
+}
+
+// --- todo_fail_require_with_mismatching_rewrite_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {
+  let X:! type;
+}
+
+constraint N {
+  require {} impls Z(Self) where .X = Self;
+}
+
+// Will not satisfy `() as N` as the rewrite does not match.
+impl {} as Z(()) where .X = {} {}
+
+fn F() {
+  // TODO: Should fail, but we're currently checking the requirements of `N`
+  // rather than of the identified facet type of `N` (which would include the
+  // require decl's requirements).
+  () as N;
+}
+
 // CHECK:STDOUT: --- fail_todo_extend.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -292,6 +426,8 @@ constraint Z {
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self.550: %Z.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.550 [symbolic]
+// CHECK:STDOUT:   %T: %Z.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -330,6 +466,11 @@ constraint Z {
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z.require60000000(constants.%T) {
+// CHECK:STDOUT:   %Self => constants.%T
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%T.binding.as_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit_self_impls.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -337,6 +478,8 @@ constraint Z {
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self.550: %Z.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.550 [symbolic]
+// CHECK:STDOUT:   %T: %Z.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -375,6 +518,11 @@ constraint Z {
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z.require50000000(constants.%T) {
+// CHECK:STDOUT:   %Self => constants.%T
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%T.binding.as_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- explicit_self_impls.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -382,6 +530,8 @@ constraint Z {
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self.550: %Z.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.550 [symbolic]
+// CHECK:STDOUT:   %T: %Z.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -420,6 +570,11 @@ constraint Z {
 // CHECK:STDOUT: specific @Z.require70000000(constants.%Self.550) {
 // CHECK:STDOUT:   %Self => constants.%Self.550
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z.require70000000(constants.%T) {
+// CHECK:STDOUT:   %Self => constants.%T
+// CHECK:STDOUT:   %Self.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- explicit_self_specific_impls.carbon

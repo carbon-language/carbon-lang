@@ -81,7 +81,19 @@ static auto GetSelfBinding(Context& context,
   return self_binding_id;
 }
 
-auto GetSelfFacetValueForInterfaceMemberSpecific(
+// Construct a facet value that can be used for the `Self` binding of entities
+// inside an interface.
+//
+// The `interface_specific_id` is the specific of the interface around the
+// `Self`. The `generic_id` is for member of the interface that the `Self` value
+// will be for. The `self_witness_id` is an impl witness for the interface that
+// the `self_type_id` implements that interface. It should come from an impl
+// definition with the given self-type and the interface as its constraint.
+//
+// The returned facet value can be used as the `Self` value in a specific for
+// the generic member of the interface, and can appear in its specific. As such,
+// this is a building block of GetSelfSpecificForInterfaceMemberWithSelfType.
+static auto GetSelfFacetValueForInterfaceMemberSpecific(
     Context& context, SemIR::SpecificId interface_specific_id,
     SemIR::GenericId generic_id, SemIR::TypeId self_type_id,
     SemIR::InstId self_witness_id) -> SemIR::InstId {
