@@ -72,18 +72,6 @@ static auto NoteIncompleteNamedConstraint(
   }
 }
 
-template <typename T>
-  requires SameAsOneOf<T, SemIR::Interface, SemIR::NamedConstraint>
-static auto ForEachRequireImpls(
-    Context& context, const T& entity,
-    llvm::function_ref<auto(const SemIR::RequireImpls&)->void> f) -> void {
-  for (auto require_impls_id :
-       context.require_impls_blocks().Get(entity.require_impls_block_id)) {
-    const auto& require = context.require_impls().Get(require_impls_id);
-    f(require);
-  }
-}
-
 // Makes a copy of a Specific from one generic to apply to another given
 // `generic_id`, with a given `Self` argument appended to the end.
 static auto MakeCopyOfSpecificAndAppendSelf(
@@ -151,19 +139,20 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
         return false;
       }
 
-      ForEachRequireImpls(
-          context, interface, [&](const SemIR::RequireImpls& require) {
-            if (require.extend_self) {
-              auto require_specific_id = MakeCopyOfSpecificAndAppendSelf(
-                  context, loc_id, extends.specific_id, require.generic_id,
-                  GetRequireImplsSpecificSelf(context, require));
-              auto facet_type_id = GetFacetTypeInSpecific(
-                  context, require.facet_type_inst_id, require_specific_id);
-              if (facet_type_id.has_value()) {
-                work.push_back(facet_type_id);
-              }
-            }
-          });
+      for (auto require_impls_id : context.require_impls_blocks().Get(
+               interface.require_impls_block_id)) {
+        const auto& require = context.require_impls().Get(require_impls_id);
+        if (require.extend_self) {
+          auto require_specific_id = MakeCopyOfSpecificAndAppendSelf(
+              context, loc_id, extends.specific_id, require.generic_id,
+              GetRequireImplsSpecificSelf(context, require));
+          auto facet_type_id = GetFacetTypeInSpecific(
+              context, require.facet_type_inst_id, require_specific_id);
+          if (facet_type_id.has_value()) {
+            work.push_back(facet_type_id);
+          }
+        }
+      }
 
       if (extends.specific_id.has_value()) {
         ResolveSpecificDefinition(context, loc_id, extends.specific_id);
@@ -182,19 +171,20 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
         return false;
       }
 
-      ForEachRequireImpls(
-          context, constraint, [&](const SemIR::RequireImpls& require) {
-            if (require.extend_self) {
-              auto require_specific_id = MakeCopyOfSpecificAndAppendSelf(
-                  context, loc_id, extends.specific_id, require.generic_id,
-                  GetRequireImplsSpecificSelf(context, require));
-              auto facet_type_id = GetFacetTypeInSpecific(
-                  context, require.facet_type_inst_id, require_specific_id);
-              if (facet_type_id.has_value()) {
-                work.push_back(facet_type_id);
-              }
-            }
-          });
+      for (auto require_impls_id : context.require_impls_blocks().Get(
+               constraint.require_impls_block_id)) {
+        const auto& require = context.require_impls().Get(require_impls_id);
+        if (require.extend_self) {
+          auto require_specific_id = MakeCopyOfSpecificAndAppendSelf(
+              context, loc_id, extends.specific_id, require.generic_id,
+              GetRequireImplsSpecificSelf(context, require));
+          auto facet_type_id = GetFacetTypeInSpecific(
+              context, require.facet_type_inst_id, require_specific_id);
+          if (facet_type_id.has_value()) {
+            work.push_back(facet_type_id);
+          }
+        }
+      }
 
       if (extends.specific_id.has_value()) {
         ResolveSpecificDefinition(context, loc_id, extends.specific_id);
@@ -944,23 +934,25 @@ auto RequireIdentifiedFacetType(Context& context,
     for (auto extend : facet_type_info.extend_named_constraints) {
       const auto& constraint =
           context.named_constraints().Get(extend.named_constraint_id);
-      ForEachRequireImpls(
-          context, constraint, [&](const SemIR::RequireImpls& require) {
-            if (facet_type_extends && require.extend_self) {
-              extend_facet_types.push_back(require.facet_type_id);
-            } else {
-              impls_facet_types.push_back(require.facet_type_id);
-            }
-          });
+      for (auto require_impls_id : context.require_impls_blocks().Get(
+               constraint.require_impls_block_id)) {
+        const auto& require = context.require_impls().Get(require_impls_id);
+        if (facet_type_extends && require.extend_self) {
+          extend_facet_types.push_back(require.facet_type_id);
+        } else {
+          impls_facet_types.push_back(require.facet_type_id);
+        }
+      }
     }
 
     for (auto impls : facet_type_info.self_impls_named_constraints) {
       const auto& constraint =
           context.named_constraints().Get(impls.named_constraint_id);
-      ForEachRequireImpls(context, constraint,
-                          [&](const SemIR::RequireImpls& require) {
-                            impls_facet_types.push_back(require.facet_type_id);
-                          });
+      for (auto require_impls_id : context.require_impls_blocks().Get(
+               constraint.require_impls_block_id)) {
+        const auto& require = context.require_impls().Get(require_impls_id);
+        impls_facet_types.push_back(require.facet_type_id);
+      }
     }
   }
 
