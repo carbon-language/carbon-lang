@@ -104,7 +104,7 @@ C++ type in any of the following ways:
 2.  A pointer to a C++ interop type (for example, `Cpp.Widget*`).
 3.  A Carbon generic type parameterized with a C++ interop type (for example,
     `MyCarbonVector(Cpp.Widget)`).
-4.  A Carbon class extending a C++ interop type as a member (for example,
+4.  A Carbon class extending a C++ interop type (for example,
     `class MyCarbonClass { extend base: Cpp.Widget; }`).
 
 This "pervasive" model of C++-awareness is a fundamental design choice. The C++
