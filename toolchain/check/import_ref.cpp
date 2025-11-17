@@ -2157,7 +2157,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   for (auto [import_vtable_entry_inst_id, local_vtable_entry_inst_id] :
-       llvm::zip(virtual_functions, lazy_virtual_functions)) {
+       llvm::zip_equal(virtual_functions, lazy_virtual_functions)) {
     // Use LoadedImportRef for imported symbolic constant vtable entries so they
     // can carry attached constants necessary for applying specifics to these
     // constants when they are used.
@@ -3211,7 +3211,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   llvm::SmallVector<SemIR::StructTypeField> new_fields;
   new_fields.reserve(orig_fields.size());
   for (auto [orig_field, field_type_inst_id] :
-       llvm::zip(orig_fields, field_type_inst_ids)) {
+       llvm::zip_equal(orig_fields, field_type_inst_ids)) {
     auto name_id = GetLocalNameId(resolver, orig_field.name_id);
     new_fields.push_back(
         {.name_id = name_id, .type_inst_id = field_type_inst_id});
@@ -3909,8 +3909,8 @@ static auto ResolveLocalEvalBlock(ImportRefResolver& resolver,
   // Set the locations of the instructions in the inst block to match those of
   // the imported instructions.
   for (auto [import_inst_id, local_inst_id] :
-       llvm::zip(resolver.import_inst_blocks().Get(import_block_id),
-                 resolver.local_inst_blocks().Get(eval_block_id))) {
+       llvm::zip_equal(resolver.import_inst_blocks().Get(import_block_id),
+                       resolver.local_inst_blocks().Get(eval_block_id))) {
     auto import_ir_inst_id = AddImportIRInst(resolver, import_inst_id);
     resolver.local_insts().SetLocId(local_inst_id, import_ir_inst_id);
   }

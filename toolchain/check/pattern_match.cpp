@@ -527,7 +527,7 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
   auto add_all_subscrutinees =
       [&](llvm::ArrayRef<SemIR::InstId> subscrutinee_ids) {
         for (auto [subpattern_id, subscrutinee_id] :
-             llvm::reverse(llvm::zip(subpattern_ids, subscrutinee_ids))) {
+             llvm::reverse(llvm::zip_equal(subpattern_ids, subscrutinee_ids))) {
           AddWork(
               {.pattern_id = subpattern_id, .scrutinee_id = subscrutinee_id});
         }

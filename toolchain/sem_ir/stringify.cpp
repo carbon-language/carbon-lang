@@ -654,7 +654,7 @@ class Stringifier {
     step_stack_->PushString("}");
     llvm::ListSeparator sep;
     for (auto [field, value_inst_id] :
-         llvm::reverse(llvm::zip(fields, field_values))) {
+         llvm::reverse(llvm::zip_equal(fields, field_values))) {
       step_stack_->Push(".", field.name_id, " = ", value_inst_id, &sep);
     }
   }

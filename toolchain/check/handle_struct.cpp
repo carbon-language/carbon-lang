@@ -82,7 +82,8 @@ static auto DiagnoseDuplicateNames(
     llvm::ArrayRef<SemIR::StructTypeField> fields, bool is_struct_type_literal)
     -> bool {
   Map<SemIR::NameId, Parse::NodeId> names;
-  for (auto [field_name_node, field] : llvm::zip(field_name_nodes, fields)) {
+  for (auto [field_name_node, field] :
+       llvm::zip_equal(field_name_nodes, fields)) {
     auto result = names.Insert(field.name_id, field_name_node);
     if (!result.is_inserted()) {
       CARBON_DIAGNOSTIC(StructNameDuplicate, Error,

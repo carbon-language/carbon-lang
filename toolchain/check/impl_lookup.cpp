@@ -459,7 +459,7 @@ class SubstWitnessesCallbacks : public SubstInstCallbacks {
     auto lookup_query_interface =
         context().specific_interfaces().Get(specific_interface_id);
     for (auto [interface, witness_inst_id] :
-         llvm::zip(interfaces_, witness_inst_ids_)) {
+         llvm::zip_equal(interfaces_, witness_inst_ids_)) {
       // If the `LookupImplWitness` for `.Self` is not looking for the same
       // interface as we have a witness for, this is not the right witness to
       // use to replace the lookup for `.Self`.

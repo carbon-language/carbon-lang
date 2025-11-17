@@ -137,7 +137,7 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   // Check we have a value for all non-function associated constants in the
   // witness.
   for (auto [assoc_entity, witness_value] :
-       llvm::zip(assoc_entities, witness_block)) {
+       llvm::zip_equal(assoc_entities, witness_block)) {
     auto decl_id = context.constant_values().GetConstantInstId(assoc_entity);
     CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
     if (auto decl =
@@ -187,7 +187,7 @@ auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void {
   llvm::SmallVector<SemIR::InstId> used_decl_ids;
 
   for (auto [assoc_entity, witness_value] :
-       llvm::zip(assoc_entities, witness_block)) {
+       llvm::zip_equal(assoc_entities, witness_block)) {
     auto decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
             context.sem_ir(), impl.interface.specific_id, assoc_entity));

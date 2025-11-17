@@ -170,13 +170,14 @@ auto TreeAndSubtrees::Print(llvm::raw_ostream& output) const -> void {
 
   // Walk the tree in reverse, just to calculate depths for each node.
   llvm::SmallVector<int> depths(tree_->size(), 0);
-  for (auto [n, depth] : llvm::reverse(llvm::zip(tree_->postorder(), depths))) {
+  for (auto [n, depth] :
+       llvm::reverse(llvm::zip_equal(tree_->postorder(), depths))) {
     for (auto child : children(n)) {
       depths[child.index] = depth + 1;
     }
   }
 
-  for (auto [n, depth] : llvm::zip(tree_->postorder(), depths)) {
+  for (auto [n, depth] : llvm::zip_equal(tree_->postorder(), depths)) {
     PrintNode(output, n, depth, /*preorder=*/false);
     output << ",\n";
   }

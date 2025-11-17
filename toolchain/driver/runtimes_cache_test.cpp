@@ -251,7 +251,7 @@ TEST_F(RuntimesCacheTest, BasicBuild) {
   }
 
   for (const auto& [target, built_runtimes_path] :
-       llvm::zip(targets, built_runtimes_paths)) {
+       llvm::zip_equal(targets, built_runtimes_paths)) {
     SCOPED_TRACE(target);
     auto lookup_result = cache_.Lookup({.target = target});
     ASSERT_THAT(lookup_result, IsSuccess(_));
