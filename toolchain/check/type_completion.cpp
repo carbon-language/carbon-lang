@@ -72,124 +72,45 @@ static auto NoteIncompleteNamedConstraint(
   }
 }
 
-// Makes a copy of a Specific from one generic to apply to another given
-// `generic_id`, with a given `Self` argument appended to the end.
-static auto MakeCopyOfSpecificAndAppendSelf(
-    Context& context, SemIR::LocId loc_id, SemIR::SpecificId specific_id,
-    SemIR::GenericId generic_id, SemIR::InstId self_id) -> SemIR::SpecificId {
-  auto source_specific_args_id =
-      context.specifics().GetArgsOrEmpty(specific_id);
-  auto source_specific_args =
-      context.inst_blocks().Get(source_specific_args_id);
-
-  llvm::SmallVector<SemIR::InstId> arg_ids;
-  arg_ids.reserve(source_specific_args.size() + 1);
-  // Start with the enclosing arguments from the source Specific.
-  llvm::append_range(arg_ids, source_specific_args);
-  // Add the new `Self` argument.
-  arg_ids.push_back(self_id);
-
-  return MakeSpecific(context, loc_id, generic_id, arg_ids);
-}
-
-static auto GetRequireImplsSpecificSelf(Context& context,
-                                        const SemIR::RequireImpls& require)
-    -> SemIR::InstId {
-  const auto& require_generic = context.generics().Get(require.generic_id);
-  const auto& require_self_specific =
-      context.specifics().Get(require_generic.self_specific_id);
-  auto require_self_specific_args =
-      context.inst_blocks().Get(require_self_specific.args_id);
-  // The last argument of a `require` generic is always `Self`, as require can
-  // not have any parameters of its own, only enclosing parameters.
-  return require_self_specific_args.back();
-}
-
-static auto GetFacetTypeInSpecific(Context& context, SemIR::InstId facet_type,
-                                   SemIR::SpecificId specific_id)
-    -> SemIR::FacetTypeId {
-  auto const_facet_type = SemIR::GetConstantValueInSpecific(
-      context.sem_ir(), specific_id, facet_type);
-  auto facet_type_in_specific = context.insts().TryGetAs<SemIR::FacetType>(
-      context.constant_values().GetInstId(const_facet_type));
-  if (!facet_type_in_specific.has_value()) {
-    return SemIR::FacetTypeId::None;
-  }
-  return facet_type_in_specific->facet_type_id;
-}
-
 static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
                                      const SemIR::FacetType& facet_type,
                                      MakeDiagnosticBuilderFn diagnoser)
     -> bool {
-  llvm::SmallVector<SemIR::FacetTypeId> work = {facet_type.facet_type_id};
-  while (!work.empty()) {
-    auto next_facet_type_id = work.pop_back_val();
-    const auto& facet_type_info = context.facet_types().Get(next_facet_type_id);
+  const auto& facet_type_info =
+      context.facet_types().Get(facet_type.facet_type_id);
 
-    for (auto extends : facet_type_info.extend_constraints) {
-      auto interface_id = extends.interface_id;
-      const auto& interface = context.interfaces().Get(interface_id);
-      if (!interface.is_complete()) {
-        if (diagnoser) {
-          auto builder = diagnoser();
-          NoteIncompleteInterface(context, interface_id, builder);
-          builder.Emit();
-        }
-        return false;
+  for (auto extends : facet_type_info.extend_constraints) {
+    auto interface_id = extends.interface_id;
+    const auto& interface = context.interfaces().Get(interface_id);
+    if (!interface.is_complete()) {
+      if (diagnoser) {
+        auto builder = diagnoser();
+        NoteIncompleteInterface(context, interface_id, builder);
+        builder.Emit();
       }
-
-      for (auto require_impls_id : context.require_impls_blocks().Get(
-               interface.require_impls_block_id)) {
-        const auto& require = context.require_impls().Get(require_impls_id);
-        if (require.extend_self) {
-          auto require_specific_id = MakeCopyOfSpecificAndAppendSelf(
-              context, loc_id, extends.specific_id, require.generic_id,
-              GetRequireImplsSpecificSelf(context, require));
-          auto facet_type_id = GetFacetTypeInSpecific(
-              context, require.facet_type_inst_id, require_specific_id);
-          if (facet_type_id.has_value()) {
-            work.push_back(facet_type_id);
-          }
-        }
-      }
-
-      if (extends.specific_id.has_value()) {
-        ResolveSpecificDefinition(context, loc_id, extends.specific_id);
-      }
+      return false;
     }
 
-    for (auto extends : facet_type_info.extend_named_constraints) {
-      auto named_constraint_id = extends.named_constraint_id;
-      const auto& constraint =
-          context.named_constraints().Get(named_constraint_id);
-      if (!constraint.is_complete()) {
-        if (diagnoser) {
-          auto builder = diagnoser();
-          NoteIncompleteNamedConstraint(context, named_constraint_id, builder);
-          builder.Emit();
-        }
-        return false;
-      }
+    if (extends.specific_id.has_value()) {
+      ResolveSpecificDefinition(context, loc_id, extends.specific_id);
+    }
+  }
 
-      for (auto require_impls_id : context.require_impls_blocks().Get(
-               constraint.require_impls_block_id)) {
-        const auto& require = context.require_impls().Get(require_impls_id);
-        if (require.extend_self) {
-          auto require_specific_id = MakeCopyOfSpecificAndAppendSelf(
-              context, loc_id, extends.specific_id, require.generic_id,
-              GetRequireImplsSpecificSelf(context, require));
-          auto facet_type_id = GetFacetTypeInSpecific(
-              context, require.facet_type_inst_id, require_specific_id);
-          if (facet_type_id.has_value()) {
-            work.push_back(facet_type_id);
-          }
-        }
+  for (auto extends : facet_type_info.extend_named_constraints) {
+    auto named_constraint_id = extends.named_constraint_id;
+    const auto& constraint =
+        context.named_constraints().Get(named_constraint_id);
+    if (!constraint.is_complete()) {
+      if (diagnoser) {
+        auto builder = diagnoser();
+        NoteIncompleteNamedConstraint(context, named_constraint_id, builder);
+        builder.Emit();
       }
+      return false;
+    }
 
-      if (extends.specific_id.has_value()) {
-        ResolveSpecificDefinition(context, loc_id, extends.specific_id);
-      }
+    if (extends.specific_id.has_value()) {
+      ResolveSpecificDefinition(context, loc_id, extends.specific_id);
     }
   }
 
