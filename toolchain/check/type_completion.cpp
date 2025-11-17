@@ -84,29 +84,37 @@ static auto ForEachRequireImpls(
   }
 }
 
-static auto MakeSpecificForRequireDecl(Context& context, SemIR::LocId loc_id,
-                                       SemIR::SpecificId entity_specific_id,
-                                       SemIR::GenericId require_generic_id)
-    -> SemIR::SpecificId {
-  auto entity_specific_args_id =
-      context.specifics().GetArgsOrEmpty(entity_specific_id);
-  auto entity_specific_args =
-      context.inst_blocks().Get(entity_specific_args_id);
+// Makes a copy of a Specific from one generic to apply to another given
+// `generic_id`, with a given `Self` argument appended to the end.
+static auto MakeCopyOfSpecificAndAppendSelf(
+    Context& context, SemIR::LocId loc_id, SemIR::SpecificId specific_id,
+    SemIR::GenericId generic_id, SemIR::InstId self_id) -> SemIR::SpecificId {
+  auto source_specific_args_id =
+      context.specifics().GetArgsOrEmpty(specific_id);
+  auto source_specific_args =
+      context.inst_blocks().Get(source_specific_args_id);
 
-  const auto& require_generic = context.generics().Get(require_generic_id);
+  llvm::SmallVector<SemIR::InstId> arg_ids;
+  arg_ids.reserve(source_specific_args.size() + 1);
+  // Start with the enclosing arguments from the source Specific.
+  llvm::append_range(arg_ids, source_specific_args);
+  // Add the new `Self` argument.
+  arg_ids.push_back(self_id);
+
+  return MakeSpecific(context, loc_id, generic_id, arg_ids);
+}
+
+static auto GetRequireImplsSpecificSelf(Context& context,
+                                        const SemIR::RequireImpls& require)
+    -> SemIR::InstId {
+  const auto& require_generic = context.generics().Get(require.generic_id);
   const auto& require_self_specific =
       context.specifics().Get(require_generic.self_specific_id);
   auto require_self_specific_args =
       context.inst_blocks().Get(require_self_specific.args_id);
-
-  llvm::SmallVector<SemIR::InstId> arg_ids;
-  arg_ids.reserve(entity_specific_args.size() + 1);
-  // Start with the enclosing arguments from the entity.
-  llvm::append_range(arg_ids, entity_specific_args);
-  // Add the `Self` argument from the require decl.
-  arg_ids.push_back(require_self_specific_args.back());
-
-  return MakeSpecific(context, loc_id, require_generic_id, arg_ids);
+  // The last argument of a `require` generic is always `Self`, as require can
+  // not have any parameters of its own, only enclosing parameters.
+  return require_self_specific_args.back();
 }
 
 static auto GetFacetTypeInSpecific(Context& context, SemIR::InstId facet_type,
@@ -146,8 +154,9 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
       ForEachRequireImpls(
           context, interface, [&](const SemIR::RequireImpls& require) {
             if (require.extend_self) {
-              auto require_specific_id = MakeSpecificForRequireDecl(
-                  context, loc_id, extends.specific_id, require.generic_id);
+              auto require_specific_id = MakeCopyOfSpecificAndAppendSelf(
+                  context, loc_id, extends.specific_id, require.generic_id,
+                  GetRequireImplsSpecificSelf(context, require));
               auto facet_type_id = GetFacetTypeInSpecific(
                   context, require.facet_type_inst_id, require_specific_id);
               if (facet_type_id.has_value()) {
@@ -176,8 +185,9 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
       ForEachRequireImpls(
           context, constraint, [&](const SemIR::RequireImpls& require) {
             if (require.extend_self) {
-              auto require_specific_id = MakeSpecificForRequireDecl(
-                  context, loc_id, extends.specific_id, require.generic_id);
+              auto require_specific_id = MakeCopyOfSpecificAndAppendSelf(
+                  context, loc_id, extends.specific_id, require.generic_id,
+                  GetRequireImplsSpecificSelf(context, require));
               auto facet_type_id = GetFacetTypeInSpecific(
                   context, require.facet_type_inst_id, require_specific_id);
               if (facet_type_id.has_value()) {
