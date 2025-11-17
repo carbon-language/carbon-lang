@@ -607,11 +607,19 @@ TEST_F(RuntimesCacheTest, LookupWithManyStaleRuntimes) {
   auto runtimes2 = *cache_.Lookup({.target = "aarch64-unknown-unknown-fresh2"});
 
   // Get the Unix-like inode of the directories so we can check whether
-  // subsequent lookups create a new directory.
+  // subsequent lookups create a new directory. For the stale directory, we
+  // don't just get the inode, we also create an open directory to it. This
+  // should allow it to be replaced, but prevent the directory's inode from
+  // being reused.
   auto runtimes1_inode = runtimes1.base_dir().Stat()->unix_inode();
+  auto runtimes2_inode = runtimes2.base_dir().Stat()->unix_inode();
+  Filesystem::Dir stale_dir =
+      *Filesystem::Cwd().OpenDir(stale_runtimes[0].base_path());
   auto stale_runtimes_0_inode =
       stale_runtimes[0].base_dir().Stat()->unix_inode();
-  auto runtimes2_inode = runtimes2.base_dir().Stat()->unix_inode();
+  // Confirm that our extra open directory points to the some entity as the
+  // runtimes has open.
+  ASSERT_THAT(stale_dir.Stat()->unix_inode(), Eq(stale_runtimes_0_inode));
 
   // Now adjust their age backwards in time by two years to make them very, very
   // stale.
@@ -639,7 +647,10 @@ TEST_F(RuntimesCacheTest, LookupWithManyStaleRuntimes) {
   EXPECT_THAT(runtimes1.base_dir().Stat()->unix_inode(), Eq(runtimes1_inode));
   EXPECT_THAT(runtimes2.base_dir().Stat()->unix_inode(), Eq(runtimes2_inode));
 
-  // One of the stale runtimes should be freshly created though.
+  // One of the stale runtimes should be freshly created though. Note that this
+  // is only reliable because `stale_runtimes_0_inode` remains in use with our
+  // open `stale_dir` above. Without that, the inode could be reused and despite
+  // being freshly created, the directory would have the same inode.
   EXPECT_THAT(stale_runtimes_0.base_dir().Stat()->unix_inode(),
               Ne(stale_runtimes_0_inode));
 }
@@ -647,7 +658,13 @@ TEST_F(RuntimesCacheTest, LookupWithManyStaleRuntimes) {
 TEST_F(RuntimesCacheTest, LookupWithTooManyRuntimes) {
   auto runtimes1 = *cache_.Lookup({.target = "aarch64-unknown-unknown-fresh1"});
   auto runtimes2 = *cache_.Lookup({.target = "aarch64-unknown-unknown-fresh2"});
-  int n = RuntimesTestPeer::CacheMaxNumEntries();
+  // Compute the number of runtimes to fill up the cache as the max, minus the
+  // two created above. Note that it is important to not _overflow_ the cache
+  // here: because we are holding all of these runtimes open, they all have
+  // their lock files locked. This will result in an attempt to prune the cache
+  // that tries (and fails) to acquire a lock on all N runtimes which can be
+  // very slow.
+  int n = RuntimesTestPeer::CacheMaxNumEntries() - 2;
   auto stale_runtimes = LookupNRuntimes(n);
 
   // Compute stale target strings.
@@ -662,10 +679,20 @@ TEST_F(RuntimesCacheTest, LookupWithTooManyRuntimes) {
   auto runtimes2_inode = runtimes2.base_dir().Stat()->unix_inode();
   auto stale_runtimes_0_inode =
       stale_runtimes[0].base_dir().Stat()->unix_inode();
-  auto stale_runtimes_n_inode =
-      stale_runtimes.back().base_dir().Stat()->unix_inode();
   auto stale_runtimes_n_1_inode =
-      std::prev(stale_runtimes.end(), 2)->base_dir().Stat()->unix_inode();
+      stale_runtimes.back().base_dir().Stat()->unix_inode();
+
+  // For the n-2 stale runtime, get the inode but also open the underlying
+  // directory so that the inode can't be reused even after pruning the runtime
+  // below.
+  Runtimes& stale_runtimes_n_2_orig = *std::prev(stale_runtimes.end(), 2);
+  auto stale_runtimes_n_2_inode =
+      stale_runtimes_n_2_orig.base_dir().Stat()->unix_inode();
+  Filesystem::Dir stale_dir =
+      *Filesystem::Cwd().OpenDir(stale_runtimes_n_2_orig.base_path());
+  // Confirm that our extra open directory points to the some entity as the
+  // runtimes has open.
+  ASSERT_THAT(stale_dir.Stat()->unix_inode(), Eq(stale_runtimes_n_2_inode));
 
   // Now manually set all the timestamps. We do this manually to avoid any
   // reliance on the clock behavior or the amount of time passing between lookup
@@ -695,8 +722,9 @@ TEST_F(RuntimesCacheTest, LookupWithTooManyRuntimes) {
   runtimes2 = *cache_.Lookup({.target = "aarch64-unknown-unknown-fresh2"});
   auto stale_runtimes_0 =
       *cache_.Lookup({.target = "aarch64-unknown-unknown0"});
-  auto stale_runtimes_n = *cache_.Lookup({.target = stale_runtimes_n_1_target});
   auto stale_runtimes_n_1 =
+      *cache_.Lookup({.target = stale_runtimes_n_1_target});
+  auto stale_runtimes_n_2 =
       *cache_.Lookup({.target = stale_runtimes_n_2_target});
 
   // The fresh runtimes should be preserved.
@@ -706,12 +734,12 @@ TEST_F(RuntimesCacheTest, LookupWithTooManyRuntimes) {
               Eq(stale_runtimes_0_inode));
 
   // THe last stale runtime should have been locked and so should remain.
-  EXPECT_THAT(stale_runtimes_n.base_dir().Stat()->unix_inode(),
-              Eq(stale_runtimes_n_inode));
+  EXPECT_THAT(stale_runtimes_n_1.base_dir().Stat()->unix_inode(),
+              Eq(stale_runtimes_n_1_inode));
 
   // The next to last should have been pruned and re-created though.
-  EXPECT_THAT(stale_runtimes_n.base_dir().Stat()->unix_inode(),
-              Ne(stale_runtimes_n_1_inode));
+  EXPECT_THAT(stale_runtimes_n_2.base_dir().Stat()->unix_inode(),
+              Ne(stale_runtimes_n_2_inode));
 }
 
 }  // namespace
