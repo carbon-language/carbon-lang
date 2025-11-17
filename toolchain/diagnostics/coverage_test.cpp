@@ -54,6 +54,9 @@ constexpr Kind UntestedKinds[] = {
     // unpredictable names in the module cache, which bazel doesn't permit.
     Kind::InCppModule,
 
+    // TODO: We should add tests that trigger this.
+    Kind::InCppConstantMapping,
+
     // TODO: This can only fire if the first message in a diagnostic is rooted
     // in a file other than the file being compiled. The language server
     // currently only supports compiling one file at a time. Do one of:

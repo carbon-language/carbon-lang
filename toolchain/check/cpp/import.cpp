@@ -1086,6 +1086,21 @@ static auto MakeIntType(Context& context, IntId size_id, bool is_signed)
   return ExprAsType(context, Parse::NodeId::None, type_inst_id);
 }
 
+// Maps a C++ builtin integer type to a Carbon `Core.CppCompat` type.
+static auto MapBuiltinCppCompatIntegerType(Context& context,
+                                           unsigned int cpp_width,
+                                           unsigned int carbon_width,
+                                           llvm::StringRef cpp_compat_name)
+    -> TypeExpr {
+  if (cpp_width != carbon_width) {
+    return TypeExpr::None;
+  }
+
+  return ExprAsType(context, Parse::NodeId::None,
+                    LookupNameInCore(context, Parse::NodeId::None,
+                                     {"CppCompat", cpp_compat_name}));
+}
+
 // Maps a C++ builtin integer type to a Carbon type.
 // TODO: Handle integer types that map to named aliases.
 static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
@@ -1112,11 +1127,18 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
     return ExprAsType(context, Parse::NodeId::None,
                       MakeCharTypeLiteral(context, Parse::NodeId::None));
   }
-  if (clang::ASTContext::hasSameType(qual_type, ast_context.LongTy) &&
-      width == 32) {
-    return ExprAsType(context, Parse::NodeId::None,
-                      LookupNameInCore(context, Parse::NodeId::None,
-                                       {"CppCompat", "Long32"}));
+  if (clang::ASTContext::hasSameType(qual_type, ast_context.LongTy)) {
+    return MapBuiltinCppCompatIntegerType(context, width, 32, "Long32");
+  }
+  if (clang::ASTContext::hasSameType(qual_type, ast_context.UnsignedLongTy)) {
+    return MapBuiltinCppCompatIntegerType(context, width, 32, "ULong32");
+  }
+  if (clang::ASTContext::hasSameType(qual_type, ast_context.LongLongTy)) {
+    return MapBuiltinCppCompatIntegerType(context, width, 64, "LongLong64");
+  }
+  if (clang::ASTContext::hasSameType(qual_type,
+                                     ast_context.UnsignedLongLongTy)) {
+    return MapBuiltinCppCompatIntegerType(context, width, 64, "ULongLong64");
   }
   return TypeExpr::None;
 }
