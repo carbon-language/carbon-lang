@@ -227,7 +227,8 @@ struct NumericTypeLiteralInfo {
   IntId bit_width_id;
 };
 
-// Information about a recognized type.
+// Information about a recognized type, which is either a literal type, or a C++
+// builtin.
 struct RecognizedTypeInfo {
   enum Kind : char {
     None,
