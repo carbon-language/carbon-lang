@@ -158,6 +158,7 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
         ResolveSpecificDefinition(context, loc_id, extends.specific_id);
       }
     }
+
     for (auto extends : facet_type_info.extend_named_constraints) {
       auto named_constraint_id = extends.named_constraint_id;
       const auto& constraint =
