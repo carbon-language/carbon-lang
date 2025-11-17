@@ -127,9 +127,9 @@ header file inclusion. Carbon must be able to parse and analyze C++ header files
 to make their declarations available within Carbon.
 
 **Syntax:** The syntax for this operation is `import Cpp library "header_name"`.
-This syntax is used for both C-style standard libraries and C++ headers:
+This syntax is used for both standard library headers and user-defined headers:
 
--   **C Standard Library:**
+-   **Standard Library:**
 
     ```carbon
     import Cpp library "<cstdio>";
