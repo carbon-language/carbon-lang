@@ -44,6 +44,22 @@ interface B {
   require impls A;
 }
 
+// --- fail_incomplete_extend_constraint.carbon
+library "[[@TEST_NAME]]";
+
+constraint A;
+
+interface B {
+  // CHECK:STDERR: fail_incomplete_extend_constraint.carbon:[[@LINE+7]]:24: error: facet type `A` cannot be identified in `require` declaration [RequireImplsUnidentifiedFacetType]
+  // CHECK:STDERR:   extend require impls A;
+  // CHECK:STDERR:                        ^
+  // CHECK:STDERR: fail_incomplete_extend_constraint.carbon:[[@LINE-6]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
+  // CHECK:STDERR: constraint A;
+  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  extend require impls A;
+}
+
 // --- incomplete_interface.carbon
 library "[[@TEST_NAME]]";
 
@@ -61,17 +77,15 @@ library "[[@TEST_NAME]]";
 interface A;
 
 interface B {
+  // CHECK:STDERR: fail_incomplete_extend_interface.carbon:[[@LINE+7]]:24: error: `extend require` of incomplete facet type `A` [RequireImplsIncompleteFacetType]
+  // CHECK:STDERR:   extend require impls A;
+  // CHECK:STDERR:                        ^
+  // CHECK:STDERR: fail_incomplete_extend_interface.carbon:[[@LINE-6]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR: interface A;
+  // CHECK:STDERR: ^~~~~~~~~~~~
+  // CHECK:STDERR:
   extend require impls A;
 }
-
-// CHECK:STDERR: fail_incomplete_extend_interface.carbon:[[@LINE+7]]:1: error: definition of impl as incomplete facet type `B` [ImplAsIncompleteFacetTypeDefinition]
-// CHECK:STDERR: impl () as B {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_incomplete_extend_interface.carbon:[[@LINE-9]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface A;
-// CHECK:STDERR: ^~~~~~~~~~~~
-// CHECK:STDERR:
-impl () as B {}
 
 // --- fail_incomplete_interface_in_where.carbon
 library "[[@TEST_NAME]]";
@@ -132,6 +146,36 @@ interface B {
 // CHECK:STDOUT: specific @T(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_incomplete_constraint.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
+// CHECK:STDOUT:   %B.type: type = facet_type <@B> [concrete]
+// CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .A = %A.decl
+// CHECK:STDOUT:     .B = %B.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A.decl: type = constraint_decl @A [concrete = constants.%A.type] {} {}
+// CHECK:STDOUT:   %B.decl: type = interface_decl @B [concrete = constants.%B.type] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @B {
+// CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .A = <poisoned>
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: constraint @A;
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_incomplete_extend_constraint.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
@@ -232,9 +276,6 @@ interface B {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
 // CHECK:STDOUT:   %B.type: type = facet_type <@B> [concrete]
 // CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -244,23 +285,12 @@ interface B {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = interface_decl @A [concrete = constants.%A.type] {} {}
 // CHECK:STDOUT:   %B.decl: type = interface_decl @B [concrete = constants.%B.type] {} {}
-// CHECK:STDOUT:   impl_decl @empty_tuple.type.as.B.impl [concrete] {} {
-// CHECK:STDOUT:     %.loc16_7.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc16_7.2: type = converted %.loc16_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B.type]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B {
 // CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %B.require0.decl = require_decl @B.require0 [concrete] {
-// CHECK:STDOUT:     require %Self.as_type impls <@A>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.as_type: type = facet_access_type @B.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -268,24 +298,6 @@ interface B {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @B.require0 {
-// CHECK:STDOUT:     require @B.require0.%Self.as_type impls <@A>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic require @B.require0(@B.%Self: %B.type) {
-// CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_tuple.type.as.B.impl: %.loc16_7.2 as %B.ref {
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = <error>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @B.require0(constants.%Self) {
-// CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_incomplete_interface_in_where.carbon

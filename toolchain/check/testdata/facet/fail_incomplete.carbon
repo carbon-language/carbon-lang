@@ -80,29 +80,6 @@ impl C as X;
 // Requires X complete.
 impl C as X {}
 
-// --- fail_incomplete_through_constraint.carbon
-library "[[@TEST_NAME]]";
-
-interface Z;
-constraint Y {
-  extend require impls Z;
-}
-
-class C {}
-
-// Requires Y identified.
-impl C as Y;
-
-// Requires Y complete.
-// CHECK:STDERR: fail_incomplete_through_constraint.carbon:[[@LINE+7]]:1: error: definition of impl as incomplete facet type `Y` [ImplAsIncompleteFacetTypeDefinition]
-// CHECK:STDERR: impl C as Y {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_incomplete_through_constraint.carbon:[[@LINE-14]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface Z;
-// CHECK:STDERR: ^~~~~~~~~~~~
-// CHECK:STDERR:
-impl C as Y {}
-
 // --- fail_impl_lookup_incomplete.carbon
 library "[[@TEST_NAME]]";
 
