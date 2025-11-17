@@ -129,7 +129,7 @@ class ClangRuntimesBuilderBase::ArchiveBuilder {
   // Start building the archive, with a latch handle to signal its completion.
   //
   // This will launch asynchronous tasks on the `builder_->tasks` task group to
-  // first compile all the member sof the archive, and once compiled to put them
+  // first compile all the members of the archive, and once compiled to put them
   // into the archive file. Only when this last step is complete will the
   // provided handle be destroyed, signaling this step of any concurrent build
   // is done.

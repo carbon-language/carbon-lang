@@ -228,7 +228,7 @@ ClangResourceDirBuilder::ClangResourceDirBuilder(
     result_ = std::move(build_dir_or_error).error();
     return;
   }
-  auto build_dir = *(std::move(build_dir_or_error));
+  auto build_dir = *std::move(build_dir_or_error);
   if (std::holds_alternative<std::filesystem::path>(build_dir)) {
     // Found cached build.
     result_ = std::get<std::filesystem::path>(std::move(build_dir));
@@ -250,7 +250,7 @@ ClangResourceDirBuilder::ClangResourceDirBuilder(
                        "-fvisibility=hidden",
                        "-w",
                    });
-  tasks_.async([this]() mutable { Setup(); });
+  tasks_.async([this]() { Setup(); });
 }
 
 auto ClangResourceDirBuilder::CollectBuiltinsSrcFiles()
@@ -329,10 +329,10 @@ auto ClangResourceDirBuilder::Setup() -> void {
     result_ = std::move(lib_dir_result).error();
     return;
   }
-  lib_dir_ = *(std::move(lib_dir_result));
+  lib_dir_ = *std::move(lib_dir_result);
 
   Latch::Handle latch_handle = step_counter_.Init(
-      [this]() mutable { tasks_.async([this]() mutable { Finish(); }); });
+      [this] { tasks_.async([this] { Finish(); }); });
 
   // For Linux targets, the system libc (typically glibc) doesn't necessarily
   // provide the CRT begin/end files, and so we need to build them.
