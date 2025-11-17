@@ -136,9 +136,7 @@ class ConstantValueStore {
   auto GetAttached(InstId inst_id) const -> ConstantId {
     CARBON_CHECK(insts_,
                  "Used ConstantValueStores must have an associated InstStore.");
-    auto index = insts_->GetRawIndex(inst_id);
-    return static_cast<size_t>(index) >= values_.size() ? default_
-                                                        : values_.Get(inst_id);
+    return values_.GetWithDefault(inst_id, default_);
   }
 
   // Sets the constant value of the given instruction, or sets that it is known
@@ -189,7 +187,7 @@ class ConstantValueStore {
   // For any other constant ID, returns the ID unchanged.
   auto GetUnattachedConstant(ConstantId const_id) const -> ConstantId {
     if (const_id.is_symbolic()) {
-      return GetAttached(GetSymbolicConstant(const_id).inst_id);
+      return values_.Get(GetSymbolicConstant(const_id).inst_id);
     }
     return const_id;
   }
