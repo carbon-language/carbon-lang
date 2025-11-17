@@ -300,9 +300,9 @@ class Stringifier {
 
   auto StringifyInst(InstId /*inst_id*/, ClassType inst) -> void {
     const auto& class_info = sem_ir_->classes().Get(inst.class_id);
-    if (auto literal_info = TypeLiteralInfo::ForType(*sem_ir_, inst);
-        literal_info.is_valid()) {
-      literal_info.PrintLiteral(*sem_ir_, *out_);
+    if (auto type_info = RecognizedTypeInfo::ForType(*sem_ir_, inst);
+        type_info.is_valid()) {
+      type_info.PrintLiteral(*sem_ir_, *out_);
       return;
     }
     step_stack_->PushEntityName(class_info, inst.specific_id);
@@ -787,13 +787,13 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
       // Print `Core.Int(N)` as `iN`.
       // TODO: This duplicates work done in StringifyInst for ClassType.
       const auto& class_info = sem_ir.classes().Get(class_decl.class_id);
-      if (auto literal_info = TypeLiteralInfo::ForType(
+      if (auto type_info = RecognizedTypeInfo::ForType(
               sem_ir, ClassType{.type_id = TypeType::TypeId,
                                 .class_id = class_decl.class_id,
                                 .specific_id = specific_id});
-          literal_info.is_valid()) {
+          type_info.is_valid()) {
         RawStringOstream out;
-        literal_info.PrintLiteral(sem_ir, out);
+        type_info.PrintLiteral(sem_ir, out);
         return out.TakeStr();
       }
       step_stack.PushEntityName(class_info, specific_id);

@@ -228,8 +228,7 @@ struct NumericTypeLiteralInfo {
 };
 
 // Information about a literal that corresponds to a type.
-// TODO: Rename to `RecognizedTypeInfo` (Cpp types are not type literals).
-struct TypeLiteralInfo {
+struct RecognizedTypeInfo {
   enum Kind : char {
     None,
     // A numeric type literal such as `i8`; see `numeric` field for details.
@@ -247,7 +246,7 @@ struct TypeLiteralInfo {
 
   // Returns the type literal that would evaluate to this class type, if any.
   static auto ForType(const File& file, ClassType class_type)
-      -> TypeLiteralInfo;
+      -> RecognizedTypeInfo;
 
   // Prints the type literal that corresponds to this type.
   auto PrintLiteral(const File& file, llvm::raw_ostream& out) const -> void;
