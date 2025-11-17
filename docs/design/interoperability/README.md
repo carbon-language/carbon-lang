@@ -13,7 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Philosophy and goals](#philosophy-and-goals)
 -   [Overview](#overview)
 -   [C++ interoperability model: introduction and principles](#c-interoperability-model-introduction-and-principles)
-    -   [The "successor language" mandate](#the-successor-language-mandate)
+    -   [The successor language mandate](#the-successor-language-mandate)
     -   [The C++ interop type](#the-c-interop-type)
 -   [Importing C++ APIs into Carbon](#importing-c-apis-into-carbon)
     -   [Importing C++ libraries (header-based)](#importing-c-libraries-header-based)
@@ -70,18 +70,18 @@ allocations or copies when calling between the two languages.
 
 ## C++ interoperability model: introduction and principles
 
-### The "successor language" mandate
+### The successor language mandate
 
 The design of Carbon's C++ interoperability is governed by its foundational
 goal: [to be a successor language](/README.md), not merely a language with a
 foreign function interface (FFI). This mandate dictates a design that moves
 beyond the C-style FFI adopted by most modern languages and instead provides
-"seamless, bidirectional interoperability". The objective is to support deep
-integration with existing C++ code, encompassing its most complex features,
-"from inheritance to templates".
+seamless, bidirectional interoperability. The objective is to support deep
+integration with existing C++ code, encompassing its most complex features, from
+inheritance to templates.
 
 This goal has profound implications for the Carbon compiler and language
-semantics. It requires that C++ is not treated as a "foreign" entity. Instead,
+semantics. It requires that C++ is not treated as a foreign entity. Instead,
 Carbon's semantic model must be _co-designed_ to understand, map, and interact
 with C++'s semantic constructs—including templates, class hierarchies, and
 complex overload resolution—with high fidelity. The interoperability layer must,
@@ -115,8 +115,8 @@ system must be aware that the `Cpp.Widget` parameter carries C++-specific rules.
 This mandates that Carbon's own generic system, struct layout logic, overload
 resolution and operator lookup must query the type system for the presence of a
 C++ interop type. If present, Carbon must consider C++ rules when operating over
-C++ interop types. This design prioritizes the goal of a "seamless" and
-"intuitive" user experience.
+C++ interop types. This design prioritizes the goal of a seamless and intuitive
+user experience.
 
 ## Importing C++ APIs into Carbon
 
