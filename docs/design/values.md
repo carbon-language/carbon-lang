@@ -345,7 +345,7 @@ There are four contexts that require a durable reference expression in Carbon:
     the `Carbon.Assign.Op` interface method.
 -   [Address-of expressions](#pointer-syntax) require their operand to be a
     durable reference and compute the address of the referenced object.
--   [non-`self` `ref` binding patterns](pattern_matching.md#name-binding-patterns)
+-   [`ref` binding patterns](pattern_matching.md#name-binding-patterns)
     require their scrutinee to be a durable reference.
 -   If a function's [return form](#function-calls-and-returns) contains `ref`
     tags, `return` statements require the corresponding parts of the operand to
@@ -617,7 +617,7 @@ into an operation from its operands and not the other way around.
 
 ### Function calls and returns
 
-The outcome of a function call can have an almost arbitrary form. The return
+The [outcome](#expression-forms) of a function call can have an almost arbitrary form. The return
 clause of a function signature consists of `->` followed by a _return form_, an
 expression-like syntax that specifies not only the type but also the form of the
 function call's outcome. `return` expressions in the function body are expected
@@ -815,14 +815,14 @@ The _type component_ of a form is defined as follows:
 
 The _category component_ and _phase component_ of a form are defined likewise.
 The category component of a struct form is called a _struct category_, and the
-category component of a tuple form is called a tuple category.
+category component of a tuple form is called a _tuple category_.
 
 The type of an expression is the type component of the expression's form.
 
 An _outcome_ is the result of evaluating an expression. It can be defined
 recursively in terms of the expression's form:
 
--   The outcome of an initializing expression is an initializing outcome.
+-   The outcome of an initializing expression is an [initializing outcome](#initializing-outcomes).
 -   The outcome of a value expression is a value.
 -   The outcome of a reference expression is a reference of the same kind.
 -   The outcome of an expression with tuple form is a tuple of outcomes.
@@ -853,7 +853,7 @@ outcome is a form conversion that does nothing except materialize any
 initializing sub-outcomes, in order to satisfy the requirement that every
 initializing outcome is materialized.
 
-Phase conversions are straightforward, because they cannot change the form
+Phase conversions cannot change the form
 structure; they can only apply primitive phase conversions to primitive
 sub-forms. Type and category conversions are more complex, and are covered in
 the next two sections.
@@ -931,14 +931,14 @@ of that conversion.
 
 #### Category conversions
 
-_Form composition_ converts a composite form with consistent category to a
+_Form composition_ converts an expression of composite form with consistent category to a
 primitive form as follows (where `min` as applied to phases uses the ordering
 "runtime" < "symbolic" < "template"):
 
--   A tuple form `([T1, C, P1, V1], [T2, C, P2, V2], ... [TN, C, PN, VN])` can
+-   An expression of tuple form `([T1, C, P1, V1], [T2, C, P2, V2], ... [TN, C, PN, VN])` can
     be converted to a primitive form
     `[(T1, T2, ..., TN), C, min(P1, P2, ..., PN), (V1, V2, ... VN)]`.
--   A struct form
+-   An expression of struct form
     `{.a = [Ta, C, Pa, Va], .b = [Tb, C, Pb, Vb], ... .z = [Tz, C, Pz, Vz]}` can
     be converted to a primitive form
     `[{.a = Ta, .b = Tb, ... .z = Tz}, C, min(Pa, Pb, ... Pz), {.a = Va, .b = Vb, ... .z = Vz}]`.
@@ -976,7 +976,7 @@ _Form decomposition_ is the inverse of form composition. It converts a primitive
 form to a composite form as follows:
 
 -   A primitive form `[(T1, T2, ..., TN), C, P, V]` can be converted to a tuple
-    form `([T1, CC, P, V.1], [T2, CC, P, V.2], ... [TN, CC, P, V.(N)])`.
+    form `([T1, CC, P, V.0], [T2, CC, P, V.1], ... [TN, CC, P, V.(N-1)])`.
 -   A primitive form `[{.a = Ta, .b = Tb, ... .z = Tz}, C, P, V]` can be
     converted to a struct form
     `{.a = [Ta, CC, P, V.a], .b = [Tb, CC, P, V.b], ... .z = [Tz, CC, P, V.z]}`.
