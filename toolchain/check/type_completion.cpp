@@ -109,6 +109,19 @@ static auto MakeSpecificForRequireDecl(Context& context, SemIR::LocId loc_id,
   return MakeSpecific(context, loc_id, require_generic_id, arg_ids);
 }
 
+static auto GetFacetTypeInSpecific(Context& context, SemIR::InstId facet_type,
+                                   SemIR::SpecificId specific_id)
+    -> SemIR::FacetTypeId {
+  auto const_facet_type = SemIR::GetConstantValueInSpecific(
+      context.sem_ir(), specific_id, facet_type);
+  auto facet_type_in_specific = context.insts().TryGetAs<SemIR::FacetType>(
+      context.constant_values().GetInstId(const_facet_type));
+  if (!facet_type_in_specific.has_value()) {
+    return SemIR::FacetTypeId::None;
+  }
+  return facet_type_in_specific->facet_type_id;
+}
+
 static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
                                      const SemIR::FacetType& facet_type,
                                      MakeDiagnosticBuilderFn diagnoser)
@@ -118,9 +131,8 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
     auto next_facet_type_id = work.pop_back_val();
     const auto& facet_type_info = context.facet_types().Get(next_facet_type_id);
 
-    auto require_complete_interface =
-        [&](SemIR::SpecificInterface req_interface) -> bool {
-      auto interface_id = req_interface.interface_id;
+    for (auto extends : facet_type_info.extend_constraints) {
+      auto interface_id = extends.interface_id;
       const auto& interface = context.interfaces().Get(interface_id);
       if (!interface.is_complete()) {
         if (diagnoser) {
@@ -135,28 +147,21 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
           context, interface, [&](const SemIR::RequireImpls& require) {
             if (require.extend_self) {
               auto require_specific_id = MakeSpecificForRequireDecl(
-                  context, loc_id, req_interface.specific_id,
-                  require.generic_id);
-              auto const_facet_type = SemIR::GetConstantValueInSpecific(
-                  context.sem_ir(), require_specific_id,
-                  require.facet_type_inst_id);
-              if (const_facet_type != SemIR::ErrorInst::ConstantId) {
-                auto facet_type = context.insts().GetAs<SemIR::FacetType>(
-                    context.constant_values().GetInstId(const_facet_type));
-                work.push_back(facet_type.facet_type_id);
+                  context, loc_id, extends.specific_id, require.generic_id);
+              auto facet_type_id = GetFacetTypeInSpecific(
+                  context, require.facet_type_inst_id, require_specific_id);
+              if (facet_type_id.has_value()) {
+                work.push_back(facet_type_id);
               }
             }
           });
 
-      if (req_interface.specific_id.has_value()) {
-        ResolveSpecificDefinition(context, loc_id, req_interface.specific_id);
+      if (extends.specific_id.has_value()) {
+        ResolveSpecificDefinition(context, loc_id, extends.specific_id);
       }
-      return true;
-    };
-
-    auto require_complete_named_constraint =
-        [&](SemIR::SpecificNamedConstraint req_constraint) -> bool {
-      auto named_constraint_id = req_constraint.named_constraint_id;
+    }
+    for (auto extends : facet_type_info.extend_named_constraints) {
+      auto named_constraint_id = extends.named_constraint_id;
       const auto& constraint =
           context.named_constraints().Get(named_constraint_id);
       if (!constraint.is_complete()) {
@@ -172,33 +177,17 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
           context, constraint, [&](const SemIR::RequireImpls& require) {
             if (require.extend_self) {
               auto require_specific_id = MakeSpecificForRequireDecl(
-                  context, loc_id, req_constraint.specific_id,
-                  require.generic_id);
-              auto const_facet_type = SemIR::GetConstantValueInSpecific(
-                  context.sem_ir(), require_specific_id,
-                  require.facet_type_inst_id);
-              if (const_facet_type != SemIR::ErrorInst::ConstantId) {
-                auto facet_type = context.insts().GetAs<SemIR::FacetType>(
-                    context.constant_values().GetInstId(const_facet_type));
-                work.push_back(facet_type.facet_type_id);
+                  context, loc_id, extends.specific_id, require.generic_id);
+              auto facet_type_id = GetFacetTypeInSpecific(
+                  context, require.facet_type_inst_id, require_specific_id);
+              if (facet_type_id.has_value()) {
+                work.push_back(facet_type_id);
               }
             }
           });
 
-      if (req_constraint.specific_id.has_value()) {
-        ResolveSpecificDefinition(context, loc_id, req_constraint.specific_id);
-      }
-      return true;
-    };
-
-    for (auto extends : facet_type_info.extend_constraints) {
-      if (!require_complete_interface(extends)) {
-        return false;
-      }
-    }
-    for (auto extends : facet_type_info.extend_named_constraints) {
-      if (!require_complete_named_constraint(extends)) {
-        return false;
+      if (extends.specific_id.has_value()) {
+        ResolveSpecificDefinition(context, loc_id, extends.specific_id);
       }
     }
   }
