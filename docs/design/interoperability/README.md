@@ -95,7 +95,7 @@ the "trigger" that activates C++-specific semantic rules within the Carbon
 compiler. Any operation involving a type that is designated as a C++ interop
 type could invoke the specialized interoperability logic, such as C++ overload
 resolution or operator overload resolution that involves both Carbon and C++
-operator overloads..
+operator overloads.
 
 A type is considered a C++ interop type if its definition involves an imported
 C++ type in any of the following ways:
