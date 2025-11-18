@@ -128,7 +128,7 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::CreateObjDir(
     return Success();
   }
 
-  std::scoped_lock lock{obj_dirs_mu_};
+  std::scoped_lock lock(obj_dirs_mu_);
   auto* it = std::lower_bound(obj_dirs_.begin(), obj_dirs_.end(), obj_dir_path);
   if (it != obj_dirs_.end() && *it == obj_dir_path) {
     return Success();
@@ -331,8 +331,8 @@ auto ClangResourceDirBuilder::Setup() -> void {
   }
   lib_dir_ = *std::move(lib_dir_result);
 
-  Latch::Handle latch_handle = step_counter_.Init(
-      [this] { tasks_.async([this] { Finish(); }); });
+  Latch::Handle latch_handle =
+      step_counter_.Init([this] { tasks_.async([this] { Finish(); }); });
 
   // For Linux targets, the system libc (typically glibc) doesn't necessarily
   // provide the CRT begin/end files, and so we need to build them.
