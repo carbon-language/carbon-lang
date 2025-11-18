@@ -199,8 +199,10 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::CompileMember(
                                llvm::fmt_consume(obj_result.takeError())));
   }
 
-  // Unlink the object file once we've read it. However, we log and ignore
-  // any errors here as they aren't fatal.
+  // Unlink the object file once we've read it -- we only want to retain the
+  // copy inside the archive member and there's no advantage to using
+  // thin-archives or something else that leaves the object file in place.
+  // However, we log and ignore any errors here as they aren't fatal.
   auto unlink_result = builder_->runtimes_builder_->dir().Unlink(obj_path);
   if (!unlink_result.ok()) {
     CARBON_VLOG("Unable to unlink object file `{0}`: {1}\n", obj_path,
