@@ -246,8 +246,10 @@ struct Worklist {
   auto Add(RequireImplsId require_id) -> void {
     CARBON_CHECK(require_id.has_value());
     const auto& require = sem_ir->require_impls().Get(require_id);
-    Add(require.self_id);
-    Add(require.facet_type_id);
+    Add(sem_ir->constant_values().Get(require.self_id));
+    Add(sem_ir->constant_values().Get(require.facet_type_inst_id));
+    contents.push_back(require.extend_self);
+    Add(require.parent_scope_id);
   }
 
   auto Add(AssociatedConstantId assoc_const_id) -> void {

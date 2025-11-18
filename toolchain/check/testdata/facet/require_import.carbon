@@ -35,7 +35,7 @@ fn F(A:! X, B:! Y) {}
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %X.type: type = facet_type <@X> [concrete]
-// CHECK:STDOUT:   %Self.861: %type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.861: %X.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type.1a1: type = symbolic_binding_type Self, 0, %Self.861 [symbolic]
 // CHECK:STDOUT:   %A: %X.type = symbolic_binding A, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.e25: type = pattern_type %X.type [concrete]
@@ -54,7 +54,7 @@ fn F(A:! X, B:! Y) {}
 // CHECK:STDOUT:   %Main.X: type = import_ref Main//a, X, loaded [concrete = constants.%X.type]
 // CHECK:STDOUT:   %Main.import_ref.462 = import_ref Main//a, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b7c: type = import_ref Main//a, loc10_18, loaded [symbolic = constants.%Self.binding.as_type.1a1]
-// CHECK:STDOUT:   %Main.import_ref.dec: %type = import_ref Main//a, loc9_14, loaded [symbolic = constants.%Self.861]
+// CHECK:STDOUT:   %Main.import_ref.dec: %X.type = import_ref Main//a, loc9_14, loaded [symbolic = constants.%Self.861]
 // CHECK:STDOUT:   %Main.import_ref.cae = import_ref Main//a, loc9_14, unloaded
 // CHECK:STDOUT:   %Main.import_ref.3e6: type = import_ref Main//a, loc6_11, loaded [symbolic = constants.%Self.binding.as_type.384]
 // CHECK:STDOUT:   %Main.import_ref.35b: %Y.type = import_ref Main//a, loc5_13, loaded [symbolic = constants.%Self.29b]
@@ -116,8 +116,8 @@ fn F(A:! X, B:! Y) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @X.require0(imports.%Main.import_ref.dec: %type) [from "a.carbon"] {
-// CHECK:STDOUT:   %Self: %type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.861)]
+// CHECK:STDOUT: generic require @X.require0(imports.%Main.import_ref.dec: %X.type) [from "a.carbon"] {
+// CHECK:STDOUT:   %Self: %X.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.861)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.1a1)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

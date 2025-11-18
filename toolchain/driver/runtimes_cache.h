@@ -46,6 +46,7 @@ class Runtimes {
 
   enum Component {
     ClangResourceDir,
+    LibUnwind,
 
     NumComponents,
   };
@@ -136,6 +137,8 @@ class Runtimes {
     switch (component) {
       case ClangResourceDir:
         return "clang_resource_dir";
+      case LibUnwind:
+        return "libunwind";
       case NumComponents:
         CARBON_FATAL("Invalid component");
     }

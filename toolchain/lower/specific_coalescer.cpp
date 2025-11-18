@@ -228,7 +228,7 @@ auto SpecificCoalescer::AreFunctionBodiesEquivalent(
                  "Number of specific calls expected to be the same.");
 
     for (auto [state1_call, state2_call] :
-         llvm::zip(state1.calls, state2.calls)) {
+         llvm::zip_equal(state1.calls, state2.calls)) {
       if (state1_call != state2_call) {
         if (ContainsPair(state1_call, state2_call, non_equivalent_specifics_)) {
           return false;

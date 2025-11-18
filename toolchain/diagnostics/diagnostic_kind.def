@@ -359,13 +359,14 @@ CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessNote)
 CARBON_DIAGNOSTIC_KIND(ImplLookupCycle)
 CARBON_DIAGNOSTIC_KIND(ImplLookupCycleNote)
-CARBON_DIAGNOSTIC_KIND(ImplLookupInIncompleteFacetType)
+CARBON_DIAGNOSTIC_KIND(ImplLookupInUnidentifiedFacetType)
 
 // Require checking.
+CARBON_DIAGNOSTIC_KIND(RequireImplsExtendWithExplicitSelf)
 CARBON_DIAGNOSTIC_KIND(RequireImplsMissingFacetType)
 CARBON_DIAGNOSTIC_KIND(RequireImplsMissingSelf)
-CARBON_DIAGNOSTIC_KIND(RequireInWrongScope)
 CARBON_DIAGNOSTIC_KIND(RequireImplsUnidentifiedFacetType)
+CARBON_DIAGNOSTIC_KIND(RequireInWrongScope)
 
 // Let declaration checking.
 CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)

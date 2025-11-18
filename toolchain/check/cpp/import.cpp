@@ -1095,7 +1095,7 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
   unsigned width = ast_context.getIntWidth(qual_type);
   bool is_signed = type.isSignedInteger();
   auto int_n_type = ast_context.getIntTypeForBitwidth(width, is_signed);
-  if (ast_context.hasSameType(qual_type, int_n_type)) {
+  if (clang::ASTContext::hasSameType(qual_type, int_n_type)) {
     TypeExpr type_expr =
         MakeIntType(context, context.ints().Add(width), is_signed);
     // Try to make sure integer types of 32 or 64 bits are complete so we can
@@ -1108,9 +1108,15 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
     }
     return type_expr;
   }
-  if (ast_context.hasSameType(qual_type, ast_context.CharTy)) {
+  if (clang::ASTContext::hasSameType(qual_type, ast_context.CharTy)) {
     return ExprAsType(context, Parse::NodeId::None,
                       MakeCharTypeLiteral(context, Parse::NodeId::None));
+  }
+  if (clang::ASTContext::hasSameType(qual_type, ast_context.LongTy) &&
+      width == 32) {
+    return ExprAsType(context, Parse::NodeId::None,
+                      LookupNameInCore(context, Parse::NodeId::None,
+                                       {"CppCompat", "Long32"}));
   }
   return TypeExpr::None;
 }
@@ -1176,7 +1182,7 @@ static auto LookupCustomRecordType(Context& context,
 // Maps a C++ tag type (class, struct, union, enum) to a Carbon type.
 static auto MapTagType(Context& context, const clang::TagType& type)
     -> TypeExpr {
-  auto* tag_decl = type.getOriginalDecl();
+  auto* tag_decl = type.getDecl();
   CARBON_CHECK(tag_decl);
 
   // Check if the declaration is already mapped.
@@ -1828,7 +1834,7 @@ static auto AddDependentUnimportedTypeDecls(Context& context,
   }
 
   if (const auto* tag_type = type->getAs<clang::TagType>()) {
-    AddDependentDecl(context, SemIR::ClangDeclKey(tag_type->getOriginalDecl()),
+    AddDependentDecl(context, SemIR::ClangDeclKey(tag_type->getDecl()),
                      worklist);
   }
 }

@@ -124,7 +124,7 @@ class BitIndex
       return reinterpret_cast<T*>(
           &reinterpret_cast<std::byte*>(pointer)[index]);
     } else if constexpr (llvm::isPowerOf2_64(sizeof(T))) {
-      constexpr size_t ScaleShift = llvm::CTLog2<sizeof(T)>();
+      constexpr size_t ScaleShift = llvm::ConstantLog2<sizeof(T)>();
       static_assert(ScaleShift <= ByteEncodingShift,
                     "Scaling by >=8 should be handled above!");
       constexpr size_t FoldedShift = ByteEncodingShift - ScaleShift;

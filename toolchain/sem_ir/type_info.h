@@ -227,16 +227,18 @@ struct NumericTypeLiteralInfo {
   IntId bit_width_id;
 };
 
-// Information about a literal that corresponds to a type.
-struct TypeLiteralInfo {
+// Information about a recognized type, which is either a literal type, or a C++
+// builtin.
+struct RecognizedTypeInfo {
   enum Kind : char {
     None,
     // A numeric type literal such as `i8`; see `numeric` field for details.
     Numeric,
     // `char` / `Core.Char`.
     Char,
+    // `Core.CppCompat.Long32` which is `Cpp.long` when `long` is 32 bits.
+    CppLong32,
     // `Cpp.nullptr_t` / `Core.CppCompat.NullptrT`.
-    // TODO: This isn't a type literal.
     CppNullptrT,
     // `str` / `Core.String`.
     // TODO: Rename `Core.String` to `Core.Str`.
@@ -245,7 +247,7 @@ struct TypeLiteralInfo {
 
   // Returns the type literal that would evaluate to this class type, if any.
   static auto ForType(const File& file, ClassType class_type)
-      -> TypeLiteralInfo;
+      -> RecognizedTypeInfo;
 
   // Prints the type literal that corresponds to this type.
   auto PrintLiteral(const File& file, llvm::raw_ostream& out) const -> void;

@@ -252,9 +252,10 @@ static auto PopOperand(Context& context, Worklist& worklist,
       new_facet_type_info.self_impls_named_constraints.resize(
           old_facet_type_info.self_impls_named_constraints.size(),
           SemIR::SpecificNamedConstraint::None);
-      for (auto [old_constraint, new_constraint] : llvm::reverse(
-               llvm::zip(old_facet_type_info.self_impls_named_constraints,
-                         new_facet_type_info.self_impls_named_constraints))) {
+      for (auto [old_constraint, new_constraint] :
+           llvm::reverse(llvm::zip_equal(
+               old_facet_type_info.self_impls_named_constraints,
+               new_facet_type_info.self_impls_named_constraints))) {
         new_constraint = {
             .named_constraint_id = old_constraint.named_constraint_id,
             .specific_id = pop_specific(old_constraint.specific_id)};
@@ -263,8 +264,8 @@ static auto PopOperand(Context& context, Worklist& worklist,
           old_facet_type_info.extend_named_constraints.size(),
           SemIR::SpecificNamedConstraint::None);
       for (auto [old_constraint, new_constraint] : llvm::reverse(
-               llvm::zip(old_facet_type_info.extend_named_constraints,
-                         new_facet_type_info.extend_named_constraints))) {
+               llvm::zip_equal(old_facet_type_info.extend_named_constraints,
+                               new_facet_type_info.extend_named_constraints))) {
         new_constraint = {
             .named_constraint_id = old_constraint.named_constraint_id,
             .specific_id = pop_specific(old_constraint.specific_id)};
@@ -273,8 +274,8 @@ static auto PopOperand(Context& context, Worklist& worklist,
           old_facet_type_info.self_impls_constraints.size(),
           SemIR::SpecificInterface::None);
       for (auto [old_constraint, new_constraint] : llvm::reverse(
-               llvm::zip(old_facet_type_info.self_impls_constraints,
-                         new_facet_type_info.self_impls_constraints))) {
+               llvm::zip_equal(old_facet_type_info.self_impls_constraints,
+                               new_facet_type_info.self_impls_constraints))) {
         new_constraint = {
             .interface_id = old_constraint.interface_id,
             .specific_id = pop_specific(old_constraint.specific_id)};
@@ -282,9 +283,9 @@ static auto PopOperand(Context& context, Worklist& worklist,
       new_facet_type_info.extend_constraints.resize(
           old_facet_type_info.extend_constraints.size(),
           SemIR::SpecificInterface::None);
-      for (auto [old_constraint, new_constraint] :
-           llvm::reverse(llvm::zip(old_facet_type_info.extend_constraints,
-                                   new_facet_type_info.extend_constraints))) {
+      for (auto [old_constraint, new_constraint] : llvm::reverse(
+               llvm::zip_equal(old_facet_type_info.extend_constraints,
+                               new_facet_type_info.extend_constraints))) {
         new_constraint = {
             .interface_id = old_constraint.interface_id,
             .specific_id = pop_specific(old_constraint.specific_id)};

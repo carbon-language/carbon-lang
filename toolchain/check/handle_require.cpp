@@ -13,6 +13,7 @@
 #include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/named_constraint.h"
@@ -81,6 +82,15 @@ auto HandleParseNode(Context& context, Parse::RequireDefaultSelfImplsId node_id)
 auto HandleParseNode(Context& context, Parse::RequireTypeImplsId node_id)
     -> bool {
   auto [self_node_id, self_inst_id] = context.node_stack().PopExprWithNodeId();
+
+  auto introducer = context.decl_introducer_state_stack().innermost();
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
+    CARBON_DIAGNOSTIC(RequireImplsExtendWithExplicitSelf, Error,
+                      "`extend require impls` with explicit type");
+    context.emitter().Emit(self_node_id, RequireImplsExtendWithExplicitSelf);
+    self_inst_id = SemIR::ErrorInst::InstId;
+  }
+
   auto self_type = ExprAsType(context, self_node_id, self_inst_id);
   context.node_stack().Push(node_id, self_type.inst_id);
   return true;
@@ -241,6 +251,8 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
     return true;
   }
 
+  bool extend = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend);
+
   auto require_impls_decl =
       SemIR::RequireImplsDecl{// To be filled in after.
                               .require_impls_id = SemIR::RequireImplsId::None,
@@ -251,6 +263,7 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
        .facet_type_inst_id =
            context.types().GetAsTypeInstId(constraint_inst_id),
        .facet_type_id = constraint_facet_type.facet_type_id,
+       .extend_self = extend,
        .decl_id = decl_id,
        .parent_scope_id = context.scope_stack().PeekNameScopeId(),
        .generic_id = BuildGenericDecl(context, decl_id)});

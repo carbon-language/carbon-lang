@@ -10,34 +10,16 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/impl_as_named_constraint.carbon
 
-// --- fail_incomplete_constraint.carbon
-library "[[@TEST_NAME]]";
-
-constraint A;
-
-class C {}
-
-// CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE+7]]:1: error: facet type `A` cannot be identified in `impl as` [ImplOfUnidentifiedFacetType]
-// CHECK:STDERR: impl C as A {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_incomplete_constraint.carbon:[[@LINE-7]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
-// CHECK:STDERR: constraint A;
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR:
-impl C as A {}
-
 // --- fail_empty_constraint.carbon
 library "[[@TEST_NAME]]";
 
 constraint A {}
 
-class C {}
-
 // CHECK:STDERR: fail_empty_constraint.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl C as A {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: impl () as A {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl C as A {}
+impl () as A {}
 
 // --- fail_too_many_interfaces_in_constraint.carbon
 library "[[@TEST_NAME]]";
@@ -45,50 +27,109 @@ library "[[@TEST_NAME]]";
 interface A1;
 interface A2;
 constraint B {
-  require impls A1;
-  require impls A2;
+  extend require impls A1;
+  extend require impls A2;
 }
 
-class C {}
-
-// TODO: This should fail since B does not name a single interface, it names
-// more than one.
-// CHECK:STDERR: fail_too_many_interfaces_in_constraint.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl C as B {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_many_interfaces_in_constraint.carbon:[[@LINE+4]]:1: error: impl as 2 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR: impl () as B {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl C as B {}
+impl () as B {}
 
-// --- fail_todo_one_declared_interface_in_constraint.carbon
+// --- one_extend_impls_interface_in_constraint.carbon
 library "[[@TEST_NAME]]";
 
-// TODO: This should work since B can be identified to have one interface.
+interface A;
+constraint B {
+  extend require impls A;
+}
+
+// Requries B identified.
+impl () as B;
+
+interface A {}
+
+// Requries B complete.
+impl () as B {}
+
+// --- fail_one_impls_interface_in_constraint.carbon
+library "[[@TEST_NAME]]";
 
 interface A;
 constraint B {
   require impls A;
 }
 
-class C {}
-// CHECK:STDERR: fail_todo_one_declared_interface_in_constraint.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl C as B {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_one_impls_interface_in_constraint.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR: impl () as B {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl C as B {}
+impl () as B {}
 
-// --- fail_todo_one_defined_interface_in_constraint.carbon
+// --- nested_constraints.carbon
 library "[[@TEST_NAME]]";
-
-// TODO: This should work since B can be identified to have one interface.
 
 interface A {}
 constraint B {
-  require impls A;
+  extend require impls A;
+}
+constraint C {
+  extend require impls B;
 }
 
-class C {}
-// CHECK:STDERR: fail_todo_one_defined_interface_in_constraint.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl C as B {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
+impl () as C {}
+
+// --- fail_nested_constraints_not_extend_outer.carbon
+library "[[@TEST_NAME]]";
+
+interface A {}
+
+constraint B {
+  extend require impls A;
+}
+constraint C {
+  require impls B;
+}
+
+// CHECK:STDERR: fail_nested_constraints_not_extend_outer.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR: impl () as C {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
-impl C as B {}
+impl () as C {}
+
+// --- fail_nested_constraints_not_extend_inner.carbon
+library "[[@TEST_NAME]]";
+
+interface A {}
+
+constraint B {
+  require impls A;
+}
+constraint C {
+  extend require impls B;
+}
+
+// CHECK:STDERR: fail_nested_constraints_not_extend_inner.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR: impl () as C {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as C {}
+
+// --- fail_nested_constraints_not_extend_both.carbon
+library "[[@TEST_NAME]]";
+
+interface A {}
+
+constraint B {
+  require impls A;
+}
+constraint C {
+  require impls B;
+}
+
+// CHECK:STDERR: fail_nested_constraints_not_extend_both.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR: impl () as C {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as C {}
