@@ -274,8 +274,8 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %require_complete.c94: <witness> = require_complete_type %I.type.070 [symbolic]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T [symbolic]
 // CHECK:STDOUT:   %I.type.229: type = facet_type <@I, @I(%ptr)> [symbolic]
-// CHECK:STDOUT:   %require_complete.555: <witness> = require_complete_type %I.type.229 [symbolic]
 // CHECK:STDOUT:   %I.impl_witness.a0f: <witness> = impl_witness imports.%I.impl_witness_table.af9, @C.as.I.impl.1fddff.1(%T) [symbolic]
+// CHECK:STDOUT:   %require_complete.555: <witness> = require_complete_type %I.type.229 [symbolic]
 // CHECK:STDOUT:   %Self.6d0: %I.type.229 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
@@ -289,15 +289,15 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %Main.import_ref.e46 = import_ref Main//import_generic, loc8_33, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//import_generic, loc4_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//import_generic, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %I.impl_witness_table.478 = impl_witness_table (), @C.as.I.impl.f3ed6b.1 [concrete]
 // CHECK:STDOUT:   %Main.import_ref.efcd44.2: type = import_ref Main//import_generic, loc8_14, loaded [symbolic = @C.as.I.impl.f3ed6b.1.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.29aca8.1: type = import_ref Main//import_generic, loc8_24, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.464: type = import_ref Main//import_generic, loc8_32, loaded [symbolic = @C.as.I.impl.f3ed6b.1.%I.type (constants.%I.type.070)]
-// CHECK:STDOUT:   %I.impl_witness_table.478 = impl_witness_table (), @C.as.I.impl.f3ed6b.1 [concrete]
 // CHECK:STDOUT:   %Main.import_ref.4f8 = import_ref Main//import_generic, loc12_35, unloaded
+// CHECK:STDOUT:   %I.impl_witness_table.af9 = impl_witness_table (), @C.as.I.impl.1fddff.1 [concrete]
 // CHECK:STDOUT:   %Main.import_ref.efcd44.3: type = import_ref Main//import_generic, loc12_14, loaded [symbolic = @C.as.I.impl.1fddff.1.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.29aca8.2: type = import_ref Main//import_generic, loc12_24, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.7b6: type = import_ref Main//import_generic, loc12_33, loaded [symbolic = @C.as.I.impl.1fddff.1.%I.type (constants.%I.type.229)]
-// CHECK:STDOUT:   %I.impl_witness_table.af9 = impl_witness_table (), @C.as.I.impl.1fddff.1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -645,14 +645,14 @@ impl forall [T:! type] D as J(T*) {}
 // CHECK:STDOUT:   %Main.import_ref.b3b = import_ref Main//import_generic_decl, loc5_23, unloaded
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//import_generic_decl, loc4_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.cab = import_ref Main//import_generic_decl, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %J.impl_witness_table.bc9 = impl_witness_table (), @D.as.J.impl.b470bf.1 [concrete]
 // CHECK:STDOUT:   %Main.import_ref.efcd44.2: type = import_ref Main//import_generic_decl, loc11_14, loaded [symbolic = @D.as.J.impl.b470bf.1.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.aa9f8a.1: type = import_ref Main//import_generic_decl, loc11_24, loaded [concrete = constants.%D]
 // CHECK:STDOUT:   %Main.import_ref.03f: type = import_ref Main//import_generic_decl, loc11_32, loaded [symbolic = @D.as.J.impl.b470bf.1.%J.type (constants.%J.type.8ec)]
-// CHECK:STDOUT:   %J.impl_witness_table.bc9 = impl_witness_table (), @D.as.J.impl.b470bf.1 [concrete]
+// CHECK:STDOUT:   %J.impl_witness_table.bd9 = impl_witness_table (), @D.as.J.impl.265db6.1 [concrete]
 // CHECK:STDOUT:   %Main.import_ref.efcd44.3: type = import_ref Main//import_generic_decl, loc17_14, loaded [symbolic = @D.as.J.impl.265db6.1.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.aa9f8a.2: type = import_ref Main//import_generic_decl, loc17_24, loaded [concrete = constants.%D]
 // CHECK:STDOUT:   %Main.import_ref.a00: type = import_ref Main//import_generic_decl, loc17_33, loaded [symbolic = @D.as.J.impl.265db6.1.%J.type (constants.%J.type.4fa)]
-// CHECK:STDOUT:   %J.impl_witness_table.bd9 = impl_witness_table (), @D.as.J.impl.265db6.1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
