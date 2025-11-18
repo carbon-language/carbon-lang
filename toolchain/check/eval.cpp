@@ -1720,9 +1720,10 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       CARBON_CHECK(arg_ids.size() == 2);
       auto lhs_facet_type_id = SemIR::FacetTypeId::None;
       auto rhs_facet_type_id = SemIR::FacetTypeId::None;
-      for (auto [facet_type_id, type_arg_id] : llvm::zip_equal(
-               std::to_array({&lhs_facet_type_id, &rhs_facet_type_id}),
-               context.types().GetBlockAsTypeInstIds(arg_ids))) {
+      for (auto [facet_type_id, arg_id] :
+           {std::make_pair(&lhs_facet_type_id, arg_ids[0]),
+            std::make_pair(&rhs_facet_type_id, arg_ids[1])}) {
+        auto type_arg_id = context.types().GetAsTypeInstId(arg_id);
         if (auto facet_type =
                 context.insts().TryGetAs<SemIR::FacetType>(type_arg_id)) {
           *facet_type_id = facet_type->facet_type_id;
