@@ -62,6 +62,20 @@ impl C as B;
 // This requires that B is complete.
 impl C as B {}
 
+// --- generic.carbon
+library "[[@TEST_NAME]]";
+
+constraint Generic(T:! type) {}
+
+// --- generic.impl.carbon
+impl library "[[@TEST_NAME]]";
+
+class C {}
+
+//@dump-sem-ir-begin
+fn F(T:! Generic(C)) {}
+//@dump-sem-ir-end
+
 // CHECK:STDOUT: --- a.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -159,5 +173,51 @@ impl C as B {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_6.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- generic.impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %Generic.type.3ee: type = generic_named_constaint_type @Generic [concrete]
+// CHECK:STDOUT:   %empty_struct: %Generic.type.3ee = struct_value () [concrete]
+// CHECK:STDOUT:   %Generic.type.b8d23b.2: type = facet_type <@Generic, @Generic(%C)> [concrete]
+// CHECK:STDOUT:   %T.861: %Generic.type.b8d23b.2 = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.e25: type = pattern_type %Generic.type.b8d23b.2 [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Main.Generic: %Generic.type.3ee = import_ref Main//generic, Generic, loaded [concrete = constants.%empty_struct]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %T.patt: %pattern_type.e25 = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc6: type = splice_block %Generic.type [concrete = constants.%Generic.type.b8d23b.2] {
+// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %Generic.ref: %Generic.type.3ee = name_ref Generic, imports.%Main.Generic [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:       %Generic.type: type = facet_type <@Generic, @Generic(constants.%C)> [concrete = constants.%Generic.type.b8d23b.2]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %T.loc6_6.2: %Generic.type.b8d23b.2 = symbolic_binding T, 0 [symbolic = %T.loc6_6.1 (constants.%T.861)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @F(%T.loc6_6.2: %Generic.type.b8d23b.2) {
+// CHECK:STDOUT:   %T.loc6_6.1: %Generic.type.b8d23b.2 = symbolic_binding T, 0 [symbolic = %T.loc6_6.1 (constants.%T.861)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%T.861) {
+// CHECK:STDOUT:   %T.loc6_6.1 => constants.%T.861
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
