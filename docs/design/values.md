@@ -29,11 +29,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Interop with C++ `const &` and `const` methods](#interop-with-c-const--and-const-methods)
     -   [Escape hatches for value addresses in Carbon](#escape-hatches-for-value-addresses-in-carbon)
 -   [Initializing expressions](#initializing-expressions)
-    -   [Initializing outcomes](#initializing-outcomes)
     -   [Function calls and returns](#function-calls-and-returns)
         -   [Deferred initialization from values and references](#deferred-initialization-from-values-and-references)
         -   [Declared `returned` variable](#declared-returned-variable)
 -   [Expression forms](#expression-forms)
+    -   [Initializing outcomes](#initializing-outcomes)
     -   [Form conversions](#form-conversions)
         -   [Type conversions](#type-conversions)
         -   [Category conversions](#category-conversions)
@@ -115,6 +115,11 @@ declared name. Owning reference expressions can only refer to complete objects,
 whereas non-owning reference expressions can refer to both complete objects and
 sub-objects (such as class fields and base class sub-objects). As a consequence,
 only owning reference expressions can be destructively moved.
+
+> **Future work:** This means that pointer-dereference expressions are
+> non-owning, but we will presumably want to be able to destructively move from
+> them. We need to figure out how to support that without violating the
+> invariant that a live object has live fields.
 
 Value binding and copy initialization can be applied to any reference
 expression, but materialization only produces owning ephemeral reference
@@ -303,15 +308,17 @@ _non-owning_, depending on whether the referenced object is known to be complete
 
 An _owning reference expression_ is one that is statically known to refer to a
 complete object. Other references are _non-owning_. Durable and ephemeral
-reference expressions can both be either owning or non-owning. An owning
-reference can be implicitly converted to a non-owning reference (with the same
-durability), because this merely discards the knowledge that the object is
-complete.
+reference expressions can both be either owning or non-owning. Unless otherwise
+specified, an expression or operation that produces a reference produces a
+non-owning reference.
 
-Any context that accepts a reference expression can accept an owning reference
-expression, and unless otherwise specified it can accept non-owning references
-as well. Unless otherwise specified, an expression or operation that produces a
-reference produces a non-owning reference.
+Note that a non-owning reference expression still _might_ refer to a complete
+object; the language rules just don't _guarantee_ that is does. As a result, an
+owning reference can be implicitly converted to a non-owning reference (with the
+same durability), because this merely discards the knowledge that the object is
+complete. By the same token, there is no context that requires a non-owning
+reference; only contexts that accept both, that accept only owning references,
+or that don't accept references at all.
 
 Currently, the only context that requires an owning reference is the scrutinee
 of a `var` pattern, which must be an owning ephemeral reference.
@@ -345,8 +352,8 @@ There are four contexts that require a durable reference expression in Carbon:
     the `Carbon.Assign.Op` interface method.
 -   [Address-of expressions](#pointer-syntax) require their operand to be a
     durable reference and compute the address of the referenced object.
--   [`ref` binding patterns](pattern_matching.md#name-binding-patterns)
-    require their scrutinee to be a durable reference.
+-   [`ref` binding patterns](pattern_matching.md#name-binding-patterns) require
+    their scrutinee to be a durable reference.
 -   If a function's [return form](#function-calls-and-returns) contains `ref`
     tags, `return` statements require the corresponding parts of the operand to
     be durable reference expressions.
@@ -389,10 +396,10 @@ used: their address can only be taken implicitly as part of a method call whose
 > Carbon will need to provide some interop and migration target for that kind of
 > code.
 
-There is one context that requires an owning ephemeral reference expression in
-Carbon: the scrutinee of a
-[`var` pattern](#binding-patterns-and-local-variables-with-let-and-var). There
-is no context that requires a non-owning ephemeral reference expression.
+There is one context that requires an ephemeral reference expression in Carbon:
+the scrutinee of a
+[`var` pattern](#binding-patterns-and-local-variables-with-let-and-var) (which
+also requires the reference to be owning).
 
 There is only one kind of explicit expression that produces an ephemeral
 reference: a member access expression `x.member` or `x.(member)`, where `x` is
@@ -597,34 +604,17 @@ initializing expression if necessary, and then temporary storage is materialized
 to act as its output, and as the referent of the resulting ephemeral reference
 expression.
 
-### Initializing outcomes
-
-An _initializing outcome_ is the notional result of evaluating an initializing
-expression, and represents an obligation to provide storage for an object of the
-expression's type. This obligation can be fulfilled by allocating suitable
-storage and materializing the initializing outcome into it, or it can be
-delegated by returning it to some enclosing context, where it acts as an
-initializing expression.
-
-This delegation only happens in a few local contexts whose semantics are defined
-by the core language, such as forming a tuple or struct literal from its
-elements, or [converting between composite forms](#form-conversions), where the
-generated code can compute the storage location beforehand, and use it as a
-hidden output parameter when evaluating the initializing expression. The
-initializing outcome abstracts away that hidden output parameter and lets us use
-the conventional vocabulary of expression evaluation, where information flows
-into an operation from its operands and not the other way around.
-
 ### Function calls and returns
 
-The [outcome](#expression-forms) of a function call can have an almost arbitrary form. The return
-clause of a function signature consists of `->` followed by a _return form_, an
-expression-like syntax that specifies not only the type but also the form of the
-function call's outcome. `return` expressions in the function body are expected
-to have that form, and are converted to it if necessary. When a function is
-declared without a return clause, it behaves from the caller's point of view as
-if the return clause were `-> ()`, but `return` statements in the function body
-don't take operands (and can be omitted at the end of the function).
+The [outcome](#expression-forms) of a function call can have an almost arbitrary
+form. The return clause of a function signature consists of `->` followed by a
+_return form_, an expression-like syntax that specifies not only the type but
+also the form of the function call's outcome. `return` expressions in the
+function body are expected to have that form, and are converted to it if
+necessary. When a function is declared without a return clause, it behaves from
+the caller's point of view as if the return clause were `-> ()`, but `return`
+statements in the function body don't take operands (and can be omitted at the
+end of the function).
 
 In the common case, the return form is a type expression, in which case calls
 are modeled directly as initializing expressions -- they require storage as an
@@ -822,13 +812,32 @@ The type of an expression is the type component of the expression's form.
 An _outcome_ is the result of evaluating an expression. It can be defined
 recursively in terms of the expression's form:
 
--   The outcome of an initializing expression is an [initializing outcome](#initializing-outcomes).
+-   The outcome of an initializing expression is an
+    [initializing outcome](#initializing-outcomes).
 -   The outcome of a value expression is a value.
 -   The outcome of a reference expression is a reference of the same kind.
 -   The outcome of an expression with tuple form is a tuple of outcomes.
 -   The outcome of an expression with struct form is a struct of outcomes.
 
 An expression and its outcome always have the same form.
+
+### Initializing outcomes
+
+An _initializing outcome_ is the notional result of evaluating an initializing
+expression, and represents an obligation to provide storage for an object of the
+expression's type. This obligation can be fulfilled directly by providing
+suitable storage (as with temporary materialization, for example), or it can be
+delegated by returning it to some enclosing context, where it acts as an
+initializing expression.
+
+This delegation only happens in a few local contexts whose semantics are defined
+by the core language, such as forming a tuple or struct literal from its
+elements, or [converting between composite forms](#form-conversions), where the
+generated code can compute the storage location beforehand, and use it as a
+hidden output parameter when evaluating the initializing expression. The
+initializing outcome abstracts away that hidden output parameter and lets us use
+the conventional vocabulary of expression evaluation, where information flows
+into an operation from its operands and not the other way around.
 
 ### Form conversions
 
@@ -850,13 +859,12 @@ In some cases an expression's outcome is _discarded_, such as when the
 expression is used as a statement, or is matched with an
 [unused binding pattern](pattern_matching.md#unused-bindings). Discarding an
 outcome is a form conversion that does nothing except materialize any
-initializing sub-outcomes, in order to satisfy the requirement that every
-initializing outcome is materialized.
+initializing sub-outcomes, in order to satisfy the obligation to provide storage
+to every initializing outcome.
 
-Phase conversions cannot change the form
-structure; they can only apply primitive phase conversions to primitive
-sub-forms. Type and category conversions are more complex, and are covered in
-the next two sections.
+Phase conversions cannot change the form structure; they can only apply
+primitive phase conversions to primitive sub-forms. Type and category
+conversions are more complex, and are covered in the next two sections.
 
 #### Type conversions
 
@@ -873,6 +881,11 @@ described here because of their unique interactions with expression forms.
 
 Each of the conversions described in this section is explicit if and only if it
 invokes another explicit type conversion. Otherwise, it is implicit.
+
+A type conversion of a primitive-form expression to a
+[compatible types](generics/terminology.md#compatible-types) just re-interprets
+the expressions outcome with a new type, so it requires no run-time work, and
+has the same category as the input expression.
 
 An outcome `source` that has a struct type can be converted to a struct type
 `Dest` if they have the same set of field names:
@@ -907,11 +920,12 @@ inefficient?
 
 There is a conversion to a class type `Dest` from an outcome `source` that has a
 struct type, if there is a conversion from `source` to a struct type that has
-the same field names as `Dest`, with the same types, in the same order. The
-conversion type-converts `source` to that struct type, category-converts that to
-an initializing expression of the struct type, and then reinterprets it as an
-initializing expression of `Dest` (which is layout-compatible with the struct
-type by construction).
+the same field names as `Dest` (including a `.base` field if `Dest` is a derived
+class), with the same types, in the same order. The conversion type-converts
+`source` to that struct type, category-converts that to an initializing
+expression of the struct type, and then reinterprets it as an initializing
+expression of `Dest` (which is layout-compatible with the struct type by
+construction).
 
 Note that some fields of an object may be initialized directly by the evaluation
 of the source expression, while others may be initialized by the conversions
@@ -931,12 +945,13 @@ of that conversion.
 
 #### Category conversions
 
-_Form composition_ converts an expression of composite form with consistent category to a
-primitive form as follows (where `min` as applied to phases uses the ordering
-"runtime" < "symbolic" < "template"):
+_Form composition_ converts an expression of composite form with consistent
+category to a primitive form as follows (where `min` as applied to phases uses
+the ordering "runtime" < "symbolic" < "template"):
 
--   An expression of tuple form `([T1, C, P1, V1], [T2, C, P2, V2], ... [TN, C, PN, VN])` can
-    be converted to a primitive form
+-   An expression of tuple form
+    `([T1, C, P1, V1], [T2, C, P2, V2], ... [TN, C, PN, VN])` can be converted
+    to a primitive form
     `[(T1, T2, ..., TN), C, min(P1, P2, ..., PN), (V1, V2, ... VN)]`.
 -   An expression of struct form
     `{.a = [Ta, C, Pa, Va], .b = [Tb, C, Pb, Vb], ... .z = [Tz, C, Pz, Vz]}` can
@@ -950,8 +965,8 @@ expression that initializes the whole aggregate. `C` cannot be a reference
 category, because an aggregate of references to independent objects can't be
 replaced by a reference to a single aggregate object in a single step.
 
-_Category conversion_ converts a form to have a given category component without
-changing its type, so long as the target category component is not "less
+_Category conversion_ converts an expression to have a given category component
+without changing its type, so long as the target category component is not "less
 primitive" than the source form. The conversion works by combining form
 composition with primitive category conversions, and is defined recursively:
 
@@ -972,13 +987,15 @@ composition with primitive category conversions, and is defined recursively:
         category-convert each source sub-form to `C`, and then convert the
         aggregate result of these conversions to `C` by form composition.
 
-_Form decomposition_ is the inverse of form composition. It converts a primitive
-form to a composite form as follows:
+_Form decomposition_ is the inverse of form composition. It converts a
+primitive-form expression to a composite form as follows:
 
--   A primitive form `[(T1, T2, ..., TN), C, P, V]` can be converted to a tuple
-    form `([T1, CC, P, V.0], [T2, CC, P, V.1], ... [TN, CC, P, V.(N-1)])`.
--   A primitive form `[{.a = Ta, .b = Tb, ... .z = Tz}, C, P, V]` can be
-    converted to a struct form
+-   An expression with primitive form `[(T1, T2, ..., TN), C, P, V]` can be
+    converted to a tuple form
+    `([T1, CC, P, V.0], [T2, CC, P, V.1], ... [TN, CC, P, V.(N-1)])`.
+-   An expression with primitive form
+    `[{.a = Ta, .b = Tb, ... .z = Tz}, C, P, V]` can be converted to a struct
+    form
     `{.a = [Ta, CC, P, V.a], .b = [Tb, CC, P, V.b], ... .z = [Tz, CC, P, V.z]}`.
 
 The category `CC` of the resulting sub-forms is the same as `C`, with two
@@ -992,8 +1009,8 @@ exceptions:
 -   If `C` is "initializing", `CC` will be "owning ephemeral reference", because
     the initializing outcome must be materialized before it can be decomposed.
 
-By convention, form decomposition is a no-op when applied to a struct or tuple
-form.
+By convention, form decomposition is a no-op when applied to an expression with
+struct or tuple form.
 
 Form decomposition occurs only where explicitly specified, because it adds
 structural information that may not have been originally present, so it is

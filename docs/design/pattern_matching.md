@@ -191,9 +191,9 @@ fn F() -> i32 {
 }
 ```
 
-`self` can be used instead of an identifier only if the pattern is an implicit
-parameter of a member function (optionally enclosed in a `var` pattern). This
-marks the function as a method; during pattern matching, the parameter pattern
+When `self` is used instead of an identifier, and the pattern is an implicit
+parameter of a class function (optionally enclosed in a `var` pattern), that
+marks the function as a method. During pattern matching, the parameter pattern
 containing `self` is matched with the object that the method was invoked on.
 Other than that, a `self` pattern behaves just like an ordinary binding pattern,
 introducing a binding named `self` into scope, just as if `self` were an

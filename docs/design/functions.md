@@ -107,7 +107,8 @@ When the return clause is provided, including when it is `-> ()`, the `return`
 statement must have an expression that is convertible to the return type, and a
 `return` statement must be used to end control flow of the function.
 
-> **TODO:** Update this section to cover the form
+> **TODO:** Update this section to cover the requirements on the form of the
+> expression.
 
 ## Function declarations
 
