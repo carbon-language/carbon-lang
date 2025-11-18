@@ -72,45 +72,130 @@ static auto NoteIncompleteNamedConstraint(
   }
 }
 
+// Makes a copy of a Specific from one generic to apply to another given
+// `generic_id`, with a given `Self` argument appended to the end.
+static auto MakeCopyOfSpecificAndAppendSelf(
+    Context& context, SemIR::LocId loc_id, SemIR::SpecificId specific_id,
+    SemIR::GenericId generic_id, SemIR::InstId self_id) -> SemIR::SpecificId {
+  auto source_specific_args_id =
+      context.specifics().GetArgsOrEmpty(specific_id);
+  auto source_specific_args =
+      context.inst_blocks().Get(source_specific_args_id);
+
+  llvm::SmallVector<SemIR::InstId> arg_ids;
+  arg_ids.reserve(source_specific_args.size() + 1);
+  // Start with the enclosing arguments from the source Specific.
+  llvm::append_range(arg_ids, source_specific_args);
+  // Add the new `Self` argument.
+  arg_ids.push_back(self_id);
+
+  return MakeSpecific(context, loc_id, generic_id, arg_ids);
+}
+
+static auto GetRequireImplsSpecificSelf(Context& context,
+                                        const SemIR::RequireImpls& require)
+    -> SemIR::InstId {
+  const auto& require_generic = context.generics().Get(require.generic_id);
+  const auto& require_self_specific =
+      context.specifics().Get(require_generic.self_specific_id);
+  auto require_self_specific_args =
+      context.inst_blocks().Get(require_self_specific.args_id);
+  // The last argument of a `require` generic is always `Self`, as require can
+  // not have any parameters of its own, only enclosing parameters.
+  return require_self_specific_args.back();
+}
+
+static auto GetFacetTypeInSpecific(Context& context,
+                                   SemIR::SpecificId specific_id,
+                                   SemIR::InstId facet_type)
+    -> SemIR::FacetTypeId {
+  auto const_facet_type = SemIR::GetConstantValueInSpecific(
+      context.sem_ir(), specific_id, facet_type);
+  if (const_facet_type == SemIR::ErrorInst::ConstantId) {
+    return SemIR::FacetTypeId::None;
+  }
+  auto facet_type_in_specific = context.insts().GetAs<SemIR::FacetType>(
+      context.constant_values().GetInstId(const_facet_type));
+  return facet_type_in_specific.facet_type_id;
+}
+
 static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
                                      const SemIR::FacetType& facet_type,
                                      MakeDiagnosticBuilderFn diagnoser)
     -> bool {
-  const auto& facet_type_info =
-      context.facet_types().Get(facet_type.facet_type_id);
+  llvm::SmallVector<SemIR::FacetTypeId> work = {facet_type.facet_type_id};
+  while (!work.empty()) {
+    auto next_facet_type_id = work.pop_back_val();
+    const auto& facet_type_info = context.facet_types().Get(next_facet_type_id);
 
-  for (auto extends : facet_type_info.extend_constraints) {
-    auto interface_id = extends.interface_id;
-    const auto& interface = context.interfaces().Get(interface_id);
-    if (!interface.is_complete()) {
-      if (diagnoser) {
-        auto builder = diagnoser();
-        NoteIncompleteInterface(context, interface_id, builder);
-        builder.Emit();
+    struct SpecificForRequires {
+      SemIR::SpecificId specific_id;
+      SemIR::RequireImplsBlockId requires_block_id;
+    };
+    llvm::SmallVector<SpecificForRequires> specifics;
+
+    for (auto extends : facet_type_info.extend_constraints) {
+      auto interface_id = extends.interface_id;
+      const auto& interface = context.interfaces().Get(interface_id);
+      if (!interface.is_complete()) {
+        if (diagnoser) {
+          auto builder = diagnoser();
+          NoteIncompleteInterface(context, interface_id, builder);
+          builder.Emit();
+        }
+        return false;
       }
-      return false;
-    }
-
-    if (extends.specific_id.has_value()) {
-      ResolveSpecificDefinition(context, loc_id, extends.specific_id);
-    }
-  }
-
-  for (auto extends : facet_type_info.extend_named_constraints) {
-    auto named_constraint_id = extends.named_constraint_id;
-    const auto& constraint =
-        context.named_constraints().Get(named_constraint_id);
-    if (!constraint.is_complete()) {
-      if (diagnoser) {
-        auto builder = diagnoser();
-        NoteIncompleteNamedConstraint(context, named_constraint_id, builder);
-        builder.Emit();
+      if (interface.generic_id.has_value()) {
+        specifics.push_back(
+            {extends.specific_id, interface.require_impls_block_id});
       }
-      return false;
+      if (extends.specific_id.has_value()) {
+        ResolveSpecificDefinition(context, loc_id, extends.specific_id);
+      }
     }
 
-    if (extends.specific_id.has_value()) {
-      ResolveSpecificDefinition(context, loc_id, extends.specific_id);
+    for (auto extends : facet_type_info.extend_named_constraints) {
+      auto named_constraint_id = extends.named_constraint_id;
+      const auto& constraint =
+          context.named_constraints().Get(named_constraint_id);
+      if (!constraint.is_complete()) {
+        if (diagnoser) {
+          auto builder = diagnoser();
+          NoteIncompleteNamedConstraint(context, named_constraint_id, builder);
+          builder.Emit();
+        }
+        return false;
+      }
+      if (constraint.generic_id.has_value()) {
+        specifics.push_back(
+            {extends.specific_id, constraint.require_impls_block_id});
+      }
+      if (extends.specific_id.has_value()) {
+        ResolveSpecificDefinition(context, loc_id, extends.specific_id);
+      }
+    }
+
+    // Formulate a specific for each `require` declaration, as the specific may
+    // introduce errors. Then recurse on those specific facet types to find
+    // other interfaces/constraints that may contain other require declarations.
+    for (auto [specific_id, requires_block_id] : specifics) {
+      for (auto require_impls_id :
+           context.require_impls_blocks().Get(requires_block_id)) {
+        const auto& require = context.require_impls().Get(require_impls_id);
+        if (require.extend_self) {
+          auto require_specific_id = MakeCopyOfSpecificAndAppendSelf(
+              context, loc_id, specific_id, require.generic_id,
+              GetRequireImplsSpecificSelf(context, require));
+          // Construct the specific facet type. If None is returned, it means an
+          // error was diagnosed.
+          auto facet_type_id = GetFacetTypeInSpecific(
+              context, require_specific_id, require.facet_type_inst_id);
+          if (!facet_type_id.has_value()) {
+            return false;
+          }
+          work.push_back(facet_type_id);
+        }
+      }
     }
   }
 

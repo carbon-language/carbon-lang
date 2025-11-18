@@ -103,3 +103,25 @@ constraint J(N:! i32) {
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
 var v: J(-1);
+
+// --- interface_require_impls_doesnt_need_complete_self.carbon
+library "[[@TEST_NAME]]";
+
+interface K {}
+interface J(N:! i32) {
+  require array(Self, N) impls K;
+}
+
+// J does not extend K so the type of Self impling K is not completed. No error.
+var v: J(-1);
+
+// --- constraint_require_impls_doesnt_need_complete_self.carbon
+library "[[@TEST_NAME]]";
+
+interface K {}
+constraint J(N:! i32) {
+  require array(Self, N) impls K;
+}
+
+// J does not extend K so the type of Self impling K is not completed. No error.
+var v: J(-1);
