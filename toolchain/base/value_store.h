@@ -226,11 +226,11 @@ class ValueStore
   auto GetWithDefault(IdType id,  //
                       ConstRefType default_value [[clang::lifetimebound]]) const
       -> ConstRefType {
+    CARBON_DCHECK(id.index >= 0, "{0}", id);
     auto index = tag_.Remove(id.index);
     if (index >= size_) {
       return default_value;
     }
-    CARBON_DCHECK(index >= 0, "{0}", id);
     auto [chunk_index, pos] = RawIndexToChunkIndices(index);
     return chunks_[chunk_index].Get(pos);
   }
@@ -325,8 +325,8 @@ class ValueStore
 
   auto GetIdTag() const -> IdTag { return tag_; }
   auto GetRawIndex(IdT id) const -> int32_t {
+    CARBON_DCHECK(id.index >= 0, "{0}", index);
     auto index = tag_.Remove(id.index);
-    CARBON_DCHECK(index >= 0, "{0}", index);
 #ifndef NDEBUG
     if (index >= size_) {
       // Attempt to decompose id.index to include extra detail in the check
