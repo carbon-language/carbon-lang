@@ -89,7 +89,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.CONFIG_VALUE;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+11]]:3: error: invalid integer type [InCppConstantMapping]
+  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: constant type: unsigned long long` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.CONFIG_VALUE;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
@@ -264,7 +264,7 @@ import Cpp library "string_literal_object_like_macro.h";
 
 fn F() {
   // TODO: Get rid of the second error.
-  // CHECK:STDERR: fail_todo_import_string_literal_object_like_macro.carbon:[[@LINE+11]]:3: error: semantics TODO: `non-integer constant expression in macro.` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_string_literal_object_like_macro.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: constant type:const char[4]` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.CONFIG_VALUE;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_import_string_literal_object_like_macro.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
@@ -279,28 +279,46 @@ fn F() {
 }
 
 // --- floating_point_literal_macro.h
-#define PI 3.14
+#define MyDouble 1.0
+#define MyDoubleE 1e2
+#define MyFloat 1.f
 
-// --- fail_todo_floating_point_literal_macro.carbon
+// --- import_floating_point_literal_macro.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "floating_point_literal_macro.h";
 
 fn F() {
-  // TODO: Get rid of the second error.
-  // CHECK:STDERR: fail_todo_floating_point_literal_macro.carbon:[[@LINE+11]]:16: error: semantics TODO: `non-integer constant expression in macro.` [SemanticsTodo]
-  // CHECK:STDERR:   let a: f64 = Cpp.PI;
-  // CHECK:STDERR:                ^~~~~~
-  // CHECK:STDERR: fail_todo_floating_point_literal_macro.carbon:[[@LINE+8]]:16: note: in `Cpp` name lookup for `PI` [InCppNameLookup]
-  // CHECK:STDERR:   let a: f64 = Cpp.PI;
-  // CHECK:STDERR:                ^~~~~~
+  //@dump-sem-ir-begin
+  let a: f64 = Cpp.MyDouble;
+  let b: f64 = Cpp.MyDoubleE;
+  let c: f32 = Cpp.MyFloat;
+  //@dump-sem-ir-end
+}
+
+// --- unsupported_floating_point_literal_macro.h
+#define MyLongDouble 987.654l
+
+// --- fail_import_unsupported_floating_point_literal_macro.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "unsupported_floating_point_literal_macro.h";
+
+fn F() {
+  // CHECK:STDERR: fail_import_unsupported_floating_point_literal_macro.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: constant type: long double` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.MyLongDouble;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_unsupported_floating_point_literal_macro.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `MyLongDouble` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.MyLongDouble;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_floating_point_literal_macro.carbon:[[@LINE+4]]:16: error: member name `PI` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let a: f64 = Cpp.PI;
-  // CHECK:STDERR:                ^~~~~~
+  // CHECK:STDERR: fail_import_unsupported_floating_point_literal_macro.carbon:[[@LINE+4]]:3: error: member name `MyLongDouble` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   Cpp.MyLongDouble;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let a: f64 = Cpp.PI;
+  Cpp.MyLongDouble;
 }
 
 // --- macro_undefined.h
@@ -719,6 +737,70 @@ fn F() {
 // CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %i32 = value_binding a, %INDIRECT_ONE.ref
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_floating_point_literal_macro.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %pattern_type.0ae: type = pattern_type %f64.d77 [concrete]
+// CHECK:STDOUT:   %float.d20: %f64.d77 = float_value 1 [concrete]
+// CHECK:STDOUT:   %float.e0c: %f64.d77 = float_value 100 [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %f32.97e: type = class_type @Float, @Float(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.201: type = pattern_type %f32.97e [concrete]
+// CHECK:STDOUT:   %float.e3b: %f32.97e = float_value 1 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .MyDouble = %float.d20
+// CHECK:STDOUT:     .MyDoubleE = %float.e0c
+// CHECK:STDOUT:     .MyFloat = %float.e3b
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %float.d20: %f64.d77 = float_value 1 [concrete = constants.%float.d20]
+// CHECK:STDOUT:   %float.e0c: %f64.d77 = float_value 100 [concrete = constants.%float.e0c]
+// CHECK:STDOUT:   %float.e3b: %f32.97e = float_value 1 [concrete = constants.%float.e3b]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.0ae = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %MyDouble.ref: %f64.d77 = name_ref MyDouble, imports.%float.d20 [concrete = constants.%float.d20]
+// CHECK:STDOUT:   %.loc8: type = splice_block %f64.loc8 [concrete = constants.%f64.d77] {
+// CHECK:STDOUT:     %int_64.loc8: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
+// CHECK:STDOUT:     %f64.loc8: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: %f64.d77 = value_binding a, %MyDouble.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type.0ae = value_binding_pattern b [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %MyDoubleE.ref: %f64.d77 = name_ref MyDoubleE, imports.%float.e0c [concrete = constants.%float.e0c]
+// CHECK:STDOUT:   %.loc9: type = splice_block %f64.loc9 [concrete = constants.%f64.d77] {
+// CHECK:STDOUT:     %int_64.loc9: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
+// CHECK:STDOUT:     %f64.loc9: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b: %f64.d77 = value_binding b, %MyDoubleE.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.201 = value_binding_pattern c [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %MyFloat.ref: %f32.97e = name_ref MyFloat, imports.%float.e3b [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc10: type = splice_block %f32.loc10 [concrete = constants.%f32.97e] {
+// CHECK:STDOUT:     %int_32.loc10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %f32.loc10: type = class_type @Float, @Float(constants.%int_32) [concrete = constants.%f32.97e]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c: %f32.97e = value_binding c, %MyFloat.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

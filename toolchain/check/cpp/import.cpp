@@ -2254,23 +2254,31 @@ static auto IsIncompleteClass(Context& context, SemIR::NameScopeId scope_id)
 static auto MapConstant(Context& context, SemIR::LocId loc_id,
                         clang::Expr* expr) -> SemIR::InstId {
   CARBON_CHECK(expr, "empty expression");
-  auto* integer_literal = dyn_cast<clang::IntegerLiteral>(expr);
-  if (!integer_literal) {
+
+  SemIR::TypeId type_id = MapType(context, loc_id, expr->getType()).type_id;
+  if (!type_id.has_value()) {
     context.TODO(
         loc_id, "Unsupported: constant type: " + expr->getType().getAsString());
     return SemIR::ErrorInst::InstId;
   }
-  SemIR::TypeId type_id =
-      MapType(context, loc_id, integer_literal->getType()).type_id;
-  if (!type_id.has_value()) {
-    CARBON_DIAGNOSTIC(InCppConstantMapping, Error, "invalid integer type");
-    context.emitter().Emit(loc_id, InCppConstantMapping);
-    return SemIR::ErrorInst::InstId;
+  SemIR::InstId inst_id = SemIR::InstId::None;
+  if (auto* integer_literal = dyn_cast<clang::IntegerLiteral>(expr)) {
+    auto int_id =
+        context.ints().Add(integer_literal->getValue().getSExtValue());
+    inst_id = AddInstInNoBlock<SemIR::IntValue>(
+        context, loc_id, {.type_id = type_id, .int_id = int_id});
+  } else if (auto* float_literal = dyn_cast<clang::FloatingLiteral>(expr)) {
+    auto float_id = context.floats().Add(float_literal->getValue());
+    inst_id = AddInstInNoBlock<SemIR::FloatValue>(
+        context, loc_id, {.type_id = type_id, .float_id = float_id});
+  } else {
+    context.TODO(
+        loc_id, "Unsupported: constant type: " + expr->getType().getAsString());
+    inst_id = SemIR::ErrorInst::InstId;
   }
-  auto int_id = context.ints().Add(integer_literal->getValue().getSExtValue());
-  auto inst_id = AddInstInNoBlock<SemIR::IntValue>(
-      context, loc_id, {.type_id = type_id, .int_id = int_id});
-  context.imports().push_back(inst_id);
+  if (inst_id != SemIR::ErrorInst::InstId) {
+    context.imports().push_back(inst_id);
+  }
   return inst_id;
 }
 

@@ -40,7 +40,8 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
 
   tokens.push_back(current_token);
 
-  preprocessor.EnterTokenStream(tokens, false, false);
+  preprocessor.EnterTokenStream(tokens, /*DisableMacroExpansion=*/false,
+                                /*IsReinject=*/false);
   parser.ConsumeAnyToken(true);
 
   clang::ExprResult result = parser.ParseConstantExpression();
@@ -60,13 +61,21 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
   }
 
   clang::Expr::EvalResult evaluated_result;
-  if (!result_expr->EvaluateAsInt(evaluated_result, sema.getASTContext())) {
-    context.TODO(loc_id, "non-integer constant expression in macro.");
-    return nullptr;
+  if (result_expr->EvaluateAsInt(evaluated_result, sema.getASTContext())) {
+    return clang::IntegerLiteral::Create(
+        sema.getASTContext(), evaluated_result.Val.getInt(),
+        result_expr->getType(), result_expr->getExprLoc());
   }
-  return clang::IntegerLiteral::Create(
-      sema.getASTContext(), evaluated_result.Val.getInt(),
-      result_expr->getType(), result_expr->getExprLoc());
+  llvm::APFloat ap_value(0.0);
+  if (result_expr->EvaluateAsFloat(ap_value, sema.getASTContext())) {
+    return clang::FloatingLiteral::Create(
+        sema.getASTContext(), ap_value,
+        /*isExact=*/true, result_expr->getType(), result_expr->getExprLoc());
+  }
+
+  context.TODO(loc_id, "Unsupported: constant type:" +
+                           result_expr->getType().getAsString());
+  return nullptr;
 }
 
 }  // namespace Carbon::Check

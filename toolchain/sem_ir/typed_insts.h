@@ -683,10 +683,8 @@ struct FloatType {
 
 // A floating point value.
 struct FloatValue {
-  static constexpr auto Kind =
-      InstKind::FloatValue.Define<Parse::RealLiteralId>(
-          {.ir_name = "float_value",
-           .constant_kind = InstConstantKind::Always});
+  static constexpr auto Kind = InstKind::FloatValue.Define<Parse::NodeId>(
+      {.ir_name = "float_value", .constant_kind = InstConstantKind::Always});
 
   TypeId type_id;
   FloatId float_id;
