@@ -482,11 +482,11 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Main.import_ref.5a3: %Add.Op.type = import_ref Main//generic_impl, loc5_41, loaded [concrete = constants.%Add.Op]
 // CHECK:STDOUT:   %Main.import_ref.a78: %Add.type = import_ref Main//generic_impl, loc4_15, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.06e: <witness> = import_ref Main//generic_impl, loc15_48, loaded [symbolic = @MyInt.as.Add.impl.%Add.impl_witness (constants.%Add.impl_witness.ec1)]
+// CHECK:STDOUT:   %Main.import_ref.59c: @MyInt.as.Add.impl.%MyInt.as.Add.impl.Op.type (%MyInt.as.Add.impl.Op.type.1ab) = import_ref Main//generic_impl, loc16_42, loaded [symbolic = @MyInt.as.Add.impl.%MyInt.as.Add.impl.Op (constants.%MyInt.as.Add.impl.Op.959)]
+// CHECK:STDOUT:   %Add.impl_witness_table = impl_witness_table (%Main.import_ref.59c), @MyInt.as.Add.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.40af26.2: Core.IntLiteral = import_ref Main//generic_impl, loc15_14, loaded [symbolic = @MyInt.as.Add.impl.%N (constants.%N)]
 // CHECK:STDOUT:   %Main.import_ref.fbc: type = import_ref Main//generic_impl, loc15_39, loaded [symbolic = @MyInt.as.Add.impl.%MyInt (constants.%MyInt.19f)]
 // CHECK:STDOUT:   %Main.import_ref.bf0: type = import_ref Main//generic_impl, loc15_44, loaded [concrete = constants.%Add.type]
-// CHECK:STDOUT:   %Main.import_ref.59c: @MyInt.as.Add.impl.%MyInt.as.Add.impl.Op.type (%MyInt.as.Add.impl.Op.type.1ab) = import_ref Main//generic_impl, loc16_42, loaded [symbolic = @MyInt.as.Add.impl.%MyInt.as.Add.impl.Op (constants.%MyInt.as.Add.impl.Op.959)]
-// CHECK:STDOUT:   %Add.impl_witness_table = impl_witness_table (%Main.import_ref.59c), @MyInt.as.Add.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.40af26.3: Core.IntLiteral = import_ref Main//generic_impl, loc15_14, loaded [symbolic = @MyInt.as.Add.impl.%N (constants.%N)]
 // CHECK:STDOUT:   %Main.import_ref.40af26.4: Core.IntLiteral = import_ref Main//generic_impl, loc19_11, loaded [symbolic = @Double.%N (constants.%N)]
 // CHECK:STDOUT: }

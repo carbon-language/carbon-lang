@@ -794,6 +794,8 @@ struct GenericData {
     SemIR::ConstantId inst_constant_id;
   };
   llvm::SmallVector<Binding> bindings;
+
+  llvm::SmallVector<SemIR::InstId> decl_block;
 };
 }  // namespace
 
@@ -818,6 +820,9 @@ static auto GetLocalGenericData(ImportRefResolver& resolver,
              .inst_constant_id = GetLocalConstantId(resolver, import_inst_id)});
       }
     }
+
+    generic_data.decl_block =
+        GetLocalInstBlockContents(resolver, import_generic.decl_block_id);
   }
   return generic_data;
 }
@@ -846,6 +851,12 @@ static auto SetGenericData(ImportContext& context,
         context, local_type_id, import_binding_id, binding.inst_constant_id));
   }
   new_generic.bindings_id = context.local_inst_blocks().Add(new_bindings);
+
+  // TODO: Import the generic eval block rather than calling
+  // RebuildGenericEvalBlock to rebuild it so that order doesn't matter.
+  new_generic.decl_block_id = RebuildGenericEvalBlock(
+      context.local_context(), new_generic_id,
+      SemIR::GenericInstIndex::Region::Declaration, generic_data.decl_block);
 
   // Track that we need to fill in the remaining information in
   // FinishPendingGeneric.
@@ -3969,10 +3980,6 @@ static auto FinishPendingGeneric(ImportRefResolver& resolver,
   const auto& import_generic =
       resolver.import_generics().Get(pending.import_id);
   auto& local_generic = resolver.local_generics().Get(pending.local_id);
-
-  local_generic.decl_block_id =
-      ResolveLocalEvalBlock(resolver, import_generic, pending.local_id,
-                            SemIR::GenericInstIndex::Region::Declaration);
 
   local_generic.self_specific_id =
       MakeSelfSpecific(resolver.local_context(),
