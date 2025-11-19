@@ -4825,8 +4825,8 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Base.F.type.3ca: type = fn_type @Base.F, @Base(%T) [symbolic]
 // CHECK:STDOUT:   %Base.F.77f: %Base.F.type.3ca = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.7f5: type = pattern_type %Base.8f3 [symbolic]
-// CHECK:STDOUT:   %Base.F.specific_fn.2ee: <specific function> = specific_function %Base.F.77f, @Base.F(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Base.8f3 [symbolic]
+// CHECK:STDOUT:   %Base.F.specific_fn.2ee: <specific function> = specific_function %Base.F.77f, @Base.F(%T) [symbolic]
 // CHECK:STDOUT:   %Base.ea5: type = class_type @Base, @Base(%T1) [concrete]
 // CHECK:STDOUT:   %Base.F.type.d82: type = fn_type @Base.F, @Base(%T1) [concrete]
 // CHECK:STDOUT:   %Base.F.d25: %Base.F.type.d82 = struct_value () [concrete]
@@ -4847,10 +4847,10 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.4aa: ref %ptr.454 = import_ref Main//generic_lib, loc6_1, loaded [concrete = constants.%Base.vtable_decl]
-// CHECK:STDOUT:   %Main.import_ref.efcd44.1: type = import_ref Main//generic_lib, loc4_17, loaded [symbolic = @Base.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.05e: <witness> = import_ref Main//generic_lib, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.a14 = import_ref Main//generic_lib, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.184 = import_ref Main//generic_lib, loc5_30, unloaded
+// CHECK:STDOUT:   %Main.import_ref.efcd44.1: type = import_ref Main//generic_lib, loc4_17, loaded [symbolic = @Base.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.efcd44.2: type = import_ref Main//generic_lib, loc4_17, loaded [symbolic = @Base.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.66b: <specific function> = import_ref Main//generic_lib, loc6_1, loaded [symbolic = constants.%Base.F.specific_fn.2ee]
 // CHECK:STDOUT: }
