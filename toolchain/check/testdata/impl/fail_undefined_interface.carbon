@@ -235,12 +235,12 @@ impl C as I where .Self impls Incomplete {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   impl_decl @C.as.<error>.impl [concrete] {} {
-// CHECK:STDOUT:     %C.ref.loc16: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %J.ref.loc16: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
+// CHECK:STDOUT:     %C.ref.loc23: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %J.ref.loc23: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:     %.Self.1: %J.type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc16: %J.type = name_ref .Self, %.Self.1 [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.loc16_25: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc16_13: type = where_expr %.Self.1 [concrete = <error>] {
+// CHECK:STDOUT:     %.Self.ref.loc23: %J.type = name_ref .Self, %.Self.1 [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc23_25: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc23_13: type = where_expr %.Self.1 [concrete = <error>] {
 // CHECK:STDOUT:       requirement_base_facet_type constants.%J.type
 // CHECK:STDOUT:       requirement_rewrite <error>, <error>
 // CHECK:STDOUT:     }
