@@ -62,18 +62,24 @@ interface J(N:! i32) {
   // CHECK:STDERR:                                     ^
   extend require impls K(array(i32, N));
 }
+interface I(N:! i32) {
+  // CHECK:STDERR: fail_interface_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+3]]:24: note: in `require` used here [ResolvingSpecificHere]
+  // CHECK:STDERR:   extend require impls J(N);
+  // CHECK:STDERR:                        ^~~~
+  extend require impls J(N);
+}
 
-// J extends K so the type of K is completed, but is invalid.
+// I extend J extends K so the type of K is completed, but is invalid.
 //
 // TODO: The error location should be the type, like in the class case above. We
 // need a location for the type in context.bind_name_map() to use as the
 // location to Convert().
 //
 // CHECK:STDERR: fail_interface_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+4]]:1: note: in `require` used here [ResolvingSpecificHere]
-// CHECK:STDERR: var v: J(-1);
+// CHECK:STDERR: var v: I(-1);
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
-var v: J(-1);
+var v: I(-1);
 
 // --- constraint_require_impls_doesnt_need_complete_interface.carbon
 library "[[@TEST_NAME]]";
@@ -96,13 +102,19 @@ constraint J(N:! i32) {
   // CHECK:STDERR:                                     ^
   extend require impls K(array(i32, N));
 }
+constraint I(N:! i32) {
+  // CHECK:STDERR: fail_constraint_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+3]]:24: note: in `require` used here [ResolvingSpecificHere]
+  // CHECK:STDERR:   extend require impls J(N);
+  // CHECK:STDERR:                        ^~~~
+  extend require impls J(N);
+}
 
-// J extends K so the type of K is completed, but is invalid.
+// I extends J extends K so the type of K is completed, but is invalid.
 // CHECK:STDERR: fail_constraint_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+4]]:1: note: in `require` used here [ResolvingSpecificHere]
-// CHECK:STDERR: var v: J(-1);
+// CHECK:STDERR: var v: I(-1);
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
-var v: J(-1);
+var v: I(-1);
 
 // --- interface_require_impls_doesnt_need_complete_self.carbon
 library "[[@TEST_NAME]]";

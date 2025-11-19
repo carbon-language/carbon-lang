@@ -920,9 +920,9 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.aa1546.1 [symbolic]
 // CHECK:STDOUT:   %ptr.3f2: type = ptr_type %ptr.4f0 [symbolic]
 // CHECK:STDOUT:   %N.type.b8d23b.2: type = facet_type <@N, @N(%ptr.3f2)> [symbolic]
-// CHECK:STDOUT:   %Self.aa1546.2: %N.type.b8d23b.2 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %I.type.71a: type = facet_type <@I, @I(%ptr.3f2)> [symbolic]
 // CHECK:STDOUT:   %require_complete.08c: <witness> = require_complete_type %I.type.71a [symbolic]
+// CHECK:STDOUT:   %Self.aa1546.2: %N.type.b8d23b.2 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %require_complete.a37: <witness> = require_complete_type %N.type.b8d23b.2 [symbolic]
 // CHECK:STDOUT:   %I.impl_witness.524: <witness> = impl_witness file.%I.impl_witness_table.loc6, @C.as.I.impl.3f8(%T) [symbolic]
 // CHECK:STDOUT: }
@@ -1372,8 +1372,8 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %require_complete.a37d6c.1: <witness> = require_complete_type %N.type.b8d23b.1 [symbolic]
 // CHECK:STDOUT:   %J.impl_witness.b5245e.1: <witness> = impl_witness file.%J.impl_witness_table.loc29, @D.as.J.impl.3b0484.1(%T) [symbolic]
 // CHECK:STDOUT:   %N.type.b8d23b.2: type = facet_type <@N, @N(%ptr)> [symbolic]
-// CHECK:STDOUT:   %Self.aa1546.2: %N.type.b8d23b.2 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %require_complete.d4d: <witness> = require_complete_type %J.type.4fa [symbolic]
+// CHECK:STDOUT:   %Self.aa1546.2: %N.type.b8d23b.2 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %require_complete.a37d6c.2: <witness> = require_complete_type %N.type.b8d23b.2 [symbolic]
 // CHECK:STDOUT:   %J.impl_witness.b5245e.2: <witness> = impl_witness file.%J.impl_witness_table.loc39, @D.as.J.impl.3b0484.2(%T) [symbolic]
 // CHECK:STDOUT: }
