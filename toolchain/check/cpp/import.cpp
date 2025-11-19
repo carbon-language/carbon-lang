@@ -542,8 +542,8 @@ static auto IsDeclInjectedClassName(Context& context,
 static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
                             clang::IdentifierInfo* identifier_name)
     -> std::optional<clang::LookupResult> {
-  clang::Sema& sema = context.clang_sema();
   CARBON_CHECK(identifier_name, "Identifier name is empty");
+  clang::Sema& sema = context.clang_sema();
 
   // TODO: Map the LocId of the lookup to a clang SourceLocation and provide it
   // here so that clang's diagnostics can point into the carbon code that uses
