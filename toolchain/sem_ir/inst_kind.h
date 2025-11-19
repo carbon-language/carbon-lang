@@ -85,7 +85,8 @@ class InstExprCategory {
   }
 
   // If the category of this instruction depends on its operands, returns the
-  // corresponding Kind value. Otherwise returns nullopt.
+  // kind of computation to use to determine the category. Otherwise returns
+  // nullopt.
   constexpr auto TryAsComputedCategory() const
       -> std::optional<ComputedExprCategory> {
     return kind_ < 0 ? std::optional(static_cast<ComputedExprCategory>(kind_))
