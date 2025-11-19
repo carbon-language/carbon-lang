@@ -8,7 +8,6 @@
 #include <optional>
 
 #include "common/check.h"
-#include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/value_store_types.h"
 
@@ -40,16 +39,14 @@ class RelationalValueStore {
   using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
 
   explicit RelationalValueStore(const RelatedStoreT* related_store)
-      : related_store_(related_store) {}
+      : values_(related_store->GetIdTag()), related_store_(related_store) {}
 
   // Given the related ID and a value, stores the value and returns a mapped ID
   // to reference it in the store.
   auto Add(RelatedIdType related_id, ValueType value) -> IdT {
     auto related_index = related_store_->GetRawIndex(related_id);
-    if (static_cast<size_t>(related_index) >= values_.size()) {
-      values_.resize(related_index + 1);
-    }
-    auto& opt = values_[related_index];
+    values_.Resize(related_index + 1, std::nullopt);
+    auto& opt = values_.Get(related_id);
     CARBON_CHECK(!opt.has_value(),
                  "Add with `related_id` that was already added to the store");
     opt.emplace(std::move(value));
@@ -63,7 +60,7 @@ class RelationalValueStore {
     if (static_cast<size_t>(related_index) >= values_.size()) {
       return IdT::None;
     }
-    auto& opt = values_[related_index];
+    auto& opt = values_.Get(related_id);
     if (!opt.has_value()) {
       return IdT::None;
     }
@@ -72,15 +69,11 @@ class RelationalValueStore {
 
   // Returns a value for an ID.
   auto Get(IdT id) const -> ConstRefType {
-    CARBON_DCHECK(id.index >= 0, "{0}", id);
-    auto index = related_store_->GetIdTag().Remove(id.index);
-    return *values_[index];
+    return *values_.Get(RelatedIdType(id.index));
   }
 
  private:
-  // Set inline size to 0 because these will typically be too large for the
-  // stack, while this does make File smaller.
-  llvm::SmallVector<std::optional<ValueType>, 0> values_;
+  ValueStore<RelatedIdType, std::optional<ValueType>> values_;
   const RelatedStoreT* related_store_;
 };
 
