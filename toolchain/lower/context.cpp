@@ -77,12 +77,10 @@ auto Context::BuildDICompileUnit(llvm::StringRef module_name,
                             llvm::DEBUG_METADATA_VERSION);
   // TODO: Include directory path in the compile_unit_file.
   llvm::DIFile* compile_unit_file = di_builder.createFile(module_name, "");
-  // TODO: Introduce a new language code for Carbon. C works well for now since
-  // it's something debuggers will already know/have support for at least.
-  // Probably have to bump to C++ at some point for virtual functions,
-  // templates, etc.
-  return di_builder.createCompileUnit(llvm::dwarf::DW_LANG_C, compile_unit_file,
-                                      "carbon",
+  // TODO: Introduce a new language code for Carbon. C++ works well for now
+  // since it's something debuggers will already know/have support for at least.
+  return di_builder.createCompileUnit(llvm::dwarf::DW_LANG_C_plus_plus,
+                                      compile_unit_file, "carbon",
                                       /*isOptimized=*/false, /*Flags=*/"",
                                       /*RV=*/0);
 }

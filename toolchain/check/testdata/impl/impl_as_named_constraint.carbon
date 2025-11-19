@@ -133,3 +133,18 @@ constraint C {
 // CHECK:STDERR: ^~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl () as C {}
+
+// --- todo_fail_duplicate_through_generic_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface A(T:! type) {}
+
+constraint B(X:! type, Y:! type) {
+  extend require impls A(Y);
+}
+
+// This should impl () as A({}).
+impl () as B((), {}) {}
+
+// This should be considered a duplicate.
+impl () as A({}) {}

@@ -264,8 +264,8 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     entity_name6000001B: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
 // CHECK:STDOUT:     entity_name6000001C: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
 // CHECK:STDOUT:     entity_name6000001D: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name6000001E: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name6000001F: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
+// CHECK:STDOUT:     entity_name6000001E: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
+// CHECK:STDOUT:     entity_name6000001F: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
 // CHECK:STDOUT:     entity_name60000020: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
 // CHECK:STDOUT:     entity_name60000021: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
 // CHECK:STDOUT:     entity_name60000022: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
@@ -280,9 +280,9 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     entity_name6000002B: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
 // CHECK:STDOUT:     entity_name6000002C: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
 // CHECK:STDOUT:     entity_name6000002D: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
-// CHECK:STDOUT:     entity_name6000002E: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
+// CHECK:STDOUT:     entity_name6000002E: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
 // CHECK:STDOUT:     entity_name6000002F: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
-// CHECK:STDOUT:     entity_name60000030: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
+// CHECK:STDOUT:     entity_name60000030: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
 // CHECK:STDOUT:     entity_name60000031: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0}
 // CHECK:STDOUT:     entity_name60000032: {name: name5, parent_scope: name_scope<none>, index: 1, is_template: 0}
 // CHECK:STDOUT:     entity_name60000033: {name: name6, parent_scope: name_scope<none>, index: 2, is_template: 0}
@@ -472,7 +472,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst60000063:    {kind: SymbolicBindingType, arg0: entity_name60000001, arg1: inst60000062, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000064:    {kind: ConstType, arg0: inst60000063, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000065:    {kind: PatternType, arg0: inst6000004A, type: type(TypeType)}
-// CHECK:STDOUT:     inst60000066:    {kind: SymbolicBindingPattern, arg0: entity_name6000000D, type: type(inst60000065)}
+// CHECK:STDOUT:     inst60000066:    {kind: SymbolicBindingPattern, arg0: entity_name6000000E, type: type(inst60000065)}
 // CHECK:STDOUT:     inst60000067:    {kind: ImportRefLoaded, arg0: import_ir_inst12, arg1: entity_name<none>, type: type(inst6000004A)}
 // CHECK:STDOUT:     inst60000068:    {kind: ImportRefLoaded, arg0: import_ir_inst13, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst60000069:    {kind: ImportRefLoaded, arg0: import_ir_inst14, arg1: entity_name<none>, type: type(TypeType)}
@@ -529,7 +529,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst6000009C:    {kind: ImportRefLoaded, arg0: import_ir_inst3C, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000009D:    {kind: ImportRefLoaded, arg0: import_ir_inst3D, arg1: entity_name<none>, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst6000009E:    {kind: ImplDecl, arg0: impl60000005, arg1: inst_block_empty}
-// CHECK:STDOUT:     inst6000009F:    {kind: SymbolicBindingPattern, arg0: entity_name60000015, type: type(inst60000017)}
+// CHECK:STDOUT:     inst6000009F:    {kind: SymbolicBindingPattern, arg0: entity_name60000016, type: type(inst60000017)}
 // CHECK:STDOUT:     inst600000A0:    {kind: ImportRefLoaded, arg0: import_ir_inst40, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000A1:    {kind: ImportRefLoaded, arg0: import_ir_inst41, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000A2:    {kind: ImportRefLoaded, arg0: import_ir_inst42, arg1: entity_name<none>, type: type(TypeType)}
@@ -566,8 +566,8 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst600000C1:    {kind: SymbolicBinding, arg0: entity_name6000001A, arg1: inst<none>, type: type(inst6000004A)}
 // CHECK:STDOUT:     inst600000C2:    {kind: SymbolicBindingType, arg0: entity_name6000001A, arg1: inst600000C1, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000C3:    {kind: TupleType, arg0: inst_block6000003B, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000C4:    {kind: SymbolicBindingPattern, arg0: entity_name6000001C, type: type(inst60000065)}
-// CHECK:STDOUT:     inst600000C5:    {kind: SymbolicBindingPattern, arg0: entity_name6000001D, type: type(inst60000065)}
+// CHECK:STDOUT:     inst600000C4:    {kind: SymbolicBindingPattern, arg0: entity_name6000001E, type: type(inst60000065)}
+// CHECK:STDOUT:     inst600000C5:    {kind: SymbolicBindingPattern, arg0: entity_name6000001F, type: type(inst60000065)}
 // CHECK:STDOUT:     inst600000C6:    {kind: ImportRefLoaded, arg0: import_ir_inst60, arg1: entity_name<none>, type: type(inst6000004A)}
 // CHECK:STDOUT:     inst600000C7:    {kind: ImportRefLoaded, arg0: import_ir_inst61, arg1: entity_name<none>, type: type(inst6000004A)}
 // CHECK:STDOUT:     inst600000C8:    {kind: ImportRefLoaded, arg0: import_ir_inst62, arg1: entity_name<none>, type: type(TypeType)}
@@ -625,9 +625,9 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst600000FC:    {kind: SymbolicBinding, arg0: entity_name60000029, arg1: inst<none>, type: type(inst6000004A)}
 // CHECK:STDOUT:     inst600000FD:    {kind: SymbolicBindingType, arg0: entity_name60000029, arg1: inst600000FC, type: type(TypeType)}
 // CHECK:STDOUT:     inst600000FE:    {kind: TupleType, arg0: inst_block60000053, type: type(TypeType)}
-// CHECK:STDOUT:     inst600000FF:    {kind: SymbolicBindingPattern, arg0: entity_name6000002B, type: type(inst60000065)}
-// CHECK:STDOUT:     inst60000100:    {kind: SymbolicBindingPattern, arg0: entity_name6000002C, type: type(inst60000065)}
-// CHECK:STDOUT:     inst60000101:    {kind: SymbolicBindingPattern, arg0: entity_name6000002D, type: type(inst60000065)}
+// CHECK:STDOUT:     inst600000FF:    {kind: SymbolicBindingPattern, arg0: entity_name6000002E, type: type(inst60000065)}
+// CHECK:STDOUT:     inst60000100:    {kind: SymbolicBindingPattern, arg0: entity_name6000002F, type: type(inst60000065)}
+// CHECK:STDOUT:     inst60000101:    {kind: SymbolicBindingPattern, arg0: entity_name60000030, type: type(inst60000065)}
 // CHECK:STDOUT:     inst60000102:    {kind: ImportRefLoaded, arg0: import_ir_inst8C, arg1: entity_name<none>, type: type(inst6000004A)}
 // CHECK:STDOUT:     inst60000103:    {kind: ImportRefLoaded, arg0: import_ir_inst8D, arg1: entity_name<none>, type: type(inst6000004A)}
 // CHECK:STDOUT:     inst60000104:    {kind: ImportRefLoaded, arg0: import_ir_inst8E, arg1: entity_name<none>, type: type(inst6000004A)}
@@ -892,8 +892,8 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       inst600000C3:    symbolic_constant60000066
 // CHECK:STDOUT:       inst600000C4:    concrete_constant(inst600000C4)
 // CHECK:STDOUT:       inst600000C5:    concrete_constant(inst600000C5)
-// CHECK:STDOUT:       inst600000C6:    symbolic_constant60000068
-// CHECK:STDOUT:       inst600000C7:    symbolic_constant60000069
+// CHECK:STDOUT:       inst600000C6:    symbolic_constant60000069
+// CHECK:STDOUT:       inst600000C7:    symbolic_constant60000068
 // CHECK:STDOUT:       inst600000C8:    symbolic_constant60000067
 // CHECK:STDOUT:       inst600000C9:    concrete_constant(inst6000004A)
 // CHECK:STDOUT:       inst600000CA:    concrete_constant(inst600000CA)
@@ -916,8 +916,8 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       inst600000DB:    concrete_constant(inst600000DB)
 // CHECK:STDOUT:       inst600000DC:    concrete_constant(inst600000DC)
 // CHECK:STDOUT:       inst600000DD:    concrete_constant(inst600000DD)
-// CHECK:STDOUT:       inst600000DE:    symbolic_constant60000068
-// CHECK:STDOUT:       inst600000DF:    symbolic_constant60000069
+// CHECK:STDOUT:       inst600000DE:    symbolic_constant60000069
+// CHECK:STDOUT:       inst600000DF:    symbolic_constant60000068
 // CHECK:STDOUT:       inst600000E0:    symbolic_constant60000081
 // CHECK:STDOUT:       inst600000E1:    symbolic_constant60000082
 // CHECK:STDOUT:       inst600000E2:    symbolic_constant60000088
@@ -952,9 +952,9 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       inst600000FF:    concrete_constant(inst600000FF)
 // CHECK:STDOUT:       inst60000100:    concrete_constant(inst60000100)
 // CHECK:STDOUT:       inst60000101:    concrete_constant(inst60000101)
-// CHECK:STDOUT:       inst60000102:    symbolic_constant600000AF
+// CHECK:STDOUT:       inst60000102:    symbolic_constant600000B1
 // CHECK:STDOUT:       inst60000103:    symbolic_constant600000B0
-// CHECK:STDOUT:       inst60000104:    symbolic_constant600000B1
+// CHECK:STDOUT:       inst60000104:    symbolic_constant600000AF
 // CHECK:STDOUT:       inst60000105:    symbolic_constant600000AE
 // CHECK:STDOUT:       inst60000106:    concrete_constant(inst6000004A)
 // CHECK:STDOUT:       inst60000107:    concrete_constant(inst60000107)
@@ -979,9 +979,9 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       inst6000011A:    concrete_constant(inst6000011A)
 // CHECK:STDOUT:       inst6000011B:    concrete_constant(inst6000011B)
 // CHECK:STDOUT:       inst6000011C:    concrete_constant(inst6000011C)
-// CHECK:STDOUT:       inst6000011D:    symbolic_constant600000AF
+// CHECK:STDOUT:       inst6000011D:    symbolic_constant600000B1
 // CHECK:STDOUT:       inst6000011E:    symbolic_constant600000B0
-// CHECK:STDOUT:       inst6000011F:    symbolic_constant600000B1
+// CHECK:STDOUT:       inst6000011F:    symbolic_constant600000AF
 // CHECK:STDOUT:       inst60000120:    symbolic_constant600000CD
 // CHECK:STDOUT:       inst60000121:    symbolic_constant600000CE
 // CHECK:STDOUT:       inst60000122:    symbolic_constant600000D6
@@ -1135,8 +1135,8 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       symbolic_constant60000065: {inst: inst600000C2, generic: generic<none>, index: generic_inst<none>, kind: checked}
 // CHECK:STDOUT:       symbolic_constant60000066: {inst: inst600000C3, generic: generic<none>, index: generic_inst<none>, kind: checked}
 // CHECK:STDOUT:       symbolic_constant60000067: {inst: inst600000C3, generic: generic60000006, index: generic_inst_in_decl5, kind: checked}
-// CHECK:STDOUT:       symbolic_constant60000068: {inst: inst60000062, generic: generic60000006, index: generic_inst_in_decl0, kind: checked}
-// CHECK:STDOUT:       symbolic_constant60000069: {inst: inst600000C1, generic: generic60000006, index: generic_inst_in_decl1, kind: checked}
+// CHECK:STDOUT:       symbolic_constant60000068: {inst: inst600000C1, generic: generic60000006, index: generic_inst_in_decl1, kind: checked}
+// CHECK:STDOUT:       symbolic_constant60000069: {inst: inst60000062, generic: generic60000006, index: generic_inst_in_decl0, kind: checked}
 // CHECK:STDOUT:       symbolic_constant6000006A: {inst: inst60000062, generic: generic60000006, index: generic_inst_in_decl0, kind: checked}
 // CHECK:STDOUT:       symbolic_constant6000006B: {inst: inst600000C1, generic: generic60000006, index: generic_inst_in_decl1, kind: checked}
 // CHECK:STDOUT:       symbolic_constant6000006C: {inst: inst600000CB, generic: generic<none>, index: generic_inst<none>, kind: checked}
@@ -1206,9 +1206,9 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       symbolic_constant600000AC: {inst: inst600000FD, generic: generic<none>, index: generic_inst<none>, kind: checked}
 // CHECK:STDOUT:       symbolic_constant600000AD: {inst: inst600000FE, generic: generic<none>, index: generic_inst<none>, kind: checked}
 // CHECK:STDOUT:       symbolic_constant600000AE: {inst: inst600000FE, generic: generic60000008, index: generic_inst_in_decl7, kind: checked}
-// CHECK:STDOUT:       symbolic_constant600000AF: {inst: inst60000062, generic: generic60000008, index: generic_inst_in_decl0, kind: checked}
+// CHECK:STDOUT:       symbolic_constant600000AF: {inst: inst600000FC, generic: generic60000008, index: generic_inst_in_decl2, kind: checked}
 // CHECK:STDOUT:       symbolic_constant600000B0: {inst: inst600000C1, generic: generic60000008, index: generic_inst_in_decl1, kind: checked}
-// CHECK:STDOUT:       symbolic_constant600000B1: {inst: inst600000FC, generic: generic60000008, index: generic_inst_in_decl2, kind: checked}
+// CHECK:STDOUT:       symbolic_constant600000B1: {inst: inst60000062, generic: generic60000008, index: generic_inst_in_decl0, kind: checked}
 // CHECK:STDOUT:       symbolic_constant600000B2: {inst: inst60000062, generic: generic60000008, index: generic_inst_in_decl0, kind: checked}
 // CHECK:STDOUT:       symbolic_constant600000B3: {inst: inst600000C1, generic: generic60000008, index: generic_inst_in_decl1, kind: checked}
 // CHECK:STDOUT:       symbolic_constant600000B4: {inst: inst600000FC, generic: generic60000008, index: generic_inst_in_decl2, kind: checked}

@@ -142,23 +142,23 @@ fn CallReturnIncomplete() {
   ReturnIncomplete();
 }
 
-class IncompleteAddrSelf {
-  fn F[addr self: Class*]();
+class IncompleteRefSelf {
+  fn F[ref self: Class]();
 }
 
 fn CallIncompleteAddrSelf(p: Class*) {
   // TODO: Should this be valid?
   // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+10]]:3: error: invalid use of incomplete type `Class` [IncompleteTypeInConversion]
-  // CHECK:STDERR:   p->(IncompleteAddrSelf.F)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   p->(IncompleteRefSelf.F)();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-137]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
   // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-11]]:8: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn F[addr self: Class*]();
-  // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   fn F[ref self: Class]();
+  // CHECK:STDERR:        ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  p->(IncompleteAddrSelf.F)();
+  p->(IncompleteRefSelf.F)();
 }
 
 // --- fail_in_definition.carbon

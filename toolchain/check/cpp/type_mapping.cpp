@@ -119,20 +119,21 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
 
   // If the class represents a Carbon type literal, map it to the corresponding
   // C++ builtin type.
-  auto literal = SemIR::TypeLiteralInfo::ForType(context.sem_ir(), class_type);
-  switch (literal.kind) {
-    case SemIR::TypeLiteralInfo::None: {
+  auto type_info =
+      SemIR::RecognizedTypeInfo::ForType(context.sem_ir(), class_type);
+  switch (type_info.kind) {
+    case SemIR::RecognizedTypeInfo::None: {
       break;
     }
-    case SemIR::TypeLiteralInfo::Numeric: {
+    case SemIR::RecognizedTypeInfo::Numeric: {
       // Carbon supports large bit width beyond C++ builtins; we don't need to
       // translate those.
-      if (!literal.numeric.bit_width_id.is_embedded_value()) {
+      if (!type_info.numeric.bit_width_id.is_embedded_value()) {
         return clang::QualType();
       }
-      int bit_width = literal.numeric.bit_width_id.AsValue();
+      int bit_width = type_info.numeric.bit_width_id.AsValue();
 
-      switch (literal.numeric.kind) {
+      switch (type_info.numeric.kind) {
         case SemIR::NumericTypeLiteralInfo::None: {
           CARBON_FATAL("Unexpected invalid numeric type literal");
         }
@@ -148,19 +149,19 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
         }
       }
     }
-    case SemIR::TypeLiteralInfo::Char: {
+    case SemIR::RecognizedTypeInfo::Char: {
       return ast_context.CharTy;
     }
-    case SemIR::TypeLiteralInfo::CppLong32: {
+    case SemIR::RecognizedTypeInfo::CppLong32: {
       if (ast_context.getIntWidth(ast_context.LongTy) == 32) {
         return ast_context.LongTy;
       }
       break;
     }
-    case SemIR::TypeLiteralInfo::CppNullptrT: {
+    case SemIR::RecognizedTypeInfo::CppNullptrT: {
       return ast_context.NullPtrTy;
     }
-    case SemIR::TypeLiteralInfo::Str: {
+    case SemIR::RecognizedTypeInfo::Str: {
       return LookupCppType(context, {"std", "string_view"});
     }
   }

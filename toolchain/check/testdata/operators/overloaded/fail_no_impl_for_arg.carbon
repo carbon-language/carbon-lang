@@ -19,7 +19,7 @@ impl C as Core.AddWith(C) where .Result = C {
   fn Op[self: C](other: C) -> C { return {}; }
 }
 impl C as Core.AddAssignWith(C) {
-  fn Op[addr self: C*](other: C) {}
+  fn Op[ref self: C](other: C) {}
 }
 
 fn Test(a: C, b: D, z: bool) -> C {

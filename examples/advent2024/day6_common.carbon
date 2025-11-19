@@ -57,34 +57,34 @@ class Maze {
     return var;
   }
 
-  fn Step[addr self: Self*]() -> bool {
-    let x: i32 = self->loc.0 + self->dir.0;
-    let y: i32 = self->loc.1 + self->dir.1;
+  fn Step[ref self: Self]() -> bool {
+    let x: i32 = self.loc.0 + self.dir.0;
+    let y: i32 = self.loc.1 + self.dir.1;
     if (x < 0 or x >= 130 or y < 0 or y >= 130) {
       return false;
     }
-    if (self->data[x][y] == Wall()) {
+    if (self.data[x][y] == Wall()) {
       // TODO: Should this work?
-      // self->dir = (-self->dir.1, self->dir.0);
-      let d: (i32, i32) = self->dir;
-      self->dir = (-d.1, d.0);
+      // self.dir = (-self.dir.1, self.dir.0);
+      let d: (i32, i32) = self.dir;
+      self.dir = (-d.1, d.0);
     } else {
-      self->loc = (x, y);
-      self->data[x][y] = Visited();
+      self.loc = (x, y);
+      self.data[x][y] = Visited();
     }
     return true;
   }
 
-  fn AddObstacle[addr self: Self*]() -> bool {
-    let x: i32 = self->loc.0 + self->dir.0;
-    let y: i32 = self->loc.1 + self->dir.1;
+  fn AddObstacle[ref self: Self]() -> bool {
+    let x: i32 = self.loc.0 + self.dir.0;
+    let y: i32 = self.loc.1 + self.dir.1;
     if (x < 0 or x >= 130 or y < 0 or y >= 130) {
       return false;
     }
-    if (self->data[x][y] != Empty()) {
+    if (self.data[x][y] != Empty()) {
       return false;
     }
-    self->data[x][y] = Wall();
+    self.data[x][y] = Wall();
     return true;
   }
 

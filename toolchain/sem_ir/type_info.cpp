@@ -133,8 +133,8 @@ auto NumericTypeLiteralInfo::GetLiteralAsString(const File& file) const
   return out.TakeStr();
 }
 
-auto TypeLiteralInfo::ForType(const File& file, ClassType class_type)
-    -> TypeLiteralInfo {
+auto RecognizedTypeInfo::ForType(const File& file, ClassType class_type)
+    -> RecognizedTypeInfo {
   if (class_type.specific_id.has_value()) {
     auto numeric = NumericTypeLiteralInfo::ForType(file, class_type);
     if (numeric.is_valid()) {
@@ -185,8 +185,8 @@ auto TypeLiteralInfo::ForType(const File& file, ClassType class_type)
   return {.kind = None};
 }
 
-auto TypeLiteralInfo::PrintLiteral(const File& file,
-                                   llvm::raw_ostream& out) const -> void {
+auto RecognizedTypeInfo::PrintLiteral(const File& file,
+                                      llvm::raw_ostream& out) const -> void {
   switch (kind) {
     case None:
       CARBON_FATAL("Printing invalid type literal");
@@ -216,7 +216,7 @@ auto TypeLiteralInfo::PrintLiteral(const File& file,
   }
 }
 
-auto TypeLiteralInfo::GetLiteralAsString(const File& file) const
+auto RecognizedTypeInfo::GetLiteralAsString(const File& file) const
     -> std::string {
   RawStringOstream out;
   PrintLiteral(file, out);

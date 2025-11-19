@@ -11,15 +11,6 @@ namespace Carbon::Parse {
 auto HandleBindingPattern(Context& context) -> void {
   auto state = context.PopState();
 
-  // An `addr` pattern may wrap the binding, and becomes the parent of the
-  // `BindingPattern`.
-  if (auto token = context.ConsumeIf(Lex::TokenKind::Addr)) {
-    context.PushState({.kind = StateKind::BindingPatternAddr,
-                       .in_var_pattern = state.in_var_pattern,
-                       .token = *token,
-                       .subtree_start = state.subtree_start});
-  }
-
   // Handle an invalid pattern introducer for parameters and variables.
   auto on_error = [&](bool expected_name) {
     if (!state.has_error) {
@@ -143,17 +134,6 @@ auto HandleBindingPatternFinishAsGeneric(Context& context) -> void {
 
 auto HandleBindingPatternFinishAsRegular(Context& context) -> void {
   HandleBindingPatternFinish(context, /*is_compile_time=*/false);
-}
-
-auto HandleBindingPatternAddr(Context& context) -> void {
-  auto state = context.PopState();
-
-  context.AddNode(NodeKind::Addr, state.token, state.has_error);
-
-  // If an error was encountered, propagate it while adding a node.
-  if (state.has_error) {
-    context.ReturnErrorOnState();
-  }
 }
 
 }  // namespace Carbon::Parse

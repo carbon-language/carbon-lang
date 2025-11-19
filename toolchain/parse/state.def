@@ -1040,12 +1040,6 @@ CARBON_PARSE_STATE(Pattern)
 // Handles the initial part of a binding pattern, enqueuing type expression
 // processing.
 //
-// addr        (variant is not Variable)
-// ^~~~
-//   3. BindingPatternAddr
-//
-// THEN
-//
 // [ref] name: ...
 // ^~~~~
 // [ref] self: ...
@@ -1068,13 +1062,6 @@ CARBON_PARSE_STATE(Pattern)
 // ^
 //   1. BindingPatternFinishAsRegular
 CARBON_PARSE_STATE(BindingPattern)
-
-// Handles `addr` in a binding pattern.
-//
-// addr name: type
-//                ^
-//   (state done)
-CARBON_PARSE_STATE(BindingPatternAddr)
 
 // Finishes binding pattern processing.
 //

@@ -697,46 +697,46 @@ class RE2 {
     impl CannedOptions as ImplicitAs(Self);
 
     fn encoding[self: Self]() -> Encoding { return self.encoding_; }
-    fn set_encoding[addr self: Self*](encoding: Encoding) { self->encoding_ = encoding; }
+    fn set_encoding[ref self: Self](encoding: Encoding) { self.encoding_ = encoding; }
 
     fn posix_syntax[self: Self]() -> bool { return self.posix_syntax_; }
-    fn set_posix_syntax[addr self: Self*](b: bool) { self->posix_syntax_ = b; }
+    fn set_posix_syntax[ref self: Self](b: bool) { self.posix_syntax_ = b; }
 
     fn longest_match[self: Self]() -> bool { return self.longest_match_; }
-    fn set_longest_match[addr self: Self*](b: bool) { self->longest_match_ = b; }
+    fn set_longest_match[ref self: Self](b: bool) { self.longest_match_ = b; }
 
     fn log_errors[self: Self]() -> bool { return self.log_errors_; }
-    fn set_log_errors[addr self: Self*](b: bool) { self->log_errors_ = b; }
+    fn set_log_errors[ref self: Self](b: bool) { self.log_errors_ = b; }
 
     fn max_mem[self: Self]() -> i64 { return self.max_mem_; }
-    fn set_max_mem[addr self: Self*](m: i64) { self->max_mem_ = m; }
+    fn set_max_mem[ref self: Self](m: i64) { self.max_mem_ = m; }
 
     fn literal[self: Self]() -> bool { return self.literal_; }
-    fn set_literal[addr self: Self*](b: bool) { self->literal_ = b; }
+    fn set_literal[ref self: Self](b: bool) { self.literal_ = b; }
 
     fn never_nl[self: Self]() -> bool { return self.never_nl_; }
-    fn set_never_nl[addr self: Self*](b: bool) { self->never_nl_ = b; }
+    fn set_never_nl[ref self: Self](b: bool) { self.never_nl_ = b; }
 
     fn dot_nl[self: Self]() -> bool { return self.dot_nl_; }
-    fn set_dot_nl[addr self: Self*](b: bool) { self->dot_nl_ = b; }
+    fn set_dot_nl[ref self: Self](b: bool) { self.dot_nl_ = b; }
 
     fn never_capture[self: Self]() -> bool { return self.never_capture_; }
-    fn set_never_capture[addr self: Self*](b: bool) { self->never_capture_ = b; }
+    fn set_never_capture[ref self: Self](b: bool) { self.never_capture_ = b; }
 
     fn case_sensitive[self: Self]() -> bool { return self.case_sensitive_; }
-    fn set_case_sensitive[addr self: Self*](b: bool) { self->case_sensitive_ = b; }
+    fn set_case_sensitive[ref self: Self](b: bool) { self.case_sensitive_ = b; }
 
     fn perl_classes[self: Self]() -> bool { return self.perl_classes_; }
-    fn set_perl_classes[addr self: Self*](b: bool) { self->perl_classes_ = b; }
+    fn set_perl_classes[ref self: Self](b: bool) { self.perl_classes_ = b; }
 
     fn word_boundary[self: Self]() -> bool { return self.word_boundary_; }
-    fn set_word_boundary[addr self: Self*](b: bool) { self->word_boundary_ = b; }
+    fn set_word_boundary[ref self: Self](b: bool) { self.word_boundary_ = b; }
 
     fn one_line[self: Self]() -> bool { return self.one_line_; }
-    fn set_one_line[addr self: Self*](b: bool) { self->one_line_ = b; }
+    fn set_one_line[ref self: Self](b: bool) { self.one_line_ = b; }
 
-    fn Copy[addr self: Self*](src: Options) {
-      *self = src;
+    fn Copy[ref self: Self](src: Options) {
+      self = src;
     }
 
     fn ParseFlags[self: Self]() -> i32;
@@ -823,7 +823,7 @@ class RE2 {
 /***** Implementation details *****/
 
 private interface Parse3ary {
-  fn Parse(str: StringView, n: i64, dest: Self*) -> bool;
+  fn Parse(str: StringView, n: i64, dest: Self) -> bool;
 }
 impl void as Parse3ary;
 impl String as Parse3ary;
@@ -833,7 +833,7 @@ impl f32 as Parse3ary;
 impl f64 as Parse3ary;
 
 private interface Parse4ary {
-  fn Parse(str: StringView, n: i64, dest: Self*, radix: i32) -> bool;
+  fn Parse(str: StringView, n: i64, dest: Self, radix: i32) -> bool;
 }
 impl i16 as Parse4ary;
 impl u16 as Parse4ary;
@@ -853,21 +853,21 @@ class RE2.Arg {
   fn Make(nullptr) -> Self { return Make(nullptr as NullArg*); }
 
   interface Parseable {
-    fn Parse[addr self: Self*](str: StringView, n: i64) -> bool;
+    fn Parse[ref self: Self](str: StringView, n: i64) -> bool;
   }
   match_first {
     impl [T:! Parse3ary] T as Parseable {
-      fn Parse[addr self: Self*](str: StringView, n: i64) -> bool {
+      fn Parse[ref self: Self](str: StringView, n: i64) -> bool {
         return T.Parse(str, n, self);
       }
     }
     impl [T:! Parse4ary] T as Parseable {
-      fn Parse[addr self: Self*](str: StringView, n: i64) -> bool {
+      fn Parse[ref self: Self](str: StringView, n: i64) -> bool {
         return T.Parse(str, n, self, 10);
       }
     }
     impl [T:! ParseFrom] T as Parseable {
-      fn Parse[addr self: Self*](str: StringView, n: i64) -> bool {
+      fn Parse[ref self: Self](str: StringView, n: i64) -> bool {
         if (self == nullptr) { return true; }
         return T.Parse(str, n, self);
       }
@@ -876,7 +876,7 @@ class RE2.Arg {
 
   private class NullArg {}
   impl NullArg as Parseable {
-    fn Parse[addr self: Self*](str: StringView, n: i64) -> bool {
+    fn Parse[ref self: Self](str: StringView, n: i64) -> bool {
       return true;
     }
   }
@@ -896,7 +896,7 @@ class RE2.Arg {
 
 private adapter ParseAsBase(T:! Parse4ary, base: i32) for T {
   impl as Self.Arg.Parseable {
-    fn Parse[addr self: Self*](str: StringView, n: i64) -> bool {
+    fn Parse[ref self: Self](str: StringView, n: i64) -> bool {
       return T.Parse(str, n, self, base);
     }
   }
@@ -942,7 +942,7 @@ class LazyRE2 {
   }
 
   // Named accessor/initializer:
-  fn get[addr self: Self*]() -> RE* {
+  fn get[ref self: Self]() -> RE* {
     Cpp.std.call_once(once_, Self.Init, self);
     return ptr_;
   }
@@ -954,7 +954,7 @@ class LazyRE2 {
   private var ptr_: RE2*;
   private var once_: Cpp.std.once_flag;
 
-  private fn Init(lazy_re2: LazyRE2*) {
+  private fn Init(ref lazy_re2: LazyRE2) {
     lazy_re2->ptr_ = heap.New!(RE2.Make(lazy_re2->pattern_, lazy_re2->options_));
   }
 }

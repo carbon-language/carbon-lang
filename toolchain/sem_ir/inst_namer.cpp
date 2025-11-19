@@ -869,9 +869,9 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(ClassType inst): {
-      if (auto literal_info = TypeLiteralInfo::ForType(sem_ir(), inst);
-          literal_info.is_valid()) {
-        AddInstName(literal_info.GetLiteralAsString(sem_ir()));
+      if (auto type_info = RecognizedTypeInfo::ForType(sem_ir(), inst);
+          type_info.is_valid()) {
+        AddInstName(type_info.GetLiteralAsString(sem_ir()));
       } else {
         AddEntityNameAndMaybePush(inst.class_id);
       }

@@ -133,21 +133,6 @@ struct AddrOf {
   InstId lvalue_id;
 };
 
-// An `addr` pattern, such as `addr self: Self*`. Structurally, `inner_id` will
-// generally be a pattern inst.
-struct AddrPattern {
-  static constexpr auto Kind = InstKind::AddrPattern.Define<Parse::NodeId>(
-      {.ir_name = "addr_pattern",
-       .constant_kind = InstConstantKind::AlwaysUnique,
-       .is_lowered = false});
-
-  // Always a PatternType whose scrutinee type represents the pointee type
-  // corresponding to the pointer type of `inner_id`.
-  TypeId type_id;
-  // The `self` binding pattern.
-  InstId inner_id;
-};
-
 // Binds a name as an alias. See AnyBinding for member documentation.
 struct AliasBinding {
   static constexpr auto Kind = InstKind::AliasBinding.Define<Parse::NodeId>(

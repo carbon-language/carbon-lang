@@ -99,10 +99,6 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
   // Decompose the pattern. The forms we allow for patterns in a function
   // parameter list are currently fairly restrictive.
 
-  // Optional `addr`, only for `self`.
-  auto [addr, addr_id] = context.insts().TryUnwrap(
-      pattern, pattern_id, &SemIR::AddrPattern::inner_id);
-
   // Optional parameter pattern.
   auto [param, param_id] = context.insts().TryUnwrap(
       pattern, pattern_id, &SemIR::AnyParamPattern::subpattern_id);
@@ -131,13 +127,6 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
          .type_id = get_type(param_id),
          .subpattern_id = new_pattern_id,
          .index = SemIR::CallParamIndex::None});
-  }
-
-  // Rebuild `addr`.
-  if (addr) {
-    new_pattern_id = RebuildPatternInst<SemIR::AddrPattern>(
-        context, addr_id,
-        {.type_id = get_type(addr_id), .inner_id = new_pattern_id});
   }
 
   return new_pattern_id;
@@ -291,10 +280,6 @@ static auto BuildPatternRef(Context& context,
                             SemIR::InstId pattern_id) -> SemIR::InstId {
   auto pattern = context.insts().Get(pattern_id);
 
-  auto addr = context.insts()
-                  .TryUnwrap(pattern, pattern_id, &SemIR::AddrPattern::inner_id)
-                  .first;
-
   auto pattern_ref_id = SemIR::InstId::None;
   if (auto value_param = pattern.TryAs<SemIR::AnyParamPattern>();
       value_param.has_value() &&
@@ -307,13 +292,6 @@ static auto BuildPatternRef(Context& context,
           "don't know how to build reference to this pattern in thunk");
     }
     return SemIR::ErrorInst::InstId;
-  }
-
-  if (addr) {
-    pattern_ref_id = PerformPointerDereference(
-        context, SemIR::LocId(pattern_id), pattern_ref_id, [](SemIR::TypeId) {
-          CARBON_FATAL("addr subpattern is not a pointer");
-        });
   }
 
   return pattern_ref_id;

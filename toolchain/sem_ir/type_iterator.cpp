@@ -98,6 +98,7 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
     case FunctionTypeWithSelfType::Kind:
     case GenericClassType::Kind:
     case GenericInterfaceType::Kind:
+    case GenericNamedConstraintType::Kind:
     case ImplWitnessAccess::Kind:
     case IntLiteralType::Kind:
     case NamespaceType::Kind:

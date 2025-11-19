@@ -221,6 +221,20 @@ class ValueStore
     return chunks_[chunk_index].Get(pos);
   }
 
+  // Returns the value for an ID, or a specified default value if a value has
+  // not yet been added for this ID.
+  auto GetWithDefault(IdType id,  //
+                      ConstRefType default_value [[clang::lifetimebound]]) const
+      -> ConstRefType {
+    auto index = tag_.Remove(id.index);
+    if (index >= size_) {
+      return default_value;
+    }
+    CARBON_DCHECK(index >= 0, "{0}", id);
+    auto [chunk_index, pos] = RawIndexToChunkIndices(index);
+    return chunks_[chunk_index].Get(pos);
+  }
+
   // Reserves space.
   auto Reserve(int32_t size) -> void {
     if (size <= size_) {

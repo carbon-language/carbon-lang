@@ -15,23 +15,23 @@ class ReportState {
             .increasing = false, .safe_so_far = true};
   }
 
-  fn Add[addr self: Self*](level: i32) {
-    ++self->levels_so_far;
-    if (self->levels_so_far >= 2) {
-      if (not IsSafeDelta(self->previous, level)) {
+  fn Add[ref self: Self](level: i32) {
+    ++self.levels_so_far;
+    if (self.levels_so_far >= 2) {
+      if (not IsSafeDelta(self.previous, level)) {
         // Difference is zero or too large.
-        self->safe_so_far = false;
+        self.safe_so_far = false;
       }
 
-      var is_increase: bool = level > self->previous;
-      if (self->levels_so_far == 2) {
-        self->increasing = is_increase;
-      } else if (is_increase != self->increasing) {
+      var is_increase: bool = level > self.previous;
+      if (self.levels_so_far == 2) {
+        self.increasing = is_increase;
+      } else if (is_increase != self.increasing) {
         // Not monotone.
-        self->safe_so_far = false;
+        self.safe_so_far = false;
       }
     }
-    self->previous = level;
+    self.previous = level;
   }
 
   var levels_so_far: i32;
