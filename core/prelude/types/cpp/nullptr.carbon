@@ -7,8 +7,9 @@ package Core library "prelude/types/cpp/nullptr";
 import library "prelude/copy";
 import library "prelude/destroy";
 import library "prelude/operators/as";
-import library "prelude/types/optional";
+import library "prelude/types/cpp/void";
 import library "prelude/types/maybe_unformed";
+import library "prelude/types/optional";
 
 namespace CppCompat;
 
@@ -26,7 +27,7 @@ class CppCompat.NullptrT {
   // nullptr_t has the same size and alignment as a pointer, but the
   // corresponding pointer is always unformed.
   // TODO: Give this type a custom empty value representation.
-  adapt MaybeUnformed(()*);
+  adapt MaybeUnformed(VoidBase*);
 
   fn Make() -> Self {
     returned var s: Self;
