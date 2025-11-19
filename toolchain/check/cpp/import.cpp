@@ -1062,6 +1062,12 @@ static auto MakeIntType(Context& context, IntId size_id, bool is_signed)
   return ExprAsType(context, Parse::NodeId::None, type_inst_id);
 }
 
+static auto MakeCppCompatType(Context& context, SemIR::LocId loc_id,
+                              llvm::StringRef name) -> TypeExpr {
+  return ExprAsType(context, loc_id,
+                    LookupNameInCore(context, loc_id, {"CppCompat", name}));
+}
+
 // Maps a C++ builtin integer type to a Carbon type.
 // TODO: Handle integer types that map to named aliases.
 static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
@@ -1090,17 +1096,13 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
   }
   if (clang::ASTContext::hasSameType(qual_type, ast_context.LongTy) &&
       width == 32) {
-    return ExprAsType(context, Parse::NodeId::None,
-                      LookupNameInCore(context, Parse::NodeId::None,
-                                       {"CppCompat", "Long32"}));
+    return MakeCppCompatType(context, loc_id, "Long32");
   }
   return TypeExpr::None;
 }
 
 static auto MapNullptrType(Context& context, SemIR::LocId loc_id) -> TypeExpr {
-  return ExprAsType(
-      context, loc_id,
-      LookupNameInCore(context, loc_id, {"CppCompat", "NullptrT"}));
+  return MakeCppCompatType(context, loc_id, "NullptrT");
 }
 
 // Maps a C++ builtin type to a Carbon type.
@@ -1129,8 +1131,7 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
     }
     // TODO: Handle floating-point types that map to named aliases.
   } else if (type.isVoidType()) {
-    return ExprAsType(context, Parse::NodeId::None,
-                      SemIR::CppVoidType::TypeInstId);
+    return MakeCppCompatType(context, loc_id, "VoidBase");
   } else if (type.isNullPtrType()) {
     return MapNullptrType(context, loc_id);
   }

@@ -927,15 +927,14 @@ static auto BuildTypeForInst(FileContext& context,
 }
 
 template <typename InstT>
-  requires(
-      InstT::Kind.template IsAnyOf<
-          SemIR::AssociatedEntityType, SemIR::AutoType, SemIR::BoundMethodType,
-          SemIR::CharLiteralType, SemIR::CppOverloadSetType, SemIR::CppVoidType,
-          SemIR::FacetType, SemIR::FloatLiteralType, SemIR::FunctionType,
-          SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
-          SemIR::GenericInterfaceType, SemIR::GenericNamedConstraintType,
-          SemIR::InstType, SemIR::IntLiteralType, SemIR::NamespaceType,
-          SemIR::WhereExpr, SemIR::WitnessType, SemIR::UnboundElementType>())
+  requires(InstT::Kind.template IsAnyOf<
+           SemIR::AssociatedEntityType, SemIR::AutoType, SemIR::BoundMethodType,
+           SemIR::CharLiteralType, SemIR::CppOverloadSetType, SemIR::FacetType,
+           SemIR::FloatLiteralType, SemIR::FunctionType,
+           SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
+           SemIR::GenericInterfaceType, SemIR::GenericNamedConstraintType,
+           SemIR::InstType, SemIR::IntLiteralType, SemIR::NamespaceType,
+           SemIR::WhereExpr, SemIR::WitnessType, SemIR::UnboundElementType>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> llvm::Type* {
   // Return an empty struct as a placeholder.
