@@ -184,7 +184,7 @@ static auto FindAndDiagnoseImplLookupCycle(
 }
 
 struct InterfacesFromConstantId {
-  llvm::SmallVector<SemIR::SpecificInterface> interfaces;
+  llvm::ArrayRef<SemIR::SpecificInterface> interfaces;
   SemIR::BuiltinConstraintMask builtin_constraint_mask;
   bool other_requirements;
 };
@@ -211,14 +211,9 @@ static auto GetInterfacesFromConstantId(
   if (!identified_id.has_value()) {
     return std::nullopt;
   }
-  // TODO: IdentifiedFacetTypes are held in a RelationalValueStore which does
-  // not protect against UAF through reallocation, so we must copy data out of
-  // it.
-  llvm::SmallVector<SemIR::SpecificInterface> interfaces(
-      context.identified_facet_types()
-          .Get(identified_id)
-          .required_interfaces());
-  return {{.interfaces = std::move(interfaces),
+  return {{.interfaces = context.identified_facet_types()
+                             .Get(identified_id)
+                             .required_interfaces(),
            .builtin_constraint_mask = facet_type_info.builtin_constraint_mask,
            .other_requirements = facet_type_info.other_requirements}};
 }
