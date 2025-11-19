@@ -201,6 +201,9 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
     specifics_done += requires_specifics.size();
   }
 
+  // Specific definitions are resolved from the interfaces in the facet type
+  // down, each require target depends on the specific referring to it being
+  // resolved already.
   for (auto [specific_id, _] : specifics) {
     ResolveSpecificDefinition(context, loc_id, specific_id);
   }
