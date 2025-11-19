@@ -69,7 +69,7 @@ interface I(N:! i32) {
   extend require impls J(N);
 }
 
-// I extend J extends K so the type of K is completed, but is invalid.
+// I extends J extends K so the type of K is completed, but is invalid.
 //
 // TODO: The error location should be the type, like in the class case above. We
 // need a location for the type in context.bind_name_map() to use as the
