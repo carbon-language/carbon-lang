@@ -852,6 +852,8 @@ static auto SetGenericData(ImportContext& context,
   }
   new_generic.bindings_id = context.local_inst_blocks().Add(new_bindings);
 
+  // TODO: Import the generic eval block rather than calling
+  // RebuildGenericEvalBlock to rebuild it so that order doesn't matter.
   new_generic.decl_block_id = RebuildGenericEvalBlock(
       context.local_context(), new_generic_id,
       SemIR::GenericInstIndex::Region::Declaration, generic_data.decl_block);
