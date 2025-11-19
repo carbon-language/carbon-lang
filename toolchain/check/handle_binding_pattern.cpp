@@ -237,13 +237,13 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
               context, node_id,
               {.type_id = type_id,
                .subpattern_id = result_inst_id,
-               .index = SemIR::CallParamIndex::None});
+               .index = context.full_pattern_stack().NextCallParamIndex()});
         } else {
           result_inst_id = AddPatternInst<SemIR::ValueParamPattern>(
               context, node_id,
               {.type_id = type_id,
                .subpattern_id = result_inst_id,
-               .index = SemIR::CallParamIndex::None});
+               .index = context.full_pattern_stack().NextCallParamIndex()});
         }
       }
       context.node_stack().Push(node_id, result_inst_id);

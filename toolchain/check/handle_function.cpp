@@ -79,7 +79,7 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
       context, node_id,
       {.type_id = pattern_type_id,
        .subpattern_id = return_slot_pattern_id,
-       .index = SemIR::CallParamIndex::None});
+       .index = context.full_pattern_stack().NextCallParamIndex()});
   context.node_stack().Push(node_id, param_pattern_id);
   return true;
 }

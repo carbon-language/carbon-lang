@@ -47,6 +47,8 @@ static auto MakeNoOpFunction(Context& context, SemIR::LocId loc_id,
   context.scope_stack().PushForDeclName();
   context.inst_block_stack().Push();
   context.pattern_block_stack().Push();
+  context.full_pattern_stack().PushFullPattern(
+      FullPatternStack::Kind::ExplicitParamList);
 
   BeginSubpattern(context);
   auto type_id = GetFacetAsType(context, loc_id, self_const_id);
@@ -61,6 +63,7 @@ static auto MakeNoOpFunction(Context& context, SemIR::LocId loc_id,
                          /*param_patterns_id=*/SemIR::InstBlockId::Empty,
                          /*return_patterns_id=*/SemIR::InstBlockId::None);
 
+  context.full_pattern_stack().PopFullPattern();
   auto pattern_block_id = context.pattern_block_stack().Pop();
   auto decl_block_id = context.inst_block_stack().Pop();
   context.scope_stack().Pop();

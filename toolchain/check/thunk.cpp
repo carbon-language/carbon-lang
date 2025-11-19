@@ -127,7 +127,7 @@ static auto ClonePattern(Context& context, SemIR::SpecificId specific_id,
         {.kind = param->kind,
          .type_id = get_type(param_id),
          .subpattern_id = new_pattern_id,
-         .index = SemIR::CallParamIndex::None});
+         .index = param->index});
   }
 
   return new_pattern_id;

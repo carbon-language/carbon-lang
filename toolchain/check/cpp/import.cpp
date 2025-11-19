@@ -22,6 +22,7 @@
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/int.h"
@@ -1257,9 +1258,10 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
       context,
       MakeImportedLocIdAndInst(
           context, return_type_import_ir_inst_id,
-          SemIR::OutParamPattern({.type_id = pattern_type_id,
-                                  .subpattern_id = return_slot_pattern_id,
-                                  .index = SemIR::CallParamIndex::None})));
+          SemIR::OutParamPattern(
+              {.type_id = pattern_type_id,
+               .subpattern_id = return_slot_pattern_id,
+               .index = context.full_pattern_stack().NextCallParamIndex()})));
   auto return_patterns_id = context.inst_blocks().Add({param_pattern_id});
   return {.return_type_inst_id = type_inst_id,
           .return_patterns_id = return_patterns_id};
@@ -1288,11 +1290,16 @@ static auto CreateFunctionSignatureInsts(Context& context, SemIR::LocId loc_id,
                                          clang::FunctionDecl* clang_decl,
                                          int num_params)
     -> std::optional<FunctionSignatureInsts> {
+  context.full_pattern_stack().PushFullPattern(
+      FullPatternStack::Kind::ImplicitParamList);
+  auto pop = llvm::make_scope_exit(
+      [&context] { context.full_pattern_stack().PopFullPattern(); });
   auto implicit_param_patterns_id =
       MakeImplicitParamPatternsBlockId(context, loc_id, *clang_decl);
   if (!implicit_param_patterns_id.has_value()) {
     return std::nullopt;
   }
+  context.full_pattern_stack().EndImplicitParamList();
   auto param_patterns_id =
       MakeParamPatternsBlockId(context, loc_id, *clang_decl, num_params);
   if (!param_patterns_id.has_value()) {
@@ -1303,6 +1310,8 @@ static auto CreateFunctionSignatureInsts(Context& context, SemIR::LocId loc_id,
   if (return_type_inst_id == SemIR::ErrorInst::TypeInstId) {
     return std::nullopt;
   }
+  pop.release();
+  context.full_pattern_stack().PopFullPattern();
 
   auto call_params_id =
       CalleePatternMatch(context, implicit_param_patterns_id, param_patterns_id,

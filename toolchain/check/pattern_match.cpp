@@ -61,7 +61,7 @@ class MatchContext {
   // specific.
   explicit MatchContext(MatchKind kind, SemIR::SpecificId callee_specific_id =
                                             SemIR::SpecificId::None)
-      : next_index_(0), kind_(kind), callee_specific_id_(callee_specific_id) {}
+      : kind_(kind), callee_specific_id_(callee_specific_id) {}
 
   // Adds a work item to the stack.
   auto AddWork(WorkItem work_item) -> void { stack_.push_back(work_item); }
@@ -73,13 +73,6 @@ class MatchContext {
   auto DoWork(Context& context) -> SemIR::InstBlockId;
 
  private:
-  // Allocates the next unallocated RuntimeParamIndex, starting from 0.
-  auto NextRuntimeIndex() -> SemIR::CallParamIndex {
-    auto result = next_index_;
-    ++next_index_.index;
-    return result;
-  }
-
   // Emits the pattern-match insts necessary to match the pattern inst
   // `entry.pattern_id` against the scrutinee value `entry.scrutinee_id`, and
   // adds to `stack_` any work necessary to traverse into its subpatterns. This
@@ -119,9 +112,6 @@ class MatchContext {
 
   // The stack of work to be processed.
   llvm::SmallVector<WorkItem> stack_;
-
-  // The next index to be allocated by `NextRuntimeIndex`.
-  SemIR::CallParamIndex next_index_;
 
   // The pending results that will be returned by the current `DoWork` call.
   // It represents the contents of the `Call` arguments block when kind_
@@ -277,10 +267,6 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       break;
     }
     case MatchKind::Callee: {
-      CARBON_CHECK(!param_pattern.index.has_value(),
-                   "ValueParamPattern index set before callee pattern match");
-      param_pattern.index = NextRuntimeIndex();
-      ReplaceInstBeforeConstantUse(context, entry.pattern_id, param_pattern);
       auto param_id = AddInst<SemIR::ValueParam>(
           context, SemIR::LocId(entry.pattern_id),
           {.type_id =
@@ -329,9 +315,6 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       break;
     }
     case MatchKind::Callee: {
-      CARBON_CHECK(!param_pattern.index.has_value());
-      param_pattern.index = NextRuntimeIndex();
-      ReplaceInstBeforeConstantUse(context, entry.pattern_id, param_pattern);
       auto param_id = AddInst<SemIR::RefParam>(
           context, SemIR::LocId(entry.pattern_id),
           {.type_id =
@@ -374,9 +357,6 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
     case MatchKind::Callee: {
       // TODO: Consider ways to address near-duplication with the
       // other ParamPattern cases.
-      CARBON_CHECK(!param_pattern.index.has_value());
-      param_pattern.index = NextRuntimeIndex();
-      ReplaceInstBeforeConstantUse(context, entry.pattern_id, param_pattern);
       auto param_id = AddInst<SemIR::OutParam>(
           context, SemIR::LocId(entry.pattern_id),
           {.type_id =
