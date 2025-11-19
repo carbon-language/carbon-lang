@@ -16,8 +16,8 @@ namespace Carbon::SemIR {
 // Forward-declared to avoid a cycle.
 struct TypeId;
 
-// The expression category of a sem_ir instruction. See /docs/design/values.md
-// for details.
+// The expression category of an instruction. See /docs/design/values.md for
+// details.
 enum class ExprCategory : int8_t {
   // This instruction does not correspond to an expression, and as such has no
   // category.
@@ -45,34 +45,37 @@ enum class ExprCategory : int8_t {
   Last = Mixed
 };
 
+// The computation used to determine the expression category for an instruction,
+// given its instruction kind. In the case where the instruction kind always has
+// the same category, a value from the `ExprCategory` enumeration is used
+// directly instead, so these values should not overlap with the `ExprCategory`
+// values.
+enum ComputedExprCategory : int8_t {
+  // The expression category is `Value` if the instruction has a `type_id`
+  // field, and `NotExpr` otherwise. This is the default, and is used for
+  // convenience because it does the right thing for most instructions.
+  ValueIfHasType = -1,
+  // The expression category is the same as that of the first operand, which
+  // is an `InstId`.
+  SameAsFirstOperand = -2,
+  // The expression category is the same as that of the first operand, which
+  // is an `InstId`.
+  SameAsSecondOperand = -3,
+  // The expression category depends on the operands in some way not covered
+  // by the above options. The category is determined by custom logic in
+  // `GetExprCategory`.
+  DependsOnOperands = -4,
+};
+
 // What kind of expression category an instruction kind produces. The expression
 // category in general may depend on the operands of the instruction, but we can
 // handle most cases based on the instruction kind alone.
 class InstExprCategory {
  public:
-  // The kind of category for this instruction. This includes all values in
-  // `ExprCategory`, for the case where the category of the instruction only
-  // depedns on its kind, plus some additional kinds.
-  enum Kind : int8_t {
-    // The expression category is `Value` if the instruction has a `type_id`
-    // field, and `NotExpr` otherwise. This is the default, and is used for
-    // convenience because it does the right thing for most instructions.
-    ValueIfHasType = -1,
-    // The expression category is the same as that of the first operand, which
-    // is an `InstId`.
-    SameAsFirstOperand = -2,
-    // The expression category is the same as that of the first operand, which
-    // is an `InstId`.
-    SameAsSecondOperand = -3,
-    // The expression category depends on the operands in some way not covered
-    // by the above options. The category is determined by custom logic in
-    // `GetExprCategory`.
-    DependsOnOperands = -4,
-  };
-
-  constexpr explicit(false) InstExprCategory(Kind kind) : kind_(kind) {}
   constexpr explicit(false) InstExprCategory(ExprCategory cat)
-      : kind_(static_cast<Kind>(cat)) {}
+      : kind_(static_cast<int8_t>(cat)) {}
+  constexpr explicit(false) InstExprCategory(ComputedExprCategory kind)
+      : kind_(static_cast<int8_t>(kind)) {}
 
   // If this instruction always has the same category, returns that category.
   // Otherwise returns nullopt.
@@ -83,12 +86,16 @@ class InstExprCategory {
 
   // If the category of this instruction depends on its operands, returns the
   // corresponding Kind value. Otherwise returns nullopt.
-  constexpr auto AsInstDependentKind() const -> std::optional<Kind> {
-    return kind_ < 0 ? std::optional(kind_) : std::nullopt;
+  constexpr auto AsComputedCategory() const
+      -> std::optional<ComputedExprCategory> {
+    return kind_ < 0 ? std::optional(static_cast<ComputedExprCategory>(kind_))
+                     : std::nullopt;
   }
 
  private:
-  Kind kind_;
+  // A value from either the `ExprCategory` or `ComputedExprCategory`
+  // enumerations.
+  int8_t kind_;
 };
 
 // Whether an instruction defines a type.
@@ -220,7 +227,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   // comments.
   struct DefinitionInfo {
     llvm::StringLiteral ir_name;
-    InstExprCategory expr_category = InstExprCategory::ValueIfHasType;
+    InstExprCategory expr_category = ComputedExprCategory::ValueIfHasType;
     InstIsType is_type = InstIsType::Never;
     InstConstantKind constant_kind = InstConstantKind::Indirect;
     InstConstantNeedsInstIdKind constant_needs_inst_id =

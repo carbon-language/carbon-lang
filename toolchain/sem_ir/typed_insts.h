@@ -155,7 +155,7 @@ struct AddrPattern {
 struct AliasBinding {
   static constexpr auto Kind = InstKind::AliasBinding.Define<Parse::NodeId>(
       {.ir_name = "alias_binding",
-       .expr_category = InstExprCategory::SameAsSecondOperand});
+       .expr_category = ComputedExprCategory::SameAsSecondOperand});
 
   TypeId type_id;
   EntityNameId entity_name_id;
@@ -167,7 +167,7 @@ struct ArrayIndex {
   // Parse node is usually Parse::IndexExprId.
   static constexpr auto Kind = InstKind::ArrayIndex.Define<Parse::NodeId>(
       {.ir_name = "array_index",
-       .expr_category = InstExprCategory::SameAsFirstOperand,
+       .expr_category = ComputedExprCategory::SameAsFirstOperand,
        .is_type = InstIsType::Maybe,
        // TODO: This should probably be SymbolicOrReference.
        .constant_kind = InstConstantKind::SymbolicOnly});
@@ -207,7 +207,7 @@ struct ArrayType {
 struct AsCompatible {
   static constexpr auto Kind = InstKind::AsCompatible.Define<Parse::NodeId>(
       {.ir_name = "as_compatible",
-       .expr_category = InstExprCategory::SameAsFirstOperand});
+       .expr_category = ComputedExprCategory::SameAsFirstOperand});
 
   TypeId type_id;
   InstId source_id;
@@ -439,7 +439,7 @@ struct ClassElementAccess {
   static constexpr auto Kind =
       InstKind::ClassElementAccess.Define<Parse::NodeId>(
           {.ir_name = "class_element_access",
-           .expr_category = InstExprCategory::DependsOnOperands,
+           .expr_category = ComputedExprCategory::DependsOnOperands,
            .is_type = InstIsType::Maybe,
            .constant_kind = InstConstantKind::SymbolicOrReference});
 
@@ -508,7 +508,7 @@ struct ConstType {
 struct Converted {
   static constexpr auto Kind = InstKind::Converted.Define<Parse::NodeId>(
       {.ir_name = "converted",
-       .expr_category = InstExprCategory::SameAsSecondOperand});
+       .expr_category = ComputedExprCategory::SameAsSecondOperand});
 
   TypeId type_id;
   // The operand prior to being converted. This is tracked only for tooling
@@ -581,7 +581,7 @@ struct ErrorInst : public SingletonTypeInst<InstKind::ErrorInst, "<error>",
 struct ExportDecl {
   static constexpr auto Kind = InstKind::ExportDecl.Define<Parse::ExportDeclId>(
       {.ir_name = "export",
-       .expr_category = InstExprCategory::SameAsSecondOperand});
+       .expr_category = ComputedExprCategory::SameAsSecondOperand});
 
   TypeId type_id;
   EntityNameId entity_name_id;
@@ -902,7 +902,7 @@ struct ImplWitnessAssociatedConstant {
   static constexpr auto Kind =
       InstKind::ImplWitnessAssociatedConstant.Define<Parse::NodeId>(
           {.ir_name = "impl_witness_assoc_constant",
-           .expr_category = InstExprCategory::SameAsFirstOperand,
+           .expr_category = ComputedExprCategory::SameAsFirstOperand,
            .is_type = InstIsType::Maybe,
            // TODO: For dynamic dispatch, we might want to lower witness tables
            // as constants.
@@ -986,7 +986,7 @@ struct ImportRefUnloaded {
   static constexpr auto Kind =
       InstKind::ImportRefUnloaded.Define<Parse::NodeId>(
           {.ir_name = "import_ref",
-           .expr_category = InstExprCategory::DependsOnOperands,
+           .expr_category = ComputedExprCategory::DependsOnOperands,
            .is_lowered = false});
 
   ImportIRInstId import_ir_inst_id;
@@ -998,7 +998,7 @@ struct ImportRefUnloaded {
 struct ImportRefLoaded {
   static constexpr auto Kind = InstKind::ImportRefLoaded.Define<Parse::NodeId>(
       {.ir_name = "import_ref",
-       .expr_category = InstExprCategory::DependsOnOperands,
+       .expr_category = ComputedExprCategory::DependsOnOperands,
        .is_lowered = false});
 
   TypeId type_id;
@@ -1185,7 +1185,7 @@ struct NameRef {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::NameRef.Define<Parse::NodeId>(
       {.ir_name = "name_ref",
-       .expr_category = InstExprCategory::SameAsSecondOperand});
+       .expr_category = ComputedExprCategory::SameAsSecondOperand});
 
   TypeId type_id;
   NameId name_id;
@@ -1531,7 +1531,7 @@ struct SpecificConstant {
   // TODO: Can we make Parse::NodeId more specific?
   static constexpr auto Kind = InstKind::SpecificConstant.Define<Parse::NodeId>(
       {.ir_name = "specific_constant",
-       .expr_category = InstExprCategory::SameAsFirstOperand,
+       .expr_category = ComputedExprCategory::SameAsFirstOperand,
        .is_lowered = false});
 
   TypeId type_id;
@@ -1601,7 +1601,7 @@ struct SpecificImplFunction {
 struct SpliceBlock {
   static constexpr auto Kind = InstKind::SpliceBlock.Define<Parse::NodeId>(
       {.ir_name = "splice_block",
-       .expr_category = InstExprCategory::SameAsSecondOperand});
+       .expr_category = ComputedExprCategory::SameAsSecondOperand});
 
   TypeId type_id;
   AbsoluteInstBlockId block_id;
@@ -1640,7 +1640,7 @@ struct StructAccess {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::StructAccess.Define<Parse::NodeId>(
       {.ir_name = "struct_access",
-       .expr_category = InstExprCategory::SameAsFirstOperand,
+       .expr_category = ComputedExprCategory::SameAsFirstOperand,
        .is_type = InstIsType::Maybe,
        .constant_kind = InstConstantKind::SymbolicOrReference});
 
@@ -1769,7 +1769,7 @@ struct TupleAccess {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::TupleAccess.Define<Parse::NodeId>(
       {.ir_name = "tuple_access",
-       .expr_category = InstExprCategory::SameAsFirstOperand,
+       .expr_category = ComputedExprCategory::SameAsFirstOperand,
        .is_type = InstIsType::Maybe,
        .constant_kind = InstConstantKind::SymbolicOrReference});
 
