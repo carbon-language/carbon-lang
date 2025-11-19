@@ -51,14 +51,18 @@ struct IdTag {
   }
 
   auto Apply(int32_t index) const -> int32_t {
+    CARBON_DCHECK(index >= 0, "{0}", index);
     if (index < initial_reserved_ids_) {
       return index;
     }
     // TODO: Assert that id_tag_ doesn't have the second highest bit set.
-    return index ^ id_tag_;
+    auto tagged_index = index ^ id_tag_;
+    CARBON_DCHECK(tagged_index >= 0, "{0}", tagged_index);
+    return tagged_index;
   }
 
   auto Remove(int32_t tagged_index) const -> int32_t {
+    CARBON_DCHECK(tagged_index >= 0, "{0}", tagged_index);
     if (!HasTag(tagged_index)) {
       CARBON_DCHECK(tagged_index < initial_reserved_ids_,
                     "This untagged index is outside the initial reserved ids "
