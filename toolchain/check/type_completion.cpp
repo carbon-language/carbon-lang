@@ -178,6 +178,10 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
     // Formulate a specific for each `require` declaration, as the specific may
     // introduce errors. Then recurse on those specific facet types to find
     // other interfaces/constraints that may contain other require declarations.
+    // We only formulate a specific for the facet type in the `require`
+    // declaration since `extend require` can only be applied to `Self`, so the
+    // self-type in these `require` declarations never uses any generic
+    // parameters.
     for (auto [specific_id, requires_block_id] : specifics) {
       for (auto require_impls_id :
            context.require_impls_blocks().Get(requires_block_id)) {
