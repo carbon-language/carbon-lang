@@ -72,8 +72,8 @@ class RelationalValueStore {
 
   // Returns a value for an ID.
   auto Get(IdT id) const -> ConstRefType {
+    CARBON_DCHECK(id.index >= 0, "{0}", id);
     auto index = related_store_->GetIdTag().Remove(id.index);
-    CARBON_DCHECK(index >= 0, "{0}", id);
     return *values_[index];
   }
 
