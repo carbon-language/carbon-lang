@@ -343,7 +343,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     specific60000017: {generic: generic60000001, args: inst_block6000006F}
 // CHECK:STDOUT:     specific60000018: {generic: generic60000001, args: inst_block60000071}
 // CHECK:STDOUT:   struct_type_fields:
-// CHECK:STDOUT:     struct_type_fields0: {}
+// CHECK:STDOUT:     struct_type_fields_empty: {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     'type(TypeType)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(TypeType)}

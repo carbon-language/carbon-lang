@@ -36,7 +36,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
 // CHECK:STDOUT:   struct_type_fields:
-// CHECK:STDOUT:     struct_type_fields0: {}
+// CHECK:STDOUT:     struct_type_fields_empty: {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     'type(TypeType)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(TypeType)}
