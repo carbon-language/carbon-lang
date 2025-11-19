@@ -52,6 +52,10 @@ struct Worklist {
     if (store.size() == 0) {
       return 0;
     }
+    if (inst_id == InstId::InitTombstone ||
+        inst_id == InstId::ImplWitnessTablePlaceholder) {
+      return inst_id.index;
+    }
     return store.Get(inst_id);
   }
 

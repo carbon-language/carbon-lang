@@ -107,6 +107,29 @@ fn G() {
   //@dump-sem-ir-end
 }
 
+// --- fail_invalid_fn_syntax_in_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  fn Op[self: Self]();
+}
+
+class C {};
+//@dump-sem-ir-begin
+impl C as I {
+  // This leaves the impl with a placeholder instruction in the witness table.
+  // CHECK:STDERR: fail_invalid_fn_syntax_in_impl.carbon:[[@LINE+8]]:11: error: expected `:` or `:!` in binding pattern [ExpectedBindingPattern]
+  // CHECK:STDERR:   fn Op[x self: C]() {}
+  // CHECK:STDERR:           ^~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_invalid_fn_syntax_in_impl.carbon:[[@LINE+4]]:11: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:   fn Op[x self: C]() {}
+  // CHECK:STDERR:           ^~~~
+  // CHECK:STDERR:
+  fn Op[x self: C]() {}
+}
+//@dump-sem-ir-end
+
 // CHECK:STDOUT: --- fail_runtime_generic_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -259,4 +282,11 @@ fn G() {
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_invalid_fn_syntax_in_impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @<null name>: <unexpected>.inst{{[0-9A-F]+}}.loc9_6 as <unexpected>.inst5800002E.loc9_11;
 // CHECK:STDOUT:
