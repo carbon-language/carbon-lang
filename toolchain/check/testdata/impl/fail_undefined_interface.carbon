@@ -65,28 +65,30 @@ impl C as J where .X = ();
 // CHECK:STDERR:
 impl C as J where .X = () {}
 
-// --- fail_class_with_qualified_rewrite.carbon
+// --- fail_todo_class_with_qualified_rewrite.carbon
 library "[[@TEST_NAME]]";
 
 interface J;
 interface K { let X:! type; }
 class C {}
 
-// TODO: The failure here should be that J is incomplete, once the rewrite of
-// `.(K.X)` works. Since any rewrite in the decl requires us to know the size of
-// the witness table which requires all interfaces to be complete.
+// TODO: There should be no error here.
 //
-// CHECK:STDERR: fail_class_with_qualified_rewrite.carbon:[[@LINE+8]]:38: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR: fail_todo_class_with_qualified_rewrite.carbon:[[@LINE+8]]:38: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
 // CHECK:STDERR: impl C as J where .Self impls K and .(K.X) = ();
 // CHECK:STDERR:                                      ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_class_with_qualified_rewrite.carbon:[[@LINE+4]]:38: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_class_with_qualified_rewrite.carbon:[[@LINE+4]]:38: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR: impl C as J where .Self impls K and .(K.X) = ();
 // CHECK:STDERR:                                      ^
 // CHECK:STDERR:
 impl C as J where .Self impls K and .(K.X) = ();
 
-// CHECK:STDERR: fail_class_with_qualified_rewrite.carbon:[[@LINE+4]]:38: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+// TODO: The failure here should be that J is incomplete, once the rewrite of
+// `.(K.X)` works. Since any rewrite in the decl requires us to know the size of
+// the witness table which requires all interfaces to be complete.
+//
+// CHECK:STDERR: fail_todo_class_with_qualified_rewrite.carbon:[[@LINE+4]]:38: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
 // CHECK:STDERR: impl C as J where .Self impls K and .(K.X) = () {}
 // CHECK:STDERR:                                      ^
 // CHECK:STDERR:
@@ -255,7 +257,7 @@ impl C as I where .Self impls Incomplete {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_class_with_qualified_rewrite.carbon
+// CHECK:STDOUT: --- fail_todo_class_with_qualified_rewrite.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %K.type: type = facet_type <@K> [concrete]
