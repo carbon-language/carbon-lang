@@ -34,7 +34,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
     auto category_from_kind = untyped_inst.kind().expr_category();
 
     // If this instruction kind has a fixed category, return it.
-    if (auto fixed_category = category_from_kind.AsFixedCategory()) {
+    if (auto fixed_category = category_from_kind.TryAsFixedCategory()) {
       return *fixed_category == ExprCategory::Value ? value_category
                                                     : *fixed_category;
     }
@@ -54,16 +54,17 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         ir = ir->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
         inst_id = import_ir_inst.inst_id();
       } else {
-        static_assert(TypedInstT::Kind.expr_category().AsComputedCategory() !=
-                          ComputedExprCategory::DependsOnOperands,
-                      "Missing expression category computation for type");
+        static_assert(
+            TypedInstT::Kind.expr_category().TryAsComputedCategory() !=
+                ComputedExprCategory::DependsOnOperands,
+            "Missing expression category computation for type");
       }
     };
 
     // If the category depends on the operands of the instruction, determine it.
     // Usually this means the category is the same as the category of an
     // operand.
-    switch (*category_from_kind.AsComputedCategory()) {
+    switch (*category_from_kind.TryAsComputedCategory()) {
       case ComputedExprCategory::ValueIfHasType: {
         return untyped_inst.kind().has_type() ? value_category
                                               : ExprCategory::NotExpr;

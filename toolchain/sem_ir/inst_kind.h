@@ -79,14 +79,14 @@ class InstExprCategory {
 
   // If this instruction always has the same category, returns that category.
   // Otherwise returns nullopt.
-  constexpr auto AsFixedCategory() const -> std::optional<ExprCategory> {
+  constexpr auto TryAsFixedCategory() const -> std::optional<ExprCategory> {
     return kind_ >= 0 ? std::optional(static_cast<ExprCategory>(kind_))
                       : std::nullopt;
   }
 
   // If the category of this instruction depends on its operands, returns the
   // corresponding Kind value. Otherwise returns nullopt.
-  constexpr auto AsComputedCategory() const
+  constexpr auto TryAsComputedCategory() const
       -> std::optional<ComputedExprCategory> {
     return kind_ < 0 ? std::optional(static_cast<ComputedExprCategory>(kind_))
                      : std::nullopt;
