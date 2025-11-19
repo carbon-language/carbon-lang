@@ -123,17 +123,17 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
                                      const SemIR::FacetType& facet_type,
                                      MakeDiagnosticBuilderFn diagnoser)
     -> bool {
+  struct SpecificForRequires {
+    SemIR::SpecificId specific_id;
+    SemIR::RequireImplsBlockId requires_block_id;
+  };
+  llvm::SmallVector<SpecificForRequires> specifics;
+  int specifics_done = 0;
+
   llvm::SmallVector<SemIR::FacetTypeId> work = {facet_type.facet_type_id};
-  llvm::SmallVector<SemIR::SpecificId> resolve;
   while (!work.empty()) {
     auto next_facet_type_id = work.pop_back_val();
     const auto& facet_type_info = context.facet_types().Get(next_facet_type_id);
-
-    struct SpecificForRequires {
-      SemIR::SpecificId specific_id;
-      SemIR::RequireImplsBlockId requires_block_id;
-    };
-    llvm::SmallVector<SpecificForRequires> specific_requires;
 
     for (auto extends : facet_type_info.extend_constraints) {
       auto interface_id = extends.interface_id;
@@ -147,9 +147,8 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
         return false;
       }
       if (interface.generic_id.has_value()) {
-        specific_requires.push_back(
+        specifics.push_back(
             {extends.specific_id, interface.require_impls_block_id});
-        resolve.push_back(extends.specific_id);
       }
     }
 
@@ -166,9 +165,8 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
         return false;
       }
       if (constraint.generic_id.has_value()) {
-        specific_requires.push_back(
+        specifics.push_back(
             {extends.specific_id, constraint.require_impls_block_id});
-        resolve.push_back(extends.specific_id);
       }
     }
 
@@ -179,7 +177,9 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
     // declaration since `extend require` can only be applied to `Self`, so the
     // self-type in these `require` declarations never uses any generic
     // parameters.
-    for (auto [specific_id, requires_block_id] : specific_requires) {
+    auto requires_specifics =
+        llvm::ArrayRef(specifics).drop_front(specifics_done);
+    for (auto [specific_id, requires_block_id] : requires_specifics) {
       for (auto require_impls_id :
            context.require_impls_blocks().Get(requires_block_id)) {
         const auto& require = context.require_impls().Get(require_impls_id);
@@ -198,9 +198,10 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
         }
       }
     }
+    specifics_done += requires_specifics.size();
   }
 
-  for (auto specific_id : resolve) {
+  for (auto [specific_id, _] : specifics) {
     ResolveSpecificDefinition(context, loc_id, specific_id);
   }
 
