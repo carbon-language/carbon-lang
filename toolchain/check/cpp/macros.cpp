@@ -8,6 +8,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Sema/Sema.h"
+#include "common/check.h"
 
 namespace Carbon::Check {
 
@@ -54,25 +55,30 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
     parser.SkipUntil(clang::tok::eof);
     CARBON_DIAGNOSTIC(
         InCppMacroEvaluation, Error,
-        "failed to evaluate macro Cpp.{0} to a valid constant expression",
+        "failed to parse macro Cpp.{0} to a valid constant expression",
         std::string);
     context.emitter().Emit(loc_id, InCppMacroEvaluation, (*name_str_opt).str());
     return nullptr;
   }
 
   clang::Expr::EvalResult evaluated_result;
-  if (result_expr->EvaluateAsInt(evaluated_result, sema.getASTContext())) {
-    return clang::IntegerLiteral::Create(
-        sema.getASTContext(), evaluated_result.Val.getInt(),
-        result_expr->getType(), result_expr->getExprLoc());
+  if (!result_expr->EvaluateAsConstantExpr(evaluated_result,
+                                           sema.getASTContext())) {
+    context.TODO(loc_id,
+                 "failed to evaluate macro to a valid constant expression");
+    return nullptr;
   }
-  llvm::APFloat ap_value(0.0);
-  if (result_expr->EvaluateAsFloat(ap_value, sema.getASTContext())) {
+  clang::APValue ap_value = evaluated_result.Val;
+  if (ap_value.isInt()) {
+    return clang::IntegerLiteral::Create(
+        sema.getASTContext(), ap_value.getInt(), result_expr->getType(),
+        result_expr->getExprLoc());
+  }
+  if (ap_value.isFloat()) {
     return clang::FloatingLiteral::Create(
-        sema.getASTContext(), ap_value,
+        sema.getASTContext(), ap_value.getFloat(),
         /*isExact=*/true, result_expr->getType(), result_expr->getExprLoc());
   }
-
   context.TODO(loc_id, "Unsupported: constant type:" +
                            result_expr->getType().getAsString());
   return nullptr;

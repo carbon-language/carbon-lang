@@ -57,7 +57,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.CONFIG_VALUE;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+11]]:3: error: failed to evaluate macro Cpp.CONFIG_VALUE to a valid constant expression [InCppMacroEvaluation]
+  // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+11]]:3: error: failed to parse macro Cpp.CONFIG_VALUE to a valid constant expression [InCppMacroEvaluation]
   // CHECK:STDERR:   Cpp.CONFIG_VALUE;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
@@ -319,6 +319,20 @@ fn F() {
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Cpp.MyLongDouble;
+}
+
+// --- fail_import_assign_to_float.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "floating_point_literal_macro.h";
+
+fn F() {
+  // CHECK:STDERR: fail_import_assign_to_float.carbon:[[@LINE+4]]:3: error: expression is not assignable [AssignmentToNonAssignable]
+  // CHECK:STDERR:   Cpp.MyDouble = 1.0;
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:
+  Cpp.MyDouble = 1.0;
 }
 
 // --- macro_undefined.h

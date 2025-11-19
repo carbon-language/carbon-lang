@@ -30,7 +30,9 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/base/int.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/base/value_ids.h"
 #include "toolchain/check/call.h"
 #include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
@@ -2247,8 +2249,8 @@ static auto IsIncompleteClass(Context& context, SemIR::NameScopeId scope_id)
              context.classes().Get(class_decl->class_id).self_type_id);
 }
 
-// Maps a Clang constant expression to a Carbon constant. Currently supports
-// only integer constants.
+// Maps a Clang literal expression to a Carbon constant. Currently supports
+// only integer and floating-point literals.
 // TODO: Add support for the other constant types for which a C++ to Carbon type
 // mapping exists.
 static auto MapConstant(Context& context, SemIR::LocId loc_id,
@@ -2261,24 +2263,31 @@ static auto MapConstant(Context& context, SemIR::LocId loc_id,
         loc_id, "Unsupported: constant type: " + expr->getType().getAsString());
     return SemIR::ErrorInst::InstId;
   }
+
   SemIR::InstId inst_id = SemIR::InstId::None;
+  SemIR::ImportIRInstId imported_loc_id =
+      AddImportIRInst(context.sem_ir(), expr->getExprLoc());
+
   if (auto* integer_literal = dyn_cast<clang::IntegerLiteral>(expr)) {
-    auto int_id =
+    IntId int_id =
         context.ints().Add(integer_literal->getValue().getSExtValue());
-    inst_id = AddInstInNoBlock<SemIR::IntValue>(
-        context, loc_id, {.type_id = type_id, .int_id = int_id});
+    inst_id = AddInstInNoBlock(
+        context,
+        MakeImportedLocIdAndInst<SemIR::IntValue>(
+            context, imported_loc_id, {.type_id = type_id, .int_id = int_id}));
   } else if (auto* float_literal = dyn_cast<clang::FloatingLiteral>(expr)) {
-    auto float_id = context.floats().Add(float_literal->getValue());
-    inst_id = AddInstInNoBlock<SemIR::FloatValue>(
-        context, loc_id, {.type_id = type_id, .float_id = float_id});
+    FloatId float_id = context.floats().Add(float_literal->getValue());
+    inst_id = AddInstInNoBlock(context,
+                               MakeImportedLocIdAndInst<SemIR::FloatValue>(
+                                   context, imported_loc_id,
+                                   {.type_id = type_id, .float_id = float_id}));
   } else {
     context.TODO(
         loc_id, "Unsupported: constant type: " + expr->getType().getAsString());
-    inst_id = SemIR::ErrorInst::InstId;
+    return SemIR::ErrorInst::InstId;
   }
-  if (inst_id != SemIR::ErrorInst::InstId) {
-    context.imports().push_back(inst_id);
-  }
+
+  context.imports().push_back(inst_id);
   return inst_id;
 }
 
