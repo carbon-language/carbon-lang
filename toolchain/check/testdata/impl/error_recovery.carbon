@@ -288,5 +288,5 @@ impl C as I {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @<null name>: <unexpected>.inst{{[0-9A-F]+}}.loc9_6 as <unexpected>.inst5800002E.loc9_11;
+// CHECK:STDOUT: impl @<null name>: <unexpected>.inst{{[0-9A-F]+}}.loc9_6 as <unexpected>.inst5800002D.loc9_11;
 // CHECK:STDOUT:
