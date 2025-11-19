@@ -178,6 +178,7 @@ auto RecognizedTypeInfo::ForType(const File& file, ClassType class_type)
     Kind kind = llvm::StringSwitch<Kind>(*name_ident)
                     .Case("Long32", CppLong32)
                     .Case("NullptrT", CppNullptrT)
+                    .Case("VoidBase", CppVoidBase)
                     .Default(None);
     return {.kind = kind};
   }
@@ -209,6 +210,9 @@ auto RecognizedTypeInfo::PrintLiteral(const File& file,
       break;
     case CppNullptrT:
       out << "Cpp.nullptr_t";
+      break;
+    case CppVoidBase:
+      out << "Cpp.void";
       break;
     case Str:
       out << "str";

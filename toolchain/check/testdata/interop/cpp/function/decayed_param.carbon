@@ -138,11 +138,11 @@ fn F() {
 // CHECK:STDOUT:   %uninit: %Cpp.nullptr_t = uninitialized_value [concrete]
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.d80: type = fn_type @Cpp.nullptr_t.as.ImplicitAs.impl.Convert, @Cpp.nullptr_t.as.ImplicitAs.impl(%T.d9f) [symbolic]
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.2ce: %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.d80 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.213: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.87f, @Cpp.nullptr_t.as.ImplicitAs.impl(%i32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.eae: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.126, @Cpp.nullptr_t.as.ImplicitAs.impl(%i32) [concrete]
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.87f: type = fn_type @Cpp.nullptr_t.as.ImplicitAs.impl.Convert, @Cpp.nullptr_t.as.ImplicitAs.impl(%i32) [concrete]
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.83e: %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.87f = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet.5e9: %ImplicitAs.type.534 = facet_value %Cpp.nullptr_t, (%ImplicitAs.impl_witness.213) [concrete]
-// CHECK:STDOUT:   %.28d: type = fn_type_with_self_type %ImplicitAs.Convert.type.8fe, %ImplicitAs.facet.5e9 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.4bf: %ImplicitAs.type.534 = facet_value %Cpp.nullptr_t, (%ImplicitAs.impl_witness.eae) [concrete]
+// CHECK:STDOUT:   %.164: type = fn_type_with_self_type %ImplicitAs.Convert.type.8fe, %ImplicitAs.facet.4bf [concrete]
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %uninit, %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.83e [concrete]
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.83e, @Cpp.nullptr_t.as.ImplicitAs.impl.Convert(%i32) [concrete]
 // CHECK:STDOUT:   %bound_method.ed9: <bound method> = bound_method %uninit, %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -185,8 +185,8 @@ fn F() {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.da6 = impl_witness_table (%Core.import_ref.ec9), @U.binding.as_type.as.ImplicitAs.impl.ea7 [concrete]
 // CHECK:STDOUT:   %Core.import_ref.7fb: @T.binding.as_type.as.OptionalAs.impl.%T.binding.as_type.as.OptionalAs.impl.Convert.type (%T.binding.as_type.as.OptionalAs.impl.Convert.type.8c6) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @T.binding.as_type.as.OptionalAs.impl.%T.binding.as_type.as.OptionalAs.impl.Convert (constants.%T.binding.as_type.as.OptionalAs.impl.Convert.180)]
 // CHECK:STDOUT:   %OptionalAs.impl_witness_table.8ee = impl_witness_table (%Core.import_ref.7fb), @T.binding.as_type.as.OptionalAs.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.54b: @Cpp.nullptr_t.as.ImplicitAs.impl.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type (%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.d80) = import_ref Core//prelude/types/cpp/nullptr, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.nullptr_t.as.ImplicitAs.impl.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert (constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.2ce)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.87f = impl_witness_table (%Core.import_ref.54b), @Cpp.nullptr_t.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.9b7: @Cpp.nullptr_t.as.ImplicitAs.impl.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type (%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.type.d80) = import_ref Core//prelude/types/cpp/nullptr, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.nullptr_t.as.ImplicitAs.impl.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert (constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.2ce)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.126 = impl_witness_table (%Core.import_ref.9b7), @Cpp.nullptr_t.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -233,7 +233,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc13_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %nullptr.ref: %Cpp.nullptr_t = name_ref nullptr, %uninit [concrete = constants.%uninit]
-// CHECK:STDOUT:   %impl.elem0.loc13: %.28d = impl_witness_access constants.%ImplicitAs.impl_witness.213, element0 [concrete = constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.83e]
+// CHECK:STDOUT:   %impl.elem0.loc13: %.164 = impl_witness_access constants.%ImplicitAs.impl_witness.eae, element0 [concrete = constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.83e]
 // CHECK:STDOUT:   %bound_method.loc13_21.1: <bound method> = bound_method %nullptr.ref, %impl.elem0.loc13 [concrete = constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn.loc13: <specific function> = specific_function %impl.elem0.loc13, @Cpp.nullptr_t.as.ImplicitAs.impl.Convert(constants.%i32) [concrete = constants.%Cpp.nullptr_t.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc13_21.2: <bound method> = bound_method %nullptr.ref, %specific_fn.loc13 [concrete = constants.%bound_method.ed9]
