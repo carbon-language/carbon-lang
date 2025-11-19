@@ -30,7 +30,6 @@ fn A() {
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %empty_tuple.type, () [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.bb8: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.72f: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.bb8 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.843: type = ptr_type %empty_tuple.type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -70,13 +69,11 @@ fn A() {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc18_25: <bound method> = bound_method %n.var.loc18_25, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.72f
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc18_25: <bound method> = bound_method %n.var.loc18_25, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc18_25: %ptr.843 = addr_of %n.var.loc18_25
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc18_25: init %empty_tuple.type = call %bound_method.loc18_25(%addr.loc18_25)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc18_25: init %empty_tuple.type = call %bound_method.loc18_25(%n.var.loc18_25)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc18_5: <bound method> = bound_method %n.var.loc18_5, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.72f
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc18_5: <bound method> = bound_method %n.var.loc18_5, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc18_5: %ptr.843 = addr_of %n.var.loc18_5
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc18_5: init %empty_tuple.type = call %bound_method.loc18_5(%addr.loc18_5)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc18_5: init %empty_tuple.type = call %bound_method.loc18_5(%n.var.loc18_5)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

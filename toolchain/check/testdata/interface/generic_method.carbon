@@ -166,15 +166,13 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %Destroy.impl_witness.cc1: <witness> = impl_witness imports.%Destroy.impl_witness_table, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.352) [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.cee: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.352) [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.056: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.cee = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.5df: type = ptr_type %tuple.type.092 [concrete]
-// CHECK:STDOUT:   %complete_type.aab: <witness> = complete_type_witness %ptr.5df [concrete]
+// CHECK:STDOUT:   %complete_type.05d: <witness> = complete_type_witness %tuple.type.092 [concrete]
 // CHECK:STDOUT:   %Destroy.facet.272: %Destroy.type = facet_value %tuple.type.092, (%Destroy.impl_witness.cc1) [concrete]
 // CHECK:STDOUT:   %.30d: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet.272 [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.7b8: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.056, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.352) [concrete]
 // CHECK:STDOUT:   %facet_value.4e3: %type_where = facet_value %Z, () [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.d83: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.4e3) [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.2cc: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.d83 = struct_value () [concrete]
-// CHECK:STDOUT:   %complete_type.d3e: <witness> = complete_type_witness %ptr.fb6 [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.cb3: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.2cc, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.4e3) [concrete]
 // CHECK:STDOUT:   %T.fb1: %A.type.0a4 = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.809: type = pattern_type %A.type.0a4 [concrete]
@@ -193,15 +191,13 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %Destroy.impl_witness.7b0: <witness> = impl_witness imports.%Destroy.impl_witness_table, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.a42) [symbolic]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.c7f: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.a42) [symbolic]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.8d9: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.c7f = struct_value () [symbolic]
-// CHECK:STDOUT:   %ptr.0f5: type = ptr_type %tuple.type.86a [symbolic]
-// CHECK:STDOUT:   %require_complete.536: <witness> = require_complete_type %ptr.0f5 [symbolic]
 // CHECK:STDOUT:   %Destroy.facet.ac7: %Destroy.type = facet_value %tuple.type.86a, (%Destroy.impl_witness.7b0) [symbolic]
 // CHECK:STDOUT:   %.47a: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet.ac7 [symbolic]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.b2a: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.8d9, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.a42) [symbolic]
 // CHECK:STDOUT:   %CallIndirect.type: type = fn_type @CallIndirect [concrete]
 // CHECK:STDOUT:   %CallIndirect: %CallIndirect.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CallGeneric.specific_fn: <specific function> = specific_function %CallGeneric, @CallGeneric(%A.facet) [concrete]
-// CHECK:STDOUT:   %complete_type.05d: <witness> = complete_type_witness %tuple.type.092 [concrete]
+// CHECK:STDOUT:   %complete_type.d3e: <witness> = complete_type_witness %ptr.fb6 [concrete]
 // CHECK:STDOUT:   %tuple.type.953: type = tuple_type (%empty_struct_type, %empty_struct_type, %ptr.fb6) [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.f1c: <witness> = impl_witness imports.%Copy.impl_witness_table.67d, @ptr.as.Copy.impl(%Z) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.31e: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Z) [concrete]
@@ -461,21 +457,19 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %impl.elem0: %.d35 = impl_witness_access constants.%A.impl_witness, element0 [concrete = constants.%Y.as.A.impl.F]
 // CHECK:STDOUT:   %Z.ref.loc23: type = name_ref Z, file.%Z.decl [concrete = constants.%Z]
 // CHECK:STDOUT:   %u.ref: ref %Z = name_ref u, %u
-// CHECK:STDOUT:   %addr.loc23_20: %ptr.fb6 = addr_of %u.ref
+// CHECK:STDOUT:   %addr: %ptr.fb6 = addr_of %u.ref
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Y.as.A.impl.F(constants.%Z) [concrete = constants.%Y.as.A.impl.F.specific_fn]
 // CHECK:STDOUT:   %.loc23_22.1: ref %tuple.type.092 = temporary_storage
-// CHECK:STDOUT:   %Y.as.A.impl.F.call: init %tuple.type.092 = call %specific_fn(%addr.loc23_20) to %.loc23_22.1
+// CHECK:STDOUT:   %Y.as.A.impl.F.call: init %tuple.type.092 = call %specific_fn(%addr) to %.loc23_22.1
 // CHECK:STDOUT:   %.loc23_22.2: ref %tuple.type.092 = temporary %.loc23_22.1, %Y.as.A.impl.F.call
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc23: <bound method> = bound_method %.loc23_22.2, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.056
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.056, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.352) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.7b8]
 // CHECK:STDOUT:   %bound_method.loc23: <bound method> = bound_method %.loc23_22.2, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc23_22: %ptr.5df = addr_of %.loc23_22.2
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc23: init %empty_tuple.type = call %bound_method.loc23(%addr.loc23_22)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc23: init %empty_tuple.type = call %bound_method.loc23(%.loc23_22.2)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc22: <bound method> = bound_method %u.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.2cc
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.2cc, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4e3) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.cb3]
 // CHECK:STDOUT:   %bound_method.loc22: <bound method> = bound_method %u.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc22: %ptr.fb6 = addr_of %u.var
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc22: init %empty_tuple.type = call %bound_method.loc22(%addr.loc22)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc22: init %empty_tuple.type = call %bound_method.loc22(%u.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -489,7 +483,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %impl.elem0.loc28_4.2: @CallGeneric.%.loc28_4.3 (%.6ed) = impl_witness_access %A.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc28_4.2 (constants.%impl.elem0.9bb)]
 // CHECK:STDOUT:   %specific_impl_fn.loc28_4.2: <specific function> = specific_impl_function %impl.elem0.loc28_4.2, @A.F(constants.%X, %T.loc26_16.1, constants.%Z) [symbolic = %specific_impl_fn.loc28_4.2 (constants.%specific_impl_fn.0b2)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (constants.%X, %T.binding.as_type, constants.%ptr.fb6) [symbolic = %tuple.type (constants.%tuple.type.86a)]
-// CHECK:STDOUT:   %require_complete.loc28_12.1: <witness> = require_complete_type %tuple.type [symbolic = %require_complete.loc28_12.1 (constants.%require_complete.93d)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %tuple.type [symbolic = %require_complete (constants.%require_complete.93d)]
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %tuple.type, () [symbolic = %facet_value (constants.%facet_value.a42)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness imports.%Destroy.impl_witness_table, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.7b0)]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %tuple.type, (%Destroy.impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet.ac7)]
@@ -497,8 +491,6 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.type (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.type.c7f)]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op: @CallGeneric.%DestroyT.binding.as_type.as.Destroy.impl.Op.type (%DestroyT.binding.as_type.as.Destroy.impl.Op.type.c7f) = struct_value () [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.8d9)]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.loc28: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.loc28 (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.b2a)]
-// CHECK:STDOUT:   %ptr: type = ptr_type %tuple.type [symbolic = %ptr (constants.%ptr.0f5)]
-// CHECK:STDOUT:   %require_complete.loc28_12.2: <witness> = require_complete_type %ptr [symbolic = %require_complete.loc28_12.2 (constants.%require_complete.536)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -517,22 +509,20 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %impl.elem0.loc28_4.1: @CallGeneric.%.loc28_4.3 (%.6ed) = impl_witness_access constants.%A.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc28_4.2 (constants.%impl.elem0.9bb)]
 // CHECK:STDOUT:     %Z.ref.loc28: type = name_ref Z, file.%Z.decl [concrete = constants.%Z]
 // CHECK:STDOUT:     %u.ref: ref %Z = name_ref u, %u
-// CHECK:STDOUT:     %addr.loc28_10: %ptr.fb6 = addr_of %u.ref
+// CHECK:STDOUT:     %addr: %ptr.fb6 = addr_of %u.ref
 // CHECK:STDOUT:     %specific_impl_fn.loc28_4.1: <specific function> = specific_impl_function %impl.elem0.loc28_4.1, @A.F(constants.%X, constants.%T.fb1, constants.%Z) [symbolic = %specific_impl_fn.loc28_4.2 (constants.%specific_impl_fn.0b2)]
 // CHECK:STDOUT:     %.loc28_12.1: ref @CallGeneric.%tuple.type (%tuple.type.86a) = temporary_storage
-// CHECK:STDOUT:     %.loc28_12.2: init @CallGeneric.%tuple.type (%tuple.type.86a) = call %specific_impl_fn.loc28_4.1(%addr.loc28_10) to %.loc28_12.1
+// CHECK:STDOUT:     %.loc28_12.2: init @CallGeneric.%tuple.type (%tuple.type.86a) = call %specific_impl_fn.loc28_4.1(%addr) to %.loc28_12.1
 // CHECK:STDOUT:     %.loc28_12.3: ref @CallGeneric.%tuple.type (%tuple.type.86a) = temporary %.loc28_12.1, %.loc28_12.2
 // CHECK:STDOUT:     %impl.elem0.loc28_12: @CallGeneric.%.loc28_12.4 (%.47a) = impl_witness_access constants.%Destroy.impl_witness.7b0, element0 [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.8d9)]
 // CHECK:STDOUT:     %bound_method.loc28_12.1: <bound method> = bound_method %.loc28_12.3, %impl.elem0.loc28_12
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0.loc28_12, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.a42) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.loc28 (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.b2a)]
 // CHECK:STDOUT:     %bound_method.loc28_12.2: <bound method> = bound_method %.loc28_12.3, %specific_fn
-// CHECK:STDOUT:     %addr.loc28_12: @CallGeneric.%ptr (%ptr.0f5) = addr_of %.loc28_12.3
-// CHECK:STDOUT:     %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc28: init %empty_tuple.type = call %bound_method.loc28_12.2(%addr.loc28_12)
+// CHECK:STDOUT:     %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc28: init %empty_tuple.type = call %bound_method.loc28_12.2(%.loc28_12.3)
 // CHECK:STDOUT:     %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %u.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.2cc
 // CHECK:STDOUT:     %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.2cc, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4e3) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.cb3]
 // CHECK:STDOUT:     %bound_method.loc27: <bound method> = bound_method %u.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:     %addr.loc27: %ptr.fb6 = addr_of %u.var
-// CHECK:STDOUT:     %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc27: init %empty_tuple.type = call %bound_method.loc27(%addr.loc27)
+// CHECK:STDOUT:     %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc27: init %empty_tuple.type = call %bound_method.loc27(%u.var)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -648,7 +638,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %impl.elem0.loc28_4.2 => constants.%Y.as.A.impl.F
 // CHECK:STDOUT:   %specific_impl_fn.loc28_4.2 => constants.%Y.as.A.impl.F.specific_fn
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.092
-// CHECK:STDOUT:   %require_complete.loc28_12.1 => constants.%complete_type.05d
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.05d
 // CHECK:STDOUT:   %facet_value => constants.%facet_value.352
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.cc1
 // CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.272
@@ -656,8 +646,6 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type => constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.type.cee
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op => constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.056
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.loc28 => constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.7b8
-// CHECK:STDOUT:   %ptr => constants.%ptr.5df
-// CHECK:STDOUT:   %require_complete.loc28_12.2 => constants.%complete_type.aab
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.F(constants.%X, constants.%A.facet, constants.%Z) {
@@ -764,15 +752,13 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %Destroy.impl_witness.c75: <witness> = impl_witness imports.%Destroy.impl_witness_table, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.71a) [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.5cd: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.71a) [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.472: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.5cd = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.ad9: type = ptr_type %tuple.type.415 [concrete]
-// CHECK:STDOUT:   %complete_type.e23: <witness> = complete_type_witness %ptr.ad9 [concrete]
+// CHECK:STDOUT:   %complete_type.aa8: <witness> = complete_type_witness %tuple.type.415 [concrete]
 // CHECK:STDOUT:   %Destroy.facet.b37: %Destroy.type = facet_value %tuple.type.415, (%Destroy.impl_witness.c75) [concrete]
 // CHECK:STDOUT:   %.322: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet.b37 [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.12b: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.472, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.71a) [concrete]
 // CHECK:STDOUT:   %facet_value.4e3: %type_where = facet_value %Z, () [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.d83: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.4e3) [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.2cc: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.d83 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.fb6: type = ptr_type %Z [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.cb3: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.2cc, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.4e3) [concrete]
 // CHECK:STDOUT:   %T.fb1: %A.type.0a4 = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.809: type = pattern_type %A.type.0a4 [concrete]
@@ -792,15 +778,12 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %Destroy.impl_witness.cd1: <witness> = impl_witness imports.%Destroy.impl_witness_table, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.185) [symbolic]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.a5d: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.185) [symbolic]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.a08: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.a5d = struct_value () [symbolic]
-// CHECK:STDOUT:   %ptr.4ce: type = ptr_type %tuple.type.bf3 [symbolic]
-// CHECK:STDOUT:   %require_complete.7d0: <witness> = require_complete_type %ptr.4ce [symbolic]
 // CHECK:STDOUT:   %Destroy.facet.1b6: %Destroy.type = facet_value %tuple.type.bf3, (%Destroy.impl_witness.cd1) [symbolic]
 // CHECK:STDOUT:   %.cce: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet.1b6 [symbolic]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.760: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.a08, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.185) [symbolic]
 // CHECK:STDOUT:   %CallIndirect.type: type = fn_type @CallIndirect [concrete]
 // CHECK:STDOUT:   %CallIndirect: %CallIndirect.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CallGeneric.specific_fn: <specific function> = specific_function %CallGeneric, @CallGeneric(%A.facet.f26) [concrete]
-// CHECK:STDOUT:   %complete_type.aa8: <witness> = complete_type_witness %tuple.type.415 [concrete]
 // CHECK:STDOUT:   %tuple.653: %tuple.type.5a1 = tuple_value (%X, %A.facet.f26, %Z) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1079,13 +1062,11 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc24_39: <bound method> = bound_method %.loc24_39.2, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.472
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.472, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.71a) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.12b]
 // CHECK:STDOUT:   %bound_method.loc24_39: <bound method> = bound_method %.loc24_39.2, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc24_39: %ptr.ad9 = addr_of %.loc24_39.2
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc24_39: init %empty_tuple.type = call %bound_method.loc24_39(%addr.loc24_39)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc24_39: init %empty_tuple.type = call %bound_method.loc24_39(%.loc24_39.2)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc24_38: <bound method> = bound_method %.loc24_38.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.2cc
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.2cc, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4e3) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.cb3]
 // CHECK:STDOUT:   %bound_method.loc24_38: <bound method> = bound_method %.loc24_38.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc24_38: %ptr.fb6 = addr_of %.loc24_38.4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc24_38: init %empty_tuple.type = call %bound_method.loc24_38(%addr.loc24_38)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc24_38: init %empty_tuple.type = call %bound_method.loc24_38(%.loc24_38.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1099,7 +1080,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %impl.elem0.loc28_4.2: @CallGeneric.%.loc28_4.3 (%.6ed) = impl_witness_access %A.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc28_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc28_4.2: <specific function> = specific_impl_function %impl.elem0.loc28_4.2, @A.F(constants.%X, %T.loc27_16.1, constants.%Z) [symbolic = %specific_impl_fn.loc28_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (constants.%X, %T.binding.as_type, constants.%Z) [symbolic = %tuple.type (constants.%tuple.type.bf3)]
-// CHECK:STDOUT:   %require_complete.loc28_12.1: <witness> = require_complete_type %tuple.type [symbolic = %require_complete.loc28_12.1 (constants.%require_complete.4e9)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %tuple.type [symbolic = %require_complete (constants.%require_complete.4e9)]
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %tuple.type, () [symbolic = %facet_value (constants.%facet_value.185)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness imports.%Destroy.impl_witness_table, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.cd1)]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %tuple.type, (%Destroy.impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet.1b6)]
@@ -1107,8 +1088,6 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.type (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.type.a5d)]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op: @CallGeneric.%DestroyT.binding.as_type.as.Destroy.impl.Op.type (%DestroyT.binding.as_type.as.Destroy.impl.Op.type.a5d) = struct_value () [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.a08)]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.loc28: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.loc28 (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.760)]
-// CHECK:STDOUT:   %ptr: type = ptr_type %tuple.type [symbolic = %ptr (constants.%ptr.4ce)]
-// CHECK:STDOUT:   %require_complete.loc28_12.2: <witness> = require_complete_type %ptr [symbolic = %require_complete.loc28_12.2 (constants.%require_complete.7d0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -1133,13 +1112,11 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %bound_method.loc28_12.1: <bound method> = bound_method %.loc28_12.3, %impl.elem0.loc28_12
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0.loc28_12, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.185) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.loc28 (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.760)]
 // CHECK:STDOUT:     %bound_method.loc28_12.2: <bound method> = bound_method %.loc28_12.3, %specific_fn
-// CHECK:STDOUT:     %addr.loc28_12: @CallGeneric.%ptr (%ptr.4ce) = addr_of %.loc28_12.3
-// CHECK:STDOUT:     %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc28_12: init %empty_tuple.type = call %bound_method.loc28_12.2(%addr.loc28_12)
+// CHECK:STDOUT:     %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc28_12: init %empty_tuple.type = call %bound_method.loc28_12.2(%.loc28_12.3)
 // CHECK:STDOUT:     %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc28_11.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.2cc
 // CHECK:STDOUT:     %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.2cc, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.4e3) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.cb3]
 // CHECK:STDOUT:     %bound_method.loc28_11: <bound method> = bound_method %.loc28_11.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:     %addr.loc28_11: %ptr.fb6 = addr_of %.loc28_11.4
-// CHECK:STDOUT:     %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc28_11: init %empty_tuple.type = call %bound_method.loc28_11(%addr.loc28_11)
+// CHECK:STDOUT:     %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc28_11: init %empty_tuple.type = call %bound_method.loc28_11(%.loc28_11.4)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1309,7 +1286,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %impl.elem0.loc28_4.2 => constants.%tuple.type.as.A.impl.F.735
 // CHECK:STDOUT:   %specific_impl_fn.loc28_4.2 => constants.%tuple.type.as.A.impl.F.specific_fn.5c5
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.415
-// CHECK:STDOUT:   %require_complete.loc28_12.1 => constants.%complete_type.aa8
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.aa8
 // CHECK:STDOUT:   %facet_value => constants.%facet_value.71a
 // CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.c75
 // CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.b37
@@ -1317,8 +1294,6 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type => constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.type.5cd
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op => constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.472
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.loc28 => constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.12b
-// CHECK:STDOUT:   %ptr => constants.%ptr.ad9
-// CHECK:STDOUT:   %require_complete.loc28_12.2 => constants.%complete_type.e23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.F(constants.%X, constants.%A.facet.f26, constants.%Z) {

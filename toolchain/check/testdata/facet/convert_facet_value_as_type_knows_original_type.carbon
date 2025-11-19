@@ -153,7 +153,6 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %Goat, () [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.5a8: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.9fd: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.5a8 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.940: type = ptr_type %Goat [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -219,18 +218,15 @@ fn F[A:! J, B:! A](x: C(A, B)) {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc27: <bound method> = bound_method %.loc27_6.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9fd
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc27: <bound method> = bound_method %.loc27_6.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc27: %ptr.940 = addr_of %.loc27_6.4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc27: init %empty_tuple.type = call %bound_method.loc27(%addr.loc27)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc27: init %empty_tuple.type = call %bound_method.loc27(%.loc27_6.4)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc26: <bound method> = bound_method %.loc26_6.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9fd
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc26: <bound method> = bound_method %.loc26_6.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc26: %ptr.940 = addr_of %.loc26_6.4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc26: init %empty_tuple.type = call %bound_method.loc26(%addr.loc26)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc26: init %empty_tuple.type = call %bound_method.loc26(%.loc26_6.4)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc22: <bound method> = bound_method %.loc22_28.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9fd
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc22: <bound method> = bound_method %.loc22_28.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.3
-// CHECK:STDOUT:   %addr.loc22: %ptr.940 = addr_of %.loc22_28.4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc22: init %empty_tuple.type = call %bound_method.loc22(%addr.loc22)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc22: init %empty_tuple.type = call %bound_method.loc22(%.loc22_28.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

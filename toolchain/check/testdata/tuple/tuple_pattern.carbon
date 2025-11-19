@@ -113,7 +113,6 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %tuple.type.b6b, () [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.504: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.766: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.504 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.8fc: type = ptr_type %tuple.type.b6b [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -196,13 +195,11 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8: <bound method> = bound_method %.var.loc8, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.766
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %.var.loc8, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc8: %ptr.8fc = addr_of %.var.loc8
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc8: init %empty_tuple.type = call %bound_method.loc8(%addr.loc8)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc8: init %empty_tuple.type = call %bound_method.loc8(%.var.loc8)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7: <bound method> = bound_method %.var.loc7, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.766
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc7: <bound method> = bound_method %.var.loc7, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc7: %ptr.8fc = addr_of %.var.loc7
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc7: init %empty_tuple.type = call %bound_method.loc7(%addr.loc7)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc7: init %empty_tuple.type = call %bound_method.loc7(%.var.loc7)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -220,7 +217,6 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %tuple.type.b6b, () [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.504: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.766: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.504 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.8fc: type = ptr_type %tuple.type.b6b [concrete]
 // CHECK:STDOUT:   %MakeTuple.type: type = fn_type @MakeTuple [concrete]
 // CHECK:STDOUT:   %MakeTuple: %MakeTuple.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -290,13 +286,11 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc7: <bound method> = bound_method %.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.766
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc7: <bound method> = bound_method %.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc7: %ptr.8fc = addr_of %.var
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc7: init %empty_tuple.type = call %bound_method.loc7(%addr.loc7)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc7: init %empty_tuple.type = call %bound_method.loc7(%.var)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc6: <bound method> = bound_method %tuple.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.766
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc6: <bound method> = bound_method %tuple.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc6: %ptr.8fc = addr_of %tuple.var
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc6: init %empty_tuple.type = call %bound_method.loc6(%addr.loc6)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc6: init %empty_tuple.type = call %bound_method.loc6(%tuple.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -357,8 +351,7 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.766
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.8fc = addr_of %.var
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -390,8 +383,7 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.766
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.8fc = addr_of %.var
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

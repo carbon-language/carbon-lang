@@ -63,12 +63,12 @@ class LLVMTool : public CARBON_ENUM_BASE(LLVMTool) {
   CARBON_ENUM_CONSTANT_DEFINITION(LLVMTool, Identifier)
 #include "toolchain/base/llvm_tools.def"
 
-constexpr LLVMTool LLVMTool::ToolsStorage[] = {
+inline constexpr LLVMTool LLVMTool::ToolsStorage[] = {
 #define CARBON_LLVM_TOOL(Identifier, Name, BinName, MainFn) \
   LLVMTool::Identifier,
 #include "toolchain/base/llvm_tools.def"
 };
-constexpr llvm::ArrayRef<LLVMTool> LLVMTool::Tools = ToolsStorage;
+inline constexpr llvm::ArrayRef<LLVMTool> LLVMTool::Tools = ToolsStorage;
 
 }  // namespace Carbon
 

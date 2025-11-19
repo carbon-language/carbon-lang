@@ -415,6 +415,28 @@ cc_library(
 )
 
 cc_library(
+    name = "latch",
+    srcs = ["latch.cpp"],
+    hdrs = ["latch.h"],
+    deps = [
+        ":check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "latch_test",
+    size = "small",
+    srcs = ["latch_test.cpp"],
+    deps = [
+        ":latch",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "map",
     hdrs = ["map.h"],
     deps = [

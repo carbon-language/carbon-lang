@@ -29,14 +29,10 @@ fn F(T:! Z) {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR:
   T.YY();
-  // CHECK:STDERR: fail_todo_extend.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   T.(Y.YY)();
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR:
   T.(Y.YY)();
 }
 
-// --- fail_todo_implicit_self_impls.carbon
+// --- implicit_self_impls.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {
@@ -50,14 +46,10 @@ constraint Z {
 //@dump-sem-ir-end
 
 fn F(T:! Z) {
-  // CHECK:STDERR: fail_todo_implicit_self_impls.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   T.(Y.YY)();
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR:
   T.(Y.YY)();
 }
 
-// --- fail_todo_explicit_self_impls.carbon
+// --- explicit_self_impls.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {
@@ -71,10 +63,6 @@ constraint Z {
 //@dump-sem-ir-end
 
 fn F(T:! Z) {
-  // CHECK:STDERR: fail_todo_explicit_self_impls.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   T.(Y.YY)();
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR:
   T.(Y.YY)();
 }
 
@@ -327,7 +315,9 @@ constraint Z {
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require0
+// CHECK:STDOUT:   @Z.require0 {
+// CHECK:STDOUT:     require @Z.require0.%Self.as_type impls <@Y>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @Z.require0(@Z.%Self: %Z.type) {
@@ -340,7 +330,7 @@ constraint Z {
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_implicit_self_impls.carbon
+// CHECK:STDOUT: --- implicit_self_impls.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
@@ -370,7 +360,9 @@ constraint Z {
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require0
+// CHECK:STDOUT:   @Z.require0 {
+// CHECK:STDOUT:     require @Z.require0.%Self.as_type impls <@Y>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @Z.require0(@Z.%Self: %Z.type) {
@@ -383,7 +375,7 @@ constraint Z {
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_explicit_self_impls.carbon
+// CHECK:STDOUT: --- explicit_self_impls.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
@@ -415,7 +407,9 @@ constraint Z {
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require0
+// CHECK:STDOUT:   @Z.require0 {
+// CHECK:STDOUT:     require @Z.require0.%.loc9 impls <@Y>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @Z.require0(@Z.%Self: %Z.type) {
@@ -466,7 +460,9 @@ constraint Z {
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require0
+// CHECK:STDOUT:   @Z.require0 {
+// CHECK:STDOUT:     require @Z.require0.%C.loc9_17.1 impls <@Y>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @Z.require0(@Z.%Self: %Z.type) {
@@ -532,7 +528,9 @@ constraint Z {
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require0
+// CHECK:STDOUT:   @Z.require0 {
+// CHECK:STDOUT:     require @Z.require0.%Self.as_type impls <@Y where constants.%impl.elem0 = constants.%empty_tuple.type>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @Z.require0(@Z.%Self: %Z.type) {
@@ -740,7 +738,9 @@ constraint Z {
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require0
+// CHECK:STDOUT:   @Z.require0 {
+// CHECK:STDOUT:     require @Z.require0.%Self.as_type.loc10_11 impls <@Y where constants.%impl.elem0 = constants.%Self.binding.as_type>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @Z.require0(@Z.%Self: %Z.type) {

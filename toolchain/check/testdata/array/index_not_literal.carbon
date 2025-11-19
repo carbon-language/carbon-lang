@@ -57,7 +57,6 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %array_type: type = array_type %int_3.1ba, %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.f01: type = ptr_type %array_type [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.24b: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
@@ -175,8 +174,7 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc10_20.14, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.be5
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10_20.7: <bound method> = bound_method %.loc10_20.14, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr: %ptr.f01 = addr_of %.loc10_20.14
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc10_20.7(%addr)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc10_20.7(%.loc10_20.14)
 // CHECK:STDOUT:   return %F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

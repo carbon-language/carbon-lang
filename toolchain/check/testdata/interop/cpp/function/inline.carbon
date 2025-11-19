@@ -296,8 +296,8 @@ fn MyF() {
 // CHECK:STDOUT:   %bound_method.loc14_32.4: <bound method> = bound_method %.loc14_32.2, %specific_fn.loc14_32.2 [concrete = constants.%bound_method.948]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc14: init %i16 = call %bound_method.loc14_32.4(%.loc14_32.2) [concrete = constants.%int_1.f90]
 // CHECK:STDOUT:   %.loc14_32.4: ref %i16 = temporary %.loc14_32.3, %Int.as.Copy.impl.Op.call.loc14
-// CHECK:STDOUT:   %addr.loc14_33: %ptr.251 = addr_of %.loc14_32.4
-// CHECK:STDOUT:   %ThunkOnArg__carbon_thunk.call: init %i32 = call imports.%ThunkOnArg__carbon_thunk.decl(%addr.loc14_33)
+// CHECK:STDOUT:   %addr.loc14: %ptr.251 = addr_of %.loc14_32.4
+// CHECK:STDOUT:   %ThunkOnArg__carbon_thunk.call: init %i32 = call imports.%ThunkOnArg__carbon_thunk.decl(%addr.loc14)
 // CHECK:STDOUT:   %.loc14_11: type = splice_block %i32.loc14 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc14: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
@@ -364,13 +364,11 @@ fn MyF() {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc16: <bound method> = bound_method %.loc16_33.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.003
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc16_33.5: <bound method> = bound_method %.loc16_33.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc16_33: %ptr.251 = addr_of %.loc16_33.4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc16: init %empty_tuple.type = call %bound_method.loc16_33.5(%addr.loc16_33)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc16: init %empty_tuple.type = call %bound_method.loc16_33.5(%.loc16_33.4)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc14: <bound method> = bound_method %.loc14_32.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.003
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc14_32.5: <bound method> = bound_method %.loc14_32.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc14_32: %ptr.251 = addr_of %.loc14_32.4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc14: init %empty_tuple.type = call %bound_method.loc14_32.5(%addr.loc14_32)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc14: init %empty_tuple.type = call %bound_method.loc14_32.5(%.loc14_32.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

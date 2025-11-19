@@ -25,6 +25,8 @@
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/singleton_insts.h"
+#include "toolchain/sem_ir/specific_interface.h"
+#include "toolchain/sem_ir/specific_named_constraint.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -618,7 +620,8 @@ auto InstNamer::PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
       llvm::formatv("{0}{1}require{2}", scope_prefix,
                     scope_prefix.empty() ? "" : ".", require_impls_id.index));
 
-  AddBlockLabel(scope_id, require.body_block_id, "require", require_loc);
+  auto decl = sem_ir_->insts().GetAs<SemIR::RequireImplsDecl>(require.decl_id);
+  AddBlockLabel(scope_id, decl.decl_block_id, "require", require_loc);
 
   // Push blocks in reverse order.
   PushGeneric(scope_id, require.generic_id);
@@ -866,9 +869,9 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(ClassType inst): {
-      if (auto literal_info = TypeLiteralInfo::ForType(sem_ir(), inst);
-          literal_info.is_valid()) {
-        AddInstName(literal_info.GetLiteralAsString(sem_ir()));
+      if (auto type_info = RecognizedTypeInfo::ForType(sem_ir(), inst);
+          type_info.is_valid()) {
+        AddInstName(type_info.GetLiteralAsString(sem_ir()));
       } else {
         AddEntityNameAndMaybePush(inst.class_id);
       }
@@ -960,8 +963,18 @@ auto InstNamer::NamingContext::NameInst() -> void {
               sem_ir().types().TryGetAs<FacetType>(inst.type_id)) {
         const auto& facet_type_info =
             sem_ir().facet_types().Get(facet_type->facet_type_id);
-        if (auto interface = facet_type_info.TryAsSingleInterface()) {
-          AddEntityNameAndMaybePush(interface->interface_id, ".facet");
+        if (auto single = facet_type_info.TryAsSingleExtend()) {
+          CARBON_KIND_SWITCH(*single) {
+            case CARBON_KIND(SemIR::SpecificInterface interface): {
+              AddEntityNameAndMaybePush(interface.interface_id, ".facet");
+              break;
+            }
+            case CARBON_KIND(SemIR::SpecificNamedConstraint constraint): {
+              AddEntityNameAndMaybePush(constraint.named_constraint_id,
+                                        ".facet");
+              break;
+            }
+          }
           return;
         }
       }

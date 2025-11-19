@@ -210,7 +210,7 @@ class EnumBase : public Printable<DerivedT> {
 // Use this immediately after the Carbon enum class body to define each named
 // constant.
 #define CARBON_ENUM_CONSTANT_DEFINITION(EnumClassName, Name) \
-  constexpr EnumClassName EnumClassName::Name =              \
+  inline constexpr EnumClassName EnumClassName::Name =       \
       EnumClassName::Make(RawEnumType::Name);
 
 // Use this in the `.cpp` file for an enum class to start the definition of the

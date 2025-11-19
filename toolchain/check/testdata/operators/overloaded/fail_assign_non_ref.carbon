@@ -17,30 +17,30 @@ package User;
 class C {};
 
 impl C as Core.Inc {
-  fn Op[addr self: C*]();
+  fn Op[ref self: C]();
 }
 impl C as Core.AddAssignWith(C) {
-  fn Op[addr self: C*](other: C);
+  fn Op[ref self: C](other: C);
 }
 
 fn TestIncNonRef(a: C) {
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+7]]:5: error: `addr self` method cannot be invoked on a value [AddrSelfIsNonRef]
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+7]]:5: error: value expression passed to reference parameter [ValueForRefParam]
   // CHECK:STDERR:   ++a;
   // CHECK:STDERR:     ^
   // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-10]]:9: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn Op[addr self: C*]();
-  // CHECK:STDERR:         ^~~~~~~~~~~~~
+  // CHECK:STDERR:   fn Op[ref self: C]();
+  // CHECK:STDERR:         ^~~~~~~~~~~
   // CHECK:STDERR:
   ++a;
 }
 
 fn TestAddAssignNonRef(a: C, b: C) {
-  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+7]]:3: error: `addr self` method cannot be invoked on a value [AddrSelfIsNonRef]
+  // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE+7]]:3: error: value expression passed to reference parameter [ValueForRefParam]
   // CHECK:STDERR:   a += b;
   // CHECK:STDERR:   ^
   // CHECK:STDERR: fail_assign_non_ref.carbon:[[@LINE-18]]:9: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn Op[addr self: C*](other: C);
-  // CHECK:STDERR:         ^~~~~~~~~~~~~
+  // CHECK:STDERR:   fn Op[ref self: C](other: C);
+  // CHECK:STDERR:         ^~~~~~~~~~~
   // CHECK:STDERR:
   a += b;
 }
@@ -54,10 +54,8 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Inc.type: type = facet_type <@Inc> [concrete]
 // CHECK:STDOUT:   %Inc.Op.type: type = fn_type @Inc.Op [concrete]
-// CHECK:STDOUT:   %pattern_type.f6d: type = pattern_type auto [concrete]
 // CHECK:STDOUT:   %Inc.impl_witness: <witness> = impl_witness file.%Inc.impl_witness_table [concrete]
-// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %pattern_type.44a: type = pattern_type %ptr.019 [concrete]
+// CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %C.as.Inc.impl.Op.type: type = fn_type @C.as.Inc.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.Inc.impl.Op: %C.as.Inc.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Inc.facet: %Inc.type = facet_value %C, (%Inc.impl_witness) [concrete]
@@ -66,7 +64,6 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %AddAssignWith.type.133: type = facet_type <@AddAssignWith, @AddAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %AddAssignWith.Op.type.5af: type = fn_type @AddAssignWith.Op, @AddAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %AddAssignWith.impl_witness: <witness> = impl_witness file.%AddAssignWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %C.as.AddAssignWith.impl.Op.type: type = fn_type @C.as.AddAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.AddAssignWith.impl.Op: %C.as.AddAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %AddAssignWith.facet: %AddAssignWith.type.133 = facet_value %C, (%AddAssignWith.impl_witness) [concrete]
@@ -139,16 +136,12 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.Inc.impl: %C.ref as %Inc.ref {
 // CHECK:STDOUT:   %C.as.Inc.impl.Op.decl: %C.as.Inc.impl.Op.type = fn_decl @C.as.Inc.impl.Op [concrete = constants.%C.as.Inc.impl.Op] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.44a = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc20_9: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.c48 = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = ref_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.019 = value_param call_param0
-// CHECK:STDOUT:     %.loc20_21: type = splice_block %ptr [concrete = constants.%ptr.019] {
-// CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %ptr: type = ptr_type %C.ref [concrete = constants.%ptr.019]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: %ptr.019 = value_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %C = ref_param call_param0
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %self: ref %C = ref_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -159,20 +152,16 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.AddAssignWith.impl: %C.ref.loc22_6 as %AddAssignWith.type {
 // CHECK:STDOUT:   %C.as.AddAssignWith.impl.Op.decl: %C.as.AddAssignWith.impl.Op.type = fn_decl @C.as.AddAssignWith.impl.Op [concrete = constants.%C.as.AddAssignWith.impl.Op] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.44a = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.44a = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc23_9: %pattern_type.f6d = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.c48 = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.c48 = ref_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %other.patt: %pattern_type.c48 = value_binding_pattern other [concrete]
 // CHECK:STDOUT:     %other.param_patt: %pattern_type.c48 = value_param_pattern %other.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.019 = value_param call_param0
-// CHECK:STDOUT:     %.loc23_21: type = splice_block %ptr [concrete = constants.%ptr.019] {
-// CHECK:STDOUT:       %C.ref.loc23_20: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %ptr: type = ptr_type %C.ref.loc23_20 [concrete = constants.%ptr.019]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: %ptr.019 = value_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %C = ref_param call_param0
+// CHECK:STDOUT:     %C.ref.loc23_19: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %self: ref %C = ref_binding self, %self.param
 // CHECK:STDOUT:     %other.param: %C = value_param call_param1
-// CHECK:STDOUT:     %C.ref.loc23_31: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc23_29: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %other: %C = value_binding other, %other.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -190,18 +179,16 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.Inc.impl.Op(%self.param: %ptr.019);
+// CHECK:STDOUT: fn @C.as.Inc.impl.Op(%self.param: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.AddAssignWith.impl.Op(%self.param: %ptr.019, %other.param: %C);
+// CHECK:STDOUT: fn @C.as.AddAssignWith.impl.Op(%self.param: %C, %other.param: %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestIncNonRef(%a.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %impl.elem0: %.35f = impl_witness_access constants.%Inc.impl_witness, element0 [concrete = constants.%C.as.Inc.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
-// CHECK:STDOUT:   %.loc34: ref %C = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc34
-// CHECK:STDOUT:   %C.as.Inc.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr)
+// CHECK:STDOUT:   %C.as.Inc.impl.Op.call: init %empty_tuple.type = call %bound_method(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -211,9 +198,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0: %.277 = impl_witness_access constants.%AddAssignWith.impl_witness, element0 [concrete = constants.%C.as.AddAssignWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem0
-// CHECK:STDOUT:   %.loc45: ref %C = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc45
-// CHECK:STDOUT:   %C.as.AddAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr, %b.ref)
+// CHECK:STDOUT:   %C.as.AddAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(<error>, %b.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

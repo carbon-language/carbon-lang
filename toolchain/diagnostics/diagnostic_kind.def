@@ -245,7 +245,6 @@ CARBON_DIAGNOSTIC_KIND(ExternRequiresDeclInApiFile)
 CARBON_DIAGNOSTIC_KIND(NamespaceDeclNotAtTopLevel)
 
 // Function call checking.
-CARBON_DIAGNOSTIC_KIND(AddrSelfIsNonRef)
 CARBON_DIAGNOSTIC_KIND(CallArgCountMismatch)
 CARBON_DIAGNOSTIC_KIND(CallToNonCallable)
 CARBON_DIAGNOSTIC_KIND(CppCallArgTypeNotSupported)
@@ -360,13 +359,14 @@ CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessNote)
 CARBON_DIAGNOSTIC_KIND(ImplLookupCycle)
 CARBON_DIAGNOSTIC_KIND(ImplLookupCycleNote)
-CARBON_DIAGNOSTIC_KIND(ImplLookupInIncompleteFacetType)
+CARBON_DIAGNOSTIC_KIND(ImplLookupInUnidentifiedFacetType)
 
 // Require checking.
+CARBON_DIAGNOSTIC_KIND(RequireImplsExtendWithExplicitSelf)
 CARBON_DIAGNOSTIC_KIND(RequireImplsMissingFacetType)
 CARBON_DIAGNOSTIC_KIND(RequireImplsMissingSelf)
-CARBON_DIAGNOSTIC_KIND(RequireInWrongScope)
 CARBON_DIAGNOSTIC_KIND(RequireImplsUnidentifiedFacetType)
+CARBON_DIAGNOSTIC_KIND(RequireInWrongScope)
 
 // Let declaration checking.
 CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)
@@ -398,8 +398,6 @@ CARBON_DIAGNOSTIC_KIND(AbstractTypeInFunctionReturnType)
 CARBON_DIAGNOSTIC_KIND(AbstractTypeInInit)
 CARBON_DIAGNOSTIC_KIND(AbstractTypeInVarPattern)
 CARBON_DIAGNOSTIC_KIND(AddrOfNonRef)
-CARBON_DIAGNOSTIC_KIND(AddrOnNonSelfParam)
-CARBON_DIAGNOSTIC_KIND(AddrOnNonPointerType)
 CARBON_DIAGNOSTIC_KIND(ArrayBoundTooLarge)
 CARBON_DIAGNOSTIC_KIND(ArrayBoundNegative)
 CARBON_DIAGNOSTIC_KIND(ArrayIndexOutOfBounds)

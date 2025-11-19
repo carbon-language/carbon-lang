@@ -113,7 +113,6 @@ auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
   auto inst_id = pattern_id;
   auto inst = sem_ir.insts().Get(inst_id);
 
-  sem_ir.insts().TryUnwrap(inst, inst_id, &AddrPattern::inner_id);
   sem_ir.insts().TryUnwrap(inst, inst_id, &VarPattern::subpattern_id);
   auto [param_pattern, param_pattern_id] =
       sem_ir.insts().TryUnwrap(inst, inst_id, &AnyParamPattern::subpattern_id);

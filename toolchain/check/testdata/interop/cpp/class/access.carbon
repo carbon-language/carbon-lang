@@ -1944,8 +1944,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %PublicCall.ref.loc8_14: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
 // CHECK:STDOUT:   %PublicCall.ref.loc8_25: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc8_37.1: ref %PublicCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc8_37.1: %ptr.dfa = addr_of %.loc8_37.1
-// CHECK:STDOUT:   %PublicCall__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc8_37.1)
+// CHECK:STDOUT:   %addr.loc8_37: %ptr.dfa = addr_of %.loc8_37.1
+// CHECK:STDOUT:   %PublicCall__carbon_thunk.call.loc8: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc8_37)
 // CHECK:STDOUT:   %.loc8_37.2: init %PublicCall = in_place_init %PublicCall__carbon_thunk.call.loc8, %.loc8_37.1
 // CHECK:STDOUT:   %.loc8_38.1: ref %C = temporary_storage
 // CHECK:STDOUT:   %.loc8_37.3: ref %PublicCall = temporary %.loc8_37.1, %.loc8_37.2
@@ -1963,8 +1963,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %PublicCall.ref.loc9_21: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
 // CHECK:STDOUT:   %PublicCall.ref.loc9_32: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc9_44.1: ref %PublicCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc9_44.1: %ptr.dfa = addr_of %.loc9_44.1
-// CHECK:STDOUT:   %PublicCall__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc9_44.1)
+// CHECK:STDOUT:   %addr.loc9_44: %ptr.dfa = addr_of %.loc9_44.1
+// CHECK:STDOUT:   %PublicCall__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc9_44)
 // CHECK:STDOUT:   %.loc9_44.2: init %PublicCall = in_place_init %PublicCall__carbon_thunk.call.loc9, %.loc9_44.1
 // CHECK:STDOUT:   %.loc9_44.3: ref %PublicCall = temporary %.loc9_44.1, %.loc9_44.2
 // CHECK:STDOUT:   %.loc9_44.4: %PublicCall = acquire_value %.loc9_44.3
@@ -1974,18 +1974,15 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc9: <bound method> = bound_method %.loc9_44.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d27
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %.loc9_44.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc9_44.2: %ptr.dfa = addr_of %.loc9_44.3
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc9: init %empty_tuple.type = call %bound_method.loc9(%addr.loc9_44.2)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc9: init %empty_tuple.type = call %bound_method.loc9(%.loc9_44.3)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_38: <bound method> = bound_method %.loc8_38.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.f77
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8_38: <bound method> = bound_method %.loc8_38.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc8_38.3: %ptr.d9e = addr_of %.loc8_38.3
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc8_38: init %empty_tuple.type = call %bound_method.loc8_38(%addr.loc8_38.3)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc8_38: init %empty_tuple.type = call %bound_method.loc8_38(%.loc8_38.3)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_37: <bound method> = bound_method %.loc8_37.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d27
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8_37: <bound method> = bound_method %.loc8_37.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.3
-// CHECK:STDOUT:   %addr.loc8_37.2: %ptr.dfa = addr_of %.loc8_37.3
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc8_37: init %empty_tuple.type = call %bound_method.loc8_37(%addr.loc8_37.2)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc8_37: init %empty_tuple.type = call %bound_method.loc8_37(%.loc8_37.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2100,8 +2097,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %PublicCall.ref.loc11_26: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
 // CHECK:STDOUT:   %PublicCall.ref.loc11_37: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc11_49.1: ref %PublicCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc11_49.1: %ptr.dfa = addr_of %.loc11_49.1
-// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc11_49.1)
+// CHECK:STDOUT:   %addr.loc11_49: %ptr.dfa = addr_of %.loc11_49.1
+// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc11_49)
 // CHECK:STDOUT:   %.loc11_49.2: init %PublicCall = in_place_init %PublicCall__carbon_thunk.call, %.loc11_49.1
 // CHECK:STDOUT:   %.loc11_51.1: ref %C = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc11_49.3: ref %PublicCall = temporary %.loc11_49.1, %.loc11_49.2
@@ -2117,8 +2114,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc11_49.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d27
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc11_49.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc11_49.2: %ptr.dfa = addr_of %.loc11_49.3
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc11_49.2)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc11_49.3)
 // CHECK:STDOUT:   return %.loc11_52 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2129,8 +2125,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %ProtectedCall.ref.loc17_26: type = name_ref ProtectedCall, imports.%ProtectedCall.decl [concrete = constants.%ProtectedCall]
 // CHECK:STDOUT:   %ProtectedCall.ref.loc17_40: %ProtectedCall.ProtectedCall.cpp_overload_set.type = name_ref ProtectedCall, imports.%ProtectedCall.ProtectedCall.cpp_overload_set.value [concrete = constants.%ProtectedCall.ProtectedCall.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc17_55.1: ref %ProtectedCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc17_55.1: %ptr.8e6 = addr_of %.loc17_55.1
-// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc17_55.1)
+// CHECK:STDOUT:   %addr.loc17_55: %ptr.8e6 = addr_of %.loc17_55.1
+// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc17_55)
 // CHECK:STDOUT:   %.loc17_55.2: init %ProtectedCall = in_place_init %ProtectedCall__carbon_thunk.call, %.loc17_55.1
 // CHECK:STDOUT:   %.loc17_57.1: ref %C = class_element_access %return, element0
 // CHECK:STDOUT:   %.loc17_55.3: ref %ProtectedCall = temporary %.loc17_55.1, %.loc17_55.2
@@ -2146,8 +2142,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc17_55.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.64c
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc17_55.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc17_55.2: %ptr.8e6 = addr_of %.loc17_55.3
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc17_55.2)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc17_55.3)
 // CHECK:STDOUT:   return %.loc17_58 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2158,8 +2153,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %PublicCall.ref.loc23_17: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
 // CHECK:STDOUT:   %PublicCall.ref.loc23_28: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc23_40.1: ref %PublicCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc23_40.1: %ptr.dfa = addr_of %.loc23_40.1
-// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc23_40.1)
+// CHECK:STDOUT:   %addr.loc23_40: %ptr.dfa = addr_of %.loc23_40.1
+// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc23_40)
 // CHECK:STDOUT:   %.loc23_40.2: init %PublicCall = in_place_init %PublicCall__carbon_thunk.call, %.loc23_40.1
 // CHECK:STDOUT:   %.loc23_40.3: ref %PublicCall = temporary %.loc23_40.1, %.loc23_40.2
 // CHECK:STDOUT:   %.loc23_40.4: %PublicCall = acquire_value %.loc23_40.3
@@ -2169,8 +2164,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc23_40.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d27
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc23_40.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc23_40.2: %ptr.dfa = addr_of %.loc23_40.3
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc23_40.2)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc23_40.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2181,8 +2175,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %ProtectedCall.ref.loc29_17: type = name_ref ProtectedCall, imports.%ProtectedCall.decl [concrete = constants.%ProtectedCall]
 // CHECK:STDOUT:   %ProtectedCall.ref.loc29_31: %ProtectedCall.ProtectedCall.cpp_overload_set.type = name_ref ProtectedCall, imports.%ProtectedCall.ProtectedCall.cpp_overload_set.value [concrete = constants.%ProtectedCall.ProtectedCall.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc29_46.1: ref %ProtectedCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc29_46.1: %ptr.8e6 = addr_of %.loc29_46.1
-// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc29_46.1)
+// CHECK:STDOUT:   %addr.loc29_46: %ptr.8e6 = addr_of %.loc29_46.1
+// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc29_46)
 // CHECK:STDOUT:   %.loc29_46.2: init %ProtectedCall = in_place_init %ProtectedCall__carbon_thunk.call, %.loc29_46.1
 // CHECK:STDOUT:   %.loc29_46.3: ref %ProtectedCall = temporary %.loc29_46.1, %.loc29_46.2
 // CHECK:STDOUT:   %.loc29_46.4: %ProtectedCall = acquire_value %.loc29_46.3
@@ -2192,8 +2186,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc29_46.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.64c
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc29_46.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc29_46.2: %ptr.8e6 = addr_of %.loc29_46.3
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc29_46.2)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc29_46.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2249,8 +2242,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %PublicCall.ref.loc8_26: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
 // CHECK:STDOUT:   %PublicCall.ref.loc8_37: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc8_49.1: ref %PublicCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc8_49.1: %ptr.dfa = addr_of %.loc8_49.1
-// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc8_49.1)
+// CHECK:STDOUT:   %addr.loc8_49: %ptr.dfa = addr_of %.loc8_49.1
+// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc8_49)
 // CHECK:STDOUT:   %.loc8_49.2: init %PublicCall = in_place_init %PublicCall__carbon_thunk.call, %.loc8_49.1
 // CHECK:STDOUT:   %.loc8_49.3: ref %PublicCall = temporary %.loc8_49.1, %.loc8_49.2
 // CHECK:STDOUT:   %.loc8_49.4: %PublicCall = acquire_value %.loc8_49.3
@@ -2260,8 +2253,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_49.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d27
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8_49.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %addr.loc8_49.2: %ptr.dfa = addr_of %.loc8_49.3
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr.loc8_49.2)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc8_49.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2352,8 +2344,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %PublicCall.ref.loc11_17: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
 // CHECK:STDOUT:   %PublicCall.ref.loc11_28: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc11_40.1: ref %PublicCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc11_40.1: %ptr.dfa = addr_of %.loc11_40.1
-// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc11_40.1)
+// CHECK:STDOUT:   %addr.loc11_40: %ptr.dfa = addr_of %.loc11_40.1
+// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc11_40)
 // CHECK:STDOUT:   %.loc11_40.2: init %PublicCall = in_place_init %PublicCall__carbon_thunk.call, %.loc11_40.1
 // CHECK:STDOUT:   %.loc11_40.3: ref %PublicCall = temporary %.loc11_40.1, %.loc11_40.2
 // CHECK:STDOUT:   %.loc11_40.4: %PublicCall = acquire_value %.loc11_40.3
@@ -2365,8 +2357,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %ProtectedCall.ref.loc12_17: type = name_ref ProtectedCall, imports.%ProtectedCall.decl [concrete = constants.%ProtectedCall]
 // CHECK:STDOUT:   %ProtectedCall.ref.loc12_31: %ProtectedCall.ProtectedCall.cpp_overload_set.type = name_ref ProtectedCall, imports.%ProtectedCall.ProtectedCall.cpp_overload_set.value [concrete = constants.%ProtectedCall.ProtectedCall.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc12_46.1: ref %ProtectedCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc12_46.1: %ptr.8e6 = addr_of %.loc12_46.1
-// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc12_46.1)
+// CHECK:STDOUT:   %addr.loc12_46: %ptr.8e6 = addr_of %.loc12_46.1
+// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc12_46)
 // CHECK:STDOUT:   %.loc12_46.2: init %ProtectedCall = in_place_init %ProtectedCall__carbon_thunk.call, %.loc12_46.1
 // CHECK:STDOUT:   %.loc12_46.3: ref %ProtectedCall = temporary %.loc12_46.1, %.loc12_46.2
 // CHECK:STDOUT:   %.loc12_46.4: %ProtectedCall = acquire_value %.loc12_46.3
@@ -2376,13 +2368,11 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc12: <bound method> = bound_method %.loc12_46.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.64c
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %.loc12_46.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc12_46.2: %ptr.8e6 = addr_of %.loc12_46.3
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc12: init %empty_tuple.type = call %bound_method.loc12(%addr.loc12_46.2)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc12: init %empty_tuple.type = call %bound_method.loc12(%.loc12_46.3)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11: <bound method> = bound_method %.loc11_40.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d27
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc11: <bound method> = bound_method %.loc11_40.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc11_40.2: %ptr.dfa = addr_of %.loc11_40.3
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc11: init %empty_tuple.type = call %bound_method.loc11(%addr.loc11_40.2)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc11: init %empty_tuple.type = call %bound_method.loc11(%.loc11_40.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2473,8 +2463,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %PublicCall.ref.loc11_17: type = name_ref PublicCall, imports.%PublicCall.decl [concrete = constants.%PublicCall]
 // CHECK:STDOUT:   %PublicCall.ref.loc11_28: %PublicCall.PublicCall.cpp_overload_set.type = name_ref PublicCall, imports.%PublicCall.PublicCall.cpp_overload_set.value [concrete = constants.%PublicCall.PublicCall.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc11_40.1: ref %PublicCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc11_40.1: %ptr.dfa = addr_of %.loc11_40.1
-// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc11_40.1)
+// CHECK:STDOUT:   %addr.loc11_40: %ptr.dfa = addr_of %.loc11_40.1
+// CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc11_40)
 // CHECK:STDOUT:   %.loc11_40.2: init %PublicCall = in_place_init %PublicCall__carbon_thunk.call, %.loc11_40.1
 // CHECK:STDOUT:   %.loc11_40.3: ref %PublicCall = temporary %.loc11_40.1, %.loc11_40.2
 // CHECK:STDOUT:   %.loc11_40.4: %PublicCall = acquire_value %.loc11_40.3
@@ -2486,8 +2476,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %ProtectedCall.ref.loc12_17: type = name_ref ProtectedCall, imports.%ProtectedCall.decl [concrete = constants.%ProtectedCall]
 // CHECK:STDOUT:   %ProtectedCall.ref.loc12_31: %ProtectedCall.ProtectedCall.cpp_overload_set.type = name_ref ProtectedCall, imports.%ProtectedCall.ProtectedCall.cpp_overload_set.value [concrete = constants.%ProtectedCall.ProtectedCall.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc12_46.1: ref %ProtectedCall = temporary_storage
-// CHECK:STDOUT:   %addr.loc12_46.1: %ptr.8e6 = addr_of %.loc12_46.1
-// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc12_46.1)
+// CHECK:STDOUT:   %addr.loc12_46: %ptr.8e6 = addr_of %.loc12_46.1
+// CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc12_46)
 // CHECK:STDOUT:   %.loc12_46.2: init %ProtectedCall = in_place_init %ProtectedCall__carbon_thunk.call, %.loc12_46.1
 // CHECK:STDOUT:   %.loc12_46.3: ref %ProtectedCall = temporary %.loc12_46.1, %.loc12_46.2
 // CHECK:STDOUT:   %.loc12_46.4: %ProtectedCall = acquire_value %.loc12_46.3
@@ -2497,13 +2487,11 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc12: <bound method> = bound_method %.loc12_46.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.64c
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %.loc12_46.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %addr.loc12_46.2: %ptr.8e6 = addr_of %.loc12_46.3
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc12: init %empty_tuple.type = call %bound_method.loc12(%addr.loc12_46.2)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc12: init %empty_tuple.type = call %bound_method.loc12(%.loc12_46.3)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11: <bound method> = bound_method %.loc11_40.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d27
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc11: <bound method> = bound_method %.loc11_40.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %addr.loc11_40.2: %ptr.dfa = addr_of %.loc11_40.3
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc11: init %empty_tuple.type = call %bound_method.loc11(%addr.loc11_40.2)
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc11: init %empty_tuple.type = call %bound_method.loc11(%.loc11_40.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

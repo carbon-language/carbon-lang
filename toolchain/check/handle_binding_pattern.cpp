@@ -402,37 +402,6 @@ auto HandleParseNode(Context& context, Parse::FieldNameAndTypeId node_id)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::AddrId node_id) -> bool {
-  auto param_pattern_id = context.node_stack().PopPattern();
-  if (SemIR::IsSelfPattern(context.sem_ir(), param_pattern_id)) {
-    auto param_type_id = ExtractScrutineeType(
-        context.sem_ir(), context.insts().Get(param_pattern_id).type_id());
-    auto pointer_type =
-        context.types().TryGetAs<SemIR::PointerType>(param_type_id);
-    if (pointer_type) {
-      auto addr_pattern_id = AddPatternInst<SemIR::AddrPattern>(
-          context, node_id,
-          {.type_id = GetPatternType(
-               context, GetSingletonType(context, SemIR::AutoType::TypeInstId)),
-           .inner_id = param_pattern_id});
-      context.node_stack().Push(node_id, addr_pattern_id);
-    } else {
-      CARBON_DIAGNOSTIC(
-          AddrOnNonPointerType, Error,
-          "`addr` can only be applied to a binding with a pointer type");
-      context.emitter().Emit(node_id, AddrOnNonPointerType);
-      context.node_stack().Push(node_id, param_pattern_id);
-    }
-  } else {
-    CARBON_DIAGNOSTIC(AddrOnNonSelfParam, Error,
-                      "`addr` can only be applied to a `self` parameter");
-    context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
-                           AddrOnNonSelfParam);
-    context.node_stack().Push(node_id, param_pattern_id);
-  }
-  return true;
-}
-
 auto HandleParseNode(Context& context, Parse::RefBindingNameId node_id)
     -> bool {
   context.node_stack().Push(node_id);

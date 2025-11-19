@@ -1091,9 +1091,9 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       auto layout = sem_ir_->custom_layouts().Get(type.layout_id);
       out_ << "size=" << layout[CustomLayoutId::SizeIndex]
            << ", align=" << layout[CustomLayoutId::AlignIndex];
-      for (auto [field, offset] :
-           llvm::zip(sem_ir_->struct_type_fields().Get(type.fields_id),
-                     layout.drop_front(CustomLayoutId::FirstFieldIndex))) {
+      for (auto [field, offset] : llvm::zip_equal(
+               sem_ir_->struct_type_fields().Get(type.fields_id),
+               layout.drop_front(CustomLayoutId::FirstFieldIndex))) {
         out_ << ", .";
         FormatName(field.name_id);
         out_ << "@" << offset << ": ";
@@ -1186,22 +1186,9 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
 
     case CARBON_KIND(RequireImplsDecl decl): {
       FormatArgs(decl.require_impls_id);
-
-      const auto& require = sem_ir_->require_impls().Get(decl.require_impls_id);
-
       llvm::SaveAndRestore scope(
           scope_, inst_namer_.GetScopeFor(decl.require_impls_id));
-
-      out_ << ' ';
-      OpenBrace();
-      Indent();
-      out_ << "require ";
-      FormatArg(require.self_id);
-      out_ << " impls ";
-      FormatArg(require.facet_type_id);
-      out_ << "\n";
-      CloseBrace();
-
+      FormatRequireImpls(decl.require_impls_id);
       FormatTrailingBlock(decl.decl_block_id);
       return;
     }
@@ -1381,6 +1368,20 @@ auto Formatter::FormatImportRefRhs(AnyImportRef inst) -> void {
        << (inst.kind == InstKind::ImportRefLoaded ? "loaded" : "unloaded");
 }
 
+auto Formatter::FormatRequireImpls(RequireImplsId id) -> void {
+  out_ << ' ';
+
+  const auto& require = sem_ir_->require_impls().Get(id);
+  OpenBrace();
+  Indent();
+  out_ << "require ";
+  FormatArg(require.self_id);
+  out_ << " impls ";
+  FormatArg(require.facet_type_id);
+  out_ << "\n";
+  CloseBrace();
+}
+
 auto Formatter::FormatRequireImplsBlock(RequireImplsBlockId block_id) -> void {
   IndentLabel();
   out_ << "!requires:\n";
@@ -1390,6 +1391,7 @@ auto Formatter::FormatRequireImplsBlock(RequireImplsBlockId block_id) -> void {
   for (auto require_impls_id : sem_ir_->require_impls_blocks().Get(block_id)) {
     Indent();
     FormatArg(require_impls_id);
+    FormatRequireImpls(require_impls_id);
     out_ << "\n";
   }
 }

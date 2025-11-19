@@ -15,6 +15,10 @@ namespace Carbon::SemIR {
 auto InstId::Print(llvm::raw_ostream& out) const -> void {
   if (IsSingletonInstId(*this)) {
     out << Label << "(" << SingletonInstKinds[index] << ")";
+  } else if (*this == InitTombstone) {
+    out << Label << "(InitTombstone)";
+  } else if (*this == ImplWitnessTablePlaceholder) {
+    out << Label << "(ImplWitnessTablePlaceholder)";
   } else {
     IdBase::Print(out);
   }
@@ -207,6 +211,22 @@ auto InstBlockId::Print(llvm::raw_ostream& out) const -> void {
   }
 }
 
+auto StructTypeFieldsId::Print(llvm::raw_ostream& out) const -> void {
+  if (*this == Empty) {
+    out << Label << "_empty";
+  } else {
+    IdBase::Print(out);
+  }
+}
+
+auto CustomLayoutId::Print(llvm::raw_ostream& out) const -> void {
+  if (*this == Empty) {
+    out << Label << "_empty";
+  } else {
+    IdBase::Print(out);
+  }
+}
+
 auto TypeId::Print(llvm::raw_ostream& out) const -> void {
   out << Label << "(";
   if (*this == TypeType::TypeId) {
@@ -235,6 +255,14 @@ auto LibraryNameId::Print(llvm::raw_ostream& out) const -> void {
     out << Label << "Default";
   } else if (*this == Error) {
     out << Label << "<error>";
+  } else {
+    IdBase::Print(out);
+  }
+}
+
+auto RequireImplsBlockId::Print(llvm::raw_ostream& out) const -> void {
+  if (*this == Empty) {
+    out << Label << "_empty";
   } else {
     IdBase::Print(out);
   }

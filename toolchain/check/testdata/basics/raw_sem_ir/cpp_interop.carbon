@@ -73,7 +73,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
 // CHECK:STDOUT:   struct_type_fields:
-// CHECK:STDOUT:     struct_type_fields0: {}
+// CHECK:STDOUT:     struct_type_fields_empty: {}
 // CHECK:STDOUT:     struct_type_fields60000001:
 // CHECK:STDOUT:       0:               {name_id: name5, type_inst_id: inst6000001F}
 // CHECK:STDOUT:     struct_type_fields60000002:

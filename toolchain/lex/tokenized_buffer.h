@@ -56,7 +56,7 @@ struct LineIndex : public IndexBase<LineIndex> {
   using IndexBase::IndexBase;
 };
 
-constexpr LineIndex LineIndex::None(NoneIndex);
+inline constexpr LineIndex LineIndex::None(NoneIndex);
 
 // A comment, which can be a block of lines. These are tracked separately from
 // tokens because they don't affect parse; if they were part of tokens, we'd
@@ -79,7 +79,7 @@ struct CommentIndex : public IndexBase<CommentIndex> {
   using IndexBase::IndexBase;
 };
 
-constexpr CommentIndex CommentIndex::None(NoneIndex);
+inline constexpr CommentIndex CommentIndex::None(NoneIndex);
 
 // Random-access iterator over comments within the buffer.
 using CommentIterator = IndexIterator<CommentIndex>;

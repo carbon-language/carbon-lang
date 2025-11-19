@@ -203,10 +203,10 @@ static auto GetInterfacesFromConstantId(
       context.facet_types().Get(facet_type_inst.facet_type_id);
   auto identified_id =
       RequireIdentifiedFacetType(context, facet_type_inst, [&] {
-        CARBON_DIAGNOSTIC(ImplLookupInIncompleteFacetType, Error,
-                          "facet type {0} is incomplete", InstIdAsType);
-        return context.emitter().Build(loc_id, ImplLookupInIncompleteFacetType,
-                                       facet_type_inst_id);
+        CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetType, Error,
+                          "facet type {0} can not be identified", InstIdAsType);
+        return context.emitter().Build(
+            loc_id, ImplLookupInUnidentifiedFacetType, facet_type_inst_id);
       });
   if (!identified_id.has_value()) {
     return std::nullopt;
@@ -459,7 +459,7 @@ class SubstWitnessesCallbacks : public SubstInstCallbacks {
     auto lookup_query_interface =
         context().specific_interfaces().Get(specific_interface_id);
     for (auto [interface, witness_inst_id] :
-         llvm::zip(interfaces_, witness_inst_ids_)) {
+         llvm::zip_equal(interfaces_, witness_inst_ids_)) {
       // If the `LookupImplWitness` for `.Self` is not looking for the same
       // interface as we have a witness for, this is not the right witness to
       // use to replace the lookup for `.Self`.

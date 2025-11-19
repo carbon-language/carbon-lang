@@ -61,7 +61,7 @@ static_assert(llvm::isPowerOf2_64(NumFourCharStrs));
 static auto MakeFourCharStrs(llvm::ArrayRef<char> characters, absl::BitGen& gen)
     -> llvm::OwningArrayRef<std::array<char, 4>> {
   constexpr ssize_t NumCharsMask = NumChars - 1;
-  constexpr ssize_t NumCharsShift = llvm::CTLog2<NumChars>();
+  constexpr ssize_t NumCharsShift = llvm::ConstantLog2<NumChars>();
   llvm::OwningArrayRef<std::array<char, 4>> four_char_strs(NumFourCharStrs);
   for (auto [i, str] : llvm::enumerate(four_char_strs)) {
     str[0] = characters[i & NumCharsMask];
@@ -372,7 +372,7 @@ auto DumpHashStatistics(llvm::ArrayRef<T> keys) -> void {
   ssize_t expected_size =
       llvm::NextPowerOf2(keys.size() + (keys.size() / 7) - 1);
 
-  constexpr int GroupShift = llvm::CTLog2<GroupSize>();
+  constexpr int GroupShift = llvm::ConstantLog2<GroupSize>();
 
   size_t mask = ComputeProbeMaskFromSize(expected_size);
   uint64_t salt = ComputeSeed();

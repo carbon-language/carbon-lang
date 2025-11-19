@@ -176,7 +176,9 @@ interface B {
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @B.require0
+// CHECK:STDOUT:   @B.require0 {
+// CHECK:STDOUT:     require @B.require0.%Self.as_type impls <@A>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @B.require0(@B.%Self: %B.type) {
