@@ -819,6 +819,7 @@ struct StructTypeFieldsId : public IdBase<StructTypeFieldsId> {
   static const StructTypeFieldsId Empty;
 
   using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 inline constexpr StructTypeFieldsId StructTypeFieldsId::Empty =
@@ -840,6 +841,7 @@ struct CustomLayoutId : public IdBase<CustomLayoutId> {
   static constexpr int FirstFieldIndex = 2;
 
   using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 inline constexpr CustomLayoutId CustomLayoutId::Empty = CustomLayoutId(0);
@@ -945,6 +947,7 @@ struct RequireImplsBlockId : public IdBase<RequireImplsBlockId> {
   static const RequireImplsBlockId Empty;
 
   using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 inline constexpr RequireImplsBlockId RequireImplsBlockId::Empty =

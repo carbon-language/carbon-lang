@@ -53,7 +53,8 @@ static auto DumpGenericSummary(const File& file, GenericId generic_id)
 static auto DumpInstSummary(const File& file, InstId inst_id) -> std::string {
   RawStringOstream out;
   out << inst_id;
-  if (inst_id.has_value()) {
+  if (inst_id.has_value() && inst_id != InstId::InitTombstone &&
+      inst_id != InstId::ImplWitnessTablePlaceholder) {
     out << ": " << file.insts().Get(inst_id);
   }
   return out.TakeStr();
@@ -228,7 +229,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InstBlockId inst_block_id)
   out << inst_block_id;
   if (inst_block_id.has_value()) {
     out << ":";
-    auto inst_block = file.inst_blocks().Get(inst_block_id);
+    auto inst_block = file.inst_blocks().GetOrEmpty(inst_block_id);
     for (auto inst_id : inst_block) {
       out << "\n  - " << DumpInstSummary(file, inst_id);
     }

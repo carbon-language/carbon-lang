@@ -537,32 +537,21 @@ static auto IsDeclInjectedClassName(Context& context,
   return true;
 }
 
-// Returns a Clang DeclarationName for the given `NameId`.
-static auto GetDeclarationName(Context& context, SemIR::NameId name_id)
-    -> std::optional<clang::DeclarationName> {
-  std::optional<llvm::StringRef> name =
-      context.names().GetAsStringIfIdentifier(name_id);
-  if (!name) {
-    // Special names never exist in C++ code.
-    return std::nullopt;
-  }
-
-  return clang::DeclarationName(
-      context.clang_sema().getPreprocessor().getIdentifierInfo(*name));
-}
-
-// Performs a qualified name lookup of the declaration name in the given scope.
+// Performs a qualified name lookup of the identifier in the given scope.
 // Returns the lookup result if lookup was successful.
-static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
-                        clang::DeclarationName name)
+static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
+                            clang::IdentifierInfo* identifier_name)
     -> std::optional<clang::LookupResult> {
+  CARBON_CHECK(identifier_name, "Identifier name is empty");
   clang::Sema& sema = context.clang_sema();
 
   // TODO: Map the LocId of the lookup to a clang SourceLocation and provide it
   // here so that clang's diagnostics can point into the carbon code that uses
   // the name.
   clang::LookupResult lookup(
-      sema, clang::DeclarationNameInfo(name, clang::SourceLocation()),
+      sema,
+      clang::DeclarationNameInfo(clang::DeclarationName(identifier_name),
+                                 clang::SourceLocation()),
       clang::Sema::LookupNameKind::LookupOrdinaryName);
 
   bool found =
@@ -573,19 +562,6 @@ static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
   }
 
   return lookup;
-}
-
-// Looks up the given name in the Clang AST in a specific scope. Returns the
-// lookup result if lookup was successful.
-static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
-                            SemIR::NameId name_id)
-    -> std::optional<clang::LookupResult> {
-  auto declaration_name = GetDeclarationName(context, name_id);
-  if (!declaration_name) {
-    return std::nullopt;
-  }
-
-  return ClangLookup(context, scope_id, *declaration_name);
 }
 
 // Returns whether `decl` already mapped to an instruction.
@@ -2300,31 +2276,39 @@ static auto ImportMacro(Context& context, SemIR::LocId loc_id,
 }
 
 // Looks up a macro definition in the top-level `Cpp` scope. Returns nullptr if
-// the macro is not found or the scope is not the top-level `Cpp` scope.
+// the macro is not found or if it is a builtin macro, function-like macro or a
+// macro used for header guards.
+// TODO: Function-like and builtin macros are currently not supported and their
+// support still needs to be clarified.
 static auto LookupMacro(Context& context, SemIR::NameScopeId scope_id,
-                        SemIR::NameId name_id) -> clang::MacroInfo* {
-  auto name_str_opt = context.names().GetAsStringIfIdentifier(name_id);
-  if (!name_str_opt || !IsTopCppScope(context, scope_id)) {
+                        clang::IdentifierInfo* identifier_info)
+    -> clang::MacroInfo* {
+  if (!IsTopCppScope(context, scope_id)) {
     return nullptr;
   }
-
-  clang::Preprocessor& preprocessor = context.clang_sema().getPreprocessor();
-  // TODO: Do the identifier lookup only once, rather than both here and in
-  // ClangLookupName.
-  clang::IdentifierInfo* identifier_info =
-      preprocessor.getIdentifierInfo(*name_str_opt);
-
-  if (!identifier_info) {
-    return nullptr;
-  }
-
-  clang::MacroInfo* macro_info = preprocessor.getMacroInfo(identifier_info);
+  CARBON_CHECK(identifier_info, "Identifier info is empty");
+  clang::MacroInfo* macro_info =
+      context.clang_sema().getPreprocessor().getMacroInfo(identifier_info);
   if (macro_info && !macro_info->isUsedForHeaderGuard() &&
       !macro_info->isFunctionLike() && !macro_info->isBuiltinMacro()) {
     return macro_info;
   }
 
   return nullptr;
+}
+
+// Gets the identifier info for a name. Returns `nullptr` if the name is not an
+// identifier name.
+static auto GetIdentifierInfo(Context& context, SemIR::NameId name_id)
+    -> clang::IdentifierInfo* {
+  std::optional<llvm::StringRef> string_name =
+      context.names().GetAsStringIfIdentifier(name_id);
+  if (!string_name) {
+    return nullptr;
+  }
+  clang::IdentifierInfo* identifier_info =
+      context.clang_sema().getPreprocessor().getIdentifierInfo(*string_name);
+  return identifier_info;
 }
 
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
@@ -2339,10 +2323,17 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
   if (IsIncompleteClass(context, scope_id)) {
     return SemIR::ScopeLookupResult::MakeError();
   }
-  if (clang::MacroInfo* macro_info = LookupMacro(context, scope_id, name_id)) {
+
+  clang::IdentifierInfo* identifier_info = GetIdentifierInfo(context, name_id);
+  if (!identifier_info) {
+    return SemIR::ScopeLookupResult::MakeNotFound();
+  }
+
+  if (clang::MacroInfo* macro_info =
+          LookupMacro(context, scope_id, identifier_info)) {
     return ImportMacro(context, loc_id, scope_id, name_id, macro_info);
   }
-  auto lookup = ClangLookupName(context, scope_id, name_id);
+  auto lookup = ClangLookupName(context, scope_id, identifier_info);
   if (!lookup) {
     return ImportBuiltinNameIntoScope(context, loc_id, scope_id, name_id);
   }
