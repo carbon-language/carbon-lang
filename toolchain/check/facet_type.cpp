@@ -62,12 +62,10 @@ static auto IncompleteFacetTypeDiagnosticBuilder(
     return context.emitter().Build(loc_id, ImplAsIncompleteFacetTypeDefinition,
                                    facet_type_inst_id);
   } else {
-    CARBON_DIAGNOSTIC(
-        ImplAsIncompleteFacetTypeRewrites, Error,
-        "declaration of impl as incomplete facet type {0} with rewrites",
-        InstIdAsType);
-    return context.emitter().Build(loc_id, ImplAsIncompleteFacetTypeRewrites,
-                                   facet_type_inst_id);
+    context.TODO(loc_id,
+                 "declaration of impl as incomplete interface with a rewrite "
+                 "constraint");
+    return context.emitter().BuildSuppressed();
   }
 }
 
@@ -105,6 +103,9 @@ auto InitialFacetTypeImplWitness(
          .specific_id = self_specific_id});
   }
 
+  // The presence of any rewrite constraints requires that we know how many
+  // entries to allocate in the witness table, which requires the entire facet
+  // type to be complete, even if this was a declaration.
   if (!RequireCompleteType(
           context, facet_type_id, SemIR::LocId(facet_type_inst_id), [&] {
             return IncompleteFacetTypeDiagnosticBuilder(

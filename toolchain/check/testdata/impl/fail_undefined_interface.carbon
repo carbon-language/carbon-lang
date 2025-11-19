@@ -41,6 +41,58 @@ class C {}
 // CHECK:STDERR:
 impl C as J {}
 
+// --- fail_class_with_rewrite.carbon
+library "[[@TEST_NAME]]";
+
+interface J;
+interface K { let X:! type; }
+class C {}
+
+// CHECK:STDERR: fail_class_with_rewrite.carbon:[[@LINE+7]]:19: error: member access into object of incomplete type `J` [IncompleteTypeInMemberAccess]
+// CHECK:STDERR: impl C as J where .X = ();
+// CHECK:STDERR:                   ^~
+// CHECK:STDERR: fail_class_with_rewrite.carbon:[[@LINE-7]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface J;
+// CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR:
+impl C as J where .X = ();
+
+// CHECK:STDERR: fail_class_with_rewrite.carbon:[[@LINE+7]]:19: error: member access into object of incomplete type `J` [IncompleteTypeInMemberAccess]
+// CHECK:STDERR: impl C as J where .X = () {}
+// CHECK:STDERR:                   ^~
+// CHECK:STDERR: fail_class_with_rewrite.carbon:[[@LINE-16]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR: interface J;
+// CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR:
+impl C as J where .X = () {}
+
+// --- fail_class_with_qualified_rewrite.carbon
+library "[[@TEST_NAME]]";
+
+interface J;
+interface K { let X:! type; }
+class C {}
+
+// TODO: The failure here should be that J is incomplete, once the rewrite of
+// `.(K.X)` works. Since any rewrite in the decl requires us to know the size of
+// the witness table which requires all interfaces to be complete.
+//
+// CHECK:STDERR: fail_class_with_qualified_rewrite.carbon:[[@LINE+8]]:38: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR: impl C as J where .Self impls K and .(K.X) = ();
+// CHECK:STDERR:                                      ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_class_with_qualified_rewrite.carbon:[[@LINE+4]]:38: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: impl C as J where .Self impls K and .(K.X) = ();
+// CHECK:STDERR:                                      ^
+// CHECK:STDERR:
+impl C as J where .Self impls K and .(K.X) = ();
+
+// CHECK:STDERR: fail_class_with_qualified_rewrite.carbon:[[@LINE+4]]:38: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR: impl C as J where .Self impls K and .(K.X) = () {}
+// CHECK:STDERR:                                      ^
+// CHECK:STDERR:
+impl C as J where .Self impls K and .(K.X) = () {}
+
 // --- incomplete_where.carbon
 library "[[@TEST_NAME]]";
 
@@ -145,6 +197,132 @@ impl C as I where .Self impls Incomplete {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_class_with_rewrite.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %J.type: type = facet_type <@J> [concrete]
+// CHECK:STDOUT:   %K.type: type = facet_type <@K> [concrete]
+// CHECK:STDOUT:   %Self: %K.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %K.assoc_type: type = assoc_entity_type @K [concrete]
+// CHECK:STDOUT:   %assoc0: %K.assoc_type = assoc_entity element0, @K.%X [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %.Self: %J.type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .J = %J.decl
+// CHECK:STDOUT:     .K = %K.decl
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %J.decl: type = interface_decl @J [concrete = constants.%J.type] {} {}
+// CHECK:STDOUT:   %K.decl: type = interface_decl @K [concrete = constants.%K.type] {} {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   impl_decl @C.as.<error>.impl [concrete] {} {
+// CHECK:STDOUT:     %C.ref.loc14: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %J.ref.loc14: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
+// CHECK:STDOUT:     %.Self.2: %J.type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref.loc14: %J.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc14_25: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc14_13: type = where_expr %.Self.2 [concrete = <error>] {
+// CHECK:STDOUT:       requirement_base_facet_type constants.%J.type
+// CHECK:STDOUT:       requirement_rewrite <error>, <error>
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   impl_decl @C.as.<error>.impl [concrete] {} {
+// CHECK:STDOUT:     %C.ref.loc16: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %J.ref.loc16: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
+// CHECK:STDOUT:     %.Self.1: %J.type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref.loc16: %J.type = name_ref .Self, %.Self.1 [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc16_25: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc16_13: type = where_expr %.Self.1 [concrete = <error>] {
+// CHECK:STDOUT:       requirement_base_facet_type constants.%J.type
+// CHECK:STDOUT:       requirement_rewrite <error>, <error>
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @J;
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @K {
+// CHECK:STDOUT:   %Self: %K.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %X: type = assoc_const_decl @X [concrete] {
+// CHECK:STDOUT:     %assoc0: %K.assoc_type = assoc_entity element0, @K.%X [concrete = constants.%assoc0]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .X = @X.%assoc0
+// CHECK:STDOUT:   witness = (%X)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @X(@K.%Self: %K.type) {
+// CHECK:STDOUT:   assoc_const X:! type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @C.as.<error>.impl: %C.ref.loc14 as %.loc14_13 {
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   witness = <error>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @X(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_class_with_qualified_rewrite.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %K.type: type = facet_type <@K> [concrete]
+// CHECK:STDOUT:   %Self: %K.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %K.assoc_type: type = assoc_entity_type @K [concrete]
+// CHECK:STDOUT:   %assoc0: %K.assoc_type = assoc_entity element0, @K.%X [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @J;
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @K {
+// CHECK:STDOUT:   %Self: %K.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %X: type = assoc_const_decl @X [concrete] {
+// CHECK:STDOUT:     %assoc0: %K.assoc_type = assoc_entity element0, @K.%X [concrete = constants.%assoc0]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .X = @X.%assoc0
+// CHECK:STDOUT:   witness = (%X)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @X(@K.%Self: %K.type) {
+// CHECK:STDOUT:   assoc_const X:! type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @X(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- incomplete_where.carbon
 // CHECK:STDOUT:
