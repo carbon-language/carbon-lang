@@ -2958,11 +2958,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                  .facet_value_inst_id = facet_value_inst_id});
 }
 
-// Collects and assigns constants for a `FacetTypeInfo`.
-//
-// We discard constants in a first call, where `local_facet_type_info` is null,
-// in order to avoid allocations. Instead they will be recomputed if there's no
-// work.
+// Collects and assigns constants for a `FacetTypeInfo`. Discards constants when
+// `local_facet_type_info` is null.
 static auto BuildFacetTypeInfo(
     ImportRefResolver& resolver,
     const SemIR::FacetTypeInfo& import_facet_type_info,
@@ -3035,6 +3032,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   const SemIR::FacetTypeInfo& import_facet_type_info =
       resolver.import_facet_types().Get(inst.facet_type_id);
+  // Ensure values are present, but discard them to avoid allocations.
   BuildFacetTypeInfo(resolver, import_facet_type_info,
                      /*local_facet_type_info=*/nullptr);
   if (resolver.HasNewWork()) {
@@ -3045,6 +3043,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       .builtin_constraint_mask = import_facet_type_info.builtin_constraint_mask,
       // TODO: Also process the other requirements.
       .other_requirements = import_facet_type_info.other_requirements};
+  // Re-fetch and values to the local `FacetTypeInfo`.
   BuildFacetTypeInfo(resolver, import_facet_type_info, &local_facet_type_info);
 
   SemIR::FacetTypeId facet_type_id =
