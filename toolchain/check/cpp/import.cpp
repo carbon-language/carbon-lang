@@ -2235,8 +2235,9 @@ static auto MapConstant(Context& context, SemIR::LocId loc_id,
 
   SemIR::TypeId type_id = MapType(context, loc_id, expr->getType()).type_id;
   if (!type_id.has_value()) {
-    context.TODO(
-        loc_id, "Unsupported: constant type: " + expr->getType().getAsString());
+    context.TODO(loc_id, llvm::formatv("Unsupported: C++ literal's type `{0}` "
+                                       "could not be mapped to a Carbon type",
+                                       expr->getType().getAsString()));
     return SemIR::ErrorInst::InstId;
   }
 
@@ -2258,8 +2259,9 @@ static auto MapConstant(Context& context, SemIR::LocId loc_id,
                                    context, imported_loc_id,
                                    {.type_id = type_id, .float_id = float_id}));
   } else {
-    context.TODO(
-        loc_id, "Unsupported: constant type: " + expr->getType().getAsString());
+    context.TODO(loc_id, llvm::formatv(
+                             "Unsupported: C++ constant expression type: '{0}'",
+                             expr->getType().getAsString()));
     return SemIR::ErrorInst::InstId;
   }
 

@@ -89,7 +89,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.CONFIG_VALUE;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: constant type: unsigned long long` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: C++ literal's type `unsigned long long` could not be mapped to a Carbon type` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.CONFIG_VALUE;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
@@ -264,7 +264,7 @@ import Cpp library "string_literal_object_like_macro.h";
 
 fn F() {
   // TODO: Get rid of the second error.
-  // CHECK:STDERR: fail_todo_import_string_literal_object_like_macro.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: constant type:const char[4]` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_string_literal_object_like_macro.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: macro evaluated to a constant of type: const char[4]` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.CONFIG_VALUE;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_import_string_literal_object_like_macro.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
@@ -307,7 +307,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "unsupported_floating_point_literal_macro.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_unsupported_floating_point_literal_macro.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: constant type: long double` [SemanticsTodo]
+  // CHECK:STDERR: fail_import_unsupported_floating_point_literal_macro.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: C++ literal's type `long double` could not be mapped to a Carbon type` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.MyLongDouble;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_unsupported_floating_point_literal_macro.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `MyLongDouble` [InCppNameLookup]
@@ -334,6 +334,19 @@ fn F() {
   // CHECK:STDERR:
   Cpp.MyDouble = 1.0;
 }
+
+// --- lambda.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+  #define MyIntLambda (([] { return 7; })())
+''';
+
+fn F() {
+  let i: i32 = Cpp.MyIntLambda;
+}
+
 
 // --- macro_undefined.h
 
