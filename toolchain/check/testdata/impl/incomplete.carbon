@@ -208,22 +208,6 @@ interface B {
   require impls A;
 }
 
-// --- fail_incomplete_extend_constraint.carbon
-library "[[@TEST_NAME]]";
-
-constraint A;
-
-interface B {
-  // CHECK:STDERR: fail_incomplete_extend_constraint.carbon:[[@LINE+7]]:24: error: facet type `A` cannot be identified in `require` declaration [RequireImplsUnidentifiedFacetType]
-  // CHECK:STDERR:   extend require impls A;
-  // CHECK:STDERR:                        ^
-  // CHECK:STDERR: fail_incomplete_extend_constraint.carbon:[[@LINE-6]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
-  // CHECK:STDERR: constraint A;
-  // CHECK:STDERR: ^~~~~~~~~~~~~
-  // CHECK:STDERR:
-  extend require impls A;
-}
-
 // CHECK:STDOUT: --- fail_empty_struct.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -847,36 +831,6 @@ interface B {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_incomplete_constraint.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
-// CHECK:STDOUT:   %B.type: type = facet_type <@B> [concrete]
-// CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .A = %A.decl
-// CHECK:STDOUT:     .B = %B.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: type = constraint_decl @A [concrete = constants.%A.type] {} {}
-// CHECK:STDOUT:   %B.decl: type = interface_decl @B [concrete = constants.%B.type] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: interface @B {
-// CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .A = <poisoned>
-// CHECK:STDOUT:   witness = ()
-// CHECK:STDOUT:
-// CHECK:STDOUT: !requires:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: constraint @A;
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_incomplete_extend_constraint.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]

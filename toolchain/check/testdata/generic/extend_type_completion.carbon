@@ -57,13 +57,13 @@ library "[[@TEST_NAME]]";
 
 interface K(T:! type) {}
 interface J(N:! i32) {
-  // CHECK:STDERR: fail_interface_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+3]]:37: error: array bound of -1 is negative [ArrayBoundNegative]
+  // CHECK:STDERR: fail_interface_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+3]]:24: error: array bound of -1 is negative [ArrayBoundNegative]
   // CHECK:STDERR:   extend require impls K(array(i32, N));
-  // CHECK:STDERR:                                     ^
+  // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~
   extend require impls K(array(i32, N));
 }
 interface I(N:! i32) {
-  // CHECK:STDERR: fail_interface_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+3]]:24: note: in `require` used here [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_interface_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+3]]:24: note: in `J(-1)` used here [ResolvingSpecificHere]
   // CHECK:STDERR:   extend require impls J(N);
   // CHECK:STDERR:                        ^~~~
   extend require impls J(N);
@@ -75,7 +75,7 @@ interface I(N:! i32) {
 // need a location for the type in context.bind_name_map() to use as the
 // location to Convert().
 //
-// CHECK:STDERR: fail_interface_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+4]]:1: note: in `require` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_interface_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+4]]:1: note: in `I(-1)` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var v: I(-1);
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -97,20 +97,20 @@ library "[[@TEST_NAME]]";
 
 interface K(T:! type) {}
 constraint J(N:! i32) {
-  // CHECK:STDERR: fail_constraint_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+3]]:37: error: array bound of -1 is negative [ArrayBoundNegative]
+  // CHECK:STDERR: fail_constraint_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+3]]:24: error: array bound of -1 is negative [ArrayBoundNegative]
   // CHECK:STDERR:   extend require impls K(array(i32, N));
-  // CHECK:STDERR:                                     ^
+  // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~
   extend require impls K(array(i32, N));
 }
 constraint I(N:! i32) {
-  // CHECK:STDERR: fail_constraint_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+3]]:24: note: in `require` used here [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_constraint_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+3]]:24: note: in `{}` used here [ResolvingSpecificHere]
   // CHECK:STDERR:   extend require impls J(N);
   // CHECK:STDERR:                        ^~~~
   extend require impls J(N);
 }
 
 // I extends J extends K so the type of K is completed, but is invalid.
-// CHECK:STDERR: fail_constraint_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+4]]:1: note: in `require` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_constraint_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+4]]:1: note: in `{}` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var v: I(-1);
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:

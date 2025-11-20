@@ -278,8 +278,9 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   // We look for a complete type after BuildGenericDecl, so that the resulting
   // RequireCompleteType instruction is part of the enclosing interface or named
   // constraint generic definition. Then requiring enclosing entity to be
-  // complete will resolve that definition and also construct a specific for the
-  // `constraint_inst_id`, finding any monomorphization errors that result.
+  // complete will resolve that definition (via ResolveSpecificDefinition()) and
+  // also construct a specific for the `constraint_inst_id`, finding any
+  // monomorphization errors that result.
   if (extend) {
     if (!RequireCompleteType(
             context, constraint_type_id, SemIR::LocId(constraint_inst_id), [&] {
@@ -290,13 +291,12 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
                                              RequireImplsIncompleteFacetType,
                                              constraint_inst_id);
             })) {
-      DiscardGenericDecl(context);
+      // DiscardGenericDecl(context);
       return true;
     }
   }
 
   context.require_impls_stack().AppendToTop(require_impls_id);
-
   return true;
 }
 
