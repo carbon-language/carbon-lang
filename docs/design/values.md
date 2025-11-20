@@ -866,6 +866,13 @@ Phase conversions cannot change the form structure; they can only apply
 primitive phase conversions to primitive sub-forms. Type and category
 conversions are more complex, and are covered in the next two sections.
 
+Note that these rules will implicitly convert between primitive and composite
+forms in both directions (except that a composite containing references cannot
+be converted to a primitive form). As a result, although the difference between
+primitive and composite forms is observable by way of overloading, it can't
+reliably carry any higher-level meaning, and should be used only as an
+optimization tool.
+
 #### Type conversions
 
 See [here](expressions/implicit_conversions.md) for overall information about
@@ -896,27 +903,11 @@ An outcome `source` that has a struct type can be converted to a struct type
     outcome where each field `F` is set to the outcome of the corresponding
     conversion.
 -   If `source` is a primitive outcome, convert it to a struct outcome by
-    [form decomposition](#category-conversions), type-convert the outcome to
-    `Dest`, category-convert the outcome to an initializing expression, and
-    return the result.
+    [form decomposition](#category-conversions), and then type-convert the
+    outcome to `Dest` and return the result.
 
 Note that the sub-conversions invoked here are not necessarily defined; if so,
 the conversion itself is not defined.
-
-The conversion to an initializing outcome in the last case is not formally
-necessary; its purpose is to ensure that the result of type conversion is not
-"less primitive" than the source form. Allowing conversions to add form
-structure that wasn't originally present would have surprising consequences. For
-example, if we have `fn F() -> (i32, i32)`, then `var a: array(i32, 2) = F();`
-is not valid because `F()` does not have a tuple form. That being the case, it
-would be surprising if `var a: array(i32, 2) = F() as (i16, i16);` were valid,
-so `F() as (i16, i16)` must not have a tuple form.
-
-**Open question:** We've chosen "initializing" as the default category for
-primitive sub-forms in a conversion, but in some cases "value" could be more
-efficient. Do we want a way of explicitly requesting conversion to a given form,
-rather than just a given type, in order to override this default when it's
-inefficient?
 
 There is a conversion to a class type `Dest` from an outcome `source` that has a
 struct type, if there is a conversion from `source` to a struct type that has
@@ -965,34 +956,12 @@ expression that initializes the whole aggregate. `C` cannot be a reference
 category, because an aggregate of references to independent objects can't be
 replaced by a reference to a single aggregate object in a single step.
 
-_Category conversion_ converts an expression to have a given category component
-without changing its type, so long as the target category component is not "less
-primitive" than the source form. The conversion works by combining form
-composition with primitive category conversions, and is defined recursively:
-
--   If the target category component is a tuple, the source form must be a tuple
-    form of the same arity. Category-convert each source sub-form to the
-    corresponding target sub-category.
--   If the target category component is a struct, the source form must be a
-    struct form with the same set of field names in the same order.
-    Category-convert each source sub-form to the corresponding target
-    sub-category.
--   If the target category is a primitive category `C`:
-    -   If the source form is primitive, convert to `C` by applying primitive
-        category conversions.
-    -   If the source form is composite and `C` is a reference category,
-        category-convert the source form to "initializing", and then convert the
-        result to `C` by applying primitive category conversions.
-    -   If the source form is composite and `C` is not a reference category,
-        category-convert each source sub-form to `C`, and then convert the
-        aggregate result of these conversions to `C` by form composition.
-
 _Form decomposition_ is the inverse of form composition. It converts a
 primitive-form expression to a composite form as follows:
 
--   An expression with primitive form `[(T1, T2, ..., TN), C, P, V]` can be
+-   An expression with primitive form `[(T0, T1, ..., TN), C, P, V]` can be
     converted to a tuple form
-    `([T1, CC, P, V.0], [T2, CC, P, V.1], ... [TN, CC, P, V.(N-1)])`.
+    `([T0, CC, P, V.0], [T1, CC, P, V.1], ... [TN, CC, P, V.N])`.
 -   An expression with primitive form
     `[{.a = Ta, .b = Tb, ... .z = Tz}, C, P, V]` can be converted to a struct
     form
@@ -1012,10 +981,28 @@ exceptions:
 By convention, form decomposition is a no-op when applied to an expression with
 struct or tuple form.
 
-Form decomposition occurs only where explicitly specified, because it adds
-structural information that may not have been originally present, so it is
-applied only in narrow contexts where that added information will be used
-safely.
+_Category conversion_ converts an expression to have a given category component
+without changing its type. The conversion works by combining form composition
+and decomposition with primitive category conversions, and is defined
+recursively:
+
+-   If the target category component is a tuple, the source form must have a
+    tuple type with the same arity. Convert the source to a tuple form by form
+    decomposition, and then category-convert each source sub-form to the
+    corresponding target sub-category.
+-   If the target category component is a struct, the source form must have a
+    struct type with the same set of field names in the same order. Convert the
+    source to a struct for by form decomposition, and then category-convert each
+    source sub-form to the corresponding target sub-category.
+-   If the target category is a primitive category `C`:
+    -   If the source form is primitive, convert to `C` by applying primitive
+        category conversions.
+    -   If the source form is composite and `C` is a reference category,
+        category-convert the source form to "initializing", and then convert the
+        result to `C` by applying primitive category conversions.
+    -   If the source form is composite and `C` is not a reference category,
+        category-convert each source sub-form to `C`, and then convert the
+        aggregate result of these conversions to `C` by form composition.
 
 ## Pointers
 
@@ -1432,7 +1419,7 @@ itself.
 -   [Alternative pointer syntaxes](/proposals/p2006.md#alternative-pointer-syntaxes)
 -   [Alternative syntaxes for locals](/proposals/p2006.md#alternative-syntaxes-for-locals)
 -   [Mixed expression categories](/proposals/p5545.md#mixed-expression-categories)
--   [Use composite forms in more or fewer places](/proposals/p5545.md#use-composite-forms-in-more-or-fewer-places)
+-   [Don't implicitly convert to less-primitive forms](/proposals/p5545.md#dont-implicitly-convert-to-less-primitive-forms)
 -   [Materialize temporaries to preserve struct initialization order](/proposals/p5545.md#materialize-temporaries-to-preserve-struct-initialization-order)
 
 ## References
