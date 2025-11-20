@@ -76,58 +76,40 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
                                      const SemIR::FacetType& facet_type,
                                      MakeDiagnosticBuilderFn diagnoser)
     -> bool {
-  struct SpecificForRequires {
-    SemIR::SpecificId specific_id;
-    SemIR::RequireImplsBlockId requires_block_id;
-  };
-  llvm::SmallVector<SpecificForRequires> specifics;
+  const auto& facet_type_info =
+      context.facet_types().Get(facet_type.facet_type_id);
 
-  llvm::SmallVector<SemIR::FacetTypeId> work = {facet_type.facet_type_id};
-  while (!work.empty()) {
-    auto next_facet_type_id = work.pop_back_val();
-    const auto& facet_type_info = context.facet_types().Get(next_facet_type_id);
-
-    for (auto extends : facet_type_info.extend_constraints) {
-      auto interface_id = extends.interface_id;
-      const auto& interface = context.interfaces().Get(interface_id);
-      if (!interface.is_complete()) {
-        if (diagnoser) {
-          auto builder = diagnoser();
-          NoteIncompleteInterface(context, interface_id, builder);
-          builder.Emit();
-        }
-        return false;
+  for (auto extends : facet_type_info.extend_constraints) {
+    auto interface_id = extends.interface_id;
+    const auto& interface = context.interfaces().Get(interface_id);
+    if (!interface.is_complete()) {
+      if (diagnoser) {
+        auto builder = diagnoser();
+        NoteIncompleteInterface(context, interface_id, builder);
+        builder.Emit();
       }
-      if (interface.generic_id.has_value()) {
-        specifics.push_back(
-            {extends.specific_id, interface.require_impls_block_id});
-      }
+      return false;
     }
-
-    for (auto extends : facet_type_info.extend_named_constraints) {
-      auto named_constraint_id = extends.named_constraint_id;
-      const auto& constraint =
-          context.named_constraints().Get(named_constraint_id);
-      if (!constraint.is_complete()) {
-        if (diagnoser) {
-          auto builder = diagnoser();
-          NoteIncompleteNamedConstraint(context, named_constraint_id, builder);
-          builder.Emit();
-        }
-        return false;
-      }
-      if (constraint.generic_id.has_value()) {
-        specifics.push_back(
-            {extends.specific_id, constraint.require_impls_block_id});
-      }
+    if (interface.generic_id.has_value()) {
+      ResolveSpecificDefinition(context, loc_id, extends.specific_id);
     }
   }
 
-  // Specific definitions are resolved from the interfaces in the facet type
-  // down, each require target depends on the specific referring to it being
-  // resolved already.
-  for (auto [specific_id, _] : specifics) {
-    ResolveSpecificDefinition(context, loc_id, specific_id);
+  for (auto extends : facet_type_info.extend_named_constraints) {
+    auto named_constraint_id = extends.named_constraint_id;
+    const auto& constraint =
+        context.named_constraints().Get(named_constraint_id);
+    if (!constraint.is_complete()) {
+      if (diagnoser) {
+        auto builder = diagnoser();
+        NoteIncompleteNamedConstraint(context, named_constraint_id, builder);
+        builder.Emit();
+      }
+      return false;
+    }
+    if (constraint.generic_id.has_value()) {
+      ResolveSpecificDefinition(context, loc_id, extends.specific_id);
+    }
   }
 
   return true;
