@@ -298,20 +298,6 @@ library "[[@TEST_NAME]]";
 import Cpp library "virtual_inheritance.h";
 
 fn Convert(p: Cpp.B*) -> Cpp.A* {
-  // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+21]]:3: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+18]]:3: note: while completing C++ type `Cpp.B` [InCppTypeCompletion]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+14]]:3: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+11]]:3: note: while completing C++ type `Cpp.B` [InCppTypeCompletion]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.B*` to `Cpp.A*` [ConversionFailure]
   // CHECK:STDERR:   return p;
   // CHECK:STDERR:   ^~~~~~~~~
@@ -320,6 +306,118 @@ fn Convert(p: Cpp.B*) -> Cpp.A* {
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
   return p;
+}
+
+// --- diamond.h
+
+struct A {
+  int a;
+};
+
+struct B : virtual A {
+  int b;
+};
+
+struct C : virtual A {
+  int c;
+};
+
+struct D : B, C {
+  int d;
+};
+
+// --- fail_todo_use_diamond.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "diamond.h";
+
+fn ConvertBA(p: Cpp.B*) -> Cpp.A* {
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.B*` to `Cpp.A*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+4]]:3: note: type `Cpp.B*` does not implement interface `Core.ImplicitAs(Cpp.A*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+fn ConvertCA(p: Cpp.C*) -> Cpp.A* {
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.C*` to `Cpp.A*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+4]]:3: note: type `Cpp.C*` does not implement interface `Core.ImplicitAs(Cpp.A*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+fn ConvertDB(p: Cpp.D*) -> Cpp.B* {
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.D*` to `Cpp.B*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+4]]:3: note: type `Cpp.D*` does not implement interface `Core.ImplicitAs(Cpp.B*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+fn ConvertDC(p: Cpp.D*) -> Cpp.C* {
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Cpp.D*` to `Cpp.C*` [ConversionFailure]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+4]]:3: note: type `Cpp.D*` does not implement interface `Core.ImplicitAs(Cpp.C*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return p;
+  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:
+  return p;
+}
+
+fn AccessBA(d: Cpp.D) -> i32 {
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:11: error: cannot convert expression of type `Cpp.D` to `Cpp.B` with `as` [ConversionFailure]
+  // CHECK:STDERR:   return (d as Cpp.B).b;
+  // CHECK:STDERR:           ^~~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+4]]:11: note: type `Cpp.D` does not implement interface `Core.As(Cpp.B)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return (d as Cpp.B).b;
+  // CHECK:STDERR:           ^~~~~~~~~~
+  // CHECK:STDERR:
+  return (d as Cpp.B).b;
+}
+
+fn AccessCA(d: Cpp.D) -> i32 {
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:11: error: cannot convert expression of type `Cpp.D` to `Cpp.C` with `as` [ConversionFailure]
+  // CHECK:STDERR:   return (d as Cpp.C).b;
+  // CHECK:STDERR:           ^~~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+4]]:11: note: type `Cpp.D` does not implement interface `Core.As(Cpp.C)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return (d as Cpp.C).b;
+  // CHECK:STDERR:           ^~~~~~~~~~
+  // CHECK:STDERR:
+  return (d as Cpp.C).b;
+}
+
+fn AccessDB(d: Cpp.D) -> i32 {
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:10: error: cannot implicitly convert expression of type `Cpp.D` to `Cpp.B` [ConversionFailure]
+  // CHECK:STDERR:   return d.b;
+  // CHECK:STDERR:          ^~~
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+4]]:10: note: type `Cpp.D` does not implement interface `Core.ImplicitAs(Cpp.B)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return d.b;
+  // CHECK:STDERR:          ^~~
+  // CHECK:STDERR:
+  return d.b;
+}
+
+fn AccessDC(d: Cpp.D) -> i32 {
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:10: error: cannot implicitly convert expression of type `Cpp.D` to `Cpp.C` [ConversionFailure]
+  // CHECK:STDERR:   return d.c;
+  // CHECK:STDERR:          ^~~
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+4]]:10: note: type `Cpp.D` does not implement interface `Core.ImplicitAs(Cpp.C)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   return d.c;
+  // CHECK:STDERR:          ^~~
+  // CHECK:STDERR:
+  return d.c;
 }
 
 // --- final.h

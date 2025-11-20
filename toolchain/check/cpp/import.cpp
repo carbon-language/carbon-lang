@@ -740,6 +740,13 @@ static auto GetInheritanceKind(clang::CXXRecordDecl* class_def)
     return SemIR::Class::Final;
   }
 
+  if (class_def->getNumVBases()) {
+    // TODO: We treat classes with virtual bases as final for now. We use the
+    // layout of the class including its virtual bases as its Carbon type
+    // layout, so we wouldn't behave correctly if we derived from it.
+    return SemIR::Class::Final;
+  }
+
   if (class_def->isAbstract()) {
     // If the class has any abstract members, it's abstract.
     return SemIR::Class::Abstract;
@@ -802,8 +809,15 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
   // Import bases.
   for (const auto& base : clang_def->bases()) {
-    CARBON_CHECK(!base.isVirtual(),
-                 "Should not import definition for class with a virtual base");
+    if (base.isVirtual()) {
+      // If the base is virtual, skip it from the layout. We don't know where it
+      // will actually appear within the complete object layout, as a pointer to
+      // this class might point to a derived type that puts the vbase in a
+      // different place.
+      // TODO: Track that the virtual base existed. Support derived-to-vbase
+      // conversions by generating a clang AST fragment.
+      continue;
+    }
 
     auto [base_type_inst_id, base_type_id] =
         ImportTypeAndDependencies(context, import_ir_inst_id, base.getType());
@@ -842,6 +856,10 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
       class_info.base_id = SemIR::InstId::None;
     }
 
+    // TODO: If the base class has virtual bases, the size of the type that we
+    // add to the layout here will be the full size of the class (including
+    // virtual bases), whereas the size actually occupied by this base class is
+    // only the nvsize (excluding virtual bases).
     auto base_offset = base.isVirtual()
                            ? clang_layout.getVBaseClassOffset(base_class)
                            : clang_layout.getBaseClassOffset(base_class);
@@ -2412,17 +2430,6 @@ auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
   if (auto* class_decl = dyn_cast<clang::CXXRecordDecl>(clang_decl)) {
     auto* class_def = class_decl->getDefinition();
     CARBON_CHECK(class_def, "Complete type has no definition");
-
-    if (class_def->getNumVBases()) {
-      // TODO: Handle virtual bases. We don't actually know where they go in the
-      // layout. We may also want to use a different size in the layout for
-      // `partial C`, excluding the virtual base. It's also not entirely safe to
-      // just skip over the virtual base, as the type we would construct would
-      // have a misleading size. For now, treat a C++ class with vbases as
-      // incomplete in Carbon.
-      context.TODO(loc_id, "class with virtual bases");
-      return false;
-    }
 
     BuildClassDefinition(context, import_ir_inst_id, class_id, class_inst_id,
                          class_def);
