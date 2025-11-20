@@ -55,18 +55,15 @@ static auto WitnessQueryMatchesInterface(
 static auto IncompleteFacetTypeDiagnosticBuilder(
     Context& context, SemIR::LocId loc_id, SemIR::TypeInstId facet_type_inst_id,
     bool is_definition) -> DiagnosticBuilder {
-  if (is_definition) {
-    CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeDefinition, Error,
-                      "definition of impl as incomplete facet type {0}",
-                      InstIdAsType);
-    return context.emitter().Build(loc_id, ImplAsIncompleteFacetTypeDefinition,
-                                   facet_type_inst_id);
-  } else {
-    context.TODO(loc_id,
-                 "declaration of impl as incomplete interface with a rewrite "
-                 "constraint");
-    return context.emitter().BuildSuppressed();
-  }
+  // TODO: Remove this parameter. Facet types don't need to be complete for in
+  // declarations, unless there's a rewrite into `.Self`. But that completeness
+  // is checked/required by the member access of the rewrite.
+  CARBON_CHECK(is_definition);
+  CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeDefinition, Error,
+                    "definition of impl as incomplete facet type {0}",
+                    InstIdAsType);
+  return context.emitter().Build(loc_id, ImplAsIncompleteFacetTypeDefinition,
+                                 facet_type_inst_id);
 }
 
 auto GetImplWitnessAccessWithoutSubstitution(Context& context,
