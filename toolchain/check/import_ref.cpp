@@ -879,43 +879,6 @@ static auto SetGenericDataForResolveResult(ImportContext& context,
       new_generic_id, SemIR::GenericInstIndex::Region::Declaration);
 }
 
-// Given a generic that's gone through the initial setup with `GenericData`,
-// finish the import.
-static auto TryFinishGeneric(ImportRefResolver& resolver,
-                             SemIR::GenericId import_generic_id,
-                             SemIR::GenericId local_generic_id) -> bool {
-  const auto& import_generic =
-      resolver.import_generics().Get(import_generic_id);
-
-  llvm::SmallVector<SemIR::InstId> definition_block;
-  if (import_generic.definition_block_id.has_value()) {
-    definition_block =
-        GetLocalInstBlockContents(resolver, import_generic.definition_block_id);
-  }
-
-  if (resolver.HasNewWork()) {
-    return false;
-  }
-
-  auto& local_generic = resolver.local_generics().Get(local_generic_id);
-  CARBON_CHECK(!local_generic.self_specific_id.has_value(),
-               "Currently assuming we can't find a GenericId multiple ways");
-
-  // TODO: Consider getting this through a constant.
-  local_generic.self_specific_id =
-      MakeSelfSpecific(resolver.local_context(),
-                       SemIR::LocId(local_generic.decl_id), local_generic_id);
-  resolver.AddPendingSpecific({.import_id = import_generic.self_specific_id,
-                               .local_id = local_generic.self_specific_id});
-
-  if (import_generic.definition_block_id.has_value()) {
-    local_generic.definition_block_id = ResolveLocalEvalBlock(
-        resolver, import_generic.definition_block_id, definition_block,
-        local_generic_id, SemIR::GenericInstIndex::Region::Definition);
-  }
-  return true;
-}
-
 // Gets a local constant value corresponding to an imported generic ID. May
 // add work to the work stack and return `None`.
 static auto GetLocalConstantId(ImportRefResolver& resolver,
@@ -998,9 +961,14 @@ static auto GetLocalSpecificData(ImportRefResolver& resolver,
 
 // Gets a local specific whose data was already imported by
 // GetLocalSpecificData. Does not add any new work.
-static auto GetOrAddLocalSpecific(ImportContext& context,
-                                  SemIR::SpecificId import_specific_id,
-                                  const SpecificData& data)
+//
+// `local_generic_id` is provided when this is used for a generic's `self`
+// specific, where `GetLocalGenericId` won't work because `generic_const_id` can
+// be `TypeType`.
+static auto GetOrAddLocalSpecific(
+    ImportContext& context, SemIR::SpecificId import_specific_id,
+    const SpecificData& data,
+    SemIR::GenericId local_generic_id = SemIR::GenericId::None)
     -> SemIR::SpecificId {
   if (!import_specific_id.has_value()) {
     return SemIR::SpecificId::None;
@@ -1009,22 +977,61 @@ static auto GetOrAddLocalSpecific(ImportContext& context,
   // Form a corresponding local specific ID.
   const auto& import_specific =
       context.import_specifics().Get(import_specific_id);
-  auto generic_id = GetLocalGenericId(context, data.generic_const_id);
+  if (!local_generic_id.has_value()) {
+    local_generic_id = GetLocalGenericId(context, data.generic_const_id);
+  }
   auto args_id =
       GetLocalCanonicalInstBlockId(context, import_specific.args_id, data.args);
 
   // Get the specific.
-  auto specific_id = context.local_specifics().GetOrAdd(generic_id, args_id);
+  auto local_specific_id =
+      context.local_specifics().GetOrAdd(local_generic_id, args_id);
 
   // Fill in the remaining information in FinishPendingSpecific, if necessary.
-  auto& specific = context.local_specifics().Get(specific_id);
-  if (!specific.decl_block_id.has_value() ||
+  auto& local_specific = context.local_specifics().Get(local_specific_id);
+  if (!local_specific.decl_block_id.has_value() ||
       (import_specific.definition_block_id.has_value() &&
-       !specific.definition_block_id.has_value())) {
+       !local_specific.definition_block_id.has_value())) {
     context.AddPendingSpecific(
-        {.import_id = import_specific_id, .local_id = specific_id});
+        {.import_id = import_specific_id, .local_id = local_specific_id});
   }
-  return specific_id;
+  return local_specific_id;
+}
+
+// Given a generic that's gone through the initial setup with `GenericData`,
+// finish the import.
+static auto TryFinishGeneric(ImportRefResolver& resolver,
+                             SemIR::GenericId import_generic_id,
+                             SemIR::GenericId local_generic_id) -> bool {
+  const auto& import_generic =
+      resolver.import_generics().Get(import_generic_id);
+
+  auto specific_data =
+      GetLocalSpecificData(resolver, import_generic.self_specific_id);
+  llvm::SmallVector<SemIR::InstId> definition_block;
+  if (import_generic.definition_block_id.has_value()) {
+    definition_block =
+        GetLocalInstBlockContents(resolver, import_generic.definition_block_id);
+  }
+
+  if (resolver.HasNewWork()) {
+    return false;
+  }
+
+  auto& local_generic = resolver.local_generics().Get(local_generic_id);
+  CARBON_CHECK(!local_generic.self_specific_id.has_value(),
+               "Currently assuming we can't find a GenericId multiple ways");
+
+  local_generic.self_specific_id =
+      GetOrAddLocalSpecific(resolver, import_generic.self_specific_id,
+                            specific_data, local_generic_id);
+
+  if (import_generic.definition_block_id.has_value()) {
+    local_generic.definition_block_id = ResolveLocalEvalBlock(
+        resolver, import_generic.definition_block_id, definition_block,
+        local_generic_id, SemIR::GenericInstIndex::Region::Definition);
+  }
+  return true;
 }
 
 namespace {
