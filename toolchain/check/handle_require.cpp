@@ -163,7 +163,7 @@ struct ValidateRequireResult {
 static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
                             SemIR::TypeInstId self_inst_id,
                             SemIR::InstId constraint_inst_id,
-                            SemIR::InstId scope_inst_id, bool extend)
+                            SemIR::InstId scope_inst_id)
     -> std::optional<ValidateRequireResult> {
   auto constraint_constant_value_id =
       context.constant_values().Get(constraint_inst_id);
@@ -210,22 +210,6 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
     return std::nullopt;
   }
 
-  if (extend) {
-    if (!RequireCompleteType(
-            context, constraint_type_id, SemIR::LocId(constraint_inst_id), [&] {
-              CARBON_DIAGNOSTIC(RequireImplsIncompleteFacetType, Error,
-                                "`extend require` of incomplete facet type {0}",
-                                InstIdAsType);
-              return context.emitter().Build(constraint_inst_id,
-                                             RequireImplsIncompleteFacetType,
-                                             constraint_inst_id);
-            })) {
-      // The constraint is invalid, and a diagnostic was emitted by
-      // RequireCompleteType().
-      return std::nullopt;
-    }
-  }
-
   if (scope_inst_id == SemIR::ErrorInst::InstId) {
     // `require` is in the wrong scope.
     return std::nullopt;
@@ -257,10 +241,8 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   auto scope_inst_id =
       context.node_stack().Pop<Parse::NodeKind::RequireIntroducer>();
 
-  bool extend = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend);
-
   auto validated = ValidateRequire(context, node_id, self_inst_id,
-                                   constraint_inst_id, scope_inst_id, extend);
+                                   constraint_inst_id, scope_inst_id);
   if (!validated) {
     DiscardGenericDecl(context);
     return true;
@@ -272,6 +254,8 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
     DiscardGenericDecl(context);
     return true;
   }
+
+  bool extend = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend);
 
   auto require_impls_decl =
       SemIR::RequireImplsDecl{// To be filled in after.
@@ -290,6 +274,26 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
 
   require_impls_decl.require_impls_id = require_impls_id;
   ReplaceInstBeforeConstantUse(context, decl_id, require_impls_decl);
+
+  // We look for a complete type after BuildGenericDecl, so that the resulting
+  // RequireCompleteType instruction is part of the enclosing interface or named
+  // constraint generic definition. Then requiring enclosing entity to be
+  // complete will resolve that definition and also construct a specific for the
+  // `constraint_inst_id`, finding any monomorphization errors that result.
+  if (extend) {
+    if (!RequireCompleteType(
+            context, constraint_type_id, SemIR::LocId(constraint_inst_id), [&] {
+              CARBON_DIAGNOSTIC(RequireImplsIncompleteFacetType, Error,
+                                "`extend require` of incomplete facet type {0}",
+                                InstIdAsType);
+              return context.emitter().Build(constraint_inst_id,
+                                             RequireImplsIncompleteFacetType,
+                                             constraint_inst_id);
+            })) {
+      DiscardGenericDecl(context);
+      return true;
+    }
+  }
 
   context.require_impls_stack().AppendToTop(require_impls_id);
 
