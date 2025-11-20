@@ -12,6 +12,44 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/import_generic.carbon
 
+// --- basic_import_generic_interface.carbon
+
+library "[[@TEST_NAME]]";
+
+interface I(T:! type) {}
+interface J(T:! type) {
+  extend require impls I(T);
+}
+
+// --- basic_import_generic_interface.impl.carbon
+
+impl library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
+// CHECK:STDERR: impl forall [T:! type] C as I(T);
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl {} as J({});
+
+// --- basic_import_generic_constraint.carbon
+
+library "[[@TEST_NAME]]";
+
+interface I(T:! type) {}
+constraint J(T:! type) {
+  extend require impls I(T);
+}
+
+// --- basic_import_generic_constraint.impl.carbon
+
+impl library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_import_generic.impl.carbon:[[@LINE+4]]:1: error: redeclaration of imported impl [RedeclImportedImpl]
+// CHECK:STDERR: impl forall [T:! type] C as I(T);
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl {} as J({});
+
 // --- import_generic.carbon
 
 library "[[@TEST_NAME]]";
