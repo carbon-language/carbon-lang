@@ -147,18 +147,6 @@ namespace {
 // Therefore code that accepts an ImportContext is unable to enqueue new work.
 class ImportContext {
  public:
-  // A generic that we have partially imported.
-  struct PendingGeneric {
-    SemIR::GenericId import_id;
-    SemIR::GenericId local_id;
-  };
-
-  // A specific that we have partially imported.
-  struct PendingSpecific {
-    SemIR::SpecificId import_id;
-    SemIR::SpecificId local_id;
-  };
-
   // `context` must not be null.
   explicit ImportContext(Context* context, SemIR::ImportIRId import_ir_id)
       : context_(context),
@@ -315,27 +303,10 @@ class ImportContext {
   }
   auto local_types() -> SemIR::TypeStore& { return local_ir().types(); }
 
-  // Add a specific that has been partially imported but needs to be finished.
-  auto AddPendingSpecific(PendingSpecific pending) -> void {
-    pending_specifics_.push_back(pending);
-  }
-
- protected:
-  auto pending_specifics() -> llvm::SmallVector<PendingSpecific>& {
-    return pending_specifics_;
-  }
-
  private:
   Context* context_;
   SemIR::ImportIRId import_ir_id_;
   const SemIR::File& import_ir_;
-
-  // TODO: The following members don't belong here. This pending work mechanism
-  // can probably be removed entirely if we stop importing generic eval blocks
-  // and instead evaluate them directly in the imported IR.
-
-  // Specifics that we have partially imported but not yet finished importing.
-  llvm::SmallVector<PendingSpecific> pending_specifics_;
 };
 
 // Resolves an instruction from an imported IR into a constant referring to the
@@ -420,31 +391,24 @@ class ImportRefResolver : public ImportContext {
   // Iteratively resolves an imported instruction's inner references until a
   // constant ID referencing the current IR is produced. See the class comment
   // for more details.
-  auto ResolveOneInst(SemIR::InstId inst_id) -> SemIR::ConstantId;
-
-  // Performs resolution for one instruction and then performs all work we
-  // deferred.
-  auto Resolve(SemIR::InstId inst_id) -> SemIR::ConstantId {
-    auto const_id = ResolveOneInst(inst_id);
-    PerformPendingWork();
-    return const_id;
-  }
+  auto Resolve(SemIR::InstId inst_id) -> SemIR::ConstantId;
 
   // Wraps constant evaluation with logic to handle constants.
-  auto ResolveConstant(SemIR::ConstantId import_const_id) -> SemIR::ConstantId {
-    return Resolve(GetInstWithConstantValue(import_ir(), import_const_id));
-  }
+  auto ResolveConstant(SemIR::ConstantId import_const_id) -> SemIR::ConstantId;
 
   // Wraps constant evaluation with logic to handle types.
   auto ResolveType(SemIR::TypeId import_type_id) -> SemIR::TypeId;
 
   // Returns true if new unresolved constants were found as part of this
   // `Resolve` step.
-  auto HasNewWork() -> bool {
-    CARBON_CHECK(initial_work_ <= work_stack_.size(),
-                 "Work shouldn't decrease");
-    return initial_work_ < work_stack_.size();
-  }
+  auto HasNewWork() -> bool;
+
+  // Pushes a specific onto the work stack. This will only process when the
+  // current instruction is done, and does not count towards `HasNewWork`. We
+  // add specifics this way because some instructions (e.g. `FacetTypeInfo`) can
+  // add multiple specifics.
+  auto PushSpecific(SemIR::SpecificId import_id, SemIR::SpecificId local_id)
+      -> void;
 
   // Returns the ConstantId for an InstId. Adds unresolved constants to
   // work_stack_.
@@ -464,6 +428,12 @@ class ImportRefResolver : public ImportContext {
   struct GenericWork {
     SemIR::GenericId import_id;
     SemIR::GenericId local_id;
+  };
+
+  // A specific to import.
+  struct SpecificWork {
+    SemIR::SpecificId import_id;
+    SemIR::SpecificId local_id;
   };
 
   // The constant found by FindResolvedConstId.
@@ -488,9 +458,8 @@ class ImportRefResolver : public ImportContext {
                           llvm::ArrayRef<SemIR::ImportIRInst> indirect_insts,
                           SemIR::ConstantId const_id) -> void;
 
-  auto PerformPendingWork() -> void;
-
-  llvm::SmallVector<std::variant<InstWork, GenericWork>> work_stack_;
+  llvm::SmallVector<std::variant<InstWork, GenericWork, SpecificWork>>
+      work_stack_;
   // The size of work_stack_ at the start of resolving the current instruction.
   size_t initial_work_ = 0;
 };
@@ -959,14 +928,24 @@ static auto GetLocalSpecificData(ImportRefResolver& resolver,
   };
 }
 
+// True for an already-imported specific.
+static auto IsSpecificImported(const SemIR::Specific& import_specific,
+                               const SemIR::Specific& local_specific) -> bool {
+  return local_specific.decl_block_id.has_value() &&
+         (local_specific.definition_block_id.has_value() ||
+          !import_specific.definition_block_id.has_value());
+}
+
 // Gets a local specific whose data was already imported by
-// GetLocalSpecificData. Does not add any new work.
+// GetLocalSpecificData. This can add work through `PushSpecific`, but callers
+// shouldn't need to consider that because specifics are processed after the
+// current instruction.
 //
 // `local_generic_id` is provided when this is used for a generic's `self`
 // specific, where `GetLocalGenericId` won't work because `generic_const_id` can
 // be `TypeType`.
 static auto GetOrAddLocalSpecific(
-    ImportContext& context, SemIR::SpecificId import_specific_id,
+    ImportRefResolver& resolver, SemIR::SpecificId import_specific_id,
     const SpecificData& data,
     SemIR::GenericId local_generic_id = SemIR::GenericId::None)
     -> SemIR::SpecificId {
@@ -976,24 +955,21 @@ static auto GetOrAddLocalSpecific(
 
   // Form a corresponding local specific ID.
   const auto& import_specific =
-      context.import_specifics().Get(import_specific_id);
+      resolver.import_specifics().Get(import_specific_id);
   if (!local_generic_id.has_value()) {
-    local_generic_id = GetLocalGenericId(context, data.generic_const_id);
+    local_generic_id = GetLocalGenericId(resolver, data.generic_const_id);
   }
-  auto args_id =
-      GetLocalCanonicalInstBlockId(context, import_specific.args_id, data.args);
+  auto args_id = GetLocalCanonicalInstBlockId(resolver, import_specific.args_id,
+                                              data.args);
 
   // Get the specific.
   auto local_specific_id =
-      context.local_specifics().GetOrAdd(local_generic_id, args_id);
+      resolver.local_specifics().GetOrAdd(local_generic_id, args_id);
 
-  // Fill in the remaining information in FinishPendingSpecific, if necessary.
-  auto& local_specific = context.local_specifics().Get(local_specific_id);
-  if (!local_specific.decl_block_id.has_value() ||
-      (import_specific.definition_block_id.has_value() &&
-       !local_specific.definition_block_id.has_value())) {
-    context.AddPendingSpecific(
-        {.import_id = import_specific_id, .local_id = local_specific_id});
+  if (!IsSpecificImported(import_specific,
+                          resolver.local_specifics().Get(local_specific_id))) {
+    // Enqueue the specific to fill in remaining fields.
+    resolver.PushSpecific(import_specific_id, local_specific_id);
   }
   return local_specific_id;
 }
@@ -1034,6 +1010,40 @@ static auto TryFinishGeneric(ImportRefResolver& resolver,
   return true;
 }
 
+// Given a specific that's gone through the initial setup with `SpecificData`,
+// finish the import.
+static auto TryFinishSpecific(ImportRefResolver& resolver,
+                              SemIR::SpecificId import_specific_id,
+                              SemIR::SpecificId local_specific_id) -> bool {
+  const auto& import_specific =
+      resolver.import_specifics().Get(import_specific_id);
+  auto& local_specific = resolver.local_specifics().Get(local_specific_id);
+
+  if (IsSpecificImported(import_specific, local_specific)) {
+    return true;
+  }
+
+  llvm::SmallVector<SemIR::InstId> decl_block;
+  if (!local_specific.decl_block_id.has_value()) {
+    decl_block =
+        GetLocalInstBlockContents(resolver, import_specific.decl_block_id);
+  }
+  auto definition_block =
+      GetLocalInstBlockContents(resolver, import_specific.definition_block_id);
+
+  if (resolver.HasNewWork()) {
+    return false;
+  }
+
+  if (!local_specific.decl_block_id.has_value()) {
+    local_specific.decl_block_id = GetLocalCanonicalInstBlockId(
+        resolver, import_specific.decl_block_id, decl_block);
+  }
+  local_specific.definition_block_id = GetLocalCanonicalInstBlockId(
+      resolver, import_specific.definition_block_id, definition_block);
+  return true;
+}
+
 namespace {
 struct SpecificInterfaceData {
   SemIR::ConstantId interface_const_id;
@@ -1057,7 +1067,8 @@ static auto GetLocalSpecificInterfaceData(
 }
 
 static auto GetLocalSpecificInterface(
-    ImportContext& context, SemIR::SpecificInterface import_specific_interface,
+    ImportRefResolver& resolver,
+    SemIR::SpecificInterface import_specific_interface,
     SpecificInterfaceData interface_data) -> SemIR::SpecificInterface {
   if (!interface_data.interface_const_id.has_value()) {
     return SemIR::SpecificInterface::None;
@@ -1067,19 +1078,19 @@ static auto GetLocalSpecificInterface(
   // build a interface type referencing this specialization of the generic
   // interface.
   auto interface_const_inst =
-      context.local_insts().Get(context.local_constant_values().GetInstId(
+      resolver.local_insts().Get(resolver.local_constant_values().GetInstId(
           interface_data.interface_const_id));
   if (auto facet_type = interface_const_inst.TryAs<SemIR::FacetType>()) {
     const SemIR::FacetTypeInfo& new_facet_type_info =
-        context.local_facet_types().Get(facet_type->facet_type_id);
+        resolver.local_facet_types().Get(facet_type->facet_type_id);
     return std::get<SemIR::SpecificInterface>(
         *new_facet_type_info.TryAsSingleExtend());
   } else {
     auto generic_interface_type =
-        context.local_types().GetAs<SemIR::GenericInterfaceType>(
+        resolver.local_types().GetAs<SemIR::GenericInterfaceType>(
             interface_const_inst.type_id());
     auto specific_id =
-        GetOrAddLocalSpecific(context, import_specific_interface.specific_id,
+        GetOrAddLocalSpecific(resolver, import_specific_interface.specific_id,
                               interface_data.specific_data);
     return {generic_interface_type.interface_id, specific_id};
   }
@@ -1109,7 +1120,7 @@ static auto GetLocalSpecificNamedConstraintData(
 }
 
 static auto GetLocalSpecificNamedConstraint(
-    ImportContext& context,
+    ImportRefResolver& resolver,
     SemIR::SpecificNamedConstraint import_specific_constraint,
     SpecificNamedConstraintData constraint_data)
     -> SemIR::SpecificNamedConstraint {
@@ -1121,19 +1132,19 @@ static auto GetLocalSpecificNamedConstraint(
   // constraint, build a named constraint type referencing this specialization
   // of the generic named constraint.
   auto constraint_const_inst =
-      context.local_insts().Get(context.local_constant_values().GetInstId(
+      resolver.local_insts().Get(resolver.local_constant_values().GetInstId(
           constraint_data.constraint_const_id));
   if (auto facet_type = constraint_const_inst.TryAs<SemIR::FacetType>()) {
     const SemIR::FacetTypeInfo& new_facet_type_info =
-        context.local_facet_types().Get(facet_type->facet_type_id);
+        resolver.local_facet_types().Get(facet_type->facet_type_id);
     return std::get<SemIR::SpecificNamedConstraint>(
         *new_facet_type_info.TryAsSingleExtend());
   } else {
     auto generic_constraint_type =
-        context.local_types().GetAs<SemIR::GenericNamedConstraintType>(
+        resolver.local_types().GetAs<SemIR::GenericNamedConstraintType>(
             constraint_const_inst.type_id());
     auto specific_id =
-        GetOrAddLocalSpecific(context, import_specific_constraint.specific_id,
+        GetOrAddLocalSpecific(resolver, import_specific_constraint.specific_id,
                               constraint_data.specific_data);
     return {generic_constraint_type.named_constraint_id, specific_id};
   }
@@ -3887,8 +3898,7 @@ static auto TryResolveInst(ImportRefResolver& resolver, SemIR::InstId inst_id,
   return result;
 }
 
-auto ImportRefResolver::ResolveOneInst(SemIR::InstId inst_id)
-    -> SemIR::ConstantId {
+auto ImportRefResolver::Resolve(SemIR::InstId inst_id) -> SemIR::ConstantId {
   work_stack_.push_back(InstWork{.inst_id = inst_id});
   while (!work_stack_.empty()) {
     auto work_variant = work_stack_.back();
@@ -3941,12 +3951,27 @@ auto ImportRefResolver::ResolveOneInst(SemIR::InstId inst_id)
         }
         break;
       }
+      case CARBON_KIND(SpecificWork specific_work): {
+        // Specifics may require 2 steps to finish, similar to step 2 and step 3
+        // of instructions.
+        initial_work_ = work_stack_.size();
+        if (TryFinishSpecific(*this, specific_work.import_id,
+                              specific_work.local_id)) {
+          work_stack_.pop_back();
+        }
+        break;
+      }
     }
   }
   auto constant_id =
       local_constant_values_for_import_insts().GetAttached(inst_id);
   CARBON_CHECK(constant_id.has_value());
   return constant_id;
+}
+
+auto ImportRefResolver::ResolveConstant(SemIR::ConstantId import_const_id)
+    -> SemIR::ConstantId {
+  return Resolve(GetInstWithConstantValue(import_ir(), import_const_id));
 }
 
 auto ImportRefResolver::ResolveType(SemIR::TypeId import_type_id)
@@ -3967,6 +3992,19 @@ auto ImportRefResolver::ResolveType(SemIR::TypeId import_type_id)
     return local_context().types().GetTypeIdForTypeConstantId(
         ResolveConstant(import_type_id.AsConstantId()));
   }
+}
+
+auto ImportRefResolver::HasNewWork() -> bool {
+  CARBON_CHECK(initial_work_ <= work_stack_.size(), "Work shouldn't decrease");
+  return initial_work_ < work_stack_.size();
+}
+
+auto ImportRefResolver::PushSpecific(SemIR::SpecificId import_id,
+                                     SemIR::SpecificId local_id) -> void {
+  work_stack_.insert(
+      work_stack_.begin() + initial_work_ - 1,
+      SpecificWork{.import_id = import_id, .local_id = local_id});
+  ++initial_work_;
 }
 
 auto ImportRefResolver::GetLocalConstantValueOrPush(SemIR::InstId inst_id)
@@ -4047,64 +4085,6 @@ auto ImportRefResolver::SetResolvedConstId(
     SemIR::ConstantId const_id) -> void {
   local_constant_values_for_import_insts().Set(inst_id, const_id);
   SetIndirectConstantValues(local_context(), indirect_insts, const_id);
-}
-
-// Resolves and returns the local contents for an imported instruction block
-// of constant instructions.
-static auto ResolveLocalInstBlockContents(ImportRefResolver& resolver,
-                                          SemIR::InstBlockId import_block_id)
-    -> llvm::SmallVector<SemIR::InstId> {
-  auto import_block = resolver.import_inst_blocks().Get(import_block_id);
-
-  llvm::SmallVector<SemIR::InstId> inst_ids;
-  inst_ids.reserve(import_block.size());
-  for (auto import_inst_id : import_block) {
-    inst_ids.push_back(resolver.local_constant_values().GetInstId(
-        resolver.ResolveOneInst(import_inst_id)));
-  }
-  return inst_ids;
-}
-
-// Resolves and returns a local inst block of constant instructions
-// corresponding to an imported inst block.
-static auto ResolveLocalInstBlock(ImportRefResolver& resolver,
-                                  SemIR::InstBlockId import_block_id)
-    -> SemIR::InstBlockId {
-  if (!import_block_id.has_value()) {
-    return SemIR::InstBlockId::None;
-  }
-
-  auto inst_ids = ResolveLocalInstBlockContents(resolver, import_block_id);
-  return resolver.local_inst_blocks().Add(inst_ids);
-}
-
-// Fills in the remaining information in a partially-imported specific.
-static auto FinishPendingSpecific(ImportRefResolver& resolver,
-                                  ImportContext::PendingSpecific pending)
-    -> void {
-  const auto& import_specific =
-      resolver.import_specifics().Get(pending.import_id);
-  auto& local_specific = resolver.local_specifics().Get(pending.local_id);
-
-  if (!local_specific.decl_block_id.has_value()) {
-    local_specific.decl_block_id =
-        ResolveLocalInstBlock(resolver, import_specific.decl_block_id);
-  }
-
-  if (!local_specific.definition_block_id.has_value() &&
-      import_specific.definition_block_id.has_value()) {
-    local_specific.definition_block_id =
-        ResolveLocalInstBlock(resolver, import_specific.definition_block_id);
-  }
-}
-
-// Perform any work that we deferred until the end of the main Resolve loop.
-auto ImportRefResolver::PerformPendingWork() -> void {
-  // Note that the individual Finish steps can add new pending work, so keep
-  // going until we have no more work to do.
-  while (!pending_specifics().empty()) {
-    FinishPendingSpecific(*this, pending_specifics().pop_back_val());
-  }
 }
 
 // Returns a list of ImportIRInsts equivalent to the ImportRef currently being

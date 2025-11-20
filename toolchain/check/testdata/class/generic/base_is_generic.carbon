@@ -286,11 +286,11 @@ fn H() {
 // CHECK:STDOUT:   %Base.elem.e9c: type = unbound_element_type %Base.8f3, %T.d9f [symbolic]
 // CHECK:STDOUT:   %require_complete.4b7: <witness> = require_complete_type %T.d9f [symbolic]
 // CHECK:STDOUT:   %Base.7a8: type = class_type @Base, @Base(%Param) [concrete]
-// CHECK:STDOUT:   %struct_type.base.8bc: type = struct_type {.base: %Base.7a8} [concrete]
-// CHECK:STDOUT:   %complete_type.b07: <witness> = complete_type_witness %struct_type.base.8bc [concrete]
-// CHECK:STDOUT:   %Base.elem.d1f: type = unbound_element_type %Base.7a8, %Param [concrete]
 // CHECK:STDOUT:   %struct_type.x.975: type = struct_type {.x: %Param} [concrete]
 // CHECK:STDOUT:   %complete_type.db3: <witness> = complete_type_witness %struct_type.x.975 [concrete]
+// CHECK:STDOUT:   %Base.elem.d1f: type = unbound_element_type %Base.7a8, %Param [concrete]
+// CHECK:STDOUT:   %struct_type.base.8bc: type = struct_type {.base: %Base.7a8} [concrete]
+// CHECK:STDOUT:   %complete_type.b07: <witness> = complete_type_witness %struct_type.base.8bc [concrete]
 // CHECK:STDOUT:   %pattern_type.fb9: type = pattern_type %Derived [concrete]
 // CHECK:STDOUT:   %pattern_type.501: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %ImportedDoubleFieldAccess.type: type = fn_type @ImportedDoubleFieldAccess [concrete]
@@ -801,13 +801,13 @@ fn H() {
 // CHECK:STDOUT:   %X.G.specific_fn.f7a: <specific function> = specific_function %X.G.045884.1, @X.G(%U) [symbolic]
 // CHECK:STDOUT:   %require_complete.4b7: <witness> = require_complete_type %U [symbolic]
 // CHECK:STDOUT:   %X.fa229d.2: type = class_type @X, @X(%T) [symbolic]
+// CHECK:STDOUT:   %X.G.type.89b800.2: type = fn_type @X.G, @X(%T) [symbolic]
+// CHECK:STDOUT:   %X.G.045884.2: %X.G.type.89b800.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %C.3f0: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %C.elem.b96: type = unbound_element_type %C.3f0, %X.fa229d.2 [symbolic]
 // CHECK:STDOUT:   %struct_type.base.b13: type = struct_type {.base: %X.fa229d.2} [symbolic]
 // CHECK:STDOUT:   %complete_type.b1f: <witness> = complete_type_witness %struct_type.base.b13 [symbolic]
 // CHECK:STDOUT:   %require_complete.6fb: <witness> = require_complete_type %X.fa229d.2 [symbolic]
-// CHECK:STDOUT:   %X.G.type.89b800.2: type = fn_type @X.G, @X(%T) [symbolic]
-// CHECK:STDOUT:   %X.G.045884.2: %X.G.type.89b800.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %C.98a: type = class_type @C, @C(%i32) [concrete]
 // CHECK:STDOUT:   %X.448: type = class_type @X, @X(%i32) [concrete]
 // CHECK:STDOUT:   %X.G.type.862: type = fn_type @X.G, @X(%i32) [concrete]
@@ -828,10 +828,10 @@ fn H() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Main.import_ref.efcd44.1: type = import_ref Main//extend_generic_symbolic_base, loc4_14, loaded [symbolic = @X.%U (constants.%U)]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//extend_generic_symbolic_base, loc6_1, loaded [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   %Main.import_ref.e14 = import_ref Main//extend_generic_symbolic_base, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e33: @X.%X.G.type (%X.G.type.89b800.1) = import_ref Main//extend_generic_symbolic_base, loc5_15, loaded [symbolic = @X.%X.G (constants.%X.G.045884.1)]
-// CHECK:STDOUT:   %Main.import_ref.efcd44.1: type = import_ref Main//extend_generic_symbolic_base, loc4_14, loaded [symbolic = @X.%U (constants.%U)]
 // CHECK:STDOUT:   %Main.import_ref.efcd44.2: type = import_ref Main//extend_generic_symbolic_base, loc4_14, loaded [symbolic = @X.%U (constants.%U)]
 // CHECK:STDOUT:   %Main.import_ref.5d2: <witness> = import_ref Main//extend_generic_symbolic_base, loc10_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.b1f)]
 // CHECK:STDOUT:   %Main.import_ref.034 = import_ref Main//extend_generic_symbolic_base, inst{{[0-9A-F]+}} [no loc], unloaded
@@ -875,7 +875,7 @@ fn H() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @X(imports.%Main.import_ref.efcd44.1: type) [from "extend_generic_symbolic_base.carbon"] {
+// CHECK:STDOUT: generic class @X(imports.%Main.import_ref.efcd44.2: type) [from "extend_generic_symbolic_base.carbon"] {
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -914,7 +914,7 @@ fn H() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @X.G(imports.%Main.import_ref.efcd44.2: type) [from "extend_generic_symbolic_base.carbon"] {
+// CHECK:STDOUT: generic fn @X.G(imports.%Main.import_ref.efcd44.1: type) [from "extend_generic_symbolic_base.carbon"] {
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %U [symbolic = %pattern_type (constants.%pattern_type.e68)]
 // CHECK:STDOUT:
