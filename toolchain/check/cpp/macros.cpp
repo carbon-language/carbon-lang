@@ -61,6 +61,10 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
     return nullptr;
   }
 
+  if (isa<clang::StringLiteral>(result_expr)) {
+    return result_expr;
+  }
+
   clang::Expr::EvalResult evaluated_result;
   CARBON_CHECK(result_expr->EvaluateAsConstantExpr(evaluated_result,
                                                    sema.getASTContext()));

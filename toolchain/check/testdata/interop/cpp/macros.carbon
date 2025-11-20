@@ -254,28 +254,101 @@ fn F() {
 }
 
 // --- string_literal_object_like_macro.h
-#define CONFIG_VALUE "abc"
 
-// --- fail_todo_import_string_literal_object_like_macro.carbon
+#define SimpleString "abc"
+#define EmptyString ""
+#define EscapeCharacter " \t "
+#define Concatenated "a" "b"
+#define RawString R"a( foo: "bar" { 123 } )a"
+#define Utf8String u8"абв"
+
+// --- import_string_literal_object_like_macro.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "string_literal_object_like_macro.h";
 
 fn F() {
-  // TODO: Get rid of the second error.
-  // CHECK:STDERR: fail_todo_import_string_literal_object_like_macro.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: macro evaluated to a constant of type: const char[4]` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_string_literal_object_like_macro.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_string_literal_object_like_macro.carbon:[[@LINE+4]]:3: error: member name `CONFIG_VALUE` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  Cpp.CONFIG_VALUE;
+ let a: str = Cpp.SimpleString;
+ let b: str = Cpp.EmptyString;
+ let c: str = Cpp.EscapeCharacter;
+ let d: str = Cpp.Concatenated;
+ let e: str = Cpp.RawString;
+ let f: str = Cpp.Utf8String;
+}
+
+// --- unsupported_string_literal_types.h
+
+#define Utf16Greeting u"Hello"
+#define Utf32Greeting U"Hello"
+#define WideGreeting L"Hello"
+
+// --- fail_import_unsupported_string_literal_types.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "unsupported_string_literal_types.h";
+
+fn F() {
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+11]]:2: error: semantics TODO: `Unsupported: string literal type: const char16_t[6]` [SemanticsTodo]
+ // CHECK:STDERR:  Cpp.Utf16Greeting;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+8]]:2: note: in `Cpp` name lookup for `Utf16Greeting` [InCppNameLookup]
+ // CHECK:STDERR:  Cpp.Utf16Greeting;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+4]]:2: error: member name `Utf16Greeting` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  Cpp.Utf16Greeting;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ Cpp.Utf16Greeting;
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+11]]:2: error: semantics TODO: `Unsupported: string literal type: const char32_t[6]` [SemanticsTodo]
+ // CHECK:STDERR:  Cpp.Utf32Greeting;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+8]]:2: note: in `Cpp` name lookup for `Utf32Greeting` [InCppNameLookup]
+ // CHECK:STDERR:  Cpp.Utf32Greeting;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+4]]:2: error: member name `Utf32Greeting` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  Cpp.Utf32Greeting;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ Cpp.Utf32Greeting;
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+11]]:2: error: semantics TODO: `Unsupported: string literal type: const wchar_t[6]` [SemanticsTodo]
+ // CHECK:STDERR:  Cpp.WideGreeting;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+8]]:2: note: in `Cpp` name lookup for `WideGreeting` [InCppNameLookup]
+ // CHECK:STDERR:  Cpp.WideGreeting;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+4]]:2: error: member name `WideGreeting` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  Cpp.WideGreeting;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ Cpp.WideGreeting;
+}
+
+// --- fail_bad_string.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+ #define BadString "123" 456
+''';
+
+fn F() {
+ // CHECK:STDERR: fail_bad_string.carbon:[[@LINE+11]]:2: error: failed to parse macro Cpp.BadString to a valid constant expression [InCppMacroEvaluation]
+ // CHECK:STDERR:  Cpp.BadString;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~
+ // CHECK:STDERR: fail_bad_string.carbon:[[@LINE+8]]:2: note: in `Cpp` name lookup for `BadString` [InCppNameLookup]
+ // CHECK:STDERR:  Cpp.BadString;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_bad_string.carbon:[[@LINE+4]]:2: error: member name `BadString` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  Cpp.BadString;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~
+ // CHECK:STDERR:
+ Cpp.BadString;
 }
 
 // --- floating_point_literal_macro.h
