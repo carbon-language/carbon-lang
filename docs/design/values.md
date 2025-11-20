@@ -20,7 +20,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Local variables](#local-variables)
     -   [Consuming function parameters](#consuming-function-parameters)
 -   [Reference expressions](#reference-expressions)
-    -   [Owning reference expressions](#owning-reference-expressions)
+    -   [Entire reference expressions](#entire-reference-expressions)
     -   [Durable reference expressions](#durable-reference-expressions)
     -   [Ephemeral reference expressions](#ephemeral-reference-expressions)
 -   [Value expressions](#value-expressions)
@@ -105,30 +105,30 @@ These conversion steps combine to provide the transitive conversion table:
 
 Reference expressions are divided into 2x2 sub-categories: they can be either
 [_ephemeral_](#ephemeral-reference-expressions) or
-[_durable_](#durable-reference-expressions), and either _owning_ or
-_non-owning_.
+[_durable_](#durable-reference-expressions), and either _entire_ or
+_non-entire_.
 
 Ephemeral reference expressions are formed through temporary materialization,
 and have restrictions on how they are used. In contrast, durable reference
 expressions refer to storage that outlives the expression, and typically has a
-declared name. Owning reference expressions can only refer to complete objects,
-whereas non-owning reference expressions can refer to both complete objects and
+declared name. Entire reference expressions can only refer to complete objects,
+whereas non-entire reference expressions can refer to both complete objects and
 sub-objects (such as class fields and base class sub-objects). As a consequence,
-only owning reference expressions can be destructively moved.
+only entire reference expressions can be destructively moved.
 
 > **Future work:** This means that pointer-dereference expressions are
-> non-owning, but we will presumably want to be able to destructively move from
+> non-entire, but we will presumably want to be able to destructively move from
 > them. We need to figure out how to support that without violating the
 > invariant that a live object has live fields.
 
 Value binding and copy initialization can be applied to any reference
-expression, but materialization only produces owning ephemeral reference
-expressions. An owning reference expression can be implicitly converted to
-non-owning; this has no run-time effect because it merely discards static
-ownership information. Non-owning reference expressions can only be converted to
-owning reference expressions by round-tripping through copy-initialization and
-materialization. Non-durable-reference expressions cannot be implicitly
-converted to durable reference expressions at all.
+expression, but materialization only produces ephemeral entire reference
+expressions. An entire reference expression can be implicitly converted to
+non-entire; this has no run-time effect because it merely discards static
+object-completeness information. Non-entire reference expressions can only be
+converted to entire reference expressions by round-tripping through
+copy-initialization and materialization. Non-durable-reference expressions
+cannot be implicitly converted to durable reference expressions at all.
 
 > **TODO:** Determine how these reference sub-categories relate to memory-safety
 > properties like uniqueness.
@@ -185,10 +185,10 @@ Value bindings require the matched expression to be a _value expression_,
 converting it into one as necessary.
 
 A _variable pattern_ is introduced with the `var` keyword. The matched
-expression must be an ephemeral owning reference expression (which typically
+expression must be an ephemeral entire reference expression (which typically
 requires the matched expression to be materialized); the `var` pattern "adopts"
 the temporary storage it refers to, which extends its lifetime to the end of the
-enclosing scope. The subpattern is then matched against a _durable_ owning
+enclosing scope. The subpattern is then matched against a _durable_ entire
 reference expression to the object in that storage.
 
 A _reference binding pattern_ is a binding pattern that is nested under a `var`
@@ -204,7 +204,7 @@ fn Example() {
   let x: i64 = 1;
 
   // `2` also starts as a value expression, but the variable pattern requires it
-  // to be converted to an owning ephemeral reference expression by using the
+  // to be converted to an ephemeral entire reference expression by using the
   // value `2` to initialize temporary storage, which the variable pattern
   // adopts. The reference binding pattern is then bound to a durable reference
   // to the newly-initialized object.
@@ -246,7 +246,7 @@ inner `var` pattern here:
 fn DestructuringExample() {
   // Both `1` and `2` start as value expressions. The `x` binding directly
   // matches `1`. For `2`, the variable pattern requires it to be converted to
-  // an owning ephemeral reference expression by using the value `2` to
+  // an ephemeral entire reference expression by using the value `2` to
   // initialize temporary storage, which the variable pattern adopts.
   // The reference binding `y` is then bound to a durable reference to the
   // newly-initialized object.
@@ -284,7 +284,7 @@ This allows us to model an important special case of function inputs -- those
 that are _consumed_ by the function, either through local processing or being
 moved into some persistent storage. Marking these in the pattern and thus
 signature of the function changes the expression category required for arguments
-in the caller. These arguments are required to be _owning ephemeral reference
+in the caller. These arguments are required to be _ephemeral entire reference
 expressions_, potentially being converted into such an expression if necessary,
 whose storage will be dedicated-to and owned-by the function parameter.
 
@@ -300,42 +300,42 @@ read or written and the object's address can be taken.
 
 Reference expressions can be either _durable_ or _ephemeral_. These refine the
 _lifetime_ of the underlying storage and provide safety restrictions reflecting
-that lifetime. Reference expressions can also be either _owning_ or
-_non-owning_, depending on whether the referenced object is known to be complete
+that lifetime. Reference expressions can also be either _entire_ or
+_non-entire_, depending on whether the referenced object is known to be complete
 (rather than a sub-object of another object).
 
-### Owning reference expressions
+### Entire reference expressions
 
-An _owning reference expression_ is one that is statically known to refer to a
-complete object. Other references are _non-owning_. Durable and ephemeral
-reference expressions can both be either owning or non-owning. Unless otherwise
+An _entire reference expression_ is one that is statically known to refer to a
+complete object. Other references are _non-entire_. Durable and ephemeral
+reference expressions can both be either entire or non-entire. Unless otherwise
 specified, an expression or operation that produces a reference produces a
-non-owning reference.
+non-entire reference.
 
-Note that a non-owning reference expression still _might_ refer to a complete
+Note that a non-entire reference expression still _might_ refer to a complete
 object; the language rules just don't _guarantee_ that is does. As a result, an
-owning reference can be implicitly converted to a non-owning reference (with the
+entire reference can be implicitly converted to a non-entire reference (with the
 same durability), because this merely discards the knowledge that the object is
-complete. By the same token, there is no context that requires a non-owning
-reference; only contexts that accept both, that accept only owning references,
+complete. By the same token, there is no context that requires a non-entire
+reference; only contexts that accept both, that accept only entire references,
 or that don't accept references at all.
 
-Currently, the only context that requires an owning reference is the scrutinee
-of a `var` pattern, which must be an owning ephemeral reference.
+Currently, the only context that requires an entire reference is the scrutinee
+of a `var` pattern, which must be an entire ephemeral reference.
 
-There is only one kind of explicit expression that produces an owning reference:
+There is only one kind of explicit expression that produces an entire reference:
 the name of an object introduced with a
 [variable binding pattern](pattern_matching.md#name-binding-patterns) (in other
-words, a name that was declared with `var <name> : <type>`) is an owning durable
+words, a name that was declared with `var <name> : <type>`) is a durable entire
 reference.
 
-Two kinds of implicit expression can also produce owning references:
+Two kinds of implicit expression can also produce entire references:
 
--   The result of materialization is an owning ephemeral reference.
+-   The result of materialization is an entire ephemeral reference.
 -   When a [tuple pattern](pattern_matching.md#tuple-patterns) or
     [struct pattern](pattern_matching.md#struct-patterns) is matched with an
-    owning ephemeral reference scrutinee, that scrutinee is destructured into
-    owning ephemeral references to its elements, which are then matched with the
+    ephemeral entire reference scrutinee, that scrutinee is destructured into
+    ephemeral entire references to its elements, which are then matched with the
     corresponding subpatterns.
 
 ### Durable reference expressions
@@ -399,7 +399,7 @@ used: their address can only be taken implicitly as part of a method call whose
 There is one context that requires an ephemeral reference expression in Carbon:
 the scrutinee of a
 [`var` pattern](#binding-patterns-and-local-variables-with-let-and-var) (which
-also requires the reference to be owning).
+also requires the reference to be entire).
 
 There is only one kind of explicit expression that produces an ephemeral
 reference: a member access expression `x.member` or `x.(member)`, where `x` is
@@ -598,7 +598,7 @@ expression, but this default can be overridden by the
 [function signature](#function-calls-and-returns).
 
 Initializing expressions can also be created implicitly, when attempting to
-convert an expression into an ephemeral owning reference expression
+convert an expression into an ephemeral entire reference expression
 (particularly to match a `var` pattern): the expression is first converted to an
 initializing expression if necessary, and then temporary storage is materialized
 to act as its output, and as the referent of the resulting ephemeral reference
@@ -652,9 +652,9 @@ ambiguity in the grammar; it has no greater significance.
 
 -   _category-tag_ ::= `val` | `ref` | `var`
 
-These tags are used to specify "value", "non-owning durable reference", or
+These tags are used to specify "value", "non-entire durable reference", or
 "initializing" expression category (respectively). Note that there is no way to
-express an owning or ephemeral reference category in a return form.
+express an entire or ephemeral reference category in a return form.
 
 -   _auto-return-form_ ::= _category-tag_? `auto`
 
@@ -970,12 +970,12 @@ primitive-form expression to a composite form as follows:
 The category `CC` of the resulting sub-forms is the same as `C`, with two
 exceptions:
 
--   If `C` is "owning durable reference", `CC` will be "non-owning durable
+-   If `C` is "durable entire reference", `CC` will be "durable non-entire
     reference", because the sub-forms don't refer to complete objects. This
-    doesn't apply to owning ephemeral references, because in that case form
+    doesn't apply to ephemeral entire references, because in that case form
     decomposition implicitly ends the lifetime of the original aggregate,
     promoting its elements to complete objects with independent lifetimes.
--   If `C` is "initializing", `CC` will be "owning ephemeral reference", because
+-   If `C` is "initializing", `CC` will be "ephemeral entire reference", because
     the initializing outcome must be materialized before it can be decomposed.
 
 By convention, form decomposition is a no-op when applied to an expression with

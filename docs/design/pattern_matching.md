@@ -157,9 +157,9 @@ The binding declared by a binding pattern has a
 [primitive form](values.md#expression-forms) with the following components:
 
 -   The type is _expression_.
--   The category is "value" if the pattern is a value binding pattern, "owning
-    durable reference" if it's a variable binding pattern, or "non-owning
-    durable reference" if it's a non-variable reference binding pattern.
+-   The category is "value" if the pattern is a value binding pattern, "durable
+    entire reference" if it's a variable binding pattern, or "durable non-entire
+    reference" if it's a non-variable reference binding pattern.
 -   The phase is "runtime", "symbolic", or "template" depending on whether the
     pattern is a runtime, symbolic, or template binding pattern.
 
@@ -301,11 +301,11 @@ scrutinee.
 -   _proper-pattern_ ::= `var` _proper-pattern_
 
 The scrutinee is expected to have the same type as the resolved type of the
-nested _proper-pattern_, and it is expected to be a runtime-phase owning
-ephemeral reference expression. The scrutinee expression is converted as needed
-to satisfy those expectations, and the `var` pattern takes ownership of the
-referenced object, promotes it to an owning _durable_ reference expression, and
-matches the nested _proper-pattern_ with it.
+nested _proper-pattern_, and it is expected to be a runtime-phase ephemeral
+entire reference expression. The scrutinee expression is converted as needed to
+satisfy those expectations, and the `var` pattern takes adopts the referenced
+object, promotes it to a _durable_ entire reference expression, and matches the
+nested _proper-pattern_ with it.
 
 The lifetime of the allocated object extends to the end of scope of the `var`
 pattern (that is the scope that any bindings declared within it would have).
@@ -720,8 +720,8 @@ Using `auto` for a type will always match, making `_: auto` the wildcard
 pattern.
 
 If the scrutinee expression's [form](values.md#expression-forms) contains any
-primitive forms with category "initializing", they are converted to non-owning
-ephemeral reference expressions by
+primitive forms with category "initializing", they are converted to ephemeral
+non-entire reference expressions by
 [materialization](values.md#temporary-materialization) before pattern matching
 begins, so that the result can be reused by multiple `case`s. However, the
 objects created by `var` patterns are not reused by multiple `case`s:
