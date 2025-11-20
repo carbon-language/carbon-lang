@@ -2960,7 +2960,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
 // Collects and assigns constants for a `FacetTypeInfo`. Discards constants when
 // `local_facet_type_info` is null.
-static auto BuildFacetTypeInfo(
+static auto ResolveFacetTypeInfo(
     ImportRefResolver& resolver,
     const SemIR::FacetTypeInfo& import_facet_type_info,
     SemIR::FacetTypeInfo* local_facet_type_info) -> void {
@@ -3034,7 +3034,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver.import_facet_types().Get(inst.facet_type_id);
   // Ensure values are imported, but discard them to avoid allocations.
   ResolveFacetTypeInfo(resolver, import_facet_type_info,
-                     /*local_facet_type_info=*/nullptr);
+                       /*local_facet_type_info=*/nullptr);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
@@ -3044,7 +3044,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       // TODO: Also process the other requirements.
       .other_requirements = import_facet_type_info.other_requirements};
   // Re-resolve and add values to the local `FacetTypeInfo`.
-  BuildFacetTypeInfo(resolver, import_facet_type_info, &local_facet_type_info);
+  ResolveFacetTypeInfo(resolver, import_facet_type_info,
+                       &local_facet_type_info);
 
   SemIR::FacetTypeId facet_type_id =
       resolver.local_facet_types().Add(std::move(local_facet_type_info));
