@@ -2958,31 +2958,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                  .facet_value_inst_id = facet_value_inst_id});
 }
 
-// For a given field on `FacetTypeInfo`, does the `reserve` and loop of
-// data/value calls.
-template <typename FieldT, typename GetDataFnT, typename GetValueFnT>
-static auto BuildFacetTypeInfoField(
-    ImportRefResolver& resolver,
-    const SemIR::FacetTypeInfo& import_facet_type_info,
-    SemIR::FacetTypeInfo* local_facet_type_info,
-    FieldT SemIR::FacetTypeInfo::* field, GetDataFnT get_data,
-    GetValueFnT get_value) -> void {
-  // If building local values, reserve first.
-  if (local_facet_type_info) {
-    (local_facet_type_info->*field)
-        .reserve((import_facet_type_info.*field).size());
-  }
-  for (auto entry : import_facet_type_info.*field) {
-    // Always get the constant value.
-    auto data = get_data(resolver, entry);
-    // On the second pass, we store the final value.
-    if (local_facet_type_info) {
-      (local_facet_type_info->*field)
-          .push_back(get_value(resolver, entry, data));
-    }
-  }
-}
-
 // Collects and assigns constants for a `FacetTypeInfo`.
 //
 // We discard constants in a first call, where `local_facet_type_info` is null,
@@ -2992,23 +2967,53 @@ static auto BuildFacetTypeInfo(
     ImportRefResolver& resolver,
     const SemIR::FacetTypeInfo& import_facet_type_info,
     SemIR::FacetTypeInfo* local_facet_type_info) -> void {
-  BuildFacetTypeInfoField(
-      resolver, import_facet_type_info, local_facet_type_info,
-      &SemIR::FacetTypeInfo::extend_constraints, GetLocalSpecificInterfaceData,
-      GetLocalSpecificInterface);
-  BuildFacetTypeInfoField(
-      resolver, import_facet_type_info, local_facet_type_info,
-      &SemIR::FacetTypeInfo::self_impls_constraints,
-      GetLocalSpecificInterfaceData, GetLocalSpecificInterface);
+  if (local_facet_type_info) {
+    local_facet_type_info->extend_constraints.reserve(
+        import_facet_type_info.extend_constraints.size());
+  }
+  for (auto interface : import_facet_type_info.extend_constraints) {
+    auto data = GetLocalSpecificInterfaceData(resolver, interface);
+    if (local_facet_type_info) {
+      local_facet_type_info->extend_constraints.push_back(
+          GetLocalSpecificInterface(resolver, interface, data));
+    }
+  }
 
-  BuildFacetTypeInfoField(
-      resolver, import_facet_type_info, local_facet_type_info,
-      &SemIR::FacetTypeInfo::extend_named_constraints,
-      GetLocalSpecificNamedConstraintData, GetLocalSpecificNamedConstraint);
-  BuildFacetTypeInfoField(
-      resolver, import_facet_type_info, local_facet_type_info,
-      &SemIR::FacetTypeInfo::self_impls_named_constraints,
-      GetLocalSpecificNamedConstraintData, GetLocalSpecificNamedConstraint);
+  if (local_facet_type_info) {
+    local_facet_type_info->self_impls_constraints.reserve(
+        import_facet_type_info.self_impls_constraints.size());
+  }
+  for (auto interface : import_facet_type_info.self_impls_constraints) {
+    auto data = GetLocalSpecificInterfaceData(resolver, interface);
+    if (local_facet_type_info) {
+      local_facet_type_info->self_impls_constraints.push_back(
+          GetLocalSpecificInterface(resolver, interface, data));
+    }
+  }
+
+  if (local_facet_type_info) {
+    local_facet_type_info->extend_named_constraints.reserve(
+        import_facet_type_info.extend_named_constraints.size());
+  }
+  for (auto constraint : import_facet_type_info.extend_named_constraints) {
+    auto data = GetLocalSpecificNamedConstraintData(resolver, constraint);
+    if (local_facet_type_info) {
+      local_facet_type_info->extend_named_constraints.push_back(
+          GetLocalSpecificNamedConstraint(resolver, constraint, data));
+    }
+  }
+
+  if (local_facet_type_info) {
+    local_facet_type_info->self_impls_named_constraints.reserve(
+        import_facet_type_info.self_impls_named_constraints.size());
+  }
+  for (auto constraint : import_facet_type_info.self_impls_named_constraints) {
+    auto data = GetLocalSpecificNamedConstraintData(resolver, constraint);
+    if (local_facet_type_info) {
+      local_facet_type_info->self_impls_named_constraints.push_back(
+          GetLocalSpecificNamedConstraint(resolver, constraint, data));
+    }
+  }
 
   if (local_facet_type_info) {
     local_facet_type_info->rewrite_constraints.reserve(
