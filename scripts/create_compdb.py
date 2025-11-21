@@ -151,10 +151,10 @@ def main() -> None:
         help="Dumps the full list of generated files (default: False)",
     )
     parser.add_argument(
-        "--extra-bazel-flags",
+        "--extra-bazel-flag",
         action="append",
         default=[],
-        help="Extra flags to pass to Bazel invocations",
+        help="Extra flag to pass to Bazel invocations, may be specified more than once",
     )
 
     args = parser.parse_args()
