@@ -2274,6 +2274,13 @@ static auto MapConstant(Context& context, SemIR::LocId loc_id,
                                MakeImportedLocIdAndInst<SemIR::FloatValue>(
                                    context, imported_loc_id,
                                    {.type_id = type_id, .float_id = float_id}));
+  } else if (auto* character_literal =
+                 dyn_cast<clang::CharacterLiteral>(expr)) {
+    inst_id = AddInstInNoBlock(
+        context, MakeImportedLocIdAndInst<SemIR::CharLiteralValue>(
+                     context, imported_loc_id,
+                     {.type_id = type_id,
+                      .value = SemIR::CharId(character_literal->getValue())}));
   } else {
     context.TODO(loc_id, llvm::formatv(
                              "Unsupported: C++ constant expression type: '{0}'",

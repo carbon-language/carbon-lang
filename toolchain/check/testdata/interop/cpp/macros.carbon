@@ -412,6 +412,135 @@ fn F() {
   Cpp.MyDouble = 1.0;
 }
 
+// --- character_literals.h
+
+#define M_LOWERCASE 'a'
+#define M_UPPRCASE 'A'
+#define M_DIGIT '1'
+#define M_SPACE ' '
+#define M_TAB '\t'
+#define M_UTF8_CHAR u8'X'
+
+// --- import_character_literals.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "character_literals.h";
+
+fn F() {
+  let a: char = Cpp.M_LOWERCASE;
+  let b: char = Cpp.M_UPPRCASE;
+  let c: char = Cpp.M_DIGIT;
+  let d: char = Cpp.M_SPACE;
+  let e: char = Cpp.M_TAB;
+  let f: char = Cpp.M_UTF8_CHAR;
+}
+
+// --- character_literals_operators.h
+
+#define M_CONDITIONAL (1 < 2 ? 'a' : 'b')
+#define M_A_PLUS_ONE 'a' + 1
+#define M_A_EQUAL ('a' == 97)
+
+// --- import_character_literals_operators.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "character_literals_operators.h";
+
+fn F() {
+  let a: char = Cpp.M_CONDITIONAL;
+  let b: i32 = Cpp.M_A_PLUS_ONE;
+  let c: bool = Cpp.M_A_EQUAL;
+}
+
+// --- multiple_characters.h
+
+#define MULTIPLE_CHARS 'AB'
+
+// --- import_multiple_characters.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: import_multiple_characters.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_characters.h:2:24: warning: multi-character character constant [CppInteropParseWarning]
+// CHECK:STDERR:     2 | #define MULTIPLE_CHARS 'AB'
+// CHECK:STDERR:       |                        ^
+import Cpp library "multiple_characters.h";
+
+fn F() {
+ // CHECK:STDERR: import_multiple_characters.carbon:[[@LINE+4]]:15: note: in `Cpp` name lookup for `MULTIPLE_CHARS` [InCppNameLookup]
+ // CHECK:STDERR:  let a: i32 = Cpp.MULTIPLE_CHARS;
+ // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ let a: i32 = Cpp.MULTIPLE_CHARS;
+}
+
+// --- unsupported_character_literal_types.h
+
+#define M_UTF16_CHAR u'a'
+#define M_UTF32_CHAR U'a'
+#define M_WIDE_CHAR L'a'
+
+// --- fail_unsupported_character_literal_types.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "unsupported_character_literal_types.h";
+
+fn F() {
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:16: error: semantics TODO: `Unsupported: C++ literal's type `char16_t` could not be mapped to a Carbon type` [SemanticsTodo]
+ // CHECK:STDERR:  let a: char = Cpp.M_UTF16_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:16: note: in `Cpp` name lookup for `M_UTF16_CHAR` [InCppNameLookup]
+ // CHECK:STDERR:  let a: char = Cpp.M_UTF16_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:16: error: member name `M_UTF16_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  let a: char = Cpp.M_UTF16_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ let a: char = Cpp.M_UTF16_CHAR;
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:16: error: semantics TODO: `Unsupported: C++ literal's type `char32_t` could not be mapped to a Carbon type` [SemanticsTodo]
+ // CHECK:STDERR:  let b: char = Cpp.M_UTF32_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:16: note: in `Cpp` name lookup for `M_UTF32_CHAR` [InCppNameLookup]
+ // CHECK:STDERR:  let b: char = Cpp.M_UTF32_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:16: error: member name `M_UTF32_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  let b: char = Cpp.M_UTF32_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ let b: char = Cpp.M_UTF32_CHAR;
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:16: error: semantics TODO: `Unsupported: C++ literal's type `wchar_t` could not be mapped to a Carbon type` [SemanticsTodo]
+ // CHECK:STDERR:  let c: char = Cpp.M_WIDE_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:16: note: in `Cpp` name lookup for `M_WIDE_CHAR` [InCppNameLookup]
+ // CHECK:STDERR:  let c: char = Cpp.M_WIDE_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:16: error: member name `M_WIDE_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  let c: char = Cpp.M_WIDE_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ let c: char = Cpp.M_WIDE_CHAR;
+}
+
+// --- fail_assign_to_character_literals.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "character_literals.h";
+
+fn F() {
+ // CHECK:STDERR: fail_assign_to_character_literals.carbon:[[@LINE+4]]:2: error: expression is not assignable [AssignmentToNonAssignable]
+ // CHECK:STDERR:  Cpp.M_LOWERCASE = 'b';
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ Cpp.M_LOWERCASE = 'b';
+}
+
 // --- lambda.carbon
 
 library "[[@TEST_NAME]]";
