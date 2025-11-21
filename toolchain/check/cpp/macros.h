@@ -10,9 +10,8 @@
 namespace Carbon::Check {
 
 // Tries to evaluate the given macro to a constant expression. Returns the
-// evaluated expression on success or nullptr otherwise. Currently supports only
-// object-like macros that evaluate to an integer constant.
-// TODO: Add support for other literal types.
+// evaluated expression on success or nullptr otherwise.
+// TODO: Add support for all literal types.
 auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
                                 SemIR::NameId name_id,
                                 clang::MacroInfo* macro_info) -> clang::Expr*;

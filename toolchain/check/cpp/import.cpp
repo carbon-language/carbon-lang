@@ -2226,9 +2226,8 @@ static auto IsIncompleteClass(Context& context, SemIR::NameScopeId scope_id)
              context.classes().Get(class_decl->class_id).self_type_id);
 }
 
-// Maps a Clang literal expression to a Carbon constant. Currently supports
-// only integer and floating-point literals.
-// TODO: Add support for the other constant types for which a C++ to Carbon type
+// Maps a Clang literal expression to a Carbon constant.
+// TODO: Add support for all constant types for which a C++ to Carbon type
 // mapping exists.
 static auto MapConstant(Context& context, SemIR::LocId loc_id,
                         clang::Expr* expr) -> SemIR::InstId {
@@ -2268,6 +2267,13 @@ static auto MapConstant(Context& context, SemIR::LocId loc_id,
         context,
         MakeImportedLocIdAndInst<SemIR::IntValue>(
             context, imported_loc_id, {.type_id = type_id, .int_id = int_id}));
+  } else if (auto* bool_literal = dyn_cast<clang::CXXBoolLiteralExpr>(expr)) {
+    inst_id = AddInstInNoBlock(
+        context, MakeImportedLocIdAndInst(
+                     context, imported_loc_id,
+                     SemIR::BoolLiteral{.type_id = type_id,
+                                        .value = SemIR::BoolValue::From(
+                                            bool_literal->getValue())}));
   } else if (auto* float_literal = dyn_cast<clang::FloatingLiteral>(expr)) {
     FloatId float_id = context.floats().Add(float_literal->getValue());
     inst_id = AddInstInNoBlock(context,

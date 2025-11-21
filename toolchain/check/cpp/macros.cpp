@@ -71,6 +71,11 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
   clang::APValue ap_value = evaluated_result.Val;
   switch (ap_value.getKind()) {
     case clang::APValue::Int:
+      if (result_expr->getType()->isBooleanType()) {
+        return clang::CXXBoolLiteralExpr::Create(
+            sema.getASTContext(), ap_value.getInt().getBoolValue(),
+            result_expr->getType(), result_expr->getExprLoc());
+      }
       return clang::IntegerLiteral::Create(
           sema.getASTContext(), ap_value.getInt(), result_expr->getType(),
           result_expr->getExprLoc());
