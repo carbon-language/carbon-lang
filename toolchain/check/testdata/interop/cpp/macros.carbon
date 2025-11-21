@@ -262,6 +262,9 @@ fn F() {
 #define RawString R"a( foo: "bar" { 123 } )a"
 #define Utf8String u8"абв"
 
+#define CONCAT_STR(A, B) #A #B
+#define Indirect CONCAT_STR(x, y)
+
 // --- import_string_literal_object_like_macro.carbon
 
 library "[[@TEST_NAME]]";
@@ -275,6 +278,7 @@ fn F() {
  let d: str = Cpp.Concatenated;
  let e: str = Cpp.RawString;
  let f: str = Cpp.Utf8String;
+ let g: str = Cpp.Indirect;
 }
 
 // --- unsupported_string_literal_types.h
