@@ -291,7 +291,6 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
                                              RequireImplsIncompleteFacetType,
                                              constraint_inst_id);
             })) {
-      // DiscardGenericDecl(context);
       return true;
     }
   }

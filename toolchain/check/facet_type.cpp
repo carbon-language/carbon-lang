@@ -55,7 +55,7 @@ static auto WitnessQueryMatchesInterface(
 static auto IncompleteFacetTypeDiagnosticBuilder(
     Context& context, SemIR::LocId loc_id, SemIR::TypeInstId facet_type_inst_id,
     bool is_definition) -> DiagnosticBuilder {
-  // TODO: Remove this parameter. Facet types don't need to be complete for in
+  // TODO: Remove this parameter. Facet types don't need to be complete for impl
   // declarations, unless there's a rewrite into `.Self`. But that completeness
   // is checked/required by the member access of the rewrite.
   CARBON_CHECK(is_definition);
