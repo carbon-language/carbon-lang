@@ -53,12 +53,8 @@ static auto WitnessQueryMatchesInterface(
 }
 
 static auto IncompleteFacetTypeDiagnosticBuilder(
-    Context& context, SemIR::LocId loc_id, SemIR::TypeInstId facet_type_inst_id,
-    bool is_definition) -> DiagnosticBuilder {
-  // TODO: Remove this parameter. Facet types don't need to be complete for impl
-  // declarations, unless there's a rewrite into `.Self`. But that completeness
-  // is checked/required by the member access of the rewrite.
-  CARBON_CHECK(is_definition);
+    Context& context, SemIR::LocId loc_id, SemIR::TypeInstId facet_type_inst_id)
+    -> DiagnosticBuilder {
   CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeDefinition, Error,
                     "definition of impl as incomplete facet type {0}",
                     InstIdAsType);
@@ -88,7 +84,18 @@ auto InitialFacetTypeImplWitness(
   const auto& facet_type_info =
       context.facet_types().Get(facet_type.facet_type_id);
 
-  if (!is_definition && facet_type_info.rewrite_constraints.empty()) {
+  auto rewrites_into_interface_to_witness = llvm::make_filter_range(
+      facet_type_info.rewrite_constraints,
+      [&](const SemIR::FacetTypeInfo::RewriteConstraint& rewrite) {
+        auto access = context.insts().GetAs<SemIR::ImplWitnessAccess>(
+            GetImplWitnessAccessWithoutSubstitution(context, rewrite.lhs_id));
+        return WitnessQueryMatchesInterface(context, access.witness_id,
+                                            interface_to_witness);
+      });
+
+  bool need_witness_table =
+      is_definition || !rewrites_into_interface_to_witness.empty();
+  if (!need_witness_table) {
     auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
         context, witness_loc_id,
         {.elements_id = context.inst_blocks().AddPlaceholder(),
@@ -100,19 +107,27 @@ auto InitialFacetTypeImplWitness(
          .specific_id = self_specific_id});
   }
 
-  // The presence of any rewrite constraints requires that we know how many
-  // entries to allocate in the witness table, which requires the entire facet
-  // type to be complete, even if this was a declaration.
-  if (!RequireCompleteType(
-          context, facet_type_id, SemIR::LocId(facet_type_inst_id), [&] {
-            return IncompleteFacetTypeDiagnosticBuilder(
-                context, witness_loc_id, facet_type_inst_id, is_definition);
-          })) {
-    return SemIR::ErrorInst::InstId;
+  if (is_definition) {
+    // The presence of any rewrite constraints requires that we know how many
+    // entries to allocate in the witness table, which requires the entire facet
+    // type to be complete, even if this was a declaration.
+    if (!RequireCompleteType(context, facet_type_id,
+                             SemIR::LocId(facet_type_inst_id), [&] {
+                               return IncompleteFacetTypeDiagnosticBuilder(
+                                   context, witness_loc_id, facet_type_inst_id);
+                             })) {
+      return SemIR::ErrorInst::InstId;
+    }
   }
 
   const auto& interface =
       context.interfaces().Get(interface_to_witness.interface_id);
+  if (!interface.is_complete()) {
+    // There are rewrite constraints into `.Self` but the interface is not
+    // complete. Those rewrites would have been diagnosed as an error.
+    return SemIR::ErrorInst::InstId;
+  }
+
   auto assoc_entities =
       context.inst_blocks().Get(interface.associated_entities_id);
   // TODO: When this function is used for things other than just impls, may want
@@ -143,13 +158,9 @@ auto InitialFacetTypeImplWitness(
          .specific_id = self_specific_id});
   }
 
-  for (auto rewrite : facet_type_info.rewrite_constraints) {
+  for (auto rewrite : rewrites_into_interface_to_witness) {
     auto access = context.insts().GetAs<SemIR::ImplWitnessAccess>(
         GetImplWitnessAccessWithoutSubstitution(context, rewrite.lhs_id));
-    if (!WitnessQueryMatchesInterface(context, access.witness_id,
-                                      interface_to_witness)) {
-      continue;
-    }
     auto& table_entry = table[access.index.index];
     if (table_entry == SemIR::ErrorInst::InstId) {
       // Don't overwrite an error value. This prioritizes not generating
@@ -248,12 +259,11 @@ auto RequireCompleteFacetTypeForImplDefinition(
     -> bool {
   auto facet_type_id =
       context.types().GetTypeIdForTypeInstId(facet_type_inst_id);
-  return RequireCompleteType(
-      context, facet_type_id, SemIR::LocId(facet_type_inst_id), [&] {
-        return IncompleteFacetTypeDiagnosticBuilder(context, loc_id,
-                                                    facet_type_inst_id,
-                                                    /*is_definition=*/true);
-      });
+  return RequireCompleteType(context, facet_type_id,
+                             SemIR::LocId(facet_type_inst_id), [&] {
+                               return IncompleteFacetTypeDiagnosticBuilder(
+                                   context, loc_id, facet_type_inst_id);
+                             });
 }
 
 auto AllocateFacetTypeImplWitness(Context& context,
