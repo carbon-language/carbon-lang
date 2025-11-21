@@ -68,6 +68,10 @@ for dep in deps:
     if repo == "" and not rule.startswith("third_party"):
         continue
 
+    # LLVM code managed in the Carbon repository is still LLVM code and OK.
+    if repo == "" and rule.startswith("third_party/llvm:"):
+        continue
+
     # Utility libraries provided by Bazel that are under a compatible license.
     if repo in ("@@rules_cc+", "@@bazel_tools"):
         continue

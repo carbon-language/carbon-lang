@@ -284,9 +284,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %struct_type.n.4d6: type = struct_type {.n: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.a68: <witness> = complete_type_witness %struct_type.n.4d6 [concrete]
 // CHECK:STDOUT:   %CompleteClass.926: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic]
-// CHECK:STDOUT:   %CompleteClass.elem.c88: type = unbound_element_type %CompleteClass.926, %i32 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.F.type.0fa: type = fn_type @CompleteClass.F, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %CompleteClass.F.6e9: %CompleteClass.F.type.0fa = struct_value () [symbolic]
+// CHECK:STDOUT:   %CompleteClass.elem.c88: type = unbound_element_type %CompleteClass.926, %i32 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.a06: type = class_type @CompleteClass, @CompleteClass(%i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.84b: type = pattern_type %CompleteClass.a06 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -322,11 +322,11 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Main.import_ref.39e: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.60d) = import_ref Main//foo, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.846)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.99d = impl_witness_table (%Main.import_ref.39e), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.efcd44.1: type = import_ref Main//foo, loc4_13, loaded [symbolic = @Class.%T.1 (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.efcd44.2: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.eb1: <witness> = import_ref Main//foo, loc9_1, loaded [concrete = constants.%complete_type.a68]
 // CHECK:STDOUT:   %Main.import_ref.bcf = import_ref Main//foo, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.1b0 = import_ref Main//foo, loc7_8, unloaded
 // CHECK:STDOUT:   %Main.import_ref.758 = import_ref Main//foo, loc8_17, unloaded
+// CHECK:STDOUT:   %Main.import_ref.efcd44.2: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.efcd44.3: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.595 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
@@ -470,9 +470,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %complete_type.54b: <witness> = complete_type_witness %struct_type.n [concrete]
 // CHECK:STDOUT:   %T.d9f: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.926: type = class_type @CompleteClass, @CompleteClass(%T.d9f) [symbolic]
-// CHECK:STDOUT:   %CompleteClass.elem.36b: type = unbound_element_type %CompleteClass.926, %i32 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.F.type.0fa: type = fn_type @CompleteClass.F, @CompleteClass(%T.d9f) [symbolic]
 // CHECK:STDOUT:   %CompleteClass.F.6e9: %CompleteClass.F.type.0fa = struct_value () [symbolic]
+// CHECK:STDOUT:   %CompleteClass.elem.36b: type = unbound_element_type %CompleteClass.926, %i32 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.e9e: type = class_type @CompleteClass, @CompleteClass(%i32) [concrete]
 // CHECK:STDOUT:   %CompleteClass.elem.7fc: type = unbound_element_type %CompleteClass.e9e, %i32 [concrete]
 // CHECK:STDOUT:   %CompleteClass.F.type.1bc: type = fn_type @CompleteClass.F, @CompleteClass(%i32) [concrete]
@@ -513,11 +513,11 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
-// CHECK:STDOUT:   %Main.import_ref.efcd44.1: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T.d9f)]
 // CHECK:STDOUT:   %Main.import_ref.eb1: <witness> = import_ref Main//foo, loc9_1, loaded [concrete = constants.%complete_type.54b]
 // CHECK:STDOUT:   %Main.import_ref.bcf = import_ref Main//foo, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.c3a: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.36b) = import_ref Main//foo, loc7_8, loaded [concrete = %.a07]
 // CHECK:STDOUT:   %Main.import_ref.191: @CompleteClass.%CompleteClass.F.type (%CompleteClass.F.type.0fa) = import_ref Main//foo, loc8_17, loaded [symbolic = @CompleteClass.%CompleteClass.F (constants.%CompleteClass.F.6e9)]
+// CHECK:STDOUT:   %Main.import_ref.efcd44.1: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T.d9f)]
 // CHECK:STDOUT:   %Main.import_ref.efcd44.2: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T.d9f)]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %.a07: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.36b) = field_decl n, element0 [concrete]
@@ -690,9 +690,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %complete_type.a68: <witness> = complete_type_witness %struct_type.n [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.926: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic]
-// CHECK:STDOUT:   %CompleteClass.elem.c88: type = unbound_element_type %CompleteClass.926, %i32 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.F.type.0fa: type = fn_type @CompleteClass.F, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %CompleteClass.F.6e9: %CompleteClass.F.type.0fa = struct_value () [symbolic]
+// CHECK:STDOUT:   %CompleteClass.elem.c88: type = unbound_element_type %CompleteClass.926, %i32 [symbolic]
 // CHECK:STDOUT:   %ptr.9e1: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %CompleteClass.0fe: type = class_type @CompleteClass, @CompleteClass(%ptr.9e1) [concrete]
 // CHECK:STDOUT:   %CompleteClass.elem.d29: type = unbound_element_type %CompleteClass.0fe, %i32 [concrete]
@@ -726,11 +726,11 @@ class Class(U:! type) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.efcd44.1: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.eb1: <witness> = import_ref Main//foo, loc9_1, loaded [concrete = constants.%complete_type.a68]
 // CHECK:STDOUT:   %Main.import_ref.bcf = import_ref Main//foo, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.1b0 = import_ref Main//foo, loc7_8, unloaded
 // CHECK:STDOUT:   %Main.import_ref.758 = import_ref Main//foo, loc8_17, unloaded
+// CHECK:STDOUT:   %Main.import_ref.efcd44.1: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.efcd44.2: type = import_ref Main//foo, loc6_21, loaded [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]

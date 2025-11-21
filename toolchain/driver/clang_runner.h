@@ -106,15 +106,6 @@ class ClangRunner : ToolRunnerBase {
  private:
   friend class ClangRuntimesBuilderBase;
 
-  // Emulates `cc1_main` but in a way that doesn't assume it is running in the
-  // main thread and can more easily fit into library calls to do compiles.
-  //
-  // TODO: Much of the logic here should be factored out of the CC1
-  // implementation in Clang's driver and into a reusable part of its libraries.
-  // That should allow reducing the code here to a minimal amount.
-  auto RunCC1(llvm::SmallVectorImpl<const char*>& cc1_args, bool enable_leaking)
-      -> int;
-
   // Handles building the Clang driver and passing the arguments down to it.
   auto RunInternal(llvm::ArrayRef<llvm::StringRef> args, llvm::StringRef target,
                    std::optional<llvm::StringRef> target_resource_dir_path,

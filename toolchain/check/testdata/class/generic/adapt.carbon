@@ -298,11 +298,11 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %struct_type.x.200: type = struct_type {.x: %T.d9f} [symbolic]
 // CHECK:STDOUT:   %complete_type.9d1: <witness> = complete_type_witness %struct_type.x.200 [symbolic]
 // CHECK:STDOUT:   %C.3f0: type = class_type @C, @C(%T.d9f) [symbolic]
+// CHECK:STDOUT:   %C.elem.d1c: type = unbound_element_type %C.3f0, %T.d9f [symbolic]
+// CHECK:STDOUT:   %require_complete.4b7: <witness> = require_complete_type %T.d9f [symbolic]
 // CHECK:STDOUT:   %C.239: type = class_type @C, @C(%i32) [concrete]
 // CHECK:STDOUT:   %struct_type.x.767: type = struct_type {.x: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.c07: <witness> = complete_type_witness %struct_type.x.767 [concrete]
-// CHECK:STDOUT:   %require_complete.4b7: <witness> = require_complete_type %T.d9f [symbolic]
-// CHECK:STDOUT:   %C.elem.d1c: type = unbound_element_type %C.3f0, %T.d9f [symbolic]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [concrete]
 // CHECK:STDOUT:   %C.elem.ed6: type = unbound_element_type %C.239, %i32 [concrete]
@@ -332,10 +332,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.efc: type = import_ref Main//adapt_specific_type, loc4_9, loaded [symbolic = @C.%T (constants.%T.d9f)]
 // CHECK:STDOUT:   %Main.import_ref.2c9: <witness> = import_ref Main//adapt_specific_type, loc6_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.9d1)]
 // CHECK:STDOUT:   %Main.import_ref.034 = import_ref Main//adapt_specific_type, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e9c: @C.%C.elem (%C.elem.d1c) = import_ref Main//adapt_specific_type, loc5_8, loaded [concrete = %.e74]
+// CHECK:STDOUT:   %Main.import_ref.efc: type = import_ref Main//adapt_specific_type, loc4_9, loaded [symbolic = @C.%T (constants.%T.d9f)]
 // CHECK:STDOUT:   %Main.import_ref.709: <witness> = import_ref Main//adapt_specific_type, loc10_1, loaded [concrete = constants.%complete_type.c07]
 // CHECK:STDOUT:   %Main.import_ref.feb = import_ref Main//adapt_specific_type, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
@@ -687,11 +687,11 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %struct_type.x.200: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.9d1: <witness> = complete_type_witness %struct_type.x.200 [symbolic]
 // CHECK:STDOUT:   %C.3f0: type = class_type @C, @C(%T) [symbolic]
+// CHECK:STDOUT:   %C.elem.d1c: type = unbound_element_type %C.3f0, %T [symbolic]
+// CHECK:STDOUT:   %require_complete.4b7: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %C.239: type = class_type @C, @C(%i32) [concrete]
 // CHECK:STDOUT:   %struct_type.x.767: type = struct_type {.x: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.c07: <witness> = complete_type_witness %struct_type.x.767 [concrete]
-// CHECK:STDOUT:   %require_complete.4b7: <witness> = require_complete_type %T [symbolic]
-// CHECK:STDOUT:   %C.elem.d1c: type = unbound_element_type %C.3f0, %T [symbolic]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [concrete]
 // CHECK:STDOUT:   %C.elem.ed6: type = unbound_element_type %C.239, %i32 [concrete]
@@ -712,10 +712,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.efc: type = import_ref Main//extend_adapt_specific_type_library, loc7_9, loaded [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.2c9: <witness> = import_ref Main//extend_adapt_specific_type_library, loc9_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.9d1)]
 // CHECK:STDOUT:   %Main.import_ref.034 = import_ref Main//extend_adapt_specific_type_library, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.e9c: @C.%C.elem (%C.elem.d1c) = import_ref Main//extend_adapt_specific_type_library, loc8_8, loaded [concrete = %.e74]
+// CHECK:STDOUT:   %Main.import_ref.efc: type = import_ref Main//extend_adapt_specific_type_library, loc7_9, loaded [symbolic = @C.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.709: <witness> = import_ref Main//extend_adapt_specific_type_library, loc13_1, loaded [concrete = constants.%complete_type.c07]
 // CHECK:STDOUT:   %Main.import_ref.feb = import_ref Main//extend_adapt_specific_type_library, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.19d12e.2: type = import_ref Main//extend_adapt_specific_type_library, loc12_21, loaded [concrete = constants.%C.239]
@@ -982,9 +982,9 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.efc: type = import_ref Main//adapt_generic_type, loc4_15, loaded [symbolic = @Adapter.%T (constants.%T.d9f)]
 // CHECK:STDOUT:   %Main.import_ref.aa2: <witness> = import_ref Main//adapt_generic_type, loc6_1, loaded [symbolic = @Adapter.%complete_type (constants.%complete_type.2f1)]
 // CHECK:STDOUT:   %Main.import_ref.452 = import_ref Main//adapt_generic_type, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.efc: type = import_ref Main//adapt_generic_type, loc4_15, loaded [symbolic = @Adapter.%T (constants.%T.d9f)]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.import_ref.d12: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.24b) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.c95)]

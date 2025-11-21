@@ -30,7 +30,9 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/base/int.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/base/value_ids.h"
 #include "toolchain/check/call.h"
 #include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
@@ -2242,29 +2244,61 @@ static auto IsIncompleteClass(Context& context, SemIR::NameScopeId scope_id)
              context.classes().Get(class_decl->class_id).self_type_id);
 }
 
-// Maps a Clang constant expression to a Carbon constant. Currently supports
-// only integer constants.
+// Maps a Clang literal expression to a Carbon constant. Currently supports
+// only integer and floating-point literals.
 // TODO: Add support for the other constant types for which a C++ to Carbon type
 // mapping exists.
 static auto MapConstant(Context& context, SemIR::LocId loc_id,
                         clang::Expr* expr) -> SemIR::InstId {
   CARBON_CHECK(expr, "empty expression");
-  auto* integer_literal = dyn_cast<clang::IntegerLiteral>(expr);
-  if (!integer_literal) {
-    context.TODO(
-        loc_id, "Unsupported: constant type: " + expr->getType().getAsString());
-    return SemIR::ErrorInst::InstId;
+
+  if (auto* string_literal = dyn_cast<clang::StringLiteral>(expr)) {
+    if (!string_literal->isOrdinary() && !string_literal->isUTF8()) {
+      context.TODO(loc_id,
+                   llvm::formatv("Unsupported: string literal type: {0}",
+                                 expr->getType()));
+      return SemIR::ErrorInst::InstId;
+    }
+    StringLiteralValueId string_id =
+        context.string_literal_values().Add(string_literal->getString());
+    auto inst_id =
+        MakeStringLiteral(context, Parse::StringLiteralId::None, string_id);
+    context.imports().push_back(inst_id);
+    return inst_id;
   }
-  SemIR::TypeId type_id =
-      MapType(context, loc_id, integer_literal->getType()).type_id;
+
+  SemIR::TypeId type_id = MapType(context, loc_id, expr->getType()).type_id;
   if (!type_id.has_value()) {
-    CARBON_DIAGNOSTIC(InCppConstantMapping, Error, "invalid integer type");
-    context.emitter().Emit(loc_id, InCppConstantMapping);
+    context.TODO(loc_id, llvm::formatv("Unsupported: C++ literal's type `{0}` "
+                                       "could not be mapped to a Carbon type",
+                                       expr->getType().getAsString()));
     return SemIR::ErrorInst::InstId;
   }
-  auto int_id = context.ints().Add(integer_literal->getValue().getSExtValue());
-  auto inst_id = AddInstInNoBlock<SemIR::IntValue>(
-      context, loc_id, {.type_id = type_id, .int_id = int_id});
+
+  SemIR::InstId inst_id = SemIR::InstId::None;
+  SemIR::ImportIRInstId imported_loc_id =
+      AddImportIRInst(context.sem_ir(), expr->getExprLoc());
+
+  if (auto* integer_literal = dyn_cast<clang::IntegerLiteral>(expr)) {
+    IntId int_id =
+        context.ints().Add(integer_literal->getValue().getSExtValue());
+    inst_id = AddInstInNoBlock(
+        context,
+        MakeImportedLocIdAndInst<SemIR::IntValue>(
+            context, imported_loc_id, {.type_id = type_id, .int_id = int_id}));
+  } else if (auto* float_literal = dyn_cast<clang::FloatingLiteral>(expr)) {
+    FloatId float_id = context.floats().Add(float_literal->getValue());
+    inst_id = AddInstInNoBlock(context,
+                               MakeImportedLocIdAndInst<SemIR::FloatValue>(
+                                   context, imported_loc_id,
+                                   {.type_id = type_id, .float_id = float_id}));
+  } else {
+    context.TODO(loc_id, llvm::formatv(
+                             "Unsupported: C++ constant expression type: '{0}'",
+                             expr->getType().getAsString()));
+    return SemIR::ErrorInst::InstId;
+  }
+
   context.imports().push_back(inst_id);
   return inst_id;
 }

@@ -33,7 +33,10 @@ import scripts_utils
 
 
 def _build_generated_files(
-    bazel: str, logtostderr: bool, dump_files: bool
+    bazel: str,
+    logtostderr: bool,
+    dump_files: bool,
+    extra_bazel_flags: list[str] = [],
 ) -> None:
     print("Building the generated files so that tools can find them...")
 
@@ -52,7 +55,9 @@ def _build_generated_files(
     if not logtostderr:
         log_to = subprocess.DEVNULL
     generated_file_labels = subprocess.check_output(
-        [bazel, "query", "--keep_going", "--output=label", kinds_query],
+        [bazel, "query"]
+        + extra_bazel_flags
+        + ["--keep_going", "--output=label", kinds_query],
         stderr=log_to,
         encoding="utf-8",
     ).splitlines()
@@ -66,7 +71,9 @@ def _build_generated_files(
     # fail in case there are build errors in the client, and just warn the user
     # that they may be missing generated files.
     subprocess.check_call(
-        [bazel, "build", "--keep_going", "--remote_download_outputs=toplevel"]
+        [bazel, "build"]
+        + extra_bazel_flags
+        + ["--keep_going", "--remote_download_outputs=toplevel"]
         + generated_file_labels
         # We also need the Bazel C++ runfiles that aren't "generated", but are
         # not linked into place until built.
@@ -143,12 +150,23 @@ def main() -> None:
         action="store_true",
         help="Dumps the full list of generated files (default: False)",
     )
+    parser.add_argument(
+        "--extra-bazel-flag",
+        action="append",
+        default=[],
+        help=(
+            "Extra flag to pass to Bazel invocations, may be specified more "
+            "than once"
+        ),
+    )
 
     args = parser.parse_args()
     scripts_utils.chdir_repo_root()
     bazel = scripts_utils.locate_bazel()
 
-    _build_generated_files(bazel, args.alsologtostderr, args.dump_files)
+    _build_generated_files(
+        bazel, args.alsologtostderr, args.dump_files, args.extra_bazel_flag
+    )
 
     print(
         "Generating compile_commands.json (may take a few minutes)...",
@@ -158,8 +176,14 @@ def main() -> None:
         [
             bazel,
             "run",
+        ]
+        + args.extra_bazel_flag
+        + [
             "@hedron_compile_commands//:refresh_all",
             "--",
+        ]
+        + args.extra_bazel_flag
+        + [
             "--notool_deps",
         ]
     )
