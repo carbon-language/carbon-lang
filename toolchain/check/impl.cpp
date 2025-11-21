@@ -508,70 +508,71 @@ auto GetOrAddImpl(Context& context, SemIR::LocId loc_id,
     // This is a redeclaration of another impl, now held in `impl_id`.
     auto& prev_impl = context.impls().Get(impl_id);
     FinishGenericRedecl(context, prev_impl.generic_id);
-  } else {
-    // This is a new declaration (possibly with an attached definition). Create
-    // a new `impl_id`, filling the missing generic and witness in the provided
-    // `Impl`.
-    impl.generic_id = BuildGeneric(context, impl.latest_decl_id());
+    return impl_id;
+  }
 
-    // Due to lack of an instruction to set to ErrorInst, an `InterfaceId::None`
-    // indicates that the interface could not be identified and an error was
-    // diagnosed. If there's any error in the construction of the impl, then the
-    // witness can't be constructed. We set it to ErrorInt to make the impl
-    // unusable for impl lookup.
-    if (!impl.interface.interface_id.has_value() || invalid_redecl ||
-        impl.self_id == SemIR::ErrorInst::TypeInstId ||
-        impl.constraint_id == SemIR::ErrorInst::TypeInstId) {
+  // This is a new declaration (possibly with an attached definition). Create a
+  // new `impl_id`, filling the missing generic and witness in the provided
+  // `Impl`.
+
+  impl.generic_id = BuildGeneric(context, impl.latest_decl_id());
+
+  // Due to lack of an instruction to set to ErrorInst, an `InterfaceId::None`
+  // indicates that the interface could not be identified and an error was
+  // diagnosed. If there's any error in the construction of the impl, then the
+  // witness can't be constructed. We set it to ErrorInt to make the impl
+  // unusable for impl lookup.
+  if (!impl.interface.interface_id.has_value() || invalid_redecl ||
+      impl.self_id == SemIR::ErrorInst::TypeInstId ||
+      impl.constraint_id == SemIR::ErrorInst::TypeInstId) {
+    impl.witness_id = SemIR::ErrorInst::InstId;
+    // TODO: We might also want to mark that the name scope for the impl has an
+    // error -- at least once we start making name lookups within the impl also
+    // look into the facet (eg, so you can name associated constants from within
+    // the impl).
+  }
+
+  if (is_definition && impl.witness_id != SemIR::ErrorInst::InstId) {
+    if (!RequireCompleteFacetTypeForImplDefinition(
+            context, SemIR::LocId(impl.latest_decl_id()), impl.constraint_id)) {
       impl.witness_id = SemIR::ErrorInst::InstId;
-      // TODO: We might also want to mark that the name scope for the impl has
-      // an error -- at least once we start making name lookups within the
-      // impl also look into the facet (eg, so you can name associated
-      // constants from within the impl).
     }
+  }
 
-    if (is_definition && impl.witness_id != SemIR::ErrorInst::InstId) {
-      if (!RequireCompleteFacetTypeForImplDefinition(
-              context, SemIR::LocId(impl.latest_decl_id()),
-              impl.constraint_id)) {
-        impl.witness_id = SemIR::ErrorInst::InstId;
-      }
-    }
+  if (impl.witness_id != SemIR::ErrorInst::InstId) {
+    // This makes either a placeholder witness or a full witness table. The full
+    // witness table is deferred to the impl definition unless the declaration
+    // uses rewrite constraints to set values of associated constants in the
+    // interface.
+    impl.witness_id = ImplWitnessForDeclaration(context, impl, is_definition);
+  }
 
-    if (impl.witness_id != SemIR::ErrorInst::InstId) {
-      // This makes either a placeholder witness or a full witness table. The
-      // full witness table is deferred to the impl definition unless the
-      // declaration uses rewrite constraints to set values of associated
-      // constants in the interface.
-      impl.witness_id = ImplWitnessForDeclaration(context, impl, is_definition);
-    }
+  FinishGenericDecl(context, SemIR::LocId(impl.latest_decl_id()),
+                    impl.generic_id);
+  // From here on, use the `Impl` from the `ImplStore` instead of `impl` in
+  // order to make and see any changes to the `Impl`.
+  impl_id = context.impls().Add(impl);
+  lookup_bucket_ref.push_back(impl_id);
+  if (impl.witness_id != SemIR::ErrorInst::InstId) {
+    AssignImplIdInWitness(context, impl_id, impl.witness_id);
+  }
 
-    FinishGenericDecl(context, SemIR::LocId(impl.latest_decl_id()),
-                      impl.generic_id);
-    // From here on, use the `Impl` from the `ImplStore` instead of `impl`
-    // in order to make and see any changes to the `Impl`.
-    impl_id = context.impls().Add(impl);
-    lookup_bucket_ref.push_back(impl_id);
-    if (impl.witness_id != SemIR::ErrorInst::InstId) {
-      AssignImplIdInWitness(context, impl_id, impl.witness_id);
-    }
+  auto& stored_impl = context.impls().Get(impl_id);
 
-    auto& stored_impl = context.impls().Get(impl_id);
+  // Look to see if there are any generic bindings on the `impl` declaration
+  // that are not deducible. If so, and the `impl` does not actually use all its
+  // generic bindings, and will never be matched. This should be diagnossed to
+  // the user.
+  if (!VerifyAllGenericBindingsUsed(context, loc_id, implicit_params_loc_id,
+                                    stored_impl)) {
+    FillImplWitnessWithErrors(context, stored_impl);
+  }
 
-    // Look to see if there are any generic bindings on the `impl` declaration
-    // that are not deducible. If so, and the `impl` does not actually use all
-    // its generic bindings, and will never be matched. This should be
-    // diagnossed to the user.
-    if (!VerifyAllGenericBindingsUsed(context, loc_id, implicit_params_loc_id,
-                                      stored_impl)) {
+  if (extend_node.has_value()) {
+    if (!ApplyExtendImplAs(context, loc_id, stored_impl, extend_node,
+                           implicit_params_loc_id)) {
+      // Signal the erroneous impl should not be used in lookup.
       FillImplWitnessWithErrors(context, stored_impl);
-    }
-
-    if (extend_node.has_value()) {
-      if (!ApplyExtendImplAs(context, loc_id, stored_impl, extend_node,
-                             implicit_params_loc_id)) {
-        // Signal the erroneous impl should not be used in lookup.
-        FillImplWitnessWithErrors(context, stored_impl);
-      }
     }
   }
 
