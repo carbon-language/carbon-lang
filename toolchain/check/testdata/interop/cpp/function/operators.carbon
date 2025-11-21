@@ -346,7 +346,7 @@ auto operator<(C lhs, B rhs) -> bool;
 fn F(c: Cpp.C) -> bool {
   // Note that we mention `operator '<=>'` in the diagnostic.
   // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE+10]]:12: error: overload resolution selected deleted operator '<=>' [CppInteropParseError]
-  // CHECK:STDERR:    22 |   return c < c;
+  // CHECK:STDERR:    25 |   return c < c;
   // CHECK:STDERR:       |            ^
   // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE-9]]:6: note: candidate function has been explicitly deleted [CppInteropParseNote]
   // CHECK:STDERR:     9 | auto operator<=>(C lhs, C rhs) -> std::strong_ordering = delete;
