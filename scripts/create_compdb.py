@@ -154,7 +154,10 @@ def main() -> None:
         "--extra-bazel-flag",
         action="append",
         default=[],
-        help="Extra flag to pass to Bazel invocations, may be specified more than once",
+        help=(
+            "Extra flag to pass to Bazel invocations, may be specified more "
+            "than once"
+        ),
     )
 
     args = parser.parse_args()
@@ -162,7 +165,7 @@ def main() -> None:
     bazel = scripts_utils.locate_bazel()
 
     _build_generated_files(
-        bazel, args.alsologtostderr, args.dump_files, args.extra_bazel_flags
+        bazel, args.alsologtostderr, args.dump_files, args.extra_bazel_flag
     )
 
     print(
@@ -174,12 +177,12 @@ def main() -> None:
             bazel,
             "run",
         ]
-        + args.extra_bazel_flags
+        + args.extra_bazel_flag
         + [
             "@hedron_compile_commands//:refresh_all",
             "--",
         ]
-        + args.extra_bazel_flags
+        + args.extra_bazel_flag
         + [
             "--notool_deps",
         ]
