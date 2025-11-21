@@ -8,6 +8,7 @@
 #include "clang/Sema/Sema.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
+#include "toolchain/check/cpp/overload_resolution.h"
 #include "toolchain/check/cpp/type_mapping.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
@@ -190,31 +191,82 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
     }
   }
 
-  auto arg_exprs = InventClangArgs(context, arg_ids);
-  if (!arg_exprs.has_value()) {
+  auto maybe_arg_exprs = InventClangArgs(context, arg_ids);
+  if (!maybe_arg_exprs.has_value()) {
     return SemIR::ErrorInst::InstId;
   }
+  auto& arg_exprs = *maybe_arg_exprs;
 
   clang::SourceLocation loc = GetCppLocation(context, loc_id);
   clang::OverloadCandidateSet::OperatorRewriteInfo operator_rewrite_info(
       *op_kind, loc, /*AllowRewritten=*/true);
-  clang::UnresolvedSet<4> functions;
+  clang::UnresolvedSet<0> functions;
   clang::OverloadCandidateSet candidate_set(
       loc, clang::OverloadCandidateSet::CSK_Operator, operator_rewrite_info);
+
+  clang::Sema& sema = context.clang_sema();
+
   // This works for both unary and binary operators.
-  context.clang_sema().LookupOverloadedBinOp(candidate_set, *op_kind, functions,
-                                             *arg_exprs);
+  sema.LookupOverloadedBinOp(candidate_set, *op_kind, functions, arg_exprs);
 
-  for (auto& it : candidate_set) {
-    if (!it.Function) {
-      continue;
+  clang::OverloadCandidateSet::iterator best_viable_fn;
+  switch (candidate_set.BestViableFunction(sema, loc, best_viable_fn)) {
+    case clang::OverloadingResult::OR_Success: {
+      if (!best_viable_fn->Function) {
+        // The best viable candidate was a builtin. Let the Carbon operator
+        // machinery handle that.
+        return SemIR::InstId::None;
+      }
+      if (best_viable_fn->RewriteKind) {
+        context.TODO(
+            loc_id,
+            llvm::formatv("Rewriting operator{0} using {1} is not supported",
+                          clang::getOperatorSpelling(
+                              candidate_set.getRewriteInfo().OriginalOperator),
+                          best_viable_fn->Function->getNameAsString()));
+        return SemIR::ErrorInst::InstId;
+      }
+      sema.MarkFunctionReferenced(loc, best_viable_fn->Function);
+      auto result_id = ImportCppFunctionDecl(
+          context, loc_id, best_viable_fn->Function,
+          // If this is an operator method, the first arg will be used as self.
+          arg_ids.size() -
+              (isa<clang::CXXMethodDecl>(best_viable_fn->Function) ? 1 : 0));
+      CheckCppOverloadAccess(context, loc_id, best_viable_fn->FoundDecl,
+                             result_id);
+      return result_id;
     }
-    functions.addDecl(it.Function, it.FoundDecl.getAccess());
+    case clang::OverloadingResult::OR_No_Viable_Function: {
+      // OK, didn't find a viable C++ candidate, but this is not an error, as
+      // there might be a Carbon candidate.
+      return SemIR::InstId::None;
+    }
+    case clang::OverloadingResult::OR_Ambiguous: {
+      const char* spelling = clang::getOperatorSpelling(*op_kind);
+      candidate_set.NoteCandidates(
+          clang::PartialDiagnosticAt(
+              loc, sema.PDiag(clang::diag::err_ovl_ambiguous_oper_binary)
+                       << spelling << arg_exprs[0]->getType()
+                       << arg_exprs[1]->getType()),
+          sema, clang::OCD_AmbiguousCandidates, arg_exprs, spelling, loc);
+      return SemIR::ErrorInst::InstId;
+    }
+    case clang::OverloadingResult::OR_Deleted:
+      const char* spelling = clang::getOperatorSpelling(*op_kind);
+      auto* message = best_viable_fn->Function->getDeletedMessage();
+      // The best viable function might be a different operator if the best
+      // candidate is a rewritten candidate, so use the operator kind of the
+      // candidate itself in the diagnostic.
+      candidate_set.NoteCandidates(
+          clang::PartialDiagnosticAt(
+              loc, sema.PDiag(clang::diag::err_ovl_deleted_oper)
+                       << clang::getOperatorSpelling(
+                              best_viable_fn->Function->getOverloadedOperator())
+                       << (message != nullptr)
+                       << (message ? message->getString() : llvm::StringRef())),
+          sema, clang::OCD_AllCandidates, arg_exprs, spelling, loc);
+      return SemIR::ErrorInst::InstId;
   }
-
-  return ImportCppOverloadSet(
-      context, loc_id, SemIR::NameScopeId::None, SemIR::NameId::CppOperator,
-      /*naming_class=*/nullptr, std::move(functions), operator_rewrite_info);
 }
 
 auto IsCppOperatorMethodDecl(clang::Decl* decl) -> bool {

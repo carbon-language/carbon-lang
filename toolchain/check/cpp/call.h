@@ -10,6 +10,11 @@
 
 namespace Carbon::Check {
 
+// Returns whether the specified instruction refers to a C++ overloaded operator
+// that is a method. If so, the first operand will be passed as `self` rather
+// than as the first argument.
+auto IsCppOperatorMethod(Context& context, SemIR::InstId inst_id) -> bool;
+
 // Checks and builds SemIR for a call to a C++ function in the given overload
 // set with self `self_id` and arguments `arg_ids`.
 //
