@@ -86,14 +86,15 @@ auto HandleParseNode(Context& context, Parse::RequireTypeImplsId node_id)
   auto self_type = ExprAsType(context, self_node_id, self_inst_id);
 
   const auto& introducer = context.decl_introducer_state_stack().innermost();
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend) &&
-      self_type.type_id != SemIR::ErrorInst::TypeId) {
-    CARBON_DIAGNOSTIC(RequireImplsExtendWithExplicitSelf, Error,
-                      "`extend require impls` with explicit type");
-    // TODO: If the explicit self-type matches a lookup of NameId::SelfType, add
-    // a note to the diagnostic: "remove the explicit `Self` type here", and
-    // continue without an ErrorInst. See ExtendImplSelfAsDefault.
-    context.emitter().Emit(self_node_id, RequireImplsExtendWithExplicitSelf);
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
+    if (self_type.type_id != SemIR::ErrorInst::TypeId) {
+      CARBON_DIAGNOSTIC(RequireImplsExtendWithExplicitSelf, Error,
+                        "`extend require impls` with explicit type");
+      // TODO: If the explicit self-type matches a lookup of NameId::SelfType,
+      // add a note to the diagnostic: "remove the explicit `Self` type here",
+      // and continue without an ErrorInst. See ExtendImplSelfAsDefault.
+      context.emitter().Emit(self_node_id, RequireImplsExtendWithExplicitSelf);
+    }
     self_type.inst_id = SemIR::ErrorInst::TypeInstId;
   }
 

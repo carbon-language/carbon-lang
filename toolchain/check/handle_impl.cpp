@@ -71,8 +71,7 @@ auto HandleParseNode(Context& context, Parse::ImplTypeAsId node_id) -> bool {
   auto self_type = ExprAsType(context, self_node, self_id);
 
   const auto& introducer = context.decl_introducer_state_stack().innermost();
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend) &&
-      self_type.type_id != SemIR::ErrorInst::TypeId) {
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     auto class_scope =
         TryAsClassScope(context, context.decl_name_stack().PeekParentScopeId());
     if (class_scope) {
@@ -86,7 +85,9 @@ auto HandleParseNode(Context& context, Parse::ImplTypeAsId node_id) -> bool {
       if (self_type.type_id != GetImplDefaultSelfType(context, *class_scope)) {
         // If the explicit self type is not the default, the self-type is an
         // error.
-        diag.Emit();
+        if (self_type.type_id != SemIR::ErrorInst::TypeId) {
+          diag.Emit();
+        }
         self_type.inst_id = SemIR::ErrorInst::TypeInstId;
       } else {
         // Otherwise, suggest removing the self-type, and continue as if there
@@ -94,7 +95,9 @@ auto HandleParseNode(Context& context, Parse::ImplTypeAsId node_id) -> bool {
         CARBON_DIAGNOSTIC(ExtendImplSelfAsDefault, Note,
                           "remove the explicit `Self` type here");
         diag.Note(self_node, ExtendImplSelfAsDefault);
-        diag.Emit();
+        if (self_type.type_id != SemIR::ErrorInst::TypeId) {
+          diag.Emit();
+        }
       }
     }
   }
