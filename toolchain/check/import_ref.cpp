@@ -4001,6 +4001,7 @@ auto ImportRefResolver::HasNewWork() -> bool {
 
 auto ImportRefResolver::PushSpecific(SemIR::SpecificId import_id,
                                      SemIR::SpecificId local_id) -> void {
+  // Insert before the current instruction.
   work_stack_.insert(
       work_stack_.begin() + initial_work_ - 1,
       SpecificWork{.import_id = import_id, .local_id = local_id});
