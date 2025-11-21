@@ -50,8 +50,10 @@ library "[[@TEST_NAME]]";
 import Cpp library "diamond.h";
 
 fn Make() {
-  // This should construct a 40-byte object, using the `...C1` constructor,
-  // which should call the `...C2` constructors for A, B, and C.
+  // This should construct a 40-byte object, using a construtor with a `...C1`
+  // mangled name for D (a complete object constructor), which should call
+  // constructors with `...C2` mangled names for A, B, and C (base subobject
+  // constructors).
   var d: Cpp.D = Cpp.D.D();
 }
 
@@ -118,9 +120,9 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAccessD.Main(ptr %d) #0 !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc14_11.1.d = getelementptr inbounds nuw [40 x i8], ptr %d, i32 0, i32 28, !dbg !14
-// CHECK:STDOUT:   %.loc14_11.2 = load i32, ptr %.loc14_11.1.d, align 4, !dbg !14
-// CHECK:STDOUT:   ret i32 %.loc14_11.2, !dbg !15
+// CHECK:STDOUT:   %.loc16_11.1.d = getelementptr inbounds nuw [40 x i8], ptr %d, i32 0, i32 28, !dbg !14
+// CHECK:STDOUT:   %.loc16_11.2 = load i32, ptr %.loc16_11.1.d, align 4, !dbg !14
+// CHECK:STDOUT:   ret i32 %.loc16_11.2, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -187,9 +189,9 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
 // CHECK:STDOUT: !9 = !{}
-// CHECK:STDOUT: !10 = !DILocation(line: 9, column: 3, scope: !7)
-// CHECK:STDOUT: !11 = !DILocation(line: 9, column: 18, scope: !7)
+// CHECK:STDOUT: !10 = !DILocation(line: 11, column: 3, scope: !7)
+// CHECK:STDOUT: !11 = !DILocation(line: 11, column: 18, scope: !7)
 // CHECK:STDOUT: !12 = !DILocation(line: 6, column: 1, scope: !7)
-// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "AccessD", linkageName: "_CAccessD.Main", scope: null, file: !6, line: 12, type: !8, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !14 = !DILocation(line: 14, column: 10, scope: !13)
-// CHECK:STDOUT: !15 = !DILocation(line: 14, column: 3, scope: !13)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "AccessD", linkageName: "_CAccessD.Main", scope: null, file: !6, line: 14, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !14 = !DILocation(line: 16, column: 10, scope: !13)
+// CHECK:STDOUT: !15 = !DILocation(line: 16, column: 3, scope: !13)
