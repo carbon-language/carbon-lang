@@ -27,10 +27,6 @@ auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void;
 // sets the witness id in the `Impl` to an error.
 auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void;
 
-// Sets the `ImplId` in the `ImplWitnessTable`.
-auto AssignImplIdInWitness(Context& context, SemIR::ImplId impl_id,
-                           SemIR::InstId witness_id) -> void;
-
 // Returns whether the impl is either `final` explicitly, or implicitly due to
 // being concrete.
 auto IsImplEffectivelyFinal(Context& context, const SemIR::Impl& impl) -> bool;
@@ -42,28 +38,16 @@ auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
                                 SemIR::TypeInstId constraint_id)
     -> SemIR::SpecificInterface;
 
-// Returns the implicit `Self` type for an `impl` when it's in a `class`
-// declaration.
-auto GetImplDefaultSelfType(Context& context) -> SemIR::TypeId;
-
-// For `StartImplDecl`, additional details for an `extend impl` declaration.
-struct ExtendImplDecl {
-  Parse::NodeId self_type_node_id;
-  SemIR::TypeId constraint_type_id;
-  Parse::NodeId extend_node_id;
-};
-
-// Starts an impl declaration. The caller is responsible for ensuring a generic
-// declaration has been started. This returns the produced `ImplId` and
-// `ImplDecl`'s `InstId`.
+// Finds an existing `Impl` if the `impl` is a redeclaration. Otherwise,
+// finishes construction of the `impl`, adds it to the ImplStore, and returns
+// the new `ImplId`. This ensures all redeclarations share the same `ImplId`.
 //
-// The `impl` should be constructed with a placeholder `ImplDecl` which this
-// will add the `ImplId` to.
-auto StartImplDecl(Context& context, SemIR::LocId loc_id,
-                   SemIR::LocId implicit_params_loc_id, SemIR::Impl impl,
-                   bool is_definition,
-                   std::optional<ExtendImplDecl> extend_impl)
-    -> std::pair<SemIR::ImplId, SemIR::InstId>;
+// If the impl is modified with `extend` then the parent's scope is extended
+// with it.
+auto GetOrAddImpl(Context& context, SemIR::LocId loc_id,
+                  SemIR::LocId implicit_params_loc_id, SemIR::Impl impl,
+                  bool is_definition, Parse::NodeId extend_node)
+    -> SemIR::ImplId;
 
 }  // namespace Carbon::Check
 

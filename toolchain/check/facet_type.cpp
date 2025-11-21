@@ -107,24 +107,12 @@ auto InitialFacetTypeImplWitness(
          .specific_id = self_specific_id});
   }
 
-  if (is_definition) {
-    // The presence of any rewrite constraints requires that we know how many
-    // entries to allocate in the witness table, which requires the entire facet
-    // type to be complete, even if this was a declaration.
-    if (!RequireCompleteType(context, facet_type_id,
-                             SemIR::LocId(facet_type_inst_id), [&] {
-                               return IncompleteFacetTypeDiagnosticBuilder(
-                                   context, witness_loc_id, facet_type_inst_id);
-                             })) {
-      return SemIR::ErrorInst::InstId;
-    }
-  }
-
   const auto& interface =
       context.interfaces().Get(interface_to_witness.interface_id);
   if (!interface.is_complete()) {
-    // There are rewrite constraints into `.Self` but the interface is not
-    // complete. Those rewrites would have been diagnosed as an error.
+    // This is a declaration with rewrite constraints into `.Self`, but the
+    // interface is not complete. Those rewrites would have been diagnosed as an
+    // error in their member access.
     return SemIR::ErrorInst::InstId;
   }
 

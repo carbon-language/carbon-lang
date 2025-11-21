@@ -71,6 +71,7 @@ auto HandleParseNode(Context& context, Parse::RequireDefaultSelfImplsId node_id)
   auto self_type_id = context.insts().Get(self_inst_id).type_id();
   CARBON_CHECK(context.types().Is<SemIR::FacetType>(self_type_id));
 
+  // TODO: We could simplify with a call to ExprAsType, like below?
   auto self_facet_as_type = AddTypeInst<SemIR::FacetAccessType>(
       context, node_id,
       {.type_id = SemIR::TypeType::TypeId,
@@ -82,16 +83,20 @@ auto HandleParseNode(Context& context, Parse::RequireDefaultSelfImplsId node_id)
 auto HandleParseNode(Context& context, Parse::RequireTypeImplsId node_id)
     -> bool {
   auto [self_node_id, self_inst_id] = context.node_stack().PopExprWithNodeId();
+  auto self_type = ExprAsType(context, self_node_id, self_inst_id);
 
-  auto introducer = context.decl_introducer_state_stack().innermost();
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
+  const auto& introducer = context.decl_introducer_state_stack().innermost();
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend) &&
+      self_type.type_id != SemIR::ErrorInst::TypeId) {
     CARBON_DIAGNOSTIC(RequireImplsExtendWithExplicitSelf, Error,
                       "`extend require impls` with explicit type");
+    // TODO: If the explicit self-type matches a lookup of NameId::SelfType, add
+    // a note to the diagnostic: "remove the explicit `Self` type here", and
+    // continue without an ErrorInst. See ExtendImplSelfAsDefault.
     context.emitter().Emit(self_node_id, RequireImplsExtendWithExplicitSelf);
-    self_inst_id = SemIR::ErrorInst::InstId;
+    self_type.inst_id = SemIR::ErrorInst::TypeInstId;
   }
 
-  auto self_type = ExprAsType(context, self_node_id, self_inst_id);
   context.node_stack().Push(node_id, self_type.inst_id);
   return true;
 }

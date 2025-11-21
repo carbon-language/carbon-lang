@@ -123,3 +123,20 @@ interface Z {
   // CHECK:STDERR:
   extend require () impls Y;
 }
+
+// --- fail_extend_require_with_invalid_type.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+
+interface Z {
+  // CHECK:STDERR: fail_extend_require_with_invalid_type.carbon:[[@LINE+8]]:18: error: name `Invalid` not found [NameNotFound]
+  // CHECK:STDERR:   extend require Invalid* impls Y;
+  // CHECK:STDERR:                  ^~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_extend_require_with_invalid_type.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic parameter for each `interface` or `constraint` [RequireImplsMissingSelf]
+  // CHECK:STDERR:   extend require Invalid* impls Y;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  extend require Invalid* impls Y;
+}
