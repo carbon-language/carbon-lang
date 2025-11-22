@@ -1704,11 +1704,36 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       auto string_literal = eval_context.insts().GetAs<SemIR::StringLiteral>(
           eval_context.constant_values().GetInstId(ptr_const_id));
 
-      auto string_value = eval_context.sem_ir().string_literal_values().Get(
-          string_literal.string_literal_id);
+      const auto& string_value =
+          eval_context.sem_ir().string_literal_values().Get(
+              string_literal.string_literal_id);
 
       auto index_inst = eval_context.insts().GetAs<SemIR::IntValue>(index_id);
       const auto& index_val = eval_context.ints().Get(index_inst.int_id);
+
+      if (index_val.isNegative()) {
+        CARBON_DIAGNOSTIC(StringIndexNegative, Error,
+                          "index `{0}` is negative.", TypedInt);
+        context.emitter().Emit(
+            loc_id, StringIndexNegative,
+            {.type = eval_context.insts().Get(arg_ids[1]).type_id(),
+             .value = index_val});
+        return SemIR::ConstantId::NotConstant;
+      }
+
+      if (index_val.getActiveBits() > 64 ||
+          index_val.getZExtValue() >= string_value.size()) {
+        CARBON_DIAGNOSTIC(
+            StringAtIndexOutOfBounds, Error,
+            "string index `{0}` is out of bounds; string has length {1}.",
+            TypedInt, unsigned);
+        context.emitter().Emit(
+            loc_id, StringAtIndexOutOfBounds,
+            {.type = eval_context.insts().Get(arg_ids[1]).type_id(),
+             .value = index_val},
+            static_cast<unsigned>(string_value.size()));
+        return SemIR::ConstantId::NotConstant;
+      }
 
       auto char_value =
           static_cast<uint8_t>(string_value[index_val.getZExtValue()]);
@@ -1995,6 +2020,7 @@ static auto MakeConstantForCall(EvalContext& eval_context,
     // Calls to builtins might be constant.
     builtin_kind =
         eval_context.functions().Get(fn->function_id).builtin_function_kind();
+
     if (builtin_kind == SemIR::BuiltinFunctionKind::None) {
       // TODO: Eventually we'll want to treat some kinds of non-builtin
       // functions as producing constants.

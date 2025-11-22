@@ -12,22 +12,12 @@ import library "prelude/operators/index";
 import library "prelude/types/int";
 import library "prelude/operators/as";
 
-class String;
-
-// Forward declaration for builtin function
-fn StringAt(s: String, index: i32) -> Char;
-
 class String {
+
   fn Size[self: Self]() -> u64 { return self.size; }
 
   impl as Copy {
     fn Op[self: Self]() -> Self { return {.ptr = self.ptr, .size = self.size}; }
-  }
-
-  impl forall [T:! ImplicitAs(i32)] as IndexWith(T) where .ElementType = Char {
-    fn At[self: Self](subscript: T) -> Char {
-      return StringAt(self, subscript);
-    }
   }
   // TODO: This should be an array iterator.
   private var ptr: Char*;
@@ -35,4 +25,6 @@ class String {
   private var size: u64;
 }
 
-fn StringAt(s: String, index: i32) -> Char = "string.at";
+impl forall [T:! ImplicitAs(i32)] String as IndexWith(T) where .ElementType = Char {
+  fn At[self: Self](subscript: T) -> Char = "string.at";
+}

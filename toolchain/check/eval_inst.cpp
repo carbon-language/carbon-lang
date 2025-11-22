@@ -115,9 +115,14 @@ auto EvalConstantInst(Context& context, SemIR::RefBinding inst)
   return ConstantEvalResult::NotConstant;
 }
 
-auto EvalConstantInst(Context& /*context*/, SemIR::ValueBinding /*inst*/)
+auto EvalConstantInst(Context& context, SemIR::ValueBinding inst)
     -> ConstantEvalResult {
-  // Non-`:!` value bindings are not constant.
+  if (inst.value_id.has_value()) {
+    auto const_id = context.constant_values().Get(inst.value_id);
+    if (const_id.is_constant()) {
+      return ConstantEvalResult::Existing(const_id);
+    }
+  }
   return ConstantEvalResult::NotConstant;
 }
 
