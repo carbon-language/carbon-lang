@@ -854,10 +854,10 @@ static auto ResolveSpecificDeclForSpecificId(EvalContext& eval_context,
 static auto ResolveSpecificDeclForInst(EvalContext& eval_context,
                                        const SemIR::Inst& inst) -> void {
   for (auto arg_and_kind : {inst.arg0_and_kind(), inst.arg1_and_kind()}) {
-    // This switch must handle any field type that has a GetConstantValue()
-    // overload which canonicalizes a specific (and thus potentially forms a new
-    // specific) as part of forming its constant value.
-    CARBON_KIND_SWITCH(arg_and_kind) {
+      // This switch must handle any field type that has a GetConstantValue()
+      // overload which canonicalizes a specific (and thus potentially forms a new
+      // specific) as part of forming its constant value.
+      CARBON_KIND_SWITCH(arg_and_kind) {
       case CARBON_KIND(SemIR::FacetTypeId facet_type_id): {
         const auto& info =
             eval_context.context().facet_types().Get(facet_type_id);
@@ -866,6 +866,14 @@ static auto ResolveSpecificDeclForInst(EvalContext& eval_context,
         }
         for (const auto& interface : info.self_impls_constraints) {
           ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
+        }
+        for (const auto& constraint : info.extend_named_constraints) {
+          ResolveSpecificDeclForSpecificId(eval_context,
+                                           constraint.specific_id);
+        }
+        for (const auto& constraint : info.self_impls_named_constraints) {
+          ResolveSpecificDeclForSpecificId(eval_context,
+                                           constraint.specific_id);
         }
         break;
       }
@@ -1858,7 +1866,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
        if (phase != Phase::Concrete) {
         return MakeConstantResult(context, call, phase);
       }
-      return PerformCharConvert(context, loc_id, arg_ids[0], call.type_id);
+      return PerformIntToCharConvert(context, loc_id, arg_ids[0], call.type_id);
     }
     case SemIR::BuiltinFunctionKind::IntConvert: {
       if (phase != Phase::Concrete) {
