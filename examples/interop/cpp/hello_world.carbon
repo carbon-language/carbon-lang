@@ -18,7 +18,7 @@ fn HelloArrayOfChars() {
 
 fn HelloStringAsArrayOfChars() {
   // TODO: Requires IndexWith support for str.
-  // let message: str = "Hello world!\n\n";
+  // let message: str = "Hello world!\n";
   // for (c: char in message) {
   //   Cpp.putchar((c as u8) as i32);
   // }
