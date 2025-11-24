@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -594,6 +594,20 @@ fn F() {
  // CHECK:STDERR:
  Cpp.M_TRUE = false;
 }
+
+// --- nullptr.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+  #define MyNullPtr nullptr
+  void foo(int arr[2]);
+''';
+
+fn F() {
+  Cpp.foo(Cpp.MyNullPtr);
+}
+
 
 // --- lambda.carbon
 
