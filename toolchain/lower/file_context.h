@@ -107,7 +107,6 @@ class FileContext {
   auto GetTypeType() -> llvm::StructType* { return context().GetTypeType(); }
 
   auto context() -> Context& { return *context_; }
-  auto context() const -> Context& { return *context_; }
   auto llvm_context() -> llvm::LLVMContext& { return context().llvm_context(); }
   auto llvm_module() -> llvm::Module& { return context().llvm_module(); }
   auto cpp_code_generator() -> clang::CodeGenerator& {
@@ -203,7 +202,7 @@ class FileContext {
 
   auto BuildDISubroutineType(
       const SemIR::Function&, SemIR::SpecificId specific_id,
-      llvm::SmallVectorImpl<llvm::DIType*>& debug_parameter_types) const
+      llvm::SmallVectorImpl<llvm::DIType*>& debug_parameter_types)
       -> llvm::DISubroutineType*;
   auto BuildDIType(SemIR::TypeId type_id) const -> llvm::DIType*;
 

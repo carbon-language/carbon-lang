@@ -772,7 +772,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
 
 auto FileContext::BuildDISubroutineType(
     const SemIR::Function& function, SemIR::SpecificId specific_id,
-    llvm::SmallVectorImpl<llvm::DIType*>& debug_parameter_types) const
+    llvm::SmallVectorImpl<llvm::DIType*>& debug_parameter_types)
     -> llvm::DISubroutineType* {
   auto implicit_param_patterns =
       sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_patterns_id);
