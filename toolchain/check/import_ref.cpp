@@ -407,6 +407,11 @@ class ImportRefResolver : public ImportContext {
   // current instruction is done, and does not count towards `HasNewWork`. We
   // add specifics this way because some instructions (e.g. `FacetTypeInfo`) can
   // add multiple specifics.
+  //
+  // The insert may do extra work moving already-added work on the work stack,
+  // but that is expected to be okay because the common cases are 0 or 1
+  // specifics being added. If this ends up showing up in profiles, potentially
+  // due to vector growth, it may be worth revisiting.
   auto PushSpecific(SemIR::SpecificId import_id, SemIR::SpecificId local_id)
       -> void;
 
