@@ -1030,7 +1030,7 @@ static auto MakeFloatTypeResult(Context& context, SemIR::LocId loc_id,
 //// Performs a conversion from integer to character type.
 // Performs a conversion between character types, diagnosing if the value
 // doesn't fit in the destination type.
-static auto PerformCharConvert(Context& context, SemIR::LocId loc_id,
+static auto PerformIntToCharConvert(Context& context, SemIR::LocId loc_id,
                                       SemIR::InstId arg_id,
                                       SemIR::TypeId dest_type_id)
     -> SemIR::ConstantId {
