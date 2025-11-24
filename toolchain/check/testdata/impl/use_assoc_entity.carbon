@@ -164,7 +164,7 @@ class E {
   }
 }
 
-// --- fail_todo_call_extend_fn.carbon
+// --- call_extend_fn.carbon
 library "[[@TEST_NAME]]";
 
 interface J {
@@ -176,15 +176,14 @@ class E {
     fn F() {}
   }
 
-  // TODO: `F` should be in scope and directly callable.
-  // CHECK:STDERR: fail_todo_call_extend_fn.carbon:[[@LINE+4]]:12: error: value of type `<associated entity in J>` is not callable [CallToNonCallable]
+  // CHECK:STDERR: call_extend_fn.carbon:[[@LINE+4]]:12: error: value of type `<associated entity in J>` is not callable [CallToNonCallable]
   // CHECK:STDERR:   fn G() { F(); }
   // CHECK:STDERR:            ^~~
   // CHECK:STDERR:
   fn G() { F(); }
 }
 
-// --- fail_todo_call_extend_method.carbon
+// --- call_extend_method.carbon
 library "[[@TEST_NAME]]";
 
 interface J {
@@ -196,12 +195,7 @@ class E {
     fn F[self: Self]() {}
   }
 
-  // TODO: `F` should be in scope and directly callable.
-  // CHECK:STDERR: fail_todo_call_extend_method.carbon:[[@LINE+4]]:12: error: value of type `<associated entity in J>` is not callable [CallToNonCallable]
-  // CHECK:STDERR:   fn G() { F(); }
-  // CHECK:STDERR:            ^~~
-  // CHECK:STDERR:
-  fn G() { F(); }
+  fn G[self: Self]() { self.F(); }
 }
 
 // --- fail_todo_use_extend_constant.carbon
@@ -2550,7 +2544,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7ce
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_call_extend_fn.carbon
+// CHECK:STDOUT: --- call_extend_fn.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [concrete]
@@ -2652,7 +2646,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.F(constants.%J.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_call_extend_method.carbon
+// CHECK:STDOUT: --- call_extend_method.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [concrete]
@@ -2660,6 +2654,7 @@ fn F() {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.4c4: type = pattern_type %Self.binding.as_type [symbolic]
 // CHECK:STDOUT:   %J.F.type: type = fn_type @J.F [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %J.F: %J.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %J.assoc_type: type = assoc_entity_type @J [concrete]
 // CHECK:STDOUT:   %assoc0: %J.assoc_type = assoc_entity element0, @J.%J.F.decl [concrete]
@@ -2674,6 +2669,7 @@ fn F() {
 // CHECK:STDOUT:   %E.G: %E.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %.225: type = fn_type_with_self_type %J.F.type, %J.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -2740,7 +2736,14 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (@E.as.J.impl.%E.as.J.impl.F.decl), @E.as.J.impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness]
-// CHECK:STDOUT:   %E.G.decl: %E.G.type = fn_decl @E.G [concrete = constants.%E.G] {} {}
+// CHECK:STDOUT:   %E.G.decl: %E.G.type = fn_decl @E.G [concrete = constants.%E.G] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.a4a = value_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.a4a = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %E = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%E [concrete = constants.%E]
+// CHECK:STDOUT:     %self: %E = value_binding self, %self.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -2771,9 +2774,13 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @E.G() {
+// CHECK:STDOUT: fn @E.G(%self.param: %E) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %self.ref: %E = name_ref self, %self
 // CHECK:STDOUT:   %F.ref: %J.assoc_type = name_ref F, @J.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %impl.elem0: %.225 = impl_witness_access constants.%J.impl_witness, element0 [concrete = constants.%E.as.J.impl.F]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %self.ref, %impl.elem0
+// CHECK:STDOUT:   %E.as.J.impl.F.call: init %empty_tuple.type = call %bound_method(%self.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
