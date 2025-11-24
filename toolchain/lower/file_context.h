@@ -56,7 +56,7 @@ class FileContext {
 
   // Returns a lowered type for the given type_id.
   auto GetType(SemIR::TypeId type_id) -> llvm::Type* {
-    return GetTypes(type_id).first;
+    return GetTypeAndDIType(type_id).first;
   }
 
   // Returns both the lowered llvm IR type and the lowered llvm IR debug info

@@ -787,7 +787,7 @@ auto FileContext::BuildDISubroutineType(
     if (!type_id.has_value()) {
       return void_pointer_debug_type;
     }
-    if (auto* type = GetTypes(type_id).second) {
+    if (auto* type = GetTypeAndDIType(type_id).second) {
       return type;
     }
     return void_pointer_debug_type;
@@ -909,7 +909,7 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ClassType inst)
                             .classes()
                             .Get(inst.class_id)
                             .GetObjectRepr(context.sem_ir(), inst.specific_id);
-  return context.GetTypes(object_repr_id);
+  return context.GetTypeAndDIType(object_repr_id);
 }
 
 template <typename InstT>
