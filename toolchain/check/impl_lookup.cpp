@@ -10,6 +10,7 @@
 #include <variant>
 
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/cpp/impl_lookup.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
@@ -46,9 +47,23 @@ static auto FindAssociatedImportIRs(
     if (!decl_id.has_value()) {
       return;
     }
-    if (auto ir_id = GetCanonicalImportIRInst(context, decl_id).ir_id();
-        ir_id.has_value()) {
-      result.push_back(ir_id);
+
+    auto import_ir_inst = GetCanonicalImportIRInst(context, decl_id);
+    const auto* sem_ir = &context.sem_ir();
+    if (import_ir_inst.ir_id().has_value()) {
+      sem_ir = context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+    }
+
+    // For an instruction imported from C++, `GetCanonicalImportIRInst` returns
+    // the final Carbon import instruction, so go one extra step to check for a
+    // C++ import.
+    if (auto import_ir_inst_id =
+            sem_ir->insts().GetImportSource(import_ir_inst.inst_id());
+        import_ir_inst_id.has_value()) {
+      result.push_back(
+          sem_ir->import_ir_insts().Get(import_ir_inst_id).ir_id());
+    } else if (import_ir_inst.ir_id().has_value()) {
+      result.push_back(import_ir_inst.ir_id());
     }
   };
 
@@ -787,16 +802,29 @@ struct CandidateImpl {
   TypeStructure type_structure;
 };
 
+struct CandidateImpls {
+  llvm::SmallVector<CandidateImpl> impls;
+  bool consider_cpp_candidates = false;
+};
+
 // Returns the list of candidates impls for lookup to select from.
 static auto CollectCandidateImplsForQuery(
     Context& context, bool final_only, SemIR::ConstantId query_self_const_id,
     const TypeStructure& query_type_structure,
-    SemIR::SpecificInterface& query_specific_interface)
-    -> llvm::SmallVector<CandidateImpl> {
+    SemIR::SpecificInterface& query_specific_interface) -> CandidateImpls {
+  CandidateImpls candidates;
+
   auto import_irs = FindAssociatedImportIRs(context, query_self_const_id,
                                             query_specific_interface);
 
   for (auto import_ir_id : import_irs) {
+    // If `Cpp` is an associated package, then we'll instead look for C++
+    // operator overloads for certain well-known interfaces.
+    if (import_ir_id == SemIR::ImportIRId::Cpp) {
+      candidates.consider_cpp_candidates = true;
+      continue;
+    }
+
     // Instead of importing all impls, only import ones that are in some way
     // connected to this query.
     ImportImplFilter filter(context, import_ir_id, query_specific_interface);
@@ -810,7 +838,6 @@ static auto CollectCandidateImplsForQuery(
     }
   }
 
-  llvm::SmallVector<CandidateImpl> candidate_impls;
   for (auto [id, impl] : context.impls().enumerate()) {
     CARBON_CHECK(impl.witness_id.has_value());
 
@@ -853,7 +880,7 @@ static auto CollectCandidateImplsForQuery(
       continue;
     }
 
-    candidate_impls.push_back(
+    candidates.impls.push_back(
         {id, impl.definition_id, std::move(*type_structure)});
   }
 
@@ -865,9 +892,30 @@ static auto CollectCandidateImplsForQuery(
   // TODO: Allow Carbon code to provide a priority ordering explicitly. For
   // now they have all the same priority, so the priority is the order in
   // which they are found in code.
-  llvm::stable_sort(candidate_impls, compare);
+  llvm::stable_sort(candidates.impls, compare);
 
-  return candidate_impls;
+  return candidates;
+}
+
+// Given a value that is either a type or a non-type facet, returns the
+// corresponding type.
+static auto GetFacetAsType(Context& context, SemIR::LocId loc_id,
+                           SemIR::ConstantId facet_or_type_const_id)
+    -> SemIR::TypeId {
+  auto facet_or_type_id =
+      context.constant_values().GetInstId(facet_or_type_const_id);
+  auto type_type_id = context.insts().Get(facet_or_type_id).type_id();
+  CARBON_CHECK(context.types().IsFacetType(type_type_id) ||
+               type_type_id == SemIR::ErrorInst::TypeId);
+
+  if (context.types().Is<SemIR::FacetType>(type_type_id)) {
+    // It's a facet; access its type.
+    facet_or_type_id = GetOrAddInst<SemIR::FacetAccessType>(
+        context, loc_id,
+        {.type_id = SemIR::TypeType::TypeId,
+         .facet_value_inst_id = facet_or_type_id});
+  }
+  return context.types().GetTypeIdForTypeInstId(facet_or_type_id);
 }
 
 auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
@@ -933,11 +981,11 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   // final impls only in that case. Note as in the CHECK above, the query can
   // not be concrete in this case, so only final impls can produce a concrete
   // witness for this query.
-  auto candidate_impls = CollectCandidateImplsForQuery(
+  auto candidates = CollectCandidateImplsForQuery(
       context, self_facet_provides_witness, query_self_const_id,
       *query_type_structure, query_specific_interface);
 
-  for (const auto& candidate : candidate_impls) {
+  for (const auto& candidate : candidates.impls) {
     // In deferred lookup for a symbolic impl witness, while building a
     // specific, there may be no stack yet as this may be the first lookup. If
     // further lookups are started as a result in deduce, they will build the
@@ -967,13 +1015,33 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
              .query = eval_query,
              .impl_witness = result.final_witness()});
       }
+
+      if (query_is_concrete && candidates.consider_cpp_candidates) {
+        auto cpp_result = LookupCppImpl(
+            context, loc_id,
+            GetFacetAsType(context, loc_id, query_self_const_id),
+            query_specific_interface, &candidate.type_structure,
+            SemIR::LocId(
+                context.impls().Get(candidate.impl_id).first_owning_decl_id));
+        if (cpp_result.has_value()) {
+          return cpp_result;
+        }
+      }
+
       return result;
     }
   }
 
+  if (query_is_concrete && candidates.consider_cpp_candidates) {
+    CARBON_CHECK(!self_facet_provides_witness);
+    return LookupCppImpl(context, loc_id,
+                         GetFacetAsType(context, loc_id, query_self_const_id),
+                         query_specific_interface, nullptr, SemIR::LocId::None);
+  }
+
   if (self_facet_provides_witness) {
     // If we did not find a final impl, but the self value is a facet that
-    // provides a symbolic witness, when we record that an impl will exist for
+    // provides a symbolic witness, then we record that an impl will exist for
     // the specific, but is yet unknown.
     return EvalImplLookupResult::MakeNonFinal();
   }

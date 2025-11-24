@@ -38,26 +38,25 @@ static auto NoteAssociatedFunction(Context& context, DiagnosticBuilder& builder,
                function.name_id);
 }
 
-// Checks that `impl_function_id` is a valid implementation of the function
-// described in the interface as `interface_function_id`. Returns the value to
-// put into the corresponding slot in the witness table, which can be
-// `BuiltinErrorInst` if the function is not usable.
-static auto CheckAssociatedFunctionImplementation(
+auto CheckAssociatedFunctionImplementation(
     Context& context, SemIR::FunctionType interface_function_type,
     SemIR::InstId impl_decl_id, SemIR::TypeId self_type_id,
-    SemIR::InstId witness_inst_id) -> SemIR::InstId {
+    SemIR::InstId witness_inst_id, bool defer_thunk_definition)
+    -> SemIR::InstId {
   auto impl_function_decl =
       context.insts().TryGetAs<SemIR::FunctionDecl>(impl_decl_id);
   if (!impl_function_decl) {
-    CARBON_DIAGNOSTIC(ImplFunctionWithNonFunction, Error,
-                      "associated function {0} implemented by non-function",
-                      SemIR::NameId);
-    auto builder = context.emitter().Build(
-        impl_decl_id, ImplFunctionWithNonFunction,
-        context.functions().Get(interface_function_type.function_id).name_id);
-    NoteAssociatedFunction(context, builder,
-                           interface_function_type.function_id);
-    builder.Emit();
+    if (impl_decl_id != SemIR::ErrorInst::InstId) {
+      CARBON_DIAGNOSTIC(ImplFunctionWithNonFunction, Error,
+                        "associated function {0} implemented by non-function",
+                        SemIR::NameId);
+      auto builder = context.emitter().Build(
+          impl_decl_id, ImplFunctionWithNonFunction,
+          context.functions().Get(interface_function_type.function_id).name_id);
+      NoteAssociatedFunction(context, builder,
+                             interface_function_type.function_id);
+      builder.Emit();
+    }
 
     return SemIR::ErrorInst::InstId;
   }
@@ -80,7 +79,8 @@ static auto CheckAssociatedFunctionImplementation(
           impl_enclosing_specific_id, self_type_id, witness_inst_id);
 
   return BuildThunk(context, interface_function_type.function_id,
-                    interface_function_specific_id, impl_decl_id);
+                    interface_function_specific_id, impl_decl_id,
+                    defer_thunk_definition);
 }
 
 // Builds an initial witness from the rewrites in the facet type, if any.
@@ -212,7 +212,7 @@ auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void {
           used_decl_ids.push_back(lookup_result.target_inst_id());
           witness_value = CheckAssociatedFunctionImplementation(
               context, *fn_type, lookup_result.target_inst_id(), self_type_id,
-              impl.witness_id);
+              impl.witness_id, /*defer_thunk_definition=*/true);
         } else {
           CARBON_DIAGNOSTIC(
               ImplMissingFunction, Error,

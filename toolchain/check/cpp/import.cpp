@@ -40,6 +40,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/custom_type_mapping.h"
+#include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/macros.h"
 #include "toolchain/check/cpp/thunk.h"
 #include "toolchain/check/diagnostic_helpers.h"
@@ -1787,6 +1788,11 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
         function_info.SetHasCppThunk(thunk_function_decl_id);
       }
     }
+  } else {
+    // Inform Clang that the function has been referenced. This will trigger
+    // instantiation if needed.
+    context.clang_sema().MarkFunctionReferenced(GetCppLocation(context, loc_id),
+                                                clang_decl);
   }
 
   return function_info.first_owning_decl_id;
