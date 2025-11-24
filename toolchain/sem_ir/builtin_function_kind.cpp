@@ -789,8 +789,8 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
       // Checked conversions are compile-time only.
       return true;
 
-    case IntConvertChar:
     case IntConvert:
+    case IntConvertChar:
     case IntSNegate:
     case IntComplement:
     case IntSAdd:
