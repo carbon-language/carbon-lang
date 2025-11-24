@@ -241,9 +241,8 @@ class ImportContext {
   // from `InstId`s in the import IR to corresponding `ConstantId`s in the local
   // IR.
   auto local_constant_values_for_import_insts() -> SemIR::ConstantValueStore& {
-    return local_context()
-        .import_ir_constant_values()[local_ir().import_irs().GetRawIndex(
-            import_ir_id_)];
+    auto index = local_ir().import_irs().GetRawIndex(import_ir_id_);
+    return local_context().import_ir_constant_values()[index];
   }
 
   // Returns the file we are importing into.
