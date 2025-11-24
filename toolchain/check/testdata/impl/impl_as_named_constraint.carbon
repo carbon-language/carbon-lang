@@ -128,7 +128,7 @@ constraint C {
 // CHECK:STDERR:
 impl () as C {}
 
-// --- todo_fail_duplicate_through_generic_constraint.carbon
+// --- fail_duplicate_through_generic_constraint.carbon
 library "[[@TEST_NAME]]";
 
 interface A(T:! type) {}
@@ -140,5 +140,11 @@ constraint B(X:! type, Y:! type) {
 // This should impl () as A({}).
 impl () as B((), {}) {}
 
-// This should be considered a duplicate.
+// CHECK:STDERR: fail_duplicate_through_generic_constraint.carbon:[[@LINE+7]]:1: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
+// CHECK:STDERR: impl () as A({}) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_duplicate_through_generic_constraint.carbon:[[@LINE-5]]:1: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
+// CHECK:STDERR: impl () as B((), {}) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl () as A({}) {}

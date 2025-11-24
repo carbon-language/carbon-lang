@@ -183,8 +183,8 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
     return std::nullopt;
   }
 
-  auto identified_facet_type_id =
-      RequireIdentifiedFacetType(context, *constraint_facet_type, [&] {
+  auto identified_facet_type_id = RequireIdentifiedFacetType(
+      context, SemIR::LocId(constraint_inst_id), *constraint_facet_type, [&] {
         CARBON_DIAGNOSTIC(
             RequireImplsUnidentifiedFacetType, Error,
             "facet type {0} cannot be identified in `require` declaration",

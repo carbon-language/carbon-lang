@@ -202,7 +202,7 @@ static auto GetInterfacesFromConstantId(
   const auto& facet_type_info =
       context.facet_types().Get(facet_type_inst.facet_type_id);
   auto identified_id =
-      RequireIdentifiedFacetType(context, facet_type_inst, [&] {
+      RequireIdentifiedFacetType(context, loc_id, facet_type_inst, [&] {
         CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetType, Error,
                           "facet type {0} can not be identified", InstIdAsType);
         return context.emitter().Build(
@@ -323,7 +323,8 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
 // is allowed to be a non-canonical facet value in order to find a concrete
 // witness, so it's not referenced as a constant value.
 static auto LookupImplWitnessInSelfFacetValue(
-    Context& context, SemIR::InstId self_facet_value_inst_id,
+    Context& context, SemIR::LocId loc_id,
+    SemIR::InstId self_facet_value_inst_id,
     SemIR::SpecificInterface query_specific_interface) -> EvalImplLookupResult {
   auto facet_type = context.types().TryGetAs<SemIR::FacetType>(
       context.insts().Get(self_facet_value_inst_id).type_id());
@@ -336,7 +337,7 @@ static auto LookupImplWitnessInSelfFacetValue(
   // `FacetValue` witnesses are the output of an impl lookup, which finds and
   // returns witnesses in the same order.
   auto identified_id =
-      RequireIdentifiedFacetType(context, *facet_type, nullptr);
+      RequireIdentifiedFacetType(context, loc_id, *facet_type, nullptr);
   // This should not be possible as FacetValue is constructed by a conversion
   // to a facet type, which performs impl lookup for that facet type, and
   // lookup only succeeds for complete facet types.
@@ -879,7 +880,7 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
       context.specific_interfaces().Get(eval_query.query_specific_interface_id);
 
   auto facet_lookup_result = LookupImplWitnessInSelfFacetValue(
-      context, self_facet_value_inst_id, query_specific_interface);
+      context, loc_id, self_facet_value_inst_id, query_specific_interface);
   if (facet_lookup_result.has_final_value()) {
     return facet_lookup_result;
   }

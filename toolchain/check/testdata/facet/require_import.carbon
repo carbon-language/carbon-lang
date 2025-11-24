@@ -53,10 +53,10 @@ fn F(A:! X, B:! Y) {}
 // CHECK:STDOUT:   %Main.Y: type = import_ref Main//a, Y, loaded [concrete = constants.%Y.type]
 // CHECK:STDOUT:   %Main.X: type = import_ref Main//a, X, loaded [concrete = constants.%X.type]
 // CHECK:STDOUT:   %Main.import_ref.462 = import_ref Main//a, loc3_13, unloaded
-// CHECK:STDOUT:   %Main.import_ref.b7c: type = import_ref Main//a, loc10_18, loaded [symbolic = constants.%Self.binding.as_type.1a1]
+// CHECK:STDOUT:   %Main.import_ref.b7c: type = import_ref Main//a, loc10_18, loaded [symbolic = @X.require0.%Self.binding.as_type (constants.%Self.binding.as_type.1a1)]
 // CHECK:STDOUT:   %Main.import_ref.dec: %X.type = import_ref Main//a, loc9_14, loaded [symbolic = constants.%Self.861]
 // CHECK:STDOUT:   %Main.import_ref.cae = import_ref Main//a, loc9_14, unloaded
-// CHECK:STDOUT:   %Main.import_ref.3e6: type = import_ref Main//a, loc6_11, loaded [symbolic = constants.%Self.binding.as_type.384]
+// CHECK:STDOUT:   %Main.import_ref.3e6: type = import_ref Main//a, loc6_11, loaded [symbolic = @Y.require1.%Self.binding.as_type (constants.%Self.binding.as_type.384)]
 // CHECK:STDOUT:   %Main.import_ref.35b: %Y.type = import_ref Main//a, loc5_13, loaded [symbolic = constants.%Self.29b]
 // CHECK:STDOUT:   %Main.import_ref.581 = import_ref Main//a, loc5_13, unloaded
 // CHECK:STDOUT: }
