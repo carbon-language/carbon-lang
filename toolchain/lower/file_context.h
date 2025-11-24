@@ -61,7 +61,7 @@ class FileContext {
 
   // Returns both the lowered llvm IR type and the lowered llvm IR debug info
   // type for the given type_id.
-  auto GetTypes(SemIR::TypeId type_id) const
+  auto GetTypeAndDIType(SemIR::TypeId type_id) const
       -> std::pair<llvm::Type*, llvm::DIType*> {
     CARBON_CHECK(type_id.has_value(), "Should not be called with `None`");
     CARBON_CHECK(type_id.is_concrete(), "Lowering symbolic type {0}: {1}",
