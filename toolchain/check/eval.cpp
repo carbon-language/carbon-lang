@@ -867,14 +867,6 @@ static auto ResolveSpecificDeclForInst(EvalContext& eval_context,
         for (const auto& interface : info.self_impls_constraints) {
           ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
         }
-        for (const auto& constraint : info.extend_named_constraints) {
-          ResolveSpecificDeclForSpecificId(eval_context,
-                                           constraint.specific_id);
-        }
-        for (const auto& constraint : info.self_impls_named_constraints) {
-          ResolveSpecificDeclForSpecificId(eval_context,
-                                           constraint.specific_id);
-        }
         break;
       }
       case CARBON_KIND(SemIR::SpecificId specific_id): {
@@ -991,6 +983,7 @@ static auto PerformCheckedCharConvert(Context& context, SemIR::LocId loc_id,
                                       SemIR::InstId arg_id,
                                       SemIR::TypeId dest_type_id)
     -> SemIR::ConstantId {
+
   auto arg = context.insts().GetAs<SemIR::CharLiteralValue>(arg_id);
 
   // Values over 0x80 require multiple code units in UTF-8.
@@ -1033,6 +1026,48 @@ static auto MakeFloatTypeResult(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::ConstantId;
   }
   return MakeConstantResult(context, result, phase);
+}
+
+//// Performs a conversion from integer to character type.
+// Performs a conversion between character types, diagnosing if the value
+// doesn't fit in the destination type.
+static auto PerformCharConvert(Context& context, SemIR::LocId loc_id,
+                                      SemIR::InstId arg_id,
+                                      SemIR::TypeId dest_type_id)
+    -> SemIR::ConstantId {
+
+  auto arg = context.insts().GetAs<SemIR::IntValue>(arg_id);
+  auto arg_val = context.ints().Get(arg.int_id);
+
+  auto [is_signed, bit_width_id] =
+      context.sem_ir().types().GetIntTypeInfo(dest_type_id);
+  
+  if (!is_signed && arg_val.isNegative()) {
+    CARBON_DIAGNOSTIC(
+        NegativeIntInUnsignedType, Error,
+        "negative integer value {0} converted to unsigned type {1}", TypedInt,
+        SemIR::TypeId);
+    context.emitter().Emit(loc_id, NegativeIntInUnsignedType,
+                           {.type = arg.type_id, .value = arg_val},
+                           dest_type_id);
+  }
+  
+  int64_t value = arg_val.getSExtValue();
+
+  // Values over 0x80 require multiple code units in UTF-8.
+  if (value >= 0x80) {
+    CARBON_DIAGNOSTIC(
+        NegativeIntInUnsignedType, Error,
+        "character value {0} too large for type {1}", TypedInt,
+        SemIR::TypeId);
+    context.emitter().Emit(loc_id, NegativeIntInUnsignedType,
+                           {.type = arg.type_id, .value = arg_val},
+                           dest_type_id);
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  llvm::APInt int_val(8, value, /*isSigned=*/false);
+  return MakeIntResult(context, dest_type_id, /*is_signed=*/false, int_val);
 }
 
 // Performs a conversion between integer types, truncating if the value doesn't
@@ -1820,6 +1855,12 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     }
 
     // Integer conversions.
+    case SemIR::BuiltinFunctionKind::IntConvertChar: {
+       if (phase != Phase::Concrete) {
+        return MakeConstantResult(context, call, phase);
+      }
+      return PerformCharConvert(context, loc_id, arg_ids[0], call.type_id);
+    }
     case SemIR::BuiltinFunctionKind::IntConvert: {
       if (phase != Phase::Concrete) {
         return MakeConstantResult(context, call, phase);

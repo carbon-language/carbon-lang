@@ -27,3 +27,7 @@ impl CharLiteral() as ImplicitAs(Char) {
 impl CharLiteral() as As(Char) {
   fn Convert[self: Self]() -> Char = "char.convert_checked";
 }
+
+impl Int(32) as As(Char) {
+  fn Convert[self: Self]() -> Char = "int.convert_char";  
+}
