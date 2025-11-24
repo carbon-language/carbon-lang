@@ -66,9 +66,10 @@ class FileContext {
     CARBON_CHECK(type_id.has_value(), "Should not be called with `None`");
     CARBON_CHECK(type_id.is_concrete(), "Lowering symbolic type {0}: {1}",
                  type_id, sem_ir().types().GetAsInst(type_id));
-    CARBON_CHECK(types_.Get(type_id).first, "Missing type {0}: {1}", type_id,
+    auto result = types_.Get(type_id);
+    CARBON_CHECK(result.first, "Missing type {0}: {1}", type_id,
                  sem_ir().types().GetAsInst(type_id));
-    return types_.Get(type_id);
+    return result;
   }
 
   // Returns location information for use with DebugInfo.
