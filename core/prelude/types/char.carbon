@@ -8,6 +8,8 @@ import library "prelude/copy";
 import library "prelude/destroy";
 import library "prelude/operators";
 import library "prelude/types/uint";
+import library "prelude/types/int";
+import library "prelude/types/int_literal";
 
 fn CharLiteral() -> type = "char_literal.make_type";
 
@@ -28,6 +30,14 @@ impl CharLiteral() as As(Char) {
   fn Convert[self: Self]() -> Char = "char.convert_checked";
 }
 
+impl Int(8) as As(Char) {
+  fn Convert[self: Self]() -> Char = "int.convert_char";
+}
+
 impl Int(32) as As(Char) {
-  fn Convert[self: Self]() -> Char = "int.convert_char";  
+  fn Convert[self: Self]() -> Char = "int.convert_char";
+}
+
+impl Int(64) as As(Char) {
+  fn Convert[self: Self]() -> Char = "int.convert_char";
 }
