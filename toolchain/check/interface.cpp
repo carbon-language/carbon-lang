@@ -122,7 +122,7 @@ static auto GetGenericArgsWithSelfType(Context& context,
   arg_ids.reserve(std::max(reserve_args_size, interface_args.size() + 1));
 
   // Start with the enclosing arguments from the interface.
-  arg_ids.assign(interface_args.begin(), interface_args.end());
+  llvm::append_range(arg_ids, interface_args);
 
   // Add the `Self` argument.
   arg_ids.push_back(GetSelfFacet(context, interface_specific_id, generic_id,

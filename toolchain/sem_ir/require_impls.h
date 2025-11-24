@@ -23,6 +23,8 @@ struct RequireImpls : Printable<RequireImpls> {
   // Evaluates to the `FacetType` that the self-type must implement.
   TypeInstId facet_type_inst_id;
   // The `FacetTypeInfo` derived from the `facet_type_inst_id` instruction.
+  // TODO: Remove this, we need to use the inst to get a constant value in the
+  // appropriate specific.
   FacetTypeId facet_type_id;
   // If the facet type extends `Self`. When true, the `self_id` will be `Self`.
   bool extend_self;
