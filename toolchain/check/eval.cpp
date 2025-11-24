@@ -983,7 +983,6 @@ static auto PerformCheckedCharConvert(Context& context, SemIR::LocId loc_id,
                                       SemIR::InstId arg_id,
                                       SemIR::TypeId dest_type_id)
     -> SemIR::ConstantId {
-
   auto arg = context.insts().GetAs<SemIR::CharLiteralValue>(arg_id);
 
   // Values over 0x80 require multiple code units in UTF-8.
