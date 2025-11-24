@@ -308,9 +308,10 @@ _non-entire_, depending on whether the referenced object is known to be complete
 
 An _entire reference expression_ is one that is statically known to refer to a
 complete object. Other references are _non-entire_. Durable and ephemeral
-reference expressions can both be either entire or non-entire. Unless otherwise
-specified, an expression or operation that produces a reference produces a
-non-entire reference.
+reference expressions can both be either entire or non-entire (although
+non-entire ephemeral references are rare). Unless otherwise specified, an
+expression or operation that produces a reference produces a non-entire
+reference.
 
 Note that a non-entire reference expression still _might_ refer to a complete
 object; the language rules just don't _guarantee_ that is does. As a result, an
@@ -323,11 +324,27 @@ or that don't accept references at all.
 Currently, the only context that requires an entire reference is the scrutinee
 of a `var` pattern, which must be an entire ephemeral reference.
 
-There is only one kind of explicit expression that produces an entire reference:
-the name of an object introduced with a
-[variable binding pattern](pattern_matching.md#name-binding-patterns) (in other
-words, a name that was declared with `var <name> : <type>`) is a durable entire
-reference.
+> **Note:** This extends the lifetime of the reference, so it must be possible
+> to determine _which_ temporary an ephemeral entire reference refers to, so
+> that the implementation knows which lifetime to extend. Under the current
+> language rules, this can be done statically.
+
+> **Open question:** Should we extend the language in ways that would force that
+> determination to be dynamic? For example, should we allow
+> `if c then r1 else r2` to be an entire ephemeral reference expression if `r1`
+> and `r2` are? As a more extreme example, should we support functions that take
+> and return entire ephemeral references?
+
+There are only two kinds of explicit expression that produce an entire
+reference:
+
+-   The name of an object introduced with a
+    [variable binding pattern](pattern_matching.md#name-binding-patterns) (in
+    other words, a name that was declared with `var <name> : <type>`) is a
+    durable entire reference.
+-   a member access expression `x.member` or `x.(member)`, where `x` is an
+    initializing or entire ephemeral reference expression with a struct or tuple
+    type.
 
 Two kinds of implicit expression can also produce entire references:
 
@@ -382,10 +399,8 @@ categories into a reference expression.
 We call the reference expressions formed through
 [temporary materialization](#temporary-materialization) _ephemeral reference
 expressions_. They still refer to an object with storage, but it may be storage
-that will not outlive the full expression. Because the storage is only
-temporary, we impose restrictions on where these reference expressions can be
-used: their address can only be taken implicitly as part of a method call whose
-`self` parameter is marked with the `ref` specifier.
+that will not outlive the full expression, and so it can't be used where a
+durable reference is expected.
 
 > **Future work:** The current design does not support mutating ephemeral
 > references (or initializing expressions): assigning to an ephemeral reference
@@ -403,8 +418,16 @@ also requires the reference to be entire).
 
 There is only one kind of explicit expression that produces an ephemeral
 reference: a member access expression `x.member` or `x.(member)`, where `x` is
-an initializing or ephemeral reference expression. Ephemeral reference
-expressions can also arise implicitly, as the result of materialization.
+an initializing or ephemeral reference expression with a struct or tuple type.
+
+Two kinds of implicit expression can also produce ephemeral references:
+
+-   The result of materialization is an entire ephemeral reference.
+-   When a [tuple pattern](pattern_matching.md#tuple-patterns) or
+    [struct pattern](pattern_matching.md#struct-patterns) is matched with an
+    initializing ephemeral reference scrutinee, that scrutinee is destructured
+    into ephemeral references to its elements, which are then matched with the
+    corresponding subpatterns.
 
 ## Value expressions
 
