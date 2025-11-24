@@ -814,6 +814,10 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
           sem_ir.interfaces().Get(interface_decl.interface_id), specific_id);
       break;
     }
+    case CARBON_KIND(RequireImplsDecl _): {
+      step_stack.Push("require");
+      break;
+    }
     default: {
       // TODO: Include the specific arguments here.
       step_stack.PushInstId(generic.decl_id);

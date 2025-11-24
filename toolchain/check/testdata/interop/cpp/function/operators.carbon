@@ -878,54 +878,6 @@ fn F() {
 }
 
 // ============================================================================
-// Unsupported operand type in instantiation
-// ============================================================================
-
-// --- unsupported_in_instantiation.h
-
-struct Supported {};
-
-template<typename T>
-struct Unsupported : public virtual Supported {};
-using UnsupportedAlias = Unsupported<int>;
-extern UnsupportedAlias unsupported;
-
-// --- fail_import_unsupported_in_instantiation_unary.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "unsupported_in_instantiation.h";
-
-fn F() {
-  // CHECK:STDERR: fail_import_unsupported_in_instantiation_unary.carbon:[[@LINE+7]]:21: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
-  // CHECK:STDERR:   let result: i32 = -Cpp.unsupported;
-  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_unsupported_in_instantiation_unary.carbon:[[@LINE+4]]:21: note: while completing C++ type `Cpp.Unsupported` [InCppTypeCompletion]
-  // CHECK:STDERR:   let result: i32 = -Cpp.unsupported;
-  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  let result: i32 = -Cpp.unsupported;
-}
-
-// --- fail_import_unsupported_in_instantiation_binary.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "unsupported_in_instantiation.h";
-
-fn F() {
-  var supported: Cpp.Supported = Cpp.Supported.Supported();
-  // CHECK:STDERR: fail_import_unsupported_in_instantiation_binary.carbon:[[@LINE+7]]:21: error: semantics TODO: `class with virtual bases` [SemanticsTodo]
-  // CHECK:STDERR:   let result: i32 = supported + Cpp.unsupported;
-  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_unsupported_in_instantiation_binary.carbon:[[@LINE+4]]:21: note: while completing C++ type `Cpp.Unsupported` [InCppTypeCompletion]
-  // CHECK:STDERR:   let result: i32 = supported + Cpp.unsupported;
-  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  let result: i32 = supported + Cpp.unsupported;
-}
-
-// ============================================================================
 // Indirect template instantiation
 // ============================================================================
 

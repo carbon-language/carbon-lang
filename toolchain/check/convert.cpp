@@ -1625,6 +1625,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
           current_category) {
     case SemIR::ExprCategory::NotExpr:
     case SemIR::ExprCategory::Mixed:
+    case SemIR::ExprCategory::Pattern:
       CARBON_FATAL("Unexpected expression {0} after builtin conversions",
                    sem_ir.insts().Get(expr_id));
 

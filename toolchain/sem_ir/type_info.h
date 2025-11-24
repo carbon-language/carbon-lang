@@ -240,6 +240,8 @@ struct RecognizedTypeInfo {
     CppLong32,
     // `Cpp.nullptr_t` / `Core.CppCompat.NullptrT`.
     CppNullptrT,
+    // `Cpp.void` / `Core.CppCompat.VoidBase`.
+    CppVoidBase,
     // `str` / `Core.String`.
     // TODO: Rename `Core.String` to `Core.Str`.
     Str,

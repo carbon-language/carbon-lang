@@ -37,6 +37,7 @@ cc_library(
         "//common:latch",
         "//common:ostream",
         "//common:vlog",
+        "//third_party/llvm:clang_cc1",
         "//toolchain/base:kind_switch",
         "//toolchain/base:runtime_sources",
         "//toolchain/install:install_paths",

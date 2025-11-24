@@ -102,22 +102,22 @@ class FixedSizeValueStore {
 
   // Sets the value for an ID.
   auto Set(IdT id, ValueType value) -> void {
+    CARBON_DCHECK(id.index >= 0, "{0}", id);
     auto index = tag_.Remove(id.index);
-    CARBON_DCHECK(index >= 0, "{0}", id);
     values_[index] = value;
   }
 
   // Returns a mutable value for an ID.
   auto Get(IdT id) -> RefType {
+    CARBON_DCHECK(id.index >= 0, "{0}", id);
     auto index = tag_.Remove(id.index);
-    CARBON_DCHECK(index >= 0, "{0}", id);
     return values_[index];
   }
 
   // Returns the value for an ID.
   auto Get(IdT id) const -> ConstRefType {
+    CARBON_DCHECK(id.index >= 0, "{0}", id);
     auto index = tag_.Remove(id.index);
-    CARBON_DCHECK(index >= 0, "{0}", id);
     return values_[index];
   }
 

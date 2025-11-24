@@ -57,7 +57,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.CONFIG_VALUE;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+11]]:3: error: failed to evaluate macro Cpp.CONFIG_VALUE to a valid constant expression [InCppMacroEvaluation]
+  // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+11]]:3: error: failed to parse macro Cpp.CONFIG_VALUE to a valid constant expression [InCppMacroEvaluation]
   // CHECK:STDERR:   Cpp.CONFIG_VALUE;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_bad_suffix.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
@@ -89,7 +89,7 @@ fn F() {
   // CHECK:STDERR:   Cpp.CONFIG_VALUE;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+11]]:3: error: invalid integer type [InCppConstantMapping]
+  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: C++ literal's type `unsigned long long` could not be mapped to a Carbon type` [SemanticsTodo]
   // CHECK:STDERR:   Cpp.CONFIG_VALUE;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
@@ -254,53 +254,357 @@ fn F() {
 }
 
 // --- string_literal_object_like_macro.h
-#define CONFIG_VALUE "abc"
 
-// --- fail_todo_import_string_literal_object_like_macro.carbon
+#define SimpleString "abc"
+#define EmptyString ""
+#define EscapeCharacter " \t "
+#define Concatenated "a" "b"
+#define RawString R"a( foo: "bar" { 123 } )a"
+#define Utf8String u8"абв"
+
+#define CONCAT_STR(A, B) #A #B
+#define Indirect CONCAT_STR(x, y)
+
+// --- import_string_literal_object_like_macro.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "string_literal_object_like_macro.h";
 
 fn F() {
-  // TODO: Get rid of the second error.
-  // CHECK:STDERR: fail_todo_import_string_literal_object_like_macro.carbon:[[@LINE+11]]:3: error: semantics TODO: `non-integer constant expression in macro.` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_string_literal_object_like_macro.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_string_literal_object_like_macro.carbon:[[@LINE+4]]:3: error: member name `CONFIG_VALUE` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  Cpp.CONFIG_VALUE;
+ let a: str = Cpp.SimpleString;
+ let b: str = Cpp.EmptyString;
+ let c: str = Cpp.EscapeCharacter;
+ let d: str = Cpp.Concatenated;
+ let e: str = Cpp.RawString;
+ let f: str = Cpp.Utf8String;
+ let g: str = Cpp.Indirect;
+}
+
+// --- unsupported_string_literal_types.h
+
+#define Utf16Greeting u"Hello"
+#define Utf32Greeting U"Hello"
+#define WideGreeting L"Hello"
+
+// --- fail_import_unsupported_string_literal_types.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "unsupported_string_literal_types.h";
+
+fn F() {
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+11]]:2: error: semantics TODO: `Unsupported: string literal type: const char16_t[6]` [SemanticsTodo]
+ // CHECK:STDERR:  Cpp.Utf16Greeting;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+8]]:2: note: in `Cpp` name lookup for `Utf16Greeting` [InCppNameLookup]
+ // CHECK:STDERR:  Cpp.Utf16Greeting;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+4]]:2: error: member name `Utf16Greeting` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  Cpp.Utf16Greeting;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ Cpp.Utf16Greeting;
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+11]]:2: error: semantics TODO: `Unsupported: string literal type: const char32_t[6]` [SemanticsTodo]
+ // CHECK:STDERR:  Cpp.Utf32Greeting;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+8]]:2: note: in `Cpp` name lookup for `Utf32Greeting` [InCppNameLookup]
+ // CHECK:STDERR:  Cpp.Utf32Greeting;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+4]]:2: error: member name `Utf32Greeting` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  Cpp.Utf32Greeting;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ Cpp.Utf32Greeting;
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+11]]:2: error: semantics TODO: `Unsupported: string literal type: const wchar_t[6]` [SemanticsTodo]
+ // CHECK:STDERR:  Cpp.WideGreeting;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+8]]:2: note: in `Cpp` name lookup for `WideGreeting` [InCppNameLookup]
+ // CHECK:STDERR:  Cpp.WideGreeting;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_import_unsupported_string_literal_types.carbon:[[@LINE+4]]:2: error: member name `WideGreeting` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  Cpp.WideGreeting;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ Cpp.WideGreeting;
+}
+
+// --- fail_bad_string.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+ #define BadString "123" 456
+''';
+
+fn F() {
+ // CHECK:STDERR: fail_bad_string.carbon:[[@LINE+11]]:2: error: failed to parse macro Cpp.BadString to a valid constant expression [InCppMacroEvaluation]
+ // CHECK:STDERR:  Cpp.BadString;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~
+ // CHECK:STDERR: fail_bad_string.carbon:[[@LINE+8]]:2: note: in `Cpp` name lookup for `BadString` [InCppNameLookup]
+ // CHECK:STDERR:  Cpp.BadString;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_bad_string.carbon:[[@LINE+4]]:2: error: member name `BadString` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  Cpp.BadString;
+ // CHECK:STDERR:  ^~~~~~~~~~~~~
+ // CHECK:STDERR:
+ Cpp.BadString;
 }
 
 // --- floating_point_literal_macro.h
-#define PI 3.14
+#define MyDouble 1.0
+#define MyDoubleE 1e2
+#define MyFloat 1.f
 
-// --- fail_todo_floating_point_literal_macro.carbon
+// --- import_floating_point_literal_macro.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp library "floating_point_literal_macro.h";
 
 fn F() {
-  // TODO: Get rid of the second error.
-  // CHECK:STDERR: fail_todo_floating_point_literal_macro.carbon:[[@LINE+11]]:16: error: semantics TODO: `non-integer constant expression in macro.` [SemanticsTodo]
-  // CHECK:STDERR:   let a: f64 = Cpp.PI;
-  // CHECK:STDERR:                ^~~~~~
-  // CHECK:STDERR: fail_todo_floating_point_literal_macro.carbon:[[@LINE+8]]:16: note: in `Cpp` name lookup for `PI` [InCppNameLookup]
-  // CHECK:STDERR:   let a: f64 = Cpp.PI;
-  // CHECK:STDERR:                ^~~~~~
+  //@dump-sem-ir-begin
+  let a: f64 = Cpp.MyDouble;
+  let b: f64 = Cpp.MyDoubleE;
+  let c: f32 = Cpp.MyFloat;
+  //@dump-sem-ir-end
+}
+
+// --- unsupported_floating_point_literal_macro.h
+#define MyLongDouble 987.654l
+
+// --- fail_import_unsupported_floating_point_literal_macro.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "unsupported_floating_point_literal_macro.h";
+
+fn F() {
+  // CHECK:STDERR: fail_import_unsupported_floating_point_literal_macro.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: C++ literal's type `long double` could not be mapped to a Carbon type` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.MyLongDouble;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_unsupported_floating_point_literal_macro.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `MyLongDouble` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.MyLongDouble;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_floating_point_literal_macro.carbon:[[@LINE+4]]:16: error: member name `PI` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let a: f64 = Cpp.PI;
-  // CHECK:STDERR:                ^~~~~~
+  // CHECK:STDERR: fail_import_unsupported_floating_point_literal_macro.carbon:[[@LINE+4]]:3: error: member name `MyLongDouble` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   Cpp.MyLongDouble;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let a: f64 = Cpp.PI;
+  Cpp.MyLongDouble;
+}
+
+// --- fail_import_assign_to_float.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "floating_point_literal_macro.h";
+
+fn F() {
+  // CHECK:STDERR: fail_import_assign_to_float.carbon:[[@LINE+4]]:3: error: expression is not assignable [AssignmentToNonAssignable]
+  // CHECK:STDERR:   Cpp.MyDouble = 1.0;
+  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR:
+  Cpp.MyDouble = 1.0;
+}
+
+// --- character_literals.h
+
+#define M_LOWERCASE 'a'
+#define M_UPPRCASE 'A'
+#define M_DIGIT '1'
+#define M_SPACE ' '
+#define M_TAB '\t'
+#define M_UTF8_CHAR u8'X'
+
+// --- import_character_literals.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "character_literals.h";
+
+fn F() {
+  let a: char = Cpp.M_LOWERCASE;
+  let b: char = Cpp.M_UPPRCASE;
+  let c: char = Cpp.M_DIGIT;
+  let d: char = Cpp.M_SPACE;
+  let e: char = Cpp.M_TAB;
+  let f: char = Cpp.M_UTF8_CHAR;
+}
+
+// --- character_literals_operators.h
+
+#define M_CONDITIONAL (1 < 2 ? 'a' : 'b')
+#define M_A_PLUS_ONE 'a' + 1
+#define M_A_EQUAL ('a' == 97)
+
+// --- import_character_literals_operators.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "character_literals_operators.h";
+
+fn F() {
+  let a: char = Cpp.M_CONDITIONAL;
+  let b: i32 = Cpp.M_A_PLUS_ONE;
+  let c: bool = Cpp.M_A_EQUAL;
+}
+
+// --- multiple_characters.h
+
+#define MULTIPLE_CHARS 'AB'
+
+// --- import_multiple_characters.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: import_multiple_characters.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_characters.h:2:24: warning: multi-character character constant [CppInteropParseWarning]
+// CHECK:STDERR:     2 | #define MULTIPLE_CHARS 'AB'
+// CHECK:STDERR:       |                        ^
+import Cpp library "multiple_characters.h";
+
+fn F() {
+ // CHECK:STDERR: import_multiple_characters.carbon:[[@LINE+4]]:15: note: in `Cpp` name lookup for `MULTIPLE_CHARS` [InCppNameLookup]
+ // CHECK:STDERR:  let a: i32 = Cpp.MULTIPLE_CHARS;
+ // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ let a: i32 = Cpp.MULTIPLE_CHARS;
+}
+
+// --- unsupported_character_literal_types.h
+
+#define M_UTF16_CHAR u'a'
+#define M_UTF32_CHAR U'a'
+#define M_WIDE_CHAR L'a'
+
+// --- fail_unsupported_character_literal_types.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "unsupported_character_literal_types.h";
+
+fn F() {
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:16: error: semantics TODO: `Unsupported: C++ literal's type `char16_t` could not be mapped to a Carbon type` [SemanticsTodo]
+ // CHECK:STDERR:  let a: char = Cpp.M_UTF16_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:16: note: in `Cpp` name lookup for `M_UTF16_CHAR` [InCppNameLookup]
+ // CHECK:STDERR:  let a: char = Cpp.M_UTF16_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:16: error: member name `M_UTF16_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  let a: char = Cpp.M_UTF16_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ let a: char = Cpp.M_UTF16_CHAR;
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:16: error: semantics TODO: `Unsupported: C++ literal's type `char32_t` could not be mapped to a Carbon type` [SemanticsTodo]
+ // CHECK:STDERR:  let b: char = Cpp.M_UTF32_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:16: note: in `Cpp` name lookup for `M_UTF32_CHAR` [InCppNameLookup]
+ // CHECK:STDERR:  let b: char = Cpp.M_UTF32_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:16: error: member name `M_UTF32_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  let b: char = Cpp.M_UTF32_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ let b: char = Cpp.M_UTF32_CHAR;
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:16: error: semantics TODO: `Unsupported: C++ literal's type `wchar_t` could not be mapped to a Carbon type` [SemanticsTodo]
+ // CHECK:STDERR:  let c: char = Cpp.M_WIDE_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:16: note: in `Cpp` name lookup for `M_WIDE_CHAR` [InCppNameLookup]
+ // CHECK:STDERR:  let c: char = Cpp.M_WIDE_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:16: error: member name `M_WIDE_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  let c: char = Cpp.M_WIDE_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ let c: char = Cpp.M_WIDE_CHAR;
+}
+
+// --- fail_assign_to_character_literals.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "character_literals.h";
+
+fn F() {
+ // CHECK:STDERR: fail_assign_to_character_literals.carbon:[[@LINE+4]]:2: error: expression is not assignable [AssignmentToNonAssignable]
+ // CHECK:STDERR:  Cpp.M_LOWERCASE = 'b';
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ Cpp.M_LOWERCASE = 'b';
+}
+
+// --- boolean_literal_macro.h
+#define M_TRUE true
+#define M_FALSE false
+
+#define M_ONE 1
+#define M_ZERO 0
+
+#define M_NOT_TRUE !true
+#define M_NOT_ZERO (!0)
+
+#define M_ONE_EQ_ONE (1 == 1)
+#define M_ONE_NEQ_ONE (1 != 1)
+#define M_AND (true && true)
+#define M_OR (M_TRUE || M_FALSE)
+
+#define M_COMPLEX ((2 * 2 < 5) && !M_FALSE)
+
+// --- import_boolean_literal_macro.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "boolean_literal_macro.h";
+
+fn F() {
+  //@dump-sem-ir-begin
+  let a: bool = Cpp.M_TRUE;
+  let b: bool = Cpp.M_FALSE;
+  let c: bool = Cpp.M_NOT_TRUE;
+  let d: bool = Cpp.M_NOT_ZERO;
+  let e: bool = Cpp.M_ONE_EQ_ONE;
+  let f: bool = Cpp.M_ONE_NEQ_ONE;
+  let g: bool = Cpp.M_AND;
+  let h: bool = Cpp.M_OR;
+  let i: bool = Cpp.M_COMPLEX;
+
+  let j: i32 = Cpp.M_ONE;
+  let k: i32 = Cpp.M_ZERO;
+  //@dump-sem-ir-end
+}
+
+// --- fail_assign_to_boolean_literal_macro.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "boolean_literal_macro.h";
+
+fn F() {
+ // CHECK:STDERR: fail_assign_to_boolean_literal_macro.carbon:[[@LINE+4]]:2: error: expression is not assignable [AssignmentToNonAssignable]
+ // CHECK:STDERR:  Cpp.M_TRUE = false;
+ // CHECK:STDERR:  ^~~~~~~~~~
+ // CHECK:STDERR:
+ Cpp.M_TRUE = false;
+}
+
+// --- lambda.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+  #define MyIntLambda (([] { return 7; })())
+''';
+
+fn F() {
+  let i: i32 = Cpp.MyIntLambda;
 }
 
 // --- macro_undefined.h
@@ -719,6 +1023,239 @@ fn F() {
 // CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %i32 = value_binding a, %INDIRECT_ONE.ref
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_floating_point_literal_macro.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %f64.d77: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %pattern_type.0ae: type = pattern_type %f64.d77 [concrete]
+// CHECK:STDOUT:   %float.d20: %f64.d77 = float_value 1 [concrete]
+// CHECK:STDOUT:   %float.e0c: %f64.d77 = float_value 100 [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %f32.97e: type = class_type @Float, @Float(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.201: type = pattern_type %f32.97e [concrete]
+// CHECK:STDOUT:   %float.e3b: %f32.97e = float_value 1 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .MyDouble = %float.d20
+// CHECK:STDOUT:     .MyDoubleE = %float.e0c
+// CHECK:STDOUT:     .MyFloat = %float.e3b
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %float.d20: %f64.d77 = float_value 1 [concrete = constants.%float.d20]
+// CHECK:STDOUT:   %float.e0c: %f64.d77 = float_value 100 [concrete = constants.%float.e0c]
+// CHECK:STDOUT:   %float.e3b: %f32.97e = float_value 1 [concrete = constants.%float.e3b]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.0ae = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %MyDouble.ref: %f64.d77 = name_ref MyDouble, imports.%float.d20 [concrete = constants.%float.d20]
+// CHECK:STDOUT:   %.loc8: type = splice_block %f64.loc8 [concrete = constants.%f64.d77] {
+// CHECK:STDOUT:     %int_64.loc8: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
+// CHECK:STDOUT:     %f64.loc8: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: %f64.d77 = value_binding a, %MyDouble.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type.0ae = value_binding_pattern b [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %MyDoubleE.ref: %f64.d77 = name_ref MyDoubleE, imports.%float.e0c [concrete = constants.%float.e0c]
+// CHECK:STDOUT:   %.loc9: type = splice_block %f64.loc9 [concrete = constants.%f64.d77] {
+// CHECK:STDOUT:     %int_64.loc9: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
+// CHECK:STDOUT:     %f64.loc9: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b: %f64.d77 = value_binding b, %MyDoubleE.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.201 = value_binding_pattern c [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %MyFloat.ref: %f32.97e = name_ref MyFloat, imports.%float.e3b [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc10: type = splice_block %f32.loc10 [concrete = constants.%f32.97e] {
+// CHECK:STDOUT:     %int_32.loc10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %f32.loc10: type = class_type @Float, @Float(constants.%int_32) [concrete = constants.%f32.97e]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c: %f32.97e = value_binding c, %MyFloat.ref
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_boolean_literal_macro.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
+// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
+// CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %int_1: %i32 = int_value 1 [concrete]
+// CHECK:STDOUT:   %int_0: %i32 = int_value 0 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .M_TRUE = %true.d1048d.1
+// CHECK:STDOUT:     .M_FALSE = %false.505718.1
+// CHECK:STDOUT:     .M_NOT_TRUE = %false.505718.2
+// CHECK:STDOUT:     .M_NOT_ZERO = %true.d1048d.2
+// CHECK:STDOUT:     .M_ONE_EQ_ONE = %true.d1048d.3
+// CHECK:STDOUT:     .M_ONE_NEQ_ONE = %false.505718.3
+// CHECK:STDOUT:     .M_AND = %true.d1048d.4
+// CHECK:STDOUT:     .M_OR = %true.d1048d.5
+// CHECK:STDOUT:     .M_COMPLEX = %true.d1048d.6
+// CHECK:STDOUT:     .M_ONE = %int_1
+// CHECK:STDOUT:     .M_ZERO = %int_0
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %true.d1048d.1: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %false.505718.1: bool = bool_literal false [concrete = constants.%false]
+// CHECK:STDOUT:   %false.505718.2: bool = bool_literal false [concrete = constants.%false]
+// CHECK:STDOUT:   %true.d1048d.2: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %true.d1048d.3: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %false.505718.3: bool = bool_literal false [concrete = constants.%false]
+// CHECK:STDOUT:   %true.d1048d.4: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %true.d1048d.5: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %true.d1048d.6: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %int_1: %i32 = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %int_0: %i32 = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.831 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %M_TRUE.ref: bool = name_ref M_TRUE, imports.%true.d1048d.1 [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc8_10.1: type = splice_block %.loc8_10.3 [concrete = bool] {
+// CHECK:STDOUT:     %Bool.call.loc8: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc8_10.2: type = value_of_initializer %Bool.call.loc8 [concrete = bool]
+// CHECK:STDOUT:     %.loc8_10.3: type = converted %Bool.call.loc8, %.loc8_10.2 [concrete = bool]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: bool = value_binding a, %M_TRUE.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %M_FALSE.ref: bool = name_ref M_FALSE, imports.%false.505718.1 [concrete = constants.%false]
+// CHECK:STDOUT:   %.loc9_10.1: type = splice_block %.loc9_10.3 [concrete = bool] {
+// CHECK:STDOUT:     %Bool.call.loc9: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc9_10.2: type = value_of_initializer %Bool.call.loc9 [concrete = bool]
+// CHECK:STDOUT:     %.loc9_10.3: type = converted %Bool.call.loc9, %.loc9_10.2 [concrete = bool]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b: bool = value_binding b, %M_FALSE.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.831 = value_binding_pattern c [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %M_NOT_TRUE.ref: bool = name_ref M_NOT_TRUE, imports.%false.505718.2 [concrete = constants.%false]
+// CHECK:STDOUT:   %.loc10_10.1: type = splice_block %.loc10_10.3 [concrete = bool] {
+// CHECK:STDOUT:     %Bool.call.loc10: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc10_10.2: type = value_of_initializer %Bool.call.loc10 [concrete = bool]
+// CHECK:STDOUT:     %.loc10_10.3: type = converted %Bool.call.loc10, %.loc10_10.2 [concrete = bool]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c: bool = value_binding c, %M_NOT_TRUE.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: %pattern_type.831 = value_binding_pattern d [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %M_NOT_ZERO.ref: bool = name_ref M_NOT_ZERO, imports.%true.d1048d.2 [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc11_10.1: type = splice_block %.loc11_10.3 [concrete = bool] {
+// CHECK:STDOUT:     %Bool.call.loc11: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc11_10.2: type = value_of_initializer %Bool.call.loc11 [concrete = bool]
+// CHECK:STDOUT:     %.loc11_10.3: type = converted %Bool.call.loc11, %.loc11_10.2 [concrete = bool]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %d: bool = value_binding d, %M_NOT_ZERO.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %e.patt: %pattern_type.831 = value_binding_pattern e [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %M_ONE_EQ_ONE.ref: bool = name_ref M_ONE_EQ_ONE, imports.%true.d1048d.3 [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc12_10.1: type = splice_block %.loc12_10.3 [concrete = bool] {
+// CHECK:STDOUT:     %Bool.call.loc12: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc12_10.2: type = value_of_initializer %Bool.call.loc12 [concrete = bool]
+// CHECK:STDOUT:     %.loc12_10.3: type = converted %Bool.call.loc12, %.loc12_10.2 [concrete = bool]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %e: bool = value_binding e, %M_ONE_EQ_ONE.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %f.patt: %pattern_type.831 = value_binding_pattern f [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %M_ONE_NEQ_ONE.ref: bool = name_ref M_ONE_NEQ_ONE, imports.%false.505718.3 [concrete = constants.%false]
+// CHECK:STDOUT:   %.loc13_10.1: type = splice_block %.loc13_10.3 [concrete = bool] {
+// CHECK:STDOUT:     %Bool.call.loc13: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc13_10.2: type = value_of_initializer %Bool.call.loc13 [concrete = bool]
+// CHECK:STDOUT:     %.loc13_10.3: type = converted %Bool.call.loc13, %.loc13_10.2 [concrete = bool]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %f: bool = value_binding f, %M_ONE_NEQ_ONE.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %g.patt: %pattern_type.831 = value_binding_pattern g [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %M_AND.ref: bool = name_ref M_AND, imports.%true.d1048d.4 [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc14_10.1: type = splice_block %.loc14_10.3 [concrete = bool] {
+// CHECK:STDOUT:     %Bool.call.loc14: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc14_10.2: type = value_of_initializer %Bool.call.loc14 [concrete = bool]
+// CHECK:STDOUT:     %.loc14_10.3: type = converted %Bool.call.loc14, %.loc14_10.2 [concrete = bool]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %g: bool = value_binding g, %M_AND.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %h.patt: %pattern_type.831 = value_binding_pattern h [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %M_OR.ref: bool = name_ref M_OR, imports.%true.d1048d.5 [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc15_10.1: type = splice_block %.loc15_10.3 [concrete = bool] {
+// CHECK:STDOUT:     %Bool.call.loc15: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc15_10.2: type = value_of_initializer %Bool.call.loc15 [concrete = bool]
+// CHECK:STDOUT:     %.loc15_10.3: type = converted %Bool.call.loc15, %.loc15_10.2 [concrete = bool]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %h: bool = value_binding h, %M_OR.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %i.patt: %pattern_type.831 = value_binding_pattern i [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %M_COMPLEX.ref: bool = name_ref M_COMPLEX, imports.%true.d1048d.6 [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc16_10.1: type = splice_block %.loc16_10.3 [concrete = bool] {
+// CHECK:STDOUT:     %Bool.call.loc16: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc16_10.2: type = value_of_initializer %Bool.call.loc16 [concrete = bool]
+// CHECK:STDOUT:     %.loc16_10.3: type = converted %Bool.call.loc16, %.loc16_10.2 [concrete = bool]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i: bool = value_binding i, %M_COMPLEX.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %j.patt: %pattern_type.7ce = value_binding_pattern j [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %M_ONE.ref: %i32 = name_ref M_ONE, imports.%int_1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %.loc18: type = splice_block %i32.loc18 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc18: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc18: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %j: %i32 = value_binding j, %M_ONE.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %k.patt: %pattern_type.7ce = value_binding_pattern k [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %M_ZERO.ref: %i32 = name_ref M_ZERO, imports.%int_0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   %.loc19: type = splice_block %i32.loc19 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc19: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %k: %i32 = value_binding k, %M_ZERO.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

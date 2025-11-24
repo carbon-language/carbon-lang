@@ -60,10 +60,12 @@ namespace Carbon::SemIR {
 // is completed when referenced. In a few cases where completeness is always
 // known (particularly `TypeType` and `ErrorInst`), a `TypeId` may be provided
 // by a child.
-template <InstKind::RawEnumType KindT, TemplateString IrName>
+template <InstKind::RawEnumType KindT, TemplateString IrName,
+          ExprCategory Cat = ExprCategory::Value>
 struct SingletonTypeInst {
   static constexpr auto Kind = InstKind::Make(KindT).Define<Parse::NoneNodeId>(
       InstKind::DefinitionInfo{.ir_name = IrName,
+                               .expr_category = Cat,
                                .is_type = InstIsType::Always,
                                .constant_kind = InstConstantKind::Always});
   static constexpr auto TypeInstId = MakeSingletonTypeInstId<Kind>();
@@ -136,7 +138,8 @@ struct AddrOf {
 // Binds a name as an alias. See AnyBinding for member documentation.
 struct AliasBinding {
   static constexpr auto Kind = InstKind::AliasBinding.Define<Parse::NodeId>(
-      {.ir_name = "alias_binding"});
+      {.ir_name = "alias_binding",
+       .expr_category = ComputedExprCategory::SameAsSecondOperand});
 
   TypeId type_id;
   EntityNameId entity_name_id;
@@ -148,6 +151,7 @@ struct ArrayIndex {
   // Parse node is usually Parse::IndexExprId.
   static constexpr auto Kind = InstKind::ArrayIndex.Define<Parse::NodeId>(
       {.ir_name = "array_index",
+       .expr_category = ComputedExprCategory::SameAsFirstOperand,
        .is_type = InstIsType::Maybe,
        // TODO: This should probably be SymbolicOrReference.
        .constant_kind = InstConstantKind::SymbolicOnly});
@@ -161,8 +165,8 @@ struct ArrayIndex {
 // expression. `inits_id` contains one initializer per array element.
 // `dest_id` is the destination array object for the initialization.
 struct ArrayInit {
-  static constexpr auto Kind =
-      InstKind::ArrayInit.Define<Parse::NodeId>({.ir_name = "array_init"});
+  static constexpr auto Kind = InstKind::ArrayInit.Define<Parse::NodeId>(
+      {.ir_name = "array_init", .expr_category = ExprCategory::Initializing});
 
   TypeId type_id;
   InstBlockId inits_id;
@@ -186,7 +190,8 @@ struct ArrayType {
 // Perform a no-op conversion to a compatible type.
 struct AsCompatible {
   static constexpr auto Kind = InstKind::AsCompatible.Define<Parse::NodeId>(
-      {.ir_name = "as_compatible"});
+      {.ir_name = "as_compatible",
+       .expr_category = ComputedExprCategory::SameAsFirstOperand});
 
   TypeId type_id;
   InstId source_id;
@@ -262,6 +267,7 @@ using AutoType = SingletonTypeInst<InstKind::AutoType, "auto">;
 struct BaseDecl {
   static constexpr auto Kind = InstKind::BaseDecl.Define<Parse::BaseDeclId>(
       {.ir_name = "base_decl",
+       .expr_category = ExprCategory::NotExpr,
        .constant_kind = InstConstantKind::AlwaysUnique});
 
   TypeId type_id;
@@ -365,6 +371,7 @@ struct Call {
   // conversions.
   static constexpr auto Kind = InstKind::Call.Define<Parse::NodeId>(
       {.ir_name = "call",
+       .expr_category = ExprCategory::Initializing,
        .constant_needs_inst_id =
            InstConstantNeedsInstIdKind::DuringEvaluation});
 
@@ -416,6 +423,7 @@ struct ClassElementAccess {
   static constexpr auto Kind =
       InstKind::ClassElementAccess.Define<Parse::NodeId>(
           {.ir_name = "class_element_access",
+           .expr_category = ComputedExprCategory::DependsOnOperands,
            .is_type = InstIsType::Maybe,
            .constant_kind = InstConstantKind::SymbolicOrReference});
 
@@ -426,8 +434,8 @@ struct ClassElementAccess {
 
 // Initializes a class object at dest_id with the contents of elements_id.
 struct ClassInit {
-  static constexpr auto Kind =
-      InstKind::ClassInit.Define<Parse::NodeId>({.ir_name = "class_init"});
+  static constexpr auto Kind = InstKind::ClassInit.Define<Parse::NodeId>(
+      {.ir_name = "class_init", .expr_category = ExprCategory::Initializing});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -482,8 +490,9 @@ struct ConstType {
 // Records that a type conversion `original as new_type` was done, producing the
 // result.
 struct Converted {
-  static constexpr auto Kind =
-      InstKind::Converted.Define<Parse::NodeId>({.ir_name = "converted"});
+  static constexpr auto Kind = InstKind::Converted.Define<Parse::NodeId>(
+      {.ir_name = "converted",
+       .expr_category = ComputedExprCategory::SameAsSecondOperand});
 
   TypeId type_id;
   // The operand prior to being converted. This is tracked only for tooling
@@ -506,14 +515,6 @@ struct ConvertToValueAction {
   TypeInstId target_type_inst_id;
 };
 
-// A type for C++ `void`. Should only be used for pointers (`void*`).
-struct CppVoidType
-    : public SingletonTypeInst<InstKind::CppVoidType, "Cpp.void"> {
-  // `Cpp.void` is never complete, so `GetSingletonType` won't work.
-  static constexpr auto TypeId =
-      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
-};
-
 // A type whose layout is determined externally. This is used as the object
 // representation of class types imported from C++.
 struct CustomLayoutType {
@@ -530,8 +531,8 @@ struct CustomLayoutType {
 
 // The `*` dereference operator, as in `*pointer`.
 struct Deref {
-  static constexpr auto Kind =
-      InstKind::Deref.Define<Parse::NodeId>({.ir_name = "deref"});
+  static constexpr auto Kind = InstKind::Deref.Define<Parse::NodeId>(
+      {.ir_name = "deref", .expr_category = ExprCategory::DurableRef});
 
   TypeId type_id;
   InstId pointer_id;
@@ -541,7 +542,8 @@ struct Deref {
 // required. For example, when there is a type checking issue, this will be used
 // in the type_id. It's typically used as a cue that semantic checking doesn't
 // need to issue further diagnostics.
-struct ErrorInst : public SingletonTypeInst<InstKind::ErrorInst, "<error>"> {
+struct ErrorInst : public SingletonTypeInst<InstKind::ErrorInst, "<error>",
+                                            ExprCategory::Error> {
   // Convenience for returning error InstIds and ConstantIds directly.
   static constexpr InstId InstId = TypeInstId;
   static constexpr auto ConstantId =
@@ -553,8 +555,9 @@ struct ErrorInst : public SingletonTypeInst<InstKind::ErrorInst, "<error>"> {
 
 // An `export bind_name` declaration.
 struct ExportDecl {
-  static constexpr auto Kind =
-      InstKind::ExportDecl.Define<Parse::ExportDeclId>({.ir_name = "export"});
+  static constexpr auto Kind = InstKind::ExportDecl.Define<Parse::ExportDeclId>(
+      {.ir_name = "export",
+       .expr_category = ComputedExprCategory::SameAsSecondOperand});
 
   TypeId type_id;
   EntityNameId entity_name_id;
@@ -620,6 +623,7 @@ struct FieldDecl {
   static constexpr auto Kind =
       InstKind::FieldDecl.Define<Parse::FieldNameAndTypeId>(
           {.ir_name = "field_decl",
+           .expr_category = ExprCategory::NotExpr,
            .constant_kind = InstConstantKind::AlwaysUnique});
 
   TypeId type_id;
@@ -681,7 +685,9 @@ struct FloatValue {
 struct FunctionDecl {
   static constexpr auto Kind =
       InstKind::FunctionDecl.Define<Parse::AnyFunctionDeclId>(
-          {.ir_name = "fn_decl", .is_lowered = false});
+          {.ir_name = "fn_decl",
+           .expr_category = ExprCategory::NotExpr,
+           .is_lowered = false});
 
   TypeId type_id;
   FunctionId function_id;
@@ -872,6 +878,7 @@ struct ImplWitnessAssociatedConstant {
   static constexpr auto Kind =
       InstKind::ImplWitnessAssociatedConstant.Define<Parse::NodeId>(
           {.ir_name = "impl_witness_assoc_constant",
+           .expr_category = ComputedExprCategory::SameAsFirstOperand,
            .is_type = InstIsType::Maybe,
            // TODO: For dynamic dispatch, we might want to lower witness tables
            // as constants.
@@ -954,7 +961,9 @@ struct ImportDecl {
 struct ImportRefUnloaded {
   static constexpr auto Kind =
       InstKind::ImportRefUnloaded.Define<Parse::NodeId>(
-          {.ir_name = "import_ref", .is_lowered = false});
+          {.ir_name = "import_ref",
+           .expr_category = ComputedExprCategory::DependsOnOperands,
+           .is_lowered = false});
 
   ImportIRInstId import_ir_inst_id;
   EntityNameId entity_name_id;
@@ -964,7 +973,9 @@ struct ImportRefUnloaded {
 // member documentation.
 struct ImportRefLoaded {
   static constexpr auto Kind = InstKind::ImportRefLoaded.Define<Parse::NodeId>(
-      {.ir_name = "import_ref", .is_lowered = false});
+      {.ir_name = "import_ref",
+       .expr_category = ComputedExprCategory::DependsOnOperands,
+       .is_lowered = false});
 
   TypeId type_id;
   ImportIRInstId import_ir_inst_id;
@@ -982,7 +993,9 @@ struct ImportRefLoaded {
 // copy initializing representation.
 struct InPlaceInit {
   static constexpr auto Kind = InstKind::InPlaceInit.Define<Parse::NodeId>(
-      {.ir_name = "in_place_init", .constant_kind = InstConstantKind::Never});
+      {.ir_name = "in_place_init",
+       .expr_category = ExprCategory::Initializing,
+       .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   // Used only to track the source of the initialization; this has no semantic
@@ -999,7 +1012,8 @@ struct InitializeFrom {
   // reusing locations.
   // TODO: Figure out if there's a better way to handle this case.
   static constexpr auto Kind = InstKind::InitializeFrom.Define<Parse::NodeId>(
-      {.ir_name = "initialize_from"});
+      {.ir_name = "initialize_from",
+       .expr_category = ExprCategory::Initializing});
 
   TypeId type_id;
   InstId src_id;
@@ -1145,8 +1159,9 @@ struct NamedConstraintDecl {
 // resolution; the value may be used for reading or writing.
 struct NameRef {
   // TODO: Make Parse::NodeId more specific.
-  static constexpr auto Kind =
-      InstKind::NameRef.Define<Parse::NodeId>({.ir_name = "name_ref"});
+  static constexpr auto Kind = InstKind::NameRef.Define<Parse::NodeId>(
+      {.ir_name = "name_ref",
+       .expr_category = ComputedExprCategory::SameAsSecondOperand});
 
   TypeId type_id;
   NameId name_id;
@@ -1158,6 +1173,7 @@ struct Namespace {
   static constexpr auto Kind =
       InstKind::Namespace.Define<Parse::AnyNamespaceId>(
           {.ir_name = "namespace",
+           .expr_category = ExprCategory::NotExpr,
            // TODO: Modeling namespaces as unique doesn't properly handle
            // namespace redeclarations.
            .constant_kind = InstConstantKind::AlwaysUnique});
@@ -1182,7 +1198,11 @@ using NamespaceType = SingletonTypeInst<InstKind::NamespaceType, "<namespace>">;
 struct OutParam {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::OutParam.Define<Parse::NodeId>(
-      {.ir_name = "out_param", .constant_kind = InstConstantKind::Never});
+      {.ir_name = "out_param",
+       // TODO: Consider introducing a separate category for OutParam:
+       // unlike other DurableRefs, it permits initialization.
+       .expr_category = ExprCategory::DurableRef,
+       .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   CallParamIndex index;
@@ -1195,6 +1215,7 @@ struct OutParamPattern {
   static constexpr auto Kind =
       InstKind::OutParamPattern.Define<Parse::ReturnTypeId>(
           {.ir_name = "out_param_pattern",
+           .expr_category = ExprCategory::Pattern,
            .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
@@ -1248,7 +1269,9 @@ struct PointerType {
 struct RefBinding {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::RefBinding.Define<Parse::NodeId>(
-      {.ir_name = "ref_binding", .constant_kind = InstConstantKind::Indirect});
+      {.ir_name = "ref_binding",
+       .expr_category = ExprCategory::DurableRef,
+       .constant_kind = InstConstantKind::Indirect});
 
   TypeId type_id;
   EntityNameId entity_name_id;
@@ -1274,6 +1297,7 @@ struct RefBindingPattern {
   static constexpr auto Kind =
       InstKind::RefBindingPattern.Define<Parse::NodeId>(
           {.ir_name = "ref_binding_pattern",
+           .expr_category = ExprCategory::Pattern,
            .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
@@ -1286,7 +1310,9 @@ struct RefBindingPattern {
 struct RefParam {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::RefParam.Define<Parse::NodeId>(
-      {.ir_name = "ref_param", .constant_kind = InstConstantKind::Never});
+      {.ir_name = "ref_param",
+       .expr_category = ExprCategory::DurableRef,
+       .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   CallParamIndex index;
@@ -1299,6 +1325,7 @@ struct RefParamPattern {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::RefParamPattern.Define<Parse::NodeId>(
       {.ir_name = "ref_param_pattern",
+       .expr_category = ExprCategory::Pattern,
        .constant_kind = InstConstantKind::AlwaysUnique,
        .is_lowered = false});
 
@@ -1431,7 +1458,9 @@ struct ReturnExpr {
 // parameters.
 struct ReturnSlot {
   static constexpr auto Kind = InstKind::ReturnSlot.Define<Parse::NodeId>(
-      {.ir_name = "return_slot", .constant_kind = InstConstantKind::Never});
+      {.ir_name = "return_slot",
+       .expr_category = ExprCategory::DurableRef,
+       .constant_kind = InstConstantKind::Never});
 
   // The type of the value that will be stored in this slot (i.e. the return
   // type of the function).
@@ -1453,6 +1482,7 @@ struct ReturnSlotPattern {
   static constexpr auto Kind =
       InstKind::ReturnSlotPattern.Define<Parse::ReturnTypeId>(
           {.ir_name = "return_slot_pattern",
+           .expr_category = ExprCategory::Pattern,
            .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
@@ -1476,7 +1506,9 @@ struct ReturnSlotPattern {
 struct SpecificConstant {
   // TODO: Can we make Parse::NodeId more specific?
   static constexpr auto Kind = InstKind::SpecificConstant.Define<Parse::NodeId>(
-      {.ir_name = "specific_constant", .is_lowered = false});
+      {.ir_name = "specific_constant",
+       .expr_category = ComputedExprCategory::SameAsFirstOperand,
+       .is_lowered = false});
 
   TypeId type_id;
   AbsoluteInstId inst_id;
@@ -1543,8 +1575,9 @@ struct SpecificImplFunction {
 // constructing from aggregates we may figure out which conversions are required
 // late, and splice parts together.
 struct SpliceBlock {
-  static constexpr auto Kind =
-      InstKind::SpliceBlock.Define<Parse::NodeId>({.ir_name = "splice_block"});
+  static constexpr auto Kind = InstKind::SpliceBlock.Define<Parse::NodeId>(
+      {.ir_name = "splice_block",
+       .expr_category = ComputedExprCategory::SameAsSecondOperand});
 
   TypeId type_id;
   AbsoluteInstBlockId block_id;
@@ -1554,8 +1587,11 @@ struct SpliceBlock {
 // Splices an instruction computed by an action into the location where this
 // appears.
 struct SpliceInst {
-  static constexpr auto Kind =
-      InstKind::SpliceInst.Define<Parse::NodeId>({.ir_name = "splice_inst"});
+  static constexpr auto Kind = InstKind::SpliceInst.Define<Parse::NodeId>(
+      {.ir_name = "splice_inst",
+       // TODO: The expression category is in general dependent on
+       // instantiation. Add ExprCategory::Dependent to model this.
+       .expr_category = ExprCategory::Value});
 
   TypeId type_id;
   // The instruction that computes the instruction to splice. The type of this
@@ -1580,6 +1616,7 @@ struct StructAccess {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::StructAccess.Define<Parse::NodeId>(
       {.ir_name = "struct_access",
+       .expr_category = ComputedExprCategory::SameAsFirstOperand,
        .is_type = InstIsType::Maybe,
        .constant_kind = InstConstantKind::SymbolicOrReference});
 
@@ -1590,8 +1627,8 @@ struct StructAccess {
 
 // Initializes a dest struct with the provided elements.
 struct StructInit {
-  static constexpr auto Kind =
-      InstKind::StructInit.Define<Parse::NodeId>({.ir_name = "struct_init"});
+  static constexpr auto Kind = InstKind::StructInit.Define<Parse::NodeId>(
+      {.ir_name = "struct_init", .expr_category = ExprCategory::Initializing});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -1604,6 +1641,7 @@ struct StructLiteral {
       Parse::NodeIdOneOf<Parse::ChoiceAlternativeListCommaId,
                          Parse::ChoiceDefinitionId, Parse::StructLiteralId>>(
       {.ir_name = "struct_literal",
+       .expr_category = ExprCategory::Mixed,
        .constant_kind = InstConstantKind::Indirect});
 
   TypeId type_id;
@@ -1652,6 +1690,7 @@ struct SymbolicBindingPattern {
   static constexpr auto Kind =
       InstKind::SymbolicBindingPattern.Define<Parse::NodeId>({
           .ir_name = "symbolic_binding_pattern",
+          .expr_category = ExprCategory::Pattern,
           .constant_kind = InstConstantKind::AlwaysUnique,
           .is_lowered = false,
       });
@@ -1680,7 +1719,9 @@ struct SymbolicBindingType {
 // A temporary value.
 struct Temporary {
   static constexpr auto Kind = InstKind::Temporary.Define<Parse::NodeId>(
-      {.ir_name = "temporary", .has_cleanup = true});
+      {.ir_name = "temporary",
+       .expr_category = ExprCategory::EphemeralRef,
+       .has_cleanup = true});
 
   TypeId type_id;
   DestInstId storage_id;
@@ -1693,6 +1734,7 @@ struct TemporaryStorage {
   // to `false` here.
   static constexpr auto Kind = InstKind::TemporaryStorage.Define<Parse::NodeId>(
       {.ir_name = "temporary_storage",
+       .expr_category = ExprCategory::EphemeralRef,
        .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
@@ -1703,6 +1745,7 @@ struct TupleAccess {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::TupleAccess.Define<Parse::NodeId>(
       {.ir_name = "tuple_access",
+       .expr_category = ComputedExprCategory::SameAsFirstOperand,
        .is_type = InstIsType::Maybe,
        .constant_kind = InstConstantKind::SymbolicOrReference});
 
@@ -1713,8 +1756,8 @@ struct TupleAccess {
 
 // Initializes the destination tuple with the given elements.
 struct TupleInit {
-  static constexpr auto Kind =
-      InstKind::TupleInit.Define<Parse::NodeId>({.ir_name = "tuple_init"});
+  static constexpr auto Kind = InstKind::TupleInit.Define<Parse::NodeId>(
+      {.ir_name = "tuple_init", .expr_category = ExprCategory::Initializing});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -1727,6 +1770,7 @@ struct TupleLiteral {
       Parse::NodeIdOneOf<Parse::ChoiceAlternativeListCommaId,
                          Parse::ChoiceDefinitionId, Parse::TupleLiteralId>>(
       {.ir_name = "tuple_literal",
+       .expr_category = ExprCategory::Mixed,
        .constant_kind = InstConstantKind::Indirect});
 
   TypeId type_id;
@@ -1738,6 +1782,7 @@ struct TuplePattern {
   static constexpr auto Kind =
       InstKind::TuplePattern.Define<Parse::TuplePatternId>(
           {.ir_name = "tuple_pattern",
+           .expr_category = ExprCategory::Pattern,
            .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
@@ -1839,7 +1884,9 @@ struct UninitializedValue {
 // form a reference to the array object.
 struct ValueAsRef {
   static constexpr auto Kind = InstKind::ValueAsRef.Define<Parse::NodeId>(
-      {.ir_name = "value_as_ref", .constant_kind = InstConstantKind::Never});
+      {.ir_name = "value_as_ref",
+       .expr_category = ExprCategory::EphemeralRef,
+       .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
   InstId value_id;
@@ -1864,6 +1911,7 @@ struct ValueBindingPattern {
   static constexpr auto Kind =
       InstKind::ValueBindingPattern.Define<Parse::NodeId>(
           {.ir_name = "value_binding_pattern",
+           .expr_category = ExprCategory::Pattern,
            .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
@@ -1902,6 +1950,7 @@ struct ValueParamPattern {
   static constexpr auto Kind =
       InstKind::ValueParamPattern.Define<Parse::NodeId>(
           {.ir_name = "value_param_pattern",
+           .expr_category = ExprCategory::Pattern,
            .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
@@ -1917,6 +1966,7 @@ struct VarParamPattern {
   static constexpr auto Kind =
       InstKind::VarParamPattern.Define<Parse::VariablePatternId>(
           {.ir_name = "var_param_pattern",
+           .expr_category = ExprCategory::Pattern,
            .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
@@ -1930,6 +1980,7 @@ struct VarPattern {
   static constexpr auto Kind =
       InstKind::VarPattern.Define<Parse::VariablePatternId>(
           {.ir_name = "var_pattern",
+           .expr_category = ExprCategory::Pattern,
            .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 
@@ -1944,6 +1995,7 @@ struct VarStorage {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::VarStorage.Define<Parse::NodeId>(
       {.ir_name = "var",
+       .expr_category = ExprCategory::DurableRef,
        .constant_kind = InstConstantKind::ConditionalUnique,
        .constant_needs_inst_id = InstConstantNeedsInstIdKind::Permanent,
        .has_cleanup = true});
@@ -1964,7 +2016,9 @@ using VtableType = SingletonTypeInst<InstKind::VtableType, "<vtable>">;
 // Initializer for virtual function table pointers in object initialization.
 struct VtablePtr {
   static constexpr auto Kind = InstKind::VtablePtr.Define<Parse::NodeId>(
-      {.ir_name = "vtable_ptr", .constant_kind = InstConstantKind::Always});
+      {.ir_name = "vtable_ptr",
+       .expr_category = ExprCategory::EphemeralRef,
+       .constant_kind = InstConstantKind::Always});
   TypeId type_id;
   VtableId vtable_id;
   SpecificId specific_id;
@@ -1973,6 +2027,7 @@ struct VtablePtr {
 struct VtableDecl {
   static constexpr auto Kind = InstKind::VtableDecl.Define<Parse::NodeId>(
       {.ir_name = "vtable_decl",
+       .expr_category = ExprCategory::EphemeralRef,
        .constant_kind = InstConstantKind::Always,
        .is_lowered = false});
   TypeId type_id;

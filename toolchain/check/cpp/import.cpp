@@ -30,7 +30,9 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/base/int.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/base/value_ids.h"
 #include "toolchain/check/call.h"
 #include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
@@ -740,6 +742,13 @@ static auto GetInheritanceKind(clang::CXXRecordDecl* class_def)
     return SemIR::Class::Final;
   }
 
+  if (class_def->getNumVBases()) {
+    // TODO: We treat classes with virtual bases as final for now. We use the
+    // layout of the class including its virtual bases as its Carbon type
+    // layout, so we wouldn't behave correctly if we derived from it.
+    return SemIR::Class::Final;
+  }
+
   if (class_def->isAbstract()) {
     // If the class has any abstract members, it's abstract.
     return SemIR::Class::Abstract;
@@ -802,8 +811,15 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
   // Import bases.
   for (const auto& base : clang_def->bases()) {
-    CARBON_CHECK(!base.isVirtual(),
-                 "Should not import definition for class with a virtual base");
+    if (base.isVirtual()) {
+      // If the base is virtual, skip it from the layout. We don't know where it
+      // will actually appear within the complete object layout, as a pointer to
+      // this class might point to a derived type that puts the vbase in a
+      // different place.
+      // TODO: Track that the virtual base existed. Support derived-to-vbase
+      // conversions by generating a clang AST fragment.
+      continue;
+    }
 
     auto [base_type_inst_id, base_type_id] =
         ImportTypeAndDependencies(context, import_ir_inst_id, base.getType());
@@ -842,6 +858,10 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
       class_info.base_id = SemIR::InstId::None;
     }
 
+    // TODO: If the base class has virtual bases, the size of the type that we
+    // add to the layout here will be the full size of the class (including
+    // virtual bases), whereas the size actually occupied by this base class is
+    // only the nvsize (excluding virtual bases).
     auto base_offset = base.isVirtual()
                            ? clang_layout.getVBaseClassOffset(base_class)
                            : clang_layout.getBaseClassOffset(base_class);
@@ -1062,6 +1082,12 @@ static auto MakeIntType(Context& context, IntId size_id, bool is_signed)
   return ExprAsType(context, Parse::NodeId::None, type_inst_id);
 }
 
+static auto MakeCppCompatType(Context& context, SemIR::LocId loc_id,
+                              llvm::StringRef name) -> TypeExpr {
+  return ExprAsType(context, loc_id,
+                    LookupNameInCore(context, loc_id, {"CppCompat", name}));
+}
+
 // Maps a C++ builtin integer type to a Carbon type.
 // TODO: Handle integer types that map to named aliases.
 static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
@@ -1090,17 +1116,13 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
   }
   if (clang::ASTContext::hasSameType(qual_type, ast_context.LongTy) &&
       width == 32) {
-    return ExprAsType(context, Parse::NodeId::None,
-                      LookupNameInCore(context, Parse::NodeId::None,
-                                       {"CppCompat", "Long32"}));
+    return MakeCppCompatType(context, loc_id, "Long32");
   }
   return TypeExpr::None;
 }
 
 static auto MapNullptrType(Context& context, SemIR::LocId loc_id) -> TypeExpr {
-  return ExprAsType(
-      context, loc_id,
-      LookupNameInCore(context, loc_id, {"CppCompat", "NullptrT"}));
+  return MakeCppCompatType(context, loc_id, "NullptrT");
 }
 
 // Maps a C++ builtin type to a Carbon type.
@@ -1129,8 +1151,7 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
     }
     // TODO: Handle floating-point types that map to named aliases.
   } else if (type.isVoidType()) {
-    return ExprAsType(context, Parse::NodeId::None,
-                      SemIR::CppVoidType::TypeInstId);
+    return MakeCppCompatType(context, loc_id, "VoidBase");
   } else if (type.isNullPtrType()) {
     return MapNullptrType(context, loc_id);
   }
@@ -2223,29 +2244,74 @@ static auto IsIncompleteClass(Context& context, SemIR::NameScopeId scope_id)
              context.classes().Get(class_decl->class_id).self_type_id);
 }
 
-// Maps a Clang constant expression to a Carbon constant. Currently supports
-// only integer constants.
-// TODO: Add support for the other constant types for which a C++ to Carbon type
+// Maps a Clang literal expression to a Carbon constant.
+// TODO: Add support for all constant types for which a C++ to Carbon type
 // mapping exists.
 static auto MapConstant(Context& context, SemIR::LocId loc_id,
                         clang::Expr* expr) -> SemIR::InstId {
   CARBON_CHECK(expr, "empty expression");
-  auto* integer_literal = dyn_cast<clang::IntegerLiteral>(expr);
-  if (!integer_literal) {
-    context.TODO(
-        loc_id, "Unsupported: constant type: " + expr->getType().getAsString());
-    return SemIR::ErrorInst::InstId;
+
+  if (auto* string_literal = dyn_cast<clang::StringLiteral>(expr)) {
+    if (!string_literal->isOrdinary() && !string_literal->isUTF8()) {
+      context.TODO(loc_id,
+                   llvm::formatv("Unsupported: string literal type: {0}",
+                                 expr->getType()));
+      return SemIR::ErrorInst::InstId;
+    }
+    StringLiteralValueId string_id =
+        context.string_literal_values().Add(string_literal->getString());
+    auto inst_id =
+        MakeStringLiteral(context, Parse::StringLiteralId::None, string_id);
+    context.imports().push_back(inst_id);
+    return inst_id;
   }
-  SemIR::TypeId type_id =
-      MapType(context, loc_id, integer_literal->getType()).type_id;
+
+  SemIR::TypeId type_id = MapType(context, loc_id, expr->getType()).type_id;
   if (!type_id.has_value()) {
-    CARBON_DIAGNOSTIC(InCppConstantMapping, Error, "invalid integer type");
-    context.emitter().Emit(loc_id, InCppConstantMapping);
+    context.TODO(loc_id, llvm::formatv("Unsupported: C++ literal's type `{0}` "
+                                       "could not be mapped to a Carbon type",
+                                       expr->getType().getAsString()));
     return SemIR::ErrorInst::InstId;
   }
-  auto int_id = context.ints().Add(integer_literal->getValue().getSExtValue());
-  auto inst_id = AddInstInNoBlock<SemIR::IntValue>(
-      context, loc_id, {.type_id = type_id, .int_id = int_id});
+
+  SemIR::InstId inst_id = SemIR::InstId::None;
+  SemIR::ImportIRInstId imported_loc_id =
+      AddImportIRInst(context.sem_ir(), expr->getExprLoc());
+
+  if (auto* integer_literal = dyn_cast<clang::IntegerLiteral>(expr)) {
+    IntId int_id =
+        context.ints().Add(integer_literal->getValue().getSExtValue());
+    inst_id = AddInstInNoBlock(
+        context,
+        MakeImportedLocIdAndInst<SemIR::IntValue>(
+            context, imported_loc_id, {.type_id = type_id, .int_id = int_id}));
+  } else if (auto* bool_literal = dyn_cast<clang::CXXBoolLiteralExpr>(expr)) {
+    inst_id = AddInstInNoBlock(
+        context,
+        MakeImportedLocIdAndInst<SemIR::BoolLiteral>(
+            context, imported_loc_id,
+            {.type_id = type_id,
+             .value = SemIR::BoolValue::From(bool_literal->getValue())}));
+  } else if (auto* float_literal = dyn_cast<clang::FloatingLiteral>(expr)) {
+    FloatId float_id = context.floats().Add(float_literal->getValue());
+    inst_id = AddInstInNoBlock(context,
+                               MakeImportedLocIdAndInst<SemIR::FloatValue>(
+                                   context, imported_loc_id,
+                                   {.type_id = type_id, .float_id = float_id}));
+  } else if (auto* character_literal =
+                 dyn_cast<clang::CharacterLiteral>(expr)) {
+    inst_id = AddInstInNoBlock(
+        context, MakeImportedLocIdAndInst<SemIR::CharLiteralValue>(
+                     context, imported_loc_id,
+                     {.type_id = type_id,
+                      .value = SemIR::CharId(character_literal->getValue())}));
+  } else {
+    context.TODO(loc_id, llvm::formatv(
+                             "Unsupported: C++ constant expression type: '{0}'",
+                             expr->getType().getAsString()));
+    return SemIR::ErrorInst::InstId;
+  }
+
   context.imports().push_back(inst_id);
   return inst_id;
 }
@@ -2411,17 +2477,6 @@ auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
   if (auto* class_decl = dyn_cast<clang::CXXRecordDecl>(clang_decl)) {
     auto* class_def = class_decl->getDefinition();
     CARBON_CHECK(class_def, "Complete type has no definition");
-
-    if (class_def->getNumVBases()) {
-      // TODO: Handle virtual bases. We don't actually know where they go in the
-      // layout. We may also want to use a different size in the layout for
-      // `partial C`, excluding the virtual base. It's also not entirely safe to
-      // just skip over the virtual base, as the type we would construct would
-      // have a misleading size. For now, treat a C++ class with vbases as
-      // incomplete in Carbon.
-      context.TODO(loc_id, "class with virtual bases");
-      return false;
-    }
 
     BuildClassDefinition(context, import_ir_inst_id, class_id, class_inst_id,
                          class_def);

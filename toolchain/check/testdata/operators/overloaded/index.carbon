@@ -289,14 +289,14 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:   %SubscriptType: type = symbolic_binding SubscriptType, 0 [symbolic]
 // CHECK:STDOUT:   %IndexWith.type.b02: type = facet_type <@IndexWith, @IndexWith(%SubscriptType, %ElementType)> [symbolic]
 // CHECK:STDOUT:   %Self.a98: %IndexWith.type.b02 = symbolic_binding Self, 2 [symbolic]
+// CHECK:STDOUT:   %IndexWith.assoc_type.4e0: type = assoc_entity_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic]
+// CHECK:STDOUT:   %assoc0.845: %IndexWith.assoc_type.4e0 = assoc_entity element0, imports.%Core.import_ref.118 [symbolic]
 // CHECK:STDOUT:   %IndexWith.At.type.755: type = fn_type @IndexWith.At, @IndexWith(%SubscriptType, %ElementType) [symbolic]
 // CHECK:STDOUT:   %IndexWith.At.f92: %IndexWith.At.type.755 = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.984: type = pattern_type %ElementType [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 2, %Self.a98 [symbolic]
 // CHECK:STDOUT:   %pattern_type.e2c: type = pattern_type %Self.binding.as_type [symbolic]
 // CHECK:STDOUT:   %pattern_type.e68: type = pattern_type %SubscriptType [symbolic]
-// CHECK:STDOUT:   %IndexWith.assoc_type.4e0: type = assoc_entity_type @IndexWith, @IndexWith(%SubscriptType, %ElementType) [symbolic]
-// CHECK:STDOUT:   %assoc0.845: %IndexWith.assoc_type.4e0 = assoc_entity element0, imports.%Core.import_ref.118 [symbolic]
 // CHECK:STDOUT:   %IndexWith.type.5ee: type = facet_type <@IndexWith, @IndexWith(%empty_tuple.type, %empty_tuple.type)> [concrete]
 // CHECK:STDOUT:   %Self.d39: %IndexWith.type.5ee = symbolic_binding Self, 2 [symbolic]
 // CHECK:STDOUT:   %IndexWith.At.type.1a9: type = fn_type @IndexWith.At, @IndexWith(%empty_tuple.type, %empty_tuple.type) [concrete]
@@ -318,15 +318,15 @@ fn F() { ()[()]; }
 // CHECK:STDOUT:     import Core//core_wrong_arg_count
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.IndexWith: %IndexWith.type.504 = import_ref Core//core_wrong_arg_count, IndexWith, loaded [concrete = constants.%IndexWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.efcd44.1: type = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, loaded [symbolic = @IndexWith.%SubscriptType (constants.%SubscriptType)]
-// CHECK:STDOUT:   %Core.import_ref.c5c78a.1: type = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, loaded [symbolic = @IndexWith.%ElementType (constants.%ElementType)]
 // CHECK:STDOUT:   %Core.import_ref.05e = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.1bb = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.At: @IndexWith.%IndexWith.At.type (%IndexWith.At.type.755) = import_ref Core//core_wrong_arg_count, At, loaded [symbolic = @IndexWith.%IndexWith.At (constants.%IndexWith.At.f92)]
+// CHECK:STDOUT:   %Core.import_ref.efcd44.1: type = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, loaded [symbolic = @IndexWith.%SubscriptType (constants.%SubscriptType)]
+// CHECK:STDOUT:   %Core.import_ref.c5c78a.1: type = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, loaded [symbolic = @IndexWith.%ElementType (constants.%ElementType)]
+// CHECK:STDOUT:   %Core.import_ref.118 = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.efcd44.2: type = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, loaded [symbolic = @IndexWith.%SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:   %Core.import_ref.c5c78a.2: type = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, loaded [symbolic = @IndexWith.%ElementType (constants.%ElementType)]
 // CHECK:STDOUT:   %Core.import_ref.c11: @IndexWith.%IndexWith.type (%IndexWith.type.b02) = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, loaded [symbolic = @IndexWith.%Self (constants.%Self.a98)]
-// CHECK:STDOUT:   %Core.import_ref.118 = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
