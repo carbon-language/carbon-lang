@@ -84,20 +84,16 @@ static auto AddOverloadCandidates(clang::Sema& sema,
   }
 }
 
-auto CheckCppOverloadAccess(Context& context, SemIR::LocId loc_id,
-                            clang::DeclAccessPair overload,
-                            SemIR::InstId overload_inst_id,
-                            SemIR::NameScopeId parent_scope_id) -> void {
+auto CheckCppOverloadAccess(
+    Context& context, SemIR::LocId loc_id, clang::DeclAccessPair overload,
+    SemIR::KnownInstId<SemIR::FunctionDecl> overload_inst_id,
+    SemIR::NameScopeId parent_scope_id) -> void {
   SemIR::AccessKind member_access_kind = MapCppAccess(overload);
   if (member_access_kind == SemIR::AccessKind::Public) {
     return;
   }
-  if (overload_inst_id == SemIR::ErrorInst::InstId) {
-    return;
-  }
 
-  auto function_id =
-      context.insts().GetAs<SemIR::FunctionDecl>(overload_inst_id).function_id;
+  auto function_id = context.insts().Get(overload_inst_id).function_id;
   auto& function = context.functions().Get(function_id);
   if (!parent_scope_id.has_value()) {
     parent_scope_id = function.parent_scope_id;
@@ -169,8 +165,13 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
       sema.MarkFunctionReferenced(loc, best_viable_fn->Function);
       SemIR::InstId result_id = ImportCppFunctionDecl(
           context, loc_id, best_viable_fn->Function, arg_exprs.size());
-      CheckCppOverloadAccess(context, loc_id, best_viable_fn->FoundDecl,
-                             result_id, overload_set.parent_scope_id);
+      if (auto fn_decl =
+              context.insts().TryGetAsWithId<SemIR::FunctionDecl>(result_id)) {
+        CheckCppOverloadAccess(context, loc_id, best_viable_fn->FoundDecl,
+                               fn_decl->inst_id, overload_set.parent_scope_id);
+      } else {
+        CARBON_CHECK(result_id == SemIR::ErrorInst::InstId);
+      }
       return result_id;
     }
     case clang::OverloadingResult::OR_No_Viable_Function: {

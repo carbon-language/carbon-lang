@@ -17,7 +17,7 @@ namespace Carbon::Check {
 // that it is a direct member of, rather than a derived class.
 auto CheckCppOverloadAccess(
     Context& context, SemIR::LocId loc_id, clang::DeclAccessPair overload,
-    SemIR::InstId overload_inst_id,
+    SemIR::KnownInstId<SemIR::FunctionDecl> overload_inst_id,
     SemIR::NameScopeId parent_scope_id = SemIR::NameScopeId::None) -> void;
 
 // Resolves which function to call using Clang overloading resolution, or

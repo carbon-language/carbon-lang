@@ -14,6 +14,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -200,14 +201,14 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
   clang::SourceLocation loc = GetCppLocation(context, loc_id);
   clang::OverloadCandidateSet::OperatorRewriteInfo operator_rewrite_info(
       *op_kind, loc, /*AllowRewritten=*/true);
-  clang::UnresolvedSet<0> functions;
   clang::OverloadCandidateSet candidate_set(
       loc, clang::OverloadCandidateSet::CSK_Operator, operator_rewrite_info);
 
   clang::Sema& sema = context.clang_sema();
 
   // This works for both unary and binary operators.
-  sema.LookupOverloadedBinOp(candidate_set, *op_kind, functions, arg_exprs);
+  sema.LookupOverloadedBinOp(candidate_set, *op_kind, clang::UnresolvedSet<0>{},
+                             arg_exprs);
 
   clang::OverloadCandidateSet::iterator best_viable_fn;
   switch (candidate_set.BestViableFunction(sema, loc, best_viable_fn)) {
@@ -232,8 +233,13 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
           // If this is an operator method, the first arg will be used as self.
           arg_ids.size() -
               (isa<clang::CXXMethodDecl>(best_viable_fn->Function) ? 1 : 0));
-      CheckCppOverloadAccess(context, loc_id, best_viable_fn->FoundDecl,
-                             result_id);
+      if (auto fn_decl =
+              context.insts().TryGetAsWithId<SemIR::FunctionDecl>(result_id)) {
+        CheckCppOverloadAccess(context, loc_id, best_viable_fn->FoundDecl,
+                               fn_decl->inst_id);
+      } else {
+        CARBON_CHECK(result_id == SemIR::ErrorInst::InstId);
+      }
       return result_id;
     }
     case clang::OverloadingResult::OR_No_Viable_Function: {
@@ -272,6 +278,19 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
 auto IsCppOperatorMethodDecl(clang::Decl* decl) -> bool {
   auto* clang_method_decl = dyn_cast<clang::CXXMethodDecl>(decl);
   return clang_method_decl && clang_method_decl->isOverloadedOperator();
+}
+
+auto IsCppOperatorMethod(Context& context, SemIR::InstId inst_id) -> bool {
+  auto function_type = context.types().TryGetAs<SemIR::FunctionType>(
+      context.insts().Get(inst_id).type_id());
+  if (!function_type) {
+    return false;
+  }
+  SemIR::ClangDeclId clang_decl_id =
+      context.functions().Get(function_type->function_id).clang_decl_id;
+  return clang_decl_id.has_value() &&
+         IsCppOperatorMethodDecl(
+             context.clang_decls().Get(clang_decl_id).key.decl);
 }
 
 }  // namespace Carbon::Check

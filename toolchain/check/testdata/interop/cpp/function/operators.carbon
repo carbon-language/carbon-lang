@@ -222,6 +222,7 @@ import Cpp library "binary_operators.h";
 
 fn F() {
   let c1: Cpp.C = Cpp.C.C();
+  // TODO: Include a list of non-viable candidate operators with this diagnostic.
   // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE+4]]:19: error: cannot access member of interface `Core.AddWith(Core.IntLiteral)` in type `Cpp.C` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   let c2: Cpp.C = c1 + 5;
   // CHECK:STDERR:                   ^~~~~~
