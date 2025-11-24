@@ -2269,11 +2269,11 @@ static auto MapConstant(Context& context, SemIR::LocId loc_id,
             context, imported_loc_id, {.type_id = type_id, .int_id = int_id}));
   } else if (auto* bool_literal = dyn_cast<clang::CXXBoolLiteralExpr>(expr)) {
     inst_id = AddInstInNoBlock(
-        context, MakeImportedLocIdAndInst(
-                     context, imported_loc_id,
-                     SemIR::BoolLiteral{.type_id = type_id,
-                                        .value = SemIR::BoolValue::From(
-                                            bool_literal->getValue())}));
+        context,
+        MakeImportedLocIdAndInst<SemIR::BoolLiteral>(
+            context, imported_loc_id,
+            {.type_id = type_id,
+             .value = SemIR::BoolValue::From(bool_literal->getValue())}));
   } else if (auto* float_literal = dyn_cast<clang::FloatingLiteral>(expr)) {
     FloatId float_id = context.floats().Add(float_literal->getValue());
     inst_id = AddInstInNoBlock(context,
