@@ -797,7 +797,8 @@ auto FileContext::BuildDISubroutineType(
     // type is tagged with indirect calling convention.
   }
 
-  // TODO: Expose the `Call` parameter patterns in `Function`, and use them here.
+  // TODO: Expose the `Call` parameter patterns in `Function`, and use them
+  // here.
   llvm::SmallVector<llvm::Metadata*, 16> element_types;
   element_types.push_back(return_info.type_id.has_value()
                               ? get_debug_type(return_info.type_id)
@@ -857,11 +858,12 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
       BuildDISubroutineType(function, specific_id, debug_parameter_types),
       /*ScopeLine=*/0, llvm::DINode::FlagZero,
       llvm::DISubprogram::SPFlagDefinition);
-  // Add a variable for each parameter, as that is where DWARF debug information comes from.
+  // Add a variable for each parameter, as that is where DWARF debug information
+  // comes from.
   for (auto [argument_number, type] : llvm::enumerate(debug_parameter_types)) {
     context().di_builder().createParameterVariable(
         subprogram, "", argument_number + 1, nullptr, 0, type,
-        /*AlwaysPreserve=*/ true);
+        /*AlwaysPreserve=*/true);
   }
   return subprogram;
 }
