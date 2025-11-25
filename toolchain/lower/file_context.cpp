@@ -770,9 +770,8 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   context().di_builder().finalizeSubprogram(subprogram);
 }
 
-auto FileContext::BuildDISubroutineType(
-    const SemIR::Function& function, SemIR::SpecificId specific_id,
-    llvm::SmallVectorImpl<llvm::DIType*>& debug_parameter_types)
+auto FileContext::BuildDISubroutineType(const SemIR::Function& function,
+                                        SemIR::SpecificId specific_id)
     -> llvm::DISubroutineType* {
   auto implicit_param_patterns =
       sem_ir().inst_blocks().GetOrEmpty(function.implicit_param_patterns_id);
@@ -830,7 +829,6 @@ auto FileContext::BuildDISubroutineType(
       case SemIR::ValueRepr::Pointer:
         auto* param_type = get_debug_type(value_rep.type_id);
         element_types.push_back(param_type);
-        debug_parameter_types.push_back(param_type);
         break;
     }
   }
@@ -851,17 +849,18 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
   CARBON_CHECK(name, "Unexpected special name for function: {0}",
                function.name_id);
   auto loc = GetLocForDI(function.definition_id);
-  llvm::SmallVector<llvm::DIType*> debug_parameter_types;
+  llvm::DISubroutineType* subroutine_type =
+      BuildDISubroutineType(function, specific_id);
   auto* subprogram = context().di_builder().createFunction(
       context().di_compile_unit(), *name, llvm_function->getName(),
       /*File=*/context().di_builder().createFile(loc.filename, ""),
-      /*LineNo=*/loc.line_number,
-      BuildDISubroutineType(function, specific_id, debug_parameter_types),
+      /*LineNo=*/loc.line_number, subroutine_type,
       /*ScopeLine=*/0, llvm::DINode::FlagZero,
       llvm::DISubprogram::SPFlagDefinition);
   // Add a variable for each parameter, as that is where DWARF debug information
   // comes from.
-  for (auto [argument_number, type] : llvm::enumerate(debug_parameter_types)) {
+  for (auto [argument_number, type] :
+       llvm::enumerate(llvm::drop_begin(subroutine_type->getTypeArray()))) {
     context().di_builder().createParameterVariable(
         subprogram, "", argument_number + 1, nullptr, 0, type,
         /*AlwaysPreserve=*/true);
