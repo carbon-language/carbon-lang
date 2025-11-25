@@ -820,6 +820,7 @@ auto FileContext::BuildDISubroutineType(
     switch (auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), param_type_id);
             value_rep.kind) {
       case SemIR::ValueRepr::Unknown:
+        CARBON_FATAL("Lowering function with incomplete parameter type");
       case SemIR::ValueRepr::Dependent:
         CARBON_FATAL("Lowering function with dependent parameter type");
       case SemIR::ValueRepr::None:
