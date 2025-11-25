@@ -27,10 +27,9 @@ fn HelloPutchar() {
 
 // Demonstrate passing a null-terminated string to a C++ function.
 fn HelloStdio() {
-  // TODO: Requires mapping from Optional(const char*) into C++.
   // TODO: There should be a better way to interact with functions that expect a
   // null-terminated string.
-  // Cpp.puts(Cpp.std.data("Hello world!\n\0"));
+  Cpp.puts(Cpp.std.data("Hello world!\0"));
 
   // TODO: Requires variadic function support.
   // Cpp.printf("Hello world!\n\0");
@@ -38,7 +37,7 @@ fn HelloStdio() {
 
 // Demonstrate passing a string as a void pointer to a C++ function.
 fn HelloWrite() {
-  // TODO: Requires mapping from Optional(const char*) into a C++ const void*.
+  // TODO: Requires conversion from `const char*` to `const void*`.
   // let s: str = "Hello world!\n";
   // Cpp.write(1, Cpp.std.data(s), Cpp.std.size(s));
 }

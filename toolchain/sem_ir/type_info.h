@@ -215,9 +215,6 @@ struct NumericTypeLiteralInfo {
   // Prints the numeric type literal that corresponds to this type.
   auto PrintLiteral(const File& file, llvm::raw_ostream& out) const -> void;
 
-  // Gets a string containing the literal.
-  auto GetLiteralAsString(const File& file) const -> std::string;
-
   // Returns whether this is a valid numeric type literal.
   auto is_valid() const -> bool { return kind != None; }
 
@@ -242,6 +239,8 @@ struct RecognizedTypeInfo {
     CppNullptrT,
     // `Cpp.void` / `Core.CppCompat.VoidBase`.
     CppVoidBase,
+    // `Core.Optional(...)`.
+    Optional,
     // `str` / `Core.String`.
     // TODO: Rename `Core.String` to `Core.Str`.
     Str,
@@ -251,11 +250,10 @@ struct RecognizedTypeInfo {
   static auto ForType(const File& file, ClassType class_type)
       -> RecognizedTypeInfo;
 
-  // Prints the type literal that corresponds to this type.
-  auto PrintLiteral(const File& file, llvm::raw_ostream& out) const -> void;
-
-  // Gets a string containing the literal.
-  auto GetLiteralAsString(const File& file) const -> std::string;
+  // Prints the type literal or special type name that corresponds to this type,
+  // if there is one. Returns true if the type was printed, or false if this
+  // type doesn't have special syntax and should be printed directly.
+  auto PrintLiteral(const File& file, llvm::raw_ostream& out) const -> bool;
 
   // Returns whether this is a valid type literal.
   auto is_valid() const -> bool { return kind != None; }
@@ -264,6 +262,8 @@ struct RecognizedTypeInfo {
   Kind kind;
   // If this is a numeric literal, additional information about the literal.
   NumericTypeLiteralInfo numeric = NumericTypeLiteralInfo::Invalid;
+  // If this is a generic type, the arguments.
+  InstBlockId args_id = InstBlockId::None;
 };
 
 inline constexpr NumericTypeLiteralInfo NumericTypeLiteralInfo::Invalid = {
