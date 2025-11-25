@@ -797,7 +797,7 @@ auto FileContext::BuildDISubroutineType(
     // type is tagged with indirect calling convention.
   }
 
-  // TODO: expose the `Call` parameter patterns in `Function`, and use them here
+  // TODO: Expose the `Call` parameter patterns in `Function`, and use them here.
   llvm::SmallVector<llvm::Metadata*, 16> element_types;
   element_types.push_back(return_info.type_id.has_value()
                               ? get_debug_type(return_info.type_id)
