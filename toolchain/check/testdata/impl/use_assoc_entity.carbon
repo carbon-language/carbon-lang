@@ -164,7 +164,7 @@ class E {
   }
 }
 
-// --- call_extend_fn.carbon
+// --- fail_todo_call_extend_fn.carbon
 library "[[@TEST_NAME]]";
 
 interface J {
@@ -176,7 +176,7 @@ class E {
     fn F() {}
   }
 
-  // CHECK:STDERR: call_extend_fn.carbon:[[@LINE+4]]:12: error: value of type `<associated entity in J>` is not callable [CallToNonCallable]
+  // CHECK:STDERR: fail_todo_call_extend_fn.carbon:[[@LINE+4]]:12: error: value of type `<associated entity in J>` is not callable [CallToNonCallable]
   // CHECK:STDERR:   fn G() { F(); }
   // CHECK:STDERR:            ^~~
   // CHECK:STDERR:
