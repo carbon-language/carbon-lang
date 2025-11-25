@@ -28,9 +28,11 @@
 
 namespace Carbon::Check {
 
-// A function that wraps a C++ type to form another C++ type.
-using WrapFn = llvm::function_ref<
-    auto(Context& context, clang::QualType inner_type)->clang::QualType>;
+// A function that wraps a C++ type to form another C++ type. Note that this is
+// a raw function pointer; we don't currently use any lambda captures here. This
+// can be replaced by a `std::function` if captures are found to be needed.
+using WrapFn = auto (*)(Context& context, clang::QualType inner_type)
+    -> clang::QualType;
 
 // Represents a type that requires a subtype to be mapped into a Clang type
 // before it can be mapped.
