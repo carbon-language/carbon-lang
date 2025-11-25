@@ -608,6 +608,42 @@ fn F() {
   Cpp.foo(Cpp.MyNullPtr);
 }
 
+// --- user_defined_literal.h
+constexpr auto operator""_kb(unsigned long long k) -> unsigned long long {
+  return k * 1024;
+}
+#define M_1KB 1_kb
+
+// --- fail_todo_import_user_defined_literal.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./user_defined_literal.h:4:16: error: numeric literal with user-defined suffix cannot be used here [CppInteropParseError]
+// CHECK:STDERR:     4 | #define M_1KB 1_kb
+// CHECK:STDERR:       |                ^
+import Cpp library "user_defined_literal.h";
+
+fn F() {
+ // CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+15]]:2: note: in `Cpp` name lookup for `M_1KB` [InCppNameLookup]
+ // CHECK:STDERR:  Cpp.M_1KB;
+ // CHECK:STDERR:  ^~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+11]]:2: error: failed to parse macro Cpp.M_1KB to a valid constant expression [InCppMacroEvaluation]
+ // CHECK:STDERR:  Cpp.M_1KB;
+ // CHECK:STDERR:  ^~~~~~~~~
+ // CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+8]]:2: note: in `Cpp` name lookup for `M_1KB` [InCppNameLookup]
+ // CHECK:STDERR:  Cpp.M_1KB;
+ // CHECK:STDERR:  ^~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+4]]:2: error: member name `M_1KB` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  Cpp.M_1KB;
+ // CHECK:STDERR:  ^~~~~~~~~
+ // CHECK:STDERR:
+ Cpp.M_1KB;
+}
+
+
 
 // --- lambda.carbon
 
