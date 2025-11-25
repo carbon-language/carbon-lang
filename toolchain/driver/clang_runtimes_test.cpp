@@ -199,6 +199,17 @@ TEST_F(ClangRuntimesTest, Libunwind) {
 }
 
 TEST_F(ClangRuntimesTest, Libcxx) {
+#if __has_feature(address_sanitizer)
+  // ASan causes Clang and LLVM to be _egregiously_ inefficient at compiling
+  // libc++, taking 5x - 10x longer than without ASan. Rough estimate is that it
+  // would take 5-10 minutes on GitHub's Linux runner. Given the limited utility
+  // of this test coverage, skip it in that configuration. This also misses
+  // assert-coverage for building libc++, but we don't really expect issues
+  // there. Misconfiguration and other common issues should still be covered in
+  // fully optimized builds at much lower cost.
+  GTEST_SKIP() << "Skipping build of libc++ with an ASan-itized Clang";
+#endif
+
   LibcxxBuilder libcxx_builder(&runner_, &threads_, target_triple_, &runtimes_);
   auto build_result = std::move(libcxx_builder).Wait();
   ASSERT_TRUE(build_result.ok()) << build_result.error();

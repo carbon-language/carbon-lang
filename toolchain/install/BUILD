@@ -178,6 +178,10 @@ configure_cmake_file(
         # configuration defines. Note that while this is sorted here in the
         # BUILD file, it is expanded at the _end_ of the configuration header
         # and so overrides the other configuration settings.
+        #
+        # TODO: This is a lot of C++ code to embed into a BUILD file. Even
+        # though it moves it farther from the interacting CMake defines, we
+        # should look at factoring this into a header that is included.
         "_LIBCPP_ABI_DEFINES": "\n".join([
             # We want to install a single header that works in all build modes,
             # so we define the ABI namespace based on how the header is used
