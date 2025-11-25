@@ -608,6 +608,42 @@ fn F() {
   Cpp.foo(Cpp.MyNullPtr);
 }
 
+// --- enums.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+  enum A { a = 1, b = 2 };
+  #define M_A ::a
+''';
+
+fn F() {
+  let a: Cpp.A = Cpp.M_A;
+}
+
+// --- fail_todo_enums_no_scope.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+  enum A { a = 1, b = 2 };
+  // CHECK:STDERR: fail_todo_enums_no_scope.carbon:[[@LINE+7]]:24: error: use of undeclared identifier 'a'; did you mean '::a'? [CppInteropParseError]
+  // CHECK:STDERR:    13 |   #define M_A_NO_SCOPE a
+  // CHECK:STDERR:       |                        ^
+  // CHECK:STDERR:       |                        ::a
+  // CHECK:STDERR: fail_todo_enums_no_scope.carbon:[[@LINE-5]]:12: note: '::a' declared here [CppInteropParseNote]
+  // CHECK:STDERR:     5 |   enum A { a = 1, b = 2 };
+  // CHECK:STDERR:       |            ^
+  #define M_A_NO_SCOPE a
+''';
+
+fn F() {
+  // CHECK:STDERR: fail_todo_enums_no_scope.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `M_A_NO_SCOPE` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.M_A_NO_SCOPE;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  Cpp.M_A_NO_SCOPE;
+}
 
 // --- lambda.carbon
 
