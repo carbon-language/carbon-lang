@@ -857,7 +857,7 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
       BuildDISubroutineType(function, specific_id, debug_parameter_types),
       /*ScopeLine=*/0, llvm::DINode::FlagZero,
       llvm::DISubprogram::SPFlagDefinition);
-  // add variables
+  // Add a variable for each parameter, as that is where DWARF debug information comes from.
   for (auto [argument_number, type] : llvm::enumerate(debug_parameter_types)) {
     context().di_builder().createParameterVariable(
         subprogram, "", argument_number + 1, nullptr, 0, type,
