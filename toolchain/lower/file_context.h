@@ -200,14 +200,15 @@ class FileContext {
                          const llvm::Function* llvm_function)
       -> llvm::DISubprogram*;
 
+  // Build a `DISubroutineType` for the given function, including the return and
+  // parameter types.
   auto BuildDISubroutineType(
       const SemIR::Function&, SemIR::SpecificId specific_id,
       llvm::SmallVectorImpl<llvm::DIType*>& debug_parameter_types)
       -> llvm::DISubroutineType*;
-  auto BuildDIType(SemIR::TypeId type_id) const -> llvm::DIType*;
 
-  // Builds the type for the given instruction, which should then be cached by
-  // the caller.
+  // Builds the `llvm::Type` and `llvm::DIType` for the given instruction, which
+  // should then be cached by the caller.
   auto BuildType(SemIR::InstId inst_id)
       -> std::pair<llvm::Type*, llvm::DIType*>;
 
