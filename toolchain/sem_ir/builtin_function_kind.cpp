@@ -373,7 +373,6 @@ constexpr BuiltinInfo PrintInt = {
 constexpr BuiltinInfo ReadChar = {"read.char",
                                   ValidateSignature<auto()->AnySizedInt>};
 
-
 // Returns the `Core.CharLiteral` type.
 constexpr BuiltinInfo CharLiteralMakeType = {"char_literal.make_type",
                                              ValidateSignature<auto()->Type>};
@@ -413,8 +412,8 @@ constexpr BuiltinInfo CharConvertChecked = {
     ValidateSignature<auto(CharLiteral)->CharCompatible>};
 
 // Converts from an integer type to a char-compatible type (u8/adapted Char).
-constexpr BuiltinInfo IntConvertChar = {"int.convert_char", 
-                                        ValidateSignature<auto(AnyInt)->CharCompatible>};
+constexpr BuiltinInfo IntConvertChar = {
+    "int.convert_char", ValidateSignature<auto(AnyInt)->CharCompatible>};
 
 // Converts between integer types, truncating if necessary.
 constexpr BuiltinInfo IntConvert = {"int.convert",
