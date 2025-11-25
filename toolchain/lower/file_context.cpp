@@ -956,7 +956,9 @@ static auto BuildTypeForInst(FileContext& context, SemIR::IntType inst)
   auto width = context.sem_ir().ints().Get(width_inst->int_id).getZExtValue();
   return {llvm::IntegerType::get(context.llvm_context(), width),
           context.context().di_builder().createBasicType(
-              "int", width, llvm::dwarf::DW_ATE_signed)};
+              "int", width,
+              inst.int_kind.is_signed() ? llvm::dwarf::DW_ATE_signed
+                                        : llvm::dwarf::DW_ATE_unsigned)};
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::PointerType /*inst*/)

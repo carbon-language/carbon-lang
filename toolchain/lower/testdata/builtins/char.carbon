@@ -48,7 +48,7 @@ fn Example() -> char {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Example", linkageName: "_CExample.Main", scope: null, file: !3, line: 4, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7}
-// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 8, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 8, encoding: DW_ATE_unsigned)
 // CHECK:STDOUT: !8 = !DILocation(line: 5, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 6, column: 10, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 6, column: 3, scope: !4)
