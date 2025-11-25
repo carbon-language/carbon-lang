@@ -297,3 +297,47 @@ let convert_not_constant: i16 = IntLiteralToInt16(not_constant);
 // CHECK:STDOUT:   return %Int32ToInt64.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+
+// --- int_to_char_basic.carbon
+
+library "[[@TEST_NAME]]";
+import library "int_ops";
+
+fn F() {
+  // Basic ASCII range
+  Test(Int32ToChar(0)) as Expect(0 as char);
+  Test(Int32ToChar(10)) as Expect(10 as char);
+  Test(Int32ToChar(32)) as Expect(32 as char);
+  Test(Int32ToChar(65)) as Expect(65 as char);
+  Test(Int32ToChar(97)) as Expect(97 as char);
+  Test(Int32ToChar(0x7F)) as Expect(0x7F as char);
+
+  // UTF-8 single-byte values (128–255)
+  Test(Int32ToChar(0x80)) as Expect(0x80 as char);
+  Test(Int32ToChar(0x90)) as Expect(0x90 as char);
+  Test(Int32ToChar(0xA0)) as Expect(0xA0 as char);
+  Test(Int32ToChar(0xC0)) as Expect(0xC0 as char);
+  Test(Int32ToChar(0xE0)) as Expect(0xE0 as char);
+  Test(Int32ToChar(0xFF)) as Expect(0xFF as char);
+
+  // Negative values → must error (same style as sign_extend test)
+  // CHECK:STDERR: int_to_char_basic.carbon:[[@LINE+3]]:30: error: cannot convert negative integer to `char` [InvalidIntToChar]
+  // CHECK:STDERR:   var bad1: char = (-1 as char);
+  // CHECK:STDERR:                              ^~~
+  var bad1: char = (-1 as char);
+
+  // CHECK:STDERR: int_to_char_basic.carbon:[[@LINE+3]]:30: error: cannot convert negative integer to `char` [InvalidIntToChar]
+  // CHECK:STDERR:   var bad2: char = (-10 as char);
+  // CHECK:STDERR:                               ^~~
+  var bad2: char = (-10 as char);
+
+  // CHECK:STDERR: int_to_char_basic.carbon:[[@LINE+3]]:30: error: cannot convert negative integer to `char` [InvalidIntToChar]
+  // CHECK:STDERR:   var bad3: char = (-255 as char);
+  // CHECK:STDERR:                                ^~~
+  var bad3: char = (-255 as char);
+
+  // CHECK:STDERR: int_to_char_basic.carbon:[[@LINE+3]]:30: error: cannot convert negative integer to `char` [InvalidIntToChar]
+  // CHECK:STDERR:   var bad4: char = (-2147483648 as char);
+  // CHECK:STDERR:                                             ^~~
+  var bad4: char = (-2147483648 as char);
+}
