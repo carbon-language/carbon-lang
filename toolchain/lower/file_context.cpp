@@ -784,9 +784,6 @@ auto FileContext::BuildDISubroutineType(
 
   auto get_debug_type = [&](SemIR::TypeId type_id) -> llvm::DIType* {
     CARBON_CHECK(type_id.has_value());
-    if (!type_id.has_value()) {
-      return void_pointer_debug_type;
-    }
     if (auto* type = GetTypeAndDIType(type_id).second) {
       return type;
     }
