@@ -796,8 +796,8 @@ auto FileContext::BuildDISubroutineType(
   auto return_info =
       SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
   if (function.return_slot_pattern_id.has_value()) {
-    // TODO: if int_repr.kind == SemIR::InitRepr::ByCopy - be sure the return
-    // type is tagged with indirect calling convention
+    // TODO: If int_repr.kind == SemIR::InitRepr::ByCopy - be sure the return
+    // type is tagged with indirect calling convention.
   }
 
   // TODO: expose the `Call` parameter patterns in `Function`, and use them here
