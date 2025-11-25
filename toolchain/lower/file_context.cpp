@@ -861,7 +861,7 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
   for (auto [argument_number, type] : llvm::enumerate(debug_parameter_types)) {
     context().di_builder().createParameterVariable(
         subprogram, "", argument_number + 1, nullptr, 0, type,
-        /* AlwaysPreserve = */ true);
+        /*AlwaysPreserve=*/ true);
   }
   return subprogram;
 }
