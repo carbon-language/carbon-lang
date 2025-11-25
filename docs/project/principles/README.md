@@ -22,6 +22,7 @@ Note that these principles seek to establish both the approaches the project
 wants to pursue, as well as those we want to exclude.
 
 -   [Errors are values](error_handling.md)
+-   [Flow checking](flow_checking.md)
 -   [Information accumulation](information_accumulation.md)
 -   [Low context-sensitivity](low_context_sensitivity.md)
 -   [Prefer providing only one way to do a given thing](one_way.md)
