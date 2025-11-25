@@ -62,7 +62,8 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
   }
 
   if (isa<clang::StringLiteral>(result_expr) ||
-      isa<clang::CharacterLiteral>(result_expr)) {
+      isa<clang::CharacterLiteral>(result_expr) ||
+      isa<clang::CXXNullPtrLiteralExpr>(result_expr)) {
     return result_expr;
   }
 

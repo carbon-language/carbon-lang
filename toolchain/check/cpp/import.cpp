@@ -2264,6 +2264,10 @@ static auto MapConstant(Context& context, SemIR::LocId loc_id,
         MakeStringLiteral(context, Parse::StringLiteralId::None, string_id);
     context.imports().push_back(inst_id);
     return inst_id;
+  } else if (isa<clang::CXXNullPtrLiteralExpr>(expr)) {
+    auto type_id = MapNullptrType(context, loc_id).type_id;
+    return GetOrAddInst<SemIR::UninitializedValue>(context, SemIR::LocId::None,
+                                                   {.type_id = type_id});
   }
 
   SemIR::TypeId type_id = MapType(context, loc_id, expr->getType()).type_id;
