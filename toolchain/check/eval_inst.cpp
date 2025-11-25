@@ -518,6 +518,7 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 
 auto EvalConstantInst(Context& context, SemIR::RequireSpecificDefinition inst)
     -> ConstantEvalResult {
+  // This can return false, we just need to try it.
   ResolveSpecificDefinition(context, SemIR::LocId::None, inst.specific_id);
   return ConstantEvalResult::NewSamePhase(inst);
 }
