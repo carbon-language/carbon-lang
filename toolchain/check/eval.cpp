@@ -1050,10 +1050,10 @@ static auto PerformIntToCharConvert(Context& context, SemIR::LocId loc_id,
 
   if (!is_signed && value < 0) {
     CARBON_DIAGNOSTIC(
-        NegativeIntInUnsignedType, Error,
+        NegativeIntInUnsignedTypeInCast, Error,
         "negative integer value {0} converted to unsigned type {1}", TypedInt,
         SemIR::TypeId);
-    context.emitter().Emit(loc_id, NegativeIntInUnsignedType,
+    context.emitter().Emit(loc_id, NegativeIntInUnsignedTypeInCast,
                            {.type = arg.type_id, .value = arg_val},
                            dest_type_id);
     return SemIR::ErrorInst::ConstantId;
