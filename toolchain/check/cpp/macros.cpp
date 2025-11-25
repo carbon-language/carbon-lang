@@ -8,6 +8,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Sema/Sema.h"
+#include "common/check.h"
 
 namespace Carbon::Check {
 
@@ -24,6 +25,7 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
 
   clang::Sema& sema = context.clang_sema();
   clang::Preprocessor& preprocessor = sema.getPreprocessor();
+
   clang::Parser parser(preprocessor, sema, false);
 
   llvm::SmallVector<clang::Token> tokens(macro_info->tokens().begin(),
@@ -40,10 +42,16 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
 
   tokens.push_back(current_token);
 
-  preprocessor.EnterTokenStream(tokens, false, false);
+  preprocessor.EnterTokenStream(tokens, /*DisableMacroExpansion=*/false,
+                                /*IsReinject=*/false);
   parser.ConsumeAnyToken(true);
 
+  // TODO: Identifiers are still only available if prefixed with "::" (e.g.
+  // "#define M_Var ::myVar").
+  parser.EnterScope(clang::Scope::DeclScope);
   clang::ExprResult result = parser.ParseConstantExpression();
+  parser.ExitScope();
+
   clang::Expr* result_expr = result.get();
 
   bool success =
@@ -53,20 +61,43 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
     parser.SkipUntil(clang::tok::eof);
     CARBON_DIAGNOSTIC(
         InCppMacroEvaluation, Error,
-        "failed to evaluate macro Cpp.{0} to a valid constant expression",
+        "failed to parse macro Cpp.{0} to a valid constant expression",
         std::string);
     context.emitter().Emit(loc_id, InCppMacroEvaluation, (*name_str_opt).str());
     return nullptr;
   }
 
-  clang::Expr::EvalResult evaluated_result;
-  if (!result_expr->EvaluateAsInt(evaluated_result, sema.getASTContext())) {
-    context.TODO(loc_id, "non-integer constant expression in macro.");
-    return nullptr;
+  if (isa<clang::StringLiteral>(result_expr) ||
+      isa<clang::CharacterLiteral>(result_expr) ||
+      isa<clang::CXXNullPtrLiteralExpr>(result_expr)) {
+    return result_expr;
   }
-  return clang::IntegerLiteral::Create(
-      sema.getASTContext(), evaluated_result.Val.getInt(),
-      result_expr->getType(), result_expr->getExprLoc());
+
+  clang::Expr::EvalResult evaluated_result;
+  CARBON_CHECK(result_expr->EvaluateAsConstantExpr(evaluated_result,
+                                                   sema.getASTContext()));
+
+  clang::APValue ap_value = evaluated_result.Val;
+  switch (ap_value.getKind()) {
+    case clang::APValue::Int:
+      if (result_expr->getType()->isBooleanType()) {
+        return clang::CXXBoolLiteralExpr::Create(
+            sema.getASTContext(), ap_value.getInt().getBoolValue(),
+            result_expr->getType(), result_expr->getExprLoc());
+      }
+      return clang::IntegerLiteral::Create(
+          sema.getASTContext(), ap_value.getInt(), result_expr->getType(),
+          result_expr->getExprLoc());
+    case clang::APValue::Float:
+      return clang::FloatingLiteral::Create(
+          sema.getASTContext(), ap_value.getFloat(),
+          /*isExact=*/true, result_expr->getType(), result_expr->getExprLoc());
+    default:
+      context.TODO(loc_id,
+                   "Unsupported: macro evaluated to a constant of type: " +
+                       result_expr->getType().getAsString());
+      return nullptr;
+  }
 }
 
 }  // namespace Carbon::Check

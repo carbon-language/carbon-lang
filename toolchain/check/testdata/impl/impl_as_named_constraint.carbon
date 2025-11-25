@@ -24,8 +24,8 @@ impl () as A {}
 // --- fail_too_many_interfaces_in_constraint.carbon
 library "[[@TEST_NAME]]";
 
-interface A1;
-interface A2;
+interface A1 {}
+interface A2 {}
 constraint B {
   extend require impls A1;
   extend require impls A2;
@@ -40,17 +40,11 @@ impl () as B {}
 // --- one_extend_impls_interface_in_constraint.carbon
 library "[[@TEST_NAME]]";
 
-interface A;
+interface A {}
 constraint B {
   extend require impls A;
 }
 
-// Requries B identified.
-impl () as B;
-
-interface A {}
-
-// Requries B complete.
 impl () as B {}
 
 // --- fail_one_impls_interface_in_constraint.carbon

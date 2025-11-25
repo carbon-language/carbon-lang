@@ -14,16 +14,6 @@
 
 namespace Carbon::Check {
 
-// Returns whether the function is an imported C++ operator member function.
-static auto IsCppOperatorMethod(Context& context, SemIR::FunctionId function_id)
-    -> bool {
-  SemIR::ClangDeclId clang_decl_id =
-      context.functions().Get(function_id).clang_decl_id;
-  return clang_decl_id.has_value() &&
-         IsCppOperatorMethodDecl(
-             context.clang_decls().Get(clang_decl_id).key.decl);
-}
-
 auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
                               SemIR::CppOverloadSetId overload_set_id,
                               SemIR::InstId self_id,
@@ -41,9 +31,6 @@ auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
       if (self_id.has_value()) {
         // Preserve the `self` argument from the original callee.
         fn.self_id = self_id;
-      } else if (IsCppOperatorMethod(context, fn.function_id)) {
-        // Adjust `self` and args for C++ overloaded operator methods.
-        fn.self_id = arg_ids.consume_front();
       }
       return PerformCallToFunction(context, loc_id, callee_id, fn, arg_ids);
     }

@@ -1002,6 +1002,7 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
       case ExprCategory::NotExpr:
       case ExprCategory::Error:
       case ExprCategory::Value:
+      case ExprCategory::Pattern:
       case ExprCategory::Mixed:
         break;
       case ExprCategory::DurableRef:

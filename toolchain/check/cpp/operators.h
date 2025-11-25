@@ -20,6 +20,11 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
 // Returns whether the decl is an operator member function.
 auto IsCppOperatorMethodDecl(clang::Decl* decl) -> bool;
 
+// Returns whether the specified instruction refers to a C++ overloaded operator
+// that is a method. If so, the first operand will be passed as `self` rather
+// than as the first argument.
+auto IsCppOperatorMethod(Context& context, SemIR::InstId inst_id) -> bool;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CPP_OPERATORS_H_

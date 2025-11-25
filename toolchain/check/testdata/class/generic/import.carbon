@@ -284,9 +284,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %struct_type.n.4d6: type = struct_type {.n: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.a68: <witness> = complete_type_witness %struct_type.n.4d6 [concrete]
 // CHECK:STDOUT:   %CompleteClass.926: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic]
-// CHECK:STDOUT:   %CompleteClass.elem.c88: type = unbound_element_type %CompleteClass.926, %i32 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.F.type.0fa: type = fn_type @CompleteClass.F, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %CompleteClass.F.6e9: %CompleteClass.F.type.0fa = struct_value () [symbolic]
+// CHECK:STDOUT:   %CompleteClass.elem.c88: type = unbound_element_type %CompleteClass.926, %i32 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.a06: type = class_type @CompleteClass, @CompleteClass(%i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.84b: type = pattern_type %CompleteClass.a06 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -384,7 +384,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @CompleteClass(imports.%Main.import_ref.efcd44.2: type) [from "foo.carbon"] {
+// CHECK:STDOUT: generic class @CompleteClass(imports.%Main.import_ref.efcd44.3: type) [from "foo.carbon"] {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -403,7 +403,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @CompleteClass.F(imports.%Main.import_ref.efcd44.3: type) [from "foo.carbon"] {
+// CHECK:STDOUT: generic fn @CompleteClass.F(imports.%Main.import_ref.efcd44.2: type) [from "foo.carbon"] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
@@ -470,9 +470,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %complete_type.54b: <witness> = complete_type_witness %struct_type.n [concrete]
 // CHECK:STDOUT:   %T.d9f: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.926: type = class_type @CompleteClass, @CompleteClass(%T.d9f) [symbolic]
-// CHECK:STDOUT:   %CompleteClass.elem.36b: type = unbound_element_type %CompleteClass.926, %i32 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.F.type.0fa: type = fn_type @CompleteClass.F, @CompleteClass(%T.d9f) [symbolic]
 // CHECK:STDOUT:   %CompleteClass.F.6e9: %CompleteClass.F.type.0fa = struct_value () [symbolic]
+// CHECK:STDOUT:   %CompleteClass.elem.36b: type = unbound_element_type %CompleteClass.926, %i32 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.e9e: type = class_type @CompleteClass, @CompleteClass(%i32) [concrete]
 // CHECK:STDOUT:   %CompleteClass.elem.7fc: type = unbound_element_type %CompleteClass.e9e, %i32 [concrete]
 // CHECK:STDOUT:   %CompleteClass.F.type.1bc: type = fn_type @CompleteClass.F, @CompleteClass(%i32) [concrete]
@@ -557,7 +557,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @CompleteClass(imports.%Main.import_ref.efcd44.1: type) [from "foo.carbon"] {
+// CHECK:STDOUT: generic class @CompleteClass(imports.%Main.import_ref.efcd44.2: type) [from "foo.carbon"] {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T.d9f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -606,7 +606,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   return %CompleteClass.F.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @CompleteClass.F(imports.%Main.import_ref.efcd44.2: type) [from "foo.carbon"] {
+// CHECK:STDOUT: generic fn @CompleteClass.F(imports.%Main.import_ref.efcd44.1: type) [from "foo.carbon"] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
@@ -690,9 +690,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %complete_type.a68: <witness> = complete_type_witness %struct_type.n [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.926: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic]
-// CHECK:STDOUT:   %CompleteClass.elem.c88: type = unbound_element_type %CompleteClass.926, %i32 [symbolic]
 // CHECK:STDOUT:   %CompleteClass.F.type.0fa: type = fn_type @CompleteClass.F, @CompleteClass(%T) [symbolic]
 // CHECK:STDOUT:   %CompleteClass.F.6e9: %CompleteClass.F.type.0fa = struct_value () [symbolic]
+// CHECK:STDOUT:   %CompleteClass.elem.c88: type = unbound_element_type %CompleteClass.926, %i32 [symbolic]
 // CHECK:STDOUT:   %ptr.9e1: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %CompleteClass.0fe: type = class_type @CompleteClass, @CompleteClass(%ptr.9e1) [concrete]
 // CHECK:STDOUT:   %CompleteClass.elem.d29: type = unbound_element_type %CompleteClass.0fe, %i32 [concrete]
@@ -750,7 +750,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @CompleteClass(imports.%Main.import_ref.efcd44.1: type) [from "foo.carbon"] {
+// CHECK:STDOUT: generic class @CompleteClass(imports.%Main.import_ref.efcd44.2: type) [from "foo.carbon"] {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -796,7 +796,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @CompleteClass.F(imports.%Main.import_ref.efcd44.2: type) [from "foo.carbon"] {
+// CHECK:STDOUT: generic fn @CompleteClass.F(imports.%Main.import_ref.efcd44.1: type) [from "foo.carbon"] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;

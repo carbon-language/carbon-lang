@@ -867,6 +867,14 @@ static auto ResolveSpecificDeclForInst(EvalContext& eval_context,
         for (const auto& interface : info.self_impls_constraints) {
           ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
         }
+        for (const auto& constraint : info.extend_named_constraints) {
+          ResolveSpecificDeclForSpecificId(eval_context,
+                                           constraint.specific_id);
+        }
+        for (const auto& constraint : info.self_impls_named_constraints) {
+          ResolveSpecificDeclForSpecificId(eval_context,
+                                           constraint.specific_id);
+        }
         break;
       }
       case CARBON_KIND(SemIR::SpecificId specific_id): {

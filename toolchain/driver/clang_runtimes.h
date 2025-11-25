@@ -257,6 +257,8 @@ class ClangArchiveRuntimesBuilder : public ClangRuntimesBuilderBase {
 
 extern template class ClangArchiveRuntimesBuilder<Runtimes::LibUnwind>;
 
+using LibunwindBuilder = ClangArchiveRuntimesBuilder<Runtimes::LibUnwind>;
+
 // Builds the target-specific resource directory for Clang.
 //
 // There is a resource directory installed along side the Clang binary that

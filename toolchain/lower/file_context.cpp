@@ -233,6 +233,7 @@ auto FileContext::GetConstant(SemIR::ConstantId const_id,
 
     case SemIR::ExprCategory::NotExpr:
     case SemIR::ExprCategory::Error:
+    case SemIR::ExprCategory::Pattern:
     case SemIR::ExprCategory::Mixed:
       CARBON_FATAL("Unexpected category {0} for lowered constant {1}", cat,
                    sem_ir().insts().Get(const_inst_id));
@@ -1024,7 +1025,8 @@ template <typename InstT>
            SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
            SemIR::GenericInterfaceType, SemIR::GenericNamedConstraintType,
            SemIR::InstType, SemIR::IntLiteralType, SemIR::NamespaceType,
-           SemIR::WhereExpr, SemIR::WitnessType, SemIR::UnboundElementType>())
+           SemIR::RequireSpecificDefinitionType, SemIR::UnboundElementType,
+           SemIR::WhereExpr, SemIR::WitnessType>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
     -> FileContext::LoweredTypes {
   // Return an empty struct as a placeholder.

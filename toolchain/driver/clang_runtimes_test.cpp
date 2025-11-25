@@ -11,6 +11,7 @@
 #include <string>
 #include <utility>
 
+#include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/SmallVector.h"
@@ -62,43 +63,79 @@ MATCHER_P(TextSymbolNamed, name_matcher, "") {
 
 class ClangRuntimesTest : public ::testing::Test {
  public:
+  // Helper to get the `llvm-nm` listing of defined symbols for an archive.
+  //
+  // TODO: It would be nice to use a library API and matchers instead of
+  // `llvm-nm` and matching text on the output.
+  auto NmListDefinedSymbols(const std::filesystem::path& archive)
+      -> std::string {
+    LLVMRunner llvm_runner(&install_paths_, &llvm::errs());
+    std::string out;
+    std::string err;
+    bool result = Testing::CallWithCapturedOutput(out, err, [&] {
+      return llvm_runner.Run(
+          LLVMTool::Nm, {"--format=just-symbols", "--defined-only", "--quiet",
+                         archive.native()});
+    });
+    CARBON_CHECK(result, "Unable to run `llvm-nm`:\n{1}", err);
+
+    return out;
+  }
+
+  // Helper to expect a specific symbol in the `llvm-nm` list.
+  //
+  // This handles platform-specific formatting of symbols.
+  auto ExpectSymbol(llvm::StringRef nm_list, llvm::StringRef symbol) -> void {
+    std::string symbol_substr = llvm::formatv(
+        target_triple_.isMacOSX() ? "\n_{0}\n" : "\n{0}\n", symbol);
+
+    // Do the actual match with `HasSubstr` so it can explain failures.
+    EXPECT_THAT(nm_list, HasSubstr(symbol_substr));
+  }
+
   InstallPaths install_paths_ =
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath());
-  Runtimes::Cache runtimes_cache_ =
-      *Runtimes::Cache::MakeSystem(install_paths_);
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> vfs_ =
       llvm::vfs::getRealFileSystem();
-};
-
-TEST_F(ClangRuntimesTest, ResourceDir) {
-  ClangRunner runner(&install_paths_, vfs_, &llvm::errs());
+  // Note that for debugging, you can pass `llvm::errs()` as the vlog stream,
+  // but this makes the output both very verbose and hard to use with multiple
+  // threads.
+  ClangRunner runner_{&install_paths_, vfs_};
 
   // Note that we can't test arbitrary targets here as we need to be able to
   // compile the builtin functions for the target. We use the default target as
   // the most likely to pass.
-  std::string target = llvm::sys::getDefaultTargetTriple();
-  llvm::Triple target_triple(target);
-  Runtimes::Cache::Features features = {.target = target};
-  auto runtimes = *runtimes_cache_.Lookup(features);
-  llvm::DefaultThreadPool threads(llvm::optimal_concurrency());
+  std::string target_ = llvm::sys::getDefaultTargetTriple();
+  llvm::Triple target_triple_{target_};
 
-  ClangResourceDirBuilder resource_dir_builder(&runner, &threads, target_triple,
-                                               &runtimes);
+  Runtimes::Cache runtimes_cache_ =
+      *Runtimes::Cache::MakeSystem(install_paths_);
+  Runtimes::Cache::Features features = {.target = target_};
+  Runtimes runtimes_ = *runtimes_cache_.Lookup(features);
+
+  // Note that for debugging it may be useful to replace this with a
+  // single-threaded thread pool. However the test will be _much_ slower.
+  llvm::DefaultThreadPool threads_{llvm::optimal_concurrency()};
+};
+
+TEST_F(ClangRuntimesTest, ResourceDir) {
+  ClangResourceDirBuilder resource_dir_builder(&runner_, &threads_,
+                                               target_triple_, &runtimes_);
   auto build_result = std::move(resource_dir_builder).Wait();
   ASSERT_TRUE(build_result.ok()) << build_result.error();
   std::filesystem::path resource_dir_path = std::move(*build_result);
 
   // For Linux we can directly check the CRT begin/end object files.
-  if (target_triple.isOSLinux()) {
+  if (target_triple_.isOSLinux()) {
     std::filesystem::path crt_begin_path =
-        resource_dir_path / "lib" / target / "clang_rt.crtbegin.o";
+        resource_dir_path / "lib" / target_ / "clang_rt.crtbegin.o";
     ASSERT_TRUE(std::filesystem::is_regular_file(crt_begin_path));
     auto begin_result =
         llvm::object::ObjectFile::createObjectFile(crt_begin_path.native());
     llvm::object::ObjectFile& crtbegin = *begin_result->getBinary();
     EXPECT_TRUE(crtbegin.isELF());
     EXPECT_TRUE(crtbegin.isObject());
-    EXPECT_THAT(crtbegin.getArch(), Eq(target_triple.getArch()));
+    EXPECT_THAT(crtbegin.getArch(), Eq(target_triple_.getArch()));
 
     llvm::SmallVector<llvm::object::SymbolRef> symbols(crtbegin.symbols());
     // The first symbol should come from the source file.
@@ -110,14 +147,14 @@ TEST_F(ClangRuntimesTest, ResourceDir) {
                                        TextSymbolNamed("__do_fini")}));
 
     std::filesystem::path crt_end_path =
-        resource_dir_path / "lib" / target / "clang_rt.crtend.o";
+        resource_dir_path / "lib" / target_ / "clang_rt.crtend.o";
     ASSERT_TRUE(std::filesystem::is_regular_file(crt_end_path));
     auto end_result =
         llvm::object::ObjectFile::createObjectFile(crt_end_path.native());
     llvm::object::ObjectFile& crtend = *end_result->getBinary();
     EXPECT_TRUE(crtend.isELF());
     EXPECT_TRUE(crtend.isObject());
-    EXPECT_THAT(crtend.getArch(), Eq(target_triple.getArch()));
+    EXPECT_THAT(crtend.getArch(), Eq(target_triple_.getArch()));
 
     // Just check the source file symbol, not much of interest in the end.
     llvm::object::SymbolRef crtend_front_symbol = *crtend.symbol_begin();
@@ -129,24 +166,36 @@ TEST_F(ClangRuntimesTest, ResourceDir) {
   // than directly inspecting the objects is a bit awkward, but lets us easily
   // ignore the wrapping in an archive file.
   std::filesystem::path builtins_path =
-      resource_dir_path / "lib" / target / "libclang_rt.builtins.a";
-  LLVMRunner llvm_runner(&install_paths_, &llvm::errs());
-  std::string out;
-  std::string err;
-  EXPECT_TRUE(Testing::CallWithCapturedOutput(out, err, [&] {
-    return llvm_runner.Run(LLVMTool::Nm, {builtins_path.native()});
-  }));
+      resource_dir_path / "lib" / target_ / "libclang_rt.builtins.a";
+  std::string builtins_symbols = NmListDefinedSymbols(builtins_path);
 
   // Check that we found a definition of `__mulodi4`, a builtin function
-  // provided by Compiler-RT, but not `libgcc` historically. Note that on macOS
-  // there is a leading `_` due to mangling.
-  EXPECT_THAT(out, HasSubstr(target_triple.isMacOSX() ? "T ___mulodi4\n"
-                                                      : "T __mulodi4\n"));
+  // provided by Compiler-RT.
+  ExpectSymbol(builtins_symbols, "__mulodi4");
 
   // Check that we don't include the `chkstk` builtins outside of Windows.
-  if (!target_triple.isOSWindows()) {
-    EXPECT_THAT(out, Not(HasSubstr("chkstk")));
+  if (!target_triple_.isOSWindows()) {
+    EXPECT_THAT(builtins_symbols, Not(HasSubstr("chkstk")));
   }
+}
+
+TEST_F(ClangRuntimesTest, Libunwind) {
+  LibunwindBuilder libunwind_builder(&runner_, &threads_, target_triple_,
+                                     &runtimes_);
+  auto build_result = std::move(libunwind_builder).Wait();
+  ASSERT_TRUE(build_result.ok()) << build_result.error();
+  std::filesystem::path runtimes_path = std::move(*build_result);
+
+  std::filesystem::path libunwind_path = runtimes_path / "lib/libunwind.a";
+  std::string libunwind_symbols = NmListDefinedSymbols(libunwind_path);
+
+  // Check a few of the main exported symbols here. The set here is somewhat
+  // arbitrary, but chosen to be among the more stable names and have at least
+  // one from most of the object files that should be linked into the archive.
+  ExpectSymbol(libunwind_symbols, "_Unwind_Resume");
+  ExpectSymbol(libunwind_symbols, "_Unwind_Backtrace");
+  ExpectSymbol(libunwind_symbols, "__unw_getcontext");
+  ExpectSymbol(libunwind_symbols, "__unw_get_proc_info");
 }
 
 }  // namespace
