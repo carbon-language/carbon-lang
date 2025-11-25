@@ -784,7 +784,7 @@ auto FileContext::BuildDISubroutineType(
 
   auto get_debug_type = [&](SemIR::TypeId type_id) -> llvm::DIType* {
     CARBON_CHECK(type_id.has_value());
-    if (auto* type = GetTypeAndDIType(type_id).second) {
+    if (auto* type = GetTypeAndDIType(type_id).llvm_di_type) {
       return type;
     }
     return void_pointer_debug_type;
@@ -874,20 +874,20 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
 template <typename InstT>
   requires(InstT::Kind.is_type() == SemIR::InstIsType::Never)
 static auto BuildTypeForInst(FileContext& /*context*/, InstT inst)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+    -> FileContext::LoweredTypes {
   CARBON_FATAL("Cannot use inst as type: {0}", inst);
 }
 
 template <typename InstT>
   requires(InstT::Kind.is_symbolic_when_type())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+    -> FileContext::LoweredTypes {
   // Treat non-monomorphized symbolic types as opaque.
   return {llvm::StructType::get(context.llvm_context()), nullptr};
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+    -> FileContext::LoweredTypes {
   return {llvm::ArrayType::get(
               context.GetType(context.sem_ir().types().GetTypeIdForTypeInstId(
                   inst.element_type_inst_id)),
@@ -896,14 +896,14 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ArrayType inst)
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::BoolType /*inst*/)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+    -> FileContext::LoweredTypes {
   // TODO: We may want to have different representations for `bool` storage
   // (`i8`) versus for `bool` values (`i1`).
   return {llvm::Type::getInt1Ty(context.llvm_context()), nullptr};
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::ClassType inst)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+    -> FileContext::LoweredTypes {
   auto object_repr_id = context.sem_ir()
                             .classes()
                             .Get(inst.class_id)
@@ -914,14 +914,14 @@ static auto BuildTypeForInst(FileContext& context, SemIR::ClassType inst)
 template <typename InstT>
   requires(SemIR::Internal::HasInstCategory<SemIR::AnyQualifiedType, InstT>)
 static auto BuildTypeForInst(FileContext& context, InstT inst)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+    -> FileContext::LoweredTypes {
   return {context.GetType(
               context.sem_ir().types().GetTypeIdForTypeInstId(inst.inner_id)),
           nullptr};
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::CustomLayoutType inst)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+    -> FileContext::LoweredTypes {
   auto layout = context.sem_ir().custom_layouts().Get(inst.layout_id);
   return {llvm::ArrayType::get(llvm::Type::getInt8Ty(context.llvm_context()),
                                layout[SemIR::CustomLayoutId::SizeIndex]),
@@ -930,26 +930,26 @@ static auto BuildTypeForInst(FileContext& context, SemIR::CustomLayoutType inst)
 
 static auto BuildTypeForInst(FileContext& context,
                              SemIR::ImplWitnessAssociatedConstant inst)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+    -> FileContext::LoweredTypes {
   return {context.GetType(inst.type_id), nullptr};
 }
 
 static auto BuildTypeForInst(FileContext& /*context*/,
                              SemIR::ErrorInst /*inst*/)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+    -> FileContext::LoweredTypes {
   // This is a complete type but uses of it should never be lowered.
   return {nullptr, nullptr};
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::FloatType inst)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+    -> FileContext::LoweredTypes {
   return {llvm::Type::getFloatingPointTy(context.llvm_context(),
                                          inst.float_kind.Semantics()),
           nullptr};
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::IntType inst)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+    -> FileContext::LoweredTypes {
   auto width_inst =
       context.sem_ir().insts().TryGetAs<SemIR::IntValue>(inst.bit_width_id);
   CARBON_CHECK(width_inst, "Can't lower int type with symbolic width");
@@ -960,19 +960,19 @@ static auto BuildTypeForInst(FileContext& context, SemIR::IntType inst)
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::PointerType /*inst*/)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+    -> FileContext::LoweredTypes {
   return {llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0),
           nullptr};
 }
 
 static auto BuildTypeForInst(FileContext& /*context*/,
                              SemIR::PatternType /*inst*/)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+    -> FileContext::LoweredTypes {
   CARBON_FATAL("Unexpected pattern type in lowering");
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::StructType inst)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+    -> FileContext::LoweredTypes {
   auto fields = context.sem_ir().struct_type_fields().Get(inst.fields_id);
   llvm::SmallVector<llvm::Type*> subtypes;
   subtypes.reserve(fields.size());
@@ -984,7 +984,7 @@ static auto BuildTypeForInst(FileContext& context, SemIR::StructType inst)
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::TupleType inst)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+    -> FileContext::LoweredTypes {
   // TODO: Investigate special-casing handling of empty tuples so that they
   // can be collectively replaced with LLVM's void, particularly around
   // function returns. LLVM doesn't allow declaring variables with a void
@@ -999,18 +999,18 @@ static auto BuildTypeForInst(FileContext& context, SemIR::TupleType inst)
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::TypeType /*inst*/)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+    -> FileContext::LoweredTypes {
   return {context.GetTypeType(), nullptr};
 }
 
 static auto BuildTypeForInst(FileContext& context, SemIR::VtableType /*inst*/)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+    -> FileContext::LoweredTypes {
   return {llvm::Type::getVoidTy(context.llvm_context()), nullptr};
 }
 
 static auto BuildTypeForInst(FileContext& context,
                              SemIR::SpecificFunctionType /*inst*/)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+    -> FileContext::LoweredTypes {
   return {llvm::PointerType::get(context.llvm_context(), 0), nullptr};
 }
 
@@ -1024,15 +1024,14 @@ template <typename InstT>
            SemIR::InstType, SemIR::IntLiteralType, SemIR::NamespaceType,
            SemIR::WhereExpr, SemIR::WitnessType, SemIR::UnboundElementType>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+    -> FileContext::LoweredTypes {
   // Return an empty struct as a placeholder.
   // TODO: Should we model an interface as a witness table, or an associated
   // entity as an index?
   return {llvm::StructType::get(context.llvm_context()), nullptr};
 }
 
-auto FileContext::BuildType(SemIR::InstId inst_id)
-    -> std::pair<llvm::Type*, llvm::DIType*> {
+auto FileContext::BuildType(SemIR::InstId inst_id) -> LoweredTypes {
   // Use overload resolution to select the implementation, producing compile
   // errors when BuildTypeForInst isn't defined for a given instruction.
   CARBON_KIND_SWITCH(sem_ir_->insts().Get(inst_id)) {
