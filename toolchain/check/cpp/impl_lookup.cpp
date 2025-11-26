@@ -36,7 +36,7 @@ static auto TypeAsClassDecl(Context& context, SemIR::TypeId type_id)
     return nullptr;
   }
 
-  auto& scope = context.name_scopes().Get(class_scope_id);
+  const auto& scope = context.name_scopes().Get(class_scope_id);
   auto decl_id = scope.clang_decl_context_id();
   if (!decl_id.has_value()) {
     return nullptr;
