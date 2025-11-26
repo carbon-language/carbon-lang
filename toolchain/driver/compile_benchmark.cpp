@@ -89,7 +89,7 @@ static auto ComputeFileCount(int target_lines) -> int {
   // Use a smaller number of files in debug builds where compiles are slower.
   return std::max(1, std::min(8, (1024 * 1024) / target_lines));
 #else
-  return std::max(8, std::min(1024, (1024 * 1024) / target_lines));
+  return std::max(8, std::min(128, (1024 * 1024) / target_lines));
 #endif
 }
 
