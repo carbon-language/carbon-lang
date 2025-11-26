@@ -69,8 +69,8 @@ fn Copy(s: str) -> str {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCopy.Main(ptr sret({ ptr, i64 }) %return, ptr %s) #0 !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_COp.String.Core:Copy.Core"(ptr %return, ptr %s), !dbg !16
-// CHECK:STDOUT:   ret void, !dbg !17
+// CHECK:STDOUT:   call void @"_COp.String.Core:Copy.Core"(ptr %return, ptr %s), !dbg !21
+// CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_COp.String.Core:Copy.Core"(ptr sret({ ptr, i64 }), ptr)
@@ -86,7 +86,7 @@ fn Copy(s: str) -> str {
 // CHECK:STDOUT: !3 = !DIFile(filename: "string.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 19, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 18, column: 1, scope: !4)
 // CHECK:STDOUT: !9 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
@@ -95,6 +95,11 @@ fn Copy(s: str) -> str {
 // CHECK:STDOUT: !12 = distinct !DISubprogram(name: "I", linkageName: "_CI.Main", scope: null, file: !3, line: 28, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !13 = !DILocation(line: 31, column: 3, scope: !12)
 // CHECK:STDOUT: !14 = !DILocation(line: 28, column: 1, scope: !12)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Copy", linkageName: "_CCopy.Main", scope: null, file: !3, line: 34, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !16 = !DILocation(line: 35, column: 10, scope: !15)
-// CHECK:STDOUT: !17 = !DILocation(line: 35, column: 3, scope: !15)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Copy", linkageName: "_CCopy.Main", scope: null, file: !3, line: 34, type: !16, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !19)
+// CHECK:STDOUT: !16 = !DISubroutineType(types: !17)
+// CHECK:STDOUT: !17 = !{!18, !18}
+// CHECK:STDOUT: !18 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !19 = !{!20}
+// CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !15, type: !18)
+// CHECK:STDOUT: !21 = !DILocation(line: 35, column: 10, scope: !15)
+// CHECK:STDOUT: !22 = !DILocation(line: 35, column: 3, scope: !15)

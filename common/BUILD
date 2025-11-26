@@ -283,7 +283,7 @@ sh_test(
     size = "small",
     srcs = [":filesystem_benchmark"],
     args = [
-        "--benchmark_min_time=1x",
+        "--benchmark_dry_run",
         # Restrict the sizes to 4-digit ones or smaller to keep test times low.
         # The `$$` is repeated for Bazel escaping of `$`.
         "--benchmark_filter=^[^/]+(/[0-9]{1,4}(/[0-9]+)?)?/real_time$$",
@@ -484,7 +484,7 @@ sh_test(
     timeout = "moderate",
     srcs = [":map_benchmark"],
     args = [
-        "--benchmark_min_time=1x",
+        "--benchmark_dry_run",
         # The `$$` is repeated for Bazel escaping of `$`.
         "--benchmark_filter=^[^/]*/[1-9][0-9]{0,3}(/[0-9]+)?$$",
     ],
@@ -554,7 +554,7 @@ sh_test(
     size = "small",
     srcs = ["raw_hashtable_metadata_group_benchmark"],
     args = [
-        "--benchmark_min_time=1x",
+        "--benchmark_dry_run",
     ],
 )
 
@@ -657,7 +657,7 @@ sh_test(
     timeout = "moderate",
     srcs = [":set_benchmark"],
     args = [
-        "--benchmark_min_time=1x",
+        "--benchmark_dry_run",
         # The `$$` is repeated for Bazel escaping of `$`.
         "--benchmark_filter=^[^/]*/[1-9][0-9]{0,3}(/[0-9]+)?$$",
     ],

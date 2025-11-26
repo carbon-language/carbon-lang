@@ -48,7 +48,7 @@ fn G() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "nested_struct_in_place.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 16, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 16, column: 55, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 16, column: 61, scope: !4)

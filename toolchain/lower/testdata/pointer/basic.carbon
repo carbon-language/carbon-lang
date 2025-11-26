@@ -25,18 +25,18 @@ fn F() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CG.Main(ptr %p) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc14_10.2 = load i32, ptr %p, align 4, !dbg !7
-// CHECK:STDOUT:   ret i32 %.loc14_10.2, !dbg !8
+// CHECK:STDOUT:   %.loc14_10.2 = load i32, ptr %p, align 4, !dbg !11
+// CHECK:STDOUT:   ret i32 %.loc14_10.2, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CF.Main() #0 !dbg !9 {
+// CHECK:STDOUT: define i32 @_CF.Main() #0 !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !10
-// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !10
-// CHECK:STDOUT:   %G.call = call i32 @_CG.Main(ptr %n.var), !dbg !11
-// CHECK:STDOUT:   ret i32 %G.call, !dbg !12
+// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !16
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !16
+// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !16
+// CHECK:STDOUT:   %G.call = call i32 @_CG.Main(ptr %n.var), !dbg !17
+// CHECK:STDOUT:   ret i32 %G.call, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -52,12 +52,18 @@ fn F() -> i32 {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "basic.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !9)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 10, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 18, column: 3, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 19, column: 10, scope: !9)
-// CHECK:STDOUT: !12 = !DILocation(line: 19, column: 3, scope: !9)
+// CHECK:STDOUT: !6 = !{!7, !8}
+// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !8 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !9 = !{!10}
+// CHECK:STDOUT: !10 = !DILocalVariable(arg: 1, scope: !4, type: !8)
+// CHECK:STDOUT: !11 = !DILocation(line: 14, column: 10, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 17, type: !14, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !14 = !DISubroutineType(types: !15)
+// CHECK:STDOUT: !15 = !{!7}
+// CHECK:STDOUT: !16 = !DILocation(line: 18, column: 3, scope: !13)
+// CHECK:STDOUT: !17 = !DILocation(line: 19, column: 10, scope: !13)
+// CHECK:STDOUT: !18 = !DILocation(line: 19, column: 3, scope: !13)

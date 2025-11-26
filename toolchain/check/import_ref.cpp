@@ -3293,6 +3293,28 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::RequireSpecificDefinition inst)
+    -> ResolveResult {
+  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
+               SemIR::RequireSpecificDefinitionType::TypeInstId);
+
+  auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
+
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  auto specific_id =
+      GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
+
+  return ResolveResult::Deduplicated<SemIR::RequireSpecificDefinition>(
+      resolver, {.type_id = GetSingletonType(
+                     resolver.local_context(),
+                     SemIR::RequireSpecificDefinitionType::TypeInstId),
+                 .specific_id = specific_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ReturnSlotPattern inst,
                                 SemIR::InstId import_inst_id) -> ResolveResult {
   auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
@@ -3753,6 +3775,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::RequireImplsDecl inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::RequireSpecificDefinition inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ReturnSlotPattern inst): {

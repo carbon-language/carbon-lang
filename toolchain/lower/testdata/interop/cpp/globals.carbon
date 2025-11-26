@@ -58,5 +58,5 @@ fn MyF() {
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_global.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 6, column: 1, scope: !7)

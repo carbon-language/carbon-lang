@@ -108,6 +108,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Add.facet.099: %Add.type = facet_value %MyInt, (%Add.impl_witness) [symbolic]
 // CHECK:STDOUT:   %Double.type: type = fn_type @Double [concrete]
 // CHECK:STDOUT:   %Double: %Double.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.bc4: require_specific_def_type = require_specific_def @MyInt.as.Add.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Add.lookup_impl_witness: <witness> = lookup_impl_witness %MyInt, @Add [symbolic]
 // CHECK:STDOUT:   %Add.facet.98c: %Add.type = facet_value %MyInt, (%Add.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %.99e: type = fn_type_with_self_type %Add.Op.type, %Add.facet.98c [symbolic]
@@ -338,10 +339,11 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %MyInt.loc19_39.1 [symbolic = %require_complete (constants.%require_complete.a87)]
+// CHECK:STDOUT:   %.loc20_11.1: require_specific_def_type = require_specific_def @MyInt.as.Add.impl(%N.loc19_11.1) [symbolic = %.loc20_11.1 (constants.%.bc4)]
 // CHECK:STDOUT:   %Add.lookup_impl_witness: <witness> = lookup_impl_witness %MyInt.loc19_39.1, @Add [symbolic = %Add.lookup_impl_witness (constants.%Add.lookup_impl_witness)]
 // CHECK:STDOUT:   %Add.facet.loc20_11: %Add.type = facet_value %MyInt.loc19_39.1, (%Add.lookup_impl_witness) [symbolic = %Add.facet.loc20_11 (constants.%Add.facet.98c)]
-// CHECK:STDOUT:   %.loc20_11: type = fn_type_with_self_type constants.%Add.Op.type, %Add.facet.loc20_11 [symbolic = %.loc20_11 (constants.%.99e)]
-// CHECK:STDOUT:   %impl.elem0.loc20_11.2: @Double.%.loc20_11 (%.99e) = impl_witness_access %Add.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc20_11.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %.loc20_11.2: type = fn_type_with_self_type constants.%Add.Op.type, %Add.facet.loc20_11 [symbolic = %.loc20_11.2 (constants.%.99e)]
+// CHECK:STDOUT:   %impl.elem0.loc20_11.2: @Double.%.loc20_11.2 (%.99e) = impl_witness_access %Add.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc20_11.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc20_11.2: <specific function> = specific_impl_function %impl.elem0.loc20_11.2, @Add.Op(%Add.facet.loc20_11) [symbolic = %specific_impl_fn.loc20_11.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @Double.%MyInt.loc19_39.1 (%MyInt)) -> @Double.%MyInt.loc19_39.1 (%MyInt) {
@@ -349,7 +351,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %x.ref.loc20_10: @Double.%MyInt.loc19_39.1 (%MyInt) = name_ref x, %x
 // CHECK:STDOUT:     %Add.ref: type = name_ref Add, file.%Add.decl [concrete = constants.%Add.type]
 // CHECK:STDOUT:     %Op.ref: %Add.assoc_type = name_ref Op, @Add.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0.loc20_11.1: @Double.%.loc20_11 (%.99e) = impl_witness_access constants.%Add.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc20_11.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc20_11.1: @Double.%.loc20_11.2 (%.99e) = impl_witness_access constants.%Add.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc20_11.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc20_11: <bound method> = bound_method %x.ref.loc20_10, %impl.elem0.loc20_11.1
 // CHECK:STDOUT:     %x.ref.loc20_21: @Double.%MyInt.loc19_39.1 (%MyInt) = name_ref x, %x
 // CHECK:STDOUT:     %Add.facet.loc20_22.1: %Add.type = facet_value constants.%MyInt, (constants.%Add.lookup_impl_witness) [symbolic = %Add.facet.loc20_11 (constants.%Add.facet.98c)]
@@ -443,14 +445,16 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %.99e: type = fn_type_with_self_type %Add.Op.type, %Add.facet.98c [symbolic]
 // CHECK:STDOUT:   %impl.elem0: %.99e = impl_witness_access %Add.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Add.Op(%Add.facet.98c) [symbolic]
-// CHECK:STDOUT:   %require_complete.a87: <witness> = require_complete_type %MyInt.19f [symbolic]
-// CHECK:STDOUT:   %Double.specific_fn: <specific function> = specific_function %Double, @Double(%int_64) [concrete]
 // CHECK:STDOUT:   %Add.impl_witness.ec1: <witness> = impl_witness imports.%Add.impl_witness_table, @MyInt.as.Add.impl(%N) [symbolic]
+// CHECK:STDOUT:   %require_complete.a87: <witness> = require_complete_type %MyInt.19f [symbolic]
 // CHECK:STDOUT:   %MyInt.as.Add.impl.Op.type.1ab: type = fn_type @MyInt.as.Add.impl.Op, @MyInt.as.Add.impl(%N) [symbolic]
 // CHECK:STDOUT:   %MyInt.as.Add.impl.Op.959: %MyInt.as.Add.impl.Op.type.1ab = struct_value () [symbolic]
+// CHECK:STDOUT:   %.bc4: require_specific_def_type = require_specific_def @MyInt.as.Add.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Double.specific_fn: <specific function> = specific_function %Double, @Double(%int_64) [concrete]
 // CHECK:STDOUT:   %Add.impl_witness.8fe: <witness> = impl_witness imports.%Add.impl_witness_table, @MyInt.as.Add.impl(%int_64) [concrete]
 // CHECK:STDOUT:   %MyInt.as.Add.impl.Op.type.193: type = fn_type @MyInt.as.Add.impl.Op, @MyInt.as.Add.impl(%int_64) [concrete]
 // CHECK:STDOUT:   %MyInt.as.Add.impl.Op.803: %MyInt.as.Add.impl.Op.type.193 = struct_value () [concrete]
+// CHECK:STDOUT:   %.9b3: require_specific_def_type = require_specific_def @MyInt.as.Add.impl(%int_64) [concrete]
 // CHECK:STDOUT:   %Add.facet.bfc: %Add.type = facet_value %MyInt.f30, (%Add.impl_witness.8fe) [concrete]
 // CHECK:STDOUT:   %.006: type = fn_type_with_self_type %Add.Op.type, %Add.facet.bfc [concrete]
 // CHECK:STDOUT:   %MyInt.as.Add.impl.Op.specific_fn: <specific function> = specific_function %MyInt.as.Add.impl.Op.803, @MyInt.as.Add.impl.Op(%int_64) [concrete]
@@ -567,10 +571,11 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %MyInt [symbolic = %require_complete (constants.%require_complete.a87)]
+// CHECK:STDOUT:   %.1: require_specific_def_type = require_specific_def @MyInt.as.Add.impl(%N) [symbolic = %.1 (constants.%.bc4)]
 // CHECK:STDOUT:   %Add.lookup_impl_witness: <witness> = lookup_impl_witness %MyInt, @Add [symbolic = %Add.lookup_impl_witness (constants.%Add.lookup_impl_witness)]
 // CHECK:STDOUT:   %Add.facet: %Add.type = facet_value %MyInt, (%Add.lookup_impl_witness) [symbolic = %Add.facet (constants.%Add.facet.98c)]
-// CHECK:STDOUT:   %.1: type = fn_type_with_self_type constants.%Add.Op.type, %Add.facet [symbolic = %.1 (constants.%.99e)]
-// CHECK:STDOUT:   %impl.elem0: @Double.%.1 (%.99e) = impl_witness_access %Add.lookup_impl_witness, element0 [symbolic = %impl.elem0 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %.2: type = fn_type_with_self_type constants.%Add.Op.type, %Add.facet [symbolic = %.2 (constants.%.99e)]
+// CHECK:STDOUT:   %impl.elem0: @Double.%.2 (%.99e) = impl_witness_access %Add.lookup_impl_witness, element0 [symbolic = %impl.elem0 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @Add.Op(%Add.facet) [symbolic = %specific_impl_fn (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
@@ -624,26 +629,6 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.37a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Double(constants.%N) {
-// CHECK:STDOUT:   %N => constants.%N
-// CHECK:STDOUT:   %MyInt => constants.%MyInt.19f
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.37a
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Double(constants.%int_64) {
-// CHECK:STDOUT:   %N => constants.%int_64
-// CHECK:STDOUT:   %MyInt => constants.%MyInt.f30
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e50
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.4a1
-// CHECK:STDOUT:   %Add.lookup_impl_witness => constants.%Add.impl_witness.8fe
-// CHECK:STDOUT:   %Add.facet => constants.%Add.facet.bfc
-// CHECK:STDOUT:   %.1 => constants.%.006
-// CHECK:STDOUT:   %impl.elem0 => constants.%MyInt.as.Add.impl.Op.803
-// CHECK:STDOUT:   %specific_impl_fn => constants.%MyInt.as.Add.impl.Op.specific_fn
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @MyInt.as.Add.impl(constants.%N) {
 // CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT:   %MyInt => constants.%MyInt.19f
@@ -659,6 +644,27 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT:   %MyInt => constants.%MyInt.19f
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.37a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Double(constants.%N) {
+// CHECK:STDOUT:   %N => constants.%N
+// CHECK:STDOUT:   %MyInt => constants.%MyInt.19f
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.37a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Double(constants.%int_64) {
+// CHECK:STDOUT:   %N => constants.%int_64
+// CHECK:STDOUT:   %MyInt => constants.%MyInt.f30
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e50
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.4a1
+// CHECK:STDOUT:   %.1 => constants.%.9b3
+// CHECK:STDOUT:   %Add.lookup_impl_witness => constants.%Add.impl_witness.8fe
+// CHECK:STDOUT:   %Add.facet => constants.%Add.facet.bfc
+// CHECK:STDOUT:   %.2 => constants.%.006
+// CHECK:STDOUT:   %impl.elem0 => constants.%MyInt.as.Add.impl.Op.803
+// CHECK:STDOUT:   %specific_impl_fn => constants.%MyInt.as.Add.impl.Op.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MyInt.as.Add.impl(constants.%int_64) {

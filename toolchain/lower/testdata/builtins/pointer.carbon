@@ -30,14 +30,14 @@ fn Check(p: MakeUnformed(C*)) -> bool {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CNull.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret ptr null, !dbg !7
+// CHECK:STDOUT:   ret ptr null, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i1 @_CCheck.Main(ptr %p) #0 !dbg !8 {
+// CHECK:STDOUT: define i1 @_CCheck.Main(ptr %p) #0 !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %IsNull.call = icmp eq ptr %p, null, !dbg !9
-// CHECK:STDOUT:   ret i1 %IsNull.call, !dbg !10
+// CHECK:STDOUT:   %IsNull.call = icmp eq ptr %p, null, !dbg !14
+// CHECK:STDOUT:   ret i1 %IsNull.call, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -51,8 +51,13 @@ fn Check(p: MakeUnformed(C*)) -> bool {
 // CHECK:STDOUT: !3 = !DIFile(filename: "pointer.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Null", linkageName: "_CNull.Main", scope: null, file: !3, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 20, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Check", linkageName: "_CCheck.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 24, column: 10, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 24, column: 3, scope: !8)
+// CHECK:STDOUT: !6 = !{!7}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !8 = !DILocation(line: 20, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Check", linkageName: "_CCheck.Main", scope: null, file: !3, line: 23, type: !10, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !12)
+// CHECK:STDOUT: !10 = !DISubroutineType(types: !11)
+// CHECK:STDOUT: !11 = !{!7, !7}
+// CHECK:STDOUT: !12 = !{!13}
+// CHECK:STDOUT: !13 = !DILocalVariable(arg: 1, scope: !9, type: !7)
+// CHECK:STDOUT: !14 = !DILocation(line: 24, column: 10, scope: !9)
+// CHECK:STDOUT: !15 = !DILocation(line: 24, column: 3, scope: !9)

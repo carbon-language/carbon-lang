@@ -26,22 +26,22 @@ fn G() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CF.Main(ptr %arr, i32 %i) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc14_15.2.array.index = getelementptr inbounds [3 x i32], ptr %arr, i32 0, i32 %i, !dbg !7
-// CHECK:STDOUT:   %.loc14_15.3 = load i32, ptr %.loc14_15.2.array.index, align 4, !dbg !7
-// CHECK:STDOUT:   ret i32 %.loc14_15.3, !dbg !8
+// CHECK:STDOUT:   %.loc14_15.2.array.index = getelementptr inbounds [3 x i32], ptr %arr, i32 0, i32 %i, !dbg !12
+// CHECK:STDOUT:   %.loc14_15.3 = load i32, ptr %.loc14_15.2.array.index, align 4, !dbg !12
+// CHECK:STDOUT:   ret i32 %.loc14_15.3, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CG.Main() #0 !dbg !9 {
+// CHECK:STDOUT: define i32 @_CG.Main() #0 !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_20.3.temp = alloca [3 x i32], align 4, !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_20.3.temp), !dbg !10
-// CHECK:STDOUT:   %.loc18_20.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_20.3.temp, i32 0, i64 0, !dbg !10
-// CHECK:STDOUT:   %.loc18_20.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_20.3.temp, i32 0, i64 1, !dbg !10
-// CHECK:STDOUT:   %.loc18_20.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_20.3.temp, i32 0, i64 2, !dbg !10
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc18_20.3.temp, ptr align 4 @array.loc18_20.13, i64 12, i1 false), !dbg !10
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr %.loc18_20.3.temp, i32 1), !dbg !11
-// CHECK:STDOUT:   ret i32 %F.call, !dbg !12
+// CHECK:STDOUT:   %.loc18_20.3.temp = alloca [3 x i32], align 4, !dbg !17
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_20.3.temp), !dbg !17
+// CHECK:STDOUT:   %.loc18_20.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_20.3.temp, i32 0, i64 0, !dbg !17
+// CHECK:STDOUT:   %.loc18_20.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_20.3.temp, i32 0, i64 1, !dbg !17
+// CHECK:STDOUT:   %.loc18_20.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_20.3.temp, i32 0, i64 2, !dbg !17
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc18_20.3.temp, ptr align 4 @array.loc18_20.13, i64 12, i1 false), !dbg !17
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr %.loc18_20.3.temp, i32 1), !dbg !18
+// CHECK:STDOUT:   ret i32 %F.call, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -61,12 +61,19 @@ fn G() -> i32 {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "function_param.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !9)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 10, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 18, column: 12, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 18, column: 10, scope: !9)
-// CHECK:STDOUT: !12 = !DILocation(line: 18, column: 3, scope: !9)
+// CHECK:STDOUT: !6 = !{!7, !8, !7}
+// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !8 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !9 = !{!10, !11}
+// CHECK:STDOUT: !10 = !DILocalVariable(arg: 1, scope: !4, type: !8)
+// CHECK:STDOUT: !11 = !DILocalVariable(arg: 2, scope: !4, type: !7)
+// CHECK:STDOUT: !12 = !DILocation(line: 14, column: 10, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 17, type: !15, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !15 = !DISubroutineType(types: !16)
+// CHECK:STDOUT: !16 = !{!7}
+// CHECK:STDOUT: !17 = !DILocation(line: 18, column: 12, scope: !14)
+// CHECK:STDOUT: !18 = !DILocation(line: 18, column: 10, scope: !14)
+// CHECK:STDOUT: !19 = !DILocation(line: 18, column: 3, scope: !14)

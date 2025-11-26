@@ -53,14 +53,14 @@ var (_: i32, _: i32) = (3, 4);
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CGetA.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret ptr @_Ca.Main, !dbg !7
+// CHECK:STDOUT:   ret ptr @_Ca.Main, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !8 {
+// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   store i32 1, ptr @_Ca.Main, align 4, !dbg !9
-// CHECK:STDOUT:   ret void, !dbg !10
+// CHECK:STDOUT:   store i32 1, ptr @_Ca.Main, align 4, !dbg !12
+// CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -74,11 +74,14 @@ var (_: i32, _: i32) = (3, 4);
 // CHECK:STDOUT: !3 = !DIFile(filename: "simple.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "GetA", linkageName: "_CGetA.Main", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 5, column: 21, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !3, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 4, column: 1, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 0, scope: !8)
+// CHECK:STDOUT: !6 = !{!7}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !8 = !DILocation(line: 5, column: 21, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !3, type: !10, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DISubroutineType(types: !11)
+// CHECK:STDOUT: !11 = !{null}
+// CHECK:STDOUT: !12 = !DILocation(line: 4, column: 1, scope: !9)
+// CHECK:STDOUT: !13 = !DILocation(line: 0, scope: !9)
 // CHECK:STDOUT: ; ModuleID = 'var_in_tuple.carbon'
 // CHECK:STDOUT: source_filename = "var_in_tuple.carbon"
 // CHECK:STDOUT:
@@ -89,21 +92,21 @@ var (_: i32, _: i32) = (3, 4);
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CGetB.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret ptr @_Cb.Main, !dbg !7
+// CHECK:STDOUT:   ret ptr @_Cb.Main, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define ptr @_CGetC.Main() #0 !dbg !8 {
+// CHECK:STDOUT: define ptr @_CGetC.Main() #0 !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret ptr @_Cc.Main, !dbg !9
+// CHECK:STDOUT:   ret ptr @_Cc.Main, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !10 {
+// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   store i32 2, ptr @_Cb.Main, align 4, !dbg !11
-// CHECK:STDOUT:   store i32 3, ptr @_Cc.Main, align 4, !dbg !12
-// CHECK:STDOUT:   ret void, !dbg !13
+// CHECK:STDOUT:   store i32 2, ptr @_Cb.Main, align 4, !dbg !14
+// CHECK:STDOUT:   store i32 3, ptr @_Cc.Main, align 4, !dbg !15
+// CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -117,14 +120,17 @@ var (_: i32, _: i32) = (3, 4);
 // CHECK:STDOUT: !3 = !DIFile(filename: "var_in_tuple.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "GetB", linkageName: "_CGetB.Main", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 6, column: 21, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "GetC", linkageName: "_CGetC.Main", scope: null, file: !3, line: 7, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 7, column: 21, scope: !8)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !3, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !11 = !DILocation(line: 4, column: 6, scope: !10)
-// CHECK:STDOUT: !12 = !DILocation(line: 4, column: 18, scope: !10)
-// CHECK:STDOUT: !13 = !DILocation(line: 0, scope: !10)
+// CHECK:STDOUT: !6 = !{!7}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !8 = !DILocation(line: 6, column: 21, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "GetC", linkageName: "_CGetC.Main", scope: null, file: !3, line: 7, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 21, scope: !9)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !3, type: !12, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
+// CHECK:STDOUT: !13 = !{null}
+// CHECK:STDOUT: !14 = !DILocation(line: 4, column: 6, scope: !11)
+// CHECK:STDOUT: !15 = !DILocation(line: 4, column: 18, scope: !11)
+// CHECK:STDOUT: !16 = !DILocation(line: 0, scope: !11)
 // CHECK:STDOUT: ; ModuleID = 'tuple_in_var.carbon'
 // CHECK:STDOUT: source_filename = "tuple_in_var.carbon"
 // CHECK:STDOUT:
@@ -135,20 +141,20 @@ var (_: i32, _: i32) = (3, 4);
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CGetD.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret ptr @_Cd.Main, !dbg !7
+// CHECK:STDOUT:   ret ptr @_Cd.Main, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define ptr @_CGetE.Main() #0 !dbg !8 {
+// CHECK:STDOUT: define ptr @_CGetE.Main() #0 !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret ptr getelementptr inbounds nuw ({ i32, i32 }, ptr @_Cd.Main, i32 0, i32 1), !dbg !9
+// CHECK:STDOUT:   ret ptr getelementptr inbounds nuw ({ i32, i32 }, ptr @_Cd.Main, i32 0, i32 1), !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !10 {
+// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cd.Main, ptr align 4 @tuple.0a0.loc4_1, i64 8, i1 false), !dbg !11
-// CHECK:STDOUT:   ret void, !dbg !12
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cd.Main, ptr align 4 @tuple.0a0.loc4_1, i64 8, i1 false), !dbg !14
+// CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
@@ -169,13 +175,16 @@ var (_: i32, _: i32) = (3, 4);
 // CHECK:STDOUT: !3 = !DIFile(filename: "tuple_in_var.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "GetD", linkageName: "_CGetD.Main", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 6, column: 21, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "GetE", linkageName: "_CGetE.Main", scope: null, file: !3, line: 7, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 7, column: 21, scope: !8)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !3, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !11 = !DILocation(line: 4, column: 1, scope: !10)
-// CHECK:STDOUT: !12 = !DILocation(line: 0, scope: !10)
+// CHECK:STDOUT: !6 = !{!7}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !8 = !DILocation(line: 6, column: 21, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "GetE", linkageName: "_CGetE.Main", scope: null, file: !3, line: 7, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 21, scope: !9)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !3, type: !12, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
+// CHECK:STDOUT: !13 = !{null}
+// CHECK:STDOUT: !14 = !DILocation(line: 4, column: 1, scope: !11)
+// CHECK:STDOUT: !15 = !DILocation(line: 0, scope: !11)
 // CHECK:STDOUT: ; ModuleID = 'unnamed.carbon'
 // CHECK:STDOUT: source_filename = "unnamed.carbon"
 // CHECK:STDOUT:
@@ -211,7 +220,7 @@ var (_: i32, _: i32) = (3, 4);
 // CHECK:STDOUT: !3 = !DIFile(filename: "unnamed.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !3, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 4, column: 1, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 5, column: 1, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 0, scope: !4)

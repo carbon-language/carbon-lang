@@ -240,7 +240,7 @@ fn GetRefs() {
 // CHECK:STDOUT: !6 = !DIFile(filename: "pass_references.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "PassRefs", linkageName: "_CPassRefs.Main", scope: null, file: !6, line: 16, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 17, column: 3, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 19, column: 17, scope: !7)
 // CHECK:STDOUT: !12 = !DILocation(line: 22, column: 3, scope: !7)
@@ -300,7 +300,7 @@ fn GetRefs() {
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
 // CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8
-// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !nonnull !9
+// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !nonnull !22
 // CHECK:STDOUT:   call void @_Z8TakeCRefR1C10ForceThunk(ptr nonnull align 1 dereferenceable(1) %1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -339,7 +339,7 @@ fn GetRefs() {
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
 // CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8
-// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !nonnull !9, !align !22
+// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !nonnull !22, !align !23
 // CHECK:STDOUT:   call void @_Z10TakeIntRefRi10ForceThunk(ptr nonnull align 4 dereferenceable(4) %1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -393,7 +393,7 @@ fn GetRefs() {
 // CHECK:STDOUT: !6 = !DIFile(filename: "pass_references_via_thunk.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "PassRefs", linkageName: "_CPassRefs.Main", scope: null, file: !6, line: 17, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 18, column: 3, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 20, column: 17, scope: !7)
 // CHECK:STDOUT: !12 = !DILocation(line: 23, column: 3, scope: !7)
@@ -406,7 +406,8 @@ fn GetRefs() {
 // CHECK:STDOUT: !19 = !DILocation(line: 25, column: 3, scope: !7)
 // CHECK:STDOUT: !20 = !DILocation(line: 26, column: 3, scope: !7)
 // CHECK:STDOUT: !21 = !DILocation(line: 17, column: 1, scope: !7)
-// CHECK:STDOUT: !22 = !{i64 4}
+// CHECK:STDOUT: !22 = !{}
+// CHECK:STDOUT: !23 = !{i64 4}
 // CHECK:STDOUT: ; ModuleID = 'return_references.carbon'
 // CHECK:STDOUT: source_filename = "return_references.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -475,7 +476,7 @@ fn GetRefs() {
 // CHECK:STDOUT: !6 = !DIFile(filename: "return_references.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "GetRefs", linkageName: "_CGetRefs.Main", scope: null, file: !6, line: 16, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 17, column: 3, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 18, column: 3, scope: !7)
 // CHECK:STDOUT: !12 = !DILocation(line: 19, column: 3, scope: !7)
@@ -609,7 +610,7 @@ fn GetRefs() {
 // CHECK:STDOUT: !6 = !DIFile(filename: "return_references_via_thunk.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "GetRefs", linkageName: "_CGetRefs.Main", scope: null, file: !6, line: 17, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 18, column: 3, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 19, column: 3, scope: !7)
 // CHECK:STDOUT: !12 = !DILocation(line: 20, column: 3, scope: !7)

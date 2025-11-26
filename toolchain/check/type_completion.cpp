@@ -193,8 +193,9 @@ class TypeCompleter {
              SemIR::CharLiteralType, SemIR::ErrorInst, SemIR::FacetType,
              SemIR::FloatLiteralType, SemIR::FloatType, SemIR::IntType,
              SemIR::IntLiteralType, SemIR::NamespaceType, SemIR::PatternType,
-             SemIR::PointerType, SemIR::SpecificFunctionType, SemIR::TypeType,
-             SemIR::VtableType, SemIR::WitnessType>())
+             SemIR::PointerType, SemIR::RequireSpecificDefinitionType,
+             SemIR::SpecificFunctionType, SemIR::TypeType, SemIR::VtableType,
+             SemIR::WitnessType>())
   auto BuildInfoForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
     return {.value_repr = MakeCopyValueRepr(type_id)};

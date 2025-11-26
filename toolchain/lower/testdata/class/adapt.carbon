@@ -65,35 +65,35 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMake.PairOfInts.Main(ptr sret({ i32, i32 }) %return) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_27.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !7
-// CHECK:STDOUT:   %.loc9_27.6.b = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !7
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @PairOfInts.val.loc9_28, i64 8, i1 false), !dbg !8
-// CHECK:STDOUT:   ret void, !dbg !8
+// CHECK:STDOUT:   %.loc9_27.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %.loc9_27.6.b = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @PairOfInts.val.loc9_28, i64 8, i1 false), !dbg !9
+// CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMake.PairAdapter.Main(ptr sret({ i32, i32 }) %return) #0 !dbg !9 {
+// CHECK:STDOUT: define void @_CMake.PairAdapter.Main(ptr sret({ i32, i32 }) %return) #0 !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CMake.PairOfInts.Main(ptr %return), !dbg !10
-// CHECK:STDOUT:   ret void, !dbg !11
+// CHECK:STDOUT:   call void @_CMake.PairOfInts.Main(ptr %return), !dbg !11
+// CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CGetB.PairAdapter.Main(ptr %self) #0 !dbg !12 {
+// CHECK:STDOUT: define i32 @_CGetB.PairAdapter.Main(ptr %self) #0 !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_14.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !13
-// CHECK:STDOUT:   %.loc22_14.2 = load i32, ptr %.loc22_14.1.b, align 4, !dbg !13
-// CHECK:STDOUT:   ret i32 %.loc22_14.2, !dbg !14
+// CHECK:STDOUT:   %.loc22_14.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !19
+// CHECK:STDOUT:   %.loc22_14.2 = load i32, ptr %.loc22_14.1.b, align 4, !dbg !19
+// CHECK:STDOUT:   ret i32 %.loc22_14.2, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CUse.Main() #0 !dbg !15 {
+// CHECK:STDOUT: define i32 @_CUse.Main() #0 !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %pa.var = alloca { i32, i32 }, align 8, !dbg !16
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %pa.var), !dbg !16
-// CHECK:STDOUT:   call void @_CMake.PairAdapter.Main(ptr %pa.var), !dbg !17
-// CHECK:STDOUT:   %PairAdapter.GetB.call = call i32 @_CGetB.PairAdapter.Main(ptr %pa.var), !dbg !18
-// CHECK:STDOUT:   ret i32 %PairAdapter.GetB.call, !dbg !19
+// CHECK:STDOUT:   %pa.var = alloca { i32, i32 }, align 8, !dbg !24
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %pa.var), !dbg !24
+// CHECK:STDOUT:   call void @_CMake.PairAdapter.Main(ptr %pa.var), !dbg !25
+// CHECK:STDOUT:   %PairAdapter.GetB.call = call i32 @_CGetB.PairAdapter.Main(ptr %pa.var), !dbg !26
+// CHECK:STDOUT:   ret i32 %PairAdapter.GetB.call, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
@@ -115,34 +115,42 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: !3 = !DIFile(filename: "adapt_class.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.PairOfInts.Main", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 9, column: 12, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 9, column: 5, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.PairAdapter.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 17, column: 12, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 17, column: 5, scope: !9)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "GetB", linkageName: "_CGetB.PairAdapter.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = !DILocation(line: 22, column: 12, scope: !12)
-// CHECK:STDOUT: !14 = !DILocation(line: 22, column: 5, scope: !12)
-// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !16 = !DILocation(line: 27, column: 3, scope: !15)
-// CHECK:STDOUT: !17 = !DILocation(line: 27, column: 25, scope: !15)
-// CHECK:STDOUT: !18 = !DILocation(line: 28, column: 10, scope: !15)
-// CHECK:STDOUT: !19 = !DILocation(line: 28, column: 3, scope: !15)
+// CHECK:STDOUT: !6 = !{!7}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !8 = !DILocation(line: 9, column: 12, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 9, column: 5, scope: !4)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.PairAdapter.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = !DILocation(line: 17, column: 12, scope: !10)
+// CHECK:STDOUT: !12 = !DILocation(line: 17, column: 5, scope: !10)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "GetB", linkageName: "_CGetB.PairAdapter.Main", scope: null, file: !3, line: 20, type: !14, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !17)
+// CHECK:STDOUT: !14 = !DISubroutineType(types: !15)
+// CHECK:STDOUT: !15 = !{!16, !7}
+// CHECK:STDOUT: !16 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !17 = !{!18}
+// CHECK:STDOUT: !18 = !DILocalVariable(arg: 1, scope: !13, type: !7)
+// CHECK:STDOUT: !19 = !DILocation(line: 22, column: 12, scope: !13)
+// CHECK:STDOUT: !20 = !DILocation(line: 22, column: 5, scope: !13)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !3, line: 26, type: !22, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !22 = !DISubroutineType(types: !23)
+// CHECK:STDOUT: !23 = !{!16}
+// CHECK:STDOUT: !24 = !DILocation(line: 27, column: 3, scope: !21)
+// CHECK:STDOUT: !25 = !DILocation(line: 27, column: 25, scope: !21)
+// CHECK:STDOUT: !26 = !DILocation(line: 28, column: 10, scope: !21)
+// CHECK:STDOUT: !27 = !DILocation(line: 28, column: 3, scope: !21)
 // CHECK:STDOUT: ; ModuleID = 'adapt_int.carbon'
 // CHECK:STDOUT: source_filename = "adapt_int.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_COp.Int.Main:Copy.Core"(i32 %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %self, !dbg !7
+// CHECK:STDOUT:   ret i32 %self, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CDoStuff.Main(i32 %a) #0 !dbg !8 {
+// CHECK:STDOUT: define i32 @_CDoStuff.Main(i32 %a) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call = call i32 @"_COp.Int.Main:Copy.Core"(i32 %a), !dbg !9
-// CHECK:STDOUT:   ret i32 %Int.as.Copy.impl.Op.call, !dbg !10
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call = call i32 @"_COp.Int.Main:Copy.Core"(i32 %a), !dbg !14
+// CHECK:STDOUT:   ret i32 %Int.as.Copy.impl.Op.call, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -154,10 +162,15 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "adapt_int.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Int.Main:Copy.Core", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Int.Main:Copy.Core", scope: null, file: !3, line: 8, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 8, column: 35, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "DoStuff", linkageName: "_CDoStuff.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 13, column: 10, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 3, scope: !8)
+// CHECK:STDOUT: !6 = !{!7, !7}
+// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !8 = !{!9}
+// CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
+// CHECK:STDOUT: !10 = !DILocation(line: 8, column: 35, scope: !4)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "DoStuff", linkageName: "_CDoStuff.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !12)
+// CHECK:STDOUT: !12 = !{!13}
+// CHECK:STDOUT: !13 = !DILocalVariable(arg: 1, scope: !11, type: !7)
+// CHECK:STDOUT: !14 = !DILocation(line: 13, column: 10, scope: !11)
+// CHECK:STDOUT: !15 = !DILocation(line: 13, column: 3, scope: !11)

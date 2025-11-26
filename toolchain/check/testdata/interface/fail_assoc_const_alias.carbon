@@ -300,6 +300,7 @@ interface C {
 // CHECK:STDOUT:   %Self.4d7: %J2.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.4d7 [symbolic]
 // CHECK:STDOUT:   %I2.impl_witness.7b7f96.2: <witness> = impl_witness file.%I2.impl_witness_table, @V.binding.as_type.as.I2.impl(%Self.4d7) [symbolic]
+// CHECK:STDOUT:   %.6cb: require_specific_def_type = require_specific_def @V.binding.as_type.as.I2.impl(%Self.4d7) [symbolic]
 // CHECK:STDOUT:   %I2.lookup_impl_witness.1de: <witness> = lookup_impl_witness %Self.4d7, @I2 [symbolic]
 // CHECK:STDOUT:   %I2.facet: %I2.type = facet_value %Self.binding.as_type, (%I2.lookup_impl_witness.1de) [symbolic]
 // CHECK:STDOUT:   %impl.elem0.804: type = impl_witness_access %I2.lookup_impl_witness.1de, element0 [symbolic]
@@ -381,7 +382,7 @@ interface C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @J2.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %I2.facet.loc15_14.2: %I2.type = facet_value %Self.as_type, (constants.%I2.lookup_impl_witness.1de) [symbolic = %I2.facet.loc15_14.1 (constants.%I2.facet)]
-// CHECK:STDOUT:     %.loc15: %I2.type = converted @J2.%Self, %I2.facet.loc15_14.2 [symbolic = %I2.facet.loc15_14.1 (constants.%I2.facet)]
+// CHECK:STDOUT:     %.loc15_14.2: %I2.type = converted @J2.%Self, %I2.facet.loc15_14.2 [symbolic = %I2.facet.loc15_14.1 (constants.%I2.facet)]
 // CHECK:STDOUT:     %impl.elem0.loc15_14.2: type = impl_witness_access constants.%I2.lookup_impl_witness.1de, element0 [symbolic = %impl.elem0.loc15_14.1 (constants.%impl.elem0.804)]
 // CHECK:STDOUT:     %U2.ref: type = name_ref U2, %impl.elem0.loc15_14.2 [symbolic = %impl.elem0.loc15_14.1 (constants.%impl.elem0.804)]
 // CHECK:STDOUT:     %return.param: ref @J2.F2.%impl.elem0.loc15_14.1 (%impl.elem0.804) = out_param call_param0
@@ -419,6 +420,7 @@ interface C {
 // CHECK:STDOUT: generic fn @J2.F2(@J2.%Self: %J2.type) {
 // CHECK:STDOUT:   %Self: %J2.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.4d7)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:   %.loc15_14.1: require_specific_def_type = require_specific_def @V.binding.as_type.as.I2.impl(%Self) [symbolic = %.loc15_14.1 (constants.%.6cb)]
 // CHECK:STDOUT:   %I2.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @I2 [symbolic = %I2.lookup_impl_witness (constants.%I2.lookup_impl_witness.1de)]
 // CHECK:STDOUT:   %I2.facet.loc15_14.1: %I2.type = facet_value %Self.binding.as_type, (%I2.lookup_impl_witness) [symbolic = %I2.facet.loc15_14.1 (constants.%I2.facet)]
 // CHECK:STDOUT:   %impl.elem0.loc15_14.1: type = impl_witness_access %I2.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc15_14.1 (constants.%impl.elem0.804)]
@@ -450,6 +452,7 @@ interface C {
 // CHECK:STDOUT: specific @J2.F2(constants.%Self.4d7) {
 // CHECK:STDOUT:   %Self => constants.%Self.4d7
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
+// CHECK:STDOUT:   %.loc15_14.1 => constants.%.6cb
 // CHECK:STDOUT:   %I2.lookup_impl_witness => constants.%I2.lookup_impl_witness.1de
 // CHECK:STDOUT:   %I2.facet.loc15_14.1 => constants.%I2.facet
 // CHECK:STDOUT:   %impl.elem0.loc15_14.1 => constants.%impl.elem0.804

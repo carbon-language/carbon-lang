@@ -25,6 +25,7 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
 
   clang::Sema& sema = context.clang_sema();
   clang::Preprocessor& preprocessor = sema.getPreprocessor();
+
   clang::Parser parser(preprocessor, sema, false);
 
   llvm::SmallVector<clang::Token> tokens(macro_info->tokens().begin(),
@@ -45,7 +46,12 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
                                 /*IsReinject=*/false);
   parser.ConsumeAnyToken(true);
 
+  // TODO: Identifiers are still only available if prefixed with "::" (e.g.
+  // "#define M_Var ::myVar").
+  parser.EnterScope(clang::Scope::DeclScope);
   clang::ExprResult result = parser.ParseConstantExpression();
+  parser.ExitScope();
+
   clang::Expr* result_expr = result.get();
 
   bool success =
@@ -70,6 +76,7 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
   clang::Expr::EvalResult evaluated_result;
   CARBON_CHECK(result_expr->EvaluateAsConstantExpr(evaluated_result,
                                                    sema.getASTContext()));
+
   clang::APValue ap_value = evaluated_result.Val;
   switch (ap_value.getKind()) {
     case clang::APValue::Int:

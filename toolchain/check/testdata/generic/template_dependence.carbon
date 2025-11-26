@@ -45,6 +45,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %require_complete.6d1: <witness> = require_complete_type %ptr.3f2 [template]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
+// CHECK:STDOUT:   %.dcd: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.d9fe7a.1) [template]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.c66: <witness> = lookup_impl_witness %ptr.4f0b5c.1, @Copy [template]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.4f0b5c.1, (%Copy.lookup_impl_witness.c66) [template]
 // CHECK:STDOUT:   %.89d: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [template]
@@ -89,10 +90,11 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc5_33: <witness> = require_complete_type %ptr.loc5_29.1 [template = %require_complete.loc5_33 (constants.%require_complete.482d3f.1)]
 // CHECK:STDOUT:   %require_complete.loc5_26: <witness> = require_complete_type %ptr.loc5_30.1 [template = %require_complete.loc5_26 (constants.%require_complete.6d1)]
+// CHECK:STDOUT:   %.loc6_10.4: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.loc5_15.1) [template = %.loc6_10.4 (constants.%.dcd)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc5_29.1, @Copy [template = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.c66)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc5_29.1, (%Copy.lookup_impl_witness) [template = %Copy.facet (constants.%Copy.facet)]
-// CHECK:STDOUT:   %.loc6_10.4: type = fn_type_with_self_type constants.%Copy.Op.type, %Copy.facet [template = %.loc6_10.4 (constants.%.89d)]
-// CHECK:STDOUT:   %impl.elem0.loc6_10.2: @F.%.loc6_10.4 (%.89d) = impl_witness_access %Copy.lookup_impl_witness, element0 [template = %impl.elem0.loc6_10.2 (constants.%impl.elem0.928)]
+// CHECK:STDOUT:   %.loc6_10.5: type = fn_type_with_self_type constants.%Copy.Op.type, %Copy.facet [template = %.loc6_10.5 (constants.%.89d)]
+// CHECK:STDOUT:   %impl.elem0.loc6_10.2: @F.%.loc6_10.5 (%.89d) = impl_witness_access %Copy.lookup_impl_witness, element0 [template = %impl.elem0.loc6_10.2 (constants.%impl.elem0.928)]
 // CHECK:STDOUT:   %specific_impl_fn.loc6_10.2: <specific function> = specific_impl_function %impl.elem0.loc6_10.2, @Copy.Op(%Copy.facet) [template = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.6a1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%ptr.loc5_30.1 (%ptr.3f2)) -> @F.%ptr.loc5_29.1 (%ptr.4f0b5c.1) {
@@ -100,7 +102,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %x.ref: @F.%ptr.loc5_30.1 (%ptr.3f2) = name_ref x, %x
 // CHECK:STDOUT:     %.loc6_10.1: ref @F.%ptr.loc5_29.1 (%ptr.4f0b5c.1) = deref %x.ref
 // CHECK:STDOUT:     %.loc6_10.2: @F.%ptr.loc5_29.1 (%ptr.4f0b5c.1) = acquire_value %.loc6_10.1
-// CHECK:STDOUT:     %impl.elem0.loc6_10.1: @F.%.loc6_10.4 (%.89d) = impl_witness_access constants.%Copy.lookup_impl_witness.c66, element0 [template = %impl.elem0.loc6_10.2 (constants.%impl.elem0.928)]
+// CHECK:STDOUT:     %impl.elem0.loc6_10.1: @F.%.loc6_10.5 (%.89d) = impl_witness_access constants.%Copy.lookup_impl_witness.c66, element0 [template = %impl.elem0.loc6_10.2 (constants.%impl.elem0.928)]
 // CHECK:STDOUT:     %bound_method.loc6_10.1: <bound method> = bound_method %.loc6_10.2, %impl.elem0.loc6_10.1
 // CHECK:STDOUT:     %specific_impl_fn.loc6_10.1: <specific function> = specific_impl_function %impl.elem0.loc6_10.1, @Copy.Op(constants.%Copy.facet) [template = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.6a1)]
 // CHECK:STDOUT:     %bound_method.loc6_10.2: <bound method> = bound_method %.loc6_10.2, %specific_impl_fn.loc6_10.1
