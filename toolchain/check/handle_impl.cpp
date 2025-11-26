@@ -196,8 +196,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
 
 // Build an ImplDecl describing the signature of an impl. This handles the
 // common logic shared by impl forward declarations and impl definitions.
-static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
-                          bool is_definition)
+static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
     -> std::pair<SemIR::ImplId, SemIR::InstId> {
   auto [constraint_node, constraint_id] =
       context.node_stack().PopExprWithNodeId();
@@ -249,7 +248,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
          .is_final = is_final}};
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Extend);
     impl_id = GetOrAddImpl(context, node_id, name.implicit_params_loc_id,
-                           impl_info, is_definition, extend_node);
+                           impl_info, extend_node);
   }
 
   // `GetOrAddImpl` either filled in the `impl_info` and returned a fresh
@@ -263,8 +262,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
 }
 
 auto HandleParseNode(Context& context, Parse::ImplDeclId node_id) -> bool {
-  auto [impl_id, impl_decl_id] =
-      BuildImplDecl(context, node_id, /*is_definition=*/false);
+  auto [impl_id, impl_decl_id] = BuildImplDecl(context, node_id);
   auto& impl = context.impls().Get(impl_id);
 
   context.decl_name_stack().PopScope();
@@ -281,8 +279,7 @@ auto HandleParseNode(Context& context, Parse::ImplDeclId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
     -> bool {
-  auto [impl_id, impl_decl_id] =
-      BuildImplDecl(context, node_id, /*is_definition=*/true);
+  auto [impl_id, impl_decl_id] = BuildImplDecl(context, node_id);
   auto& impl = context.impls().Get(impl_id);
 
   CARBON_CHECK(!impl.has_definition_started());

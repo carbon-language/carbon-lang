@@ -76,7 +76,7 @@ auto InitialFacetTypeImplWitness(
     Context& context, SemIR::LocId witness_loc_id,
     SemIR::TypeInstId facet_type_inst_id, SemIR::TypeInstId self_type_inst_id,
     const SemIR::SpecificInterface& interface_to_witness,
-    SemIR::SpecificId self_specific_id, bool is_definition) -> SemIR::InstId {
+    SemIR::SpecificId self_specific_id) -> SemIR::InstId {
   auto facet_type_id =
       context.types().GetTypeIdForTypeInstId(facet_type_inst_id);
   CARBON_CHECK(facet_type_id != SemIR::ErrorInst::TypeId);
@@ -96,9 +96,9 @@ auto InitialFacetTypeImplWitness(
                                             interface_to_witness);
       });
 
-  bool need_witness_table =
-      is_definition || !rewrites_into_interface_to_witness.empty();
-  if (!need_witness_table) {
+  if (rewrites_into_interface_to_witness.empty()) {
+    // The witness table is not needed until the definition. Make a placeholder
+    // for the declaration.
     auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
         context, witness_loc_id,
         {.elements_id = context.inst_blocks().AddPlaceholder(),

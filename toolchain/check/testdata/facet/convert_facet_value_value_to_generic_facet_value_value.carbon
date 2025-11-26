@@ -62,9 +62,9 @@ fn F() {
 // CHECK:STDOUT:   %T.binding.as_type.5cd: type = symbolic_binding_type T, 0, %T.84c [symbolic]
 // CHECK:STDOUT:   %U.binding.as_type: type = symbolic_binding_type U, 1, %U [symbolic]
 // CHECK:STDOUT:   %Eats.type.98f93b.1: type = facet_type <@Eats, @Eats(%U.binding.as_type)> [symbolic]
+// CHECK:STDOUT:   %Eats.impl_witness.42a0e2.1: <witness> = impl_witness file.%Eats.impl_witness_table, @T.binding.as_type.as.Eats.impl(%T.84c, %U) [symbolic]
 // CHECK:STDOUT:   %Self.9eb: %Eats.type.98f93b.1 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %require_complete.cc38c8.1: <witness> = require_complete_type %Eats.type.98f93b.1 [symbolic]
-// CHECK:STDOUT:   %Eats.impl_witness.42a0e2.1: <witness> = impl_witness file.%Eats.impl_witness_table, @T.binding.as_type.as.Eats.impl(%T.84c, %U) [symbolic]
 // CHECK:STDOUT:   %Goat: type = class_type @Goat [concrete]
 // CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness file.%Animal.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Food.17b: %Edible.type = symbolic_binding Food, 0 [symbolic]
@@ -91,8 +91,8 @@ fn F() {
 // CHECK:STDOUT:   %require_complete.c0f: <witness> = require_complete_type %A.binding.as_type [symbolic]
 // CHECK:STDOUT:   %require_complete.74d: <witness> = require_complete_type %Food.binding.as_type.86a [symbolic]
 // CHECK:STDOUT:   %Eats.type.98f93b.2: type = facet_type <@Eats, @Eats(%Food.binding.as_type.86a)> [symbolic]
-// CHECK:STDOUT:   %require_complete.cc38c8.2: <witness> = require_complete_type %Eats.type.98f93b.2 [symbolic]
 // CHECK:STDOUT:   %Eats.impl_witness.42a0e2.2: <witness> = impl_witness file.%Eats.impl_witness_table, @T.binding.as_type.as.Eats.impl(%A, %Food.e7a) [symbolic]
+// CHECK:STDOUT:   %require_complete.cc38c8.2: <witness> = require_complete_type %Eats.type.98f93b.2 [symbolic]
 // CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %A, @Eats, @Eats(%Food.binding.as_type.86a) [symbolic]
 // CHECK:STDOUT:   %Eats.facet.bda: %Eats.type.98f93b.2 = facet_value %A.binding.as_type, (%Eats.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %pattern_type.5a9: type = pattern_type %Eats.type.98f93b.2 [symbolic]
@@ -118,9 +118,9 @@ fn F() {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.9fd: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.5a8 = struct_value () [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.3f8: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.9fd, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.8dd) [concrete]
 // CHECK:STDOUT:   %Eats.type.cee: type = facet_type <@Eats, @Eats(%Grass)> [concrete]
+// CHECK:STDOUT:   %Eats.impl_witness.7f7: <witness> = impl_witness file.%Eats.impl_witness_table, @T.binding.as_type.as.Eats.impl(%Animal.facet, %Edible.facet) [concrete]
 // CHECK:STDOUT:   %Self.026: %Eats.type.cee = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %complete_type.eba: <witness> = complete_type_witness %Eats.type.cee [concrete]
-// CHECK:STDOUT:   %Eats.impl_witness.7f7: <witness> = impl_witness file.%Eats.impl_witness_table, @T.binding.as_type.as.Eats.impl(%Animal.facet, %Edible.facet) [concrete]
 // CHECK:STDOUT:   %Eats.facet.179: %Eats.type.cee = facet_value %Goat, (%Eats.impl_witness.7f7) [concrete]
 // CHECK:STDOUT:   %pattern_type.cf8: type = pattern_type %Eats.type.cee [concrete]
 // CHECK:STDOUT:   %Feed.specific_fn.577: <specific function> = specific_function %Feed, @Feed(%Edible.facet, %Eats.facet.179) [concrete]
@@ -317,10 +317,10 @@ fn F() {
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc26_14.2 [symbolic = %T.binding.as_type (constants.%T.binding.as_type.5cd)]
 // CHECK:STDOUT:   %U.binding.as_type: type = symbolic_binding_type U, 1, %U.loc26_26.2 [symbolic = %U.binding.as_type (constants.%U.binding.as_type)]
 // CHECK:STDOUT:   %Eats.type.loc26_49.2: type = facet_type <@Eats, @Eats(%U.binding.as_type)> [symbolic = %Eats.type.loc26_49.2 (constants.%Eats.type.98f93b.1)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Eats.type.loc26_49.2 [symbolic = %require_complete (constants.%require_complete.cc38c8.1)]
 // CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness file.%Eats.impl_witness_table, @T.binding.as_type.as.Eats.impl(%T.loc26_14.2, %U.loc26_26.2) [symbolic = %Eats.impl_witness (constants.%Eats.impl_witness.42a0e2.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Eats.type.loc26_49.2 [symbolic = %require_complete (constants.%require_complete.cc38c8.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc26_38 as %Eats.type.loc26_49.1 {
 // CHECK:STDOUT:   !members:
@@ -456,7 +456,6 @@ fn F() {
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type.5cd
 // CHECK:STDOUT:   %U.binding.as_type => constants.%U.binding.as_type
 // CHECK:STDOUT:   %Eats.type.loc26_49.2 => constants.%Eats.type.98f93b.1
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.cc38c8.1
 // CHECK:STDOUT:   %Eats.impl_witness => constants.%Eats.impl_witness.42a0e2.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -498,10 +497,10 @@ fn F() {
 // CHECK:STDOUT:   %T.binding.as_type => constants.%A.binding.as_type
 // CHECK:STDOUT:   %U.binding.as_type => constants.%Food.binding.as_type.86a
 // CHECK:STDOUT:   %Eats.type.loc26_49.2 => constants.%Eats.type.98f93b.2
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.cc38c8.2
 // CHECK:STDOUT:   %Eats.impl_witness => constants.%Eats.impl_witness.42a0e2.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.cc38c8.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%Food.e7a, constants.%Eats.facet.bda) {
@@ -550,10 +549,10 @@ fn F() {
 // CHECK:STDOUT:   %T.binding.as_type => constants.%Goat
 // CHECK:STDOUT:   %U.binding.as_type => constants.%Grass
 // CHECK:STDOUT:   %Eats.type.loc26_49.2 => constants.%Eats.type.cee
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.eba
 // CHECK:STDOUT:   %Eats.impl_witness => constants.%Eats.impl_witness.7f7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.eba
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%Edible.facet, constants.%Eats.facet.179) {

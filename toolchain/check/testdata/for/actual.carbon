@@ -87,7 +87,6 @@ fn Read() {
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.035: <witness> = lookup_impl_witness %Int.b50e37.1, @Copy [symbolic]
 // CHECK:STDOUT:   %Copy.facet.d3d: %Copy.type = facet_value %Int.b50e37.1, (%Copy.lookup_impl_witness.035) [symbolic]
 // CHECK:STDOUT:   %Iterate_where.type: type = facet_type <@Iterate where %impl.elem1.aba = %Int.b50e37.1 and %impl.elem0.0b5 = %Copy.facet.d3d> [symbolic]
-// CHECK:STDOUT:   %require_complete.e76: <witness> = require_complete_type %Iterate_where.type [symbolic]
 // CHECK:STDOUT:   %OptionalStorage.type: type = facet_type <@OptionalStorage> [concrete]
 // CHECK:STDOUT:   %Optional.type: type = generic_class_type @Optional [concrete]
 // CHECK:STDOUT:   %Optional.generic: %Optional.type = struct_value () [concrete]
@@ -97,6 +96,7 @@ fn Read() {
 // CHECK:STDOUT:   %Optional.None.type.193: type = fn_type @Optional.None, @Optional(%T.3fe) [symbolic]
 // CHECK:STDOUT:   %Optional.None.dc7: %Optional.None.type.193 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness @IntRange.%Iterate.impl_witness_table, @IntRange.as.Iterate.impl(%N) [symbolic]
+// CHECK:STDOUT:   %require_complete.e76: <witness> = require_complete_type %Iterate_where.type [symbolic]
 // CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor.type: type = fn_type @IntRange.as.Iterate.impl.NewCursor, @IntRange.as.Iterate.impl(%N) [symbolic]
 // CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor: %IntRange.as.Iterate.impl.NewCursor.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.1cf: type = ptr_type %Int.b50e37.1 [symbolic]
@@ -297,10 +297,10 @@ fn Read() {
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc9_54.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.035)]
 // CHECK:STDOUT:   %Copy.facet.loc9_85.1: %Copy.type = facet_value %Int.loc9_54.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet.loc9_85.1 (constants.%Copy.facet.d3d)]
 // CHECK:STDOUT:   %Iterate_where.type: type = facet_type <@Iterate where constants.%impl.elem1.aba = %Int.loc9_54.1 and constants.%impl.elem0.0b5 = %Copy.facet.loc9_85.1> [symbolic = %Iterate_where.type (constants.%Iterate_where.type)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Iterate_where.type [symbolic = %require_complete (constants.%require_complete.e76)]
 // CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness @IntRange.%Iterate.impl_witness_table, @IntRange.as.Iterate.impl(%N) [symbolic = %Iterate.impl_witness (constants.%Iterate.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Iterate_where.type [symbolic = %require_complete (constants.%require_complete.e76)]
 // CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor.type: type = fn_type @IntRange.as.Iterate.impl.NewCursor, @IntRange.as.Iterate.impl(%N) [symbolic = %IntRange.as.Iterate.impl.NewCursor.type (constants.%IntRange.as.Iterate.impl.NewCursor.type)]
 // CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor: @IntRange.as.Iterate.impl.%IntRange.as.Iterate.impl.NewCursor.type (%IntRange.as.Iterate.impl.NewCursor.type) = struct_value () [symbolic = %IntRange.as.Iterate.impl.NewCursor (constants.%IntRange.as.Iterate.impl.NewCursor)]
 // CHECK:STDOUT:   %IntRange.as.Iterate.impl.Next.type: type = fn_type @IntRange.as.Iterate.impl.Next, @IntRange.as.Iterate.impl(%N) [symbolic = %IntRange.as.Iterate.impl.Next.type (constants.%IntRange.as.Iterate.impl.Next.type)]
@@ -749,10 +749,10 @@ fn Read() {
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.lookup_impl_witness.035
 // CHECK:STDOUT:   %Copy.facet.loc9_85.1 => constants.%Copy.facet.d3d
 // CHECK:STDOUT:   %Iterate_where.type => constants.%Iterate_where.type
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.e76
 // CHECK:STDOUT:   %Iterate.impl_witness => constants.%Iterate.impl_witness
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.e76
 // CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor.type => constants.%IntRange.as.Iterate.impl.NewCursor.type
 // CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor => constants.%IntRange.as.Iterate.impl.NewCursor
 // CHECK:STDOUT:   %IntRange.as.Iterate.impl.Next.type => constants.%IntRange.as.Iterate.impl.Next.type

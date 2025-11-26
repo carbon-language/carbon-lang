@@ -39,10 +39,10 @@ auto GetImplWitnessAccessWithoutSubstitution(Context& context,
                                              SemIR::InstId inst_id)
     -> SemIR::InstId;
 
-// Creates a impl witness instruction for a facet type. The facet type is
-// required to be complete if `is_definition` is true or the facet type has
-// rewrites. Otherwise a placeholder witness is created, and
-// `AllocateFacetTypeImplWitness` can be used at the `impl` definition.
+// Creates a impl witness instruction for a facet type. A placeholder witness
+// table is created if there are no rewrites in the declaration, and
+// `AllocateFacetTypeImplWitness` will construct the table of the appropriate
+// size at the `impl` definition.
 //
 // Adds and returns an `ImplWitness` instruction (created with location set to
 // `witness_loc_id`) that shows "`Self` type" of type "facet type" (the value of
@@ -59,14 +59,13 @@ auto GetImplWitnessAccessWithoutSubstitution(Context& context,
 // bind the inner `.Self` to the outer `.Self`.
 //
 // If the facet type contains a rewrite, we may have deferred converting the
-// rewritten value to the type of the associated constant. That conversion
-// will also be performed as part of resolution, and may depend on the
-// `Self` type.
+// rewritten value to the type of the associated constant. That conversion will
+// also be performed as part of resolution, and may depend on the `Self` type.
 auto InitialFacetTypeImplWitness(
     Context& context, SemIR::LocId witness_loc_id,
     SemIR::TypeInstId facet_type_inst_id, SemIR::TypeInstId self_type_inst_id,
     const SemIR::SpecificInterface& interface_to_witness,
-    SemIR::SpecificId self_specific_id, bool is_definition) -> SemIR::InstId;
+    SemIR::SpecificId self_specific_id) -> SemIR::InstId;
 
 // Returns `true` if the facet type is complete. Otherwise issues a diagnostic
 // and returns `false`.

@@ -85,8 +85,8 @@ static auto CheckAssociatedFunctionImplementation(
 }
 
 // Builds an initial witness from the rewrites in the facet type, if any.
-auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl,
-                               bool has_definition) -> SemIR::InstId {
+auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
+    -> SemIR::InstId {
   CARBON_CHECK(!impl.has_definition_started());
 
   auto self_type_id = context.types().GetTypeIdForTypeInstId(impl.self_id);
@@ -98,7 +98,7 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl,
   return InitialFacetTypeImplWitness(
       context, SemIR::LocId(impl.latest_decl_id()), impl.constraint_id,
       impl.self_id, impl.interface,
-      context.generics().GetSelfSpecific(impl.generic_id), has_definition);
+      context.generics().GetSelfSpecific(impl.generic_id));
 }
 
 auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
@@ -108,18 +108,10 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
     return;
   }
 
-  if (impl.first_decl_id() != impl.latest_decl_id()) {
-    // This definition is a redeclaration so `GetOrAddImpl` did not require
-    // the facet type to be complete yet. It couldn't do so in the redeclaration
-    // because it was not part of the previous declaration and all generic
-    // declarations of the same entity need to match. So in the case of a
-    // definition that is also a redeclaration, the instruction must go into the
-    // generic definition.
-    if (!RequireCompleteFacetTypeForImplDefinition(
-            context, SemIR::LocId(impl.latest_decl_id()), impl.constraint_id)) {
-      FillImplWitnessWithErrors(context, impl);
-      return;
-    }
+  if (!RequireCompleteFacetTypeForImplDefinition(
+          context, SemIR::LocId(impl.latest_decl_id()), impl.constraint_id)) {
+    FillImplWitnessWithErrors(context, impl);
+    return;
   }
 
   auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
@@ -492,8 +484,7 @@ static auto ApplyExtendImplAs(Context& context, SemIR::LocId loc_id,
 
 auto GetOrAddImpl(Context& context, SemIR::LocId loc_id,
                   SemIR::LocId implicit_params_loc_id, SemIR::Impl impl,
-                  bool is_definition, Parse::NodeId extend_node)
-    -> SemIR::ImplId {
+                  Parse::NodeId extend_node) -> SemIR::ImplId {
   auto impl_id = SemIR::ImplId::None;
 
   // Add the impl declaration.
@@ -544,19 +535,12 @@ auto GetOrAddImpl(Context& context, SemIR::LocId loc_id,
     // the impl).
   }
 
-  if (is_definition && impl.witness_id != SemIR::ErrorInst::InstId) {
-    if (!RequireCompleteFacetTypeForImplDefinition(
-            context, SemIR::LocId(impl.latest_decl_id()), impl.constraint_id)) {
-      impl.witness_id = SemIR::ErrorInst::InstId;
-    }
-  }
-
   if (impl.witness_id != SemIR::ErrorInst::InstId) {
     // This makes either a placeholder witness or a full witness table. The full
     // witness table is deferred to the impl definition unless the declaration
     // uses rewrite constraints to set values of associated constants in the
     // interface.
-    impl.witness_id = ImplWitnessForDeclaration(context, impl, is_definition);
+    impl.witness_id = ImplWitnessForDeclaration(context, impl);
   }
 
   FinishGenericDecl(context, SemIR::LocId(impl.latest_decl_id()),

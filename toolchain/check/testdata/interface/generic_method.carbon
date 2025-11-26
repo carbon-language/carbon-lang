@@ -113,12 +113,12 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %Y: type = class_type @Y [concrete]
 // CHECK:STDOUT:   %Z: type = class_type @Z [concrete]
 // CHECK:STDOUT:   %A.type.0a4: type = facet_type <@A, @A(%X)> [concrete]
+// CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness file.%A.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.789: %A.type.0a4 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %A.F.type.13d: type = fn_type @A.F, @A(%X) [concrete]
 // CHECK:STDOUT:   %A.F.d83: %A.F.type.13d = struct_value () [concrete]
 // CHECK:STDOUT:   %A.assoc_type.296: type = assoc_entity_type @A, @A(%X) [concrete]
 // CHECK:STDOUT:   %assoc0.6a1: %A.assoc_type.296 = assoc_entity element0, @A.%A.F.decl [concrete]
-// CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness file.%A.impl_witness_table [concrete]
 // CHECK:STDOUT:   %U.d9f: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.4f0b5c.1: type = ptr_type %U.d9f [symbolic]
 // CHECK:STDOUT:   %pattern_type.a603a0.1: type = pattern_type %ptr.4f0b5c.1 [symbolic]
@@ -698,13 +698,13 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %tuple.225: %tuple.type.24b = tuple_value (%V1, %V2) [symbolic]
 // CHECK:STDOUT:   %tuple.type.d18: type = tuple_type (%V1, %V2) [symbolic]
 // CHECK:STDOUT:   %A.type.2ec: type = facet_type <@A, @A(%W)> [symbolic]
+// CHECK:STDOUT:   %A.impl_witness.2bc: <witness> = impl_witness file.%A.impl_witness_table, @tuple.type.as.A.impl(%V1, %V2, %W) [symbolic]
 // CHECK:STDOUT:   %Self.b6c: %A.type.2ec = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %A.F.type.f65: type = fn_type @A.F, @A(%W) [symbolic]
 // CHECK:STDOUT:   %A.F.d51: %A.F.type.f65 = struct_value () [symbolic]
 // CHECK:STDOUT:   %A.assoc_type.abb: type = assoc_entity_type @A, @A(%W) [symbolic]
 // CHECK:STDOUT:   %assoc0.973: %A.assoc_type.abb = assoc_entity element0, @A.%A.F.decl [symbolic]
 // CHECK:STDOUT:   %require_complete.4d8: <witness> = require_complete_type %A.type.2ec [symbolic]
-// CHECK:STDOUT:   %A.impl_witness.2bc: <witness> = impl_witness file.%A.impl_witness_table, @tuple.type.as.A.impl(%V1, %V2, %W) [symbolic]
 // CHECK:STDOUT:   %U.800: type = symbolic_binding U, 3 [symbolic]
 // CHECK:STDOUT:   %pattern_type.332: type = pattern_type %U.800 [symbolic]
 // CHECK:STDOUT:   %tuple.type.11f: type = tuple_type (type, %tuple.type.24b, type) [concrete]
@@ -724,13 +724,13 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %tuple.821: %tuple.type.24b = tuple_value (%Y1, %Y2) [concrete]
 // CHECK:STDOUT:   %tuple.type.a46: type = tuple_type (%Y1, %Y2) [concrete]
 // CHECK:STDOUT:   %A.type.0a4: type = facet_type <@A, @A(%X)> [concrete]
+// CHECK:STDOUT:   %A.impl_witness.be7: <witness> = impl_witness file.%A.impl_witness_table, @tuple.type.as.A.impl(%Y1, %Y2, %X) [concrete]
 // CHECK:STDOUT:   %Self.789: %A.type.0a4 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %A.F.type.13d: type = fn_type @A.F, @A(%X) [concrete]
 // CHECK:STDOUT:   %A.F.d83: %A.F.type.13d = struct_value () [concrete]
 // CHECK:STDOUT:   %A.assoc_type.296: type = assoc_entity_type @A, @A(%X) [concrete]
 // CHECK:STDOUT:   %assoc0.6a1: %A.assoc_type.296 = assoc_entity element0, @A.%A.F.decl [concrete]
 // CHECK:STDOUT:   %complete_type.e2d: <witness> = complete_type_witness %A.type.0a4 [concrete]
-// CHECK:STDOUT:   %A.impl_witness.be7: <witness> = impl_witness file.%A.impl_witness_table, @tuple.type.as.A.impl(%Y1, %Y2, %X) [concrete]
 // CHECK:STDOUT:   %tuple.type.as.A.impl.F.type.415: type = fn_type @tuple.type.as.A.impl.F, @tuple.type.as.A.impl(%Y1, %Y2, %X) [concrete]
 // CHECK:STDOUT:   %tuple.type.as.A.impl.F.735: %tuple.type.as.A.impl.F.type.415 = struct_value () [concrete]
 // CHECK:STDOUT:   %A.facet.f26: %A.type.0a4 = facet_value %tuple.type.a46, (%A.impl_witness.be7) [concrete]
@@ -912,10 +912,10 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%V1.loc14_14.1, %V2.loc14_25.1) [symbolic = %tuple (constants.%tuple.225)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%V1.loc14_14.1, %V2.loc14_25.1) [symbolic = %tuple.type (constants.%tuple.type.d18)]
 // CHECK:STDOUT:   %A.type.loc14_61.1: type = facet_type <@A, @A(%W.loc14_36.1)> [symbolic = %A.type.loc14_61.1 (constants.%A.type.2ec)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %A.type.loc14_61.1 [symbolic = %require_complete (constants.%require_complete.4d8)]
 // CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness file.%A.impl_witness_table, @tuple.type.as.A.impl(%V1.loc14_14.1, %V2.loc14_25.1, %W.loc14_36.1) [symbolic = %A.impl_witness (constants.%A.impl_witness.2bc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %A.type.loc14_61.1 [symbolic = %require_complete (constants.%require_complete.4d8)]
 // CHECK:STDOUT:   %tuple.type.as.A.impl.F.type: type = fn_type @tuple.type.as.A.impl.F, @tuple.type.as.A.impl(%V1.loc14_14.1, %V2.loc14_25.1, %W.loc14_36.1) [symbolic = %tuple.type.as.A.impl.F.type (constants.%tuple.type.as.A.impl.F.type.172)]
 // CHECK:STDOUT:   %tuple.type.as.A.impl.F: @tuple.type.as.A.impl.%tuple.type.as.A.impl.F.type (%tuple.type.as.A.impl.F.type.172) = struct_value () [symbolic = %tuple.type.as.A.impl.F (constants.%tuple.type.as.A.impl.F.c93)]
 // CHECK:STDOUT:
@@ -1171,10 +1171,10 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %tuple => constants.%tuple.225
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.d18
 // CHECK:STDOUT:   %A.type.loc14_61.1 => constants.%A.type.2ec
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.4d8
 // CHECK:STDOUT:   %A.impl_witness => constants.%A.impl_witness.2bc
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.4d8
 // CHECK:STDOUT:   %tuple.type.as.A.impl.F.type => constants.%tuple.type.as.A.impl.F.type.172
 // CHECK:STDOUT:   %tuple.type.as.A.impl.F => constants.%tuple.type.as.A.impl.F.c93
 // CHECK:STDOUT: }
@@ -1231,10 +1231,10 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %tuple => constants.%tuple.821
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.a46
 // CHECK:STDOUT:   %A.type.loc14_61.1 => constants.%A.type.0a4
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.e2d
 // CHECK:STDOUT:   %A.impl_witness => constants.%A.impl_witness.be7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.e2d
 // CHECK:STDOUT:   %tuple.type.as.A.impl.F.type => constants.%tuple.type.as.A.impl.F.type.415
 // CHECK:STDOUT:   %tuple.type.as.A.impl.F => constants.%tuple.type.as.A.impl.F.735
 // CHECK:STDOUT: }
