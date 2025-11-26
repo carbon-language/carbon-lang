@@ -1034,14 +1034,14 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
       if (kind == Concrete && candidates.consider_cpp_candidates) {
         // We found a Carbon impl. Also check for a C++ candidate that is a
         // better match than that impl.
-        auto cpp_result = LookupCppImpl(
+        auto cpp_witness_id = LookupCppImpl(
             context, loc_id,
             GetFacetAsType(context, loc_id, query_self_const_id),
             query_specific_interface, &candidate.type_structure,
             SemIR::LocId(
                 context.impls().Get(candidate.impl_id).first_owning_decl_id));
-        if (cpp_result.has_value()) {
-          return cpp_result;
+        if (cpp_witness_id.has_value()) {
+          return EvalImplLookupResult::MakeFinal(cpp_witness_id);
         }
       }
 
@@ -1055,10 +1055,13 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
       if (candidates.consider_cpp_candidates) {
         // Look for a matching C++ result, with no Carbon candidate to compare
         // against.
-        return LookupCppImpl(
+        auto cpp_witness_id = LookupCppImpl(
             context, loc_id,
             GetFacetAsType(context, loc_id, query_self_const_id),
             query_specific_interface, nullptr, SemIR::LocId::None);
+        if (cpp_witness_id.has_value()) {
+          return EvalImplLookupResult::MakeFinal(cpp_witness_id);
+        }
       }
       return EvalImplLookupResult::MakeNone();
 

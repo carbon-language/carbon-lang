@@ -54,7 +54,7 @@ static auto BuildWitness(Context& context, SemIR::LocId loc_id,
                          SemIR::TypeId self_type_id,
                          SemIR::SpecificInterface specific_interface,
                          llvm::ArrayRef<SemIR::InstId> values)
-    -> EvalImplLookupResult {
+    -> SemIR::InstId {
   const auto& interface =
       context.interfaces().Get(specific_interface.interface_id);
   auto assoc_entities =
@@ -63,7 +63,7 @@ static auto BuildWitness(Context& context, SemIR::LocId loc_id,
     context.TODO(loc_id, ("Unsupported definition of interface " +
                           context.names().GetFormatted(interface.name_id))
                              .str());
-    return EvalImplLookupResult::MakeNone();
+    return SemIR::ErrorInst::InstId;
   }
 
   // Prepare an empty witness table.
@@ -97,7 +97,7 @@ static auto BuildWitness(Context& context, SemIR::LocId loc_id,
     CARBON_KIND_SWITCH(decl) {
       case CARBON_KIND(SemIR::StructValue struct_value): {
         if (struct_value.type_id == SemIR::ErrorInst::TypeId) {
-          return EvalImplLookupResult::MakeNone();
+          return SemIR::ErrorInst::InstId;
         }
         witness_value_id = CheckAssociatedFunctionImplementation(
             context,
@@ -109,26 +109,26 @@ static auto BuildWitness(Context& context, SemIR::LocId loc_id,
       case SemIR::AssociatedConstantDecl::Kind: {
         context.TODO(loc_id,
                      "Associated constant in interface with synthesized impl");
-        return EvalImplLookupResult::MakeNone();
+        return SemIR::ErrorInst::InstId;
       }
       default:
         CARBON_CHECK(decl_id == SemIR::ErrorInst::InstId,
                      "Unexpected kind of associated entity {0}", decl);
-        return EvalImplLookupResult::MakeNone();
+        return SemIR::ErrorInst::InstId;
     }
   }
 
-  return EvalImplLookupResult::MakeFinal(witness_id);
+  return witness_id;
 }
 
 static auto LookupCopyImpl(Context& context, SemIR::LocId loc_id,
                            SemIR::TypeId self_type_id,
                            SemIR::SpecificInterface specific_interface)
-    -> EvalImplLookupResult {
+    -> SemIR::InstId {
   auto* class_decl = TypeAsClassDecl(context, self_type_id);
   if (!class_decl) {
     // TODO: Should we also provide a `Copy` implementation for enumerations?
-    return EvalImplLookupResult::MakeNone();
+    return SemIR::InstId::None;
   }
 
   auto* ctor = context.clang_sema().LookupCopyingConstructor(
@@ -136,7 +136,7 @@ static auto LookupCopyImpl(Context& context, SemIR::LocId loc_id,
   if (!ctor) {
     // TODO: If the impl lookup failure is an error, we should produce a
     // diagnostic explaining why the class is not copyable.
-    return EvalImplLookupResult::MakeNone();
+    return SemIR::InstId::None;
   }
 
   auto ctor_id =
@@ -151,6 +151,7 @@ static auto LookupCopyImpl(Context& context, SemIR::LocId loc_id,
                            ctor_decl->inst_id);
   } else {
     CARBON_CHECK(ctor_id == SemIR::ErrorInst::InstId);
+    return SemIR::ErrorInst::InstId;
   }
   return BuildWitness(context, loc_id, self_type_id, specific_interface,
                       {ctor_id});
@@ -160,14 +161,14 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                    SemIR::TypeId self_type_id,
                    SemIR::SpecificInterface specific_interface,
                    const TypeStructure* best_impl_type_structure,
-                   SemIR::LocId best_impl_loc_id) -> EvalImplLookupResult {
+                   SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
   // Determine whether this is an interface that we have special knowledge of.
   auto& interface = context.interfaces().Get(specific_interface.interface_id);
   if (!context.name_scopes().IsCorePackage(interface.parent_scope_id)) {
-    return EvalImplLookupResult::MakeNone();
+    return SemIR::InstId::None;
   }
   if (!interface.name_id.AsIdentifierId().has_value()) {
-    return EvalImplLookupResult::MakeNone();
+    return SemIR::InstId::None;
   }
 
   if (context.identifiers().Get(interface.name_id.AsIdentifierId()) == "Copy") {
@@ -181,7 +182,7 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
   static_cast<void>(best_impl_type_structure);
   static_cast<void>(best_impl_loc_id);
 
-  return EvalImplLookupResult::MakeNone();
+  return SemIR::InstId::None;
 }
 
 }  // namespace Carbon::Check

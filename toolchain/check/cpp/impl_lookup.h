@@ -13,7 +13,8 @@
 
 namespace Carbon::Check {
 
-// Performs lookup for an impl witness for a query involving C++ types.
+// Performs lookup for an impl witness for a query involving C++ types. Returns
+// a witness value, or `None` if a synthesized C++ witness should not be used.
 //
 // If `interface` is an interface for which we can synthesize a witness based on
 // C++ operator overloads or special member functions, performs the suitable C++
@@ -36,7 +37,7 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                    SemIR::TypeId self_type_id,
                    SemIR::SpecificInterface specific_interface,
                    const TypeStructure* best_impl_type_structure,
-                   SemIR::LocId best_impl_loc_id) -> EvalImplLookupResult;
+                   SemIR::LocId best_impl_loc_id) -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 
