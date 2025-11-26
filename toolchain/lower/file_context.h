@@ -56,12 +56,24 @@ class FileContext {
 
   // Returns a lowered type for the given type_id.
   auto GetType(SemIR::TypeId type_id) -> llvm::Type* {
+    return GetTypeAndDIType(type_id).llvm_ir_type;
+  }
+
+  struct LoweredTypes {
+    llvm::Type* llvm_ir_type;
+    llvm::DIType* llvm_di_type;
+  };
+
+  // Returns both the lowered llvm IR type and the lowered llvm IR debug info
+  // type for the given type_id.
+  auto GetTypeAndDIType(SemIR::TypeId type_id) const -> LoweredTypes {
     CARBON_CHECK(type_id.has_value(), "Should not be called with `None`");
     CARBON_CHECK(type_id.is_concrete(), "Lowering symbolic type {0}: {1}",
                  type_id, sem_ir().types().GetAsInst(type_id));
-    CARBON_CHECK(types_.Get(type_id), "Missing type {0}: {1}", type_id,
+    auto result = types_.Get(type_id);
+    CARBON_CHECK(result.llvm_ir_type, "Missing type {0}: {1}", type_id,
                  sem_ir().types().GetAsInst(type_id));
-    return types_.Get(type_id);
+    return result;
   }
 
   // Returns location information for use with DebugInfo.
@@ -188,12 +200,19 @@ class FileContext {
 
   // Build the DISubprogram metadata for the given function.
   auto BuildDISubprogram(const SemIR::Function& function,
+                         SemIR::SpecificId specific_id,
                          const llvm::Function* llvm_function)
       -> llvm::DISubprogram*;
 
-  // Builds the type for the given instruction, which should then be cached by
-  // the caller.
-  auto BuildType(SemIR::InstId inst_id) -> llvm::Type*;
+  // Build a `DISubroutineType` for the given function, including the return and
+  // parameter types.
+  auto BuildDISubroutineType(const SemIR::Function&,
+                             SemIR::SpecificId specific_id)
+      -> llvm::DISubroutineType*;
+
+  // Builds the `llvm::Type` and `llvm::DIType` for the given instruction, which
+  // should then be cached by the caller.
+  auto BuildType(SemIR::InstId inst_id) -> LoweredTypes;
 
   auto BuildVtable(const SemIR::Vtable& vtable, SemIR::SpecificId specific_id)
       -> llvm::GlobalVariable*;
@@ -237,7 +256,7 @@ class FileContext {
   FixedSizeValueStore<SemIR::SpecificId, llvm::Function*> specific_functions_;
 
   // Provides lowered versions of types. Entries are non-symbolic types.
-  using LoweredTypeStore = FixedSizeValueStore<SemIR::TypeId, llvm::Type*>;
+  using LoweredTypeStore = FixedSizeValueStore<SemIR::TypeId, LoweredTypes>;
   LoweredTypeStore types_;
 
   // Maps constants to their lowered values. Indexes are the `InstId` for

@@ -42,6 +42,6 @@ var a: A = {};
 // CHECK:STDOUT: !3 = !DIFile(filename: "class_obj.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !3, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 14, column: 1, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 0, scope: !4)

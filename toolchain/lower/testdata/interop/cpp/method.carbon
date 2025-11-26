@@ -86,8 +86,8 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CUseVal.Main(ptr %a) #0 !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %by_val__carbon_thunk.call = call i32 @_ZNK1A6by_valEv.carbon_thunk(ptr %a), !dbg !10
-// CHECK:STDOUT:   ret i32 %by_val__carbon_thunk.call, !dbg !11
+// CHECK:STDOUT:   %by_val__carbon_thunk.call = call i32 @_ZNK1A6by_valEv.carbon_thunk(ptr %a), !dbg !14
+// CHECK:STDOUT:   ret i32 %by_val__carbon_thunk.call, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
@@ -95,7 +95,7 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8
-// CHECK:STDOUT:   %0 = load ptr, ptr %this.addr, align 8, !nonnull !9, !align !12
+// CHECK:STDOUT:   %0 = load ptr, ptr %this.addr, align 8, !nonnull !16, !align !17
 // CHECK:STDOUT:   %call = call i32 @_ZNK1A6by_valEv(ptr nonnull align 8 dereferenceable(12) %0)
 // CHECK:STDOUT:   ret i32 %call
 // CHECK:STDOUT: }
@@ -125,12 +125,17 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "call_by_val.carbon", directory: "")
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "UseVal", linkageName: "_CUseVal.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "UseVal", linkageName: "_CUseVal.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !12)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
-// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 10, scope: !7)
-// CHECK:STDOUT: !11 = !DILocation(line: 7, column: 3, scope: !7)
-// CHECK:STDOUT: !12 = !{i64 8}
+// CHECK:STDOUT: !9 = !{!10, !11}
+// CHECK:STDOUT: !10 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !11 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !12 = !{!13}
+// CHECK:STDOUT: !13 = !DILocalVariable(arg: 1, scope: !7, type: !11)
+// CHECK:STDOUT: !14 = !DILocation(line: 7, column: 10, scope: !7)
+// CHECK:STDOUT: !15 = !DILocation(line: 7, column: 3, scope: !7)
+// CHECK:STDOUT: !16 = !{}
+// CHECK:STDOUT: !17 = !{i64 8}
 // CHECK:STDOUT: ; ModuleID = 'call_by_ref.carbon'
 // CHECK:STDOUT: source_filename = "call_by_ref.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -144,8 +149,8 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CUseVal.Main(ptr %a) #0 !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %A.by_ref.call = call i32 @_ZN1A6by_refEv(ptr %a), !dbg !10
-// CHECK:STDOUT:   ret i32 %A.by_ref.call, !dbg !11
+// CHECK:STDOUT:   %A.by_ref.call = call i32 @_ZN1A6by_refEv(ptr %a), !dbg !14
+// CHECK:STDOUT:   ret i32 %A.by_ref.call, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone
@@ -172,11 +177,15 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "call_by_ref.carbon", directory: "")
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "UseVal", linkageName: "_CUseVal.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "UseVal", linkageName: "_CUseVal.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !12)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
-// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 10, scope: !7)
-// CHECK:STDOUT: !11 = !DILocation(line: 7, column: 3, scope: !7)
+// CHECK:STDOUT: !9 = !{!10, !11}
+// CHECK:STDOUT: !10 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !11 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !12 = !{!13}
+// CHECK:STDOUT: !13 = !DILocalVariable(arg: 1, scope: !7, type: !11)
+// CHECK:STDOUT: !14 = !DILocation(line: 7, column: 10, scope: !7)
+// CHECK:STDOUT: !15 = !DILocation(line: 7, column: 3, scope: !7)
 // CHECK:STDOUT: ; ModuleID = 'call_virtual.carbon'
 // CHECK:STDOUT: source_filename = "call_virtual.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -185,16 +194,16 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CUseVal.Main(ptr %a) #0 !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_4.2.base = getelementptr inbounds nuw [16 x i8], ptr %a, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   %Base.virt0.call.vtable = load ptr, ptr %.loc7_4.2.base, align 8, !dbg !10
-// CHECK:STDOUT:   %Base.virt0.call = getelementptr ptr, ptr %Base.virt0.call.vtable, i32 0, !dbg !10
-// CHECK:STDOUT:   %Base.virt0.call.memptr.virtualfn = load ptr, ptr %Base.virt0.call, align 8, !dbg !10
-// CHECK:STDOUT:   call void %Base.virt0.call.memptr.virtualfn(ptr %.loc7_4.2.base), !dbg !10
-// CHECK:STDOUT:   %A.virt1.call.vtable = load ptr, ptr %a, align 8, !dbg !11
-// CHECK:STDOUT:   %A.virt1.call = getelementptr ptr, ptr %A.virt1.call.vtable, i32 1, !dbg !11
-// CHECK:STDOUT:   %A.virt1.call.memptr.virtualfn = load ptr, ptr %A.virt1.call, align 8, !dbg !11
-// CHECK:STDOUT:   call void %A.virt1.call.memptr.virtualfn(ptr %a), !dbg !11
-// CHECK:STDOUT:   ret void, !dbg !12
+// CHECK:STDOUT:   %.loc7_4.2.base = getelementptr inbounds nuw [16 x i8], ptr %a, i32 0, i32 0, !dbg !13
+// CHECK:STDOUT:   %Base.virt0.call.vtable = load ptr, ptr %.loc7_4.2.base, align 8, !dbg !13
+// CHECK:STDOUT:   %Base.virt0.call = getelementptr ptr, ptr %Base.virt0.call.vtable, i32 0, !dbg !13
+// CHECK:STDOUT:   %Base.virt0.call.memptr.virtualfn = load ptr, ptr %Base.virt0.call, align 8, !dbg !13
+// CHECK:STDOUT:   call void %Base.virt0.call.memptr.virtualfn(ptr %.loc7_4.2.base), !dbg !13
+// CHECK:STDOUT:   %A.virt1.call.vtable = load ptr, ptr %a, align 8, !dbg !14
+// CHECK:STDOUT:   %A.virt1.call = getelementptr ptr, ptr %A.virt1.call.vtable, i32 1, !dbg !14
+// CHECK:STDOUT:   %A.virt1.call.memptr.virtualfn = load ptr, ptr %A.virt1.call, align 8, !dbg !14
+// CHECK:STDOUT:   call void %A.virt1.call.memptr.virtualfn(ptr %a), !dbg !14
+// CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_ZN4Base5virt0Ev(ptr)
@@ -213,12 +222,15 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "call_virtual.carbon", directory: "")
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "UseVal", linkageName: "_CUseVal.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "UseVal", linkageName: "_CUseVal.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !11)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
-// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !7)
-// CHECK:STDOUT: !11 = !DILocation(line: 8, column: 3, scope: !7)
-// CHECK:STDOUT: !12 = !DILocation(line: 6, column: 1, scope: !7)
+// CHECK:STDOUT: !9 = !{null, !10}
+// CHECK:STDOUT: !10 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !11 = !{!12}
+// CHECK:STDOUT: !12 = !DILocalVariable(arg: 1, scope: !7, type: !10)
+// CHECK:STDOUT: !13 = !DILocation(line: 7, column: 3, scope: !7)
+// CHECK:STDOUT: !14 = !DILocation(line: 8, column: 3, scope: !7)
+// CHECK:STDOUT: !15 = !DILocation(line: 6, column: 1, scope: !7)
 // CHECK:STDOUT: ; ModuleID = 'call_thunk.carbon'
 // CHECK:STDOUT: source_filename = "call_thunk.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -229,15 +241,15 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCall.Main(ptr %n) #0 !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_14.3.temp = alloca i8, align 1, !dbg !10
-// CHECK:STDOUT:   %.loc8_14.3.temp = alloca i8, align 1, !dbg !11
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_14.3.temp), !dbg !10
-// CHECK:STDOUT:   store i8 1, ptr %.loc7_14.3.temp, align 1, !dbg !10
-// CHECK:STDOUT:   call void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk(ptr %n, ptr %.loc7_14.3.temp), !dbg !12
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_14.3.temp), !dbg !11
-// CHECK:STDOUT:   store i8 1, ptr %.loc8_14.3.temp, align 1, !dbg !11
-// CHECK:STDOUT:   call void @_ZNH9NeedThunk8ExplicitES_a.carbon_thunk(ptr %n, ptr %.loc8_14.3.temp), !dbg !13
-// CHECK:STDOUT:   ret void, !dbg !14
+// CHECK:STDOUT:   %.loc7_14.3.temp = alloca i8, align 1, !dbg !13
+// CHECK:STDOUT:   %.loc8_14.3.temp = alloca i8, align 1, !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_14.3.temp), !dbg !13
+// CHECK:STDOUT:   store i8 1, ptr %.loc7_14.3.temp, align 1, !dbg !13
+// CHECK:STDOUT:   call void @_ZNK9NeedThunk8ImplicitEa.carbon_thunk(ptr %n, ptr %.loc7_14.3.temp), !dbg !15
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_14.3.temp), !dbg !14
+// CHECK:STDOUT:   store i8 1, ptr %.loc8_14.3.temp, align 1, !dbg !14
+// CHECK:STDOUT:   call void @_ZNH9NeedThunk8ExplicitES_a.carbon_thunk(ptr %n, ptr %.loc8_14.3.temp), !dbg !16
+// CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -250,7 +262,7 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT:   %c.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8
 // CHECK:STDOUT:   store ptr %c, ptr %c.addr, align 8
-// CHECK:STDOUT:   %0 = load ptr, ptr %this.addr, align 8, !nonnull !9
+// CHECK:STDOUT:   %0 = load ptr, ptr %this.addr, align 8, !nonnull !18
 // CHECK:STDOUT:   %1 = load ptr, ptr %c.addr, align 8
 // CHECK:STDOUT:   %2 = load i8, ptr %1, align 1
 // CHECK:STDOUT:   call void @_ZNK9NeedThunk8ImplicitEa(ptr nonnull align 1 dereferenceable(1) %0, i8 signext %2)
@@ -294,11 +306,15 @@ fn Call(n: Cpp.NeedThunk) {
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "call_thunk.carbon", directory: "")
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !11)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
-// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 14, scope: !7)
-// CHECK:STDOUT: !11 = !DILocation(line: 8, column: 14, scope: !7)
-// CHECK:STDOUT: !12 = !DILocation(line: 7, column: 3, scope: !7)
-// CHECK:STDOUT: !13 = !DILocation(line: 8, column: 3, scope: !7)
-// CHECK:STDOUT: !14 = !DILocation(line: 6, column: 1, scope: !7)
+// CHECK:STDOUT: !9 = !{null, !10}
+// CHECK:STDOUT: !10 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !11 = !{!12}
+// CHECK:STDOUT: !12 = !DILocalVariable(arg: 1, scope: !7, type: !10)
+// CHECK:STDOUT: !13 = !DILocation(line: 7, column: 14, scope: !7)
+// CHECK:STDOUT: !14 = !DILocation(line: 8, column: 14, scope: !7)
+// CHECK:STDOUT: !15 = !DILocation(line: 7, column: 3, scope: !7)
+// CHECK:STDOUT: !16 = !DILocation(line: 8, column: 3, scope: !7)
+// CHECK:STDOUT: !17 = !DILocation(line: 6, column: 1, scope: !7)
+// CHECK:STDOUT: !18 = !{}

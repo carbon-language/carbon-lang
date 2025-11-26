@@ -84,22 +84,27 @@ static auto AddOverloadCandidates(clang::Sema& sema,
   }
 }
 
-// Checks whether a selected overload is accessible and diagnoses if not.
-static auto CheckOverloadAccess(Context& context, SemIR::LocId loc_id,
-                                const SemIR::CppOverloadSet& overload_set,
-                                clang::DeclAccessPair overload,
-                                SemIR::InstId overload_inst_id) -> void {
+auto CheckCppOverloadAccess(
+    Context& context, SemIR::LocId loc_id, clang::DeclAccessPair overload,
+    SemIR::KnownInstId<SemIR::FunctionDecl> overload_inst_id,
+    SemIR::NameScopeId parent_scope_id) -> void {
   SemIR::AccessKind member_access_kind = MapCppAccess(overload);
   if (member_access_kind == SemIR::AccessKind::Public) {
     return;
   }
 
+  auto function_id = context.insts().Get(overload_inst_id).function_id;
+  auto& function = context.functions().Get(function_id);
+  if (!parent_scope_id.has_value()) {
+    parent_scope_id = function.parent_scope_id;
+  }
+
   auto name_scope_const_id = context.constant_values().Get(
-      context.name_scopes().Get(overload_set.parent_scope_id).inst_id());
+      context.name_scopes().Get(parent_scope_id).inst_id());
   SemIR::AccessKind allowed_access_kind =
       GetHighestAllowedAccess(context, loc_id, name_scope_const_id);
-  CheckAccess(context, loc_id, SemIR::LocId(overload_inst_id),
-              overload_set.name_id, member_access_kind,
+  CheckAccess(context, loc_id, SemIR::LocId(overload_inst_id), function.name_id,
+              member_access_kind,
               /*is_parent_access=*/false,
               {.constant_id = name_scope_const_id,
                .highest_allowed_access = allowed_access_kind});
@@ -155,25 +160,18 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
 
   switch (overloading_result) {
     case clang::OverloadingResult::OR_Success: {
-      // TODO: Handle the cases when Function is null.
       CARBON_CHECK(best_viable_fn->Function);
-      if (best_viable_fn->RewriteKind) {
-        context.TODO(
-            loc_id,
-            llvm::formatv("Rewriting operator{0} using {1} is not supported",
-                          clang::getOperatorSpelling(
-                              candidate_set.getRewriteInfo().OriginalOperator),
-                          best_viable_fn->Function->getNameAsString()));
-        return SemIR::ErrorInst::InstId;
-      }
+      CARBON_CHECK(!best_viable_fn->RewriteKind);
       sema.MarkFunctionReferenced(loc, best_viable_fn->Function);
       SemIR::InstId result_id = ImportCppFunctionDecl(
-          context, loc_id, best_viable_fn->Function,
-          // If this is an operator method, the first arg will be used as self.
-          arg_exprs.size() -
-              (IsCppOperatorMethodDecl(best_viable_fn->Function) ? 1 : 0));
-      CheckOverloadAccess(context, loc_id, overload_set,
-                          best_viable_fn->FoundDecl, result_id);
+          context, loc_id, best_viable_fn->Function, arg_exprs.size());
+      if (auto fn_decl =
+              context.insts().TryGetAsWithId<SemIR::FunctionDecl>(result_id)) {
+        CheckCppOverloadAccess(context, loc_id, best_viable_fn->FoundDecl,
+                               fn_decl->inst_id, overload_set.parent_scope_id);
+      } else {
+        CARBON_CHECK(result_id == SemIR::ErrorInst::InstId);
+      }
       return result_id;
     }
     case clang::OverloadingResult::OR_No_Viable_Function: {

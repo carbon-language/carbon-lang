@@ -1088,6 +1088,19 @@ static auto MakeCppCompatType(Context& context, SemIR::LocId loc_id,
                     LookupNameInCore(context, loc_id, {"CppCompat", name}));
 }
 
+// Maps a C++ builtin integer type to a Carbon `Core.CppCompat` type.
+static auto MapBuiltinCppCompatIntegerType(Context& context,
+                                           unsigned int cpp_width,
+                                           unsigned int carbon_width,
+                                           llvm::StringRef cpp_compat_name)
+    -> TypeExpr {
+  if (cpp_width != carbon_width) {
+    return TypeExpr::None;
+  }
+
+  return MakeCppCompatType(context, Parse::NodeId::None, cpp_compat_name);
+}
+
 // Maps a C++ builtin integer type to a Carbon type.
 // TODO: Handle integer types that map to named aliases.
 static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
@@ -1114,9 +1127,18 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
     return ExprAsType(context, Parse::NodeId::None,
                       MakeCharTypeLiteral(context, Parse::NodeId::None));
   }
-  if (clang::ASTContext::hasSameType(qual_type, ast_context.LongTy) &&
-      width == 32) {
-    return MakeCppCompatType(context, loc_id, "Long32");
+  if (clang::ASTContext::hasSameType(qual_type, ast_context.LongTy)) {
+    return MapBuiltinCppCompatIntegerType(context, width, 32, "Long32");
+  }
+  if (clang::ASTContext::hasSameType(qual_type, ast_context.UnsignedLongTy)) {
+    return MapBuiltinCppCompatIntegerType(context, width, 32, "ULong32");
+  }
+  if (clang::ASTContext::hasSameType(qual_type, ast_context.LongLongTy)) {
+    return MapBuiltinCppCompatIntegerType(context, width, 64, "LongLong64");
+  }
+  if (clang::ASTContext::hasSameType(qual_type,
+                                     ast_context.UnsignedLongLongTy)) {
+    return MapBuiltinCppCompatIntegerType(context, width, 64, "ULongLong64");
   }
   return TypeExpr::None;
 }
@@ -2264,6 +2286,10 @@ static auto MapConstant(Context& context, SemIR::LocId loc_id,
         MakeStringLiteral(context, Parse::StringLiteralId::None, string_id);
     context.imports().push_back(inst_id);
     return inst_id;
+  } else if (isa<clang::CXXNullPtrLiteralExpr>(expr)) {
+    auto type_id = MapNullptrType(context, loc_id).type_id;
+    return GetOrAddInst<SemIR::UninitializedValue>(context, SemIR::LocId::None,
+                                                   {.type_id = type_id});
   }
 
   SemIR::TypeId type_id = MapType(context, loc_id, expr->getType()).type_id;

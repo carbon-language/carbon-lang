@@ -230,9 +230,9 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %Main.import_ref.bc1: <witness> = import_ref Main//import_generic, loc10_34, loaded [symbolic = @C.as.I.impl.%I.impl_witness (constants.%I.impl_witness.2ba)]
 // CHECK:STDOUT:   %Main.import_ref.2bf: @C.as.I.impl.%C.as.I.impl.F.type (%C.as.I.impl.F.type.dd2) = import_ref Main//import_generic, loc11_10, loaded [symbolic = @C.as.I.impl.%C.as.I.impl.F (constants.%C.as.I.impl.F.470)]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.2bf), @C.as.I.impl [concrete]
+// CHECK:STDOUT:   %Main.import_ref.efcd44.2: type = import_ref Main//import_generic, loc10_14, loaded [symbolic = @C.as.I.impl.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.4d2: type = import_ref Main//import_generic, loc10_27, loaded [symbolic = @C.as.I.impl.%C (constants.%C.3f0)]
 // CHECK:STDOUT:   %Main.import_ref.301: type = import_ref Main//import_generic, loc10_32, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref.efcd44.2: type = import_ref Main//import_generic, loc10_14, loaded [symbolic = @C.as.I.impl.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.efcd44.3: type = import_ref Main//import_generic, loc10_14, loaded [symbolic = @C.as.I.impl.%T (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -298,7 +298,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @C.as.I.impl(imports.%Main.import_ref.efcd44.2: type) [from "import_generic.carbon"] {
+// CHECK:STDOUT: generic impl @C.as.I.impl(imports.%Main.import_ref.efcd44.3: type) [from "import_generic.carbon"] {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C.3f0)]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%T) [symbolic = %I.impl_witness (constants.%I.impl_witness.2ba)]
@@ -334,7 +334,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @C.as.I.impl.F(imports.%Main.import_ref.efcd44.3: type) [from "import_generic.carbon"] {
+// CHECK:STDOUT: generic fn @C.as.I.impl.F(imports.%Main.import_ref.efcd44.2: type) [from "import_generic.carbon"] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;

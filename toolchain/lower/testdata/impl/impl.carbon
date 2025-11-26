@@ -34,16 +34,16 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_CF.A.Main:I.Main"(ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc23_16.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !7
-// CHECK:STDOUT:   %.loc23_16.2 = load i32, ptr %.loc23_16.1.n, align 4, !dbg !7
-// CHECK:STDOUT:   ret i32 %.loc23_16.2, !dbg !8
+// CHECK:STDOUT:   %.loc23_16.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !11
+// CHECK:STDOUT:   %.loc23_16.2 = load i32, ptr %.loc23_16.1.n, align 4, !dbg !11
+// CHECK:STDOUT:   ret i32 %.loc23_16.2, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CCall.Main(ptr %a) #0 !dbg !9 {
+// CHECK:STDOUT: define i32 @_CCall.Main(ptr %a) #0 !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %A.as.I.impl.F.call = call i32 @"_CF.A.Main:I.Main"(ptr %a), !dbg !10
-// CHECK:STDOUT:   ret i32 %A.as.I.impl.F.call, !dbg !11
+// CHECK:STDOUT:   %A.as.I.impl.F.call = call i32 @"_CF.A.Main:I.Main"(ptr %a), !dbg !16
+// CHECK:STDOUT:   ret i32 %A.as.I.impl.F.call, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -55,11 +55,17 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "impl.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.A.Main:I.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.A.Main:I.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !9)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 23, column: 12, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 23, column: 5, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 28, column: 10, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 28, column: 3, scope: !9)
+// CHECK:STDOUT: !6 = !{!7, !8}
+// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !8 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !9 = !{!10}
+// CHECK:STDOUT: !10 = !DILocalVariable(arg: 1, scope: !4, type: !8)
+// CHECK:STDOUT: !11 = !DILocation(line: 23, column: 12, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 23, column: 5, scope: !4)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !3, line: 27, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
+// CHECK:STDOUT: !14 = !{!15}
+// CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !13, type: !8)
+// CHECK:STDOUT: !16 = !DILocation(line: 28, column: 10, scope: !13)
+// CHECK:STDOUT: !17 = !DILocation(line: 28, column: 3, scope: !13)

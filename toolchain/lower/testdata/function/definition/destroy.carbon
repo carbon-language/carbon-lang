@@ -80,20 +80,20 @@ fn InitLet() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main(ptr %x) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !7
+// CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CG.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCallF.Main() #0 !dbg !8 {
+// CHECK:STDOUT: define void @_CCallF.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_6.2.temp = alloca {}, align 8, !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_6.2.temp), !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc12_6.2.temp, ptr align 1 @C.val.loc12_6.3, i64 0, i1 false), !dbg !9
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc12_6.2.temp), !dbg !10
-// CHECK:STDOUT:   call void @_CG.Main(), !dbg !11
-// CHECK:STDOUT:   ret void, !dbg !12
+// CHECK:STDOUT:   %.loc12_6.2.temp = alloca {}, align 8, !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_6.2.temp), !dbg !14
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc12_6.2.temp, ptr align 1 @C.val.loc12_6.3, i64 0, i1 false), !dbg !14
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc12_6.2.temp), !dbg !15
+// CHECK:STDOUT:   call void @_CG.Main(), !dbg !16
+// CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -113,15 +113,20 @@ fn InitLet() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "let_param.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 6, column: 1, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "CallF", linkageName: "_CCallF.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 12, column: 5, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 12, column: 3, scope: !8)
-// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 3, scope: !8)
-// CHECK:STDOUT: !12 = !DILocation(line: 11, column: 1, scope: !8)
+// CHECK:STDOUT: !6 = !{null, !7}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !8 = !{!9}
+// CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
+// CHECK:STDOUT: !10 = !DILocation(line: 6, column: 1, scope: !4)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "CallF", linkageName: "_CCallF.Main", scope: null, file: !3, line: 11, type: !12, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
+// CHECK:STDOUT: !13 = !{null}
+// CHECK:STDOUT: !14 = !DILocation(line: 12, column: 5, scope: !11)
+// CHECK:STDOUT: !15 = !DILocation(line: 12, column: 3, scope: !11)
+// CHECK:STDOUT: !16 = !DILocation(line: 15, column: 3, scope: !11)
+// CHECK:STDOUT: !17 = !DILocation(line: 11, column: 1, scope: !11)
 // CHECK:STDOUT: ; ModuleID = 'var_param.carbon'
 // CHECK:STDOUT: source_filename = "var_param.carbon"
 // CHECK:STDOUT:
@@ -130,20 +135,20 @@ fn InitLet() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main(ptr %x) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !7
+// CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CG.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCallF.Main() #0 !dbg !8 {
+// CHECK:STDOUT: define void @_CCallF.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc6_6.1.temp = alloca {}, align 8, !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc6_6.1.temp), !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc6_6.1.temp, ptr align 1 @C.val.loc6_6.2, i64 0, i1 false), !dbg !9
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc6_6.1.temp), !dbg !10
-// CHECK:STDOUT:   call void @_CG.Main(), !dbg !11
-// CHECK:STDOUT:   ret void, !dbg !12
+// CHECK:STDOUT:   %.loc6_6.1.temp = alloca {}, align 8, !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc6_6.1.temp), !dbg !14
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc6_6.1.temp, ptr align 1 @C.val.loc6_6.2, i64 0, i1 false), !dbg !14
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc6_6.1.temp), !dbg !15
+// CHECK:STDOUT:   call void @_CG.Main(), !dbg !16
+// CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -163,15 +168,20 @@ fn InitLet() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "var_param.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 6, column: 1, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "CallF", linkageName: "_CCallF.Main", scope: null, file: !3, line: 11, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 6, column: 6, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 12, column: 3, scope: !8)
-// CHECK:STDOUT: !11 = !DILocation(line: 15, column: 3, scope: !8)
-// CHECK:STDOUT: !12 = !DILocation(line: 11, column: 1, scope: !8)
+// CHECK:STDOUT: !6 = !{null, !7}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !8 = !{!9}
+// CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
+// CHECK:STDOUT: !10 = !DILocation(line: 6, column: 1, scope: !4)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "CallF", linkageName: "_CCallF.Main", scope: null, file: !3, line: 11, type: !12, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
+// CHECK:STDOUT: !13 = !{null}
+// CHECK:STDOUT: !14 = !DILocation(line: 6, column: 6, scope: !11)
+// CHECK:STDOUT: !15 = !DILocation(line: 12, column: 3, scope: !11)
+// CHECK:STDOUT: !16 = !DILocation(line: 15, column: 3, scope: !11)
+// CHECK:STDOUT: !17 = !DILocation(line: 11, column: 1, scope: !11)
 // CHECK:STDOUT: ; ModuleID = 'return_slot.carbon'
 // CHECK:STDOUT: source_filename = "return_slot.carbon"
 // CHECK:STDOUT:
@@ -180,37 +190,37 @@ fn InitLet() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main(ptr sret({}) %return) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.loc7_12, i64 0, i1 false), !dbg !7
-// CHECK:STDOUT:   ret void, !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.loc7_12, i64 0, i1 false), !dbg !8
+// CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CG.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CForward.Main(ptr sret({}) %return) #0 !dbg !8 {
+// CHECK:STDOUT: define void @_CForward.Main(ptr sret({}) %return) #0 !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main(ptr %return), !dbg !9
-// CHECK:STDOUT:   ret void, !dbg !10
+// CHECK:STDOUT:   call void @_CF.Main(ptr %return), !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CInitVar.Main() #0 !dbg !11 {
+// CHECK:STDOUT: define void @_CInitVar.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %local.var = alloca {}, align 8, !dbg !12
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local.var), !dbg !12
-// CHECK:STDOUT:   call void @_CF.Main(ptr %local.var), !dbg !13
-// CHECK:STDOUT:   call void @_CG.Main(), !dbg !14
-// CHECK:STDOUT:   ret void, !dbg !15
+// CHECK:STDOUT:   %local.var = alloca {}, align 8, !dbg !15
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local.var), !dbg !15
+// CHECK:STDOUT:   call void @_CF.Main(ptr %local.var), !dbg !16
+// CHECK:STDOUT:   call void @_CG.Main(), !dbg !17
+// CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CInitLet.Main() #0 !dbg !16 {
+// CHECK:STDOUT: define void @_CInitLet.Main() #0 !dbg !19 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_20.1.temp = alloca {}, align 8, !dbg !17
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_20.1.temp), !dbg !17
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc22_20.1.temp), !dbg !17
-// CHECK:STDOUT:   call void @_CG.Main(), !dbg !18
-// CHECK:STDOUT:   ret void, !dbg !19
+// CHECK:STDOUT:   %.loc22_20.1.temp = alloca {}, align 8, !dbg !20
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_20.1.temp), !dbg !20
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc22_20.1.temp), !dbg !20
+// CHECK:STDOUT:   call void @_CG.Main(), !dbg !21
+// CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
@@ -235,17 +245,20 @@ fn InitLet() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "return_slot.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 7, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Forward", linkageName: "_CForward.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 13, column: 10, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 3, scope: !8)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "InitVar", linkageName: "_CInitVar.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !12 = !DILocation(line: 17, column: 3, scope: !11)
-// CHECK:STDOUT: !13 = !DILocation(line: 17, column: 18, scope: !11)
-// CHECK:STDOUT: !14 = !DILocation(line: 18, column: 3, scope: !11)
-// CHECK:STDOUT: !15 = !DILocation(line: 16, column: 1, scope: !11)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "InitLet", linkageName: "_CInitLet.Main", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !17 = !DILocation(line: 22, column: 18, scope: !16)
-// CHECK:STDOUT: !18 = !DILocation(line: 23, column: 3, scope: !16)
-// CHECK:STDOUT: !19 = !DILocation(line: 21, column: 1, scope: !16)
+// CHECK:STDOUT: !6 = !{!7}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !8 = !DILocation(line: 7, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Forward", linkageName: "_CForward.Main", scope: null, file: !3, line: 12, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 10, scope: !9)
+// CHECK:STDOUT: !11 = !DILocation(line: 13, column: 3, scope: !9)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "InitVar", linkageName: "_CInitVar.Main", scope: null, file: !3, line: 16, type: !13, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
+// CHECK:STDOUT: !14 = !{null}
+// CHECK:STDOUT: !15 = !DILocation(line: 17, column: 3, scope: !12)
+// CHECK:STDOUT: !16 = !DILocation(line: 17, column: 18, scope: !12)
+// CHECK:STDOUT: !17 = !DILocation(line: 18, column: 3, scope: !12)
+// CHECK:STDOUT: !18 = !DILocation(line: 16, column: 1, scope: !12)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "InitLet", linkageName: "_CInitLet.Main", scope: null, file: !3, line: 21, type: !13, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !20 = !DILocation(line: 22, column: 18, scope: !19)
+// CHECK:STDOUT: !21 = !DILocation(line: 23, column: 3, scope: !19)
+// CHECK:STDOUT: !22 = !DILocation(line: 21, column: 1, scope: !19)

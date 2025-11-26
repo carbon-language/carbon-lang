@@ -11,6 +11,15 @@
 
 namespace Carbon::Check {
 
+// Checks whether a selected overload is accessible and diagnoses if not.
+// `parent_scope_id`, if specified, describes the scope that was named to find
+// the overload. If unspecified, we assume the overload was found in the class
+// that it is a direct member of, rather than a derived class.
+auto CheckCppOverloadAccess(
+    Context& context, SemIR::LocId loc_id, clang::DeclAccessPair overload,
+    SemIR::KnownInstId<SemIR::FunctionDecl> overload_inst_id,
+    SemIR::NameScopeId parent_scope_id = SemIR::NameScopeId::None) -> void;
+
 // Resolves which function to call using Clang overloading resolution, or
 // returns an error instruction if overload resolution failed.
 //

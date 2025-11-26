@@ -58,7 +58,7 @@ fn F() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "can_destroy.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 5, column: 1, scope: !4)
 // CHECK:STDOUT: ; ModuleID = 'destroy.carbon'
 // CHECK:STDOUT: source_filename = "destroy.carbon"
@@ -83,5 +83,5 @@ fn F() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "destroy.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 14, column: 1, scope: !4)

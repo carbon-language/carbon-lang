@@ -140,26 +140,26 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassShort.Main(i16 %a, ptr %b) #0 !dbg !17 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc17_18.1.temp = alloca i16, align 2, !dbg !18
-// CHECK:STDOUT:   %.loc18_18.3.temp = alloca i16, align 2, !dbg !19
-// CHECK:STDOUT:   %.loc19_18.2.temp = alloca i16, align 2, !dbg !20
-// CHECK:STDOUT:   %.loc20_28.3.temp = alloca i16, align 2, !dbg !21
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_18.1.temp), !dbg !18
-// CHECK:STDOUT:   store i16 %a, ptr %.loc17_18.1.temp, align 2, !dbg !18
-// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc17_18.1.temp), !dbg !22
-// CHECK:STDOUT:   %.loc18_18.2 = load i16, ptr %b, align 2, !dbg !19
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_18.3.temp), !dbg !19
-// CHECK:STDOUT:   store i16 %.loc18_18.2, ptr %.loc18_18.3.temp, align 2, !dbg !19
-// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc18_18.3.temp), !dbg !23
-// CHECK:STDOUT:   %.loc19_18.1 = load i16, ptr @_Cc.Main, align 2, !dbg !20
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_18.2.temp), !dbg !20
-// CHECK:STDOUT:   store i16 %.loc19_18.1, ptr %.loc19_18.2.temp, align 2, !dbg !20
-// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc19_18.2.temp), !dbg !24
-// CHECK:STDOUT:   %MakeShort.call = call i16 @_CMakeShort.Main(), !dbg !21
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_28.3.temp), !dbg !21
-// CHECK:STDOUT:   store i16 %MakeShort.call, ptr %.loc20_28.3.temp, align 2, !dbg !21
-// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc20_28.3.temp), !dbg !25
-// CHECK:STDOUT:   ret void, !dbg !26
+// CHECK:STDOUT:   %.loc17_18.1.temp = alloca i16, align 2, !dbg !25
+// CHECK:STDOUT:   %.loc18_18.3.temp = alloca i16, align 2, !dbg !26
+// CHECK:STDOUT:   %.loc19_18.2.temp = alloca i16, align 2, !dbg !27
+// CHECK:STDOUT:   %.loc20_28.3.temp = alloca i16, align 2, !dbg !28
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_18.1.temp), !dbg !25
+// CHECK:STDOUT:   store i16 %a, ptr %.loc17_18.1.temp, align 2, !dbg !25
+// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc17_18.1.temp), !dbg !29
+// CHECK:STDOUT:   %.loc18_18.2 = load i16, ptr %b, align 2, !dbg !26
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_18.3.temp), !dbg !26
+// CHECK:STDOUT:   store i16 %.loc18_18.2, ptr %.loc18_18.3.temp, align 2, !dbg !26
+// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc18_18.3.temp), !dbg !30
+// CHECK:STDOUT:   %.loc19_18.1 = load i16, ptr @_Cc.Main, align 2, !dbg !27
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_18.2.temp), !dbg !27
+// CHECK:STDOUT:   store i16 %.loc19_18.1, ptr %.loc19_18.2.temp, align 2, !dbg !27
+// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc19_18.2.temp), !dbg !31
+// CHECK:STDOUT:   %MakeShort.call = call i16 @_CMakeShort.Main(), !dbg !28
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_28.3.temp), !dbg !28
+// CHECK:STDOUT:   store i16 %MakeShort.call, ptr %.loc20_28.3.temp, align 2, !dbg !28
+// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk(ptr %.loc20_28.3.temp), !dbg !32
+// CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -244,7 +244,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_ints.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 7, column: 19, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 7, column: 22, scope: !7)
 // CHECK:STDOUT: !12 = !DILocation(line: 9, column: 21, scope: !7)
@@ -252,16 +252,23 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !14 = !DILocation(line: 7, column: 3, scope: !7)
 // CHECK:STDOUT: !15 = !DILocation(line: 9, column: 3, scope: !7)
 // CHECK:STDOUT: !16 = !DILocation(line: 6, column: 1, scope: !7)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "PassShort", linkageName: "_CPassShort.Main", scope: null, file: !6, line: 16, type: !8, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !18 = !DILocation(line: 17, column: 18, scope: !17)
-// CHECK:STDOUT: !19 = !DILocation(line: 18, column: 18, scope: !17)
-// CHECK:STDOUT: !20 = !DILocation(line: 19, column: 18, scope: !17)
-// CHECK:STDOUT: !21 = !DILocation(line: 20, column: 18, scope: !17)
-// CHECK:STDOUT: !22 = !DILocation(line: 17, column: 3, scope: !17)
-// CHECK:STDOUT: !23 = !DILocation(line: 18, column: 3, scope: !17)
-// CHECK:STDOUT: !24 = !DILocation(line: 19, column: 3, scope: !17)
-// CHECK:STDOUT: !25 = !DILocation(line: 20, column: 3, scope: !17)
-// CHECK:STDOUT: !26 = !DILocation(line: 16, column: 1, scope: !17)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "PassShort", linkageName: "_CPassShort.Main", scope: null, file: !6, line: 16, type: !18, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !22)
+// CHECK:STDOUT: !18 = !DISubroutineType(types: !19)
+// CHECK:STDOUT: !19 = !{null, !20, !21}
+// CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 16, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !22 = !{!23, !24}
+// CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !17, type: !20)
+// CHECK:STDOUT: !24 = !DILocalVariable(arg: 2, scope: !17, type: !21)
+// CHECK:STDOUT: !25 = !DILocation(line: 17, column: 18, scope: !17)
+// CHECK:STDOUT: !26 = !DILocation(line: 18, column: 18, scope: !17)
+// CHECK:STDOUT: !27 = !DILocation(line: 19, column: 18, scope: !17)
+// CHECK:STDOUT: !28 = !DILocation(line: 20, column: 18, scope: !17)
+// CHECK:STDOUT: !29 = !DILocation(line: 17, column: 3, scope: !17)
+// CHECK:STDOUT: !30 = !DILocation(line: 18, column: 3, scope: !17)
+// CHECK:STDOUT: !31 = !DILocation(line: 19, column: 3, scope: !17)
+// CHECK:STDOUT: !32 = !DILocation(line: 20, column: 3, scope: !17)
+// CHECK:STDOUT: !33 = !DILocation(line: 16, column: 1, scope: !17)
 // CHECK:STDOUT: ; ModuleID = 'import_struct.carbon'
 // CHECK:STDOUT: source_filename = "import_struct.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -331,7 +338,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_struct.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Test", linkageName: "_CTest.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 8, column: 3, scope: !7)
 // CHECK:STDOUT: !12 = !DILocation(line: 9, column: 3, scope: !7)
@@ -375,8 +382,8 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassValueExpr.Main(ptr %y) #0 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk(ptr %y), !dbg !21
-// CHECK:STDOUT:   ret void, !dbg !22
+// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk(ptr %y), !dbg !26
+// CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -418,7 +425,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_class_with_nontrivial_copy.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "PassRefExpr", linkageName: "_CPassRefExpr.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 8, column: 3, scope: !7)
 // CHECK:STDOUT: !12 = !DILocation(line: 9, column: 3, scope: !7)
@@ -429,6 +436,11 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !17 = !DILocation(line: 17, column: 19, scope: !16)
 // CHECK:STDOUT: !18 = !DILocation(line: 17, column: 3, scope: !16)
 // CHECK:STDOUT: !19 = !DILocation(line: 16, column: 1, scope: !16)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "PassValueExpr", linkageName: "_CPassValueExpr.Main", scope: null, file: !6, line: 20, type: !8, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !21 = !DILocation(line: 21, column: 3, scope: !20)
-// CHECK:STDOUT: !22 = !DILocation(line: 20, column: 1, scope: !20)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "PassValueExpr", linkageName: "_CPassValueExpr.Main", scope: null, file: !6, line: 20, type: !21, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !24)
+// CHECK:STDOUT: !21 = !DISubroutineType(types: !22)
+// CHECK:STDOUT: !22 = !{null, !23}
+// CHECK:STDOUT: !23 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !24 = !{!25}
+// CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !20, type: !23)
+// CHECK:STDOUT: !26 = !DILocation(line: 21, column: 3, scope: !20)
+// CHECK:STDOUT: !27 = !DILocation(line: 20, column: 1, scope: !20)

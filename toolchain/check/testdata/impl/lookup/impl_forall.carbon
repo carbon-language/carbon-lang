@@ -67,6 +67,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.75bcbe.1: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.d9f) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.692ac2.1: %ptr.as.Copy.impl.Op.type.75bcbe.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.dcd: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%V.d9f) [symbolic]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.c66: <witness> = lookup_impl_witness %ptr.4f0b5c.2, @Copy [symbolic]
 // CHECK:STDOUT:   %Copy.facet.747: %Copy.type = facet_value %ptr.4f0b5c.2, (%Copy.lookup_impl_witness.c66) [symbolic]
 // CHECK:STDOUT:   %.89d: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.747 [symbolic]
@@ -86,6 +87,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %I.impl_witness.0c179e.2: <witness> = impl_witness file.%I.impl_witness_table, @A.as.I.impl(%W) [symbolic]
 // CHECK:STDOUT:   %A.as.I.impl.F.type.2974bf.2: type = fn_type @A.as.I.impl.F, @A.as.I.impl(%W) [symbolic]
 // CHECK:STDOUT:   %A.as.I.impl.F.786476.2: %A.as.I.impl.F.type.2974bf.2 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.dfa: require_specific_def_type = require_specific_def @A.as.I.impl(%W) [symbolic]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %A.2ddf89.3, @I, @I(%W) [symbolic]
 // CHECK:STDOUT:   %I.facet.84d: %I.type.07036d.3 = facet_value %A.2ddf89.3, (%I.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %.e50: type = fn_type_with_self_type %I.F.type.76d346.3, %I.facet.84d [symbolic]
@@ -117,6 +119,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %Copy.impl_witness.433: <witness> = impl_witness imports.%Copy.impl_witness_table.67d, @ptr.as.Copy.impl(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.424: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.15e: %ptr.as.Copy.impl.Op.type.424 = struct_value () [concrete]
+// CHECK:STDOUT:   %.1b5: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %Copy.facet.48c: %Copy.type = facet_value %ptr.c28, (%Copy.impl_witness.433) [concrete]
 // CHECK:STDOUT:   %.fb0: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.48c [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.15e, @ptr.as.Copy.impl.Op(%empty_struct_type) [concrete]
@@ -189,10 +192,11 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %require_complete.loc13_26: <witness> = require_complete_type %ptr.loc13_30.1 [symbolic = %require_complete.loc13_26 (constants.%require_complete.482d3f.1)]
 // CHECK:STDOUT:   %require_complete.loc13_16: <witness> = require_complete_type %A [symbolic = %require_complete.loc13_16 (constants.%require_complete.f6b5ff.1)]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %V [symbolic = %A.elem (constants.%A.elem.ee5a68.2)]
+// CHECK:STDOUT:   %.loc14_12.2: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%V) [symbolic = %.loc14_12.2 (constants.%.dcd)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc13_30.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.c66)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc13_30.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet.747)]
-// CHECK:STDOUT:   %.loc14_12.2: type = fn_type_with_self_type constants.%Copy.Op.type, %Copy.facet [symbolic = %.loc14_12.2 (constants.%.89d)]
-// CHECK:STDOUT:   %impl.elem0.loc14_12.2: @A.as.I.impl.F.%.loc14_12.2 (%.89d) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_12.2 (constants.%impl.elem0.928)]
+// CHECK:STDOUT:   %.loc14_12.3: type = fn_type_with_self_type constants.%Copy.Op.type, %Copy.facet [symbolic = %.loc14_12.3 (constants.%.89d)]
+// CHECK:STDOUT:   %impl.elem0.loc14_12.2: @A.as.I.impl.F.%.loc14_12.3 (%.89d) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_12.2 (constants.%impl.elem0.928)]
 // CHECK:STDOUT:   %specific_impl_fn.loc14_12.2: <specific function> = specific_impl_function %impl.elem0.loc14_12.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc14_12.2 (constants.%specific_impl_fn.6a1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @A.as.I.impl.F.%A (%A.2ddf89.2)) -> @A.as.I.impl.F.%ptr.loc13_30.1 (%ptr.4f0b5c.2) {
@@ -201,7 +205,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:     %n.ref: @A.as.I.impl.F.%A.elem (%A.elem.ee5a68.2) = name_ref n, @A.%.loc4 [concrete = @A.%.loc4]
 // CHECK:STDOUT:     %.loc14_17: ref @A.as.I.impl.F.%V (%V.d9f) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %addr: @A.as.I.impl.F.%ptr.loc13_30.1 (%ptr.4f0b5c.2) = addr_of %.loc14_17
-// CHECK:STDOUT:     %impl.elem0.loc14_12.1: @A.as.I.impl.F.%.loc14_12.2 (%.89d) = impl_witness_access constants.%Copy.lookup_impl_witness.c66, element0 [symbolic = %impl.elem0.loc14_12.2 (constants.%impl.elem0.928)]
+// CHECK:STDOUT:     %impl.elem0.loc14_12.1: @A.as.I.impl.F.%.loc14_12.3 (%.89d) = impl_witness_access constants.%Copy.lookup_impl_witness.c66, element0 [symbolic = %impl.elem0.loc14_12.2 (constants.%impl.elem0.928)]
 // CHECK:STDOUT:     %bound_method.loc14_12.1: <bound method> = bound_method %addr, %impl.elem0.loc14_12.1
 // CHECK:STDOUT:     %specific_impl_fn.loc14_12.1: <specific function> = specific_impl_function %impl.elem0.loc14_12.1, @Copy.Op(constants.%Copy.facet.747) [symbolic = %specific_impl_fn.loc14_12.2 (constants.%specific_impl_fn.6a1)]
 // CHECK:STDOUT:     %bound_method.loc14_12.2: <bound method> = bound_method %addr, %specific_impl_fn.loc14_12.1
@@ -219,11 +223,12 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %require_complete.loc21_18: <witness> = require_complete_type %I.type.loc21_17.2 [symbolic = %require_complete.loc21_18 (constants.%require_complete.c94ab4.2)]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I, @I(%W.loc19_16.1) [symbolic = %I.assoc_type (constants.%I.assoc_type.b650b2.3)]
 // CHECK:STDOUT:   %assoc0: @TestGeneric.%I.assoc_type (%I.assoc_type.b650b2.3) = assoc_entity element0, @I.%I.F.decl [symbolic = %assoc0 (constants.%assoc0.b4fda0.3)]
+// CHECK:STDOUT:   %.loc21_11.2: require_specific_def_type = require_specific_def @A.as.I.impl(%W.loc19_16.1) [symbolic = %.loc21_11.2 (constants.%.dfa)]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %A.loc19_32.1, @I, @I(%W.loc19_16.1) [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
 // CHECK:STDOUT:   %I.F.type: type = fn_type @I.F, @I(%W.loc19_16.1) [symbolic = %I.F.type (constants.%I.F.type.76d346.3)]
 // CHECK:STDOUT:   %I.facet: @TestGeneric.%I.type.loc21_17.2 (%I.type.07036d.3) = facet_value %A.loc19_32.1, (%I.lookup_impl_witness) [symbolic = %I.facet (constants.%I.facet.84d)]
-// CHECK:STDOUT:   %.loc21_11.2: type = fn_type_with_self_type %I.F.type, %I.facet [symbolic = %.loc21_11.2 (constants.%.e50)]
-// CHECK:STDOUT:   %impl.elem0.loc21_11.2: @TestGeneric.%.loc21_11.2 (%.e50) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc21_11.2 (constants.%impl.elem0.a9e)]
+// CHECK:STDOUT:   %.loc21_11.3: type = fn_type_with_self_type %I.F.type, %I.facet [symbolic = %.loc21_11.3 (constants.%.e50)]
+// CHECK:STDOUT:   %impl.elem0.loc21_11.2: @TestGeneric.%.loc21_11.3 (%.e50) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc21_11.2 (constants.%impl.elem0.a9e)]
 // CHECK:STDOUT:   %specific_impl_fn.loc21_11.2: <specific function> = specific_impl_function %impl.elem0.loc21_11.2, @I.F(%W.loc19_16.1, %I.facet) [symbolic = %specific_impl_fn.loc21_11.2 (constants.%specific_impl_fn.2e3)]
 // CHECK:STDOUT:   %require_complete.loc21_11: <witness> = require_complete_type %A.loc19_32.1 [symbolic = %require_complete.loc21_11 (constants.%require_complete.f6b5ff.2)]
 // CHECK:STDOUT:
@@ -236,7 +241,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:     %.loc21_18: @TestGeneric.%I.assoc_type (%I.assoc_type.b650b2.3) = specific_constant @I.%assoc0.loc8_31.1, @I(constants.%W) [symbolic = %assoc0 (constants.%assoc0.b4fda0.3)]
 // CHECK:STDOUT:     %F.ref: @TestGeneric.%I.assoc_type (%I.assoc_type.b650b2.3) = name_ref F, %.loc21_18 [symbolic = %assoc0 (constants.%assoc0.b4fda0.3)]
 // CHECK:STDOUT:     %.loc21_11.1: ref @TestGeneric.%A.loc19_32.1 (%A.2ddf89.3) = deref %a.ref
-// CHECK:STDOUT:     %impl.elem0.loc21_11.1: @TestGeneric.%.loc21_11.2 (%.e50) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc21_11.2 (constants.%impl.elem0.a9e)]
+// CHECK:STDOUT:     %impl.elem0.loc21_11.1: @TestGeneric.%.loc21_11.3 (%.e50) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc21_11.2 (constants.%impl.elem0.a9e)]
 // CHECK:STDOUT:     %bound_method.loc21_11: <bound method> = bound_method %.loc21_11.1, %impl.elem0.loc21_11.1
 // CHECK:STDOUT:     %specific_impl_fn.loc21_11.1: <specific function> = specific_impl_function %impl.elem0.loc21_11.1, @I.F(constants.%W, constants.%I.facet.84d) [symbolic = %specific_impl_fn.loc21_11.2 (constants.%specific_impl_fn.2e3)]
 // CHECK:STDOUT:     %bound_method.loc21_22: <bound method> = bound_method %.loc21_11.1, %specific_impl_fn.loc21_11.1
@@ -327,9 +332,10 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %require_complete.loc13_26 => constants.%complete_type.38e
 // CHECK:STDOUT:   %require_complete.loc13_16 => constants.%complete_type.0a6
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.2af
+// CHECK:STDOUT:   %.loc14_12.2 => constants.%.1b5
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.433
 // CHECK:STDOUT:   %Copy.facet => constants.%Copy.facet.48c
-// CHECK:STDOUT:   %.loc14_12.2 => constants.%.fb0
+// CHECK:STDOUT:   %.loc14_12.3 => constants.%.fb0
 // CHECK:STDOUT:   %impl.elem0.loc14_12.2 => constants.%ptr.as.Copy.impl.Op.15e
 // CHECK:STDOUT:   %specific_impl_fn.loc14_12.2 => constants.%ptr.as.Copy.impl.Op.specific_fn
 // CHECK:STDOUT: }

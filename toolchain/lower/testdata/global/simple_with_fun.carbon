@@ -25,15 +25,15 @@ var a: i32 = test_a();
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_Ctest_a.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 0, !dbg !7
+// CHECK:STDOUT:   ret i32 0, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !8 {
+// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %test_a.call = call i32 @_Ctest_a.Main(), !dbg !9
-// CHECK:STDOUT:   store i32 %test_a.call, ptr @_Ca.Main, align 4, !dbg !10
-// CHECK:STDOUT:   ret void, !dbg !11
+// CHECK:STDOUT:   %test_a.call = call i32 @_Ctest_a.Main(), !dbg !12
+// CHECK:STDOUT:   store i32 %test_a.call, ptr @_Ca.Main, align 4, !dbg !13
+// CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -47,9 +47,12 @@ var a: i32 = test_a();
 // CHECK:STDOUT: !3 = !DIFile(filename: "simple_with_fun.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "test_a", linkageName: "_Ctest_a.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !3, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 17, column: 14, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 17, column: 1, scope: !8)
-// CHECK:STDOUT: !11 = !DILocation(line: 0, scope: !8)
+// CHECK:STDOUT: !6 = !{!7}
+// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !3, type: !10, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DISubroutineType(types: !11)
+// CHECK:STDOUT: !11 = !{null}
+// CHECK:STDOUT: !12 = !DILocation(line: 17, column: 14, scope: !9)
+// CHECK:STDOUT: !13 = !DILocation(line: 17, column: 1, scope: !9)
+// CHECK:STDOUT: !14 = !DILocation(line: 0, scope: !9)

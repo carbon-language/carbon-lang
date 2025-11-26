@@ -92,7 +92,7 @@ fn Run() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "base.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 15, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 16, column: 3, scope: !4)

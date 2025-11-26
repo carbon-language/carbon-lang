@@ -871,10 +871,13 @@ auto InstNamer::NamingContext::NameInst() -> void {
     case CARBON_KIND(ClassType inst): {
       if (auto type_info = RecognizedTypeInfo::ForType(sem_ir(), inst);
           type_info.is_valid()) {
-        AddInstName(type_info.GetLiteralAsString(sem_ir()));
-      } else {
-        AddEntityNameAndMaybePush(inst.class_id);
+        RawStringOstream out;
+        if (type_info.PrintLiteral(sem_ir(), out)) {
+          AddInstName(out.TakeStr());
+          return;
+        }
       }
+      AddEntityNameAndMaybePush(inst.class_id);
       return;
     }
     case CompleteTypeWitness::Kind: {

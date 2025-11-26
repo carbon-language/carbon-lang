@@ -94,6 +94,7 @@ http_archive(
 
 # Required for llvm-project.
 bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "protobuf", version = "33.1", repo_name = "com_google_protobuf")
 bazel_dep(name = "zlib", version = "1.3.1.bcr.6", repo_name = "llvm_zlib")
 bazel_dep(name = "zstd", version = "1.5.7", repo_name = "llvm_zstd")
 
@@ -103,14 +104,14 @@ bazel_dep(name = "zstd", version = "1.5.7", repo_name = "llvm_zstd")
 
 # We pin to specific upstream commits and try to track top-of-tree reasonably
 # closely rather than pinning to a specific release.
-# HEAD as of 2025-11-14.
-llvm_project_version = "b2a81888f55735e9249ef25b6014a989e7f03969"
+# HEAD as of 2025-11-22.
+llvm_project_version = "20ebc7ea8209cb8f1ff3916706b6e7d8232c9f3f"
 
 # Load a repository for the raw llvm-project, pre-overlay.
 http_archive(
     name = "llvm-raw",
     build_file_content = "# empty",
-    integrity = "sha256-PkRNmo5RZgP0RecsLW8kbg7SIS84OPX+StuNL4omIhw=",
+    integrity = "sha256-/LVv96+cMl0CE3AxLZKzSE97CwbB1G2ic8h/Agqeafo=",
     patch_args = ["-p1"],
     patches = [
         "@carbon//bazel/llvm_project:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
@@ -133,7 +134,7 @@ use_repo(llvm_project, "llvm-project")
 # Python
 ###############################################################################
 
-bazel_dep(name = "rules_python", version = "1.5.1")
+bazel_dep(name = "rules_python", version = "1.6.0")
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.toolchain(

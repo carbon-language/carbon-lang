@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -85,18 +85,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "integer_literal_too_big.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+15]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: C++ literal's type `unsigned long long` could not be mapped to a Carbon type` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+4]]:3: error: member name `CONFIG_VALUE` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.CONFIG_VALUE;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -593,6 +582,91 @@ fn F() {
  // CHECK:STDERR:  ^~~~~~~~~~
  // CHECK:STDERR:
  Cpp.M_TRUE = false;
+}
+
+// --- nullptr.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+  #define MyNullPtr nullptr
+  void foo(int arr[2]);
+''';
+
+fn F() {
+  Cpp.foo(Cpp.MyNullPtr);
+}
+
+// --- user_defined_literal.h
+constexpr auto operator""_kb(unsigned long long k) -> unsigned long long {
+  return k * 1024;
+}
+#define M_1KB 1_kb
+
+// --- fail_todo_import_user_defined_literal.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./user_defined_literal.h:4:16: error: no matching literal operator for call to 'operator""_kb' with argument of type 'unsigned long long' or 'const char *', and no matching literal operator template [CppInteropParseError]
+// CHECK:STDERR:     4 | #define M_1KB 1_kb
+// CHECK:STDERR:       |                ^
+import Cpp library "user_defined_literal.h";
+
+fn F() {
+ // CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+15]]:2: note: in `Cpp` name lookup for `M_1KB` [InCppNameLookup]
+ // CHECK:STDERR:  Cpp.M_1KB;
+ // CHECK:STDERR:  ^~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+11]]:2: error: failed to parse macro Cpp.M_1KB to a valid constant expression [InCppMacroEvaluation]
+ // CHECK:STDERR:  Cpp.M_1KB;
+ // CHECK:STDERR:  ^~~~~~~~~
+ // CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+8]]:2: note: in `Cpp` name lookup for `M_1KB` [InCppNameLookup]
+ // CHECK:STDERR:  Cpp.M_1KB;
+ // CHECK:STDERR:  ^~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+4]]:2: error: member name `M_1KB` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  Cpp.M_1KB;
+ // CHECK:STDERR:  ^~~~~~~~~
+ // CHECK:STDERR:
+ Cpp.M_1KB;
+}
+
+// --- enums.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+  enum A { a = 1, b = 2 };
+  #define M_A ::a
+''';
+
+fn F() {
+  let a: Cpp.A = Cpp.M_A;
+}
+
+// --- fail_todo_enums_no_scope.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+  enum A { a = 1, b = 2 };
+  // CHECK:STDERR: fail_todo_enums_no_scope.carbon:[[@LINE+7]]:24: error: use of undeclared identifier 'a'; did you mean '::a'? [CppInteropParseError]
+  // CHECK:STDERR:    13 |   #define M_A_NO_SCOPE a
+  // CHECK:STDERR:       |                        ^
+  // CHECK:STDERR:       |                        ::a
+  // CHECK:STDERR: fail_todo_enums_no_scope.carbon:[[@LINE-5]]:12: note: '::a' declared here [CppInteropParseNote]
+  // CHECK:STDERR:     5 |   enum A { a = 1, b = 2 };
+  // CHECK:STDERR:       |            ^
+  #define M_A_NO_SCOPE a
+''';
+
+fn F() {
+  // CHECK:STDERR: fail_todo_enums_no_scope.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `M_A_NO_SCOPE` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.M_A_NO_SCOPE;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  Cpp.M_A_NO_SCOPE;
 }
 
 // --- lambda.carbon

@@ -302,8 +302,9 @@ class Stringifier {
     const auto& class_info = sem_ir_->classes().Get(inst.class_id);
     if (auto type_info = RecognizedTypeInfo::ForType(*sem_ir_, inst);
         type_info.is_valid()) {
-      type_info.PrintLiteral(*sem_ir_, *out_);
-      return;
+      if (type_info.PrintLiteral(*sem_ir_, *out_)) {
+        return;
+      }
     }
     step_stack_->PushEntityName(class_info, inst.specific_id);
   }
@@ -793,8 +794,9 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
                                 .specific_id = specific_id});
           type_info.is_valid()) {
         RawStringOstream out;
-        type_info.PrintLiteral(sem_ir, out);
-        return out.TakeStr();
+        if (type_info.PrintLiteral(sem_ir, out)) {
+          return out.TakeStr();
+        }
       }
       step_stack.PushEntityName(class_info, specific_id);
       break;
