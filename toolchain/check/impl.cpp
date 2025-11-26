@@ -107,6 +107,21 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   if (impl.witness_id == SemIR::ErrorInst::InstId) {
     return;
   }
+
+  if (impl.first_decl_id() != impl.latest_decl_id()) {
+    // This definition is a redeclaration so `GetOrAddImpl` did not require
+    // the facet type to be complete yet. It couldn't do so in the redeclaration
+    // because it was not part of the previous declaration and all generic
+    // declarations of the same entity need to match. So in the case of a
+    // definition that is also a redeclaration, the instruction must go into the
+    // generic definition.
+    if (!RequireCompleteFacetTypeForImplDefinition(
+            context, SemIR::LocId(impl.latest_decl_id()), impl.constraint_id)) {
+      FillImplWitnessWithErrors(context, impl);
+      return;
+    }
+  }
+
   auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
   auto witness_table =
       context.insts().GetAs<SemIR::ImplWitnessTable>(witness.witness_table_id);
@@ -116,16 +131,11 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   // definition is the first declaration and the interface has no members. The
   // other case where `witness_block` will be empty is when we are using a
   // placeholder witness. This happens when there is a forward declaration of
-  // the impl and the facet type has no rewrite constraints and so it wasn't
-  // required to be complete.
+  // the impl and the facet type has no rewrite constraints. The placeholder
+  // (empty) table needs to be replaced with an actual table with a slot for
+  // each associated entity.
   if (witness_table.elements_id != SemIR::InstBlockId::Empty &&
       witness_block.empty()) {
-    if (!RequireCompleteFacetTypeForImplDefinition(
-            context, SemIR::LocId(impl.latest_decl_id()), impl.constraint_id)) {
-      FillImplWitnessWithErrors(context, impl);
-      return;
-    }
-
     AllocateFacetTypeImplWitness(context, impl.interface.interface_id,
                                  witness_table.elements_id);
     witness_block = context.inst_blocks().GetMutable(witness_table.elements_id);
@@ -508,6 +518,8 @@ auto GetOrAddImpl(Context& context, SemIR::LocId loc_id,
     // This is a redeclaration of another impl, now held in `impl_id`.
     auto& prev_impl = context.impls().Get(impl_id);
     FinishGenericRedecl(context, prev_impl.generic_id);
+    // In the case that `is_definition` is true, requiring the facet type to be
+    // complete is deferred until the generic definition is started.
     return impl_id;
   }
 
@@ -517,10 +529,10 @@ auto GetOrAddImpl(Context& context, SemIR::LocId loc_id,
 
   impl.generic_id = BuildGeneric(context, impl.latest_decl_id());
 
-  // Due to lack of an instruction to set to ErrorInst, an `InterfaceId::None`
+  // Due to lack of an instruction to set to `ErrorInst`, an `InterfaceId::None`
   // indicates that the interface could not be identified and an error was
   // diagnosed. If there's any error in the construction of the impl, then the
-  // witness can't be constructed. We set it to ErrorInt to make the impl
+  // witness can't be constructed. We set it to `ErrorInst` to make the impl
   // unusable for impl lookup.
   if (!impl.interface.interface_id.has_value() || invalid_redecl ||
       impl.self_id == SemIR::ErrorInst::TypeInstId ||

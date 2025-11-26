@@ -6,8 +6,6 @@
 
 namespace Carbon::Check {
 
-// If the specified name scope corresponds to a class, returns the corresponding
-// class declaration.
 auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
     -> std::optional<ClassScope> {
   if (!scope_id.has_value()) {
@@ -21,7 +19,7 @@ auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
   if (!class_decl) {
     return std::nullopt;
   }
-  // TODO: This is also valid in a mixin.
+  // TODO: Return something else for a mixin.
   return {{.class_decl = *class_decl}};
 }
 

@@ -84,6 +84,9 @@ auto InitialFacetTypeImplWitness(
   const auto& facet_type_info =
       context.facet_types().Get(facet_type.facet_type_id);
 
+  // An iterator over the rewrite_constraints where the LHS of the rewrite names
+  // a member of the `interface_to_witness`. This filters out rewrites into
+  // other interfaces, as they do not set values in the witness table.
   auto rewrites_into_interface_to_witness = llvm::make_filter_range(
       facet_type_info.rewrite_constraints,
       [&](const SemIR::FacetTypeInfo::RewriteConstraint& rewrite) {
@@ -111,8 +114,8 @@ auto InitialFacetTypeImplWitness(
       context.interfaces().Get(interface_to_witness.interface_id);
   if (!interface.is_complete()) {
     // This is a declaration with rewrite constraints into `.Self`, but the
-    // interface is not complete. Those rewrites would have been diagnosed as an
-    // error in their member access.
+    // interface is not complete. Those rewrites have already been diagnosed as
+    // an error in their member access.
     return SemIR::ErrorInst::InstId;
   }
 

@@ -32,7 +32,8 @@ namespace Carbon::Check {
 static auto GetImplDefaultSelfType(Context& context,
                                    const ClassScope& class_scope)
     -> SemIR::TypeId {
-  // TODO: This is also valid in a mixin.
+  // TODO: ClassScope will need to be extended to handle mixins. Then handle
+  // that here.
   return context.classes().Get(class_scope.class_decl.class_id).self_type_id;
 }
 
@@ -82,21 +83,21 @@ auto HandleParseNode(Context& context, Parse::ImplTypeAsId node_id) -> bool {
                         "cannot `extend` an `impl` with an explicit self type");
       auto diag = context.emitter().Build(extend_node, ExtendImplSelfAs);
 
-      if (self_type.type_id != GetImplDefaultSelfType(context, *class_scope)) {
-        // If the explicit self type is not the default, the self-type is an
-        // error.
-        if (self_type.type_id != SemIR::ErrorInst::TypeId) {
-          diag.Emit();
-        }
-        self_type.inst_id = SemIR::ErrorInst::TypeInstId;
-      } else {
-        // Otherwise, suggest removing the self-type, and continue as if there
-        // was not error.
+      if (self_type.type_id == GetImplDefaultSelfType(context, *class_scope)) {
+        // If the explicit self type is the default, suggest removing it with a
+        // diagnostic, but continue as if no error occurred since the self-type
+        // is semantically valid.
         CARBON_DIAGNOSTIC(ExtendImplSelfAsDefault, Note,
                           "remove the explicit `Self` type here");
         diag.Note(self_node, ExtendImplSelfAsDefault);
         if (self_type.type_id != SemIR::ErrorInst::TypeId) {
           diag.Emit();
+        }
+      } else {
+        // Otherwise, the self-type is an error.
+        if (self_type.type_id != SemIR::ErrorInst::TypeId) {
+          diag.Emit();
+          self_type.inst_id = SemIR::ErrorInst::TypeInstId;
         }
       }
     }
@@ -197,7 +198,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
 // common logic shared by impl forward declarations and impl definitions.
 static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                           bool is_definition)
-    -> std::tuple<SemIR::ImplId, SemIR::InstId> {
+    -> std::pair<SemIR::ImplId, SemIR::InstId> {
   auto [constraint_node, constraint_id] =
       context.node_stack().PopExprWithNodeId();
   auto [self_type_node, self_type_inst_id] =
@@ -251,9 +252,9 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                            impl_info, is_definition, extend_node);
   }
 
-  // StartImplDecl either filled in the `impl_info` and returned a fresh ImplId,
-  // or if we're redeclaring a previous impl, returned an existing ImplId. Write
-  // that ImplId into the ImplDecl instruction and finish it.
+  // `GetOrAddImpl` either filled in the `impl_info` and returned a fresh
+  // ImplId, or if we're redeclaring a previous impl, returned an existing
+  // ImplId. Write that ImplId into the ImplDecl instruction and finish it.
   auto impl_decl = context.insts().GetAs<SemIR::ImplDecl>(impl_decl_id);
   impl_decl.impl_id = impl_id;
   ReplaceInstBeforeConstantUse(context, impl_decl_id, impl_decl);
@@ -293,8 +294,8 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
   context.scope_stack().PushForEntity(
       impl_decl_id, impl.scope_id,
       context.generics().GetSelfSpecific(impl.generic_id));
+
   StartGenericDefinition(context, impl.generic_id);
-  // This requires that the facet type is complete.
   ImplWitnessStartDefinition(context, impl);
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);

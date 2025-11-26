@@ -1929,6 +1929,7 @@ interface I {
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = %C> [symbolic]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @I.F.%I.impl_witness_table, @C.as.I.impl(%Self) [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I_where.type [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1976,6 +1977,7 @@ interface I {
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @I.F.%I.impl_witness_table, @C.as.I.impl(%Self) [symbolic = %I.impl_witness (constants.%I.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I_where.type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.ref.loc12_10 as %.loc12_17 {
 // CHECK:STDOUT:   !members:
