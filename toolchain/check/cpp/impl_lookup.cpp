@@ -55,7 +55,8 @@ static auto BuildWitness(Context& context, SemIR::LocId loc_id,
                          SemIR::SpecificInterface specific_interface,
                          llvm::ArrayRef<SemIR::InstId> values)
     -> EvalImplLookupResult {
-  const auto& interface = context.interfaces().Get(specific_interface.interface_id);
+  const auto& interface =
+      context.interfaces().Get(specific_interface.interface_id);
   auto assoc_entities =
       context.inst_blocks().GetOrEmpty(interface.associated_entities_id);
   if (assoc_entities.size() != values.size()) {
