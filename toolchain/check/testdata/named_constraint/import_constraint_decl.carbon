@@ -83,6 +83,7 @@ impl C as B {}
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %B.type: type = facet_type <@B> [concrete]
 // CHECK:STDOUT:   %Self.861: %B.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.861 [symbolic]
 // CHECK:STDOUT:   %T: %B.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %B.type [concrete]
@@ -95,6 +96,7 @@ impl C as B {}
 // CHECK:STDOUT:   %Main.B: type = import_ref Main//b, B, loaded [concrete = constants.%B.type]
 // CHECK:STDOUT:   %Main.import_ref.8df = import_ref Main//b, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b7c: type = import_ref Main//b, loc5_18, loaded [symbolic = @B.require0.%Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:   %Main.import_ref.301: type = import_ref Main//b, loc5_24, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.import_ref.dec: %B.type = import_ref Main//b, loc4_14, loaded [symbolic = constants.%Self.861]
 // CHECK:STDOUT:   %Main.import_ref.cae = import_ref Main//b, loc4_14, unloaded
 // CHECK:STDOUT: }
@@ -132,7 +134,7 @@ impl C as B {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @B.require0 {
-// CHECK:STDOUT:     require imports.%Main.import_ref.b7c impls <@I>
+// CHECK:STDOUT:     require imports.%Main.import_ref.b7c impls imports.%Main.import_ref.301
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

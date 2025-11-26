@@ -2613,7 +2613,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     require_impls_id = resolver.local_require_impls().Add(
         {.self_id = SemIR::TypeInstId::None,
          .facet_type_inst_id = SemIR::TypeInstId::None,
-         .facet_type_id = SemIR::FacetTypeId::None,
          .decl_id = require_decl_id,
          .parent_scope_id = SemIR::NameScopeId::None,
          .generic_id = MakeIncompleteGeneric(resolver, require_decl_id,
@@ -2651,13 +2650,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, import_require.self_id, self_const_id);
   new_require.facet_type_inst_id = AddLoadedImportRefForType(
       resolver, import_require.facet_type_inst_id, facet_type_const_id);
-  auto new_canonical_facet_type_inst_id =
-      resolver.local_constant_values().GetConstantInstId(
-          new_require.facet_type_inst_id);
-  auto new_canonical_facet_type =
-      resolver.local_insts().GetAs<SemIR::FacetType>(
-          new_canonical_facet_type_inst_id);
-  new_require.facet_type_id = new_canonical_facet_type.facet_type_id;
   new_require.extend_self = import_require.extend_self;
   new_require.parent_scope_id = parent_scope_id;
 

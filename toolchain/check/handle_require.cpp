@@ -157,9 +157,9 @@ static auto TypeStructureReferencesSelf(
 }
 
 struct ValidateRequireResult {
-  SemIR::FacetType facet_type;
-  SemIR::TypeId facet_type_type_id;
-  const SemIR::IdentifiedFacetType* identified;
+  // The TypeId of a FacetType.
+  SemIR::TypeId constraint_type_id;
+  const SemIR::IdentifiedFacetType* identified_facet_type;
 };
 
 // Returns nullopt if a diagnostic has been emitted and the `require` decl is
@@ -224,9 +224,8 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
     return std::nullopt;
   }
 
-  return ValidateRequireResult{.facet_type = *constraint_facet_type,
-                               .facet_type_type_id = constraint_type_id,
-                               .identified = &identified};
+  return ValidateRequireResult{.constraint_type_id = constraint_type_id,
+                               .identified_facet_type = &identified};
 }
 
 auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
@@ -252,8 +251,8 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
     return true;
   }
 
-  auto [constraint_facet_type, constraint_type_id, identified] = *validated;
-  if (identified->required_interfaces().empty()) {
+  auto [constraint_type_id, identified_facet_type] = *validated;
+  if (identified_facet_type->required_interfaces().empty()) {
     // A `require T impls type` adds no actual constraints, so nothing to do.
     DiscardGenericDecl(context);
     return true;
@@ -270,7 +269,6 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
       {.self_id = self_inst_id,
        .facet_type_inst_id =
            context.types().GetAsTypeInstId(constraint_inst_id),
-       .facet_type_id = constraint_facet_type.facet_type_id,
        .extend_self = extend,
        .decl_id = decl_id,
        .parent_scope_id = context.scope_stack().PeekNameScopeId(),
