@@ -12,9 +12,9 @@
 
 fn F();
 
-// --- addr.carbon
+// --- ref.carbon
 
-fn foo(addr a: i32*);
+fn foo(ref a: i32);
 
 // --- implicit_empty.carbon
 
@@ -172,19 +172,18 @@ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
-// CHECK:STDOUT: - filename: addr.carbon
+// CHECK:STDOUT: - filename: ref.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'foo'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
 // CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'a'},
-// CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:             {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'Addr', text: 'addr', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 10},
+// CHECK:STDOUT:           {kind: 'RefBindingName', text: 'ref', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 9},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: implicit_empty.carbon

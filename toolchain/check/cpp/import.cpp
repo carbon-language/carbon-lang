@@ -30,7 +30,9 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
+#include "toolchain/base/int.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/base/value_ids.h"
 #include "toolchain/check/call.h"
 #include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
@@ -537,32 +539,21 @@ static auto IsDeclInjectedClassName(Context& context,
   return true;
 }
 
-// Returns a Clang DeclarationName for the given `NameId`.
-static auto GetDeclarationName(Context& context, SemIR::NameId name_id)
-    -> std::optional<clang::DeclarationName> {
-  std::optional<llvm::StringRef> name =
-      context.names().GetAsStringIfIdentifier(name_id);
-  if (!name) {
-    // Special names never exist in C++ code.
-    return std::nullopt;
-  }
-
-  return clang::DeclarationName(
-      context.clang_sema().getPreprocessor().getIdentifierInfo(*name));
-}
-
-// Performs a qualified name lookup of the declaration name in the given scope.
+// Performs a qualified name lookup of the identifier in the given scope.
 // Returns the lookup result if lookup was successful.
-static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
-                        clang::DeclarationName name)
+static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
+                            clang::IdentifierInfo* identifier_name)
     -> std::optional<clang::LookupResult> {
+  CARBON_CHECK(identifier_name, "Identifier name is empty");
   clang::Sema& sema = context.clang_sema();
 
   // TODO: Map the LocId of the lookup to a clang SourceLocation and provide it
   // here so that clang's diagnostics can point into the carbon code that uses
   // the name.
   clang::LookupResult lookup(
-      sema, clang::DeclarationNameInfo(name, clang::SourceLocation()),
+      sema,
+      clang::DeclarationNameInfo(clang::DeclarationName(identifier_name),
+                                 clang::SourceLocation()),
       clang::Sema::LookupNameKind::LookupOrdinaryName);
 
   bool found =
@@ -573,19 +564,6 @@ static auto ClangLookup(Context& context, SemIR::NameScopeId scope_id,
   }
 
   return lookup;
-}
-
-// Looks up the given name in the Clang AST in a specific scope. Returns the
-// lookup result if lookup was successful.
-static auto ClangLookupName(Context& context, SemIR::NameScopeId scope_id,
-                            SemIR::NameId name_id)
-    -> std::optional<clang::LookupResult> {
-  auto declaration_name = GetDeclarationName(context, name_id);
-  if (!declaration_name) {
-    return std::nullopt;
-  }
-
-  return ClangLookup(context, scope_id, *declaration_name);
 }
 
 // Returns whether `decl` already mapped to an instruction.
@@ -764,6 +742,13 @@ static auto GetInheritanceKind(clang::CXXRecordDecl* class_def)
     return SemIR::Class::Final;
   }
 
+  if (class_def->getNumVBases()) {
+    // TODO: We treat classes with virtual bases as final for now. We use the
+    // layout of the class including its virtual bases as its Carbon type
+    // layout, so we wouldn't behave correctly if we derived from it.
+    return SemIR::Class::Final;
+  }
+
   if (class_def->isAbstract()) {
     // If the class has any abstract members, it's abstract.
     return SemIR::Class::Abstract;
@@ -826,8 +811,15 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
   // Import bases.
   for (const auto& base : clang_def->bases()) {
-    CARBON_CHECK(!base.isVirtual(),
-                 "Should not import definition for class with a virtual base");
+    if (base.isVirtual()) {
+      // If the base is virtual, skip it from the layout. We don't know where it
+      // will actually appear within the complete object layout, as a pointer to
+      // this class might point to a derived type that puts the vbase in a
+      // different place.
+      // TODO: Track that the virtual base existed. Support derived-to-vbase
+      // conversions by generating a clang AST fragment.
+      continue;
+    }
 
     auto [base_type_inst_id, base_type_id] =
         ImportTypeAndDependencies(context, import_ir_inst_id, base.getType());
@@ -866,6 +858,10 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
       class_info.base_id = SemIR::InstId::None;
     }
 
+    // TODO: If the base class has virtual bases, the size of the type that we
+    // add to the layout here will be the full size of the class (including
+    // virtual bases), whereas the size actually occupied by this base class is
+    // only the nvsize (excluding virtual bases).
     auto base_offset = base.isVirtual()
                            ? clang_layout.getVBaseClassOffset(base_class)
                            : clang_layout.getBaseClassOffset(base_class);
@@ -1086,6 +1082,12 @@ static auto MakeIntType(Context& context, IntId size_id, bool is_signed)
   return ExprAsType(context, Parse::NodeId::None, type_inst_id);
 }
 
+static auto MakeCppCompatType(Context& context, SemIR::LocId loc_id,
+                              llvm::StringRef name) -> TypeExpr {
+  return ExprAsType(context, loc_id,
+                    LookupNameInCore(context, loc_id, {"CppCompat", name}));
+}
+
 // Maps a C++ builtin integer type to a Carbon `Core.CppCompat` type.
 static auto MapBuiltinCppCompatIntegerType(Context& context,
                                            unsigned int cpp_width,
@@ -1096,9 +1098,7 @@ static auto MapBuiltinCppCompatIntegerType(Context& context,
     return TypeExpr::None;
   }
 
-  return ExprAsType(context, Parse::NodeId::None,
-                    LookupNameInCore(context, Parse::NodeId::None,
-                                     {"CppCompat", cpp_compat_name}));
+  return MakeCppCompatType(context, Parse::NodeId::None, cpp_compat_name);
 }
 
 // Maps a C++ builtin integer type to a Carbon type.
@@ -1144,9 +1144,7 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
 }
 
 static auto MapNullptrType(Context& context, SemIR::LocId loc_id) -> TypeExpr {
-  return ExprAsType(
-      context, loc_id,
-      LookupNameInCore(context, loc_id, {"CppCompat", "NullptrT"}));
+  return MakeCppCompatType(context, loc_id, "NullptrT");
 }
 
 // Maps a C++ builtin type to a Carbon type.
@@ -1175,8 +1173,7 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
     }
     // TODO: Handle floating-point types that map to named aliases.
   } else if (type.isVoidType()) {
-    return ExprAsType(context, Parse::NodeId::None,
-                      SemIR::CppVoidType::TypeInstId);
+    return MakeCppCompatType(context, loc_id, "VoidBase");
   } else if (type.isNullPtrType()) {
     return MapNullptrType(context, loc_id);
   }
@@ -2269,29 +2266,78 @@ static auto IsIncompleteClass(Context& context, SemIR::NameScopeId scope_id)
              context.classes().Get(class_decl->class_id).self_type_id);
 }
 
-// Maps a Clang constant expression to a Carbon constant. Currently supports
-// only integer constants.
-// TODO: Add support for the other constant types for which a C++ to Carbon type
+// Maps a Clang literal expression to a Carbon constant.
+// TODO: Add support for all constant types for which a C++ to Carbon type
 // mapping exists.
 static auto MapConstant(Context& context, SemIR::LocId loc_id,
                         clang::Expr* expr) -> SemIR::InstId {
   CARBON_CHECK(expr, "empty expression");
-  auto* integer_literal = dyn_cast<clang::IntegerLiteral>(expr);
-  if (!integer_literal) {
-    context.TODO(
-        loc_id, "Unsupported: constant type: " + expr->getType().getAsString());
-    return SemIR::ErrorInst::InstId;
+
+  if (auto* string_literal = dyn_cast<clang::StringLiteral>(expr)) {
+    if (!string_literal->isOrdinary() && !string_literal->isUTF8()) {
+      context.TODO(loc_id,
+                   llvm::formatv("Unsupported: string literal type: {0}",
+                                 expr->getType()));
+      return SemIR::ErrorInst::InstId;
+    }
+    StringLiteralValueId string_id =
+        context.string_literal_values().Add(string_literal->getString());
+    auto inst_id =
+        MakeStringLiteral(context, Parse::StringLiteralId::None, string_id);
+    context.imports().push_back(inst_id);
+    return inst_id;
+  } else if (isa<clang::CXXNullPtrLiteralExpr>(expr)) {
+    auto type_id = MapNullptrType(context, loc_id).type_id;
+    return GetOrAddInst<SemIR::UninitializedValue>(context, SemIR::LocId::None,
+                                                   {.type_id = type_id});
   }
-  SemIR::TypeId type_id =
-      MapType(context, loc_id, integer_literal->getType()).type_id;
+
+  SemIR::TypeId type_id = MapType(context, loc_id, expr->getType()).type_id;
   if (!type_id.has_value()) {
-    CARBON_DIAGNOSTIC(InCppConstantMapping, Error, "invalid integer type");
-    context.emitter().Emit(loc_id, InCppConstantMapping);
+    context.TODO(loc_id, llvm::formatv("Unsupported: C++ literal's type `{0}` "
+                                       "could not be mapped to a Carbon type",
+                                       expr->getType().getAsString()));
     return SemIR::ErrorInst::InstId;
   }
-  auto int_id = context.ints().Add(integer_literal->getValue().getSExtValue());
-  auto inst_id = AddInstInNoBlock<SemIR::IntValue>(
-      context, loc_id, {.type_id = type_id, .int_id = int_id});
+
+  SemIR::InstId inst_id = SemIR::InstId::None;
+  SemIR::ImportIRInstId imported_loc_id =
+      AddImportIRInst(context.sem_ir(), expr->getExprLoc());
+
+  if (auto* integer_literal = dyn_cast<clang::IntegerLiteral>(expr)) {
+    IntId int_id =
+        context.ints().Add(integer_literal->getValue().getSExtValue());
+    inst_id = AddInstInNoBlock(
+        context,
+        MakeImportedLocIdAndInst<SemIR::IntValue>(
+            context, imported_loc_id, {.type_id = type_id, .int_id = int_id}));
+  } else if (auto* bool_literal = dyn_cast<clang::CXXBoolLiteralExpr>(expr)) {
+    inst_id = AddInstInNoBlock(
+        context,
+        MakeImportedLocIdAndInst<SemIR::BoolLiteral>(
+            context, imported_loc_id,
+            {.type_id = type_id,
+             .value = SemIR::BoolValue::From(bool_literal->getValue())}));
+  } else if (auto* float_literal = dyn_cast<clang::FloatingLiteral>(expr)) {
+    FloatId float_id = context.floats().Add(float_literal->getValue());
+    inst_id = AddInstInNoBlock(context,
+                               MakeImportedLocIdAndInst<SemIR::FloatValue>(
+                                   context, imported_loc_id,
+                                   {.type_id = type_id, .float_id = float_id}));
+  } else if (auto* character_literal =
+                 dyn_cast<clang::CharacterLiteral>(expr)) {
+    inst_id = AddInstInNoBlock(
+        context, MakeImportedLocIdAndInst<SemIR::CharLiteralValue>(
+                     context, imported_loc_id,
+                     {.type_id = type_id,
+                      .value = SemIR::CharId(character_literal->getValue())}));
+  } else {
+    context.TODO(loc_id, llvm::formatv(
+                             "Unsupported: C++ constant expression type: '{0}'",
+                             expr->getType().getAsString()));
+    return SemIR::ErrorInst::InstId;
+  }
+
   context.imports().push_back(inst_id);
   return inst_id;
 }
@@ -2322,31 +2368,39 @@ static auto ImportMacro(Context& context, SemIR::LocId loc_id,
 }
 
 // Looks up a macro definition in the top-level `Cpp` scope. Returns nullptr if
-// the macro is not found or the scope is not the top-level `Cpp` scope.
+// the macro is not found or if it is a builtin macro, function-like macro or a
+// macro used for header guards.
+// TODO: Function-like and builtin macros are currently not supported and their
+// support still needs to be clarified.
 static auto LookupMacro(Context& context, SemIR::NameScopeId scope_id,
-                        SemIR::NameId name_id) -> clang::MacroInfo* {
-  auto name_str_opt = context.names().GetAsStringIfIdentifier(name_id);
-  if (!name_str_opt || !IsTopCppScope(context, scope_id)) {
+                        clang::IdentifierInfo* identifier_info)
+    -> clang::MacroInfo* {
+  if (!IsTopCppScope(context, scope_id)) {
     return nullptr;
   }
-
-  clang::Preprocessor& preprocessor = context.clang_sema().getPreprocessor();
-  // TODO: Do the identifier lookup only once, rather than both here and in
-  // ClangLookupName.
-  clang::IdentifierInfo* identifier_info =
-      preprocessor.getIdentifierInfo(*name_str_opt);
-
-  if (!identifier_info) {
-    return nullptr;
-  }
-
-  clang::MacroInfo* macro_info = preprocessor.getMacroInfo(identifier_info);
+  CARBON_CHECK(identifier_info, "Identifier info is empty");
+  clang::MacroInfo* macro_info =
+      context.clang_sema().getPreprocessor().getMacroInfo(identifier_info);
   if (macro_info && !macro_info->isUsedForHeaderGuard() &&
       !macro_info->isFunctionLike() && !macro_info->isBuiltinMacro()) {
     return macro_info;
   }
 
   return nullptr;
+}
+
+// Gets the identifier info for a name. Returns `nullptr` if the name is not an
+// identifier name.
+static auto GetIdentifierInfo(Context& context, SemIR::NameId name_id)
+    -> clang::IdentifierInfo* {
+  std::optional<llvm::StringRef> string_name =
+      context.names().GetAsStringIfIdentifier(name_id);
+  if (!string_name) {
+    return nullptr;
+  }
+  clang::IdentifierInfo* identifier_info =
+      context.clang_sema().getPreprocessor().getIdentifierInfo(*string_name);
+  return identifier_info;
 }
 
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
@@ -2361,10 +2415,17 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
   if (IsIncompleteClass(context, scope_id)) {
     return SemIR::ScopeLookupResult::MakeError();
   }
-  if (clang::MacroInfo* macro_info = LookupMacro(context, scope_id, name_id)) {
+
+  clang::IdentifierInfo* identifier_info = GetIdentifierInfo(context, name_id);
+  if (!identifier_info) {
+    return SemIR::ScopeLookupResult::MakeNotFound();
+  }
+
+  if (clang::MacroInfo* macro_info =
+          LookupMacro(context, scope_id, identifier_info)) {
     return ImportMacro(context, loc_id, scope_id, name_id, macro_info);
   }
-  auto lookup = ClangLookupName(context, scope_id, name_id);
+  auto lookup = ClangLookupName(context, scope_id, identifier_info);
   if (!lookup) {
     return ImportBuiltinNameIntoScope(context, loc_id, scope_id, name_id);
   }
@@ -2442,17 +2503,6 @@ auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
   if (auto* class_decl = dyn_cast<clang::CXXRecordDecl>(clang_decl)) {
     auto* class_def = class_decl->getDefinition();
     CARBON_CHECK(class_def, "Complete type has no definition");
-
-    if (class_def->getNumVBases()) {
-      // TODO: Handle virtual bases. We don't actually know where they go in the
-      // layout. We may also want to use a different size in the layout for
-      // `partial C`, excluding the virtual base. It's also not entirely safe to
-      // just skip over the virtual base, as the type we would construct would
-      // have a misleading size. For now, treat a C++ class with vbases as
-      // incomplete in Carbon.
-      context.TODO(loc_id, "class with virtual bases");
-      return false;
-    }
 
     BuildClassDefinition(context, import_ir_inst_id, class_id, class_inst_id,
                          class_def);

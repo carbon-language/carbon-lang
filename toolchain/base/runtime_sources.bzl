@@ -37,6 +37,10 @@ BUILTINS_FILEGROUPS = {
     "x86_fp80_srcs": "@llvm-project//compiler-rt:builtins_x86_fp80_srcs",
 }
 
+RUNTIMES_FILEGROUPS = {
+    "libunwind_srcs": "@llvm-project//libunwind:libunwind_srcs",
+}
+
 _TEMPLATE = """
 // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 // Exceptions. See /LICENSE for license information.
@@ -85,6 +89,10 @@ inline constexpr llvm::StringLiteral BuiltinsI386Srcs[] = {{
 {i386_srcs}
 }};
 
+constexpr inline llvm::StringLiteral LibunwindSrcs[] = {{
+{libunwind_srcs}
+}};
+
 }}  // namespace Carbon::RuntimeSources
 
 #endif  // CARBON_TOOLCHAIN_BASE_RUNTIME_SOURCES_H_
@@ -98,6 +106,10 @@ def _builtins_path(file):
     # subdirectory, so just remove the "lib/" prefix from the package-relative
     # label name.
     return file.owner.name.removeprefix("lib/")
+
+def _runtimes_path(file):
+    """Returns the runtime install path for a file in a normal runtimes library."""
+    return file.owner.name
 
 def _get_path(file_attr, to_path_fn):
     files = file_attr[DefaultInfo].files.to_list()
@@ -125,6 +137,9 @@ def _generate_runtime_sources_h_rule(ctx):
     } | {
         k: _get_paths(getattr(ctx.attr, "_" + k), _builtins_path)
         for k in BUILTINS_FILEGROUPS.keys()
+    } | {
+        k: _get_paths(getattr(ctx.attr, "_" + k), _runtimes_path)
+        for k in RUNTIMES_FILEGROUPS.keys()
     })))
     return [DefaultInfo(files = depset([h_file]))]
 
@@ -135,7 +150,8 @@ generate_runtime_sources_h = rule(
         for k, v in CRT_FILES.items()
     } | {
         "_" + k: attr.label_list(default = [v], allow_files = True)
-        for k, v in BUILTINS_FILEGROUPS.items()
+        for k, v in BUILTINS_FILEGROUPS.items() + RUNTIMES_FILEGROUPS.items()
+    } | {
     },
 )
 

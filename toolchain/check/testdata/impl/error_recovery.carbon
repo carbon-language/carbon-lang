@@ -107,6 +107,29 @@ fn G() {
   //@dump-sem-ir-end
 }
 
+// --- fail_invalid_fn_syntax_in_impl.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  fn Op[self: Self]();
+}
+
+class C {};
+//@dump-sem-ir-begin
+impl C as I {
+  // This leaves the impl with a placeholder instruction in the witness table.
+  // CHECK:STDERR: fail_invalid_fn_syntax_in_impl.carbon:[[@LINE+8]]:11: error: expected `:` or `:!` in binding pattern [ExpectedBindingPattern]
+  // CHECK:STDERR:   fn Op[x self: C]() {}
+  // CHECK:STDERR:           ^~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_invalid_fn_syntax_in_impl.carbon:[[@LINE+4]]:11: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:   fn Op[x self: C]() {}
+  // CHECK:STDERR:           ^~~~
+  // CHECK:STDERR:
+  fn Op[x self: C]() {}
+}
+//@dump-sem-ir-end
+
 // CHECK:STDOUT: --- fail_runtime_generic_param.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -140,6 +163,7 @@ fn G() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.b31: require_specific_def_type = require_specific_def @T.as.Z.impl(%T) [symbolic]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T, @Z [symbolic]
 // CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %T, (%Z.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%Z.facet) [symbolic]
@@ -158,6 +182,7 @@ fn G() {
 // CHECK:STDOUT:   %T.loc13_6.1: type = symbolic_binding T, 0 [symbolic = %T.loc13_6.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.loc19_6.2: require_specific_def_type = require_specific_def @T.as.Z.impl(%T.loc13_6.1) [symbolic = %.loc19_6.2 (constants.%.b31)]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_6.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
 // CHECK:STDOUT:   %Z.facet.loc19_6.2: %Z.type = facet_value %T.loc13_6.1, (%Z.lookup_impl_witness) [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:   %F.specific_fn.loc19_3.2: <specific function> = specific_function constants.%F, @F(%Z.facet.loc19_6.2) [symbolic = %F.specific_fn.loc19_3.2 (constants.%F.specific_fn)]
@@ -167,7 +192,7 @@ fn G() {
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_6.2 [symbolic = %T.loc13_6.1 (constants.%T)]
 // CHECK:STDOUT:     %Z.facet.loc19_6.1: %Z.type = facet_value %T.ref, (constants.%Z.lookup_impl_witness) [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
-// CHECK:STDOUT:     %.loc19: %Z.type = converted %T.ref, %Z.facet.loc19_6.1 [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
+// CHECK:STDOUT:     %.loc19_6.1: %Z.type = converted %T.ref, %Z.facet.loc19_6.1 [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:     %F.specific_fn.loc19_3.1: <specific function> = specific_function %F.ref, @F(constants.%Z.facet) [symbolic = %F.specific_fn.loc19_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn.loc19_3.1()
 // CHECK:STDOUT:     return
@@ -189,9 +214,11 @@ fn G() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.b31: require_specific_def_type = require_specific_def @T.as.Z.impl(%T) [symbolic]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T, @Z [symbolic]
 // CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %T, (%Z.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%Z.facet) [symbolic]
+// CHECK:STDOUT:   %.0df: require_specific_def_type = require_specific_def @T.as.Z.impl(%empty_tuple.type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -207,6 +234,7 @@ fn G() {
 // CHECK:STDOUT:   %T.loc13_6.1: type = symbolic_binding T, 0 [symbolic = %T.loc13_6.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.loc19_6.2: require_specific_def_type = require_specific_def @T.as.Z.impl(%T.loc13_6.1) [symbolic = %.loc19_6.2 (constants.%.b31)]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_6.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
 // CHECK:STDOUT:   %Z.facet.loc19_6.2: %Z.type = facet_value %T.loc13_6.1, (%Z.lookup_impl_witness) [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:   %F.specific_fn.loc19_3.2: <specific function> = specific_function constants.%F, @F(%Z.facet.loc19_6.2) [symbolic = %F.specific_fn.loc19_3.2 (constants.%F.specific_fn)]
@@ -216,7 +244,7 @@ fn G() {
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_6.2 [symbolic = %T.loc13_6.1 (constants.%T)]
 // CHECK:STDOUT:     %Z.facet.loc19_6.1: %Z.type = facet_value %T.ref, (constants.%Z.lookup_impl_witness) [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
-// CHECK:STDOUT:     %.loc19: %Z.type = converted %T.ref, %Z.facet.loc19_6.1 [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
+// CHECK:STDOUT:     %.loc19_6.1: %Z.type = converted %T.ref, %Z.facet.loc19_6.1 [symbolic = %Z.facet.loc19_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:     %F.specific_fn.loc19_3.1: <specific function> = specific_function %F.ref, @F(constants.%Z.facet) [symbolic = %F.specific_fn.loc19_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn.loc19_3.1()
 // CHECK:STDOUT:     return
@@ -231,6 +259,7 @@ fn G() {
 // CHECK:STDOUT:   %T.loc13_6.1 => constants.%empty_tuple.type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %.loc19_6.2 => constants.%.0df
 // CHECK:STDOUT:   %Z.lookup_impl_witness => <error>
 // CHECK:STDOUT:   %Z.facet.loc19_6.2 => <error>
 // CHECK:STDOUT:   %F.specific_fn.loc19_3.2 => <error>
@@ -259,4 +288,11 @@ fn G() {
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_invalid_fn_syntax_in_impl.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @<null name>: <unexpected>.inst{{[0-9A-F]+}}.loc9_6 as <unexpected>.inst{{[0-9A-F]+}}.loc9_11;
 // CHECK:STDOUT:

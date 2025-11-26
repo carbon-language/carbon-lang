@@ -42,13 +42,13 @@ class DisjointSetForest {
     return var;
   }
 
-  fn Lookup[addr self: Self*](a: i32) -> i32 {
-    let next: i32 = self->nodes[a].next;
+  fn Lookup[ref self: Self](a: i32) -> i32 {
+    let next: i32 = self.nodes[a].next;
     if (next == a) {
       return next;
     }
-    let resolved: i32 = self->Lookup(next);
-    self->nodes[a].next = resolved;
+    let resolved: i32 = self.Lookup(next);
+    self.nodes[a].next = resolved;
     return resolved;
   }
 
@@ -60,22 +60,22 @@ class DisjointSetForest {
     return self.nodes[canon_a].weight;
   }
 
-  fn Union[addr self: Self*](a: i32, b: i32) {
-    let canon_b: i32 = self->Lookup(b);
-    self->Set(a, canon_b);
-    ++self->nodes[canon_b].unions;
+  fn Union[ref self: Self](a: i32, b: i32) {
+    let canon_b: i32 = self.Lookup(b);
+    self.Set(a, canon_b);
+    ++self.nodes[canon_b].unions;
   }
 
-  private fn Set[addr self: Self*](a: i32, canon_b: i32) {
-    let next: i32 = self->nodes[a].next;
-    self->nodes[a].next = canon_b;
+  private fn Set[ref self: Self](a: i32, canon_b: i32) {
+    let next: i32 = self.nodes[a].next;
+    self.nodes[a].next = canon_b;
     if (next == a) {
       if (a != canon_b) {
-        self->nodes[canon_b].weight += self->nodes[a].weight;
-        self->nodes[canon_b].unions += self->nodes[a].unions;
+        self.nodes[canon_b].weight += self.nodes[a].weight;
+        self.nodes[canon_b].unions += self.nodes[a].unions;
       }
     } else {
-      self->Set(next, canon_b);
+      self.Set(next, canon_b);
     }
   }
 

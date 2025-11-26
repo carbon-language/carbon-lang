@@ -867,6 +867,14 @@ static auto ResolveSpecificDeclForInst(EvalContext& eval_context,
         for (const auto& interface : info.self_impls_constraints) {
           ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
         }
+        for (const auto& constraint : info.extend_named_constraints) {
+          ResolveSpecificDeclForSpecificId(eval_context,
+                                           constraint.specific_id);
+        }
+        for (const auto& constraint : info.self_impls_named_constraints) {
+          ResolveSpecificDeclForSpecificId(eval_context,
+                                           constraint.specific_id);
+        }
         break;
       }
       case CARBON_KIND(SemIR::SpecificId specific_id): {
@@ -1649,6 +1657,26 @@ static auto PerformBuiltinBoolComparison(
                             : lhs != rhs);
 }
 
+// Converts a call argument to a FacetTypeId.
+static auto ArgToFacetTypeId(Context& context, SemIR::LocId loc_id,
+                             SemIR::InstId arg_id) -> SemIR::FacetTypeId {
+  auto type_arg_id = context.types().GetAsTypeInstId(arg_id);
+  if (auto facet_type =
+          context.insts().TryGetAs<SemIR::FacetType>(type_arg_id)) {
+    return facet_type->facet_type_id;
+  }
+  CARBON_DIAGNOSTIC(FacetTypeRequiredForTypeAndOperator, Error,
+                    "non-facet type {0} combined with `&` operator",
+                    SemIR::TypeId);
+  // TODO: Find a location for the lhs or rhs specifically, instead of
+  // the whole thing. If that's not possible we can change the text to
+  // say if it's referring to the left or the right side for the error.
+  // The `arg_id` instruction has no location in it for some reason.
+  context.emitter().Emit(loc_id, FacetTypeRequiredForTypeAndOperator,
+                         context.types().GetTypeIdForTypeInstId(type_arg_id));
+  return SemIR::FacetTypeId::None;
+}
+
 // Returns a constant for a call to a builtin function.
 static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
                                        SemIR::LocId loc_id, SemIR::Call call,
@@ -1718,27 +1746,9 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
 
     case SemIR::BuiltinFunctionKind::TypeAnd: {
       CARBON_CHECK(arg_ids.size() == 2);
-      auto lhs_facet_type_id = SemIR::FacetTypeId::None;
-      auto rhs_facet_type_id = SemIR::FacetTypeId::None;
-      for (auto [facet_type_id, type_arg_id] :
-           llvm::zip(std::to_array({&lhs_facet_type_id, &rhs_facet_type_id}),
-                     context.types().GetBlockAsTypeInstIds(arg_ids))) {
-        if (auto facet_type =
-                context.insts().TryGetAs<SemIR::FacetType>(type_arg_id)) {
-          *facet_type_id = facet_type->facet_type_id;
-        } else {
-          CARBON_DIAGNOSTIC(FacetTypeRequiredForTypeAndOperator, Error,
-                            "non-facet type {0} combined with `&` operator",
-                            SemIR::TypeId);
-          // TODO: Find a location for the lhs or rhs specifically, instead of
-          // the whole thing. If that's not possible we can change the text to
-          // say if it's referring to the left or the right side for the error.
-          // The `arg_id` instruction has no location in it for some reason.
-          context.emitter().Emit(
-              loc_id, FacetTypeRequiredForTypeAndOperator,
-              context.types().GetTypeIdForTypeInstId(type_arg_id));
-        }
-      }
+      auto lhs_facet_type_id = ArgToFacetTypeId(context, loc_id, arg_ids[0]);
+      auto rhs_facet_type_id = ArgToFacetTypeId(context, loc_id, arg_ids[1]);
+
       // Allow errors to be diagnosed for both sides of the operator before
       // returning here if any error occurred on either side.
       if (!lhs_facet_type_id.has_value() || !rhs_facet_type_id.has_value()) {

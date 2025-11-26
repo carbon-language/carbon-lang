@@ -90,7 +90,6 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
     case BoolType::Kind:
     case CharLiteralType::Kind:
     case CppOverloadSetType::Kind:
-    case CppVoidType::Kind:
     case FacetType::Kind:
     case FloatLiteralType::Kind:
     case FloatType::Kind:
@@ -98,9 +97,11 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
     case FunctionTypeWithSelfType::Kind:
     case GenericClassType::Kind:
     case GenericInterfaceType::Kind:
+    case GenericNamedConstraintType::Kind:
     case ImplWitnessAccess::Kind:
     case IntLiteralType::Kind:
     case NamespaceType::Kind:
+    case RequireSpecificDefinitionType::Kind:
     case TypeType::Kind:
     case WitnessType::Kind: {
       return Step::ConcreteType{.type_id = type_id};

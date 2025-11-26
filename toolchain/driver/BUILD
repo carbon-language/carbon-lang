@@ -19,16 +19,26 @@ filegroup(
 
 cc_library(
     name = "clang_runner",
-    srcs = ["clang_runner.cpp"],
-    hdrs = ["clang_runner.h"],
+    srcs = [
+        "clang_runner.cpp",
+        "clang_runtimes.cpp",
+    ],
+    hdrs = [
+        "clang_runner.h",
+        "clang_runtimes.h",
+    ],
     deps = [
         ":llvm_runner",
         ":runtimes_cache",
         ":tool_runner_base",
+        "//common:check",
         "//common:error",
         "//common:filesystem",
+        "//common:latch",
         "//common:ostream",
         "//common:vlog",
+        "//third_party/llvm:clang_cc1",
+        "//toolchain/base:kind_switch",
         "//toolchain/base:runtime_sources",
         "//toolchain/install:install_paths",
         "@llvm-project//clang:basic",
@@ -53,6 +63,7 @@ cc_test(
     deps = [
         ":clang_runner",
         ":llvm_runner",
+        ":runtimes_cache",
         "//common:all_llvm_targets",
         "//common:check",
         "//common:ostream",
@@ -61,6 +72,33 @@ cc_test(
         "//testing/base:file_helpers",
         "//testing/base:global_exe_path",
         "//testing/base:gtest_main",
+        "//toolchain/install:install_paths",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Object",
+        "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:TargetParser",
+    ],
+)
+
+cc_test(
+    name = "clang_runtimes_test",
+    size = "small",
+    srcs = ["clang_runtimes_test.cpp"],
+    data = ["//toolchain/install:install_data"],
+    deps = [
+        ":clang_runner",
+        ":llvm_runner",
+        ":runtimes_cache",
+        "//common:all_llvm_targets",
+        "//common:check",
+        "//common:ostream",
+        "//common:raw_string_ostream",
+        "//testing/base:capture_std_streams",
+        "//testing/base:file_helpers",
+        "//testing/base:global_exe_path",
+        "//testing/base:gtest_main",
+        "//toolchain/base:llvm_tools",
+        "//toolchain/install:install_paths",
         "@googletest//:gtest",
         "@llvm-project//llvm:Object",
         "@llvm-project//llvm:Support",
@@ -90,7 +128,7 @@ sh_test(
     size = "small",
     srcs = [":compile_benchmark"],
     args = [
-        "--benchmark_min_time=1x",
+        "--benchmark_dry_run",
         # The `$$` is repeated for Bazel escaping of `$`.
         "--benchmark_filter=/256$$",
     ],

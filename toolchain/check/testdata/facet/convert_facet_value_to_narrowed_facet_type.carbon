@@ -539,6 +539,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %Animal.lookup_impl_witness: <witness> = lookup_impl_witness %W, @Animal [symbolic]
 // CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %W.binding.as_type, (%Animal.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %Eats.impl_witness.4bd: <witness> = impl_witness file.%Eats.impl_witness_table, @A.binding.as_type.as.Eats.impl(%Animal.facet) [symbolic]
+// CHECK:STDOUT:   %.16f: require_specific_def_type = require_specific_def @A.binding.as_type.as.Eats.impl(%Animal.facet) [symbolic]
 // CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %W, @Eats [symbolic]
 // CHECK:STDOUT:   %Tame.lookup_impl_witness: <witness> = lookup_impl_witness %W, @Tame [symbolic]
 // CHECK:STDOUT:   %facet_value: %facet_type.807 = facet_value %W.binding.as_type, (%Eats.lookup_impl_witness, %Tame.lookup_impl_witness) [symbolic]
@@ -698,6 +699,9 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %W.binding.as_type [symbolic = %require_complete (constants.%require_complete.b58)]
+// CHECK:STDOUT:   %Animal.lookup_impl_witness: <witness> = lookup_impl_witness %W.loc11_22.1, @Animal [symbolic = %Animal.lookup_impl_witness (constants.%Animal.lookup_impl_witness)]
+// CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %W.binding.as_type, (%Animal.lookup_impl_witness) [symbolic = %Animal.facet (constants.%Animal.facet)]
+// CHECK:STDOUT:   %.loc12_14.3: require_specific_def_type = require_specific_def @A.binding.as_type.as.Eats.impl(%Animal.facet) [symbolic = %.loc12_14.3 (constants.%.16f)]
 // CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %W.loc11_22.1, @Eats [symbolic = %Eats.lookup_impl_witness (constants.%Eats.lookup_impl_witness)]
 // CHECK:STDOUT:   %Tame.lookup_impl_witness: <witness> = lookup_impl_witness %W.loc11_22.1, @Tame [symbolic = %Tame.lookup_impl_witness (constants.%Tame.lookup_impl_witness)]
 // CHECK:STDOUT:   %facet_value.loc12_14.3: %facet_type.807 = facet_value %W.binding.as_type, (%Eats.lookup_impl_witness, %Tame.lookup_impl_witness) [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]

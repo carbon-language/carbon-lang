@@ -12,11 +12,11 @@ import library "io_utils";
 // A three-element sliding window of recent levels.
 class Window {
   fn Make() -> Window { return {.data = (0,0,0), .size = 0}; }
-  fn Add[addr self: Self*](n: i32) {
-    self->data[2] = self->data[1];
-    self->data[1] = self->data[0];
-    self->data[0] = n;
-    ++self->size;
+  fn Add[ref self: Self](n: i32) {
+    self.data[2] = self.data[1];
+    self.data[1] = self.data[0];
+    self.data[0] = n;
+    ++self.size;
   }
 
   var data: array(i32, 3);
@@ -36,7 +36,7 @@ class ReportState {
             .removable_double_bad_edge = false};
   }
 
-  fn OnAdd[addr self: Self*](window: Window) {
+  fn OnAdd[ref self: Self](window: Window) {
     if (window.size < 2) {
       return;
     }
@@ -47,39 +47,39 @@ class ReportState {
     let c: i32 = window.data[0];
 
     // Keep a count of the unsafe edges.
-    let b_to_c: bool = IsSafe(window.data[1], window.data[0], self->increasing);
+    let b_to_c: bool = IsSafe(window.data[1], window.data[0], self.increasing);
     if (not b_to_c) {
-      ++self->bad_edges;
+      ++self.bad_edges;
 
       // We have a removable single bad edge if the first edge is unsafe.
       if (window.size == 2) {
-        self->removable_single_bad_edge = true;
+        self.removable_single_bad_edge = true;
       }
     }
 
     if (window.size >= 3) {
       let a: i32 = window.data[2];
-      if (IsSafe(a, c, self->increasing)) {
-        let lhs: bool = IsSafe(a, b, self->increasing);
+      if (IsSafe(a, c, self.increasing)) {
+        let lhs: bool = IsSafe(a, b, self.increasing);
         let rhs: bool = b_to_c;
         if (not lhs and not rhs) {
           // If a->b and b->c are both unsafe, but a->c is safe,
           // then we have a removable double bad edge.
-          self->removable_double_bad_edge = true;
+          self.removable_double_bad_edge = true;
         } else if (not lhs or not rhs) {
           // If a->b or b->c is unsafe but a->c is safe, then we have a
           // removable single bad edge.
-          self->removable_single_bad_edge = true;
+          self.removable_single_bad_edge = true;
         }
       }
     }
   }
 
-  fn OnFinish[addr self: Self*](window: Window) {
+  fn OnFinish[ref self: Self](window: Window) {
     if (window.size >= 2 and
-        not IsSafe(window.data[1], window.data[0], self->increasing)) {
+        not IsSafe(window.data[1], window.data[0], self.increasing)) {
       // We have a removable single bad edge if the last edge is unsafe.
-      self->removable_single_bad_edge = true;
+      self.removable_single_bad_edge = true;
     }
   }
 

@@ -33,51 +33,51 @@ class SectorList {
     return var;
   }
 
-  fn DefragBlocks[addr self: Self*]() {
+  fn DefragBlocks[ref self: Self]() {
     var i: i32 = 0;
-    var j: i32 = self->size - 1;
+    var j: i32 = self.size - 1;
     while (j > i) {
-      if (self->data[i] != -1) {
+      if (self.data[i] != -1) {
         ++i;
-      } else if (self->data[j] == -1) {
+      } else if (self.data[j] == -1) {
         --j;
       } else {
-        self->data[i] = self->data[j];
+        self.data[i] = self.data[j];
         ++i;
         --j;
       }
     }
-    self->size = j;
+    self.size = j;
   }
 
-  fn HasSpace[addr self: Self*](start: i32, size: i32) -> bool {
+  fn HasSpace[ref self: Self](start: i32, size: i32) -> bool {
     for (i: i32 in Core.InclusiveRange(start, start + size - 1)) {
-      if (self->data[i] != -1) {
+      if (self.data[i] != -1) {
         return false;
       }
     }
     return true;
   }
 
-  fn Fill[addr self: Self*](start: i32, size: i32, sector: i32) {
+  fn Fill[ref self: Self](start: i32, size: i32, sector: i32) {
     for (i: i32 in Core.InclusiveRange(start, start + size - 1)) {
-      self->data[i] = sector;
+      self.data[i] = sector;
     }
   }
 
-  fn DefragFiles[addr self: Self*]() {
-    var j: i32 = self->size - 1;
+  fn DefragFiles[ref self: Self]() {
+    var j: i32 = self.size - 1;
     while (j >= 0) {
       // Skip empty sectors.
-      while (j >= 0 and self->data[j] == -1) {
+      while (j >= 0 and self.data[j] == -1) {
         --j;
       }
 
       // Find the file size and sector and delete the file.
       let last: i32 = j;
-      let sector: i32 = self->data[last];
-      while (j >= 0 and self->data[j] == sector) {
-        self->data[j] = -1;
+      let sector: i32 = self.data[last];
+      while (j >= 0 and self.data[j] == sector) {
+        self.data[j] = -1;
         --j;
       }
       let first: i32 = j + 1;
@@ -85,7 +85,7 @@ class SectorList {
 
       // Find the first available space for the file.
       var i: i32 = 0;
-      while (not self->HasSpace(i, size)) {
+      while (not self.HasSpace(i, size)) {
         ++i;
         if (i + size > first) {
           // If it doesn't fit to the left of its old position, put it back
@@ -95,7 +95,7 @@ class SectorList {
       }
 
       // Insert it.
-      self->Fill(i, size, sector);
+      self.Fill(i, size, sector);
     }
   }
 

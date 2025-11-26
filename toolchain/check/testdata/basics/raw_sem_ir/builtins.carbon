@@ -28,7 +28,7 @@
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
 // CHECK:STDOUT:   struct_type_fields:
-// CHECK:STDOUT:     struct_type_fields0: {}
+// CHECK:STDOUT:     struct_type_fields_empty: {}
 // CHECK:STDOUT:   types:
 // CHECK:STDOUT:     'type(TypeType)':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(TypeType)}
@@ -42,12 +42,12 @@
 // CHECK:STDOUT:     'inst(BoolType)':  {kind: BoolType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(BoundMethodType)': {kind: BoundMethodType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(CharLiteralType)': {kind: CharLiteralType, type: type(TypeType)}
-// CHECK:STDOUT:     'inst(CppVoidType)': {kind: CppVoidType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(ErrorInst)': {kind: ErrorInst, type: type(Error)}
 // CHECK:STDOUT:     'inst(FloatLiteralType)': {kind: FloatLiteralType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(InstType)':  {kind: InstType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(IntLiteralType)': {kind: IntLiteralType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(NamespaceType)': {kind: NamespaceType, type: type(TypeType)}
+// CHECK:STDOUT:     'inst(RequireSpecificDefinitionType)': {kind: RequireSpecificDefinitionType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(SpecificFunctionType)': {kind: SpecificFunctionType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(VtableType)': {kind: VtableType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(WitnessType)': {kind: WitnessType, type: type(TypeType)}
@@ -59,12 +59,12 @@
 // CHECK:STDOUT:       'inst(BoolType)':  concrete_constant(inst(BoolType))
 // CHECK:STDOUT:       'inst(BoundMethodType)': concrete_constant(inst(BoundMethodType))
 // CHECK:STDOUT:       'inst(CharLiteralType)': concrete_constant(inst(CharLiteralType))
-// CHECK:STDOUT:       'inst(CppVoidType)': concrete_constant(inst(CppVoidType))
 // CHECK:STDOUT:       'inst(ErrorInst)': concrete_constant(inst(ErrorInst))
 // CHECK:STDOUT:       'inst(FloatLiteralType)': concrete_constant(inst(FloatLiteralType))
 // CHECK:STDOUT:       'inst(InstType)':  concrete_constant(inst(InstType))
 // CHECK:STDOUT:       'inst(IntLiteralType)': concrete_constant(inst(IntLiteralType))
 // CHECK:STDOUT:       'inst(NamespaceType)': concrete_constant(inst(NamespaceType))
+// CHECK:STDOUT:       'inst(RequireSpecificDefinitionType)': concrete_constant(inst(RequireSpecificDefinitionType))
 // CHECK:STDOUT:       'inst(SpecificFunctionType)': concrete_constant(inst(SpecificFunctionType))
 // CHECK:STDOUT:       'inst(VtableType)': concrete_constant(inst(VtableType))
 // CHECK:STDOUT:       'inst(WitnessType)': concrete_constant(inst(WitnessType))

@@ -225,6 +225,11 @@ auto InstallPaths::llvm_runtime_srcs() const -> std::filesystem::path {
                    "/src";
 }
 
+auto InstallPaths::libunwind_path() const -> std::filesystem::path {
+  // TODO: Adjust this to work equally well on Windows.
+  return prefix_ / "lib/carbon/libunwind";
+}
+
 auto InstallPaths::digest_path() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
   return prefix_ / "lib/carbon/install_digest.txt";

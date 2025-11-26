@@ -329,7 +329,7 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
     // instruction edits including adding/removing singleton instructions.
     static RE2 inst_re(
         R"(((?:import_ref [^,]*, |<unexpected>\.)inst)[0-9A-F]+)");
-    RE2::Replace(&check_line, inst_re, R"(\1{{[0-9A-F]+}})");
+    RE2::GlobalReplace(&check_line, inst_re, R"(\1{{[0-9A-F]+}})");
 
     // Reduce location sensitivity in imports referring to `Core`; this is
     // brittle for small edits, including comment changes.

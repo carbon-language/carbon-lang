@@ -302,8 +302,9 @@ class Stringifier {
     const auto& class_info = sem_ir_->classes().Get(inst.class_id);
     if (auto type_info = RecognizedTypeInfo::ForType(*sem_ir_, inst);
         type_info.is_valid()) {
-      type_info.PrintLiteral(*sem_ir_, *out_);
-      return;
+      if (type_info.PrintLiteral(*sem_ir_, *out_)) {
+        return;
+      }
     }
     step_stack_->PushEntityName(class_info, inst.specific_id);
   }
@@ -654,7 +655,7 @@ class Stringifier {
     step_stack_->PushString("}");
     llvm::ListSeparator sep;
     for (auto [field, value_inst_id] :
-         llvm::reverse(llvm::zip(fields, field_values))) {
+         llvm::reverse(llvm::zip_equal(fields, field_values))) {
       step_stack_->Push(".", field.name_id, " = ", value_inst_id, &sep);
     }
   }
@@ -793,8 +794,9 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
                                 .specific_id = specific_id});
           type_info.is_valid()) {
         RawStringOstream out;
-        type_info.PrintLiteral(sem_ir, out);
-        return out.TakeStr();
+        if (type_info.PrintLiteral(sem_ir, out)) {
+          return out.TakeStr();
+        }
       }
       step_stack.PushEntityName(class_info, specific_id);
       break;
@@ -812,6 +814,10 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
     case CARBON_KIND(InterfaceDecl interface_decl): {
       step_stack.PushEntityName(
           sem_ir.interfaces().Get(interface_decl.interface_id), specific_id);
+      break;
+    }
+    case CARBON_KIND(RequireImplsDecl _): {
+      step_stack.Push("require");
       break;
     }
     default: {

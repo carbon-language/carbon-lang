@@ -1002,6 +1002,7 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
       case ExprCategory::NotExpr:
       case ExprCategory::Error:
       case ExprCategory::Value:
+      case ExprCategory::Pattern:
       case ExprCategory::Mixed:
         break;
       case ExprCategory::DurableRef:
@@ -1090,9 +1091,9 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       auto layout = sem_ir_->custom_layouts().Get(type.layout_id);
       out_ << "size=" << layout[CustomLayoutId::SizeIndex]
            << ", align=" << layout[CustomLayoutId::AlignIndex];
-      for (auto [field, offset] :
-           llvm::zip(sem_ir_->struct_type_fields().Get(type.fields_id),
-                     layout.drop_front(CustomLayoutId::FirstFieldIndex))) {
+      for (auto [field, offset] : llvm::zip_equal(
+               sem_ir_->struct_type_fields().Get(type.fields_id),
+               layout.drop_front(CustomLayoutId::FirstFieldIndex))) {
         out_ << ", .";
         FormatName(field.name_id);
         out_ << "@" << offset << ": ";

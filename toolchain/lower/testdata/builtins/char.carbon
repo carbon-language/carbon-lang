@@ -25,11 +25,11 @@ fn Example() -> char {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i8 @_CExample.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca i8, align 1, !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !7
-// CHECK:STDOUT:   store i8 97, ptr %c.var, align 1, !dbg !7
-// CHECK:STDOUT:   %.loc6 = load i8, ptr %c.var, align 1, !dbg !8
-// CHECK:STDOUT:   ret i8 %.loc6, !dbg !9
+// CHECK:STDOUT:   %c.var = alloca i8, align 1, !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !8
+// CHECK:STDOUT:   store i8 97, ptr %c.var, align 1, !dbg !8
+// CHECK:STDOUT:   %.loc6 = load i8, ptr %c.var, align 1, !dbg !9
+// CHECK:STDOUT:   ret i8 %.loc6, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -43,11 +43,12 @@ fn Example() -> char {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "basic.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Example", linkageName: "_CExample.Main", scope: null, file: !3, line: 4, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 5, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 6, column: 10, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 6, column: 3, scope: !4)
+// CHECK:STDOUT: !6 = !{!7}
+// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 8, encoding: DW_ATE_unsigned)
+// CHECK:STDOUT: !8 = !DILocation(line: 5, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 6, column: 10, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 6, column: 3, scope: !4)

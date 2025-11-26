@@ -111,6 +111,9 @@ class InstallPaths {
   // The path to the root of LLVM runtime sources.
   auto llvm_runtime_srcs() const -> std::filesystem::path;
 
+  // The path to `libunwind` runtime.
+  auto libunwind_path() const -> std::filesystem::path;
+
   // The installation digest path.
   //
   // This file contains a digest of the installation.

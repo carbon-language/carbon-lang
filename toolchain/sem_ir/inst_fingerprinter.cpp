@@ -52,6 +52,12 @@ struct Worklist {
     if (store.size() == 0) {
       return 0;
     }
+    // These InstIds are constant values, so not in the ValueStore. We use a
+    // constant (negative) fingerprint for them.
+    if (inst_id == InstId::InitTombstone ||
+        inst_id == InstId::ImplWitnessTablePlaceholder) {
+      return inst_id.index;
+    }
     return store.Get(inst_id);
   }
 

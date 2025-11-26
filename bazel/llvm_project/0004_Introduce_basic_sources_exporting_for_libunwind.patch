@@ -1,0 +1,34 @@
+Commit ID: a79f1facf56cc5772557cdb09d811aa11a22e43b
+Change ID: sxspxmonsuvqzuvxvrvorlumwpwromsv
+Author   : Chandler Carruth <chandlerc@gmail.com> (2025-09-25 22:55:26)
+Committer: Chandler Carruth <chandlerc@gmail.com> (2025-11-17 09:59:25)
+
+    Introduce basic sources exporting for libunwind
+
+    This exports the source files directly so that they can be used to build
+    this runtime library on demand.
+
+diff --git a/utils/bazel/llvm-project-overlay/libunwind/BUILD.bazel b/utils/bazel/llvm-project-overlay/libunwind/BUILD.bazel
+index c9fdc819c0..7d734c5a06 100644
+--- a/utils/bazel/llvm-project-overlay/libunwind/BUILD.bazel
++++ b/utils/bazel/llvm-project-overlay/libunwind/BUILD.bazel
+@@ -21,3 +21,19 @@
+     ],
+     strip_include_prefix = "include",
+ )
++
++filegroup(
++    name = "libunwind_hdrs",
++    srcs = glob(["include/**/*.h"]),
++)
++
++filegroup(
++    name = "libunwind_srcs",
++    srcs = glob([
++        "src/*.cpp",
++        "src/*.hpp",
++        "src/*.c",
++        "src/*.h",
++        "src/*.S",
++    ]),
++)

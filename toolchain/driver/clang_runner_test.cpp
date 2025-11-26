@@ -8,30 +8,27 @@
 #include <gtest/gtest.h>
 
 #include <filesystem>
-#include <fstream>
 #include <string>
 #include <utility>
 
-#include "common/check.h"
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
-#include "llvm/ADT/ScopeExit.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Object/ObjectFile.h"
-#include "llvm/Support/FormatVariadic.h"
-#include "llvm/Support/Program.h"
+#include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/TargetParser/Host.h"
 #include "testing/base/capture_std_streams.h"
 #include "testing/base/file_helpers.h"
 #include "testing/base/global_exe_path.h"
-#include "toolchain/driver/llvm_runner.h"
+#include "toolchain/driver/runtimes_cache.h"
+#include "toolchain/install/install_paths.h"
 
 namespace Carbon {
 namespace {
 
-using ::testing::Eq;
 using ::testing::HasSubstr;
-using ::testing::IsSupersetOf;
 using ::testing::StrEq;
 
 // NOLINTNEXTLINE(modernize-use-trailing-return-type): Macro based function.
@@ -176,84 +173,6 @@ TEST_F(ClangRunnerTest, CompileMultipleFiles) {
   compile("test1.cpp", "int test1() { return 0; }");
   compile("test2.cpp", "int test2() { return 0; }");
   compile("test3.cpp", "int test3() { return 0; }");
-}
-
-TEST_F(ClangRunnerTest, BuildResourceDir) {
-  ClangRunner runner(&install_paths_, vfs_, &llvm::errs());
-
-  // Note that we can't test arbitrary targets here as we need to be able to
-  // compile the builtin functions for the target. We use the default target as
-  // the most likely to pass.
-  std::string target = llvm::sys::getDefaultTargetTriple();
-  llvm::Triple target_triple(target);
-  Runtimes::Cache::Features features = {.target = target};
-  auto runtimes = *runtimes_cache_.Lookup(features);
-  auto tmp_dir = *Filesystem::MakeTmpDir();
-  llvm::DefaultThreadPool threads(llvm::optimal_concurrency());
-  auto build_result = runner.BuildTargetResourceDir(
-      features, runtimes, tmp_dir.abs_path(), threads);
-  ASSERT_TRUE(build_result.ok()) << build_result.error();
-  std::filesystem::path resource_dir_path = std::move(*build_result);
-
-  // For Linux we can directly check the CRT begin/end object files.
-  if (target_triple.isOSLinux()) {
-    std::filesystem::path crt_begin_path =
-        resource_dir_path / "lib" / target / "clang_rt.crtbegin.o";
-    ASSERT_TRUE(std::filesystem::is_regular_file(crt_begin_path));
-    auto begin_result =
-        llvm::object::ObjectFile::createObjectFile(crt_begin_path.native());
-    llvm::object::ObjectFile& crtbegin = *begin_result->getBinary();
-    EXPECT_TRUE(crtbegin.isELF());
-    EXPECT_TRUE(crtbegin.isObject());
-    EXPECT_THAT(crtbegin.getArch(), Eq(target_triple.getArch()));
-
-    llvm::SmallVector<llvm::object::SymbolRef> symbols(crtbegin.symbols());
-    // The first symbol should come from the source file.
-    EXPECT_THAT(*symbols.front().getName(), Eq("crtbegin.c"));
-
-    // Check for representative symbols of `crtbegin.o` -- we always use
-    // `.init_array` in our runtimes build so we have predictable functions.
-    EXPECT_THAT(symbols, IsSupersetOf({TextSymbolNamed("__do_init"),
-                                       TextSymbolNamed("__do_fini")}));
-
-    std::filesystem::path crt_end_path =
-        resource_dir_path / "lib" / target / "clang_rt.crtend.o";
-    ASSERT_TRUE(std::filesystem::is_regular_file(crt_end_path));
-    auto end_result =
-        llvm::object::ObjectFile::createObjectFile(crt_end_path.native());
-    llvm::object::ObjectFile& crtend = *end_result->getBinary();
-    EXPECT_TRUE(crtend.isELF());
-    EXPECT_TRUE(crtend.isObject());
-    EXPECT_THAT(crtend.getArch(), Eq(target_triple.getArch()));
-
-    // Just check the source file symbol, not much of interest in the end.
-    llvm::object::SymbolRef crtend_front_symbol = *crtend.symbol_begin();
-    EXPECT_THAT(*crtend_front_symbol.getName(), Eq("crtend.c"));
-  }
-
-  // Across all targets, check that the builtins archive exists, and contains a
-  // relevant symbol by running the `llvm-nm` tool over it. Using `nm` rather
-  // than directly inspecting the objects is a bit awkward, but lets us easily
-  // ignore the wrapping in an archive file.
-  std::filesystem::path builtins_path =
-      resource_dir_path / "lib" / target / "libclang_rt.builtins.a";
-  LLVMRunner llvm_runner(&install_paths_, &llvm::errs());
-  std::string out;
-  std::string err;
-  EXPECT_TRUE(Testing::CallWithCapturedOutput(out, err, [&] {
-    return llvm_runner.Run(LLVMTool::Nm, {builtins_path.native()});
-  }));
-
-  // Check that we found a definition of `__mulodi4`, a builtin function
-  // provided by Compiler-RT, but not `libgcc` historically. Note that on macOS
-  // there is a leading `_` due to mangling.
-  EXPECT_THAT(out, HasSubstr(target_triple.isMacOSX() ? "T ___mulodi4\n"
-                                                      : "T __mulodi4\n"));
-
-  // Check that we don't include the `chkstk` builtins outside of Windows.
-  if (!target_triple.isOSWindows()) {
-    EXPECT_THAT(out, Not(HasSubstr("chkstk")));
-  }
 }
 
 // It's hard to write a portable and reliable unittest for all the layers of the

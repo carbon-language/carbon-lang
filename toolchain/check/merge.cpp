@@ -249,12 +249,6 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     }
 
     switch (new_param_pattern.kind()) {
-      case SemIR::AddrPattern::Kind: {
-        pattern_stack.push_back(
-            {.prev_id = prev_param_pattern.As<SemIR::AddrPattern>().inner_id,
-             .new_id = new_param_pattern.As<SemIR::AddrPattern>().inner_id});
-        break;
-      }
       case SemIR::OutParamPattern::Kind:
       case SemIR::RefParamPattern::Kind:
       case SemIR::ValueParamPattern::Kind:
