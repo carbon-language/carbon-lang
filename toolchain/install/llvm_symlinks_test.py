@@ -14,6 +14,7 @@ import os
 import platform
 import sys
 import unittest
+from bazel_tools.tools.python.runfiles import runfiles
 
 
 class LLVMSymlinksTest(unittest.TestCase):
@@ -23,12 +24,20 @@ class LLVMSymlinksTest(unittest.TestCase):
         self.tmpdir = Path(os.environ["TEST_TMPDIR"])
         self.test_o_file = self.tmpdir / "test.o"
         self.test_o_file.touch()
+        self.runfiles = runfiles.Create()
+        self.prebuilt_runtimes = self.runfiles.Rlocation(
+            "carbon/toolchain/driver/prebuilt_runtimes_tree"
+        )
 
     def get_link_cmd(self, clang: Path) -> list[str | Path]:
         return [
             clang,
             # Verbose printing to help with debugging.
             "-v",
+            # Pass a parameter to the underlying Carbon busybox using `-Xcarbon`
+            # to switch it to use the prebuilt runtimes rather than building
+            # runtimes on demand.
+            f"-Xcarbon=--prebuilt-runtimes={self.prebuilt_runtimes}",
             # Print out the link command rather than running it.
             "-###",
             # Give the link command an output.
@@ -56,12 +65,8 @@ class LLVMSymlinksTest(unittest.TestCase):
         )
 
         # Also ensure that it correctly didn't imply a C++ link.
-        if platform.system() == "Linux":
-            self.assertNotRegex(run.stderr, r'"-lstdc\+\+"')
-        elif platform.system() == "Darwin":
-            self.assertNotRegex(run.stderr, r'"-lc\+\+"')
-        else:
-            self.unsupported(run.stderr)
+        self.assertNotRegex(run.stderr, r'"-lc\+\+"')
+        self.assertNotRegex(run.stderr, r'"-lstdc\+\+"')
 
     # Note that we can't test `clang` vs. `clang++` portably. See the comment on
     # `test_clang` for details.
@@ -71,13 +76,9 @@ class LLVMSymlinksTest(unittest.TestCase):
             self.get_link_cmd(bin), check=True, capture_output=True, text=True
         )
 
-        # Ensure that this binary _does_ imply a C++ link.
-        if platform.system() == "Linux":
-            self.assertRegex(run.stderr, r'"-lstdc\+\+"')
-        elif platform.system() == "Darwin":
-            self.assertRegex(run.stderr, r'"-lc\+\+"')
-        else:
-            self.unsupported(run.stderr)
+        # Ensure that this binary _does_ imply a C++ link. Also ensure it uses
+        # `libc++`, as we default our Clang to use that on all platforms.
+        self.assertRegex(run.stderr, r'"-lc\+\+"')
 
     def test_clang_cl(self) -> None:
         bin = self.install_root / "lib/carbon/llvm/bin/clang-cl"

@@ -120,7 +120,7 @@ auto BuildClangInvocation(Diagnostics::Consumer& consumer,
   return invocation;
 }
 
-auto AppendDefaultClangArgs(const InstallPaths& /*install_paths*/,
+auto AppendDefaultClangArgs(const InstallPaths& install_paths,
                             llvm::StringRef target_str,
                             llvm::SmallVectorImpl<std::string>& args) -> void {
   args.append({
@@ -129,6 +129,15 @@ auto AppendDefaultClangArgs(const InstallPaths& /*install_paths*/,
       // defaults to be more stable.
       // TODO: Decide if we want this.
       "-fPIE",
+
+      // Override runtime library defaults.
+      //
+      // TODO: We should consider if there is a reasonable way to build Clang
+      // with its configuration macros set to establish these defaults rather
+      // than doing it with runtime flags.
+      "-rtlib=compiler-rt",
+      "-unwindlib=libunwind",
+      "-stdlib=libc++",
 
       // Override the default linker to use.
       "-fuse-ld=lld",
@@ -162,7 +171,14 @@ auto AppendDefaultClangArgs(const InstallPaths& /*install_paths*/,
       break;
   }
 
-  // TODO: Add flags for the installed runtimes using `install_paths`.
+  // Append our exact header search paths for the various parts of the C++
+  // standard library headers as we don't build a single unified tree.
+  for (const std::filesystem::path& runtime_path :
+       {install_paths.libunwind_path(), install_paths.libcxx_path(),
+        install_paths.libcxxabi_path()}) {
+    args.push_back(
+        llvm::formatv("-stdlib++-isystem{0}", runtime_path / "include").str());
+  }
 }
 
 }  // namespace Carbon

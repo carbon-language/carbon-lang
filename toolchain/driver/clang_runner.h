@@ -110,6 +110,8 @@ class ClangRunner : ToolRunnerBase {
   // Handles building the Clang driver and passing the arguments down to it.
   auto RunInternal(llvm::ArrayRef<llvm::StringRef> args, llvm::StringRef target,
                    std::optional<llvm::StringRef> target_resource_dir_path,
+                   std::optional<std::filesystem::path> libunwind_path,
+                   std::optional<std::filesystem::path> libcxx_path,
                    bool enable_leaking) -> bool;
 
   // Returns the target-specific source files for the builtins runtime library.

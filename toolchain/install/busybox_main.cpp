@@ -10,6 +10,7 @@
 #include "common/bazel_working_dir.h"
 #include "common/error.h"
 #include "common/init_llvm.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/LLVMDriver.h"
@@ -44,6 +45,9 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
       /*overwrite=*/0);
 
   auto fs = llvm::vfs::getRealFileSystem();
+
+  llvm::SmallVector<llvm::StringRef> raw_args;
+  raw_args.append(argv + 1, argv + argc);
 
   llvm::SmallVector<llvm::StringRef> args;
   args.reserve(argc + 1);
@@ -80,9 +84,24 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
 #include "toolchain/base/llvm_tools.def"
 
             .Default({*busybox_info.mode, "--"});
+
+    // When we're operating as a busybox, we also support a special command line
+    // syntax for passing flags to the base Carbon driver as
+    // `-Xcarbon=--some-carbon-flag=some-value`. Extract any arguments of that
+    // form, remove the prefix, and prepend them to the arg list prior to the
+    // busybox subcommand arguments.
+    llvm::erase_if(raw_args, [&args](llvm::StringRef raw_arg) {
+      if (raw_arg.consume_front("-Xcarbon=")) {
+        args.push_back(raw_arg);
+        return true;
+      }
+      return false;
+    });
+
+    // And now append the subcommand args.
     args.append(subcommand_args);
   }
-  args.append(argv + 1, argv + argc);
+  args.append(raw_args);
 
   Driver driver(fs, &install_paths, stdin, &llvm::outs(), &llvm::errs(),
                 /*fuzzing=*/false, /*enable_leaking=*/true);

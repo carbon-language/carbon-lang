@@ -44,6 +44,7 @@
 #include "llvm/Support/BuryPointer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Error.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/LLVMDriver.h"
 #include "llvm/Support/ThreadPool.h"
 #include "llvm/Support/TimeProfiler.h"
@@ -166,7 +167,12 @@ auto ClangRunner::RunWithPrebuiltRuntimes(llvm::ArrayRef<llvm::StringRef> args,
 
   CARBON_ASSIGN_OR_RETURN(std::filesystem::path prebuilt_resource_dir_path,
                           prebuilt_runtimes.Get(Runtimes::ClangResourceDir));
+  CARBON_ASSIGN_OR_RETURN(std::filesystem::path libunwind_path,
+                          prebuilt_runtimes.Get(Runtimes::LibUnwind));
+  CARBON_ASSIGN_OR_RETURN(std::filesystem::path libcxx_path,
+                          prebuilt_runtimes.Get(Runtimes::Libcxx));
   return RunInternal(args, target, prebuilt_resource_dir_path.native(),
+                     std::move(libunwind_path), std::move(libcxx_path),
                      enable_leaking);
 }
 
@@ -184,7 +190,6 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
 
   std::string target = ComputeClangTarget(args);
 
-  CARBON_VLOG("Building target resource dir...\n");
   Runtimes::Cache::Features features = {.target = target};
   CARBON_ASSIGN_OR_RETURN(Runtimes runtimes, runtimes_cache.Lookup(features));
 
@@ -192,30 +197,46 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
   // requires a temporary directory as well as the destination directory for
   // the build. The temporary directory should only be used during the build,
   // not once we are running Clang with the built runtime.
-  std::filesystem::path resource_dir_path;
-  {
-    ClangResourceDirBuilder builder(this, &runtimes_build_thread_pool,
-                                    llvm::Triple(features.target), &runtimes);
-    CARBON_ASSIGN_OR_RETURN(resource_dir_path, std::move(builder).Wait());
-  }
+  CARBON_VLOG("Building target resource dir...\n");
+  ClangResourceDirBuilder builder(this, &runtimes_build_thread_pool,
+                                  llvm::Triple(features.target), &runtimes);
+  ClangArchiveRuntimesBuilder<Runtimes::LibUnwind> lib_unwind_builder(
+      this, &runtimes_build_thread_pool, llvm::Triple(features.target),
+      &runtimes);
+  ClangArchiveRuntimesBuilder<Runtimes::Libcxx> libcxx_builder(
+      this, &runtimes_build_thread_pool, llvm::Triple(features.target),
+      &runtimes);
+  CARBON_ASSIGN_OR_RETURN(std::filesystem::path resource_dir_path,
+                          std::move(builder).Wait());
+  CARBON_ASSIGN_OR_RETURN(std::filesystem::path libunwind_path,
+                          std::move(lib_unwind_builder).Wait());
+  CARBON_ASSIGN_OR_RETURN(std::filesystem::path libcxx_path,
+                          std::move(libcxx_builder).Wait());
 
   // Note that this function always successfully runs `clang` and returns a bool
   // to indicate whether `clang` itself succeeded, not whether the runner was
   // able to run it. As a consequence, even a `false` here is a non-`Error`
   // return.
-  return RunInternal(args, target, resource_dir_path.native(), enable_leaking);
+  return RunInternal(args, target, resource_dir_path.native(),
+                     std::move(libunwind_path), std::move(libcxx_path),
+                     enable_leaking);
 }
 
 auto ClangRunner::RunWithNoRuntimes(llvm::ArrayRef<llvm::StringRef> args,
                                     bool enable_leaking) -> bool {
   std::string target = ComputeClangTarget(args);
-  return RunInternal(args, target, std::nullopt, enable_leaking);
+  return RunInternal(args, target, /*target_resource_dir_path=*/std::nullopt,
+                     /*libunwind_path=*/std::nullopt,
+                     /*libcxx_path=*/std::nullopt, enable_leaking);
 }
 
 auto ClangRunner::RunInternal(
     llvm::ArrayRef<llvm::StringRef> args, llvm::StringRef target,
     std::optional<llvm::StringRef> target_resource_dir_path,
-    bool enable_leaking) -> bool {
+
+    std::optional<std::filesystem::path> libunwind_path,
+    std::optional<std::filesystem::path> libcxx_path, bool enable_leaking)
+    -> bool {
   // Rebuild the args as C-string args.
   llvm::OwningArrayRef<char> cstr_arg_storage;
 
@@ -258,6 +279,20 @@ auto ClangRunner::RunInternal(
 
   AppendDefaultClangArgs(*installation_, target, prefix_args);
 
+  // We don't have a direct way to configure the linker search paths in the
+  // Clang driver outside of command line flags, so we inject them here with
+  // flags. Note that we only inject these as _search_ paths to allow the normal
+  // linking rules to govern whether or not to link a given library. We also
+  // build our runtimes exclusively as static archives so we don't need to use
+  // command line flags to force static runtime linking to occur.
+  if (libunwind_path) {
+    prefix_args.push_back(
+        llvm::formatv("-L{0}/lib", *std::move(libunwind_path)).str());
+  }
+  if (libcxx_path) {
+    prefix_args.push_back(
+        llvm::formatv("-L{0}/lib", std::move(libcxx_path)).str());
+  }
   prefix_args.push_back("--end-no-unused-arguments");
 
   // Rebuild the args as C-string args.

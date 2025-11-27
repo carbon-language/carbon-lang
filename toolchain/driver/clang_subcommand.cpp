@@ -30,9 +30,7 @@ the installation tree in the default searched locations.
 )""",
       },
       [&](auto& arg_b) {
-        // TODO: Once runtimes are cached properly, the plan is to enable this
-        // by default.
-        arg_b.Default(false);
+        arg_b.Default(true);
         arg_b.Set(&build_runtimes_on_demand);
       });
   b.AddStringPositionalArg(
