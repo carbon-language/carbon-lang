@@ -2284,7 +2284,6 @@ static auto MapConstant(Context& context, SemIR::LocId loc_id,
         context.string_literal_values().Add(string_literal->getString());
     auto inst_id =
         MakeStringLiteral(context, Parse::StringLiteralId::None, string_id);
-    context.imports().push_back(inst_id);
     return inst_id;
   } else if (isa<clang::CXXNullPtrLiteralExpr>(expr)) {
     auto type_id = MapNullptrType(context, loc_id).type_id;

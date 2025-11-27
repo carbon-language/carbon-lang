@@ -261,13 +261,15 @@ library "[[@TEST_NAME]]";
 import Cpp library "string_literal_object_like_macro.h";
 
 fn F() {
- let a: str = Cpp.SimpleString;
- let b: str = Cpp.EmptyString;
- let c: str = Cpp.EscapeCharacter;
- let d: str = Cpp.Concatenated;
- let e: str = Cpp.RawString;
- let f: str = Cpp.Utf8String;
- let g: str = Cpp.Indirect;
+  //@dump-sem-ir-begin
+  let a: str = Cpp.SimpleString;
+  let b: str = Cpp.EmptyString;
+  let c: str = Cpp.EscapeCharacter;
+  let d: str = Cpp.Concatenated;
+  let e: str = Cpp.RawString;
+  let f: str = Cpp.Utf8String;
+  let g: str = Cpp.Indirect;
+  //@dump-sem-ir-end
 }
 
 // --- unsupported_string_literal_types.h
@@ -1097,6 +1099,103 @@ fn F() {
 // CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %i32 = value_binding a, %INDIRECT_ONE.ref
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_string_literal_object_like_macro.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %str.ee0: type = class_type @String [concrete]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
+// CHECK:STDOUT:   %char: type = class_type @Char [concrete]
+// CHECK:STDOUT:   %ptr.fb0: type = ptr_type %char [concrete]
+// CHECK:STDOUT:   %pattern_type.461: type = pattern_type %str.ee0 [concrete]
+// CHECK:STDOUT:   %str.dea: %ptr.fb0 = string_literal "abc" [concrete]
+// CHECK:STDOUT:   %int_3: %u64 = int_value 3 [concrete]
+// CHECK:STDOUT:   %String.val.822: %str.ee0 = struct_value (%str.dea, %int_3) [concrete]
+// CHECK:STDOUT:   %str.937: %ptr.fb0 = string_literal "" [concrete]
+// CHECK:STDOUT:   %int_0: %u64 = int_value 0 [concrete]
+// CHECK:STDOUT:   %String.val.cef: %str.ee0 = struct_value (%str.937, %int_0) [concrete]
+// CHECK:STDOUT:   %str.1d3: %ptr.fb0 = string_literal " \t " [concrete]
+// CHECK:STDOUT:   %String.val.446: %str.ee0 = struct_value (%str.1d3, %int_3) [concrete]
+// CHECK:STDOUT:   %str.c82: %ptr.fb0 = string_literal "ab" [concrete]
+// CHECK:STDOUT:   %int_2: %u64 = int_value 2 [concrete]
+// CHECK:STDOUT:   %String.val.f11: %str.ee0 = struct_value (%str.c82, %int_2) [concrete]
+// CHECK:STDOUT:   %str.130: %ptr.fb0 = string_literal " foo: \"bar\" { 123 } " [concrete]
+// CHECK:STDOUT:   %int_20: %u64 = int_value 20 [concrete]
+// CHECK:STDOUT:   %String.val.a83: %str.ee0 = struct_value (%str.130, %int_20) [concrete]
+// CHECK:STDOUT:   %str.ace: %ptr.fb0 = string_literal "\xD0\xB0\xD0\xB1\xD0\xB2" [concrete]
+// CHECK:STDOUT:   %int_6: %u64 = int_value 6 [concrete]
+// CHECK:STDOUT:   %String.val.2c7: %str.ee0 = struct_value (%str.ace, %int_6) [concrete]
+// CHECK:STDOUT:   %str.245: %ptr.fb0 = string_literal "xy" [concrete]
+// CHECK:STDOUT:   %String.val.b8c: %str.ee0 = struct_value (%str.245, %int_2) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .SimpleString = @F.%String.val.1
+// CHECK:STDOUT:     .EmptyString = @F.%String.val.2
+// CHECK:STDOUT:     .EscapeCharacter = @F.%String.val.3
+// CHECK:STDOUT:     .Concatenated = @F.%String.val.4
+// CHECK:STDOUT:     .RawString = @F.%String.val.5
+// CHECK:STDOUT:     .Utf8String = @F.%String.val.6
+// CHECK:STDOUT:     .Indirect = @F.%String.val.7
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.461 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %SimpleString.ref: %str.ee0 = name_ref SimpleString, %String.val.1 [concrete = constants.%String.val.822]
+// CHECK:STDOUT:   %a: %str.ee0 = value_binding a, %SimpleString.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type.461 = value_binding_pattern b [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %EmptyString.ref: %str.ee0 = name_ref EmptyString, %String.val.2 [concrete = constants.%String.val.cef]
+// CHECK:STDOUT:   %b: %str.ee0 = value_binding b, %EmptyString.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.461 = value_binding_pattern c [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %EscapeCharacter.ref: %str.ee0 = name_ref EscapeCharacter, %String.val.3 [concrete = constants.%String.val.446]
+// CHECK:STDOUT:   %c: %str.ee0 = value_binding c, %EscapeCharacter.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: %pattern_type.461 = value_binding_pattern d [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Concatenated.ref: %str.ee0 = name_ref Concatenated, %String.val.4 [concrete = constants.%String.val.f11]
+// CHECK:STDOUT:   %d: %str.ee0 = value_binding d, %Concatenated.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %e.patt: %pattern_type.461 = value_binding_pattern e [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %RawString.ref: %str.ee0 = name_ref RawString, %String.val.5 [concrete = constants.%String.val.a83]
+// CHECK:STDOUT:   %e: %str.ee0 = value_binding e, %RawString.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %f.patt: %pattern_type.461 = value_binding_pattern f [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Utf8String.ref: %str.ee0 = name_ref Utf8String, %String.val.6 [concrete = constants.%String.val.2c7]
+// CHECK:STDOUT:   %f: %str.ee0 = value_binding f, %Utf8String.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %g.patt: %pattern_type.461 = value_binding_pattern g [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Indirect.ref: %str.ee0 = name_ref Indirect, %String.val.7 [concrete = constants.%String.val.b8c]
+// CHECK:STDOUT:   %g: %str.ee0 = value_binding g, %Indirect.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
