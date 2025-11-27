@@ -816,6 +816,12 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
           sem_ir.interfaces().Get(interface_decl.interface_id), specific_id);
       break;
     }
+    case CARBON_KIND(NamedConstraintDecl constraint_decl): {
+      step_stack.PushEntityName(
+          sem_ir.named_constraints().Get(constraint_decl.named_constraint_id),
+          specific_id);
+      break;
+    }
     case CARBON_KIND(RequireImplsDecl _): {
       step_stack.Push("require");
       break;
