@@ -840,8 +840,13 @@ static auto GetRequireImplsSpecificSelf(Context& context,
   return self_inst_id;
 }
 
-static auto GetFacetTypeInSpecific(Context& context, SemIR::InstId facet_type,
-                                   SemIR::SpecificId specific_id)
+// Returns the `facet_type` mapped into `specific_id`. If an error results, it
+// returns None. In particular, this can surface as a monomorphization error
+// where the facet type was valid as a symbolic but becomes invalid with some
+// concrete specific.
+static auto TryGetFacetTypeInSpecific(Context& context,
+                                      SemIR::InstId facet_type,
+                                      SemIR::SpecificId specific_id)
     -> SemIR::FacetTypeId {
   auto const_facet_type = SemIR::GetConstantValueInSpecific(
       context.sem_ir(), specific_id, facet_type);
@@ -908,12 +913,14 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
         auto require_specific_id = MakeCopyOfSpecificAndAppendSelf(
             context, loc_id, extends.specific_id, require.generic_id,
             GetRequireImplsSpecificSelf(context, require));
-        auto facet_type_id = GetFacetTypeInSpecific(
+        auto facet_type_id = TryGetFacetTypeInSpecific(
             context, require.facet_type_inst_id, require_specific_id);
-        if (facet_type_extends && require.extend_self) {
-          extend_facet_types.push_back(facet_type_id);
-        } else {
-          impls_facet_types.push_back(facet_type_id);
+        if (facet_type_id.has_value()) {
+          if (facet_type_extends && require.extend_self) {
+            extend_facet_types.push_back(facet_type_id);
+          } else {
+            impls_facet_types.push_back(facet_type_id);
+          }
         }
       }
     }
@@ -927,9 +934,11 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
         auto require_specific_id = MakeCopyOfSpecificAndAppendSelf(
             context, loc_id, impls.specific_id, require.generic_id,
             GetRequireImplsSpecificSelf(context, require));
-        auto facet_type_id = GetFacetTypeInSpecific(
+        auto facet_type_id = TryGetFacetTypeInSpecific(
             context, require.facet_type_inst_id, require_specific_id);
-        impls_facet_types.push_back(facet_type_id);
+        if (facet_type_id.has_value()) {
+          impls_facet_types.push_back(facet_type_id);
+        }
       }
     }
   }
