@@ -1306,9 +1306,8 @@ static auto PerformBuiltinConversion(
     // value (which has type `TypeType`) to a facet value. We can do this if the
     // type satisfies the requirements of the target `FacetType`, as determined
     // by finding impl witnesses for the target FacetType.
-    auto lookup_result = LookupImplWitness(
-        context, loc_id, sem_ir.constant_values().Get(type_inst_id),
-        sem_ir.types().GetConstantId(target.type_id));
+    auto lookup_result =
+        LookupImplWitness(context, loc_id, type_inst_id, target.type_id);
     if (lookup_result.has_value()) {
       if (lookup_result.has_error_value()) {
         return SemIR::ErrorInst::InstId;

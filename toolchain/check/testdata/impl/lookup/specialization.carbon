@@ -363,6 +363,16 @@ var t: ();
 
 interface Y {}
 impl forall [T:! Y] T as Z where .V = () {
+  // CHECK:STDERR: specialization_written_after_generic_use.carbon:[[@LINE+10]]:3: error: cannot implicitly convert expression of type `()*` to `T.(Z.V)*` [ConversionFailure]
+  // CHECK:STDERR:   fn ZZ() -> ()* { return &t; }
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: specialization_written_after_generic_use.carbon:[[@LINE+7]]:3: note: type `()*` does not implement interface `Core.ImplicitAs(T.(Z.V)*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   fn ZZ() -> ()* { return &t; }
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: specialization_written_after_generic_use.carbon:[[@LINE-13]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR:   fn ZZ() -> V*;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR:
   fn ZZ() -> ()* { return &t; }
 }
 
@@ -400,6 +410,16 @@ var t: ();
 
 interface Y {}
 impl forall [T:! Y] T as Z(T) where .V = () {
+  // CHECK:STDERR: specialization_written_after_generic_use_with_generic_interface.carbon:[[@LINE+10]]:3: error: cannot implicitly convert expression of type `()*` to `T.(Z(T).V)*` [ConversionFailure]
+  // CHECK:STDERR:   fn ZZ() -> ()* { return &t; }
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: specialization_written_after_generic_use_with_generic_interface.carbon:[[@LINE+7]]:3: note: type `()*` does not implement interface `Core.ImplicitAs(T.(Z(T).V)*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   fn ZZ() -> ()* { return &t; }
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: specialization_written_after_generic_use_with_generic_interface.carbon:[[@LINE-13]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR:   fn ZZ() -> V*;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR:
   fn ZZ() -> ()* { return &t; }
 }
 
@@ -437,11 +457,31 @@ class C {}
 
 // Type structure: "?(?)"
 impl forall [T:! type] T as Z(T) where .X = {.less_good: ()} {
+    // CHECK:STDERR: type_structure_first_difference.carbon:[[@LINE+10]]:5: error: cannot implicitly convert expression of type `{.less_good: ()}` to `T.(Z(T).X)` [ConversionFailure]
+    // CHECK:STDERR:     fn MakeX() -> {.less_good: ()} { return {.less_good = ()}; }
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: type_structure_first_difference.carbon:[[@LINE+7]]:5: note: type `{.less_good: ()}` does not implement interface `Core.ImplicitAs(T.(Z(T).X))` [MissingImplInMemberAccessNote]
+    // CHECK:STDERR:     fn MakeX() -> {.less_good: ()} { return {.less_good = ()}; }
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: type_structure_first_difference.carbon:[[@LINE-13]]:5: note: while building thunk to match the signature of this function [ThunkSignature]
+    // CHECK:STDERR:     fn MakeX() -> X;
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~
+    // CHECK:STDERR:
     fn MakeX() -> {.less_good: ()} { return {.less_good = ()}; }
 }
 
 // Type structure: "?(c)". Should outrank the previous impl.
 impl forall [T:! type] T as Z(C) where .X = () {
+    // CHECK:STDERR: type_structure_first_difference.carbon:[[@LINE+10]]:5: error: cannot implicitly convert expression of type `()` to `T.(Z(C).X)` [ConversionFailure]
+    // CHECK:STDERR:     fn MakeX() -> () { return (); }
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: type_structure_first_difference.carbon:[[@LINE+7]]:5: note: type `()` does not implement interface `Core.ImplicitAs(T.(Z(C).X))` [MissingImplInMemberAccessNote]
+    // CHECK:STDERR:     fn MakeX() -> () { return (); }
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: type_structure_first_difference.carbon:[[@LINE-28]]:5: note: while building thunk to match the signature of this function [ThunkSignature]
+    // CHECK:STDERR:     fn MakeX() -> X;
+    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~
+    // CHECK:STDERR:
     fn MakeX() -> () { return (); }
 }
 

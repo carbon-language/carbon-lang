@@ -29,7 +29,7 @@ fn F(T:! Z) {
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR:
   T.YY();
-  // CHECK:STDERR: fail_todo_extend.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_todo_extend.carbon:[[@LINE+4]]:3: error: semantics TODO: `diagnose missing impl` [SemanticsTodo]
   // CHECK:STDERR:   T.(Y.YY)();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
@@ -50,7 +50,7 @@ interface Z {
 //@dump-sem-ir-end
 
 fn F(T:! Z) {
-  // CHECK:STDERR: fail_todo_implicit_self_impls.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_todo_implicit_self_impls.carbon:[[@LINE+4]]:3: error: semantics TODO: `diagnose missing impl` [SemanticsTodo]
   // CHECK:STDERR:   T.(Y.YY)();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
@@ -71,7 +71,7 @@ interface Z {
 //@dump-sem-ir-end
 
 fn F(T:! Z) {
-  // CHECK:STDERR: fail_todo_explicit_self_impls.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_todo_explicit_self_impls.carbon:[[@LINE+4]]:3: error: semantics TODO: `diagnose missing impl` [SemanticsTodo]
   // CHECK:STDERR:   T.(Y.YY)();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
@@ -478,7 +478,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %.Self: %Y.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self [symbolic_self]
-// CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @Y [symbolic_self]
+// CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.binding.as_type, @Y [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y where %impl.elem0 = %empty_tuple.type> [concrete]
@@ -627,7 +627,7 @@ interface Z(T:! type) {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.3b3 [symbolic]
 // CHECK:STDOUT:   %.Self: %Y.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self [symbolic_self]
-// CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @Y [symbolic_self]
+// CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.binding.as_type, @Y [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y where %impl.elem0 = %Self.binding.as_type> [symbolic]
 // CHECK:STDOUT: }

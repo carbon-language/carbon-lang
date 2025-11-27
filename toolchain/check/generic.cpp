@@ -711,7 +711,6 @@ auto MakeSelfSpecific(Context& context, SemIR::LocId loc_id,
 
 auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
                                SemIR::SpecificId specific_id) -> bool {
-  // TODO: Handle recursive resolution of the same generic definition.
   auto& specific = context.specifics().Get(specific_id);
   auto generic_id = specific.generic_id;
   CARBON_CHECK(generic_id.has_value(), "Specific with no generic ID");
@@ -724,6 +723,8 @@ auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
       // The generic is not defined yet.
       return false;
     }
+    // TODO: Handle recursive resolution of the same generic definition better.
+    specific.definition_block_id = SemIR::InstBlockId::Empty;
     specific.definition_block_id = TryEvalBlockForSpecific(
         context, loc_id, specific_id, SemIR::GenericInstIndex::Definition);
   }

@@ -565,6 +565,29 @@ struct ExportDecl {
   InstId value_id;
 };
 
+// Represents accessing the impl witness for the sole interface extended by a
+// facet type that is currently being defined.
+//
+// We usually don't need or use this, as non-final queries are usually
+// re-performed during monomorphization in order to pick up specializations. The
+// exception is when an interface refers to its `Self` facet, where we want to
+// use the witness provided as part of the impl when checking the impl itself,
+// rather than redoing impl lookup. This is what permits a non-final impl to use
+// its associated constant values later in its own definition, even though a
+// more specialized impl might exist.
+struct FacetAccessSelfWitness {
+  static constexpr auto Kind =
+      InstKind::FacetAccessSelfWitness.Define<Parse::NodeId>(
+          {.ir_name = "facet_access_self_witness",
+           .constant_kind = InstConstantKind::SymbolicOnly,
+           .is_lowered = false});
+
+  // Always the builtin type WitnessType.
+  TypeId type_id;
+  // An instruction that evaluates to a `FacetValue`.
+  InstId facet_value_inst_id;
+};
+
 // Represents accessing the `type` field in a facet value, which is notionally a
 // pair of a type and a witness.
 struct FacetAccessType {
@@ -1109,8 +1132,8 @@ struct LookupImplWitness {
 
   // Always the type of the builtin `WitnessType` singleton instruction.
   TypeId type_id;
-  // The self type (or facet value) and interface of the impl lookup query.
-  InstId query_self_inst_id;
+  // The self type and interface of the impl lookup query.
+  TypeInstId query_self_inst_id;
   SpecificInterfaceId query_specific_interface_id;
 };
 

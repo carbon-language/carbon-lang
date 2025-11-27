@@ -2404,6 +2404,18 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
                                          context.insts().Get(inst_id));
     result[i] = context.constant_values().GetInstId(const_id);
+    if (!result[i].has_value()) {
+      if (auto lookup =
+              context.insts().TryGetAs<SemIR::LookupImplWitness>(inst_id)) {
+        CARBON_DIAGNOSTIC(ResolvingSpecificHere, Error,
+                          "lookup for {0} as {1} failed", InstIdAsType,
+                          SemIR::SpecificInterfaceId);
+        context.emitter().Emit(loc_id, ResolvingSpecificHere,
+                               lookup->query_self_inst_id,
+                               lookup->query_specific_interface_id);
+        result[i] = SemIR::ErrorInst::InstId;
+      }
+    }
     CARBON_CHECK(result[i].has_value(), "Failed to evaluate {0} in eval block",
                  context.insts().Get(inst_id));
   }

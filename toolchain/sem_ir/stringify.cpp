@@ -526,14 +526,19 @@ class Stringifier {
     if (auto lookup =
             sem_ir_->insts().TryGetAs<LookupImplWitness>(witness_inst_id)) {
       bool period_self = false;
-      if (auto sym_name = sem_ir_->insts().TryGetAs<SymbolicBinding>(
-              lookup->query_self_inst_id)) {
+      SemIR::InstId self_inst_id = lookup->query_self_inst_id;
+      if (auto access_type =
+              sem_ir_->insts().TryGetAs<FacetAccessType>(self_inst_id)) {
+        self_inst_id = access_type->facet_value_inst_id;
+      }
+      if (auto sym_name =
+              sem_ir_->insts().TryGetAs<SymbolicBinding>(self_inst_id)) {
         auto name_id =
             sem_ir_->entity_names().Get(sym_name->entity_name_id).name_id;
         period_self = (name_id == NameId::PeriodSelf);
       }
       if (!period_self) {
-        step_stack_->PushInstId(lookup->query_self_inst_id);
+        step_stack_->PushInstId(self_inst_id);
       }
     } else {
       // TODO: Omit parens if not needed for precedence.

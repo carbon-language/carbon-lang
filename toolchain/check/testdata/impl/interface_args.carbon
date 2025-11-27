@@ -92,7 +92,7 @@ import Core;
 class C {}
 
 fn MakeC() -> C {
-  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+4]]:10: error: cannot convert type `A` into type implementing `Factory(C)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_factory.impl.carbon:[[@LINE+4]]:10: error: semantics TODO: `diagnose missing impl` [SemanticsTodo]
   // CHECK:STDERR:   return A.(Factory(C).Make)();
   // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -1243,10 +1243,8 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Factory.ref: %Factory.type.1a8 = name_ref Factory, imports.%Main.Factory [concrete = constants.%Factory.generic]
 // CHECK:STDOUT:   %B.ref.loc5: type = name_ref B, imports.%Main.B [concrete = constants.%B]
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(constants.%B)> [concrete = constants.%Factory.type.3cb]
-// CHECK:STDOUT:   %.loc5_23: %Factory.assoc_type.579 = specific_constant imports.%Main.import_ref.2a0, @Factory(constants.%B) [concrete = constants.%assoc0.29a]
-// CHECK:STDOUT:   %Make.ref: %Factory.assoc_type.579 = name_ref Make, %.loc5_23 [concrete = constants.%assoc0.29a]
-// CHECK:STDOUT:   %Factory.facet: %Factory.type.3cb = facet_value %A.ref, (constants.%Factory.impl_witness) [concrete = constants.%Factory.facet]
-// CHECK:STDOUT:   %.loc5_11: %Factory.type.3cb = converted %A.ref, %Factory.facet [concrete = constants.%Factory.facet]
+// CHECK:STDOUT:   %.loc5: %Factory.assoc_type.579 = specific_constant imports.%Main.import_ref.2a0, @Factory(constants.%B) [concrete = constants.%assoc0.29a]
+// CHECK:STDOUT:   %Make.ref: %Factory.assoc_type.579 = name_ref Make, %.loc5 [concrete = constants.%assoc0.29a]
 // CHECK:STDOUT:   %impl.elem0: %.549 = impl_witness_access constants.%Factory.impl_witness, element0 [concrete = constants.%A.as.Factory.impl.Make]
 // CHECK:STDOUT:   %.loc4: ref %B = splice_block %return {}
 // CHECK:STDOUT:   %A.as.Factory.impl.Make.call: init %B = call %impl.elem0() to %.loc4

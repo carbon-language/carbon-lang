@@ -19,6 +19,16 @@ interface I {
 }
 
 impl forall [U:! type] U as I where .T = () {
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE+10]]:3: error: cannot implicitly convert expression of type `()` to `U.(I.T)` [ConversionFailure]
+  // CHECK:STDERR:   fn F[self: Self]() -> () { return (); }
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE+7]]:3: note: type `()` does not implement interface `Core.ImplicitAs(U.(I.T))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   fn F[self: Self]() -> () { return (); }
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE-10]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR:   fn F[self: Self]() -> T;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   fn F[self: Self]() -> () { return (); }
 }
 
@@ -39,7 +49,7 @@ fn G(p: C*) -> () {
 // CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE+7]]:1: note: the use would select the `impl` here but it was not found yet [PoisonedImplLookupConcreteResultNoteBadImpl]
 // CHECK:STDERR: impl C* as I where .T = C {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE-21]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
+// CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE-31]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
 // CHECK:STDERR: impl forall [U:! type] U as I where .T = () {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -86,6 +96,16 @@ interface I {
 class C(U:! type) {}
 
 impl forall [U:! type] C(U) as I where .T = () {
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE+10]]:3: error: cannot implicitly convert expression of type `()` to `C(U).(I.T)` [ConversionFailure]
+  // CHECK:STDERR:   fn F[self: Self]() -> () { return (); }
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE+7]]:3: note: type `()` does not implement interface `Core.ImplicitAs(C(U).(I.T))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   fn F[self: Self]() -> () { return (); }
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE-12]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR:   fn F[self: Self]() -> T;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   fn F[self: Self]() -> () { return (); }
 }
 
@@ -97,10 +117,20 @@ fn G(c: C(())) -> () {
   return c.(I.F)();
 }
 
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE+17]]:1: note: the use would select the `impl` here but it was not found yet [PoisonedImplLookupConcreteResultNoteBadImpl]
+// CHECK:STDERR: impl C(()) as I where .T = {} {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE-25]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
+// CHECK:STDERR: impl forall [U:! type] C(U) as I where .T = () {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE-34]]:22: error: found `impl` that would change the result of an earlier use of `C(()) as I` [PoisonedImplLookupConcreteResult]
+// CHECK:STDERR:   fn F[self: Self]() -> T;
+// CHECK:STDERR:                      ^~~~
 // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE+7]]:1: note: the use would select the `impl` here but it was not found yet [PoisonedImplLookupConcreteResultNoteBadImpl]
 // CHECK:STDERR: impl C(()) as I where .T = {} {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE-15]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE-35]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
 // CHECK:STDERR: impl forall [U:! type] C(U) as I where .T = () {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -117,6 +147,16 @@ interface I(U:! type) {
 }
 
 impl forall [U:! type] U as I(U) where .T = () {
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE+10]]:3: error: cannot implicitly convert expression of type `()` to `U.(I(U).T)` [ConversionFailure]
+  // CHECK:STDERR:   fn F[self: Self]() -> () { return (); }
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE+7]]:3: note: type `()` does not implement interface `Core.ImplicitAs(U.(I(U).T))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   fn F[self: Self]() -> () { return (); }
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE-10]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR:   fn F[self: Self]() -> T;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   fn F[self: Self]() -> () { return (); }
 }
 
@@ -130,10 +170,20 @@ fn G(c: C) -> () {
   return c.(I(C).F)();
 }
 
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE+17]]:1: note: the use would select the `impl` here but it was not found yet [PoisonedImplLookupConcreteResultNoteBadImpl]
+// CHECK:STDERR: impl C as I(C) where .T = {} {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE-27]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
+// CHECK:STDERR: impl forall [U:! type] U as I(U) where .T = () {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE-34]]:22: error: found `impl` that would change the result of an earlier use of `C as I(C)` [PoisonedImplLookupConcreteResult]
+// CHECK:STDERR:   fn F[self: Self]() -> T;
+// CHECK:STDERR:                      ^~~~
 // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE+7]]:1: note: the use would select the `impl` here but it was not found yet [PoisonedImplLookupConcreteResultNoteBadImpl]
 // CHECK:STDERR: impl C as I(C) where .T = {} {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE-17]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE-37]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
 // CHECK:STDERR: impl forall [U:! type] U as I(U) where .T = () {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -150,6 +200,16 @@ interface I {
 }
 
 impl forall [U:! type] U as I where .T = () {
+  // CHECK:STDERR: todo_fail_final_poisoned_by_generic_query.carbon:[[@LINE+10]]:3: error: cannot implicitly convert expression of type `()` to `U.(I.T)` [ConversionFailure]
+  // CHECK:STDERR:   fn F[self: Self]() -> () { return (); }
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: todo_fail_final_poisoned_by_generic_query.carbon:[[@LINE+7]]:3: note: type `()` does not implement interface `Core.ImplicitAs(U.(I.T))` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   fn F[self: Self]() -> () { return (); }
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: todo_fail_final_poisoned_by_generic_query.carbon:[[@LINE-10]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR:   fn F[self: Self]() -> T;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   fn F[self: Self]() -> () { return (); }
 }
 

@@ -104,7 +104,7 @@ fn Test() {
 
   fn G(T:! I where .X = Constant) {
     // TODO: The facet type T in G should match the facet type T in F.
-    // CHECK:STDERR: fail_todo_named_constant_in_rewrite_caller.carbon:[[@LINE+7]]:5: error: cannot convert type `T` that implements `I where .(I.X) = Constant` into type implementing `I where .(I.X) = ()` [ConversionFailureFacetToFacet]
+    // CHECK:STDERR: fail_todo_named_constant_in_rewrite_caller.carbon:[[@LINE+7]]:5: error: cannot convert type `T` that implements `I where .Self.(I.X) = Constant` into type implementing `I where .Self.(I.X) = ()` [ConversionFailureFacetToFacet]
     // CHECK:STDERR:     F(T);
     // CHECK:STDERR:     ^~~~
     // CHECK:STDERR: fail_todo_named_constant_in_rewrite_caller.carbon:[[@LINE-7]]:8: note: initializing generic parameter `T` declared here [InitializingGenericParam]
@@ -128,13 +128,13 @@ fn Test() {
 
   // TODO: The .Self reference in each .X should be different, there should be
   // no cycle here.
-  // CHECK:STDERR: fail_todo_named_constant_in_nested_facet_type.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.(I.X)` [FacetTypeConstraintCycle]
+  // CHECK:STDERR: fail_todo_named_constant_in_nested_facet_type.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.Self.(I.X)` [FacetTypeConstraintCycle]
   // CHECK:STDERR:   fn F(T:! I where .X = (I where .X = Constant)) {}
   // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   fn F(T:! I where .X = (I where .X = Constant)) {}
 
-  // CHECK:STDERR: fail_todo_named_constant_in_nested_facet_type.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.(I.X)` [FacetTypeConstraintCycle]
+  // CHECK:STDERR: fail_todo_named_constant_in_nested_facet_type.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.Self.(I.X)` [FacetTypeConstraintCycle]
   // CHECK:STDERR:   fn G(T:! I where .X = (I where .X = Constant)) {
   // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -159,7 +159,7 @@ fn Test() {
 
   // TODO: The .Self reference in each .X should be different, there should be
   // no cycle here.
-  // CHECK:STDERR: fail_todo_named_constant_in_nested_facet_type_caller.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.(I.X)` [FacetTypeConstraintCycle]
+  // CHECK:STDERR: fail_todo_named_constant_in_nested_facet_type_caller.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.Self.(I.X)` [FacetTypeConstraintCycle]
   // CHECK:STDERR:   fn G(T:! I where .X = (I where .X = Constant)) {
   // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -182,7 +182,7 @@ fn Test() {
 
   // TODO: The .Self reference in each .X should be different, there should be
   // no cycle here.
-  // CHECK:STDERR: fail_named_constant_in_nested_facet_type_callee.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.(I.X)` [FacetTypeConstraintCycle]
+  // CHECK:STDERR: fail_named_constant_in_nested_facet_type_callee.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.Self.(I.X)` [FacetTypeConstraintCycle]
   // CHECK:STDERR:   fn F(T:! I where .X = (I where .X = Constant)) {}
   // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

@@ -59,7 +59,7 @@ interface Z {
     let X:! type;
 }
 
-// CHECK:STDERR: fail_compound_member_lookup_in_runtime_facet_without_value.carbon:[[@LINE+4]]:15: error: semantics TODO: `associated value lookup on runtime facet value` [SemanticsTodo]
+// CHECK:STDERR: fail_compound_member_lookup_in_runtime_facet_without_value.carbon:[[@LINE+4]]:15: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: fn F(T: Z, v: T.(Z.X));
 // CHECK:STDERR:               ^~~~~~~
 // CHECK:STDERR:
@@ -88,7 +88,7 @@ interface Z {
 // TODO: We should be able to get the value of `.X` from the `FacetType` of
 // `T`.
 //
-// CHECK:STDERR: fail_todo_compound_member_lookup_in_runtime_facet_with_value.carbon:[[@LINE+4]]:29: error: semantics TODO: `conversion of runtime facet value` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_compound_member_lookup_in_runtime_facet_with_value.carbon:[[@LINE+4]]:29: error: cannot evaluate type expression [TypeExprEvaluationFailure]
 // CHECK:STDERR: fn F(T: Z where .X = (), v: T.(Z.X));
 // CHECK:STDERR:                             ^~~~~~~
 // CHECK:STDERR:

@@ -196,6 +196,19 @@ auto EvalConstantInst(Context& context, SemIR::ExportDecl inst)
       context.constant_values().Get(inst.value_id));
 }
 
+auto EvalConstantInst(Context& context, SemIR::FacetAccessSelfWitness inst)
+    -> ConstantEvalResult {
+  if (auto facet_value = context.insts().TryGetAs<SemIR::FacetValue>(
+          inst.facet_value_inst_id)) {
+    auto witnesses = context.inst_blocks().Get(facet_value->witnesses_block_id);
+    // FIXME: Is the first witness always the right one?
+    // We should at least CHECK this makes sense.
+    return ConstantEvalResult::Existing(
+        context.constant_values().Get(witnesses[0]));
+  }
+  return ConstantEvalResult::NewSamePhase(inst);
+}
+
 auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
     -> ConstantEvalResult {
   if (auto facet_value = context.insts().TryGetAs<SemIR::FacetValue>(
@@ -269,36 +282,9 @@ auto EvalConstantInst(Context& /*context*/, SemIR::FunctionDecl inst)
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::LookupImplWitness inst) -> ConstantEvalResult {
-  // The self value is canonicalized in order to produce a canonical
-  // LookupImplWitness instruction, avoiding multiple constant values for
-  // `<facet value>` and `<facet value>` as type, which always have the same
-  // lookup result.
-  auto self_facet_value_inst_id =
-      GetCanonicalFacetOrTypeValue(context, inst.query_self_inst_id);
-
-  // When we look for a witness in the (facet) type of self, we may get a
-  // concrete witness from a `FacetValue` (which is `self_facet_value_inst_id`)
-  // in which case this instruction evaluates to that witness.
-  //
-  // If we only get a symbolic witness result though, then this instruction
-  // evaluates to a `LookupImplWitness`. Since there was no concrete result in
-  // the `FacetValue`, we don't need to preserve it. By looking through the
-  // `FacetValue` at the type value it wraps to generate a more canonical value
-  // for a symbolic `LookupImplWitness`. This makes us produce the same constant
-  // value for symbolic lookups in `FacetValue(T)` and `T`, since they will
-  // always have the same lookup result later, when `T` is replaced in a
-  // specific by something that can provide a concrete witness.
-  if (auto facet_value = context.insts().TryGetAs<SemIR::FacetValue>(
-          self_facet_value_inst_id)) {
-    inst.query_self_inst_id =
-        GetCanonicalFacetOrTypeValue(context, facet_value->type_inst_id);
-  } else {
-    inst.query_self_inst_id = self_facet_value_inst_id;
-  }
-
-  auto result = EvalLookupSingleImplWitness(context, SemIR::LocId(inst_id),
-                                            inst, self_facet_value_inst_id,
-                                            /*poison_final_results=*/true);
+  auto result =
+      EvalLookupSingleImplWitness(context, SemIR::LocId(inst_id), inst,
+                                  /*poison_final_results=*/true);
   if (!result.has_value()) {
     // We use NotConstant to communicate back to impl lookup that the lookup
     // failed. This can not happen for a deferred symbolic lookup in a generic
@@ -345,9 +331,9 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
     // If the witness is symbolic but has a self type that is a FacetType, it
     // can pull rewrite values from the self type. If the access is for one of
     // those rewrites, evaluate to the RHS of the rewrite.
-
-    auto witness_self_type_id =
-        context.insts().Get(witness->query_self_inst_id).type_id();
+    auto facet_inst_id =
+        GetCanonicalFacetOrTypeValue(context, witness->query_self_inst_id);
+    auto witness_self_type_id = context.insts().Get(facet_inst_id).type_id();
     if (!context.types().Is<SemIR::FacetType>(witness_self_type_id)) {
       return ConstantEvalResult::NewSamePhase(inst);
     }

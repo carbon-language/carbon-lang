@@ -3094,7 +3094,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                SemIR::WitnessType::TypeInstId);
 
   auto query_self_inst_id =
-      GetLocalConstantInstId(resolver, inst.query_self_inst_id);
+      GetLocalTypeInstId(resolver, inst.query_self_inst_id);
 
   const auto& import_specific_interface =
       resolver.import_specific_interfaces().Get(

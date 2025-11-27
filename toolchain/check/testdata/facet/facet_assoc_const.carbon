@@ -29,7 +29,7 @@ library "[[@TEST_NAME]]";
 
 interface L { let W:! type; }
 
-// CHECK:STDERR: fail_two_different.carbon:[[@LINE+4]]:10: error: associated constant `.(L.W)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_two_different.carbon:[[@LINE+4]]:10: error: associated constant `.Self.(L.W)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: fn F(T:! L where .W = {} and .W = ()) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -40,7 +40,7 @@ library "[[@TEST_NAME]]";
 
 interface L { let W:! type; let X:! type; }
 
-// CHECK:STDERR: fail_two_different_first_associated.carbon:[[@LINE+4]]:10: error: associated constant `.(L.W)` given two different values `.(L.X)` and `()` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_two_different_first_associated.carbon:[[@LINE+4]]:10: error: associated constant `.Self.(L.W)` given two different values `.Self.(L.X)` and `()` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: fn F(T:! L where .W = .X and .W = ()) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -51,7 +51,7 @@ library "[[@TEST_NAME]]";
 
 interface L { let W:! type; let X:! type; }
 
-// CHECK:STDERR: fail_two_different_second_associated.carbon:[[@LINE+4]]:10: error: associated constant `.(L.W)` given two different values `()` and `.(L.X)` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_two_different_second_associated.carbon:[[@LINE+4]]:10: error: associated constant `.Self.(L.W)` given two different values `()` and `.Self.(L.X)` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: fn F(T:! L where .W = () and .W = .X) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -99,7 +99,7 @@ library "[[@TEST_NAME]]";
 
 interface L { let W:! type; }
 
-// CHECK:STDERR: fail_two_different_combined_from_bitand.carbon:[[@LINE+4]]:10: error: associated constant `.(L.W)` given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_two_different_combined_from_bitand.carbon:[[@LINE+4]]:10: error: associated constant `.Self.(L.W)` given two different values `()` and `{}` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: fn F(T:! (L where .W = {}) & (L where .W = ())) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -120,6 +120,13 @@ impl C as L where .W = {} {}
 impl C as M {}
 
 fn G() {
+  // CHECK:STDERR: two_different_combined_from_impl_and_facet.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `L & M where .Self.(L.W) = {}` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   F(C);
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: two_different_combined_from_impl_and_facet.carbon:[[@LINE-10]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(T:! M & (L where .W = {})) {}
+  // CHECK:STDERR:      ^
+  // CHECK:STDERR:
   F(C);
 }
 
@@ -145,7 +152,7 @@ fn F(T:! M & (L where .W = {}), a: T.W) {
   // likely to show up in diagnostics? Or should we diagnose `T` as being
   // invalid directly, where we can see both `.W` values and print them?
   //
-  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+7]]:15: error: cannot convert type `T` that implements `L & M where .(L.W) = {}` into type implementing `L where .(L.W) = {}` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+7]]:15: error: cannot convert type `T` that implements `L & M where .Self.(L.W) = {}` into type implementing `L where .Self.(L.W) = {}` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   let c: {} = H(T, a);
   // CHECK:STDERR:               ^~~~~~~
   // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE-15]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
@@ -160,7 +167,7 @@ library "[[@TEST_NAME]]";
 
 interface L { let W:! type; }
 
-// CHECK:STDERR: fail_many_different.carbon:[[@LINE+4]]:10: error: associated constant `.(L.W)` given two different values `((), (), ())` and `({}, (), ())` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_many_different.carbon:[[@LINE+4]]:10: error: associated constant `.Self.(L.W)` given two different values `((), (), ())` and `({}, (), ())` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: fn G(T:! L where .W = ((), (), ()) and .W = ({}, (), ()) and .W = ({}, {}, ()) and .W = ({}, (), {})) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -180,7 +187,7 @@ library "[[@TEST_NAME]]";
 
 interface M { let X:! type; let Y:! type; }
 
-// CHECK:STDERR: fail_rewrite_conflicts_with_second_facet.carbon:[[@LINE+4]]:31: error: associated constant `.(M.Y)` given two different values `T.(M.X)` and `.(M.X)` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_rewrite_conflicts_with_second_facet.carbon:[[@LINE+4]]:31: error: associated constant `.Self.(M.Y)` given two different values `T.(M.X)` and `.Self.(M.X)` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: fn F(T:! M where .X = (), U:! M where .Y = T.X and .Y = .X) {}
 // CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -205,6 +212,13 @@ interface M { let X:! type; let Y:! type; }
 fn F(T:! M where .X = .Y and .X = .Y) {}
 
 fn G(T:! M where .X = () and .Y = ()) {
+  // CHECK:STDERR: repeated_associated.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `M where .Self.(M.X) = () and .Self.(M.Y) = ()` into type implementing `M where .Self.(M.X) = .Self.(M.Y)` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   F(T);
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: repeated_associated.carbon:[[@LINE-6]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(T:! M where .X = .Y and .X = .Y) {}
+  // CHECK:STDERR:      ^
+  // CHECK:STDERR:
   F(T);
 }
 
@@ -219,6 +233,13 @@ fn F2(T:! M where .X = () and .X = .X) {}
 
 fn G(T:! M where .X = () and .Y = ()) {
   F1(T);
+  // CHECK:STDERR: repeated_concrete_value_and_associated.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `M where .Self.(M.X) = () and .Self.(M.Y) = ()` into type implementing `M where .Self.(M.X) = ()` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   F2(T);
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: repeated_concrete_value_and_associated.carbon:[[@LINE-7]]:7: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F2(T:! M where .X = () and .X = .X) {}
+  // CHECK:STDERR:       ^
+  // CHECK:STDERR:
   F2(T);
 }
 
@@ -240,7 +261,7 @@ library "[[@TEST_NAME]]";
 
 interface M { let X:! type; }
 
-// CHECK:STDERR: fail_repeated_and_different.carbon:[[@LINE+4]]:10: error: associated constant `.(M.X)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_repeated_and_different.carbon:[[@LINE+4]]:10: error: associated constant `.Self.(M.X)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: fn F(T:! M where .X = {} and .X = () and .X = {}) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -253,7 +274,7 @@ interface M { let X:! type; }
 
 // This fails because it resolves to `.X = .X` which is cyclical.
 //
-// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.Self.(M.X)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(T:! M where .X = .X) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -262,7 +283,7 @@ fn F(T:! M where .X = .X) {}
 // Even though `.X = ()` is specified, the rewrites are resolved left to right
 // and a cycle `.X = .X` is found first.
 //
-// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.Self.(M.X)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn G(T:! M where .X = .X and .X = ()) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -277,7 +298,7 @@ interface M { let X:! type; let Y:! type; let Z:! type; }
 // The value of .X and .Y becomes <error> but .Z is still valid.
 //
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(M.Y)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.Self.(M.Y)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(T:! M where .X = .Y and .Y = .X and .Z = ()) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -297,7 +318,7 @@ interface J {
 
 // This fails because it resolves to `.X1 = .X1` which is cyclical.
 //
-// CHECK:STDERR: fail_cycle_between_interfaces.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(J.X3)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_cycle_between_interfaces.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.Self.(J.X3)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn G(T:! I & J where .X1 = .X3 and .X2 = .X1 and .X3 = .X2) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -313,7 +334,7 @@ interface I {
 
 // This fails because it resolves to `.X1 = .X1**` which is cyclical.
 //
-// CHECK:STDERR: fail_indirect_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(I.X2)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_indirect_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.Self.(I.X2)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(T:! I where .X1 = .X2* and .X2 = .X1*);
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -322,7 +343,7 @@ fn F(T:! I where .X1 = .X2* and .X2 = .X1*);
 class C(T:! type);
 // This fails because it resolves to `.X1 = C(C(.X1))` which is cyclical.
 //
-// CHECK:STDERR: fail_indirect_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(I.X2)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_indirect_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.Self.(I.X2)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn G(T:! I where .X1 = C(.X2) and .X2 = C(.X1));
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -342,7 +363,7 @@ class C(T:! type, U:! type);
 // This fails because it resolves to `.X1 = C(C(.X3, .X1), .X3)` which is
 // cyclical.
 //
-// CHECK:STDERR: fail_complex_indirect_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(I.X2)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_complex_indirect_cycle.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.Self.(I.X2)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(T:! I where .X1 = C(.X2, .X3) and .X2 = C(.X3, .X1));
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -403,7 +424,7 @@ interface Z {
 // approach can recursively rebuild the RHS values from the ground up
 // repeatedly.
 fn F(
-    // CHECK:STDERR: fail_exponential_large_cycle.carbon:[[@LINE+4]]:9: error: found cycle in facet type constraint for `.(Z.T0)` [FacetTypeConstraintCycle]
+    // CHECK:STDERR: fail_exponential_large_cycle.carbon:[[@LINE+4]]:9: error: found cycle in facet type constraint for `.Self.(Z.T0)` [FacetTypeConstraintCycle]
     // CHECK:STDERR:     T:! Z where
     // CHECK:STDERR:         ^~~~~~~
     // CHECK:STDERR:
@@ -445,7 +466,7 @@ interface N {
   let Y:! {.a: type};
 }
 
-// CHECK:STDERR: fail_non-type_different.carbon:[[@LINE+4]]:10: error: associated constant `.(N.Y)` given two different values `{.a = {}}` and `{.a = ()}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_non-type_different.carbon:[[@LINE+4]]:10: error: associated constant `.Self.(N.Y)` given two different values `{.a = {}}` and `{.a = ()}` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: fn F(T:! N where .Y = {.a = {}} and .Y = {.a = ()}) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -555,7 +576,7 @@ interface Z {
   let T3:! type;
 }
 
-// CHECK:STDERR: fail_cycle_with_unrelated_associated_constant.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T1)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_cycle_with_unrelated_associated_constant.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.Self.(Z.T1)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(T:! Z where .T0 = .T1 and .T1 = .T0 and .T2 = .T3) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -574,13 +595,13 @@ interface Z {
 
 // TODO: There should only be one diagnostic here.
 //
-// CHECK:STDERR: fail_cycle_with_branching_in_rhs.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T3)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_cycle_with_branching_in_rhs.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.Self.(Z.T3)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn F(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T1) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn F(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T1) {}
 
-// CHECK:STDERR: fail_cycle_with_branching_in_rhs.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.(Z.T1)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_cycle_with_branching_in_rhs.carbon:[[@LINE+4]]:10: error: found cycle in facet type constraint for `.Self.(Z.T1)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: fn G(T:! Z where .T0 = .T1 and .T1 = (.T2, .T3) and .T2 = .T4 and .T3 = .T0) {}
 // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -687,7 +708,7 @@ fn F(T:! I & J where .I1 = .J1.I2) {}
 // CHECK:STDOUT:   %.Self.5f5: %M.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.5f5 [symbolic_self]
-// CHECK:STDOUT:   %M.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.5f5, @M [symbolic_self]
+// CHECK:STDOUT:   %M.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.binding.as_type, @M [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %M.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %impl.elem1: type = impl_witness_access %M.lookup_impl_witness, element1 [symbolic_self]
 // CHECK:STDOUT:   %impl.elem2: type = impl_witness_access %M.lookup_impl_witness, element2 [symbolic_self]

@@ -29,7 +29,7 @@ interface I { let X:! type; }
 fn F(T:! I where .X = ()) {}
 
 fn G(T:! I where .Self impls (I where .X = {})) {
-  // CHECK:STDERR: fail_self_impls_modifies_assoc_constant_type_differs.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .(I.X) = {}` into type implementing `I where .(I.X) = ()` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_self_impls_modifies_assoc_constant_type_differs.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `I where .Self.(I.X) = {}` into type implementing `I where .Self.(I.X) = ()` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:   F(T);
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR: fail_self_impls_modifies_assoc_constant_type_differs.carbon:[[@LINE-6]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]

@@ -23,20 +23,20 @@ namespace Carbon::Check {
 //
 // The return value is one of:
 // - An InstBlockId value, containing an `ImplWitness` instruction for each
-//   required interface in the `query_facet_type_const_id`. This verifies the
-//   facet type is satisfied for the type in `type_const_id`, and provides a
+//   required interface in the `query_facet_type_id`. This verifies the facet
+//   type is satisfied for the type in `query_self_type_inst_id`, and provides a
 //   witness for accessing the impl of each interface.
 //
 // - `InstBlockId::None`, indicating lookup failed for at least one required
-//   interface in the `query_facet_type_const_id`. The facet type is not
-//   satisfied for the type in `type_const_id`. This represents lookup failure,
-//   but is not an error, so no diagnostic is emitted.
+//   interface in the `query_facet_type_id`. The facet type is not satisfied for
+//   the type in `query_self_type_inst_id`. This represents lookup failure, but
+//   is not an error, so no diagnostic is emitted.
 //
 // - An error value, indicating the program is invalid and a diagonstic has been
 //   produced, either in this function or before.
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
-                       SemIR::ConstantId query_self_const_id,
-                       SemIR::ConstantId query_facet_type_const_id)
+                       SemIR::TypeInstId query_self_type_inst_id,
+                       SemIR::TypeId query_facet_type_id)
     -> SemIR::InstBlockIdOrError;
 
 // Returns whether the query matches against the given impl. This is like a
@@ -106,7 +106,6 @@ class [[nodiscard]] EvalImplLookupResult {
 // preventing overlapping final impls.
 auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
                                  SemIR::LookupImplWitness eval_query,
-                                 SemIR::InstId self_facet_value_inst_id,
                                  bool poison_final_results)
     -> EvalImplLookupResult;
 

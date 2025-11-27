@@ -44,12 +44,12 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   %Inner.Get.c75: %Inner.Get.type.e3d = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete.d74: <witness> = require_complete_type %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
-// CHECK:STDOUT:   %Copy.lookup_impl_witness.c42: <witness> = lookup_impl_witness %T.417, @Copy [symbolic]
+// CHECK:STDOUT:   %Copy.lookup_impl_witness.bf4: <witness> = lookup_impl_witness %T.binding.as_type, @Copy [symbolic]
 // CHECK:STDOUT:   %.a79: type = fn_type_with_self_type %Copy.Op.type, %T.417 [symbolic]
-// CHECK:STDOUT:   %impl.elem0.fac: %.a79 = impl_witness_access %Copy.lookup_impl_witness.c42, element0 [symbolic]
-// CHECK:STDOUT:   %specific_impl_fn.103: <specific function> = specific_impl_function %impl.elem0.fac, @Copy.Op(%T.417) [symbolic]
-// CHECK:STDOUT:   %bound_method.35f: <bound method> = bound_method %U.1b1, %impl.elem0.fac [symbolic]
-// CHECK:STDOUT:   %bound_method.685: <bound method> = bound_method %U.1b1, %specific_impl_fn.103 [symbolic]
+// CHECK:STDOUT:   %impl.elem0.9af: %.a79 = impl_witness_access %Copy.lookup_impl_witness.bf4, element0 [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn.399: <specific function> = specific_impl_function %impl.elem0.9af, @Copy.Op(%T.417) [symbolic]
+// CHECK:STDOUT:   %bound_method.56f: <bound method> = bound_method %U.1b1, %impl.elem0.9af [symbolic]
+// CHECK:STDOUT:   %bound_method.6ad: <bound method> = bound_method %U.1b1, %specific_impl_fn.399 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -168,20 +168,20 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete (constants.%require_complete.d74)]
 // CHECK:STDOUT:   %U: @Inner.Get.%T.binding.as_type (%T.binding.as_type) = symbolic_binding U, 1 [symbolic = %U (constants.%U.1b1)]
-// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.c42)]
+// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T.binding.as_type, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.bf4)]
 // CHECK:STDOUT:   %.loc7_28.2: type = fn_type_with_self_type constants.%Copy.Op.type, %T [symbolic = %.loc7_28.2 (constants.%.a79)]
-// CHECK:STDOUT:   %impl.elem0.loc7_28.2: @Inner.Get.%.loc7_28.2 (%.a79) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_28.2 (constants.%impl.elem0.fac)]
-// CHECK:STDOUT:   %bound_method.loc7_28.3: <bound method> = bound_method %U, %impl.elem0.loc7_28.2 [symbolic = %bound_method.loc7_28.3 (constants.%bound_method.35f)]
-// CHECK:STDOUT:   %specific_impl_fn.loc7_28.2: <specific function> = specific_impl_function %impl.elem0.loc7_28.2, @Copy.Op(%T) [symbolic = %specific_impl_fn.loc7_28.2 (constants.%specific_impl_fn.103)]
-// CHECK:STDOUT:   %bound_method.loc7_28.4: <bound method> = bound_method %U, %specific_impl_fn.loc7_28.2 [symbolic = %bound_method.loc7_28.4 (constants.%bound_method.685)]
+// CHECK:STDOUT:   %impl.elem0.loc7_28.2: @Inner.Get.%.loc7_28.2 (%.a79) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_28.2 (constants.%impl.elem0.9af)]
+// CHECK:STDOUT:   %bound_method.loc7_28.3: <bound method> = bound_method %U, %impl.elem0.loc7_28.2 [symbolic = %bound_method.loc7_28.3 (constants.%bound_method.56f)]
+// CHECK:STDOUT:   %specific_impl_fn.loc7_28.2: <specific function> = specific_impl_function %impl.elem0.loc7_28.2, @Copy.Op(%T) [symbolic = %specific_impl_fn.loc7_28.2 (constants.%specific_impl_fn.399)]
+// CHECK:STDOUT:   %bound_method.loc7_28.4: <bound method> = bound_method %U, %specific_impl_fn.loc7_28.2 [symbolic = %bound_method.loc7_28.4 (constants.%bound_method.6ad)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> %return.param: @Inner.Get.%T.binding.as_type (%T.binding.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %U.ref: @Inner.Get.%T.binding.as_type (%T.binding.as_type) = name_ref U, @Inner.%U.loc5_15.2 [symbolic = %U (constants.%U.1b1)]
-// CHECK:STDOUT:     %impl.elem0.loc7_28.1: @Inner.Get.%.loc7_28.2 (%.a79) = impl_witness_access constants.%Copy.lookup_impl_witness.c42, element0 [symbolic = %impl.elem0.loc7_28.2 (constants.%impl.elem0.fac)]
-// CHECK:STDOUT:     %bound_method.loc7_28.1: <bound method> = bound_method %U.ref, %impl.elem0.loc7_28.1 [symbolic = %bound_method.loc7_28.3 (constants.%bound_method.35f)]
-// CHECK:STDOUT:     %specific_impl_fn.loc7_28.1: <specific function> = specific_impl_function %impl.elem0.loc7_28.1, @Copy.Op(constants.%T.417) [symbolic = %specific_impl_fn.loc7_28.2 (constants.%specific_impl_fn.103)]
-// CHECK:STDOUT:     %bound_method.loc7_28.2: <bound method> = bound_method %U.ref, %specific_impl_fn.loc7_28.1 [symbolic = %bound_method.loc7_28.4 (constants.%bound_method.685)]
+// CHECK:STDOUT:     %impl.elem0.loc7_28.1: @Inner.Get.%.loc7_28.2 (%.a79) = impl_witness_access constants.%Copy.lookup_impl_witness.bf4, element0 [symbolic = %impl.elem0.loc7_28.2 (constants.%impl.elem0.9af)]
+// CHECK:STDOUT:     %bound_method.loc7_28.1: <bound method> = bound_method %U.ref, %impl.elem0.loc7_28.1 [symbolic = %bound_method.loc7_28.3 (constants.%bound_method.56f)]
+// CHECK:STDOUT:     %specific_impl_fn.loc7_28.1: <specific function> = specific_impl_function %impl.elem0.loc7_28.1, @Copy.Op(constants.%T.417) [symbolic = %specific_impl_fn.loc7_28.2 (constants.%specific_impl_fn.399)]
+// CHECK:STDOUT:     %bound_method.loc7_28.2: <bound method> = bound_method %U.ref, %specific_impl_fn.loc7_28.1 [symbolic = %bound_method.loc7_28.4 (constants.%bound_method.6ad)]
 // CHECK:STDOUT:     %.loc7_14: ref @Inner.Get.%T.binding.as_type (%T.binding.as_type) = splice_block %return {}
 // CHECK:STDOUT:     %.loc7_28.1: init @Inner.Get.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc7_28.2(%U.ref) to %.loc7_14
 // CHECK:STDOUT:     return %.loc7_28.1 to %return

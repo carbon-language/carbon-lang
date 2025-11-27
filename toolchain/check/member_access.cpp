@@ -233,15 +233,17 @@ static auto GetWitnessFromSingleImplLookupResult(
 // Performs impl lookup for a member name expression. This finds the relevant
 // impl witness and extracts the corresponding impl member.
 static auto PerformImplLookup(
-    Context& context, SemIR::LocId loc_id, SemIR::ConstantId type_const_id,
+    Context& context, SemIR::LocId loc_id, SemIR::TypeId self_type_id,
     SemIR::AssociatedEntityType assoc_type, SemIR::InstId member_id,
     MakeDiagnosticBuilderFn missing_impl_diagnoser = nullptr) -> SemIR::InstId {
-  auto self_type_id = context.types().GetTypeIdForTypeConstantId(type_const_id);
   // TODO: Avoid forming and then immediately decomposing a `FacetType` here.
   auto interface_type_id = GetInterfaceType(context, assoc_type.interface_id,
                                             assoc_type.interface_specific_id);
-  auto lookup_result = LookupImplWitness(context, loc_id, type_const_id,
-                                         interface_type_id.AsConstantId());
+  // TODO: Preserve the type as written rather than using a canonical TypeInstId
+  // here.
+  auto lookup_result = LookupImplWitness(
+      context, loc_id, context.types().GetInstId(self_type_id),
+      interface_type_id);
   if (!lookup_result.has_value()) {
     if (missing_impl_diagnoser) {
       // TODO: Pass in the expression whose type we are printing.
@@ -341,14 +343,15 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
         base_type_id = ExprAsType(context, loc_id, base_id).type_id;
       }
 
-      member_id = PerformImplLookup(context, loc_id,
-                                    context.types().GetConstantId(base_type_id),
-                                    *assoc_type, member_id);
+      member_id = PerformImplLookup(context, loc_id, base_type_id, *assoc_type,
+                                    member_id);
     } else if (ScopeNeedsImplLookup(context, name_scope_const_id)) {
       // Handles `T.F` where `T` is a type extending an interface containing
       // `F`.
-      member_id = PerformImplLookup(context, loc_id, name_scope_const_id,
-                                    *assoc_type, member_id);
+      member_id = PerformImplLookup(
+          context, loc_id,
+          context.types().GetTypeIdForTypeConstantId(name_scope_const_id),
+          *assoc_type, member_id);
     }
   }
 
@@ -624,41 +627,21 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
                                    const SemIR::AssociatedEntity& assoc_entity,
                                    SemIR::SpecificInterface interface)
     -> SemIR::InstId {
-  // Convert to the interface type of the associated member, to get a facet
-  // value.
-  auto interface_type_id =
-      GetInterfaceType(context, interface.interface_id, interface.specific_id);
-  auto facet_inst_id =
-      ConvertToValueOfType(context, loc_id, base_id, interface_type_id);
-  if (facet_inst_id == SemIR::ErrorInst::InstId) {
-    return SemIR::ErrorInst::InstId;
-  }
-  // That facet value has both the self type we need below and the witness
-  // we are going to use to look up the value of the associated member.
-  auto self_type_const_id = TryEvalInst<SemIR::FacetAccessType>(
-      context, {.type_id = SemIR::TypeType::TypeId,
-                .facet_value_inst_id = facet_inst_id});
+  // Convert the base to a type constant.
   // TODO: We should be able to lookup constant associated values from runtime
   // facet values by using their FacetType only, but we assume constant values
   // for impl lookup at the moment.
-  if (!self_type_const_id.is_constant()) {
-    context.TODO(loc_id, "associated value lookup on runtime facet value");
+  auto self_type = ExprAsType(context, loc_id, base_id);
+
+  // Find the witness that the base type implements the given interface.
+  auto lookup_result = LookupImplWitness(
+      context, loc_id, self_type.inst_id,
+      GetInterfaceType(context, interface.interface_id, interface.specific_id));
+  if (!lookup_result.has_value()) {
+    context.TODO(loc_id, "diagnose missing impl");
     return SemIR::ErrorInst::InstId;
   }
-  auto self_type_id =
-      context.types().GetTypeIdForTypeConstantId(self_type_const_id);
 
-  // TODO: If `ConvertToValueOfType` returned a `FacetValue`, we already got a
-  // witness for this interface there. We don't need to do both a
-  // ConvertToValueOfType and LookupImplWitness, that is redundant. Since we
-  // want to do LookupImplWitness unconditionally (eg. if `base_id` has exactly
-  // the right FacetType already), can we drop the ConvertToValueOfType step?
-  auto lookup_result = LookupImplWitness(
-      context, loc_id, context.constant_values().Get(facet_inst_id),
-      EvalOrAddInst(context, loc_id,
-                    FacetTypeFromInterface(context, interface.interface_id,
-                                           interface.specific_id)));
-  CARBON_CHECK(lookup_result.has_value());
   auto witness_id =
       GetWitnessFromSingleImplLookupResult(context, lookup_result);
 
@@ -667,7 +650,7 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
   // interface.
   auto assoc_type_id = GetTypeForSpecificAssociatedEntity(
       context, loc_id, interface.specific_id, assoc_entity.decl_id,
-      self_type_id, witness_id);
+      self_type.type_id, witness_id);
   // Now that we have the witness, an index into it, and the type of the
   // result, return the element of the witness.
   return GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id,
@@ -700,7 +683,6 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
                                  MakeDiagnosticBuilderFn missing_impl_diagnoser)
     -> SemIR::InstId {
   auto base_type_id = context.insts().Get(base_id).type_id();
-  auto base_type_const_id = context.types().GetConstantId(base_type_id);
 
   auto member_id = member_expr_id;
   auto member = context.insts().Get(member_id);
@@ -731,9 +713,8 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
     if (IsInstanceType(context, decl_type_id)) {
       // Step 2a: For instance methods, lookup the impl of the interface for
       // this type and get the method.
-      member_id =
-          PerformImplLookup(context, loc_id, base_type_const_id, *assoc_type,
-                            member_id, missing_impl_diagnoser);
+      member_id = PerformImplLookup(context, loc_id, base_type_id, *assoc_type,
+                                    member_id, missing_impl_diagnoser);
       // Next we will perform instance binding.
     } else {
       // Step 2b: For non-instance methods and associated constants, we access
@@ -753,8 +734,7 @@ auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
       member.type_id() != SemIR::ErrorInst::TypeId) {
     // As a special case, an integer-valued expression can be used as a member
     // name when indexing a tuple.
-    if (context.insts().Is<SemIR::TupleType>(
-            context.constant_values().GetInstId(base_type_const_id))) {
+    if (context.types().Is<SemIR::TupleType>(base_type_id)) {
       return PerformTupleAccess(context, loc_id, base_id, member_expr_id);
     }
 

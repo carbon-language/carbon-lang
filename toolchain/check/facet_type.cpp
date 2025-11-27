@@ -47,9 +47,10 @@ auto FacetTypeFromNamedConstraint(Context& context,
 static auto WitnessQueryMatchesInterface(
     Context& context, SemIR::InstId witness_id,
     const SemIR::SpecificInterface& interface) -> bool {
-  auto lookup = context.insts().GetAs<SemIR::LookupImplWitness>(witness_id);
-  return interface ==
-         context.specific_interfaces().Get(lookup.query_specific_interface_id);
+  auto lookup = context.insts().TryGetAs<SemIR::LookupImplWitness>(witness_id);
+  // TODO: Handle FacetAccessSelfWitness
+  return lookup && interface == context.specific_interfaces().Get(
+                                    lookup->query_specific_interface_id);
 }
 
 static auto IncompleteFacetTypeDiagnosticBuilder(
@@ -401,18 +402,6 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       // to pop it in the paired callback.
       substs_in_progress_.push_back(rhs_inst_id);
       return SubstResult::SubstOperands;
-    }
-
-    // If the access is going through a nested `ImplWitnessAccess`, that
-    // access needs to be resolved to a facet value first. If it can't be
-    // resolved then the outer one can not be either.
-    if (auto lookup = context().insts().TryGetAs<SemIR::LookupImplWitness>(
-            rhs_access->inst.witness_id)) {
-      if (context().insts().Is<SemIR::ImplWitnessAccess>(
-              lookup->query_self_inst_id)) {
-        substs_in_progress_.push_back(rhs_inst_id);
-        return SubstResult::SubstOperandsAndRetry;
-      }
     }
 
     auto* rewrite_value =

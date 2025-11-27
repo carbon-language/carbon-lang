@@ -823,10 +823,10 @@ impl () as I({}) {
 // CHECK:STDOUT:   %require_complete.d742dc.1: <witness> = require_complete_type %U.binding.as_type.225 [symbolic]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %require_complete.482: <witness> = require_complete_type %ptr.4f0 [symbolic]
-// CHECK:STDOUT:   %Copy.lookup_impl_witness.c42a3d.2: <witness> = lookup_impl_witness %U.417, @Copy [symbolic]
+// CHECK:STDOUT:   %Copy.lookup_impl_witness.bf49cd.2: <witness> = lookup_impl_witness %U.binding.as_type.225, @Copy [symbolic]
 // CHECK:STDOUT:   %.a79665.2: type = fn_type_with_self_type %Copy.Op.type, %U.417 [symbolic]
-// CHECK:STDOUT:   %impl.elem0.fac0be.2: %.a79665.2 = impl_witness_access %Copy.lookup_impl_witness.c42a3d.2, element0 [symbolic]
-// CHECK:STDOUT:   %specific_impl_fn.103937.2: <specific function> = specific_impl_function %impl.elem0.fac0be.2, @Copy.Op(%U.417) [symbolic]
+// CHECK:STDOUT:   %impl.elem0.9af80c.2: %.a79665.2 = impl_witness_access %Copy.lookup_impl_witness.bf49cd.2, element0 [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn.399e3c.2: <specific function> = specific_impl_function %impl.elem0.9af80c.2, @Copy.Op(%U.417) [symbolic]
 // CHECK:STDOUT:   %.dcd: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.d9f) [symbolic]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.c66: <witness> = lookup_impl_witness %ptr.4f0, @Copy [symbolic]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.4f0, (%Copy.lookup_impl_witness.c66) [symbolic]
@@ -890,17 +890,17 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %U.binding.as_type [symbolic = %require_complete (constants.%require_complete.d742dc.1)]
-// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %U.loc10_8.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.c42a3d.2)]
+// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %U.binding.as_type, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.bf49cd.2)]
 // CHECK:STDOUT:   %.loc10_43.2: type = fn_type_with_self_type constants.%Copy.Op.type, %U.loc10_8.1 [symbolic = %.loc10_43.2 (constants.%.a79665.2)]
-// CHECK:STDOUT:   %impl.elem0.loc10_43.2: @empty_tuple.type.as.I.impl.F.loc10_34.1.%.loc10_43.2 (%.a79665.2) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_43.2 (constants.%impl.elem0.fac0be.2)]
-// CHECK:STDOUT:   %specific_impl_fn.loc10_43.2: <specific function> = specific_impl_function %impl.elem0.loc10_43.2, @Copy.Op(%U.loc10_8.1) [symbolic = %specific_impl_fn.loc10_43.2 (constants.%specific_impl_fn.103937.2)]
+// CHECK:STDOUT:   %impl.elem0.loc10_43.2: @empty_tuple.type.as.I.impl.F.loc10_34.1.%.loc10_43.2 (%.a79665.2) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_43.2 (constants.%impl.elem0.9af80c.2)]
+// CHECK:STDOUT:   %specific_impl_fn.loc10_43.2: <specific function> = specific_impl_function %impl.elem0.loc10_43.2, @Copy.Op(%U.loc10_8.1) [symbolic = %specific_impl_fn.loc10_43.2 (constants.%specific_impl_fn.399e3c.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @empty_tuple.type.as.I.impl.F.loc10_34.1.%U.binding.as_type (%U.binding.as_type.225)) -> %return.param: @empty_tuple.type.as.I.impl.F.loc10_34.1.%U.binding.as_type (%U.binding.as_type.225) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @empty_tuple.type.as.I.impl.F.loc10_34.1.%U.binding.as_type (%U.binding.as_type.225) = name_ref x, %x
-// CHECK:STDOUT:     %impl.elem0.loc10_43.1: @empty_tuple.type.as.I.impl.F.loc10_34.1.%.loc10_43.2 (%.a79665.2) = impl_witness_access constants.%Copy.lookup_impl_witness.c42a3d.2, element0 [symbolic = %impl.elem0.loc10_43.2 (constants.%impl.elem0.fac0be.2)]
+// CHECK:STDOUT:     %impl.elem0.loc10_43.1: @empty_tuple.type.as.I.impl.F.loc10_34.1.%.loc10_43.2 (%.a79665.2) = impl_witness_access constants.%Copy.lookup_impl_witness.bf49cd.2, element0 [symbolic = %impl.elem0.loc10_43.2 (constants.%impl.elem0.9af80c.2)]
 // CHECK:STDOUT:     %bound_method.loc10_43.1: <bound method> = bound_method %x.ref, %impl.elem0.loc10_43.1
-// CHECK:STDOUT:     %specific_impl_fn.loc10_43.1: <specific function> = specific_impl_function %impl.elem0.loc10_43.1, @Copy.Op(constants.%U.417) [symbolic = %specific_impl_fn.loc10_43.2 (constants.%specific_impl_fn.103937.2)]
+// CHECK:STDOUT:     %specific_impl_fn.loc10_43.1: <specific function> = specific_impl_function %impl.elem0.loc10_43.1, @Copy.Op(constants.%U.417) [symbolic = %specific_impl_fn.loc10_43.2 (constants.%specific_impl_fn.399e3c.2)]
 // CHECK:STDOUT:     %bound_method.loc10_43.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc10_43.1
 // CHECK:STDOUT:     %.loc10_29: ref @empty_tuple.type.as.I.impl.F.loc10_34.1.%U.binding.as_type (%U.binding.as_type.225) = splice_block %return {}
 // CHECK:STDOUT:     %.loc10_43.1: init @empty_tuple.type.as.I.impl.F.loc10_34.1.%U.binding.as_type (%U.binding.as_type.225) = call %bound_method.loc10_43.2(%x.ref) to %.loc10_29
@@ -978,10 +978,10 @@ impl () as I({}) {
 // CHECK:STDOUT:   %require_complete.d742dc.1: <witness> = require_complete_type %U.binding.as_type.225 [symbolic]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %require_complete.482: <witness> = require_complete_type %ptr.4f0 [symbolic]
-// CHECK:STDOUT:   %Copy.lookup_impl_witness.c42a3d.2: <witness> = lookup_impl_witness %U.417, @Copy [symbolic]
+// CHECK:STDOUT:   %Copy.lookup_impl_witness.bf49cd.2: <witness> = lookup_impl_witness %U.binding.as_type.225, @Copy [symbolic]
 // CHECK:STDOUT:   %.a79665.2: type = fn_type_with_self_type %Copy.Op.type, %U.417 [symbolic]
-// CHECK:STDOUT:   %impl.elem0.fac0be.2: %.a79665.2 = impl_witness_access %Copy.lookup_impl_witness.c42a3d.2, element0 [symbolic]
-// CHECK:STDOUT:   %specific_impl_fn.103937.2: <specific function> = specific_impl_function %impl.elem0.fac0be.2, @Copy.Op(%U.417) [symbolic]
+// CHECK:STDOUT:   %impl.elem0.9af80c.2: %.a79665.2 = impl_witness_access %Copy.lookup_impl_witness.bf49cd.2, element0 [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn.399e3c.2: <specific function> = specific_impl_function %impl.elem0.9af80c.2, @Copy.Op(%U.417) [symbolic]
 // CHECK:STDOUT:   %.dcd: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.d9f) [symbolic]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.c66: <witness> = lookup_impl_witness %ptr.4f0, @Copy [symbolic]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.4f0, (%Copy.lookup_impl_witness.c66) [symbolic]
@@ -1053,17 +1053,17 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %U.binding.as_type [symbolic = %require_complete (constants.%require_complete.d742dc.1)]
-// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %U.loc10_18.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.c42a3d.2)]
+// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %U.binding.as_type, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.bf49cd.2)]
 // CHECK:STDOUT:   %.loc10_53.2: type = fn_type_with_self_type constants.%Copy.Op.type, %U.loc10_18.1 [symbolic = %.loc10_53.2 (constants.%.a79665.2)]
-// CHECK:STDOUT:   %impl.elem0.loc10_53.2: @empty_tuple.type.as.I.impl.F.loc10_44.1.%.loc10_53.2 (%.a79665.2) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_53.2 (constants.%impl.elem0.fac0be.2)]
-// CHECK:STDOUT:   %specific_impl_fn.loc10_53.2: <specific function> = specific_impl_function %impl.elem0.loc10_53.2, @Copy.Op(%U.loc10_18.1) [symbolic = %specific_impl_fn.loc10_53.2 (constants.%specific_impl_fn.103937.2)]
+// CHECK:STDOUT:   %impl.elem0.loc10_53.2: @empty_tuple.type.as.I.impl.F.loc10_44.1.%.loc10_53.2 (%.a79665.2) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_53.2 (constants.%impl.elem0.9af80c.2)]
+// CHECK:STDOUT:   %specific_impl_fn.loc10_53.2: <specific function> = specific_impl_function %impl.elem0.loc10_53.2, @Copy.Op(%U.loc10_18.1) [symbolic = %specific_impl_fn.loc10_53.2 (constants.%specific_impl_fn.399e3c.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: %empty_tuple.type, %x.param: @empty_tuple.type.as.I.impl.F.loc10_44.1.%U.binding.as_type (%U.binding.as_type.225)) -> %return.param: @empty_tuple.type.as.I.impl.F.loc10_44.1.%U.binding.as_type (%U.binding.as_type.225) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @empty_tuple.type.as.I.impl.F.loc10_44.1.%U.binding.as_type (%U.binding.as_type.225) = name_ref x, %x
-// CHECK:STDOUT:     %impl.elem0.loc10_53.1: @empty_tuple.type.as.I.impl.F.loc10_44.1.%.loc10_53.2 (%.a79665.2) = impl_witness_access constants.%Copy.lookup_impl_witness.c42a3d.2, element0 [symbolic = %impl.elem0.loc10_53.2 (constants.%impl.elem0.fac0be.2)]
+// CHECK:STDOUT:     %impl.elem0.loc10_53.1: @empty_tuple.type.as.I.impl.F.loc10_44.1.%.loc10_53.2 (%.a79665.2) = impl_witness_access constants.%Copy.lookup_impl_witness.bf49cd.2, element0 [symbolic = %impl.elem0.loc10_53.2 (constants.%impl.elem0.9af80c.2)]
 // CHECK:STDOUT:     %bound_method.loc10_53.1: <bound method> = bound_method %x.ref, %impl.elem0.loc10_53.1
-// CHECK:STDOUT:     %specific_impl_fn.loc10_53.1: <specific function> = specific_impl_function %impl.elem0.loc10_53.1, @Copy.Op(constants.%U.417) [symbolic = %specific_impl_fn.loc10_53.2 (constants.%specific_impl_fn.103937.2)]
+// CHECK:STDOUT:     %specific_impl_fn.loc10_53.1: <specific function> = specific_impl_function %impl.elem0.loc10_53.1, @Copy.Op(constants.%U.417) [symbolic = %specific_impl_fn.loc10_53.2 (constants.%specific_impl_fn.399e3c.2)]
 // CHECK:STDOUT:     %bound_method.loc10_53.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc10_53.1
 // CHECK:STDOUT:     %.loc10_39: ref @empty_tuple.type.as.I.impl.F.loc10_44.1.%U.binding.as_type (%U.binding.as_type.225) = splice_block %return {}
 // CHECK:STDOUT:     %.loc10_53.1: init @empty_tuple.type.as.I.impl.F.loc10_44.1.%U.binding.as_type (%U.binding.as_type.225) = call %bound_method.loc10_53.2(%x.ref) to %.loc10_39

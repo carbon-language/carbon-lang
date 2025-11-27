@@ -518,8 +518,6 @@ fn G() {
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%empty_tuple) [concrete = constants.%C.607]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   %F.ref.loc7_11: %I.assoc_type = name_ref F, imports.%Main.import_ref.c44 [concrete = constants.%assoc0.3f3]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (constants.%I.impl_witness.2f0) [concrete = constants.%I.facet]
-// CHECK:STDOUT:   %.loc7_8: %I.type = converted %C, %I.facet [concrete = constants.%I.facet]
 // CHECK:STDOUT:   %impl.elem0: %.5c3 = impl_witness_access constants.%I.impl_witness.2f0, element0 [concrete = constants.%C.as.I.impl.F.bb5d01.2]
 // CHECK:STDOUT:   %.loc7_16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %empty_struct.loc7_16.1: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]

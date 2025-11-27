@@ -109,7 +109,7 @@ library "[[@TEST_NAME]]";
 
 interface L { let W:! type; }
 
-// CHECK:STDERR: fail_two_different.carbon:[[@LINE+4]]:12: error: associated constant `.(L.W)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_two_different.carbon:[[@LINE+4]]:12: error: associated constant `.Self.(L.W)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: impl () as L where .W = {} and .W = () {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -120,7 +120,7 @@ library "[[@TEST_NAME]]";
 
 interface L2 { let W2:! type; let X2:! type; }
 
-// CHECK:STDERR: fail_two_different_first_associated.carbon:[[@LINE+4]]:12: error: associated constant `.(L2.W2)` given two different values `.(L2.X2)` and `()` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_two_different_first_associated.carbon:[[@LINE+4]]:12: error: associated constant `.Self.(L2.W2)` given two different values `.Self.(L2.X2)` and `()` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: impl () as L2 where .W2 = .X2 and .W2 = () {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -131,7 +131,7 @@ library "[[@TEST_NAME]]";
 
 interface L2 { let W2:! type; let X2:! type; }
 
-// CHECK:STDERR: fail_two_different_second_associated.carbon:[[@LINE+4]]:12: error: associated constant `.(L2.W2)` given two different values `()` and `.(L2.X2)` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_two_different_second_associated.carbon:[[@LINE+4]]:12: error: associated constant `.Self.(L2.W2)` given two different values `()` and `.Self.(L2.X2)` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: impl () as L2 where .W2 = () and .W2 = .X2 {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -183,7 +183,7 @@ interface L { let W:! type; }
 // are all errors, and they get deduped).
 //
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_many_different.carbon:[[@LINE+4]]:12: error: associated constant `.(L.W)` given two different values `((), (), ())` and `({}, (), ())` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_many_different.carbon:[[@LINE+4]]:12: error: associated constant `.Self.(L.W)` given two different values `((), (), ())` and `({}, (), ())` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: impl () as L where .W = ((), (), ()) and .W = ({}, (), ()) and .W = ({}, {}, ()) and .W = ({}, (), {}) {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -218,7 +218,7 @@ library "[[@TEST_NAME]]";
 
 interface M { let X:! type; }
 
-// CHECK:STDERR: fail_repeated_and_different.carbon:[[@LINE+4]]:12: error: associated constant `.(M.X)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_repeated_and_different.carbon:[[@LINE+4]]:12: error: associated constant `.Self.(M.X)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: impl () as M where .X = {} and .X = () and .X = {} {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -231,7 +231,7 @@ interface M { let X:! type; }
 
 // This fails because it resolves to `.X = .X` which is cyclical.
 //
-// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.Self.(M.X)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: impl () as M where .X = .X {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -240,7 +240,7 @@ impl () as M where .X = .X {}
 // Even though `.X = ()` is specified, the rewrites are resolved left to right
 // and a cycle `.X = .X` is found first.
 //
-// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.(M.X)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_cycle_single.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.Self.(M.X)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: impl () as M where .X = .X and .X = () {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -255,7 +255,7 @@ interface M { let X:! type; let Y:! type; let Z:! type; }
 // The value of .X and .Y becomes <error> but .Z is still valid.
 //
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_cycle.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.(M.Y)` [FacetTypeConstraintCycle]
+// CHECK:STDERR: fail_cycle.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.Self.(M.Y)` [FacetTypeConstraintCycle]
 // CHECK:STDERR: impl () as M where .X = .Y and .Y = .X and .Z = () {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -316,7 +316,7 @@ interface N {
   let Y:! {.a: type};
 }
 
-// CHECK:STDERR: fail_non-type_different.carbon:[[@LINE+4]]:12: error: associated constant `.(N.Y)` given two different values `{.a = {}}` and `{.a = ()}` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR: fail_non-type_different.carbon:[[@LINE+4]]:12: error: associated constant `.Self.(N.Y)` given two different values `{.a = {}}` and `{.a = ()}` [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR: impl () as N where .Y = {.a = {}} and .Y = {.a = ()} {}
 // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -407,7 +407,7 @@ fn G() {
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %.Self: %L.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self [symbolic_self]
-// CHECK:STDOUT:   %L.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @L [symbolic_self]
+// CHECK:STDOUT:   %L.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.binding.as_type, @L [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %L.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %tuple.type.2d5: type = tuple_type (%empty_tuple.type, %empty_tuple.type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %tuple.7e4: %tuple.type.2d5 = tuple_value (%empty_tuple, %empty_tuple, %empty_tuple) [concrete]
@@ -509,7 +509,7 @@ fn G() {
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %.Self: %M.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self [symbolic_self]
-// CHECK:STDOUT:   %M.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @M [symbolic_self]
+// CHECK:STDOUT:   %M.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.binding.as_type, @M [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %M.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %impl.elem1: type = impl_witness_access %M.lookup_impl_witness, element1 [symbolic_self]
 // CHECK:STDOUT:   %impl.elem2: type = impl_witness_access %M.lookup_impl_witness, element2 [symbolic_self]

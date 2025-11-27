@@ -54,7 +54,7 @@ fn Use() { UseJ(C); }
 // CHECK:STDOUT:   %UseI.type: type = fn_type @UseI [concrete]
 // CHECK:STDOUT:   %UseI: %UseI.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T.binding.as_type.bcb: type = symbolic_binding_type T, 0, %T.9f2 [symbolic]
-// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.9f2, @I [symbolic]
+// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.binding.as_type.bcb, @I [symbolic]
 // CHECK:STDOUT:   %.258: type = fn_type_with_self_type %I.F.type, %T.9f2 [symbolic]
 // CHECK:STDOUT:   %impl.elem0: %.258 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @I.F(%T.9f2) [symbolic]
@@ -217,7 +217,7 @@ fn Use() { UseJ(C); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc11_9.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type.bcb)]
-// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc11_9.1, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
+// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.binding.as_type, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
 // CHECK:STDOUT:   %.loc11_19.2: type = fn_type_with_self_type constants.%I.F.type, %T.loc11_9.1 [symbolic = %.loc11_19.2 (constants.%.258)]
 // CHECK:STDOUT:   %impl.elem0.loc11_19.2: @UseI.%.loc11_19.2 (%.258) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_19.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc11_19.2: <specific function> = specific_impl_function %impl.elem0.loc11_19.2, @I.F(%T.loc11_9.1) [symbolic = %specific_impl_fn.loc11_19.2 (constants.%specific_impl_fn)]
