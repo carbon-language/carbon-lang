@@ -69,8 +69,12 @@ auto HandleParseNode(Context& context, Parse::RequireDefaultSelfImplsId node_id)
 
   auto self_inst_id = lookup_result.target_inst_id();
   auto self_type_id = context.insts().Get(self_inst_id).type_id();
-  CARBON_CHECK(context.types().Is<SemIR::FacetType>(self_type_id));
+  if (self_type_id == SemIR::ErrorInst::TypeId) {
+    context.node_stack().Push(node_id, SemIR::ErrorInst::TypeInstId);
+    return true;
+  }
 
+  CARBON_CHECK(context.types().Is<SemIR::FacetType>(self_type_id));
   auto self_facet_as_type = AddTypeInst<SemIR::FacetAccessType>(
       context, node_id,
       {.type_id = SemIR::TypeType::TypeId,
