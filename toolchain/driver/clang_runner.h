@@ -64,7 +64,8 @@ class ClangRunner : ToolRunnerBase {
   // that stream. The verbose output from Clang goes to stderr regardless.
   ClangRunner(const InstallPaths* install_paths,
               llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-              llvm::raw_ostream* vlog_stream = nullptr);
+              llvm::raw_ostream* vlog_stream = nullptr,
+              std::optional<std::filesystem::path> override_clang_path = {});
 
   // Run Clang with the provided arguments and a runtime cache for on-demand
   // runtime building.
@@ -123,6 +124,8 @@ class ClangRunner : ToolRunnerBase {
                         llvm::ThreadPoolTaskGroup& threads) -> ErrorOr<Success>;
 
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
+
+  std::filesystem::path clang_path_;
 };
 
 }  // namespace Carbon

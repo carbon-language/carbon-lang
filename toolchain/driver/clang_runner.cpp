@@ -69,10 +69,15 @@ auto clang_main(int Argc, char** Argv, const llvm::ToolContext& ToolContext)
 
 namespace Carbon {
 
-ClangRunner::ClangRunner(const InstallPaths* install_paths,
-                         llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                         llvm::raw_ostream* vlog_stream)
-    : ToolRunnerBase(install_paths, vlog_stream), fs_(std::move(fs)) {}
+ClangRunner::ClangRunner(
+    const InstallPaths* install_paths,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::raw_ostream* vlog_stream,
+    std::optional<std::filesystem::path> override_clang_path)
+    : ToolRunnerBase(install_paths, vlog_stream),
+      fs_(std::move(fs)),
+      clang_path_(override_clang_path ? *std::move(override_clang_path)
+                                      : installation_->clang_path()) {}
 
 // Searches an argument list to a Clang execution to determine the expected
 // target string, suitable for use with `llvm::Triple`.
@@ -211,8 +216,6 @@ auto ClangRunner::RunInternal(
     llvm::ArrayRef<llvm::StringRef> args, llvm::StringRef target,
     std::optional<llvm::StringRef> target_resource_dir_path,
     bool enable_leaking) -> bool {
-  std::string clang_path = installation_->clang_path();
-
   // Rebuild the args as C-string args.
   llvm::OwningArrayRef<char> cstr_arg_storage;
 
@@ -220,7 +223,7 @@ auto ClangRunner::RunInternal(
   // we don't synthesize any default arguments there.
   if (!args.empty() && args[0].starts_with("-cc1")) {
     llvm::SmallVector<const char*, 64> cstr_args =
-        BuildCStrArgs(clang_path, args, cstr_arg_storage);
+        BuildCStrArgs(clang_path_.native(), args, cstr_arg_storage);
     if (args[0] == "-cc1") {
       CARBON_VLOG("Dispatching `-cc1` command line...");
       int exit_code =
@@ -259,7 +262,7 @@ auto ClangRunner::RunInternal(
 
   // Rebuild the args as C-string args.
   llvm::SmallVector<const char*, 64> cstr_args =
-      BuildCStrArgs(clang_path, prefix_args, args, cstr_arg_storage);
+      BuildCStrArgs(clang_path_.native(), prefix_args, args, cstr_arg_storage);
 
   CARBON_VLOG("Running Clang driver with the following arguments:\n");
   for (const char* cstr_arg : llvm::ArrayRef(cstr_args)) {
@@ -286,8 +289,9 @@ auto ClangRunner::RunInternal(
 
   // Note that we configure the driver's *default* target here, not the expected
   // target as that will be parsed out of the command line below.
-  clang::driver::Driver driver(clang_path, llvm::sys::getDefaultTargetTriple(),
-                               diagnostics, "clang LLVM compiler", fs_);
+  clang::driver::Driver driver(clang_path_.native(),
+                               llvm::sys::getDefaultTargetTriple(), diagnostics,
+                               "clang LLVM compiler", fs_);
 
   llvm::Triple target_triple(target);
 
@@ -305,10 +309,10 @@ auto ClangRunner::RunInternal(
   }
 
   // If we have a target-specific resource directory, set it as the default
-  // here.
-  if (target_resource_dir_path) {
-    driver.ResourceDir = target_resource_dir_path->str();
-  }
+  // here, otherwise use the installation's resource directory.
+  driver.ResourceDir = target_resource_dir_path
+                           ? target_resource_dir_path->str()
+                           : installation_->clang_resource_path().native();
 
   // Configure the install directory to find other tools and data files.
   //

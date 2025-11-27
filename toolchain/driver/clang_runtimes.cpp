@@ -527,12 +527,6 @@ auto ClangResourceDirBuilder::Setup() -> void {
     result_ = std::move(result).error();
     return;
   }
-  if (auto result = runtimes_builder_->dir().Symlink(
-          "share", install_resource_path / "share");
-      !result.ok()) {
-    result_ = std::move(result).error();
-    return;
-  }
 
   // Create the target's `lib` directory.
   auto lib_dir_result = runtimes_builder_->dir().CreateDirectories(lib_path_);
