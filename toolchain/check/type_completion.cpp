@@ -824,6 +824,7 @@ static auto MakeCopyOfSpecificAndAppendSelf(
   return MakeSpecific(context, loc_id, generic_id, arg_ids);
 }
 
+// Returns the `Self` from the specific of a `require` declaration.
 static auto GetRequireImplsSpecificSelf(Context& context,
                                         const SemIR::RequireImpls& require)
     -> SemIR::InstId {
@@ -832,9 +833,11 @@ static auto GetRequireImplsSpecificSelf(Context& context,
       context.specifics().Get(require_generic.self_specific_id);
   auto require_self_specific_args =
       context.inst_blocks().Get(require_self_specific.args_id);
-  // The last argument of a `require` generic is always `Self`, as require can
+  // The last argument of a `require` generic is always `Self`, as `require` can
   // not have any parameters of its own, only enclosing parameters.
-  return require_self_specific_args.back();
+  auto self_inst_id = require_self_specific_args.back();
+  CARBON_CHECK(context.insts().Is<SemIR::SymbolicBinding>(self_inst_id));
+  return self_inst_id;
 }
 
 static auto GetFacetTypeInSpecific(Context& context, SemIR::InstId facet_type,

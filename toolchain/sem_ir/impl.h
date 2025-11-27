@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_IMPL_H_
 #define CARBON_TOOLCHAIN_SEM_IR_IMPL_H_
 
+#include <utility>
+
 #include "common/map.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
@@ -208,8 +210,7 @@ class ImplStore {
  private:
   File& sem_ir_;
   ValueStore<ImplId, Impl> values_;
-  Map<std::tuple<InstId, InterfaceId, SpecificId>, ImplOrLookupBucketId>
-      lookup_;
+  Map<std::pair<InstId, SpecificInterface>, ImplOrLookupBucketId> lookup_;
   // Buckets with at least 2 entries, which will be rare; see LookupBucketRef.
   llvm::SmallVector<llvm::SmallVector<ImplId, 2>> lookup_buckets_;
 };

@@ -865,14 +865,10 @@ static auto GetLocalConstantId(ImportRefResolver& resolver,
   auto import_decl_inst_id = resolver.import_generics().Get(generic_id).decl_id;
   auto import_decl_inst =
       resolver.import_insts().GetWithAttachedType(import_decl_inst_id);
-  if (import_decl_inst.Is<SemIR::ImplDecl>()) {
-    // For an impl declaration, the imported entity can be found via the
-    // declaration.
-    return GetLocalConstantId(resolver, import_decl_inst_id);
-  }
-  if (import_decl_inst.Is<SemIR::RequireImplsDecl>()) {
-    // For an impl declaration, the imported entity can be found via the
-    // declaration.
+  if (import_decl_inst.Is<SemIR::ImplDecl>() ||
+      import_decl_inst.Is<SemIR::RequireImplsDecl>()) {
+    // For these decl types, the imported entity can be found via the
+    // declaration's operands.
     return GetLocalConstantId(resolver, import_decl_inst_id);
   }
   // For all other kinds of declaration, the imported entity can be found via

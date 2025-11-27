@@ -32,12 +32,11 @@ auto ImplStore::GetOrAddLookupBucket(const Impl& impl) -> LookupBucketRef {
       }
     }
   }
-  return LookupBucketRef(
-      *this, lookup_
-                 .Insert(std::tuple{self_id, impl_as_interface.interface_id,
-                                    impl_as_interface.specific_id},
-                         [] { return ImplOrLookupBucketId::None; })
-                 .value());
+  return LookupBucketRef(*this,
+                         lookup_
+                             .Insert(std::pair{self_id, impl_as_interface},
+                                     [] { return ImplOrLookupBucketId::None; })
+                             .value());
 }
 
 }  // namespace Carbon::SemIR
