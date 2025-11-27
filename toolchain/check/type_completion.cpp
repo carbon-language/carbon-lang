@@ -806,7 +806,7 @@ static auto RequireIdentifiedNamedConstraints(
   return true;
 }
 
-// Construct the specific of a RequireImpls from the specific of its enclosing
+// Get the specific of a RequireImpls from the specific of its enclosing
 // interface or named constraint. Since a `require` declaration can not
 // introduce new generic bindings, the specific for the RequireImpls can be
 // constructed from the enclosing one.
