@@ -32,25 +32,6 @@ class ToolRunnerBase {
                           llvm::raw_ostream* vlog_stream = nullptr);
 
  protected:
-  // Translates `args` into C-string arguments for tool APIs based on `main`.
-  //
-  // Accepts a `tool_name` for logging, and a `tool_path` that will be used as
-  // the first C-string argument to simulate and `argv[0]` entry.
-  //
-  // Accepts a `cstr_arg_storage` that will provide the underlying storage for
-  // the C-strings, and returns a small vector of the C-string pointers. The
-  // returned small vector uses a large small size to allow most common command
-  // lines to avoid extra allocations and growth passes.
-  //
-  // Lastly accepts an optional `verbose_flag`. If provided, and if
-  // `vlog_stream_` is bound to stderr for this instance, the verbose flag will
-  // be injected at the start of the argument list.
-  auto BuildCStrArgs(llvm::StringRef tool_name, llvm::StringRef tool_path,
-                     std::optional<llvm::StringRef> verbose_flag,
-                     llvm::ArrayRef<llvm::StringRef> args,
-                     llvm::OwningArrayRef<char>& cstr_arg_storage)
-      -> llvm::SmallVector<const char*, 64>;
-
   // We use protected members as this base is just factoring out common
   // implementation details of other runners.
   //
