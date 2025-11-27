@@ -28,15 +28,36 @@
 
 namespace Carbon {
 
-auto Runtimes::Make(std::filesystem::path path, llvm::raw_ostream* vlog_stream)
-    -> ErrorOr<Runtimes> {
+static auto MakeAbsolute(std::filesystem::path path)
+    -> ErrorOr<std::filesystem::path> {
   if (!path.is_absolute()) {
-    return Error("Runtimes require an absolute path");
+    std::error_code ec;
+    path = std::filesystem::absolute(path, ec);
+    if (ec) {
+      return Error(llvm::formatv("Unable to compute an absolute path: {0}",
+                                 ec.message()));
+    }
   }
+  return std::move(path);
+}
+
+auto Runtimes::OpenExisting(std::filesystem::path path,
+                            llvm::raw_ostream* vlog_stream)
+    -> ErrorOr<Runtimes> {
+  CARBON_ASSIGN_OR_RETURN(path, MakeAbsolute(std::move(path)));
 
   CARBON_ASSIGN_OR_RETURN(
       Filesystem::Dir dir,
       Filesystem::Cwd().OpenDir(path, Filesystem::OpenExisting));
+  return Runtimes(std::move(path), std::move(dir), {}, {}, vlog_stream);
+}
+
+auto Runtimes::Make(std::filesystem::path path, llvm::raw_ostream* vlog_stream)
+    -> ErrorOr<Runtimes> {
+  CARBON_ASSIGN_OR_RETURN(path, MakeAbsolute(std::move(path)));
+
+  CARBON_ASSIGN_OR_RETURN(Filesystem::Dir dir,
+                          Filesystem::Cwd().CreateDirectories(path));
   return Runtimes(std::move(path), std::move(dir), {}, {}, vlog_stream);
 }
 
@@ -64,6 +85,11 @@ auto Runtimes::Get(Component component) -> ErrorOr<std::filesystem::path> {
 auto Runtimes::Build(Component component)
     -> ErrorOr<std::variant<std::filesystem::path, Builder>> {
   return BuildImpl(component, BuildLockDeadline, BuildLockPollInterval);
+}
+
+auto Runtimes::Remove(Component component) -> ErrorOr<Success> {
+  CARBON_RETURN_IF_ERROR(base_dir_.Rmtree(ComponentPath(component)));
+  return Success();
 }
 
 auto Runtimes::BuildImpl(Component component, Filesystem::Duration deadline,

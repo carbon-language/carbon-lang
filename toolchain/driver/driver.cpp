@@ -206,9 +206,8 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
   driver_env_.runtimes_cache = std::move(*cache_result);
 
   if (!options.prebuilt_runtimes_path.empty()) {
-    auto result = Runtimes::Make(
-        std::filesystem::absolute(options.prebuilt_runtimes_path.str()),
-        driver_env_.vlog_stream);
+    auto result = Runtimes::OpenExisting(options.prebuilt_runtimes_path.str(),
+                                         driver_env_.vlog_stream);
     if (!result.ok()) {
       // TODO: We should provide a better diagnostic than the raw error.
       CARBON_DIAGNOSTIC(DriverPrebuiltRuntimesInvalid, Error, "{0}",
