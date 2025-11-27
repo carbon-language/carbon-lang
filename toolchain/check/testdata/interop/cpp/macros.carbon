@@ -669,6 +669,69 @@ fn F() {
   Cpp.M_A_NO_SCOPE;
 }
 
+// --- constexpr_int.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+   constexpr int a = 1;
+   #define M_CONSTEXPR_INT ::a
+''';
+
+fn F() {
+  //@dump-sem-ir-begin
+  let a: i32 = Cpp.M_CONSTEXPR_INT;
+  //@dump-sem-ir-end
+}
+
+// --- fail_import_constexpr_no_scope.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+   constexpr int a = 1;
+   // CHECK:STDERR: fail_import_constexpr_no_scope.carbon:[[@LINE+7]]:33: error: use of undeclared identifier 'a'; did you mean '::a'? [CppInteropParseError]
+   // CHECK:STDERR:    13 |    #define M_CONSTEXPR_NO_SCOPE a
+   // CHECK:STDERR:       |                                 ^
+   // CHECK:STDERR:       |                                 ::a
+   // CHECK:STDERR: fail_import_constexpr_no_scope.carbon:[[@LINE-5]]:18: note: '::a' declared here [CppInteropParseNote]
+   // CHECK:STDERR:     5 |    constexpr int a = 1;
+   // CHECK:STDERR:       |                  ^
+   #define M_CONSTEXPR_NO_SCOPE a
+''';
+
+fn F() {
+  // CHECK:STDERR: fail_import_constexpr_no_scope.carbon:[[@LINE+4]]:16: note: in `Cpp` name lookup for `M_CONSTEXPR_NO_SCOPE` [InCppNameLookup]
+  // CHECK:STDERR:   let a: i32 = Cpp.M_CONSTEXPR_NO_SCOPE;
+  // CHECK:STDERR:                ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  let a: i32 = Cpp.M_CONSTEXPR_NO_SCOPE;
+}
+
+// --- fail_todo_import_macro_constexpr_float.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+   constexpr float b = 1.0f;
+   #define M_CONSTEXPR_FLOAT ::b
+''';
+
+fn F() {
+  // CHECK:STDERR: fail_todo_import_macro_constexpr_float.carbon:[[@LINE+11]]:16: error: semantics TODO: `Unsupported: macro evaluated to a non-integer LValue` [SemanticsTodo]
+  // CHECK:STDERR:   let a: f32 = Cpp.M_CONSTEXPR_FLOAT;
+  // CHECK:STDERR:                ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_macro_constexpr_float.carbon:[[@LINE+8]]:16: note: in `Cpp` name lookup for `M_CONSTEXPR_FLOAT` [InCppNameLookup]
+  // CHECK:STDERR:   let a: f32 = Cpp.M_CONSTEXPR_FLOAT;
+  // CHECK:STDERR:                ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_import_macro_constexpr_float.carbon:[[@LINE+4]]:16: error: member name `M_CONSTEXPR_FLOAT` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   let a: f32 = Cpp.M_CONSTEXPR_FLOAT;
+  // CHECK:STDERR:                ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  let a: f32 = Cpp.M_CONSTEXPR_FLOAT;
+}
+
 // --- lambda.carbon
 
 library "[[@TEST_NAME]]";
@@ -1330,6 +1393,43 @@ fn F() {
 // CHECK:STDOUT:     %i32.loc19: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %k: %i32 = value_binding k, %M_ZERO.ref
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- constexpr_int.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %const: type = const_type %i32 [concrete]
+// CHECK:STDOUT:   %int_1.22e: %const = int_value 1 [concrete]
+// CHECK:STDOUT:   %int_1.5d2: %i32 = int_value 1 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .M_CONSTEXPR_INT = %int_1
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_1: %const = int_value 1 [concrete = constants.%int_1.22e]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.7ce = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %M_CONSTEXPR_INT.ref: %const = name_ref M_CONSTEXPR_INT, imports.%int_1 [concrete = constants.%int_1.22e]
+// CHECK:STDOUT:   %.loc11_10: type = splice_block %i32.loc11 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc11_19.1: %i32 = as_compatible %M_CONSTEXPR_INT.ref [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %M_CONSTEXPR_INT.ref, %.loc11_19.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %a: %i32 = value_binding a, %.loc11_19.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
