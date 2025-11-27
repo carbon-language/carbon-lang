@@ -530,6 +530,9 @@ CARBON_DIAGNOSTIC_KIND(FacetTypeConstraintCycle)
 // Facet type combination.
 CARBON_DIAGNOSTIC_KIND(FacetTypeRequiredForTypeAndOperator)
 
+// Facet type completeness.
+CARBON_DIAGNOSTIC_KIND(IdentifyingFacetTypeHere)
+
 // Generics.
 CARBON_DIAGNOSTIC_KIND(GenericMissingExplicitParameters)
 

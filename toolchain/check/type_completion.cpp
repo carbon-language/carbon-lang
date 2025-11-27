@@ -811,7 +811,7 @@ static auto RequireIdentifiedNamedConstraints(
 // introduce new generic bindings, the specific for the RequireImpls can be
 // constructed from the enclosing one.
 static auto GetRequireImplsSpecificFromEnclosingSpecific(
-    Context& context, SemIR::LocId loc_id, const SemIR::RequireImpls& require,
+    Context& context, const SemIR::RequireImpls& require,
     SemIR::SpecificId enclosing_specific_id) -> SemIR::SpecificId {
   auto enclosing_specific_args_id =
       context.specifics().GetArgsOrEmpty(enclosing_specific_id);
@@ -836,7 +836,8 @@ static auto GetRequireImplsSpecificFromEnclosingSpecific(
   CARBON_CHECK(context.insts().Is<SemIR::SymbolicBinding>(self_inst_id));
   arg_ids.push_back(self_inst_id);
 
-  return MakeSpecific(context, loc_id, require.generic_id, arg_ids);
+  return MakeSpecific(context, SemIR::LocId(require.decl_id),
+                      require.generic_id, arg_ids);
 }
 
 // Returns the `facet_type` mapped into `specific_id`. If an error results, it
@@ -903,6 +904,15 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
     }
     llvm::append_range(self_impls, facet_type_info.self_impls_constraints);
 
+    Diagnostics::AnnotationScope annotate_diagnostics(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC(IdentifyingFacetTypeHere, Note,
+                            "identifying facet type {0} here",
+                            SemIR::FacetTypeId);
+          builder.Note(loc_id, IdentifyingFacetTypeHere,
+                       facet_type.facet_type_id);
+        });
+
     for (auto extends : facet_type_info.extend_named_constraints) {
       const auto& constraint =
           context.named_constraints().Get(extends.named_constraint_id);
@@ -910,7 +920,7 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                constraint.require_impls_block_id)) {
         const auto& require = context.require_impls().Get(require_impls_id);
         auto require_specific_id = GetRequireImplsSpecificFromEnclosingSpecific(
-            context, loc_id, require, extends.specific_id);
+            context, require, extends.specific_id);
         auto facet_type_id = TryGetFacetTypeInSpecific(
             context, require.facet_type_inst_id, require_specific_id);
         if (facet_type_id.has_value()) {
@@ -930,7 +940,7 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                constraint.require_impls_block_id)) {
         const auto& require = context.require_impls().Get(require_impls_id);
         auto require_specific_id = GetRequireImplsSpecificFromEnclosingSpecific(
-            context, loc_id, require, impls.specific_id);
+            context, require, impls.specific_id);
         auto facet_type_id = TryGetFacetTypeInSpecific(
             context, require.facet_type_inst_id, require_specific_id);
         if (facet_type_id.has_value()) {
