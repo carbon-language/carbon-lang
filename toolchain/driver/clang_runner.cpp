@@ -51,6 +51,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/TargetParser/Host.h"
 #include "third_party/llvm/clang_cc1.h"
+#include "toolchain/base/clang_invocation.h"
 #include "toolchain/base/install_paths.h"
 #include "toolchain/driver/clang_runtimes.h"
 #include "toolchain/driver/runtimes_cache.h"
@@ -214,12 +215,12 @@ auto ClangRunner::RunInternal(
 
   // Rebuild the args as C-string args.
   llvm::OwningArrayRef<char> cstr_arg_storage;
-  llvm::SmallVector<const char*, 64> cstr_args =
-      BuildCStrArgs(clang_path, args, cstr_arg_storage);
 
   // Handle special dispatch for CC1 commands as they don't use the driver and
   // we don't synthesize any default arguments there.
   if (!args.empty() && args[0].starts_with("-cc1")) {
+    llvm::SmallVector<const char*, 64> cstr_args =
+        BuildCStrArgs(clang_path, args, cstr_arg_storage);
     if (args[0] == "-cc1") {
       CARBON_VLOG("Dispatching `-cc1` command line...");
       int exit_code =
@@ -245,6 +246,20 @@ auto ClangRunner::RunInternal(
     // TODO: Should this be forwarding the full exit code?
     return exit_code == 0;
   }
+
+  // We start with a custom prefix of arguments to establish Carbon's default
+  // configuration for invoking Clang. These may not all be needed for all
+  // invocations, so we also suppress warnings about any that are ignored.
+  llvm::SmallVector<std::string> prefix_args;
+  prefix_args.push_back("--start-no-unused-arguments");
+
+  AppendDefaultClangArgs(*installation_, target, prefix_args);
+
+  prefix_args.push_back("--end-no-unused-arguments");
+
+  // Rebuild the args as C-string args.
+  llvm::SmallVector<const char*, 64> cstr_args =
+      BuildCStrArgs(clang_path, prefix_args, args, cstr_arg_storage);
 
   CARBON_VLOG("Running Clang driver with the following arguments:\n");
   for (const char* cstr_arg : llvm::ArrayRef(cstr_args)) {

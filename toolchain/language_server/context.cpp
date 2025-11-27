@@ -169,7 +169,8 @@ auto Context::File::SetText(Context& context, std::optional<int64_t> version,
       Parse::GetTreeAndSubtreesStore::MakeWithExplicitSize(IdTag(), 1, getter);
 
   auto clang_invocation =
-      BuildClangInvocation(consumer, fs, {context.installation().clang_path()});
+      BuildClangInvocation(consumer, fs, context.installation(),
+                           llvm::sys::getDefaultTargetTriple());
 
   Check::CheckParseTrees(units, getters, fs, check_options,
                          std::move(clang_invocation));

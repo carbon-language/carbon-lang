@@ -39,6 +39,7 @@ cc_library(
         "//common:string_helpers",
         "//common:vlog",
         "//third_party/llvm:clang_cc1",
+        "//toolchain/base:clang_invocation",
         "//toolchain/base:install_paths",
         "//toolchain/base:kind_switch",
         "//toolchain/base:runtime_sources",

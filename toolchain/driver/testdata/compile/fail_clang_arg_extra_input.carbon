@@ -9,7 +9,7 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/driver/testdata/compile/fail_clang_arg_extra_input.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/driver/testdata/compile/fail_clang_arg_extra_input.carbon
-// CHECK:STDERR: error: unable to handle compilation, expected exactly one compiler job in ' "{{.*}}/clang" "-cc1" {{.*}} "-x" "c++" "bar.cpp";  "{{.*}}/clang" "-cc1" {{.*}} "-x" "c++" "<carbon Cpp imports>"; ' [CppInteropDriverError]
+// CHECK:STDERR: error: unable to handle compilation, expected exactly one compiler job in ' "{{.*}}/clang" "-cc1" {{.*}} "-x" "c++" "<carbon Cpp imports>";  "{{.*}}/clang" "-cc1" {{.*}} "-x" "c++" "bar.cpp"; ' [CppInteropDriverError]
 // CHECK:STDERR:
 
 // --- foo.carbon

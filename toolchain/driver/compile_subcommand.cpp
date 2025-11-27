@@ -1082,31 +1082,25 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // TODO: Share any arguments we specify here with the `carbon clang`
   // subcommand.
   {
-    llvm::SmallVector<std::string> clang_path_and_args = {
-        driver_env.installation->clang_path(),
-        // Propagate the target to Clang.
-        llvm::formatv("--target={0}", options_.codegen_options.target).str(),
-        // Enable PIE by default, but allow it to be overridden by Clang
-        // arguments. Clang's default is configurable, but we'd like our
-        // defaults to be more stable.
-        // TODO: Decide if we want this.
-        "-fPIE",
-        // Propagate our optimization level to Clang as a default. This can be
-        // overridden by Clang arguments, but doing so will only have an effect
-        // if those arguments affect Clang's IR, not its pass pipeline.
-        GetClangOptimizationFlag(options_.opt_level).str(),
-    };
     if (driver_env.fuzzing && !options_.clang_args.empty()) {
       // Parsing specific Clang arguments can reach deep into
       // external libraries that aren't fuzz clean.
       TestAndDiagnoseIfFuzzingExternalLibraries(driver_env, "compile");
       return {.success = false};
     }
-    for (auto str : options_.clang_args) {
-      clang_path_and_args.push_back(str.str());
-    }
-    clang_invocation = BuildClangInvocation(driver_env.consumer, driver_env.fs,
-                                            clang_path_and_args);
+
+    // TODO: Move this into `BuildClangInvocation` when it can accept an
+    // optimization level.
+    llvm::SmallVector<llvm::StringRef> clang_args = {
+        // Propagate our optimization level to Clang as a default. This can be
+        // overridden by Clang arguments, but doing so will only have an effect
+        // if those arguments affect Clang's IR, not its pass pipeline.
+        GetClangOptimizationFlag(options_.opt_level),
+    };
+    clang_args.append(options_.clang_args);
+    clang_invocation = BuildClangInvocation(
+        driver_env.consumer, driver_env.fs, *driver_env.installation,
+        options_.codegen_options.target, clang_args);
     if (!clang_invocation) {
       return {.success = false};
     }
