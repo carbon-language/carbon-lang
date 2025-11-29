@@ -82,6 +82,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %Destroy.impl_witness.386: <witness> = impl_witness imports.%Destroy.impl_witness_table, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.c52) [symbolic]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.555: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.c52) [symbolic]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.61a: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.555 = struct_value () [symbolic]
+// CHECK:STDOUT:   %.b57: require_specific_def_type = require_specific_def @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.c52) [symbolic]
 // CHECK:STDOUT:   %Destroy.facet.381: %Destroy.type = facet_value %Class.55f, (%Destroy.impl_witness.386) [symbolic]
 // CHECK:STDOUT:   %.ab9: type = fn_type_with_self_type %Destroy.Op.type, %Destroy.facet.381 [symbolic]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.95f: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.61a, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value.c52) [symbolic]
@@ -190,9 +191,10 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %specific_impl_fn.loc10_27.2: <specific function> = specific_impl_function %impl.elem0.loc10_27.2, @Copy.Op(%T.loc9_26.1) [symbolic = %specific_impl_fn.loc10_27.2 (constants.%specific_impl_fn.103)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class.loc10_17.2, %T.binding.as_type [symbolic = %Class.elem (constants.%Class.elem.4f3)]
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %Class.loc10_17.2, () [symbolic = %facet_value (constants.%facet_value.c52)]
+// CHECK:STDOUT:   %.loc10_3.2: require_specific_def_type = require_specific_def @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [symbolic = %.loc10_3.2 (constants.%.b57)]
 // CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness imports.%Destroy.impl_witness_table, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.386)]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Class.loc10_17.2, (%Destroy.impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet.381)]
-// CHECK:STDOUT:   %.loc10_3.2: type = fn_type_with_self_type constants.%Destroy.Op.type, %Destroy.facet [symbolic = %.loc10_3.2 (constants.%.ab9)]
+// CHECK:STDOUT:   %.loc10_3.3: type = fn_type_with_self_type constants.%Destroy.Op.type, %Destroy.facet [symbolic = %.loc10_3.3 (constants.%.ab9)]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.type (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.type.555)]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op: @InitFromStructGeneric.%DestroyT.binding.as_type.as.Destroy.impl.Op.type (%DestroyT.binding.as_type.as.Destroy.impl.Op.type.555) = struct_value () [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.61a)]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.95f)]
@@ -234,7 +236,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:     %bound_method.loc11_11.2: <bound method> = bound_method %.loc11_11.2, %specific_impl_fn.loc11
 // CHECK:STDOUT:     %.loc9_47: ref @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = splice_block %return {}
 // CHECK:STDOUT:     %.loc11_11.3: init @InitFromStructGeneric.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc11_11.2(%.loc11_11.2) to %.loc9_47
-// CHECK:STDOUT:     %impl.elem0.loc10_3: @InitFromStructGeneric.%.loc10_3.2 (%.ab9) = impl_witness_access constants.%Destroy.impl_witness.386, element0 [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.61a)]
+// CHECK:STDOUT:     %impl.elem0.loc10_3: @InitFromStructGeneric.%.loc10_3.3 (%.ab9) = impl_witness_access constants.%Destroy.impl_witness.386, element0 [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.61a)]
 // CHECK:STDOUT:     %bound_method.loc10_3.1: <bound method> = bound_method %v.var, %impl.elem0.loc10_3
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0.loc10_3, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.c52) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.95f)]
 // CHECK:STDOUT:     %bound_method.loc10_3.2: <bound method> = bound_method %v.var, %specific_fn

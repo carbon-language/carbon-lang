@@ -239,14 +239,15 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
 
   // The self type of the impl must match the type in the query, or this is an
   // `impl T as ...` for some other type `T` and should not be considered.
-  auto deduced_self_const_id = SemIR::GetConstantValueInSpecific(
+  auto noncanonical_deduced_self_const_id = SemIR::GetConstantValueInSpecific(
       context.sem_ir(), specific_id, impl.self_id);
+
   // In a generic `impl forall` the self type can be a FacetAccessType, which
   // will not be the same constant value as a query facet value. We move through
   // to the facet value here, and if the query was a FacetAccessType we did the
   // same there so they still match.
-  deduced_self_const_id =
-      GetCanonicalFacetOrTypeValue(context, deduced_self_const_id);
+  auto deduced_self_const_id =
+      GetCanonicalFacetOrTypeValue(context, noncanonical_deduced_self_const_id);
   if (query_self_const_id != deduced_self_const_id) {
     return EvalImplLookupResult::MakeNone();
   }
@@ -287,6 +288,17 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
 
   LoadImportRef(context, impl.witness_id);
   if (specific_id.has_value()) {
+    // Add an instruction to support requiring an impl definition which may not
+    // otherwise be generated. This is used to resolve dependency chains when
+    // `MakeFinal` is returned without a concrete definition; particularly final
+    // impls with symbolic constants.
+    AddInstInNoBlock(
+        context, loc_id,
+        SemIR::RequireSpecificDefinition{
+            .type_id = GetSingletonType(
+                context, SemIR::RequireSpecificDefinitionType::TypeInstId),
+            .specific_id = specific_id});
+
     // We need a definition of the specific `impl` so we can access its
     // witness.
     ResolveSpecificDefinition(context, loc_id, specific_id);

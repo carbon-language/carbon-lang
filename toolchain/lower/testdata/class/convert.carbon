@@ -33,27 +33,27 @@ fn DoIt() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_CConvert.IntWrapper.Main:ImplicitAs.Core"(ptr %self) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_48.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !7
-// CHECK:STDOUT:   %.loc18_48.2 = load i32, ptr %.loc18_48.1.n, align 4, !dbg !7
-// CHECK:STDOUT:   ret i32 %.loc18_48.2, !dbg !8
+// CHECK:STDOUT:   %.loc18_48.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !11
+// CHECK:STDOUT:   %.loc18_48.2 = load i32, ptr %.loc18_48.1.n, align 4, !dbg !11
+// CHECK:STDOUT:   ret i32 %.loc18_48.2, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CConsume.Main(i32 %n) #0 !dbg !9 {
+// CHECK:STDOUT: define void @_CConsume.Main(i32 %n) #0 !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CDoIt.Main() #0 !dbg !11 {
+// CHECK:STDOUT: define void @_CDoIt.Main() #0 !dbg !19 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %w.var = alloca { i32 }, align 8, !dbg !12
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !12
-// CHECK:STDOUT:   %.loc24_31.3.n = getelementptr inbounds nuw { i32 }, ptr %w.var, i32 0, i32 0, !dbg !13
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %w.var, ptr align 4 @IntWrapper.val.loc24_3, i64 4, i1 false), !dbg !12
-// CHECK:STDOUT:   %IntWrapper.as.ImplicitAs.impl.Convert.call = call i32 @"_CConvert.IntWrapper.Main:ImplicitAs.Core"(ptr %w.var), !dbg !14
-// CHECK:STDOUT:   call void @_CConsume.Main(i32 %IntWrapper.as.ImplicitAs.impl.Convert.call), !dbg !15
-// CHECK:STDOUT:   ret void, !dbg !16
+// CHECK:STDOUT:   %w.var = alloca { i32 }, align 8, !dbg !22
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !22
+// CHECK:STDOUT:   %.loc24_31.3.n = getelementptr inbounds nuw { i32 }, ptr %w.var, i32 0, i32 0, !dbg !23
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %w.var, ptr align 4 @IntWrapper.val.loc24_3, i64 4, i1 false), !dbg !22
+// CHECK:STDOUT:   %IntWrapper.as.ImplicitAs.impl.Convert.call = call i32 @"_CConvert.IntWrapper.Main:ImplicitAs.Core"(ptr %w.var), !dbg !24
+// CHECK:STDOUT:   call void @_CConsume.Main(i32 %IntWrapper.as.ImplicitAs.impl.Convert.call), !dbg !25
+// CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -73,16 +73,26 @@ fn DoIt() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "convert.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.IntWrapper.Main:ImplicitAs.Core", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.IntWrapper.Main:ImplicitAs.Core", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !9)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 18, column: 44, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 18, column: 37, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Consume", linkageName: "_CConsume.Main", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 21, column: 1, scope: !9)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "DoIt", linkageName: "_CDoIt.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !12 = !DILocation(line: 24, column: 3, scope: !11)
-// CHECK:STDOUT: !13 = !DILocation(line: 24, column: 23, scope: !11)
-// CHECK:STDOUT: !14 = !DILocation(line: 25, column: 11, scope: !11)
-// CHECK:STDOUT: !15 = !DILocation(line: 25, column: 3, scope: !11)
-// CHECK:STDOUT: !16 = !DILocation(line: 23, column: 1, scope: !11)
+// CHECK:STDOUT: !6 = !{!7, !8}
+// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !8 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !9 = !{!10}
+// CHECK:STDOUT: !10 = !DILocalVariable(arg: 1, scope: !4, type: !8)
+// CHECK:STDOUT: !11 = !DILocation(line: 18, column: 44, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 18, column: 37, scope: !4)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "Consume", linkageName: "_CConsume.Main", scope: null, file: !3, line: 21, type: !14, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !16)
+// CHECK:STDOUT: !14 = !DISubroutineType(types: !15)
+// CHECK:STDOUT: !15 = !{null, !7}
+// CHECK:STDOUT: !16 = !{!17}
+// CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !13, type: !7)
+// CHECK:STDOUT: !18 = !DILocation(line: 21, column: 1, scope: !13)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "DoIt", linkageName: "_CDoIt.Main", scope: null, file: !3, line: 23, type: !20, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !20 = !DISubroutineType(types: !21)
+// CHECK:STDOUT: !21 = !{null}
+// CHECK:STDOUT: !22 = !DILocation(line: 24, column: 3, scope: !19)
+// CHECK:STDOUT: !23 = !DILocation(line: 24, column: 23, scope: !19)
+// CHECK:STDOUT: !24 = !DILocation(line: 25, column: 11, scope: !19)
+// CHECK:STDOUT: !25 = !DILocation(line: 25, column: 3, scope: !19)
+// CHECK:STDOUT: !26 = !DILocation(line: 23, column: 1, scope: !19)

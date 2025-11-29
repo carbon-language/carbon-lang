@@ -126,21 +126,22 @@ auto NumericTypeLiteralInfo::PrintLiteral(const File& file,
   file.ints().Get(bit_width_id).print(out, /*isSigned=*/false);
 }
 
-auto NumericTypeLiteralInfo::GetLiteralAsString(const File& file) const
-    -> std::string {
-  RawStringOstream out;
-  PrintLiteral(file, out);
-  return out.TakeStr();
+// Returns whether this kind of recognized type should have a generic argument
+// list.
+static auto ExpectsArgs(RecognizedTypeInfo::Kind kind) -> bool {
+  return kind == RecognizedTypeInfo::Optional;
 }
 
 auto RecognizedTypeInfo::ForType(const File& file, ClassType class_type)
     -> RecognizedTypeInfo {
+  auto args_id = SemIR::InstBlockId::None;
+
   if (class_type.specific_id.has_value()) {
     auto numeric = NumericTypeLiteralInfo::ForType(file, class_type);
     if (numeric.is_valid()) {
       return {.kind = Numeric, .numeric = numeric};
     }
-    return {.kind = None};
+    args_id = file.specifics().Get(class_type.specific_id).args_id;
   }
 
   // The class must be declared in the `Core` package. We check for up to one
@@ -167,9 +168,12 @@ auto RecognizedTypeInfo::ForType(const File& file, ClassType class_type)
   if (!parent_scope_name_id.has_value()) {
     Kind kind = llvm::StringSwitch<Kind>(*name_ident)
                     .Case("Char", Char)
+                    .Case("Optional", Optional)
                     .Case("String", Str)
                     .Default(None);
-    return {.kind = kind};
+    if (ExpectsArgs(kind) == args_id.has_value()) {
+      return {.kind = kind, .args_id = args_id};
+    }
   }
 
   auto parent_name_ident =
@@ -177,54 +181,82 @@ auto RecognizedTypeInfo::ForType(const File& file, ClassType class_type)
   if (parent_name_ident == "CppCompat") {
     Kind kind = llvm::StringSwitch<Kind>(*name_ident)
                     .Case("Long32", CppLong32)
+                    .Case("ULong32", CppULong32)
+                    .Case("LongLong64", CppLongLong64)
+                    .Case("ULongLong64", CppULongLong64)
                     .Case("NullptrT", CppNullptrT)
                     .Case("VoidBase", CppVoidBase)
                     .Default(None);
-    return {.kind = kind};
+    if (ExpectsArgs(kind) == args_id.has_value()) {
+      return {.kind = kind, .args_id = args_id};
+    }
   }
 
   return {.kind = None};
 }
 
+// Prints a `Core.CppCompat` integer type name. Typically, when the C++ integer
+// type width matches the Carbon type width, prints
+// `Cpp.builtin_type` and returns true. Otherwise returns false.
+static auto PrintCppCompatLiteral(
+    const File& file, clang::CanQualType clang::ASTContext::* qual_type_member,
+    unsigned int carbon_bit_width, llvm::StringRef cpp_builtin_name,
+    llvm::raw_ostream& out) -> bool {
+  if (file.clang_ast_unit()) {
+    const clang::ASTContext& ast_context =
+        file.clang_ast_unit()->getASTContext();
+    if (ast_context.getIntWidth(ast_context.*qual_type_member) ==
+        carbon_bit_width) {
+      out << "Cpp." << cpp_builtin_name;
+      return true;
+    }
+  }
+  return false;
+}
+
 auto RecognizedTypeInfo::PrintLiteral(const File& file,
-                                      llvm::raw_ostream& out) const -> void {
+                                      llvm::raw_ostream& out) const -> bool {
   switch (kind) {
     case None:
       CARBON_FATAL("Printing invalid type literal");
     case Numeric:
       numeric.PrintLiteral(file, out);
-      break;
+      return true;
     case Char:
       out << "char";
-      break;
+      return true;
     case CppLong32:
-      if (file.clang_ast_unit()) {
-        const clang::ASTContext& ast_context =
-            file.clang_ast_unit()->getASTContext();
-        if (ast_context.getIntWidth(ast_context.LongTy) == 32) {
-          out << "Cpp.long";
-          break;
-        }
-      }
-      out << "Core.CppCompat.Long32";
-      break;
+      return PrintCppCompatLiteral(file, &clang::ASTContext::LongTy, 32, "long",
+                                   out);
+    case CppULong32:
+      return PrintCppCompatLiteral(file, &clang::ASTContext::UnsignedLongTy, 32,
+                                   "unsigned_long", out);
+    case CppLongLong64:
+      return PrintCppCompatLiteral(file, &clang::ASTContext::LongLongTy, 64,
+                                   "long_long", out);
+    case CppULongLong64:
+      return PrintCppCompatLiteral(file, &clang::ASTContext::UnsignedLongLongTy,
+                                   64, "unsigned_long_long", out);
     case CppNullptrT:
-      out << "Cpp.nullptr_t";
+      if (file.clang_ast_unit()) {
+        out << "Cpp.nullptr_t";
+        return true;
+      }
       break;
     case CppVoidBase:
-      out << "Cpp.void";
+      if (file.clang_ast_unit()) {
+        out << "Cpp.void";
+        return true;
+      }
+      break;
+    case Optional:
       break;
     case Str:
       out << "str";
-      break;
+      return true;
   }
-}
 
-auto RecognizedTypeInfo::GetLiteralAsString(const File& file) const
-    -> std::string {
-  RawStringOstream out;
-  PrintLiteral(file, out);
-  return out.TakeStr();
+  return false;
 }
 
 }  // namespace Carbon::SemIR

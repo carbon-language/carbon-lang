@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -85,18 +85,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "integer_literal_too_big.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+15]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+11]]:3: error: semantics TODO: `Unsupported: C++ literal's type `unsigned long long` could not be mapped to a Carbon type` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+8]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.CONFIG_VALUE;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+4]]:3: error: member name `CONFIG_VALUE` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_import_integer_literal_too_big.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `CONFIG_VALUE` [InCppNameLookup]
   // CHECK:STDERR:   Cpp.CONFIG_VALUE;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -272,13 +261,15 @@ library "[[@TEST_NAME]]";
 import Cpp library "string_literal_object_like_macro.h";
 
 fn F() {
- let a: str = Cpp.SimpleString;
- let b: str = Cpp.EmptyString;
- let c: str = Cpp.EscapeCharacter;
- let d: str = Cpp.Concatenated;
- let e: str = Cpp.RawString;
- let f: str = Cpp.Utf8String;
- let g: str = Cpp.Indirect;
+  //@dump-sem-ir-begin
+  let a: str = Cpp.SimpleString;
+  let b: str = Cpp.EmptyString;
+  let c: str = Cpp.EscapeCharacter;
+  let d: str = Cpp.Concatenated;
+  let e: str = Cpp.RawString;
+  let f: str = Cpp.Utf8String;
+  let g: str = Cpp.Indirect;
+  //@dump-sem-ir-end
 }
 
 // --- unsupported_string_literal_types.h
@@ -412,6 +403,135 @@ fn F() {
   Cpp.MyDouble = 1.0;
 }
 
+// --- character_literals.h
+
+#define M_LOWERCASE 'a'
+#define M_UPPRCASE 'A'
+#define M_DIGIT '1'
+#define M_SPACE ' '
+#define M_TAB '\t'
+#define M_UTF8_CHAR u8'X'
+
+// --- import_character_literals.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "character_literals.h";
+
+fn F() {
+  let a: char = Cpp.M_LOWERCASE;
+  let b: char = Cpp.M_UPPRCASE;
+  let c: char = Cpp.M_DIGIT;
+  let d: char = Cpp.M_SPACE;
+  let e: char = Cpp.M_TAB;
+  let f: char = Cpp.M_UTF8_CHAR;
+}
+
+// --- character_literals_operators.h
+
+#define M_CONDITIONAL (1 < 2 ? 'a' : 'b')
+#define M_A_PLUS_ONE 'a' + 1
+#define M_A_EQUAL ('a' == 97)
+
+// --- import_character_literals_operators.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "character_literals_operators.h";
+
+fn F() {
+  let a: char = Cpp.M_CONDITIONAL;
+  let b: i32 = Cpp.M_A_PLUS_ONE;
+  let c: bool = Cpp.M_A_EQUAL;
+}
+
+// --- multiple_characters.h
+
+#define MULTIPLE_CHARS 'AB'
+
+// --- import_multiple_characters.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: import_multiple_characters.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./multiple_characters.h:2:24: warning: multi-character character constant [CppInteropParseWarning]
+// CHECK:STDERR:     2 | #define MULTIPLE_CHARS 'AB'
+// CHECK:STDERR:       |                        ^
+import Cpp library "multiple_characters.h";
+
+fn F() {
+ // CHECK:STDERR: import_multiple_characters.carbon:[[@LINE+4]]:15: note: in `Cpp` name lookup for `MULTIPLE_CHARS` [InCppNameLookup]
+ // CHECK:STDERR:  let a: i32 = Cpp.MULTIPLE_CHARS;
+ // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ let a: i32 = Cpp.MULTIPLE_CHARS;
+}
+
+// --- unsupported_character_literal_types.h
+
+#define M_UTF16_CHAR u'a'
+#define M_UTF32_CHAR U'a'
+#define M_WIDE_CHAR L'a'
+
+// --- fail_unsupported_character_literal_types.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "unsupported_character_literal_types.h";
+
+fn F() {
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:16: error: semantics TODO: `Unsupported: C++ literal's type `char16_t` could not be mapped to a Carbon type` [SemanticsTodo]
+ // CHECK:STDERR:  let a: char = Cpp.M_UTF16_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:16: note: in `Cpp` name lookup for `M_UTF16_CHAR` [InCppNameLookup]
+ // CHECK:STDERR:  let a: char = Cpp.M_UTF16_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:16: error: member name `M_UTF16_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  let a: char = Cpp.M_UTF16_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ let a: char = Cpp.M_UTF16_CHAR;
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:16: error: semantics TODO: `Unsupported: C++ literal's type `char32_t` could not be mapped to a Carbon type` [SemanticsTodo]
+ // CHECK:STDERR:  let b: char = Cpp.M_UTF32_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:16: note: in `Cpp` name lookup for `M_UTF32_CHAR` [InCppNameLookup]
+ // CHECK:STDERR:  let b: char = Cpp.M_UTF32_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:16: error: member name `M_UTF32_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  let b: char = Cpp.M_UTF32_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ let b: char = Cpp.M_UTF32_CHAR;
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:16: error: semantics TODO: `Unsupported: C++ literal's type `wchar_t` could not be mapped to a Carbon type` [SemanticsTodo]
+ // CHECK:STDERR:  let c: char = Cpp.M_WIDE_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:16: note: in `Cpp` name lookup for `M_WIDE_CHAR` [InCppNameLookup]
+ // CHECK:STDERR:  let c: char = Cpp.M_WIDE_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:16: error: member name `M_WIDE_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  let c: char = Cpp.M_WIDE_CHAR;
+ // CHECK:STDERR:                ^~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ let c: char = Cpp.M_WIDE_CHAR;
+}
+
+// --- fail_assign_to_character_literals.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "character_literals.h";
+
+fn F() {
+ // CHECK:STDERR: fail_assign_to_character_literals.carbon:[[@LINE+4]]:2: error: expression is not assignable [AssignmentToNonAssignable]
+ // CHECK:STDERR:  Cpp.M_LOWERCASE = 'b';
+ // CHECK:STDERR:  ^~~~~~~~~~~~~~~
+ // CHECK:STDERR:
+ Cpp.M_LOWERCASE = 'b';
+}
+
 // --- boolean_literal_macro.h
 #define M_TRUE true
 #define M_FALSE false
@@ -464,6 +584,91 @@ fn F() {
  // CHECK:STDERR:  ^~~~~~~~~~
  // CHECK:STDERR:
  Cpp.M_TRUE = false;
+}
+
+// --- nullptr.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+  #define MyNullPtr nullptr
+  void foo(int arr[2]);
+''';
+
+fn F() {
+  Cpp.foo(Cpp.MyNullPtr);
+}
+
+// --- user_defined_literal.h
+constexpr auto operator""_kb(unsigned long long k) -> unsigned long long {
+  return k * 1024;
+}
+#define M_1KB 1_kb
+
+// --- fail_todo_import_user_defined_literal.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./user_defined_literal.h:4:16: error: no matching literal operator for call to 'operator""_kb' with argument of type 'unsigned long long' or 'const char *', and no matching literal operator template [CppInteropParseError]
+// CHECK:STDERR:     4 | #define M_1KB 1_kb
+// CHECK:STDERR:       |                ^
+import Cpp library "user_defined_literal.h";
+
+fn F() {
+ // CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+15]]:2: note: in `Cpp` name lookup for `M_1KB` [InCppNameLookup]
+ // CHECK:STDERR:  Cpp.M_1KB;
+ // CHECK:STDERR:  ^~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+11]]:2: error: failed to parse macro Cpp.M_1KB to a valid constant expression [InCppMacroEvaluation]
+ // CHECK:STDERR:  Cpp.M_1KB;
+ // CHECK:STDERR:  ^~~~~~~~~
+ // CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+8]]:2: note: in `Cpp` name lookup for `M_1KB` [InCppNameLookup]
+ // CHECK:STDERR:  Cpp.M_1KB;
+ // CHECK:STDERR:  ^~~~~~~~~
+ // CHECK:STDERR:
+ // CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+4]]:2: error: member name `M_1KB` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  Cpp.M_1KB;
+ // CHECK:STDERR:  ^~~~~~~~~
+ // CHECK:STDERR:
+ Cpp.M_1KB;
+}
+
+// --- enums.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+  enum A { a = 1, b = 2 };
+  #define M_A ::a
+''';
+
+fn F() {
+  let a: Cpp.A = Cpp.M_A;
+}
+
+// --- fail_todo_enums_no_scope.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+  enum A { a = 1, b = 2 };
+  // CHECK:STDERR: fail_todo_enums_no_scope.carbon:[[@LINE+7]]:24: error: use of undeclared identifier 'a'; did you mean '::a'? [CppInteropParseError]
+  // CHECK:STDERR:    13 |   #define M_A_NO_SCOPE a
+  // CHECK:STDERR:       |                        ^
+  // CHECK:STDERR:       |                        ::a
+  // CHECK:STDERR: fail_todo_enums_no_scope.carbon:[[@LINE-5]]:12: note: '::a' declared here [CppInteropParseNote]
+  // CHECK:STDERR:     5 |   enum A { a = 1, b = 2 };
+  // CHECK:STDERR:       |            ^
+  #define M_A_NO_SCOPE a
+''';
+
+fn F() {
+  // CHECK:STDERR: fail_todo_enums_no_scope.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `M_A_NO_SCOPE` [InCppNameLookup]
+  // CHECK:STDERR:   Cpp.M_A_NO_SCOPE;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  Cpp.M_A_NO_SCOPE;
 }
 
 // --- lambda.carbon
@@ -894,6 +1099,103 @@ fn F() {
 // CHECK:STDOUT:     %i32.loc8: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %i32 = value_binding a, %INDIRECT_ONE.ref
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_string_literal_object_like_macro.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %str.ee0: type = class_type @String [concrete]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
+// CHECK:STDOUT:   %char: type = class_type @Char [concrete]
+// CHECK:STDOUT:   %ptr.fb0: type = ptr_type %char [concrete]
+// CHECK:STDOUT:   %pattern_type.461: type = pattern_type %str.ee0 [concrete]
+// CHECK:STDOUT:   %str.dea: %ptr.fb0 = string_literal "abc" [concrete]
+// CHECK:STDOUT:   %int_3: %u64 = int_value 3 [concrete]
+// CHECK:STDOUT:   %String.val.822: %str.ee0 = struct_value (%str.dea, %int_3) [concrete]
+// CHECK:STDOUT:   %str.937: %ptr.fb0 = string_literal "" [concrete]
+// CHECK:STDOUT:   %int_0: %u64 = int_value 0 [concrete]
+// CHECK:STDOUT:   %String.val.cef: %str.ee0 = struct_value (%str.937, %int_0) [concrete]
+// CHECK:STDOUT:   %str.1d3: %ptr.fb0 = string_literal " \t " [concrete]
+// CHECK:STDOUT:   %String.val.446: %str.ee0 = struct_value (%str.1d3, %int_3) [concrete]
+// CHECK:STDOUT:   %str.c82: %ptr.fb0 = string_literal "ab" [concrete]
+// CHECK:STDOUT:   %int_2: %u64 = int_value 2 [concrete]
+// CHECK:STDOUT:   %String.val.f11: %str.ee0 = struct_value (%str.c82, %int_2) [concrete]
+// CHECK:STDOUT:   %str.130: %ptr.fb0 = string_literal " foo: \"bar\" { 123 } " [concrete]
+// CHECK:STDOUT:   %int_20: %u64 = int_value 20 [concrete]
+// CHECK:STDOUT:   %String.val.a83: %str.ee0 = struct_value (%str.130, %int_20) [concrete]
+// CHECK:STDOUT:   %str.ace: %ptr.fb0 = string_literal "\xD0\xB0\xD0\xB1\xD0\xB2" [concrete]
+// CHECK:STDOUT:   %int_6: %u64 = int_value 6 [concrete]
+// CHECK:STDOUT:   %String.val.2c7: %str.ee0 = struct_value (%str.ace, %int_6) [concrete]
+// CHECK:STDOUT:   %str.245: %ptr.fb0 = string_literal "xy" [concrete]
+// CHECK:STDOUT:   %String.val.b8c: %str.ee0 = struct_value (%str.245, %int_2) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .SimpleString = @F.%String.val.1
+// CHECK:STDOUT:     .EmptyString = @F.%String.val.2
+// CHECK:STDOUT:     .EscapeCharacter = @F.%String.val.3
+// CHECK:STDOUT:     .Concatenated = @F.%String.val.4
+// CHECK:STDOUT:     .RawString = @F.%String.val.5
+// CHECK:STDOUT:     .Utf8String = @F.%String.val.6
+// CHECK:STDOUT:     .Indirect = @F.%String.val.7
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.461 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %SimpleString.ref: %str.ee0 = name_ref SimpleString, %String.val.1 [concrete = constants.%String.val.822]
+// CHECK:STDOUT:   %a: %str.ee0 = value_binding a, %SimpleString.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type.461 = value_binding_pattern b [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %EmptyString.ref: %str.ee0 = name_ref EmptyString, %String.val.2 [concrete = constants.%String.val.cef]
+// CHECK:STDOUT:   %b: %str.ee0 = value_binding b, %EmptyString.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.461 = value_binding_pattern c [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %EscapeCharacter.ref: %str.ee0 = name_ref EscapeCharacter, %String.val.3 [concrete = constants.%String.val.446]
+// CHECK:STDOUT:   %c: %str.ee0 = value_binding c, %EscapeCharacter.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: %pattern_type.461 = value_binding_pattern d [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Concatenated.ref: %str.ee0 = name_ref Concatenated, %String.val.4 [concrete = constants.%String.val.f11]
+// CHECK:STDOUT:   %d: %str.ee0 = value_binding d, %Concatenated.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %e.patt: %pattern_type.461 = value_binding_pattern e [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %RawString.ref: %str.ee0 = name_ref RawString, %String.val.5 [concrete = constants.%String.val.a83]
+// CHECK:STDOUT:   %e: %str.ee0 = value_binding e, %RawString.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %f.patt: %pattern_type.461 = value_binding_pattern f [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Utf8String.ref: %str.ee0 = name_ref Utf8String, %String.val.6 [concrete = constants.%String.val.2c7]
+// CHECK:STDOUT:   %f: %str.ee0 = value_binding f, %Utf8String.ref
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %g.patt: %pattern_type.461 = value_binding_pattern g [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Indirect.ref: %str.ee0 = name_ref Indirect, %String.val.7 [concrete = constants.%String.val.b8c]
+// CHECK:STDOUT:   %g: %str.ee0 = value_binding g, %Indirect.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

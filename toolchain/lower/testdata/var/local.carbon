@@ -21,11 +21,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x.var = alloca i32, align 4, !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !7
-// CHECK:STDOUT:   store i32 1, ptr %x.var, align 4, !dbg !7
-// CHECK:STDOUT:   %.loc15 = load i32, ptr %x.var, align 4, !dbg !8
-// CHECK:STDOUT:   ret i32 %.loc15, !dbg !9
+// CHECK:STDOUT:   %x.var = alloca i32, align 4, !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !8
+// CHECK:STDOUT:   store i32 1, ptr %x.var, align 4, !dbg !8
+// CHECK:STDOUT:   %.loc15 = load i32, ptr %x.var, align 4, !dbg !9
+// CHECK:STDOUT:   ret i32 %.loc15, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -43,7 +43,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !3 = !DIFile(filename: "local.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 15, column: 10, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 15, column: 3, scope: !4)
+// CHECK:STDOUT: !6 = !{!7}
+// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 15, column: 10, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 15, column: 3, scope: !4)

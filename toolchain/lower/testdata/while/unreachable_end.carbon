@@ -66,7 +66,7 @@ fn While() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "unreachable_end.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "While", linkageName: "_CWhile.Main", scope: null, file: !3, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 20, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 21, column: 9, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 21, column: 10, scope: !4)

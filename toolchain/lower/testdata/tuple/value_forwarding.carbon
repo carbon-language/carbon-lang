@@ -24,13 +24,13 @@ fn F(a: (i32, i32, i32), b: (i32, i32, i32)) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main(ptr %a, ptr %b) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple = alloca { ptr, ptr }, align 8, !dbg !7
-// CHECK:STDOUT:   %tuple1 = getelementptr inbounds nuw { ptr, ptr }, ptr %tuple, i32 0, i32 0, !dbg !7
-// CHECK:STDOUT:   store ptr %a, ptr %tuple1, align 8, !dbg !7
-// CHECK:STDOUT:   %tuple2 = getelementptr inbounds nuw { ptr, ptr }, ptr %tuple, i32 0, i32 1, !dbg !7
-// CHECK:STDOUT:   store ptr %b, ptr %tuple2, align 8, !dbg !7
-// CHECK:STDOUT:   call void @_CG.Main(ptr %tuple), !dbg !8
-// CHECK:STDOUT:   ret void, !dbg !9
+// CHECK:STDOUT:   %tuple = alloca { ptr, ptr }, align 8, !dbg !11
+// CHECK:STDOUT:   %tuple1 = getelementptr inbounds nuw { ptr, ptr }, ptr %tuple, i32 0, i32 0, !dbg !11
+// CHECK:STDOUT:   store ptr %a, ptr %tuple1, align 8, !dbg !11
+// CHECK:STDOUT:   %tuple2 = getelementptr inbounds nuw { ptr, ptr }, ptr %tuple, i32 0, i32 1, !dbg !11
+// CHECK:STDOUT:   store ptr %b, ptr %tuple2, align 8, !dbg !11
+// CHECK:STDOUT:   call void @_CG.Main(ptr %tuple), !dbg !12
+// CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -42,9 +42,13 @@ fn F(a: (i32, i32, i32), b: (i32, i32, i32)) {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "value_forwarding.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 16, column: 5, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 16, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 15, column: 1, scope: !4)
+// CHECK:STDOUT: !6 = !{null, !7, !7}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !8 = !{!9, !10}
+// CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
+// CHECK:STDOUT: !10 = !DILocalVariable(arg: 2, scope: !4, type: !7)
+// CHECK:STDOUT: !11 = !DILocation(line: 16, column: 5, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 16, column: 3, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 15, column: 1, scope: !4)

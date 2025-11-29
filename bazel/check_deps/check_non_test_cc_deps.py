@@ -41,11 +41,14 @@ for dep in deps:
         # Other packages in the LLVM project shouldn't be accidentally used
         # in Carbon. We can expand the above list if use cases emerge.
         if package not in (
-            "llvm",
-            "lld",
             "clang",
             "clang-tools-extra/clangd",
+            "libc",
+            "libcxx",
+            "libcxxabi",
             "libunwind",
+            "lld",
+            "llvm",
             # While this is in a `third_party` directory, its code is documented
             # as part of LLVM and for use in compiler-rt.
             "third-party/siphash",

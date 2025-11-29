@@ -79,7 +79,7 @@ fn Main() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "print_read.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 18, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 19, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 22, column: 9, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 22, column: 10, scope: !4)

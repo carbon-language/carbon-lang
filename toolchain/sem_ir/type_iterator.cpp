@@ -101,6 +101,7 @@ auto TypeIterator::ProcessTypeId(TypeId type_id) -> std::optional<Step> {
     case ImplWitnessAccess::Kind:
     case IntLiteralType::Kind:
     case NamespaceType::Kind:
+    case RequireSpecificDefinitionType::Kind:
     case TypeType::Kind:
     case WitnessType::Kind: {
       return Step::ConcreteType{.type_id = type_id};

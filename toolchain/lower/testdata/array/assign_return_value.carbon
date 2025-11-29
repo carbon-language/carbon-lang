@@ -24,29 +24,29 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main(ptr sret({ i32, i32 }) %return) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !7
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !7
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @tuple.014.loc13_39, i64 8, i1 false), !dbg !8
-// CHECK:STDOUT:   ret void, !dbg !8
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @tuple.014.loc13_39, i64 8, i1 false), !dbg !9
+// CHECK:STDOUT:   ret void, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @main() #0 !dbg !9 {
+// CHECK:STDOUT: define void @main() #0 !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %t.var = alloca [2 x i32], align 4, !dbg !10
-// CHECK:STDOUT:   %.loc16_28.1.temp = alloca { i32, i32 }, align 8, !dbg !11
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %t.var), !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_28.1.temp), !dbg !11
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_28.1.temp), !dbg !11
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc16_28.1.temp, i32 0, i32 0, !dbg !11
-// CHECK:STDOUT:   %.loc16_28.3 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !11
-// CHECK:STDOUT:   %.loc16_28.4.array.index = getelementptr inbounds [2 x i32], ptr %t.var, i32 0, i64 0, !dbg !11
-// CHECK:STDOUT:   store i32 %.loc16_28.3, ptr %.loc16_28.4.array.index, align 4, !dbg !11
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc16_28.1.temp, i32 0, i32 1, !dbg !11
-// CHECK:STDOUT:   %.loc16_28.6 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !11
-// CHECK:STDOUT:   %.loc16_28.7.array.index = getelementptr inbounds [2 x i32], ptr %t.var, i32 0, i64 1, !dbg !11
-// CHECK:STDOUT:   store i32 %.loc16_28.6, ptr %.loc16_28.7.array.index, align 4, !dbg !11
-// CHECK:STDOUT:   ret void, !dbg !12
+// CHECK:STDOUT:   %t.var = alloca [2 x i32], align 4, !dbg !13
+// CHECK:STDOUT:   %.loc16_28.1.temp = alloca { i32, i32 }, align 8, !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %t.var), !dbg !13
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_28.1.temp), !dbg !14
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_28.1.temp), !dbg !14
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc16_28.1.temp, i32 0, i32 0, !dbg !14
+// CHECK:STDOUT:   %.loc16_28.3 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !14
+// CHECK:STDOUT:   %.loc16_28.4.array.index = getelementptr inbounds [2 x i32], ptr %t.var, i32 0, i64 0, !dbg !14
+// CHECK:STDOUT:   store i32 %.loc16_28.3, ptr %.loc16_28.4.array.index, align 4, !dbg !14
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc16_28.1.temp, i32 0, i32 1, !dbg !14
+// CHECK:STDOUT:   %.loc16_28.6 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !14
+// CHECK:STDOUT:   %.loc16_28.7.array.index = getelementptr inbounds [2 x i32], ptr %t.var, i32 0, i64 1, !dbg !14
+// CHECK:STDOUT:   store i32 %.loc16_28.6, ptr %.loc16_28.7.array.index, align 4, !dbg !14
+// CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nounwind willreturn memory(argmem: readwrite)
@@ -71,10 +71,13 @@ fn Run() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "assign_return_value.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 13, column: 31, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 13, column: 24, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 16, column: 3, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 16, column: 26, scope: !9)
-// CHECK:STDOUT: !12 = !DILocation(line: 15, column: 1, scope: !9)
+// CHECK:STDOUT: !6 = !{!7}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !8 = !DILocation(line: 13, column: 31, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 13, column: 24, scope: !4)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !3, line: 15, type: !11, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = !DISubroutineType(types: !12)
+// CHECK:STDOUT: !12 = !{null}
+// CHECK:STDOUT: !13 = !DILocation(line: 16, column: 3, scope: !10)
+// CHECK:STDOUT: !14 = !DILocation(line: 16, column: 26, scope: !10)
+// CHECK:STDOUT: !15 = !DILocation(line: 15, column: 1, scope: !10)

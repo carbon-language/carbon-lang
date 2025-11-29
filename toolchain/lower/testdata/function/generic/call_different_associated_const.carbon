@@ -74,7 +74,7 @@ fn H() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "call_different_associated_const.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !3, line: 35, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 36, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 37, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 35, column: 1, scope: !4)

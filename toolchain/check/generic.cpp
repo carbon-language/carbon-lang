@@ -719,6 +719,7 @@ auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
   if (!specific.definition_block_id.has_value()) {
     // Evaluate the eval block for the definition of the generic.
     auto& generic = context.generics().Get(generic_id);
+    CARBON_CHECK(generic.decl_block_id.has_value(), "missing declaration");
     if (!generic.definition_block_id.has_value()) {
       // The generic is not defined yet.
       return false;

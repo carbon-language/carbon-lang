@@ -27,17 +27,17 @@ fn F() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CF.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc17 = load i32, ptr @_Ca.Main, align 4, !dbg !7
-// CHECK:STDOUT:   ret i32 %.loc17, !dbg !8
+// CHECK:STDOUT:   %.loc17 = load i32, ptr @_Ca.Main, align 4, !dbg !8
+// CHECK:STDOUT:   ret i32 %.loc17, !dbg !9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !9 {
+// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   store i32 5, ptr @_Ca.Main, align 4, !dbg !10
-// CHECK:STDOUT:   %.loc14 = load i32, ptr @_Ca.Main, align 4, !dbg !11
-// CHECK:STDOUT:   store i32 %.loc14, ptr @_Cb.Main, align 4, !dbg !12
-// CHECK:STDOUT:   ret void, !dbg !13
+// CHECK:STDOUT:   store i32 5, ptr @_Ca.Main, align 4, !dbg !13
+// CHECK:STDOUT:   %.loc14 = load i32, ptr @_Ca.Main, align 4, !dbg !14
+// CHECK:STDOUT:   store i32 %.loc14, ptr @_Cb.Main, align 4, !dbg !15
+// CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -51,11 +51,14 @@ fn F() -> i32 {
 // CHECK:STDOUT: !3 = !DIFile(filename: "use.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 17, column: 10, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 17, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !3, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 12, column: 1, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 14, column: 14, scope: !9)
-// CHECK:STDOUT: !12 = !DILocation(line: 14, column: 1, scope: !9)
-// CHECK:STDOUT: !13 = !DILocation(line: 0, scope: !9)
+// CHECK:STDOUT: !6 = !{!7}
+// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !8 = !DILocation(line: 17, column: 10, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 17, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !3, type: !11, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !11 = !DISubroutineType(types: !12)
+// CHECK:STDOUT: !12 = !{null}
+// CHECK:STDOUT: !13 = !DILocation(line: 12, column: 1, scope: !10)
+// CHECK:STDOUT: !14 = !DILocation(line: 14, column: 14, scope: !10)
+// CHECK:STDOUT: !15 = !DILocation(line: 14, column: 1, scope: !10)
+// CHECK:STDOUT: !16 = !DILocation(line: 0, scope: !10)

@@ -93,22 +93,14 @@ import Cpp library "postfix_inc_and_dec.h";
 
 fn F() {
   var postfix: Cpp.Postfix = Cpp.Postfix.Postfix();
-  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE+8]]:3: error: no matching function for call to '<C++ operator>' [CppInteropParseError]
-  // CHECK:STDERR:    16 |   ++postfix;
-  // CHECK:STDERR:       |   ^
-  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./postfix_inc_and_dec.h:3:6: note: candidate function not viable: requires 2 arguments, but 1 was provided [CppInteropParseNote]
-  // CHECK:STDERR:     3 | auto operator++(Postfix& operand, int) -> Postfix&;
-  // CHECK:STDERR:       |      ^          ~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.Inc` in type `Cpp.Postfix` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   ++postfix;
+  // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
   ++postfix;
-  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE+8]]:3: error: no matching function for call to '<C++ operator>' [CppInteropParseError]
-  // CHECK:STDERR:    25 |   --postfix;
-  // CHECK:STDERR:       |   ^
-  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./postfix_inc_and_dec.h:4:6: note: candidate function not viable: requires 2 arguments, but 1 was provided [CppInteropParseNote]
-  // CHECK:STDERR:     4 | auto operator--(Postfix& operand, int) -> Postfix&;
-  // CHECK:STDERR:       |      ^          ~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.Dec` in type `Cpp.Postfix` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   --postfix;
+  // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR:
   --postfix;
 }
@@ -230,24 +222,69 @@ import Cpp library "binary_operators.h";
 
 fn F() {
   let c1: Cpp.C = Cpp.C.C();
-  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE+8]]:22: error: no matching function for call to '<C++ operator>' [CppInteropParseError]
-  // CHECK:STDERR:    16 |   let c2: Cpp.C = c1 + 5;
-  // CHECK:STDERR:       |                      ^
-  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./binary_operators.h:5:6: note: candidate function not viable: no known conversion from 'int' to 'C' for 2nd argument [CppInteropParseNote]
-  // CHECK:STDERR:     5 | auto operator+(C lhs, C rhs) -> C;
-  // CHECK:STDERR:       |      ^                ~~~~~
+  // TODO: Include a list of non-viable candidate operators with this diagnostic.
+  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE+4]]:19: error: cannot access member of interface `Core.AddWith(Core.IntLiteral)` in type `Cpp.C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   let c2: Cpp.C = c1 + 5;
+  // CHECK:STDERR:                   ^~~~~~
   // CHECK:STDERR:
   let c2: Cpp.C = c1 + 5;
-  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE+8]]:21: error: no matching function for call to '<C++ operator>' [CppInteropParseError]
-  // CHECK:STDERR:    25 |   let c3: Cpp.C = 6 + c1;
-  // CHECK:STDERR:       |                     ^
-  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./binary_operators.h:5:6: note: candidate function not viable: no known conversion from 'int' to 'C' for 1st argument [CppInteropParseNote]
-  // CHECK:STDERR:     5 | auto operator+(C lhs, C rhs) -> C;
-  // CHECK:STDERR:       |      ^         ~~~~~
+  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE+4]]:19: error: cannot access member of interface `Core.AddWith(Cpp.C)` in type `Core.IntLiteral` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   let c3: Cpp.C = 6 + c1;
+  // CHECK:STDERR:                   ^~~~~~
   // CHECK:STDERR:
   let c3: Cpp.C = 6 + c1;
+}
+
+// ============================================================================
+// Overload resolution failures
+// ============================================================================
+
+// --- fail_ambiguous.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+class C {};
+void operator+(C, char);
+void operator+(C, short);
+''';
+
+fn Test(c: Cpp.C) {
+  // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE+10]]:5: error: use of overloaded operator '+' is ambiguous (with operand types 'C' and 'int') [CppInteropParseError]
+  // CHECK:STDERR:    21 |   c + 1;
+  // CHECK:STDERR:       |     ^
+  // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE-8]]:6: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR:     6 | void operator+(C, char);
+  // CHECK:STDERR:       |      ^
+  // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE-10]]:6: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR:     7 | void operator+(C, short);
+  // CHECK:STDERR:       |      ^
+  // CHECK:STDERR:
+  c + 1;
+}
+
+// --- fail_deleted.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+class C {};
+void operator+(C, int) = delete;
+void operator+(C, void*) = delete;
+''';
+
+fn Test(c: Cpp.C) {
+  // CHECK:STDERR: fail_deleted.carbon:[[@LINE+10]]:5: error: overload resolution selected deleted operator '+' [CppInteropParseError]
+  // CHECK:STDERR:    21 |   c + 1;
+  // CHECK:STDERR:       |     ^
+  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-8]]:6: note: candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR:     6 | void operator+(C, int) = delete;
+  // CHECK:STDERR:       |      ^
+  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-10]]:6: note: candidate function not viable: no known conversion from 'int' to 'void *' for 2nd argument [CppInteropParseNote]
+  // CHECK:STDERR:     7 | void operator+(C, void*) = delete;
+  // CHECK:STDERR:       |      ^            ~~~~~
+  // CHECK:STDERR:
+  c + 1;
 }
 
 // ============================================================================
@@ -292,6 +329,34 @@ fn F() {
   // No rewrite.
   let less_than_or_equal: bool = c1 <= c2;
   //@dump-sem-ir-end
+}
+
+// --- fail_rewrite_deleted.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+class B {};
+class C : public B {};
+
+namespace std { class strong_ordering {}; }
+auto operator<=>(C lhs, C rhs) -> std::strong_ordering = delete;
+auto operator<(C lhs, B rhs) -> bool;
+''';
+
+fn F(c: Cpp.C) -> bool {
+  // Note that we mention `operator '<=>'` in the diagnostic.
+  // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE+10]]:12: error: overload resolution selected deleted operator '<=>' [CppInteropParseError]
+  // CHECK:STDERR:    25 |   return c < c;
+  // CHECK:STDERR:       |            ^
+  // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE-9]]:6: note: candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR:     9 | auto operator<=>(C lhs, C rhs) -> std::strong_ordering = delete;
+  // CHECK:STDERR:       |      ^
+  // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE-11]]:6: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR:    10 | auto operator<(C lhs, B rhs) -> bool;
+  // CHECK:STDERR:       |      ^
+  // CHECK:STDERR:
+  return c < c;
 }
 
 // ============================================================================
@@ -655,9 +720,9 @@ fn F() {
   //@dump-sem-ir-begin
   let c1: Cpp.N.C = Cpp.N.C.C();
   let c2: Cpp.N.C = Cpp.N.C.C();
-  // CHECK:STDERR: fail_todo_import_operands_in_namespace_operator_in_global.carbon:[[@LINE+4]]:24: error: no matching function for call to '<C++ operator>' [CppInteropParseError]
-  // CHECK:STDERR:    14 |   let c3: Cpp.N.C = c1 + c2;
-  // CHECK:STDERR:       |                        ^
+  // CHECK:STDERR: fail_todo_import_operands_in_namespace_operator_in_global.carbon:[[@LINE+4]]:21: error: cannot access member of interface `Core.AddWith(Cpp.N.C)` in type `Cpp.N.C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   let c3: Cpp.N.C = c1 + c2;
+  // CHECK:STDERR:                     ^~~~~~~
   // CHECK:STDERR:
   let c3: Cpp.N.C = c1 + c2;
   //@dump-sem-ir-end
@@ -793,9 +858,9 @@ import Cpp library "not_found.h";
 fn F() {
   let c1: Cpp.C = Cpp.C.C();
   let c2: Cpp.C = Cpp.C.C();
-  // CHECK:STDERR: fail_import_not_found.carbon:[[@LINE+4]]:22: error: no matching function for call to '<C++ operator>' [CppInteropParseError]
-  // CHECK:STDERR:    13 |   let c3: Cpp.C = c1 + c2;
-  // CHECK:STDERR:       |                      ^
+  // CHECK:STDERR: fail_import_not_found.carbon:[[@LINE+4]]:19: error: cannot access member of interface `Core.AddWith(Cpp.C)` in type `Cpp.C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   let c3: Cpp.C = c1 + c2;
+  // CHECK:STDERR:                   ^~~~~~~
   // CHECK:STDERR:
   let c3: Cpp.C = c1 + c2;
 }
@@ -899,10 +964,6 @@ fn F(x: Cpp.X) -> i32 {
   //@dump-sem-ir-end
 }
 
-// ============================================================================
-// Indirect template instantiation error
-// ============================================================================
-
 // --- fail_indirect_template_instantiation_error.carbon
 
 library "[[@TEST_NAME]]";
@@ -924,10 +985,30 @@ fn F(x: Cpp.X) -> i32 {
   // CHECK:STDERR:    25 |   return x + x;
   // CHECK:STDERR:       |            ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+4]]:12: error: no matching function for call to '<C++ operator>' [CppInteropParseError]
-  // CHECK:STDERR:    25 |   return x + x;
-  // CHECK:STDERR:       |            ^
+  // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.AddWith(Cpp.B)` in type `Cpp.B` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   return x + x;
+  // CHECK:STDERR:          ^~~~~
   // CHECK:STDERR:
+  return x + x;
+}
+
+// ============================================================================
+// Templated operators
+// ============================================================================
+
+// --- templated_operator.h
+
+template<typename T> struct X {};
+template<typename T> X<T> operator+(X<T>, X<T>);
+using Xint = X<int>;
+
+// --- templated_operator.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "templated_operator.h";
+
+fn Test(x: Cpp.Xint) -> Cpp.Xint {
   return x + x;
 }
 
@@ -2913,8 +2994,12 @@ fn F() {
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk.type: type = fn_type @C__carbon_thunk [concrete]
 // CHECK:STDOUT:   %C__carbon_thunk: %C__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.cpp_operator.type.dab96a.1: type = fn_type @C.cpp_operator.1 [concrete]
+// CHECK:STDOUT:   %C.cpp_operator.d21c75.1: %C.cpp_operator.type.dab96a.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %operator-__carbon_thunk.type: type = fn_type @operator-__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator-__carbon_thunk: %operator-__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.cpp_operator.type.dab96a.2: type = fn_type @C.cpp_operator.2 [concrete]
+// CHECK:STDOUT:   %C.cpp_operator.d21c75.2: %C.cpp_operator.type.dab96a.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %operator+__carbon_thunk.type: type = fn_type @operator+__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator+__carbon_thunk: %operator+__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
@@ -2935,9 +3020,27 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.cpp_operator.decl.828f43.1: %C.cpp_operator.type.dab96a.1 = fn_decl @C.cpp_operator.1 [concrete = constants.%C.cpp_operator.d21c75.1] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.217 = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.217 = ref_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %C = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %C = ref_binding self, %self.param
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator-__carbon_thunk.decl: %operator-__carbon_thunk.type = fn_decl @operator-__carbon_thunk [concrete = constants.%operator-__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.cpp_operator.decl.828f43.2: %C.cpp_operator.type.dab96a.2 = fn_decl @C.cpp_operator.2 [concrete = constants.%C.cpp_operator.d21c75.2] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.217 = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.217 = ref_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %C = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %C = ref_binding self, %self.param
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator+__carbon_thunk.decl: %operator+__carbon_thunk.type = fn_decl @operator+__carbon_thunk [concrete = constants.%operator+__carbon_thunk] {
@@ -2973,6 +3076,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c2.var: ref %C = var %c2.var_patt
 // CHECK:STDOUT:   %c1.ref.loc9: ref %C = name_ref c1, %c1
+// CHECK:STDOUT:   %C.cpp_operator.bound.loc9: <bound method> = bound_method %c1.ref.loc9, imports.%C.cpp_operator.decl.828f43.1
 // CHECK:STDOUT:   %.loc9_3: ref %C = splice_block %c2.var {}
 // CHECK:STDOUT:   %addr.loc9: %ptr.d9e = addr_of %.loc9_3
 // CHECK:STDOUT:   %operator-__carbon_thunk.call: init %empty_tuple.type = call imports.%operator-__carbon_thunk.decl(%c1.ref.loc9, %addr.loc9)
@@ -2990,6 +3094,7 @@ fn F() {
 // CHECK:STDOUT:   %c3.var: ref %C = var %c3.var_patt
 // CHECK:STDOUT:   %c1.ref.loc10: ref %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref: ref %C = name_ref c2, %c2
+// CHECK:STDOUT:   %C.cpp_operator.bound.loc10: <bound method> = bound_method %c1.ref.loc10, imports.%C.cpp_operator.decl.828f43.2
 // CHECK:STDOUT:   %.loc10_3: ref %C = splice_block %c3.var {}
 // CHECK:STDOUT:   %.loc10_24.1: %C = acquire_value %c2.ref
 // CHECK:STDOUT:   %.loc10_24.2: ref %C = value_as_ref %.loc10_24.1

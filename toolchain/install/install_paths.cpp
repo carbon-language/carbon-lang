@@ -219,15 +219,29 @@ auto InstallPaths::clang_resource_path() const -> std::filesystem::path {
   return prefix_ / "lib/carbon/llvm/lib/clang/" CLANG_VERSION_MAJOR_STRING;
 }
 
-auto InstallPaths::llvm_runtime_srcs() const -> std::filesystem::path {
+auto InstallPaths::runtimes_root() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  return prefix_ / "lib/carbon/llvm/lib/clang/" CLANG_VERSION_MAJOR_STRING
-                   "/src";
+  return prefix_ / "lib/carbon/runtimes";
 }
 
 auto InstallPaths::libunwind_path() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  return prefix_ / "lib/carbon/libunwind";
+  return prefix_ / "lib/carbon/runtimes/libunwind";
+}
+
+auto InstallPaths::libcxx_path() const -> std::filesystem::path {
+  // TODO: Adjust this to work equally well on Windows.
+  return prefix_ / "lib/carbon/runtimes/libcxx";
+}
+
+auto InstallPaths::libcxxabi_path() const -> std::filesystem::path {
+  // TODO: Adjust this to work equally well on Windows.
+  return prefix_ / "lib/carbon/runtimes/libcxxabi";
+}
+
+auto InstallPaths::libc_path() const -> std::filesystem::path {
+  // TODO: Adjust this to work equally well on Windows.
+  return prefix_ / "lib/carbon/runtimes/libc";
 }
 
 auto InstallPaths::digest_path() const -> std::filesystem::path {

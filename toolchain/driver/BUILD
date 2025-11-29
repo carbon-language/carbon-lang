@@ -82,7 +82,7 @@ cc_test(
 
 cc_test(
     name = "clang_runtimes_test",
-    size = "small",
+    size = "medium",
     srcs = ["clang_runtimes_test.cpp"],
     data = ["//toolchain/install:install_data"],
     deps = [
@@ -128,7 +128,7 @@ sh_test(
     size = "small",
     srcs = [":compile_benchmark"],
     args = [
-        "--benchmark_min_time=1x",
+        "--benchmark_dry_run",
         # The `$$` is repeated for Bazel escaping of `$`.
         "--benchmark_filter=/256$$",
     ],
