@@ -115,7 +115,7 @@ static auto LowerInstHelper(FunctionContext& context, SemIR::InstId inst_id,
 // in `requires`-style overloads.
 // NOLINTNEXTLINE(readability-function-size): The define confuses lint.
 auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
-  // Skip over constants. `FileContext::GetGlobal` lowers them as needed.
+  // Skip over constants. `FileContext::GetConstant` lowers them as needed.
   if (sem_ir().constant_values().Get(inst_id).is_constant()) {
     return;
   }

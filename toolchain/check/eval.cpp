@@ -2175,6 +2175,14 @@ auto TryEvalTypedInst<SemIR::SymbolicBinding>(EvalContext& eval_context,
     -> SemIR::ConstantId {
   auto bind = inst.As<SemIR::SymbolicBinding>();
 
+  // If bound to a non-constant value, the symbolic binding cannot be constant.
+  if (bind.value_id.has_value()) {
+    auto value_const_id = eval_context.constant_values().Get(bind.value_id);
+    if (!value_const_id.is_constant()) {
+      return SemIR::ConstantId::NotConstant;
+    }
+  }
+
   // If we know which specific we're evaluating within and this is an argument
   // of that specific, its constant value is the corresponding argument value.
   const auto& bind_name = eval_context.entity_names().Get(bind.entity_name_id);
