@@ -39,6 +39,8 @@ library "[[@TEST_NAME]]";
 
 // Identification tries to form the specific interface `K(array(i32, -1))` which
 // is invalid. So the constraint J is seen as having 0 interfaces to impl.
+//
+// `extend require` is identified in the same way as the non-extend case.
 
 interface K(T:! type) {}
 constraint J(N:! i32) {
