@@ -229,7 +229,8 @@ class Context {
 
   // A map from a (self, interface) pair to a final witness.
   using ImplLookupCacheMap =
-      Map<std::pair<SemIR::InstId, SemIR::SpecificInterfaceId>, SemIR::InstId>;
+      Map<std::pair<SemIR::ConstantId, SemIR::SpecificInterfaceId>,
+          SemIR::InstId>;
   auto impl_lookup_cache() -> ImplLookupCacheMap& { return impl_lookup_cache_; }
 
   // An impl lookup query that resulted in a concrete witness from finding an
