@@ -22,6 +22,9 @@ impl forall [U:! type] U as I where .T = () {
   fn F[self: Self]() -> () { return (); }
 }
 
+// CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE+3]]:25: error: found `impl` that would change the result of an earlier use of `C* as I` [PoisonedImplLookupConcreteResult]
+// CHECK:STDERR: fn H[W:! type](v: W) -> W.(I.T) {
+// CHECK:STDERR:                         ^~~~~~~
 fn H[W:! type](v: W) -> W.(I.T) {
   return v.(I.F)();
 }
@@ -33,6 +36,13 @@ fn G(p: C*) -> () {
   return H(p);
 }
 
+// CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE+7]]:1: note: the use would select the `impl` here but it was not found yet [PoisonedImplLookupConcreteResultNoteBadImpl]
+// CHECK:STDERR: impl C* as I where .T = C {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_final_poisoned_concrete_query_in_specific.carbon:[[@LINE-21]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
+// CHECK:STDERR: impl forall [U:! type] U as I where .T = () {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl C* as I where .T = C {
   fn F[self: Self]() -> C { return *self; }
 }
@@ -50,9 +60,19 @@ class C {}
 
 fn H[W:! type](v: W) {
   // This concrete impl lookup query poisons any further specializations.
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE+3]]:10: error: found `impl` that would change the result of an earlier use of `C as I` [PoisonedImplLookupConcreteResult]
+  // CHECK:STDERR:   let a: C.(I.T) = ();
+  // CHECK:STDERR:          ^~~~~~~
   let a: C.(I.T) = ();
 }
 
+// CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE+7]]:1: note: the use would select the `impl` here but it was not found yet [PoisonedImplLookupConcreteResultNoteBadImpl]
+// CHECK:STDERR: impl C as I where .T = C {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE-15]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
+// CHECK:STDERR: impl forall [U:! type] U as I where .T = () {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl C as I where .T = C {}
 
 // --- fail_final_poisoned_concrete_query_nested_type_in_self.carbon
@@ -71,9 +91,19 @@ impl forall [U:! type] C(U) as I where .T = () {
 
 fn G(c: C(())) -> () {
   // This concrete impl lookup query poisons any further specializations.
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE+3]]:10: error: found `impl` that would change the result of an earlier use of `C(()) as I` [PoisonedImplLookupConcreteResult]
+  // CHECK:STDERR:   return c.(I.F)();
+  // CHECK:STDERR:          ^~~~~~~
   return c.(I.F)();
 }
 
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE+7]]:1: note: the use would select the `impl` here but it was not found yet [PoisonedImplLookupConcreteResultNoteBadImpl]
+// CHECK:STDERR: impl C(()) as I where .T = {} {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_self.carbon:[[@LINE-15]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
+// CHECK:STDERR: impl forall [U:! type] C(U) as I where .T = () {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl C(()) as I where .T = {} {
   fn F[self: Self]() -> {} { return {}; }
 }
@@ -94,9 +124,19 @@ class C {}
 
 fn G(c: C) -> () {
   // This concrete impl lookup query poisons any further specializations.
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE+3]]:10: error: found `impl` that would change the result of an earlier use of `C as I(C)` [PoisonedImplLookupConcreteResult]
+  // CHECK:STDERR:   return c.(I(C).F)();
+  // CHECK:STDERR:          ^~~~~~~~~~
   return c.(I(C).F)();
 }
 
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE+7]]:1: note: the use would select the `impl` here but it was not found yet [PoisonedImplLookupConcreteResultNoteBadImpl]
+// CHECK:STDERR: impl C as I(C) where .T = {} {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_final_poisoned_concrete_query_nested_type_in_interface.carbon:[[@LINE-17]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
+// CHECK:STDERR: impl forall [U:! type] U as I(U) where .T = () {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl C as I(C) where .T = {} {
   fn F[self: Self]() -> {} { return {}; }
 }

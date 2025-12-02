@@ -932,10 +932,16 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
     return facet_lookup_result;
   }
 
+  // Check to see if this result is in the cache. But skip the cache in
+  // `!poison_final_results` mode, as that indicates we're re-checking a
+  // poisoned result and need to redo the lookup.
   std::pair impl_lookup_cache_key = {eval_query.query_self_inst_id,
                                      eval_query.query_specific_interface_id};
-  if (auto result = context.impl_lookup_cache().Lookup(impl_lookup_cache_key)) {
-    return EvalImplLookupResult::MakeFinal(result.value());
+  if (poison_final_results) {
+    if (auto result =
+            context.impl_lookup_cache().Lookup(impl_lookup_cache_key)) {
+      return EvalImplLookupResult::MakeFinal(result.value());
+    }
   }
 
   // Ensure specifics don't substitute in weird things for the query self.
