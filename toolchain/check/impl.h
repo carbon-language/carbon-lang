@@ -35,6 +35,16 @@ auto AssignImplIdInWitness(Context& context, SemIR::ImplId impl_id,
 // being concrete.
 auto IsImplEffectivelyFinal(Context& context, const SemIR::Impl& impl) -> bool;
 
+// Checks that `impl_function_id` is a valid implementation of the function
+// described in the interface as `interface_function_id`. Returns the value to
+// put into the corresponding slot in the witness table, which can be
+// `ErrorInst::InstId` if the function is not usable.
+auto CheckAssociatedFunctionImplementation(
+    Context& context, SemIR::FunctionType interface_function_type,
+    SemIR::InstId impl_decl_id, SemIR::TypeId self_type_id,
+    SemIR::InstId witness_inst_id, bool defer_thunk_definition)
+    -> SemIR::InstId;
+
 // Checks that the constraint specified for the impl is valid and identified.
 // Returns the interface that the impl implements. On error, issues a diagnostic
 // and returns `None`.

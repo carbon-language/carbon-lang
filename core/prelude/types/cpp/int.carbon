@@ -31,8 +31,18 @@ class CppCompat.ULongLong64 {
 
 // Conversions.
 
-// TODO: ImplicitAs from IntLiteral to Long32, ULong32, LongLong64, ULongLong64.
-// TODO: ImplicitAs from Long32, ULong32, LongLong64, ULongLong64 to IntLiteral.
+impl IntLiteral() as ImplicitAs(CppCompat.Long32) {
+  fn Convert[self: Self]() -> CppCompat.Long32 = "int.convert_checked";
+}
+
+// TODO: Remove this once `ImplicitAs` extends `As`.
+impl IntLiteral() as As(CppCompat.Long32) {
+  fn Convert[self: Self]() -> CppCompat.Long32 = "int.convert_checked";
+}
+
+final impl CppCompat.Long32 as ImplicitAs(IntLiteral()) {
+  fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
+}
 
 // TODO: ImplicitAs from Int(N) to Long32 if N < 32.
 impl i32 as ImplicitAs(CppCompat.Long32) {
@@ -42,6 +52,19 @@ impl i32 as ImplicitAs(CppCompat.Long32) {
 // TODO: ImplicitAs from Long32 to Int(N) if N > 32.
 final impl CppCompat.Long32 as ImplicitAs(i32) {
   fn Convert[self: Self]() -> i32 = "int.convert";
+}
+
+impl IntLiteral() as ImplicitAs(CppCompat.ULong32) {
+  fn Convert[self: Self]() -> CppCompat.ULong32 = "int.convert_checked";
+}
+
+// TODO: Remove this once `ImplicitAs` extends `As`.
+impl IntLiteral() as As(CppCompat.ULong32) {
+  fn Convert[self: Self]() -> CppCompat.ULong32 = "int.convert_checked";
+}
+
+final impl CppCompat.ULong32 as ImplicitAs(IntLiteral()) {
+  fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 }
 
 // TODO: ImplicitAs from UInt(N) to ULong32 if N < 32.
@@ -54,6 +77,19 @@ final impl CppCompat.ULong32 as ImplicitAs(u32) {
   fn Convert[self: Self]() -> u32 = "int.convert";
 }
 
+impl IntLiteral() as ImplicitAs(CppCompat.LongLong64) {
+  fn Convert[self: Self]() -> CppCompat.LongLong64 = "int.convert_checked";
+}
+
+// TODO: Remove this once `ImplicitAs` extends `As`.
+impl IntLiteral() as As(CppCompat.LongLong64) {
+  fn Convert[self: Self]() -> CppCompat.LongLong64 = "int.convert_checked";
+}
+
+final impl CppCompat.LongLong64 as ImplicitAs(IntLiteral()) {
+  fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
+}
+
 // TODO: ImplicitAs from Int(N) to LongLong64 if N < 64.
 impl i64 as ImplicitAs(CppCompat.LongLong64) {
   fn Convert[self: Self]() -> CppCompat.LongLong64 = "int.convert_checked";
@@ -62,6 +98,19 @@ impl i64 as ImplicitAs(CppCompat.LongLong64) {
 // TODO: ImplicitAs from LongLong64 to Int(N) if N > 64.
 final impl CppCompat.LongLong64 as ImplicitAs(i64) {
   fn Convert[self: Self]() -> i64 = "int.convert";
+}
+
+impl IntLiteral() as ImplicitAs(CppCompat.ULongLong64) {
+  fn Convert[self: Self]() -> CppCompat.ULongLong64 = "int.convert_checked";
+}
+
+// TODO: Remove this once `ImplicitAs` extends `As`.
+impl IntLiteral() as As(CppCompat.ULongLong64) {
+  fn Convert[self: Self]() -> CppCompat.ULongLong64 = "int.convert_checked";
+}
+
+final impl CppCompat.ULongLong64 as ImplicitAs(IntLiteral()) {
+  fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 }
 
 // TODO: ImplicitAs from UInt(N) to ULongLong64 if N < 64.

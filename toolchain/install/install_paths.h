@@ -108,11 +108,20 @@ class InstallPaths {
   // The path to the Clang resources.
   auto clang_resource_path() const -> std::filesystem::path;
 
-  // The path to the root of LLVM runtime sources.
-  auto llvm_runtime_srcs() const -> std::filesystem::path;
+  // The path to the root of the runtimes.
+  auto runtimes_root() const -> std::filesystem::path;
 
   // The path to `libunwind` runtime.
   auto libunwind_path() const -> std::filesystem::path;
+
+  // The path to `libunwind` runtime.
+  auto libcxx_path() const -> std::filesystem::path;
+
+  // The path to `libunwind` runtime.
+  auto libcxxabi_path() const -> std::filesystem::path;
+
+  // The path to the LLVM `libc` runtime.
+  auto libc_path() const -> std::filesystem::path;
 
   // The installation digest path.
   //

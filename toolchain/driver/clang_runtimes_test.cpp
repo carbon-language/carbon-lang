@@ -198,5 +198,41 @@ TEST_F(ClangRuntimesTest, Libunwind) {
   ExpectSymbol(libunwind_symbols, "__unw_get_proc_info");
 }
 
+TEST_F(ClangRuntimesTest, Libcxx) {
+#if __has_feature(address_sanitizer)
+  // ASan causes Clang and LLVM to be _egregiously_ inefficient at compiling
+  // libc++, taking 5x - 10x longer than without ASan. Rough estimate is that it
+  // would take 5-10 minutes on GitHub's Linux runner. Given the limited utility
+  // of this test coverage, skip it in that configuration. This also misses
+  // assert-coverage for building libc++, but we don't really expect issues
+  // there. Misconfiguration and other common issues should still be covered in
+  // fully optimized builds at much lower cost.
+  GTEST_SKIP() << "Skipping build of libc++ with an ASan-itized Clang";
+#endif
+
+  LibcxxBuilder libcxx_builder(&runner_, &threads_, target_triple_, &runtimes_);
+  auto build_result = std::move(libcxx_builder).Wait();
+  ASSERT_TRUE(build_result.ok()) << build_result.error();
+  std::filesystem::path runtimes_path = std::move(*build_result);
+
+  std::filesystem::path libcxx_path = runtimes_path / "lib/libc++.a";
+  std::string libcxx_symbols = NmListDefinedSymbols(libcxx_path);
+
+  // First check a few fundamental symbols from libc++.a, including symbols both
+  // within the ABI namespace and outside of it.
+  ExpectSymbol(libcxx_symbols, "_ZNKSt12bad_any_cast4whatEv");
+  ExpectSymbol(libcxx_symbols, "_ZNSt2_C8to_charsEPcS0_d");
+  ExpectSymbol(libcxx_symbols, "_ZSt17current_exceptionv");
+  ExpectSymbol(libcxx_symbols, "_ZNKSt2_C10filesystem4path10__filenameEv");
+
+  // Check that several of the libc++abi object files are also included in the
+  // archive.
+  ExpectSymbol(libcxx_symbols, "__cxa_bad_cast");
+  ExpectSymbol(libcxx_symbols, "__cxa_new_handler");
+  ExpectSymbol(libcxx_symbols, "__cxa_demangle");
+  ExpectSymbol(libcxx_symbols, "__cxa_get_globals");
+  ExpectSymbol(libcxx_symbols, "_ZSt9terminatev");
+}
+
 }  // namespace
 }  // namespace Carbon

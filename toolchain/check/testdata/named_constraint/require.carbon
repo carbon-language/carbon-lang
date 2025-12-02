@@ -304,7 +304,7 @@ constraint Z {
 // CHECK:STDOUT: constraint @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.861]
 // CHECK:STDOUT:   %Z.require0.decl = require_decl @Z.require0 [concrete] {
-// CHECK:STDOUT:     require %Self.as_type impls <@Y>
+// CHECK:STDOUT:     require %Self.as_type impls %Y.ref
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @Z.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
@@ -316,7 +316,7 @@ constraint Z {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @Z.require0 {
-// CHECK:STDOUT:     require @Z.require0.%Self.as_type impls <@Y>
+// CHECK:STDOUT:     require @Z.require0.%Self.as_type impls @Z.require0.%Y.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -349,7 +349,7 @@ constraint Z {
 // CHECK:STDOUT: constraint @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.861]
 // CHECK:STDOUT:   %Z.require0.decl = require_decl @Z.require0 [concrete] {
-// CHECK:STDOUT:     require %Self.as_type impls <@Y>
+// CHECK:STDOUT:     require %Self.as_type impls %Y.ref
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @Z.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
@@ -361,7 +361,7 @@ constraint Z {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @Z.require0 {
-// CHECK:STDOUT:     require @Z.require0.%Self.as_type impls <@Y>
+// CHECK:STDOUT:     require @Z.require0.%Self.as_type impls @Z.require0.%Y.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -394,7 +394,7 @@ constraint Z {
 // CHECK:STDOUT: constraint @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.861]
 // CHECK:STDOUT:   %Z.require0.decl = require_decl @Z.require0 [concrete] {
-// CHECK:STDOUT:     require %.loc9 impls <@Y>
+// CHECK:STDOUT:     require %.loc9 impls %Y.ref
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %Z.type = name_ref Self, @Z.%Self [symbolic = %Self (constants.%Self.861)]
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type %Self.ref [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
@@ -408,7 +408,7 @@ constraint Z {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @Z.require0 {
-// CHECK:STDOUT:     require @Z.require0.%.loc9 impls <@Y>
+// CHECK:STDOUT:     require @Z.require0.%.loc9 impls @Z.require0.%Y.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -444,7 +444,7 @@ constraint Z {
 // CHECK:STDOUT: constraint @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.861]
 // CHECK:STDOUT:   %Z.require0.decl = require_decl @Z.require0 [concrete] {
-// CHECK:STDOUT:     require %C.loc9_17.1 impls <@Y>
+// CHECK:STDOUT:     require %C.loc9_17.1 impls %Y.ref
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %Self.ref: %Z.type = name_ref Self, @Z.%Self [symbolic = %Self (constants.%Self.861)]
@@ -461,7 +461,7 @@ constraint Z {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @Z.require0 {
-// CHECK:STDOUT:     require @Z.require0.%C.loc9_17.1 impls <@Y>
+// CHECK:STDOUT:     require @Z.require0.%C.loc9_17.1 impls @Z.require0.%Y.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -505,7 +505,7 @@ constraint Z {
 // CHECK:STDOUT: constraint @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.861]
 // CHECK:STDOUT:   %Z.require0.decl = require_decl @Z.require0 [concrete] {
-// CHECK:STDOUT:     require %Self.as_type impls <@Y where constants.%impl.elem0 = constants.%empty_tuple.type>
+// CHECK:STDOUT:     require %Self.as_type impls %.loc7_19
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @Z.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
@@ -529,7 +529,7 @@ constraint Z {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @Z.require0 {
-// CHECK:STDOUT:     require @Z.require0.%Self.as_type impls <@Y where constants.%impl.elem0 = constants.%empty_tuple.type>
+// CHECK:STDOUT:     require @Z.require0.%Self.as_type impls @Z.require0.%.loc7_19
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -714,7 +714,7 @@ constraint Z {
 // CHECK:STDOUT: constraint @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.861]
 // CHECK:STDOUT:   %Z.require0.decl = require_decl @Z.require0 [concrete] {
-// CHECK:STDOUT:     require %Self.as_type.loc10_11 impls <@Y where constants.%impl.elem0 = constants.%Self.binding.as_type>
+// CHECK:STDOUT:     require %Self.as_type.loc10_11 impls %.loc10_19
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type.loc10_11: type = facet_access_type @Z.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
@@ -739,7 +739,7 @@ constraint Z {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @Z.require0 {
-// CHECK:STDOUT:     require @Z.require0.%Self.as_type.loc10_11 impls <@Y where constants.%impl.elem0 = constants.%Self.binding.as_type>
+// CHECK:STDOUT:     require @Z.require0.%Self.as_type.loc10_11 impls @Z.require0.%.loc10_19
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
