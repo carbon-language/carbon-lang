@@ -913,8 +913,8 @@ Each of the conversions described in this section is explicit if and only if it
 invokes another explicit type conversion. Otherwise, it is implicit.
 
 A type conversion of a primitive-form expression to a
-[compatible types](generics/terminology.md#compatible-types) just re-interprets
-the expressions outcome with a new type, so it requires no run-time work, and
+[compatible type](generics/terminology.md#compatible-types) just re-interprets
+the expression's outcome with a new type, so it requires no run-time work, and
 has the same category as the input expression.
 
 An outcome `source` that has a struct type can be converted to a struct type
