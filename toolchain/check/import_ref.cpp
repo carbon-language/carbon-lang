@@ -15,6 +15,7 @@
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/inst.h"
@@ -494,7 +495,7 @@ static auto SetIndirectConstantValues(
 // Adds an import_ref instruction for an instruction that we have already loaded
 // from an imported IR, with a known constant value. This is useful when the
 // instruction has a symbolic constant value, in order to produce an instruction
-// that hold that symbolic constant.
+// that holds that symbolic constant.
 static auto AddLoadedImportRef(ImportContext& context,
                                SemIR::TypeId local_type_id,
                                SemIR::InstId import_inst_id,
@@ -864,13 +865,15 @@ static auto GetLocalConstantId(ImportRefResolver& resolver,
   auto import_decl_inst_id = resolver.import_generics().Get(generic_id).decl_id;
   auto import_decl_inst =
       resolver.import_insts().GetWithAttachedType(import_decl_inst_id);
-  if (import_decl_inst.Is<SemIR::ImplDecl>()) {
-    // For an impl declaration, the imported entity can be found via the
-    // declaration.
+  if (import_decl_inst.Is<SemIR::ImplDecl>() ||
+      import_decl_inst.Is<SemIR::RequireImplsDecl>()) {
+    // For these decl types, the imported entity can be found via the
+    // declaration's operands.
     return GetLocalConstantId(resolver, import_decl_inst_id);
   }
   // For all other kinds of declaration, the imported entity can be found via
   // the type of the declaration.
+  CARBON_CHECK(import_decl_inst.type_id().has_value());
   return GetLocalConstantId(resolver, import_decl_inst.type_id());
 }
 
@@ -903,6 +906,11 @@ static auto GetLocalGenericId(ImportContext& context,
     }
     case CARBON_KIND(SemIR::ImplDecl impl_decl): {
       return context.local_impls().Get(impl_decl.impl_id).generic_id;
+    }
+    case CARBON_KIND(SemIR::RequireImplsDecl require_decl): {
+      return context.local_require_impls()
+          .Get(require_decl.require_impls_id)
+          .generic_id;
     }
     default: {
       CARBON_FATAL("Unexpected inst for generic declaration: {0}", inst);
@@ -2562,6 +2570,13 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, import_impl.constraint_id, constraint_const_id);
   new_impl.interface = GetLocalSpecificInterface(
       resolver, import_impl.interface, specific_interface_data);
+  // Create a local IdentifiedFacetType for the imported facet type, since impl
+  // declarations always identify the facet type.
+  if (auto facet_type = resolver.local_insts().TryGetAs<SemIR::FacetType>(
+          resolver.local_constant_values().GetInstId(constraint_const_id))) {
+    RequireIdentifiedFacetType(resolver.local_context(), SemIR::LocId::None,
+                               *facet_type, nullptr);
+  }
   if (import_impl.is_complete()) {
     AddImplDefinition(resolver, import_impl, new_impl);
   }
@@ -2579,9 +2594,43 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::RequireImplsDecl inst) -> ResolveResult {
+                                SemIR::RequireImplsDecl inst,
+                                SemIR::ConstantId require_decl_const_id)
+    -> ResolveResult {
   const auto& import_require =
       resolver.import_require_impls().Get(inst.require_impls_id);
+
+  auto require_decl_id = SemIR::InstId::None;
+  auto require_impls_id = SemIR::RequireImplsId::None;
+  if (!require_decl_const_id.has_value()) {
+    // Phase one: Make the decl and structure with placeholder values to be
+    // filled in. Begin the generic so instructions can be attached to it.
+    SemIR::RequireImplsDecl require_decl = {
+        .require_impls_id = SemIR::RequireImplsId::None,
+        .decl_block_id = SemIR::InstBlockId::Empty};
+    auto require_decl_id = AddPlaceholderImportedInst(
+        resolver, import_require.decl_id, require_decl);
+    require_impls_id = resolver.local_require_impls().Add(
+        {.self_id = SemIR::TypeInstId::None,
+         .facet_type_inst_id = SemIR::TypeInstId::None,
+         .decl_id = require_decl_id,
+         .parent_scope_id = SemIR::NameScopeId::None,
+         .generic_id = MakeIncompleteGeneric(resolver, require_decl_id,
+                                             import_require.generic_id)});
+
+    // Write the RequireImplsId into the RequireImplsDecl.
+    require_decl.require_impls_id = require_impls_id;
+    require_decl_const_id =
+        ReplacePlaceholderImportedInst(resolver, require_decl_id, require_decl);
+  } else {
+    // Phase two: Get the `require_decl_id` and `require_impls_id` from the
+    // RequireImplsDecl constructed in phase one.
+    require_decl_id =
+        resolver.local_constant_values().GetInstId(require_decl_const_id);
+    require_impls_id = resolver.local_insts()
+                           .GetAs<SemIR::RequireImplsDecl>(require_decl_id)
+                           .require_impls_id;
+  }
 
   // Load dependent constants.
   auto parent_scope_id =
@@ -2592,28 +2641,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       GetLocalConstantId(resolver, import_require.facet_type_inst_id);
 
   if (resolver.HasNewWork()) {
-    return ResolveResult::Retry();
+    return ResolveResult::Retry(require_decl_const_id, require_decl_id);
   }
-
-  // Make the decl and structure with placeholder values to be filled in.
-  SemIR::RequireImplsDecl require_decl = {
-      .require_impls_id = SemIR::RequireImplsId::None,
-      .decl_block_id = SemIR::InstBlockId::Empty};
-  auto require_decl_id = AddPlaceholderImportedInst(
-      resolver, import_require.decl_id, require_decl);
-  auto require_impls_id = resolver.local_require_impls().Add(
-      {.self_id = SemIR::TypeInstId::None,
-       .facet_type_inst_id = SemIR::TypeInstId::None,
-       .facet_type_id = SemIR::FacetTypeId::None,
-       .decl_id = require_decl_id,
-       .parent_scope_id = SemIR::NameScopeId::None,
-       .generic_id = MakeIncompleteGeneric(resolver, require_decl_id,
-                                           import_require.generic_id)});
-
-  // Write the RequireImplsId into the RequireImplsDecl.
-  require_decl.require_impls_id = require_impls_id;
-  auto require_decl_const_id =
-      ReplacePlaceholderImportedInst(resolver, require_decl_id, require_decl);
 
   // Fill in the RequireImpls structure.
   auto& new_require = resolver.local_require_impls().Get(require_impls_id);
@@ -2621,13 +2650,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, import_require.self_id, self_const_id);
   new_require.facet_type_inst_id = AddLoadedImportRefForType(
       resolver, import_require.facet_type_inst_id, facet_type_const_id);
-  auto new_canonical_facet_type_inst_id =
-      resolver.local_constant_values().GetConstantInstId(
-          new_require.facet_type_inst_id);
-  auto new_canonical_facet_type =
-      resolver.local_insts().GetAs<SemIR::FacetType>(
-          new_canonical_facet_type_inst_id);
-  new_require.facet_type_id = new_canonical_facet_type.facet_type_id;
   new_require.extend_self = import_require.extend_self;
   new_require.parent_scope_id = parent_scope_id;
 
@@ -3604,6 +3626,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::NamedConstraintDecl inst): {
       return TryResolveTypedInst(resolver, inst, const_id);
     }
+    case CARBON_KIND(SemIR::RequireImplsDecl inst): {
+      return TryResolveTypedInst(resolver, inst, const_id);
+    }
     default:
       break;
   }
@@ -3772,9 +3797,6 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
     }
     case CARBON_KIND(SemIR::RequireCompleteType inst): {
-      return TryResolveTypedInst(resolver, inst);
-    }
-    case CARBON_KIND(SemIR::RequireImplsDecl inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::RequireSpecificDefinition inst): {

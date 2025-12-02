@@ -38,7 +38,9 @@ BUILTINS_FILEGROUPS = {
 }
 
 RUNTIMES_FILEGROUPS = {
-    "libunwind_srcs": "@llvm-project//libunwind:libunwind_srcs",
+    "libcxx": "@llvm-project//libcxx:libcxx_srcs",
+    "libcxxabi": "@llvm-project//libcxxabi:libcxxabi_srcs",
+    "libunwind": "@llvm-project//libunwind:libunwind_srcs",
 }
 
 _TEMPLATE = """
@@ -89,8 +91,16 @@ inline constexpr llvm::StringLiteral BuiltinsI386Srcs[] = {{
 {i386_srcs}
 }};
 
+constexpr inline llvm::StringLiteral LibcxxSrcs[] = {{
+{libcxx}
+}};
+
+constexpr inline llvm::StringLiteral LibcxxabiSrcs[] = {{
+{libcxxabi}
+}};
+
 constexpr inline llvm::StringLiteral LibunwindSrcs[] = {{
-{libunwind_srcs}
+{libunwind}
 }};
 
 }}  // namespace Carbon::RuntimeSources
@@ -118,14 +128,14 @@ def _get_path(file_attr, to_path_fn):
 
     return '"{0}"'.format(to_path_fn(files[0]))
 
-def _get_paths(files_attr, to_path_fn):
+def _get_paths(files_attr, to_path_fn, prefix = ""):
     files = []
     for src in files_attr:
         files.extend(src[DefaultInfo].files.to_list())
         files.extend(src[DefaultInfo].default_runfiles.files.to_list())
 
     return "\n".join([
-        '    "{0}",'.format(to_path_fn(f))
+        '    "{0}{1}",'.format(prefix, to_path_fn(f))
         for f in files
     ])
 
@@ -138,7 +148,9 @@ def _generate_runtime_sources_h_rule(ctx):
         k: _get_paths(getattr(ctx.attr, "_" + k), _builtins_path)
         for k in BUILTINS_FILEGROUPS.keys()
     } | {
-        k: _get_paths(getattr(ctx.attr, "_" + k), _runtimes_path)
+        # Other runtimes are installed under separate directories named the same
+        # as their key.
+        k: _get_paths(getattr(ctx.attr, "_" + k), _runtimes_path, k + "/")
         for k in RUNTIMES_FILEGROUPS.keys()
     })))
     return [DefaultInfo(files = depset([h_file]))]

@@ -128,7 +128,7 @@ constraint C {
 // CHECK:STDERR:
 impl () as C {}
 
-// --- todo_fail_duplicate_through_generic_constraint.carbon
+// --- fail_duplicate_through_generic_constraint.carbon
 library "[[@TEST_NAME]]";
 
 interface A(T:! type) {}
@@ -140,5 +140,68 @@ constraint B(X:! type, Y:! type) {
 // This should impl () as A({}).
 impl () as B((), {}) {}
 
-// This should be considered a duplicate.
+// CHECK:STDERR: fail_duplicate_through_generic_constraint.carbon:[[@LINE+7]]:1: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
+// CHECK:STDERR: impl () as A({}) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_duplicate_through_generic_constraint.carbon:[[@LINE-5]]:1: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
+// CHECK:STDERR: impl () as B((), {}) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl () as A({}) {}
+
+// --- fail_error_self_in_require.carbon
+library "[[@TEST_NAME]]";
+
+interface A(T:! type) {}
+
+// This makes the type of `Self` into an ErrorInst. No `require` is added to
+// the constraint.
+//@dump-sem-ir-begin
+//
+// CHECK:STDERR: fail_error_self_in_require.carbon:[[@LINE+4]]:18: error: name `Undefined` not found [NameNotFound]
+// CHECK:STDERR: constraint B(X:! Undefined) {
+// CHECK:STDERR:                  ^~~~~~~~~
+// CHECK:STDERR:
+constraint B(X:! Undefined) {
+  extend require impls A(X);
+}
+//@dump-sem-ir-end
+
+impl () as B(1) {}
+
+// CHECK:STDOUT: --- fail_error_self_in_require.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %B.type: type = generic_named_constaint_type @B [concrete]
+// CHECK:STDOUT:   %empty_struct: %B.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %B.decl: %B.type = constraint_decl @B [concrete = constants.%empty_struct] {
+// CHECK:STDOUT:     %X.patt: <error> = symbolic_binding_pattern X, 0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %X: <error> = symbolic_binding X, 0 [concrete = <error>]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic constraint @B(%X: <error>) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   constraint {
+// CHECK:STDOUT:     %Self: <error> = symbolic_binding Self, 1 [concrete = <error>]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = %Self
+// CHECK:STDOUT:     .A = <poisoned>
+// CHECK:STDOUT:     .X = <poisoned>
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @B(<error>) {}
+// CHECK:STDOUT:
