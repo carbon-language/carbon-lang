@@ -30,6 +30,9 @@ static auto GetGlobalDecl(const clang::FunctionDecl* decl)
   if (const auto* ctor = dyn_cast<clang::CXXConstructorDecl>(decl)) {
     return clang::GlobalDecl(ctor, clang::CXXCtorType::Ctor_Complete);
   }
+  if (const auto* dtor = dyn_cast<clang::CXXDestructorDecl>(decl)) {
+    return clang::GlobalDecl(dtor, clang::CXXDtorType::Dtor_Complete);
+  }
   return clang::GlobalDecl(decl);
 }
 

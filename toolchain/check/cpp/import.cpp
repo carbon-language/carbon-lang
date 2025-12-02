@@ -1626,11 +1626,6 @@ static auto CreateFunctionParamsInsts(Context& context, SemIR::LocId loc_id,
                                       clang::FunctionDecl* clang_decl,
                                       int num_params)
     -> std::optional<FunctionParamsInsts> {
-  if (isa<clang::CXXDestructorDecl>(clang_decl)) {
-    context.TODO(loc_id, "Unsupported: Destructor");
-    return std::nullopt;
-  }
-
   auto implicit_param_patterns_id =
       MakeImplicitParamPatternsBlockId(context, loc_id, *clang_decl);
   if (!implicit_param_patterns_id.has_value()) {
@@ -1668,6 +1663,10 @@ static auto GetFunctionName(Context& context, clang::FunctionDecl* clang_decl)
                    .GetAs<SemIR::ClassDecl>(LookupClangDeclInstId(context, key))
                    .class_id)
           .name_id;
+    }
+
+    case clang::DeclarationName::CXXDestructorName: {
+      return SemIR::NameId::CppDestructor;
     }
 
     case clang::DeclarationName::CXXOperatorName: {

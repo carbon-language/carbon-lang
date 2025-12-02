@@ -522,12 +522,13 @@ fn F() {
 // CHECK:STDOUT:   %facet_value.cee: %type_where = facet_value %array_type, () [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.1a5: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.cee) [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.39c: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.1a5 = struct_value () [concrete]
-// CHECK:STDOUT:   %facet_value.743: %type_where = facet_value %IntResult, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.3b7: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.743) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.515: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.3b7 = struct_value () [concrete]
-// CHECK:STDOUT:   %facet_value.1e3: %type_where = facet_value %LongResult, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.6c9: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.1e3) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.418: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.6c9 = struct_value () [concrete]
+// CHECK:STDOUT:   %IntResult.cpp_destructor.type: type = fn_type @IntResult.cpp_destructor [concrete]
+// CHECK:STDOUT:   %IntResult.cpp_destructor: %IntResult.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %impl_witness.319: <witness> = impl_witness @F.%impl_witness_table.loc22 [concrete]
+// CHECK:STDOUT:   %LongResult.cpp_destructor.type: type = fn_type @LongResult.cpp_destructor [concrete]
+// CHECK:STDOUT:   %LongResult.cpp_destructor: %LongResult.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %impl_witness.839524.1: <witness> = impl_witness @F.%impl_witness_table.loc19 [concrete]
+// CHECK:STDOUT:   %impl_witness.839524.2: <witness> = impl_witness @F.%impl_witness_table.loc16 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -583,6 +584,20 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.f5b: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.528) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.98e)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.f5c = impl_witness_table (%Core.import_ref.f5b), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %IntResult.cpp_destructor.decl: %IntResult.cpp_destructor.type = fn_decl @IntResult.cpp_destructor [concrete = constants.%IntResult.cpp_destructor] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.454 = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.454 = ref_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %IntResult = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %IntResult = ref_binding self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %LongResult.cpp_destructor.decl: %LongResult.cpp_destructor.type = fn_decl @LongResult.cpp_destructor [concrete = constants.%LongResult.cpp_destructor] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.cd9 = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.cd9 = ref_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %LongResult = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %LongResult = ref_binding self, %self.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -714,22 +729,22 @@ fn F() {
 // CHECK:STDOUT:     %array_type: type = array_type %.loc24_23.4, %f32 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type = ref_binding a, %a.var
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc24: <bound method> = bound_method %a.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.39c
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %a.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.39c
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc24_3: <bound method> = bound_method %a.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc24: init %empty_tuple.type = call %bound_method.loc24_3(%a.var)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc22: <bound method> = bound_method %.loc22_65.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.515
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc22: <bound method> = bound_method %.loc22_65.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc22: init %empty_tuple.type = call %bound_method.loc22(%.loc22_65.3)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc19: <bound method> = bound_method %.loc19_76.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.418
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc19: <bound method> = bound_method %.loc19_76.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.3
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc19: init %empty_tuple.type = call %bound_method.loc19(%.loc19_76.3)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc16: <bound method> = bound_method %.loc16_62.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.418
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc16: <bound method> = bound_method %.loc16_62.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc16: init %empty_tuple.type = call %bound_method.loc16(%.loc16_62.3)
+// CHECK:STDOUT:   %bound_method.loc24_3: <bound method> = bound_method %a.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc24_3(%a.var)
+// CHECK:STDOUT:   %impl_witness_table.loc22 = impl_witness_table (imports.%IntResult.cpp_destructor.decl), invalid [concrete]
+// CHECK:STDOUT:   %impl_witness.loc22: <witness> = impl_witness %impl_witness_table.loc22 [concrete = constants.%impl_witness.319]
+// CHECK:STDOUT:   %IntResult.cpp_destructor.bound: <bound method> = bound_method %.loc22_65.3, constants.%IntResult.cpp_destructor
+// CHECK:STDOUT:   %IntResult.cpp_destructor.call: init %empty_tuple.type = call %IntResult.cpp_destructor.bound(%.loc22_65.3)
+// CHECK:STDOUT:   %impl_witness_table.loc19 = impl_witness_table (imports.%LongResult.cpp_destructor.decl), invalid [concrete]
+// CHECK:STDOUT:   %impl_witness.loc19: <witness> = impl_witness %impl_witness_table.loc19 [concrete = constants.%impl_witness.839524.1]
+// CHECK:STDOUT:   %LongResult.cpp_destructor.bound.loc19: <bound method> = bound_method %.loc19_76.3, constants.%LongResult.cpp_destructor
+// CHECK:STDOUT:   %LongResult.cpp_destructor.call.loc19: init %empty_tuple.type = call %LongResult.cpp_destructor.bound.loc19(%.loc19_76.3)
+// CHECK:STDOUT:   %impl_witness_table.loc16 = impl_witness_table (imports.%LongResult.cpp_destructor.decl), invalid [concrete]
+// CHECK:STDOUT:   %impl_witness.loc16: <witness> = impl_witness %impl_witness_table.loc16 [concrete = constants.%impl_witness.839524.2]
+// CHECK:STDOUT:   %LongResult.cpp_destructor.bound.loc16: <bound method> = bound_method %.loc16_62.3, constants.%LongResult.cpp_destructor
+// CHECK:STDOUT:   %LongResult.cpp_destructor.call.loc16: init %empty_tuple.type = call %LongResult.cpp_destructor.bound.loc16(%.loc16_62.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -822,12 +837,13 @@ fn F() {
 // CHECK:STDOUT:   %facet_value.cee: %type_where = facet_value %array_type, () [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.1a5: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.cee) [concrete]
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.39c: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.1a5 = struct_value () [concrete]
-// CHECK:STDOUT:   %facet_value.dd4: %type_where = facet_value %UIntResult, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.f16: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.dd4) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.0d5: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.f16 = struct_value () [concrete]
-// CHECK:STDOUT:   %facet_value.4ba: %type_where = facet_value %ULongResult, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.429: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.4ba) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.735: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.429 = struct_value () [concrete]
+// CHECK:STDOUT:   %UIntResult.cpp_destructor.type: type = fn_type @UIntResult.cpp_destructor [concrete]
+// CHECK:STDOUT:   %UIntResult.cpp_destructor: %UIntResult.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %impl_witness.867: <witness> = impl_witness @F.%impl_witness_table.loc22 [concrete]
+// CHECK:STDOUT:   %ULongResult.cpp_destructor.type: type = fn_type @ULongResult.cpp_destructor [concrete]
+// CHECK:STDOUT:   %ULongResult.cpp_destructor: %ULongResult.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %impl_witness.b5ad92.1: <witness> = impl_witness @F.%impl_witness_table.loc19 [concrete]
+// CHECK:STDOUT:   %impl_witness.b5ad92.2: <witness> = impl_witness @F.%impl_witness_table.loc16 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -883,6 +899,20 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.f5b: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.528) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.98e)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.f5c = impl_witness_table (%Core.import_ref.f5b), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %UIntResult.cpp_destructor.decl: %UIntResult.cpp_destructor.type = fn_decl @UIntResult.cpp_destructor [concrete = constants.%UIntResult.cpp_destructor] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.dc7 = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.dc7 = ref_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %UIntResult = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %UIntResult = ref_binding self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %ULongResult.cpp_destructor.decl: %ULongResult.cpp_destructor.type = fn_decl @ULongResult.cpp_destructor [concrete = constants.%ULongResult.cpp_destructor] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.6f2 = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.6f2 = ref_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: ref %ULongResult = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %ULongResult = ref_binding self, %self.param
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -1014,22 +1044,22 @@ fn F() {
 // CHECK:STDOUT:     %array_type: type = array_type %.loc24_23.4, %f32 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type = ref_binding a, %a.var
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc24: <bound method> = bound_method %a.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.39c
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %a.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.39c
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc24_3: <bound method> = bound_method %a.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc24: init %empty_tuple.type = call %bound_method.loc24_3(%a.var)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc22: <bound method> = bound_method %.loc22_67.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.0d5
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc22: <bound method> = bound_method %.loc22_67.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc22: init %empty_tuple.type = call %bound_method.loc22(%.loc22_67.3)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc19: <bound method> = bound_method %.loc19_80.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.735
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc19: <bound method> = bound_method %.loc19_80.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.3
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc19: init %empty_tuple.type = call %bound_method.loc19(%.loc19_80.3)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc16: <bound method> = bound_method %.loc16_82.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.735
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc16: <bound method> = bound_method %.loc16_82.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.4
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc16: init %empty_tuple.type = call %bound_method.loc16(%.loc16_82.3)
+// CHECK:STDOUT:   %bound_method.loc24_3: <bound method> = bound_method %a.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc24_3(%a.var)
+// CHECK:STDOUT:   %impl_witness_table.loc22 = impl_witness_table (imports.%UIntResult.cpp_destructor.decl), invalid [concrete]
+// CHECK:STDOUT:   %impl_witness.loc22: <witness> = impl_witness %impl_witness_table.loc22 [concrete = constants.%impl_witness.867]
+// CHECK:STDOUT:   %UIntResult.cpp_destructor.bound: <bound method> = bound_method %.loc22_67.3, constants.%UIntResult.cpp_destructor
+// CHECK:STDOUT:   %UIntResult.cpp_destructor.call: init %empty_tuple.type = call %UIntResult.cpp_destructor.bound(%.loc22_67.3)
+// CHECK:STDOUT:   %impl_witness_table.loc19 = impl_witness_table (imports.%ULongResult.cpp_destructor.decl), invalid [concrete]
+// CHECK:STDOUT:   %impl_witness.loc19: <witness> = impl_witness %impl_witness_table.loc19 [concrete = constants.%impl_witness.b5ad92.1]
+// CHECK:STDOUT:   %ULongResult.cpp_destructor.bound.loc19: <bound method> = bound_method %.loc19_80.3, constants.%ULongResult.cpp_destructor
+// CHECK:STDOUT:   %ULongResult.cpp_destructor.call.loc19: init %empty_tuple.type = call %ULongResult.cpp_destructor.bound.loc19(%.loc19_80.3)
+// CHECK:STDOUT:   %impl_witness_table.loc16 = impl_witness_table (imports.%ULongResult.cpp_destructor.decl), invalid [concrete]
+// CHECK:STDOUT:   %impl_witness.loc16: <witness> = impl_witness %impl_witness_table.loc16 [concrete = constants.%impl_witness.b5ad92.2]
+// CHECK:STDOUT:   %ULongResult.cpp_destructor.bound.loc16: <bound method> = bound_method %.loc16_82.3, constants.%ULongResult.cpp_destructor
+// CHECK:STDOUT:   %ULongResult.cpp_destructor.call.loc16: init %empty_tuple.type = call %ULongResult.cpp_destructor.bound.loc16(%.loc16_82.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

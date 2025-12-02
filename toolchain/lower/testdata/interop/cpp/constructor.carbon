@@ -77,8 +77,11 @@ fn Copy(c: Cpp.Copy) -> Cpp.Copy {
 // CHECK:STDOUT:   %.loc7_26.1.temp = alloca [8 x i8], align 1, !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_26.1.temp), !dbg !10
 // CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk(ptr %.loc7_26.1.temp), !dbg !10
+// CHECK:STDOUT:   call void @_ZN1CD1Ev(ptr %.loc7_26.1.temp), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_ZN1CD1Ev(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1

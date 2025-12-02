@@ -123,6 +123,26 @@ static auto BuildWitness(Context& context, SemIR::LocId loc_id,
   return witness_id;
 }
 
+static auto BuildSingleFunctionWitness(
+    Context& context, SemIR::LocId loc_id, clang::FunctionDecl* cpp_fn,
+    clang::DeclAccessPair found_decl, int num_params,
+    SemIR::TypeId self_type_id, SemIR::SpecificInterface specific_interface)
+    -> SemIR::InstId {
+  auto fn_id = context.clang_sema().DiagnoseUseOfOverloadedDecl(
+                   cpp_fn, GetCppLocation(context, loc_id))
+                   ? SemIR::ErrorInst::InstId
+                   : ImportCppFunctionDecl(context, loc_id, cpp_fn, num_params);
+  if (auto fn_decl =
+          context.insts().TryGetAsWithId<SemIR::FunctionDecl>(fn_id)) {
+    CheckCppOverloadAccess(context, loc_id, found_decl, fn_decl->inst_id);
+  } else {
+    CARBON_CHECK(fn_id == SemIR::ErrorInst::InstId);
+    return SemIR::ErrorInst::InstId;
+  }
+  return BuildWitness(context, loc_id, self_type_id, specific_interface,
+                      {fn_id});
+}
+
 static auto LookupCopyImpl(Context& context, SemIR::LocId loc_id,
                            SemIR::TypeId self_type_id,
                            SemIR::SpecificInterface specific_interface)
@@ -141,22 +161,32 @@ static auto LookupCopyImpl(Context& context, SemIR::LocId loc_id,
     return SemIR::InstId::None;
   }
 
-  auto ctor_id =
-      context.clang_sema().DiagnoseUseOfOverloadedDecl(
-          ctor, GetCppLocation(context, loc_id))
-          ? SemIR::ErrorInst::InstId
-          : ImportCppFunctionDecl(context, loc_id, ctor, /*num_params=*/1);
-  if (auto ctor_decl =
-          context.insts().TryGetAsWithId<SemIR::FunctionDecl>(ctor_id)) {
-    CheckCppOverloadAccess(context, loc_id,
-                           clang::DeclAccessPair::make(ctor, ctor->getAccess()),
-                           ctor_decl->inst_id);
-  } else {
-    CARBON_CHECK(ctor_id == SemIR::ErrorInst::InstId);
-    return SemIR::ErrorInst::InstId;
+  return BuildSingleFunctionWitness(
+      context, loc_id, ctor,
+      clang::DeclAccessPair::make(ctor, ctor->getAccess()), /*num_params=*/1,
+      self_type_id, specific_interface);
+}
+
+static auto LookupDestroyImpl(Context& context, SemIR::LocId loc_id,
+                              SemIR::TypeId self_type_id,
+                              SemIR::SpecificInterface specific_interface)
+    -> SemIR::InstId {
+  auto* class_decl = TypeAsClassDecl(context, self_type_id);
+  if (!class_decl) {
+    return SemIR::InstId::None;
   }
-  return BuildWitness(context, loc_id, self_type_id, specific_interface,
-                      {ctor_id});
+
+  auto* dtor = context.clang_sema().LookupDestructor(class_decl);
+  if (!dtor) {
+    // TODO: If the impl lookup failure is an error, we should produce a
+    // diagnostic explaining why the class is not destructible.
+    return SemIR::InstId::None;
+  }
+
+  return BuildSingleFunctionWitness(
+      context, loc_id, dtor,
+      clang::DeclAccessPair::make(dtor, dtor->getAccess()), /*num_params=*/0,
+      self_type_id, specific_interface);
 }
 
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
@@ -175,6 +205,11 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
 
   if (context.identifiers().Get(interface.name_id.AsIdentifierId()) == "Copy") {
     return LookupCopyImpl(context, loc_id, self_type_id, specific_interface);
+  }
+
+  if (context.identifiers().Get(interface.name_id.AsIdentifierId()) ==
+      "Destroy") {
+    return LookupDestroyImpl(context, loc_id, self_type_id, specific_interface);
   }
 
   // TODO: Handle other interfaces.
