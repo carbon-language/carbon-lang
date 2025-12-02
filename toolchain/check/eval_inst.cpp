@@ -336,6 +336,8 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
             context.sem_ir(), witness->specific_id, element));
       }
     }
+    // If we get here, this impl witness table entry has not been populated yet,
+    // because the impl was referenced within its own definition.
     // TODO: Add note pointing to the impl declaration.
     context.emitter().Emit(inst_id, ImplAccessMemberBeforeSet);
     return ConstantEvalResult::Error;
@@ -343,10 +345,15 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                  context.insts().TryGetAs<SemIR::CppWitness>(inst.witness_id)) {
     auto elements = context.inst_blocks().Get(cpp_witness->elements_id);
     auto index = static_cast<size_t>(inst.index.index);
+    // `elements` can be shorter than the number of associated entities while
+    // we're building the synthetic witness.
     if (index < elements.size()) {
       return ConstantEvalResult::Existing(
           context.constant_values().Get(elements[index]));
     }
+    // If we get here, this synthesized witness table entry has not been
+    // populated yet.
+    // TODO: Is this reachable? We have no test coverage for this diagnostic.
     context.emitter().Emit(inst_id, ImplAccessMemberBeforeSet);
     return ConstantEvalResult::Error;
   } else if (auto witness = context.insts().TryGetAs<SemIR::LookupImplWitness>(

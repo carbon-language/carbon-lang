@@ -71,11 +71,20 @@ static auto BuildWitness(Context& context, SemIR::LocId loc_id,
   // Build a witness with the current contents of the witness table. This will
   // grow as we progress through the impl. In theory this will build O(n^2)
   // table entries, but in practice n <= 2, so that's OK.
+  //
+  // This is necessary because later associated entities may refer to earlier
+  // associated entities in their signatures. In particular, an associated
+  // result type may be used as the return type of an associated function.
+  //
+  // TODO: Consider building one witness after all associated constants, and
+  // then a second after all associated functions, rather than building one at
+  // each step. For now this doesn't really matter since we don't have more than
+  // one of each anyway.
   auto make_witness = [&] {
-    return AddInst<SemIR::CppWitness>(
+    return context.constant_values().GetInstId(EvalOrAddInst<SemIR::CppWitness>(
         context, loc_id,
         {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-         .elements_id = context.inst_blocks().Add(entries)});
+         .elements_id = context.inst_blocks().Add(entries)}));
   };
 
   // Fill in the witness table.
