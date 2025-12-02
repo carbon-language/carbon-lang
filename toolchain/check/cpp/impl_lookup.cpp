@@ -76,6 +76,8 @@ static auto BuildWitness(Context& context, SemIR::LocId loc_id,
 
   // Build a witness. We use an `ImplWitness` with an `impl_id` of `None` to
   // represent a synthesized witness.
+  // TODO: Stop using `ImplWitnessTable` here and add a distinct instruction
+  // that doesn't contain an `InstId` and supports deduplication.
   auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
       context, loc_id,
       {.elements_id = witness_table_id, .impl_id = SemIR::ImplId::None});
