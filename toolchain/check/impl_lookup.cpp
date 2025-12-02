@@ -932,6 +932,12 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
     return facet_lookup_result;
   }
 
+  std::pair impl_lookup_cache_key = {eval_query.query_self_inst_id,
+                                     eval_query.query_specific_interface_id};
+  if (auto result = context.impl_lookup_cache().Lookup(impl_lookup_cache_key)) {
+    return EvalImplLookupResult::MakeFinal(result.value());
+  }
+
   // Ensure specifics don't substitute in weird things for the query self.
   CARBON_CHECK(context.types().IsFacetType(
       context.insts().Get(eval_query.query_self_inst_id).type_id()));
@@ -1042,8 +1048,13 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
             SemIR::LocId(
                 context.impls().Get(candidate.impl_id).first_owning_decl_id));
         if (cpp_witness_id.has_value()) {
-          return EvalImplLookupResult::MakeFinal(cpp_witness_id);
+          result = EvalImplLookupResult::MakeFinal(cpp_witness_id);
         }
+      }
+
+      if (result.has_final_value()) {
+        context.impl_lookup_cache().Insert(impl_lookup_cache_key,
+                                           result.final_witness());
       }
 
       return result;
@@ -1061,6 +1072,8 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
             GetFacetAsType(context, loc_id, query_self_const_id),
             query_specific_interface, nullptr, SemIR::LocId::None);
         if (cpp_witness_id.has_value()) {
+          context.impl_lookup_cache().Insert(impl_lookup_cache_key,
+                                             cpp_witness_id);
           return EvalImplLookupResult::MakeFinal(cpp_witness_id);
         }
       }
