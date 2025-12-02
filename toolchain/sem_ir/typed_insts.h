@@ -754,6 +754,20 @@ struct CppOverloadSetValue {
   CppOverloadSetId overload_set_id;
 };
 
+// A witness table synthesized for a C++ construct such as a constructor,
+// conversion function, or overloaded operator.
+struct CppWitnessTable {
+  static constexpr auto Kind = InstKind::CppWitnessTable.Define<Parse::NodeId>(
+      {.ir_name = "cpp_witness_table",
+       .constant_kind = InstConstantKind::Always,
+       // TODO: For dynamic dispatch, we might want to lower witness tables as
+       // constants.
+       .is_lowered = false});
+
+  // The witness table of instructions.
+  InstBlockId elements_id;
+};
+
 // The type of the name of a generic class. The corresponding value is an empty
 // `StructValue`.
 struct GenericClassType {

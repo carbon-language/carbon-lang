@@ -66,30 +66,26 @@ static auto BuildWitness(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::InstId;
   }
 
-  // Prepare an empty witness table.
-  auto witness_table_id =
-      context.inst_blocks().AddUninitialized(assoc_entities.size());
-  auto witness_table = context.inst_blocks().GetMutable(witness_table_id);
-  for (auto& witness_value_id : witness_table) {
-    witness_value_id = SemIR::InstId::ImplWitnessTablePlaceholder;
-  }
+  llvm::SmallVector<SemIR::InstId> entries;
 
-  // Build a witness. We use an `ImplWitness` with an `impl_id` of `None` to
-  // represent a synthesized witness.
-  // TODO: Stop using `ImplWitnessTable` here and add a distinct instruction
-  // that doesn't contain an `InstId` and supports deduplication.
-  auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
-      context, loc_id,
-      {.elements_id = witness_table_id, .impl_id = SemIR::ImplId::None});
-  auto witness_id = AddInst<SemIR::ImplWitness>(
-      context, loc_id,
-      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-       .witness_table_id = witness_table_inst_id,
-       .specific_id = SemIR::SpecificId::None});
+  // Build a witness with the current contents of the witness table. This will
+  // grow as we progress through the impl. In theory this will build O(n^2)
+  // table entries, but in practice n <= 2, so that's OK.
+  auto make_witness = [&] {
+    // TODO: Determine if we can remove the `ImplWitness` here, and use the
+    // `CppWitnessTable` directly as the witness.
+    auto witness_table_inst_id = AddInst<SemIR::CppWitnessTable>(
+        context, loc_id, {.elements_id = context.inst_blocks().Add(entries)});
+    return AddInst<SemIR::ImplWitness>(
+        context, loc_id,
+        {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+         .witness_table_id = witness_table_inst_id,
+         .specific_id = SemIR::SpecificId::None});
+  };
 
   // Fill in the witness table.
-  for (const auto& [assoc_entity_id, value_id, witness_value_id] :
-       llvm::zip_equal(assoc_entities, values, witness_table)) {
+  for (const auto& [assoc_entity_id, value_id] :
+       llvm::zip_equal(assoc_entities, values)) {
     LoadImportRef(context, assoc_entity_id);
     auto decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
@@ -101,11 +97,13 @@ static auto BuildWitness(Context& context, SemIR::LocId loc_id,
         if (struct_value.type_id == SemIR::ErrorInst::TypeId) {
           return SemIR::ErrorInst::InstId;
         }
-        witness_value_id = CheckAssociatedFunctionImplementation(
+        // TODO: Skip calling make_witness if this function signature doesn't
+        // involve `Self`.
+        entries.push_back(CheckAssociatedFunctionImplementation(
             context,
             context.types().GetAs<SemIR::FunctionType>(struct_value.type_id),
-            value_id, self_type_id, witness_id,
-            /*defer_thunk_definition=*/false);
+            value_id, self_type_id, make_witness(),
+            /*defer_thunk_definition=*/false));
         break;
       }
       case SemIR::AssociatedConstantDecl::Kind: {
@@ -120,7 +118,7 @@ static auto BuildWitness(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  return witness_id;
+  return make_witness();
 }
 
 static auto LookupCopyImpl(Context& context, SemIR::LocId loc_id,
