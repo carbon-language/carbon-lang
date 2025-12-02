@@ -162,7 +162,6 @@ auto PerformCppOverloadResolution(Context& context, SemIR::LocId loc_id,
     case clang::OverloadingResult::OR_Success: {
       CARBON_CHECK(best_viable_fn->Function);
       CARBON_CHECK(!best_viable_fn->RewriteKind);
-      sema.MarkFunctionReferenced(loc, best_viable_fn->Function);
       SemIR::InstId result_id = ImportCppFunctionDecl(
           context, loc_id, best_viable_fn->Function, arg_exprs.size());
       if (auto fn_decl =

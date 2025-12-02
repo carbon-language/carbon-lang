@@ -162,7 +162,7 @@ interface A(T:! type) {
 // CHECK:STDOUT: interface @A {
 // CHECK:STDOUT:   %Self: %A.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %A.require0.decl = require_decl @A.require0 [concrete] {
-// CHECK:STDOUT:     require %Self.as_type impls <@A>
+// CHECK:STDOUT:     require %Self.as_type impls %A.ref
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @A.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
@@ -225,7 +225,7 @@ interface A(T:! type) {
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:     %Self.loc3_23.1: @A.%A.type (%A.type.c1c) = symbolic_binding Self, 1 [symbolic = %Self.loc3_23.2 (constants.%Self)]
 // CHECK:STDOUT:     %A.require0.decl = require_decl @A.require0 [concrete] {
-// CHECK:STDOUT:       require %Self.as_type impls <@A, @A(constants.%empty_struct_type)>
+// CHECK:STDOUT:       require %Self.as_type impls %A.type.loc11_28
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Self.as_type: type = facet_access_type @A.%Self.loc3_23.1 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:       %A.ref: %A.type.495 = name_ref A, file.%A.decl [concrete = constants.%A.generic]

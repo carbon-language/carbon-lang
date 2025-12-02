@@ -264,6 +264,11 @@ struct Worklist {
   }
 
   auto Add(ImplId impl_id) -> void {
+    if (!impl_id.has_value()) {
+      AddInvalid();
+      return;
+    }
+
     const auto& impl = sem_ir->impls().Get(impl_id);
     Add(sem_ir->constant_values().Get(impl.self_id));
     Add(sem_ir->constant_values().Get(impl.constraint_id));

@@ -25,7 +25,7 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
     -> std::optional<clang::OverloadedOperatorKind> {
   // Unary operators.
   if (interface_name == "Destroy" || interface_name == "As" ||
-      interface_name == "ImplicitAs") {
+      interface_name == "ImplicitAs" || interface_name == "Copy") {
     // TODO: Support destructors and conversions.
     return std::nullopt;
   }
@@ -280,17 +280,37 @@ auto IsCppOperatorMethodDecl(clang::Decl* decl) -> bool {
   return clang_method_decl && clang_method_decl->isOverloadedOperator();
 }
 
-auto IsCppOperatorMethod(Context& context, SemIR::InstId inst_id) -> bool {
+static auto GetAsCppFunctionDecl(Context& context, SemIR::InstId inst_id)
+    -> clang::FunctionDecl* {
   auto function_type = context.types().TryGetAs<SemIR::FunctionType>(
       context.insts().Get(inst_id).type_id());
   if (!function_type) {
-    return false;
+    return nullptr;
   }
   SemIR::ClangDeclId clang_decl_id =
       context.functions().Get(function_type->function_id).clang_decl_id;
-  return clang_decl_id.has_value() &&
-         IsCppOperatorMethodDecl(
-             context.clang_decls().Get(clang_decl_id).key.decl);
+  return clang_decl_id.has_value()
+             ? dyn_cast<clang::FunctionDecl>(
+                   context.clang_decls().Get(clang_decl_id).key.decl)
+             : nullptr;
+}
+
+auto IsCppOperatorMethod(Context& context, SemIR::InstId inst_id) -> bool {
+  auto* function_decl = GetAsCppFunctionDecl(context, inst_id);
+  return function_decl && IsCppOperatorMethodDecl(function_decl);
+}
+
+auto IsCppConstructorOrNonMethodOperator(Context& context,
+                                         SemIR::InstId inst_id) -> bool {
+  auto* function_decl = GetAsCppFunctionDecl(context, inst_id);
+  if (!function_decl) {
+    return false;
+  }
+  if (isa<clang::CXXConstructorDecl>(function_decl)) {
+    return true;
+  }
+  return !isa<clang::CXXMethodDecl>(function_decl) &&
+         function_decl->isOverloadedOperator();
 }
 
 }  // namespace Carbon::Check

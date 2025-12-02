@@ -761,7 +761,7 @@ interface B {
 // CHECK:STDOUT: interface @X {
 // CHECK:STDOUT:   %Self: %X.type = symbolic_binding Self, 0 [symbolic = constants.%Self.40f]
 // CHECK:STDOUT:   %X.require1.decl = require_decl @X.require1 [concrete] {
-// CHECK:STDOUT:     require %Self.as_type impls <@Y>
+// CHECK:STDOUT:     require %Self.as_type impls %Y.ref
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @X.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.dcc)]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
@@ -774,14 +774,14 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @X.require1 {
-// CHECK:STDOUT:     require @X.require1.%Self.as_type impls <@Y>
+// CHECK:STDOUT:     require @X.require1.%Self.as_type impls @X.require1.%Y.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @Y {
 // CHECK:STDOUT:   %Self: %Y.type = symbolic_binding Self, 0 [symbolic = constants.%Self.861]
 // CHECK:STDOUT:   %Y.require0.decl = require_decl @Y.require0 [concrete] {
-// CHECK:STDOUT:     require %Self.as_type impls <@Z>
+// CHECK:STDOUT:     require %Self.as_type impls %Z.ref
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @Y.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.1a1)]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
@@ -793,7 +793,7 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @Y.require0 {
-// CHECK:STDOUT:     require @Y.require0.%Self.as_type impls <@Z>
+// CHECK:STDOUT:     require @Y.require0.%Self.as_type impls @Y.require0.%Z.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
