@@ -159,7 +159,7 @@ fn MyF() {
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_function_decl.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 6, column: 1, scope: !7)
 // CHECK:STDOUT: ; ModuleID = 'import_inline_function_decl.carbon'
@@ -197,7 +197,7 @@ fn MyF() {
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_inline_function_decl.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 6, column: 1, scope: !7)
 // CHECK:STDOUT: ; ModuleID = 'import_inline_used_function_decl.carbon'
@@ -240,7 +240,7 @@ fn MyF() {
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_inline_used_function_decl.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 6, column: 1, scope: !7)
 // CHECK:STDOUT: ; ModuleID = 'import_multiple_inline_function_decls.carbon'
@@ -296,7 +296,7 @@ fn MyF() {
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_multiple_inline_function_decls.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 8, column: 3, scope: !7)
 // CHECK:STDOUT: !12 = !DILocation(line: 9, column: 3, scope: !7)
@@ -346,7 +346,7 @@ fn MyF() {
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_inline_recursive_function_decl.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 8, column: 3, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 6, column: 1, scope: !7)
 // CHECK:STDOUT: ; ModuleID = 'call_with_default_args.carbon'
@@ -428,7 +428,7 @@ fn MyF() {
 // CHECK:STDOUT: !6 = !DIFile(filename: "call_with_default_args.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 11, column: 3, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 7, column: 3, scope: !7)
 // CHECK:STDOUT: !12 = !DILocation(line: 8, column: 3, scope: !7)

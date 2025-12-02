@@ -130,7 +130,7 @@ fn MyF() {
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_extern_c_function.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 6, column: 1, scope: !7)
 // CHECK:STDOUT: ; ModuleID = 'extern_c_function_with_cpp_overload_set.carbon'
@@ -164,7 +164,7 @@ fn MyF() {
 // CHECK:STDOUT: !6 = !DIFile(filename: "extern_c_function_with_cpp_overload_set.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 9, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 10, column: 3, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 11, column: 3, scope: !7)
 // CHECK:STDOUT: !12 = !DILocation(line: 9, column: 1, scope: !7)
@@ -178,8 +178,8 @@ fn MyF() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CMyF.Main() #0 !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7 = load i32, ptr @foo, align 4, !dbg !10
-// CHECK:STDOUT:   ret i32 %.loc7, !dbg !11
+// CHECK:STDOUT:   %.loc7 = load i32, ptr @foo, align 4, !dbg !11
+// CHECK:STDOUT:   ret i32 %.loc7, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -196,9 +196,10 @@ fn MyF() {
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_extern_c_variable.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
-// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 10, scope: !7)
-// CHECK:STDOUT: !11 = !DILocation(line: 7, column: 3, scope: !7)
+// CHECK:STDOUT: !9 = !{!10}
+// CHECK:STDOUT: !10 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !11 = !DILocation(line: 7, column: 10, scope: !7)
+// CHECK:STDOUT: !12 = !DILocation(line: 7, column: 3, scope: !7)
 // CHECK:STDOUT: ; ModuleID = 'import_extern_c_with_special_name.carbon'
 // CHECK:STDOUT: source_filename = "import_extern_c_with_special_name.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -209,8 +210,8 @@ fn MyF() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMyF.Main(ptr sret({}) %return, ptr %a, ptr %b) #0 !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Zpl1XS_.carbon_thunk(ptr %a, ptr %b, ptr %return), !dbg !10
-// CHECK:STDOUT:   ret void, !dbg !11
+// CHECK:STDOUT:   call void @_Zpl1XS_.carbon_thunk(ptr %a, ptr %b, ptr %return), !dbg !14
+// CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
@@ -248,11 +249,15 @@ fn MyF() {
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_extern_c_with_special_name.carbon", directory: "")
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !11)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
-// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 10, scope: !7)
-// CHECK:STDOUT: !11 = !DILocation(line: 7, column: 3, scope: !7)
+// CHECK:STDOUT: !9 = !{!10, !10, !10}
+// CHECK:STDOUT: !10 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !11 = !{!12, !13}
+// CHECK:STDOUT: !12 = !DILocalVariable(arg: 1, scope: !7, type: !10)
+// CHECK:STDOUT: !13 = !DILocalVariable(arg: 2, scope: !7, type: !10)
+// CHECK:STDOUT: !14 = !DILocation(line: 7, column: 10, scope: !7)
+// CHECK:STDOUT: !15 = !DILocation(line: 7, column: 3, scope: !7)
 // CHECK:STDOUT: ; ModuleID = 'import_extern_c_with_asm_label.carbon'
 // CHECK:STDOUT: source_filename = "import_extern_c_with_asm_label.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -281,6 +286,6 @@ fn MyF() {
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_extern_c_with_asm_label.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 7, column: 3, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 6, column: 1, scope: !7)

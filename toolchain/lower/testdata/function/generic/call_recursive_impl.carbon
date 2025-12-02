@@ -73,33 +73,33 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.4d3c36eeac175c1f(i32 %count) #0 !dbg !16 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(), !dbg !17
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !18
-// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !19
+// CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(), !dbg !22
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !23
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !24
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   ret i32 %count, !dbg !20
+// CHECK:STDOUT:   ret i32 %count, !dbg !25
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !21
-// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.4d3c36eeac175c1f(i32 %Int.as.AddWith.impl.Op.call), !dbg !22
-// CHECK:STDOUT:   ret i32 %G.call, !dbg !23
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !26
+// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.4d3c36eeac175c1f(i32 %Int.as.AddWith.impl.Op.call), !dbg !27
+// CHECK:STDOUT:   ret i32 %G.call, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.7abe23e63361d139(i32 %count) #0 !dbg !24 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.7abe23e63361d139(i32 %count) #0 !dbg !29 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CF.Y.Main:I.Main"(), !dbg !25
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !26
-// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !27
+// CHECK:STDOUT:   call void @"_CF.Y.Main:I.Main"(), !dbg !32
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 0, !dbg !33
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !34
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   ret i32 %count, !dbg !28
+// CHECK:STDOUT:   ret i32 %count, !dbg !35
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !29
-// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.7abe23e63361d139(i32 %Int.as.AddWith.impl.Op.call), !dbg !30
-// CHECK:STDOUT:   ret i32 %G.call, !dbg !31
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !36
+// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.7abe23e63361d139(i32 %Int.as.AddWith.impl.Op.call), !dbg !37
+// CHECK:STDOUT:   ret i32 %G.call, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -116,7 +116,7 @@ fn Run() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "call_recursive_impl.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.X.Main:I.Main", scope: null, file: !3, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 20, column: 12, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 20, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = distinct !DISubprogram(name: "F", linkageName: "_CF.Y.Main:I.Main", scope: null, file: !3, line: 24, type: !5, spFlags: DISPFlagDefinition, unit: !2)
@@ -126,19 +126,26 @@ fn Run() {
 // CHECK:STDOUT: !13 = !DILocation(line: 40, column: 3, scope: !12)
 // CHECK:STDOUT: !14 = !DILocation(line: 41, column: 3, scope: !12)
 // CHECK:STDOUT: !15 = !DILocation(line: 39, column: 1, scope: !12)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.4d3c36eeac175c1f", scope: null, file: !3, line: 30, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !17 = !DILocation(line: 31, column: 3, scope: !16)
-// CHECK:STDOUT: !18 = !DILocation(line: 33, column: 7, scope: !16)
-// CHECK:STDOUT: !19 = !DILocation(line: 33, column: 6, scope: !16)
-// CHECK:STDOUT: !20 = !DILocation(line: 34, column: 5, scope: !16)
-// CHECK:STDOUT: !21 = !DILocation(line: 36, column: 15, scope: !16)
-// CHECK:STDOUT: !22 = !DILocation(line: 36, column: 10, scope: !16)
-// CHECK:STDOUT: !23 = !DILocation(line: 36, column: 3, scope: !16)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.7abe23e63361d139", scope: null, file: !3, line: 30, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !25 = !DILocation(line: 31, column: 3, scope: !24)
-// CHECK:STDOUT: !26 = !DILocation(line: 33, column: 7, scope: !24)
-// CHECK:STDOUT: !27 = !DILocation(line: 33, column: 6, scope: !24)
-// CHECK:STDOUT: !28 = !DILocation(line: 34, column: 5, scope: !24)
-// CHECK:STDOUT: !29 = !DILocation(line: 36, column: 15, scope: !24)
-// CHECK:STDOUT: !30 = !DILocation(line: 36, column: 10, scope: !24)
-// CHECK:STDOUT: !31 = !DILocation(line: 36, column: 3, scope: !24)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.4d3c36eeac175c1f", scope: null, file: !3, line: 30, type: !17, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !20)
+// CHECK:STDOUT: !17 = !DISubroutineType(types: !18)
+// CHECK:STDOUT: !18 = !{!19, !19}
+// CHECK:STDOUT: !19 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !20 = !{!21}
+// CHECK:STDOUT: !21 = !DILocalVariable(arg: 1, scope: !16, type: !19)
+// CHECK:STDOUT: !22 = !DILocation(line: 31, column: 3, scope: !16)
+// CHECK:STDOUT: !23 = !DILocation(line: 33, column: 7, scope: !16)
+// CHECK:STDOUT: !24 = !DILocation(line: 33, column: 6, scope: !16)
+// CHECK:STDOUT: !25 = !DILocation(line: 34, column: 5, scope: !16)
+// CHECK:STDOUT: !26 = !DILocation(line: 36, column: 15, scope: !16)
+// CHECK:STDOUT: !27 = !DILocation(line: 36, column: 10, scope: !16)
+// CHECK:STDOUT: !28 = !DILocation(line: 36, column: 3, scope: !16)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.7abe23e63361d139", scope: null, file: !3, line: 30, type: !17, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !30)
+// CHECK:STDOUT: !30 = !{!31}
+// CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !29, type: !19)
+// CHECK:STDOUT: !32 = !DILocation(line: 31, column: 3, scope: !29)
+// CHECK:STDOUT: !33 = !DILocation(line: 33, column: 7, scope: !29)
+// CHECK:STDOUT: !34 = !DILocation(line: 33, column: 6, scope: !29)
+// CHECK:STDOUT: !35 = !DILocation(line: 34, column: 5, scope: !29)
+// CHECK:STDOUT: !36 = !DILocation(line: 36, column: 15, scope: !29)
+// CHECK:STDOUT: !37 = !DILocation(line: 36, column: 10, scope: !29)
+// CHECK:STDOUT: !38 = !DILocation(line: 36, column: 3, scope: !29)

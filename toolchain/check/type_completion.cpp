@@ -806,7 +806,58 @@ static auto RequireIdentifiedNamedConstraints(
   return true;
 }
 
-auto RequireIdentifiedFacetType(Context& context,
+// Get the specific of a RequireImpls from the specific of its enclosing
+// interface or named constraint. Since a `require` declaration can not
+// introduce new generic bindings, the specific for the RequireImpls can be
+// constructed from the enclosing one.
+static auto GetRequireImplsSpecificFromEnclosingSpecific(
+    Context& context, SemIR::LocId loc_id, const SemIR::RequireImpls& require,
+    SemIR::SpecificId enclosing_specific_id) -> SemIR::SpecificId {
+  auto enclosing_specific_args_id =
+      context.specifics().GetArgsOrEmpty(enclosing_specific_id);
+  auto enclosing_specific_args =
+      context.inst_blocks().Get(enclosing_specific_args_id);
+  llvm::SmallVector<SemIR::InstId> arg_ids;
+  arg_ids.reserve(enclosing_specific_args.size() + 1);
+  // Start with the args from the enclosing specific.
+  llvm::append_range(arg_ids, enclosing_specific_args);
+
+  // Specifics inside an interface/constraint also include the `Self` of the
+  // enclosing entity. We copy that `Self` from the self-specific of the
+  // RequireImpls generic.
+  const auto& require_generic = context.generics().Get(require.generic_id);
+  const auto& require_self_specific =
+      context.specifics().Get(require_generic.self_specific_id);
+  auto require_self_specific_args =
+      context.inst_blocks().Get(require_self_specific.args_id);
+  // The last argument of a `require` generic is always `Self`, as `require` can
+  // not have any parameters of its own, only enclosing parameters.
+  auto self_inst_id = require_self_specific_args.back();
+  CARBON_CHECK(context.insts().Is<SemIR::SymbolicBinding>(self_inst_id));
+  arg_ids.push_back(self_inst_id);
+
+  return MakeSpecific(context, loc_id, require.generic_id, arg_ids);
+}
+
+// Returns the `facet_type` mapped into `specific_id`. If an error results, it
+// returns None. In particular, this can surface as a monomorphization error
+// where the facet type was valid as a symbolic but becomes invalid with some
+// concrete specific.
+static auto TryGetFacetTypeInSpecific(Context& context,
+                                      SemIR::InstId facet_type,
+                                      SemIR::SpecificId specific_id)
+    -> SemIR::FacetTypeId {
+  auto const_facet_type = SemIR::GetConstantValueInSpecific(
+      context.sem_ir(), specific_id, facet_type);
+  auto facet_type_in_specific = context.insts().TryGetAs<SemIR::FacetType>(
+      context.constant_values().GetInstId(const_facet_type));
+  if (!facet_type_in_specific.has_value()) {
+    return SemIR::FacetTypeId::None;
+  }
+  return facet_type_in_specific->facet_type_id;
+}
+
+auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                                 const SemIR::FacetType& facet_type,
                                 MakeDiagnosticBuilderFn diagnoser)
     -> SemIR::IdentifiedFacetTypeId {
@@ -852,16 +903,22 @@ auto RequireIdentifiedFacetType(Context& context,
     }
     llvm::append_range(self_impls, facet_type_info.self_impls_constraints);
 
-    for (auto extend : facet_type_info.extend_named_constraints) {
+    for (auto extends : facet_type_info.extend_named_constraints) {
       const auto& constraint =
-          context.named_constraints().Get(extend.named_constraint_id);
+          context.named_constraints().Get(extends.named_constraint_id);
       for (auto require_impls_id : context.require_impls_blocks().Get(
                constraint.require_impls_block_id)) {
         const auto& require = context.require_impls().Get(require_impls_id);
-        if (facet_type_extends && require.extend_self) {
-          extend_facet_types.push_back(require.facet_type_id);
-        } else {
-          impls_facet_types.push_back(require.facet_type_id);
+        auto require_specific_id = GetRequireImplsSpecificFromEnclosingSpecific(
+            context, loc_id, require, extends.specific_id);
+        auto facet_type_id = TryGetFacetTypeInSpecific(
+            context, require.facet_type_inst_id, require_specific_id);
+        if (facet_type_id.has_value()) {
+          if (facet_type_extends && require.extend_self) {
+            extend_facet_types.push_back(facet_type_id);
+          } else {
+            impls_facet_types.push_back(facet_type_id);
+          }
         }
       }
     }
@@ -872,7 +929,13 @@ auto RequireIdentifiedFacetType(Context& context,
       for (auto require_impls_id : context.require_impls_blocks().Get(
                constraint.require_impls_block_id)) {
         const auto& require = context.require_impls().Get(require_impls_id);
-        impls_facet_types.push_back(require.facet_type_id);
+        auto require_specific_id = GetRequireImplsSpecificFromEnclosingSpecific(
+            context, loc_id, require, impls.specific_id);
+        auto facet_type_id = TryGetFacetTypeInSpecific(
+            context, require.facet_type_inst_id, require_specific_id);
+        if (facet_type_id.has_value()) {
+          impls_facet_types.push_back(facet_type_id);
+        }
       }
     }
   }

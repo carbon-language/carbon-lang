@@ -1377,7 +1377,7 @@ auto Formatter::FormatRequireImpls(RequireImplsId id) -> void {
   out_ << "require ";
   FormatArg(require.self_id);
   out_ << " impls ";
-  FormatArg(require.facet_type_id);
+  FormatArg(require.facet_type_inst_id);
   out_ << "\n";
   CloseBrace();
 }

@@ -82,7 +82,7 @@ cc_test(
 
 cc_test(
     name = "clang_runtimes_test",
-    size = "small",
+    size = "medium",
     srcs = ["clang_runtimes_test.cpp"],
     data = ["//toolchain/install:install_data"],
     deps = [

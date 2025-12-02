@@ -8,7 +8,9 @@
 
 #include <algorithm>
 #include <filesystem>
+#include <functional>
 #include <mutex>
+#include <numeric>
 #include <optional>
 #include <string_view>
 #include <utility>
@@ -47,7 +49,7 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::Setup(Latch::Handle latch_handle)
   // manually populate the vector with errors that we'll replace with the actual
   // result in each thread.
   objs_.reserve(src_files_.size());
-  for (auto _ : src_files_) {
+  for (const auto& _ : src_files_) {
     objs_.push_back(Error("Never constructed archive member!"));
   }
 
@@ -163,20 +165,26 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::CompileMember(
     llvm::StringRef src_file) -> ErrorOr<llvm::NewArchiveMember> {
   // Create any obj subdirectories needed for this file.
   CARBON_RETURN_IF_ERROR(CreateObjDir(src_file.str()));
-
+  std::filesystem::path src_path = srcs_root_ / std::string_view(src_file);
   std::filesystem::path obj_path =
       builder_->runtimes_builder_->path() / std::string_view(src_file);
   obj_path += ".o";
-  std::filesystem::path src_path = srcs_path_ / std::string_view(src_file);
-  CARBON_VLOG("Building `{0}' from `{1}`...\n", obj_path, src_path);
+  CARBON_VLOG("Building `{0}' from `{1}`...\n", obj_path, src_file);
 
   llvm::SmallVector<llvm::StringRef> args(cflags_);
 
   // Add language-specific flags based on file extension.
+  //
+  // Currently, we hard code a sufficiently "recent" C++ standard, but this is
+  // arbitrary and brittle. We'll have to update these any time one of the
+  // libraries uses a too-new feature.
+  //
+  // TODO: We should eventually switch to something more like `/std:c++latest`
+  // in MSVC-style command lines, but would need that implemented in Clang.
   if (src_file.ends_with(".c")) {
     args.push_back("-std=c11");
   } else if (src_file.ends_with(".cpp")) {
-    args.push_back("-std=c++20");
+    args.push_back("-std=c++26");
   }
 
   // Collect the additional required flags and dynamic flags for this builder.
@@ -214,7 +222,7 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::CompileMember(
 }
 
 template <Runtimes::Component Component>
-  requires(Component == Runtimes::LibUnwind)
+  requires IsClangArchiveRuntimes<Component>
 ClangArchiveRuntimesBuilder<Component>::ClangArchiveRuntimesBuilder(
     ClangRunner* clang, llvm::ThreadPoolInterface* threads,
     llvm::Triple target_triple, Runtimes* runtimes)
@@ -246,29 +254,87 @@ ClangArchiveRuntimesBuilder<Component>::ClangArchiveRuntimesBuilder(
   }
 
   if constexpr (Component == Runtimes::LibUnwind) {
-    srcs_path_ = installation().libunwind_path();
-    include_path_ = installation().libunwind_path() / "include";
     archive_path_ = std::filesystem::path("lib") / "libunwind.a";
+    include_paths_ = {installation().libunwind_path() / "include"};
+  } else if constexpr (Component == Runtimes::Libcxx) {
+    archive_path_ = std::filesystem::path("lib") / "libc++.a";
+    include_paths_ = {
+        installation().libcxx_path() / "include",
+        // Some private headers of libc++ are nested in the source directory.
+        installation().libcxx_path() / "src",
+        installation().libcxxabi_path() / "include",
+        // Libc++ also uses llvm-libc header-only libraries for parts of its
+        // implementation. All the `#include`s are relative to the root of the
+        // internal libc source tree rather than an `include` directory.
+        installation().libc_path() / "internal",
+    };
   } else {
     static_assert(false,
                   "Invalid runtimes component for an archive runtime builder.");
   }
 
-  archive_.emplace(this, archive_path_, srcs_path_, CollectSrcFiles(),
-                   CollectCflags());
+  archive_.emplace(this, archive_path_, installation().runtimes_root(),
+                   CollectSrcFiles(), CollectCflags());
   tasks_.async([this]() mutable { Setup(); });
 }
 
 template <Runtimes::Component Component>
-  requires(Component == Runtimes::LibUnwind)
+  requires IsClangArchiveRuntimes<Component>
 auto ClangArchiveRuntimesBuilder<Component>::CollectSrcFiles()
     -> llvm::SmallVector<llvm::StringRef> {
   if constexpr (Component == Runtimes::LibUnwind) {
-    return llvm::SmallVector<llvm::StringRef>(llvm::make_filter_range(
+    return llvm::to_vector_of<llvm::StringRef>(llvm::make_filter_range(
         RuntimeSources::LibunwindSrcs, [](llvm::StringRef src) {
           return src.ends_with(".c") || src.ends_with(".cpp") ||
                  src.ends_with(".S");
         }));
+  } else if constexpr (Component == Runtimes::Libcxx) {
+    auto libcxx_srcs = llvm::make_filter_range(
+        RuntimeSources::LibcxxSrcs, [this](llvm::StringRef src) {
+          if (!src.ends_with(".cpp")) {
+            return false;
+          }
+
+          // We include libc++abi and so don't need new/delete definitions.
+          if (src == "libcxx/src/new.cpp") {
+            return false;
+          }
+          // We use compiler-rt for builtins, so we don't need int128 helpers.
+          if (src == "libcxx/src/filesystem/int128_builtins.cpp") {
+            return false;
+          }
+
+          // We don't currently use the libdispatch PSTL backend.
+          // TODO: We should evaluate enabling this on macOS.
+          if (src == "libcxx/src/pstl/libdispatch.cpp") {
+            return false;
+          }
+
+          // Skip platform-specific code for unsupported platforms.
+          // TODO: We should revisit this and include the code for these targets
+          // along with testing to make sure it works.
+          if (src.starts_with("libcxx/src/support/ibm/") ||
+              src.starts_with("libcxx/src/support/win32/")) {
+            return false;
+          }
+
+          // The timezone database is currently only enabled on Linux in
+          // upstream.
+          if (!target_triple_.isOSLinux() &&
+              (src == "libcxx/src/experimental/chrono_exception.cpp" ||
+               src == "libcxx/src/experimental/time_zone.cpp" ||
+               src == "libcxx/src/experimental/tzdb.cpp" ||
+               src == "libcxx/src/experimental/tzdb_list.cpp")) {
+            return false;
+          }
+
+          return true;
+        });
+    auto libcxxabi_srcs = llvm::make_filter_range(
+        RuntimeSources::LibcxxabiSrcs,
+        [](llvm::StringRef src) { return src.ends_with(".cpp"); });
+    return llvm::to_vector(
+        llvm::concat<llvm::StringRef>(libcxx_srcs, libcxxabi_srcs));
   } else {
     static_assert(false,
                   "Invalid runtimes component for an archive runtime builder.");
@@ -276,41 +342,57 @@ auto ClangArchiveRuntimesBuilder<Component>::CollectSrcFiles()
 }
 
 template <Runtimes::Component Component>
-  requires(Component == Runtimes::LibUnwind)
+  requires IsClangArchiveRuntimes<Component>
 auto ClangArchiveRuntimesBuilder<Component>::CollectCflags()
     -> llvm::SmallVector<llvm::StringRef> {
+  llvm::SmallVector<llvm::StringRef> cflags;
+
+  // TODO: It would be nice to plumb through an option to enable (some) warnings
+  // when building runtimes, especially for folks working directly on the Carbon
+  // toolchain to validate our builds of runtimes.
+
   if constexpr (Component == Runtimes::LibUnwind) {
-    return {
+    // TODO: Should libunwind also limit symbol visibility?
+    cflags = {
         "-no-canonical-prefixes",
+        "-D_LIBUNWIND_IS_NATIVE_ONLY",
         "-O3",
         "-fPIC",
-        "-funwind-tables",
         "-fno-exceptions",
         "-fno-rtti",
+        "-funwind-tables",
         "-nostdinc++",
-        "-I",
-        include_path_.native(),
-        "-D_LIBUNWIND_IS_NATIVE_ONLY",
+        "-w",
+    };
+  } else if constexpr (Component == Runtimes::Libcxx) {
+    cflags = {
+        "-no-canonical-prefixes",
+        "-DLIBCXX_BUILDING_LIBCXXABI",
+        "-D_LIBCPP_BUILDING_LIBRARY",
+        "-D_LIBCPP_REMOVE_TRANSITIVE_INCLUDES",
+        "-O3",
+        "-fPIC",
+        "-fvisibility-inlines-hidden",
+        "-fvisibility=hidden",
+        "-nostdinc++",
         "-w",
     };
   } else {
     static_assert(false,
                   "Invalid runtimes component for an archive runtime builder.");
   }
+
+  for (const auto& include_path : include_paths_) {
+    CARBON_CHECK(include_path.is_absolute(),
+                 "Unexpected relative include path: {0}", include_path);
+    cflags.append({"-I", include_path.native()});
+  }
+  return cflags;
 }
 
 template <Runtimes::Component Component>
-  requires(Component == Runtimes::LibUnwind)
+  requires IsClangArchiveRuntimes<Component>
 auto ClangArchiveRuntimesBuilder<Component>::Setup() -> void {
-  // Symlink the installation's `include` into the runtime.
-  CARBON_CHECK(include_path_.is_absolute(),
-               "Unexpected relative include path: {0}", include_path_);
-  if (auto result = runtimes_builder_->dir().Symlink("include", include_path_);
-      !result.ok()) {
-    result_ = std::move(result).error();
-    return;
-  }
-
   // Finish building the runtime once the archive is built.
   Latch::Handle latch_handle = step_counter_.Init(
       [this]() mutable { tasks_.async([this]() mutable { Finish(); }); });
@@ -320,7 +402,7 @@ auto ClangArchiveRuntimesBuilder<Component>::Setup() -> void {
 }
 
 template <Runtimes::Component Component>
-  requires(Component == Runtimes::LibUnwind)
+  requires IsClangArchiveRuntimes<Component>
 auto ClangArchiveRuntimesBuilder<Component>::Finish() -> void {
   CARBON_VLOG("Finished building {0}...\n", archive_path_);
   if (!archive_->result().ok()) {
@@ -332,6 +414,7 @@ auto ClangArchiveRuntimesBuilder<Component>::Finish() -> void {
 }
 
 template class ClangArchiveRuntimesBuilder<Runtimes::LibUnwind>;
+template class ClangArchiveRuntimesBuilder<Runtimes::Libcxx>;
 
 ClangResourceDirBuilder::ClangResourceDirBuilder(
     ClangRunner* clang, llvm::ThreadPoolInterface* threads,
@@ -361,7 +444,7 @@ ClangResourceDirBuilder::ClangResourceDirBuilder(
   runtimes_builder_ = std::get<Runtimes::Builder>(std::move(build_dir));
   lib_path_ = std::filesystem::path("lib") / target_triple_.str();
   archive_.emplace(this, lib_path_ / "libclang_rt.builtins.a",
-                   installation().llvm_runtime_srcs(),
+                   installation().runtimes_root(),
                    CollectBuiltinsSrcFiles(), /*cflags=*/
                    llvm::SmallVector<llvm::StringRef>{
                        "-no-canonical-prefixes",
@@ -498,7 +581,7 @@ auto ClangResourceDirBuilder::BuildCrtFile(llvm::StringRef src_file)
       (src_file == RuntimeSources::CrtBegin ? "clang_rt.crtbegin.o"
                                             : "clang_rt.crtend.o");
   std::filesystem::path src_path =
-      installation().llvm_runtime_srcs() / std::string_view(src_file);
+      installation().runtimes_root() / std::string_view(src_file);
   CARBON_VLOG("Building `{0}' from `{1}`...\n", out_path, src_path);
 
   bool success = clang_->RunWithNoRuntimes({

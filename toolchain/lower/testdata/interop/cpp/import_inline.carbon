@@ -32,12 +32,12 @@ fn Call() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CCall.Main() #0 !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !10
-// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !10
-// CHECK:STDOUT:   call void @_Z1FPi(ptr %n.var), !dbg !11
-// CHECK:STDOUT:   %.loc24 = load i32, ptr %n.var, align 4, !dbg !12
-// CHECK:STDOUT:   ret i32 %.loc24, !dbg !13
+// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !11
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !11
+// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !11
+// CHECK:STDOUT:   call void @_Z1FPi(ptr %n.var), !dbg !12
+// CHECK:STDOUT:   %.loc24 = load i32, ptr %n.var, align 4, !dbg !13
+// CHECK:STDOUT:   ret i32 %.loc24, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -69,8 +69,9 @@ fn Call() -> i32 {
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_inline.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !6, line: 21, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
-// CHECK:STDOUT: !10 = !DILocation(line: 22, column: 3, scope: !7)
-// CHECK:STDOUT: !11 = !DILocation(line: 23, column: 3, scope: !7)
-// CHECK:STDOUT: !12 = !DILocation(line: 24, column: 10, scope: !7)
-// CHECK:STDOUT: !13 = !DILocation(line: 24, column: 3, scope: !7)
+// CHECK:STDOUT: !9 = !{!10}
+// CHECK:STDOUT: !10 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !11 = !DILocation(line: 22, column: 3, scope: !7)
+// CHECK:STDOUT: !12 = !DILocation(line: 23, column: 3, scope: !7)
+// CHECK:STDOUT: !13 = !DILocation(line: 24, column: 10, scope: !7)
+// CHECK:STDOUT: !14 = !DILocation(line: 24, column: 3, scope: !7)

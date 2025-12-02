@@ -39,7 +39,7 @@ fn G() -> i32 { return A.NS.G(1); }
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CG.NS.A(i32 %x) #0 !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %x, !dbg !9
+// CHECK:STDOUT:   ret i32 %x, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -53,10 +53,15 @@ fn G() -> i32 { return A.NS.G(1); }
 // CHECK:STDOUT: !3 = !DIFile(filename: "a.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.NS.A", scope: null, file: !3, line: 5, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 5, column: 1, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "G", linkageName: "_CG.NS.A", scope: null, file: !3, line: 7, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 7, column: 26, scope: !8)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "G", linkageName: "_CG.NS.A", scope: null, file: !3, line: 7, type: !9, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !12)
+// CHECK:STDOUT: !9 = !DISubroutineType(types: !10)
+// CHECK:STDOUT: !10 = !{!11, !11}
+// CHECK:STDOUT: !11 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !12 = !{!13}
+// CHECK:STDOUT: !13 = !DILocalVariable(arg: 1, scope: !8, type: !11)
+// CHECK:STDOUT: !14 = !DILocation(line: 7, column: 26, scope: !8)
 // CHECK:STDOUT: ; ModuleID = 'b.carbon'
 // CHECK:STDOUT: source_filename = "b.carbon"
 // CHECK:STDOUT:
@@ -72,8 +77,8 @@ fn G() -> i32 { return A.NS.G(1); }
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CG.Main() #0 !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %G.call = call i32 @_CG.NS.A(i32 1), !dbg !10
-// CHECK:STDOUT:   ret i32 %G.call, !dbg !11
+// CHECK:STDOUT:   %G.call = call i32 @_CG.NS.A(i32 1), !dbg !13
+// CHECK:STDOUT:   ret i32 %G.call, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @_CG.NS.A(i32)
@@ -89,9 +94,12 @@ fn G() -> i32 { return A.NS.G(1); }
 // CHECK:STDOUT: !3 = !DIFile(filename: "b.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 4, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 4, column: 10, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 4, column: 1, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 6, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 6, column: 24, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 6, column: 17, scope: !9)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 6, type: !10, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DISubroutineType(types: !11)
+// CHECK:STDOUT: !11 = !{!12}
+// CHECK:STDOUT: !12 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !13 = !DILocation(line: 6, column: 24, scope: !9)
+// CHECK:STDOUT: !14 = !DILocation(line: 6, column: 17, scope: !9)

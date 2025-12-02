@@ -99,15 +99,15 @@ fn Call3() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CPassI32.Main(i32 %a) #0 !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %identity.call = call i32 @_Z8identityIiET_S0_(i32 %a), !dbg !10
-// CHECK:STDOUT:   ret i32 %identity.call, !dbg !11
+// CHECK:STDOUT:   %identity.call = call i32 @_Z8identityIiET_S0_(i32 %a), !dbg !13
+// CHECK:STDOUT:   ret i32 %identity.call, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassClass.Main(ptr sret({}) %return, ptr %a) #0 !dbg !12 {
+// CHECK:STDOUT: define void @_CPassClass.Main(ptr sret({}) %return, ptr %a) #0 !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z8identityI5ClassET_S1_.carbon_thunk(ptr %a, ptr %return), !dbg !13
-// CHECK:STDOUT:   ret void, !dbg !14
+// CHECK:STDOUT:   call void @_Z8identityI5ClassET_S1_.carbon_thunk(ptr %a, ptr %return), !dbg !21
+// CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
@@ -155,14 +155,22 @@ fn Call3() {
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "call.carbon", directory: "")
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "PassI32", linkageName: "_CPassI32.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "PassI32", linkageName: "_CPassI32.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !11)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
-// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 10, scope: !7)
-// CHECK:STDOUT: !11 = !DILocation(line: 7, column: 3, scope: !7)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "PassClass", linkageName: "_CPassClass.Main", scope: null, file: !6, line: 10, type: !8, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !13 = !DILocation(line: 11, column: 10, scope: !12)
-// CHECK:STDOUT: !14 = !DILocation(line: 11, column: 3, scope: !12)
+// CHECK:STDOUT: !9 = !{!10, !10}
+// CHECK:STDOUT: !10 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !11 = !{!12}
+// CHECK:STDOUT: !12 = !DILocalVariable(arg: 1, scope: !7, type: !10)
+// CHECK:STDOUT: !13 = !DILocation(line: 7, column: 10, scope: !7)
+// CHECK:STDOUT: !14 = !DILocation(line: 7, column: 3, scope: !7)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "PassClass", linkageName: "_CPassClass.Main", scope: null, file: !6, line: 10, type: !16, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !19)
+// CHECK:STDOUT: !16 = !DISubroutineType(types: !17)
+// CHECK:STDOUT: !17 = !{!18, !18}
+// CHECK:STDOUT: !18 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !19 = !{!20}
+// CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !15, type: !18)
+// CHECK:STDOUT: !21 = !DILocation(line: 11, column: 10, scope: !15)
+// CHECK:STDOUT: !22 = !DILocation(line: 11, column: 3, scope: !15)
 // CHECK:STDOUT: ; ModuleID = 'variadic.carbon'
 // CHECK:STDOUT: source_filename = "variadic.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -209,7 +217,7 @@ fn Call3() {
 // CHECK:STDOUT: !6 = !DIFile(filename: "variadic.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Call1", linkageName: "_CCall1.Main", scope: null, file: !6, line: 9, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 11, column: 3, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 9, column: 1, scope: !7)
 // CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Call2", linkageName: "_CCall2.Main", scope: null, file: !6, line: 15, type: !8, spFlags: DISPFlagDefinition, unit: !5)
@@ -333,7 +341,7 @@ fn Call3() {
 // CHECK:STDOUT: !6 = !DIFile(filename: "variadic_thunk.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Call1", linkageName: "_CCall1.Main", scope: null, file: !6, line: 10, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 12, column: 11, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 12, column: 3, scope: !7)
 // CHECK:STDOUT: !12 = !DILocation(line: 10, column: 1, scope: !7)

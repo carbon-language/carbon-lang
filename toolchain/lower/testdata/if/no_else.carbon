@@ -38,15 +38,15 @@ fn If(b: bool) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CIf.Main(i1 %b) #0 !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   br i1 %b, label %if.then, label %if.else, !dbg !11
+// CHECK:STDOUT:   br i1 %b, label %if.then, label %if.else, !dbg !16
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   call void @_CF.Main(), !dbg !12
-// CHECK:STDOUT:   br label %if.else, !dbg !13
+// CHECK:STDOUT:   call void @_CF.Main(), !dbg !17
+// CHECK:STDOUT:   br label %if.else, !dbg !18
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %if.then, %entry
-// CHECK:STDOUT:   call void @_CG.Main(), !dbg !14
-// CHECK:STDOUT:   ret void, !dbg !15
+// CHECK:STDOUT:   call void @_CG.Main(), !dbg !19
+// CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -60,13 +60,18 @@ fn If(b: bool) {
 // CHECK:STDOUT: !3 = !DIFile(filename: "no_else.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 13, column: 1, scope: !4)
 // CHECK:STDOUT: !8 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 14, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !9 = !DILocation(line: 14, column: 1, scope: !8)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "If", linkageName: "_CIf.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !11 = !DILocation(line: 17, column: 6, scope: !10)
-// CHECK:STDOUT: !12 = !DILocation(line: 18, column: 5, scope: !10)
-// CHECK:STDOUT: !13 = !DILocation(line: 17, column: 3, scope: !10)
-// CHECK:STDOUT: !14 = !DILocation(line: 20, column: 3, scope: !10)
-// CHECK:STDOUT: !15 = !DILocation(line: 16, column: 1, scope: !10)
+// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "If", linkageName: "_CIf.Main", scope: null, file: !3, line: 16, type: !11, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
+// CHECK:STDOUT: !11 = !DISubroutineType(types: !12)
+// CHECK:STDOUT: !12 = !{null, !13}
+// CHECK:STDOUT: !13 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !14 = !{!15}
+// CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !10, type: !13)
+// CHECK:STDOUT: !16 = !DILocation(line: 17, column: 6, scope: !10)
+// CHECK:STDOUT: !17 = !DILocation(line: 18, column: 5, scope: !10)
+// CHECK:STDOUT: !18 = !DILocation(line: 17, column: 3, scope: !10)
+// CHECK:STDOUT: !19 = !DILocation(line: 20, column: 3, scope: !10)
+// CHECK:STDOUT: !20 = !DILocation(line: 16, column: 1, scope: !10)

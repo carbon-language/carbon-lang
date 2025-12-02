@@ -107,24 +107,21 @@ class ClangRuntimesBuilderBase::ArchiveBuilder {
   // - `archive_path` is the _relative_ path of the archive file within the
   // built
   //   runtimes directory.
-  // - `srcs_path` is the _absolute_ root of source files used to build the
-  // archive.
-  // - `src_files` is a list of the file paths to build into the archive,
-  //   relative to the `srcs_path`. These are `StringRef`s so they can reference
-  //   constant `StringLiteral`s in common cases.
+  // - `src_files` is a list of the _absolute_ file paths to build into the
+  //   archive.
   // - `cflags` are the compile flags that should be used for all the compiles
   //   in this archive.
   ArchiveBuilder(ClangRuntimesBuilderBase* builder,
                  std::filesystem::path archive_path,
-                 std::filesystem::path srcs_path,
-                 llvm::ArrayRef<llvm::StringRef> src_files,
-                 llvm::ArrayRef<llvm::StringRef> cflags)
+                 std::filesystem::path srcs_root,
+                 llvm::SmallVector<llvm::StringRef> src_files,
+                 llvm::SmallVector<llvm::StringRef> cflags)
       : builder_(builder),
         vlog_stream_(builder_->vlog_stream_),
         archive_path_(std::move(archive_path)),
-        srcs_path_(std::move(srcs_path)),
-        src_files_(src_files),
-        cflags_(cflags) {}
+        srcs_root_(std::move(srcs_root)),
+        src_files_(std::move(src_files)),
+        cflags_(std::move(cflags)) {}
 
   // Start building the archive, with a latch handle to signal its completion.
   //
@@ -182,7 +179,7 @@ class ClangRuntimesBuilderBase::ArchiveBuilder {
 
   std::filesystem::path archive_path_;
 
-  std::filesystem::path srcs_path_;
+  std::filesystem::path srcs_root_;
   llvm::SmallVector<llvm::StringRef> src_files_;
 
   llvm::SmallVector<llvm::StringRef> cflags_;
@@ -203,6 +200,11 @@ class ClangRuntimesBuilderBase::ArchiveBuilder {
   ErrorOr<Success> result_ = Error("No archive built!");
 };
 
+template <Runtimes::Component Component>
+concept IsClangArchiveRuntimes = requires {
+  requires(Component == Runtimes::LibUnwind || Component == Runtimes::Libcxx);
+};
+
 // A class template to build runtimes consisting of a single archive.
 //
 // The template argument comes from the `Runtimes::Component` enum, but is only
@@ -210,7 +212,7 @@ class ClangRuntimesBuilderBase::ArchiveBuilder {
 // requires to enforce that the components used are exactly one of those
 // supported so we can also move instantiation into the `.cpp` file.
 template <Runtimes::Component Component>
-  requires(Component == Runtimes::LibUnwind)
+  requires IsClangArchiveRuntimes<Component>
 class ClangArchiveRuntimesBuilder : public ClangRuntimesBuilderBase {
  public:
   // Constructing this class will attempt to build the `Component` archive into
@@ -241,23 +243,22 @@ class ClangArchiveRuntimesBuilder : public ClangRuntimesBuilderBase {
   // directory.
   auto Finish() -> void;
 
-  // The root path used for any of the source files.
-  std::filesystem::path srcs_path_;
-
-  // The (absolute) include path used during the compilation of the source
-  // files.
-  std::filesystem::path include_path_;
-
   // The relative archive path within the runtimes' build directory.
   std::filesystem::path archive_path_;
+
+  // The (absolute) include paths used during the compilation of the source
+  // files.
+  llvm::SmallVector<std::filesystem::path> include_paths_;
 
   // The archive builder if it is necessary to build the archive.
   std::optional<ArchiveBuilder> archive_;
 };
 
 extern template class ClangArchiveRuntimesBuilder<Runtimes::LibUnwind>;
+extern template class ClangArchiveRuntimesBuilder<Runtimes::Libcxx>;
 
 using LibunwindBuilder = ClangArchiveRuntimesBuilder<Runtimes::LibUnwind>;
+using LibcxxBuilder = ClangArchiveRuntimesBuilder<Runtimes::Libcxx>;
 
 // Builds the target-specific resource directory for Clang.
 //

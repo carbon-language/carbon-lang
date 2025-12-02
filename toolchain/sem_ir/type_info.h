@@ -235,6 +235,15 @@ struct RecognizedTypeInfo {
     Char,
     // `Core.CppCompat.Long32` which is `Cpp.long` when `long` is 32 bits.
     CppLong32,
+    // `Core.CppCompat.ULong32` which is `Cpp.unsigned_long` when `unsigned
+    // long` is 32 bits.
+    CppULong32,
+    // `Core.CppCompat.LongLong64` which is `Cpp.long_long` when `long` is 64
+    // bits.
+    CppLongLong64,
+    // `Core.CppCompat.ULongLong64` which is `Cpp.unsigned_long_long` when
+    // `unsigned long` is 64 bits.
+    CppULongLong64,
     // `Cpp.nullptr_t` / `Core.CppCompat.NullptrT`.
     CppNullptrT,
     // `Cpp.void` / `Core.CppCompat.VoidBase`.

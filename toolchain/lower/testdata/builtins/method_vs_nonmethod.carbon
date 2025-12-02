@@ -22,15 +22,15 @@ fn TestAddMethod(a: i32, b: i32) -> i32 { return a.(AddMethod)(b); }
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CTestAddNonmethod.Main(i32 %a, i32 %b) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %AddNonmethod.call = add i32 %a, %b, !dbg !7
-// CHECK:STDOUT:   ret i32 %AddNonmethod.call, !dbg !8
+// CHECK:STDOUT:   %AddNonmethod.call = add i32 %a, %b, !dbg !11
+// CHECK:STDOUT:   ret i32 %AddNonmethod.call, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CTestAddMethod.Main(i32 %a, i32 %b) #0 !dbg !9 {
+// CHECK:STDOUT: define i32 @_CTestAddMethod.Main(i32 %a, i32 %b) #0 !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %AddMethod.call = add i32 %a, %b, !dbg !10
-// CHECK:STDOUT:   ret i32 %AddMethod.call, !dbg !11
+// CHECK:STDOUT:   %AddMethod.call = add i32 %a, %b, !dbg !17
+// CHECK:STDOUT:   ret i32 %AddMethod.call, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -42,11 +42,18 @@ fn TestAddMethod(a: i32, b: i32) -> i32 { return a.(AddMethod)(b); }
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "method_vs_nonmethod.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestAddNonmethod", linkageName: "_CTestAddNonmethod.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestAddNonmethod", linkageName: "_CTestAddNonmethod.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 16, column: 53, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 16, column: 46, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "TestAddMethod", linkageName: "_CTestAddMethod.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DILocation(line: 17, column: 50, scope: !9)
-// CHECK:STDOUT: !11 = !DILocation(line: 17, column: 43, scope: !9)
+// CHECK:STDOUT: !6 = !{!7, !7, !7}
+// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !8 = !{!9, !10}
+// CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
+// CHECK:STDOUT: !10 = !DILocalVariable(arg: 2, scope: !4, type: !7)
+// CHECK:STDOUT: !11 = !DILocation(line: 16, column: 53, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 16, column: 46, scope: !4)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "TestAddMethod", linkageName: "_CTestAddMethod.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !14)
+// CHECK:STDOUT: !14 = !{!15, !16}
+// CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !13, type: !7)
+// CHECK:STDOUT: !16 = !DILocalVariable(arg: 2, scope: !13, type: !7)
+// CHECK:STDOUT: !17 = !DILocation(line: 17, column: 50, scope: !13)
+// CHECK:STDOUT: !18 = !DILocation(line: 17, column: 43, scope: !13)

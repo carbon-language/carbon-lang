@@ -47,6 +47,7 @@ class Runtimes {
   enum Component {
     ClangResourceDir,
     LibUnwind,
+    Libcxx,
 
     NumComponents,
   };
@@ -139,6 +140,8 @@ class Runtimes {
         return "clang_resource_dir";
       case LibUnwind:
         return "libunwind";
+      case Libcxx:
+        return "libcxx";
       case NumComponents:
         CARBON_FATAL("Invalid component");
     }

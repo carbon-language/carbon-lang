@@ -45,26 +45,26 @@ fn J() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CG.Main() #0 !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %a.var = alloca {}, align 8, !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !9
-// CHECK:STDOUT:   ret void, !dbg !10
+// CHECK:STDOUT:   %a.var = alloca {}, align 8, !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !12
+// CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CH.Main() #0 !dbg !11 {
+// CHECK:STDOUT: define void @_CH.Main() #0 !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !12
+// CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CI.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CJ.Main() #0 !dbg !13 {
+// CHECK:STDOUT: define void @_CJ.Main() #0 !dbg !16 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc33_11.1.temp = alloca {}, align 8, !dbg !14
-// CHECK:STDOUT:   call void @_CI.Main(), !dbg !14
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc33_11.1.temp), !dbg !14
-// CHECK:STDOUT:   ret void, !dbg !15
+// CHECK:STDOUT:   %.loc33_11.1.temp = alloca {}, align 8, !dbg !17
+// CHECK:STDOUT:   call void @_CI.Main(), !dbg !17
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc33_11.1.temp), !dbg !17
+// CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -85,13 +85,16 @@ fn J() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "no_op.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 17, column: 1, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 22, column: 3, scope: !8)
-// CHECK:STDOUT: !10 = !DILocation(line: 23, column: 3, scope: !8)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !3, line: 26, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !12 = !DILocation(line: 27, column: 3, scope: !11)
-// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "J", linkageName: "_CJ.Main", scope: null, file: !3, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !14 = !DILocation(line: 33, column: 9, scope: !13)
-// CHECK:STDOUT: !15 = !DILocation(line: 32, column: 1, scope: !13)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 21, type: !9, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DISubroutineType(types: !10)
+// CHECK:STDOUT: !10 = !{!11}
+// CHECK:STDOUT: !11 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !12 = !DILocation(line: 22, column: 3, scope: !8)
+// CHECK:STDOUT: !13 = !DILocation(line: 23, column: 3, scope: !8)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !3, line: 26, type: !9, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !15 = !DILocation(line: 27, column: 3, scope: !14)
+// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "J", linkageName: "_CJ.Main", scope: null, file: !3, line: 32, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !17 = !DILocation(line: 33, column: 9, scope: !16)
+// CHECK:STDOUT: !18 = !DILocation(line: 32, column: 1, scope: !16)

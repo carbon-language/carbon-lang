@@ -122,6 +122,17 @@ static auto LookupCppType(
                    : clang::QualType();
 }
 
+// Returns the given integer type if its width is as expected. Otherwise returns
+// the null type.
+static auto VerifyIntegerTypeWidth(Context& context, clang::QualType type,
+                                   unsigned int expected_width)
+    -> clang::QualType {
+  if (context.ast_context().getIntWidth(type) == expected_width) {
+    return type;
+  }
+  return clang::QualType();
+}
+
 // Maps a Carbon class type to a C++ type. Returns a null `QualType` if the
 // type is not supported.
 static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
@@ -175,10 +186,17 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
       return ast_context.CharTy;
     }
     case SemIR::RecognizedTypeInfo::CppLong32: {
-      if (ast_context.getIntWidth(ast_context.LongTy) == 32) {
-        return ast_context.LongTy;
-      }
-      break;
+      return VerifyIntegerTypeWidth(context, ast_context.LongTy, 32);
+    }
+    case SemIR::RecognizedTypeInfo::CppULong32: {
+      return VerifyIntegerTypeWidth(context, ast_context.UnsignedLongTy, 32);
+    }
+    case SemIR::RecognizedTypeInfo::CppLongLong64: {
+      return VerifyIntegerTypeWidth(context, ast_context.LongLongTy, 64);
+    }
+    case SemIR::RecognizedTypeInfo::CppULongLong64: {
+      return VerifyIntegerTypeWidth(context, ast_context.UnsignedLongLongTy,
+                                    64);
     }
     case SemIR::RecognizedTypeInfo::CppNullptrT: {
       return ast_context.NullPtrTy;

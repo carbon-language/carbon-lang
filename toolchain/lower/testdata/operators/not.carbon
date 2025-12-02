@@ -20,8 +20,8 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i1 @_CNot.Main(i1 %b) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc14 = xor i1 %b, true, !dbg !7
-// CHECK:STDOUT:   ret i1 %.loc14, !dbg !8
+// CHECK:STDOUT:   %.loc14 = xor i1 %b, true, !dbg !10
+// CHECK:STDOUT:   ret i1 %.loc14, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -33,8 +33,11 @@ fn Not(b: bool) -> bool {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "not.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Not", linkageName: "_CNot.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Not", linkageName: "_CNot.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
-// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 10, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !6 = !{!7, !7}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !8 = !{!9}
+// CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
+// CHECK:STDOUT: !10 = !DILocation(line: 14, column: 10, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 14, column: 3, scope: !4)

@@ -181,6 +181,9 @@ auto RecognizedTypeInfo::ForType(const File& file, ClassType class_type)
   if (parent_name_ident == "CppCompat") {
     Kind kind = llvm::StringSwitch<Kind>(*name_ident)
                     .Case("Long32", CppLong32)
+                    .Case("ULong32", CppULong32)
+                    .Case("LongLong64", CppLongLong64)
+                    .Case("ULongLong64", CppULongLong64)
                     .Case("NullptrT", CppNullptrT)
                     .Case("VoidBase", CppVoidBase)
                     .Default(None);
@@ -190,6 +193,25 @@ auto RecognizedTypeInfo::ForType(const File& file, ClassType class_type)
   }
 
   return {.kind = None};
+}
+
+// Prints a `Core.CppCompat` integer type name. Typically, when the C++ integer
+// type width matches the Carbon type width, prints
+// `Cpp.builtin_type` and returns true. Otherwise returns false.
+static auto PrintCppCompatLiteral(
+    const File& file, clang::CanQualType clang::ASTContext::* qual_type_member,
+    unsigned int carbon_bit_width, llvm::StringRef cpp_builtin_name,
+    llvm::raw_ostream& out) -> bool {
+  if (file.clang_ast_unit()) {
+    const clang::ASTContext& ast_context =
+        file.clang_ast_unit()->getASTContext();
+    if (ast_context.getIntWidth(ast_context.*qual_type_member) ==
+        carbon_bit_width) {
+      out << "Cpp." << cpp_builtin_name;
+      return true;
+    }
+  }
+  return false;
 }
 
 auto RecognizedTypeInfo::PrintLiteral(const File& file,
@@ -204,15 +226,17 @@ auto RecognizedTypeInfo::PrintLiteral(const File& file,
       out << "char";
       return true;
     case CppLong32:
-      if (file.clang_ast_unit()) {
-        const clang::ASTContext& ast_context =
-            file.clang_ast_unit()->getASTContext();
-        if (ast_context.getIntWidth(ast_context.LongTy) == 32) {
-          out << "Cpp.long";
-          return true;
-        }
-      }
-      break;
+      return PrintCppCompatLiteral(file, &clang::ASTContext::LongTy, 32, "long",
+                                   out);
+    case CppULong32:
+      return PrintCppCompatLiteral(file, &clang::ASTContext::UnsignedLongTy, 32,
+                                   "unsigned_long", out);
+    case CppLongLong64:
+      return PrintCppCompatLiteral(file, &clang::ASTContext::LongLongTy, 64,
+                                   "long_long", out);
+    case CppULongLong64:
+      return PrintCppCompatLiteral(file, &clang::ASTContext::UnsignedLongLongTy,
+                                   64, "unsigned_long_long", out);
     case CppNullptrT:
       if (file.clang_ast_unit()) {
         out << "Cpp.nullptr_t";

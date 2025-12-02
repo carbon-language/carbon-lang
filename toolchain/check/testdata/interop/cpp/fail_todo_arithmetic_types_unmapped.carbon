@@ -14,23 +14,14 @@
 // Ensure we get a diagnostic when using a type that doesn't yet have a mapping
 // from C++ to Carbon.
 
-// --- u64_types.h
+// --- fail_todo_wide_char_t.carbon
 
-unsigned long GetUL();
+import Cpp inline '''
+auto GetWC() -> wchar_t;
+''';
 
-unsigned long long GetULL();
-
-// --- fail_todo_use_u64_types.carbon
-
-import Cpp library "u64_types.h";
-
-fn CallGetUL() -> u64 { return Cpp.GetUL(); }
-
-// TODO: Eventually, `unsigned long long` should map to
-// `Cpp.unsigned_long_long`, which should implicitly convert to `u64`.
-// We should switch to testing a different type when that case works.
-// CHECK:STDERR: fail_todo_use_u64_types.carbon:[[@LINE+4]]:33: error: semantics TODO: `Unsupported: return type: unsigned long long` [SemanticsTodo]
-// CHECK:STDERR: fn CallGetULL() -> u64 { return Cpp.GetULL(); }
-// CHECK:STDERR:                                 ^~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_wide_char_t.carbon:[[@LINE+4]]:32: error: semantics TODO: `Unsupported: return type: wchar_t` [SemanticsTodo]
+// CHECK:STDERR: fn CallGetWC() -> u32 { return Cpp.GetWC(); }
+// CHECK:STDERR:                                ^~~~~~~~~~~
 // CHECK:STDERR:
-fn CallGetULL() -> u64 { return Cpp.GetULL(); }
+fn CallGetWC() -> u32 { return Cpp.GetWC(); }

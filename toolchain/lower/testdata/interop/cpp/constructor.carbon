@@ -134,7 +134,7 @@ fn Copy(c: Cpp.Copy) -> Cpp.Copy {
 // CHECK:STDOUT: !6 = !DIFile(filename: "import_default.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !9 = !{null}
 // CHECK:STDOUT: !10 = !DILocation(line: 7, column: 18, scope: !7)
 // CHECK:STDOUT: !11 = !DILocation(line: 6, column: 1, scope: !7)
 // CHECK:STDOUT: ; ModuleID = 'call_copy.carbon'
