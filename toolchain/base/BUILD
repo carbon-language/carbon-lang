@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("//bazel/cc_rules:defs.bzl", "cc_library", "cc_test")
+load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("llvm_tools.bzl", "LLVM_MAIN_TOOLS", "generate_llvm_tools_def")
 load("runtime_sources.bzl", "generate_runtime_sources_cc_library")
 
@@ -86,6 +86,66 @@ cc_library(
     hdrs = ["index_base.h"],
     deps = [
         "//common:ostream",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+# A library for computing install paths for the toolchain. Note that this
+# library does *not* include the data itself, as that would form a dependency
+# cycle. Each part of the toolchain should add the narrow data file groups to
+# their data dependencies, and then use this library to locate them.
+cc_library(
+    name = "install_paths",
+    srcs = ["install_paths.cpp"],
+    hdrs = ["install_paths.h"],
+    deps = [
+        ":llvm_tools",
+        "//common:check",
+        "//common:error",
+        "//common:filesystem",
+        "@bazel_tools//tools/cpp/runfiles",
+        "@llvm-project//clang:basic",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_binary(
+    name = "test_binary",
+    testonly = 1,
+    srcs = ["test_binary.cpp"],
+    data = ["//toolchain/install:install_data"],
+)
+
+cc_test(
+    name = "install_paths_test",
+    size = "small",
+    srcs = ["install_paths_test.cpp"],
+    data = [
+        ":test_binary",
+        "//toolchain/install:install_data",
+    ],
+    deps = [
+        ":install_paths",
+        "//common:check",
+        "//common:error_test_helpers",
+        "//common:filesystem",
+        "//common:ostream",
+        "//testing/base:global_exe_path",
+        "//testing/base:gtest_main",
+        "@bazel_tools//tools/cpp/runfiles",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "install_paths_test_helpers",
+    testonly = 1,
+    srcs = ["install_paths_test_helpers.cpp"],
+    hdrs = ["install_paths_test_helpers.h"],
+    deps = [
+        ":install_paths",
+        "//testing/base:global_exe_path",
         "@llvm-project//llvm:Support",
     ],
 )

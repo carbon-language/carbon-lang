@@ -6,8 +6,8 @@
 #define CARBON_TOOLCHAIN_LANGUAGE_SERVER_LANGUAGE_SERVER_H_
 
 #include "common/ostream.h"
+#include "toolchain/base/install_paths.h"
 #include "toolchain/diagnostics/diagnostic_consumer.h"
-#include "toolchain/install/install_paths.h"
 
 namespace Carbon::LanguageServer {
 
