@@ -145,17 +145,17 @@ fn Copy(c: Cpp.Copy) -> Cpp.Copy {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCopy.Main(ptr sret([4 x i8]) %return, ptr %c) #0 !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_10.1.temp = alloca [4 x i8], align 1, !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_10.1.temp), !dbg !10
-// CHECK:STDOUT:   call void @_ZN4CopyC1ERKS_.carbon_thunk(ptr %c, ptr %return), !dbg !10
-// CHECK:STDOUT:   ret void, !dbg !11
+// CHECK:STDOUT:   %.loc7_10.1.temp = alloca [4 x i8], align 1, !dbg !13
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_10.1.temp), !dbg !13
+// CHECK:STDOUT:   call void @_ZN4CopyC1ERKS_.carbon_thunk(ptr %c, ptr %return), !dbg !13
+// CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define void @"_COp:thunk.Copy.Cpp"(ptr sret([4 x i8]) %return, ptr %self) #1 !dbg !12 {
+// CHECK:STDOUT: define void @"_COp:thunk.Copy.Cpp"(ptr sret([4 x i8]) %return, ptr %self) #1 !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN4CopyC1ERKS_.carbon_thunk(ptr %self, ptr %return), !dbg !13
-// CHECK:STDOUT:   ret void, !dbg !13
+// CHECK:STDOUT:   call void @_ZN4CopyC1ERKS_.carbon_thunk(ptr %self, ptr %return), !dbg !18
+// CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -192,10 +192,15 @@ fn Copy(c: Cpp.Copy) -> Cpp.Copy {
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "call_copy.carbon", directory: "")
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Copy", linkageName: "_CCopy.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Copy", linkageName: "_CCopy.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !11)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
-// CHECK:STDOUT: !10 = !DILocation(line: 7, column: 10, scope: !7)
-// CHECK:STDOUT: !11 = !DILocation(line: 7, column: 3, scope: !7)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Copy.Cpp", scope: null, file: !6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !13 = !DILocation(line: 0, scope: !12)
+// CHECK:STDOUT: !9 = !{!10, !10}
+// CHECK:STDOUT: !10 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !11 = !{!12}
+// CHECK:STDOUT: !12 = !DILocalVariable(arg: 1, scope: !7, type: !10)
+// CHECK:STDOUT: !13 = !DILocation(line: 7, column: 10, scope: !7)
+// CHECK:STDOUT: !14 = !DILocation(line: 7, column: 3, scope: !7)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Copy.Cpp", scope: null, file: !6, type: !8, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !16)
+// CHECK:STDOUT: !16 = !{!17}
+// CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !15, type: !10)
+// CHECK:STDOUT: !18 = !DILocation(line: 0, scope: !15)
