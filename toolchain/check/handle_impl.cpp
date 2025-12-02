@@ -29,11 +29,11 @@ namespace Carbon::Check {
 
 // Returns the implicit `Self` type for an `impl` when it's in a `class`
 // declaration.
+//
+// TODO: Mixin scopes also have a default `Self` type.
 static auto GetImplDefaultSelfType(Context& context,
                                    const ClassScope& class_scope)
     -> SemIR::TypeId {
-  // TODO: ClassScope will need to be extended to handle mixins. Then handle
-  // that here.
   return context.classes().Get(class_scope.class_decl.class_id).self_type_id;
 }
 
@@ -73,6 +73,7 @@ auto HandleParseNode(Context& context, Parse::ImplTypeAsId node_id) -> bool {
 
   const auto& introducer = context.decl_introducer_state_stack().innermost();
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
+    // TODO: Also handle the parent scope being a mixin.
     auto class_scope =
         TryAsClassScope(context, context.decl_name_stack().PeekParentScopeId());
     if (class_scope) {

@@ -19,7 +19,6 @@ auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
   if (!class_decl) {
     return std::nullopt;
   }
-  // TODO: Return something else for a mixin.
   return {{.class_decl = *class_decl}};
 }
 

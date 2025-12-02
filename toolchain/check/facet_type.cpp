@@ -85,8 +85,8 @@ auto InitialFacetTypeImplWitness(
       context.facet_types().Get(facet_type.facet_type_id);
 
   // An iterator over the rewrite_constraints where the LHS of the rewrite names
-  // a member of the `interface_to_witness`. This filters out rewrites into
-  // other interfaces, as they do not set values in the witness table.
+  // a member of the `interface_to_witness`. This filters out rewrites of names
+  // from other interfaces, as they do not set values in the witness table.
   auto rewrites_into_interface_to_witness = llvm::make_filter_range(
       facet_type_info.rewrite_constraints,
       [&](const SemIR::FacetTypeInfo::RewriteConstraint& rewrite) {
