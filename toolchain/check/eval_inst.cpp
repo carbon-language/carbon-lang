@@ -314,64 +314,39 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-static auto GetValueInImplWitnessTable(Context& context,
-                                       SemIR::ImplWitnessTable table,
-                                       SemIR::SpecificId specific_id,
-                                       SemIR::ElementIndex table_index)
-    -> SemIR::ConstantId {
-  auto elements = context.inst_blocks().Get(table.elements_id);
-  // `elements` can be empty if there is only a forward declaration of the
-  // impl.
-  if (!elements.empty()) {
-    auto index = static_cast<size_t>(table_index.index);
-    CARBON_CHECK(index < elements.size(), "Access out of bounds.");
-    auto element = elements[index];
-    if (element.has_value()) {
-      LoadImportRef(context, element);
-      return GetConstantValueInSpecific(context.sem_ir(), specific_id, element);
-    }
-  }
-  return SemIR::ConstantId::None;
-}
-
-static auto GetValueInCppWitnessTable(Context& context,
-                                      SemIR::CppWitnessTable table,
-                                      SemIR::ElementIndex table_index)
-    -> SemIR::ConstantId {
-  auto elements = context.inst_blocks().Get(table.elements_id);
-  auto index = static_cast<size_t>(table_index.index);
-  if (index < elements.size()) {
-    return context.constant_values().Get(elements[index]);
-  }
-  return SemIR::ConstantId::None;
-}
-
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::ImplWitnessAccess inst) -> ConstantEvalResult {
+  CARBON_DIAGNOSTIC(ImplAccessMemberBeforeSet, Error,
+                    "accessing member from impl before it has a defined value");
   if (auto witness =
           context.insts().TryGetAs<SemIR::ImplWitness>(inst.witness_id)) {
-    auto const_id = SemIR::ConstantId::None;
     // This is PerformAggregateAccess followed by GetConstantValueInSpecific.
-    if (auto impl_witness_table = context.insts().TryGetAs<SemIR::ImplWitnessTable>(
-        witness->witness_table_id)) {
-      const_id = GetValueInImplWitnessTable(context, *impl_witness_table,
-                                            witness->specific_id, inst.index);
-    } else if (auto cpp_witness_table =
-                   context.insts().TryGetAs<SemIR::CppWitnessTable>(
-                       witness->witness_table_id)) {
-      const_id =
-          GetValueInCppWitnessTable(context, *cpp_witness_table, inst.index);
-    } else {
-      CARBON_FATAL("Unexpected type for witness table {0}",
-                   context.insts().Get(witness->witness_table_id));
+    auto witness_table = context.insts().GetAs<SemIR::ImplWitnessTable>(
+        witness->witness_table_id);
+    auto elements = context.inst_blocks().Get(witness_table.elements_id);
+    // `elements` can be empty if there is only a forward declaration of the
+    // impl.
+    if (!elements.empty()) {
+      auto index = static_cast<size_t>(inst.index.index);
+      CARBON_CHECK(index < elements.size(), "Access out of bounds.");
+      auto element = elements[index];
+      if (element.has_value()) {
+        LoadImportRef(context, element);
+        return ConstantEvalResult::Existing(GetConstantValueInSpecific(
+            context.sem_ir(), witness->specific_id, element));
+      }
     }
-    if (const_id.has_value()) {
-      return ConstantEvalResult::Existing(const_id);
-    }
-    CARBON_DIAGNOSTIC(
-        ImplAccessMemberBeforeSet, Error,
-        "accessing member from impl before it has a defined value");
     // TODO: Add note pointing to the impl declaration.
+    context.emitter().Emit(inst_id, ImplAccessMemberBeforeSet);
+    return ConstantEvalResult::Error;
+  } else if (auto cpp_witness =
+                 context.insts().TryGetAs<SemIR::CppWitness>(inst.witness_id)) {
+    auto elements = context.inst_blocks().Get(cpp_witness->elements_id);
+    auto index = static_cast<size_t>(inst.index.index);
+    if (index < elements.size()) {
+      return ConstantEvalResult::Existing(
+          context.constant_values().Get(elements[index]));
+    }
     context.emitter().Emit(inst_id, ImplAccessMemberBeforeSet);
     return ConstantEvalResult::Error;
   } else if (auto witness = context.insts().TryGetAs<SemIR::LookupImplWitness>(

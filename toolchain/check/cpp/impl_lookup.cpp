@@ -72,15 +72,10 @@ static auto BuildWitness(Context& context, SemIR::LocId loc_id,
   // grow as we progress through the impl. In theory this will build O(n^2)
   // table entries, but in practice n <= 2, so that's OK.
   auto make_witness = [&] {
-    // TODO: Determine if we can remove the `ImplWitness` here, and use the
-    // `CppWitnessTable` directly as the witness.
-    auto witness_table_inst_id = AddInst<SemIR::CppWitnessTable>(
-        context, loc_id, {.elements_id = context.inst_blocks().Add(entries)});
-    return AddInst<SemIR::ImplWitness>(
+    return AddInst<SemIR::CppWitness>(
         context, loc_id,
         {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-         .witness_table_id = witness_table_inst_id,
-         .specific_id = SemIR::SpecificId::None});
+         .elements_id = context.inst_blocks().Add(entries)});
   };
 
   // Fill in the witness table.
