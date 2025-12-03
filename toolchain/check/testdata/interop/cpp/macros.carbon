@@ -408,7 +408,7 @@ fn F() {
 // --- character_literals.h
 
 #define M_LOWERCASE 'a'
-#define M_UPPRCASE 'A'
+#define M_UPPERCASE 'A'
 #define M_DIGIT '1'
 #define M_SPACE ' '
 #define M_TAB '\t'
@@ -423,7 +423,7 @@ import Cpp library "character_literals.h";
 fn F() {
   //@dump-sem-ir-begin
   let a: char = Cpp.M_LOWERCASE;
-  let b: char = Cpp.M_UPPRCASE;
+  let b: char = Cpp.M_UPPERCASE;
   let c: char = Cpp.M_DIGIT;
   let d: char = Cpp.M_SPACE;
   let e: char = Cpp.M_TAB;
@@ -1416,7 +1416,7 @@ fn F() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .M_LOWERCASE = %.b69
-// CHECK:STDOUT:     .M_UPPRCASE = %.13f
+// CHECK:STDOUT:     .M_UPPERCASE = %.13f
 // CHECK:STDOUT:     .M_DIGIT = %.c50
 // CHECK:STDOUT:     .M_SPACE = %.e74
 // CHECK:STDOUT:     .M_TAB = %.a7f
@@ -1443,8 +1443,8 @@ fn F() {
 // CHECK:STDOUT:     %b.patt: %pattern_type.b09 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %M_UPPRCASE.ref: %char = name_ref M_UPPRCASE, imports.%.13f [concrete = constants.%.13f]
-// CHECK:STDOUT:   %b: %char = value_binding b, %M_UPPRCASE.ref
+// CHECK:STDOUT:   %M_UPPERCASE.ref: %char = name_ref M_UPPERCASE, imports.%.13f [concrete = constants.%.13f]
+// CHECK:STDOUT:   %b: %char = value_binding b, %M_UPPERCASE.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.b09 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
