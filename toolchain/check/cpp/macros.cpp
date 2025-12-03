@@ -81,13 +81,12 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
   clang::APValue ap_value = evaluated_result.Val;
   // TODO: Add support for other types.
   if (ap_value.isLValue()) {
-    if (result_expr->EvaluateAsInt(evaluated_result, sema.getASTContext())) {
-      ap_value = evaluated_result.Val;
-    } else {
+    if (!result_expr->EvaluateAsInt(evaluated_result, sema.getASTContext())) {
       context.TODO(loc_id,
                    "Unsupported: macro evaluated to a non-integer LValue");
       return nullptr;
     }
+    ap_value = evaluated_result.Val;
   }
 
   switch (ap_value.getKind()) {
