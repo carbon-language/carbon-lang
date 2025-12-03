@@ -102,7 +102,7 @@ reusing the result from an earlier comparison:
 ```carbon
 class ChattyIntMatcher {
   impl as EqWith(i32) {
-    fn Eq[me: ChattyIntMatcher](other: i32) {
+    fn Eq[self: ChattyIntMatcher](other: i32) {
       Print("Matching {0}", other);
       return other == 1;
     }
@@ -176,7 +176,7 @@ value matches the scope of the binding.
 class NoisyDestructor {
   fn Make() -> Self { return {}; }
   impl i32 as ImplicitAs(NoisyDestructor) {
-    fn Convert[me: i32]() -> Self { return Make(); }
+    fn Convert[self: i32]() -> Self { return Make(); }
   }
   destructor {
     Print("Destroyed!");

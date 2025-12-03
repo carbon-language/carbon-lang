@@ -128,7 +128,7 @@ class CheckUnit {
       const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
       std::shared_ptr<clang::CompilerInvocation> clang_invocation,
-      bool gen_implicit_type_impls, llvm::raw_ostream* vlog_stream);
+      llvm::raw_ostream* vlog_stream);
 
   // Produces and checks the IR for the provided unit.
   auto Run() -> void;
@@ -187,8 +187,6 @@ class CheckUnit {
 
   UnitAndImports* unit_and_imports_;
   Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter_;
-  // The number of IRs being checked in total.
-  int total_ir_count_;
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
   std::shared_ptr<clang::CompilerInvocation> clang_invocation_;
 

@@ -98,27 +98,30 @@ auto EvalConstantInst(Context& context, SemIR::AsCompatible inst)
   return ConstantEvalResult::NewAnyPhase(value_inst);
 }
 
-auto EvalConstantInst(Context& context, SemIR::BindAlias inst)
+auto EvalConstantInst(Context& context, SemIR::AliasBinding inst)
     -> ConstantEvalResult {
   // An alias evaluates to the value it's bound to.
   return ConstantEvalResult::Existing(
       context.constant_values().Get(inst.value_id));
 }
 
-auto EvalConstantInst(Context& context, SemIR::BindName inst)
+auto EvalConstantInst(Context& context, SemIR::RefBinding inst)
     -> ConstantEvalResult {
   // A reference binding evaluates to the value it's bound to.
-  if (inst.value_id.has_value() && SemIR::IsRefCategory(SemIR::GetExprCategory(
-                                       context.sem_ir(), inst.value_id))) {
+  if (inst.value_id.has_value()) {
     return ConstantEvalResult::Existing(
         context.constant_values().Get(inst.value_id));
   }
+  return ConstantEvalResult::NotConstant;
+}
 
+auto EvalConstantInst(Context& /*context*/, SemIR::ValueBinding /*inst*/)
+    -> ConstantEvalResult {
   // Non-`:!` value bindings are not constant.
   return ConstantEvalResult::NotConstant;
 }
 
-auto EvalConstantInst(Context& /*context*/, SemIR::BindValue /*inst*/)
+auto EvalConstantInst(Context& /*context*/, SemIR::AcquireValue /*inst*/)
     -> ConstantEvalResult {
   // TODO: Handle this once we've decided how to represent constant values of
   // reference expressions.
@@ -200,6 +203,51 @@ auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
     return ConstantEvalResult::Existing(
         context.constant_values().Get(facet_value->type_inst_id));
   }
+
+  if (auto bind_name = context.insts().TryGetAs<SemIR::SymbolicBinding>(
+          inst.facet_value_inst_id)) {
+    return ConstantEvalResult::NewSamePhase(SemIR::SymbolicBindingType{
+        .type_id = SemIR::TypeType::TypeId,
+        .entity_name_id = bind_name->entity_name_id,
+        // TODO: This is to be removed, at which point explore if we should
+        // replace NewSamePhase with NewAnyPhase (to make the constant value
+        // concrete). This is still a symbolic type though even if the inst
+        // doesn't contain a symbolic constant. Previously we crashed in CHECKs
+        // when we had a symbolic instruction with only an EntityNameId, due to
+        // it not changing in a generic eval block. Maybe that has improved in
+        // the latest version of this instruction. If it's not symbolic, then
+        // SubstConstantCallbacks and other Subst callers may need to handle
+        // looking through concrete instructions which would be unfortunate.
+        .facet_value_inst_id = inst.facet_value_inst_id});
+  }
+
+  // The `facet_value_inst_id` is always a facet value (has type facet type).
+  CARBON_CHECK(context.types().Is<SemIR::FacetType>(
+      context.insts().Get(inst.facet_value_inst_id).type_id()));
+
+  // Other instructions (e.g. ImplWitnessAccess) of type FacetType can appear
+  // here, in which case the constant inst is a FacetAccessType until those
+  // instructions resolve to one of the above.
+  return ConstantEvalResult::NewSamePhase(inst);
+}
+
+auto EvalConstantInst(Context& context, SemIR::FacetValue inst)
+    -> ConstantEvalResult {
+  // A FacetValue that just wraps a SymbolicBinding without adding/removing any
+  // witnesses is evaluated back to the SymbolicBinding itself.
+  if (auto bind_as_type = context.insts().TryGetAs<SemIR::SymbolicBindingType>(
+          inst.type_inst_id)) {
+    // TODO: Look in ScopeStack with the entity_name_id to find the facet value.
+    auto bind_id = bind_as_type->facet_value_inst_id;
+    auto bind = context.insts().GetAs<SemIR::SymbolicBinding>(bind_id);
+    // If the FacetTypes are the same, then the FacetValue didn't add/remove
+    // any witnesses.
+    if (bind.type_id == inst.type_id) {
+      return ConstantEvalResult::Existing(
+          context.constant_values().Get(bind_id));
+    }
+  }
+
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
@@ -222,15 +270,35 @@ auto EvalConstantInst(Context& /*context*/, SemIR::FunctionDecl inst)
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::LookupImplWitness inst) -> ConstantEvalResult {
   // The self value is canonicalized in order to produce a canonical
-  // LookupImplWitness instruction. We save the non-canonical instruction as it
-  // may be a concrete `FacetValue` that contains a concrete witness.
-  auto non_canonical_query_self_inst_id = inst.query_self_inst_id;
-  inst.query_self_inst_id =
-      GetCanonicalizedFacetOrTypeValue(context, inst.query_self_inst_id);
+  // LookupImplWitness instruction, avoiding multiple constant values for
+  // `<facet value>` and `<facet value>` as type, which always have the same
+  // lookup result.
+  auto self_facet_value_inst_id =
+      GetCanonicalFacetOrTypeValue(context, inst.query_self_inst_id);
 
-  auto result = EvalLookupSingleImplWitness(
-      context, SemIR::LocId(inst_id), inst, non_canonical_query_self_inst_id,
-      /*poison_concrete_results=*/true);
+  // When we look for a witness in the (facet) type of self, we may get a
+  // concrete witness from a `FacetValue` (which is `self_facet_value_inst_id`)
+  // in which case this instruction evaluates to that witness.
+  //
+  // If we only get a symbolic witness result though, then this instruction
+  // evaluates to a `LookupImplWitness`. Since there was no concrete result in
+  // the `FacetValue`, we don't need to preserve it. By looking through the
+  // `FacetValue` at the type value it wraps to generate a more canonical value
+  // for a symbolic `LookupImplWitness`. This makes us produce the same constant
+  // value for symbolic lookups in `FacetValue(T)` and `T`, since they will
+  // always have the same lookup result later, when `T` is replaced in a
+  // specific by something that can provide a concrete witness.
+  if (auto facet_value = context.insts().TryGetAs<SemIR::FacetValue>(
+          self_facet_value_inst_id)) {
+    inst.query_self_inst_id =
+        GetCanonicalFacetOrTypeValue(context, facet_value->type_inst_id);
+  } else {
+    inst.query_self_inst_id = self_facet_value_inst_id;
+  }
+
+  auto result = EvalLookupSingleImplWitness(context, SemIR::LocId(inst_id),
+                                            inst, self_facet_value_inst_id,
+                                            EvalImplLookupMode::Normal);
   if (!result.has_value()) {
     // We use NotConstant to communicate back to impl lookup that the lookup
     // failed. This can not happen for a deferred symbolic lookup in a generic
@@ -238,11 +306,12 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
     // evaluated here) to the SemIR if the lookup succeeds.
     return ConstantEvalResult::NotConstant;
   }
-  if (!result.has_concrete_value()) {
-    return ConstantEvalResult::NewSamePhase(inst);
+  if (result.has_final_value()) {
+    return ConstantEvalResult::Existing(
+        context.constant_values().Get(result.final_witness()));
   }
-  return ConstantEvalResult::Existing(
-      context.constant_values().Get(result.concrete_witness()));
+
+  return ConstantEvalResult::NewSamePhase(inst);
 }
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
@@ -379,10 +448,31 @@ auto EvalConstantInst(Context& context, SemIR::InterfaceDecl inst)
         .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
   }
 
-  // A non-parameterized interface declaration evaluates to a facet type.
+  // A non-parameterized interface declaration evaluates to a declared facet
+  // type containing just the interface.
   return ConstantEvalResult::NewAnyPhase(FacetTypeFromInterface(
       context, inst.interface_id,
       context.generics().GetSelfSpecific(interface_info.generic_id)));
+}
+
+auto EvalConstantInst(Context& context, SemIR::NamedConstraintDecl inst)
+    -> ConstantEvalResult {
+  const auto& named_constraint_info =
+      context.named_constraints().Get(inst.named_constraint_id);
+
+  // If the named constraint has generic parameters, we don't produce a named
+  // constraint type, but a callable whose return value is a named constraint
+  // type.
+  if (named_constraint_info.has_parameters()) {
+    return ConstantEvalResult::NewSamePhase(SemIR::StructValue{
+        .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
+  }
+
+  // A non-parameterized named constraint declaration evaluates to a declared
+  // facet type containing just the named constraint.
+  return ConstantEvalResult::NewAnyPhase(FacetTypeFromNamedConstraint(
+      context, inst.named_constraint_id,
+      context.generics().GetSelfSpecific(named_constraint_info.generic_id)));
 }
 
 auto EvalConstantInst(Context& context, SemIR::NameRef inst)
@@ -423,6 +513,13 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 
   // If it's not a concrete constant, require it to be complete once it
   // becomes one.
+  return ConstantEvalResult::NewSamePhase(inst);
+}
+
+auto EvalConstantInst(Context& context, SemIR::RequireSpecificDefinition inst)
+    -> ConstantEvalResult {
+  // This can return false, we just need to try it.
+  ResolveSpecificDefinition(context, SemIR::LocId::None, inst.specific_id);
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
@@ -493,7 +590,7 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::SpecificFunction inst) -> ConstantEvalResult {
   auto callee_function =
-      SemIR::GetCalleeFunction(context.sem_ir(), inst.callee_id);
+      SemIR::GetCalleeAsFunction(context.sem_ir(), inst.callee_id);
   const auto& fn = context.functions().Get(callee_function.function_id);
   if (!callee_function.self_type_id.has_value() &&
       fn.builtin_function_kind() != SemIR::BuiltinFunctionKind::NoOp &&
@@ -544,6 +641,12 @@ auto EvalConstantInst(Context& /*context*/, SemIR::StructInit inst)
       .type_id = inst.type_id, .elements_id = inst.elements_id});
 }
 
+auto EvalConstantInst(Context& /*context*/, SemIR::StructLiteral inst)
+    -> ConstantEvalResult {
+  return ConstantEvalResult::NewSamePhase(SemIR::StructValue{
+      .type_id = inst.type_id, .elements_id = inst.elements_id});
+}
+
 auto EvalConstantInst(Context& /*context*/, SemIR::Temporary /*inst*/)
     -> ConstantEvalResult {
   // TODO: Handle this. Can we just return the value of `init_id`?
@@ -556,6 +659,12 @@ auto EvalConstantInst(Context& context, SemIR::TupleAccess inst)
 }
 
 auto EvalConstantInst(Context& /*context*/, SemIR::TupleInit inst)
+    -> ConstantEvalResult {
+  return ConstantEvalResult::NewSamePhase(SemIR::TupleValue{
+      .type_id = inst.type_id, .elements_id = inst.elements_id});
+}
+
+auto EvalConstantInst(Context& /*context*/, SemIR::TupleLiteral inst)
     -> ConstantEvalResult {
   return ConstantEvalResult::NewSamePhase(SemIR::TupleValue{
       .type_id = inst.type_id, .elements_id = inst.elements_id});

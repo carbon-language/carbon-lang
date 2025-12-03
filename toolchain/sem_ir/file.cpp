@@ -35,10 +35,40 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
                                  : LibraryNameId::Default),
       value_stores_(&value_stores),
       filename_(std::move(filename)),
+      entity_names_(check_ir_id),
+      cpp_global_vars_(check_ir_id),
+      functions_(check_ir_id),
+      cpp_overload_sets_(check_ir_id),
+      classes_(check_ir_id),
+      interfaces_(check_ir_id),
+      named_constraints_(check_ir_id),
+      // 1 reserved id for `RequireImplsBlockId::Empty`.
+      require_impls_blocks_(allocator_, IdTag(check_ir_id.index, 1)),
+      associated_constants_(check_ir_id),
+      facet_types_(check_ir_id),
+      identified_facet_types_(&facet_types_),
       impls_(*this),
-      constant_values_(ConstantId::NotConstant),
-      inst_blocks_(allocator_),
-      constants_(this) {
+      specific_interfaces_(check_ir_id),
+      generics_(check_ir_id),
+      specifics_(check_ir_id),
+      // The `2` prevents adding a tag for the global ids
+      // `ImportIRId::{ApiForImpl,Cpp}`.
+      import_irs_(IdTag(check_ir_id.index, 2)),
+      clang_decls_(check_ir_id),
+      // The `+1` prevents adding a tag to the global `NameSpace::PackageInstId`
+      // instruction. It's not a "singleton" instruction, but it's a unique
+      // instruction id that comes right after the singletons.
+      insts_(this, SingletonInstKinds.size() + 1),
+      vtables_(check_ir_id),
+      constant_values_(ConstantId::NotConstant, &insts_),
+      inst_blocks_(allocator_, check_ir_id),
+      constants_(this),
+      // 1 reserved id for `StructTypeFieldsId::Empty`.
+      struct_type_fields_(allocator_, IdTag(check_ir_id.index, 1)),
+      // 1 reserved id for `CustomLayoutId::Empty`.
+      custom_layouts_(allocator_, IdTag(check_ir_id.index, 1)),
+      expr_regions_(check_ir_id),
+      clang_source_locs_(check_ir_id) {
   // `type` and the error type are both complete & concrete types.
   types_.SetComplete(
       TypeType::TypeId,
@@ -101,8 +131,10 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
     map.Add("sem_ir", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
               map.Add("import_irs", import_irs_.OutputYaml());
               map.Add("import_ir_insts", import_ir_insts_.OutputYaml());
+              map.Add("clang_decls", clang_decls_.OutputYaml());
               map.Add("name_scopes", name_scopes_.OutputYaml());
               map.Add("entity_names", entity_names_.OutputYaml());
+              map.Add("cpp_global_vars", cpp_global_vars_.OutputYaml());
               map.Add("functions", functions_.OutputYaml());
               map.Add("classes", classes_.OutputYaml());
               map.Add("generics", generics_.OutputYaml());
@@ -125,11 +157,50 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
   });
 }
 
+auto File::CollectRefTagsNeeded() const -> Set<SemIR::InstId> {
+  CARBON_CHECK(!has_errors_);
+  Set<SemIR::InstId> ref_tags_needed;
+  for (auto [id, inst] : insts_.enumerate()) {
+    if (inst.kind() != SemIR::InstKind::Call) {
+      continue;
+    }
+    auto call_inst = inst.As<SemIR::Call>();
+    auto callee = SemIR::GetCallee(*this, call_inst.callee_id);
+    CARBON_KIND_SWITCH(callee) {
+      case CARBON_KIND(SemIR::CalleeError _):
+        break;
+      case CARBON_KIND(SemIR::CalleeNonFunction _):
+        break;
+      case CARBON_KIND(SemIR::CalleeCppOverloadSet _): {
+        // TODO: Perform validation here once we model C++ ref parameters as
+        // Carbon ref parameters.
+        break;
+      }
+      case CARBON_KIND(SemIR::CalleeFunction fn): {
+        auto function = functions_.Get(fn.function_id);
+        auto args = inst_blocks_.GetOrEmpty(call_inst.args_id);
+        for (auto param_id : llvm::concat<const InstId>(
+                 inst_blocks_.GetOrEmpty(function.implicit_param_patterns_id),
+                 inst_blocks_.GetOrEmpty(function.param_patterns_id))) {
+          if (auto ref_param_pattern =
+                  insts_.TryGetAs<SemIR::RefParamPattern>(param_id)) {
+            ref_tags_needed.Insert(args[ref_param_pattern->index.index]);
+          }
+        }
+        break;
+      }
+    }
+  }
+  return ref_tags_needed;
+}
+
 auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
     -> void {
   mem_usage.Collect(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "entity_names_"),
                     entity_names_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "cpp_global_vars_"),
+                    cpp_global_vars_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "functions_"), functions_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "classes_"), classes_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "interfaces_"), interfaces_);
@@ -139,6 +210,7 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "import_irs_"), import_irs_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "import_ir_insts_"),
                     import_ir_insts_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "clang_decls_"), clang_decls_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "struct_type_fields_"),
                     struct_type_fields_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "insts_"), insts_);

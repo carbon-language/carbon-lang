@@ -19,7 +19,7 @@ def _carbon_binary_impl(ctx):
     # Pass any C++ flags from our dependencies onto Carbon.
     dep_flags = []
     dep_hdrs = []
-    dep_link_flags = []
+    dep_link_flags = ["-lc++"]
     dep_link_inputs = []
     for dep in ctx.attr.deps:
         if CcInfo in dep:
@@ -75,7 +75,8 @@ def _carbon_binary_impl(ctx):
                 inputs = depset(direct = srcs_reordered, transitive = dep_hdrs),
                 executable = toolchain_driver,
                 tools = depset(toolchain_data),
-                arguments = ["compile", "--output=" + out.path, "--clang-arg=-stdlib=libc++"] + [s.path for s in srcs_reordered] + extra_flags,
+                arguments = ["compile", "--output=" + out.path, "--clang-arg=-stdlib=libc++"] +
+                            [s.path for s in srcs_reordered] + extra_flags + ctx.attr.flags,
                 mnemonic = "CarbonCompile",
                 progress_message = "Compiling " + src.short_path,
             )
@@ -86,7 +87,7 @@ def _carbon_binary_impl(ctx):
         inputs = objs + dep_link_inputs,
         executable = toolchain_driver,
         tools = depset(toolchain_data),
-        arguments = ["link", "--output=" + bin.path] + dep_link_flags + [o.path for o in objs],
+        arguments = ["link", "--output=" + bin.path] + ["--"] + dep_link_flags + [o.path for o in objs],
         mnemonic = "CarbonLink",
         progress_message = "Linking " + bin.short_path,
     )
@@ -96,6 +97,7 @@ _carbon_binary_internal = rule(
     implementation = _carbon_binary_impl,
     attrs = {
         "deps": attr.label_list(allow_files = True, providers = [[CcInfo]]),
+        "flags": attr.string_list(),
         # The exec config toolchain driver and data. These will be `None` when
         # using the target config and populated when using the exec config. We
         # have to use duplicate attributes here and below to have different
@@ -130,13 +132,14 @@ _carbon_binary_internal = rule(
     executable = True,
 )
 
-def carbon_binary(name, srcs, deps = [], tags = []):
+def carbon_binary(name, srcs, deps = [], flags = [], tags = []):
     """Compiles a Carbon binary.
 
     Args:
       name: The name of the build target.
       srcs: List of Carbon source files to compile.
       deps: List of dependencies.
+      flags: Extra flags to pass to the Carbon compile command.
       tags: Tags to apply to the rule.
     """
     _carbon_binary_internal(
@@ -144,6 +147,7 @@ def carbon_binary(name, srcs, deps = [], tags = []):
         srcs = srcs,
         prelude_srcs = ["//core:prelude_files"],
         deps = deps,
+        flags = flags,
         tags = tags,
 
         # We synthesize two sets of attributes from mirrored `select`s here

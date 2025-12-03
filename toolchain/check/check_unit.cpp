@@ -9,6 +9,7 @@
 #include <tuple>
 #include <utility>
 
+#include "clang/Sema/Sema.h"
 #include "common/growing_range.h"
 #include "common/pretty_stack_trace_function.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
@@ -16,6 +17,7 @@
 #include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/cpp/import.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
@@ -23,7 +25,6 @@
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/impl_validation.h"
 #include "toolchain/check/import.h"
-#include "toolchain/check/import_cpp.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/node_id_traversal.h"
@@ -59,19 +60,18 @@ CheckUnit::CheckUnit(
     const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation,
-    bool gen_implicit_type_impls, llvm::raw_ostream* vlog_stream)
+    llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
       tree_and_subtrees_getter_(tree_and_subtrees_getters->Get(
           unit_and_imports->unit->sem_ir->check_ir_id())),
-      total_ir_count_(tree_and_subtrees_getters->size()),
       fs_(std::move(fs)),
       clang_invocation_(std::move(clang_invocation)),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
       context_(&emitter_, tree_and_subtrees_getter_,
                unit_and_imports_->unit->sem_ir,
-               GetImportedIRCount(unit_and_imports), total_ir_count_,
-               gen_implicit_type_impls, vlog_stream) {}
+               GetImportedIRCount(unit_and_imports),
+               unit_and_imports_->unit->total_ir_count, vlog_stream) {}
 
 auto CheckUnit::Run() -> void {
   Timings::ScopedTiming timing(unit_and_imports_->unit->timings, "check");
@@ -195,7 +195,7 @@ auto CheckUnit::CollectTransitiveImports(SemIR::InstId import_decl_id,
   // exported to this IR.
   auto ir_to_result_index =
       FixedSizeValueStore<SemIR::CheckIRId, int>::MakeWithExplicitSize(
-          total_ir_count_, -1);
+          IdTag(), unit_and_imports_->unit->total_ir_count, -1);
 
   // First add direct imports. This means that if an entity is imported both
   // directly and indirectly, the import path will reflect the direct import.
@@ -524,12 +524,16 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
   auto poisoned_queries =
       std::exchange(context_.poisoned_concrete_impl_lookup_queries(), {});
   for (const auto& poison : poisoned_queries) {
-    auto witness_result =
-        EvalLookupSingleImplWitness(context_, poison.loc_id, poison.query,
-                                    poison.non_canonical_query_self_inst_id,
-                                    /*poison_concrete_results=*/false);
-    CARBON_CHECK(witness_result.has_concrete_value());
-    auto found_witness_id = witness_result.concrete_witness();
+    auto witness_result = EvalLookupSingleImplWitness(
+        context_, poison.loc_id, poison.query, poison.query.query_self_inst_id,
+        EvalImplLookupMode::RecheckPoisonedLookup);
+    CARBON_CHECK(witness_result.has_final_value());
+    auto found_witness_id = witness_result.final_witness();
+    if (found_witness_id == SemIR::ErrorInst::InstId) {
+      // Errors may have been diagnosed with the impl used in the poisoned query
+      // in the meantime (such as a missing definition).
+      continue;
+    }
     if (found_witness_id != poison.impl_witness) {
       auto witness_to_impl_id = [&](SemIR::InstId witness_id) {
         auto table_id = context_.insts()
@@ -579,6 +583,13 @@ auto CheckUnit::FinishRun() -> void {
   CheckRequiredDefinitions();
   CheckPoisonedConcreteImplLookupQueries();
   CheckImpls();
+
+  if (auto* clang_ast = context_.sem_ir().clang_ast_unit()) {
+    // Ask Clang to perform any cleanups required, including instantiating used
+    // templates.
+    clang_ast->getSema().ActOnEndOfTranslationUnit();
+    context_.emitter().Flush();
+  }
 
   // Pop information for the file-level scope.
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());

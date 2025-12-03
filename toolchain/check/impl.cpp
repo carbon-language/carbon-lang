@@ -38,26 +38,25 @@ static auto NoteAssociatedFunction(Context& context, DiagnosticBuilder& builder,
                function.name_id);
 }
 
-// Checks that `impl_function_id` is a valid implementation of the function
-// described in the interface as `interface_function_id`. Returns the value to
-// put into the corresponding slot in the witness table, which can be
-// `BuiltinErrorInst` if the function is not usable.
-static auto CheckAssociatedFunctionImplementation(
+auto CheckAssociatedFunctionImplementation(
     Context& context, SemIR::FunctionType interface_function_type,
     SemIR::InstId impl_decl_id, SemIR::TypeId self_type_id,
-    SemIR::InstId witness_inst_id) -> SemIR::InstId {
+    SemIR::InstId witness_inst_id, bool defer_thunk_definition)
+    -> SemIR::InstId {
   auto impl_function_decl =
       context.insts().TryGetAs<SemIR::FunctionDecl>(impl_decl_id);
   if (!impl_function_decl) {
-    CARBON_DIAGNOSTIC(ImplFunctionWithNonFunction, Error,
-                      "associated function {0} implemented by non-function",
-                      SemIR::NameId);
-    auto builder = context.emitter().Build(
-        impl_decl_id, ImplFunctionWithNonFunction,
-        context.functions().Get(interface_function_type.function_id).name_id);
-    NoteAssociatedFunction(context, builder,
-                           interface_function_type.function_id);
-    builder.Emit();
+    if (impl_decl_id != SemIR::ErrorInst::InstId) {
+      CARBON_DIAGNOSTIC(ImplFunctionWithNonFunction, Error,
+                        "associated function {0} implemented by non-function",
+                        SemIR::NameId);
+      auto builder = context.emitter().Build(
+          impl_decl_id, ImplFunctionWithNonFunction,
+          context.functions().Get(interface_function_type.function_id).name_id);
+      NoteAssociatedFunction(context, builder,
+                             interface_function_type.function_id);
+      builder.Emit();
+    }
 
     return SemIR::ErrorInst::InstId;
   }
@@ -80,7 +79,8 @@ static auto CheckAssociatedFunctionImplementation(
           impl_enclosing_specific_id, self_type_id, witness_inst_id);
 
   return BuildThunk(context, interface_function_type.function_id,
-                    interface_function_specific_id, impl_decl_id);
+                    interface_function_specific_id, impl_decl_id,
+                    defer_thunk_definition);
 }
 
 // Builds an initial witness from the rewrites in the facet type, if any.
@@ -121,6 +121,7 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
       witness_block.empty()) {
     if (!RequireCompleteFacetTypeForImplDefinition(
             context, SemIR::LocId(impl.latest_decl_id()), impl.constraint_id)) {
+      FillImplWitnessWithErrors(context, impl);
       return;
     }
 
@@ -136,12 +137,12 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   // Check we have a value for all non-function associated constants in the
   // witness.
   for (auto [assoc_entity, witness_value] :
-       llvm::zip(assoc_entities, witness_block)) {
+       llvm::zip_equal(assoc_entities, witness_block)) {
     auto decl_id = context.constant_values().GetConstantInstId(assoc_entity);
     CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
     if (auto decl =
             context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id)) {
-      if (witness_value == SemIR::ImplWitnessTablePlaceholder::TypeInstId) {
+      if (witness_value == SemIR::InstId::ImplWitnessTablePlaceholder) {
         CARBON_DIAGNOSTIC(ImplAssociatedConstantNeedsValue, Error,
                           "associated constant {0} not given a value in impl "
                           "of interface {1}",
@@ -186,7 +187,7 @@ auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void {
   llvm::SmallVector<SemIR::InstId> used_decl_ids;
 
   for (auto [assoc_entity, witness_value] :
-       llvm::zip(assoc_entities, witness_block)) {
+       llvm::zip_equal(assoc_entities, witness_block)) {
     auto decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
             context.sem_ir(), impl.interface.specific_id, assoc_entity));
@@ -211,7 +212,7 @@ auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void {
           used_decl_ids.push_back(lookup_result.target_inst_id());
           witness_value = CheckAssociatedFunctionImplementation(
               context, *fn_type, lookup_result.target_inst_id(), self_type_id,
-              impl.witness_id);
+              impl.witness_id, /*defer_thunk_definition=*/true);
         } else {
           CARBON_DIAGNOSTIC(
               ImplMissingFunction, Error,
@@ -252,7 +253,7 @@ auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void {
   auto witness_block =
       context.inst_blocks().GetMutable(witness_table.elements_id);
   for (auto& elem : witness_block) {
-    if (elem == SemIR::ImplWitnessTablePlaceholder::TypeInstId) {
+    if (elem == SemIR::InstId::ImplWitnessTablePlaceholder) {
       elem = SemIR::ErrorInst::InstId;
     }
   }
@@ -296,7 +297,17 @@ auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
     return SemIR::SpecificInterface::None;
   }
 
-  auto identified_id = RequireIdentifiedFacetType(context, *facet_type);
+  auto identified_id = RequireIdentifiedFacetType(
+      context, SemIR::LocId(constraint_id), *facet_type, [&] {
+        CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Error,
+                          "facet type {0} cannot be identified in `impl as`",
+                          InstIdAsType);
+        return context.emitter().Build(
+            impl_decl_id, ImplOfUnidentifiedFacetType, constraint_id);
+      });
+  if (!identified_id.has_value()) {
+    return SemIR::SpecificInterface::None;
+  }
   const auto& identified = context.identified_facet_types().Get(identified_id);
   if (!identified.is_valid_impl_as_target()) {
     CARBON_DIAGNOSTIC(ImplOfNotOneInterface, Error,
@@ -433,7 +444,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
   const auto& impl = context.impls().Get(impl_id);
 
   if (context.parse_tree().node_kind(self_type_node_id) ==
-      Parse::NodeKind::TypeImplAs) {
+      Parse::NodeKind::ImplTypeAs) {
     CARBON_DIAGNOSTIC(ExtendImplSelfAs, Error,
                       "cannot `extend` an `impl` with an explicit self type");
     auto diag = context.emitter().Build(extend_node, ExtendImplSelfAs);
@@ -448,7 +459,7 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
     // The explicit self type is the same as the default self type, so suggest
     // removing it and recover as if it were not present.
     if (auto self_as =
-            context.parse_tree_and_subtrees().ExtractAs<Parse::TypeImplAs>(
+            context.parse_tree_and_subtrees().ExtractAs<Parse::ImplTypeAs>(
                 self_type_node_id)) {
       CARBON_DIAGNOSTIC(ExtendImplSelfAsDefault, Note,
                         "remove the explicit `Self` type here");
@@ -484,24 +495,15 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
 static auto DiagnoseUnusedGenericBinding(Context& context, SemIR::LocId loc_id,
                                          SemIR::LocId implicit_params_loc_id,
                                          SemIR::ImplId impl_id) -> void {
-  auto deduced_specific_id = SemIR::SpecificId::None;
-
   auto& impl = context.impls().Get(impl_id);
   if (!impl.generic_id.has_value() ||
       impl.witness_id == SemIR::ErrorInst::InstId) {
     return;
   }
 
-  // TODO: Deduce has side effects in the semir by generating `Converted`
-  // instructions which we will not use here. We should stop generating
-  // those when deducing for impl lookup, but for now we discard them by
-  // pushing an InstBlock on the stack and dropping it right after.
-  context.inst_block_stack().Push();
-  deduced_specific_id = DeduceImplArguments(
+  auto deduced_specific_id = DeduceImplArguments(
       context, loc_id, impl, context.constant_values().Get(impl.self_id),
       impl.interface.specific_id);
-  context.inst_block_stack().PopAndDiscard();
-
   if (deduced_specific_id.has_value()) {
     // Deduction succeeded, all bindings were used.
     return;

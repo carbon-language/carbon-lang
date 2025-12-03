@@ -18,8 +18,8 @@ auto DiagnoseExternRequiresDeclInApiFile(Context& context, SemIR::LocId loc_id)
 
 // Information on new and previous declarations for DiagnoseIfInvalidRedecl.
 struct RedeclInfo {
-  explicit RedeclInfo(SemIR::EntityWithParamsBase params, SemIR::LocId loc_id,
-                      bool is_definition)
+  explicit RedeclInfo(const SemIR::EntityWithParamsBase& params,
+                      SemIR::LocId loc_id, bool is_definition)
       : loc_id(loc_id),
         is_definition(is_definition),
         is_extern(params.is_extern),

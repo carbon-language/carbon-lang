@@ -55,13 +55,6 @@ auto HandleDeclNameAndParams(Context& context) -> void {
     return;
   }
 
-  if (auto keyword = context.ConsumeIf(Lex::TokenKind::Destroy)) {
-    HandleName(context, state, *keyword, NodeKind::KeywordNameNotBeforeParams,
-               NodeKind::KeywordNameQualifierWithoutParams,
-               NodeKind::KeywordNameBeforeParams);
-    return;
-  }
-
   Lex::TokenIndex token = *context.position();
   if (context.tokens().GetKind(token) == Lex::TokenKind::FileEnd) {
     // The end of file is an unhelpful diagnostic location. Instead, use the
@@ -100,11 +93,10 @@ auto HandleDeclNameAndParamsAfterParams(Context& context) -> void {
   auto state = context.PopState();
 
   if (auto period = context.ConsumeIf(Lex::TokenKind::Period)) {
-    auto start_kind = context.tree().node_kind(NodeId(state.subtree_start));
-    auto node_kind = start_kind == NodeKind::IdentifierNameBeforeParams
-                         ? NodeKind::IdentifierNameQualifierWithParams
-                         : NodeKind::KeywordNameQualifierWithParams;
-    context.AddNode(node_kind, *period, state.has_error);
+    CARBON_CHECK(context.tree().node_kind(NodeId(state.subtree_start)) ==
+                 NodeKind::IdentifierNameBeforeParams);
+    context.AddNode(NodeKind::IdentifierNameQualifierWithParams, *period,
+                    state.has_error);
     context.PushState(StateKind::DeclNameAndParams);
   }
 }

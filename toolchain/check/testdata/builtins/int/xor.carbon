@@ -41,9 +41,7 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %Xor.call: init %i32 = call %Xor.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc9_19.1: %i32 = value_of_initializer %Xor.call
-// CHECK:STDOUT:   %.loc9_19.2: %i32 = converted %Xor.call, %.loc9_19.1
-// CHECK:STDOUT:   return %.loc9_19.2
+// CHECK:STDOUT:   return %Xor.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -94,10 +94,24 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
                          std::optional<AccessInfo> access_info = std::nullopt)
     -> LookupResult;
 
+// Returns the `InstId` corresponding to a qualified name in the core package,
+// or BuiltinErrorInst if not found.
+auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
+                      llvm::ArrayRef<llvm::StringRef> names) -> SemIR::InstId;
+
 // Returns the `InstId` corresponding to a name in the core package, or
 // BuiltinErrorInst if not found.
-auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
-                      llvm::StringRef name) -> SemIR::InstId;
+inline auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
+                             llvm::StringRef name) -> SemIR::InstId {
+  return LookupNameInCore(context, loc_id, llvm::ArrayRef{name});
+}
+
+// Checks whether a name is accessible in the given access context. Produces a
+// diagnostic if not.
+auto CheckAccess(Context& context, SemIR::LocId loc_id,
+                 SemIR::LocId member_loc_id, SemIR::NameId name_id,
+                 SemIR::AccessKind access_kind, bool is_parent_access,
+                 AccessInfo access_info) -> void;
 
 // Prints a diagnostic for a duplicate name.
 auto DiagnoseDuplicateName(Context& context, SemIR::NameId name_id,

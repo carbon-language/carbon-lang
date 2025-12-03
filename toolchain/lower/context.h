@@ -13,6 +13,8 @@
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "toolchain/base/fixed_size_value_store.h"
+#include "toolchain/lower/options.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
 #include "toolchain/sem_ir/ids.h"
@@ -47,7 +49,8 @@ class Context {
       llvm::LLVMContext* llvm_context,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, bool want_debug_info,
       const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
-      llvm::StringRef module_name, llvm::raw_ostream* vlog_stream);
+      llvm::StringRef module_name, int total_ir_count,
+      Lower::OptimizationLevel opt_level, llvm::raw_ostream* vlog_stream);
 
   // Gets or creates the `FileContext` for a given SemIR file. If an
   // `inst_namer` is specified the first time this is called for a file, it will
@@ -95,11 +98,13 @@ class Context {
   auto file_system() -> llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem>& {
     return file_system_;
   }
+  auto opt_level() -> Lower::OptimizationLevel { return opt_level_; }
   auto di_builder() -> llvm::DIBuilder& { return di_builder_; }
   auto di_compile_unit() -> llvm::DICompileUnit* { return di_compile_unit_; }
   auto tree_and_subtrees_getters() -> const Parse::GetTreeAndSubtreesStore& {
     return *tree_and_subtrees_getters_;
   }
+  auto total_ir_count() -> int { return total_ir_count_; }
 
   auto printf_int_format_string() -> llvm::Value* {
     return printf_int_format_string_;
@@ -127,6 +132,9 @@ class Context {
   // The filesystem for source code.
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> file_system_;
 
+  // The optimization level to specify for lowered function definitions.
+  Lower::OptimizationLevel opt_level_;
+
   // State for building the LLVM IR debug info metadata.
   llvm::DIBuilder di_builder_;
 
@@ -139,8 +147,13 @@ class Context {
   // The optional vlog stream.
   llvm::raw_ostream* vlog_stream_;
 
+  // The total number of files.
+  int total_ir_count_;
+
   // The `FileContext`s for each IR that is involved in this lowering action.
-  Map<SemIR::CheckIRId, std::unique_ptr<FileContext>> file_contexts_;
+  using FileContextStore =
+      FixedSizeValueStore<SemIR::CheckIRId, std::unique_ptr<FileContext>>;
+  FileContextStore file_contexts_;
 
   // Lowered version of the builtin type `type`.
   llvm::StructType* type_type_ = nullptr;

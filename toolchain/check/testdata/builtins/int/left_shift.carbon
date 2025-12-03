@@ -246,9 +246,7 @@ let bad4: Core.IntLiteral() = LeftShiftOfLit(12, an_i32);
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %LeftShift.call: init %i32 = call %LeftShift.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc22_25.1: %i32 = value_of_initializer %LeftShift.call
-// CHECK:STDOUT:   %.loc22_25.2: %i32 = converted %LeftShift.call, %.loc22_25.1
-// CHECK:STDOUT:   return %.loc22_25.2
+// CHECK:STDOUT:   return %LeftShift.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- u32.carbon
@@ -270,8 +268,6 @@ let bad4: Core.IntLiteral() = LeftShiftOfLit(12, an_i32);
 // CHECK:STDOUT:   %a.ref: %u32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %LeftShift.call: init %u32 = call %LeftShift.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   %.loc22_25.1: %u32 = value_of_initializer %LeftShift.call
-// CHECK:STDOUT:   %.loc22_25.2: %u32 = converted %LeftShift.call, %.loc22_25.1
-// CHECK:STDOUT:   return %.loc22_25.2
+// CHECK:STDOUT:   return %LeftShift.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

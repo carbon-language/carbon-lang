@@ -18,12 +18,15 @@
 #include "toolchain/base/value_ids.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/singleton_insts.h"
+#include "toolchain/sem_ir/specific_interface.h"
+#include "toolchain/sem_ir/specific_named_constraint.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -58,6 +61,16 @@ class InstNamer::NamingContext {
   auto AddWitnessTableName(InstId witness_table_inst_id, std::string name)
       -> void;
 
+  auto AddBlockLabel(ScopeId scope_id, InstBlockId block_id, std::string name,
+                     LocId loc_id) -> void {
+    inst_namer_->AddBlockLabel(scope_id, block_id, name, loc_id);
+  }
+
+  // Pushes all instructions in a generic, by ID.
+  auto PushGeneric(ScopeId scope_id, GenericId generic_id) -> void {
+    inst_namer_->PushGeneric(scope_id, generic_id);
+  }
+
   // Pushes all instructions in a block, by ID.
   auto PushBlockId(ScopeId scope_id, InstBlockId block_id) -> void {
     inst_namer_->PushBlockId(scope_id, block_id);
@@ -70,7 +83,7 @@ class InstNamer::NamingContext {
     AddInstName((inst_namer_->MaybePushEntity(id) + suffix).str());
   }
 
-  auto sem_ir() -> const SemIR::File& { return *inst_namer_->sem_ir_; }
+  auto sem_ir() -> const File& { return *inst_namer_->sem_ir_; }
 
   InstNamer* inst_namer_;
   ScopeId scope_id_;
@@ -78,7 +91,8 @@ class InstNamer::NamingContext {
   Inst inst_;
 };
 
-InstNamer::InstNamer(const File* sem_ir) : sem_ir_(sem_ir) {
+InstNamer::InstNamer(const File* sem_ir, int total_ir_count)
+    : sem_ir_(sem_ir), fingerprinter_(total_ir_count) {
   insts_.resize(sem_ir->insts().size(), {ScopeId::None, Namespace::Name()});
   labels_.resize(sem_ir->inst_blocks().size());
   scopes_.resize(GetScopeIdOffset(ScopeIdTypeEnum::None));
@@ -128,27 +142,47 @@ auto InstNamer::GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int {
   switch (id_enum) {
     case ScopeIdTypeEnum::None:
       // `None` will be getting a full count of scopes.
+
       offset += sem_ir_->associated_constants().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<AssociatedConstantId>:
+
       offset += sem_ir_->classes().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<ClassId>:
-      offset += sem_ir_->vtables().size();
+
+      offset += sem_ir_->cpp_overload_sets().size();
       [[fallthrough]];
-    case ScopeIdTypeEnum::For<VtableId>:
+    case ScopeIdTypeEnum::For<CppOverloadSetId>:
+
       offset += sem_ir_->functions().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<FunctionId>:
+
       offset += sem_ir_->impls().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<ImplId>:
+
       offset += sem_ir_->interfaces().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<InterfaceId>:
+
+      offset += sem_ir_->named_constraints().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<NamedConstraintId>:
+
+      offset += sem_ir_->require_impls().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<RequireImplsId>:
+
       offset += sem_ir_->specific_interfaces().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<SpecificInterfaceId>:
+
+      offset += sem_ir_->vtables().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<VtableId>:
+
       // All type-specific scopes are offset by `FirstEntityScope`.
       offset += static_cast<int>(ScopeId::FirstEntityScope);
       return offset;
@@ -184,7 +218,8 @@ auto InstNamer::GetUnscopedNameFor(InstId inst_id) const -> llvm::StringRef {
   if (IsSingletonInstId(inst_id)) {
     return sem_ir_->insts().Get(inst_id).kind().ir_name();
   }
-  const auto& inst_name = insts_[inst_id.index].second;
+  auto index = sem_ir_->insts().GetRawIndex(inst_id);
+  const auto& inst_name = insts_[index].second;
   return inst_name ? inst_name.GetFullName() : "";
 }
 
@@ -203,7 +238,8 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
     return "package";
   }
 
-  const auto& [inst_scope, inst_name] = insts_[inst_id.index];
+  auto index = sem_ir_->insts().GetRawIndex(inst_id);
+  const auto& [inst_scope, inst_name] = insts_[index];
   if (!inst_name) {
     // This should not happen in valid IR.
     RawStringOstream out;
@@ -229,7 +265,8 @@ auto InstNamer::GetUnscopedLabelFor(InstBlockId block_id) const
   if (!block_id.has_value()) {
     return "";
   }
-  const auto& label_name = labels_[block_id.index].second;
+  const auto& label_name =
+      labels_[sem_ir_->inst_blocks().GetRawIndex(block_id)].second;
   return label_name ? label_name.GetFullName() : "";
 }
 
@@ -240,7 +277,8 @@ auto InstNamer::GetLabelFor(ScopeId scope_id, InstBlockId block_id) const
     return "!invalid";
   }
 
-  const auto& [label_scope, label_name] = labels_[block_id.index];
+  const auto& [label_scope, label_name] =
+      labels_[sem_ir_->inst_blocks().GetRawIndex(block_id)];
   if (!label_name) {
     // This should not happen in valid IR.
     RawStringOstream out;
@@ -354,7 +392,8 @@ auto InstNamer::Namespace::AllocateName(
 auto InstNamer::AddBlockLabel(
     ScopeId scope_id, InstBlockId block_id, std::string name,
     std::variant<LocId, uint64_t> loc_id_or_fingerprint) -> void {
-  if (!block_id.has_value() || labels_[block_id.index].second) {
+  if (!block_id.has_value() ||
+      labels_[sem_ir_->inst_blocks().GetRawIndex(block_id)].second) {
     return;
   }
 
@@ -366,7 +405,7 @@ auto InstNamer::AddBlockLabel(
     }
   }
 
-  labels_[block_id.index] = {
+  labels_[sem_ir_->inst_blocks().GetRawIndex(block_id)] = {
       scope_id, GetScopeInfo(scope_id).labels.AllocateName(
                     *this, loc_id_or_fingerprint, std::move(name))};
 }
@@ -477,7 +516,7 @@ auto InstNamer::PushGeneric(ScopeId scope_id, GenericId generic_id) -> void {
   if (!generic_id.has_value()) {
     return;
   }
-  generic_scopes_[generic_id.index] = scope_id;
+  generic_scopes_[sem_ir_->generics().GetRawIndex(generic_id)] = scope_id;
   const auto& generic = sem_ir_->generics().Get(generic_id);
 
   // Push blocks in reverse order.
@@ -530,6 +569,9 @@ auto InstNamer::GetNameForParentNameScope(NameScopeId name_scope_id)
     case CARBON_KIND(InterfaceDecl interface): {
       return MaybePushEntity(interface.interface_id);
     }
+    case CARBON_KIND(NamedConstraintDecl named_constraint): {
+      return MaybePushEntity(named_constraint.named_constraint_id);
+    }
     case SemIR::Namespace::Kind: {
       // Only prefix type scopes.
       return "";
@@ -564,6 +606,42 @@ auto InstNamer::PushEntity(FunctionId function_id, ScopeId scope_id,
   PushBlockId(scope_id, fn.call_params_id);
 }
 
+auto InstNamer::PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
+                           Scope& scope) -> void {
+  const auto& require = sem_ir_->require_impls().Get(require_impls_id);
+  LocId require_loc(require.decl_id);
+
+  auto scope_prefix = GetNameForParentNameScope(require.parent_scope_id);
+
+  scope.name = globals_.AllocateName(
+      *this, require_loc,
+      // TODO: Include the Interface being required if there's only one, instead
+      // of the index.
+      llvm::formatv("{0}{1}require{2}", scope_prefix,
+                    scope_prefix.empty() ? "" : ".", require_impls_id.index));
+
+  auto decl = sem_ir_->insts().GetAs<SemIR::RequireImplsDecl>(require.decl_id);
+  AddBlockLabel(scope_id, decl.decl_block_id, "require", require_loc);
+
+  // Push blocks in reverse order.
+  PushGeneric(scope_id, require.generic_id);
+}
+
+auto InstNamer::PushEntity(CppOverloadSetId cpp_overload_set_id,
+                           ScopeId /*scope_id*/, Scope& scope) -> void {
+  const CppOverloadSet& overload_set =
+      sem_ir_->cpp_overload_sets().Get(cpp_overload_set_id);
+  uint64_t fingerprint =
+      fingerprinter_.GetOrCompute(sem_ir_, cpp_overload_set_id);
+
+  auto scope_prefix = GetNameForParentNameScope(overload_set.parent_scope_id);
+  scope.name = globals_.AllocateName(
+      *this, fingerprint,
+      llvm::formatv("{0}{1}{2}.cpp_overload_set", scope_prefix,
+                    scope_prefix.empty() ? "" : ".",
+                    sem_ir_->names().GetIRBaseName(overload_set.name_id)));
+}
+
 auto InstNamer::PushEntity(ImplId impl_id, ScopeId scope_id, Scope& scope)
     -> void {
   const auto& impl = sem_ir_->impls().Get(impl_id);
@@ -572,9 +650,10 @@ auto InstNamer::PushEntity(ImplId impl_id, ScopeId scope_id, Scope& scope)
   llvm::StringRef self_name;
   auto self_const_id =
       sem_ir_->constant_values().GetConstantInstId(impl.self_id);
+  auto index = sem_ir_->insts().GetRawIndex(self_const_id);
   if (IsSingletonInstId(self_const_id)) {
     self_name = sem_ir_->insts().Get(self_const_id).kind().ir_name();
-  } else if (const auto& inst_name = insts_[self_const_id.index].second) {
+  } else if (const auto& inst_name = insts_[index].second) {
     self_name = inst_name.GetBaseName();
   } else {
     self_name = "<unexpected self>";
@@ -613,6 +692,23 @@ auto InstNamer::PushEntity(InterfaceId interface_id, ScopeId scope_id,
   PushBlockId(scope_id, interface.pattern_block_id);
 }
 
+auto InstNamer::PushEntity(NamedConstraintId named_constraint_id,
+                           ScopeId scope_id, Scope& scope) -> void {
+  const auto& constraint =
+      sem_ir_->named_constraints().Get(named_constraint_id);
+  LocId constraint_loc(constraint.latest_decl_id());
+  scope.name = globals_.AllocateName(
+      *this, constraint_loc,
+      sem_ir_->names().GetIRBaseName(constraint.name_id).str());
+  AddBlockLabel(scope_id, constraint.body_block_id, "constraint",
+                constraint_loc);
+
+  // Push blocks in reverse order.
+  PushGeneric(scope_id, constraint.generic_id);
+  PushBlockId(scope_id, constraint.body_block_id);
+  PushBlockId(scope_id, constraint.pattern_block_id);
+}
+
 auto InstNamer::PushEntity(VtableId vtable_id, ScopeId /*scope_id*/,
                            Scope& scope) -> void {
   const auto& vtable = sem_ir_->vtables().Get(vtable_id);
@@ -634,7 +730,8 @@ InstNamer::NamingContext::NamingContext(InstNamer* inst_namer,
       inst_(sem_ir().insts().Get(inst_id)) {}
 
 auto InstNamer::NamingContext::AddInstName(std::string name) -> void {
-  ScopeId old_scope_id = inst_namer_->insts_[inst_id_.index].first;
+  auto index = sem_ir().insts().GetRawIndex(inst_id_);
+  ScopeId old_scope_id = inst_namer_->insts_[index].first;
   if (old_scope_id == ScopeId::None) {
     std::variant<LocId, uint64_t> loc_id_or_fingerprint = LocId::None;
     if (scope_id_ == ScopeId::Constants || scope_id_ == ScopeId::Imports) {
@@ -644,8 +741,8 @@ auto InstNamer::NamingContext::AddInstName(std::string name) -> void {
       loc_id_or_fingerprint = LocId(inst_id_);
     }
     auto scoped_name = inst_namer_->GetScopeInfo(scope_id_).insts.AllocateName(
-        *inst_namer_, loc_id_or_fingerprint, name);
-    inst_namer_->insts_[inst_id_.index] = {scope_id_, scoped_name};
+        *inst_namer_, loc_id_or_fingerprint, std::move(name));
+    inst_namer_->insts_[index] = {scope_id_, scoped_name};
   } else {
     CARBON_CHECK(old_scope_id == scope_id_,
                  "Attempting to name inst in multiple scopes");
@@ -670,15 +767,15 @@ auto InstNamer::NamingContext::AddIntOrFloatTypeName(char type_literal_prefix,
 auto InstNamer::NamingContext::AddWitnessTableName(InstId witness_table_inst_id,
                                                    std::string name) -> void {
   auto witness_table =
-      sem_ir().insts().GetAs<ImplWitnessTable>(witness_table_inst_id);
-  if (!witness_table.impl_id.has_value()) {
-    // TODO: The witness comes from a facet value. Can we get the
-    // interface names from it? Store the facet value instruction in the
+      sem_ir().insts().TryGetAs<ImplWitnessTable>(witness_table_inst_id);
+  if (!witness_table || !witness_table->impl_id.has_value()) {
+    // TODO: If `impl_id` is None, the witness comes from a facet value. Can we
+    // get the interface names from it? Store the facet value instruction in the
     // table?
     AddInstName(name);
     return;
   }
-  const auto& impl = sem_ir().impls().Get(witness_table.impl_id);
+  const auto& impl = sem_ir().impls().Get(witness_table->impl_id);
   auto name_id = sem_ir().interfaces().Get(impl.interface.interface_id).name_id;
 
   std::string suffix = llvm::formatv(".{}", name);
@@ -712,16 +809,18 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddEntityNameAndMaybePush(inst.interface_id, ".assoc_type");
       return;
     }
-    case BindAlias::Kind:
-    case BindName::Kind:
-    case BindSymbolicName::Kind:
+    case AliasBinding::Kind:
+    case RefBinding::Kind:
+    case SymbolicBinding::Kind:
+    case ValueBinding::Kind:
     case ExportDecl::Kind: {
-      auto inst = inst_.As<AnyBindNameOrExportDecl>();
+      auto inst = inst_.As<AnyBindingOrExportDecl>();
       AddInstNameId(sem_ir().entity_names().Get(inst.entity_name_id).name_id);
       return;
     }
-    case BindingPattern::Kind:
-    case SymbolicBindingPattern::Kind: {
+    case RefBindingPattern::Kind:
+    case SymbolicBindingPattern::Kind:
+    case ValueBindingPattern::Kind: {
       auto inst = inst_.As<AnyBindingPattern>();
       auto name_id = NameId::Underscore;
       if (inst.entity_name_id.has_value()) {
@@ -755,12 +854,12 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(Call inst): {
-      auto callee_function = GetCalleeFunction(sem_ir(), inst.callee_id);
-      if (!callee_function.function_id.has_value()) {
-        AddInstName("");
+      auto callee = GetCallee(sem_ir(), inst.callee_id);
+      if (auto* fn = std::get_if<CalleeFunction>(&callee)) {
+        AddEntityNameAndMaybePush(fn->function_id, ".call");
         return;
       }
-      AddEntityNameAndMaybePush(callee_function.function_id, ".call");
+      AddInstName("");
       return;
     }
     case CARBON_KIND(ClassDecl inst): {
@@ -770,12 +869,15 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(ClassType inst): {
-      if (auto literal_info = NumericTypeLiteralInfo::ForType(sem_ir(), inst);
-          literal_info.is_valid()) {
-        AddInstName(literal_info.GetLiteralAsString(sem_ir()));
-      } else {
-        AddEntityNameAndMaybePush(inst.class_id);
+      if (auto type_info = RecognizedTypeInfo::ForType(sem_ir(), inst);
+          type_info.is_valid()) {
+        RawStringOstream out;
+        if (type_info.PrintLiteral(sem_ir(), out)) {
+          AddInstName(out.TakeStr());
+          return;
+        }
       }
+      AddEntityNameAndMaybePush(inst.class_id);
       return;
     }
     case CompleteTypeWitness::Kind: {
@@ -806,15 +908,14 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(FacetAccessType inst): {
-      auto name_id = NameId::None;
+      auto name_id = SemIR::NameId::None;
       if (auto name =
               sem_ir().insts().TryGetAs<NameRef>(inst.facet_value_inst_id)) {
         name_id = name->name_id;
-      } else if (auto symbolic = sem_ir().insts().TryGetAs<BindSymbolicName>(
+      } else if (auto bind = sem_ir().insts().TryGetAs<SymbolicBinding>(
                      inst.facet_value_inst_id)) {
-        name_id = sem_ir().entity_names().Get(symbolic->entity_name_id).name_id;
+        name_id = sem_ir().entity_names().Get(bind->entity_name_id).name_id;
       }
-
       if (name_id.has_value()) {
         AddInstNameId(name_id, ".as_type");
       } else {
@@ -822,17 +923,38 @@ auto InstNamer::NamingContext::NameInst() -> void {
       }
       return;
     }
+    case CARBON_KIND(SymbolicBindingType inst): {
+      auto bind =
+          sem_ir().insts().GetAs<SymbolicBinding>(inst.facet_value_inst_id);
+      auto name_id = sem_ir().entity_names().Get(bind.entity_name_id).name_id;
+      if (name_id.has_value()) {
+        AddInstNameId(name_id, ".binding.as_type");
+      } else {
+        AddInstName("binding.as_type");
+      }
+      return;
+    }
     case CARBON_KIND(FacetType inst): {
       const auto& facet_type_info =
           sem_ir().facet_types().Get(inst.facet_type_id);
       bool has_where = facet_type_info.other_requirements ||
+                       !facet_type_info.builtin_constraint_mask.empty() ||
                        !facet_type_info.self_impls_constraints.empty() ||
+                       !facet_type_info.self_impls_named_constraints.empty() ||
                        !facet_type_info.rewrite_constraints.empty();
-      if (facet_type_info.extend_constraints.size() == 1) {
+      if (facet_type_info.extend_constraints.size() == 1 &&
+          facet_type_info.extend_named_constraints.empty()) {
         AddEntityNameAndMaybePush(
             facet_type_info.extend_constraints.front().interface_id,
             has_where ? "_where.type" : ".type");
-      } else if (facet_type_info.extend_constraints.empty()) {
+      } else if (facet_type_info.extend_named_constraints.size() == 1 &&
+                 facet_type_info.extend_constraints.empty()) {
+        AddEntityNameAndMaybePush(
+            facet_type_info.extend_named_constraints.front()
+                .named_constraint_id,
+            has_where ? "_where.type" : ".type");
+      } else if (facet_type_info.extend_constraints.empty() &&
+                 facet_type_info.extend_named_constraints.empty()) {
         AddInstName(has_where ? "type_where" : "type");
       } else {
         AddInstName("facet_type");
@@ -844,8 +966,18 @@ auto InstNamer::NamingContext::NameInst() -> void {
               sem_ir().types().TryGetAs<FacetType>(inst.type_id)) {
         const auto& facet_type_info =
             sem_ir().facet_types().Get(facet_type->facet_type_id);
-        if (auto interface = facet_type_info.TryAsSingleInterface()) {
-          AddEntityNameAndMaybePush(interface->interface_id, ".facet");
+        if (auto single = facet_type_info.TryAsSingleExtend()) {
+          CARBON_KIND_SWITCH(*single) {
+            case CARBON_KIND(SemIR::SpecificInterface interface): {
+              AddEntityNameAndMaybePush(interface.interface_id, ".facet");
+              break;
+            }
+            case CARBON_KIND(SemIR::SpecificNamedConstraint constraint): {
+              AddEntityNameAndMaybePush(constraint.named_constraint_id,
+                                        ".facet");
+              break;
+            }
+          }
           return;
         }
       }
@@ -871,12 +1003,24 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddEntityNameAndMaybePush(inst.function_id, ".type");
       return;
     }
+    case CARBON_KIND(CppOverloadSetValue inst): {
+      AddEntityNameAndMaybePush(inst.overload_set_id, ".value");
+      return;
+    }
+    case CARBON_KIND(CppOverloadSetType inst): {
+      AddEntityNameAndMaybePush(inst.overload_set_id, ".type");
+      return;
+    }
     case CARBON_KIND(GenericClassType inst): {
       AddEntityNameAndMaybePush(inst.class_id, ".type");
       return;
     }
     case CARBON_KIND(GenericInterfaceType inst): {
       AddEntityNameAndMaybePush(inst.interface_id, ".type");
+      return;
+    }
+    case CARBON_KIND(GenericNamedConstraintType inst): {
+      AddEntityNameAndMaybePush(inst.named_constraint_id, ".type");
       return;
     }
     case CARBON_KIND(ImplDecl inst): {
@@ -966,7 +1110,8 @@ auto InstNamer::NamingContext::NameInst() -> void {
       auto const_id = sem_ir().constant_values().Get(inst_id_);
       if (const_id.has_value() && const_id.is_concrete()) {
         auto const_inst_id = sem_ir().constant_values().GetInstId(const_id);
-        if (!inst_namer_->insts_[const_inst_id.index].second) {
+        auto index = sem_ir().insts().GetRawIndex(const_inst_id);
+        if (!inst_namer_->insts_[index].second) {
           inst_namer_->PushBlockInsts(ScopeId::Imports, const_inst_id);
         }
       }
@@ -1000,6 +1145,13 @@ auto InstNamer::NamingContext::NameInst() -> void {
       PushBlockId(scope_id_, inst.pattern_block_id);
       return;
     }
+    case CARBON_KIND(NamedConstraintDecl inst): {
+      AddEntityNameAndMaybePush(inst.named_constraint_id, ".decl");
+      auto interface_scope_id =
+          inst_namer_->GetScopeFor(inst.named_constraint_id);
+      PushBlockId(interface_scope_id, inst.decl_block_id);
+      return;
+    }
     case CARBON_KIND(NameRef inst): {
       AddInstNameId(inst.name_id, ".ref");
       return;
@@ -1017,7 +1169,8 @@ auto InstNamer::NamingContext::NameInst() -> void {
     }
     case OutParamPattern::Kind:
     case RefParamPattern::Kind:
-    case ValueParamPattern::Kind: {
+    case ValueParamPattern::Kind:
+    case VarParamPattern::Kind: {
       AddInstNameId(GetPrettyNameFromPatternId(sem_ir(), inst_id_),
                     ".param_patt");
       return;
@@ -1032,6 +1185,12 @@ auto InstNamer::NamingContext::NameInst() -> void {
     }
     case RequireCompleteType::Kind: {
       AddInstName("require_complete");
+      return;
+    }
+    case CARBON_KIND(RequireImplsDecl inst): {
+      AddEntityNameAndMaybePush(inst.require_impls_id, ".decl");
+      auto require_scope_id = inst_namer_->GetScopeFor(inst.require_impls_id);
+      PushBlockId(require_scope_id, inst.decl_block_id);
       return;
     }
     case ReturnSlotPattern::Kind: {
@@ -1069,6 +1228,20 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstName("str");
       return;
     }
+    case CARBON_KIND(StructType inst): {
+      const auto& fields = sem_ir().struct_type_fields().Get(inst.fields_id);
+      if (fields.empty()) {
+        AddInstName("empty_struct_type");
+        return;
+      }
+      std::string name = "struct_type";
+      for (auto field : fields) {
+        name += ".";
+        name += sem_ir().names().GetIRBaseName(field.name_id).str();
+      }
+      AddInstName(std::move(name));
+      return;
+    }
     case CARBON_KIND(StructValue inst): {
       if (auto fn_ty = sem_ir().types().TryGetAs<FunctionType>(inst.type_id)) {
         AddEntityNameAndMaybePush(fn_ty->function_id);
@@ -1094,20 +1267,6 @@ auto InstNamer::NamingContext::NameInst() -> void {
           AddInstName("struct");
         }
       }
-      return;
-    }
-    case CARBON_KIND(StructType inst): {
-      const auto& fields = sem_ir().struct_type_fields().Get(inst.fields_id);
-      if (fields.empty()) {
-        AddInstName("empty_struct_type");
-        return;
-      }
-      std::string name = "struct_type";
-      for (auto field : fields) {
-        name += ".";
-        name += sem_ir().names().GetIRBaseName(field.name_id).str();
-      }
-      AddInstName(std::move(name));
       return;
     }
     case CARBON_KIND(TupleAccess inst): {
@@ -1143,6 +1302,10 @@ auto InstNamer::NamingContext::NameInst() -> void {
       }
       return;
     }
+    case UninitializedValue::Kind: {
+      AddInstName("uninit");
+      return;
+    }
     case VarPattern::Kind: {
       AddInstNameId(GetPrettyNameFromPatternId(sem_ir(), inst_id_),
                     ".var_patt");
@@ -1165,6 +1328,11 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
   }
+}
+
+auto InstNamer::has_name(InstId inst_id) const -> bool {
+  return static_cast<bool>(
+      insts_[sem_ir_->insts().GetRawIndex(inst_id)].second);
 }
 
 }  // namespace Carbon::SemIR

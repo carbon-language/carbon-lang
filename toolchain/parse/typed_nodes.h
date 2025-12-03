@@ -132,17 +132,11 @@ using EmptyDecl =
 using IdentifierNameBeforeParams =
     LeafNode<NodeKind::IdentifierNameBeforeParams, Lex::IdentifierTokenIndex,
              NodeCategory::MemberName | NodeCategory::NonExprName>;
-using KeywordNameBeforeParams =
-    LeafNode<NodeKind::KeywordNameBeforeParams, Lex::TokenIndex,
-             NodeCategory::MemberName | NodeCategory::NonExprName>;
 
 // A name in a non-expression context, such as a declaration, that is known
 // to not be followed by parameters.
 using IdentifierNameNotBeforeParams =
     LeafNode<NodeKind::IdentifierNameNotBeforeParams, Lex::IdentifierTokenIndex,
-             NodeCategory::MemberName | NodeCategory::NonExprName>;
-using KeywordNameNotBeforeParams =
-    LeafNode<NodeKind::KeywordNameNotBeforeParams, Lex::TokenIndex,
              NodeCategory::MemberName | NodeCategory::NonExprName>;
 
 // A name in an expression context.
@@ -184,15 +178,6 @@ struct IdentifierNameQualifierWithParams {
   std::optional<ExplicitParamListId> params;
   Lex::PeriodTokenIndex token;
 };
-struct KeywordNameQualifierWithParams {
-  static constexpr auto Kind = NodeKind::KeywordNameQualifierWithParams.Define(
-      {.bracketed_by = KeywordNameBeforeParams::Kind});
-
-  KeywordNameBeforeParamsId name;
-  std::optional<ImplicitParamListId> implicit_params;
-  std::optional<ExplicitParamListId> params;
-  Lex::PeriodTokenIndex token;
-};
 
 // A name qualifier without parameters, such as `A.`.
 struct IdentifierNameQualifierWithoutParams {
@@ -203,21 +188,12 @@ struct IdentifierNameQualifierWithoutParams {
   IdentifierNameNotBeforeParamsId name;
   Lex::PeriodTokenIndex token;
 };
-struct KeywordNameQualifierWithoutParams {
-  static constexpr auto Kind =
-      NodeKind::KeywordNameQualifierWithoutParams.Define(
-          {.bracketed_by = KeywordNameNotBeforeParams::Kind});
-
-  KeywordNameNotBeforeParamsId name;
-  Lex::PeriodTokenIndex token;
-};
 
 // A complete name in a declaration: `A.C(T:! type).F(n: i32)`.
 // Note that this includes the parameters of the entity itself.
 struct DeclName {
-  llvm::SmallVector<NodeIdOneOf<
-      IdentifierNameQualifierWithParams, IdentifierNameQualifierWithoutParams,
-      KeywordNameQualifierWithParams, KeywordNameQualifierWithoutParams>>
+  llvm::SmallVector<NodeIdOneOf<IdentifierNameQualifierWithParams,
+                                IdentifierNameQualifierWithoutParams>>
       qualifiers;
   AnyNonExprNameId name;
   std::optional<ImplicitParamListId> implicit_params;
@@ -227,13 +203,13 @@ struct DeclName {
 // Library, package, import, export
 // --------------------------------
 
-// The `package` keyword in an expression.
-using PackageExpr =
-    LeafNode<NodeKind::PackageExpr, Lex::PackageTokenIndex, NodeCategory::Expr>;
-
-// The `Core` keyword in an expression.
+// Various keywords in an expression.
 using CoreNameExpr =
     LeafNode<NodeKind::CoreNameExpr, Lex::CoreTokenIndex, NodeCategory::Expr>;
+using CppNameExpr =
+    LeafNode<NodeKind::CppNameExpr, Lex::CppTokenIndex, NodeCategory::Expr>;
+using PackageExpr =
+    LeafNode<NodeKind::PackageExpr, Lex::PackageTokenIndex, NodeCategory::Expr>;
 
 // The name of a package or library for `package`, `import`, and `library`.
 using IdentifierPackageName =
@@ -241,6 +217,8 @@ using IdentifierPackageName =
              NodeCategory::PackageName>;
 using CorePackageName = LeafNode<NodeKind::CorePackageName, Lex::CoreTokenIndex,
                                  NodeCategory::PackageName>;
+using CppPackageName = LeafNode<NodeKind::CppPackageName, Lex::CppTokenIndex,
+                                NodeCategory::PackageName>;
 using LibraryName =
     LeafNode<NodeKind::LibraryName, Lex::StringLiteralTokenIndex>;
 using DefaultLibrary =
@@ -346,17 +324,29 @@ struct Namespace {
 // Pattern nodes
 // -------------
 
-// A pattern binding, such as `name: Type`, that isn't inside a `var` pattern.
+// A ref binding name: `ref name`.
+struct RefBindingName {
+  static constexpr auto Kind =
+      NodeKind::RefBindingName.Define({.child_count = 1});
+
+  Lex::RefTokenIndex token;
+  AnyRuntimeBindingPatternName name;
+};
+
+// A binding pattern, such as `name: Type`, that isn't inside a `var` pattern.
 struct LetBindingPattern {
   static constexpr auto Kind = NodeKind::LetBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
 
-  AnyRuntimeBindingPatternName name;
+  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
+  NodeIdOneOf<IdentifierNameNotBeforeParams, SelfValueName, UnderscoreName,
+              RefBindingName>
+      name;
   Lex::ColonTokenIndex token;
   AnyExprId type;
 };
 
-// A pattern binding, such as `name: Type`, that is inside a `var` pattern.
+// A binding pattern, such as `name: Type`, that is inside a `var` pattern.
 struct VarBindingPattern {
   static constexpr auto Kind = NodeKind::VarBindingPattern.Define(
       {.category = NodeCategory::Pattern, .child_count = 2});
@@ -395,15 +385,6 @@ struct CompileTimeBindingPattern {
   CompileTimeBindingPatternStartId introducer;
   Lex::ColonExclaimTokenIndex token;
   AnyExprId type;
-};
-
-// An address-of binding: `addr self: Self*`.
-struct Addr {
-  static constexpr auto Kind = NodeKind::Addr.Define(
-      {.category = NodeCategory::Pattern, .child_count = 1});
-
-  Lex::AddrTokenIndex token;
-  AnyPatternId inner;
 };
 
 using TuplePatternStart =
@@ -1008,16 +989,23 @@ struct CallExprStart {
   Lex::OpenParenTokenIndex token;
 };
 
-using CallExprComma = LeafNode<NodeKind::CallExprComma, Lex::CommaTokenIndex>;
-
 // A call expression: `F(a, b, c)`.
 struct CallExpr {
   static constexpr auto Kind = NodeKind::CallExpr.Define(
       {.category = NodeCategory::Expr, .bracketed_by = CallExprStart::Kind});
 
   CallExprStartId start;
-  CommaSeparatedList<AnyExprId, CallExprCommaId> arguments;
+  CommaSeparatedList<AnyExprId, TupleLiteralCommaId> arguments;
   Lex::CloseParenTokenIndex token;
+};
+
+// A callsite `ref` tag: `F(ref x)` or `F({.x = ref x})
+struct RefTag {
+  static constexpr auto Kind = NodeKind::RefTag.Define(
+      {.category = NodeCategory::Expr, .child_count = 1});
+
+  Lex::RefTokenIndex token;
+  AnyExprId tagged_expr;
 };
 
 // A member access expression: `a.b` or `a.(b)`.
@@ -1472,6 +1460,40 @@ struct InterfaceDefinition {
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
+// `require`...`impls` statements
+// ------------------------------
+
+// `require`
+using RequireIntroducer =
+    LeafNode<NodeKind::RequireIntroducer, Lex::RequireTokenIndex>;
+
+// `impls` with no type before it
+using RequireDefaultSelfImpls =
+    LeafNode<NodeKind::RequireDefaultSelfImpls, Lex::ImplsTokenIndex,
+             NodeCategory::RequireImpls>;
+
+// `<type> impls`.
+struct RequireTypeImpls {
+  static constexpr auto Kind = NodeKind::RequireTypeImpls.Define(
+      {.category = NodeCategory::RequireImpls, .child_count = 1});
+
+  AnyExprId type_expr;
+  Lex::ImplsTokenIndex token;
+};
+
+// `require T impls I where...`
+struct RequireDecl {
+  static constexpr auto Kind =
+      NodeKind::RequireDecl.Define({.category = NodeCategory::Decl,
+                                    .bracketed_by = RequireIntroducer::Kind});
+
+  RequireIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
+  AnyRequireImplsId impls;
+  AnyExprId facet_type;
+  Lex::SemiTokenIndex token;
+};
+
 // `impl`...`as` declarations and definitions
 // ------------------------------------------
 
@@ -1488,12 +1510,12 @@ struct ImplForall {
 };
 
 // `as` with no type before it
-using DefaultSelfImplAs = LeafNode<NodeKind::DefaultSelfImplAs,
+using ImplDefaultSelfAs = LeafNode<NodeKind::ImplDefaultSelfAs,
                                    Lex::AsTokenIndex, NodeCategory::ImplAs>;
 
 // `<type> as`
-struct TypeImplAs {
-  static constexpr auto Kind = NodeKind::TypeImplAs.Define(
+struct ImplTypeAs {
+  static constexpr auto Kind = NodeKind::ImplTypeAs.Define(
       {.category = NodeCategory::ImplAs, .child_count = 1});
 
   AnyExprId type_expr;

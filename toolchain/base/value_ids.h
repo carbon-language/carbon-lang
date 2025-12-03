@@ -49,7 +49,7 @@ struct FloatId : public IdBase<FloatId> {
   static const FloatId None;
   using IdBase::IdBase;
 };
-constexpr FloatId FloatId::None(FloatId::NoneIndex);
+inline constexpr FloatId FloatId::None(FloatId::NoneIndex);
 
 // Corresponds to a Real value.
 struct RealId : public IdBase<RealId> {
@@ -62,7 +62,7 @@ struct RealId : public IdBase<RealId> {
   static const RealId None;
   using IdBase::IdBase;
 };
-constexpr RealId RealId::None(RealId::NoneIndex);
+inline constexpr RealId RealId::None(RealId::NoneIndex);
 
 // Corresponds to StringRefs for identifiers.
 //
@@ -73,7 +73,7 @@ struct IdentifierId : public IdBase<IdentifierId> {
   static const IdentifierId None;
   using IdBase::IdBase;
 };
-constexpr IdentifierId IdentifierId::None(IdentifierId::NoneIndex);
+inline constexpr IdentifierId IdentifierId::None(IdentifierId::NoneIndex);
 
 // The name of a package, which is either an identifier or the special `Core`
 // package name.
@@ -83,6 +83,7 @@ struct PackageNameId : public IdBase<PackageNameId> {
   static constexpr llvm::StringLiteral Label = "package";
   static const PackageNameId None;
   static const PackageNameId Core;
+  static const PackageNameId Cpp;
 
   // Returns the PackageNameId corresponding to a particular IdentifierId.
   static auto ForIdentifier(IdentifierId id) -> PackageNameId {
@@ -100,17 +101,31 @@ struct PackageNameId : public IdBase<PackageNameId> {
   // Returns the special package name corresponding to this PackageNameId.
   // Requires that this name is not an identifier name.
   auto AsSpecialName() const -> llvm::StringLiteral {
+    CARBON_CHECK(index <= NoneIndex);
     if (*this == None) {
       return "Main";
     }
     if (*this == Core) {
       return "Core";
     }
-    CARBON_FATAL("Unknown special package name kind {0}", *this);
+    if (*this == Cpp) {
+      return "Cpp";
+    }
+    CARBON_FATAL("Unknown special package name kind {0}", index);
+  }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    if (index <= NoneIndex) {
+      out << Label << AsSpecialName();
+    } else {
+      IdBase::Print(out);
+    }
   }
 };
-constexpr PackageNameId PackageNameId::None(PackageNameId::NoneIndex);
-constexpr PackageNameId PackageNameId::Core(PackageNameId::NoneIndex - 1);
+inline constexpr PackageNameId PackageNameId::None(PackageNameId::NoneIndex);
+inline constexpr PackageNameId PackageNameId::Core(PackageNameId::NoneIndex -
+                                                   1);
+inline constexpr PackageNameId PackageNameId::Cpp(PackageNameId::NoneIndex - 2);
 
 // Corresponds to StringRefs for string literals.
 struct StringLiteralValueId : public IdBase<StringLiteralValueId> {
@@ -118,7 +133,7 @@ struct StringLiteralValueId : public IdBase<StringLiteralValueId> {
   static const StringLiteralValueId None;
   using IdBase::IdBase;
 };
-constexpr StringLiteralValueId StringLiteralValueId::None(
+inline constexpr StringLiteralValueId StringLiteralValueId::None(
     StringLiteralValueId::NoneIndex);
 
 }  // namespace Carbon

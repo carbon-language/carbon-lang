@@ -31,7 +31,8 @@ fn M() {
 // CHECK:STDOUT: ; ModuleID = 'call_recursive_reorder.carbon'
 // CHECK:STDOUT: source_filename = "call_recursive_reorder.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: define void @_CM.Main() !dbg !4 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CM.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %ptr_i32.var = alloca ptr, align 8, !dbg !7
 // CHECK:STDOUT:   %ptr_f64.var = alloca ptr, align 8, !dbg !8
@@ -49,38 +50,40 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #0
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.2fe87eb83f5a4614(ptr %x, ptr %y, i32 %count) !dbg !17 {
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.2fe87eb83f5a4614(ptr %x, ptr %y, i32 %count) #0 !dbg !17 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !18
-// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !19
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Greater.call = icmp sgt i32 %count, 2, !dbg !26
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Greater.call, label %if.then, label %if.else, !dbg !27
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.then:                                          ; preds = %entry
-// CHECK:STDOUT:   ret i32 %count, !dbg !20
+// CHECK:STDOUT:   ret i32 %count, !dbg !28
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !21
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.2fe87eb83f5a4614(ptr %y, ptr %x, i32 %Int.as.AddWith.impl.Op.call), !dbg !22
-// CHECK:STDOUT:   ret i32 %F.call, !dbg !23
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %count, 1, !dbg !29
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.2fe87eb83f5a4614(ptr %y, ptr %x, i32 %Int.as.AddWith.impl.Op.call), !dbg !30
+// CHECK:STDOUT:   ret i32 %F.call, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_CF.Main.2fe87eb83f5a4614, { 0, 2, 1 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!2}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "call_recursive_reorder.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "M", linkageName: "_CM.Main", scope: null, file: !3, line: 22, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{}
+// CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 23, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 24, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 25, column: 3, scope: !4)
@@ -91,10 +94,18 @@ fn M() {
 // CHECK:STDOUT: !14 = !DILocation(line: 28, column: 14, scope: !4)
 // CHECK:STDOUT: !15 = !DILocation(line: 28, column: 3, scope: !4)
 // CHECK:STDOUT: !16 = !DILocation(line: 22, column: 1, scope: !4)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.2fe87eb83f5a4614", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !18 = !DILocation(line: 16, column: 7, scope: !17)
-// CHECK:STDOUT: !19 = !DILocation(line: 16, column: 6, scope: !17)
-// CHECK:STDOUT: !20 = !DILocation(line: 17, column: 5, scope: !17)
-// CHECK:STDOUT: !21 = !DILocation(line: 19, column: 18, scope: !17)
-// CHECK:STDOUT: !22 = !DILocation(line: 19, column: 10, scope: !17)
-// CHECK:STDOUT: !23 = !DILocation(line: 19, column: 3, scope: !17)
+// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.2fe87eb83f5a4614", scope: null, file: !3, line: 15, type: !18, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !22)
+// CHECK:STDOUT: !18 = !DISubroutineType(types: !19)
+// CHECK:STDOUT: !19 = !{!20, !21, !21, !20}
+// CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
+// CHECK:STDOUT: !22 = !{!23, !24, !25}
+// CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !17, type: !21)
+// CHECK:STDOUT: !24 = !DILocalVariable(arg: 2, scope: !17, type: !21)
+// CHECK:STDOUT: !25 = !DILocalVariable(arg: 3, scope: !17, type: !20)
+// CHECK:STDOUT: !26 = !DILocation(line: 16, column: 7, scope: !17)
+// CHECK:STDOUT: !27 = !DILocation(line: 16, column: 6, scope: !17)
+// CHECK:STDOUT: !28 = !DILocation(line: 17, column: 5, scope: !17)
+// CHECK:STDOUT: !29 = !DILocation(line: 19, column: 18, scope: !17)
+// CHECK:STDOUT: !30 = !DILocation(line: 19, column: 10, scope: !17)
+// CHECK:STDOUT: !31 = !DILocation(line: 19, column: 3, scope: !17)

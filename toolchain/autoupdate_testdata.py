@@ -10,6 +10,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import argparse
 import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -50,10 +51,10 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.non_fatal_checks:
-        if build_mode == "opt":
+        if build_mode == "optimize":
             exit(
                 "`--non-fatal-checks` is incompatible with inferred "
-                "`-c opt` build mode"
+                "`-c optimize` build mode"
             )
         configs.append("--config=non-fatal-checks")
 
@@ -92,8 +93,16 @@ def main() -> None:
         argv.append("--file_tests=" + ",".join(file_tests))
     # Provide an empty stdin so that the driver tests that read from stdin
     # don't block waiting for input. This matches the behavior of `bazel test`.
-    subprocess.run(argv, check=True)
+    result = subprocess.run(argv)
+    if result.returncode != 0:
+        sys.exit(
+            f"Command `{shlex.join(argv)}` failed with exit code "
+            f"`{result.returncode}`"
+        )
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit(1)

@@ -53,7 +53,7 @@ fn AddressOfOperator() {
   // CHECK:STDERR:   ^
   // CHECK:STDERR:
   &(true and false);
-  // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+4]]:3: error: cannot take the address of a temporary object [AddrOfEphemeralRef]
+  // CHECK:STDERR: fail_address_of_value.carbon:[[@LINE+4]]:3: error: cannot take the address of non-reference expression [AddrOfNonRef]
   // CHECK:STDERR:   &H().a;
   // CHECK:STDERR:   ^
   // CHECK:STDERR:

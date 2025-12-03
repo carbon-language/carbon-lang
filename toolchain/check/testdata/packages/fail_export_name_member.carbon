@@ -43,6 +43,7 @@ export C.n;
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %empty_struct_type [concrete]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %empty_struct_type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.n [concrete]
@@ -56,7 +57,7 @@ export C.n;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc5_11.1: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc5_11.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %.loc5_8: %C.elem = field_decl n, element0 [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.n [concrete = constants.%complete_type]
@@ -79,7 +80,7 @@ export C.n;
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Foo.C: type = import_ref Foo//a, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.import_ref.9fc: <witness> = import_ref Foo//a, loc6_1, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Foo.import_ref.2c4 = import_ref Foo//a, inst16 [no loc], unloaded
+// CHECK:STDOUT:   %Foo.import_ref.2c4 = import_ref Foo//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Foo.import_ref.4cb = import_ref Foo//a, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

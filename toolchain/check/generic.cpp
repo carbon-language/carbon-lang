@@ -23,6 +23,10 @@
 
 namespace Carbon::Check {
 
+CARBON_DEFINE_ENUM_MASK_NAMES(DependentInstKind) {
+  CARBON_DEPENDENT_INST_KIND(CARBON_ENUM_MASK_NAME_STRING)
+};
+
 static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
     -> SemIR::SpecificId;
 
@@ -145,7 +149,7 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
   auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
     auto inst = context().insts().Get(orig_inst_id);
     CARBON_CHECK(
-        inst.Is<SemIR::BindSymbolicName>() ||
+        inst.Is<SemIR::SymbolicBinding>() ||
             inst.Is<SemIR::SymbolicBindingPattern>(),
         "Instruction {0} has symbolic constant value but no symbolic operands",
         inst);
@@ -302,14 +306,14 @@ auto AttachDependentInstToCurrentGeneric(Context& context,
   if (context.generic_region_stack().Empty()) {
     // This should only happen for `*Decl` instructions, never for template
     // actions.
-    CARBON_CHECK((dep_kind & DependentInst::Template) == DependentInst::None);
+    CARBON_CHECK(!dep_kind.HasAnyOf(DependentInstKind::Template));
     return;
   }
 
   context.generic_region_stack().AddDependentInst(dependent_inst.inst_id);
 
   // If the type is symbolic, replace it with a type specific to this generic.
-  if ((dep_kind & DependentInst::SymbolicType) != DependentInst::None) {
+  if (dep_kind.HasAnyOf(DependentInstKind::SymbolicType)) {
     auto inst = context.insts().Get(inst_id);
     auto type_id = AddGenericTypeToEvalBlock(context, SemIR::LocId(inst_id),
                                              inst.type_id());
@@ -327,7 +331,7 @@ auto AttachDependentInstToCurrentGeneric(Context& context,
   // we'll need to evaluate this instruction when forming the specific. Update
   // the constant value of the instruction to refer to the result of that
   // eventual evaluation.
-  if ((dep_kind & DependentInst::SymbolicConstant) != DependentInst::None) {
+  if (dep_kind.HasAnyOf(DependentInstKind::SymbolicConstant)) {
     // Update the constant value to refer to this generic.
     context.constant_values().Set(
         inst_id, AddGenericConstantToEvalBlock(context, inst_id));
@@ -335,7 +339,7 @@ auto AttachDependentInstToCurrentGeneric(Context& context,
 
   // If the instruction is a template action, add it directly to this position
   // in the eval block.
-  if ((dep_kind & DependentInst::Template) != DependentInst::None) {
+  if (dep_kind.HasAnyOf(DependentInstKind::Template)) {
     AddTemplateActionToEvalBlock(context, inst_id);
   }
 }
@@ -462,8 +466,6 @@ auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId {
     context.generics().Get(generic_id) = generic;
   }
 
-  // MakeSelfSpecificId could cause something to be imported, which would
-  // invalidate the return value of `context.generics().Get(generic_id)`.
   auto self_specific_id = MakeSelfSpecificId(context, generic_id);
   context.generics().Get(generic_id).self_specific_id = self_specific_id;
   return generic_id;
@@ -650,18 +652,15 @@ auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,
                          SemIR::SpecificId specific_id) -> void {
   // If this is the first time we've formed this specific, evaluate its decl
   // block to form information about the specific.
-  if (!context.specifics().Get(specific_id).decl_block_id.has_value()) {
+  auto& specific = context.specifics().Get(specific_id);
+  if (!specific.decl_block_id.has_value()) {
     // Set a placeholder value as the decl block ID so we won't attempt to
     // recursively resolve the same specific.
-    context.specifics().Get(specific_id).decl_block_id =
-        SemIR::InstBlockId::Empty;
+    specific.decl_block_id = SemIR::InstBlockId::Empty;
 
-    auto decl_block_id =
+    specific.decl_block_id =
         TryEvalBlockForSpecific(context, loc_id, specific_id,
                                 SemIR::GenericInstIndex::Region::Declaration);
-    // Note that TryEvalBlockForSpecific may reallocate the list of specifics,
-    // so re-lookup the specific here.
-    context.specifics().Get(specific_id).decl_block_id = decl_block_id;
   }
 }
 
@@ -720,22 +719,19 @@ auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
   if (!specific.definition_block_id.has_value()) {
     // Evaluate the eval block for the definition of the generic.
     auto& generic = context.generics().Get(generic_id);
+    CARBON_CHECK(generic.decl_block_id.has_value(), "missing declaration");
     if (!generic.definition_block_id.has_value()) {
       // The generic is not defined yet.
       return false;
     }
-    auto definition_block_id = TryEvalBlockForSpecific(
+    specific.definition_block_id = TryEvalBlockForSpecific(
         context, loc_id, specific_id, SemIR::GenericInstIndex::Definition);
-    // Note that TryEvalBlockForSpecific may reallocate the list of specifics,
-    // so re-lookup the specific here.
-    context.specifics().Get(specific_id).definition_block_id =
-        definition_block_id;
   }
   return true;
 }
 
 auto DiagnoseIfGenericMissingExplicitParameters(
-    Context& context, SemIR::EntityWithParamsBase& entity_base) -> void {
+    Context& context, const SemIR::EntityWithParamsBase& entity_base) -> void {
   if (!entity_base.implicit_param_patterns_id.has_value() ||
       entity_base.param_patterns_id.has_value()) {
     return;

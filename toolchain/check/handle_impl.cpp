@@ -54,7 +54,7 @@ auto HandleParseNode(Context& context, Parse::ForallId /*node_id*/) -> bool {
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::TypeImplAsId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::ImplTypeAsId node_id) -> bool {
   auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
   auto self_type_inst_id = ExprAsType(context, self_node, self_id).inst_id;
   context.node_stack().Push(node_id, self_type_inst_id);
@@ -67,7 +67,7 @@ auto HandleParseNode(Context& context, Parse::TypeImplAsId node_id) -> bool {
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::DefaultSelfImplAsId node_id)
+auto HandleParseNode(Context& context, Parse::ImplDefaultSelfAsId node_id)
     -> bool {
   auto self_inst_id = SemIR::TypeInstId::None;
 
@@ -190,6 +190,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                                /*is_extern=*/false, SemIR::LibraryNameId::None),
                            {.self_id = self_type_inst_id,
                             .constraint_id = constraint_type_inst_id,
+                            // This requires that the facet type is identified.
                             .interface = CheckConstraintIsInterface(
                                 context, impl_decl_id, constraint_type_inst_id),
                             .is_final = is_final}};
@@ -230,6 +231,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
       impl_decl_id, impl_info.scope_id,
       context.generics().GetSelfSpecific(impl_info.generic_id));
   StartGenericDefinition(context, impl_info.generic_id);
+  // This requires that the facet type is complete.
   ImplWitnessStartDefinition(context, impl_info);
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);

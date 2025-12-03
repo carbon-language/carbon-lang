@@ -64,7 +64,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.d8f = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.d8f = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.d8f = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C.2ba = var %a.var_patt [concrete]
@@ -78,7 +78,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %.loc12_25.3: bool = converted %Neq.call.loc12, %.loc12_25.2 [concrete = constants.%false]
 // CHECK:STDOUT:     %C.loc12: type = class_type @C, @C(constants.%false) [concrete = constants.%C.2ba]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %C.2ba = bind_name a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %C.2ba = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -101,25 +101,25 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %pattern_type.d8f: type = pattern_type %C.2ba [concrete]
 // CHECK:STDOUT:   %False.type: type = fn_type @False [concrete]
 // CHECK:STDOUT:   %False: %False.type = struct_value () [concrete]
-// CHECK:STDOUT:   %EqWith.type.a38: type = facet_type <@EqWith, @EqWith(bool)> [concrete]
+// CHECK:STDOUT:   %EqWith.type.5ae: type = facet_type <@EqWith, @EqWith(bool)> [concrete]
 // CHECK:STDOUT:   %EqWith.NotEqual.type.f03: type = fn_type @EqWith.NotEqual, @EqWith(bool) [concrete]
 // CHECK:STDOUT:   %EqWith.impl_witness: <witness> = impl_witness imports.%EqWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %EqWith.facet: %EqWith.type.a38 = facet_value bool, (%EqWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.c2f: type = fn_type_with_self_type %EqWith.NotEqual.type.f03, %EqWith.facet [concrete]
+// CHECK:STDOUT:   %EqWith.facet: %EqWith.type.5ae = facet_value bool, (%EqWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.676: type = fn_type_with_self_type %EqWith.NotEqual.type.f03, %EqWith.facet [concrete]
 // CHECK:STDOUT:   %bool.as.EqWith.impl.NotEqual.type: type = fn_type @bool.as.EqWith.impl.NotEqual [concrete]
 // CHECK:STDOUT:   %bool.as.EqWith.impl.NotEqual: %bool.as.EqWith.impl.NotEqual.type = struct_value () [concrete]
-// CHECK:STDOUT:   %bool.as.EqWith.impl.NotEqual.bound.0d4: <bound method> = bound_method %true, %bool.as.EqWith.impl.NotEqual [concrete]
+// CHECK:STDOUT:   %bool.as.EqWith.impl.NotEqual.bound.2f1: <bound method> = bound_method %true, %bool.as.EqWith.impl.NotEqual [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.a67 = import_ref Core//prelude/operators/comparison, loc36_45, unloaded
-// CHECK:STDOUT:   %Core.import_ref.76f: %bool.as.EqWith.impl.NotEqual.type = import_ref Core//prelude/operators/comparison, loc37_48, loaded [concrete = constants.%bool.as.EqWith.impl.NotEqual]
-// CHECK:STDOUT:   %EqWith.impl_witness_table = impl_witness_table (%Core.import_ref.a67, %Core.import_ref.76f), @bool.as.EqWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.516 = import_ref Core//prelude/operators/comparison, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.d3a: %bool.as.EqWith.impl.NotEqual.type = import_ref Core//prelude/operators/comparison, loc{{\d+_\d+}}, loaded [concrete = constants.%bool.as.EqWith.impl.NotEqual]
+// CHECK:STDOUT:   %EqWith.impl_witness_table = impl_witness_table (%Core.import_ref.516, %Core.import_ref.d3a), @bool.as.EqWith.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.d8f = binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.d8f = ref_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.d8f = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C.2ba = var %a.var_patt [concrete]
@@ -127,14 +127,14 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %C.ref.loc10: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %true.loc10_10: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:     %true.loc10_18: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:     %impl.elem1.loc10: %.c2f = impl_witness_access constants.%EqWith.impl_witness, element1 [concrete = constants.%bool.as.EqWith.impl.NotEqual]
-// CHECK:STDOUT:     %bound_method.loc10: <bound method> = bound_method %true.loc10_10, %impl.elem1.loc10 [concrete = constants.%bool.as.EqWith.impl.NotEqual.bound.0d4]
+// CHECK:STDOUT:     %impl.elem1.loc10: %.676 = impl_witness_access constants.%EqWith.impl_witness, element1 [concrete = constants.%bool.as.EqWith.impl.NotEqual]
+// CHECK:STDOUT:     %bound_method.loc10: <bound method> = bound_method %true.loc10_10, %impl.elem1.loc10 [concrete = constants.%bool.as.EqWith.impl.NotEqual.bound.2f1]
 // CHECK:STDOUT:     %bool.as.EqWith.impl.NotEqual.call.loc10: init bool = call %bound_method.loc10(%true.loc10_10, %true.loc10_18) [concrete = constants.%false]
 // CHECK:STDOUT:     %.loc10_22.2: bool = value_of_initializer %bool.as.EqWith.impl.NotEqual.call.loc10 [concrete = constants.%false]
 // CHECK:STDOUT:     %.loc10_22.3: bool = converted %bool.as.EqWith.impl.NotEqual.call.loc10, %.loc10_22.2 [concrete = constants.%false]
 // CHECK:STDOUT:     %C.loc10: type = class_type @C, @C(constants.%false) [concrete = constants.%C.2ba]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %C.2ba = bind_name a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %C.2ba = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

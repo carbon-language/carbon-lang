@@ -752,6 +752,10 @@ class GraphNode {
 **Open question:** What is specifically allowed and forbidden with an incomplete
 type has not yet been decided.
 
+> **TODO:** Document that qualified names can be looked up in an incomplete
+> type, as adopted in
+> [p5087: Qualified lookup into types being defined](/proposals/p5087.md).
+
 ### `Self`
 
 A `class` definition may provisionally include references to its own name in
@@ -899,14 +903,14 @@ class Circle {
   fn Diameter[self: Self]() -> f32 {
     return self.radius * 2;
   }
-  fn Expand[addr self: Self*](distance: f32);
+  fn Expand[ref self: Self](distance: f32);
 
   var center: Point;
   var radius: f32;
 }
 
-fn Circle.Expand[addr self: Self*](distance: f32) {
-  self->radius += distance;
+fn Circle.Expand[ref self: Self](distance: f32) {
+  self.radius += distance;
 }
 
 var c: Circle = {.center = Point.Origin(), .radius = 1.5 };
@@ -921,12 +925,11 @@ Assert(Math.Abs(c.Diameter() - 4.0) < 0.001);
     the `Circle` instance. This is signified using `[self: Self]` in the method
     declaration.
 -   `c.Expand(`...`)` does modify the value of `c`. This is signified using
-    `[addr self: Self*]` in the method declaration.
+    `[ref self: Self]` in the method declaration.
 
-The pattern '`addr self:` _type_' means "first take the address of the argument,
-which must be an
-[l-value](<https://en.wikipedia.org/wiki/Value_(computer_science)#lrvalue>), and
-then match pattern '`self:` _type_' against it".
+The pattern '`ref self:` _type_' means "the argument must be a
+[reference expression](/docs/design/values.md#reference-expressions), and must
+match the pattern '`self:` _type_'".
 
 If the method declaration also includes
 [deduced compile-time parameters](/docs/design/generics/overview.md#deduced-parameters),
@@ -1237,21 +1240,20 @@ There are three virtual modifier keywords:
     virtual" but is called
     ["pure virtual" in C++](https://en.wikipedia.org/wiki/Virtual_function#Abstract_classes_and_pure_virtual_functions).
     Only abstract classes may have unimplemented abstract methods.
--   `impl` - This marks a method that overrides a method marked `virtual` or
+-   `override` - This marks a method that overrides a method marked `virtual` or
     `abstract` in the base class with an implementation specific to -- and
     defined within -- this class. The method is still virtual and may be
     overridden again in subsequent derived classes if this is a base class. See
     [method overriding in Wikipedia](https://en.wikipedia.org/wiki/Method_overriding).
     Requiring a keyword when overriding allows the compiler to diagnose when the
     derived class accidentally uses the wrong signature or spelling and so
-    doesn't match the base class. We intentionally use the same keyword here as
-    for implementing interfaces, to emphasize that they are similar operations.
+    doesn't match the base class.
 
-| Keyword on<br />method in `C` | Allowed in<br />`abstract class C` | Allowed in<br />`base class C` | Allowed in<br />final `class C` | in `B` where<br />`C` extends `B`                        | in `D` where<br />`D` extends `C`                                                |
-| ----------------------------- | ---------------------------------- | ------------------------------ | ------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `virtual`                     | ✅                                 | ✅                             | ❌                              | _not present_                                            | `abstract`<br />`impl`<br />_not mentioned_                                      |
-| `abstract`                    | ✅                                 | ❌                             | ❌                              | _not present_<br />`virtual`<br />`abstract`<br />`impl` | `abstract`<br />`impl`<br />_may not be<br />mentioned if<br />`D` is not final_ |
-| `impl`                        | ✅                                 | ✅                             | ✅                              | `virtual`<br />`abstract`<br />`impl`                    | `abstract`<br />`impl`                                                           |
+| Keyword on<br />method in `C` | Allowed in<br />`abstract class C` | Allowed in<br />`base class C` | Allowed in<br />final `class C` | in `B` where<br />`C` extends `B`                            | in `D` where<br />`D` extends `C`                                                    |
+| ----------------------------- | ---------------------------------- | ------------------------------ | ------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `virtual`                     | ✅                                 | ✅                             | ❌                              | _not present_                                                | `abstract`<br />`override`<br />_not mentioned_                                      |
+| `abstract`                    | ✅                                 | ❌                             | ❌                              | _not present_<br />`virtual`<br />`abstract`<br />`override` | `abstract`<br />`override`<br />_may not be<br />mentioned if<br />`D` is not final_ |
+| `override`                    | ✅                                 | ✅                             | ✅                              | `virtual`<br />`abstract`<br />`override`                    | `abstract`<br />`override`                                                           |
 
 Since validating a method with a virtual modifier keyword involves looking for
 methods with the same name in the base class, virtual methods must be declared
@@ -1315,15 +1317,15 @@ base class B1 {
 class D1 {
   extend base: B1;
   // ❌ Illegal:
-  //   impl fn F[self: Self](x: Self) -> Self;
+  //   override fn F[self: Self](x: Self) -> Self;
   // since that would mean the same thing as:
-  //   impl fn F[self: Self](x: D1) -> D1;
+  //   override fn F[self: Self](x: D1) -> D1;
   // and `D1` is a different type than `B1`.
 
   // ✅ Allowed: Parameter and return types
   //  of `F` match declaration in `B1`.
-  impl fn F[self: Self](x: B1) -> B1;
-  // Or: impl fn F[self: D1](x: B1) -> B1;
+  override fn F[self: Self](x: B1) -> B1;
+  // Or: override fn F[self: D1](x: B1) -> B1;
 }
 ```
 
@@ -1341,9 +1343,9 @@ base class B2 {
 class D2 {
   extend base: B2;
   // ✅ Allowed
-  impl fn Clone[self: Self]() -> Self*;
+  override fn Clone[self: Self]() -> Self*;
   // Means the same thing as:
-  //   impl fn Clone[self: D2]() -> D2*;
+  //   override fn Clone[self: D2]() -> D2*;
   // which is allowed since `D2*` is a
   // subtype of `B2*`.
 }
@@ -1582,7 +1584,7 @@ or:
 ```carbon
 class MyClass {
   // Can modify `self` in the body.
-  fn destroy[addr self: Self*]() { ... }
+  fn destroy[ref self: Self]() { ... }
 }
 ```
 
@@ -1605,9 +1607,9 @@ Destructors may be declared in class scope and then defined out-of-line:
 
 ```carbon
 class MyClass {
-  fn destroy[addr self: Self*]();
+  fn destroy[ref self: Self]();
 }
-fn MyClass.destroy[addr self: Self*]() { ... }
+fn MyClass.destroy[ref self: Self]() { ... }
 ```
 
 It is illegal to delete an instance of a derived class through a pointer to one
@@ -1615,16 +1617,16 @@ of its base classes unless it has a
 [virtual destructor](https://en.wikipedia.org/wiki/Virtual_function#Virtual_destructors).
 An abstract or base class' destructor may be declared virtual using the
 `virtual` introducer, in which case any derived class destructor declaration
-must be `impl`:
+must be `override`:
 
 ```carbon
 base class MyBaseClass {
-  virtual fn destroy[addr self: Self*]() { ... }
+  virtual fn destroy[ref self: Self]() { ... }
 }
 
 class MyDerivedClass {
   extend base: MyBaseClass;
-  impl fn destroy[addr self: Self*]() { ... }
+  override fn destroy[ref self: Self]() { ... }
 }
 ```
 
@@ -1674,8 +1676,8 @@ call the `UnsafeDelete` method instead. Note that you may not call
 ```
 interface Allocator {
   // ...
-  fn Delete[T:! Deletable, addr self: Self*](p: T*);
-  fn UnsafeDelete[T:! Destructible, addr self: Self*](p: T*);
+  fn Delete[T:! Deletable, ref self: Self](p: T*);
+  fn UnsafeDelete[T:! Destructible, ref self: Self](p: T*);
 }
 ```
 
@@ -1832,10 +1834,10 @@ base class MyBaseClass {
 
 class MyDerivedClass {
   extend base: MyBaseClass;
-  fn UsesProtected[addr self: Self*]() {
+  fn UsesProtected[ref self: Self]() {
     // Can access protected members in derived class
     var x: i32 = HelperClassFunction(3);
-    self->data = self->HelperMethod(x);
+    self.data = self.HelperMethod(x);
   }
 }
 ```
@@ -2297,6 +2299,8 @@ the type of `U.x`."
 
     -   [Destructor syntax options](/proposals/p5017.md#destructor-syntax-options)
     -   [Destructor name options](/proposals/p5017.md#destructor-name-options)
+
+-   [#6008: Replace `impl fn` with `override fn`](https://github.com/carbon-language/carbon-lang/pull/6008)
 
 ## References
 

@@ -15,6 +15,10 @@ namespace Carbon::SemIR {
 auto InstId::Print(llvm::raw_ostream& out) const -> void {
   if (IsSingletonInstId(*this)) {
     out << Label << "(" << SingletonInstKinds[index] << ")";
+  } else if (*this == InitTombstone) {
+    out << Label << "(InitTombstone)";
+  } else if (*this == ImplWitnessTablePlaceholder) {
+    out << Label << "(ImplWitnessTablePlaceholder)";
   } else {
     IdBase::Print(out);
   }
@@ -42,12 +46,30 @@ auto ConstantId::Print(llvm::raw_ostream& out, bool disambiguate) const
   }
 }
 
+auto CheckIRId::Print(llvm::raw_ostream& out) const -> void {
+  if (*this == Cpp) {
+    out << Label << "(Cpp)";
+  } else {
+    IdBase::Print(out);
+  }
+}
+
 auto GenericInstIndex::Print(llvm::raw_ostream& out) const -> void {
   out << "generic_inst";
   if (has_value()) {
     out << (region() == Declaration ? "_in_decl" : "_in_def") << index();
   } else {
     out << "<none>";
+  }
+}
+
+auto ImportIRId::Print(llvm::raw_ostream& out) const -> void {
+  if (*this == ApiForImpl) {
+    out << Label << "(ApiForImpl)";
+  } else if (*this == Cpp) {
+    out << Label << "(Cpp)";
+  } else {
+    IdBase::Print(out);
   }
 }
 
@@ -144,6 +166,8 @@ auto NameId::ForPackageName(PackageNameId id) -> NameId {
     return ForIdentifier(identifier_id);
   } else if (id == PackageNameId::Core) {
     return NameId::Core;
+  } else if (id == PackageNameId::Cpp) {
+    return NameId::Cpp;
   } else if (!id.has_value()) {
     return NameId::None;
   } else {
@@ -187,12 +211,26 @@ auto InstBlockId::Print(llvm::raw_ostream& out) const -> void {
   }
 }
 
+auto StructTypeFieldsId::Print(llvm::raw_ostream& out) const -> void {
+  if (*this == Empty) {
+    out << Label << "_empty";
+  } else {
+    IdBase::Print(out);
+  }
+}
+
+auto CustomLayoutId::Print(llvm::raw_ostream& out) const -> void {
+  if (*this == Empty) {
+    out << Label << "_empty";
+  } else {
+    IdBase::Print(out);
+  }
+}
+
 auto TypeId::Print(llvm::raw_ostream& out) const -> void {
   out << Label << "(";
   if (*this == TypeType::TypeId) {
     out << "TypeType";
-  } else if (*this == AutoType::TypeId) {
-    out << "AutoType";
   } else if (*this == ErrorInst::TypeId) {
     out << "Error";
   } else {
@@ -217,6 +255,14 @@ auto LibraryNameId::Print(llvm::raw_ostream& out) const -> void {
     out << Label << "Default";
   } else if (*this == Error) {
     out << Label << "<error>";
+  } else {
+    IdBase::Print(out);
+  }
+}
+
+auto RequireImplsBlockId::Print(llvm::raw_ostream& out) const -> void {
+  if (*this == Empty) {
+    out << Label << "_empty";
   } else {
     IdBase::Print(out);
   }

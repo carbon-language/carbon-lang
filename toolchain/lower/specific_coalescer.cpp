@@ -80,10 +80,20 @@ auto SpecificCoalescer::CoalesceEquivalentSpecifics(
           // Removed the replaced specific from the list of emitted specifics.
           // Only the top level, since the others are somewhere else in the
           // vector, they will be found and removed during processing.
-          specifics_to_delete.push_back(specifics[j]);
-          specifics[j] = specifics[specifics.size() - 1];
-          specifics.pop_back();
-          --j;
+          if (equivalent_specifics_.Get(specifics[j]).has_value() &&
+              equivalent_specifics_.Get(specifics[j]) != specifics[j]) {
+            specifics_to_delete.push_back(specifics[j]);
+            specifics[j] = specifics[specifics.size() - 1];
+            specifics.pop_back();
+            --j;
+          } else {
+            // j was the canonical one, remove specifics[i], exit j loop.
+            specifics_to_delete.push_back(specifics[i]);
+            specifics[i] = specifics[specifics.size() - 1];
+            specifics.pop_back();
+            --i;
+            break;
+          }
         } else {
           // Only mark non-equivalence based on state for starting specifics.
           InsertPair(specifics[i], specifics[j], non_equivalent_specifics_);
@@ -127,8 +137,13 @@ auto SpecificCoalescer::ProcessSpecificEquivalence(
   // chains in `IsKnownEquivalence`.
   equivalent_specifics_.Set(specific_id1, canon_id1);
   equivalent_specifics_.Set(specific_id2, canon_id1);
-  equivalent_specifics_.Set(canon_id1, canon_id1);
   equivalent_specifics_.Set(canon_id2, canon_id1);
+  // Only update the canonical for itself if it has no value, otherwise a
+  // "better" canonical was previously added and the chain will be followed
+  // when deleting specifics, by calling `UpdateEquivalentSpecific`.
+  if (!equivalent_specifics_.Get(canon_id1).has_value()) {
+    equivalent_specifics_.Set(canon_id1, canon_id1);
+  }
 }
 
 auto SpecificCoalescer::UpdateEquivalentSpecific(SemIR::SpecificId specific_id)
@@ -213,7 +228,7 @@ auto SpecificCoalescer::AreFunctionBodiesEquivalent(
                  "Number of specific calls expected to be the same.");
 
     for (auto [state1_call, state2_call] :
-         llvm::zip(state1.calls, state2.calls)) {
+         llvm::zip_equal(state1.calls, state2.calls)) {
       if (state1_call != state2_call) {
         if (ContainsPair(state1_call, state2_call, non_equivalent_specifics_)) {
           return false;

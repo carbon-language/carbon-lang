@@ -37,6 +37,12 @@ BUILTINS_FILEGROUPS = {
     "x86_fp80_srcs": "@llvm-project//compiler-rt:builtins_x86_fp80_srcs",
 }
 
+RUNTIMES_FILEGROUPS = {
+    "libcxx": "@llvm-project//libcxx:libcxx_srcs",
+    "libcxxabi": "@llvm-project//libcxxabi:libcxxabi_srcs",
+    "libunwind": "@llvm-project//libunwind:libunwind_srcs",
+}
+
 _TEMPLATE = """
 // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 // Exceptions. See /LICENSE for license information.
@@ -54,35 +60,47 @@ _TEMPLATE = """
 
 namespace Carbon::RuntimeSources {{
 
-constexpr inline llvm::StringLiteral CrtBegin = {crtbegin_src};
-constexpr inline llvm::StringLiteral CrtEnd = {crtend_src};
+inline constexpr llvm::StringLiteral CrtBegin = {crtbegin_src};
+inline constexpr llvm::StringLiteral CrtEnd = {crtend_src};
 
-constexpr inline llvm::StringLiteral BuiltinsGenericSrcs[] = {{
+inline constexpr llvm::StringLiteral BuiltinsGenericSrcs[] = {{
 {generic_srcs}
 }};
-constexpr inline llvm::StringLiteral BuiltinsMacosSrcs[] = {{
+inline constexpr llvm::StringLiteral BuiltinsMacosSrcs[] = {{
 {macos_srcs}
 }};
-constexpr inline llvm::StringLiteral BuiltinsBf16Srcs[] = {{
+inline constexpr llvm::StringLiteral BuiltinsBf16Srcs[] = {{
 {bf16_srcs}
 }};
-constexpr inline llvm::StringLiteral BuiltinsTfSrcs[] = {{
+inline constexpr llvm::StringLiteral BuiltinsTfSrcs[] = {{
 {tf_srcs}
 }};
-constexpr inline llvm::StringLiteral BuiltinsX86ArchSrcs[] = {{
+inline constexpr llvm::StringLiteral BuiltinsX86ArchSrcs[] = {{
 {x86_arch_srcs}
 }};
-constexpr inline llvm::StringLiteral BuiltinsX86Fp80Srcs[] = {{
+inline constexpr llvm::StringLiteral BuiltinsX86Fp80Srcs[] = {{
 {x86_fp80_srcs}
 }};
-constexpr inline llvm::StringLiteral BuiltinsAarch64Srcs[] = {{
+inline constexpr llvm::StringLiteral BuiltinsAarch64Srcs[] = {{
 {aarch64_srcs}
 }};
-constexpr inline llvm::StringLiteral BuiltinsX86_64Srcs[] = {{
+inline constexpr llvm::StringLiteral BuiltinsX86_64Srcs[] = {{
 {x86_64_srcs}
 }};
-constexpr inline llvm::StringLiteral BuiltinsI386Srcs[] = {{
+inline constexpr llvm::StringLiteral BuiltinsI386Srcs[] = {{
 {i386_srcs}
+}};
+
+constexpr inline llvm::StringLiteral LibcxxSrcs[] = {{
+{libcxx}
+}};
+
+constexpr inline llvm::StringLiteral LibcxxabiSrcs[] = {{
+{libcxxabi}
+}};
+
+constexpr inline llvm::StringLiteral LibunwindSrcs[] = {{
+{libunwind}
 }};
 
 }}  // namespace Carbon::RuntimeSources
@@ -99,6 +117,10 @@ def _builtins_path(file):
     # label name.
     return file.owner.name.removeprefix("lib/")
 
+def _runtimes_path(file):
+    """Returns the runtime install path for a file in a normal runtimes library."""
+    return file.owner.name
+
 def _get_path(file_attr, to_path_fn):
     files = file_attr[DefaultInfo].files.to_list()
     if len(files) > 1:
@@ -106,14 +128,14 @@ def _get_path(file_attr, to_path_fn):
 
     return '"{0}"'.format(to_path_fn(files[0]))
 
-def _get_paths(files_attr, to_path_fn):
+def _get_paths(files_attr, to_path_fn, prefix = ""):
     files = []
     for src in files_attr:
         files.extend(src[DefaultInfo].files.to_list())
         files.extend(src[DefaultInfo].default_runfiles.files.to_list())
 
     return "\n".join([
-        '    "{0}",'.format(to_path_fn(f))
+        '    "{0}{1}",'.format(prefix, to_path_fn(f))
         for f in files
     ])
 
@@ -125,6 +147,11 @@ def _generate_runtime_sources_h_rule(ctx):
     } | {
         k: _get_paths(getattr(ctx.attr, "_" + k), _builtins_path)
         for k in BUILTINS_FILEGROUPS.keys()
+    } | {
+        # Other runtimes are installed under separate directories named the same
+        # as their key.
+        k: _get_paths(getattr(ctx.attr, "_" + k), _runtimes_path, k + "/")
+        for k in RUNTIMES_FILEGROUPS.keys()
     })))
     return [DefaultInfo(files = depset([h_file]))]
 
@@ -135,7 +162,8 @@ generate_runtime_sources_h = rule(
         for k, v in CRT_FILES.items()
     } | {
         "_" + k: attr.label_list(default = [v], allow_files = True)
-        for k, v in BUILTINS_FILEGROUPS.items()
+        for k, v in BUILTINS_FILEGROUPS.items() + RUNTIMES_FILEGROUPS.items()
+    } | {
     },
 )
 

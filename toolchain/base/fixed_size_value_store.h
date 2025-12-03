@@ -5,11 +5,15 @@
 #ifndef CARBON_TOOLCHAIN_BASE_FIXED_SIZE_VALUE_STORE_H_
 #define CARBON_TOOLCHAIN_BASE_FIXED_SIZE_VALUE_STORE_H_
 
+#include <concepts>
+#include <type_traits>
+
 #include "common/check.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/iterator_range.h"
 #include "toolchain/base/mem_usage.h"
+#include "toolchain/base/value_store.h"
 #include "toolchain/base/value_store_types.h"
 
 namespace Carbon {
@@ -38,16 +42,31 @@ class FixedSizeValueStore {
     requires std::same_as<IdT, typename ValueStoreT::IdType>
   static auto MakeForOverwrite(const ValueStoreT& size_source)
       -> FixedSizeValueStore {
-    FixedSizeValueStore store;
+    FixedSizeValueStore store(size_source.GetIdTag());
     store.values_.resize_for_overwrite(size_source.size());
     return store;
   }
 
   // Makes a ValueStore of the specified size, initialized to a default.
-  static auto MakeWithExplicitSize(size_t size, ConstRefType default_value)
+  static auto MakeWithExplicitSize(IdTag tag, size_t size,
+                                   ConstRefType default_value)
       -> FixedSizeValueStore {
     FixedSizeValueStore store;
+    store.tag_ = tag;
     store.values_.resize(size, default_value);
+    return store;
+  }
+
+  // Makes a ValueStore of the specified size, initialized to values returned
+  // from a callback. This allows initializing non-copyable values.
+  static auto MakeWithExplicitSizeFrom(
+      size_t size, llvm::function_ref<auto()->ValueT> callable)
+      -> FixedSizeValueStore {
+    FixedSizeValueStore store;
+    store.values_.reserve(size);
+    for (auto _ : llvm::seq(size)) {
+      store.values_.push_back(callable());
+    }
     return store;
   }
 
@@ -57,9 +76,12 @@ class FixedSizeValueStore {
   template <typename ValueStoreT>
     requires std::same_as<IdT, typename ValueStoreT::IdType>
   explicit FixedSizeValueStore(const ValueStoreT& size_source,
-                               ConstRefType default_value) {
+                               ConstRefType default_value)
+      : tag_(size_source.GetIdTag()) {
     values_.resize(size_source.size(), default_value);
   }
+
+  explicit FixedSizeValueStore(IdTag tag) : tag_(tag) {}
 
   // Makes a ValueStore using a mapped range of `source`. The `factory_fn`
   // receives each enumerated entry for construction of `ValueType`.
@@ -70,7 +92,8 @@ class FixedSizeValueStore {
       llvm::function_ref<
           auto(IdT, typename ValueStoreT::ConstRefType)->ValueType>
           factory_fn)
-      : values_(llvm::map_range(source.enumerate(), factory_fn)) {}
+      : values_(llvm::map_range(source.enumerate(), factory_fn)),
+        tag_(GetIdTag(source)) {}
 
   // Move-only.
   FixedSizeValueStore(FixedSizeValueStore&&) noexcept = default;
@@ -80,19 +103,22 @@ class FixedSizeValueStore {
   // Sets the value for an ID.
   auto Set(IdT id, ValueType value) -> void {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
-    values_[id.index] = value;
+    auto index = tag_.Remove(id.index);
+    values_[index] = value;
   }
 
   // Returns a mutable value for an ID.
   auto Get(IdT id) -> RefType {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
-    return values_[id.index];
+    auto index = tag_.Remove(id.index);
+    return values_[index];
   }
 
   // Returns the value for an ID.
   auto Get(IdT id) const -> ConstRefType {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
-    return values_[id.index];
+    auto index = tag_.Remove(id.index);
+    return values_[index];
   }
 
   // Collects memory usage of the values.
@@ -119,6 +145,8 @@ class FixedSizeValueStore {
 
   // Storage for the `ValueT` objects, indexed by the id.
   llvm::SmallVector<ValueT, 0> values_;
+
+  IdTag tag_;
 };
 
 }  // namespace Carbon

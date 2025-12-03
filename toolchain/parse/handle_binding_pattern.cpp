@@ -11,15 +11,6 @@ namespace Carbon::Parse {
 auto HandleBindingPattern(Context& context) -> void {
   auto state = context.PopState();
 
-  // An `addr` pattern may wrap the binding, and becomes the parent of the
-  // `BindingPattern`.
-  if (auto token = context.ConsumeIf(Lex::TokenKind::Addr)) {
-    context.PushState({.kind = StateKind::BindingPatternAddr,
-                       .in_var_pattern = state.in_var_pattern,
-                       .token = *token,
-                       .subtree_start = state.subtree_start});
-  }
-
   // Handle an invalid pattern introducer for parameters and variables.
   auto on_error = [&](bool expected_name) {
     if (!state.has_error) {
@@ -34,6 +25,12 @@ auto HandleBindingPattern(Context& context) -> void {
 
   // A `template` keyword may precede the name.
   auto template_token = context.ConsumeIf(Lex::TokenKind::Template);
+  auto ref_token = context.ConsumeIf(Lex::TokenKind::Ref);
+  if (ref_token && state.in_var_pattern) {
+    CARBON_DIAGNOSTIC(RefInsideVar, Error, "found `ref` inside `var` pattern");
+    context.emitter().Emit(*ref_token, RefInsideVar);
+    state.has_error = true;
+  }
 
   // The first item should be an identifier, the placeholder `_`, or `self`.
   if (auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier)) {
@@ -66,6 +63,16 @@ auto HandleBindingPattern(Context& context) -> void {
       }
       context.AddNode(NodeKind::TemplateBindingName, *template_token,
                       state.has_error);
+    }
+    if (ref_token) {
+      if (token_kind != Lex::TokenKind::Colon && !state.has_error) {
+        CARBON_DIAGNOSTIC(ExpectedRuntimeBindingPatternAfterRef, Error,
+                          "expected `:` binding after `ref`");
+        context.emitter().Emit(*ref_token,
+                               ExpectedRuntimeBindingPatternAfterRef);
+        state.has_error = true;
+      }
+      context.AddNode(NodeKind::RefBindingName, *ref_token, state.has_error);
     }
 
     state.kind = token_kind == Lex::TokenKind::Colon
@@ -127,17 +134,6 @@ auto HandleBindingPatternFinishAsGeneric(Context& context) -> void {
 
 auto HandleBindingPatternFinishAsRegular(Context& context) -> void {
   HandleBindingPatternFinish(context, /*is_compile_time=*/false);
-}
-
-auto HandleBindingPatternAddr(Context& context) -> void {
-  auto state = context.PopState();
-
-  context.AddNode(NodeKind::Addr, state.token, state.has_error);
-
-  // If an error was encountered, propagate it while adding a node.
-  if (state.has_error) {
-    context.ReturnErrorOnState();
-  }
 }
 
 }  // namespace Carbon::Parse

@@ -51,7 +51,7 @@ auto MakeElements(RangeT&& range, RangeTs&&... ranges) {
     }
   };
   add_range(std::forward<RangeT>(range));
-  (add_range(std::forward<RangeT>(ranges)), ...);
+  (add_range(std::forward<RangeTs>(ranges)), ...);
 
   return elements;
 }

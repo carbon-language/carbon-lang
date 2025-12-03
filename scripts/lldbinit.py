@@ -44,7 +44,7 @@ def cmd_dump(debugger: Any, command: Any, result: Any, dict: Any) -> None:
 Dumps the value of an associated ID, using the C++ Dump() functions.
 
 Usage:
-  dump <CONTEXT> [<EXPR>|-- <EXPR>|<TYPE><ID>|<TYPE> <ID>]
+  dump <CONTEXT> [<EXPR>|-- <EXPR>|<TYPE><ID>]
 
 Args:
   CONTEXT is the dump context, such a SemIR::Context reference, a SemIR::File,
@@ -55,7 +55,7 @@ Args:
        the `Label` string in `IdBase` classes to find possible TYPE names,
        though only Id types that have a matching `Make...Id()` function are
        supported.
-  ID is an integer number, such as `42`.
+  ID is an integer number, such as `42`, in hex, such as in `inst6000000A`.
 
 Example usage:
   # Dumps the `inst_id` local variable, with a `context` local variable.
@@ -78,6 +78,7 @@ Example usage:
     id_types = {
         "class": "SemIR::MakeClassId",
         "constant": "SemIR::MakeConstantId",
+        "constraint": "SemIR::MakeNamedConstraintId",
         "symbolic_constant": "SemIR::MakeSymbolicConstantId",
         "entity_name": "SemIR::MakeEntityNameId",
         "facet_type": "SemIR::MakeFacetTypeId",
@@ -110,27 +111,20 @@ Example usage:
 
     # Try to find a type + id from the input args. If not, the id will be passed
     # through directly to C++, as it can be a variable name.
-    id_type = None
+    found_id_type = False
 
     # Look for <type><id> as a single argument.
-    if m := re.fullmatch("([a-z_]+)(\\d+)", args[1]):
+    if m := re.fullmatch("([a-z_]+)([0-9A-Fa-f]+)", args[1]):
         if m[1] in id_types:
             if len(args) != 2:
                 print_usage()
                 return
-            id_type = m[1]
-            print_dump(context, f"{id_types[id_type]}({m[2]})")
+            make_id_fn = id_types[m[1]]
+            id = int(m[2], 16)
+            print_dump(context, f"{make_id_fn}({id})")
+            found_id_type = True
 
-    # Look for <type> <id> as two arguments.
-    if not id_type:
-        if args[1] in id_types:
-            if len(args) != 3:
-                print_usage()
-                return
-            id_type = args[1]
-            print_dump(context, f"{id_types[id_type]}({args[2]})")
-
-    if not id_type:
+    if not found_id_type:
         # Use `--` to escape a variable name like `inst22`.
         if args[1] == "--":
             expr = " ".join(args[2:])

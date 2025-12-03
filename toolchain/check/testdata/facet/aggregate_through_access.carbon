@@ -47,7 +47,7 @@ interface Z {
   let X:! type;
 }
 
-// CHECK:STDERR: fail_todo_array_access_through_witness.carbon:[[@LINE+4]]:40: error: type `type` does not support indexing [TypeNotIndexable]
+// CHECK:STDERR: fail_todo_array_access_through_witness.carbon:[[@LINE+4]]:40: error: cannot access member of interface `Core.IndexWith(Core.IntLiteral)` in type `type` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR: fn F(T:! Z where .X = array({}, 1)) -> T.X[0] {
 // CHECK:STDERR:                                        ^~~~~~
 // CHECK:STDERR:

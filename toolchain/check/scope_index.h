@@ -24,7 +24,7 @@ struct ScopeIndex : public IndexBase<ScopeIndex> {
   using IndexBase::IndexBase;
 };
 
-constexpr ScopeIndex ScopeIndex::Package = ScopeIndex(0);
+inline constexpr ScopeIndex ScopeIndex::Package = ScopeIndex(0);
 
 }  // namespace Carbon::Check
 

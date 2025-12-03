@@ -304,11 +304,11 @@ If the resulting SemIR needs a new instruction:
         constructed as a special-case in
         [`File` construction](/toolchain/sem_ir/file.cpp). To get a type id for
         one of these builtin types, use something like
-        `GetSingletonType(context,SemIR::WitnessType::InstId)`, as in:
+        `GetSingletonType(context,SemIR::WitnessType::TypeInstId)`, as in:
 
         ```
         SemIR::TypeId witness_type_id =
-            GetSingletonType(context, SemIR::WitnessType::InstId);
+            GetSingletonType(context, SemIR::WitnessType::TypeInstId);
         SemIR::InstId inst_id = AddInst<SemIR::NewInstKindName>(
             context, node_id, {.type_id = witness_type_id, ...});
         ```
@@ -508,7 +508,7 @@ minimal `Core` package and `prelude` library to the file test with the
 `check/testdata/facet_types/min_prelude/my_test.carbon` might contain:
 
 ```
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/facet_types.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 ```
 
 We have a set of minimal `Core` preludes for testing different compiler feature

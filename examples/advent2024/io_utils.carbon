@@ -72,7 +72,7 @@ fn PrintInt64NoNewline(n_val: i64) {
   }
   while (pow10 != 0) {
     let d: i64 = n / pow10;
-    Core.PrintChar((d + 0x30) as i32);
+    Core.PrintChar(((d + 0x30) as u8) as char);
     n = n % pow10;
     pow10 = pow10 / 10;
   }
@@ -80,7 +80,7 @@ fn PrintInt64NoNewline(n_val: i64) {
 
 fn PrintInt64(n_val: i64) {
   PrintInt64NoNewline(n_val);
-  Core.PrintChar(0xA);
+  Core.PrintChar('\n');
 }
 
 fn PeekChar() -> i32 {

@@ -226,7 +226,7 @@ fn Sum(x: i32, y: i32) -> i32 {
   return x + y;
 }
 
-fn Main() -> i32 {
+fn Run() -> i32 {
   return Sum(4, 2);
 }
 ```

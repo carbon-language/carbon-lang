@@ -82,7 +82,7 @@ class ArrayStack {
   // Adds multiple values to the top array on the stack.
   auto AppendToTop(llvm::ArrayRef<ValueT> values) -> void {
     CARBON_CHECK(!array_offsets_.empty(),
-                 "Must call PushArray before PushValues.");
+                 "Must call PushArray before AppendToTop.");
     llvm::append_range(values_, values);
   }
 

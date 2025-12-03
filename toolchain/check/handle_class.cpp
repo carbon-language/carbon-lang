@@ -15,7 +15,6 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
-#include "toolchain/check/implicit_type_impls.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
@@ -566,8 +565,6 @@ auto HandleParseNode(Context& context, Parse::ClassDefinitionId node_id)
     -> bool {
   auto class_id =
       context.node_stack().Pop<Parse::NodeKind::ClassDefinitionStart>();
-
-  MakeClassDestroyImpl(context, class_id);
 
   // The class type is now fully defined. Compute its object representation.
   ComputeClassObjectRepr(context, node_id, class_id,

@@ -8,6 +8,7 @@
 #include "common/hashing.h"
 #include "common/set.h"
 #include "toolchain/base/value_store.h"
+#include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
@@ -61,6 +62,8 @@ struct EntityName : public Printable<EntityName> {
 // functionality, this can provide optional canonical IDs for EntityNames.
 struct EntityNameStore : public ValueStore<EntityNameId, EntityName> {
  public:
+  using ValueStore::ValueStore;
+
   // Adds an entity name for a symbolic binding.
   auto AddSymbolicBindingName(NameId name_id, NameScopeId parent_scope_id,
                               CompileTimeBindIndex bind_index, bool is_template)

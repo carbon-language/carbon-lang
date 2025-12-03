@@ -21,6 +21,11 @@ struct ConversionTarget {
     ValueOrRef,
     // Convert to a durable reference of type `type_id`.
     DurableRef,
+    // Convert to a reference, suitable for binding to a reference parameter.
+    // This allows both durable and ephemeral references. The restriction that
+    // only a `ref self` parameter can bind to an ephemeral reference is
+    // enforced separately when handling `ref` tags on call arguments.
+    RefParam,
     // Convert to a reference of type `type_id`, for use as the argument to a
     // C++ thunk.
     CppThunkRef,
@@ -134,13 +139,17 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 struct TypeExpr {
   static const TypeExpr None;
 
+  // Returns a TypeExpr describing a type with no associated spelling or type
+  // sugar.
+  static auto ForUnsugared(Context& context, SemIR::TypeId type_id) -> TypeExpr;
+
   // The converted expression of type `type`, or `ErrorInst::InstId`.
   SemIR::TypeInstId inst_id;
   // The corresponding type, or `ErrorInst::TypeId`.
   SemIR::TypeId type_id;
 };
 
-constexpr inline TypeExpr TypeExpr::None = {.inst_id = SemIR::TypeInstId::None,
+inline constexpr TypeExpr TypeExpr::None = {.inst_id = SemIR::TypeInstId::None,
                                             .type_id = SemIR::TypeId::None};
 
 // Converts an expression for use as a type.

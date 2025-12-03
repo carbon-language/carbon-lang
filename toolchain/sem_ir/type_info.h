@@ -22,6 +22,8 @@ struct ValueRepr : public Printable<ValueRepr> {
     // The value representation is not yet known. This is used for incomplete
     // types.
     Unknown,
+    // The value representation is dependent because the type is symbolic.
+    Dependent,
     // The type has no value representation. This is used for empty types, such
     // as `()`, where there is no value.
     None,
@@ -93,6 +95,9 @@ struct InitRepr : Printable<InitRepr> {
     // The type has no initializing representation. This is used for empty
     // types, where no initialization is necessary.
     None,
+    // The initializing representation is dependent because the type is
+    // symbolic.
+    Dependent,
     // An initializing expression produces an object representation by value,
     // which is copied into the initialized object.
     ByCopy,
@@ -117,11 +122,26 @@ struct InitRepr : Printable<InitRepr> {
   // representation of the type. Provided for symmetry with `ValueRepr`.
   auto IsCopyOfObjectRepr() const -> bool { return kind == ByCopy; }
 
+  // Returns whether the initializing representation might be by-copy, and
+  // therefore might require a final destination store.
+  auto MightBeByCopy() const -> bool {
+    return kind == ByCopy || kind == Dependent;
+  }
+
+  // Returns whether the initializing representation might be in-place, and
+  // therefore might require a destination address to be provided as input.
+  auto MightBeInPlace() const -> bool {
+    return kind == InPlace || kind == Dependent;
+  }
+
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{kind: ";
     switch (kind) {
       case None:
         out << "None";
+        break;
+      case Dependent:
+        out << "Dependent";
         break;
       case ByCopy:
         out << "ByCopy";
@@ -161,7 +181,7 @@ struct ReturnTypeInfo : public Printable<ReturnTypeInfo> {
   // only be called for valid return info.
   auto has_return_slot() const -> bool {
     CARBON_CHECK(is_valid());
-    return init_repr.kind == InitRepr::InPlace;
+    return init_repr.MightBeInPlace();
   }
 
   auto Print(llvm::raw_ostream& out) const -> void {
@@ -195,9 +215,6 @@ struct NumericTypeLiteralInfo {
   // Prints the numeric type literal that corresponds to this type.
   auto PrintLiteral(const File& file, llvm::raw_ostream& out) const -> void;
 
-  // Gets a string containing the literal.
-  auto GetLiteralAsString(const File& file) const -> std::string;
-
   // Returns whether this is a valid numeric type literal.
   auto is_valid() const -> bool { return kind != None; }
 
@@ -205,6 +222,57 @@ struct NumericTypeLiteralInfo {
   Kind kind;
   // The bit width of this type literal.
   IntId bit_width_id;
+};
+
+// Information about a recognized type, which is either a literal type, or a C++
+// builtin.
+struct RecognizedTypeInfo {
+  enum Kind : char {
+    None,
+    // A numeric type literal such as `i8`; see `numeric` field for details.
+    Numeric,
+    // `char` / `Core.Char`.
+    Char,
+    // `Core.CppCompat.Long32` which is `Cpp.long` when `long` is 32 bits.
+    CppLong32,
+    // `Core.CppCompat.ULong32` which is `Cpp.unsigned_long` when `unsigned
+    // long` is 32 bits.
+    CppULong32,
+    // `Core.CppCompat.LongLong64` which is `Cpp.long_long` when `long` is 64
+    // bits.
+    CppLongLong64,
+    // `Core.CppCompat.ULongLong64` which is `Cpp.unsigned_long_long` when
+    // `unsigned long` is 64 bits.
+    CppULongLong64,
+    // `Cpp.nullptr_t` / `Core.CppCompat.NullptrT`.
+    CppNullptrT,
+    // `Cpp.void` / `Core.CppCompat.VoidBase`.
+    CppVoidBase,
+    // `Core.Optional(...)`.
+    Optional,
+    // `str` / `Core.String`.
+    // TODO: Rename `Core.String` to `Core.Str`.
+    Str,
+  };
+
+  // Returns the type literal that would evaluate to this class type, if any.
+  static auto ForType(const File& file, ClassType class_type)
+      -> RecognizedTypeInfo;
+
+  // Prints the type literal or special type name that corresponds to this type,
+  // if there is one. Returns true if the type was printed, or false if this
+  // type doesn't have special syntax and should be printed directly.
+  auto PrintLiteral(const File& file, llvm::raw_ostream& out) const -> bool;
+
+  // Returns whether this is a valid type literal.
+  auto is_valid() const -> bool { return kind != None; }
+
+  // The kind of the literal.
+  Kind kind;
+  // If this is a numeric literal, additional information about the literal.
+  NumericTypeLiteralInfo numeric = NumericTypeLiteralInfo::Invalid;
+  // If this is a generic type, the arguments.
+  InstBlockId args_id = InstBlockId::None;
 };
 
 inline constexpr NumericTypeLiteralInfo NumericTypeLiteralInfo::Invalid = {

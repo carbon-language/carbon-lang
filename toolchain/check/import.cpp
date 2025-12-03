@@ -44,11 +44,12 @@ static auto GetImportName(const SemIR::File& import_sem_ir,
                           SemIR::Inst import_inst)
     -> std::pair<SemIR::NameId, SemIR::NameScopeId> {
   CARBON_KIND_SWITCH(import_inst) {
-    case SemIR::BindAlias::Kind:
-    case SemIR::BindName::Kind:
-    case SemIR::BindSymbolicName::Kind:
+    case SemIR::AliasBinding::Kind:
+    case SemIR::RefBinding::Kind:
+    case SemIR::SymbolicBinding::Kind:
+    case SemIR::ValueBinding::Kind:
     case SemIR::ExportDecl::Kind: {
-      auto bind_inst = import_inst.As<SemIR::AnyBindNameOrExportDecl>();
+      auto bind_inst = import_inst.As<SemIR::AnyBindingOrExportDecl>();
       return GetImportNameForEntity(
           import_sem_ir.entity_names().Get(bind_inst.entity_name_id));
     }
@@ -71,6 +72,11 @@ static auto GetImportName(const SemIR::File& import_sem_ir,
     case CARBON_KIND(SemIR::Namespace ns): {
       return GetImportNameForEntity(
           import_sem_ir.name_scopes().Get(ns.name_scope_id));
+    }
+
+    case CARBON_KIND(SemIR::NamedConstraintDecl named_constraint_decl): {
+      return GetImportNameForEntity(import_sem_ir.named_constraints().Get(
+          named_constraint_decl.named_constraint_id));
     }
 
     default:
@@ -138,8 +144,8 @@ auto AddImportNamespace(Context& context, SemIR::TypeId namespace_type_id,
       MakeImportedNamespaceLocIdAndInst(context, import_id, namespace_inst);
   AddImportNamespaceResult result = {
       .name_scope_id = SemIR::NameScopeId::None,
-      .inst_id = AddPlaceholderInstInNoBlock(context, namespace_inst_and_loc)};
-  context.imports().push_back(result.inst_id);
+      .inst_id =
+          AddPlaceholderImportedInstInNoBlock(context, namespace_inst_and_loc)};
   namespace_inst.name_scope_id =
       context.name_scopes().Add(result.inst_id, name_id, parent_scope_id);
   result.name_scope_id = namespace_inst.name_scope_id;
@@ -245,8 +251,10 @@ static auto CopySingleNameScopeFromImportIR(
 
   auto namespace_const_id =
       context.constant_values().Get(result.add_result.inst_id);
-  context.import_ir_constant_values()[ir_id.index].Set(import_inst_id,
-                                                       namespace_const_id);
+  context
+      .import_ir_constant_values()[context.sem_ir().import_irs().GetRawIndex(
+          ir_id)]
+      .Set(import_inst_id, namespace_const_id);
 
   if (copied_namespaces) {
     CacheCopiedNamespace(*copied_namespaces, import_scope_id,
@@ -483,9 +491,11 @@ auto ImportLibrariesFromCurrentPackage(
   for (auto import_ir : import_irs) {
     auto ir_id = AddImportIR(context, import_ir);
 
-    context.import_ir_constant_values()[ir_id.index].Set(
-        SemIR::Namespace::PackageInstId,
-        context.constant_values().Get(SemIR::Namespace::PackageInstId));
+    context
+        .import_ir_constant_values()[context.sem_ir().import_irs().GetRawIndex(
+            ir_id)]
+        .Set(SemIR::Namespace::PackageInstId,
+             context.constant_values().Get(SemIR::Namespace::PackageInstId));
 
     for (const auto import_inst_id :
          import_ir.sem_ir->inst_blocks().Get(SemIR::InstBlockId::Exports)) {
@@ -547,8 +557,10 @@ auto ImportLibrariesFromOtherPackage(Context& context,
   for (auto import_ir : import_irs) {
     auto ir_id = AddImportIR(context, import_ir);
     scope.AddImportIRScope({ir_id, SemIR::NameScopeId::Package});
-    context.import_ir_constant_values()[ir_id.index].Set(
-        SemIR::Namespace::PackageInstId, namespace_const_id);
+    context
+        .import_ir_constant_values()[context.sem_ir().import_irs().GetRawIndex(
+            ir_id)]
+        .Set(SemIR::Namespace::PackageInstId, namespace_const_id);
   }
   if (has_load_error) {
     scope.set_has_error();

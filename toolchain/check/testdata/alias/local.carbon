@@ -35,7 +35,7 @@ fn F() -> () {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %a.ref: ref %empty_tuple.type = name_ref a, %a
-// CHECK:STDOUT:   %b: ref %empty_tuple.type = bind_alias b, %a
+// CHECK:STDOUT:   %b: ref %empty_tuple.type = alias_binding b, %a
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

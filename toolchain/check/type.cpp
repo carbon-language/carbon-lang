@@ -9,6 +9,7 @@
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -138,19 +139,19 @@ auto GetConstType(Context& context, SemIR::TypeInstId inner_type_id)
 
 auto GetQualifiedType(Context& context, SemIR::TypeId type_id,
                       SemIR::TypeQualifiers quals) -> SemIR::TypeId {
-  if (HasTypeQualifier(quals, SemIR::TypeQualifiers::Const)) {
+  if (quals.HasAnyOf(SemIR::TypeQualifiers::Const)) {
     type_id = GetConstType(context, context.types().GetInstId(type_id));
-    quals &= ~SemIR::TypeQualifiers::Const;
+    quals.Remove(SemIR::TypeQualifiers::Const);
   }
-  if (HasTypeQualifier(quals, SemIR::TypeQualifiers::MaybeUnformed)) {
+  if (quals.HasAnyOf(SemIR::TypeQualifiers::MaybeUnformed)) {
     type_id = GetTypeImpl<SemIR::MaybeUnformedType>(
         context, context.types().GetInstId(type_id));
-    quals &= ~SemIR::TypeQualifiers::MaybeUnformed;
+    quals.Remove(SemIR::TypeQualifiers::MaybeUnformed);
   }
-  if (HasTypeQualifier(quals, SemIR::TypeQualifiers::Partial)) {
+  if (quals.HasAnyOf(SemIR::TypeQualifiers::Partial)) {
     type_id = GetTypeImpl<SemIR::PartialType>(
         context, context.types().GetInstId(type_id));
-    quals &= ~SemIR::TypeQualifiers::Partial;
+    quals.Remove(SemIR::TypeQualifiers::Partial);
   }
   CARBON_CHECK(quals == SemIR::TypeQualifiers::None);
   return type_id;
@@ -168,6 +169,13 @@ auto GetSingletonType(Context& context, SemIR::TypeInstId singleton_id)
 auto GetClassType(Context& context, SemIR::ClassId class_id,
                   SemIR::SpecificId specific_id) -> SemIR::TypeId {
   return GetTypeImpl<SemIR::ClassType>(context, class_id, specific_id);
+}
+
+auto GetCppOverloadSetType(Context& context,
+                           SemIR::CppOverloadSetId overload_set_id,
+                           SemIR::SpecificId specific_id) -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::CppOverloadSetType>(
+      context, overload_set_id, specific_id);
 }
 
 auto GetFunctionType(Context& context, SemIR::FunctionId fn_id,
@@ -196,11 +204,28 @@ auto GetGenericInterfaceType(Context& context, SemIR::InterfaceId interface_id,
       context, interface_id, enclosing_specific_id);
 }
 
+auto GetGenericNamedConstraintType(Context& context,
+                                   SemIR::NamedConstraintId named_constraint_id,
+                                   SemIR::SpecificId enclosing_specific_id)
+    -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::GenericNamedConstraintType>(
+      context, named_constraint_id, enclosing_specific_id);
+}
+
 auto GetInterfaceType(Context& context, SemIR::InterfaceId interface_id,
                       SemIR::SpecificId specific_id) -> SemIR::TypeId {
   return GetTypeImpl<SemIR::FacetType>(
       context,
       FacetTypeFromInterface(context, interface_id, specific_id).facet_type_id);
+}
+
+auto GetNamedConstraintType(Context& context,
+                            SemIR::NamedConstraintId named_constraint_id,
+                            SemIR::SpecificId specific_id) -> SemIR::TypeId {
+  return GetTypeImpl<SemIR::FacetType>(
+      context,
+      FacetTypeFromNamedConstraint(context, named_constraint_id, specific_id)
+          .facet_type_id);
 }
 
 auto GetFacetType(Context& context, const SemIR::FacetTypeInfo& info)
@@ -211,7 +236,7 @@ auto GetFacetType(Context& context, const SemIR::FacetTypeInfo& info)
 
 auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
     -> SemIR::TypeId {
-  return GetTypeImpl<SemIR::PointerType>(context, pointee_type_id);
+  return GetCompleteTypeImpl<SemIR::PointerType>(context, pointee_type_id);
 }
 
 auto GetPatternType(Context& context, SemIR::TypeId scrutinee_type_id)
@@ -231,33 +256,37 @@ auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
                                                 element_type_id);
 }
 
-auto GetCanonicalizedFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
+auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId {
-  // We can have FacetAccessType of a FacetValue, and a FacetValue of a
-  // FacetAccessType, but they don't nest indefinitely.
-  if (auto access = context.insts().TryGetAs<SemIR::FacetAccessType>(inst_id)) {
-    inst_id = access->facet_value_inst_id;
-  }
-  if (auto value = context.insts().TryGetAs<SemIR::FacetValue>(inst_id)) {
-    inst_id = value->type_inst_id;
+  auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
+  CARBON_DCHECK(const_inst_id.has_value());
 
-    if (auto access =
-            context.insts().TryGetAs<SemIR::FacetAccessType>(inst_id)) {
-      inst_id = access->facet_value_inst_id;
-    }
+  if (auto access =
+          context.insts().TryGetAs<SemIR::FacetAccessType>(const_inst_id)) {
+    return access->facet_value_inst_id;
   }
 
-  CARBON_CHECK(!context.insts().Is<SemIR::FacetAccessType>(inst_id));
-  CARBON_CHECK(!context.insts().Is<SemIR::FacetValue>(inst_id));
+  if (auto access =
+          context.insts().TryGetAs<SemIR::SymbolicBindingType>(const_inst_id)) {
+    // TODO: Look in ScopeStack with the entity_name_id to find the facet value.
+    return access->facet_value_inst_id;
+  }
 
-  return context.constant_values().GetConstantInstId(inst_id);
+  return const_inst_id;
 }
 
-auto GetCanonicalizedFacetOrTypeValue(Context& context,
-                                      SemIR::ConstantId const_id)
+auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::ConstantId const_id)
     -> SemIR::ConstantId {
-  return context.constant_values().Get(GetCanonicalizedFacetOrTypeValue(
+  return context.constant_values().Get(GetCanonicalFacetOrTypeValue(
       context, context.constant_values().GetInstId(const_id)));
+}
+
+auto TryGetCanonicalFacetValue(Context& context, SemIR::InstId inst_id)
+    -> SemIR::InstId {
+  if (context.insts().Get(inst_id).type_id() == SemIR::TypeType::TypeId) {
+    return GetCanonicalFacetOrTypeValue(context, inst_id);
+  }
+  return SemIR::InstId::None;
 }
 
 }  // namespace Carbon::Check

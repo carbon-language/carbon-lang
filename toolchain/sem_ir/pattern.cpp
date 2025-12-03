@@ -10,7 +10,7 @@
 namespace Carbon::SemIR {
 
 // Returns the pattern instruction corresponding to the given ID, after
-// unwrapping any simple pattern operators such as `var` and `addr`.
+// unwrapping any simple pattern operators such as `var`.
 static auto GetUnwrapped(const File& sem_ir, InstId pattern_id)
     -> std::pair<InstId, Inst> {
   auto inst_id = pattern_id;
@@ -18,11 +18,6 @@ static auto GetUnwrapped(const File& sem_ir, InstId pattern_id)
 
   if (auto var_pattern = inst.TryAs<VarPattern>()) {
     inst_id = var_pattern->subpattern_id;
-    inst = sem_ir.insts().Get(inst_id);
-  }
-
-  if (auto addr_pattern = inst.TryAs<AddrPattern>()) {
-    inst_id = addr_pattern->inner_id;
     inst = sem_ir.insts().Get(inst_id);
   }
 
@@ -42,7 +37,7 @@ static auto GetBoundEntityName(const File& sem_ir, Inst inst)
     return {sem_ir.entity_names().Get(binding_pattern->entity_name_id).name_id,
             binding_pattern->entity_name_id};
   }
-  return {SemIR::NameId::None, SemIR::EntityNameId::None};
+  return {NameId::None, EntityNameId::None};
 }
 
 auto IsSelfPattern(const File& sem_ir, InstId pattern_id) -> bool {
@@ -56,7 +51,7 @@ auto GetFirstBindingNameFromPatternId(const File& sem_ir, InstId pattern_id)
   llvm::SmallVector<InstId> work_list = {pattern_id};
   while (!work_list.empty()) {
     auto [_, inst] = GetUnwrapped(sem_ir, work_list.pop_back_val());
-    if (auto tuple_patt = inst.TryAs<SemIR::TuplePattern>()) {
+    if (auto tuple_patt = inst.TryAs<TuplePattern>()) {
       auto block = sem_ir.inst_blocks().Get(tuple_patt->elements_id);
       work_list.append(block.rbegin(), block.rend());
       continue;

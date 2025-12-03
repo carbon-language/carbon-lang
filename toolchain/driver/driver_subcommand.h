@@ -8,8 +8,8 @@
 #include "common/command_line.h"
 #include "common/ostream.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "toolchain/base/install_paths.h"
 #include "toolchain/driver/driver_env.h"
-#include "toolchain/install/install_paths.h"
 
 namespace Carbon {
 

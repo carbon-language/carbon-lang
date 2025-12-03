@@ -23,3 +23,11 @@ interface ImplicitAs(Dest:! type) {
   // TODO: extend As(Dest);
   fn Convert[self: Self]() -> Dest;
 }
+
+interface BitAndWith(Other:! type) {
+  fn Op[self: Self](other: Other) -> Self;
+}
+
+impl type as BitAndWith(type) {
+  fn Op[self: Self](other: Self) -> Self = "type.and";
+}

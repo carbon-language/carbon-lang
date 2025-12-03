@@ -36,8 +36,8 @@ var A: () = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -46,30 +46,30 @@ var A: () = ();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.loc15: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %A.patt.loc24: %pattern_type = binding_pattern A [concrete]
+// CHECK:STDOUT:     %A.patt.loc24: %pattern_type = ref_binding_pattern A [concrete]
 // CHECK:STDOUT:     %A.var_patt.loc24: %pattern_type = var_pattern %A.patt.loc24 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.var.loc24: ref %empty_tuple.type = var %A.var_patt.loc24 [concrete]
 // CHECK:STDOUT:   %.loc24_9.1: type = splice_block %.loc24_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc24_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc24_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc24_9.3: type = converted %.loc24_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.loc24: ref %empty_tuple.type = bind_name A, %A.var.loc24 [concrete = %A.var.loc24]
+// CHECK:STDOUT:   %A.loc24: ref %empty_tuple.type = ref_binding A, %A.var.loc24 [concrete = %A.var.loc24]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %A.patt.loc33: %pattern_type = binding_pattern A [concrete]
+// CHECK:STDOUT:     %A.patt.loc33: %pattern_type = ref_binding_pattern A [concrete]
 // CHECK:STDOUT:     %A.var_patt.loc33: %pattern_type = var_pattern %A.patt.loc33 [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.var.loc33: ref %empty_tuple.type = var %A.var_patt.loc33 [concrete]
 // CHECK:STDOUT:   %.loc33_9.1: type = splice_block %.loc33_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc33_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc33_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc33_9.3: type = converted %.loc33_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.loc33: ref %empty_tuple.type = bind_name A, %A.var.loc33 [concrete = %A.var.loc33]
+// CHECK:STDOUT:   %A.loc33: ref %empty_tuple.type = ref_binding A, %A.var.loc33 [concrete = %A.var.loc33]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc33_14.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc33_14.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc33_14.2: init %empty_tuple.type = tuple_init () to file.%A.var.loc33 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc33_1: init %empty_tuple.type = converted %.loc33_14.1, %.loc33_14.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%A.var.loc33, %.loc33_1

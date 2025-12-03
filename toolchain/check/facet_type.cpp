@@ -8,6 +8,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
@@ -24,9 +25,19 @@ namespace Carbon::Check {
 
 auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
                             SemIR::SpecificId specific_id) -> SemIR::FacetType {
-  auto info =
-      SemIR::FacetTypeInfo{.extend_constraints = {{interface_id, specific_id}},
-                           .other_requirements = false};
+  auto info = SemIR::FacetTypeInfo{};
+  info.extend_constraints.push_back({interface_id, specific_id});
+  info.Canonicalize();
+  SemIR::FacetTypeId facet_type_id = context.facet_types().Add(info);
+  return {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id};
+}
+
+auto FacetTypeFromNamedConstraint(Context& context,
+                                  SemIR::NamedConstraintId named_constraint_id,
+                                  SemIR::SpecificId specific_id)
+    -> SemIR::FacetType {
+  auto info = SemIR::FacetTypeInfo{};
+  info.extend_named_constraints.push_back({named_constraint_id, specific_id});
   info.Canonicalize();
   SemIR::FacetTypeId facet_type_id = context.facet_types().Add(info);
   return {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id};
@@ -44,20 +55,15 @@ static auto WitnessQueryMatchesInterface(
 static auto IncompleteFacetTypeDiagnosticBuilder(
     Context& context, SemIR::LocId loc_id, SemIR::TypeInstId facet_type_inst_id,
     bool is_definition) -> DiagnosticBuilder {
-  if (is_definition) {
-    CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeDefinition, Error,
-                      "definition of impl as incomplete facet type {0}",
-                      InstIdAsType);
-    return context.emitter().Build(loc_id, ImplAsIncompleteFacetTypeDefinition,
-                                   facet_type_inst_id);
-  } else {
-    CARBON_DIAGNOSTIC(
-        ImplAsIncompleteFacetTypeRewrites, Error,
-        "declaration of impl as incomplete facet type {0} with rewrites",
-        InstIdAsType);
-    return context.emitter().Build(loc_id, ImplAsIncompleteFacetTypeRewrites,
-                                   facet_type_inst_id);
-  }
+  // TODO: Remove this parameter. Facet types don't need to be complete for impl
+  // declarations, unless there's a rewrite into `.Self`. But that completeness
+  // is checked/required by the member access of the rewrite.
+  CARBON_CHECK(is_definition);
+  CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeDefinition, Error,
+                    "definition of impl as incomplete facet type {0}",
+                    InstIdAsType);
+  return context.emitter().Build(loc_id, ImplAsIncompleteFacetTypeDefinition,
+                                 facet_type_inst_id);
 }
 
 auto GetImplWitnessAccessWithoutSubstitution(Context& context,
@@ -94,6 +100,9 @@ auto InitialFacetTypeImplWitness(
          .specific_id = self_specific_id});
   }
 
+  // The presence of any rewrite constraints requires that we know how many
+  // entries to allocate in the witness table, which requires the entire facet
+  // type to be complete, even if this was a declaration.
   if (!RequireCompleteType(
           context, facet_type_id, SemIR::LocId(facet_type_inst_id), [&] {
             return IncompleteFacetTypeDiagnosticBuilder(
@@ -120,7 +129,7 @@ auto InitialFacetTypeImplWitness(
         context.inst_blocks().AddUninitialized(assoc_entities.size());
     table = context.inst_blocks().GetMutable(elements_id);
     for (auto& uninit : table) {
-      uninit = SemIR::ImplWitnessTablePlaceholder::TypeInstId;
+      uninit = SemIR::InstId::ImplWitnessTablePlaceholder;
     }
 
     auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
@@ -181,7 +190,7 @@ auto InitialFacetTypeImplWitness(
     // FacetTypes resolution disallows two rewrites to the same associated
     // constant, so we won't ever have a facet write twice to the same position
     // in the witness table.
-    CARBON_CHECK(table_entry == SemIR::ImplWitnessTablePlaceholder::TypeInstId);
+    CARBON_CHECK(table_entry == SemIR::InstId::ImplWitnessTablePlaceholder);
 
     // If the associated constant has a symbolic type, convert the rewrite
     // value to that type now we know the value of `Self`.
@@ -259,7 +268,7 @@ auto AllocateFacetTypeImplWitness(Context& context,
   }
 
   llvm::SmallVector<SemIR::InstId> empty_table(
-      assoc_entities.size(), SemIR::ImplWitnessTablePlaceholder::TypeInstId);
+      assoc_entities.size(), SemIR::InstId::ImplWitnessTablePlaceholder);
   context.inst_blocks().ReplacePlaceholder(witness_id, empty_table);
 }
 
@@ -621,7 +630,7 @@ auto MakePeriodSelfFacetValue(Context& context, SemIR::TypeId self_type_id)
       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
   });
   auto inst_id = AddInst(
-      context, SemIR::LocIdAndInst::NoLoc<SemIR::BindSymbolicName>({
+      context, SemIR::LocIdAndInst::NoLoc<SemIR::SymbolicBinding>({
                    .type_id = self_type_id,
                    .entity_name_id = entity_name_id,
                    // `None` because there is no equivalent non-symbolic value.

@@ -26,12 +26,12 @@ interface AddWith(Other:! type) {
 
 // Addition with assignment: `a += b`.
 interface AddAssignWith(Other:! type) {
-  fn Op[addr self: Self*](other: Other);
+  fn Op[ref self: Self](other: Other);
 }
 
 // Increment: `++a`.
 interface Inc {
-  fn Op[addr self: Self*]();
+  fn Op[ref self: Self]();
 }
 
 // Negation: `-a`.
@@ -48,12 +48,12 @@ interface SubWith(Other:! type) {
 
 // Subtraction with assignment: `a -= b`.
 interface SubAssignWith(Other:! type) {
-  fn Op[addr self: Self*](other: Other);
+  fn Op[ref self: Self](other: Other);
 }
 
 // Decrement: `--a`.
 interface Dec {
-  fn Op[addr self: Self*]();
+  fn Op[ref self: Self]();
 }
 
 // Multiplication: `a * b`.
@@ -64,7 +64,7 @@ interface MulWith(Other:! type) {
 
 // Multiplication with assignment: `a *= b`.
 interface MulAssignWith(Other:! type) {
-  fn Op[addr self: Self*](other: Other);
+  fn Op[ref self: Self](other: Other);
 }
 
 // Division: `a / b`.
@@ -75,7 +75,7 @@ interface DivWith(Other:! type) {
 
 // Division with assignment: `a /= b`.
 interface DivAssignWith(Other:! type) {
-  fn Op[addr self: Self*](other: Other);
+  fn Op[ref self: Self](other: Other);
 }
 
 // Modulo: `a % b`.
@@ -86,7 +86,7 @@ interface ModWith(Other:! type) {
 
 // Modulo with assignment: `a %= b`.
 interface ModAssignWith(Other:! type) {
-  fn Op[addr self: Self*](other: Other);
+  fn Op[ref self: Self](other: Other);
 }
 
 

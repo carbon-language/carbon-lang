@@ -86,13 +86,13 @@ class ConstantEvalResult {
   bool same_phase_as_inst_;
 };
 
-constexpr ConstantEvalResult ConstantEvalResult::Error =
+inline constexpr ConstantEvalResult ConstantEvalResult::Error =
     Existing(SemIR::ErrorInst::ConstantId);
 
-constexpr ConstantEvalResult ConstantEvalResult::NotConstant =
+inline constexpr ConstantEvalResult ConstantEvalResult::NotConstant =
     ConstantEvalResult(SemIR::ConstantId::NotConstant);
 
-constexpr ConstantEvalResult ConstantEvalResult::TODO = NotConstant;
+inline constexpr ConstantEvalResult ConstantEvalResult::TODO = NotConstant;
 
 // Implementation details to compute the type of the `EvalConstantInst`
 // functions.

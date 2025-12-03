@@ -42,7 +42,7 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Incomplete.decl: type = class_decl @Incomplete [concrete = constants.%Incomplete] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %s.patt: <error> = binding_pattern s [concrete]
+// CHECK:STDOUT:     %s.patt: <error> = ref_binding_pattern s [concrete]
 // CHECK:STDOUT:     %s.var_patt: <error> = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref <error> = var %s.var_patt [concrete = <error>]
@@ -50,9 +50,9 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:     %Incomplete.ref.loc24: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %Incomplete} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: <error> = bind_name s, <error> [concrete = <error>]
+// CHECK:STDOUT:   %s: ref <error> = ref_binding s, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %p.patt: %pattern_type = binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.patt: %pattern_type = ref_binding_pattern p [concrete]
 // CHECK:STDOUT:     %p.var_patt: %pattern_type = var_pattern %p.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p.var: ref %ptr = var %p.var_patt [concrete]
@@ -60,14 +60,14 @@ var p: Incomplete* = &s.a;
 // CHECK:STDOUT:     %Incomplete.ref.loc26: type = name_ref Incomplete, %Incomplete.decl [concrete = constants.%Incomplete]
 // CHECK:STDOUT:     %ptr: type = ptr_type %Incomplete.ref.loc26 [concrete = constants.%ptr]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: ref %ptr = bind_name p, %p.var [concrete = %p.var]
+// CHECK:STDOUT:   %p: ref %ptr = ref_binding p, %p.var [concrete = %p.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Incomplete;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %s.ref: <error> = name_ref s, file.%s [concrete = <error>]
+// CHECK:STDOUT:   %s.ref: ref <error> = name_ref s, file.%s [concrete = <error>]
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [concrete = <error>]
 // CHECK:STDOUT:   %addr: <error> = addr_of %a.ref [concrete = <error>]
 // CHECK:STDOUT:   assign file.%p.var, <error>

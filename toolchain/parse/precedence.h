@@ -58,6 +58,10 @@ class PrecedenceGroup {
   // `impl` and `as`.
   static auto ForImplAs() -> PrecedenceGroup;
 
+  // Get the precedence level at which to parse the type expression between
+  // `require` and `impls`.
+  static auto ForRequireImpls() -> PrecedenceGroup;
+
   // Get the precedence level at which to parse expressions in requirements
   // after `where` or `require`.
   static auto ForRequirements() -> PrecedenceGroup;
@@ -131,8 +135,7 @@ class PrecedenceGroup {
 
   // We rely on implicit conversions via `int8_t` for enumerators defined in the
   // implementation.
-  // NOLINTNEXTLINE(google-explicit-constructor)
-  PrecedenceGroup(int8_t level) : level_(level) {}
+  explicit(false) PrecedenceGroup(int8_t level) : level_(level) {}
 
   // The precedence level.
   int8_t level_;

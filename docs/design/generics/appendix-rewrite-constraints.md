@@ -363,7 +363,7 @@ fn F[T:! C](x: T) {
 ```
 
 When looking up the name `N`, if `C` is an interface `I` and `N` is the name of
-an associated constant in that interface, the result is a symbolic value
+an associated constant in that interface, the result is a symbolic constant
 representing "the member `N` of `I`". If `C` is formed by combining interfaces
 with `&`, all such results are required to find the same associated constant,
 otherwise we reject for ambiguity.
@@ -439,7 +439,7 @@ is discussed later.
 ### Type substitution
 
 At various points during the type-checking of a Carbon program, we need to
-substitute a set of (binding, value) pairs into a symbolic value. We saw an
+substitute a set of (binding, value) pairs into a symbolic constant. We saw an
 example above: substituting `Self = W` into the type `A where .(A.T) = Self.U`
 to produce the value `A where .(A.T) = W.U`. Another important case is the
 substitution of inferred parameter values into the type of a function when
@@ -504,14 +504,14 @@ fn J[V:! A where .T = K](y: V) {
 }
 ```
 
-The values being substituted into the symbolic value are themselves already
+The values being substituted into the symbolic constant are themselves already
 fully substituted and resolved, and in particular, satisfy property 1 given
 above.
 
-Substitution proceeds by recursively rebuilding each symbolic value, bottom-up,
-replacing each substituted binding with its value. Doing this naively will
-propagate values like `i32` in the `F`/`G` case earlier in this section, but
-will not propagate rewrite constants like in the `H`/`J` case. The reason is
+Substitution proceeds by recursively rebuilding each symbolic constant,
+bottom-up, replacing each substituted binding with its value. Doing this naively
+will propagate values like `i32` in the `F`/`G` case earlier in this section,
+but will not propagate rewrite constants like in the `H`/`J` case. The reason is
 that the `.T = K` constraint is in the _type_ of the substituted value, rather
 than in the substituted value itself: deducing `T = i32` and converting `i32` to
 the type `C` of `T` preserves the value `i32`, but deducing `U = V` and

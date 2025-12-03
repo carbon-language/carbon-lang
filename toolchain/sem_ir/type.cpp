@@ -10,6 +10,10 @@
 
 namespace Carbon::SemIR {
 
+CARBON_DEFINE_ENUM_MASK_NAMES(TypeQualifiers) {
+  CARBON_TYPE_QUALIFIERS(CARBON_ENUM_MASK_NAME_STRING)
+};
+
 // Verify that the constant value's type is `TypeType` (or an error).
 static void CheckTypeOfConstantIsTypeType(File& file, ConstantId constant_id) {
   CARBON_CHECK(constant_id.is_constant(),
@@ -101,13 +105,13 @@ auto TypeStore::GetUnqualifiedTypeAndQualifiers(TypeId type_id) const
       type_id = file_->types().GetTypeIdForTypeInstId(qualified_type->inner_id);
       switch (qualified_type->kind) {
         case ConstType::Kind:
-          quals |= TypeQualifiers::Const;
+          quals.Add(TypeQualifiers::Const);
           break;
         case MaybeUnformedType::Kind:
-          quals |= TypeQualifiers::MaybeUnformed;
+          quals.Add(TypeQualifiers::MaybeUnformed);
           break;
         case PartialType::Kind:
-          quals |= TypeQualifiers::Partial;
+          quals.Add(TypeQualifiers::Partial);
           break;
         default:
           CARBON_FATAL("Unknown type qualifier {0}", qualified_type->kind);
@@ -129,7 +133,7 @@ auto TypeStore::GetTransitiveUnqualifiedAdaptedType(TypeId type_id) const
       return {type_id, quals};
     }
     type_id = unqual_type_id;
-    quals |= inner_quals;
+    quals.Add(inner_quals);
   }
 }
 
@@ -166,14 +170,12 @@ auto TypeStore::GetIntTypeInfo(TypeId int_type_id) const -> IntTypeInfo {
   return *int_info;
 }
 
-auto ExtractScrutineeType(const File& sem_ir, SemIR::TypeId type_id)
-    -> SemIR::TypeId {
-  if (auto pattern_type =
-          sem_ir.types().TryGetAs<SemIR::PatternType>(type_id)) {
+auto ExtractScrutineeType(const File& sem_ir, TypeId type_id) -> TypeId {
+  if (auto pattern_type = sem_ir.types().TryGetAs<PatternType>(type_id)) {
     return sem_ir.types().GetTypeIdForTypeInstId(
         pattern_type->scrutinee_type_inst_id);
   }
-  CARBON_CHECK(type_id == SemIR::ErrorInst::TypeId,
+  CARBON_CHECK(type_id == ErrorInst::TypeId,
                "Inst kind doesn't have scrutinee type: {0}",
                sem_ir.types().GetAsInst(type_id).kind());
   return type_id;
