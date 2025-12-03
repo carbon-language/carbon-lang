@@ -250,17 +250,17 @@ auto GetCanonicalWitnessesBlock(File& sem_ir,
   for (auto witness_id : witnesses) {
     auto inst = sem_ir.insts().Get(witness_id);
     CARBON_KIND_SWITCH(inst) {
-      case CARBON_KIND(LookupImplWitness witness): {
-        sortable.push_back({sem_ir.specific_interfaces().Get(
-                                witness.query_specific_interface_id),
-                            witness_id});
-        break;
-      }
       case CARBON_KIND(ImplWitness witness): {
         auto table =
             sem_ir.insts().GetAs<ImplWitnessTable>(witness.witness_table_id);
         sortable.push_back(
             {sem_ir.impls().Get(table.impl_id).interface, witness_id});
+        break;
+      }
+      case CARBON_KIND(LookupImplWitness witness): {
+        sortable.push_back({sem_ir.specific_interfaces().Get(
+                                witness.query_specific_interface_id),
+                            witness_id});
         break;
       }
       default:
