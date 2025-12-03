@@ -235,7 +235,7 @@ IdentifiedFacetType::IdentifiedFacetType(
   SortAndDeduplicate(required_interfaces_, RequiredLess);
 }
 
-auto GetCanonicalWitnessesBlock(File& sem_ir,
+auto AddCanonicalWitnessesBlock(File& sem_ir,
                                 llvm::SmallVector<InstId>& witnesses)
     -> InstBlockId {
   // Small blocks don't need to be sorted.

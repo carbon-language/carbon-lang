@@ -3104,7 +3104,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto witnesses_block_id = SemIR::InstBlockId::None;
   if (inst.witnesses_block_id.has_value()) {
     witnesses_block_id =
-        GetCanonicalWitnessesBlock(resolver.local_ir(), witnesses);
+        AddCanonicalWitnessesBlock(resolver.local_ir(), witnesses);
   }
 
   return ResolveResult::Deduplicated<SemIR::FacetValue>(
