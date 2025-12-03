@@ -214,7 +214,8 @@ inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
 }
 
 // Given an array of witnesses, sorts them to match the FacetTypeInfo ordering
-// and returns the resulting block ID.
+// and returns the resulting block ID. This assumes witnesses have already been
+// deduplicated, because it's mainly for imports.
 auto AddCanonicalWitnessesBlock(File& sem_ir,
                                 llvm::SmallVector<InstId>& witnesses)
     -> InstBlockId;
