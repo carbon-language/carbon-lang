@@ -322,7 +322,8 @@ reference; only contexts that accept both, that accept only entire references,
 or that don't accept references at all.
 
 Currently, the only context that requires an entire reference is the scrutinee
-of a `var` pattern, which must be an entire ephemeral reference.
+of a `var` pattern, which is required to be an entire ephemeral reference (and
+is [converted](#category-conversions) to that category if necessary).
 
 > **Note:** This extends the lifetime of the reference, so it must be possible
 > to determine _which_ temporary an ephemeral entire reference refers to, so

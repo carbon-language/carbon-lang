@@ -193,11 +193,11 @@ fn F() -> i32 {
 
 When `self` is used instead of an identifier, and the pattern is an implicit
 parameter of a class function (optionally enclosed in a `var` pattern), that
-marks the function as a method. During pattern matching, the parameter pattern
-containing `self` is matched with the object that the method was invoked on.
-Other than that, a `self` pattern behaves just like an ordinary binding pattern,
-introducing a binding named `self` into scope, just as if `self` were an
-identifier rather than a keyword.
+marks the function as a method (as discussed [here](classes.md#methods)). During
+pattern matching, the parameter pattern containing `self` is matched with the
+object that the method was invoked on. Other than that, a `self` pattern behaves
+just like an ordinary binding pattern, introducing a binding named `self` into
+scope, just as if `self` were an identifier rather than a keyword.
 
 #### Unused bindings
 
