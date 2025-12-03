@@ -6,7 +6,9 @@
 
 #include <tuple>
 
+#include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 
@@ -230,6 +232,38 @@ IdentifiedFacetType::IdentifiedFacetType(
   llvm::append_range(required_interfaces_, extends);
   llvm::append_range(required_interfaces_, self_impls);
   SortAndDeduplicate(required_interfaces_, RequiredLess);
+}
+
+auto GetCanonicalWitnessesBlock(File& sem_ir,
+                                llvm::SmallVector<SemIR::InstId>& witnesses)
+    -> SemIR::InstBlockId {
+  // Small blocks don't need to be sorted.
+  if (witnesses.size() <= 1) {
+    return sem_ir.inst_blocks().AddCanonical(witnesses);
+  }
+
+  llvm::SmallVector<std::pair<SpecificInterface, SemIR::InstId>> sortable;
+  sortable.reserve(witnesses.size());
+
+  // Produce the sorted order based on the witness's SpecificInterface.
+  for (auto witness_id : witnesses) {
+    auto witness = sem_ir.insts().GetAs<SemIR::LookupImplWitness>(witness_id);
+    sortable.push_back(
+        {sem_ir.specific_interfaces().Get(witness.query_specific_interface_id),
+         witness_id});
+  }
+  llvm::sort(sortable, [](auto& lhs, auto& rhs) {
+    return ImplsLess(lhs.first, rhs.first);
+  });
+
+  // Update the original list with the new order (reusing to avoid an
+  // allocation).
+  for (auto [witness_id, sortable_entry] :
+       llvm::zip_equal(witnesses, sortable)) {
+    witness_id = sortable_entry.second;
+  }
+
+  return sem_ir.inst_blocks().AddCanonical(witnesses);
 }
 
 }  // namespace Carbon::SemIR

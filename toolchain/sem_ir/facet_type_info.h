@@ -15,6 +15,8 @@
 
 namespace Carbon::SemIR {
 
+class File;
+
 #define CARBON_BUILTIN_CONSTRAINT_MASK(X)                  \
   /* Verifies types can use the builtin `type.destroy`. */ \
   X(TypeCanDestroy)
@@ -211,8 +213,11 @@ inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
   return static_cast<HashCode>(hasher);
 }
 
-// Declared:
-// (Carbon::HashCode)  (value_ = 12557349131240970624)
+// Given an array of witnesses, sorts them to match the FacetTypeInfo ordering
+// and returns the resulting block ID.
+auto GetCanonicalWitnessesBlock(File& sem_ir,
+                                llvm::SmallVector<SemIR::InstId>& witnesses)
+    -> SemIR::InstBlockId;
 
 }  // namespace Carbon::SemIR
 
