@@ -35,6 +35,14 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT: ---
 // CHECK:STDOUT: filename:        import.carbon
 // CHECK:STDOUT: sem_ir:
+// CHECK:STDOUT:   names:
+// CHECK:STDOUT:     name0:           G
+// CHECK:STDOUT:     name1:           x
+// CHECK:STDOUT:     name2:           X
+// CHECK:STDOUT:     name3:           f
+// CHECK:STDOUT:     name4:           global
+// CHECK:STDOUT:     name5:           p
+// CHECK:STDOUT:     name6:           f__carbon_thunk
 // CHECK:STDOUT:   import_irs:
 // CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
@@ -70,8 +78,12 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     function60000004: {name: name6, parent_scope: name_scope60000001, call_params_id: inst_block60000012}
 // CHECK:STDOUT:   classes:
 // CHECK:STDOUT:     class60000000:   {name: name2, parent_scope: name_scope60000001, self_type_id: type(inst60000014), inheritance_kind: Base, is_dynamic: 0, scope_id: name_scope60000002, body_block_id: inst_block6000000A, adapt_id: inst<none>, base_id: inst<none>, complete_type_witness_id: inst60000024, vtable_decl_id: inst<none>}}
+// CHECK:STDOUT:   interfaces:      {}
+// CHECK:STDOUT:   associated_constants: {}
+// CHECK:STDOUT:   impls:           {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
+// CHECK:STDOUT:   specific_interfaces: {}
 // CHECK:STDOUT:   struct_type_fields:
 // CHECK:STDOUT:     struct_type_fields_empty: {}
 // CHECK:STDOUT:     struct_type_fields60000001:
@@ -111,6 +123,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst60000012)}
 // CHECK:STDOUT:     'type(inst60000043)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst60000012)}
+// CHECK:STDOUT:   facet_types:     {}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     'inst(TypeType)':  {kind: TypeType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(AutoType)':  {kind: AutoType, type: type(TypeType)}
@@ -360,4 +373,19 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:       0:               instE
 // CHECK:STDOUT:       1:               inst6000000F
 // CHECK:STDOUT:       2:               inst6000001C
+// CHECK:STDOUT:   value_stores:
+// CHECK:STDOUT:     shared_values:
+// CHECK:STDOUT:       ints:            {}
+// CHECK:STDOUT:       reals:           {}
+// CHECK:STDOUT:       floats:          {}
+// CHECK:STDOUT:       identifiers:
+// CHECK:STDOUT:         identifier0:     G
+// CHECK:STDOUT:         identifier1:     x
+// CHECK:STDOUT:         identifier2:     X
+// CHECK:STDOUT:         identifier3:     f
+// CHECK:STDOUT:         identifier4:     global
+// CHECK:STDOUT:         identifier5:     p
+// CHECK:STDOUT:         identifier6:     f__carbon_thunk
+// CHECK:STDOUT:       strings:
+// CHECK:STDOUT:         string0:         header.h
 // CHECK:STDOUT: ...

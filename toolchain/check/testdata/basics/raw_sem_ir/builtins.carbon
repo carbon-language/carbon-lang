@@ -14,6 +14,7 @@
 // CHECK:STDOUT: ---
 // CHECK:STDOUT: filename:        builtins.carbon
 // CHECK:STDOUT: sem_ir:
+// CHECK:STDOUT:   names:           {}
 // CHECK:STDOUT:   import_irs:
 // CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
@@ -25,8 +26,12 @@
 // CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:       {}
 // CHECK:STDOUT:   classes:         {}
+// CHECK:STDOUT:   interfaces:      {}
+// CHECK:STDOUT:   associated_constants: {}
+// CHECK:STDOUT:   impls:           {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
+// CHECK:STDOUT:   specific_interfaces: {}
 // CHECK:STDOUT:   struct_type_fields:
 // CHECK:STDOUT:     struct_type_fields_empty: {}
 // CHECK:STDOUT:   types:
@@ -36,6 +41,7 @@
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(Error)}
 // CHECK:STDOUT:     'type(inst(NamespaceType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:   facet_types:     {}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     'inst(TypeType)':  {kind: TypeType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(AutoType)':  {kind: AutoType, type: type(TypeType)}
@@ -77,4 +83,11 @@
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     inst_block60000004:
 // CHECK:STDOUT:       0:               instE
+// CHECK:STDOUT:   value_stores:
+// CHECK:STDOUT:     shared_values:
+// CHECK:STDOUT:       ints:            {}
+// CHECK:STDOUT:       reals:           {}
+// CHECK:STDOUT:       floats:          {}
+// CHECK:STDOUT:       identifiers:     {}
+// CHECK:STDOUT:       strings:         {}
 // CHECK:STDOUT: ...

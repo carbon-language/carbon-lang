@@ -20,6 +20,14 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT: ---
 // CHECK:STDOUT: filename:        one_file.carbon
 // CHECK:STDOUT: sem_ir:
+// CHECK:STDOUT:   names:
+// CHECK:STDOUT:     name0:           Foo
+// CHECK:STDOUT:     name1:           T
+// CHECK:STDOUT:     name2:           p
+// CHECK:STDOUT:     name3:           Copy
+// CHECK:STDOUT:     name4:           Op
+// CHECK:STDOUT:     name5:           U
+// CHECK:STDOUT:     name6:           V
 // CHECK:STDOUT:   import_irs:
 // CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
@@ -311,44 +319,60 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     function60000004: {name: name4, parent_scope: name_scope6000000B, return_type_inst_id: inst600000D4, return_patterns_id: inst_block60000046}
 // CHECK:STDOUT:     function60000005: {name: name4, parent_scope: name_scope6000000C, return_type_inst_id: inst60000110, return_patterns_id: inst_block6000005F}
 // CHECK:STDOUT:   classes:         {}
+// CHECK:STDOUT:   interfaces:
+// CHECK:STDOUT:     interface60000000: {name: name3, parent_scope: name_scope60000001, require_impls_block_id: require_block_empty}
+// CHECK:STDOUT:   associated_constants: {}
+// CHECK:STDOUT:   impls:
+// CHECK:STDOUT:     impl60000000:    {self: inst60000086, constraint: inst60000087, witness: inst60000061}
+// CHECK:STDOUT:     impl60000001:    {self: inst60000091, constraint: inst60000092, witness: inst6000008F}
+// CHECK:STDOUT:     impl60000002:    {self: inst60000095, constraint: inst60000096, witness: inst60000093}
+// CHECK:STDOUT:     impl60000003:    {self: inst60000099, constraint: inst6000009A, witness: inst60000097}
+// CHECK:STDOUT:     impl60000004:    {self: inst6000009D, constraint: inst6000009E, witness: inst6000009B}
+// CHECK:STDOUT:     impl60000005:    {self: inst600000A5, constraint: inst600000A6, witness: inst6000009F}
+// CHECK:STDOUT:     impl60000006:    {self: inst600000BC, constraint: inst600000BD, witness: inst600000BA}
+// CHECK:STDOUT:     impl60000007:    {self: inst600000C0, constraint: inst600000C1, witness: inst600000BE}
+// CHECK:STDOUT:     impl60000008:    {self: inst600000F1, constraint: inst600000F2, witness: inst600000C2}
+// CHECK:STDOUT:     impl60000009:    {self: inst60000136, constraint: inst60000137, witness: inst600000FE}
 // CHECK:STDOUT:   generics:
-// CHECK:STDOUT:     generic60000000: {decl: inst60000038, bindings: inst_block60000013}
-// CHECK:STDOUT:     generic60000001: {decl: inst60000052, bindings: inst_block6000001C}
-// CHECK:STDOUT:     generic60000002: {decl: inst60000062, bindings: inst_block6000002D}
-// CHECK:STDOUT:     generic60000003: {decl: inst60000069, bindings: inst_block60000026}
-// CHECK:STDOUT:     generic60000004: {decl: inst600000A0, bindings: inst_block60000035}
-// CHECK:STDOUT:     generic60000005: {decl: inst600000AB, bindings: inst_block6000003A}
-// CHECK:STDOUT:     generic60000006: {decl: inst600000C3, bindings: inst_block60000051}
-// CHECK:STDOUT:     generic60000007: {decl: inst600000CA, bindings: inst_block60000047}
-// CHECK:STDOUT:     generic60000008: {decl: inst600000FF, bindings: inst_block6000006B}
-// CHECK:STDOUT:     generic60000009: {decl: inst60000106, bindings: inst_block60000060}
+// CHECK:STDOUT:     generic60000000: {decl: inst60000038, bindings: inst_block60000013, self_specific_id: specific60000000, decl_block_id: inst_block60000015, definition_block_id: inst_block6000007B}
+// CHECK:STDOUT:     generic60000001: {decl: inst60000052, bindings: inst_block6000001C, self_specific_id: specific60000001, decl_block_id: inst_block6000001D, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     generic60000002: {decl: inst60000062, bindings: inst_block6000002D, self_specific_id: specific60000002, decl_block_id: inst_block6000002F, definition_block_id: inst_block60000031}
+// CHECK:STDOUT:     generic60000003: {decl: inst60000069, bindings: inst_block60000026, self_specific_id: specific60000004, decl_block_id: inst_block60000027, definition_block_id: inst_block6000002A}
+// CHECK:STDOUT:     generic60000004: {decl: inst600000A0, bindings: inst_block60000035, self_specific_id: specific60000007, decl_block_id: inst_block60000037, definition_block_id: inst_block6000003E}
+// CHECK:STDOUT:     generic60000005: {decl: inst600000AB, bindings: inst_block6000003A, self_specific_id: specific60000009, decl_block_id: inst_block6000003B, definition_block_id: inst_block_empty}
+// CHECK:STDOUT:     generic60000006: {decl: inst600000C3, bindings: inst_block60000051, self_specific_id: specific6000000A, decl_block_id: inst_block60000055, definition_block_id: inst_block60000057}
+// CHECK:STDOUT:     generic60000007: {decl: inst600000CA, bindings: inst_block60000047, self_specific_id: specific6000000C, decl_block_id: inst_block60000049, definition_block_id: inst_block6000004E}
+// CHECK:STDOUT:     generic60000008: {decl: inst600000FF, bindings: inst_block6000006B, self_specific_id: specific60000010, decl_block_id: inst_block6000006F, definition_block_id: inst_block60000071}
+// CHECK:STDOUT:     generic60000009: {decl: inst60000106, bindings: inst_block60000060, self_specific_id: specific60000012, decl_block_id: inst_block60000062, definition_block_id: inst_block60000068}
 // CHECK:STDOUT:   specifics:
-// CHECK:STDOUT:     specific60000000: {generic: generic60000000, args: inst_block60000014}
-// CHECK:STDOUT:     specific60000001: {generic: generic60000001, args: inst_block6000001E}
-// CHECK:STDOUT:     specific60000002: {generic: generic60000002, args: inst_block60000021}
-// CHECK:STDOUT:     specific60000003: {generic: generic60000001, args: inst_block60000021}
-// CHECK:STDOUT:     specific60000004: {generic: generic60000003, args: inst_block60000021}
-// CHECK:STDOUT:     specific60000005: {generic: generic60000001, args: inst_block60000029}
-// CHECK:STDOUT:     specific60000006: {generic: generic60000002, args: inst_block6000002E}
-// CHECK:STDOUT:     specific60000007: {generic: generic60000004, args: inst_block60000014}
-// CHECK:STDOUT:     specific60000008: {generic: generic60000004, args: inst_block60000036}
-// CHECK:STDOUT:     specific60000009: {generic: generic60000005, args: inst_block60000014}
-// CHECK:STDOUT:     specific6000000A: {generic: generic60000006, args: inst_block60000041}
-// CHECK:STDOUT:     specific6000000B: {generic: generic60000001, args: inst_block6000004A}
-// CHECK:STDOUT:     specific6000000C: {generic: generic60000007, args: inst_block60000041}
-// CHECK:STDOUT:     specific6000000D: {generic: generic60000001, args: inst_block6000004C}
-// CHECK:STDOUT:     specific6000000E: {generic: generic60000001, args: inst_block6000004D}
-// CHECK:STDOUT:     specific6000000F: {generic: generic60000006, args: inst_block60000052}
-// CHECK:STDOUT:     specific60000010: {generic: generic60000008, args: inst_block6000005A}
-// CHECK:STDOUT:     specific60000011: {generic: generic60000001, args: inst_block60000063}
-// CHECK:STDOUT:     specific60000012: {generic: generic60000009, args: inst_block6000005A}
-// CHECK:STDOUT:     specific60000013: {generic: generic60000001, args: inst_block60000065}
-// CHECK:STDOUT:     specific60000014: {generic: generic60000001, args: inst_block60000066}
-// CHECK:STDOUT:     specific60000015: {generic: generic60000001, args: inst_block60000067}
-// CHECK:STDOUT:     specific60000016: {generic: generic60000008, args: inst_block6000006C}
-// CHECK:STDOUT:     specific60000017: {generic: generic60000004, args: inst_block60000073}
-// CHECK:STDOUT:     specific60000018: {generic: generic60000001, args: inst_block60000076}
-// CHECK:STDOUT:     specific60000019: {generic: generic60000001, args: inst_block60000078}
+// CHECK:STDOUT:     specific60000000: {generic: generic60000000, args: inst_block60000014, decl_block_id: inst_block60000016, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific60000001: {generic: generic60000001, args: inst_block6000001E, decl_block_id: inst_block6000001F, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific60000002: {generic: generic60000002, args: inst_block60000021, decl_block_id: inst_block60000022, definition_block_id: inst_block60000023}
+// CHECK:STDOUT:     specific60000003: {generic: generic60000001, args: inst_block60000021, decl_block_id: inst_block60000028, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific60000004: {generic: generic60000003, args: inst_block60000021, decl_block_id: inst_block6000002B, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific60000005: {generic: generic60000001, args: inst_block60000029, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific60000006: {generic: generic60000002, args: inst_block6000002E, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific60000007: {generic: generic60000004, args: inst_block60000014, decl_block_id: inst_block60000033, definition_block_id: inst_block60000072}
+// CHECK:STDOUT:     specific60000008: {generic: generic60000004, args: inst_block60000036, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific60000009: {generic: generic60000005, args: inst_block60000014, decl_block_id: inst_block6000003C, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific6000000A: {generic: generic60000006, args: inst_block60000041, decl_block_id: inst_block60000043, definition_block_id: inst_block60000044}
+// CHECK:STDOUT:     specific6000000B: {generic: generic60000001, args: inst_block6000004A, decl_block_id: inst_block6000004B, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific6000000C: {generic: generic60000007, args: inst_block60000041, decl_block_id: inst_block6000004F, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific6000000D: {generic: generic60000001, args: inst_block6000004C, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific6000000E: {generic: generic60000001, args: inst_block6000004D, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific6000000F: {generic: generic60000006, args: inst_block60000052, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific60000010: {generic: generic60000008, args: inst_block6000005A, decl_block_id: inst_block6000005C, definition_block_id: inst_block6000005D}
+// CHECK:STDOUT:     specific60000011: {generic: generic60000001, args: inst_block60000063, decl_block_id: inst_block60000064, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific60000012: {generic: generic60000009, args: inst_block6000005A, decl_block_id: inst_block60000069, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific60000013: {generic: generic60000001, args: inst_block60000065, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific60000014: {generic: generic60000001, args: inst_block60000066, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific60000015: {generic: generic60000001, args: inst_block60000067, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific60000016: {generic: generic60000008, args: inst_block6000006C, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific60000017: {generic: generic60000004, args: inst_block60000073, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific60000018: {generic: generic60000001, args: inst_block60000076, decl_block_id: inst_block60000077, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     specific60000019: {generic: generic60000001, args: inst_block60000078, decl_block_id: inst_block<none>, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:   specific_interfaces:
+// CHECK:STDOUT:     specific_interface60000000: {interface_id: interface60000000, specific_id: specific<none>}
 // CHECK:STDOUT:   struct_type_fields:
 // CHECK:STDOUT:     struct_type_fields_empty: {}
 // CHECK:STDOUT:   types:
@@ -392,6 +416,9 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst60000024)}
 // CHECK:STDOUT:     'type(inst(BoundMethodType))':
 // CHECK:STDOUT:       value_repr:      {kind: copy, type: type(inst(BoundMethodType))}
+// CHECK:STDOUT:   facet_types:
+// CHECK:STDOUT:     facet_type60000000: {}
+// CHECK:STDOUT:     facet_type60000001: {extends interface: interface60000000}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     instE:           {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst6000000F:    {kind: ImportDecl, arg0: name(Core)}
@@ -1908,4 +1935,19 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:       0:               instE
 // CHECK:STDOUT:       1:               inst6000000F
 // CHECK:STDOUT:       2:               inst60000038
+// CHECK:STDOUT:   value_stores:
+// CHECK:STDOUT:     shared_values:
+// CHECK:STDOUT:       ints:            {}
+// CHECK:STDOUT:       reals:           {}
+// CHECK:STDOUT:       floats:          {}
+// CHECK:STDOUT:       identifiers:
+// CHECK:STDOUT:         identifier0:     Foo
+// CHECK:STDOUT:         identifier1:     T
+// CHECK:STDOUT:         identifier2:     p
+// CHECK:STDOUT:         identifier3:     Copy
+// CHECK:STDOUT:         identifier4:     Op
+// CHECK:STDOUT:         identifier5:     U
+// CHECK:STDOUT:         identifier6:     V
+// CHECK:STDOUT:       strings:
+// CHECK:STDOUT:         string0:         prelude
 // CHECK:STDOUT: ...

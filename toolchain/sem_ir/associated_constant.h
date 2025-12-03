@@ -22,7 +22,9 @@ namespace Carbon::SemIR {
 struct AssociatedConstant : public Printable<AssociatedConstant> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{"
-        << "name: " << name_id << ", parent_scope: " << parent_scope_id << "}";
+        << "name: " << name_id << ", parent_scope: " << parent_scope_id
+        << ", decl_id: " << decl_id << ", generic_id: " << generic_id
+        << ", default_value_id: " << default_value_id << "}";
   }
 
   // The following fields are set at the `:!` binding, when the

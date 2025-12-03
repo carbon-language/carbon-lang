@@ -19,6 +19,13 @@ struct SpecificInterface {
   InterfaceId interface_id;
   SpecificId specific_id;
 
+  friend auto operator<<(llvm::raw_ostream& out, SpecificInterface si)
+      -> llvm::raw_ostream& {
+    out << "{interface_id: " << si.interface_id
+        << ", specific_id: " << si.specific_id << "}";
+    return out;
+  }
+
   friend auto operator==(const SpecificInterface& lhs,
                          const SpecificInterface& rhs) -> bool = default;
 };

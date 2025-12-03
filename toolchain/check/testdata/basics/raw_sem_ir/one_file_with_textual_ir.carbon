@@ -20,6 +20,9 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT: ---
 // CHECK:STDOUT: filename:        one_file_with_textual_ir.carbon
 // CHECK:STDOUT: sem_ir:
+// CHECK:STDOUT:   names:
+// CHECK:STDOUT:     name0:           Foo
+// CHECK:STDOUT:     name1:           n
 // CHECK:STDOUT:   import_irs:
 // CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
@@ -33,8 +36,12 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function60000000: {name: name0, parent_scope: name_scope0, call_params_id: inst_block6000000B, return_type_inst_id: inst6000001F, return_patterns_id: inst_block6000000A, body: [inst_block6000000E]}
 // CHECK:STDOUT:   classes:         {}
+// CHECK:STDOUT:   interfaces:      {}
+// CHECK:STDOUT:   associated_constants: {}
+// CHECK:STDOUT:   impls:           {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
+// CHECK:STDOUT:   specific_interfaces: {}
 // CHECK:STDOUT:   struct_type_fields:
 // CHECK:STDOUT:     struct_type_fields_empty: {}
 // CHECK:STDOUT:   types:
@@ -52,6 +59,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       value_repr:      {kind: pointer, type: type(inst6000001C)}
 // CHECK:STDOUT:     'type(inst60000028)':
 // CHECK:STDOUT:       value_repr:      {kind: none, type: type(inst6000000F)}
+// CHECK:STDOUT:   facet_types:     {}
 // CHECK:STDOUT:   insts:
 // CHECK:STDOUT:     instE:           {kind: Namespace, arg0: name_scope0, arg1: inst<none>, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst6000000F:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
@@ -195,6 +203,15 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst_block60000012:
 // CHECK:STDOUT:       0:               instE
 // CHECK:STDOUT:       1:               inst60000027
+// CHECK:STDOUT:   value_stores:
+// CHECK:STDOUT:     shared_values:
+// CHECK:STDOUT:       ints:            {}
+// CHECK:STDOUT:       reals:           {}
+// CHECK:STDOUT:       floats:          {}
+// CHECK:STDOUT:       identifiers:
+// CHECK:STDOUT:         identifier0:     Foo
+// CHECK:STDOUT:         identifier1:     n
+// CHECK:STDOUT:       strings:         {}
 // CHECK:STDOUT: ...
 // CHECK:STDOUT: --- one_file_with_textual_ir.carbon
 // CHECK:STDOUT:

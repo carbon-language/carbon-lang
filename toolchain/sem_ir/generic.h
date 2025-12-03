@@ -17,7 +17,10 @@ namespace Carbon::SemIR {
 // Note that this includes both checked generics and template generics.
 struct Generic : public Printable<Generic> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{decl: " << decl_id << ", bindings: " << bindings_id << "}";
+    out << "{decl: " << decl_id << ", bindings: " << bindings_id
+        << ", self_specific_id: " << self_specific_id
+        << ", decl_block_id: " << decl_block_id
+        << ", definition_block_id: " << definition_block_id << "}";
   }
 
   // Returns the eval block for the specified region of the generic. This is a
@@ -69,7 +72,9 @@ class GenericStore : public ValueStore<GenericId, Generic> {
 // values for the compile-time parameters themselves.
 struct Specific : Printable<Specific> {
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{generic: " << generic_id << ", args: " << args_id << "}";
+    out << "{generic: " << generic_id << ", args: " << args_id
+        << ", decl_block_id: " << decl_block_id
+        << ", definition_block_id: " << definition_block_id << "}";
   }
 
   // Returns true if this specific has never been resolved. Such specifics are

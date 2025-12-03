@@ -33,7 +33,14 @@ static auto DumpConstantSummary(const File& file, ConstantId const_id)
   if (const_id.is_symbolic()) {
     out << ": " << file.constant_values().GetSymbolicConstant(const_id);
   } else if (const_id.is_concrete()) {
-    out << ": " << file.insts().Get(file.constant_values().GetInstId(const_id));
+    out << ": "
+        << file.insts().GetWithAttachedType(
+               file.constant_values().GetInstId(const_id));
+  }
+  if (file.constant_values().IsAttached(const_id)) {
+    out << " (attached)";
+  } else {
+    out << " (unattached)";
   }
   return out.TakeStr();
 }
@@ -55,7 +62,7 @@ static auto DumpInstSummary(const File& file, InstId inst_id) -> std::string {
   out << inst_id;
   if (inst_id.has_value() && inst_id != InstId::InitTombstone &&
       inst_id != InstId::ImplWitnessTablePlaceholder) {
-    out << ": " << file.insts().Get(inst_id);
+    out << ": " << file.insts().GetWithAttachedType(inst_id);
   }
   return out.TakeStr();
 }
@@ -89,8 +96,13 @@ LLVM_DUMP_METHOD auto Dump(const File& file, ConstantId const_id)
   }
   if (const_id.is_symbolic()) {
     const auto& symbolic = file.constant_values().GetSymbolicConstant(const_id);
-    out << ": " << symbolic << '\n'
-        << Dump(file, symbolic.inst_id) << '\n'
+    out << ": " << symbolic;
+    if (file.constant_values().IsAttached(const_id)) {
+      out << " (attached)\n";
+    } else {
+      out << " (unattached)\n";
+    }
+    out << Dump(file, symbolic.inst_id) << '\n'
         << DumpGenericSummary(file, symbolic.generic_id);
   } else if (const_id.is_concrete()) {
     out << ": " << Dump(file, file.constant_values().GetInstId(const_id));
@@ -244,7 +256,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InstId inst_id) -> std::string {
     return out.TakeStr();
   }
 
-  Inst inst = file.insts().Get(inst_id);
+  Inst inst = file.insts().GetWithAttachedType(inst_id);
 
   if (inst.arg0_and_kind().kind() == IdKind::For<EntityNameId>) {
     auto entity_name_id = EntityNameId(inst.arg0());
@@ -256,7 +268,7 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InstId inst_id) -> std::string {
   if (inst.type_id().has_value()) {
     out << "\n  - type: " << Dump(file, inst.type_id());
   }
-  ConstantId const_id = file.constant_values().Get(inst_id);
+  ConstantId const_id = file.constant_values().GetAttached(inst_id);
   if (const_id.has_value()) {
     InstId const_inst_id = file.constant_values().GetInstId(const_id);
     out << "\n  - value: ";
@@ -298,8 +310,13 @@ LLVM_DUMP_METHOD auto Dump(const File& file, LocId loc_id) -> std::string {
       auto import_ir_id =
           file.import_ir_insts().Get(loc_id.import_ir_inst_id()).ir_id();
       const auto* import_file = file.import_irs().Get(import_ir_id).sem_ir;
-      out << "LocId(import from \"" << FormatEscaped(import_file->filename())
-          << "\")";
+      out << "LocId(import from ";
+      if (import_file == nullptr) {
+        out << "unknown file";
+      } else {
+        out << "\"" << FormatEscaped(import_file->filename()) << "\"";
+      }
+      out << ")";
       break;
     }
 
@@ -461,6 +478,11 @@ LLVM_DUMP_METHOD auto Dump(const File& file, TypeId type_id) -> std::string {
   InstId inst_id = file.types().GetInstId(type_id);
   out << ": " << StringifyConstantInst(file, inst_id) << "; "
       << file.insts().Get(inst_id);
+  if (file.types().IsAttached(type_id)) {
+    out << " (attached)";
+  } else {
+    out << " (unattached)";
+  }
   return out.TakeStr();
 }
 

@@ -139,6 +139,10 @@ class ConstantValueStore {
     return values_.GetWithDefault(inst_id, default_);
   }
 
+  auto IsAttached(ConstantId const_id) const -> bool {
+    return const_id != GetUnattachedConstant(const_id);
+  }
+
   // Sets the constant value of the given instruction, or sets that it is known
   // to not be a constant.
   auto Set(InstId inst_id, ConstantId const_id) -> void {

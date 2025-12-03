@@ -60,6 +60,7 @@ class CanonicalValueStore {
     return values_.values();
   }
   auto size() const -> size_t { return values_.size(); }
+  auto enumerate() const -> auto { return values_.enumerate(); }
 
   // Collects memory usage of the values and deduplication set.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
