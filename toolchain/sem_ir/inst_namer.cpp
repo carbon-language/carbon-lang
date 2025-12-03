@@ -769,8 +769,8 @@ auto InstNamer::NamingContext::AddWitnessTableName(InstId witness_table_inst_id,
   auto witness_table =
       sem_ir().insts().TryGetAs<ImplWitnessTable>(witness_table_inst_id);
   if (!witness_table || !witness_table->impl_id.has_value()) {
-    // TODO: If `impl_id` is None, the witness comes from a facet value. Can we get the
-    // interface names from it? Store the facet value instruction in the
+    // TODO: If `impl_id` is None, the witness comes from a facet value. Can we
+    // get the interface names from it? Store the facet value instruction in the
     // table?
     AddInstName(name);
     return;
