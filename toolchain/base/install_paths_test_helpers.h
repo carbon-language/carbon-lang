@@ -2,11 +2,11 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_INSTALL_INSTALL_PATHS_TEST_HELPERS_H_
-#define CARBON_TOOLCHAIN_INSTALL_INSTALL_PATHS_TEST_HELPERS_H_
+#ifndef CARBON_TOOLCHAIN_BASE_INSTALL_PATHS_TEST_HELPERS_H_
+#define CARBON_TOOLCHAIN_BASE_INSTALL_PATHS_TEST_HELPERS_H_
 
 #include "llvm/Support/VirtualFileSystem.h"
-#include "toolchain/install/install_paths.h"
+#include "toolchain/base/install_paths.h"
 
 namespace Carbon::Testing {
 
@@ -17,4 +17,4 @@ auto AddPreludeFilesToVfs(
 
 }  // namespace Carbon::Testing
 
-#endif  // CARBON_TOOLCHAIN_INSTALL_INSTALL_PATHS_TEST_HELPERS_H_
+#endif  // CARBON_TOOLCHAIN_BASE_INSTALL_PATHS_TEST_HELPERS_H_

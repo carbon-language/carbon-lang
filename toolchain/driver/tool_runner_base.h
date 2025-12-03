@@ -10,7 +10,7 @@
 #include "common/ostream.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
-#include "toolchain/install/install_paths.h"
+#include "toolchain/base/install_paths.h"
 
 namespace Carbon {
 

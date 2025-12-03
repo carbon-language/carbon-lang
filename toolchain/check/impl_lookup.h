@@ -96,18 +96,28 @@ class [[nodiscard]] EvalImplLookupResult {
   Value value_;
 };
 
+// The kind of impl lookup being performed by a call to
+// `EvalLookupSingleImplWitness`.
+enum class EvalImplLookupMode {
+  // This is a regular impl lookup performed during check. If we produce a final
+  // witness value that uses a specializable impl, the query will be poisoned so
+  // that we will recheck it at the end of the compilation.
+  Normal,
+  // This is a re-check of a poisoned lookup being performed at the end of a
+  // file. This disables any caching of lookup results for this query and redoes
+  // the impl lookup.
+  RecheckPoisonedLookup,
+};
+
 // Looks for a witness instruction of an impl declaration for a query consisting
 // of a type value or facet value, and a single interface. This is for eval to
 // execute lookup via the LookupImplWitness instruction. It does not consider
 // the self facet value for finding a witness, since LookupImplWitness() would
 // have found that and not caused us to defer lookup to here.
-//
-// `poison_final_results` poisons lookup results which are effectively final,
-// preventing overlapping final impls.
 auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
                                  SemIR::LookupImplWitness eval_query,
                                  SemIR::InstId self_facet_value_inst_id,
-                                 bool poison_final_results)
+                                 EvalImplLookupMode mode)
     -> EvalImplLookupResult;
 
 }  // namespace Carbon::Check

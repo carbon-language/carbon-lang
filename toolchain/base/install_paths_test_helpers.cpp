@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/install/install_paths_test_helpers.h"
+#include "toolchain/base/install_paths_test_helpers.h"
 
 #include <memory>
 #include <utility>

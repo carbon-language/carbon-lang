@@ -921,7 +921,7 @@ static auto GetFacetAsType(Context& context, SemIR::LocId loc_id,
 auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
                                  SemIR::LookupImplWitness eval_query,
                                  SemIR::InstId self_facet_value_inst_id,
-                                 bool poison_final_results)
+                                 EvalImplLookupMode mode)
     -> EvalImplLookupResult {
   auto query_specific_interface =
       context.specific_interfaces().Get(eval_query.query_specific_interface_id);
@@ -937,6 +937,17 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
       context.insts().Get(eval_query.query_self_inst_id).type_id()));
   SemIR::ConstantId query_self_const_id =
       context.constant_values().Get(eval_query.query_self_inst_id);
+
+  // Check to see if this result is in the cache. But skip the cache if
+  // //we're re-checking a poisoned result and need to redo the lookup.
+  std::pair impl_lookup_cache_key = {query_self_const_id,
+                                     eval_query.query_specific_interface_id};
+  if (mode != EvalImplLookupMode::RecheckPoisonedLookup) {
+    if (auto result =
+            context.impl_lookup_cache().Lookup(impl_lookup_cache_key)) {
+      return EvalImplLookupResult::MakeFinal(result.value());
+    }
+  }
 
   // The kind of lookup we're performing, which determines what kind of result
   // we provide.
@@ -1023,7 +1034,8 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
       // If the impl was effectively final, then we don't need to poison here. A
       // change of query result will already be diagnosed at the point where the
       // new impl decl was written that changes the result.
-      if (poison_final_results && result.has_final_value() &&
+      if (mode != EvalImplLookupMode::RecheckPoisonedLookup &&
+          result.has_final_value() &&
           !IsImplEffectivelyFinal(context,
                                   context.impls().Get(candidate.impl_id))) {
         context.poisoned_concrete_impl_lookup_queries().push_back(
@@ -1042,8 +1054,14 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
             SemIR::LocId(
                 context.impls().Get(candidate.impl_id).first_owning_decl_id));
         if (cpp_witness_id.has_value()) {
-          return EvalImplLookupResult::MakeFinal(cpp_witness_id);
+          result = EvalImplLookupResult::MakeFinal(cpp_witness_id);
         }
+      }
+
+      if (mode != EvalImplLookupMode::RecheckPoisonedLookup &&
+          result.has_final_value()) {
+        context.impl_lookup_cache().Insert(impl_lookup_cache_key,
+                                           result.final_witness());
       }
 
       return result;
@@ -1061,6 +1079,10 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
             GetFacetAsType(context, loc_id, query_self_const_id),
             query_specific_interface, nullptr, SemIR::LocId::None);
         if (cpp_witness_id.has_value()) {
+          if (mode != EvalImplLookupMode::RecheckPoisonedLookup) {
+            context.impl_lookup_cache().Insert(impl_lookup_cache_key,
+                                               cpp_witness_id);
+          }
           return EvalImplLookupResult::MakeFinal(cpp_witness_id);
         }
       }

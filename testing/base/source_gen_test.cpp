@@ -11,8 +11,8 @@
 
 #include "common/set.h"
 #include "testing/base/global_exe_path.h"
+#include "toolchain/base/install_paths_test_helpers.h"
 #include "toolchain/driver/driver.h"
-#include "toolchain/install/install_paths_test_helpers.h"
 
 namespace Carbon::Testing {
 namespace {

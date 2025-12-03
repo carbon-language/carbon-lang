@@ -31,7 +31,7 @@
 #include "llvm/Support/TimeProfiler.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
-#include "toolchain/install/install_paths.h"
+#include "toolchain/base/install_paths.h"
 
 namespace Carbon {
 
