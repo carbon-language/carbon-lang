@@ -40,9 +40,13 @@ namespace {
 class ClangImportCollector : public clang::DiagnosticRenderer {
  public:
   explicit ClangImportCollector(
-      const clang::LangOptions& lang_opts, clang::DiagnosticOptions& diag_opts,
+      const clang::LangOptions& lang_opts,
+      const clang::DiagnosticOptions& diag_opts,
       llvm::SmallVectorImpl<DiagnosticLocConverter::ImportLoc>* imports)
-      : DiagnosticRenderer(lang_opts, diag_opts), imports_(imports) {}
+      : DiagnosticRenderer(lang_opts,
+                           // Work around lack of const-correctness in Clang.
+                           const_cast<clang::DiagnosticOptions&>(diag_opts)),
+        imports_(imports) {}
 
   void emitDiagnosticMessage(clang::FullSourceLoc loc, clang::PresumedLoc ploc,
                              clang::DiagnosticsEngine::Level /*level*/,
@@ -126,15 +130,16 @@ auto DiagnosticLocConverter::ConvertWithImports(LocId loc_id,
 
   // Convert the C++ import locations.
   if (final_node_id.check_ir_id() == CheckIRId::Cpp) {
-    const clang::ASTUnit* ast = sem_ir_->clang_ast_unit();
+    const SemIR::CppFile* cpp_file = sem_ir_->cpp_file();
+    CARBON_CHECK(cpp_file, "Converting C++ location before C++ file is set");
+
     // Collect the location backtrace that Clang would use for an error here.
-    ClangImportCollector(ast->getLangOpts(),
-                         ast->getDiagnostics().getDiagnosticOptions(),
-                         &result.imports)
+    ClangImportCollector(cpp_file->lang_options(),
+                         cpp_file->diagnostic_options(), &result.imports)
         .emitDiagnostic(
             clang::FullSourceLoc(sem_ir_->clang_source_locs().Get(
                                      final_node_id.clang_source_loc_id()),
-                                 ast->getSourceManager()),
+                                 cpp_file->source_manager()),
             clang::DiagnosticsEngine::Error, "", {}, {});
   }
 
@@ -174,8 +179,8 @@ auto DiagnosticLocConverter::ConvertImpl(
   clang::SourceLocation clang_loc =
       sem_ir_->clang_source_locs().Get(clang_source_loc_id);
 
-  CARBON_CHECK(sem_ir_->clang_ast_unit());
-  const auto& src_mgr = sem_ir_->clang_ast_unit()->getSourceManager();
+  CARBON_CHECK(sem_ir_->cpp_file());
+  const auto& src_mgr = sem_ir_->cpp_file()->source_manager();
   clang::PresumedLoc presumed_loc = src_mgr.getPresumedLoc(clang_loc);
   if (presumed_loc.isInvalid()) {
     return Diagnostics::ConvertedLoc();

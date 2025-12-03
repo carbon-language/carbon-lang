@@ -159,6 +159,7 @@ cc_library(
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:absolute_node_id",
         "//toolchain/sem_ir:clang_decl",
+        "//toolchain/sem_ir:cpp_file",
         "//toolchain/sem_ir:expr_info",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:formatter",

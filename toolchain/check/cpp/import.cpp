@@ -16,7 +16,6 @@
 #include "clang/AST/UnresolvedSet.h"
 #include "clang/AST/VTableBuilder.h"
 #include "clang/Basic/FileManager.h"
-#include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/TextDiagnostic.h"
@@ -62,6 +61,7 @@
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/class.h"
+#include "toolchain/sem_ir/cpp_file.h"
 #include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
@@ -278,8 +278,9 @@ class CarbonClangDiagnosticConsumer : public clang::DiagnosticConsumer {
   // Outputs Carbon diagnostics based on the collected Clang diagnostics. Must
   // be called after the AST is set in the context.
   auto EmitDiagnostics() -> void {
-    CARBON_CHECK(sem_ir_->clang_ast_unit(),
-                 "Attempted to emit diagnostics before the AST Unit is loaded");
+    CARBON_CHECK(
+        sem_ir_->cpp_file(),
+        "Attempted to emit C++ diagnostics before the C++ file is set");
 
     for (size_t i = 0; i != diagnostic_infos_.size(); ++i) {
       const ClangDiagnosticInfo& info = diagnostic_infos_[i];
@@ -388,15 +389,14 @@ class ShallowCopyCompilerInvocation : public clang::CompilerInvocation {
 
 }  // namespace
 
-// Returns an AST for the C++ imports and a bool that represents whether
-// compilation errors where encountered or the generated AST is null due to an
-// error. Sets the AST in the context's `sem_ir`.
-// TODO: Consider to always have a (non-null) AST.
+// Generates a Clang AST for the C++ imports and sets it in the context's
+// `sem_ir`. Returns a bool that represents whether compilation was successful.
+// TODO: Consider to always have a (non-null) AST even if there are no Cpp
+// imports.
 static auto GenerateAst(
     Context& context, llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-    std::shared_ptr<clang::CompilerInvocation> base_invocation)
-    -> std::pair<std::unique_ptr<clang::ASTUnit>, bool> {
+    std::shared_ptr<clang::CompilerInvocation> base_invocation) -> bool {
   auto invocation =
       std::make_shared<ShallowCopyCompilerInvocation>(*base_invocation);
 
@@ -434,12 +434,13 @@ static auto GenerateAst(
   // Attach the AST to SemIR. This needs to be done before we can emit any
   // diagnostics, so their locations can be properly interpreted by our
   // diagnostics machinery.
-  context.sem_ir().set_clang_ast_unit(ast.get());
+  context.sem_ir().set_cpp_file(
+      std::make_unique<SemIR::CppFile>(std::move(ast)));
 
   // Emit any diagnostics we queued up while building the AST.
   context.emitter().Flush();
 
-  return {std::move(ast), !ast || trap.hasErrorOccurred()};
+  return !trap.hasErrorOccurred();
 }
 
 // Adds a namespace for the `Cpp` import and returns its `NameScopeId`.
@@ -462,16 +463,15 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
       .add_result.name_scope_id;
 }
 
-auto ImportCppFiles(Context& context,
-                    llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-                    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                    std::shared_ptr<clang::CompilerInvocation> invocation)
-    -> std::unique_ptr<clang::ASTUnit> {
+auto ImportCpp(Context& context,
+               llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
+               llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+               std::shared_ptr<clang::CompilerInvocation> invocation) -> void {
   if (imports.empty()) {
-    return nullptr;
+    return;
   }
 
-  CARBON_CHECK(!context.sem_ir().clang_ast_unit());
+  CARBON_CHECK(!context.sem_ir().cpp_file());
 
   PackageNameId package_id = imports.front().package_id;
   CARBON_CHECK(
@@ -480,21 +480,19 @@ auto ImportCppFiles(Context& context,
       }));
   auto name_scope_id = AddNamespace(context, package_id, imports);
 
-  auto [generated_ast, ast_has_error] =
-      GenerateAst(context, imports, fs, std::move(invocation));
+  bool ast_has_error =
+      !GenerateAst(context, imports, fs, std::move(invocation));
 
   SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
   name_scope.set_is_closed_import(true);
   name_scope.set_clang_decl_context_id(context.clang_decls().Add(
-      {.key = SemIR::ClangDeclKey(
-           generated_ast->getASTContext().getTranslationUnitDecl()),
+      {.key =
+           SemIR::ClangDeclKey(context.ast_context().getTranslationUnitDecl()),
        .inst_id = name_scope.inst_id()}));
 
   if (ast_has_error) {
     name_scope.set_has_error();
   }
-
-  return std::move(generated_ast);
 }
 
 // Returns the Clang `DeclContext` for the given name scope. Return the
@@ -2472,8 +2470,8 @@ auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
                                        SemIR::ClassId class_id,
                                        SemIR::ClangDeclId clang_decl_id)
     -> bool {
-  clang::ASTUnit* ast = context.sem_ir().clang_ast_unit();
-  CARBON_CHECK(ast);
+  SemIR::CppFile* cpp_file = context.sem_ir().cpp_file();
+  CARBON_CHECK(cpp_file);
 
   auto* clang_decl =
       cast<clang::TagDecl>(context.clang_decls().Get(clang_decl_id).key.decl);
@@ -2494,8 +2492,8 @@ auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
 
   // Ask Clang whether the type is complete. This triggers template
   // instantiation if necessary.
-  clang::DiagnosticErrorTrap trap(ast->getDiagnostics());
-  if (!ast->getSema().isCompleteType(
+  clang::DiagnosticErrorTrap trap(cpp_file->diagnostics());
+  if (!cpp_file->sema().isCompleteType(
           loc, context.ast_context().getCanonicalTagType(clang_decl))) {
     // Type is incomplete. Nothing more to do, but tell the caller if we
     // produced an error.

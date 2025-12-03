@@ -64,6 +64,20 @@ cc_library(
 )
 
 cc_library(
+    name = "cpp_file",
+    srcs = ["cpp_file.cpp"],
+    hdrs = ["cpp_file.h"],
+    deps = [
+        "//common:check",
+        "@llvm-project//clang:ast",
+        "@llvm-project//clang:basic",
+        "@llvm-project//clang:frontend",
+        "@llvm-project//clang:sema",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "file",
     srcs = [
         "builtin_function_kind.cpp",
@@ -118,6 +132,7 @@ cc_library(
     ],
     deps = [
         ":clang_decl",
+        ":cpp_file",
         ":typed_insts",
         "//common:check",
         "//common:enum_base",
