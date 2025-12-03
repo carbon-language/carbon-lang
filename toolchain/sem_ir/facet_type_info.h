@@ -216,8 +216,8 @@ inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
 // Given an array of witnesses, sorts them to match the FacetTypeInfo ordering
 // and returns the resulting block ID.
 auto GetCanonicalWitnessesBlock(File& sem_ir,
-                                llvm::SmallVector<SemIR::InstId>& witnesses)
-    -> SemIR::InstBlockId;
+                                llvm::SmallVector<InstId>& witnesses)
+    -> InstBlockId;
 
 }  // namespace Carbon::SemIR
 

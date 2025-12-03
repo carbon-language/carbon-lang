@@ -235,19 +235,19 @@ IdentifiedFacetType::IdentifiedFacetType(
 }
 
 auto GetCanonicalWitnessesBlock(File& sem_ir,
-                                llvm::SmallVector<SemIR::InstId>& witnesses)
-    -> SemIR::InstBlockId {
+                                llvm::SmallVector<InstId>& witnesses)
+    -> InstBlockId {
   // Small blocks don't need to be sorted.
   if (witnesses.size() <= 1) {
     return sem_ir.inst_blocks().AddCanonical(witnesses);
   }
 
-  llvm::SmallVector<std::pair<SpecificInterface, SemIR::InstId>> sortable;
+  llvm::SmallVector<std::pair<SpecificInterface, InstId>> sortable;
   sortable.reserve(witnesses.size());
 
   // Produce the sorted order based on the witness's SpecificInterface.
   for (auto witness_id : witnesses) {
-    auto witness = sem_ir.insts().GetAs<SemIR::LookupImplWitness>(witness_id);
+    auto witness = sem_ir.insts().GetAs<LookupImplWitness>(witness_id);
     sortable.push_back(
         {sem_ir.specific_interfaces().Get(witness.query_specific_interface_id),
          witness_id});
