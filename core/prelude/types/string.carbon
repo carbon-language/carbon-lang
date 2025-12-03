@@ -13,7 +13,6 @@ import library "prelude/types/int";
 import library "prelude/operators/as";
 
 class String {
-
   fn Size[self: Self]() -> u64 { return self.size; }
 
   impl as Copy {
@@ -25,6 +24,6 @@ class String {
   private var size: u64;
 }
 
-impl forall [T:! ImplicitAs(i32)] String as IndexWith(T) where .ElementType = Char {
+impl forall [T:! ImplicitAs(i64)] String as IndexWith(T) where .ElementType = Char {
   fn At[self: Self](subscript: T) -> Char = "string.at";
 }

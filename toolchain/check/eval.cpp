@@ -1698,11 +1698,12 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
 
       auto str_struct = eval_context.insts().GetAs<SemIR::StructValue>(str_id);
       auto elements = eval_context.inst_blocks().Get(str_struct.elements_id);
+      // String struct has two fields: a pointer to the string data and the
+      // length.
       CARBON_CHECK(elements.size() == 2, "String struct should have 2 fields.");
 
-      auto ptr_const_id = eval_context.constant_values().Get(elements[0]);
       auto string_literal = eval_context.insts().GetAs<SemIR::StringLiteral>(
-          eval_context.constant_values().GetInstId(ptr_const_id));
+          eval_context.constant_values().GetConstantInstId(elements[0]));
 
       const auto& string_value =
           eval_context.sem_ir().string_literal_values().Get(
@@ -1712,26 +1713,25 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       const auto& index_val = eval_context.ints().Get(index_inst.int_id);
 
       if (index_val.isNegative()) {
-        CARBON_DIAGNOSTIC(StringIndexNegative, Error,
+        CARBON_DIAGNOSTIC(StringAtIndexNegative, Error,
                           "index `{0}` is negative.", TypedInt);
         context.emitter().Emit(
-            loc_id, StringIndexNegative,
-            {.type = eval_context.insts().Get(arg_ids[1]).type_id(),
+            loc_id, StringAtIndexNegative,
+            {.type = eval_context.insts().Get(index_id).type_id(),
              .value = index_val});
         return SemIR::ConstantId::NotConstant;
       }
 
-      if (index_val.getActiveBits() > 64 ||
-          index_val.getZExtValue() >= string_value.size()) {
+      if (index_val.getZExtValue() >= string_value.size()) {
         CARBON_DIAGNOSTIC(
             StringAtIndexOutOfBounds, Error,
             "string index `{0}` is out of bounds; string has length {1}.",
-            TypedInt, unsigned);
+            TypedInt, size_t);
         context.emitter().Emit(
             loc_id, StringAtIndexOutOfBounds,
-            {.type = eval_context.insts().Get(arg_ids[1]).type_id(),
+            {.type = eval_context.insts().Get(index_id).type_id(),
              .value = index_val},
-            static_cast<unsigned>(string_value.size()));
+            string_value.size());
         return SemIR::ConstantId::NotConstant;
       }
 
@@ -2020,7 +2020,6 @@ static auto MakeConstantForCall(EvalContext& eval_context,
     // Calls to builtins might be constant.
     builtin_kind =
         eval_context.functions().Get(fn->function_id).builtin_function_kind();
-
     if (builtin_kind == SemIR::BuiltinFunctionKind::None) {
       // TODO: Eventually we'll want to treat some kinds of non-builtin
       // functions as producing constants.
