@@ -692,7 +692,7 @@ static auto TypeCanDestroy(Context& context, SemIR::LocId loc_id,
         }
 
         auto obj_repr_id =
-            class_info.GetObjectRepr(context.sem_ir(), SemIR::SpecificId::None);
+            class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
         work.push_back({.id = context.types().GetInstId(obj_repr_id)});
         break;
       }
