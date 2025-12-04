@@ -50,7 +50,7 @@ class CppFile {
 
   // Visit all top-level declarations in the file.
   auto VisitLocalTopLevelDecls(
-      llvm::function_ref<void(const clang::Decl*)> visitor) const -> void;
+      llvm::function_ref<auto(const clang::Decl*)->void> visitor) const -> void;
 
  private:
   std::unique_ptr<clang::ASTUnit> ast_unit_;
