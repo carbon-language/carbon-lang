@@ -230,6 +230,9 @@ class File : public Printable<File> {
   }
   auto cpp_file() -> SemIR::CppFile* { return cpp_file_.get(); }
   auto cpp_file() const -> const SemIR::CppFile* { return cpp_file_.get(); }
+  // TODO: We should be able to create the initial C++ AST before creating the
+  // `File` and initialize the pointer in the constructor instead of using a
+  // setter.
   auto set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void;
   auto clang_mangle_context() -> clang::MangleContext* {
     return clang_mangle_context_.get();

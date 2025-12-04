@@ -82,7 +82,6 @@ auto FileContext::PrepareToLower() -> void {
       auto* non_const_decl = const_cast<clang::Decl*>(decl);
       cpp_code_generator_->HandleTopLevelDecl(
           clang::DeclGroupRef(non_const_decl));
-      return true;
     });
   }
 
