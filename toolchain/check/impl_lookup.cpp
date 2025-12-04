@@ -669,12 +669,6 @@ static auto TypeCanDestroy(Context& context, SemIR::LocId loc_id,
         break;
       }
 
-      case CARBON_KIND(SemIR::BaseDecl base_decl): {
-        work.push_back(
-            {.id = base_decl.base_type_inst_id, .allow_abstract = true});
-        break;
-      }
-
       case CARBON_KIND(SemIR::ClassType class_type): {
         auto class_info = context.classes().Get(class_type.class_id);
         // Incomplete and abstract classes can't be destroyed.
