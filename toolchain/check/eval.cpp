@@ -2082,7 +2082,8 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
     // Build a constant instruction by replacing each non-constant operand with
     // its constant value.
     Phase phase = Phase::Concrete;
-    if (!ReplaceTypeWithConstantValue(eval_context, inst_id, &inst, &phase) ||
+    if ((SemIR::Internal::HasTypeIdMember<InstT> &&
+         !ReplaceTypeWithConstantValue(eval_context, inst_id, &inst, &phase)) ||
         !ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
       if constexpr (ConstantKind == SemIR::InstConstantKind::Always) {
         CARBON_FATAL("{0} should always be constant", InstT::Kind);

@@ -11,7 +11,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//common:check",
-        "//toolchain/install:install_paths",
+        "//toolchain/base:install_paths",
         "@llvm-project//clang:basic",
         "@llvm-project//clang:codegen",
         "@llvm-project//clang:frontend",

@@ -24,11 +24,11 @@
 #include "llvm/TargetParser/Triple.h"
 #include "testing/base/capture_std_streams.h"
 #include "testing/base/global_exe_path.h"
+#include "toolchain/base/install_paths.h"
 #include "toolchain/base/llvm_tools.h"
 #include "toolchain/driver/clang_runner.h"
 #include "toolchain/driver/llvm_runner.h"
 #include "toolchain/driver/runtimes_cache.h"
-#include "toolchain/install/install_paths.h"
 
 namespace Carbon {
 namespace {

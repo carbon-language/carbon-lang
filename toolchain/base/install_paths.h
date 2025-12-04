@@ -2,8 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_INSTALL_INSTALL_PATHS_H_
-#define CARBON_TOOLCHAIN_INSTALL_INSTALL_PATHS_H_
+#ifndef CARBON_TOOLCHAIN_BASE_INSTALL_PATHS_H_
+#define CARBON_TOOLCHAIN_BASE_INSTALL_PATHS_H_
 
 #include <filesystem>
 
@@ -183,4 +183,4 @@ class InstallPaths {
 
 }  // namespace Carbon
 
-#endif  // CARBON_TOOLCHAIN_INSTALL_INSTALL_PATHS_H_
+#endif  // CARBON_TOOLCHAIN_BASE_INSTALL_PATHS_H_
