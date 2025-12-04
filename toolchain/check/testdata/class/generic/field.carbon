@@ -246,7 +246,7 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %pattern_type.loc13_34: type = pattern_type %T.binding.as_type [symbolic = %pattern_type.loc13_34 (constants.%pattern_type.f14b96.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc13_34: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc13_34 (constants.%require_complete.d742dc.1)]
+// CHECK:STDOUT:   %require_complete.loc13_37: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc13_37 (constants.%require_complete.d742dc.1)]
 // CHECK:STDOUT:   %require_complete.loc13_22: <witness> = require_complete_type %Class.loc13_31.1 [symbolic = %require_complete.loc13_22 (constants.%require_complete.366d0c.1)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class.loc13_31.1, %T.binding.as_type [symbolic = %Class.elem (constants.%Class.elem.4f394c.1)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_6.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.c42a3d.1)]
@@ -278,7 +278,7 @@ fn H(U:! Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %pattern_type.loc17_34: type = pattern_type %U.binding.as_type [symbolic = %pattern_type.loc17_34 (constants.%pattern_type.f14b96.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc17_34: <witness> = require_complete_type %U.binding.as_type [symbolic = %require_complete.loc17_34 (constants.%require_complete.d742dc.2)]
+// CHECK:STDOUT:   %require_complete.loc17_37: <witness> = require_complete_type %U.binding.as_type [symbolic = %require_complete.loc17_37 (constants.%require_complete.d742dc.2)]
 // CHECK:STDOUT:   %require_complete.loc17_22: <witness> = require_complete_type %Class.loc17_31.1 [symbolic = %require_complete.loc17_22 (constants.%require_complete.366d0c.2)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class.loc17_31.1, %U.binding.as_type [symbolic = %Class.elem (constants.%Class.elem.4f394c.2)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %U.loc17_6.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.c42a3d.2)]

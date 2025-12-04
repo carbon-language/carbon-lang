@@ -603,9 +603,9 @@ auto MatchContext::EmitPatternMatch(Context& context,
 auto CalleePatternMatch(Context& context,
                         SemIR::InstBlockId implicit_param_patterns_id,
                         SemIR::InstBlockId param_patterns_id,
-                        SemIR::InstId return_slot_pattern_id)
+                        SemIR::InstBlockId return_patterns_id)
     -> SemIR::InstBlockId {
-  if (!return_slot_pattern_id.has_value() && !param_patterns_id.has_value() &&
+  if (!return_patterns_id.has_value() && !param_patterns_id.has_value() &&
       !implicit_param_patterns_id.has_value()) {
     return SemIR::InstBlockId::None;
   }
@@ -614,9 +614,10 @@ auto CalleePatternMatch(Context& context,
 
   // We add work to the stack in reverse so that the results will be produced
   // in the original order.
-  if (return_slot_pattern_id.has_value()) {
-    match.AddWork({.pattern_id = return_slot_pattern_id,
-                   .scrutinee_id = SemIR::InstId::None});
+  for (auto return_pattern_id :
+       context.inst_blocks().GetOrEmpty(return_patterns_id)) {
+    match.AddWork(
+        {.pattern_id = return_pattern_id, .scrutinee_id = SemIR::InstId::None});
   }
 
   if (param_patterns_id.has_value()) {
@@ -641,18 +642,20 @@ auto CalleePatternMatch(Context& context,
 auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
                         SemIR::InstId self_pattern_id,
                         SemIR::InstBlockId param_patterns_id,
-                        SemIR::InstId return_slot_pattern_id,
+                        SemIR::InstBlockId return_patterns_id,
                         SemIR::InstId self_arg_id,
                         llvm::ArrayRef<SemIR::InstId> arg_refs,
                         SemIR::InstId return_slot_arg_id)
     -> SemIR::InstBlockId {
   MatchContext match(MatchKind::Caller, specific_id);
 
+  auto return_patterns = context.inst_blocks().GetOrEmpty(return_patterns_id);
   // Track the return storage, if present.
   if (return_slot_arg_id.has_value()) {
-    CARBON_CHECK(return_slot_pattern_id.has_value());
-    match.AddWork({.pattern_id = return_slot_pattern_id,
-                   .scrutinee_id = return_slot_arg_id});
+    CARBON_CHECK(return_patterns.size() == 1,
+                 "TODO: implement support for multiple return patterns");
+    match.AddWork(
+        {.pattern_id = return_patterns[0], .scrutinee_id = return_slot_arg_id});
   }
 
   // Check type conversions per-element.

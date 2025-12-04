@@ -9,7 +9,7 @@
 
 namespace Carbon::Check {
 
-auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
+auto PopNameComponent(Context& context, SemIR::InstBlockId return_patterns_id)
     -> NameComponent {
   Parse::NodeId first_param_node_id = Parse::NoneNodeId();
   Parse::NodeId last_param_node_id = Parse::NoneNodeId();
@@ -48,10 +48,9 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
   auto pattern_block_id = SemIR::InstBlockId::None;
   if (param_patterns_id->has_value() ||
       implicit_param_patterns_id->has_value() ||
-      return_slot_pattern_id.has_value()) {
-    call_params_id =
-        CalleePatternMatch(context, *implicit_param_patterns_id,
-                           *param_patterns_id, return_slot_pattern_id);
+      (!context.inst_blocks().GetOrEmpty(return_patterns_id).empty())) {
+    call_params_id = CalleePatternMatch(context, *implicit_param_patterns_id,
+                                        *param_patterns_id, return_patterns_id);
     pattern_block_id = context.pattern_block_stack().Pop();
     context.full_pattern_stack().PopFullPattern();
   }
@@ -69,7 +68,6 @@ auto PopNameComponent(Context& context, SemIR::InstId return_slot_pattern_id)
       .params_loc_id = params_node_id,
       .param_patterns_id = *param_patterns_id,
       .call_params_id = call_params_id,
-      .return_slot_pattern_id = return_slot_pattern_id,
       .pattern_block_id = pattern_block_id,
   };
 }

@@ -128,11 +128,11 @@ auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
 
 auto Function::GetDeclaredReturnType(const File& file,
                                      SpecificId specific_id) const -> TypeId {
-  if (!return_slot_pattern_id.has_value()) {
+  if (!return_type_inst_id.has_value()) {
     return TypeId::None;
   }
-  return ExtractScrutineeType(
-      file, GetTypeOfInstInSpecific(file, specific_id, return_slot_pattern_id));
+  return file.types().GetTypeIdForTypeConstantId(
+      GetConstantValueInSpecific(file, specific_id, return_type_inst_id));
 }
 
 }  // namespace Carbon::SemIR

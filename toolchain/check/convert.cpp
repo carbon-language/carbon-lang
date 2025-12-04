@@ -1811,7 +1811,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     -> SemIR::InstBlockId {
   auto param_patterns =
       context.inst_blocks().GetOrEmpty(callee.param_patterns_id);
-  auto return_slot_pattern_id = callee.return_slot_pattern_id;
+  auto return_patterns_id = callee.return_patterns_id;
 
   // The caller should have ensured this callee has the right arity.
   CARBON_CHECK(arg_refs.size() == param_patterns.size());
@@ -1828,7 +1828,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
   }
 
   return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
-                            callee.param_patterns_id, return_slot_pattern_id,
+                            callee.param_patterns_id, return_patterns_id,
                             self_id, arg_refs, return_slot_arg_id);
 }
 

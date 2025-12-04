@@ -176,7 +176,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %pattern_type.loc7_40: type = pattern_type %U.loc7_16.1 [symbolic = %pattern_type.loc7_40 (constants.%pattern_type.984)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc7_40: <witness> = require_complete_type %U.loc7_16.1 [symbolic = %require_complete.loc7_40 (constants.%require_complete.162)]
+// CHECK:STDOUT:   %require_complete.loc7_43: <witness> = require_complete_type %U.loc7_16.1 [symbolic = %require_complete.loc7_43 (constants.%require_complete.162)]
 // CHECK:STDOUT:   %require_complete.loc7_30: <witness> = require_complete_type %tuple.type [symbolic = %require_complete.loc7_30 (constants.%require_complete.fdf)]
 // CHECK:STDOUT:   %F.specific_fn.loc7_54.2: <specific function> = specific_function constants.%F, @F(%T.loc7_6.1, %U.loc7_16.1) [symbolic = %F.specific_fn.loc7_54.2 (constants.%F.specific_fn.b44)]
 // CHECK:STDOUT:
@@ -210,7 +210,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %pattern_type.loc7_40 => constants.%pattern_type.984
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc7_40 => constants.%require_complete.162
+// CHECK:STDOUT:   %require_complete.loc7_43 => constants.%require_complete.162
 // CHECK:STDOUT:   %require_complete.loc7_30 => constants.%require_complete.fdf
 // CHECK:STDOUT:   %F.specific_fn.loc7_54.2 => constants.%F.specific_fn.b44
 // CHECK:STDOUT: }
@@ -224,7 +224,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %pattern_type.loc7_40 => constants.%pattern_type.510
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc7_40 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc7_43 => constants.%complete_type.357
 // CHECK:STDOUT:   %require_complete.loc7_30 => constants.%complete_type.53b
 // CHECK:STDOUT:   %F.specific_fn.loc7_54.2 => constants.%F.specific_fn.4a7
 // CHECK:STDOUT: }

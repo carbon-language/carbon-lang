@@ -2155,7 +2155,8 @@ static auto MakeFunctionDecl(ImportContext& context,
   function_decl.function_id = context.local_functions().Add(
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
        {.call_params_id = SemIR::InstBlockId::None,
-        .return_slot_pattern_id = SemIR::InstId::None,
+        .return_type_inst_id = SemIR::TypeInstId::None,
+        .return_patterns_id = SemIR::InstBlockId::None,
         .virtual_modifier = import_function.virtual_modifier,
         .virtual_index = import_function.virtual_index}});
 
@@ -2211,10 +2212,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   auto return_type_const_id = SemIR::ConstantId::None;
-  if (import_function.return_slot_pattern_id.has_value()) {
-    return_type_const_id = GetLocalConstantId(
-        resolver, resolver.import_insts().GetAttachedType(
-                      import_function.return_slot_pattern_id));
+  if (import_function.return_type_inst_id.has_value()) {
+    return_type_const_id =
+        GetLocalConstantId(resolver, import_function.return_type_inst_id);
   }
   auto parent_scope_id =
       GetLocalNameScopeId(resolver, import_function.parent_scope_id);
@@ -2225,9 +2225,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto generic_data = GetLocalGenericData(resolver, import_function.generic_id);
   auto self_param_id =
       GetLocalConstantInstId(resolver, import_function.self_param_id);
-  auto return_slot_pattern_id =
-      GetLocalConstantInstId(resolver, import_function.return_slot_pattern_id);
-
+  auto return_patterns =
+      GetLocalInstBlockContents(resolver, import_function.return_patterns_id);
   auto& new_function = resolver.local_functions().Get(function_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry(function_const_id,
@@ -2242,8 +2241,13 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   new_function.self_param_id = self_param_id;
   new_function.param_patterns_id = GetLocalCanonicalInstBlockId(
       resolver, import_function.param_patterns_id, param_patterns);
-  new_function.return_slot_pattern_id = return_slot_pattern_id;
-
+  new_function.return_type_inst_id = SemIR::TypeInstId::None;
+  if (import_function.return_type_inst_id.has_value()) {
+    new_function.return_type_inst_id = AddLoadedImportRefForType(
+        resolver, import_function.return_type_inst_id, return_type_const_id);
+  }
+  new_function.return_patterns_id = GetLocalCanonicalInstBlockId(
+      resolver, import_function.return_patterns_id, return_patterns);
   if (import_function.definition_id.has_value()) {
     new_function.definition_id = new_function.first_owning_decl_id;
   }

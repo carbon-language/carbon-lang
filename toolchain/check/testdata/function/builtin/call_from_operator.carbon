@@ -795,7 +795,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Core.import_ref.54a: @AddWith.%AddWith.type (%AddWith.type.51e) = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @AddWith.%Self (constants.%Self.895)]
 // CHECK:STDOUT:   %Core.import_ref.91e = import_ref Core//default, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.8af: <witness> = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%AddWith.impl_witness]
-// CHECK:STDOUT:   %Core.import_ref.c8c7cd.1: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%i32.builtin]
+// CHECK:STDOUT:   %Core.import_ref.c8c7cd.2: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:   %Core.import_ref.af3: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%AddWith.type.2a3]
 // CHECK:STDOUT:   %Core.import_ref.980: %i32.builtin.as.AddWith.impl.Op.type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%i32.builtin.as.AddWith.impl.Op]
 // CHECK:STDOUT:   %AddWith.impl_witness_table = impl_witness_table (%Core.import_ref.980), @i32.builtin.as.AddWith.impl [concrete]
@@ -813,7 +813,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Core.import_ref.8721d7.2: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = Core.IntLiteral]
 // CHECK:STDOUT:   %Core.import_ref.64f: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%ImplicitAs.type.873]
 // CHECK:STDOUT:   %Core.import_ref.614: <witness> = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%ImplicitAs.impl_witness.fb8]
-// CHECK:STDOUT:   %Core.import_ref.c8c7cd.2: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%i32.builtin]
+// CHECK:STDOUT:   %Core.import_ref.c8c7cd.3: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%i32.builtin]
 // CHECK:STDOUT:   %Core.import_ref.d7b: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%ImplicitAs.type.7a9]
 // CHECK:STDOUT:   %Core.import_ref.4ae: %i32.builtin.as.ImplicitAs.impl.Convert.type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%i32.builtin.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.16d = impl_witness_table (%Core.import_ref.4ae), @i32.builtin.as.ImplicitAs.impl [concrete]
@@ -940,7 +940,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   witness = imports.%Core.import_ref.931
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @i32.builtin.as.AddWith.impl: imports.%Core.import_ref.c8c7cd.1 as imports.%Core.import_ref.af3 [from "core.carbon"] {
+// CHECK:STDOUT: impl @i32.builtin.as.AddWith.impl: imports.%Core.import_ref.c8c7cd.2 as imports.%Core.import_ref.af3 [from "core.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = imports.%Core.import_ref.8af
 // CHECK:STDOUT: }
@@ -950,7 +950,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   witness = imports.%Core.import_ref.8a9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @i32.builtin.as.ImplicitAs.impl: imports.%Core.import_ref.c8c7cd.2 as imports.%Core.import_ref.d7b [from "core.carbon"] {
+// CHECK:STDOUT: impl @i32.builtin.as.ImplicitAs.impl: imports.%Core.import_ref.c8c7cd.3 as imports.%Core.import_ref.d7b [from "core.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = imports.%Core.import_ref.614
 // CHECK:STDOUT: }

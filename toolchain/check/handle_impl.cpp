@@ -113,7 +113,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
     // because `impl`s are never actually called at runtime.
     auto call_params_id =
         CalleePatternMatch(context, *implicit_param_patterns_id,
-                           SemIR::InstBlockId::None, SemIR::InstId::None);
+                           SemIR::InstBlockId::None, SemIR::InstBlockId::None);
     CARBON_CHECK(call_params_id == SemIR::InstBlockId::Empty ||
                  llvm::all_of(context.inst_blocks().Get(call_params_id),
                               [](SemIR::InstId inst_id) {
@@ -143,7 +143,6 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
           .params_loc_id = Parse::NodeId::None,
           .param_patterns_id = SemIR::InstBlockId::None,
           .call_params_id = SemIR::InstBlockId::None,
-          .return_slot_pattern_id = SemIR::InstId::None,
           .pattern_block_id = pattern_block_id};
 }
 

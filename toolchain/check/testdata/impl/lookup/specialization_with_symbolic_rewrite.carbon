@@ -924,7 +924,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %pattern_type.loc9_26: type = pattern_type %ptr [symbolic = %pattern_type.loc9_26 (constants.%pattern_type.a60)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc9_26: <witness> = require_complete_type %ptr [symbolic = %require_complete.loc9_26 (constants.%require_complete.482)]
+// CHECK:STDOUT:   %require_complete.loc9_30: <witness> = require_complete_type %ptr [symbolic = %require_complete.loc9_30 (constants.%require_complete.482)]
 // CHECK:STDOUT:   %require_complete.loc9_16: <witness> = require_complete_type %T.loc9_6.1 [symbolic = %require_complete.loc9_16 (constants.%require_complete.4b7)]
 // CHECK:STDOUT:   %.loc10_10.2: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.loc9_6.1) [symbolic = %.loc10_10.2 (constants.%.dcd)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.c66)]
@@ -1136,7 +1136,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %pattern_type.loc9_25: type = pattern_type %ptr [symbolic = %pattern_type.loc9_25 (constants.%pattern_type.425)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc9_25: <witness> = require_complete_type %ptr [symbolic = %require_complete.loc9_25 (constants.%require_complete.c88)]
+// CHECK:STDOUT:   %require_complete.loc9_29: <witness> = require_complete_type %ptr [symbolic = %require_complete.loc9_29 (constants.%require_complete.c88)]
 // CHECK:STDOUT:   %require_complete.loc9_15: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc9_15 (constants.%require_complete.b27)]
 // CHECK:STDOUT:   %.loc10_10.2: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.binding.as_type) [symbolic = %.loc10_10.2 (constants.%.fd3)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.c59)]
@@ -1347,7 +1347,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %pattern_type.loc9_25: type = pattern_type %ptr [symbolic = %pattern_type.loc9_25 (constants.%pattern_type.425)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc9_25: <witness> = require_complete_type %ptr [symbolic = %require_complete.loc9_25 (constants.%require_complete.c88)]
+// CHECK:STDOUT:   %require_complete.loc9_29: <witness> = require_complete_type %ptr [symbolic = %require_complete.loc9_29 (constants.%require_complete.c88)]
 // CHECK:STDOUT:   %require_complete.loc9_15: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc9_15 (constants.%require_complete.b27)]
 // CHECK:STDOUT:   %.loc10_10.2: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.binding.as_type) [symbolic = %.loc10_10.2 (constants.%.fd3)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.c59)]

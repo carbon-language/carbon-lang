@@ -1517,10 +1517,6 @@ struct ReturnSlotPattern {
 // Given an instruction with a constant value that depends on a generic
 // parameter, selects a version of that instruction with the constant value
 // corresponding to a particular specific.
-//
-// TODO: We only form these as the instruction referenced by a `NameRef`.
-// Consider merging an `SpecificConstant` + `NameRef` into a new form of
-// instruction in order to give a more compact representation.
 struct SpecificConstant {
   // TODO: Can we make Parse::NodeId more specific?
   static constexpr auto Kind = InstKind::SpecificConstant.Define<Parse::NodeId>(

@@ -256,6 +256,25 @@ class Context {
     return rewrites_stack_;
   }
 
+  // Pushes inst_id onto the stack of return type declarations for in-progress
+  // function declarations.
+  //
+  // Note: the "stack" currently can only have one element, but that restriction
+  // can be relaxed if it becomes possible to have multiple pending return type
+  // declarations.
+  auto PushReturnTypeInstId(SemIR::TypeInstId inst_id) -> void {
+    CARBON_CHECK(return_type_inst_id_ == std::nullopt,
+                 "TODO: make return_type_inst_id_ a stack if necessary");
+    return_type_inst_id_ = inst_id;
+  }
+
+  // Pops a TypeInstId off the stack of return type declarations for in-progress
+  // function declarations.
+  auto PopReturnTypeInstId() -> SemIR::TypeInstId {
+    CARBON_CHECK(return_type_inst_id_ != std::nullopt);
+    return *std::exchange(return_type_inst_id_, std::nullopt);
+  }
+
   // --------------------------------------------------------------------------
   // Directly expose SemIR::File data accessors for brevity in calls.
   // --------------------------------------------------------------------------
@@ -492,6 +511,9 @@ class Context {
   // value on the RHS. Used during checking of a `where` expression to allow
   // constraints to access values from earlier constraints.
   llvm::SmallVector<Map<SemIR::ConstantId, SemIR::InstId>> rewrites_stack_;
+
+  // Declared return type for the in-progress function declaration, if any.
+  std::optional<SemIR::TypeInstId> return_type_inst_id_;
 };
 
 }  // namespace Carbon::Check

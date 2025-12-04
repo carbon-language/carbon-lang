@@ -602,7 +602,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc6_43: type = pattern_type %ptr.loc6_47.1 [symbolic = %pattern_type.loc6_43 (constants.%pattern_type.a60)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_43: <witness> = require_complete_type %ptr.loc6_47.1 [symbolic = %require_complete.loc6_43 (constants.%require_complete.482)]
+// CHECK:STDOUT:   %require_complete.loc6_47: <witness> = require_complete_type %ptr.loc6_47.1 [symbolic = %require_complete.loc6_47 (constants.%require_complete.482)]
 // CHECK:STDOUT:   %require_complete.loc6_38: <witness> = require_complete_type %T.loc6_27.1 [symbolic = %require_complete.loc6_38 (constants.%require_complete.4b7)]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.specific_fn.loc7_10.2: <specific function> = specific_function constants.%ExplicitAndAlsoDeduced, @ExplicitAndAlsoDeduced(%T.loc6_27.1) [symbolic = %ExplicitAndAlsoDeduced.specific_fn.loc7_10.2 (constants.%ExplicitAndAlsoDeduced.specific_fn.997)]
 // CHECK:STDOUT:
@@ -643,7 +643,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc6_43 => constants.%pattern_type.a60
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_43 => constants.%require_complete.482
+// CHECK:STDOUT:   %require_complete.loc6_47 => constants.%require_complete.482
 // CHECK:STDOUT:   %require_complete.loc6_38 => constants.%require_complete.4b7
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.specific_fn.loc7_10.2 => constants.%ExplicitAndAlsoDeduced.specific_fn.997
 // CHECK:STDOUT: }
@@ -655,7 +655,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc6_43 => constants.%pattern_type.5f8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_43 => constants.%complete_type.7ea
+// CHECK:STDOUT:   %require_complete.loc6_47 => constants.%complete_type.7ea
 // CHECK:STDOUT:   %require_complete.loc6_38 => constants.%complete_type.357
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.specific_fn.loc7_10.2 => constants.%ExplicitAndAlsoDeduced.specific_fn.720
 // CHECK:STDOUT: }
@@ -750,7 +750,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc4_41: type = pattern_type %ptr.loc4_45.1 [symbolic = %pattern_type.loc4_41 (constants.%pattern_type.a60)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc4_41: <witness> = require_complete_type %ptr.loc4_45.1 [symbolic = %require_complete.loc4_41 (constants.%require_complete.482)]
+// CHECK:STDOUT:   %require_complete.loc4_45: <witness> = require_complete_type %ptr.loc4_45.1 [symbolic = %require_complete.loc4_45 (constants.%require_complete.482)]
 // CHECK:STDOUT:   %require_complete.loc4_36: <witness> = require_complete_type %T.loc4_25.1 [symbolic = %require_complete.loc4_36 (constants.%require_complete.4b7)]
 // CHECK:STDOUT:   %ImplicitGenericParam.specific_fn.loc4_56.2: <specific function> = specific_function constants.%ImplicitGenericParam, @ImplicitGenericParam(%T.loc4_25.1) [symbolic = %ImplicitGenericParam.specific_fn.loc4_56.2 (constants.%ImplicitGenericParam.specific_fn.231)]
 // CHECK:STDOUT:
@@ -780,7 +780,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc4_41 => constants.%pattern_type.a60
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc4_41 => constants.%require_complete.482
+// CHECK:STDOUT:   %require_complete.loc4_45 => constants.%require_complete.482
 // CHECK:STDOUT:   %require_complete.loc4_36 => constants.%require_complete.4b7
 // CHECK:STDOUT:   %ImplicitGenericParam.specific_fn.loc4_56.2 => constants.%ImplicitGenericParam.specific_fn.231
 // CHECK:STDOUT: }
@@ -792,7 +792,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc4_41 => constants.%pattern_type.fe8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc4_41 => constants.%complete_type.3d0
+// CHECK:STDOUT:   %require_complete.loc4_45 => constants.%complete_type.3d0
 // CHECK:STDOUT:   %require_complete.loc4_36 => constants.%complete_type.f8a
 // CHECK:STDOUT:   %ImplicitGenericParam.specific_fn.loc4_56.2 => constants.%ImplicitGenericParam.specific_fn.752
 // CHECK:STDOUT: }

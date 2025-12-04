@@ -346,7 +346,7 @@ fn Interface.C.F[self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:   %pattern_type.loc14_32: type = pattern_type %ptr.loc14_36.1 [symbolic = %pattern_type.loc14_32 (constants.%pattern_type.53b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc20_47: <witness> = require_complete_type %ptr.loc14_36.1 [symbolic = %require_complete.loc20_47 (constants.%require_complete.88b)]
+// CHECK:STDOUT:   %require_complete.loc20_51: <witness> = require_complete_type %ptr.loc14_36.1 [symbolic = %require_complete.loc20_51 (constants.%require_complete.88b)]
 // CHECK:STDOUT:   %require_complete.loc20_22: <witness> = require_complete_type %C [symbolic = %require_complete.loc20_22 (constants.%require_complete.886)]
 // CHECK:STDOUT:   %.loc20_62.2: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%U.loc14_22.1) [symbolic = %.loc20_62.2 (constants.%.f91)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc14_36.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.7dd)]

@@ -333,7 +333,11 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
   if (return_info.has_return_slot()) {
     param_types.push_back(
         llvm::PointerType::get(llvm_context(), /*AddressSpace=*/0));
-    return_param_id = function.return_slot_pattern_id;
+    auto return_patterns =
+        sem_ir_->inst_blocks().Get(function.return_patterns_id);
+    CARBON_CHECK(return_patterns.size() == 1,
+                 "TODO: implement support for multiple return params");
+    return_param_id = return_patterns[0];
     param_inst_ids.push_back(return_param_id);
   }
   for (auto param_pattern_id : llvm::concat<const SemIR::InstId>(
@@ -677,7 +681,13 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
   };
 
   // Lower the return slot parameter.
-  if (declaration_function.return_slot_pattern_id.has_value()) {
+  auto return_patterns = sem_ir_->inst_blocks().GetOrEmpty(
+      declaration_function.return_patterns_id);
+  if (!return_patterns.empty()) {
+    CARBON_CHECK(sem_ir_->inst_blocks()
+                         .Get(declaration_function.return_patterns_id)
+                         .size() == 1,
+                 "TODO: implement support for multiple return patterns");
     auto call_param_id = call_param_ids.consume_back();
     // The LLVM calling convention has the return slot first rather than last.
     // Note that this queries whether there is a return slot at the LLVM level,
@@ -776,7 +786,7 @@ auto FileContext::BuildDISubroutineType(const SemIR::Function& function,
 
   auto return_info =
       SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
-  if (function.return_slot_pattern_id.has_value()) {
+  if (function.return_type_inst_id.has_value()) {
     // TODO: If int_repr.kind == SemIR::InitRepr::ByCopy - be sure the return
     // type is tagged with indirect calling convention.
   }

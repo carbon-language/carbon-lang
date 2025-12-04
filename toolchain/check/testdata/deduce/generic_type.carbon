@@ -188,7 +188,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc7_25: type = pattern_type %T.loc7_6.1 [symbolic = %pattern_type.loc7_25 (constants.%pattern_type.e68)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc7_25: <witness> = require_complete_type %T.loc7_6.1 [symbolic = %require_complete.loc7_25 (constants.%require_complete.4b7)]
+// CHECK:STDOUT:   %require_complete.loc7_28: <witness> = require_complete_type %T.loc7_6.1 [symbolic = %require_complete.loc7_28 (constants.%require_complete.4b7)]
 // CHECK:STDOUT:   %require_complete.loc7_17: <witness> = require_complete_type %C.loc7_22.1 [symbolic = %require_complete.loc7_17 (constants.%require_complete.c98)]
 // CHECK:STDOUT:   %F.specific_fn.loc7_39.2: <specific function> = specific_function constants.%F, @F(%T.loc7_6.1) [symbolic = %F.specific_fn.loc7_39.2 (constants.%F.specific_fn.96e)]
 // CHECK:STDOUT:
@@ -226,7 +226,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc7_25 => constants.%pattern_type.e68
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc7_25 => constants.%require_complete.4b7
+// CHECK:STDOUT:   %require_complete.loc7_28 => constants.%require_complete.4b7
 // CHECK:STDOUT:   %require_complete.loc7_17 => constants.%require_complete.c98
 // CHECK:STDOUT:   %F.specific_fn.loc7_39.2 => constants.%F.specific_fn.96e
 // CHECK:STDOUT: }
@@ -244,7 +244,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc7_25 => constants.%pattern_type.510
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc7_25 => constants.%complete_type
+// CHECK:STDOUT:   %require_complete.loc7_28 => constants.%complete_type
 // CHECK:STDOUT:   %require_complete.loc7_17 => constants.%complete_type
 // CHECK:STDOUT:   %F.specific_fn.loc7_39.2 => constants.%F.specific_fn.c4a
 // CHECK:STDOUT: }
@@ -612,7 +612,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc13_48: type = pattern_type %tuple.type [symbolic = %pattern_type.loc13_48 (constants.%pattern_type.b8b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc13_48: <witness> = require_complete_type %tuple.type [symbolic = %require_complete.loc13_48 (constants.%require_complete.fdf)]
+// CHECK:STDOUT:   %require_complete.loc13_56: <witness> = require_complete_type %tuple.type [symbolic = %require_complete.loc13_56 (constants.%require_complete.fdf)]
 // CHECK:STDOUT:   %require_complete.loc13_27: <witness> = require_complete_type %Inner.loc13_45.1 [symbolic = %require_complete.loc13_27 (constants.%require_complete.319)]
 // CHECK:STDOUT:   %F.specific_fn.loc13_67.2: <specific function> = specific_function constants.%F, @F(%T.loc13_6.1, %U.loc13_16.1) [symbolic = %F.specific_fn.loc13_67.2 (constants.%F.specific_fn.b44)]
 // CHECK:STDOUT:
@@ -665,7 +665,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc13_48 => constants.%pattern_type.b8b
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc13_48 => constants.%require_complete.fdf
+// CHECK:STDOUT:   %require_complete.loc13_56 => constants.%require_complete.fdf
 // CHECK:STDOUT:   %require_complete.loc13_27 => constants.%require_complete.319
 // CHECK:STDOUT:   %F.specific_fn.loc13_67.2 => constants.%F.specific_fn.b44
 // CHECK:STDOUT: }
@@ -698,7 +698,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc13_48 => constants.%pattern_type.9ec
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc13_48 => constants.%complete_type.53b
+// CHECK:STDOUT:   %require_complete.loc13_56 => constants.%complete_type.53b
 // CHECK:STDOUT:   %require_complete.loc13_27 => constants.%complete_type.357
 // CHECK:STDOUT:   %F.specific_fn.loc13_67.2 => constants.%F.specific_fn.4a7
 // CHECK:STDOUT: }

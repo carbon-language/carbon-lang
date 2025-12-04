@@ -16,9 +16,9 @@ fn Mismatch() -> i32 {
   // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE+7]]:19: error: type `f64` of `returned var` does not match return type of enclosing function [ReturnedVarWrongType]
   // CHECK:STDERR:   returned var v: f64 = 0.0;
   // CHECK:STDERR:                   ^~~
-  // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE-4]]:15: note: return type of function is `i32` [ReturnTypeHereNote]
+  // CHECK:STDERR: fail_returned_var_type.carbon:[[@LINE-4]]:18: note: return type of function is `i32` [ReturnTypeHereNote]
   // CHECK:STDERR: fn Mismatch() -> i32 {
-  // CHECK:STDERR:               ^~~~~~
+  // CHECK:STDERR:                  ^~~
   // CHECK:STDERR:
   returned var v: f64 = 0.0;
   return var;

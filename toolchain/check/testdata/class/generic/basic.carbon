@@ -183,7 +183,7 @@ class Declaration(T:! type);
 // CHECK:STDOUT:   %pattern_type.loc6_32: type = pattern_type %ptr.loc6_36.1 [symbolic = %pattern_type.loc6_32 (constants.%pattern_type.12f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc6_32: <witness> = require_complete_type %ptr.loc6_36.1 [symbolic = %require_complete.loc6_32 (constants.%require_complete.d1a)]
+// CHECK:STDOUT:   %require_complete.loc6_36: <witness> = require_complete_type %ptr.loc6_36.1 [symbolic = %require_complete.loc6_36 (constants.%require_complete.d1a)]
 // CHECK:STDOUT:   %require_complete.loc6_22: <witness> = require_complete_type %Class [symbolic = %require_complete.loc6_22 (constants.%require_complete.f79)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.binding.as_type [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %.loc7_12.2: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.binding.as_type) [symbolic = %.loc7_12.2 (constants.%.d8a)]

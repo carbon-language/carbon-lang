@@ -1220,6 +1220,9 @@ static auto MapTagType(Context& context, const clang::TagType& type)
   SemIR::TypeInstId record_type_inst_id =
       context.types().GetAsTypeInstId(tag_inst_id);
   return {
+      // TODO: inst_id's location should be the location of the usage, not
+      // the location of the type definition. Possibly we should synthesize a
+      // NameRef inst, to match how this would work in Carbon code.
       .inst_id = record_type_inst_id,
       .type_id = context.types().GetTypeIdForTypeInstId(record_type_inst_id)};
 }
@@ -1559,19 +1562,28 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
       .type_id = context.types().GetTypeIdForTypeInstId(record_type_inst_id)};
 }
 
-// Returns the return pattern of the given function declaration. In case of an
-// unsupported return type, it produces a diagnostic and returns
-// `SemIR::ErrorInst::InstId`. Constructors are treated as returning a class
-// instance.
-static auto GetReturnPattern(Context& context, SemIR::LocId loc_id,
-                             clang::FunctionDecl* clang_decl) -> SemIR::InstId {
+// Information about a function's declared return type, corresponding to the
+// fields of SemIR::Function with the same names.
+struct ReturnInfo {
+  SemIR::TypeInstId return_type_inst_id;
+  SemIR::InstBlockId return_patterns_id;
+};
+
+// Returns information about the declared return type of the given function
+// declaration. In case of an unsupported return type, it produces a diagnostic,
+// and the returned return_type_inst_id will be `SemIR::ErrorInst::InstId`.
+// Constructors are treated as returning a class instance.
+static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
+                          clang::FunctionDecl* clang_decl) -> ReturnInfo {
   auto [type_inst_id, type_id] = GetReturnTypeExpr(context, loc_id, clang_decl);
   if (!type_inst_id.has_value()) {
     // void.
-    return SemIR::InstId::None;
+    return {.return_type_inst_id = type_inst_id,
+            .return_patterns_id = SemIR::InstBlockId::None};
   }
   if (type_inst_id == SemIR::ErrorInst::TypeInstId) {
-    return SemIR::ErrorInst::InstId;
+    return {.return_type_inst_id = type_inst_id,
+            .return_patterns_id = SemIR::InstBlockId::None};
   }
   auto pattern_type_id = GetPatternType(context, type_id);
   clang::SourceLocation return_type_loc =
@@ -1597,16 +1609,19 @@ static auto GetReturnPattern(Context& context, SemIR::LocId loc_id,
           SemIR::OutParamPattern({.type_id = pattern_type_id,
                                   .subpattern_id = return_slot_pattern_id,
                                   .index = SemIR::CallParamIndex::None})));
-  return param_pattern_id;
+  auto return_patterns_id = context.inst_blocks().Add({param_pattern_id});
+  return {.return_type_inst_id = type_inst_id,
+          .return_patterns_id = return_patterns_id};
 }
 
 namespace {
-// Represents the parameter patterns block id, the return slot pattern id and
-// the call parameters block id for a function declaration.
-struct FunctionParamsInsts {
+// Represents the insts and inst blocks associated with the parameters and
+// returns of a function declaration.
+struct FunctionSignatureInsts {
   SemIR::InstBlockId implicit_param_patterns_id;
   SemIR::InstBlockId param_patterns_id;
-  SemIR::InstId return_slot_pattern_id;
+  SemIR::TypeInstId return_type_inst_id;
+  SemIR::InstBlockId return_patterns_id;
   SemIR::InstBlockId call_params_id;
 };
 }  // namespace
@@ -1614,16 +1629,16 @@ struct FunctionParamsInsts {
 // Creates a block containing the parameter pattern instructions for the
 // explicit parameters, a parameter pattern instruction for the return type and
 // a block containing the call parameters of the function. Emits a callee
-// pattern-match for the explicit parameter patterns and the return slot pattern
-// to create the Call parameters instructions block. Currently the implicit
-// parameter patterns are not taken into account. Returns the parameter patterns
-// block id, the return slot pattern id, and the call parameters block id.
-// Produces a diagnostic and returns `std::nullopt` if the function declaration
-// has an unsupported parameter type.
-static auto CreateFunctionParamsInsts(Context& context, SemIR::LocId loc_id,
-                                      clang::FunctionDecl* clang_decl,
-                                      int num_params)
-    -> std::optional<FunctionParamsInsts> {
+// pattern-match for the explicit parameter patterns and the return patterns to
+// create the Call parameters instructions block. Currently the implicit
+// parameter patterns are not taken into account. Returns a
+// FunctionSignatureInsts containing the results. Produces a diagnostic and
+// returns `std::nullopt` if the function declaration has an unsupported
+// parameter type.
+static auto CreateFunctionSignatureInsts(Context& context, SemIR::LocId loc_id,
+                                         clang::FunctionDecl* clang_decl,
+                                         int num_params)
+    -> std::optional<FunctionSignatureInsts> {
   if (isa<clang::CXXDestructorDecl>(clang_decl)) {
     context.TODO(loc_id, "Unsupported: Destructor");
     return std::nullopt;
@@ -1639,18 +1654,20 @@ static auto CreateFunctionParamsInsts(Context& context, SemIR::LocId loc_id,
   if (!param_patterns_id.has_value()) {
     return std::nullopt;
   }
-  auto return_slot_pattern_id = GetReturnPattern(context, loc_id, clang_decl);
-  if (SemIR::ErrorInst::InstId == return_slot_pattern_id) {
+  auto [return_type_inst_id, return_patterns_id] =
+      GetReturnInfo(context, loc_id, clang_decl);
+  if (return_type_inst_id == SemIR::ErrorInst::TypeInstId) {
     return std::nullopt;
   }
 
   auto call_params_id =
       CalleePatternMatch(context, implicit_param_patterns_id, param_patterns_id,
-                         return_slot_pattern_id);
+                         return_patterns_id);
 
   return {{.implicit_param_patterns_id = implicit_param_patterns_id,
            .param_patterns_id = param_patterns_id,
-           .return_slot_pattern_id = return_slot_pattern_id,
+           .return_type_inst_id = return_type_inst_id,
+           .return_patterns_id = return_patterns_id,
            .call_params_id = call_params_id}};
 }
 
@@ -1690,7 +1707,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
   context.pattern_block_stack().Push();
 
   auto function_params_insts =
-      CreateFunctionParamsInsts(context, loc_id, clang_decl, num_params);
+      CreateFunctionSignatureInsts(context, loc_id, clang_decl, num_params);
 
   auto pattern_block_id = context.pattern_block_stack().Pop();
   auto decl_block_id = context.inst_block_stack().Pop();
@@ -1736,7 +1753,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
        .first_owning_decl_id = decl_id,
        .definition_id = SemIR::InstId::None},
       {.call_params_id = function_params_insts->call_params_id,
-       .return_slot_pattern_id = function_params_insts->return_slot_pattern_id,
+       .return_type_inst_id = function_params_insts->return_type_inst_id,
+       .return_patterns_id = function_params_insts->return_patterns_id,
        .virtual_modifier = virtual_modifier,
        .virtual_index = virtual_index,
        .self_param_id = FindSelfPattern(

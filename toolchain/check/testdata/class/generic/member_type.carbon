@@ -261,7 +261,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc9_14: type = pattern_type %Inner [symbolic = %pattern_type.loc9_14 (constants.%pattern_type.fc1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc9_14: <witness> = require_complete_type %Inner [symbolic = %require_complete.loc9_14 (constants.%require_complete.baa)]
+// CHECK:STDOUT:   %require_complete.loc9_17: <witness> = require_complete_type %Inner [symbolic = %require_complete.loc9_17 (constants.%require_complete.baa)]
 // CHECK:STDOUT:   %require_complete.loc9_9: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc9_9 (constants.%require_complete.d74)]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: @Outer.F.%T.binding.as_type (%T.binding.as_type)} [symbolic = %struct_type.n (constants.%struct_type.n.a18)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.c42)]
@@ -400,7 +400,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc9_14 => constants.%pattern_type.15f
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc9_14 => constants.%complete_type.54b
+// CHECK:STDOUT:   %require_complete.loc9_17 => constants.%complete_type.54b
 // CHECK:STDOUT:   %require_complete.loc9_9 => constants.%complete_type.f8a
 // CHECK:STDOUT:   %struct_type.n => constants.%struct_type.n.033
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.fb7
@@ -709,7 +709,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc11_23: type = pattern_type %T [symbolic = %pattern_type.loc11_23 (constants.%pattern_type.e68)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc11_23: <witness> = require_complete_type %T [symbolic = %require_complete.loc11_23 (constants.%require_complete.4b7)]
+// CHECK:STDOUT:   %require_complete.loc11_26: <witness> = require_complete_type %T [symbolic = %require_complete.loc11_26 (constants.%require_complete.4b7)]
 // CHECK:STDOUT:   %require_complete.loc11_16: <witness> = require_complete_type %C [symbolic = %require_complete.loc11_16 (constants.%require_complete.a8f)]
 // CHECK:STDOUT:   %Inner.type: type = facet_type <@Inner, @Inner(%T)> [symbolic = %Inner.type (constants.%Inner.type.5f4)]
 // CHECK:STDOUT:   %require_complete.loc11_48: <witness> = require_complete_type %Inner.type [symbolic = %require_complete.loc11_48 (constants.%require_complete.3ba)]
@@ -904,7 +904,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc11_23 => constants.%pattern_type.7ce
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc11_23 => constants.%complete_type.f8a
+// CHECK:STDOUT:   %require_complete.loc11_26 => constants.%complete_type.f8a
 // CHECK:STDOUT:   %require_complete.loc11_16 => constants.%complete_type.357
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.56c
 // CHECK:STDOUT:   %require_complete.loc11_48 => constants.%complete_type.619

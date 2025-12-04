@@ -374,6 +374,7 @@ impl () as I({}) {
 // CHECK:STDOUT:     %return.param: ref %struct_type.d.c.b36 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %struct_type.d.c.b36 = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.F.decl.loc10_48.2: %empty_tuple.type.as.I.impl.F.type.e6fdf8.2 = fn_decl @empty_tuple.type.as.I.impl.F.loc10_48.2 [concrete = constants.%empty_tuple.type.as.I.impl.F.f1aebb.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -469,6 +470,7 @@ impl () as I({}) {
 // CHECK:STDOUT:     %return.param: ref %ptr.019 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %ptr.019 = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %B.as.X.impl.F.decl.loc14_37.2: %B.as.X.impl.F.type.84a1c2.2 = fn_decl @B.as.X.impl.F.loc14_37.2 [concrete = constants.%B.as.X.impl.F.b849c8.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -616,6 +618,7 @@ impl () as I({}) {
 // CHECK:STDOUT:     %return.param: ref %ptr.019 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %ptr.019 = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %B.as.X.impl.F.decl.loc14_37.2: %B.as.X.impl.F.type.84a1c2.2 = fn_decl @B.as.X.impl.F.loc14_37.2 [concrete = constants.%B.as.X.impl.F.b849c8.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -709,6 +712,7 @@ impl () as I({}) {
 // CHECK:STDOUT:     %return.param: ref %ptr.019 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %ptr.019 = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %B.as.X.impl.F.decl.loc14_37.2: %B.as.X.impl.F.type.84a1c2.2 = fn_decl @B.as.X.impl.F.loc14_37.2 [concrete = constants.%B.as.X.impl.F.b849c8.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -774,6 +778,7 @@ impl () as I({}) {
 // CHECK:STDOUT:     %return.param: ref %B = out_param call_param0
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %A.as.X.impl.F.decl.loc23_14.2: %A.as.X.impl.F.type.dc7bda.2 = fn_decl @A.as.X.impl.F.loc23_14.2 [concrete = constants.%A.as.X.impl.F.0afbb1.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -872,6 +877,7 @@ impl () as I({}) {
 // CHECK:STDOUT:     %return.param: ref @empty_tuple.type.as.I.impl.F.loc10_34.1.%U.binding.as_type (%U.binding.as_type.225) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @empty_tuple.type.as.I.impl.F.loc10_34.1.%U.binding.as_type (%U.binding.as_type.225) = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.F.decl.loc10_34.2: %empty_tuple.type.as.I.impl.F.type.e6fdf8.2 = fn_decl @empty_tuple.type.as.I.impl.F.loc10_34.2 [concrete = constants.%empty_tuple.type.as.I.impl.F.f1aebb.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -1035,6 +1041,7 @@ impl () as I({}) {
 // CHECK:STDOUT:     %return.param: ref @empty_tuple.type.as.I.impl.F.loc10_44.1.%U.binding.as_type (%U.binding.as_type.225) = out_param call_param2
 // CHECK:STDOUT:     %return: ref @empty_tuple.type.as.I.impl.F.loc10_44.1.%U.binding.as_type (%U.binding.as_type.225) = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.F.decl.loc10_44.2: %empty_tuple.type.as.I.impl.F.type.e6fdf8.2 = fn_decl @empty_tuple.type.as.I.impl.F.loc10_44.2 [concrete = constants.%empty_tuple.type.as.I.impl.F.f1aebb.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -1158,6 +1165,7 @@ impl () as I({}) {
 // CHECK:STDOUT:     %return.param: ref %struct_type.b.a.1b0 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %struct_type.b.a.1b0 = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.F.decl.loc10_29.2: %empty_tuple.type.as.I.impl.F.type.109800.2 = fn_decl @empty_tuple.type.as.I.impl.F.loc10_29.2 [concrete = constants.%empty_tuple.type.as.I.impl.F.3e8bab.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
