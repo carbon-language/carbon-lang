@@ -259,8 +259,19 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
 }
 
 auto HandleParseNode(Context& context, Parse::ImplDeclId node_id) -> bool {
-  BuildImplDecl(context, node_id, /*is_definition=*/false);
+  auto [impl_id, impl_decl_id] =
+      BuildImplDecl(context, node_id, /*is_definition=*/false);
+  auto& impl = context.impls().Get(impl_id);
+
   context.decl_name_stack().PopScope();
+
+  // Impl definitions are required in the same file as the declaration. We skip
+  // this requirement if we've already issued an invalid redeclaration error, or
+  // there is an error that would prevent the impl from being legal to define.
+  if (impl.witness_id != SemIR::ErrorInst::InstId) {
+    context.definitions_required_by_decl().push_back(impl_decl_id);
+  }
+
   return true;
 }
 
@@ -268,20 +279,20 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
     -> bool {
   auto [impl_id, impl_decl_id] =
       BuildImplDecl(context, node_id, /*is_definition=*/true);
-  auto& impl_info = context.impls().Get(impl_id);
+  auto& impl = context.impls().Get(impl_id);
 
-  CARBON_CHECK(!impl_info.has_definition_started());
-  impl_info.definition_id = impl_decl_id;
-  impl_info.scope_id =
+  CARBON_CHECK(!impl.has_definition_started());
+  impl.definition_id = impl_decl_id;
+  impl.scope_id =
       context.name_scopes().Add(impl_decl_id, SemIR::NameId::None,
                                 context.decl_name_stack().PeekParentScopeId());
 
   context.scope_stack().PushForEntity(
-      impl_decl_id, impl_info.scope_id,
-      context.generics().GetSelfSpecific(impl_info.generic_id));
-  StartGenericDefinition(context, impl_info.generic_id);
+      impl_decl_id, impl.scope_id,
+      context.generics().GetSelfSpecific(impl.generic_id));
+  StartGenericDefinition(context, impl.generic_id);
   // This requires that the facet type is complete.
-  ImplWitnessStartDefinition(context, impl_info);
+  ImplWitnessStartDefinition(context, impl);
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);
 
@@ -294,7 +305,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
   //
   // We may need to track a list of instruction blocks here, as we do for a
   // function.
-  impl_info.body_block_id = context.inst_block_stack().PeekOrAdd();
+  impl.body_block_id = context.inst_block_stack().PeekOrAdd();
   return true;
 }
 
@@ -305,9 +316,9 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionId /*node_id*/)
 
   FinishImplWitness(context, impl_id);
 
-  auto& impl_info = context.impls().Get(impl_id);
-  impl_info.defined = true;
-  FinishGenericDefinition(context, impl_info.generic_id);
+  auto& impl = context.impls().Get(impl_id);
+  impl.defined = true;
+  FinishGenericDefinition(context, impl.generic_id);
 
   context.inst_block_stack().Pop();
   // The decl_name_stack and scopes are popped by `ProcessNodeIds`.

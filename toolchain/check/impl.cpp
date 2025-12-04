@@ -585,17 +585,6 @@ auto GetOrAddImpl(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  // Impl definitions are required in the same file as the declaration. We skip
-  // this requirement if we've already issued an invalid redeclaration error, or
-  // there is an error that would prevent the impl from being legal to define.
-  if (!is_definition) {
-    auto& stored_impl = context.impls().Get(impl_id);
-    if (stored_impl.witness_id != SemIR::ErrorInst::InstId) {
-      context.definitions_required_by_decl().push_back(
-          stored_impl.latest_decl_id());
-    }
-  }
-
   return impl_id;
 }
 
