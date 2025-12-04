@@ -267,6 +267,10 @@ auto AddCanonicalWitnessesBlock(File& sem_ir,
         CARBON_FATAL("Unhandled inst: {0}", inst);
     }
   }
+  // This matches the sort order of IdentifiedFacetType::required_interfaces,
+  // which is the order of the witnesses returned from impl lookup, and is
+  // canonical order in which the witnesses must appear for a given facet type
+  // so that ImplWitnessAccess can find the appropriate witness.
   llvm::sort(sortable, [](auto& lhs, auto& rhs) {
     return ImplsLess(lhs.first, rhs.first);
   });
