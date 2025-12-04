@@ -228,28 +228,34 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
                          SemIR::ImplDecl{.impl_id = SemIR::ImplId::None,
                                          .decl_block_id = decl_block_id});
 
-  SemIR::Impl impl_info = {name_context.MakeEntityWithParamsBase(
-                               name, impl_decl_id,
-                               /*is_extern=*/false, SemIR::LibraryNameId::None),
-                           {.self_id = self_type_inst_id,
-                            .constraint_id = constraint_type_inst_id,
-                            // This requires that the facet type is identified.
-                            .interface = CheckConstraintIsInterface(
-                                context, impl_decl_id, constraint_type_inst_id),
-                            .is_final = is_final}};
+  // This requires that the facet type is identified. It returns None if an
+  // error was diagnosed.
+  auto specific_interface = CheckConstraintIsInterface(context, impl_decl_id,
+                                                       constraint_type_inst_id);
 
-  std::optional<ExtendImplDecl> extend_impl;
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
-    extend_impl = ExtendImplDecl{
-        .self_type_node_id = self_type_node,
-        .constraint_type_id = constraint_type_id,
-        .extend_node_id = introducer.modifier_node_id(ModifierOrder::Extend),
-    };
+  auto impl_id = SemIR::ImplId::None;
+  {
+    SemIR::Impl impl_info = {
+        name_context.MakeEntityWithParamsBase(name, impl_decl_id,
+                                              /*is_extern=*/false,
+                                              SemIR::LibraryNameId::None),
+        {.self_id = self_type_inst_id,
+         .constraint_id = constraint_type_inst_id,
+         .interface = specific_interface,
+         .is_final = is_final}};
+    auto extend_node = introducer.modifier_node_id(ModifierOrder::Extend);
+    impl_id = GetOrAddImpl(context, node_id, name.implicit_params_loc_id,
+                           impl_info, is_definition, extend_node);
   }
 
-  return StartImplDecl(context, SemIR::LocId(node_id),
-                       name.implicit_params_loc_id, impl_info, is_definition,
-                       extend_impl);
+  // `GetOrAddImpl` either filled in the `impl_info` and returned a fresh
+  // ImplId, or if we're redeclaring a previous impl, returned an existing
+  // ImplId. Write that ImplId into the ImplDecl instruction and finish it.
+  auto impl_decl = context.insts().GetAs<SemIR::ImplDecl>(impl_decl_id);
+  impl_decl.impl_id = impl_id;
+  ReplaceInstBeforeConstantUse(context, impl_decl_id, impl_decl);
+
+  return {impl_id, impl_decl_id};
 }
 
 auto HandleParseNode(Context& context, Parse::ImplDeclId node_id) -> bool {

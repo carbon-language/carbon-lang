@@ -399,13 +399,13 @@ static auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
   return context.insts().TryGetAs<SemIR::ClassDecl>(scope.inst_id());
 }
 
-// Process an `extend impl` declaration by extending the impl scope with the
-// `impl`'s scope.
-static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
-                       SemIR::LocId loc_id, SemIR::ImplId impl_id,
-                       SemIR::LocId implicit_params_loc_id,
-                       SemIR::TypeInstId constraint_type_inst_id,
-                       SemIR::TypeId constraint_type_id) -> bool {
+// Apply an `extend impl` declaration by extending the parent scope with the
+// `impl`. If there's an error it is diagnosed and false is returned.
+static auto ApplyExtendImplAs(Context& context, Parse::NodeId extend_node,
+                              SemIR::LocId loc_id, SemIR::ImplId impl_id,
+                              SemIR::LocId implicit_params_loc_id,
+                              SemIR::TypeInstId constraint_type_inst_id)
+    -> bool {
   auto parent_scope_id = context.decl_name_stack().PeekParentScopeId();
   if (!parent_scope_id.has_value()) {
     DiagnoseExtendImplOutsideClass(context, loc_id);
@@ -432,6 +432,8 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
   if (impl.witness_id == SemIR::ErrorInst::InstId) {
     parent_scope.set_has_error();
   } else {
+    auto constraint_type_id =
+        context.types().GetTypeIdForTypeInstId(constraint_type_inst_id);
     bool is_complete = RequireCompleteType(
         context, constraint_type_id, SemIR::LocId(constraint_type_inst_id),
         [&] {
@@ -484,11 +486,10 @@ static auto DiagnoseUnusedGenericBinding(Context& context, SemIR::LocId loc_id,
   FillImplWitnessWithErrors(context, context.impls().Get(impl_id));
 }
 
-auto StartImplDecl(Context& context, SemIR::LocId loc_id,
-                   SemIR::LocId implicit_params_loc_id, SemIR::Impl impl,
-                   bool is_definition,
-                   std::optional<ExtendImplDecl> extend_impl)
-    -> std::pair<SemIR::ImplId, SemIR::InstId> {
+auto GetOrAddImpl(Context& context, SemIR::LocId loc_id,
+                  SemIR::LocId implicit_params_loc_id, SemIR::Impl impl,
+                  bool is_definition, Parse::NodeId extend_node)
+    -> SemIR::ImplId {
   auto impl_id = SemIR::ImplId::None;
 
   // Add the impl declaration.
@@ -500,72 +501,70 @@ auto StartImplDecl(Context& context, SemIR::LocId loc_id,
       if (IsValidImplRedecl(context, impl, prev_impl_id)) {
         impl_id = prev_impl_id;
       } else {
-        // IsValidImplRedecl() has issued a diagnostic, avoid generating more
-        // diagnostics for this declaration.
+        // IsValidImplRedecl() has issued a diagnostic, take care to avoid
+        // generating more diagnostics for this declaration.
         impl.witness_id = SemIR::ErrorInst::InstId;
       }
       break;
     }
   }
 
-  // Create a new impl if this isn't a valid redeclaration.
-  if (!impl_id.has_value()) {
-    impl.generic_id = BuildGeneric(context, impl.latest_decl_id());
-    if (impl.witness_id != SemIR::ErrorInst::InstId) {
-      if (impl.interface.interface_id.has_value()) {
-        impl.witness_id =
-            ImplWitnessForDeclaration(context, impl, is_definition);
-      } else {
-        impl.witness_id = SemIR::ErrorInst::InstId;
-        // TODO: We might also want to mark that the name scope for the impl has
-        // an error -- at least once we start making name lookups within the
-        // impl also look into the facet (eg, so you can name associated
-        // constants from within the impl).
-      }
-    }
-    FinishGenericDecl(context, SemIR::LocId(impl.latest_decl_id()),
-                      impl.generic_id);
-    // From here on, use the `Impl` from the `ImplStore` instead of `impl`
-    // in order to make and see any changes to the `Impl`.
-    impl_id = context.impls().Add(impl);
-    lookup_bucket_ref.push_back(impl_id);
-
-    AssignImplIdInWitness(context, impl_id, impl.witness_id);
-
-    // Looking to see if there are any generic bindings on the `impl`
-    // declaration that are not deducible. If so, and the `impl` does not
-    // actually use all its generic bindings, and will never be matched. This
-    // should be diagnossed to the user.
-    bool has_error_in_implicit_pattern = false;
-    if (impl.implicit_param_patterns_id.has_value()) {
-      for (auto inst_id :
-           context.inst_blocks().Get(impl.implicit_param_patterns_id)) {
-        if (inst_id == SemIR::ErrorInst::InstId) {
-          has_error_in_implicit_pattern = true;
-          break;
-        }
-      }
-    }
-
-    if (!has_error_in_implicit_pattern) {
-      DiagnoseUnusedGenericBinding(context, loc_id, implicit_params_loc_id,
-                                   impl_id);
-    }
-  } else {
-    auto& stored_impl = context.impls().Get(impl_id);
-    FinishGenericRedecl(context, stored_impl.generic_id);
+  if (impl_id.has_value()) {
+    // This is a redeclaration of another impl, now held in `impl_id`.
+    auto& prev_impl = context.impls().Get(impl_id);
+    FinishGenericRedecl(context, prev_impl.generic_id);
+    return impl_id;
   }
 
-  // Write the impl ID into the ImplDecl.
-  auto impl_decl =
-      context.insts().GetAs<SemIR::ImplDecl>(impl.first_owning_decl_id);
-  CARBON_CHECK(!impl_decl.impl_id.has_value());
-  impl_decl.impl_id = impl_id;
-  ReplaceInstBeforeConstantUse(context, impl.first_owning_decl_id, impl_decl);
+  // This is a new declaration (possibly with an attached definition). Create a
+  // new `impl_id`, filling the missing generic and witness in the provided
+  // `Impl`.
+
+  impl.generic_id = BuildGeneric(context, impl.latest_decl_id());
+  if (impl.witness_id != SemIR::ErrorInst::InstId) {
+    if (impl.interface.interface_id.has_value()) {
+      impl.witness_id = ImplWitnessForDeclaration(context, impl, is_definition);
+    } else {
+      impl.witness_id = SemIR::ErrorInst::InstId;
+      // TODO: We might also want to mark that the name scope for the impl has
+      // an error -- at least once we start making name lookups within the
+      // impl also look into the facet (eg, so you can name associated
+      // constants from within the impl).
+    }
+  }
+  FinishGenericDecl(context, SemIR::LocId(impl.latest_decl_id()),
+                    impl.generic_id);
+  // From here on, use the `Impl` from the `ImplStore` instead of `impl`
+  // in order to make and see any changes to the `Impl`.
+  impl_id = context.impls().Add(impl);
+  lookup_bucket_ref.push_back(impl_id);
+
+  AssignImplIdInWitness(context, impl_id, impl.witness_id);
+
+  auto& stored_impl_info = context.impls().Get(impl_id);
+
+  // Looking to see if there are any generic bindings on the `impl`
+  // declaration that are not deducible. If so, and the `impl` does not
+  // actually use all its generic bindings, and will never be matched. This
+  // should be diagnossed to the user.
+  bool has_error_in_implicit_pattern = false;
+  if (impl.implicit_param_patterns_id.has_value()) {
+    for (auto inst_id :
+         context.inst_blocks().Get(impl.implicit_param_patterns_id)) {
+      if (inst_id == SemIR::ErrorInst::InstId) {
+        has_error_in_implicit_pattern = true;
+        break;
+      }
+    }
+  }
+
+  if (!has_error_in_implicit_pattern) {
+    DiagnoseUnusedGenericBinding(context, loc_id, implicit_params_loc_id,
+                                 impl_id);
+  }
 
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
-  if (extend_impl) {
-    auto& stored_impl_info = context.impls().Get(impl_decl.impl_id);
+  if (extend_node.has_value()) {
     auto self_type_id =
         context.types().GetTypeIdForTypeInstId(stored_impl_info.self_id);
     if (self_type_id != SemIR::ErrorInst::TypeId) {
@@ -578,9 +577,8 @@ auto StartImplDecl(Context& context, SemIR::LocId loc_id,
              .specific_id = context.generics().GetSelfSpecific(
                  stored_impl_info.generic_id)});
       }
-      if (!ExtendImpl(context, extend_impl->extend_node_id, loc_id,
-                      impl_decl.impl_id, implicit_params_loc_id, constraint_id,
-                      extend_impl->constraint_type_id)) {
+      if (!ApplyExtendImplAs(context, extend_node, loc_id, impl_id,
+                             implicit_params_loc_id, constraint_id)) {
         // Don't allow the invalid impl to be used.
         FillImplWitnessWithErrors(context, stored_impl_info);
       }
@@ -598,7 +596,7 @@ auto StartImplDecl(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  return {impl_id, impl.latest_decl_id()};
+  return impl_id;
 }
 
 }  // namespace Carbon::Check
