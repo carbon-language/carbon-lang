@@ -103,14 +103,14 @@ constraint J(N:! i32) {
   extend require impls K(array(i32, N));
 }
 constraint I(N:! i32) {
-  // CHECK:STDERR: fail_constraint_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+3]]:24: note: in `{}` used here [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_constraint_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+3]]:24: note: in `J(-1)` used here [ResolvingSpecificHere]
   // CHECK:STDERR:   extend require impls J(N);
   // CHECK:STDERR:                        ^~~~
   extend require impls J(N);
 }
 
 // I extends J extends K so the type of K is completed, but is invalid.
-// CHECK:STDERR: fail_constraint_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+4]]:1: note: in `{}` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fail_constraint_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+4]]:1: note: in `I(-1)` used here [ResolvingSpecificHere]
 // CHECK:STDERR: var v: I(-1);
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:

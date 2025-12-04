@@ -13,7 +13,7 @@ filegroup(
 )
 
 # A list of prelude inputs.
-# This is consumed by //toolchain/install:install_paths.
+# This is consumed by //toolchain/base:install_paths.
 manifest(
     name = "prelude_manifest.txt",
     srcs = [":prelude_files"],

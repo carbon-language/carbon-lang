@@ -6,7 +6,10 @@
 
 #include <tuple>
 
+#include "toolchain/base/kind_switch.h"
+#include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 
@@ -230,6 +233,52 @@ IdentifiedFacetType::IdentifiedFacetType(
   llvm::append_range(required_interfaces_, extends);
   llvm::append_range(required_interfaces_, self_impls);
   SortAndDeduplicate(required_interfaces_, RequiredLess);
+}
+
+auto AddCanonicalWitnessesBlock(File& sem_ir,
+                                llvm::SmallVector<InstId>& witnesses)
+    -> InstBlockId {
+  // Small blocks don't need to be sorted.
+  if (witnesses.size() <= 1) {
+    return sem_ir.inst_blocks().AddCanonical(witnesses);
+  }
+
+  llvm::SmallVector<std::pair<SpecificInterface, InstId>> sortable;
+  sortable.reserve(witnesses.size());
+
+  // Produce the sorted order based on the witness's SpecificInterface.
+  for (auto witness_id : witnesses) {
+    auto inst = sem_ir.insts().Get(witness_id);
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(ImplWitness witness): {
+        auto table =
+            sem_ir.insts().GetAs<ImplWitnessTable>(witness.witness_table_id);
+        sortable.push_back(
+            {sem_ir.impls().Get(table.impl_id).interface, witness_id});
+        break;
+      }
+      case CARBON_KIND(LookupImplWitness witness): {
+        sortable.push_back({sem_ir.specific_interfaces().Get(
+                                witness.query_specific_interface_id),
+                            witness_id});
+        break;
+      }
+      default:
+        CARBON_FATAL("Unhandled inst: {0}", inst);
+    }
+  }
+  llvm::sort(sortable, [](auto& lhs, auto& rhs) {
+    return ImplsLess(lhs.first, rhs.first);
+  });
+
+  // Update the original list with the new order (reusing to avoid an
+  // allocation).
+  for (auto [witness_id, sortable_entry] :
+       llvm::zip_equal(witnesses, sortable)) {
+    witness_id = sortable_entry.second;
+  }
+
+  return sem_ir.inst_blocks().AddCanonical(witnesses);
 }
 
 }  // namespace Carbon::SemIR

@@ -26,12 +26,18 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
     -> std::string;
 
 // Produces a string version of the name of a specific interface. If the
-// interface is not generic, this is just the name of the interface. Otheewise,
+// interface is not generic, this is just the name of the interface. Otherwise,
 // it is the interface name and its generic arguments.  Generally, this should
 // not be called directly. To format a string into a diagnostic, use a
 // diagnostic parameter of type `SpecificInterface`.
 auto StringifySpecificInterface(const File& sem_ir,
                                 SpecificInterface specific_interface)
+    -> std::string;
+
+// Produces a string version of the facet type. This contains the name of the
+// interfaces or named constraints that the facet type names, and any
+// requirements such as rewrites.
+auto StringifyFacetType(const File& sem_ir, FacetTypeId facet_type_id)
     -> std::string;
 
 }  // namespace Carbon::SemIR

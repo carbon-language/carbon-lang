@@ -526,7 +526,7 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
   for (const auto& poison : poisoned_queries) {
     auto witness_result = EvalLookupSingleImplWitness(
         context_, poison.loc_id, poison.query, poison.query.query_self_inst_id,
-        /*poison_final_results=*/false);
+        EvalImplLookupMode::RecheckPoisonedLookup);
     CARBON_CHECK(witness_result.has_final_value());
     auto found_witness_id = witness_result.final_witness();
     if (found_witness_id == SemIR::ErrorInst::InstId) {

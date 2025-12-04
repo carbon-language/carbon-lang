@@ -101,6 +101,9 @@ static auto BuildWitness(Context& context, SemIR::LocId loc_id,
         if (struct_value.type_id == SemIR::ErrorInst::TypeId) {
           return SemIR::ErrorInst::InstId;
         }
+        // TODO: If a thunk is needed, this will build a different value each
+        // time it's called, so we won't properly deduplicate repeated
+        // witnesses.
         // TODO: Skip calling make_witness if this function signature doesn't
         // involve `Self`.
         entries.push_back(CheckAssociatedFunctionImplementation(

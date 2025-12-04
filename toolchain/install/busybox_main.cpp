@@ -13,9 +13,9 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/LLVMDriver.h"
+#include "toolchain/base/install_paths.h"
 #include "toolchain/driver/driver.h"
 #include "toolchain/install/busybox_info.h"
-#include "toolchain/install/install_paths.h"
 
 namespace Carbon {
 
