@@ -123,3 +123,29 @@ interface Z {
   // CHECK:STDERR:
   extend require () impls Y;
 }
+
+// --- fail_extend_require_with_nonexistant_type.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+
+interface Z {
+  // CHECK:STDERR: fail_extend_require_with_nonexistant_type.carbon:[[@LINE+4]]:18: error: name `nonexistant` not found [NameNotFound]
+  // CHECK:STDERR:   extend require nonexistant impls Y;
+  // CHECK:STDERR:                  ^~~~~~~~~~~
+  // CHECK:STDERR:
+  extend require nonexistant impls Y;
+}
+
+// --- fail_extend_require_with_nonexistant_type_pointer.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+
+interface Z {
+  // CHECK:STDERR: fail_extend_require_with_nonexistant_type_pointer.carbon:[[@LINE+4]]:18: error: name `nonexistant` not found [NameNotFound]
+  // CHECK:STDERR:   extend require nonexistant* impls Y;
+  // CHECK:STDERR:                  ^~~~~~~~~~~
+  // CHECK:STDERR:
+  extend require nonexistant* impls Y;
+}

@@ -39,6 +39,20 @@ interface I {}
 
 class C {
   // CHECK:STDERR: fail_extend_impl_nonexistent.carbon:[[@LINE+4]]:15: error: name `nonexistent` not found [NameNotFound]
+  // CHECK:STDERR:   extend impl nonexistent as I {}
+  // CHECK:STDERR:               ^~~~~~~~~~~
+  // CHECK:STDERR:
+  extend impl nonexistent as I {}
+}
+
+// --- fail_extend_impl_nonexistent_pointer.carbon
+
+library "[[@TEST_NAME]]";
+
+interface I {}
+
+class C {
+  // CHECK:STDERR: fail_extend_impl_nonexistent_pointer.carbon:[[@LINE+4]]:15: error: name `nonexistent` not found [NameNotFound]
   // CHECK:STDERR:   extend impl nonexistent* as I {}
   // CHECK:STDERR:               ^~~~~~~~~~~
   // CHECK:STDERR:

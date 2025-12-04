@@ -399,24 +399,10 @@ static auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
   return context.insts().TryGetAs<SemIR::ClassDecl>(scope.inst_id());
 }
 
-auto GetImplDefaultSelfType(Context& context) -> SemIR::TypeId {
-  auto parent_scope_id = context.decl_name_stack().PeekParentScopeId();
-
-  if (auto class_decl = TryAsClassScope(context, parent_scope_id)) {
-    return context.classes().Get(class_decl->class_id).self_type_id;
-  }
-
-  // TODO: This is also valid in a mixin.
-
-  return SemIR::TypeId::None;
-}
-
 // Process an `extend impl` declaration by extending the impl scope with the
 // `impl`'s scope.
 static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
                        SemIR::LocId loc_id, SemIR::ImplId impl_id,
-                       Parse::NodeId self_type_node_id,
-                       SemIR::TypeId self_type_id,
                        SemIR::LocId implicit_params_loc_id,
                        SemIR::TypeInstId constraint_type_inst_id,
                        SemIR::TypeId constraint_type_id) -> bool {
@@ -442,31 +428,6 @@ static auto ExtendImpl(Context& context, Parse::NodeId extend_node,
   }
 
   const auto& impl = context.impls().Get(impl_id);
-
-  if (context.parse_tree().node_kind(self_type_node_id) ==
-      Parse::NodeKind::ImplTypeAs) {
-    CARBON_DIAGNOSTIC(ExtendImplSelfAs, Error,
-                      "cannot `extend` an `impl` with an explicit self type");
-    auto diag = context.emitter().Build(extend_node, ExtendImplSelfAs);
-
-    // If the explicit self type is not the default, just bail out.
-    if (self_type_id != GetImplDefaultSelfType(context)) {
-      diag.Emit();
-      parent_scope.set_has_error();
-      return false;
-    }
-
-    // The explicit self type is the same as the default self type, so suggest
-    // removing it and recover as if it were not present.
-    if (auto self_as =
-            context.parse_tree_and_subtrees().ExtractAs<Parse::ImplTypeAs>(
-                self_type_node_id)) {
-      CARBON_DIAGNOSTIC(ExtendImplSelfAsDefault, Note,
-                        "remove the explicit `Self` type here");
-      diag.Note(self_as->type_expr, ExtendImplSelfAsDefault);
-    }
-    diag.Emit();
-  }
 
   if (impl.witness_id == SemIR::ErrorInst::InstId) {
     parent_scope.set_has_error();
@@ -618,8 +579,7 @@ auto StartImplDecl(Context& context, SemIR::LocId loc_id,
                  stored_impl_info.generic_id)});
       }
       if (!ExtendImpl(context, extend_impl->extend_node_id, loc_id,
-                      impl_decl.impl_id, extend_impl->self_type_node_id,
-                      self_type_id, implicit_params_loc_id, constraint_id,
+                      impl_decl.impl_id, implicit_params_loc_id, constraint_id,
                       extend_impl->constraint_type_id)) {
         // Don't allow the invalid impl to be used.
         FillImplWitnessWithErrors(context, stored_impl_info);

@@ -14,6 +14,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/name_scope.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -23,6 +24,16 @@
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
+
+// Returns the implicit `Self` type for an `impl` when it's in a `class`
+// declaration.
+//
+// TODO: Mixin scopes also have a default `Self` type.
+static auto GetImplDefaultSelfType(Context& context,
+                                   const ClassScope& class_scope)
+    -> SemIR::TypeId {
+  return context.classes().Get(class_scope.class_decl.class_id).self_type_id;
+}
 
 auto HandleParseNode(Context& context, Parse::ImplIntroducerId node_id)
     -> bool {
@@ -56,14 +67,46 @@ auto HandleParseNode(Context& context, Parse::ForallId /*node_id*/) -> bool {
 
 auto HandleParseNode(Context& context, Parse::ImplTypeAsId node_id) -> bool {
   auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
-  auto self_type_inst_id = ExprAsType(context, self_node, self_id).inst_id;
-  context.node_stack().Push(node_id, self_type_inst_id);
+  auto self_type = ExprAsType(context, self_node, self_id);
+
+  const auto& introducer = context.decl_introducer_state_stack().innermost();
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
+    // TODO: Also handle the parent scope being a mixin.
+    auto class_scope =
+        TryAsClassScope(context, context.decl_name_stack().PeekParentScopeId());
+    if (class_scope) {
+      // If we're not inside a class at all, that will be diagnosed against the
+      // `extend` elsewhere.
+      auto extend_node = introducer.modifier_node_id(ModifierOrder::Extend);
+      CARBON_DIAGNOSTIC(ExtendImplSelfAs, Error,
+                        "cannot `extend` an `impl` with an explicit self type");
+      auto diag = context.emitter().Build(extend_node, ExtendImplSelfAs);
+
+      if (self_type.type_id == GetImplDefaultSelfType(context, *class_scope)) {
+        // If the explicit self type is the default, suggest removing it with a
+        // diagnostic, but continue as if no error occurred since the self-type
+        // is semantically valid.
+        CARBON_DIAGNOSTIC(ExtendImplSelfAsDefault, Note,
+                          "remove the explicit `Self` type here");
+        diag.Note(self_node, ExtendImplSelfAsDefault);
+        if (self_type.type_id != SemIR::ErrorInst::TypeId) {
+          diag.Emit();
+        }
+      } else if (self_type.type_id != SemIR::ErrorInst::TypeId) {
+        // Otherwise, the self-type is an error.
+        diag.Emit();
+        class_scope->name_scope->set_has_error();
+        self_type.inst_id = SemIR::ErrorInst::TypeInstId;
+      }
+    }
+  }
 
   // Introduce `Self`. Note that we add this name lexically rather than adding
   // to the `NameScopeId` of the `impl`, because this happens before we enter
   // the `impl` scope or even identify which `impl` we're declaring.
   // TODO: Revisit this once #3714 is resolved.
-  AddNameToLookup(context, SemIR::NameId::SelfType, self_type_inst_id);
+  AddNameToLookup(context, SemIR::NameId::SelfType, self_type.inst_id);
+  context.node_stack().Push(node_id, self_type.inst_id);
   return true;
 }
 
@@ -71,8 +114,10 @@ auto HandleParseNode(Context& context, Parse::ImplDefaultSelfAsId node_id)
     -> bool {
   auto self_inst_id = SemIR::TypeInstId::None;
 
-  if (auto self_type_id = GetImplDefaultSelfType(context);
-      self_type_id.has_value()) {
+  auto class_scope =
+      TryAsClassScope(context, context.decl_name_stack().PeekParentScopeId());
+  if (class_scope) {
+    auto self_type_id = GetImplDefaultSelfType(context, *class_scope);
     // Build the implicit access to the enclosing `Self`.
     // TODO: Consider calling `HandleNameAsExpr` to build this implicit `Self`
     // expression. We've already done the work to check that the enclosing

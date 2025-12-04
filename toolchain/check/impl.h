@@ -52,10 +52,6 @@ auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
                                 SemIR::TypeInstId constraint_id)
     -> SemIR::SpecificInterface;
 
-// Returns the implicit `Self` type for an `impl` when it's in a `class`
-// declaration.
-auto GetImplDefaultSelfType(Context& context) -> SemIR::TypeId;
-
 // For `StartImplDecl`, additional details for an `extend impl` declaration.
 struct ExtendImplDecl {
   Parse::NodeId self_type_node_id;
