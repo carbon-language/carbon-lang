@@ -16,6 +16,7 @@
 #include "toolchain/check/interface.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/name_scope.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -377,47 +378,33 @@ static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
   return true;
 }
 
-static auto DiagnoseExtendImplOutsideClass(Context& context,
-                                           SemIR::LocId loc_id) -> void {
-  CARBON_DIAGNOSTIC(ExtendImplOutsideClass, Error,
-                    "`extend impl` can only be used in a class");
-  context.emitter().Emit(loc_id, ExtendImplOutsideClass);
-}
-
-// If the specified name scope corresponds to a class, returns the corresponding
-// class declaration.
-// TODO: Should this be somewhere more central?
-static auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
-    -> std::optional<SemIR::ClassDecl> {
-  if (!scope_id.has_value()) {
-    return std::nullopt;
-  }
-  auto& scope = context.name_scopes().Get(scope_id);
-  if (!scope.inst_id().has_value()) {
-    return std::nullopt;
-  }
-  return context.insts().TryGetAs<SemIR::ClassDecl>(scope.inst_id());
-}
-
 // Apply an `extend impl` declaration by extending the parent scope with the
 // `impl`. If there's an error it is diagnosed and false is returned.
-static auto ApplyExtendImplAs(Context& context, Parse::NodeId extend_node,
-                              SemIR::LocId loc_id, SemIR::ImplId impl_id,
-                              SemIR::LocId implicit_params_loc_id,
-                              SemIR::TypeInstId constraint_type_inst_id)
-    -> bool {
+static auto ApplyExtendImplAs(Context& context, SemIR::LocId loc_id,
+                              const SemIR::Impl& impl,
+                              Parse::NodeId extend_node,
+                              SemIR::LocId implicit_params_loc_id) -> bool {
   auto parent_scope_id = context.decl_name_stack().PeekParentScopeId();
-  if (!parent_scope_id.has_value()) {
-    DiagnoseExtendImplOutsideClass(context, loc_id);
-    return false;
-  }
-  // TODO: This is also valid in a mixin.
-  if (!TryAsClassScope(context, parent_scope_id)) {
-    DiagnoseExtendImplOutsideClass(context, loc_id);
+
+  // TODO: Also handle the parent scope being a mixin.
+  auto class_scope = TryAsClassScope(context, parent_scope_id);
+  if (!class_scope) {
+    if (impl.witness_id != SemIR::ErrorInst::InstId) {
+      CARBON_DIAGNOSTIC(ExtendImplOutsideClass, Error,
+                        "`extend impl` can only be used in a class");
+      context.emitter().Emit(loc_id, ExtendImplOutsideClass);
+    }
     return false;
   }
 
-  auto& parent_scope = context.name_scopes().Get(parent_scope_id);
+  auto& parent_scope = *class_scope->name_scope;
+
+  // An error was already diagnosed, but this is `extend impl as` inside a
+  // class, so propagate the error into the enclosing class scope.
+  if (impl.witness_id == SemIR::ErrorInst::InstId) {
+    parent_scope.set_has_error();
+    return false;
+  }
 
   if (implicit_params_loc_id.has_value()) {
     CARBON_DIAGNOSTIC(ExtendImplForall, Error,
@@ -427,30 +414,30 @@ static auto ApplyExtendImplAs(Context& context, Parse::NodeId extend_node,
     return false;
   }
 
-  const auto& impl = context.impls().Get(impl_id);
-
-  if (impl.witness_id == SemIR::ErrorInst::InstId) {
+  if (!RequireCompleteType(
+          context, context.types().GetTypeIdForTypeInstId(impl.constraint_id),
+          SemIR::LocId(impl.constraint_id), [&] {
+            CARBON_DIAGNOSTIC(ExtendImplAsIncomplete, Error,
+                              "`extend impl as` incomplete facet type {0}",
+                              InstIdAsType);
+            return context.emitter().Build(impl.latest_decl_id(),
+                                           ExtendImplAsIncomplete,
+                                           impl.constraint_id);
+          })) {
     parent_scope.set_has_error();
-  } else {
-    auto constraint_type_id =
-        context.types().GetTypeIdForTypeInstId(constraint_type_inst_id);
-    bool is_complete = RequireCompleteType(
-        context, constraint_type_id, SemIR::LocId(constraint_type_inst_id),
-        [&] {
-          CARBON_DIAGNOSTIC(ExtendImplAsIncomplete, Error,
-                            "`extend impl as` incomplete facet type {0}",
-                            InstIdAsType);
-          return context.emitter().Build(impl.latest_decl_id(),
-                                         ExtendImplAsIncomplete,
-                                         constraint_type_inst_id);
-        });
-    if (!is_complete) {
-      parent_scope.set_has_error();
-      return false;
-    }
+    return false;
   }
 
-  parent_scope.AddExtendedScope(constraint_type_inst_id);
+  if (!impl.generic_id.has_value()) {
+    parent_scope.AddExtendedScope(impl.constraint_id);
+  } else {
+    auto constraint_id_in_self_specific = AddTypeInst<SemIR::SpecificConstant>(
+        context, SemIR::LocId(impl.constraint_id),
+        {.type_id = SemIR::TypeType::TypeId,
+         .inst_id = impl.constraint_id,
+         .specific_id = context.generics().GetSelfSpecific(impl.generic_id)});
+    parent_scope.AddExtendedScope(constraint_id_in_self_specific);
+  }
   return true;
 }
 
@@ -521,16 +508,24 @@ auto GetOrAddImpl(Context& context, SemIR::LocId loc_id,
   // `Impl`.
 
   impl.generic_id = BuildGeneric(context, impl.latest_decl_id());
+
+  // Due to lack of an instruction to set to `ErrorInst`, an `InterfaceId::None`
+  // indicates that the interface could not be identified and an error was
+  // diagnosed. If there's any error in the construction of the impl, then the
+  // witness can't be constructed. We set it to `ErrorInst` to make the impl
+  // unusable for impl lookup.
+  if (!impl.interface.interface_id.has_value() ||
+      impl.self_id == SemIR::ErrorInst::TypeInstId ||
+      impl.constraint_id == SemIR::ErrorInst::TypeInstId) {
+    impl.witness_id = SemIR::ErrorInst::InstId;
+    // TODO: We might also want to mark that the name scope for the impl has an
+    // error -- at least once we start making name lookups within the impl also
+    // look into the facet (eg, so you can name associated constants from within
+    // the impl).
+  }
+
   if (impl.witness_id != SemIR::ErrorInst::InstId) {
-    if (impl.interface.interface_id.has_value()) {
-      impl.witness_id = ImplWitnessForDeclaration(context, impl, is_definition);
-    } else {
-      impl.witness_id = SemIR::ErrorInst::InstId;
-      // TODO: We might also want to mark that the name scope for the impl has
-      // an error -- at least once we start making name lookups within the
-      // impl also look into the facet (eg, so you can name associated
-      // constants from within the impl).
-    }
+    impl.witness_id = ImplWitnessForDeclaration(context, impl, is_definition);
   }
   FinishGenericDecl(context, SemIR::LocId(impl.latest_decl_id()),
                     impl.generic_id);
@@ -565,23 +560,10 @@ auto GetOrAddImpl(Context& context, SemIR::LocId loc_id,
 
   // For an `extend impl` declaration, mark the impl as extending this `impl`.
   if (extend_node.has_value()) {
-    auto self_type_id =
-        context.types().GetTypeIdForTypeInstId(stored_impl_info.self_id);
-    if (self_type_id != SemIR::ErrorInst::TypeId) {
-      auto constraint_id = impl.constraint_id;
-      if (stored_impl_info.generic_id.has_value()) {
-        constraint_id = AddTypeInst<SemIR::SpecificConstant>(
-            context, SemIR::LocId(constraint_id),
-            {.type_id = SemIR::TypeType::TypeId,
-             .inst_id = constraint_id,
-             .specific_id = context.generics().GetSelfSpecific(
-                 stored_impl_info.generic_id)});
-      }
-      if (!ApplyExtendImplAs(context, extend_node, loc_id, impl_id,
-                             implicit_params_loc_id, constraint_id)) {
-        // Don't allow the invalid impl to be used.
-        FillImplWitnessWithErrors(context, stored_impl_info);
-      }
+    if (!ApplyExtendImplAs(context, loc_id, stored_impl_info, extend_node,
+                           implicit_params_loc_id)) {
+      // Don't allow the invalid impl to be used.
+      FillImplWitnessWithErrors(context, stored_impl_info);
     }
   }
 

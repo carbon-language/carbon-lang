@@ -94,7 +94,6 @@ auto HandleParseNode(Context& context, Parse::ImplTypeAsId node_id) -> bool {
       } else if (self_type.type_id != SemIR::ErrorInst::TypeId) {
         // Otherwise, the self-type is an error.
         diag.Emit();
-        class_scope->name_scope->set_has_error();
         self_type.inst_id = SemIR::ErrorInst::TypeInstId;
       }
     }
