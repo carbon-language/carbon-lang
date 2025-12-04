@@ -22,7 +22,7 @@ private interface OptionalStorage {
 
 // TODO: We don't have an approved design for an `Optional` type yet, but it's
 // used by the design for `Iterate`. The API here is a placeholder.
-class Optional(T:! Destroy & OptionalStorage) {
+class Optional(T:! OptionalStorage) {
   fn None() -> Self {
     return T.None() as Self;
   }
@@ -59,11 +59,11 @@ class Optional(T:! Destroy & OptionalStorage) {
 //   }
 // }
 
-private interface OptionalAs(T:! Destroy & OptionalStorage) {
+private interface OptionalAs(T:! OptionalStorage) {
   fn Convert[self: Self]() -> Optional(T);
 }
 
-final impl forall [T:! Destroy & OptionalStorage]
+final impl forall [T:! OptionalStorage]
     T as OptionalAs(T) {
   fn Convert[self: Self]() -> Optional(T) {
     return Optional(T).Some(self);
@@ -77,7 +77,7 @@ impl forall [T:! Destroy & OptionalStorage, U:! ImplicitAs(T)]
   }
 }
 
-impl forall [T:! Destroy & OptionalStorage, U:! OptionalAs(T)]
+impl forall [T:! OptionalStorage, U:! OptionalAs(T)]
     U as ImplicitAs(Optional(T)) {
   fn Convert[self: Self]() -> Optional(T) {
     return self.Convert();
@@ -89,12 +89,12 @@ impl forall [T:! Destroy & OptionalStorage, U:! OptionalAs(T)]
 // `bool` is `false`.
 //
 // TODO: Revisit this once we have choice types implemented in the toolchain.
-private class DefaultOptionalStorage(T:! Copy & Destroy) {
+private class DefaultOptionalStorage(T:! Destroy & Copy) {
   var value: MaybeUnformed(T);
   var has_value: bool;
 }
 
-impl forall [T:! Copy & Destroy] T as OptionalStorage
+impl forall [T:! Destroy & Copy] T as OptionalStorage
     where .Type = DefaultOptionalStorage(T) {
   fn None() -> DefaultOptionalStorage(T) {
     returned var me: DefaultOptionalStorage(T);

@@ -208,12 +208,12 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %Struct.elem.86b: type = unbound_element_type %Struct, %i32 [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %Struct.elem.765: type = unbound_element_type %Struct, %ptr.235 [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %facet_type.13e: type = facet_type <@OptionalStorage & @Destroy> [concrete]
-// CHECK:STDOUT:   %T.d2f: %facet_type.13e = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %Optional.Get.type.649: type = fn_type @Optional.Get, @Optional(%T.d2f) [symbolic]
-// CHECK:STDOUT:   %Optional.Get.f2e: %Optional.Get.type.649 = struct_value () [symbolic]
+// CHECK:STDOUT:   %OptionalStorage.type: type = facet_type <@OptionalStorage> [concrete]
+// CHECK:STDOUT:   %T.3fe: %OptionalStorage.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %Optional.Get.type.fb0: type = fn_type @Optional.Get, @Optional(%T.3fe) [symbolic]
+// CHECK:STDOUT:   %Optional.Get.894: %Optional.Get.type.fb0 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %T.d9f: type = symbolic_binding T, 0 [symbolic]
@@ -224,17 +224,15 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %MaybeUnformed.c89: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.7f8) [symbolic]
 // CHECK:STDOUT:   %ptr.as.OptionalStorage.impl.Get.type.f12: type = fn_type @ptr.as.OptionalStorage.impl.Get, @ptr.as.OptionalStorage.impl(%T.d9f) [symbolic]
 // CHECK:STDOUT:   %ptr.as.OptionalStorage.impl.Get.e9e: %ptr.as.OptionalStorage.impl.Get.type.f12 = struct_value () [symbolic]
-// CHECK:STDOUT:   %facet_value.380: %type_where = facet_value %ptr.235, () [concrete]
-// CHECK:STDOUT:   %Destroy.impl_witness.bb0: <witness> = impl_witness imports.%Destroy.impl_witness_table, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value.380) [concrete]
 // CHECK:STDOUT:   %OptionalStorage.impl_witness.49a: <witness> = impl_witness imports.%OptionalStorage.impl_witness_table.208, @ptr.as.OptionalStorage.impl(%i32) [concrete]
-// CHECK:STDOUT:   %facet_value.86c: %facet_type.13e = facet_value %ptr.235, (%OptionalStorage.impl_witness.49a, %Destroy.impl_witness.bb0) [concrete]
-// CHECK:STDOUT:   %Optional.155: type = class_type @Optional, @Optional(%facet_value.86c) [concrete]
-// CHECK:STDOUT:   %Struct.elem.01b: type = unbound_element_type %Struct, %Optional.155 [concrete]
+// CHECK:STDOUT:   %OptionalStorage.facet: %OptionalStorage.type = facet_value %ptr.235, (%OptionalStorage.impl_witness.49a) [concrete]
+// CHECK:STDOUT:   %Optional.10b: type = class_type @Optional, @Optional(%OptionalStorage.facet) [concrete]
+// CHECK:STDOUT:   %Struct.elem.36a: type = unbound_element_type %Struct, %Optional.10b [concrete]
 // CHECK:STDOUT:   %const.12f: type = const_type %ptr.235 [concrete]
 // CHECK:STDOUT:   %Struct.elem.93e: type = unbound_element_type %Struct, %const.12f [concrete]
-// CHECK:STDOUT:   %Optional.Get.type.c77: type = fn_type @Optional.Get, @Optional(%facet_value.86c) [concrete]
-// CHECK:STDOUT:   %Optional.Get.cf1: %Optional.Get.type.c77 = struct_value () [concrete]
-// CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Optional.Get.cf1, @Optional.Get(%facet_value.86c) [concrete]
+// CHECK:STDOUT:   %Optional.Get.type.a39: type = fn_type @Optional.Get, @Optional(%OptionalStorage.facet) [concrete]
+// CHECK:STDOUT:   %Optional.Get.f81: %Optional.Get.type.a39 = struct_value () [concrete]
+// CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Optional.Get.f81, @Optional.Get(%OptionalStorage.facet) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.24b: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.c95: %Int.as.Copy.impl.Op.type.24b = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.fb7: <witness> = impl_witness imports.%Copy.impl_witness_table.b6a, @Int.as.Copy.impl(%int_32) [concrete]
@@ -246,7 +244,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.f5c: @Optional.%Optional.Get.type (%Optional.Get.type.649) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.f2e)]
+// CHECK:STDOUT:   %Core.import_ref.8b4: @Optional.%Optional.Get.type (%Optional.Get.type.fb0) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.894)]
 // CHECK:STDOUT:   %Core.import_ref.a84 = import_ref Core//prelude/types/optional, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT:   %Destroy.impl_witness_table = impl_witness_table (%Core.import_ref.a84), @DestroyT.binding.as_type.as.Destroy.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.db1: type = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.OptionalStorage.impl.%MaybeUnformed (constants.%MaybeUnformed.c89)]
@@ -275,13 +273,13 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %.loc8_23.2: %ptr.235 = acquire_value %.loc8_23.1
 // CHECK:STDOUT:   %.loc8_21.1: ref %i32 = deref %.loc8_23.2
 // CHECK:STDOUT:   %s.ref.loc8_28: %Struct = name_ref s, %s
-// CHECK:STDOUT:   %q.ref: %Struct.elem.01b = name_ref q, @Struct.%.5 [concrete = @Struct.%.5]
-// CHECK:STDOUT:   %.loc8_29.1: ref %Optional.155 = class_element_access %s.ref.loc8_28, element3
-// CHECK:STDOUT:   %.loc8_29.2: %Optional.155 = acquire_value %.loc8_29.1
-// CHECK:STDOUT:   %.loc8_31: %Optional.Get.type.c77 = specific_constant imports.%Core.import_ref.f5c, @Optional(constants.%facet_value.86c) [concrete = constants.%Optional.Get.cf1]
-// CHECK:STDOUT:   %Get.ref: %Optional.Get.type.c77 = name_ref Get, %.loc8_31 [concrete = constants.%Optional.Get.cf1]
+// CHECK:STDOUT:   %q.ref: %Struct.elem.36a = name_ref q, @Struct.%.5 [concrete = @Struct.%.5]
+// CHECK:STDOUT:   %.loc8_29.1: ref %Optional.10b = class_element_access %s.ref.loc8_28, element3
+// CHECK:STDOUT:   %.loc8_29.2: %Optional.10b = acquire_value %.loc8_29.1
+// CHECK:STDOUT:   %.loc8_31: %Optional.Get.type.a39 = specific_constant imports.%Core.import_ref.8b4, @Optional(constants.%OptionalStorage.facet) [concrete = constants.%Optional.Get.f81]
+// CHECK:STDOUT:   %Get.ref: %Optional.Get.type.a39 = name_ref Get, %.loc8_31 [concrete = constants.%Optional.Get.f81]
 // CHECK:STDOUT:   %Optional.Get.bound: <bound method> = bound_method %.loc8_29.2, %Get.ref
-// CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Get.ref, @Optional.Get(constants.%facet_value.86c) [concrete = constants.%Optional.Get.specific_fn]
+// CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Get.ref, @Optional.Get(constants.%OptionalStorage.facet) [concrete = constants.%Optional.Get.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_36: <bound method> = bound_method %.loc8_29.2, %Optional.Get.specific_fn
 // CHECK:STDOUT:   %Optional.Get.call: init %ptr.235 = call %bound_method.loc8_36(%.loc8_29.2)
 // CHECK:STDOUT:   %.loc8_36.1: %ptr.235 = value_of_initializer %Optional.Get.call
