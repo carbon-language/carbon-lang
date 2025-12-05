@@ -456,4 +456,8 @@ auto HandleParseNode(Context& context, Parse::TemplateBindingNameId node_id)
   return true;
 }
 
+auto HandleParseNode(Context& context, Parse::UnusedPatternId node_id) -> bool {
+  return context.TODO(node_id, "unused");
+}
+
 }  // namespace Carbon::Check

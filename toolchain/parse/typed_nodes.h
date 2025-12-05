@@ -324,6 +324,15 @@ struct Namespace {
 // Pattern nodes
 // -------------
 
+// An unused pattern: `unused pattern`.
+struct UnusedPattern {
+  static constexpr auto Kind = NodeKind::UnusedPattern.Define(
+      {.category = NodeCategory::Pattern, .child_count = 1});
+
+  Lex::UnusedTokenIndex token;
+  AnyPatternId inner;
+};
+
 // A ref binding name: `ref name`.
 struct RefBindingName {
   static constexpr auto Kind =

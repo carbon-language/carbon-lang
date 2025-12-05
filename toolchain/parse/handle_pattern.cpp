@@ -18,6 +18,10 @@ auto HandlePattern(Context& context) -> void {
       context.PushStateForPattern(StateKind::VariablePattern,
                                   state.in_var_pattern);
       break;
+    case Lex::TokenKind::Unused:
+      context.PushStateForPattern(StateKind::UnusedPattern,
+                                  state.in_var_pattern);
+      break;
     default:
       context.PushStateForPattern(StateKind::BindingPattern,
                                   state.in_var_pattern);

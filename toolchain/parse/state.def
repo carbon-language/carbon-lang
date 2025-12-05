@@ -1035,6 +1035,10 @@ CARBON_PARSE_STATE(ParenExprFinish)
 //  ...
 // ^
 //   1. BindingPattern
+//
+//  ...
+// ^
+//   1. UnusedPattern
 CARBON_PARSE_STATE(Pattern)
 
 // Handles the initial part of a binding pattern, enqueuing type expression
@@ -1084,6 +1088,21 @@ CARBON_PARSE_STATE(VariablePattern)
 //        ^
 //   (state done)
 CARBON_PARSE_STATE(FinishVariablePattern)
+
+// Handles `unused` in a pattern context.
+//
+// unused ...
+// ^~~~~~
+//   1. Pattern
+//   2. FinishUnusedPattern
+CARBON_PARSE_STATE(UnusedPattern)
+
+// Finishes `unused` in a pattern context.
+//
+// unused ...
+//           ^
+//   (state done)
+CARBON_PARSE_STATE(FinishUnusedPattern)
 
 // Handles a single statement. While typically within a statement block, this
 // can also be used for error recovery where we expect a statement block and
