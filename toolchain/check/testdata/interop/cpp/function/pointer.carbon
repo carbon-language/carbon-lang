@@ -1902,8 +1902,7 @@ fn F() {
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.de7: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.6e8 = struct_value () [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor.type: type = fn_type @S.cpp_destructor [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor: %S.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %impl_witness.174b47.1: <witness> = impl_witness @F.%impl_witness_table.loc13 [concrete]
-// CHECK:STDOUT:   %impl_witness.174b47.2: <witness> = impl_witness @F.%impl_witness_table.loc10 [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness @F.%impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -2031,16 +2030,14 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %.loc13_58.2, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc13: init %empty_tuple.type = call %bound_method.loc13(%.loc13_58.2)
-// CHECK:STDOUT:   %impl_witness_table.loc13 = impl_witness_table (imports.%S.cpp_destructor.decl), invalid [concrete]
-// CHECK:STDOUT:   %impl_witness.loc13: <witness> = impl_witness %impl_witness_table.loc13 [concrete = constants.%impl_witness.174b47.1]
+// CHECK:STDOUT:   %impl_witness_table = impl_witness_table (imports.%S.cpp_destructor.decl), invalid [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness %impl_witness_table [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %S.cpp_destructor.bound.loc13: <bound method> = bound_method %.loc13_48.4, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call.loc13: init %empty_tuple.type = call %S.cpp_destructor.bound.loc13(%.loc13_48.4)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc11: <bound method> = bound_method %.loc11_14.3, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.de7
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc11_14.3: <bound method> = bound_method %.loc11_14.3, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc11: init %empty_tuple.type = call %bound_method.loc11_14.3(%.loc11_14.3)
-// CHECK:STDOUT:   %impl_witness_table.loc10 = impl_witness_table (imports.%S.cpp_destructor.decl), invalid [concrete]
-// CHECK:STDOUT:   %impl_witness.loc10: <witness> = impl_witness %impl_witness_table.loc10 [concrete = constants.%impl_witness.174b47.2]
 // CHECK:STDOUT:   %S.cpp_destructor.bound.loc10: <bound method> = bound_method %s.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call.loc10: init %empty_tuple.type = call %S.cpp_destructor.bound.loc10(%s.var)
 // CHECK:STDOUT:   <elided>

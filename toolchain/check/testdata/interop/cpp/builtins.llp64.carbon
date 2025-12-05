@@ -527,8 +527,7 @@ fn F() {
 // CHECK:STDOUT:   %impl_witness.319: <witness> = impl_witness @F.%impl_witness_table.loc22 [concrete]
 // CHECK:STDOUT:   %LongResult.cpp_destructor.type: type = fn_type @LongResult.cpp_destructor [concrete]
 // CHECK:STDOUT:   %LongResult.cpp_destructor: %LongResult.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %impl_witness.839524.1: <witness> = impl_witness @F.%impl_witness_table.loc19 [concrete]
-// CHECK:STDOUT:   %impl_witness.839524.2: <witness> = impl_witness @F.%impl_witness_table.loc16 [concrete]
+// CHECK:STDOUT:   %impl_witness.839: <witness> = impl_witness @F.%impl_witness_table.loc19 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -738,11 +737,9 @@ fn F() {
 // CHECK:STDOUT:   %IntResult.cpp_destructor.bound: <bound method> = bound_method %.loc22_65.3, constants.%IntResult.cpp_destructor
 // CHECK:STDOUT:   %IntResult.cpp_destructor.call: init %empty_tuple.type = call %IntResult.cpp_destructor.bound(%.loc22_65.3)
 // CHECK:STDOUT:   %impl_witness_table.loc19 = impl_witness_table (imports.%LongResult.cpp_destructor.decl), invalid [concrete]
-// CHECK:STDOUT:   %impl_witness.loc19: <witness> = impl_witness %impl_witness_table.loc19 [concrete = constants.%impl_witness.839524.1]
+// CHECK:STDOUT:   %impl_witness.loc19: <witness> = impl_witness %impl_witness_table.loc19 [concrete = constants.%impl_witness.839]
 // CHECK:STDOUT:   %LongResult.cpp_destructor.bound.loc19: <bound method> = bound_method %.loc19_76.3, constants.%LongResult.cpp_destructor
 // CHECK:STDOUT:   %LongResult.cpp_destructor.call.loc19: init %empty_tuple.type = call %LongResult.cpp_destructor.bound.loc19(%.loc19_76.3)
-// CHECK:STDOUT:   %impl_witness_table.loc16 = impl_witness_table (imports.%LongResult.cpp_destructor.decl), invalid [concrete]
-// CHECK:STDOUT:   %impl_witness.loc16: <witness> = impl_witness %impl_witness_table.loc16 [concrete = constants.%impl_witness.839524.2]
 // CHECK:STDOUT:   %LongResult.cpp_destructor.bound.loc16: <bound method> = bound_method %.loc16_62.3, constants.%LongResult.cpp_destructor
 // CHECK:STDOUT:   %LongResult.cpp_destructor.call.loc16: init %empty_tuple.type = call %LongResult.cpp_destructor.bound.loc16(%.loc16_62.3)
 // CHECK:STDOUT:   <elided>
@@ -842,8 +839,7 @@ fn F() {
 // CHECK:STDOUT:   %impl_witness.867: <witness> = impl_witness @F.%impl_witness_table.loc22 [concrete]
 // CHECK:STDOUT:   %ULongResult.cpp_destructor.type: type = fn_type @ULongResult.cpp_destructor [concrete]
 // CHECK:STDOUT:   %ULongResult.cpp_destructor: %ULongResult.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %impl_witness.b5ad92.1: <witness> = impl_witness @F.%impl_witness_table.loc19 [concrete]
-// CHECK:STDOUT:   %impl_witness.b5ad92.2: <witness> = impl_witness @F.%impl_witness_table.loc16 [concrete]
+// CHECK:STDOUT:   %impl_witness.b5a: <witness> = impl_witness @F.%impl_witness_table.loc19 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1053,11 +1049,9 @@ fn F() {
 // CHECK:STDOUT:   %UIntResult.cpp_destructor.bound: <bound method> = bound_method %.loc22_67.3, constants.%UIntResult.cpp_destructor
 // CHECK:STDOUT:   %UIntResult.cpp_destructor.call: init %empty_tuple.type = call %UIntResult.cpp_destructor.bound(%.loc22_67.3)
 // CHECK:STDOUT:   %impl_witness_table.loc19 = impl_witness_table (imports.%ULongResult.cpp_destructor.decl), invalid [concrete]
-// CHECK:STDOUT:   %impl_witness.loc19: <witness> = impl_witness %impl_witness_table.loc19 [concrete = constants.%impl_witness.b5ad92.1]
+// CHECK:STDOUT:   %impl_witness.loc19: <witness> = impl_witness %impl_witness_table.loc19 [concrete = constants.%impl_witness.b5a]
 // CHECK:STDOUT:   %ULongResult.cpp_destructor.bound.loc19: <bound method> = bound_method %.loc19_80.3, constants.%ULongResult.cpp_destructor
 // CHECK:STDOUT:   %ULongResult.cpp_destructor.call.loc19: init %empty_tuple.type = call %ULongResult.cpp_destructor.bound.loc19(%.loc19_80.3)
-// CHECK:STDOUT:   %impl_witness_table.loc16 = impl_witness_table (imports.%ULongResult.cpp_destructor.decl), invalid [concrete]
-// CHECK:STDOUT:   %impl_witness.loc16: <witness> = impl_witness %impl_witness_table.loc16 [concrete = constants.%impl_witness.b5ad92.2]
 // CHECK:STDOUT:   %ULongResult.cpp_destructor.bound.loc16: <bound method> = bound_method %.loc16_82.3, constants.%ULongResult.cpp_destructor
 // CHECK:STDOUT:   %ULongResult.cpp_destructor.call.loc16: init %empty_tuple.type = call %ULongResult.cpp_destructor.bound.loc16(%.loc16_82.3)
 // CHECK:STDOUT:   <elided>

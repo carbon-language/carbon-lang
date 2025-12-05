@@ -158,7 +158,7 @@ fn ProtectedDestroy() {
   var a: Cpp.ProtectedDestructor = {};
 }
 
-// --- fail_todo_destroy_generically.carbon
+// --- destroy_generically.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -169,31 +169,12 @@ fn Destroy[T:! Core.Copy & Core.Destroy](c: T) {
 }
 
 fn DoDestroy() {
-  // TODO: We perform multiple impl lookups for `Cpp.PublicDestructor as
-  // Core.Destroy` here, and each one produces a different impl witness,
-  // resulting in a deduction failure.
-  // CHECK:STDERR: fail_todo_destroy_generically.carbon:[[@LINE+7]]:3: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
-  // CHECK:STDERR:   Destroy({} as Cpp.PublicDestructor);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_destroy_generically.carbon:[[@LINE-11]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Destroy[T:! Core.Copy & Core.Destroy](c: T) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   Destroy({} as Cpp.PublicDestructor);
 }
 
 class Wrap(T:! Core.Destroy) {}
 
-// TODO: This should type-check: each conversion of `Cpp.PublicDestructor` to
-// `Core.Destroy` should produce the same value.
 fn EqualWitnesses(p: Wrap(Cpp.PublicDestructor)*) -> Wrap(Cpp.PublicDestructor)* {
-  // CHECK:STDERR: fail_todo_destroy_generically.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Wrap(Cpp.PublicDestructor as Core.Destroy)*` to `Wrap(Cpp.PublicDestructor as Core.Destroy)*` [ConversionFailure]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_destroy_generically.carbon:[[@LINE+4]]:3: note: type `Wrap(Cpp.PublicDestructor as Core.Destroy)*` does not implement interface `Core.ImplicitAs(Wrap(Cpp.PublicDestructor as Core.Destroy)*)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR:
   return p;
 }
 

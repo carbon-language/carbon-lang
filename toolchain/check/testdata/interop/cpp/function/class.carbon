@@ -726,8 +726,7 @@ fn F() {
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor: %C.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %impl_witness.50d801.1: <witness> = impl_witness @F.%impl_witness_table.loc10 [concrete]
-// CHECK:STDOUT:   %impl_witness.50d801.2: <witness> = impl_witness @F.%impl_witness_table.loc8 [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness @F.%impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -783,12 +782,10 @@ fn F() {
 // CHECK:STDOUT:     %C.ref.loc10: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %C = ref_binding x, %x.var
-// CHECK:STDOUT:   %impl_witness_table.loc10 = impl_witness_table (imports.%C.cpp_destructor.decl), invalid [concrete]
-// CHECK:STDOUT:   %impl_witness.loc10: <witness> = impl_witness %impl_witness_table.loc10 [concrete = constants.%impl_witness.50d801.1]
+// CHECK:STDOUT:   %impl_witness_table = impl_witness_table (imports.%C.cpp_destructor.decl), invalid [concrete]
+// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness %impl_witness_table [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc10: <bound method> = bound_method %x.var, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc10: init %empty_tuple.type = call %C.cpp_destructor.bound.loc10(%x.var)
-// CHECK:STDOUT:   %impl_witness_table.loc8 = impl_witness_table (imports.%C.cpp_destructor.decl), invalid [concrete]
-// CHECK:STDOUT:   %impl_witness.loc8: <witness> = impl_witness %impl_witness_table.loc8 [concrete = constants.%impl_witness.50d801.2]
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_12.4, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc8: init %empty_tuple.type = call %C.cpp_destructor.bound.loc8(%.loc8_12.4)
 // CHECK:STDOUT:   <elided>
