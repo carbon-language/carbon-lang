@@ -430,8 +430,8 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %Inner.assoc_type.073: type = assoc_entity_type @Inner, @Inner(%T) [symbolic]
 // CHECK:STDOUT:   %assoc0.600: %Inner.assoc_type.073 = assoc_entity element0, @Inner.%Inner.F.decl [symbolic]
 // CHECK:STDOUT:   %C.f7b: type = class_type @C, @C(%T) [symbolic]
-// CHECK:STDOUT:   %require_complete.b33: <witness> = require_complete_type %Inner.type.83d [symbolic]
 // CHECK:STDOUT:   %Inner.impl_witness.cd1: <witness> = impl_witness @C.%Inner.impl_witness_table, @C.as.Inner.impl(%T) [symbolic]
+// CHECK:STDOUT:   %require_complete.b33: <witness> = require_complete_type %Inner.type.83d [symbolic]
 // CHECK:STDOUT:   %pattern_type.394: type = pattern_type %C.f7b [symbolic]
 // CHECK:STDOUT:   %C.as.Inner.impl.F.type.eb9: type = fn_type @C.as.Inner.impl.F, @C.as.Inner.impl(%T) [symbolic]
 // CHECK:STDOUT:   %C.as.Inner.impl.F.345: %C.as.Inner.impl.F.type.eb9 = struct_value () [symbolic]
@@ -454,12 +454,12 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %Outer.545: type = class_type @Outer, @Outer(%i32) [concrete]
 // CHECK:STDOUT:   %Inner.type.56c: type = facet_type <@Inner, @Inner(%i32)> [concrete]
 // CHECK:STDOUT:   %C.70f: type = class_type @C, @C(%i32) [concrete]
+// CHECK:STDOUT:   %Inner.impl_witness.01d: <witness> = impl_witness @D.%Inner.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.0c6: %Inner.type.56c = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Inner.F.type.86e: type = fn_type @Inner.F, @Inner(%i32) [concrete]
 // CHECK:STDOUT:   %Inner.F.11d: %Inner.F.type.86e = struct_value () [concrete]
 // CHECK:STDOUT:   %Inner.assoc_type.215: type = assoc_entity_type @Inner, @Inner(%i32) [concrete]
 // CHECK:STDOUT:   %assoc0.bd5: %Inner.assoc_type.215 = assoc_entity element0, @Inner.%Inner.F.decl [concrete]
-// CHECK:STDOUT:   %Inner.impl_witness.01d: <witness> = impl_witness @D.%Inner.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.510: type = pattern_type %D [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %D.as.Inner.impl.F.type: type = fn_type @D.as.Inner.impl.F [concrete]
@@ -472,8 +472,8 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %pattern_type.de9: type = pattern_type %C.70f [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C.70f = struct_value () [concrete]
-// CHECK:STDOUT:   %complete_type.619: <witness> = complete_type_witness %Inner.type.56c [concrete]
 // CHECK:STDOUT:   %Inner.impl_witness.662: <witness> = impl_witness @C.%Inner.impl_witness_table, @C.as.Inner.impl(%i32) [concrete]
+// CHECK:STDOUT:   %complete_type.619: <witness> = complete_type_witness %Inner.type.56c [concrete]
 // CHECK:STDOUT:   %C.as.Inner.impl.F.type.22a: type = fn_type @C.as.Inner.impl.F, @C.as.Inner.impl(%i32) [concrete]
 // CHECK:STDOUT:   %C.as.Inner.impl.F.bd7: %C.as.Inner.impl.F.type.22a = struct_value () [concrete]
 // CHECK:STDOUT:   %.b0b: require_specific_def_type = require_specific_def @C.as.Inner.impl(%i32) [concrete]
@@ -571,10 +571,10 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C.f7b)]
 // CHECK:STDOUT:   %Inner.type: type = facet_type <@Inner, @Inner(%T)> [symbolic = %Inner.type (constants.%Inner.type.83d)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Inner.type [symbolic = %require_complete (constants.%require_complete.b33)]
 // CHECK:STDOUT:   %Inner.impl_witness: <witness> = impl_witness @C.%Inner.impl_witness_table, @C.as.Inner.impl(%T) [symbolic = %Inner.impl_witness (constants.%Inner.impl_witness.cd1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Inner.type [symbolic = %require_complete (constants.%require_complete.b33)]
 // CHECK:STDOUT:   %C.as.Inner.impl.F.type: type = fn_type @C.as.Inner.impl.F, @C.as.Inner.impl(%T) [symbolic = %C.as.Inner.impl.F.type (constants.%C.as.Inner.impl.F.type.eb9)]
 // CHECK:STDOUT:   %C.as.Inner.impl.F: @C.as.Inner.impl.%C.as.Inner.impl.F.type (%C.as.Inner.impl.F.type.eb9) = struct_value () [symbolic = %C.as.Inner.impl.F (constants.%C.as.Inner.impl.F.345)]
 // CHECK:STDOUT:
@@ -820,10 +820,10 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %C => constants.%C.f7b
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.83d
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.b33
 // CHECK:STDOUT:   %Inner.impl_witness => constants.%Inner.impl_witness.cd1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.b33
 // CHECK:STDOUT:   %C.as.Inner.impl.F.type => constants.%C.as.Inner.impl.F.type.eb9
 // CHECK:STDOUT:   %C.as.Inner.impl.F => constants.%C.as.Inner.impl.F.345
 // CHECK:STDOUT: }
@@ -889,10 +889,10 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %T => constants.%i32
 // CHECK:STDOUT:   %C => constants.%C.70f
 // CHECK:STDOUT:   %Inner.type => constants.%Inner.type.56c
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.619
 // CHECK:STDOUT:   %Inner.impl_witness => constants.%Inner.impl_witness.662
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.619
 // CHECK:STDOUT:   %C.as.Inner.impl.F.type => constants.%C.as.Inner.impl.F.type.22a
 // CHECK:STDOUT:   %C.as.Inner.impl.F => constants.%C.as.Inner.impl.F.bd7
 // CHECK:STDOUT: }
