@@ -29,10 +29,6 @@ struct Unit {
   SemIR::File* sem_ir;
   // The total number of files.
   int total_ir_count;
-
-  // Storage for the unit's Clang AST. The unique_ptr should start empty, and
-  // can be assigned as part of checking.
-  std::unique_ptr<clang::ASTUnit>* clang_ast_unit;
 };
 
 struct CheckParseTreesOptions {

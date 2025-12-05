@@ -50,10 +50,10 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/TargetParser/Host.h"
 #include "third_party/llvm/clang_cc1.h"
+#include "toolchain/base/install_paths.h"
 #include "toolchain/driver/clang_runtimes.h"
 #include "toolchain/driver/runtimes_cache.h"
 #include "toolchain/driver/tool_runner_base.h"
-#include "toolchain/install/install_paths.h"
 
 // Defined in:
 // https://github.com/llvm/llvm-project/blob/main/clang/tools/driver/driver.cpp

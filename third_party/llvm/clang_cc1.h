@@ -8,7 +8,7 @@
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/VirtualFileSystem.h"
-#include "toolchain/install/install_paths.h"
+#include "toolchain/base/install_paths.h"
 
 namespace Carbon {
 

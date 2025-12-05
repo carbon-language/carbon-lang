@@ -15,6 +15,8 @@
 
 namespace Carbon::SemIR {
 
+class File;
+
 #define CARBON_BUILTIN_CONSTRAINT_MASK(X)                  \
   /* Verifies types can use the builtin `type.destroy`. */ \
   X(TypeCanDestroy)
@@ -211,8 +213,14 @@ inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
   return static_cast<HashCode>(hasher);
 }
 
-// Declared:
-// (Carbon::HashCode)  (value_ = 12557349131240970624)
+// Given an array of witnesses, sorts them to match the ordering of the specific
+// interfaces in the IdentifiedFacetType that produced the witness set, which is
+// the canonical witness order, and returns the resulting block ID. This assumes
+// witnesses have already been deduplicated, and do not contain errors, because
+// it's mainly for imports.
+auto AddCanonicalWitnessesBlock(File& sem_ir,
+                                llvm::SmallVector<InstId>& witnesses)
+    -> InstBlockId;
 
 }  // namespace Carbon::SemIR
 

@@ -23,9 +23,9 @@
 #include "llvm/Support/ThreadPool.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/TargetParser/Triple.h"
+#include "toolchain/base/install_paths.h"
 #include "toolchain/driver/clang_runner.h"
 #include "toolchain/driver/runtimes_cache.h"
-#include "toolchain/install/install_paths.h"
 
 namespace Carbon {
 

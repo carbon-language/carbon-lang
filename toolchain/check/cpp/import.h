@@ -17,13 +17,12 @@
 namespace Carbon::Check {
 
 // Generates a C++ header that includes the imported cpp files, parses it,
-// generates the AST from it and links `SemIR::File` to it. Report C++ errors
-// and warnings. If successful, adds a `Cpp` namespace and returns the AST.
-auto ImportCppFiles(Context& context,
-                    llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-                    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                    std::shared_ptr<clang::CompilerInvocation> invocation)
-    -> std::unique_ptr<clang::ASTUnit>;
+// generates the AST from it and links `SemIR::File` to it. Reports C++ errors
+// and warnings. If successful, adds a `Cpp` namespace.
+auto ImportCpp(Context& context,
+               llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
+               llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+               std::shared_ptr<clang::CompilerInvocation> invocation) -> void;
 
 // Imports a function declaration from Clang to Carbon. If successful, returns
 // the new Carbon function declaration `InstId`. If the declaration was already

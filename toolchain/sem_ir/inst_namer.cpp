@@ -767,15 +767,15 @@ auto InstNamer::NamingContext::AddIntOrFloatTypeName(char type_literal_prefix,
 auto InstNamer::NamingContext::AddWitnessTableName(InstId witness_table_inst_id,
                                                    std::string name) -> void {
   auto witness_table =
-      sem_ir().insts().GetAs<ImplWitnessTable>(witness_table_inst_id);
-  if (!witness_table.impl_id.has_value()) {
-    // TODO: The witness comes from a facet value. Can we get the
-    // interface names from it? Store the facet value instruction in the
+      sem_ir().insts().TryGetAs<ImplWitnessTable>(witness_table_inst_id);
+  if (!witness_table || !witness_table->impl_id.has_value()) {
+    // TODO: If `impl_id` is None, the witness comes from a facet value. Can we
+    // get the interface names from it? Store the facet value instruction in the
     // table?
     AddInstName(name);
     return;
   }
-  const auto& impl = sem_ir().impls().Get(witness_table.impl_id);
+  const auto& impl = sem_ir().impls().Get(witness_table->impl_id);
   auto name_id = sem_ir().interfaces().Get(impl.interface.interface_id).name_id;
 
   std::string suffix = llvm::formatv(".{}", name);

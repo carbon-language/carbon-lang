@@ -202,9 +202,8 @@ static auto PrintCppCompatLiteral(
     const File& file, clang::CanQualType clang::ASTContext::* qual_type_member,
     unsigned int carbon_bit_width, llvm::StringRef cpp_builtin_name,
     llvm::raw_ostream& out) -> bool {
-  if (file.clang_ast_unit()) {
-    const clang::ASTContext& ast_context =
-        file.clang_ast_unit()->getASTContext();
+  if (const auto* cpp_file = file.cpp_file()) {
+    const clang::ASTContext& ast_context = cpp_file->ast_context();
     if (ast_context.getIntWidth(ast_context.*qual_type_member) ==
         carbon_bit_width) {
       out << "Cpp." << cpp_builtin_name;
@@ -238,13 +237,13 @@ auto RecognizedTypeInfo::PrintLiteral(const File& file,
       return PrintCppCompatLiteral(file, &clang::ASTContext::UnsignedLongLongTy,
                                    64, "unsigned_long_long", out);
     case CppNullptrT:
-      if (file.clang_ast_unit()) {
+      if (file.cpp_file()) {
         out << "Cpp.nullptr_t";
         return true;
       }
       break;
     case CppVoidBase:
-      if (file.clang_ast_unit()) {
+      if (file.cpp_file()) {
         out << "Cpp.void";
         return true;
       }

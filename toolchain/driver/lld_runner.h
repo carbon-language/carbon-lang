@@ -9,8 +9,8 @@
 #include "lld/Common/Driver.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
+#include "toolchain/base/install_paths.h"
 #include "toolchain/driver/tool_runner_base.h"
-#include "toolchain/install/install_paths.h"
 
 namespace Carbon {
 

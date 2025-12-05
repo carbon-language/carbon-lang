@@ -3101,12 +3101,17 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
+  auto witnesses_block_id = SemIR::InstBlockId::None;
+  if (inst.witnesses_block_id.has_value()) {
+    witnesses_block_id =
+        AddCanonicalWitnessesBlock(resolver.local_ir(), witnesses);
+  }
+
   return ResolveResult::Deduplicated<SemIR::FacetValue>(
       resolver,
       {.type_id = resolver.local_types().GetTypeIdForTypeConstantId(type_id),
        .type_inst_id = type_inst_id,
-       .witnesses_block_id = GetLocalCanonicalInstBlockId(
-           resolver, inst.witnesses_block_id, witnesses)});
+       .witnesses_block_id = witnesses_block_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
