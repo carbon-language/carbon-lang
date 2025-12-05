@@ -28,6 +28,7 @@
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/inst.h"
+#include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -568,6 +569,16 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
   return context.constant_values().GetInstId(witness_const_id);
 }
 
+namespace {
+// A stack of IDs to check (ordering shouldn't be important).
+struct CanDestroyWorkItem {
+  SemIR::InstId id;
+  // The only case `abstract` is allowed during a type walk is when looking at
+  // a `base` type of a class.
+  bool allow_abstract = false;
+};
+}  // namespace
+
 // Determines whether `type_id` is a `FacetType` which impls `Destroy`.
 //
 // This handles cases where the facet type provides either `CanDestroy` or
@@ -615,21 +626,154 @@ static auto CanDestroyFacetType(Context& context, SemIR::LocId loc_id,
   return false;
 }
 
-// Returns true if an instruction that should be a `FacetValue` is destructible.
-static auto CanDestroyFacetValue(Context& context, SemIR::LocId loc_id,
-                                 SemIR::InstId facet_value_inst_id,
-                                 SemIR::InterfaceId& destroy_interface_id)
-    -> bool {
-  if (!facet_value_inst_id.has_value()) {
+// The `CanDestroyInst` family of functions will return false if an inst is not
+// destructible. They can add work to the `work` argument to help.
+//
+// This first variant offers a default implementation for unexpected
+// instructions. All other instructions are more explicitly handled below.
+template <typename InstT>
+  requires((InstT::Kind.is_type() != SemIR::InstIsType::Always &&
+            !std::same_as<InstT, SemIR::ImplWitnessAccess>) ||
+           SameAsOneOf<InstT, SemIR::AssociatedEntityType, SemIR::AutoType,
+                       SemIR::BoundMethodType, SemIR::CharLiteralType,
+                       SemIR::CppOverloadSetType, SemIR::CustomLayoutType,
+                       SemIR::ErrorInst, SemIR::FacetType, SemIR::FunctionType,
+                       SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
+                       SemIR::GenericInterfaceType, SemIR::UnboundElementType,
+                       SemIR::WitnessType>)
+static auto CanDestroyInst(Context& /*context*/,
+                           llvm::SmallVector<CanDestroyWorkItem>& /*work*/,
+                           SemIR::InterfaceId /*destroy_interface_id*/,
+                           bool /*allow_abstract*/, SemIR::LocId /*loc_id*/,
+                           InstT inst) -> bool {
+  CARBON_FATAL("TypeCanDestroy found unexpected inst: {0}", inst);
+}
+
+static auto CanDestroyInst(Context& /*context*/,
+                           llvm::SmallVector<CanDestroyWorkItem>& work,
+                           SemIR::InterfaceId /*destroy_interface_id*/,
+                           bool /*allow_abstract*/, SemIR::LocId /*loc_id*/,
+                           SemIR::ArrayType array_type) -> bool {
+  work.push_back({.id = array_type.element_type_inst_id});
+  return true;
+}
+
+static auto CanDestroyInst(Context& context,
+                           llvm::SmallVector<CanDestroyWorkItem>& work,
+                           SemIR::InterfaceId /*destroy_interface_id*/,
+                           bool allow_abstract, SemIR::LocId /*loc_id*/,
+                           SemIR::ClassType class_type) -> bool {
+  auto class_info = context.classes().Get(class_type.class_id);
+  // Incomplete and abstract classes can't be destroyed.
+  if (!class_info.is_complete() ||
+      (!allow_abstract && class_info.inheritance_kind ==
+                              SemIR::Class::InheritanceKind::Abstract)) {
     return false;
   }
-  auto facet_value = context.insts().Get(facet_value_inst_id);
+
+  // For C++ types, use Clang to determine whether they can be destructed.
+  // TODO: Needs appropriate calls.
+  if (context.name_scopes().Get(class_info.scope_id).is_cpp_scope()) {
+    return true;
+  }
+
+  // TODO: See if we can pass `class_type.specific_id` here. Right now it
+  // results in a crash.
+  auto obj_repr_id =
+      class_info.GetObjectRepr(context.sem_ir(), SemIR::SpecificId::None);
+  work.push_back({.id = context.types().GetInstId(obj_repr_id)});
+  return true;
+}
+
+static auto CanDestroyInst(Context& /*context*/,
+                           llvm::SmallVector<CanDestroyWorkItem>& work,
+                           SemIR::InterfaceId /*destroy_interface_id*/,
+                           bool allow_abstract, SemIR::LocId /*loc_id*/,
+                           SemIR::ConstType const_type) -> bool {
+  work.push_back({.id = const_type.inner_id, .allow_abstract = allow_abstract});
+  return true;
+}
+
+template <typename InstT>
+  requires SameAsOneOf<InstT, SemIR::FacetAccessType,
+                       SemIR::SymbolicBindingType>
+static auto CanDestroyInst(Context& context,
+                           llvm::SmallVector<CanDestroyWorkItem>& /*work*/,
+                           SemIR::InterfaceId destroy_interface_id,
+                           bool /*allow_abstract*/, SemIR::LocId loc_id,
+                           InstT inst) -> bool {
+  if (!inst.facet_value_inst_id.has_value()) {
+    return false;
+  }
+  auto facet_value = context.insts().Get(inst.facet_value_inst_id);
   auto facet_type =
       context.types().GetAs<SemIR::FacetType>(facet_value.type_id());
   return CanDestroyFacetType(context, loc_id, facet_type, destroy_interface_id);
 }
 
+static auto CanDestroyInst(Context& /*context*/,
+                           llvm::SmallVector<CanDestroyWorkItem>& work,
+                           SemIR::InterfaceId /*destroy_interface_id*/,
+                           bool /*allow_abstract*/, SemIR::LocId /*loc_id*/,
+                           SemIR::PartialType partial_type) -> bool {
+  // TODO: This may be adjusted per
+  // https://github.com/carbon-language/carbon-lang/issues/6161.
+  work.push_back({.id = partial_type.inner_id, .allow_abstract = true});
+  return true;
+}
+
+static auto CanDestroyInst(Context& context,
+                           llvm::SmallVector<CanDestroyWorkItem>& work,
+                           SemIR::InterfaceId /*destroy_interface_id*/,
+                           bool /*allow_abstract*/, SemIR::LocId /*loc_id*/,
+                           SemIR::StructType struct_type) -> bool {
+  for (auto field : context.struct_type_fields().Get(struct_type.fields_id)) {
+    work.push_back({.id = field.type_inst_id});
+  }
+  return true;
+}
+
+static auto CanDestroyInst(Context& context,
+                           llvm::SmallVector<CanDestroyWorkItem>& work,
+                           SemIR::InterfaceId /*destroy_interface_id*/,
+                           bool /*allow_abstract*/, SemIR::LocId /*loc_id*/,
+                           SemIR::TupleType tuple_type) -> bool {
+  for (auto element_id :
+       context.inst_blocks().Get(tuple_type.type_elements_id)) {
+    work.push_back({.id = element_id});
+  }
+  return true;
+}
+
+template <typename InstT>
+  requires SameAsOneOf<InstT, SemIR::BoolType, SemIR::FloatLiteralType,
+                       SemIR::FloatType, SemIR::IntLiteralType, SemIR::IntType,
+                       SemIR::PointerType, SemIR::TypeType>
+static auto CanDestroyInst(Context& /*context*/,
+                           llvm::SmallVector<CanDestroyWorkItem>& /*work*/,
+                           SemIR::InterfaceId /*destroy_interface_id*/,
+                           bool /*allow_abstract*/, SemIR::LocId /*loc_id*/,
+                           InstT /*inst*/) -> bool {
+  // Trivially destructible.
+  return true;
+}
+
+template <typename InstT>
+  requires SameAsOneOf<InstT, SemIR::ImplWitnessAccess,
+                       SemIR::MaybeUnformedType>
+static auto CanDestroyInst(Context& /*context*/,
+                           llvm::SmallVector<CanDestroyWorkItem>& /*work*/,
+                           SemIR::InterfaceId /*destroy_interface_id*/,
+                           bool /*allow_abstract*/, SemIR::LocId /*loc_id*/,
+                           InstT /*inst*/) -> bool {
+  // TODO: Need to dig into the type to ensure it does `Destroy`;
+  // providing `Destroy` for now for compatibility. Note with
+  // `Core.MaybeUnformed`, it requires `Destroy` for related reasons, and
+  // should probably also support non-`Destroy` types.
+}
+
 // Returns true if the `Self` should impl `Destroy`.
+// NOLINTNEXTLINE(readability-function-size): Macro body.
 static auto TypeCanDestroy(Context& context, SemIR::LocId loc_id,
                            SemIR::ConstantId query_self_const_id) -> bool {
   // A lazily cached `Destroy` interface.
@@ -645,14 +789,7 @@ static auto TypeCanDestroy(Context& context, SemIR::LocId loc_id,
                                destroy_interface_id);
   }
 
-  // A stack of IDs to check (ordering shouldn't be important).
-  struct WorkItem {
-    SemIR::InstId id;
-    // The only case `abstract` is allowed during a type walk is when looking at
-    // a `base` type of a class.
-    bool allow_abstract = false;
-  };
-  llvm::SmallVector<WorkItem> work;
+  llvm::SmallVector<CanDestroyWorkItem> work;
 
   // Start by checking the queried instruction.
   work.push_back({.id = query_inst_id});
@@ -664,102 +801,15 @@ static auto TypeCanDestroy(Context& context, SemIR::LocId loc_id,
     auto inst = context.insts().Get(work_item.id);
 
     CARBON_KIND_SWITCH(inst) {
-      case CARBON_KIND(SemIR::ArrayType array_type): {
-        work.push_back({.id = array_type.element_type_inst_id});
-        break;
-      }
-
-      case CARBON_KIND(SemIR::ClassType class_type): {
-        auto class_info = context.classes().Get(class_type.class_id);
-        // Incomplete and abstract classes can't be destroyed.
-        if (!class_info.is_complete() ||
-            (!work_item.allow_abstract &&
-             class_info.inheritance_kind ==
-                 SemIR::Class::InheritanceKind::Abstract)) {
-          return false;
-        }
-
-        // For C++ types, use Clang to determine whether they can be destructed.
-        // TODO: Needs appropriate calls.
-        if (context.name_scopes().Get(class_info.scope_id).is_cpp_scope()) {
-          break;
-        }
-
-        // TODO: See if we can pass `class_type.specific_id` here. Right now it
-        // results in a crash.
-        auto obj_repr_id =
-            class_info.GetObjectRepr(context.sem_ir(), SemIR::SpecificId::None);
-        work.push_back({.id = context.types().GetInstId(obj_repr_id)});
-        break;
-      }
-
-      case CARBON_KIND(SemIR::ConstType const_type): {
-        work.push_back({.id = const_type.inner_id,
-                        .allow_abstract = work_item.allow_abstract});
-        break;
-      }
-
-      case CARBON_KIND(SemIR::FacetAccessType facet_access_type): {
-        if (!CanDestroyFacetValue(context, loc_id,
-                                  facet_access_type.facet_value_inst_id,
-                                  destroy_interface_id)) {
-          return false;
-        }
-        break;
-      }
-
-      case CARBON_KIND(SemIR::PartialType partial_type): {
-        // TODO: This may be adjusted per
-        // https://github.com/carbon-language/carbon-lang/issues/6161.
-        work.push_back({.id = partial_type.inner_id, .allow_abstract = true});
-        break;
-      }
-
-      case CARBON_KIND(SemIR::StructType struct_type): {
-        for (auto field :
-             context.struct_type_fields().Get(struct_type.fields_id)) {
-          work.push_back({.id = field.type_inst_id});
-        }
-        break;
-      }
-
-      case CARBON_KIND(SemIR::SymbolicBindingType facet_access_type): {
-        if (!CanDestroyFacetValue(context, loc_id,
-                                  facet_access_type.facet_value_inst_id,
-                                  destroy_interface_id)) {
-          return false;
-        }
-        break;
-      }
-
-      case CARBON_KIND(SemIR::TupleType tuple_type): {
-        for (auto element_id :
-             context.inst_blocks().Get(tuple_type.type_elements_id)) {
-          work.push_back({.id = element_id});
-        }
-        break;
-      }
-
-      case SemIR::FloatLiteralType::Kind:
-      case SemIR::FloatType::Kind:
-      case SemIR::IntLiteralType::Kind:
-      case SemIR::IntType::Kind:
-      case SemIR::BoolType::Kind:
-      case SemIR::PointerType::Kind:
-      case SemIR::TypeType::Kind:
-        // Trivially destructible.
-        break;
-
-      case SemIR::ImplWitnessAccess::Kind:
-      case SemIR::MaybeUnformedType::Kind:
-        // TODO: Need to dig into the type to ensure it does `Destroy`;
-        // providing `Destroy` for now for compatibility. Note with
-        // `Core.MaybeUnformed`, it requires `Destroy` for related reasons, and
-        // should probably also support non-`Destroy` types.
-        break;
-
-      default:
-        CARBON_FATAL("TypeCanDestroy found unexpected inst: {0}", inst);
+#define CARBON_SEM_IR_INST_KIND(Name)                                    \
+  case CARBON_KIND(SemIR::Name typed_inst): {                            \
+    if (!CanDestroyInst(context, work, destroy_interface_id,             \
+                        work_item.allow_abstract, loc_id, typed_inst)) { \
+      return false;                                                      \
+    }                                                                    \
+    break;                                                               \
+  }
+#include "toolchain/sem_ir/inst_kind.def"
     }
   }
 
