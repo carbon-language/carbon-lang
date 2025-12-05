@@ -86,8 +86,8 @@ auto CheckAssociatedFunctionImplementation(
 }
 
 // Builds an initial witness from the rewrites in the facet type, if any.
-auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl,
-                               bool has_definition) -> SemIR::InstId {
+auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
+    -> SemIR::InstId {
   CARBON_CHECK(!impl.has_definition_started());
 
   auto self_type_id = context.types().GetTypeIdForTypeInstId(impl.self_id);
@@ -99,7 +99,7 @@ auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl,
   return InitialFacetTypeImplWitness(
       context, SemIR::LocId(impl.latest_decl_id()), impl.constraint_id,
       impl.self_id, impl.interface,
-      context.generics().GetSelfSpecific(impl.generic_id), has_definition);
+      context.generics().GetSelfSpecific(impl.generic_id));
 }
 
 auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
@@ -108,33 +108,52 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   if (impl.witness_id == SemIR::ErrorInst::InstId) {
     return;
   }
+
+  if (!RequireCompleteType(
+          context, context.types().GetTypeIdForTypeInstId(impl.constraint_id),
+          SemIR::LocId(impl.constraint_id), [&] {
+            CARBON_DIAGNOSTIC(ImplAsIncompleteFacetTypeDefinition, Error,
+                              "definition of impl as incomplete facet type {0}",
+                              InstIdAsType);
+            return context.emitter().Build(SemIR::LocId(impl.latest_decl_id()),
+                                           ImplAsIncompleteFacetTypeDefinition,
+                                           impl.constraint_id);
+          })) {
+    FillImplWitnessWithErrors(context, impl);
+    return;
+  }
+
+  const auto& interface = context.interfaces().Get(impl.interface.interface_id);
+
+  auto assoc_entities =
+      context.inst_blocks().Get(interface.associated_entities_id);
+  for (auto decl_id : assoc_entities) {
+    LoadImportRef(context, decl_id);
+  }
+
   auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
   auto witness_table =
       context.insts().GetAs<SemIR::ImplWitnessTable>(witness.witness_table_id);
   auto witness_block =
       context.inst_blocks().GetMutable(witness_table.elements_id);
-  // `witness_table.elements_id` will be `SemIR::InstBlockId::Empty` when the
-  // definition is the first declaration and the interface has no members. The
-  // other case where `witness_block` will be empty is when we are using a
-  // placeholder witness. This happens when there is a forward declaration of
-  // the impl and the facet type has no rewrite constraints and so it wasn't
-  // required to be complete.
-  if (witness_table.elements_id != SemIR::InstBlockId::Empty &&
-      witness_block.empty()) {
-    if (!RequireCompleteFacetTypeForImplDefinition(
-            context, SemIR::LocId(impl.latest_decl_id()), impl.constraint_id)) {
-      FillImplWitnessWithErrors(context, impl);
-      return;
-    }
 
-    AllocateFacetTypeImplWitness(context, impl.interface.interface_id,
-                                 witness_table.elements_id);
+  // We can detect that the witness table is a placeholder table if it's not the
+  // `Empty` id, but it is empty still. This happens when a forward declaration
+  // makes the table before the interface is known to be complete (so the
+  // table's required size was unknown). Then we replace the placeholder table
+  // here in the definition, as the interface must be complete.
+  bool witness_table_is_placeholder =
+      witness_table.elements_id != SemIR::InstBlockId::Empty &&
+      witness_block.empty();
+  if (witness_table_is_placeholder) {
+    // TODO: We could skip an allocation here if we could `ReplacePlaceholder`
+    // with a size and value.
+    llvm::SmallVector<SemIR::InstId> empty_table(
+        assoc_entities.size(), SemIR::InstId::ImplWitnessTablePlaceholder);
+    context.inst_blocks().ReplacePlaceholder(witness_table.elements_id,
+                                             empty_table);
     witness_block = context.inst_blocks().GetMutable(witness_table.elements_id);
   }
-  const auto& interface = context.interfaces().Get(impl.interface.interface_id);
-  auto assoc_entities =
-      context.inst_blocks().Get(interface.associated_entities_id);
-  CARBON_CHECK(witness_block.size() == assoc_entities.size());
 
   // Check we have a value for all non-function associated constants in the
   // witness.
@@ -306,7 +325,8 @@ auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
 }
 
 // Returns true if impl redeclaration parameters match.
-static auto CheckImplRedeclParamsMatch(Context& context, SemIR::Impl& new_impl,
+static auto CheckImplRedeclParamsMatch(Context& context,
+                                       const SemIR::Impl& new_impl,
                                        SemIR::ImplId prev_impl_id) -> bool {
   auto& prev_impl = context.impls().Get(prev_impl_id);
 
@@ -324,7 +344,7 @@ static auto CheckImplRedeclParamsMatch(Context& context, SemIR::Impl& new_impl,
 
 // Returns whether an impl can be redeclared. For example, defined impls
 // cannot be redeclared.
-static auto IsValidImplRedecl(Context& context, SemIR::Impl& new_impl,
+static auto IsValidImplRedecl(Context& context, const SemIR::Impl& new_impl,
                               SemIR::ImplId prev_impl_id) -> bool {
   auto& prev_impl = context.impls().Get(prev_impl_id);
 
@@ -488,11 +508,10 @@ static auto ApplyExtendImplAs(Context& context, SemIR::LocId loc_id,
 
 auto GetOrAddImpl(Context& context, SemIR::LocId loc_id,
                   SemIR::LocId implicit_params_loc_id, SemIR::Impl impl,
-                  bool is_definition, Parse::NodeId extend_node)
-    -> SemIR::ImplId {
+                  Parse::NodeId extend_node) -> SemIR::ImplId {
   auto impl_id = SemIR::ImplId::None;
 
-  // Add the impl declaration.
+  // Look for an existing matching declaration.
   auto lookup_bucket_ref = context.impls().GetOrAddLookupBucket(impl);
   // TODO: Detect two impl declarations with the same self type and interface,
   // and issue an error if they don't match.
@@ -538,12 +557,17 @@ auto GetOrAddImpl(Context& context, SemIR::LocId loc_id,
   }
 
   if (impl.witness_id != SemIR::ErrorInst::InstId) {
-    impl.witness_id = ImplWitnessForDeclaration(context, impl, is_definition);
+    // This makes either a placeholder witness or a full witness table. The full
+    // witness table is deferred to the impl definition unless the declaration
+    // uses rewrite constraints to set values of associated constants in the
+    // interface.
+    impl.witness_id = ImplWitnessForDeclaration(context, impl);
   }
+
   FinishGenericDecl(context, SemIR::LocId(impl.latest_decl_id()),
                     impl.generic_id);
-  // From here on, use the `Impl` from the `ImplStore` instead of `impl`
-  // in order to make and see any changes to the `Impl`.
+  // From here on, use the `Impl` from the `ImplStore` instead of `impl` in
+  // order to make and see any changes to the `Impl`.
   impl_id = context.impls().Add(impl);
   lookup_bucket_ref.push_back(impl_id);
   AssignImplIdInWitness(context, impl_id, impl.witness_id);

@@ -18,9 +18,11 @@
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -190,8 +192,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
 
 // Build an ImplDecl describing the signature of an impl. This handles the
 // common logic shared by impl forward declarations and impl definitions.
-static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
-                          bool is_definition)
+static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
     -> std::pair<SemIR::ImplId, SemIR::InstId> {
   auto [constraint_node, constraint_id] =
       context.node_stack().PopExprWithNodeId();
@@ -243,7 +244,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
          .is_final = is_final}};
     auto extend_node = introducer.modifier_node_id(ModifierOrder::Extend);
     impl_id = GetOrAddImpl(context, node_id, name.implicit_params_loc_id,
-                           impl_info, is_definition, extend_node);
+                           impl_info, extend_node);
   }
 
   // `GetOrAddImpl` either filled in the `impl_info` and returned a fresh
@@ -257,8 +258,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
 }
 
 auto HandleParseNode(Context& context, Parse::ImplDeclId node_id) -> bool {
-  auto [impl_id, impl_decl_id] =
-      BuildImplDecl(context, node_id, /*is_definition=*/false);
+  auto [impl_id, impl_decl_id] = BuildImplDecl(context, node_id);
   auto& impl = context.impls().Get(impl_id);
 
   context.decl_name_stack().PopScope();
@@ -275,8 +275,7 @@ auto HandleParseNode(Context& context, Parse::ImplDeclId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
     -> bool {
-  auto [impl_id, impl_decl_id] =
-      BuildImplDecl(context, node_id, /*is_definition=*/true);
+  auto [impl_id, impl_decl_id] = BuildImplDecl(context, node_id);
   auto& impl = context.impls().Get(impl_id);
 
   CARBON_CHECK(!impl.has_definition_started());
@@ -289,7 +288,6 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
       impl_decl_id, impl.scope_id,
       context.generics().GetSelfSpecific(impl.generic_id));
   StartGenericDefinition(context, impl.generic_id);
-  // This requires that the facet type is complete.
   ImplWitnessStartDefinition(context, impl);
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);

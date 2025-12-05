@@ -4173,14 +4173,14 @@ fn F() {
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.a1a, @Z [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %Z.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %Z_where.type.bb0: type = facet_type <@Z where %impl.elem0 = %C.20b> [symbolic]
-// CHECK:STDOUT:   %require_complete.4fe: <witness> = require_complete_type %Z_where.type.bb0 [symbolic]
 // CHECK:STDOUT:   %Z.impl_witness.f43: <witness> = impl_witness file.%Z.impl_witness_table, @T.as.Z.impl(%T) [symbolic]
+// CHECK:STDOUT:   %require_complete.4fe: <witness> = require_complete_type %Z_where.type.bb0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.131: type = class_type @C, @C(%D) [concrete]
 // CHECK:STDOUT:   %Z_where.type.a77: type = facet_type <@Z where %impl.elem0 = %C.131> [concrete]
-// CHECK:STDOUT:   %complete_type.bcc: <witness> = complete_type_witness %Z_where.type.a77 [concrete]
 // CHECK:STDOUT:   %Z.impl_witness.18a: <witness> = impl_witness file.%Z.impl_witness_table, @T.as.Z.impl(%D) [concrete]
+// CHECK:STDOUT:   %complete_type.bcc: <witness> = complete_type_witness %Z_where.type.a77 [concrete]
 // CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %D, (%Z.impl_witness.18a) [concrete]
 // CHECK:STDOUT:   %pattern_type.7f8: type = pattern_type %C.131 [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
@@ -4268,10 +4268,10 @@ fn F() {
 // CHECK:STDOUT:   %T.loc9_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc9_14.2 (constants.%T)]
 // CHECK:STDOUT:   %C.loc9_45.2: type = class_type @C, @C(%T.loc9_14.2) [symbolic = %C.loc9_45.2 (constants.%C.20b)]
 // CHECK:STDOUT:   %Z_where.type: type = facet_type <@Z where constants.%impl.elem0 = %C.loc9_45.2> [symbolic = %Z_where.type (constants.%Z_where.type.bb0)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Z_where.type [symbolic = %require_complete (constants.%require_complete.4fe)]
 // CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness file.%Z.impl_witness_table, @T.as.Z.impl(%T.loc9_14.2) [symbolic = %Z.impl_witness (constants.%Z.impl_witness.f43)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Z_where.type [symbolic = %require_complete (constants.%require_complete.4fe)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref.loc9_24 as %.loc9_31 {
 // CHECK:STDOUT:   !members:
@@ -4343,7 +4343,6 @@ fn F() {
 // CHECK:STDOUT:   %T.loc9_14.2 => constants.%T
 // CHECK:STDOUT:   %C.loc9_45.2 => constants.%C.20b
 // CHECK:STDOUT:   %Z_where.type => constants.%Z_where.type.bb0
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.4fe
 // CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness.f43
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -4351,10 +4350,10 @@ fn F() {
 // CHECK:STDOUT:   %T.loc9_14.2 => constants.%D
 // CHECK:STDOUT:   %C.loc9_45.2 => constants.%C.131
 // CHECK:STDOUT:   %Z_where.type => constants.%Z_where.type.a77
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.bcc
 // CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness.18a
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.bcc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%D) {

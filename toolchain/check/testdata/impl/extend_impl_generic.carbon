@@ -79,12 +79,12 @@ class X(U:! type) {
 // CHECK:STDOUT:   %complete_type.1ec: <witness> = complete_type_witness %struct_type.x.ed6 [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %HasF.type.aca: type = facet_type <@HasF, @HasF(%Param)> [concrete]
+// CHECK:STDOUT:   %HasF.impl_witness: <witness> = impl_witness @C.%HasF.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.866: %HasF.type.aca = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %HasF.F.type.7f1: type = fn_type @HasF.F, @HasF(%Param) [concrete]
 // CHECK:STDOUT:   %HasF.F.eff: %HasF.F.type.7f1 = struct_value () [concrete]
 // CHECK:STDOUT:   %HasF.assoc_type.257: type = assoc_entity_type @HasF, @HasF(%Param) [concrete]
 // CHECK:STDOUT:   %assoc0.65a: %HasF.assoc_type.257 = assoc_entity element0, @HasF.%HasF.F.decl [concrete]
-// CHECK:STDOUT:   %HasF.impl_witness: <witness> = impl_witness @C.%HasF.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.b01: type = pattern_type %Param [concrete]
 // CHECK:STDOUT:   %C.as.HasF.impl.F.type: type = fn_type @C.as.HasF.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.HasF.impl.F: %C.as.HasF.impl.F.type = struct_value () [concrete]
@@ -400,13 +400,13 @@ class X(U:! type) {
 // CHECK:STDOUT:   %X.generic: %X.type = struct_value () [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X, @X(%U) [symbolic]
 // CHECK:STDOUT:   %I.type.17e1af.2: type = facet_type <@I, @I(%U)> [symbolic]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @X.%I.impl_witness_table, @X.as.I.impl(%U) [symbolic]
 // CHECK:STDOUT:   %Self.4d2d4e.2: %I.type.17e1af.2 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %I.F.type.224f2c.2: type = fn_type @I.F, @I(%U) [symbolic]
 // CHECK:STDOUT:   %I.F.56f2ca.2: %I.F.type.224f2c.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type.3157fa.2: type = assoc_entity_type @I, @I(%U) [symbolic]
 // CHECK:STDOUT:   %assoc0.2fb04f.2: %I.assoc_type.3157fa.2 = assoc_entity element0, @I.%I.F.decl [symbolic]
 // CHECK:STDOUT:   %require_complete.78e: <witness> = require_complete_type %I.type.17e1af.2 [symbolic]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @X.%I.impl_witness_table, @X.as.I.impl(%U) [symbolic]
 // CHECK:STDOUT:   %pattern_type.acb: type = pattern_type %X [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d1c4.2: type = pattern_type %U [symbolic]
 // CHECK:STDOUT:   %X.as.I.impl.F.type: type = fn_type @X.as.I.impl.F, @X.as.I.impl(%U) [symbolic]
@@ -494,10 +494,10 @@ class X(U:! type) {
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:   %X: type = class_type @X, @X(%U) [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:   %I.type.loc9_21.1: type = facet_type <@I, @I(%U)> [symbolic = %I.type.loc9_21.1 (constants.%I.type.17e1af.2)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.loc9_21.1 [symbolic = %require_complete (constants.%require_complete.78e)]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @X.%I.impl_witness_table, @X.as.I.impl(%U) [symbolic = %I.impl_witness (constants.%I.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.loc9_21.1 [symbolic = %require_complete (constants.%require_complete.78e)]
 // CHECK:STDOUT:   %X.as.I.impl.F.type: type = fn_type @X.as.I.impl.F, @X.as.I.impl(%U) [symbolic = %X.as.I.impl.F.type (constants.%X.as.I.impl.F.type)]
 // CHECK:STDOUT:   %X.as.I.impl.F: @X.as.I.impl.%X.as.I.impl.F.type (%X.as.I.impl.F.type) = struct_value () [symbolic = %X.as.I.impl.F (constants.%X.as.I.impl.F)]
 // CHECK:STDOUT:
@@ -620,10 +620,10 @@ class X(U:! type) {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT:   %X => constants.%X
 // CHECK:STDOUT:   %I.type.loc9_21.1 => constants.%I.type.17e1af.2
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.78e
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.78e
 // CHECK:STDOUT:   %X.as.I.impl.F.type => constants.%X.as.I.impl.F.type
 // CHECK:STDOUT:   %X.as.I.impl.F => constants.%X.as.I.impl.F
 // CHECK:STDOUT: }

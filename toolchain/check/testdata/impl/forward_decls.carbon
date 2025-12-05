@@ -1928,8 +1928,8 @@ interface I {
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = %C> [symbolic]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I_where.type [symbolic]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @I.F.%I.impl_witness_table, @C.as.I.impl(%Self) [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I_where.type [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1974,10 +1974,10 @@ interface I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%Self) [symbolic = %C (constants.%C)]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where constants.%impl.elem0 = %C> [symbolic = %I_where.type (constants.%I_where.type)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I_where.type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @I.F.%I.impl_witness_table, @C.as.I.impl(%Self) [symbolic = %I.impl_witness (constants.%I.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I_where.type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.ref.loc12_10 as %.loc12_17 {
 // CHECK:STDOUT:   !members:
@@ -2055,7 +2055,6 @@ interface I {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %C => constants.%C
 // CHECK:STDOUT:   %I_where.type => constants.%I_where.type
-// CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

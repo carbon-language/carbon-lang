@@ -330,8 +330,8 @@ fn H(T:! type) {
 // CHECK:STDOUT:   %BB.binding.as_type: type = symbolic_binding_type BB, 1, %BB.965 [symbolic]
 // CHECK:STDOUT:   %ptr.e8f8f9.1: type = ptr_type %AA [symbolic]
 // CHECK:STDOUT:   %B.type.32966c.1: type = facet_type <@B, @B(%ptr.e8f8f9.1)> [symbolic]
-// CHECK:STDOUT:   %require_complete.f59d26.1: <witness> = require_complete_type %B.type.32966c.1 [symbolic]
 // CHECK:STDOUT:   %B.impl_witness.1e2: <witness> = impl_witness file.%B.impl_witness_table.loc9, @BB.binding.as_type.as.B.impl(%AA, %BB.965) [symbolic]
+// CHECK:STDOUT:   %require_complete.f59d26.1: <witness> = require_complete_type %B.type.32966c.1 [symbolic]
 // CHECK:STDOUT:   %DD: type = symbolic_binding DD, 0 [symbolic]
 // CHECK:STDOUT:   %D.9b4: type = class_type @D, @D(%DD) [symbolic]
 // CHECK:STDOUT:   %T.091: type = symbolic_binding T, 1 [symbolic]
@@ -408,10 +408,10 @@ fn H(T:! type) {
 // CHECK:STDOUT:   %BB.binding.as_type: type = symbolic_binding_type BB, 1, %BB.loc9_25.2 [symbolic = %BB.binding.as_type (constants.%BB.binding.as_type)]
 // CHECK:STDOUT:   %ptr.loc9_61.2: type = ptr_type %AA.loc9_14.2 [symbolic = %ptr.loc9_61.2 (constants.%ptr.e8f8f9.1)]
 // CHECK:STDOUT:   %B.type.loc9_62.2: type = facet_type <@B, @B(%ptr.loc9_61.2)> [symbolic = %B.type.loc9_62.2 (constants.%B.type.32966c.1)]
-// CHECK:STDOUT:   %require_complete.loc9_62: <witness> = require_complete_type %B.type.loc9_62.2 [symbolic = %require_complete.loc9_62 (constants.%require_complete.f59d26.1)]
 // CHECK:STDOUT:   %B.impl_witness: <witness> = impl_witness file.%B.impl_witness_table.loc9, @BB.binding.as_type.as.B.impl(%AA.loc9_14.2, %BB.loc9_25.2) [symbolic = %B.impl_witness (constants.%B.impl_witness.1e2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc9_62: <witness> = require_complete_type %B.type.loc9_62.2 [symbolic = %require_complete.loc9_62 (constants.%require_complete.f59d26.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc9_51 as %B.type.loc9_62.1 {
 // CHECK:STDOUT:   !members:
@@ -477,7 +477,6 @@ fn H(T:! type) {
 // CHECK:STDOUT:   %BB.binding.as_type => constants.%BB.binding.as_type
 // CHECK:STDOUT:   %ptr.loc9_61.2 => constants.%ptr.e8f8f9.1
 // CHECK:STDOUT:   %B.type.loc9_62.2 => constants.%B.type.32966c.1
-// CHECK:STDOUT:   %require_complete.loc9_62 => constants.%require_complete.f59d26.1
 // CHECK:STDOUT:   %B.impl_witness => constants.%B.impl_witness.1e2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
