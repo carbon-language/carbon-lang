@@ -754,6 +754,21 @@ struct CppOverloadSetValue {
   CppOverloadSetId overload_set_id;
 };
 
+// The type of the name of a C++ type template. The corresponding value is an
+// empty `StructValue`.
+struct CppTypeTemplateType {
+  // This is only ever created as a constant, so doesn't have a location.
+  static constexpr auto Kind =
+      InstKind::CppTypeTemplateType.Define<Parse::NoneNodeId>(
+          {.ir_name = "cpp_type_template_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+  EntityNameId name_id;
+  ClangDeclId decl_id;
+};
+
 // A witness synthesized for a C++ construct such as a constructor, conversion
 // function, or overloaded operator.
 struct CppWitness {

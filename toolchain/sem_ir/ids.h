@@ -472,6 +472,20 @@ struct ImportIRId : public IdBase<ImportIRId> {
 inline constexpr ImportIRId ImportIRId::ApiForImpl = ImportIRId(0);
 inline constexpr ImportIRId ImportIRId::Cpp = ImportIRId(ApiForImpl.index + 1);
 
+// The ID of a `ClangDecl`.
+//
+// These IDs are importantly distinct from the `inst_id` associated with each
+// declaration. These form a dense range of IDs that is used to reference the
+// AST node pointers without storing those pointers directly into SemIR and
+// needing space to hold a full pointer. We can't avoid having these IDs without
+// embedding pointers directly into the storage of SemIR as part of an
+// instruction.
+struct ClangDeclId : public IdBase<ClangDeclId> {
+  static constexpr llvm::StringLiteral Label = "clang_decl_id";
+
+  using IdBase::IdBase;
+};
+
 // A boolean value.
 struct BoolValue : public IdBase<BoolValue> {
   // Not used by `Print`, but for `IdKind`.
