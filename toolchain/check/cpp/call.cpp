@@ -100,6 +100,8 @@ static auto ConvertArgToTemplateArg(Context& context,
           GetCppLocation(context, SemIR::LocId(arg_id)));
     }
 
+    // TODO: Eventually we should also support passing Carbon generics as
+    // template template arguments.
     return MakePlaceholderTemplateArg(context, arg_id);
   }
 
