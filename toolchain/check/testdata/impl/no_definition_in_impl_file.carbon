@@ -150,7 +150,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.A: type = import_ref Main//decl_in_api_definition_in_impl, A, loaded [concrete = constants.%A.type]
-// CHECK:STDOUT:   %Main.import_ref.3b8 = import_ref Main//decl_in_api_definition_in_impl, loc4_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.b12 = import_ref Main//decl_in_api_definition_in_impl, loc4_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5c: type = import_ref Main//decl_in_api_definition_in_impl, loc10_7, loaded [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %Main.import_ref.831: type = import_ref Main//decl_in_api_definition_in_impl, loc10_12, loaded [concrete = constants.%A.type]
 // CHECK:STDOUT: }
@@ -175,7 +175,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @A [from "fail_decl_in_api_definition_in_impl.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.3b8
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.b12
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -255,7 +255,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.B = import_ref Main//decl_only_in_api, B, unloaded
-// CHECK:STDOUT:   %Main.import_ref.5c0 = import_ref Main//decl_only_in_api, loc4_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.3bc = import_ref Main//decl_only_in_api, loc4_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5c: type = import_ref Main//decl_only_in_api, loc10_7, loaded [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %Main.import_ref.171: type = import_ref Main//decl_only_in_api, loc10_12, loaded [concrete = constants.%B.type]
 // CHECK:STDOUT: }
@@ -270,7 +270,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B [from "fail_decl_only_in_api.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.5c0
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.3bc
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -324,7 +324,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//decl_in_api_decl_in_impl, C, loaded [concrete = constants.%C.type]
-// CHECK:STDOUT:   %Main.import_ref.a1a = import_ref Main//decl_in_api_decl_in_impl, loc4_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.31f = import_ref Main//decl_in_api_decl_in_impl, loc4_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5c: type = import_ref Main//decl_in_api_decl_in_impl, loc10_7, loaded [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %Main.import_ref.653: type = import_ref Main//decl_in_api_decl_in_impl, loc10_12, loaded [concrete = constants.%C.type]
 // CHECK:STDOUT: }
@@ -344,7 +344,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @C [from "fail_decl_in_api_decl_in_impl.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.a1a
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.31f
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:

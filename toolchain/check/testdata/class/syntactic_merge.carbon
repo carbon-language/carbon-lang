@@ -375,7 +375,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:   %Foo.generic.80461b.1: %Foo.type.39e446.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type.39e446.2: type = generic_class_type @Foo.loc14 [concrete]
 // CHECK:STDOUT:   %Foo.generic.80461b.2: %Foo.type.39e446.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.e91f3a.2: type = class_type @Foo.loc14, @Foo.loc14(%a) [symbolic]
+// CHECK:STDOUT:   %Foo.d7a4ae.2: type = class_type @Foo.loc14, @Foo.loc14(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -428,7 +428,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Foo.e91f3a.2
+// CHECK:STDOUT:     .Self = constants.%Foo.d7a4ae.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -604,8 +604,8 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:   %Main.D: type = import_ref Main//two_file, D, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//two_file, loc4_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//two_file, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.29e19b.1: %C = import_ref Main//two_file, loc7_11, loaded [symbolic = @Foo.%a.1 (constants.%a)]
-// CHECK:STDOUT:   %Main.import_ref.29e19b.2: %C = import_ref Main//two_file, loc8_11, loaded [symbolic = @Bar.%a.1 (constants.%a)]
+// CHECK:STDOUT:   %Main.import_ref.306962.1: %C = import_ref Main//two_file, loc7_11, loaded [symbolic = @Foo.%a.1 (constants.%a)]
+// CHECK:STDOUT:   %Main.import_ref.306962.2: %C = import_ref Main//two_file, loc8_11, loaded [symbolic = @Bar.%a.1 (constants.%a)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -644,7 +644,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo(imports.%Main.import_ref.29e19b.1: %C) {
+// CHECK:STDOUT: generic class @Foo(imports.%Main.import_ref.306962.1: %C) {
 // CHECK:STDOUT:   %a.1: %C = symbolic_binding a, 0 [symbolic = %a.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -658,7 +658,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Bar(imports.%Main.import_ref.29e19b.2: %C) {
+// CHECK:STDOUT: generic class @Bar(imports.%Main.import_ref.306962.2: %C) {
 // CHECK:STDOUT:   %a.1: %C = symbolic_binding a, 0 [symbolic = %a.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -695,7 +695,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:   %b: %C = symbolic_binding b, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type.39e446.2: type = generic_class_type @Foo.loc15 [concrete]
 // CHECK:STDOUT:   %Foo.generic.80461b.2: %Foo.type.39e446.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.e91f3a.2: type = class_type @Foo.loc15, @Foo.loc15(%b) [symbolic]
+// CHECK:STDOUT:   %Foo.d7a4ae.2: type = class_type @Foo.loc15, @Foo.loc15(%b) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -751,7 +751,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Foo.e91f3a.2
+// CHECK:STDOUT:     .Self = constants.%Foo.d7a4ae.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -777,7 +777,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:   %Foo.generic.80461b.1: %Foo.type.39e446.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type.39e446.2: type = generic_class_type @Foo.loc15 [concrete]
 // CHECK:STDOUT:   %Foo.generic.80461b.2: %Foo.type.39e446.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.e91f3a.2: type = class_type @Foo.loc15, @Foo.loc15(%a) [symbolic]
+// CHECK:STDOUT:   %Foo.d7a4ae.2: type = class_type @Foo.loc15, @Foo.loc15(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -833,7 +833,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Foo.e91f3a.2
+// CHECK:STDOUT:     .Self = constants.%Foo.d7a4ae.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -859,7 +859,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:   %Foo.generic.80461b.1: %Foo.type.39e446.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type.39e446.2: type = generic_class_type @Foo.loc15 [concrete]
 // CHECK:STDOUT:   %Foo.generic.80461b.2: %Foo.type.39e446.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.e91f3a.2: type = class_type @Foo.loc15, @Foo.loc15(%a) [symbolic]
+// CHECK:STDOUT:   %Foo.d7a4ae.2: type = class_type @Foo.loc15, @Foo.loc15(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -915,7 +915,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Foo.e91f3a.2
+// CHECK:STDOUT:     .Self = constants.%Foo.d7a4ae.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -995,7 +995,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//alias_two_file, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//alias_two_file, loc4_10, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.2c4 = import_ref Main//alias_two_file, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.29e: %C = import_ref Main//alias_two_file, loc6_11, loaded [symbolic = @Foo.%a.1 (constants.%a)]
+// CHECK:STDOUT:   %Main.import_ref.306: %C = import_ref Main//alias_two_file, loc6_11, loaded [symbolic = @Foo.%a.1 (constants.%a)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1026,7 +1026,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.2c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Foo(imports.%Main.import_ref.29e: %C) {
+// CHECK:STDOUT: generic class @Foo(imports.%Main.import_ref.306: %C) {
 // CHECK:STDOUT:   %a.1: %C = symbolic_binding a, 0 [symbolic = %a.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1059,7 +1059,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:   %Foo.generic.80461b.1: %Foo.type.39e446.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type.39e446.2: type = generic_class_type @Foo.loc18 [concrete]
 // CHECK:STDOUT:   %Foo.generic.80461b.2: %Foo.type.39e446.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.015089.2: type = class_type @Foo.loc18, @Foo.loc18(%a) [symbolic]
+// CHECK:STDOUT:   %Foo.ddbb29.2: type = class_type @Foo.loc18, @Foo.loc18(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1115,7 +1115,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Foo.015089.2
+// CHECK:STDOUT:     .Self = constants.%Foo.ddbb29.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
