@@ -284,11 +284,8 @@ static auto TryMapType(Context& context, SemIR::TypeId type_id)
   return clang::QualType();
 }
 
-// Maps a Carbon type to a C++ type. Returns `clang::QualType` if the mapping
-// succeeds, or `clang::QualType::isNull()` if the type is not supported.
-// TODO: unify this with the C++ to Carbon type mapping function.
-static auto MapToCppType(Context& context, SemIR::TypeId type_id)
-    -> clang::QualType {
+auto MapToCppType(Context& context, SemIR::TypeId type_id) -> clang::QualType {
+  // TODO: unify this with the C++ to Carbon type mapping function.
   llvm::SmallVector<WrapFn> wrap_fns;
   while (true) {
     CARBON_KIND_SWITCH(TryMapType(context, type_id)) {

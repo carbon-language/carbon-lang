@@ -644,9 +644,6 @@ static auto ImportNamespaceDecl(Context& context,
   return result.inst_id;
 }
 
-static auto ImportTypeAndDependencies(Context& context, SemIR::LocId loc_id,
-                                      clang::QualType type) -> TypeExpr;
-
 // Creates a class declaration for the given class name in the given scope.
 // Returns the `InstId` for the declaration.
 static auto BuildClassDecl(Context& context,
@@ -821,7 +818,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
     }
 
     auto [base_type_inst_id, base_type_id] =
-        ImportTypeAndDependencies(context, import_ir_inst_id, base.getType());
+        ImportCppType(context, import_ir_inst_id, base.getType());
     if (!base_type_id.has_value()) {
       // TODO: If the base class's type can't be mapped, skip it.
       continue;
@@ -903,7 +900,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
     auto field_name_id = AddIdentifierName(context, field->getName());
     auto [field_type_inst_id, field_type_id] =
-        ImportTypeAndDependencies(context, import_ir_inst_id, field->getType());
+        ImportCppType(context, import_ir_inst_id, field->getType());
     if (!field_type_inst_id.has_value()) {
       // TODO: For now, just skip over fields whose types we can't map.
       continue;
@@ -2080,12 +2077,8 @@ static auto ImportDeclSet(Context& context, SemIR::LocId loc_id,
   return true;
 }
 
-// Imports a declaration from Clang to Carbon. If successful, returns the
-// instruction for the new Carbon declaration. All unimported dependencies are
-// imported first.
-static auto ImportDeclAndDependencies(Context& context, SemIR::LocId loc_id,
-                                      SemIR::ClangDeclKey key)
-    -> SemIR::InstId {
+auto ImportCppDecl(Context& context, SemIR::LocId loc_id,
+                   SemIR::ClangDeclKey key) -> SemIR::InstId {
   // Collect dependencies by walking the dependency graph in depth-first order.
   ImportWorklist worklist;
   AddDependentDecl(context, key, worklist);
@@ -2095,10 +2088,8 @@ static auto ImportDeclAndDependencies(Context& context, SemIR::LocId loc_id,
   return LookupClangDeclInstId(context, key);
 }
 
-// Imports a type from Clang to Carbon. If successful, returns the imported
-// TypeId. All unimported dependencies are imported first.
-static auto ImportTypeAndDependencies(Context& context, SemIR::LocId loc_id,
-                                      clang::QualType type) -> TypeExpr {
+auto ImportCppType(Context& context, SemIR::LocId loc_id, clang::QualType type)
+    -> TypeExpr {
   // Collect dependencies by walking the dependency graph in depth-first order.
   ImportWorklist worklist;
   AddDependentUnimportedTypeDecls(context, type, worklist);
@@ -2109,14 +2100,6 @@ static auto ImportTypeAndDependencies(Context& context, SemIR::LocId loc_id,
   return MapType(context, loc_id, type);
 }
 
-auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
-                           clang::FunctionDecl* clang_decl, int num_params)
-    -> SemIR::InstId {
-  return ImportDeclAndDependencies(
-      context, loc_id,
-      SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, num_params));
-}
-
 // Imports a Clang declaration into Carbon and adds that name into the
 // `NameScope`.
 static auto ImportNameDeclIntoScope(Context& context, SemIR::LocId loc_id,
@@ -2125,7 +2108,7 @@ static auto ImportNameDeclIntoScope(Context& context, SemIR::LocId loc_id,
                                     SemIR::ClangDeclKey key,
                                     SemIR::AccessKind access_kind)
     -> SemIR::ScopeLookupResult {
-  SemIR::InstId inst_id = ImportDeclAndDependencies(context, loc_id, key);
+  SemIR::InstId inst_id = ImportCppDecl(context, loc_id, key);
   if (!inst_id.has_value()) {
     return SemIR::ScopeLookupResult::MakeNotFound();
   }

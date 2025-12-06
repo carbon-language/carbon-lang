@@ -10,6 +10,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/ids.h"
@@ -24,12 +25,29 @@ auto ImportCpp(Context& context,
                llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                std::shared_ptr<clang::CompilerInvocation> invocation) -> void;
 
+// Imports a declaration from Clang to Carbon. If successful, returns the new
+// Carbon declaration `InstId`. If the declaration was already imported, returns
+// the mapped instruction. All unimported dependencies are imported first.
+auto ImportCppDecl(Context& context, SemIR::LocId loc_id,
+                   SemIR::ClangDeclKey key) -> SemIR::InstId;
+
 // Imports a function declaration from Clang to Carbon. If successful, returns
 // the new Carbon function declaration `InstId`. If the declaration was already
 // imported, returns the mapped instruction.
-auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
-                           clang::FunctionDecl* clang_decl, int num_params)
-    -> SemIR::InstId;
+inline auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
+                                  clang::FunctionDecl* clang_decl,
+                                  int num_params) -> SemIR::InstId {
+  return ImportCppDecl(
+      context, loc_id,
+      SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, num_params));
+}
+
+// Imports a function declaration from Clang to Carbon. If successful, returns
+// the new Carbon function declaration `InstId`. If the declaration was already
+// imported, returns the mapped instruction. All unimported dependencies are
+// imported first.
+auto ImportCppType(Context& context, SemIR::LocId loc_id, clang::QualType type)
+    -> TypeExpr;
 
 // Imports an overloaded function set from Clang to Carbon.
 auto ImportCppOverloadSet(
