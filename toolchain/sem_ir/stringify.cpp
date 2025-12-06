@@ -327,7 +327,7 @@ class Stringifier {
     step_stack_->PushInstId(inst.inner_id);
   }
 
-  auto StringifyInst(InstId /*inst_id*/, CppTypeTemplateType inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, CppTemplateNameType inst) -> void {
     *out_ << "<type of ";
     step_stack_->Push(inst.name_id, ">");
   }

@@ -1958,6 +1958,38 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   return var_storage_inst_id;
 }
 
+static auto ImportTemplateDecl(Context& context,
+                               clang::TemplateDecl* template_decl)
+    -> SemIR::InstId {
+  auto key = SemIR::ClangDeclKey(template_decl);
+
+  // TODO: Avoid doing this lookup both here and in the insertion below.
+  if (SemIR::InstId existing_inst_id = LookupClangDeclInstId(context, key);
+      existing_inst_id.has_value()) {
+    return existing_inst_id;
+  }
+
+  // Add a placeholder instruction to resolve cycle between the clang
+  // declaration and the type.
+  auto import_loc_id =
+      AddImportIRInst(context.sem_ir(), template_decl->getLocation());
+  SemIR::StructValue value = {.type_id = SemIR::TypeId::None,
+                              .elements_id = SemIR::InstBlockId::Empty};
+  auto inst_id = AddPlaceholderImportedInstInNoBlock(
+      context, MakeImportedLocIdAndInst(context, import_loc_id, value));
+
+  // Create a type for the constant value.
+  auto name_id = context.entity_names().Add(
+      {.name_id = AddIdentifierName(context, template_decl->getName()),
+       .parent_scope_id = GetParentNameScopeId(context, template_decl)});
+  auto decl_id = context.clang_decls().Add({.key = key, .inst_id = inst_id});
+  value.type_id = GetCppTemplateNameType(context, name_id, decl_id);
+
+  // Update the value with its type.
+  ReplaceInstBeforeConstantUse(context, inst_id, value);
+  return inst_id;
+}
+
 // Imports a declaration from Clang to Carbon. Returns the instruction for the
 // new Carbon declaration, which will be an ErrorInst on failure. Assumes all
 // dependencies have already been imported.
@@ -1999,6 +2031,9 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
   }
   if (auto* var_decl = dyn_cast<clang::VarDecl>(clang_decl)) {
     return ImportVarDecl(context, loc_id, var_decl);
+  }
+  if (auto* template_decl = dyn_cast<clang::TemplateDecl>(clang_decl)) {
+    return ImportTemplateDecl(context, template_decl);
   }
 
   context.TODO(AddImportIRInst(context.sem_ir(), clang_decl->getLocation()),

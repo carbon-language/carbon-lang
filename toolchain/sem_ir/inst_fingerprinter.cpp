@@ -230,7 +230,7 @@ struct Worklist {
   }
 
   auto Add(ClangDeclId /*decl_id*/) -> void {
-    // TODO: For `CppTypeTemplateType` we don't need to fingerprint the
+    // TODO: For `CppTemplateNameType` we don't need to fingerprint the
     // `decl_id`, because fingerprinting the `NameId` is sufficient to identify
     // the template, but this won't necessarily be true for other
     // `ClangDeclId`s.

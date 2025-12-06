@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -10,47 +10,49 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/unsupported_decl_type.carbon
 
-// --- template.h
+// --- structured_binding.h
 
-template<typename T> class C {};
+struct X { int a, b; };
+auto [a, b] = X{};
 
-// --- fail_todo_use_template.carbon
+// --- fail_todo_use_structured_binding.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_use_template.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./template.h:2:28: error: semantics TODO: `Unsupported: Declaration type ClassTemplate` [SemanticsTodo]
-// CHECK:STDERR: template<typename T> class C {};
-// CHECK:STDERR:                            ^
-import Cpp library "template.h";
+// CHECK:STDERR: fail_todo_use_structured_binding.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: ./structured_binding.h:3:7: error: semantics TODO: `Unsupported: Declaration type Binding` [SemanticsTodo]
+// CHECK:STDERR: auto [a, b] = X{};
+// CHECK:STDERR:       ^
+import Cpp library "structured_binding.h";
 
-fn F() {
+fn F() -> i32 {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_use_template.carbon:[[@LINE+4]]:10: note: in `Cpp` name lookup for `C` [InCppNameLookup]
-  // CHECK:STDERR:   var c: Cpp.C({});
+  // CHECK:STDERR: fail_todo_use_structured_binding.carbon:[[@LINE+4]]:10: note: in `Cpp` name lookup for `a` [InCppNameLookup]
+  // CHECK:STDERR:   return Cpp.a;
   // CHECK:STDERR:          ^~~~~
   // CHECK:STDERR:
-  var c: Cpp.C({});
+  return Cpp.a;
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- fail_todo_use_template.carbon
+// CHECK:STDOUT: --- fail_todo_use_structured_binding.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .a = <error>
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: fn @F() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: <error> = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %c: ref <error> = ref_binding c, <error> [concrete = <error>]
-// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [concrete = <error>]
+// CHECK:STDOUT:   return <error> to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

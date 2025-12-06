@@ -158,6 +158,8 @@ fn MyF(bar : Cpp.Bar*) {
 
 // --- template.h
 
+struct X {};
+
 template<typename T>
 union Bar {};
 
@@ -165,18 +167,14 @@ union Bar {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_import_template.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./template.h:3:7: error: semantics TODO: `Unsupported: Declaration type ClassTemplate` [SemanticsTodo]
-// CHECK:STDERR: union Bar {};
-// CHECK:STDERR:       ^
 import Cpp library "template.h";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_todo_import_template.carbon:[[@LINE+4]]:13: note: in `Cpp` name lookup for `Bar` [InCppNameLookup]
-// CHECK:STDERR: fn MyF(bar: Cpp.Bar*);
-// CHECK:STDERR:             ^~~~~~~
+// CHECK:STDERR: fail_todo_import_template.carbon:[[@LINE+4]]:13: error: value of type `<type of Cpp.Bar>` is not callable [CallToNonCallable]
+// CHECK:STDERR: fn MyF(bar: Cpp.Bar(Cpp.X)*);
+// CHECK:STDERR:             ^~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn MyF(bar: Cpp.Bar*);
+fn MyF(bar: Cpp.Bar(Cpp.X)*);
 //@dump-sem-ir-end
 
 // CHECK:STDOUT: --- import_declaration.carbon
@@ -405,15 +403,21 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT: --- fail_todo_import_template.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.763: type = cpp_type_template_type Bar [concrete]
+// CHECK:STDOUT:   %empty_struct: %.763 = struct_value () [concrete]
+// CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .Bar = <error>
+// CHECK:STDOUT:     .Bar = %empty_struct
+// CHECK:STDOUT:     .X = %X.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %empty_struct: %.763 = struct_value () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -422,9 +426,11 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:     %bar.param_patt: <error> = value_param_pattern %bar.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: <error> = value_param call_param0
-// CHECK:STDOUT:     %.loc15: type = splice_block %ptr [concrete = <error>] {
-// CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       %Bar.ref: <error> = name_ref Bar, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc18: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:       %Cpp.ref.loc18_13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:       %Bar.ref: %.763 = name_ref Bar, imports.%empty_struct [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %Cpp.ref.loc18_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:       %X.ref: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %bar: <error> = value_binding bar, %bar.param

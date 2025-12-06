@@ -1005,7 +1005,7 @@ template <typename InstT>
   requires(InstT::Kind.template IsAnyOf<
            SemIR::AssociatedEntityType, SemIR::AutoType, SemIR::BoundMethodType,
            SemIR::CharLiteralType, SemIR::CppOverloadSetType,
-           SemIR::CppTypeTemplateType, SemIR::FacetType,
+           SemIR::CppTemplateNameType, SemIR::FacetType,
            SemIR::FloatLiteralType, SemIR::FunctionType,
            SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
            SemIR::GenericInterfaceType, SemIR::GenericNamedConstraintType,
