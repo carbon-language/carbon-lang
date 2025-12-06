@@ -48,7 +48,7 @@ auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
   }
 }
 
-// Convert an argument in a call to a C++ template name into a corresponding
+// Converts an argument in a call to a C++ template name into a corresponding
 // clang template argument, given the template parameter it will be matched
 // against.
 static auto ConvertArgToTemplateArg(Context& context,
@@ -88,7 +88,52 @@ static auto ConvertArgToTemplateArg(Context& context,
   CARBON_FATAL("Unknown declaration kind for template parameter");
 }
 
-// Given a template and an template argument list, build a Carbon value
+// Converts a call argument list into a Clang template argument list for a given
+// template. Returns true on success, or false if an error was diagnosed.
+static auto ConvertArgsToTemplateArgs(Context& context,
+                                      clang::TemplateDecl* template_decl,
+                                      llvm::ArrayRef<SemIR::InstId> arg_ids,
+                                      clang::TemplateArgumentListInfo& arg_list)
+    -> bool {
+  for (auto* param_decl : template_decl->getTemplateParameters()->asArray()) {
+    if (arg_ids.empty()) {
+      return true;
+    }
+
+    // A parameter pack consumes all remaining arguments; otherwise, it consumes
+    // a single argument.
+    // TODO: Handle expanded template parameter packs, which have a known, fixed
+    // arity.
+    llvm::ArrayRef<SemIR::InstId> args_for_param =
+        param_decl->isTemplateParameterPack() ? std::exchange(arg_ids, {})
+                                              : arg_ids.consume_front();
+    for (auto arg_id : args_for_param) {
+      if (auto arg = ConvertArgToTemplateArg(context, param_decl, arg_id)) {
+        arg_list.addArgument(*arg);
+      } else {
+        return false;
+      }
+    }
+  }
+
+  // If there are any remaining arguments, that's an error; convert them to
+  // placeholder template arguments so that Clang will diagnose it for us.
+  for (auto arg_id : arg_ids) {
+    // Synthesize a placeholder `void{}` template argument.
+    auto arg_loc = GetCppLocation(context, SemIR::LocId(arg_id));
+    auto void_type = context.ast_context().VoidTy;
+    auto* arg = new (context.ast_context()) clang::CXXScalarValueInitExpr(
+        void_type,
+        context.ast_context().getTrivialTypeSourceInfo(void_type, arg_loc),
+        arg_loc);
+    arg_list.addArgument(clang::TemplateArgumentLoc(
+        clang::TemplateArgument(arg, /*IsCanonical=*/false), arg));
+  }
+
+  return true;
+}
+
+// Given a template and an template argument list, builds a Carbon value
 // describing the corresponding C++ template-id.
 static auto BuildTemplateId(Context& context, SemIR::LocId loc_id,
                             clang::SourceLocation loc,
@@ -140,39 +185,8 @@ auto PerformCallToCppTemplateName(Context& context, SemIR::LocId loc_id,
 
   // Form a template argument list for this template.
   clang::TemplateArgumentListInfo arg_list(loc, loc);
-  for (auto* param_decl : template_decl->getTemplateParameters()->asArray()) {
-    if (arg_ids.empty()) {
-      break;
-    }
-
-    // A parameter pack consumes all remaining arguments; otherwise, it consumes
-    // a single argument.
-    // TODO: Handle expanded template parameter packs, which have a known, fixed
-    // arity.
-    llvm::ArrayRef<SemIR::InstId> args_for_param =
-        param_decl->isTemplateParameterPack() ? std::exchange(arg_ids, {})
-                                              : arg_ids.consume_front();
-    for (auto arg_id : args_for_param) {
-      if (auto arg = ConvertArgToTemplateArg(context, param_decl, arg_id)) {
-        arg_list.addArgument(*arg);
-      } else {
-        return SemIR::ErrorInst::InstId;
-      }
-    }
-  }
-
-  // If there are any remaining arguments, that's an error; convert them to
-  // placeholder template arguments so that Clang will diagnose it for us.
-  for (auto arg_id : arg_ids) {
-    // Synthesize a placeholder `void{}` template argument.
-    auto arg_loc = GetCppLocation(context, SemIR::LocId(arg_id));
-    auto void_type = context.ast_context().VoidTy;
-    auto* arg = new (context.ast_context()) clang::CXXScalarValueInitExpr(
-        void_type,
-        context.ast_context().getTrivialTypeSourceInfo(void_type, arg_loc),
-        arg_loc);
-    arg_list.addArgument(clang::TemplateArgumentLoc(
-        clang::TemplateArgument(arg, /*IsCanonical=*/false), arg));
+  if (!ConvertArgsToTemplateArgs(context, template_decl, arg_ids, arg_list)) {
+    return SemIR::ErrorInst::InstId;
   }
 
   return BuildTemplateId(context, loc_id, loc, template_decl, arg_list);
