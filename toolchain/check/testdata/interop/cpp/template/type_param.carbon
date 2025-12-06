@@ -6,9 +6,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/template/arguments.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/template/type_param.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/template/arguments.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/template/type_param.carbon
 
 // --- templates.h
 
@@ -27,34 +27,6 @@ import Cpp library "templates.h";
 var x: Cpp.TwoTypes(Cpp.A, Cpp.B);
 //@dump-sem-ir-end
 
-// --- fail_too_few_arguments.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "templates.h";
-
-// CHECK:STDERR: fail_too_few_arguments.carbon:[[@LINE+8]]:26: error: too few template arguments for class template 'TwoTypes' [CppInteropParseError]
-// CHECK:STDERR:    14 | var x: Cpp.TwoTypes(Cpp.A);
-// CHECK:STDERR:       |                          ^
-// CHECK:STDERR: fail_too_few_arguments.carbon:[[@LINE-5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./templates.h:5:41: note: template is declared here [CppInteropParseNote]
-// CHECK:STDERR:     5 | template<typename T, typename U> struct TwoTypes {};
-// CHECK:STDERR:       | ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~        ^
-// CHECK:STDERR:
-var x: Cpp.TwoTypes(Cpp.A);
-
-// --- fail_too_many_arguments.carbon
-
-library "[[@TEST_NAME]]";
-
-import Cpp library "templates.h";
-
-// CHECK:STDERR: fail_too_many_arguments.carbon:[[@LINE+4]]:8: error: semantics TODO: `diagnose too many arguments in call to template` [SemanticsTodo]
-// CHECK:STDERR: var x: Cpp.TwoTypes(Cpp.A, Cpp.A, Cpp.A);
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-var x: Cpp.TwoTypes(Cpp.A, Cpp.A, Cpp.A);
-
 // --- fail_non_type_argument.carbon
 
 library "[[@TEST_NAME]]";
@@ -69,6 +41,18 @@ import Cpp library "templates.h";
 // CHECK:STDERR:                            ^~~~
 // CHECK:STDERR:
 var x: Cpp.TwoTypes(Cpp.A, true);
+
+// --- fail_unsupported_type.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "templates.h";
+
+// CHECK:STDERR: fail_unsupported_type.carbon:[[@LINE+4]]:28: error: semantics TODO: `unsupported type used as template argument` [SemanticsTodo]
+// CHECK:STDERR: var x: Cpp.TwoTypes(Cpp.A, {});
+// CHECK:STDERR:                            ^~
+// CHECK:STDERR:
+var x: Cpp.TwoTypes(Cpp.A, {});
 
 // CHECK:STDOUT: --- valid.carbon
 // CHECK:STDOUT:

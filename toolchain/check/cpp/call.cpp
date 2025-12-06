@@ -88,43 +88,15 @@ static auto ConvertArgToTemplateArg(Context& context,
   CARBON_FATAL("Unknown declaration kind for template parameter");
 }
 
-auto PerformCallToCppTemplateName(Context& context, SemIR::LocId loc_id,
-                                  SemIR::ClangDeclId template_decl_id,
-                                  llvm::ArrayRef<SemIR::InstId> arg_ids)
+// Given a template and an template argument list, build a Carbon value
+// describing the corresponding C++ template-id.
+static auto BuildTemplateId(Context& context, SemIR::LocId loc_id,
+                            clang::SourceLocation loc,
+                            clang::TemplateDecl* template_decl,
+                            clang::TemplateArgumentListInfo& arg_list)
     -> SemIR::InstId {
-  auto* template_decl = dyn_cast<clang::TemplateDecl>(
-      context.clang_decls().Get(template_decl_id).key.decl);
-  auto loc = GetCppLocation(context, loc_id);
-
-  // Form a template argument list for this template.
-  clang::TemplateArgumentListInfo arg_list(loc, loc);
-  for (auto* param_decl : template_decl->getTemplateParameters()->asArray()) {
-    if (arg_ids.empty()) {
-      break;
-    }
-
-    // A parameter pack consumes all remaining arguments; otherwise, it consumes
-    // a single argument.
-    // TODO: Handle expanded template parameter packs, which have a known, fixed
-    // arity.
-    llvm::ArrayRef<SemIR::InstId> args_for_param =
-        param_decl->isTemplateParameterPack() ? std::exchange(arg_ids, {})
-                                              : arg_ids.consume_front();
-    for (auto arg_id : args_for_param) {
-      if (auto arg = ConvertArgToTemplateArg(context, param_decl, arg_id)) {
-        arg_list.addArgument(*arg);
-      } else {
-        return SemIR::ErrorInst::InstId;
-      }
-    }
-  }
-
-  if (!arg_ids.empty()) {
-    context.TODO(loc_id, "diagnose too many arguments in call to template");
-    return SemIR::ErrorInst::InstId;
-  }
-
-  if (auto* var_template_decl = dyn_cast<clang::VarTemplateDecl>(template_decl)) {
+  if (auto* var_template_decl =
+          dyn_cast<clang::VarTemplateDecl>(template_decl)) {
     auto decl_result = context.clang_sema().CheckVarTemplateId(
         var_template_decl, /*TemplateLoc=*/clang::SourceLocation(), loc,
         arg_list, /*SetWrittenArgs=*/false);
@@ -156,6 +128,54 @@ auto PerformCallToCppTemplateName(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::InstId;
   }
   return ImportCppType(context, loc_id, clang_type).inst_id;
+}
+
+auto PerformCallToCppTemplateName(Context& context, SemIR::LocId loc_id,
+                                  SemIR::ClangDeclId template_decl_id,
+                                  llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> SemIR::InstId {
+  auto* template_decl = dyn_cast<clang::TemplateDecl>(
+      context.clang_decls().Get(template_decl_id).key.decl);
+  auto loc = GetCppLocation(context, loc_id);
+
+  // Form a template argument list for this template.
+  clang::TemplateArgumentListInfo arg_list(loc, loc);
+  for (auto* param_decl : template_decl->getTemplateParameters()->asArray()) {
+    if (arg_ids.empty()) {
+      break;
+    }
+
+    // A parameter pack consumes all remaining arguments; otherwise, it consumes
+    // a single argument.
+    // TODO: Handle expanded template parameter packs, which have a known, fixed
+    // arity.
+    llvm::ArrayRef<SemIR::InstId> args_for_param =
+        param_decl->isTemplateParameterPack() ? std::exchange(arg_ids, {})
+                                              : arg_ids.consume_front();
+    for (auto arg_id : args_for_param) {
+      if (auto arg = ConvertArgToTemplateArg(context, param_decl, arg_id)) {
+        arg_list.addArgument(*arg);
+      } else {
+        return SemIR::ErrorInst::InstId;
+      }
+    }
+  }
+
+  // If there are any remaining arguments, that's an error; convert them to
+  // placeholder template arguments so that Clang will diagnose it for us.
+  for (auto arg_id : arg_ids) {
+    // Synthesize a placeholder `void{}` template argument.
+    auto arg_loc = GetCppLocation(context, SemIR::LocId(arg_id));
+    auto void_type = context.ast_context().VoidTy;
+    auto* arg = new (context.ast_context()) clang::CXXScalarValueInitExpr(
+        void_type,
+        context.ast_context().getTrivialTypeSourceInfo(void_type, arg_loc),
+        arg_loc);
+    arg_list.addArgument(clang::TemplateArgumentLoc(
+        clang::TemplateArgument(arg, /*IsCanonical=*/false), arg));
+  }
+
+  return BuildTemplateId(context, loc_id, loc, template_decl, arg_list);
 }
 
 }  // namespace Carbon::Check
