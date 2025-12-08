@@ -9,10 +9,17 @@ namespace Carbon::Parse {
 
 auto HandleUnusedPattern(Context& context) -> void {
   auto state = context.PopState();
+  if (state.in_unused_pattern) {
+    CARBON_DIAGNOSTIC(NestedUnused, Error,
+                      "`unused` nested within another `unused`");
+    context.emitter().Emit(*context.position(), NestedUnused);
+    state.has_error = true;
+  }
   context.PushState(StateKind::FinishUnusedPattern);
   context.ConsumeChecked(Lex::TokenKind::Unused);
 
-  context.PushStateForPattern(StateKind::Pattern, state.in_var_pattern);
+  context.PushStateForPattern(StateKind::Pattern, state.in_var_pattern,
+                              /*in_unused_pattern=*/true);
 }
 
 auto HandleFinishUnusedPattern(Context& context) -> void {

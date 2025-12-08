@@ -12,8 +12,10 @@ static auto HandlePatternListElement(Context& context, StateKind pattern_state,
                                      StateKind finish_state_kind) -> void {
   auto state = context.PopState();
 
-  context.PushStateForPattern(finish_state_kind, state.in_var_pattern);
-  context.PushStateForPattern(pattern_state, state.in_var_pattern);
+  context.PushStateForPattern(finish_state_kind, state.in_var_pattern,
+                              state.in_unused_pattern);
+  context.PushStateForPattern(pattern_state, state.in_var_pattern,
+                              state.in_unused_pattern);
 }
 
 auto HandlePatternListElementAsTuple(Context& context) -> void {
@@ -44,7 +46,8 @@ static auto HandlePatternListElementFinish(Context& context,
   if (context.ConsumeListToken(NodeKind::PatternListComma, close_token,
                                state.has_error) ==
       Context::ListTokenKind::Comma) {
-    context.PushStateForPattern(param_state_kind, state.in_var_pattern);
+    context.PushStateForPattern(param_state_kind, state.in_var_pattern,
+                                state.in_unused_pattern);
   }
 }
 
@@ -71,11 +74,13 @@ static auto HandlePatternList(Context& context, NodeKind node_kind,
     -> void {
   auto state = context.PopState();
 
-  context.PushStateForPattern(finish_state, state.in_var_pattern);
+  context.PushStateForPattern(finish_state, state.in_var_pattern,
+                              state.in_unused_pattern);
   context.AddLeafNode(node_kind, context.ConsumeChecked(open_token_kind));
 
   if (!context.PositionIs(close_token_kind)) {
-    context.PushStateForPattern(param_state, state.in_var_pattern);
+    context.PushStateForPattern(param_state, state.in_var_pattern,
+                                state.in_unused_pattern);
   }
 }
 

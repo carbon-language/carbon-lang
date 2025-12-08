@@ -69,6 +69,22 @@ fn G(x: (), var unused ref y: ());
 // CHECK:STDERR:
 fn I(x: (), unused var ref y: ());
 
+
+// --- fail_nested.carbon
+
+// CHECK:STDERR: fail_nested.carbon:[[@LINE+4]]:12: error: `unused` nested within another `unused` [NestedUnused]
+// CHECK:STDERR: var unused unused x: i32 = 0;
+// CHECK:STDERR:            ^~~~~~
+// CHECK:STDERR:
+var unused unused x: i32 = 0;
+
+// CHECK:STDERR: fail_nested.carbon:[[@LINE+4]]:13: error: `unused` nested within another `unused` [NestedUnused]
+// CHECK:STDERR: var unused (unused y: i32) = (0,);
+// CHECK:STDERR:             ^~~~~~
+// CHECK:STDERR:
+var unused (unused y: i32) = (0,);
+
+
 // CHECK:STDOUT: - filename: let_var_unused.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
@@ -362,5 +378,35 @@ fn I(x: (), unused var ref y: ());
 // CHECK:STDOUT:         {kind: 'UnusedPattern', text: 'unused', has_error: yes, subtree_size: 7},
 // CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 14},
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 17},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_nested.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:             {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:           {kind: 'UnusedPattern', text: 'unused', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'UnusedPattern', text: 'unused', subtree_size: 5},
+// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 6},
+// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:       {kind: 'IntLiteral', text: '0'},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 10},
+// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:             {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeParams', text: 'y'},
+// CHECK:STDOUT:                 {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:               {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'UnusedPattern', text: 'unused', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'TuplePattern', text: ')', subtree_size: 6},
+// CHECK:STDOUT:         {kind: 'UnusedPattern', text: 'unused', subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 8},
+// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:         {kind: 'TupleLiteralStart', text: '('},
+// CHECK:STDOUT:         {kind: 'IntLiteral', text: '0'},
+// CHECK:STDOUT:         {kind: 'TupleLiteralComma', text: ','},
+// CHECK:STDOUT:       {kind: 'TupleLiteral', text: ')', subtree_size: 4},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 15},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
