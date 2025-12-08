@@ -34,8 +34,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Alternatives considered](#alternatives-considered-6)
         -   [Guards](#guards)
     -   [Pattern matching in local variables](#pattern-matching-in-local-variables)
-    -   [Evaluation order](#evaluation-order)
-        -   [Alternatives considered](#alternatives-considered-7)
+-   [Evaluation order](#evaluation-order)
+    -   [Alternatives considered](#alternatives-considered-7)
 -   [Open questions](#open-questions)
     -   [Slice or array nested value pattern matching](#slice-or-array-nested-value-pattern-matching)
     -   [Pattern matching as function overload resolution](#pattern-matching-as-function-overload-resolution)
@@ -768,7 +768,7 @@ fn Foo() -> i32 {
 This extracts the first value from the result of calling `Bar()` and binds it to
 a local variable named `p` which is then returned.
 
-### Evaluation order
+## Evaluation order
 
 A pattern matching operation's potentially-observable side effects are a series
 of calls to functions that might be user-defined. This includes function calls
@@ -888,7 +888,7 @@ Note that generally speaking, pattern-match evaluation stops as soon as it's
 known that the match will fail, in which case only a prefix of the full
 evaluation order will be evaluated.
 
-#### Alternatives considered
+### Alternatives considered
 
 -   [Breadth-first evaluation order](/proposals/p5545.md#breadth-first-evaluation-order)
 -   [Depth-first evaluation with a different "horizontal" order](/proposals/p5545.md#depth-first-evaluation-with-a-different-horizontal-order)
