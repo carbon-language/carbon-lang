@@ -16,13 +16,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Alternatives considered](#alternatives-considered)
     -   [Binding patterns](#binding-patterns)
         -   [Name binding patterns](#name-binding-patterns)
-        -   [Unused bindings](#unused-bindings)
+        -   [Anonymous bindings](#anonymous-bindings)
             -   [Alternatives considered](#alternatives-considered-1)
         -   [Compile-time bindings](#compile-time-bindings)
         -   [`auto` and type deduction](#auto-and-type-deduction)
         -   [Alternatives considered](#alternatives-considered-2)
     -   [`var`](#var)
         -   [Alternatives considered](#alternatives-considered-3)
+    -   [`unused`](#unused)
     -   [Tuple patterns](#tuple-patterns)
     -   [Struct patterns](#struct-patterns)
         -   [Alternatives considered](#alternatives-considered-4)
@@ -198,17 +199,12 @@ fn H(n: i32) {
 }
 ```
 
-#### Unused bindings
+#### Anonymous bindings
 
-A syntax like a binding but with `_` in place of an identifier, or `unused`
-before the name, can be used to ignore part of a value. Names that are qualified
-with the `unused` keyword are visible for name lookup but uses are invalid,
-including when they cause ambiguous name lookup errors. If attempted to be used,
-a compiler error will be shown to the user, instructing them to either remove
-the `unused` qualifier or remove the use.
+A syntax like a binding but with `_` in place of an identifier can be used to
+ignore part of a value.
 
 -   _binding-pattern_ ::= `_` `:` _expression_
--   _binding-pattern_ ::= `unused` _identifier_ `:` _expression_
 
 ```carbon
 fn F(n: i32) {
@@ -344,6 +340,29 @@ _pattern_ `=` _expression_ `;`.
 -   [Treat all bindings under `var` as variable bindings](/proposals/p5164.md#treat-all-bindings-under-var-as-variable-bindings)
 -   [Make `var` a binding pattern modifier](/proposals/p5164.md#make-var-a-binding-pattern-modifier)
 -   [Initialize storage once pattern matching succeeds](/proposals/p5164.md#initialize-storage-once-pattern-matching-succeeds)
+
+### `unused`
+
+An `unused` prefix indicate that names are visible for name lookup but uses are
+invalid, including when they cause ambiguous name lookup errors. If attempted to
+be used, a compiler error will be shown to the user, instructing them to either
+remove the `unused` qualifier or remove the use.
+
+-   _proper-pattern_ ::= `unused` _proper-pattern_
+
+An `unused` pattern cannot be nested within another `unused` pattern.
+
+As specified in [#3763](/proposals/p3763.md), the `unused` marker may only
+appear on definitions, not on non-defining declarations. Function redeclarations
+that are also definitions may mark names with `unused`, which does not affect
+the matching redeclaration check.
+
+```carbon
+fn J(n: i32);
+
+// ✅ Does not use `n`.
+fn J(unused n: i32) { ... };
+```
 
 ### Tuple patterns
 
