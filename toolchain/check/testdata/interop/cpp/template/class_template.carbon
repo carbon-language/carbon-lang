@@ -37,12 +37,12 @@ var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.9de: type = pattern_type %A [concrete]
-// CHECK:STDOUT:   %.139: type = cpp_type_template_type X [concrete]
-// CHECK:STDOUT:   %empty_struct.3c8: %.139 = struct_value () [concrete]
+// CHECK:STDOUT:   %X.type: type = cpp_type_template_type X [concrete]
+// CHECK:STDOUT:   %X.template: %X.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %X.f.cpp_overload_set.type: type = cpp_overload_set_type @X.f.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %X.f.cpp_overload_set.value: %X.f.cpp_overload_set.type = cpp_overload_set_value @X.f.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %empty_struct.a40: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %B.val: %B = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.a04: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %ptr.270: type = ptr_type %A [concrete]
@@ -53,12 +53,12 @@ var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
 // CHECK:STDOUT:     .A = %A.decl
-// CHECK:STDOUT:     .X = %empty_struct
+// CHECK:STDOUT:     .X = %X.template
 // CHECK:STDOUT:     .B = %B.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
-// CHECK:STDOUT:   %empty_struct: %.139 = struct_value () [concrete = constants.%empty_struct.3c8]
+// CHECK:STDOUT:   %X.template: %X.type = struct_value () [concrete = constants.%X.template]
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %X.f.cpp_overload_set.value: %X.f.cpp_overload_set.type = cpp_overload_set_value @X.f.cpp_overload_set [concrete = constants.%X.f.cpp_overload_set.value]
 // CHECK:STDOUT:   %f__carbon_thunk.decl: %f__carbon_thunk.type = fn_decl @f__carbon_thunk [concrete = constants.%f__carbon_thunk] {
@@ -84,13 +84,13 @@ var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref.loc7_16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %X.ref: %.139 = name_ref X, imports.%empty_struct [concrete = constants.%empty_struct.3c8]
+// CHECK:STDOUT:   %X.ref: %X.type = name_ref X, imports.%X.template [concrete = constants.%X.template]
 // CHECK:STDOUT:   %Cpp.ref.loc7_22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %Cpp.ref.loc7_29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %B.ref.loc7_32: type = name_ref B, imports.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %f.ref: %X.f.cpp_overload_set.type = name_ref f, imports.%X.f.cpp_overload_set.value [concrete = constants.%X.f.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc7_39.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc7_39.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Cpp.ref.loc7_44: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %B.ref.loc7_47: type = name_ref B, imports.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %.loc7_39.2: ref %B = temporary_storage

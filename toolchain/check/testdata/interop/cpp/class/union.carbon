@@ -399,8 +399,8 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT: --- import_template.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %.763: type = cpp_type_template_type Bar [concrete]
-// CHECK:STDOUT:   %empty_struct: %.763 = struct_value () [concrete]
+// CHECK:STDOUT:   %Bar.type: type = cpp_type_template_type Bar [concrete]
+// CHECK:STDOUT:   %Bar.template: %Bar.type = struct_value () [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Bar [concrete]
@@ -411,11 +411,11 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .Bar = %empty_struct
+// CHECK:STDOUT:     .Bar = %Bar.template
 // CHECK:STDOUT:     .X = %X.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %empty_struct: %.763 = struct_value () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %Bar.template: %Bar.type = struct_value () [concrete = constants.%Bar.template]
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
 // CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
 // CHECK:STDOUT: }
@@ -428,7 +428,7 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
 // CHECK:STDOUT:       %Cpp.ref.loc7_13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       %Bar.ref: %.763 = name_ref Bar, imports.%empty_struct [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %Bar.ref: %Bar.type = name_ref Bar, imports.%Bar.template [concrete = constants.%Bar.template]
 // CHECK:STDOUT:       %Cpp.ref.loc7_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:       %X.ref: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:       %ptr: type = ptr_type imports.%Bar.decl [concrete = constants.%ptr]

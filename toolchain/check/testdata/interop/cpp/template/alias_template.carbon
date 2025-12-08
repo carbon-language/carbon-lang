@@ -35,8 +35,8 @@ var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %.5c9: type = cpp_type_template_type First [concrete]
-// CHECK:STDOUT:   %empty_struct.7c7: %.5c9 = struct_value () [concrete]
+// CHECK:STDOUT:   %First.type: type = cpp_type_template_type First [concrete]
+// CHECK:STDOUT:   %First.template: %First.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %pattern_type.9de: type = pattern_type %A [concrete]
@@ -51,19 +51,19 @@ var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
 // CHECK:STDOUT:   %ptr.a04: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %B__carbon_thunk.type: type = fn_type @B__carbon_thunk [concrete]
 // CHECK:STDOUT:   %B__carbon_thunk: %B__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.cb8: type = cpp_type_template_type Second [concrete]
-// CHECK:STDOUT:   %empty_struct.c58: %.cb8 = struct_value () [concrete]
+// CHECK:STDOUT:   %Second.type: type = cpp_type_template_type Second [concrete]
+// CHECK:STDOUT:   %Second.template: %Second.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .First = %empty_struct.7c7
+// CHECK:STDOUT:     .First = %First.template
 // CHECK:STDOUT:     .A = %A.decl
 // CHECK:STDOUT:     .B = %B.decl
-// CHECK:STDOUT:     .Second = %empty_struct.c58
+// CHECK:STDOUT:     .Second = %Second.template
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %empty_struct.7c7: %.5c9 = struct_value () [concrete = constants.%empty_struct.7c7]
+// CHECK:STDOUT:   %First.template: %First.type = struct_value () [concrete = constants.%First.template]
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %A.A.cpp_overload_set.value: %A.A.cpp_overload_set.type = cpp_overload_set_value @A.A.cpp_overload_set [concrete = constants.%A.A.cpp_overload_set.value]
@@ -78,7 +78,7 @@ var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %empty_struct.c58: %.cb8 = struct_value () [concrete = constants.%empty_struct.c58]
+// CHECK:STDOUT:   %Second.template: %Second.type = struct_value () [concrete = constants.%Second.template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

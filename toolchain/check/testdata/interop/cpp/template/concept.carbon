@@ -38,8 +38,8 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %X.type: type = generic_class_type @X [concrete]
 // CHECK:STDOUT:   %X.generic: %X.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.ebd: type = cpp_type_template_type IsLarge [concrete]
-// CHECK:STDOUT:   %empty_struct.5b6: %.ebd = struct_value () [concrete]
+// CHECK:STDOUT:   %IsLarge.type: type = cpp_type_template_type IsLarge [concrete]
+// CHECK:STDOUT:   %IsLarge.template: %IsLarge.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Small: type = class_type @Small [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT:   %X.363: type = class_type @X, @X(%false) [concrete]
@@ -58,12 +58,12 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .IsLarge = %empty_struct
+// CHECK:STDOUT:     .IsLarge = %IsLarge.template
 // CHECK:STDOUT:     .Small = %Small.decl
 // CHECK:STDOUT:     .Large = %Large.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %empty_struct: %.ebd = struct_value () [concrete = constants.%empty_struct.5b6]
+// CHECK:STDOUT:   %IsLarge.template: %IsLarge.type = struct_value () [concrete = constants.%IsLarge.template]
 // CHECK:STDOUT:   %Small.decl: type = class_decl @Small [concrete = constants.%Small] {} {}
 // CHECK:STDOUT:   %Large.decl: type = class_decl @Large [concrete = constants.%Large] {} {}
 // CHECK:STDOUT: }
@@ -77,7 +77,7 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT:   %.loc11: type = splice_block %X.loc11 [concrete = constants.%X.363] {
 // CHECK:STDOUT:     %X.ref.loc11: %X.type = name_ref X, %X.decl [concrete = constants.%X.generic]
 // CHECK:STDOUT:     %Cpp.ref.loc11_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %IsLarge.ref.loc11: %.ebd = name_ref IsLarge, imports.%empty_struct [concrete = constants.%empty_struct.5b6]
+// CHECK:STDOUT:     %IsLarge.ref.loc11: %IsLarge.type = name_ref IsLarge, imports.%IsLarge.template [concrete = constants.%IsLarge.template]
 // CHECK:STDOUT:     %Cpp.ref.loc11_23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Small.ref: type = name_ref Small, imports.%Small.decl [concrete = constants.%Small]
 // CHECK:STDOUT:     %false: bool = bool_literal false [concrete = constants.%false]
@@ -92,7 +92,7 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT:   %.loc12: type = splice_block %X.loc12 [concrete = constants.%X.57c] {
 // CHECK:STDOUT:     %X.ref.loc12: %X.type = name_ref X, %X.decl [concrete = constants.%X.generic]
 // CHECK:STDOUT:     %Cpp.ref.loc12_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %IsLarge.ref.loc12: %.ebd = name_ref IsLarge, imports.%empty_struct [concrete = constants.%empty_struct.5b6]
+// CHECK:STDOUT:     %IsLarge.ref.loc12: %IsLarge.type = name_ref IsLarge, imports.%IsLarge.template [concrete = constants.%IsLarge.template]
 // CHECK:STDOUT:     %Cpp.ref.loc12_23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Large.ref: type = name_ref Large, imports.%Large.decl [concrete = constants.%Large]
 // CHECK:STDOUT:     %true: bool = bool_literal true [concrete = constants.%true]
