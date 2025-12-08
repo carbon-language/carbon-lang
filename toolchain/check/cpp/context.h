@@ -23,9 +23,18 @@ class CppContext {
   }
   auto sema() -> clang::Sema& { return ast_unit_->getSema(); }
 
+  auto carbon_file_locations()
+      -> llvm::SmallVector<clang::SourceLocation>& {
+    return carbon_file_locations_;
+  }
+
  private:
   // The ASTUnit is owned by the `CppFile`.
   clang::ASTUnit* ast_unit_;
+
+  // Per-Carbon-file start locations for corresponding Clang source buffers.
+  // Owned and managed by code in location.cpp.
+  llvm::SmallVector<clang::SourceLocation> carbon_file_locations_;
 };
 
 }  // namespace Carbon::Check
