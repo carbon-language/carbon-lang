@@ -580,10 +580,10 @@ auto CheckUnit::FinishRun() -> void {
   CheckPoisonedConcreteImplLookupQueries();
   CheckImpls();
 
-  if (auto* cpp_file = context_.sem_ir().cpp_file()) {
+  if (auto* cpp_context = context_.cpp_context()) {
     // Ask Clang to perform any cleanups required, including instantiating used
     // templates.
-    cpp_file->sema().ActOnEndOfTranslationUnit();
+    cpp_context->sema().ActOnEndOfTranslationUnit();
     context_.emitter().Flush();
   }
 

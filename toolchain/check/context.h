@@ -12,6 +12,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/value_store.h"
+#include "toolchain/check/cpp/context.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/deferred_definition_worklist.h"
@@ -83,6 +84,14 @@ class Context {
 
   auto sem_ir() -> SemIR::File& { return *sem_ir_; }
   auto sem_ir() const -> const SemIR::File& { return *sem_ir_; }
+
+  auto cpp_context() -> CppContext* { return cpp_context_.get(); }
+
+  // TODO: Remove this and pass the C++ context to the constructor.
+  auto set_cpp_context(std::unique_ptr<CppContext> cpp_context) {
+    CARBON_CHECK(cpp_context, "C++ context set more than once");
+    cpp_context_ = std::move(cpp_context);
+  }
 
   // Convenience functions for major phase data.
   auto parse_tree() const -> const Parse::Tree& {
@@ -311,9 +320,9 @@ class Context {
     return sem_ir().import_ir_insts();
   }
   auto ast_context() -> clang::ASTContext& {
-    return sem_ir().cpp_file()->ast_context();
+    return cpp_context()->ast_context();
   }
-  auto clang_sema() -> clang::Sema& { return sem_ir().cpp_file()->sema(); }
+  auto clang_sema() -> clang::Sema& { return cpp_context()->sema(); }
   auto clang_decls() -> SemIR::ClangDeclStore& {
     return sem_ir().clang_decls();
   }
@@ -354,6 +363,9 @@ class Context {
   SemIR::File* sem_ir_;
   // The total number of files.
   int total_ir_count_;
+
+  // The C++ checking context.
+  std::unique_ptr<CppContext> cpp_context_;
 
   // Whether to print verbose output.
   llvm::raw_ostream* vlog_stream_;

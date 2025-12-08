@@ -35,6 +35,8 @@ class CppFile {
   auto source_manager() const -> const clang::SourceManager& {
     return ast_unit_->getSourceManager();
   }
+  // TODO: This doesn't really belong here, but is currently used by lowering
+  // because Clang's code generation may produce diagnostics.
   auto diagnostics() const -> clang::DiagnosticsEngine& {
     return ast_unit_->getDiagnostics();
   }
@@ -46,7 +48,6 @@ class CppFile {
   auto ast_context() const -> const clang::ASTContext& {
     return ast_unit_->getASTContext();
   }
-  auto sema() -> clang::Sema& { return ast_unit_->getSema(); }
 
   // Visit all top-level declarations in the file.
   auto VisitLocalTopLevelDecls(

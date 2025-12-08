@@ -434,6 +434,7 @@ static auto GenerateAst(
   // Attach the AST to SemIR. This needs to be done before we can emit any
   // diagnostics, so their locations can be properly interpreted by our
   // diagnostics machinery.
+  context.set_cpp_context(std::make_unique<CppContext>(ast.get()));
   context.sem_ir().set_cpp_file(
       std::make_unique<SemIR::CppFile>(std::move(ast)));
 
@@ -471,6 +472,7 @@ auto ImportCpp(Context& context,
     return;
   }
 
+  CARBON_CHECK(!context.cpp_context());
   CARBON_CHECK(!context.sem_ir().cpp_file());
 
   PackageNameId package_id = imports.front().package_id;
@@ -2493,7 +2495,7 @@ auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
   // Ask Clang whether the type is complete. This triggers template
   // instantiation if necessary.
   clang::DiagnosticErrorTrap trap(cpp_file->diagnostics());
-  if (!cpp_file->sema().isCompleteType(
+  if (!context.cpp_context()->sema().isCompleteType(
           loc, context.ast_context().getCanonicalTagType(clang_decl))) {
     // Type is incomplete. Nothing more to do, but tell the caller if we
     // produced an error.
