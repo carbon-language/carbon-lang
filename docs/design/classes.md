@@ -600,23 +600,22 @@ Assert(different_order.x == 3);
 Assert(different_order.y == 2);
 ```
 
-Initialization and assignment occur field-by-field. The overall order is that
-the initializer is fully evaluated in the order it's written, and then each
-field of the new object is initialized from the corresponding element of the
-result, in the new object's field order. However, in some cases evaluation of
-the initializer can directly initialize fields on the left-hand side, without
-any intervening conversions. When that happens, the order of initialization of
-those fields is determined by the evaluation order of the initializer, and
-happens before initializing the fields of the new object that are not
-initialized directly. See [here](values.md#type-conversions) for details.
+Initialization and assignment occur field-by-field. The order of fields is
+determined by the source on the right side of the `=`, and individual operations
+are generally interleaved field-by-field. See [here](values.md#type-conversions)
+for details about the semantics, and
+[here](pattern_matching.md#evaluation-order) for details about the order of
+operations.
 
-**Open question:** What operations and in what order happen for assignment and
-initialization?
+> **Open question:** Do we need a way for a class to require the source order to
+> match? Should that be the default, with an opt out?
 
--   Is assignment just destruction followed by initialization? Is that
-    destruction completed for the whole object before initializing, or is it
-    interleaved field-by-field?
--   Perhaps some operations are _not_ ordered with respect to each other?
+> **Open question:** What operations and in what order happen for assignment?
+>
+> -   Is assignment just destruction followed by initialization? Is that
+>     destruction completed for the whole object before initializing, or is it
+>     interleaved field-by-field?
+> -   Perhaps some operations are _not_ ordered with respect to each other?
 
 ### Operations performed field-wise
 

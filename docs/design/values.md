@@ -336,19 +336,16 @@ is [converted](#category-conversions) to that category if necessary).
 > and `r2` are? As a more extreme example, should we support functions that take
 > and return entire ephemeral references?
 
-There are only two kinds of explicit expression that produce an entire
-reference:
+There are several kinds of expressions that produce entire references. For
+example:
 
 -   The name of an object introduced with a
     [variable binding pattern](pattern_matching.md#name-binding-patterns) (in
     other words, a name that was declared with `var <name> : <type>`) is a
     durable entire reference.
--   a member access expression `x.member` or `x.(member)`, where `x` is an
-    initializing or entire ephemeral reference expression with a struct or tuple
-    type.
-
-Two kinds of implicit expression can also produce entire references:
-
+-   a member access expression `x.member` or `x.(member)` is an entire reference
+    if `x` is an initializing or entire ephemeral reference expression with a
+    struct or tuple type.
 -   The result of materialization is an entire ephemeral reference.
 -   When a [tuple pattern](pattern_matching.md#tuple-patterns) or
     [struct pattern](pattern_matching.md#struct-patterns) is matched with an
@@ -362,7 +359,8 @@ _Durable reference expressions_ are those where the object's storage outlives
 the full expression and the address could be meaningfully propagated out of it
 as well.
 
-There are four contexts that require a durable reference expression in Carbon:
+There are several contexts where durable reference expressions are required. For
+example:
 
 -   [Assignment statements](/docs/design/assignment.md) require the
     left-hand-side of the `=` to be a durable reference. This stronger
@@ -376,8 +374,8 @@ There are four contexts that require a durable reference expression in Carbon:
     tags, `return` statements require the corresponding parts of the operand to
     be durable reference expressions.
 
-There are several kinds of expressions that produce durable references in
-Carbon:
+There are also several kinds of expressions that produce durable references. For
+example:
 
 -   Names of objects introduced with a
     [reference binding](#binding-patterns-and-local-variables-with-let-and-var):
@@ -417,18 +415,17 @@ the scrutinee of a
 [`var` pattern](#binding-patterns-and-local-variables-with-let-and-var) (which
 also requires the reference to be entire).
 
-There is only one kind of explicit expression that produces an ephemeral
-reference: a member access expression `x.member` or `x.(member)`, where `x` is
-an initializing or ephemeral reference expression with a struct or tuple type.
-
-Two kinds of implicit expression can also produce ephemeral references:
+There are only a few ways to produce an ephemeral reference expression. Most
+notably:
 
 -   The result of materialization is an entire ephemeral reference.
+-   A member access expression `x.member` or `x.(member)` is an ephemeral
+    reference if `x` is an initializing or ephemeral reference.
 -   When a [tuple pattern](pattern_matching.md#tuple-patterns) or
     [struct pattern](pattern_matching.md#struct-patterns) is matched with an
-    initializing ephemeral reference scrutinee, that scrutinee is destructured
-    into ephemeral references to its elements, which are then matched with the
-    corresponding subpatterns.
+    initializing or ephemeral reference scrutinee, that scrutinee is
+    destructured into ephemeral references to its elements, which are then
+    matched with the corresponding subpatterns.
 
 ## Value expressions
 
@@ -897,6 +894,14 @@ primitive and composite forms is observable by way of overloading, it can't
 reliably carry any higher-level meaning, and should be used only as an
 optimization tool.
 
+Note that this section describes the _logical structure_ of form conversions. As
+such, it primarily describes them "breadth-first", as a sequence of operations
+that each applies to the whole expression by recursively operating on its parts.
+However, the _physical execution_ of these conversions is actually depth-first,
+applying as many operations as possible to a minimal subexpression before moving
+on to the next one. The details of that process are described
+[here](pattern_matching.md#evaluation-order).
+
 #### Type conversions
 
 See [here](expressions/implicit_conversions.md) for overall information about
@@ -922,10 +927,9 @@ An outcome `source` that has a struct type can be converted to a struct type
 `Dest` if they have the same set of field names:
 
 -   If the type of `source` is `Dest`, return `source`.
--   If `source` is a struct outcome, for each field name `F` in `Dest`, in
-    `Dest`'s field order, type-convert `source.F` to `Dest.F`. Return a struct
-    outcome where each field `F` is set to the outcome of the corresponding
-    conversion.
+-   If `source` is a struct outcome, for each field name `F` in `Dest`,
+    type-convert `source.F` to `Dest.F`. Return a struct outcome where each
+    field `F` is set to the outcome of the corresponding conversion.
 -   If `source` is a primitive outcome, convert it to a struct outcome by
     [form decomposition](#category-conversions), and then type-convert the
     outcome to `Dest` and return the result.
@@ -1444,7 +1448,6 @@ itself.
 -   [Alternative syntaxes for locals](/proposals/p2006.md#alternative-syntaxes-for-locals)
 -   [Mixed expression categories](/proposals/p5545.md#mixed-expression-categories)
 -   [Don't implicitly convert to less-primitive forms](/proposals/p5545.md#dont-implicitly-convert-to-less-primitive-forms)
--   [Materialize temporaries to preserve struct initialization order](/proposals/p5545.md#materialize-temporaries-to-preserve-struct-initialization-order)
 
 ## References
 
