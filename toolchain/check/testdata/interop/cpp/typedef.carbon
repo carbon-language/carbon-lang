@@ -26,7 +26,7 @@ fn F() {
   //@dump-sem-ir-begin
   var n: Cpp.foo = 42;
   // Types are equivalent.
-  var p: Cpp.bar* = &n;
+  var unused p: Cpp.bar* = &n;
   //@dump-sem-ir-end
 }
 
@@ -44,8 +44,8 @@ import Cpp library "class_typedef.h";
 fn H(var c: Cpp.C, var d: Cpp.D) {
   //@dump-sem-ir-begin
   // Types are equivalent.
-  var pd: Cpp.D* = &c;
-  var pc: Cpp.C* = &d;
+  var unused pd: Cpp.D* = &c;
+  var unused pc: Cpp.C* = &d;
   //@dump-sem-ir-end
 }
 
@@ -133,11 +133,11 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:   %p.var: ref %ptr.235 = var %p.var_patt
 // CHECK:STDOUT:   %n.ref: ref %i32 = name_ref n, %n
 // CHECK:STDOUT:   %addr: %ptr.235 = addr_of %n.ref
-// CHECK:STDOUT:   %impl.elem0.loc10: %.fef = impl_witness_access constants.%Copy.impl_witness.9c7, element0 [concrete = constants.%ptr.as.Copy.impl.Op.624]
-// CHECK:STDOUT:   %bound_method.loc10_21.1: <bound method> = bound_method %addr, %impl.elem0.loc10
+// CHECK:STDOUT:   %impl.elem0.loc10: %.cbc = impl_witness_access constants.%Copy.impl_witness.be3, element0 [concrete = constants.%ptr.as.Copy.impl.Op.687]
+// CHECK:STDOUT:   %bound_method.loc10_28.1: <bound method> = bound_method %addr, %impl.elem0.loc10
 // CHECK:STDOUT:   %specific_fn.loc10: <specific function> = specific_function %impl.elem0.loc10, @ptr.as.Copy.impl.Op(constants.%i32) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc10_21.2: <bound method> = bound_method %addr, %specific_fn.loc10
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.235 = call %bound_method.loc10_21.2(%addr)
+// CHECK:STDOUT:   %bound_method.loc10_28.2: <bound method> = bound_method %addr, %specific_fn.loc10
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.235 = call %bound_method.loc10_28.2(%addr)
 // CHECK:STDOUT:   assign %p.var, %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %.loc10: type = splice_block %ptr [concrete = constants.%ptr.235] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -201,11 +201,11 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:   %pd.var: ref %ptr.d9e = var %pd.var_patt
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:   %addr.loc9: %ptr.d9e = addr_of %c.ref
-// CHECK:STDOUT:   %impl.elem0.loc9: %.52c = impl_witness_access constants.%Copy.impl_witness.cd9, element0 [concrete = constants.%ptr.as.Copy.impl.Op.406]
-// CHECK:STDOUT:   %bound_method.loc9_20.1: <bound method> = bound_method %addr.loc9, %impl.elem0.loc9
+// CHECK:STDOUT:   %impl.elem0.loc9: %.f83 = impl_witness_access constants.%Copy.impl_witness.485, element0 [concrete = constants.%ptr.as.Copy.impl.Op.898]
+// CHECK:STDOUT:   %bound_method.loc9_27.1: <bound method> = bound_method %addr.loc9, %impl.elem0.loc9
 // CHECK:STDOUT:   %specific_fn.loc9: <specific function> = specific_function %impl.elem0.loc9, @ptr.as.Copy.impl.Op(constants.%C) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc9_20.2: <bound method> = bound_method %addr.loc9, %specific_fn.loc9
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call.loc9: init %ptr.d9e = call %bound_method.loc9_20.2(%addr.loc9)
+// CHECK:STDOUT:   %bound_method.loc9_27.2: <bound method> = bound_method %addr.loc9, %specific_fn.loc9
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call.loc9: init %ptr.d9e = call %bound_method.loc9_27.2(%addr.loc9)
 // CHECK:STDOUT:   assign %pd.var, %ptr.as.Copy.impl.Op.call.loc9
 // CHECK:STDOUT:   %.loc9: type = splice_block %ptr.loc9 [concrete = constants.%ptr.d9e] {
 // CHECK:STDOUT:     %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -220,11 +220,11 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:   %pc.var: ref %ptr.d9e = var %pc.var_patt
 // CHECK:STDOUT:   %d.ref: ref %C = name_ref d, %d
 // CHECK:STDOUT:   %addr.loc10: %ptr.d9e = addr_of %d.ref
-// CHECK:STDOUT:   %impl.elem0.loc10: %.52c = impl_witness_access constants.%Copy.impl_witness.cd9, element0 [concrete = constants.%ptr.as.Copy.impl.Op.406]
-// CHECK:STDOUT:   %bound_method.loc10_20.1: <bound method> = bound_method %addr.loc10, %impl.elem0.loc10
+// CHECK:STDOUT:   %impl.elem0.loc10: %.f83 = impl_witness_access constants.%Copy.impl_witness.485, element0 [concrete = constants.%ptr.as.Copy.impl.Op.898]
+// CHECK:STDOUT:   %bound_method.loc10_27.1: <bound method> = bound_method %addr.loc10, %impl.elem0.loc10
 // CHECK:STDOUT:   %specific_fn.loc10: <specific function> = specific_function %impl.elem0.loc10, @ptr.as.Copy.impl.Op(constants.%C) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc10_20.2: <bound method> = bound_method %addr.loc10, %specific_fn.loc10
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call.loc10: init %ptr.d9e = call %bound_method.loc10_20.2(%addr.loc10)
+// CHECK:STDOUT:   %bound_method.loc10_27.2: <bound method> = bound_method %addr.loc10, %specific_fn.loc10
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call.loc10: init %ptr.d9e = call %bound_method.loc10_27.2(%addr.loc10)
 // CHECK:STDOUT:   assign %pc.var, %ptr.as.Copy.impl.Op.call.loc10
 // CHECK:STDOUT:   %.loc10: type = splice_block %ptr.loc10 [concrete = constants.%ptr.d9e] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]

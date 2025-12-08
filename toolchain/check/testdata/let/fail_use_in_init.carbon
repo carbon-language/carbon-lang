@@ -13,11 +13,11 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/let/fail_use_in_init.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+4]]:16: error: `a` used before initialization [UsedBeforeInitialization]
-  // CHECK:STDERR:   let a: i32 = a;
-  // CHECK:STDERR:                ^
+  // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+4]]:23: error: `a` used before initialization [UsedBeforeInitialization]
+  // CHECK:STDERR:   let unused a: i32 = a;
+  // CHECK:STDERR:                       ^
   // CHECK:STDERR:
-  let a: i32 = a;
+  let unused a: i32 = a;
 }
 
 // CHECK:STDOUT: --- fail_use_in_init.carbon

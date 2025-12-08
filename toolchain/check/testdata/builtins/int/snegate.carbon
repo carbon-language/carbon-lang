@@ -21,7 +21,7 @@ let arr_p: array(i32, 123)* = &arr;
 
 let n: i32 = Negate(1);
 
-fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
+fn RuntimeCallIsValid(a: i32, unused b: i32) -> i32 {
   //@dump-sem-ir-begin
   return Negate(a);
   //@dump-sem-ir-end

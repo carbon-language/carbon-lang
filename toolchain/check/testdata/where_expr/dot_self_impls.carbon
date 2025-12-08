@@ -57,7 +57,7 @@ interface J {
 
 fn INotJ(T:! I where .Self impls J) {
   // Gets `T.(I.F)`. Doesn't consider `T.(J.F)`, so no ambiguity.
-  let x: () = T.F();
+  let unused x: () = T.F();
 }
 
 // --- fail_name_lookup_through_where_self_impls.carbon
@@ -145,7 +145,7 @@ fn INotJ[T:! I where .Self impls J](x: T) {
 library "[[@TEST_NAME]]";
 
 class WrapType(T:! type) {}
-fn AssertSame[T:! type](a: WrapType(T), b: WrapType(T)) {}
+fn AssertSame[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
 fn Type(T:! type) -> WrapType(T) { return {}; }
 
 interface I;
@@ -178,7 +178,7 @@ interface K {}
 library "[[@TEST_NAME]]";
 
 class WrapType(T:! type) {}
-fn AssertSame[T:! type](a: WrapType(T), b: WrapType(T)) {}
+fn AssertSame[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
 fn Type(T:! type) -> WrapType(T) { return {}; }
 
 interface I { let A:! type; }
@@ -201,7 +201,7 @@ fn Test() {
 library "[[@TEST_NAME]]";
 
 class WrapType(T:! type) {}
-fn Same[T:! type](a: WrapType(T), b: WrapType(T)) {}
+fn Same[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
 fn Type(T:! type) -> WrapType(T) { return {}; }
 
 interface I {}
@@ -212,8 +212,8 @@ fn Test() {
   // CHECK:STDERR:   Same(Type(I where .Self impls J), Type(J where .Self impls I));
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_compare_not_equal.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn Same[T:! type](a: WrapType(T), b: WrapType(T)) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn Same[T:! type](unused a: WrapType(T), unused b: WrapType(T)) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   Same(Type(I where .Self impls J), Type(J where .Self impls I));
 }

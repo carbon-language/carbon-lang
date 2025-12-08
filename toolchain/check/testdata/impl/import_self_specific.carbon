@@ -59,7 +59,7 @@ class D(N:! E) {}
 // impl for Z) should not be inappropriately added to this impl's generic eval
 // block.
 impl forall [N:! E] D(N) as I where .Assoc = () {
-  fn F(c: C(())) {}
+  fn F(unused c: C(())) {}
 }
 
 // CHECK:STDOUT: --- impl_def.carbon
@@ -502,13 +502,13 @@ impl forall [N:! E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:       %c.patt: %pattern_type.0c5 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:       %c.param_patt: %pattern_type.0c5 = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %c.param: %C.1ed = value_param call_param0
-// CHECK:STDOUT:       %.loc21_15.1: type = splice_block %C [concrete = constants.%C.1ed] {
+// CHECK:STDOUT:       %c.param: %C.3c2 = value_param call_param0
+// CHECK:STDOUT:       %.loc21_22.1: type = splice_block %C [concrete = constants.%C.3c2] {
 // CHECK:STDOUT:         %C.ref: %C.type = name_ref C, imports.%Main.C [concrete = constants.%C.generic]
-// CHECK:STDOUT:         %.loc21_14: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:         %Z.facet: %Z.type = facet_value constants.%empty_tuple.type, (constants.%Z.impl_witness.b73) [concrete = constants.%Z.facet.48e]
-// CHECK:STDOUT:         %.loc21_15.2: %Z.type = converted %.loc21_14, %Z.facet [concrete = constants.%Z.facet.48e]
-// CHECK:STDOUT:         %C: type = class_type @C, @C(constants.%Z.facet.48e) [concrete = constants.%C.1ed]
+// CHECK:STDOUT:         %.loc21_21: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:         %Z.facet: %Z.type = facet_value constants.%empty_tuple.type, (constants.%Z.impl_witness.b07) [concrete = constants.%Z.facet.996]
+// CHECK:STDOUT:         %.loc21_22.2: %Z.type = converted %.loc21_21, %Z.facet [concrete = constants.%Z.facet.996]
+// CHECK:STDOUT:         %C: type = class_type @C, @C(constants.%Z.facet.996) [concrete = constants.%C.3c2]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %c: %C.1ed = value_binding c, %c.param
 // CHECK:STDOUT:     }

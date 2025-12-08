@@ -41,7 +41,7 @@ class A(T:! type) {
   }
 }
 
-fn A(T:! type).B(N:! T).F[self: Self](a: T) {}
+fn A(T:! type).B(N:! T).F[self: Self](unused a: T) {}
 //@dump-sem-ir-end
 
 // --- fail_mismatched_not_generic_vs_generic.carbon
@@ -419,7 +419,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self.loc11: @B.F.%B (%B) = value_binding self, %self.param.loc11
 // CHECK:STDOUT:     %a.param.loc11: @B.F.%T.loc7 (%T) = value_param call_param1
-// CHECK:STDOUT:     %T.ref.loc11_42: type = name_ref T, %T.loc11 [symbolic = %T.loc7 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc11_49: type = name_ref T, %T.loc11 [symbolic = %T.loc7 (constants.%T)]
 // CHECK:STDOUT:     %a.loc11: @B.F.%T.loc7 (%T) = value_binding a, %a.param.loc11
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -495,8 +495,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %pattern_type.loc7_22: type = pattern_type %T.loc7 [symbolic = %pattern_type.loc7_22 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc11_31: <witness> = require_complete_type %B [symbolic = %require_complete.loc11_31 (constants.%require_complete.7cc)]
-// CHECK:STDOUT:   %require_complete.loc11_40: <witness> = require_complete_type %T.loc7 [symbolic = %require_complete.loc11_40 (constants.%require_complete.944)]
+// CHECK:STDOUT:   %require_complete.loc11_31: <witness> = require_complete_type %B [symbolic = %require_complete.loc11_31 (constants.%require_complete.607)]
+// CHECK:STDOUT:   %require_complete.loc11_47: <witness> = require_complete_type %T.loc7 [symbolic = %require_complete.loc11_47 (constants.%require_complete.4b7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param.loc11: @B.F.%B (%B), %a.param.loc11: @B.F.%T.loc7 (%T)) {
 // CHECK:STDOUT:   !entry:

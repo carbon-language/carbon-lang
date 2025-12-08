@@ -19,12 +19,12 @@ package User;
 class C {};
 
 impl C as Core.BitAndWith(C) where .Result = C {
-  fn Op[self: C](other: C) -> C {
+  fn Op[self: C](unused other: C) -> C {
     return {};
   }
 }
 impl C as Core.BitAndAssignWith(C) {
-  fn Op[ref self: C](other: C) {}
+  fn Op[ref self: C](unused other: C) {}
 }
 
 fn TestOp(a: C, b: C) -> C {

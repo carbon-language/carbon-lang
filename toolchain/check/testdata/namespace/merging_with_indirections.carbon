@@ -39,7 +39,7 @@ fn Run() {
   Other.F();
 
   // Use `Other.NS.A` directly.
-  var a: Other.NS1.A;
+  var unused a: Other.NS1.A;
 
   // Ensure the type is equivalent.
   a = Other.F();

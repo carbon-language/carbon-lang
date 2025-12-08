@@ -543,6 +543,13 @@ CARBON_DIAGNOSTIC_KIND(GenericMissingExplicitParameters)
 // Pattern matching diagnostics.
 CARBON_DIAGNOSTIC_KIND(TuplePatternSizeDoesntMatchLiteral)
 
+// Dataflow diagnostics.
+CARBON_DIAGNOSTIC_KIND(UnusedButUsed)
+CARBON_DIAGNOSTIC_KIND(UnusedButUsedHere)
+CARBON_DIAGNOSTIC_KIND(UnusedMarkerInDeclaration)
+CARBON_DIAGNOSTIC_KIND(UnusedPatternNoBindings)
+CARBON_DIAGNOSTIC_KIND(UnusedBinding)
+
 // ============================================================================
 // CodeGen diagnostics
 // ============================================================================

@@ -27,8 +27,8 @@ fn F() -> i32 {
 }
 
 fn Run() {
-  var a: i32 = F();
-  var b: i32 = Class.F();
+  var unused a: i32 = F();
+  var unused b: i32 = Class.F();
 }
 
 // CHECK:STDOUT: --- scope.carbon

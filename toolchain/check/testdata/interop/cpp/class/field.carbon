@@ -190,11 +190,11 @@ library "[[@TEST_NAME]]";
 import Cpp library "unsupported_members.h";
 
 fn Test(m: Cpp.UnsupportedMembers*) {
-  // CHECK:STDERR: fail_use_unsupported_members.carbon:[[@LINE+4]]:16: note: in `Cpp` name lookup for `is_volatile` [InCppNameLookup]
-  // CHECK:STDERR:   let a: i32 = m->is_volatile;
-  // CHECK:STDERR:                ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_use_unsupported_members.carbon:[[@LINE+4]]:23: note: in `Cpp` name lookup for `is_volatile` [InCppNameLookup]
+  // CHECK:STDERR:   let unused a: i32 = m->is_volatile;
+  // CHECK:STDERR:                       ^~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let a: i32 = m->is_volatile;
+  let unused a: i32 = m->is_volatile;
 }
 
 // CHECK:STDOUT: --- use_struct_fields.carbon

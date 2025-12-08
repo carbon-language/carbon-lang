@@ -450,12 +450,23 @@ static auto CheckRedeclParamSyntax(Context& context,
   for (; new_iter != new_end && prev_iter != prev_end;
        ++new_iter, ++prev_iter) {
     auto new_node_id = *new_iter;
+    auto new_node_kind = context.parse_tree().node_kind(new_node_id);
+    // Skip over "unused" markers.
+    if (new_node_kind == Parse::NodeKind::UnusedPattern) {
+      ++new_iter;
+      new_node_id = *new_iter;
+      new_node_kind = context.parse_tree().node_kind(new_node_id);
+    }
     auto prev_node_id = *prev_iter;
+    auto prev_node_kind = context.parse_tree().node_kind(prev_node_id);
+    if (prev_node_kind == Parse::NodeKind::UnusedPattern) {
+      ++prev_iter;
+      prev_node_id = *prev_iter;
+      prev_node_kind = context.parse_tree().node_kind(prev_node_id);
+    }
     if (!IsNodeSyntaxEqual(context, new_node_id, prev_node_id)) {
       // Skip difference if it is `Self as` vs. `as` in an `impl` declaration.
       // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p3763.md#redeclarations
-      auto new_node_kind = context.parse_tree().node_kind(new_node_id);
-      auto prev_node_kind = context.parse_tree().node_kind(prev_node_id);
       if (new_node_kind == Parse::NodeKind::ImplDefaultSelfAs &&
           prev_node_kind == Parse::NodeKind::SelfTypeNameExpr &&
           context.parse_tree().node_kind(prev_iter[1]) ==

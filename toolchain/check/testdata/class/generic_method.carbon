@@ -17,7 +17,7 @@ class Class(T:! type) {
   fn F[self: Self](n: T);
 }
 
-fn Class(T:! type).F[self: Self](n: T) {}
+fn Class(T:! type).F[self: Self](unused n: T) {}
 
 // CHECK:STDOUT: --- generic_method.carbon
 // CHECK:STDOUT:
@@ -128,8 +128,8 @@ fn Class(T:! type).F[self: Self](n: T) {}
 // CHECK:STDOUT:   %pattern_type.loc17_20: type = pattern_type %T.loc17 [symbolic = %pattern_type.loc17_20 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc20_26: <witness> = require_complete_type %Class [symbolic = %require_complete.loc20_26 (constants.%require_complete.43d)]
-// CHECK:STDOUT:   %require_complete.loc20_35: <witness> = require_complete_type %T.loc17 [symbolic = %require_complete.loc20_35 (constants.%require_complete.944)]
+// CHECK:STDOUT:   %require_complete.loc20_26: <witness> = require_complete_type %Class [symbolic = %require_complete.loc20_26 (constants.%require_complete.1d2)]
+// CHECK:STDOUT:   %require_complete.loc20_42: <witness> = require_complete_type %T.loc17 [symbolic = %require_complete.loc20_42 (constants.%require_complete.4b7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param.loc20: @Class.F.%Class (%Class), %n.param.loc20: @Class.F.%T.loc17 (%T)) {
 // CHECK:STDOUT:   !entry:

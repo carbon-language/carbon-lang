@@ -17,7 +17,7 @@ interface Animal {}
 
 impl forall [A:! Animal] A as Eats {}
 
-fn Feed[T:! Eats](e: T) {}
+fn Feed[T:! Eats](unused e: T) {}
 
 fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 
@@ -95,12 +95,12 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc20_9.2: %Eats.type = symbolic_binding T, 0 [symbolic = %T.loc20_9.1 (constants.%T.b61)]
-// CHECK:STDOUT:     %e.param: @Feed.%T.binding.as_type (%T.binding.as_type.c82) = value_param call_param0
-// CHECK:STDOUT:     %.loc20_22.1: type = splice_block %.loc20_22.2 [symbolic = %T.binding.as_type (constants.%T.binding.as_type.c82)] {
-// CHECK:STDOUT:       %T.ref: %Eats.type = name_ref T, %T.loc20_9.2 [symbolic = %T.loc20_9.1 (constants.%T.b61)]
-// CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type.c82)]
-// CHECK:STDOUT:       %.loc20_22.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type.c82)]
+// CHECK:STDOUT:     %T.loc20_9.2: %Eats.type = symbolic_binding T, 0 [symbolic = %T.loc20_9.1 (constants.%T.267)]
+// CHECK:STDOUT:     %e.param: @Feed.%T.binding.as_type (%T.binding.as_type.e28) = value_param call_param0
+// CHECK:STDOUT:     %.loc20_29.1: type = splice_block %.loc20_29.2 [symbolic = %T.binding.as_type (constants.%T.binding.as_type.e28)] {
+// CHECK:STDOUT:       %T.ref: %Eats.type = name_ref T, %T.loc20_9.2 [symbolic = %T.loc20_9.1 (constants.%T.267)]
+// CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type.e28)]
+// CHECK:STDOUT:       %.loc20_29.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type.e28)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %e: @Feed.%T.binding.as_type (%T.binding.as_type.c82) = value_binding e, %e.param
 // CHECK:STDOUT:   }

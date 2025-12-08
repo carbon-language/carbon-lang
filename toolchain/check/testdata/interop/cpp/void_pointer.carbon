@@ -20,14 +20,14 @@ struct S {};
 
 fn F(input: Cpp.S*) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_implicit_as_from_cpp_class_pointer_to_void_pointer.carbon:[[@LINE+7]]:22: error: cannot implicitly convert expression of type `Cpp.S*` to `Cpp.void*` [ConversionFailure]
-  // CHECK:STDERR:   let p: Cpp.void* = input;
-  // CHECK:STDERR:                      ^~~~~
-  // CHECK:STDERR: fail_todo_implicit_as_from_cpp_class_pointer_to_void_pointer.carbon:[[@LINE+4]]:22: note: type `Cpp.S*` does not implement interface `Core.ImplicitAs(Cpp.void*)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let p: Cpp.void* = input;
-  // CHECK:STDERR:                      ^~~~~
+  // CHECK:STDERR: fail_todo_implicit_as_from_cpp_class_pointer_to_void_pointer.carbon:[[@LINE+7]]:29: error: cannot implicitly convert expression of type `Cpp.S*` to `Cpp.void*` [ConversionFailure]
+  // CHECK:STDERR:   let unused p: Cpp.void* = input;
+  // CHECK:STDERR:                             ^~~~~
+  // CHECK:STDERR: fail_todo_implicit_as_from_cpp_class_pointer_to_void_pointer.carbon:[[@LINE+4]]:29: note: type `Cpp.S*` does not implement interface `Core.ImplicitAs(Cpp.void*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let unused p: Cpp.void* = input;
+  // CHECK:STDERR:                             ^~~~~
   // CHECK:STDERR:
-  let p: Cpp.void* = input;
+  let unused p: Cpp.void* = input;
   //@dump-sem-ir-end
 }
 
@@ -41,14 +41,14 @@ class C {}
 
 fn F(input: C*) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_implicit_as_from_carbon_class_pointer_to_void_pointer.carbon:[[@LINE+7]]:22: error: cannot implicitly convert expression of type `C*` to `Cpp.void*` [ConversionFailure]
-  // CHECK:STDERR:   let p: Cpp.void* = input;
-  // CHECK:STDERR:                      ^~~~~
-  // CHECK:STDERR: fail_todo_implicit_as_from_carbon_class_pointer_to_void_pointer.carbon:[[@LINE+4]]:22: note: type `C*` does not implement interface `Core.ImplicitAs(Cpp.void*)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let p: Cpp.void* = input;
-  // CHECK:STDERR:                      ^~~~~
+  // CHECK:STDERR: fail_todo_implicit_as_from_carbon_class_pointer_to_void_pointer.carbon:[[@LINE+7]]:29: error: cannot implicitly convert expression of type `C*` to `Cpp.void*` [ConversionFailure]
+  // CHECK:STDERR:   let unused p: Cpp.void* = input;
+  // CHECK:STDERR:                             ^~~~~
+  // CHECK:STDERR: fail_todo_implicit_as_from_carbon_class_pointer_to_void_pointer.carbon:[[@LINE+4]]:29: note: type `C*` does not implement interface `Core.ImplicitAs(Cpp.void*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let unused p: Cpp.void* = input;
+  // CHECK:STDERR:                             ^~~~~
   // CHECK:STDERR:
-  let p: Cpp.void* = input;
+  let unused p: Cpp.void* = input;
   //@dump-sem-ir-end
 }
 
@@ -62,14 +62,14 @@ struct S {};
 
 fn F(input: Cpp.void*) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_explicit_as_from_void_pointer_to_cpp_class_pointer.carbon:[[@LINE+7]]:19: error: cannot convert expression of type `Cpp.void*` to `Cpp.S*` with `as` [ConversionFailure]
-  // CHECK:STDERR:   let p: Cpp.S* = input as Cpp.S*;
-  // CHECK:STDERR:                   ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_explicit_as_from_void_pointer_to_cpp_class_pointer.carbon:[[@LINE+4]]:19: note: type `Cpp.void*` does not implement interface `Core.As(Cpp.S*)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let p: Cpp.S* = input as Cpp.S*;
-  // CHECK:STDERR:                   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_explicit_as_from_void_pointer_to_cpp_class_pointer.carbon:[[@LINE+7]]:26: error: cannot convert expression of type `Cpp.void*` to `Cpp.S*` with `as` [ConversionFailure]
+  // CHECK:STDERR:   let unused p: Cpp.S* = input as Cpp.S*;
+  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_explicit_as_from_void_pointer_to_cpp_class_pointer.carbon:[[@LINE+4]]:26: note: type `Cpp.void*` does not implement interface `Core.As(Cpp.S*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let unused p: Cpp.S* = input as Cpp.S*;
+  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let p: Cpp.S* = input as Cpp.S*;
+  let unused p: Cpp.S* = input as Cpp.S*;
   //@dump-sem-ir-end
 }
 
@@ -83,14 +83,14 @@ class C {}
 
 fn F(input: Cpp.void*) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_explicit_as_from_void_pointer_to_carbon_class_pointer.carbon:[[@LINE+7]]:15: error: cannot convert expression of type `Cpp.void*` to `C*` with `as` [ConversionFailure]
-  // CHECK:STDERR:   let p: C* = input as C*;
-  // CHECK:STDERR:               ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_explicit_as_from_void_pointer_to_carbon_class_pointer.carbon:[[@LINE+4]]:15: note: type `Cpp.void*` does not implement interface `Core.As(C*)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let p: C* = input as C*;
-  // CHECK:STDERR:               ^~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_explicit_as_from_void_pointer_to_carbon_class_pointer.carbon:[[@LINE+7]]:22: error: cannot convert expression of type `Cpp.void*` to `C*` with `as` [ConversionFailure]
+  // CHECK:STDERR:   let unused p: C* = input as C*;
+  // CHECK:STDERR:                      ^~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_explicit_as_from_void_pointer_to_carbon_class_pointer.carbon:[[@LINE+4]]:22: note: type `Cpp.void*` does not implement interface `Core.As(C*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let unused p: C* = input as C*;
+  // CHECK:STDERR:                      ^~~~~~~~~~~
   // CHECK:STDERR:
-  let p: C* = input as C*;
+  let unused p: C* = input as C*;
   //@dump-sem-ir-end
 }
 
@@ -119,12 +119,12 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %p.patt: %pattern_type.9fb = value_binding_pattern p [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.5c7 = name_ref input, %input
-// CHECK:STDOUT:   %.loc17_18: type = splice_block %ptr.loc17 [concrete = constants.%ptr.874] {
+// CHECK:STDOUT:   %.loc17_25: type = splice_block %ptr.loc17 [concrete = constants.%ptr.874] {
 // CHECK:STDOUT:     %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %void.ref: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
 // CHECK:STDOUT:     %ptr.loc17: type = ptr_type %void.ref [concrete = constants.%ptr.874]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17_22: %ptr.874 = converted %input.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc17_29: %ptr.874 = converted %input.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %p: %ptr.874 = value_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -151,13 +151,13 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %p.patt: %pattern_type.9fb = value_binding_pattern p [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %input.ref: %ptr.31e = name_ref input, %input
-// CHECK:STDOUT:   %.loc17_18: type = splice_block %ptr.loc17 [concrete = constants.%ptr.874] {
+// CHECK:STDOUT:   %input.ref: %ptr.019 = name_ref input, %input
+// CHECK:STDOUT:   %.loc17_25: type = splice_block %ptr.loc17 [concrete = constants.%ptr.874] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %void.ref: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
 // CHECK:STDOUT:     %ptr.loc17: type = ptr_type %void.ref [concrete = constants.%ptr.874]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17_22: %ptr.874 = converted %input.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc17_29: %ptr.874 = converted %input.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %p: %ptr.874 = value_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -187,14 +187,14 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %p.patt: %pattern_type.259 = value_binding_pattern p [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.874 = name_ref input, %input
-// CHECK:STDOUT:   %Cpp.ref.loc17_28: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %S.ref.loc17_31: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %ptr.loc17_33: type = ptr_type %S.ref.loc17_31 [concrete = constants.%ptr.5c7]
-// CHECK:STDOUT:   %.loc17_25: %ptr.5c7 = converted %input.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc17_15: type = splice_block %ptr.loc17_15 [concrete = constants.%ptr.5c7] {
-// CHECK:STDOUT:     %Cpp.ref.loc17_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %S.ref.loc17_13: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:     %ptr.loc17_15: type = ptr_type %S.ref.loc17_13 [concrete = constants.%ptr.5c7]
+// CHECK:STDOUT:   %Cpp.ref.loc17_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc17_38: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %ptr.loc17_40: type = ptr_type %S.ref.loc17_38 [concrete = constants.%ptr.5c7]
+// CHECK:STDOUT:   %.loc17_32: %ptr.5c7 = converted %input.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc17_22: type = splice_block %ptr.loc17_22 [concrete = constants.%ptr.5c7] {
+// CHECK:STDOUT:     %Cpp.ref.loc17_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %S.ref.loc17_20: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:     %ptr.loc17_22: type = ptr_type %S.ref.loc17_20 [concrete = constants.%ptr.5c7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.5c7 = value_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
@@ -219,12 +219,12 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:     %p.patt: %pattern_type.506 = value_binding_pattern p [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.874 = name_ref input, %input
-// CHECK:STDOUT:   %C.ref.loc17_24: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %ptr.loc17_25: type = ptr_type %C.ref.loc17_24 [concrete = constants.%ptr.31e]
-// CHECK:STDOUT:   %.loc17_21: %ptr.31e = converted %input.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc17_11: type = splice_block %ptr.loc17_11 [concrete = constants.%ptr.31e] {
-// CHECK:STDOUT:     %C.ref.loc17_10: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr.loc17_11: type = ptr_type %C.ref.loc17_10 [concrete = constants.%ptr.31e]
+// CHECK:STDOUT:   %C.ref.loc17_31: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %ptr.loc17_32: type = ptr_type %C.ref.loc17_31 [concrete = constants.%ptr.019]
+// CHECK:STDOUT:   %.loc17_28: %ptr.019 = converted %input.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc17_18: type = splice_block %ptr.loc17_18 [concrete = constants.%ptr.019] {
+// CHECK:STDOUT:     %C.ref.loc17_17: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %ptr.loc17_18: type = ptr_type %C.ref.loc17_17 [concrete = constants.%ptr.019]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.31e = value_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>

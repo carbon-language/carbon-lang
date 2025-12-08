@@ -103,7 +103,7 @@ interface J(T:! type) {
   fn J1() -> T*;
 }
 
-fn F2[U:! I(.Self)](T: U*) {}
+fn F2[U:! I(.Self)](unused T: U*) {}
 
 fn F(U:! I(.Self)) {
   // Caller sees the returned `.Self` type from `F()` as the full `U`.
@@ -139,7 +139,7 @@ interface J(T:! type) {
   fn J1() -> T*;
 }
 
-fn F2[U:! I(.Self) & J(.Self)](T: U*) {}
+fn F2[U:! I(.Self) & J(.Self)](unused T: U*) {}
 
 fn F(U:! I(.Self) & J(.Self)) {
   // TODO: The returned value of `I1` and `J1` has type `U` which has access to
@@ -218,14 +218,14 @@ interface I(T:! type) {
 }
 
 fn F(U:! I(.Self)) {
-  // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
-  // CHECK:STDERR:   let a: U = U.G();
-  // CHECK:STDERR:              ^~~~~
-  // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let a: U = U.G();
-  // CHECK:STDERR:              ^~~~~
+  // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+7]]:21: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
+  // CHECK:STDERR:   let unused a: U = U.G();
+  // CHECK:STDERR:                     ^~~~~
+  // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+4]]:21: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let unused a: U = U.G();
+  // CHECK:STDERR:                     ^~~~~
   // CHECK:STDERR:
-  let a: U = U.G();
+  let unused a: U = U.G();
 }
 
 // --- fail_todo_return_of_type_period_self_assoc_const_has_type_u.carbon
@@ -237,14 +237,14 @@ interface I {
 }
 
 fn F(U:! I where .X = .Self) {
-  // CHECK:STDERR: fail_todo_return_of_type_period_self_assoc_const_has_type_u.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
-  // CHECK:STDERR:   let a: U = U.G();
-  // CHECK:STDERR:              ^~~~~
-  // CHECK:STDERR: fail_todo_return_of_type_period_self_assoc_const_has_type_u.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let a: U = U.G();
-  // CHECK:STDERR:              ^~~~~
+  // CHECK:STDERR: fail_todo_return_of_type_period_self_assoc_const_has_type_u.carbon:[[@LINE+7]]:21: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
+  // CHECK:STDERR:   let unused a: U = U.G();
+  // CHECK:STDERR:                     ^~~~~
+  // CHECK:STDERR: fail_todo_return_of_type_period_self_assoc_const_has_type_u.carbon:[[@LINE+4]]:21: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let unused a: U = U.G();
+  // CHECK:STDERR:                     ^~~~~
   // CHECK:STDERR:
-  let a: U = U.G();
+  let unused a: U = U.G();
 }
 
 // --- fail_todo_nested_period_self.carbon
@@ -261,23 +261,23 @@ interface I(T:! type) {
 // constraining the binding.
 fn F(T:! I(.Self) where .A = ((I(.Self) where .B = {}) where .A = {}) and .B = {}, U:! T.A) {
   // T.G() has type T.
-  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `T` [ConversionFailure]
-  // CHECK:STDERR:   let t: T = T.G();
-  // CHECK:STDERR:              ^~~~~
-  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let t: T = T.G();
-  // CHECK:STDERR:              ^~~~~
+  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+7]]:21: error: cannot implicitly convert expression of type `.Self` to `T` [ConversionFailure]
+  // CHECK:STDERR:   let unused t: T = T.G();
+  // CHECK:STDERR:                     ^~~~~
+  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:21: note: type `.Self` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let unused t: T = T.G();
+  // CHECK:STDERR:                     ^~~~~
   // CHECK:STDERR:
-  let t: T = T.G();
+  let unused t: T = T.G();
     // U.G() has type T.
-  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+7]]:14: error: cannot implicitly convert expression of type `.Self` to `T` [ConversionFailure]
-  // CHECK:STDERR:   let u: T = U.G();
-  // CHECK:STDERR:              ^~~~~
-  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:14: note: type `.Self` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let u: T = U.G();
-  // CHECK:STDERR:              ^~~~~
+  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+7]]:21: error: cannot implicitly convert expression of type `.Self` to `T` [ConversionFailure]
+  // CHECK:STDERR:   let unused u: T = U.G();
+  // CHECK:STDERR:                     ^~~~~
+  // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:21: note: type `.Self` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let unused u: T = U.G();
+  // CHECK:STDERR:                     ^~~~~
   // CHECK:STDERR:
-  let u: T = U.G();
+  let unused u: T = U.G();
 
   // Shows both `I(.Self)` are `I(T)`.
   // CHECK:STDERR: fail_todo_nested_period_self.carbon:[[@LINE+4]]:9: error: found cycle in facet type constraint for `.(I(T).A)` [FacetTypeConstraintCycle]

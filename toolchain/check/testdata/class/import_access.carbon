@@ -104,7 +104,7 @@ var c: Test.ForwardWithDef = {};
 
 impl package Test library "[[@TEST_NAME]]";
 
-fn F(c: Forward*) {}
+fn F(unused c: Forward*) {}
 
 class Forward {}
 
@@ -114,11 +114,11 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward";
 
-// CHECK:STDERR: fail_local_forward.carbon:[[@LINE+4]]:9: error: name `Forward` not found [NameNotFound]
-// CHECK:STDERR: fn F(c: Forward*) {}
-// CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR: fail_local_forward.carbon:[[@LINE+4]]:16: error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR: fn F(unused c: Forward*) {}
+// CHECK:STDERR:                ^~~~~~~
 // CHECK:STDERR:
-fn F(c: Forward*) {}
+fn F(unused c: Forward*) {}
 
 // --- fail_other_forward.carbon
 
@@ -126,11 +126,11 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
-// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+4]]:9: error: member name `Forward` not found in `Test` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: fn F(c: Test.Forward*) {}
-// CHECK:STDERR:         ^~~~~~~~~~~~
+// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+4]]:16: error: member name `Forward` not found in `Test` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR: fn F(unused c: Test.Forward*) {}
+// CHECK:STDERR:                ^~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(c: Test.Forward*) {}
+fn F(unused c: Test.Forward*) {}
 
 // --- todo_fail_private_on_redecl.carbon
 

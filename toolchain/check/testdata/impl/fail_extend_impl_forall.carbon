@@ -22,7 +22,7 @@ class C {
   // CHECK:STDERR:   ^~~~~~
   // CHECK:STDERR:
   extend impl forall [T:! type] as GenericInterface(T) {
-    fn F(x: T) {}
+    fn F(unused x: T) {}
   }
 }
 

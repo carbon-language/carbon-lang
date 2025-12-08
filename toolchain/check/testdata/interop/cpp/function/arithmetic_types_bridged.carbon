@@ -485,7 +485,7 @@ import Cpp library "bool_return.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  let x: bool = Cpp.foo_bool();
+  let unused x: bool = Cpp.foo_bool();
   //@dump-sem-ir-end
 }
 
@@ -505,7 +505,7 @@ import Cpp library "short_return.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  let x: i16 = Cpp.foo_short();
+  let unused x: i16 = Cpp.foo_short();
   //@dump-sem-ir-end
 }
 
@@ -551,7 +551,7 @@ import Cpp library "double_return.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  let x: f64 = Cpp.foo_double();
+  let unused x: f64 = Cpp.foo_double();
   //@dump-sem-ir-end
 }
 
@@ -2129,18 +2129,18 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo_bool.ref: %foo_bool.cpp_overload_set.type = name_ref foo_bool, imports.%foo_bool.cpp_overload_set.value [concrete = constants.%foo_bool.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc8_30.1: ref bool = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr = addr_of %.loc8_30.1
+// CHECK:STDOUT:   %.loc8_37.1: ref bool = temporary_storage
+// CHECK:STDOUT:   %addr: %ptr = addr_of %.loc8_37.1
 // CHECK:STDOUT:   %foo_bool__carbon_thunk.call: init %empty_tuple.type = call imports.%foo_bool__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc8_30.2: init bool = in_place_init %foo_bool__carbon_thunk.call, %.loc8_30.1
-// CHECK:STDOUT:   %.loc8_10.1: type = splice_block %.loc8_10.3 [concrete = bool] {
+// CHECK:STDOUT:   %.loc8_37.2: init bool = in_place_init %foo_bool__carbon_thunk.call, %.loc8_37.1
+// CHECK:STDOUT:   %.loc8_17.1: type = splice_block %.loc8_17.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc8_10.2: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc8_10.3: type = converted %Bool.call, %.loc8_10.2 [concrete = bool]
+// CHECK:STDOUT:     %.loc8_17.2: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc8_17.3: type = converted %Bool.call, %.loc8_17.2 [concrete = bool]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_30.3: bool = value_of_initializer %.loc8_30.2
-// CHECK:STDOUT:   %.loc8_30.4: bool = converted %.loc8_30.2, %.loc8_30.3
-// CHECK:STDOUT:   %x: bool = value_binding x, %.loc8_30.4
+// CHECK:STDOUT:   %.loc8_37.3: bool = value_of_initializer %.loc8_37.2
+// CHECK:STDOUT:   %.loc8_37.4: bool = converted %.loc8_37.2, %.loc8_37.3
+// CHECK:STDOUT:   %x: bool = value_binding x, %.loc8_37.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2178,17 +2178,17 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo_short.ref: %foo_short.cpp_overload_set.type = name_ref foo_short, imports.%foo_short.cpp_overload_set.value [concrete = constants.%foo_short.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc8_30.1: ref %i16 = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr = addr_of %.loc8_30.1
+// CHECK:STDOUT:   %.loc8_37.1: ref %i16 = temporary_storage
+// CHECK:STDOUT:   %addr: %ptr = addr_of %.loc8_37.1
 // CHECK:STDOUT:   %foo_short__carbon_thunk.call: init %empty_tuple.type = call imports.%foo_short__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc8_30.2: init %i16 = in_place_init %foo_short__carbon_thunk.call, %.loc8_30.1
-// CHECK:STDOUT:   %.loc8_10: type = splice_block %i16 [concrete = constants.%i16] {
+// CHECK:STDOUT:   %.loc8_37.2: init %i16 = in_place_init %foo_short__carbon_thunk.call, %.loc8_37.1
+// CHECK:STDOUT:   %.loc8_17: type = splice_block %i16 [concrete = constants.%i16] {
 // CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_30.3: %i16 = value_of_initializer %.loc8_30.2
-// CHECK:STDOUT:   %.loc8_30.4: %i16 = converted %.loc8_30.2, %.loc8_30.3
-// CHECK:STDOUT:   %x: %i16 = value_binding x, %.loc8_30.4
+// CHECK:STDOUT:   %.loc8_37.3: %i16 = value_of_initializer %.loc8_37.2
+// CHECK:STDOUT:   %.loc8_37.4: %i16 = converted %.loc8_37.2, %.loc8_37.3
+// CHECK:STDOUT:   %x: %i16 = value_binding x, %.loc8_37.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2250,17 +2250,17 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo_double.ref: %foo_double.cpp_overload_set.type = name_ref foo_double, imports.%foo_double.cpp_overload_set.value [concrete = constants.%foo_double.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc8_31.1: ref %f64.d77 = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr = addr_of %.loc8_31.1
+// CHECK:STDOUT:   %.loc8_38.1: ref %f64.d77 = temporary_storage
+// CHECK:STDOUT:   %addr: %ptr = addr_of %.loc8_38.1
 // CHECK:STDOUT:   %foo_double__carbon_thunk.call: init %empty_tuple.type = call imports.%foo_double__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc8_31.2: init %f64.d77 = in_place_init %foo_double__carbon_thunk.call, %.loc8_31.1
-// CHECK:STDOUT:   %.loc8_10: type = splice_block %f64 [concrete = constants.%f64.d77] {
+// CHECK:STDOUT:   %.loc8_38.2: init %f64.d77 = in_place_init %foo_double__carbon_thunk.call, %.loc8_38.1
+// CHECK:STDOUT:   %.loc8_17: type = splice_block %f64 [concrete = constants.%f64.d77] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_31.3: %f64.d77 = value_of_initializer %.loc8_31.2
-// CHECK:STDOUT:   %.loc8_31.4: %f64.d77 = converted %.loc8_31.2, %.loc8_31.3
-// CHECK:STDOUT:   %x: %f64.d77 = value_binding x, %.loc8_31.4
+// CHECK:STDOUT:   %.loc8_38.3: %f64.d77 = value_of_initializer %.loc8_38.2
+// CHECK:STDOUT:   %.loc8_38.4: %f64.d77 = converted %.loc8_38.2, %.loc8_38.3
+// CHECK:STDOUT:   %x: %f64.d77 = value_binding x, %.loc8_38.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

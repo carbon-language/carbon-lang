@@ -19,7 +19,7 @@ interface Animal {}
 // https://github.com/carbon-language/carbon-lang/issues/4853
 impl Animal as Eats {}
 
-fn F(e: Eats) {}
+fn F(unused e: Eats) {}
 fn G() { F(Animal); }
 
 // CHECK:STDOUT: --- convert_interface.carbon

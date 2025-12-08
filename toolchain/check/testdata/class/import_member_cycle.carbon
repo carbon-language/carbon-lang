@@ -27,7 +27,7 @@ library "[[@TEST_NAME]]";
 import library "a";
 
 fn Run() {
-  var a: Cycle*;
+  var unused a: Cycle*;
 }
 
 // CHECK:STDOUT: --- a.carbon

@@ -41,7 +41,7 @@ fn F(ZZ:! Z where .X = ()) {
   // Z.Y is unspecified on `ZZ` so it's found on the final impl where it's known
   // to be the concrete type (), which can then be used in this generic
   // function.
-  let a: ZZ.Y = ();
+  let unused a: ZZ.Y = ();
 }
 
 // --- final_impl_precedence_over_facet_access_type_with_where.carbon
@@ -54,11 +54,11 @@ interface Z {
 
 final impl forall [T:! type] T as Z where .X = () and .Y = () {}
 
-fn F[T:! Z where .X = ()](z: T) {
+fn F[T:! Z where .X = ()](unused z: T) {
   // z.Y is unspecified on `ZZ` so it's found on the final impl where it's known
   // to be the concrete type (), which can then be used in this generic
   // function.
-  let a: z.Y = ();
+  let unused a: z.Y = ();
 }
 
 // --- final_impl_makes_compatible_facet_values.carbon

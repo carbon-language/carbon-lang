@@ -28,14 +28,14 @@ fn F() {
   // CHECK:STDERR:
   Interface.F();
 
-  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+7]]:10: error: cannot implicitly convert non-type value of type `<associated entity in Interface>` to `type` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:   var v: Interface.T;
-  // CHECK:STDERR:          ^~~~~~~~~~~
-  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+4]]:10: note: type `<associated entity in Interface>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   var v: Interface.T;
-  // CHECK:STDERR:          ^~~~~~~~~~~
+  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+7]]:17: error: cannot implicitly convert non-type value of type `<associated entity in Interface>` to `type` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:   var unused v: Interface.T;
+  // CHECK:STDERR:                 ^~~~~~~~~~~
+  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+4]]:17: note: type `<associated entity in Interface>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   var unused v: Interface.T;
+  // CHECK:STDERR:                 ^~~~~~~~~~~
   // CHECK:STDERR:
-  var v: Interface.T;
+  var unused v: Interface.T;
 }
 
 interface Different {}

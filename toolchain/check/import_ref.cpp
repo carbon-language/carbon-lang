@@ -640,7 +640,7 @@ static auto GetLocalSymbolicEntityNameId(
   auto name_id = GetLocalNameId(context, import_entity_name.name_id);
   return context.local_entity_names().AddSymbolicBindingName(
       name_id, SemIR::NameScopeId::None, import_entity_name.bind_index(),
-      import_entity_name.is_template);
+      import_entity_name.is_template, import_entity_name.is_unused);
 }
 
 // Gets the local constant values corresponding to an imported inst block.

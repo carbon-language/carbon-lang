@@ -24,7 +24,7 @@ class X {}
 var x: Adapter(X);
 
 fn F(p: Adapter(X)*) {
-  let x: X* = *p as X*;
+  let unused x: X* = *p as X*;
 }
 
 // --- can_be_completed.carbon
@@ -40,7 +40,7 @@ class X {}
 fn F(p: Adapter(X)*) {
   // The conversion here triggers completion of Adapter(X)
   // so we can determine what it adapts.
-  let x: X* = *p as X*;
+  let unused x: X* = *p as X*;
 }
 
 // --- fail_incomplete.carbon
@@ -52,12 +52,12 @@ class Adapter(T:! type);
 class X {}
 
 fn F(p: Adapter(X)*) {
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:15: error: cannot convert expression of type `Adapter(X)` to `X*` with `as` [ConversionFailure]
-  // CHECK:STDERR:   let x: X* = *p as X*;
-  // CHECK:STDERR:               ^~~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:15: note: type `Adapter(X)` does not implement interface `Core.As(X*)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   let x: X* = *p as X*;
-  // CHECK:STDERR:               ^~~~~~~~
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:22: error: cannot convert expression of type `Adapter(X)` to `X*` with `as` [ConversionFailure]
+  // CHECK:STDERR:   let unused x: X* = *p as X*;
+  // CHECK:STDERR:                      ^~~~~~~~
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:22: note: type `Adapter(X)` does not implement interface `Core.As(X*)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   let unused x: X* = *p as X*;
+  // CHECK:STDERR:                      ^~~~~~~~
   // CHECK:STDERR:
-  let x: X* = *p as X*;
+  let unused x: X* = *p as X*;
 }

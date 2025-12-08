@@ -17,7 +17,7 @@ library "[[@TEST_NAME]]";
 fn G(T:! type) {
   // We can initialize this without knowing T.
   //@dump-sem-ir-begin
-  var arr: array(T, 0) = ();
+  var unused arr: array(T, 0) = ();
   //@dump-sem-ir-end
 }
 
@@ -32,11 +32,11 @@ fn H() {
 library "[[@TEST_NAME]]";
 
 fn F(N:! i32) {
-  // CHECK:STDERR: fail_init_dependent_bound.carbon:[[@LINE+4]]:28: error: cannot initialize array with dependent bound from a list of initializers [ArrayInitDependentBound]
-  // CHECK:STDERR:   var arr: array(i32, N) = (1, 2, 3);
-  // CHECK:STDERR:                            ^~~~~~~~~
+  // CHECK:STDERR: fail_init_dependent_bound.carbon:[[@LINE+4]]:35: error: cannot initialize array with dependent bound from a list of initializers [ArrayInitDependentBound]
+  // CHECK:STDERR:   var unused arr: array(i32, N) = (1, 2, 3);
+  // CHECK:STDERR:                                   ^~~~~~~~~
   // CHECK:STDERR:
-  var arr: array(i32, N) = (1, 2, 3);
+  var unused arr: array(i32, N) = (1, 2, 3);
 }
 
 // --- fail_todo_init_template_dependent_bound.carbon
@@ -46,11 +46,11 @@ library "[[@TEST_NAME]]";
 // TODO: This should be valid.
 fn G(template N:! i32) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_init_template_dependent_bound.carbon:[[@LINE+4]]:12: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-  // CHECK:STDERR:   var arr: array(i32, N) = (1, 2, 3);
-  // CHECK:STDERR:            ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_init_template_dependent_bound.carbon:[[@LINE+4]]:19: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+  // CHECK:STDERR:   var unused arr: array(i32, N) = (1, 2, 3);
+  // CHECK:STDERR:                   ^~~~~~~~~~~~~
   // CHECK:STDERR:
-  var arr: array(i32, N) = (1, 2, 3);
+  var unused arr: array(i32, N) = (1, 2, 3);
   //@dump-sem-ir-end
 }
 
@@ -105,18 +105,18 @@ fn H() { G(3); }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %array_type.loc7_22.2: type = array_type constants.%int_0, %T.loc4_6.1 [symbolic = %array_type.loc7_22.2 (constants.%array_type.1b3)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc7_22.2 [symbolic = %require_complete (constants.%require_complete.cc5)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %array_type.loc7_22.2 [symbolic = %pattern_type (constants.%pattern_type.bd6)]
-// CHECK:STDOUT:   %array: @G.%array_type.loc7_22.2 (%array_type.1b3) = tuple_value () [symbolic = %array (constants.%array.ca4)]
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value %array_type.loc7_22.2, () [symbolic = %facet_value (constants.%facet_value.bab)]
-// CHECK:STDOUT:   %.loc7_3.2: require_specific_def_type = require_specific_def @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [symbolic = %.loc7_3.2 (constants.%.a2e)]
-// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness imports.%Destroy.impl_witness_table, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.72c)]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %array_type.loc7_22.2, (%Destroy.impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet.ed3)]
-// CHECK:STDOUT:   %.loc7_3.3: type = fn_type_with_self_type constants.%Destroy.Op.type, %Destroy.facet [symbolic = %.loc7_3.3 (constants.%.e38)]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.type (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.type.a84)]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op: @G.%DestroyT.binding.as_type.as.Destroy.impl.Op.type (%DestroyT.binding.as_type.as.Destroy.impl.Op.type.a84) = struct_value () [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.081)]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.dca)]
+// CHECK:STDOUT:   %array_type.loc7_29.2: type = array_type constants.%int_0, %T.loc4_6.1 [symbolic = %array_type.loc7_29.2 (constants.%array_type.512)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %array_type.loc7_29.2 [symbolic = %require_complete (constants.%require_complete.cec)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %array_type.loc7_29.2 [symbolic = %pattern_type (constants.%pattern_type.b5c)]
+// CHECK:STDOUT:   %array: @G.%array_type.loc7_29.2 (%array_type.512) = tuple_value () [symbolic = %array (constants.%array.8ba)]
+// CHECK:STDOUT:   %facet_value: %type_where = facet_value %array_type.loc7_29.2, () [symbolic = %facet_value (constants.%facet_value.30f)]
+// CHECK:STDOUT:   %.loc7_3.2: require_specific_def_type = require_specific_def @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [symbolic = %.loc7_3.2 (constants.%.019)]
+// CHECK:STDOUT:   %Destroy.impl_witness: <witness> = impl_witness imports.%Destroy.impl_witness_table, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [symbolic = %Destroy.impl_witness (constants.%Destroy.impl_witness.aa0)]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %array_type.loc7_29.2, (%Destroy.impl_witness) [symbolic = %Destroy.facet (constants.%Destroy.facet.49e)]
+// CHECK:STDOUT:   %.loc7_3.3: type = fn_type_with_self_type constants.%Destroy.Op.type, %Destroy.facet [symbolic = %.loc7_3.3 (constants.%.fb1)]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.type (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.type.cc4)]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op: @G.%DestroyT.binding.as_type.as.Destroy.impl.Op.type (%DestroyT.binding.as_type.as.Destroy.impl.Op.type.cc4) = struct_value () [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.44f)]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.91d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -124,18 +124,18 @@ fn H() { G(3); }
 // CHECK:STDOUT:       %arr.patt: @G.%pattern_type (%pattern_type.bd6) = ref_binding_pattern arr [concrete]
 // CHECK:STDOUT:       %arr.var_patt: @G.%pattern_type (%pattern_type.bd6) = var_pattern %arr.patt [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %arr.var: ref @G.%array_type.loc7_22.2 (%array_type.1b3) = var %arr.var_patt
-// CHECK:STDOUT:     %.loc7_27.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc7_27.2: init @G.%array_type.loc7_22.2 (%array_type.1b3) = array_init () to %arr.var [symbolic = %array (constants.%array.ca4)]
-// CHECK:STDOUT:     %.loc7_3.1: init @G.%array_type.loc7_22.2 (%array_type.1b3) = converted %.loc7_27.1, %.loc7_27.2 [symbolic = %array (constants.%array.ca4)]
+// CHECK:STDOUT:     %arr.var: ref @G.%array_type.loc7_29.2 (%array_type.512) = var %arr.var_patt
+// CHECK:STDOUT:     %.loc7_34.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc7_34.2: init @G.%array_type.loc7_29.2 (%array_type.512) = array_init () to %arr.var [symbolic = %array (constants.%array.8ba)]
+// CHECK:STDOUT:     %.loc7_3.1: init @G.%array_type.loc7_29.2 (%array_type.512) = converted %.loc7_34.1, %.loc7_34.2 [symbolic = %array (constants.%array.8ba)]
 // CHECK:STDOUT:     assign %arr.var, %.loc7_3.1
-// CHECK:STDOUT:     %.loc7_22: type = splice_block %array_type.loc7_22.1 [symbolic = %array_type.loc7_22.2 (constants.%array_type.1b3)] {
+// CHECK:STDOUT:     %.loc7_29: type = splice_block %array_type.loc7_29.1 [symbolic = %array_type.loc7_29.2 (constants.%array_type.512)] {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc4_6.2 [symbolic = %T.loc4_6.1 (constants.%T)]
 // CHECK:STDOUT:       %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:       %array_type.loc7_22.1: type = array_type %int_0, %T.ref [symbolic = %array_type.loc7_22.2 (constants.%array_type.1b3)]
+// CHECK:STDOUT:       %array_type.loc7_29.1: type = array_type %int_0, %T.ref [symbolic = %array_type.loc7_29.2 (constants.%array_type.512)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %arr: ref @G.%array_type.loc7_22.2 (%array_type.1b3) = ref_binding arr, %arr.var
-// CHECK:STDOUT:     %impl.elem0: @G.%.loc7_3.3 (%.e38) = impl_witness_access constants.%Destroy.impl_witness.72c, element0 [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.081)]
+// CHECK:STDOUT:     %arr: ref @G.%array_type.loc7_29.2 (%array_type.512) = ref_binding arr, %arr.var
+// CHECK:STDOUT:     %impl.elem0: @G.%.loc7_3.3 (%.fb1) = impl_witness_access constants.%Destroy.impl_witness.aa0, element0 [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.44f)]
 // CHECK:STDOUT:     %bound_method.loc7_3.1: <bound method> = bound_method %arr.var, %impl.elem0
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.bab) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.dca)]
 // CHECK:STDOUT:     %bound_method.loc7_3.2: <bound method> = bound_method %arr.var, %specific_fn
@@ -152,18 +152,18 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %T.loc4_6.1 => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %array_type.loc7_22.2 => constants.%array_type.70a
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.95b
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.f2c
-// CHECK:STDOUT:   %array => constants.%array.40f
-// CHECK:STDOUT:   %facet_value => constants.%facet_value.235
-// CHECK:STDOUT:   %.loc7_3.2 => constants.%.f20
-// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.af1
-// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.dd2
-// CHECK:STDOUT:   %.loc7_3.3 => constants.%.e08
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type => constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.type.292
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op => constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b36
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn => constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.f3f
+// CHECK:STDOUT:   %array_type.loc7_29.2 => constants.%array_type.6f1
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.ed6
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9c8
+// CHECK:STDOUT:   %array => constants.%array.2e5
+// CHECK:STDOUT:   %facet_value => constants.%facet_value.cba
+// CHECK:STDOUT:   %.loc7_3.2 => constants.%.793
+// CHECK:STDOUT:   %Destroy.impl_witness => constants.%Destroy.impl_witness.dff
+// CHECK:STDOUT:   %Destroy.facet => constants.%Destroy.facet.105
+// CHECK:STDOUT:   %.loc7_3.3 => constants.%.0c7
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type => constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.type.cc8
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op => constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.dcd
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn => constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.bf3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_init_template_dependent_bound.carbon
@@ -213,7 +213,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc11_23.2: <instruction> = convert_to_value_action %N.ref, Core.IntLiteral [template]
+// CHECK:STDOUT:   %.loc11_30.2: <instruction> = convert_to_value_action %N.ref, Core.IntLiteral [template]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -225,7 +225,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:     %.loc11_36: %tuple.type = tuple_literal (%int_1, %int_2, %int_3) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc11_43: %tuple.type = tuple_literal (%int_1, %int_2, %int_3) [concrete = constants.%tuple]
 // CHECK:STDOUT:     assign %arr.var, <error>
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %arr: ref <error> = ref_binding arr, <error> [concrete = <error>]
@@ -241,6 +241,6 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %N.loc5_15.1 => constants.%int_3.822
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %.loc11_23.2 => constants.%inst.splice_block
+// CHECK:STDOUT:   %.loc11_30.2 => constants.%inst.splice_block
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

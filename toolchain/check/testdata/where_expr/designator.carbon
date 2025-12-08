@@ -45,7 +45,7 @@ fn PeriodMismatch(W:! J where .Mismatch = {});
 library "[[@TEST_NAME]]";
 
 fn Foo() -> () {
-  var x: ();
+  var unused x: ();
   // CHECK:STDERR: fail_designator_matches_var.carbon:[[@LINE+5]]:10: error: name `.Self` not found [NameNotFound]
   // CHECK:STDERR:   return .x;
   // CHECK:STDERR:          ^~

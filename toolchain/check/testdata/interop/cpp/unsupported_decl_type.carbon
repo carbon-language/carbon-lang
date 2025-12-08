@@ -27,11 +27,11 @@ import Cpp library "structured_binding.h";
 
 fn F() -> i32 {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_use_structured_binding.carbon:[[@LINE+4]]:10: note: in `Cpp` name lookup for `a` [InCppNameLookup]
-  // CHECK:STDERR:   return Cpp.a;
-  // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR: fail_todo_use_template.carbon:[[@LINE+4]]:17: note: in `Cpp` name lookup for `C` [InCppNameLookup]
+  // CHECK:STDERR:   var unused c: Cpp.C({});
+  // CHECK:STDERR:                 ^~~~~
   // CHECK:STDERR:
-  return Cpp.a;
+  var unused c: Cpp.C({});
   //@dump-sem-ir-end
 }
 

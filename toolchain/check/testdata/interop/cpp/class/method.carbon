@@ -164,8 +164,8 @@ import Cpp library "object_param_qualifiers_overloaded.h";
 
 fn CallF(v: Cpp.HasQualifiers, p: Cpp.HasQualifiers*) {
   //@dump-sem-ir-begin
-  var a: i32 = v.F();
-  var b: i32* = p->F();
+  var unused a: i32 = v.F();
+  var unused b: i32* = p->F();
   //@dump-sem-ir-end
 }
 
@@ -383,7 +383,7 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   %a.var: ref %i32 = var %a.var_patt
 // CHECK:STDOUT:   %v.ref: %HasQualifiers = name_ref v, %v
 // CHECK:STDOUT:   %F.ref.loc8: %HasQualifiers.F.cpp_overload_set.type = name_ref F, imports.%HasQualifiers.F.cpp_overload_set.value [concrete = constants.%HasQualifiers.F.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc8_17: <bound method> = bound_method %v.ref, %F.ref.loc8
+// CHECK:STDOUT:   %bound_method.loc8_24: <bound method> = bound_method %v.ref, %F.ref.loc8
 // CHECK:STDOUT:   %F__carbon_thunk.call: init %i32 = call imports.%F__carbon_thunk.decl(%v.ref)
 // CHECK:STDOUT:   assign %a.var, %F__carbon_thunk.call
 // CHECK:STDOUT:   %.loc8: type = splice_block %i32.loc8 [concrete = constants.%i32] {
@@ -397,12 +397,12 @@ fn Call(e: Cpp.ExplicitObjectParam, n: i32, a: Cpp.Another) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %ptr.235 = var %b.var_patt
 // CHECK:STDOUT:   %p.ref: %ptr.ec3 = name_ref p, %p
-// CHECK:STDOUT:   %.loc9_18: ref %HasQualifiers = deref %p.ref
+// CHECK:STDOUT:   %.loc9_25: ref %HasQualifiers = deref %p.ref
 // CHECK:STDOUT:   %F.ref.loc9: %HasQualifiers.F.cpp_overload_set.type = name_ref F, imports.%HasQualifiers.F.cpp_overload_set.value [concrete = constants.%HasQualifiers.F.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc9_18: <bound method> = bound_method %.loc9_18, %F.ref.loc9
-// CHECK:STDOUT:   %HasQualifiers.F.call: init %ptr.235 = call imports.%HasQualifiers.F.decl.f862ea.2(%.loc9_18)
+// CHECK:STDOUT:   %bound_method.loc9_25: <bound method> = bound_method %.loc9_25, %F.ref.loc9
+// CHECK:STDOUT:   %HasQualifiers.F.call: init %ptr.235 = call imports.%HasQualifiers.F.decl.f862ea.2(%.loc9_25)
 // CHECK:STDOUT:   assign %b.var, %HasQualifiers.F.call
-// CHECK:STDOUT:   %.loc9_13: type = splice_block %ptr.loc9 [concrete = constants.%ptr.235] {
+// CHECK:STDOUT:   %.loc9_20: type = splice_block %ptr.loc9 [concrete = constants.%ptr.235] {
 // CHECK:STDOUT:     %int_32.loc9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc9: type = ptr_type %i32.loc9 [concrete = constants.%ptr.235]

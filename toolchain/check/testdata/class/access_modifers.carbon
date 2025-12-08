@@ -31,14 +31,14 @@ class Circle {
 
 fn Run() {
   let circle: Circle = Circle.Make();
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:21: error: cannot access private member `radius` of type `Circle` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let radius: i32 = circle.radius;
-  // CHECK:STDERR:                     ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:28: error: cannot access private member `radius` of type `Circle` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   let unused radius: i32 = circle.radius;
+  // CHECK:STDERR:                            ^~~~~~~~~~~~~
   // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-17]]:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   private var radius: i32;
   // CHECK:STDERR:               ^~~~~~~~~~~
   // CHECK:STDERR:
-  let radius: i32 = circle.radius;
+  let unused radius: i32 = circle.radius;
   // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+7]]:3: error: cannot access private member `radius` of type `Circle` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   circle.radius = 5;
   // CHECK:STDERR:   ^~~~~~~~~~~~~
@@ -75,14 +75,14 @@ class A {
 }
 
 fn Run() {
-  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE+7]]:16: error: cannot access protected member `x` of type `A` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   let x: i32 = A.x;
-  // CHECK:STDERR:                ^~~
+  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE+7]]:23: error: cannot access protected member `x` of type `A` [ClassInvalidMemberAccess]
+  // CHECK:STDERR:   let unused x: i32 = A.x;
+  // CHECK:STDERR:                       ^~~
   // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE-7]]:17: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:   protected var x: i32;
   // CHECK:STDERR:                 ^~~~~~
   // CHECK:STDERR:
-  let x: i32 = A.x;
+  let unused x: i32 = A.x;
 }
 
 // --- instance_private_field_access_on_self.carbon

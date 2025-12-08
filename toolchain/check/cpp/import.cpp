@@ -1600,7 +1600,7 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   SemIR::EntityNameId entity_name_id =
       context.entity_names().AddSymbolicBindingName(
           var_name_id, GetParentNameScopeId(context, var_decl),
-          SemIR::CompileTimeBindIndex::None, false);
+          SemIR::CompileTimeBindIndex::None, false, /*is_unused=*/false);
   context.cpp_global_names().Add({.key = {.entity_name_id = entity_name_id},
                                   .clang_decl_id = clang_decl_id});
 

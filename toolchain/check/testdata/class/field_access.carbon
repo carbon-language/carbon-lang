@@ -21,8 +21,8 @@ fn Run() {
   var c: Class;
   c.j = 1;
   c.k = 2;
-  var cj: i32 = c.j;
-  var ck: i32 = c.k;
+  var unused cj: i32 = c.j;
+  var unused ck: i32 = c.k;
 }
 
 // CHECK:STDOUT: --- field_access.carbon
@@ -169,15 +169,15 @@ fn Run() {
 // CHECK:STDOUT:   %cj.var: ref %i32 = var %cj.var_patt
 // CHECK:STDOUT:   %c.ref.loc24: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %j.ref.loc24: %Class.elem = name_ref j, @Class.%.loc16 [concrete = @Class.%.loc16]
-// CHECK:STDOUT:   %.loc24_18.1: ref %i32 = class_element_access %c.ref.loc24, element0
-// CHECK:STDOUT:   %.loc24_18.2: %i32 = acquire_value %.loc24_18.1
-// CHECK:STDOUT:   %impl.elem0.loc24: %.958 = impl_witness_access constants.%Copy.impl_witness.66f, element0 [concrete = constants.%Int.as.Copy.impl.Op.c85]
-// CHECK:STDOUT:   %bound_method.loc24_18.1: <bound method> = bound_method %.loc24_18.2, %impl.elem0.loc24
+// CHECK:STDOUT:   %.loc24_25.1: ref %i32 = class_element_access %c.ref.loc24, element0
+// CHECK:STDOUT:   %.loc24_25.2: %i32 = acquire_value %.loc24_25.1
+// CHECK:STDOUT:   %impl.elem0.loc24: %.65f = impl_witness_access constants.%Copy.impl_witness.fb7, element0 [concrete = constants.%Int.as.Copy.impl.Op.dfd]
+// CHECK:STDOUT:   %bound_method.loc24_25.1: <bound method> = bound_method %.loc24_25.2, %impl.elem0.loc24
 // CHECK:STDOUT:   %specific_fn.loc24: <specific function> = specific_function %impl.elem0.loc24, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc24_18.2: <bound method> = bound_method %.loc24_18.2, %specific_fn.loc24
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc24: init %i32 = call %bound_method.loc24_18.2(%.loc24_18.2)
+// CHECK:STDOUT:   %bound_method.loc24_25.2: <bound method> = bound_method %.loc24_25.2, %specific_fn.loc24
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc24: init %i32 = call %bound_method.loc24_25.2(%.loc24_25.2)
 // CHECK:STDOUT:   assign %cj.var, %Int.as.Copy.impl.Op.call.loc24
-// CHECK:STDOUT:   %.loc24_11: type = splice_block %i32.loc24 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc24_18: type = splice_block %i32.loc24 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc24: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
@@ -189,15 +189,15 @@ fn Run() {
 // CHECK:STDOUT:   %ck.var: ref %i32 = var %ck.var_patt
 // CHECK:STDOUT:   %c.ref.loc25: ref %Class = name_ref c, %c
 // CHECK:STDOUT:   %k.ref.loc25: %Class.elem = name_ref k, @Class.%.loc17 [concrete = @Class.%.loc17]
-// CHECK:STDOUT:   %.loc25_18.1: ref %i32 = class_element_access %c.ref.loc25, element1
-// CHECK:STDOUT:   %.loc25_18.2: %i32 = acquire_value %.loc25_18.1
-// CHECK:STDOUT:   %impl.elem0.loc25: %.958 = impl_witness_access constants.%Copy.impl_witness.66f, element0 [concrete = constants.%Int.as.Copy.impl.Op.c85]
-// CHECK:STDOUT:   %bound_method.loc25_18.1: <bound method> = bound_method %.loc25_18.2, %impl.elem0.loc25
+// CHECK:STDOUT:   %.loc25_25.1: ref %i32 = class_element_access %c.ref.loc25, element1
+// CHECK:STDOUT:   %.loc25_25.2: %i32 = acquire_value %.loc25_25.1
+// CHECK:STDOUT:   %impl.elem0.loc25: %.65f = impl_witness_access constants.%Copy.impl_witness.fb7, element0 [concrete = constants.%Int.as.Copy.impl.Op.dfd]
+// CHECK:STDOUT:   %bound_method.loc25_25.1: <bound method> = bound_method %.loc25_25.2, %impl.elem0.loc25
 // CHECK:STDOUT:   %specific_fn.loc25: <specific function> = specific_function %impl.elem0.loc25, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc25_18.2: <bound method> = bound_method %.loc25_18.2, %specific_fn.loc25
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc25: init %i32 = call %bound_method.loc25_18.2(%.loc25_18.2)
+// CHECK:STDOUT:   %bound_method.loc25_25.2: <bound method> = bound_method %.loc25_25.2, %specific_fn.loc25
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc25: init %i32 = call %bound_method.loc25_25.2(%.loc25_25.2)
 // CHECK:STDOUT:   assign %ck.var, %Int.as.Copy.impl.Op.call.loc25
-// CHECK:STDOUT:   %.loc25_11: type = splice_block %i32.loc25 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc25_18: type = splice_block %i32.loc25 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc25: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc25: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }

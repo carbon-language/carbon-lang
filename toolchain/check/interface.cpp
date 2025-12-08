@@ -228,7 +228,8 @@ auto AddSelfGenericParameter(Context& context, SemIR::LocId definition_loc_id,
                              bool is_template) -> SemIR::InstId {
   auto entity_name_id = context.entity_names().AddSymbolicBindingName(
       SemIR::NameId::SelfType, scope_id,
-      context.scope_stack().AddCompileTimeBinding(), is_template);
+      context.scope_stack().AddCompileTimeBinding(), is_template,
+      /*is_unused=*/false);
   // Because there is no equivalent non-symbolic value, we use `None` as
   // the `value_id` on the `SymbolicBinding`.
   auto self_param_inst_id =

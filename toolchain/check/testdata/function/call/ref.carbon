@@ -83,11 +83,11 @@ fn F(x: i32);
 fn G() {
   var y: i32 = 0;
 
-  // CHECK:STDERR: fail_unnecessary_ref.carbon:[[@LINE+4]]:24: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
-  // CHECK:STDERR:   var z: (i32,) = (ref y,);
-  // CHECK:STDERR:                        ^
+  // CHECK:STDERR: fail_unnecessary_ref.carbon:[[@LINE+4]]:31: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
+  // CHECK:STDERR:   var unused z: (i32,) = (ref y,);
+  // CHECK:STDERR:                               ^
   // CHECK:STDERR:
-  var z: (i32,) = (ref y,);
+  var unused z: (i32,) = (ref y,);
   // CHECK:STDERR: fail_unnecessary_ref.carbon:[[@LINE+7]]:9: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
   // CHECK:STDERR:   F(ref y);
   // CHECK:STDERR:         ^

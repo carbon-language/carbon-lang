@@ -66,8 +66,8 @@ library "[[@TEST_NAME]]";
 
 class X {}
 
-fn TakeValue(x: X) {}
-fn TakeConstValue(x: const X) {}
+fn TakeValue(unused x: X) {}
+fn TakeConstValue(unused x: const X) {}
 
 fn PassConstValueToValue(a: const X) {
   TakeValue(a);

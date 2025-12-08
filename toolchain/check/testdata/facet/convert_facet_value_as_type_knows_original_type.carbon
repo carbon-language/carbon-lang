@@ -83,7 +83,7 @@ class C(A:! J, B:! A) {}
 // referring to the same symbolic type and with the same facet type.
 // Essentially, it allows lossless round trips through a FacetAccessType when
 // converting back to the type of its original facet value.
-fn G[A:! J, B:! A](x: C(A, B)) {}
+fn G[A:! J, B:! A](unused x: C(A, B)) {}
 
 fn F[A:! J, B:! A](x: C(A, B)) {
   //@dump-sem-ir-begin

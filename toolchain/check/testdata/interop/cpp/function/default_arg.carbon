@@ -31,7 +31,7 @@ import Cpp library "functions.h";
 fn Call() {
   //@dump-sem-ir-begin
   Cpp.GlobalNoReturn(1, 2, 3, 4);
-  let value: i32 = Cpp.GlobalReturnInt(1, 2, 3, 4);
+  let unused value: i32 = Cpp.GlobalReturnInt(1, 2, 3, 4);
   ({} as Cpp.X).B(1, 2);
   Cpp.X.C(1, 2);
   ({} as Cpp.X).D(1, 2);
@@ -47,7 +47,7 @@ import Cpp library "functions.h";
 fn Call() {
   // //@dump-sem-ir-begin
   Cpp.GlobalNoReturn(1, 2);
-  let value: i32 = Cpp.GlobalReturnInt(1, 2);
+  let unused value: i32 = Cpp.GlobalReturnInt(1, 2);
   Cpp.GlobalNoReturn(1, 2, 3);
   ({} as Cpp.X).B(1);
   Cpp.X.C(1);
@@ -291,42 +291,42 @@ fn Call() {
 // CHECK:STDOUT:   %int_2.loc9: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %int_3.loc9: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %int_4.loc9: Core.IntLiteral = int_value 4 [concrete = constants.%int_4.0c1]
-// CHECK:STDOUT:   %impl.elem0.loc9_40: %.dbf = impl_witness_access constants.%ImplicitAs.impl_witness.57f, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
-// CHECK:STDOUT:   %bound_method.loc9_40.1: <bound method> = bound_method %int_1.loc9, %impl.elem0.loc9_40 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.3d4]
-// CHECK:STDOUT:   %specific_fn.loc9_40: <specific function> = specific_function %impl.elem0.loc9_40, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc9_40.2: <bound method> = bound_method %int_1.loc9, %specific_fn.loc9_40 [concrete = constants.%bound_method.d3a]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_40: init %i32 = call %bound_method.loc9_40.2(%int_1.loc9) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc9_40.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_40 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc9_40.2: %i32 = converted %int_1.loc9, %.loc9_40.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %impl.elem0.loc9_43: %.dbf = impl_witness_access constants.%ImplicitAs.impl_witness.57f, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
-// CHECK:STDOUT:   %bound_method.loc9_43.1: <bound method> = bound_method %int_2.loc9, %impl.elem0.loc9_43 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.c08]
-// CHECK:STDOUT:   %specific_fn.loc9_43: <specific function> = specific_function %impl.elem0.loc9_43, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc9_43.2: <bound method> = bound_method %int_2.loc9, %specific_fn.loc9_43 [concrete = constants.%bound_method.6f5]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_43: init %i32 = call %bound_method.loc9_43.2(%int_2.loc9) [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc9_43.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_43 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc9_43.2: %i32 = converted %int_2.loc9, %.loc9_43.1 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %impl.elem0.loc9_46: %.dbf = impl_witness_access constants.%ImplicitAs.impl_witness.57f, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
-// CHECK:STDOUT:   %bound_method.loc9_46.1: <bound method> = bound_method %int_3.loc9, %impl.elem0.loc9_46 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.ad4]
-// CHECK:STDOUT:   %specific_fn.loc9_46: <specific function> = specific_function %impl.elem0.loc9_46, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc9_46.2: <bound method> = bound_method %int_3.loc9, %specific_fn.loc9_46 [concrete = constants.%bound_method.7cb]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_46: init %i32 = call %bound_method.loc9_46.2(%int_3.loc9) [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc9_46.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_46 [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc9_46.2: %i32 = converted %int_3.loc9, %.loc9_46.1 [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %impl.elem0.loc9_49: %.dbf = impl_witness_access constants.%ImplicitAs.impl_witness.57f, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
-// CHECK:STDOUT:   %bound_method.loc9_49.1: <bound method> = bound_method %int_4.loc9, %impl.elem0.loc9_49 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.c71]
-// CHECK:STDOUT:   %specific_fn.loc9_49: <specific function> = specific_function %impl.elem0.loc9_49, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc9_49.2: <bound method> = bound_method %int_4.loc9, %specific_fn.loc9_49 [concrete = constants.%bound_method.a9f]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_49: init %i32 = call %bound_method.loc9_49.2(%int_4.loc9) [concrete = constants.%int_4.940]
-// CHECK:STDOUT:   %.loc9_49.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_49 [concrete = constants.%int_4.940]
-// CHECK:STDOUT:   %.loc9_49.2: %i32 = converted %int_4.loc9, %.loc9_49.1 [concrete = constants.%int_4.940]
-// CHECK:STDOUT:   %GlobalReturnInt.call: init %i32 = call imports.%GlobalReturnInt.decl(%.loc9_40.2, %.loc9_43.2, %.loc9_46.2, %.loc9_49.2)
-// CHECK:STDOUT:   %.loc9_14: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %impl.elem0.loc9_47: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:   %bound_method.loc9_47.1: <bound method> = bound_method %int_1.loc9, %impl.elem0.loc9_47 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.265]
+// CHECK:STDOUT:   %specific_fn.loc9_47: <specific function> = specific_function %impl.elem0.loc9_47, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc9_47.2: <bound method> = bound_method %int_1.loc9, %specific_fn.loc9_47 [concrete = constants.%bound_method.dfc]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_47: init %i32 = call %bound_method.loc9_47.2(%int_1.loc9) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc9_47.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_47 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc9_47.2: %i32 = converted %int_1.loc9, %.loc9_47.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %impl.elem0.loc9_50: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:   %bound_method.loc9_50.1: <bound method> = bound_method %int_2.loc9, %impl.elem0.loc9_50 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.393]
+// CHECK:STDOUT:   %specific_fn.loc9_50: <specific function> = specific_function %impl.elem0.loc9_50, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc9_50.2: <bound method> = bound_method %int_2.loc9, %specific_fn.loc9_50 [concrete = constants.%bound_method.9f7]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_50: init %i32 = call %bound_method.loc9_50.2(%int_2.loc9) [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc9_50.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_50 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc9_50.2: %i32 = converted %int_2.loc9, %.loc9_50.1 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %impl.elem0.loc9_53: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:   %bound_method.loc9_53.1: <bound method> = bound_method %int_3.loc9, %impl.elem0.loc9_53 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.87d]
+// CHECK:STDOUT:   %specific_fn.loc9_53: <specific function> = specific_function %impl.elem0.loc9_53, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc9_53.2: <bound method> = bound_method %int_3.loc9, %specific_fn.loc9_53 [concrete = constants.%bound_method.def]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_53: init %i32 = call %bound_method.loc9_53.2(%int_3.loc9) [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   %.loc9_53.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_53 [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   %.loc9_53.2: %i32 = converted %int_3.loc9, %.loc9_53.1 [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   %impl.elem0.loc9_56: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:   %bound_method.loc9_56.1: <bound method> = bound_method %int_4.loc9, %impl.elem0.loc9_56 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.0b5]
+// CHECK:STDOUT:   %specific_fn.loc9_56: <specific function> = specific_function %impl.elem0.loc9_56, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc9_56.2: <bound method> = bound_method %int_4.loc9, %specific_fn.loc9_56 [concrete = constants.%bound_method.5dd]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_56: init %i32 = call %bound_method.loc9_56.2(%int_4.loc9) [concrete = constants.%int_4.940]
+// CHECK:STDOUT:   %.loc9_56.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_56 [concrete = constants.%int_4.940]
+// CHECK:STDOUT:   %.loc9_56.2: %i32 = converted %int_4.loc9, %.loc9_56.1 [concrete = constants.%int_4.940]
+// CHECK:STDOUT:   %GlobalReturnInt.call: init %i32 = call imports.%GlobalReturnInt.decl(%.loc9_47.2, %.loc9_50.2, %.loc9_53.2, %.loc9_56.2)
+// CHECK:STDOUT:   %.loc9_21: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_50.1: %i32 = value_of_initializer %GlobalReturnInt.call
-// CHECK:STDOUT:   %.loc9_50.2: %i32 = converted %GlobalReturnInt.call, %.loc9_50.1
-// CHECK:STDOUT:   %value: %i32 = value_binding value, %.loc9_50.2
+// CHECK:STDOUT:   %.loc9_57.1: %i32 = value_of_initializer %GlobalReturnInt.call
+// CHECK:STDOUT:   %.loc9_57.2: %i32 = converted %GlobalReturnInt.call, %.loc9_57.1
+// CHECK:STDOUT:   %value: %i32 = value_binding value, %.loc9_57.2
 // CHECK:STDOUT:   %.loc10_5.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %X.ref.loc10: type = name_ref X, imports.%X.decl [concrete = constants.%X]
@@ -672,28 +672,28 @@ fn Call() {
 // CHECK:STDOUT:   %GlobalReturnInt.ref: %GlobalReturnInt.cpp_overload_set.type = name_ref GlobalReturnInt, imports.%GlobalReturnInt.cpp_overload_set.value [concrete = constants.%GlobalReturnInt.cpp_overload_set.value]
 // CHECK:STDOUT:   %int_1.loc9: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc9: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %impl.elem0.loc9_40: %.dbf = impl_witness_access constants.%ImplicitAs.impl_witness.57f, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
-// CHECK:STDOUT:   %bound_method.loc9_40.1: <bound method> = bound_method %int_1.loc9, %impl.elem0.loc9_40 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.3d4]
-// CHECK:STDOUT:   %specific_fn.loc9_40: <specific function> = specific_function %impl.elem0.loc9_40, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc9_40.2: <bound method> = bound_method %int_1.loc9, %specific_fn.loc9_40 [concrete = constants.%bound_method.d3a]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_40: init %i32 = call %bound_method.loc9_40.2(%int_1.loc9) [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc9_40.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_40 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc9_40.2: %i32 = converted %int_1.loc9, %.loc9_40.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %impl.elem0.loc9_43: %.dbf = impl_witness_access constants.%ImplicitAs.impl_witness.57f, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
-// CHECK:STDOUT:   %bound_method.loc9_43.1: <bound method> = bound_method %int_2.loc9, %impl.elem0.loc9_43 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.c08]
-// CHECK:STDOUT:   %specific_fn.loc9_43: <specific function> = specific_function %impl.elem0.loc9_43, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc9_43.2: <bound method> = bound_method %int_2.loc9, %specific_fn.loc9_43 [concrete = constants.%bound_method.6f5]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_43: init %i32 = call %bound_method.loc9_43.2(%int_2.loc9) [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc9_43.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_43 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc9_43.2: %i32 = converted %int_2.loc9, %.loc9_43.1 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %GlobalReturnInt__carbon_thunk.call: init %i32 = call imports.%GlobalReturnInt__carbon_thunk.decl(%.loc9_40.2, %.loc9_43.2)
-// CHECK:STDOUT:   %.loc9_14: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %impl.elem0.loc9_47: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:   %bound_method.loc9_47.1: <bound method> = bound_method %int_1.loc9, %impl.elem0.loc9_47 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.265]
+// CHECK:STDOUT:   %specific_fn.loc9_47: <specific function> = specific_function %impl.elem0.loc9_47, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc9_47.2: <bound method> = bound_method %int_1.loc9, %specific_fn.loc9_47 [concrete = constants.%bound_method.dfc]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_47: init %i32 = call %bound_method.loc9_47.2(%int_1.loc9) [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc9_47.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_47 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc9_47.2: %i32 = converted %int_1.loc9, %.loc9_47.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %impl.elem0.loc9_50: %.322 = impl_witness_access constants.%ImplicitAs.impl_witness.bc9, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e9b]
+// CHECK:STDOUT:   %bound_method.loc9_50.1: <bound method> = bound_method %int_2.loc9, %impl.elem0.loc9_50 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.393]
+// CHECK:STDOUT:   %specific_fn.loc9_50: <specific function> = specific_function %impl.elem0.loc9_50, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc9_50.2: <bound method> = bound_method %int_2.loc9, %specific_fn.loc9_50 [concrete = constants.%bound_method.9f7]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_50: init %i32 = call %bound_method.loc9_50.2(%int_2.loc9) [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc9_50.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9_50 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc9_50.2: %i32 = converted %int_2.loc9, %.loc9_50.1 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %GlobalReturnInt__carbon_thunk.call: init %i32 = call imports.%GlobalReturnInt__carbon_thunk.decl(%.loc9_47.2, %.loc9_50.2)
+// CHECK:STDOUT:   %.loc9_21: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_44.1: %i32 = value_of_initializer %GlobalReturnInt__carbon_thunk.call
-// CHECK:STDOUT:   %.loc9_44.2: %i32 = converted %GlobalReturnInt__carbon_thunk.call, %.loc9_44.1
-// CHECK:STDOUT:   %value: %i32 = value_binding value, %.loc9_44.2
+// CHECK:STDOUT:   %.loc9_51.1: %i32 = value_of_initializer %GlobalReturnInt__carbon_thunk.call
+// CHECK:STDOUT:   %.loc9_51.2: %i32 = converted %GlobalReturnInt__carbon_thunk.call, %.loc9_51.1
+// CHECK:STDOUT:   %value: %i32 = value_binding value, %.loc9_51.2
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %GlobalNoReturn.ref.loc10: %GlobalNoReturn.cpp_overload_set.type = name_ref GlobalNoReturn, imports.%GlobalNoReturn.cpp_overload_set.value [concrete = constants.%GlobalNoReturn.cpp_overload_set.value]
 // CHECK:STDOUT:   %int_1.loc10: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]

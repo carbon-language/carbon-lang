@@ -123,7 +123,7 @@ class A {
 
 fn F(a: A) {
   //@dump-sem-ir-begin
-  let a_value: A = (a as ({}, Noncopyable)) as A;
+  let unused a_value: A = (a as ({}, Noncopyable)) as A;
   //@dump-sem-ir-end
 }
 
@@ -146,16 +146,16 @@ fn F(a: A) {
   // behavior.
 
   // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+10]]:3: error: cannot copy value of type `Noncopyable` [CopyOfUncopyableType]
-  // CHECK:STDERR:   var a_init: A = (a as ({}, Noncopyable)) as A;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:   var unused a_init: A = (a as ({}, Noncopyable)) as A;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+7]]:3: note: type `Noncopyable` does not implement interface `Core.Copy` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   var a_init: A = (a as ({}, Noncopyable)) as A;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+4]]:19: note: in copy of `A` [InCopy]
-  // CHECK:STDERR:   var a_init: A = (a as ({}, Noncopyable)) as A;
-  // CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:   var unused a_init: A = (a as ({}, Noncopyable)) as A;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+4]]:26: note: in copy of `A` [InCopy]
+  // CHECK:STDERR:   var unused a_init: A = (a as ({}, Noncopyable)) as A;
+  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  var a_init: A = (a as ({}, Noncopyable)) as A;
+  var unused a_init: A = (a as ({}, Noncopyable)) as A;
 }
 
 // --- fail_adapt_init_from_struct.carbon
@@ -446,18 +446,18 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:     %a_value.patt: %pattern_type = value_binding_pattern a_value [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
-// CHECK:STDOUT:   %.loc14_28: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc14_35: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Noncopyable.ref: type = name_ref Noncopyable, file.%Noncopyable.decl [concrete = constants.%Noncopyable]
-// CHECK:STDOUT:   %.loc14_42.1: %tuple.type.c8c = tuple_literal (%.loc14_28, %Noncopyable.ref) [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc14_42.2: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %.loc14_42.3: type = converted %.loc14_42.1, constants.%tuple.type.037 [concrete = constants.%tuple.type.037]
-// CHECK:STDOUT:   %.loc14_23.1: %tuple.type.037 = as_compatible %a.ref
-// CHECK:STDOUT:   %.loc14_23.2: %tuple.type.037 = converted %a.ref, %.loc14_23.1
-// CHECK:STDOUT:   %A.ref.loc14_48: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc14_45.1: %A = as_compatible %.loc14_23.2
-// CHECK:STDOUT:   %.loc14_45.2: %A = converted %.loc14_23.2, %.loc14_45.1
-// CHECK:STDOUT:   %A.ref.loc14_16: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %a_value: %A = value_binding a_value, %.loc14_45.2
+// CHECK:STDOUT:   %.loc14_49.1: %tuple.type.c8c = tuple_literal (%.loc14_35, %Noncopyable.ref) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc14_49.2: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc14_49.3: type = converted %.loc14_49.1, constants.%tuple.type.a10 [concrete = constants.%tuple.type.a10]
+// CHECK:STDOUT:   %.loc14_30.1: %tuple.type.a10 = as_compatible %a.ref
+// CHECK:STDOUT:   %.loc14_30.2: %tuple.type.a10 = converted %a.ref, %.loc14_30.1
+// CHECK:STDOUT:   %A.ref.loc14_55: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %.loc14_52.1: %A = as_compatible %.loc14_30.2
+// CHECK:STDOUT:   %.loc14_52.2: %A = converted %.loc14_30.2, %.loc14_52.1
+// CHECK:STDOUT:   %A.ref.loc14_23: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %a_value: %A = value_binding a_value, %.loc14_52.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

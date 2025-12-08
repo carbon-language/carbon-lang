@@ -17,14 +17,14 @@ library "[[@TEST_NAME]]";
 fn Run() {
   // TODO: These diagnostics could be better. If nothing else, we should only diagnose once.
   // CHECK:STDERR: fail_not_range.carbon:[[@LINE+8]]:7: error: cannot access member of interface `Core.Iterate` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   for (c: {} in {}) {
-  // CHECK:STDERR:       ^~~~~~~~~~~~~
+  // CHECK:STDERR:   for (unused c: {} in {}) {
+  // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_not_range.carbon:[[@LINE+4]]:7: error: cannot access member of interface `Core.Iterate` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   for (c: {} in {}) {
-  // CHECK:STDERR:       ^~~~~~~~~~~~~
+  // CHECK:STDERR:   for (unused c: {} in {}) {
+  // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  for (c: {} in {}) {
+  for (unused c: {} in {}) {
   }
 }
 
@@ -35,7 +35,7 @@ library "[[@TEST_NAME]]";
 class TrivialRange {
   impl as Core.Iterate where .CursorType = () and .ElementType = () {
     fn NewCursor[self: Self]() {}
-    fn Next[self: Self](cursor: ()*) -> Core.Optional(()) {
+    fn Next[self: Self](unused cursor: ()*) -> Core.Optional(()) {
       return Core.Optional(()).None();
     }
   }

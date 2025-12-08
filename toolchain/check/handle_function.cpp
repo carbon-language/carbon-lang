@@ -9,6 +9,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/dataflow_analysis.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/function.h"
@@ -488,8 +489,60 @@ static auto BuildFunctionDecl(Context& context,
   return {function_decl.function_id, decl_id};
 }
 
+CARBON_DIAGNOSTIC(
+    UnusedMarkerInDeclaration, Error,
+    "`unused` maker cannot be used on a declaration that is not a "
+    "definition");
+
+static auto CheckUnusedBindingsInPattern(Context& context,
+                                         SemIR::InstId pattern_id) -> void {
+  auto inst = context.insts().Get(pattern_id);
+  if (auto var_pattern = inst.TryAs<SemIR::VarPattern>()) {
+    CheckUnusedBindingsInPattern(context, var_pattern->subpattern_id);
+  } else if (auto var_param = inst.TryAs<SemIR::VarParamPattern>()) {
+    CheckUnusedBindingsInPattern(context, var_param->subpattern_id);
+  } else if (auto ref_param = inst.TryAs<SemIR::RefParamPattern>()) {
+    CheckUnusedBindingsInPattern(context, ref_param->subpattern_id);
+  } else if (auto val_param = inst.TryAs<SemIR::ValueParamPattern>()) {
+    CheckUnusedBindingsInPattern(context, val_param->subpattern_id);
+  } else if (auto ref_bind = inst.TryAs<SemIR::RefBindingPattern>()) {
+    auto& entity_name = context.entity_names().Get(ref_bind->entity_name_id);
+    if (entity_name.is_unused &&
+        entity_name.name_id != SemIR::NameId::Underscore) {
+      context.emitter().Emit(LocIdForDiagnostics(pattern_id),
+                             UnusedMarkerInDeclaration);
+    }
+  } else if (auto val_bind = inst.TryAs<SemIR::ValueBindingPattern>()) {
+    auto& entity_name = context.entity_names().Get(val_bind->entity_name_id);
+    if (entity_name.is_unused &&
+        entity_name.name_id != SemIR::NameId::Underscore) {
+      context.emitter().Emit(LocIdForDiagnostics(pattern_id),
+                             UnusedMarkerInDeclaration);
+    }
+  } else if (auto tuple_pattern = inst.TryAs<SemIR::TuplePattern>()) {
+    auto elements = context.inst_blocks().Get(tuple_pattern->elements_id);
+    for (auto element_id : elements) {
+      CheckUnusedBindingsInPattern(context, element_id);
+    }
+  }
+}
+
+static auto DiagnoseUnusedMarkersInDeclaration(Context& context,
+                                               SemIR::FunctionId function_id)
+    -> void {
+  const auto& function = context.functions().Get(function_id);
+  if (function.param_patterns_id.has_value()) {
+    for (auto pattern_id :
+         context.inst_blocks().Get(function.param_patterns_id)) {
+      CheckUnusedBindingsInPattern(context, pattern_id);
+    }
+  }
+}
+
 auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
-  BuildFunctionDecl(context, node_id, /*is_definition=*/false);
+  auto [function_id, decl_id] =
+      BuildFunctionDecl(context, node_id, /*is_definition=*/false);
+  DiagnoseUnusedMarkersInDeclaration(context, function_id);
   context.decl_name_stack().PopScope();
   return true;
 }
@@ -569,6 +622,8 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
 
   // If this is a generic function, collect information about the definition.
   FinishGenericDefinition(context, function.generic_id);
+
+  RunDataflowAnalysis(context, function_id);
 
   return true;
 }

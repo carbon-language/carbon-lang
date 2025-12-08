@@ -17,7 +17,7 @@
 library "[[@TEST_NAME]]";
 
 class C(T:! type) {
-  fn Create(value: T) {}
+  fn Create(unused value: T) {}
 }
 
 fn F(U:! type, V:! type) {
@@ -27,9 +27,9 @@ fn F(U:! type, V:! type) {
   // CHECK:STDERR: fail_incompatible_deduce.carbon:[[@LINE+7]]:15: note: type `{}` does not implement interface `Core.ImplicitAs(V)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   C(V).Create({});
   // CHECK:STDERR:               ^~
-  // CHECK:STDERR: fail_incompatible_deduce.carbon:[[@LINE-10]]:13: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn Create(value: T) {}
-  // CHECK:STDERR:             ^~~~~~~~
+  // CHECK:STDERR: fail_incompatible_deduce.carbon:[[@LINE-10]]:20: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:   fn Create(unused value: T) {}
+  // CHECK:STDERR:                    ^~~~~~~~
   // CHECK:STDERR:
   C(V).Create({});
 }
@@ -39,7 +39,7 @@ fn F(U:! type, V:! type) {
 library "[[@TEST_NAME]]";
 
 class C(T:! type) {
-  fn Create(value: T) {}
+  fn Create(unused value: T) {}
 }
 
 // TODO: This `where` should be sufficient to say that `{} as V` works.
@@ -50,9 +50,9 @@ fn F(U:! type, V:! type where {} impls Core.ImplicitAs(.Self)) {
   // CHECK:STDERR: fail_todo_compatible_deduce.carbon:[[@LINE+7]]:15: note: type `{}` does not implement interface `Core.ImplicitAs(V)` [MissingImplInMemberAccessNote]
   // CHECK:STDERR:   C(V).Create({});
   // CHECK:STDERR:               ^~
-  // CHECK:STDERR: fail_todo_compatible_deduce.carbon:[[@LINE-11]]:13: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn Create(value: T) {}
-  // CHECK:STDERR:             ^~~~~~~~
+  // CHECK:STDERR: fail_todo_compatible_deduce.carbon:[[@LINE-11]]:20: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:   fn Create(unused value: T) {}
+  // CHECK:STDERR:                    ^~~~~~~~
   // CHECK:STDERR:
   C(V).Create({});
 }

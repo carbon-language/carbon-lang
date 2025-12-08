@@ -14,7 +14,7 @@
 
 interface Empty {}
 
-fn F(e: Empty) {}
+fn F(unused e: Empty) {}
 
 // CHECK:STDOUT: --- as_type.carbon
 // CHECK:STDOUT:

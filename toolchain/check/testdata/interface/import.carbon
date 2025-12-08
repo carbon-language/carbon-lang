@@ -40,9 +40,9 @@ library "[[@TEST_NAME]]";
 
 import library "a";
 
-fn UseEmpty(e: Empty) {}
-fn UseBasic(e: Basic) {}
-fn UseForwardDeclared(f: ForwardDeclared) {}
+fn UseEmpty(unused e: Empty) {}
+fn UseBasic(unused e: Basic) {}
+fn UseForwardDeclared(unused f: ForwardDeclared) {}
 
 alias UseBasicT = Basic.T;
 alias UseBasicF = Basic.F;

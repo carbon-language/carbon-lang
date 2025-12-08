@@ -18,13 +18,13 @@ library "[[@TEST_NAME]]";
 
 fn Procedure() {
   // CHECK:STDERR: fail_procedure_with_returned_var.carbon:[[@LINE+7]]:3: error: cannot declare a `returned var` in this function [ReturnedVarWithNoReturnType]
-  // CHECK:STDERR:   returned var v: () = ();
+  // CHECK:STDERR:   returned var unused v: () = ();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_procedure_with_returned_var.carbon:[[@LINE-4]]:1: note: there was no return type provided [ReturnTypeOmittedNote]
   // CHECK:STDERR: fn Procedure() {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  returned var v: () = ();
+  returned var unused v: () = ();
   return;
 }
 
@@ -34,13 +34,13 @@ library "[[@TEST_NAME]]";
 
 fn ForgotReturnType() {
   // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE+7]]:3: error: cannot declare a `returned var` in this function [ReturnedVarWithNoReturnType]
-  // CHECK:STDERR:   returned var v: () = ();
+  // CHECK:STDERR:   returned var unused v: () = ();
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE-4]]:1: note: there was no return type provided [ReturnTypeOmittedNote]
   // CHECK:STDERR: fn ForgotReturnType() {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  returned var v: () = ();
+  returned var unused v: () = ();
   // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE+4]]:3: error: `return var;` with no `returned var` in scope [ReturnVarWithNoReturnedVar]
   // CHECK:STDERR:   return var;
   // CHECK:STDERR:   ^~~~~~~~~~~
@@ -89,13 +89,13 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.cb1 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var %v.var_patt
-// CHECK:STDOUT:   %.loc12_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc12_25.2: init %empty_tuple.type = tuple_init () to %v.var [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc12_12: init %empty_tuple.type = converted %.loc12_25.1, %.loc12_25.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc12_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc12_32.2: init %empty_tuple.type = tuple_init () to %v.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc12_12: init %empty_tuple.type = converted %.loc12_32.1, %.loc12_32.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %v.var, %.loc12_12
-// CHECK:STDOUT:   %.loc12_20.1: type = splice_block %.loc12_20.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc12_20.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc12_20.3: type = converted %.loc12_20.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc12_27.1: type = splice_block %.loc12_27.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc12_27.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc12_27.3: type = converted %.loc12_27.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %empty_tuple.type = ref_binding v, %v.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %v.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.144
@@ -146,13 +146,13 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:     %v.var_patt: %pattern_type.cb1 = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %empty_tuple.type = var %v.var_patt
-// CHECK:STDOUT:   %.loc12_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc12_25.2: init %empty_tuple.type = tuple_init () to %v.var [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc12_12: init %empty_tuple.type = converted %.loc12_25.1, %.loc12_25.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc12_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc12_32.2: init %empty_tuple.type = tuple_init () to %v.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc12_12: init %empty_tuple.type = converted %.loc12_32.1, %.loc12_32.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %v.var, %.loc12_12
-// CHECK:STDOUT:   %.loc12_20.1: type = splice_block %.loc12_20.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc12_20.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc12_20.3: type = converted %.loc12_20.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc12_27.1: type = splice_block %.loc12_27.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc12_27.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc12_27.3: type = converted %.loc12_27.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %empty_tuple.type = ref_binding v, %v.var
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %v.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.144

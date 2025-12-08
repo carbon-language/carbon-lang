@@ -14,7 +14,7 @@
 
 fn F(T:! type) {
   var p: T*;
-  let n: T = *p;
+  let unused n: T = *p;
 }
 
 // CHECK:STDOUT: --- type_param.carbon
@@ -107,12 +107,12 @@ fn F(T:! type) {
 // CHECK:STDOUT:       %n.patt: @F.%pattern_type.loc17 (%pattern_type.51d) = value_binding_pattern n [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p.ref: ref @F.%ptr.loc16_11.2 (%ptr) = name_ref p, %p
-// CHECK:STDOUT:     %.loc17_15: @F.%ptr.loc16_11.2 (%ptr) = acquire_value %p.ref
-// CHECK:STDOUT:     %.loc17_14.1: ref @F.%T.loc15_6.1 (%T) = deref %.loc17_15
+// CHECK:STDOUT:     %.loc17_22: @F.%ptr.loc16_11.2 (%ptr) = acquire_value %p.ref
+// CHECK:STDOUT:     %.loc17_21.1: ref @F.%T.loc15_6.1 (%T) = deref %.loc17_22
 // CHECK:STDOUT:     %T.ref.loc17: type = name_ref T, %T.loc15_6.2 [symbolic = %T.loc15_6.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc17_14.2: @F.%T.loc15_6.1 (%T) = acquire_value %.loc17_14.1
-// CHECK:STDOUT:     %n: @F.%T.loc15_6.1 (%T) = value_binding n, %.loc17_14.2
-// CHECK:STDOUT:     %impl.elem0: @F.%.loc16_3.2 (%.60c) = impl_witness_access constants.%Destroy.impl_witness.1f6, element0 [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.a14)]
+// CHECK:STDOUT:     %.loc17_21.2: @F.%T.loc15_6.1 (%T) = acquire_value %.loc17_21.1
+// CHECK:STDOUT:     %n: @F.%T.loc15_6.1 (%T) = value_binding n, %.loc17_21.2
+// CHECK:STDOUT:     %impl.elem0: @F.%.loc16_3.2 (%.17f) = impl_witness_access constants.%Destroy.impl_witness.60c, element0 [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ef)]
 // CHECK:STDOUT:     %bound_method.loc16_3.1: <bound method> = bound_method %p.var, %impl.elem0
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [symbolic = %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn (constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn)]
 // CHECK:STDOUT:     %bound_method.loc16_3.2: <bound method> = bound_method %p.var, %specific_fn

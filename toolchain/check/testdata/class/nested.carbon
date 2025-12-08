@@ -15,8 +15,8 @@
 class Outer {
   fn F() {
     // Outer and Inner are both complete here.
-    var o: Outer;
-    var i: Inner;
+    var unused o: Outer;
+    var unused i: Inner;
   }
 
   class Inner {
@@ -26,15 +26,15 @@ class Outer {
 
     fn G() {
       // Outer and Inner are both complete here.
-      var o: Outer;
-      var i: Inner;
+      var unused o: Outer;
+      var unused i: Inner;
     }
   }
 
   fn H() {
     // Outer and Inner are both complete here.
-    var o: Outer;
-    var i: Inner;
+    var unused o: Outer;
+    var unused i: Inner;
   }
 
   var po: Self*;

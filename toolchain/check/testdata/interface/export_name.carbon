@@ -40,7 +40,7 @@ library "[[@TEST_NAME]]";
 
 import library "export";
 
-fn UseEmpty(i: I) {}
+fn UseEmpty(unused i: I) {}
 
 // CHECK:STDOUT: --- base.carbon
 // CHECK:STDOUT:

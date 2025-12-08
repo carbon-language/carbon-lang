@@ -42,8 +42,8 @@ struct BindingPatternInfo {
 auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                        SemIR::NameId name_id, SemIR::TypeId type_id,
                        SemIR::ExprRegionId type_region_id,
-                       SemIR::InstKind pattern_kind, bool is_template)
-    -> BindingPatternInfo;
+                       SemIR::InstKind pattern_kind, bool is_template,
+                       bool is_unused) -> BindingPatternInfo;
 
 // Creates storage for `var` patterns nested within the given pattern at the
 // current location in the output SemIR. For a `returned var`, this

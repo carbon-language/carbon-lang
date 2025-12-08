@@ -123,9 +123,9 @@ interface I {
   fn G() -> X*;
 }
 
-fn F2[U:! I](V: U*) {}
+fn F2[U:! I](unused V: U*) {}
 
-fn F(U:! I where .X = .Self, V: U) {
+fn F(U:! I where .X = .Self, unused V: U) {
   // The returned value of `G` type `U` which has access to the methods of `I`.
   U.G()->G();
   (U as type).G()->G();
@@ -142,10 +142,10 @@ interface I {
   fn G() -> X*;
 }
 
-fn F2[U:! I](V: U*) {}
-fn F3[U:! I where .X = .Self](V: U*) {}
+fn F2[U:! I](unused V: U*) {}
+fn F3[U:! I where .X = .Self](unused V: U*) {}
 
-fn F(U:! I where .X = .Self, V: U*) {
+fn F(U:! I where .X = .Self, unused V: U*) {
   // The returned value of `G` type `U` which has access to the methods of `I`.
   //
   // TODO: These should work.
@@ -184,8 +184,8 @@ fn F(U:! I where .X = .Self, V: U*) {
   // CHECK:STDERR:   F3(U.G());
   // CHECK:STDERR:   ^~~~~~~~~
   // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE-40]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn F3[U:! I where .X = .Self](V: U*) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn F3[U:! I where .X = .Self](unused V: U*) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F3(U.G());
   // CHECK:STDERR: fail_todo_access_through_call.carbon:[[@LINE+4]]:6: error: type `.(I.X)` does not support qualified expressions [QualifiedExprUnsupported]
@@ -404,7 +404,7 @@ interface Z {
 // This requires that `SymbolicBindingType` evaluation correctly handles
 // arbitrary facet value instructions. Not just the common case of `FacetValue`
 // or `SymbolicBinding`.
-fn F1(T:! Y, t: T*) {}
+fn F1(T:! Y, unused t: T*) {}
 
 fn F2(U:! Z) {
   F1(U.Y1, U.G());

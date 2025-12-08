@@ -11,7 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/main_run/fail_mismatch_params.carbon
 
 // CHECK:STDERR: fail_mismatch_params.carbon:[[@LINE+4]]:1: error: invalid signature for `Main.Run` function; expected `fn ()` or `fn () -> i32` [InvalidMainRunSignature]
-// CHECK:STDERR: fn Run(n: i32) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn Run(unused n: i32) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn Run(n: i32) {}
+fn Run(unused n: i32) {}

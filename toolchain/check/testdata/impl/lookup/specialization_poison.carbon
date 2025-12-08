@@ -58,12 +58,12 @@ impl forall [U:! type] U as I where .T = () {}
 
 class C {}
 
-fn H[W:! type](v: W) {
+fn H[W:! type](unused v: W) {
   // This concrete impl lookup query poisons any further specializations.
-  // CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE+3]]:10: error: found `impl` that would change the result of an earlier use of `C as I` [PoisonedImplLookupConcreteResult]
-  // CHECK:STDERR:   let a: C.(I.T) = ();
-  // CHECK:STDERR:          ^~~~~~~
-  let a: C.(I.T) = ();
+  // CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE+3]]:17: error: found `impl` that would change the result of an earlier use of `C as I` [PoisonedImplLookupConcreteResult]
+  // CHECK:STDERR:   let unused a: C.(I.T) = ();
+  // CHECK:STDERR:                 ^~~~~~~
+  let unused a: C.(I.T) = ();
 }
 
 // CHECK:STDERR: fail_final_poisoned_concrete_query_in_generic.carbon:[[@LINE+7]]:1: note: the use would select the `impl` here but it was not found yet [PoisonedImplLookupConcreteResultNoteBadImpl]

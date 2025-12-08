@@ -12,7 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/call/params_one_comma.carbon
 
-fn Foo(a: i32,) {}
+fn Foo(unused a: i32,) {}
 
 fn Main() {
   Foo(1);

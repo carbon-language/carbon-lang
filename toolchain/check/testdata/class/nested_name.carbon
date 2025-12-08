@@ -22,8 +22,8 @@ fn F(oi: Outer.Inner) -> i32 {
   return oi.n;
 }
 
-fn G(o: Outer) {
-  var i: o.Inner;
+fn G(unused o: Outer) {
+  var unused i: o.Inner;
 }
 
 // CHECK:STDOUT: --- nested_name.carbon

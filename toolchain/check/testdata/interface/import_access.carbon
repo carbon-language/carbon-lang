@@ -45,7 +45,7 @@ package Test library "[[@TEST_NAME]]";
 
 impl package Test library "[[@TEST_NAME]]";
 
-fn F(i: Def) {}
+fn F(unused i: Def) {}
 
 // --- fail_local_def.carbon
 
@@ -53,11 +53,11 @@ package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:9: error: name `Def` not found [NameNotFound]
-// CHECK:STDERR: fn F(i: Def) {}
-// CHECK:STDERR:         ^~~
+// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:16: error: name `Def` not found [NameNotFound]
+// CHECK:STDERR: fn F(unused i: Def) {}
+// CHECK:STDERR:                ^~~
 // CHECK:STDERR:
-fn F(i: Def) {}
+fn F(unused i: Def) {}
 
 // --- fail_other_def.carbon
 
@@ -65,17 +65,17 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:9: error: member name `Def` not found in `Test` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: fn F(i: Test.Def) {}
-// CHECK:STDERR:         ^~~~~~~~
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:16: error: member name `Def` not found in `Test` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR: fn F(unused i: Test.Def) {}
+// CHECK:STDERR:                ^~~~~~~~
 // CHECK:STDERR:
-fn F(i: Test.Def) {}
+fn F(unused i: Test.Def) {}
 
 // --- forward_with_def.impl.carbon
 
 impl package Test library "[[@TEST_NAME]]";
 
-fn F(i: ForwardWithDef) {}
+fn F(unused i: ForwardWithDef) {}
 
 // --- fail_local_forward_with_def.carbon
 
@@ -83,11 +83,11 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward_with_def";
 
-// CHECK:STDERR: fail_local_forward_with_def.carbon:[[@LINE+4]]:9: error: name `ForwardWithDef` not found [NameNotFound]
-// CHECK:STDERR: fn F(i: ForwardWithDef) {}
-// CHECK:STDERR:         ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_local_forward_with_def.carbon:[[@LINE+4]]:16: error: name `ForwardWithDef` not found [NameNotFound]
+// CHECK:STDERR: fn F(unused i: ForwardWithDef) {}
+// CHECK:STDERR:                ^~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(i: ForwardWithDef) {}
+fn F(unused i: ForwardWithDef) {}
 
 // --- fail_other_forward_with_def.carbon
 
@@ -95,24 +95,24 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward_with_def";
 
-// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:9: error: member name `ForwardWithDef` not found in `Test` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: fn F(i: Test.ForwardWithDef) {}
-// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:16: error: member name `ForwardWithDef` not found in `Test` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR: fn F(unused i: Test.ForwardWithDef) {}
+// CHECK:STDERR:                ^~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(i: Test.ForwardWithDef) {}
+fn F(unused i: Test.ForwardWithDef) {}
 
 // --- fail_todo_forward.impl.carbon
 
 impl package Test library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+7]]:9: error: name `Forward` not found [NameNotFound]
-// CHECK:STDERR: fn F(i: Forward*) {}
-// CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+7]]:16: error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR: fn F(unused i: Forward*) {}
+// CHECK:STDERR:                ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+3]]:9: error: name `Forward` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: fn F(i: Forward*) {}
-// CHECK:STDERR:         ^~~~~~~
-fn F(i: Forward*) {}
+// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+3]]:16: error: name `Forward` used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fn F(unused i: Forward*) {}
+// CHECK:STDERR:                ^~~~~~~
+fn F(unused i: Forward*) {}
 
 // CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+4]]:11: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR: interface Forward {}
@@ -126,11 +126,11 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward";
 
-// CHECK:STDERR: fail_local_forward.carbon:[[@LINE+4]]:9: error: name `Forward` not found [NameNotFound]
-// CHECK:STDERR: fn F(i: Forward*) {}
-// CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR: fail_local_forward.carbon:[[@LINE+4]]:16: error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR: fn F(unused i: Forward*) {}
+// CHECK:STDERR:                ^~~~~~~
 // CHECK:STDERR:
-fn F(i: Forward*) {}
+fn F(unused i: Forward*) {}
 
 // --- fail_other_forward.carbon
 
@@ -138,11 +138,11 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
-// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+4]]:9: error: name `Forward` not found [NameNotFound]
-// CHECK:STDERR: fn F(i: Forward*) {}
-// CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+4]]:16: error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR: fn F(unused i: Forward*) {}
+// CHECK:STDERR:                ^~~~~~~
 // CHECK:STDERR:
-fn F(i: Forward*) {}
+fn F(unused i: Forward*) {}
 
 // --- todo_fail_private_on_redecl.carbon
 

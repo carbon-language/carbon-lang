@@ -139,20 +139,20 @@ fn F(T:! M & (L where .W = {}), a: T.W) {
   // One of `b` or `c` must fail, because `T.W` is either found to be `()` from
   // the impl or `{}` from the facet type of T.
 
-  let b: () = G(T, a);
+  let unused b: () = G(T, a);
   // TODO: This diagnostic sucks. Can we make the facet type's value take
   // precidence over final, since that's what is written in the code and more
   // likely to show up in diagnostics? Or should we diagnose `T` as being
   // invalid directly, where we can see both `.W` values and print them?
   //
-  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+7]]:15: error: cannot convert type `T` that implements `L & M where .(L.W) = {}` into type implementing `L where .(L.W) = {}` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   let c: {} = H(T, a);
-  // CHECK:STDERR:               ^~~~~~~
+  // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE+7]]:22: error: cannot convert type `T` that implements `L & M where .(L.W) = {}` into type implementing `L where .(L.W) = {}` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   let unused c: {} = H(T, a);
+  // CHECK:STDERR:                      ^~~~~~~
   // CHECK:STDERR: fail_two_different_combined_from_final_impl_and_facet.carbon:[[@LINE-15]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR: fn H(T:! L where .W = {}, a: T.W) -> {} { return a; }
   // CHECK:STDERR:      ^
   // CHECK:STDERR:
-  let c: {} = H(T, a);
+  let unused c: {} = H(T, a);
 }
 
 // --- fail_many_different.carbon

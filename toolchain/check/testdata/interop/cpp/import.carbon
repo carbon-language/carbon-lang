@@ -38,11 +38,11 @@ import library "namespace_api";
 
 fn F() {
   // Imports are not implicitly re-exported, so lookup is expected to fail.
-  // CHECK:STDERR: fail_import_namespace_api.carbon:[[@LINE+4]]:10: error: member name `MyClass` not found in `Cpp.MyNamespace` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   var x: MyNamespaceAlias.MyClass;
-  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_namespace_api.carbon:[[@LINE+4]]:17: error: member name `MyClass` not found in `Cpp.MyNamespace` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   var unused x: MyNamespaceAlias.MyClass;
+  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  var x: MyNamespaceAlias.MyClass;
+  var unused x: MyNamespaceAlias.MyClass;
 }
 
 // ============================================================================
@@ -126,7 +126,7 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 fn F(input: Cpp.int) {
-  let output: i32 = input;
+  let unused output: i32 = input;
 }
 
 // ============================================================================

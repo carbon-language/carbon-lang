@@ -13,13 +13,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_return_with_returned_var.carbon
 
 fn F() -> i32 {
-  returned var v: i32 = 0;
+  returned var unused v: i32 = 0;
   // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE+7]]:3: error: can only `return var;` in the scope of a `returned var` [ReturnExprWithReturnedVar]
   // CHECK:STDERR:   return 1;
   // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE-4]]:16: note: `returned var` was declared here [ReturnedVarHere]
-  // CHECK:STDERR:   returned var v: i32 = 0;
-  // CHECK:STDERR:                ^
+  // CHECK:STDERR: fail_return_with_returned_var.carbon:[[@LINE-4]]:23: note: `returned var` was declared here [ReturnedVarHere]
+  // CHECK:STDERR:   returned var unused v: i32 = 0;
+  // CHECK:STDERR:                       ^
   // CHECK:STDERR:
   return 1;
 }
@@ -165,7 +165,7 @@ fn G() -> C {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc16_12.2(%int_0) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc16_12: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   assign %v.var, %.loc16_12
-// CHECK:STDOUT:   %.loc16_19: type = splice_block %i32.loc16 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc16_26: type = splice_block %i32.loc16 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc16: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }

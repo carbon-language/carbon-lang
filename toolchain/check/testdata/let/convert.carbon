@@ -29,7 +29,7 @@ library "[[@TEST_NAME]]";
 
 fn G() {
   var a: i32 = 0;
-  let n: i32 = a;
+  let unused n: i32 = a;
   // CHECK:STDERR: fail_let_bound_to_ref_not_mutable.carbon:[[@LINE+4]]:3: error: expression is not assignable [AssignmentToNonAssignable]
   // CHECK:STDERR:   n = 1;
   // CHECK:STDERR:   ^

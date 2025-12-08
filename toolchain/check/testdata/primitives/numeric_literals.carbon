@@ -17,7 +17,7 @@ library "[[@TEST_NAME]]";
 fn F() {
   // 8 and 9 trigger special behavior in APInt when mishandling signed versus
   // unsigned, so we pay extra attention to those.
-  var ints: array(i32, 6) = (
+  var unused ints: array(i32, 6) = (
     //@dump-sem-ir-begin
     8,
     9,
@@ -27,7 +27,7 @@ fn F() {
     0x7FFFFFFF,
     //@dump-sem-ir-end
   );
-  var floats: array(f64, 6) = (
+  var unused floats: array(f64, 6) = (
     //@dump-sem-ir-begin
     0.9,
     8.0,

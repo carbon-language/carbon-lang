@@ -16,13 +16,13 @@ fn Foo() -> f64 { return 1.0; }
 
 fn Run() {
   // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `f64` to `i32` [ConversionFailure]
-  // CHECK:STDERR:   var x: i32 = Foo();
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:   var unused x: i32 = Foo();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+4]]:3: note: type `f64` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   var x: i32 = Foo();
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:   var unused x: i32 = Foo();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  var x: i32 = Foo();
+  var unused x: i32 = Foo();
 }
 
 // CHECK:STDOUT: --- fail_return_type_mismatch.carbon
@@ -127,7 +127,7 @@ fn Run() {
 // CHECK:STDOUT:   %Foo.call: init %f64.d77 = call %Foo.ref()
 // CHECK:STDOUT:   %.loc25_3: %i32 = converted %Foo.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %x.var, <error>
-// CHECK:STDOUT:   %.loc25_10: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc25_17: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }

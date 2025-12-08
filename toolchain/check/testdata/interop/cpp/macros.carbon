@@ -30,12 +30,12 @@ import Cpp library "integer_literal_replacement_token.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  let a: i32 = Cpp.CONFIG_VALUE;
-  let b: i64 = Cpp.CONFIG_VALUE_LONG;
-  let c: u32 = Cpp.CONFIG_VALUE_UNSIGNED;
-  let d: i32 = Cpp.CONFIG_VALUE_HEXA;
-  let e: i32 = Cpp.CONFIG_VALUE_OCTAL;
-  let f: i32 = Cpp.CONFIG_VALUE_BINARY;
+  let unused a: i32 = Cpp.CONFIG_VALUE;
+  let unused b: i64 = Cpp.CONFIG_VALUE_LONG;
+  let unused c: u32 = Cpp.CONFIG_VALUE_UNSIGNED;
+  let unused d: i32 = Cpp.CONFIG_VALUE_HEXA;
+  let unused e: i32 = Cpp.CONFIG_VALUE_OCTAL;
+  let unused f: i32 = Cpp.CONFIG_VALUE_BINARY;
   //@dump-sem-ir-end
 }
 
@@ -119,13 +119,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "macro_in_nested_scope.h";
 
 fn F() {
-  let a: i32 = Cpp.CONFIG_VALUE;
+  let unused a: i32 = Cpp.CONFIG_VALUE;
 
-  // CHECK:STDERR: fail_import_macro_in_nested_scope.carbon:[[@LINE+4]]:16: error: member name `CONFIG_VALUE` not found in `Cpp.N` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let b: i32 = Cpp.N.CONFIG_VALUE;
-  // CHECK:STDERR:                ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_macro_in_nested_scope.carbon:[[@LINE+4]]:23: error: member name `CONFIG_VALUE` not found in `Cpp.N` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   let unused b: i32 = Cpp.N.CONFIG_VALUE;
+  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let b: i32 = Cpp.N.CONFIG_VALUE;
+  let unused b: i32 = Cpp.N.CONFIG_VALUE;
 }
 
 // --- macro_and_non_macro_same_name.h
@@ -146,9 +146,9 @@ fn F() {
   //@dump-sem-ir-begin
   // When the same macro name and non-macro name exist in the global C++ scope, the macro name is selected.
   // Cpp.n is treated as an integer constant with value 1.
-  var a: array(f32, Cpp.n) = (1.0,);
+  var unused a: array(f32, Cpp.n) = (1.0,);
 
-  let b: f32 = Cpp.X.n;
+  let unused b: f32 = Cpp.X.n;
   //@dump-sem-ir-end
 }
 
@@ -188,7 +188,7 @@ import Cpp library "unary_operator.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  let a: i32 = Cpp.NEGATIVE;
+  let unused a: i32 = Cpp.NEGATIVE;
   //@dump-sem-ir-end
 }
 
@@ -203,7 +203,7 @@ import Cpp library "binary_operator.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  let a: i32 = Cpp.ADDITION;
+  let unused a: i32 = Cpp.ADDITION;
   //@dump-sem-ir-end
 }
 
@@ -221,10 +221,10 @@ import Cpp library "casting.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  let a: u32 = Cpp.CAST_UNSIGNED;
-  let b: i32 = Cpp.CAST_STATIC;
-  let c: i32 = Cpp.CAST_FUNCTIONAL;
-  let d: i32 = Cpp.CAST_BOOL_TO_INT;
+  let unused a: u32 = Cpp.CAST_UNSIGNED;
+  let unused b: i32 = Cpp.CAST_STATIC;
+  let unused c: i32 = Cpp.CAST_FUNCTIONAL;
+  let unused d: i32 = Cpp.CAST_BOOL_TO_INT;
   //@dump-sem-ir-end
 }
 
@@ -240,7 +240,7 @@ import Cpp library "nested_macros.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  let a: i32 = Cpp.INDIRECT_ONE;
+  let unused a: i32 = Cpp.INDIRECT_ONE;
   //@dump-sem-ir-end
 }
 
@@ -264,13 +264,13 @@ import Cpp library "string_literal_object_like_macro.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  let a: str = Cpp.SimpleString;
-  let b: str = Cpp.EmptyString;
-  let c: str = Cpp.EscapeCharacter;
-  let d: str = Cpp.Concatenated;
-  let e: str = Cpp.RawString;
-  let f: str = Cpp.Utf8String;
-  let g: str = Cpp.Indirect;
+  let unused a: str = Cpp.SimpleString;
+  let unused b: str = Cpp.EmptyString;
+  let unused c: str = Cpp.EscapeCharacter;
+  let unused d: str = Cpp.Concatenated;
+  let unused e: str = Cpp.RawString;
+  let unused f: str = Cpp.Utf8String;
+  let unused g: str = Cpp.Indirect;
   //@dump-sem-ir-end
 }
 
@@ -361,9 +361,9 @@ import Cpp library "floating_point_literal_macro.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  let a: f64 = Cpp.MyDouble;
-  let b: f64 = Cpp.MyDoubleE;
-  let c: f32 = Cpp.MyFloat;
+  let unused a: f64 = Cpp.MyDouble;
+  let unused b: f64 = Cpp.MyDoubleE;
+  let unused c: f32 = Cpp.MyFloat;
   //@dump-sem-ir-end
 }
 
@@ -422,12 +422,12 @@ import Cpp library "character_literals.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  let a: char = Cpp.M_LOWERCASE;
-  let b: char = Cpp.M_UPPERCASE;
-  let c: char = Cpp.M_DIGIT;
-  let d: char = Cpp.M_SPACE;
-  let e: char = Cpp.M_TAB;
-  let f: char = Cpp.M_UTF8_CHAR;
+  let unused a: char = Cpp.M_LOWERCASE;
+  let unused b: char = Cpp.M_UPPERCASE;
+  let unused c: char = Cpp.M_DIGIT;
+  let unused d: char = Cpp.M_SPACE;
+  let unused e: char = Cpp.M_TAB;
+  let unused f: char = Cpp.M_UTF8_CHAR;
   //@dump-sem-ir-end
 }
 
@@ -445,9 +445,9 @@ import Cpp library "character_literals_operators.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  let a: char = Cpp.M_CONDITIONAL;
-  let b: i32 = Cpp.M_A_PLUS_ONE;
-  let c: bool = Cpp.M_A_EQUAL;
+  let unused a: char = Cpp.M_CONDITIONAL;
+  let unused b: i32 = Cpp.M_A_PLUS_ONE;
+  let unused c: bool = Cpp.M_A_EQUAL;
   //@dump-sem-ir-end
 }
 
@@ -466,11 +466,11 @@ library "[[@TEST_NAME]]";
 import Cpp library "multiple_characters.h";
 
 fn F() {
- // CHECK:STDERR: import_multiple_characters.carbon:[[@LINE+4]]:15: note: in `Cpp` name lookup for `MULTIPLE_CHARS` [InCppNameLookup]
- // CHECK:STDERR:  let a: i32 = Cpp.MULTIPLE_CHARS;
- // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~
+ // CHECK:STDERR: import_multiple_characters.carbon:[[@LINE+4]]:22: note: in `Cpp` name lookup for `MULTIPLE_CHARS` [InCppNameLookup]
+ // CHECK:STDERR:  let unused a: i32 = Cpp.MULTIPLE_CHARS;
+ // CHECK:STDERR:                      ^~~~~~~~~~~~~~~~~~
  // CHECK:STDERR:
- let a: i32 = Cpp.MULTIPLE_CHARS;
+ let unused a: i32 = Cpp.MULTIPLE_CHARS;
 }
 
 // --- unsupported_character_literal_types.h
@@ -486,42 +486,42 @@ library "[[@TEST_NAME]]";
 import Cpp library "unsupported_character_literal_types.h";
 
 fn F() {
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:16: error: semantics TODO: `Unsupported: C++ literal's type `char16_t` could not be mapped to a Carbon type` [SemanticsTodo]
- // CHECK:STDERR:  let a: char = Cpp.M_UTF16_CHAR;
- // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:16: note: in `Cpp` name lookup for `M_UTF16_CHAR` [InCppNameLookup]
- // CHECK:STDERR:  let a: char = Cpp.M_UTF16_CHAR;
- // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: C++ literal's type `char16_t` could not be mapped to a Carbon type` [SemanticsTodo]
+ // CHECK:STDERR:  let unused a: char = Cpp.M_UTF16_CHAR;
+ // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:23: note: in `Cpp` name lookup for `M_UTF16_CHAR` [InCppNameLookup]
+ // CHECK:STDERR:  let unused a: char = Cpp.M_UTF16_CHAR;
+ // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~
  // CHECK:STDERR:
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:16: error: member name `M_UTF16_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
- // CHECK:STDERR:  let a: char = Cpp.M_UTF16_CHAR;
- // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:23: error: member name `M_UTF16_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  let unused a: char = Cpp.M_UTF16_CHAR;
+ // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~
  // CHECK:STDERR:
- let a: char = Cpp.M_UTF16_CHAR;
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:16: error: semantics TODO: `Unsupported: C++ literal's type `char32_t` could not be mapped to a Carbon type` [SemanticsTodo]
- // CHECK:STDERR:  let b: char = Cpp.M_UTF32_CHAR;
- // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:16: note: in `Cpp` name lookup for `M_UTF32_CHAR` [InCppNameLookup]
- // CHECK:STDERR:  let b: char = Cpp.M_UTF32_CHAR;
- // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ let unused a: char = Cpp.M_UTF16_CHAR;
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: C++ literal's type `char32_t` could not be mapped to a Carbon type` [SemanticsTodo]
+ // CHECK:STDERR:  let unused b: char = Cpp.M_UTF32_CHAR;
+ // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:23: note: in `Cpp` name lookup for `M_UTF32_CHAR` [InCppNameLookup]
+ // CHECK:STDERR:  let unused b: char = Cpp.M_UTF32_CHAR;
+ // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~
  // CHECK:STDERR:
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:16: error: member name `M_UTF32_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
- // CHECK:STDERR:  let b: char = Cpp.M_UTF32_CHAR;
- // CHECK:STDERR:                ^~~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:23: error: member name `M_UTF32_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  let unused b: char = Cpp.M_UTF32_CHAR;
+ // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~
  // CHECK:STDERR:
- let b: char = Cpp.M_UTF32_CHAR;
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:16: error: semantics TODO: `Unsupported: C++ literal's type `wchar_t` could not be mapped to a Carbon type` [SemanticsTodo]
- // CHECK:STDERR:  let c: char = Cpp.M_WIDE_CHAR;
- // CHECK:STDERR:                ^~~~~~~~~~~~~~~
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:16: note: in `Cpp` name lookup for `M_WIDE_CHAR` [InCppNameLookup]
- // CHECK:STDERR:  let c: char = Cpp.M_WIDE_CHAR;
- // CHECK:STDERR:                ^~~~~~~~~~~~~~~
+ let unused b: char = Cpp.M_UTF32_CHAR;
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: C++ literal's type `wchar_t` could not be mapped to a Carbon type` [SemanticsTodo]
+ // CHECK:STDERR:  let unused c: char = Cpp.M_WIDE_CHAR;
+ // CHECK:STDERR:                       ^~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+8]]:23: note: in `Cpp` name lookup for `M_WIDE_CHAR` [InCppNameLookup]
+ // CHECK:STDERR:  let unused c: char = Cpp.M_WIDE_CHAR;
+ // CHECK:STDERR:                       ^~~~~~~~~~~~~~~
  // CHECK:STDERR:
- // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:16: error: member name `M_WIDE_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
- // CHECK:STDERR:  let c: char = Cpp.M_WIDE_CHAR;
- // CHECK:STDERR:                ^~~~~~~~~~~~~~~
+ // CHECK:STDERR: fail_unsupported_character_literal_types.carbon:[[@LINE+4]]:23: error: member name `M_WIDE_CHAR` not found in `Cpp` [MemberNameNotFoundInInstScope]
+ // CHECK:STDERR:  let unused c: char = Cpp.M_WIDE_CHAR;
+ // CHECK:STDERR:                       ^~~~~~~~~~~~~~~
  // CHECK:STDERR:
- let c: char = Cpp.M_WIDE_CHAR;
+ let unused c: char = Cpp.M_WIDE_CHAR;
 }
 
 // --- fail_assign_to_character_literals.carbon
@@ -563,18 +563,18 @@ import Cpp library "boolean_literal_macro.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  let a: bool = Cpp.M_TRUE;
-  let b: bool = Cpp.M_FALSE;
-  let c: bool = Cpp.M_NOT_TRUE;
-  let d: bool = Cpp.M_NOT_ZERO;
-  let e: bool = Cpp.M_ONE_EQ_ONE;
-  let f: bool = Cpp.M_ONE_NEQ_ONE;
-  let g: bool = Cpp.M_AND;
-  let h: bool = Cpp.M_OR;
-  let i: bool = Cpp.M_COMPLEX;
+  let unused a: bool = Cpp.M_TRUE;
+  let unused b: bool = Cpp.M_FALSE;
+  let unused c: bool = Cpp.M_NOT_TRUE;
+  let unused d: bool = Cpp.M_NOT_ZERO;
+  let unused e: bool = Cpp.M_ONE_EQ_ONE;
+  let unused f: bool = Cpp.M_ONE_NEQ_ONE;
+  let unused g: bool = Cpp.M_AND;
+  let unused h: bool = Cpp.M_OR;
+  let unused i: bool = Cpp.M_COMPLEX;
 
-  let j: i32 = Cpp.M_ONE;
-  let k: i32 = Cpp.M_ZERO;
+  let unused j: i32 = Cpp.M_ONE;
+  let unused k: i32 = Cpp.M_ZERO;
   //@dump-sem-ir-end
 }
 
@@ -634,7 +634,7 @@ import Cpp inline '''
 
 fn F() {
   //@dump-sem-ir-begin
-  let a: Cpp.A = Cpp.M_A;
+  let unused a: Cpp.A = Cpp.M_A;
   //@dump-sem-ir-end
 }
 
@@ -662,7 +662,7 @@ import Cpp inline '''
 
 fn F() {
   //@dump-sem-ir-begin
-  let a: i32 = Cpp.M_CONSTEXPR_INT;
+  let unused a: i32 = Cpp.M_CONSTEXPR_INT;
   //@dump-sem-ir-end
 }
 
@@ -676,7 +676,11 @@ import Cpp inline '''
 ''';
 
 fn F() {
-  let a: i32 = Cpp.M_CONSTEXPR_NO_SCOPE;
+  // CHECK:STDERR: fail_import_constexpr_no_scope.carbon:[[@LINE+4]]:23: note: in `Cpp` name lookup for `M_CONSTEXPR_NO_SCOPE` [InCppNameLookup]
+  // CHECK:STDERR:   let unused a: i32 = Cpp.M_CONSTEXPR_NO_SCOPE;
+  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  let unused a: i32 = Cpp.M_CONSTEXPR_NO_SCOPE;
 }
 
 // --- fail_todo_import_macro_constexpr_float.carbon
@@ -689,18 +693,18 @@ import Cpp inline '''
 ''';
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_macro_constexpr_float.carbon:[[@LINE+11]]:16: error: semantics TODO: `Unsupported: macro evaluated to a non-integer LValue` [SemanticsTodo]
-  // CHECK:STDERR:   let a: f32 = Cpp.M_CONSTEXPR_FLOAT;
-  // CHECK:STDERR:                ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_import_macro_constexpr_float.carbon:[[@LINE+8]]:16: note: in `Cpp` name lookup for `M_CONSTEXPR_FLOAT` [InCppNameLookup]
-  // CHECK:STDERR:   let a: f32 = Cpp.M_CONSTEXPR_FLOAT;
-  // CHECK:STDERR:                ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_macro_constexpr_float.carbon:[[@LINE+11]]:23: error: semantics TODO: `Unsupported: macro evaluated to a non-integer LValue` [SemanticsTodo]
+  // CHECK:STDERR:   let unused a: f32 = Cpp.M_CONSTEXPR_FLOAT;
+  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_macro_constexpr_float.carbon:[[@LINE+8]]:23: note: in `Cpp` name lookup for `M_CONSTEXPR_FLOAT` [InCppNameLookup]
+  // CHECK:STDERR:   let unused a: f32 = Cpp.M_CONSTEXPR_FLOAT;
+  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_macro_constexpr_float.carbon:[[@LINE+4]]:16: error: member name `M_CONSTEXPR_FLOAT` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let a: f32 = Cpp.M_CONSTEXPR_FLOAT;
-  // CHECK:STDERR:                ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_macro_constexpr_float.carbon:[[@LINE+4]]:23: error: member name `M_CONSTEXPR_FLOAT` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   let unused a: f32 = Cpp.M_CONSTEXPR_FLOAT;
+  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let a: f32 = Cpp.M_CONSTEXPR_FLOAT;
+  let unused a: f32 = Cpp.M_CONSTEXPR_FLOAT;
 }
 
 // --- lambda.carbon
@@ -713,7 +717,7 @@ import Cpp inline '''
 
 fn F() {
   //@dump-sem-ir-begin
-  let i: i32 = Cpp.MyIntLambda;
+  let unused i: i32 = Cpp.MyIntLambda;
   //@dump-sem-ir-end
 }
 
@@ -729,11 +733,11 @@ library "[[@TEST_NAME]]";
 import Cpp library "macro_undefined.h";
 
 fn F() {
-  // CHECK:STDERR: fail_macro_undefined.carbon:[[@LINE+4]]:16: error: member name `UNDEF_NAME` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let a: i32 = Cpp.UNDEF_NAME;
-  // CHECK:STDERR:                ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_macro_undefined.carbon:[[@LINE+4]]:23: error: member name `UNDEF_VALUE` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   let unused a: i32 = Cpp.UNDEF_VALUE;
+  // CHECK:STDERR:                       ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let a: i32 = Cpp.UNDEF_NAME;
+  let unused a: i32 = Cpp.UNDEF_VALUE;
 }
 
 // --- macro_redefined.h
@@ -751,7 +755,7 @@ import Cpp library "macro_redefined.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  let a: i32 = Cpp.REDEF_NAME;
+  let unused a: i32 = Cpp.REDEF_NAME;
   //@dump-sem-ir-end
 }
 
@@ -777,7 +781,7 @@ import Cpp library "macro_defined_twice.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  let a: i32 = Cpp.TWICE_DEF;
+  let unused a: i32 = Cpp.TWICE_DEF;
   //@dump-sem-ir-end
 }
 
@@ -796,11 +800,11 @@ library "[[@TEST_NAME]]";
 import Cpp library "function_like_macros.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_function_like_macros.carbon:[[@LINE+4]]:16: error: member name `MAX` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let a: i32 = Cpp.MAX(1,2);
-  // CHECK:STDERR:                ^~~~~~~
+  // CHECK:STDERR: fail_todo_import_function_like_macros.carbon:[[@LINE+4]]:23: error: member name `MAX` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   let unused a: i32 = Cpp.MAX(1,2);
+  // CHECK:STDERR:                       ^~~~~~~
   // CHECK:STDERR:
-  let a: i32 = Cpp.MAX(1,2);
+  let unused a: i32 = Cpp.MAX(1,2);
 }
 
 // ============================================================================
@@ -818,11 +822,11 @@ library "[[@TEST_NAME]]";
 import Cpp library "predefined_macros.h";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_import_predefined_macros.carbon:[[@LINE+4]]:23: error: member name `__LINE__` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let line_num: i32 = Cpp.__LINE__;
-  // CHECK:STDERR:                       ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_predefined_macros.carbon:[[@LINE+4]]:30: error: member name `__LINE__` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   let unused line_num: i32 = Cpp.__LINE__;
+  // CHECK:STDERR:                              ^~~~~~~~~~~~
   // CHECK:STDERR:
-  let line_num: i32 = Cpp.__LINE__;
+  let unused line_num: i32 = Cpp.__LINE__;
 }
 
 // ============================================================================
@@ -1036,33 +1040,33 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %array_type = var %a.var_patt
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.674]
-// CHECK:STDOUT:   %.loc10_35.1: %tuple.type = tuple_literal (%float) [concrete = constants.%tuple]
-// CHECK:STDOUT:   %impl.elem0.loc10_35: %.ed8 = impl_witness_access constants.%ImplicitAs.impl_witness.958, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.4f8]
-// CHECK:STDOUT:   %bound_method.loc10_35.1: <bound method> = bound_method %float, %impl.elem0.loc10_35 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc10_35: <specific function> = specific_function %impl.elem0.loc10_35, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc10_35.2: <bound method> = bound_method %float, %specific_fn.loc10_35 [concrete = constants.%bound_method.1cf]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f32.97e = call %bound_method.loc10_35.2(%float) [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc10_35.2: init %f32.97e = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc10_42.1: %tuple.type = tuple_literal (%float) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %impl.elem0.loc10_42: %.393 = impl_witness_access constants.%ImplicitAs.impl_witness.e0e, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.947]
+// CHECK:STDOUT:   %bound_method.loc10_42.1: <bound method> = bound_method %float, %impl.elem0.loc10_42 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc10_42: <specific function> = specific_function %impl.elem0.loc10_42, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc10_42.2: <bound method> = bound_method %float, %specific_fn.loc10_42 [concrete = constants.%bound_method.d8a]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f32.97e = call %bound_method.loc10_42.2(%float) [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc10_42.2: init %f32.97e = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %.loc10_35.3: ref %f32.97e = array_index %a.var, %int_0
-// CHECK:STDOUT:   %.loc10_35.4: init %f32.97e = initialize_from %.loc10_35.2 to %.loc10_35.3 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc10_35.5: init %array_type = array_init (%.loc10_35.4) to %a.var [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc10_3: init %array_type = converted %.loc10_35.1, %.loc10_35.5 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc10_42.3: ref %f32.97e = array_index %a.var, %int_0
+// CHECK:STDOUT:   %.loc10_42.4: init %f32.97e = initialize_from %.loc10_42.2 to %.loc10_42.3 [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc10_42.5: init %array_type = array_init (%.loc10_42.4) to %a.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc10_3: init %array_type = converted %.loc10_42.1, %.loc10_42.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc10_3
-// CHECK:STDOUT:   %.loc10_26: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:   %.loc10_33: type = splice_block %array_type [concrete = constants.%array_type] {
 // CHECK:STDOUT:     %int_32.loc10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %f32.loc10: type = class_type @Float, @Float(constants.%int_32) [concrete = constants.%f32.97e]
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %n.ref.loc10: %i32 = name_ref n, imports.%int_1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:     %impl.elem0.loc10_24: %.892 = impl_witness_access constants.%ImplicitAs.impl_witness.6e4, element0 [concrete = constants.%Int.as.ImplicitAs.impl.Convert.a1b]
-// CHECK:STDOUT:     %bound_method.loc10_24.1: <bound method> = bound_method %n.ref.loc10, %impl.elem0.loc10_24 [concrete = constants.%Int.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:     %specific_fn.loc10_24: <specific function> = specific_function %impl.elem0.loc10_24, @Int.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Int.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:     %bound_method.loc10_24.2: <bound method> = bound_method %n.ref.loc10, %specific_fn.loc10_24 [concrete = constants.%bound_method.478]
-// CHECK:STDOUT:     %Int.as.ImplicitAs.impl.Convert.call: init Core.IntLiteral = call %bound_method.loc10_24.2(%n.ref.loc10) [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:     %.loc10_24.1: Core.IntLiteral = value_of_initializer %Int.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:     %.loc10_24.2: Core.IntLiteral = converted %n.ref.loc10, %.loc10_24.1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:     %array_type: type = array_type %.loc10_24.2, %f32.loc10 [concrete = constants.%array_type]
+// CHECK:STDOUT:     %impl.elem0.loc10_31: %.63b = impl_witness_access constants.%ImplicitAs.impl_witness.972, element0 [concrete = constants.%Int.as.ImplicitAs.impl.Convert.047]
+// CHECK:STDOUT:     %bound_method.loc10_31.1: <bound method> = bound_method %n.ref.loc10, %impl.elem0.loc10_31 [concrete = constants.%Int.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:     %specific_fn.loc10_31: <specific function> = specific_function %impl.elem0.loc10_31, @Int.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Int.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:     %bound_method.loc10_31.2: <bound method> = bound_method %n.ref.loc10, %specific_fn.loc10_31 [concrete = constants.%bound_method.3e3]
+// CHECK:STDOUT:     %Int.as.ImplicitAs.impl.Convert.call: init Core.IntLiteral = call %bound_method.loc10_31.2(%n.ref.loc10) [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:     %.loc10_31.1: Core.IntLiteral = value_of_initializer %Int.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:     %.loc10_31.2: Core.IntLiteral = converted %n.ref.loc10, %.loc10_31.1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:     %array_type: type = array_type %.loc10_31.2, %f32.loc10 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %array_type = ref_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -1072,13 +1076,13 @@ fn F() {
 // CHECK:STDOUT:   %X.ref: <namespace> = name_ref X, imports.%X [concrete = imports.%X]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %n.ref.loc12: ref %f32.97e = name_ref n, imports.%n.var [concrete = imports.%n.var]
-// CHECK:STDOUT:   %.loc12_10: type = splice_block %f32.loc12 [concrete = constants.%f32.97e] {
+// CHECK:STDOUT:   %.loc12_17: type = splice_block %f32.loc12 [concrete = constants.%f32.97e] {
 // CHECK:STDOUT:     %int_32.loc12: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %f32.loc12: type = class_type @Float, @Float(constants.%int_32) [concrete = constants.%f32.97e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_21: %f32.97e = acquire_value %n.ref.loc12
-// CHECK:STDOUT:   %b: %f32.97e = value_binding b, %.loc12_21
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %a.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.9ec
+// CHECK:STDOUT:   %.loc12_28: %f32.97e = acquire_value %n.ref.loc12
+// CHECK:STDOUT:   %b: %f32.97e = value_binding b, %.loc12_28
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %a.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.39c
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc10_3: <bound method> = bound_method %a.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc10_3(%a.var)
@@ -1546,10 +1550,10 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_A_EQUAL.ref: bool = name_ref M_A_EQUAL, imports.%true [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc10_10.1: type = splice_block %.loc10_10.3 [concrete = bool] {
+// CHECK:STDOUT:   %.loc10_17.1: type = splice_block %.loc10_17.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc10_10.2: type = value_of_initializer %Bool.call [concrete = bool]
-// CHECK:STDOUT:     %.loc10_10.3: type = converted %Bool.call, %.loc10_10.2 [concrete = bool]
+// CHECK:STDOUT:     %.loc10_17.2: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc10_17.3: type = converted %Bool.call, %.loc10_17.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: bool = value_binding c, %M_A_EQUAL.ref
 // CHECK:STDOUT:   <elided>
@@ -1605,10 +1609,10 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_TRUE.ref: bool = name_ref M_TRUE, imports.%true.d1048d.1 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc8_10.1: type = splice_block %.loc8_10.3 [concrete = bool] {
+// CHECK:STDOUT:   %.loc8_17.1: type = splice_block %.loc8_17.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call.loc8: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc8_10.2: type = value_of_initializer %Bool.call.loc8 [concrete = bool]
-// CHECK:STDOUT:     %.loc8_10.3: type = converted %Bool.call.loc8, %.loc8_10.2 [concrete = bool]
+// CHECK:STDOUT:     %.loc8_17.2: type = value_of_initializer %Bool.call.loc8 [concrete = bool]
+// CHECK:STDOUT:     %.loc8_17.3: type = converted %Bool.call.loc8, %.loc8_17.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: bool = value_binding a, %M_TRUE.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1616,10 +1620,10 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_FALSE.ref: bool = name_ref M_FALSE, imports.%false.505718.1 [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc9_10.1: type = splice_block %.loc9_10.3 [concrete = bool] {
+// CHECK:STDOUT:   %.loc9_17.1: type = splice_block %.loc9_17.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call.loc9: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc9_10.2: type = value_of_initializer %Bool.call.loc9 [concrete = bool]
-// CHECK:STDOUT:     %.loc9_10.3: type = converted %Bool.call.loc9, %.loc9_10.2 [concrete = bool]
+// CHECK:STDOUT:     %.loc9_17.2: type = value_of_initializer %Bool.call.loc9 [concrete = bool]
+// CHECK:STDOUT:     %.loc9_17.3: type = converted %Bool.call.loc9, %.loc9_17.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: bool = value_binding b, %M_FALSE.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1627,10 +1631,10 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_NOT_TRUE.ref: bool = name_ref M_NOT_TRUE, imports.%false.505718.2 [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc10_10.1: type = splice_block %.loc10_10.3 [concrete = bool] {
+// CHECK:STDOUT:   %.loc10_17.1: type = splice_block %.loc10_17.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call.loc10: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc10_10.2: type = value_of_initializer %Bool.call.loc10 [concrete = bool]
-// CHECK:STDOUT:     %.loc10_10.3: type = converted %Bool.call.loc10, %.loc10_10.2 [concrete = bool]
+// CHECK:STDOUT:     %.loc10_17.2: type = value_of_initializer %Bool.call.loc10 [concrete = bool]
+// CHECK:STDOUT:     %.loc10_17.3: type = converted %Bool.call.loc10, %.loc10_17.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: bool = value_binding c, %M_NOT_TRUE.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1638,10 +1642,10 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_NOT_ZERO.ref: bool = name_ref M_NOT_ZERO, imports.%true.d1048d.2 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc11_10.1: type = splice_block %.loc11_10.3 [concrete = bool] {
+// CHECK:STDOUT:   %.loc11_17.1: type = splice_block %.loc11_17.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call.loc11: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc11_10.2: type = value_of_initializer %Bool.call.loc11 [concrete = bool]
-// CHECK:STDOUT:     %.loc11_10.3: type = converted %Bool.call.loc11, %.loc11_10.2 [concrete = bool]
+// CHECK:STDOUT:     %.loc11_17.2: type = value_of_initializer %Bool.call.loc11 [concrete = bool]
+// CHECK:STDOUT:     %.loc11_17.3: type = converted %Bool.call.loc11, %.loc11_17.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: bool = value_binding d, %M_NOT_ZERO.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1649,10 +1653,10 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_ONE_EQ_ONE.ref: bool = name_ref M_ONE_EQ_ONE, imports.%true.d1048d.3 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc12_10.1: type = splice_block %.loc12_10.3 [concrete = bool] {
+// CHECK:STDOUT:   %.loc12_17.1: type = splice_block %.loc12_17.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call.loc12: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc12_10.2: type = value_of_initializer %Bool.call.loc12 [concrete = bool]
-// CHECK:STDOUT:     %.loc12_10.3: type = converted %Bool.call.loc12, %.loc12_10.2 [concrete = bool]
+// CHECK:STDOUT:     %.loc12_17.2: type = value_of_initializer %Bool.call.loc12 [concrete = bool]
+// CHECK:STDOUT:     %.loc12_17.3: type = converted %Bool.call.loc12, %.loc12_17.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e: bool = value_binding e, %M_ONE_EQ_ONE.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1660,10 +1664,10 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_ONE_NEQ_ONE.ref: bool = name_ref M_ONE_NEQ_ONE, imports.%false.505718.3 [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc13_10.1: type = splice_block %.loc13_10.3 [concrete = bool] {
+// CHECK:STDOUT:   %.loc13_17.1: type = splice_block %.loc13_17.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call.loc13: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc13_10.2: type = value_of_initializer %Bool.call.loc13 [concrete = bool]
-// CHECK:STDOUT:     %.loc13_10.3: type = converted %Bool.call.loc13, %.loc13_10.2 [concrete = bool]
+// CHECK:STDOUT:     %.loc13_17.2: type = value_of_initializer %Bool.call.loc13 [concrete = bool]
+// CHECK:STDOUT:     %.loc13_17.3: type = converted %Bool.call.loc13, %.loc13_17.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: bool = value_binding f, %M_ONE_NEQ_ONE.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1671,10 +1675,10 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_AND.ref: bool = name_ref M_AND, imports.%true.d1048d.4 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc14_10.1: type = splice_block %.loc14_10.3 [concrete = bool] {
+// CHECK:STDOUT:   %.loc14_17.1: type = splice_block %.loc14_17.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call.loc14: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc14_10.2: type = value_of_initializer %Bool.call.loc14 [concrete = bool]
-// CHECK:STDOUT:     %.loc14_10.3: type = converted %Bool.call.loc14, %.loc14_10.2 [concrete = bool]
+// CHECK:STDOUT:     %.loc14_17.2: type = value_of_initializer %Bool.call.loc14 [concrete = bool]
+// CHECK:STDOUT:     %.loc14_17.3: type = converted %Bool.call.loc14, %.loc14_17.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %g: bool = value_binding g, %M_AND.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1682,10 +1686,10 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_OR.ref: bool = name_ref M_OR, imports.%true.d1048d.5 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc15_10.1: type = splice_block %.loc15_10.3 [concrete = bool] {
+// CHECK:STDOUT:   %.loc15_17.1: type = splice_block %.loc15_17.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call.loc15: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc15_10.2: type = value_of_initializer %Bool.call.loc15 [concrete = bool]
-// CHECK:STDOUT:     %.loc15_10.3: type = converted %Bool.call.loc15, %.loc15_10.2 [concrete = bool]
+// CHECK:STDOUT:     %.loc15_17.2: type = value_of_initializer %Bool.call.loc15 [concrete = bool]
+// CHECK:STDOUT:     %.loc15_17.3: type = converted %Bool.call.loc15, %.loc15_17.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %h: bool = value_binding h, %M_OR.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1693,10 +1697,10 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_COMPLEX.ref: bool = name_ref M_COMPLEX, imports.%true.d1048d.6 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc16_10.1: type = splice_block %.loc16_10.3 [concrete = bool] {
+// CHECK:STDOUT:   %.loc16_17.1: type = splice_block %.loc16_17.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call.loc16: init type = call constants.%Bool() [concrete = bool]
-// CHECK:STDOUT:     %.loc16_10.2: type = value_of_initializer %Bool.call.loc16 [concrete = bool]
-// CHECK:STDOUT:     %.loc16_10.3: type = converted %Bool.call.loc16, %.loc16_10.2 [concrete = bool]
+// CHECK:STDOUT:     %.loc16_17.2: type = value_of_initializer %Bool.call.loc16 [concrete = bool]
+// CHECK:STDOUT:     %.loc16_17.3: type = converted %Bool.call.loc16, %.loc16_17.2 [concrete = bool]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i: bool = value_binding i, %M_COMPLEX.ref
 // CHECK:STDOUT:   name_binding_decl {
@@ -1840,10 +1844,10 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type = value_binding_pattern a [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp.ref.loc11_18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc11_25: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %M_A.ref: %A = name_ref M_A, imports.%int_1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %.loc11: type = splice_block %A.ref [concrete = constants.%A] {
-// CHECK:STDOUT:     %Cpp.ref.loc11_10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Cpp.ref.loc11_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %A = value_binding a, %M_A.ref
@@ -1877,13 +1881,13 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %M_CONSTEXPR_INT.ref: %const = name_ref M_CONSTEXPR_INT, imports.%int_1 [concrete = constants.%int_1.22e]
-// CHECK:STDOUT:   %.loc11_10: type = splice_block %i32.loc11 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc11_17: type = splice_block %i32.loc11 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc11: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc11: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc11_19.1: %i32 = as_compatible %M_CONSTEXPR_INT.ref [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc11_19.2: %i32 = converted %M_CONSTEXPR_INT.ref, %.loc11_19.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %a: %i32 = value_binding a, %.loc11_19.2
+// CHECK:STDOUT:   %.loc11_26.1: %i32 = as_compatible %M_CONSTEXPR_INT.ref [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc11_26.2: %i32 = converted %M_CONSTEXPR_INT.ref, %.loc11_26.1 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %a: %i32 = value_binding a, %.loc11_26.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

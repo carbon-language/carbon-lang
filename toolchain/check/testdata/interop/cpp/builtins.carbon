@@ -19,28 +19,28 @@ import Cpp;
 fn F() {
   //@dump-sem-ir-begin
   let cpp_signed_char : Cpp.signed_char = 1 as i8;
-  let carbon_signed_char: i8 = cpp_signed_char;
+  let unused carbon_signed_char: i8 = cpp_signed_char;
 
   let cpp_short : Cpp.short = 1 as i16;
-  let carbon_short: i16 = cpp_short;
+  let unused carbon_short: i16 = cpp_short;
 
   let cpp_int : Cpp.int = 1 as i32;
-  let carbon_int: i32 = cpp_int;
+  let unused carbon_int: i32 = cpp_int;
 
   let cpp_unsigned_char : Cpp.unsigned_char = 1 as u8;
-  let carbon_unsigned_char: u8 = cpp_unsigned_char;
+  let unused carbon_unsigned_char: u8 = cpp_unsigned_char;
 
   let cpp_unsigned_short : Cpp.unsigned_short = 1 as u16;
-  let carbon_unsigned_short: u16 = cpp_unsigned_short;
+  let unused carbon_unsigned_short: u16 = cpp_unsigned_short;
 
   let cpp_unsigned_int : Cpp.unsigned_int = 1 as u32;
-  let carbon_unsigned_int: u32 = cpp_unsigned_int;
+  let unused carbon_unsigned_int: u32 = cpp_unsigned_int;
 
   let cpp_float : Cpp.float = 1.0 as f32;
-  let carbon_float: f32 = cpp_float;
+  let unused carbon_float: f32 = cpp_float;
 
   let cpp_double : Cpp.double = 1.0 as f64;
-  let carbon_double: f64 = cpp_double;
+  let unused carbon_double: f64 = cpp_double;
   //@dump-sem-ir-end
 }
 
@@ -60,7 +60,7 @@ fn F() {
   // CHECK:STDERR:                         ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
   let cpp_long_double : Cpp.long_double = 1.0 as f64;
-  let carbon_long_double: f64 = cpp_long_double;
+  let unused carbon_long_double: f64 = cpp_long_double;
   //@dump-sem-ir-end
 }
 
@@ -71,11 +71,11 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 fn F() {
-  // CHECK:STDERR: fail_not_builtin.carbon:[[@LINE+4]]:21: error: member name `not_builtin` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let not_builtin : Cpp.not_builtin = 1;
-  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_not_builtin.carbon:[[@LINE+4]]:28: error: member name `not_builtin` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   let unused not_builtin : Cpp.not_builtin = 1;
+  // CHECK:STDERR:                            ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let not_builtin : Cpp.not_builtin = 1;
+  let unused not_builtin : Cpp.not_builtin = 1;
 }
 
 // --- fail_lookup_in_other_scopes.carbon
@@ -87,11 +87,11 @@ namespace MyNamespace {}
 ''';
 
 fn F() {
-  // CHECK:STDERR: fail_lookup_in_other_scopes.carbon:[[@LINE+4]]:14: error: member name `long` not found in `Cpp.MyNamespace` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let long : Cpp.MyNamespace.long = 1;
-  // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_lookup_in_other_scopes.carbon:[[@LINE+4]]:21: error: member name `long` not found in `Cpp.MyNamespace` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:   let unused long : Cpp.MyNamespace.long = 1;
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  let long : Cpp.MyNamespace.long = 1;
+  let unused long : Cpp.MyNamespace.long = 1;
 }
 
 // --- override_builtin.carbon
@@ -107,7 +107,7 @@ struct unsigned_int {
 fn F() {
   //@dump-sem-ir-begin
   var unsigned_int : Cpp.unsigned_int;
-  let x: u32 = unsigned_int.foo();
+  let unused x: u32 = unsigned_int.foo();
   //@dump-sem-ir-end
 }
 
@@ -595,15 +595,17 @@ fn F() {
 // CHECK:STDOUT:   %foo.ref: %unsigned_int.foo.cpp_overload_set.type = name_ref foo, imports.%unsigned_int.foo.cpp_overload_set.value [concrete = constants.%unsigned_int.foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %unsigned_int.ref.loc13, %foo.ref
 // CHECK:STDOUT:   %unsigned_int.foo.call: init %u32 = call imports.%unsigned_int.foo.decl(%unsigned_int.ref.loc13)
-// CHECK:STDOUT:   %.loc13_10: type = splice_block %u32 [concrete = constants.%u32] {
+// CHECK:STDOUT:   %.loc13_17: type = splice_block %u32 [concrete = constants.%u32] {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %u32: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc13_33.1: %u32 = value_of_initializer %unsigned_int.foo.call
-// CHECK:STDOUT:   %.loc13_33.2: %u32 = converted %unsigned_int.foo.call, %.loc13_33.1
-// CHECK:STDOUT:   %x: %u32 = value_binding x, %.loc13_33.2
-// CHECK:STDOUT:   %unsigned_int.cpp_destructor.bound: <bound method> = bound_method %unsigned_int.var, constants.%unsigned_int.cpp_destructor
-// CHECK:STDOUT:   %unsigned_int.cpp_destructor.call: init %empty_tuple.type = call %unsigned_int.cpp_destructor.bound(%unsigned_int.var)
+// CHECK:STDOUT:   %.loc13_40.1: %u32 = value_of_initializer %unsigned_int.foo.call
+// CHECK:STDOUT:   %.loc13_40.2: %u32 = converted %unsigned_int.foo.call, %.loc13_40.1
+// CHECK:STDOUT:   %x: %u32 = value_binding x, %.loc13_40.2
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %unsigned_int.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.b85
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %unsigned_int.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc12(%unsigned_int.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

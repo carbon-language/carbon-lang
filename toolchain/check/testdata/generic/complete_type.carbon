@@ -28,18 +28,18 @@ class A(T:! type) {
   var v: T;
 }
 
-// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+11]]:6: note: in `A(B)` used here [ResolvingSpecificHere]
-// CHECK:STDERR: fn F(x: A(B)) {}
-// CHECK:STDERR:      ^~~~~~~
+// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+11]]:13: note: in `A(B)` used here [ResolvingSpecificHere]
+// CHECK:STDERR: fn F(unused x: A(B)) {}
+// CHECK:STDERR:             ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+7]]:6: error: parameter has incomplete type `A(B)` in function definition [IncompleteTypeInFunctionParam]
-// CHECK:STDERR: fn F(x: A(B)) {}
-// CHECK:STDERR:      ^~~~~~~
+// CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE+7]]:13: error: parameter has incomplete type `A(B)` in function definition [IncompleteTypeInFunctionParam]
+// CHECK:STDERR: fn F(unused x: A(B)) {}
+// CHECK:STDERR:             ^~~~~~~
 // CHECK:STDERR: fail_incomplete_in_class.carbon:[[@LINE-19]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class B;
 // CHECK:STDERR: ^~~~~~~~
 // CHECK:STDERR:
-fn F(x: A(B)) {}
+fn F(unused x: A(B)) {}
 
 class B {}
 

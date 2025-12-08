@@ -102,7 +102,8 @@ static auto IsValidParamForIntroducer(Context& context, Parse::NodeId node_id,
 
 // TODO: make this function shorter by factoring pieces out.
 static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
-                                    Parse::NodeKind node_kind) -> bool {
+                                    Parse::NodeKind node_kind,
+                                    bool is_unused = false) -> bool {
   // TODO: split this into smaller, more focused functions.
   auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
   auto [cast_type_inst_id, cast_type_id] =
@@ -134,9 +135,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   auto make_binding_pattern = [&]() -> SemIR::InstId {
     // TODO: Eventually the name will need to support associations with other
     // scopes, but right now we don't support qualified names here.
-    auto binding =
-        AddBindingPattern(context, name_node, name_id, cast_type_id,
-                          type_expr_region_id, pattern_inst_kind, is_template);
+    auto binding = AddBindingPattern(context, name_node, name_id, cast_type_id,
+                                     type_expr_region_id, pattern_inst_kind,
+                                     is_template, is_unused);
 
     // TODO: If `is_generic`, then `binding.bind_id is a SymbolicBinding. Subst
     // the `.Self` of type `type` in the `cast_type_id` type (a `FacetType`)
@@ -456,8 +457,53 @@ auto HandleParseNode(Context& context, Parse::TemplateBindingNameId node_id)
   return true;
 }
 
+static auto MarkPatternUnused(Context& context, SemIR::InstId inst_id) -> bool {
+  bool any_marked = false;
+  auto inst = context.insts().Get(inst_id);
+  if (auto bind = inst.TryAs<SemIR::AnyBindingPattern>()) {
+    auto& name = context.entity_names().Get(bind->entity_name_id);
+    name.is_unused = true;
+    if (name.name_id != SemIR::NameId::Underscore) {
+      any_marked = true;
+    }
+  } else if (auto tuple = inst.TryAs<SemIR::TuplePattern>()) {
+    for (auto elem_id : context.inst_blocks().Get(tuple->elements_id)) {
+      if (MarkPatternUnused(context, elem_id)) {
+        any_marked = true;
+      }
+    }
+  } else if (auto var = inst.TryAs<SemIR::VarPattern>()) {
+    if (MarkPatternUnused(context, var->subpattern_id)) {
+      any_marked = true;
+    }
+  } else if (auto var_param = inst.TryAs<SemIR::VarParamPattern>()) {
+    if (MarkPatternUnused(context, var_param->subpattern_id)) {
+      any_marked = true;
+    }
+  } else if (auto ref_param = inst.TryAs<SemIR::RefParamPattern>()) {
+    if (MarkPatternUnused(context, ref_param->subpattern_id)) {
+      any_marked = true;
+    }
+  } else if (auto val_param = inst.TryAs<SemIR::ValueParamPattern>()) {
+    if (MarkPatternUnused(context, val_param->subpattern_id)) {
+      any_marked = true;
+    }
+  }
+  // TODO: Handle other patterns if necessary.
+  return any_marked;
+}
+
 auto HandleParseNode(Context& context, Parse::UnusedPatternId node_id) -> bool {
-  return context.TODO(node_id, "unused");
+  auto [child_node, child_inst_id] =
+      context.node_stack().PopPatternWithNodeId();
+  if (!MarkPatternUnused(context, child_inst_id)) {
+    CARBON_DIAGNOSTIC(
+        UnusedPatternNoBindings, Warning,
+        "`unused` modifier has no effect on pattern without bindings");
+    context.emitter().Emit(node_id, UnusedPatternNoBindings);
+  }
+  context.node_stack().Push(node_id, child_inst_id);
+  return true;
 }
 
 }  // namespace Carbon::Check

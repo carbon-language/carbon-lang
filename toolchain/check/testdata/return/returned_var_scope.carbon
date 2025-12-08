@@ -14,10 +14,10 @@
 
 fn UnrelatedScopes() -> i32 {
   if (true) {
-    returned var v: i32 = 0;
+    returned var unused v: i32 = 0;
   }
   if (true) {
-    returned var w: i32 = 1;
+    returned var unused w: i32 = 1;
   }
   return 0;
 }
@@ -149,7 +149,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc17: init %i32 = call %bound_method.loc17_14.2(%int_0.loc17) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc17_14: init %i32 = converted %int_0.loc17, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc17 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   assign %v.var, %.loc17_14
-// CHECK:STDOUT:   %.loc17_21: type = splice_block %i32.loc17 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc17_28: type = splice_block %i32.loc17 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }
@@ -174,7 +174,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc20: init %i32 = call %bound_method.loc20_14.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc20_14: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc20 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   assign %w.var, %.loc20_14
-// CHECK:STDOUT:   %.loc20_21: type = splice_block %i32.loc20 [concrete = constants.%i32] {
+// CHECK:STDOUT:   %.loc20_28: type = splice_block %i32.loc20 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc20: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:   }

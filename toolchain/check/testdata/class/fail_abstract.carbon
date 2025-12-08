@@ -38,14 +38,14 @@ abstract class Abstract {
 }
 
 fn Var() {
-  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE+7]]:10: error: binding pattern has abstract type `Abstract` in `var` pattern [AbstractTypeInVarPattern]
-  // CHECK:STDERR:   var v: Abstract;
-  // CHECK:STDERR:          ^~~~~~~~
+  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE+7]]:17: error: binding pattern has abstract type `Abstract` in `var` pattern [AbstractTypeInVarPattern]
+  // CHECK:STDERR:   var unused v: Abstract;
+  // CHECK:STDERR:                 ^~~~~~~~
   // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE-7]]:1: note: class was declared abstract here [ClassAbstractHere]
   // CHECK:STDERR: abstract class Abstract {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  var v: Abstract;
+  var unused v: Abstract;
 }
 
 // --- fail_abstract_var_function_param.carbon
@@ -73,7 +73,7 @@ abstract class Abstract {
 }
 
 fn F(a: Abstract) {
-  let l: Abstract = a;
+  let unused l: Abstract = a;
 }
 
 // --- fail_abstract_adapter.carbon
@@ -183,7 +183,7 @@ abstract class Abstract {
 }
 
 fn F() {
-  let l: Abstract = {};
+  let unused l: Abstract = {};
 }
 
 // --- fail_call_abstract_return.carbon

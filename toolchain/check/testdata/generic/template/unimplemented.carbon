@@ -52,22 +52,22 @@ library "[[@TEST_NAME]]";
 fn F[template T:! Core.Destroy](x: T) {
   // TODO: These diagnostics aren't very good, and we should only produce one error here.
   // CHECK:STDERR: fail_todo_unimplemented_convert.carbon:[[@LINE+8]]:3: error: member name of type `<dependent type>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
-  // CHECK:STDERR:   var v: T = 0;
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:   var unused v: T = 0;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_unimplemented_convert.carbon:[[@LINE+4]]:3: error: value of type `<dependent type>` is not callable [CallToNonCallable]
-  // CHECK:STDERR:   var v: T = 0;
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:   var unused v: T = 0;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  var v: T = 0;
+  var unused v: T = 0;
   // CHECK:STDERR: fail_todo_unimplemented_convert.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `T` to `i32` [ConversionFailure]
-  // CHECK:STDERR:   var w: i32 = x;
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:   var unused w: i32 = x;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_todo_unimplemented_convert.carbon:[[@LINE+4]]:3: note: type `T` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessNote]
-  // CHECK:STDERR:   var w: i32 = x;
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR:   var unused w: i32 = x;
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  var w: i32 = x;
+  var unused w: i32 = x;
 }
 
 // CHECK:STDOUT: --- fail_todo_unimplemented_operator.carbon
@@ -345,10 +345,10 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:     %.loc14_3.1: @F.%.loc14_3.4 (@F.%.loc14_3.4) = splice_inst %.loc14_3.3
 // CHECK:STDOUT:     %.loc14_3.2: @F.%T.binding.as_type (%T.binding.as_type.132) = converted %int_0, <error> [concrete = <error>]
 // CHECK:STDOUT:     assign %v.var, <error>
-// CHECK:STDOUT:     %.loc14_10.1: type = splice_block %.loc14_10.2 [template = %T.binding.as_type (constants.%T.binding.as_type.132)] {
-// CHECK:STDOUT:       %T.ref.loc14: %Destroy.type = name_ref T, %T.loc4_15.2 [template = %T.loc4_15.1 (constants.%T.110)]
-// CHECK:STDOUT:       %T.as_type.loc14: type = facet_access_type %T.ref.loc14 [template = %T.binding.as_type (constants.%T.binding.as_type.132)]
-// CHECK:STDOUT:       %.loc14_10.2: type = converted %T.ref.loc14, %T.as_type.loc14 [template = %T.binding.as_type (constants.%T.binding.as_type.132)]
+// CHECK:STDOUT:     %.loc14_17.1: type = splice_block %.loc14_17.2 [template = %T.binding.as_type (constants.%T.binding.as_type.d87)] {
+// CHECK:STDOUT:       %T.ref.loc14: %Destroy.type = name_ref T, %T.loc4_15.2 [template = %T.loc4_15.1 (constants.%T.afb)]
+// CHECK:STDOUT:       %T.as_type.loc14: type = facet_access_type %T.ref.loc14 [template = %T.binding.as_type (constants.%T.binding.as_type.d87)]
+// CHECK:STDOUT:       %.loc14_17.2: type = converted %T.ref.loc14, %T.as_type.loc14 [template = %T.binding.as_type (constants.%T.binding.as_type.d87)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v: ref @F.%T.binding.as_type (%T.binding.as_type.132) = ref_binding v, %v.var
 // CHECK:STDOUT:     name_binding_decl {
@@ -359,7 +359,7 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:     %x.ref: @F.%T.binding.as_type (%T.binding.as_type.132) = name_ref x, %x
 // CHECK:STDOUT:     %.loc22_3: %i32 = converted %x.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:     assign %w.var, <error>
-// CHECK:STDOUT:     %.loc22_10: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.loc22_17: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
