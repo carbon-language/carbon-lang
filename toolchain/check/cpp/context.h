@@ -5,7 +5,9 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CPP_CONTEXT_H_
 #define CARBON_TOOLCHAIN_CHECK_CPP_CONTEXT_H_
 
+#include "clang/Basic/SourceLocation.h"
 #include "clang/Frontend/ASTUnit.h"
+#include "llvm/ADT/SmallVector.h"
 
 namespace Carbon::Check {
 

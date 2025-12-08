@@ -25,6 +25,8 @@ cc_library(
         "cpp/call.cpp",
         "cpp/context.cpp",
         "cpp/custom_type_mapping.cpp",
+        "cpp/generate_ast.cpp",
+        "cpp/generate_ast.h",
         "cpp/impl_lookup.cpp",
         "cpp/import.cpp",
         "cpp/location.cpp",
