@@ -264,6 +264,8 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
     return true;
   }
 
+  // TODO: When extend is true, any errors should propagate up to the parent
+  // scope.
   bool extend = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend);
 
   auto require_impls_decl =
