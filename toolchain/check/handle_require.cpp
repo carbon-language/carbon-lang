@@ -254,7 +254,7 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   auto validated = ValidateRequire(context, node_id, self_inst_id,
                                    constraint_inst_id, scope_inst_id);
   if (!validated) {
-    // In an `extend` decl, errors get propageted into the parent scope just as
+    // In an `extend` decl, errors get propagated into the parent scope just as
     // names do.
     if (extend) {
       context.name_scopes()
