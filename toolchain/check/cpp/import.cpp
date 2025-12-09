@@ -1616,7 +1616,8 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
 
 namespace {
 // Represents the insts and inst blocks associated with the parameters and
-// returns of a function declaration.
+// returns of a function declaration, corresponding to the fields of
+// SemIR::Function with the same names.
 struct FunctionSignatureInsts {
   SemIR::InstBlockId implicit_param_patterns_id;
   SemIR::InstBlockId param_patterns_id;
@@ -1626,12 +1627,9 @@ struct FunctionSignatureInsts {
 };
 }  // namespace
 
-// Creates a block containing the parameter pattern instructions for the
-// explicit parameters, a parameter pattern instruction for the return type and
-// a block containing the call parameters of the function. Emits a callee
-// pattern-match for the explicit parameter patterns and the return patterns to
-// create the Call parameters instructions block. Currently the implicit
-// parameter patterns are not taken into account. Returns a
+// Creates the insts and inst blocks that represent the parameters and returns
+// of the given C++ function's Carbon counterpart, including emitting a callee
+// pattern match to create the `Call` parameters, and returns a
 // FunctionSignatureInsts containing the results. Produces a diagnostic and
 // returns `std::nullopt` if the function declaration has an unsupported
 // parameter type.

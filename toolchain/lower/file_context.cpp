@@ -691,8 +691,8 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     auto call_param_id = call_param_ids.consume_back();
     // The LLVM calling convention has the return slot first rather than last.
     // Note that this queries whether there is a return slot at the LLVM level,
-    // whereas `function.return_slot_pattern_id.has_value()` queries whether
-    // there is a return slot at the SemIR level.
+    // whereas `return_patterns.empty()` queries whether there are any output
+    // parameters at the SemIR level.
     if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), declaration_function,
                                            specific_id)
             .has_return_slot()) {
