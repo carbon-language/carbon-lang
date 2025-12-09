@@ -490,7 +490,7 @@ import Other library "o1";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.NS: <namespace> = import_ref Main//use_ns, NS, loaded
-// CHECK:STDOUT:   %NS.528: <namespace> = namespace %Main.NS, [concrete] {
+// CHECK:STDOUT:   %NS.f1b: <namespace> = namespace %Main.NS, [concrete] {
 // CHECK:STDOUT:     .C = %Main.C
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//use_ns, C, loaded [concrete = constants.%C]
@@ -500,7 +500,7 @@ import Other library "o1";
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .NS = imports.%NS.528
+// CHECK:STDOUT:     .NS = imports.%NS.f1b
 // CHECK:STDOUT:     .c = %c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_22.1 = import <none>
@@ -511,7 +511,7 @@ import Other library "o1";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C = var %c.var_patt [concrete]
 // CHECK:STDOUT:   %.loc4: type = splice_block %C.ref [concrete = constants.%C] {
-// CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, imports.%NS.528 [concrete = imports.%NS.528]
+// CHECK:STDOUT:     %NS.ref: <namespace> = name_ref NS, imports.%NS.f1b [concrete = imports.%NS.f1b]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]

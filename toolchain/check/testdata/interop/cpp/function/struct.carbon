@@ -534,13 +534,11 @@ fn F() {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
 // CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.7da: type = pattern_type %S [concrete]
 // CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor.type: type = fn_type @S.cpp_destructor [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor: %S.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness @F.%impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -555,13 +553,6 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %S.cpp_destructor.decl: %S.cpp_destructor.type = fn_decl @S.cpp_destructor [concrete = constants.%S.cpp_destructor] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.7da = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.7da = ref_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %S = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %S = ref_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -580,8 +571,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_14.3: ref %S = value_as_ref %.loc8_14.2
 // CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of %.loc8_14.3
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %impl_witness_table = impl_witness_table (imports.%S.cpp_destructor.decl), invalid [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness %impl_witness_table [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc8_12.4, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc8_12.4)
 // CHECK:STDOUT:   <elided>
@@ -597,12 +586,10 @@ fn F() {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
 // CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.7da: type = pattern_type %S [concrete]
 // CHECK:STDOUT:   %foo.type: type = fn_type @foo [concrete]
 // CHECK:STDOUT:   %foo: %foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor.type: type = fn_type @S.cpp_destructor [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor: %S.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness @F.%impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -617,13 +604,6 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %S.cpp_destructor.decl: %S.cpp_destructor.type = fn_decl @S.cpp_destructor [concrete = constants.%S.cpp_destructor] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.7da = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.7da = ref_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %S = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %S = ref_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -640,8 +620,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc24_14.1: ref %S = converted %.loc24_12.1, %.loc24_12.4
 // CHECK:STDOUT:   %.loc24_14.2: %S = acquire_value %.loc24_14.1
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc24_14.2)
-// CHECK:STDOUT:   %impl_witness_table = impl_witness_table (imports.%S.cpp_destructor.decl), invalid [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness %impl_witness_table [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc24_12.4, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc24_12.4)
 // CHECK:STDOUT:   <elided>
@@ -725,7 +703,6 @@ fn F() {
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor.type: type = fn_type @S.cpp_destructor [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor: %S.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness @F.%impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -744,13 +721,6 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %S.cpp_destructor.decl: %S.cpp_destructor.type = fn_decl @S.cpp_destructor [concrete = constants.%S.cpp_destructor] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.cd8 = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.cd8 = ref_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %S = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %S = ref_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -781,8 +751,6 @@ fn F() {
 // CHECK:STDOUT:     %S.ref.loc10: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %S = ref_binding x, %x.var
-// CHECK:STDOUT:   %impl_witness_table = impl_witness_table (imports.%S.cpp_destructor.decl), invalid [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness %impl_witness_table [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %S.cpp_destructor.bound.loc10: <bound method> = bound_method %x.var, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call.loc10: init %empty_tuple.type = call %S.cpp_destructor.bound.loc10(%x.var)
 // CHECK:STDOUT:   %S.cpp_destructor.bound.loc8: <bound method> = bound_method %.loc8_12.4, constants.%S.cpp_destructor
@@ -800,13 +768,11 @@ fn F() {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
 // CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.12c: type = pattern_type %S [concrete]
 // CHECK:STDOUT:   %ptr.887: type = ptr_type %S [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor.type: type = fn_type @S.cpp_destructor [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor: %S.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness @F.%impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -830,13 +796,6 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %S.cpp_destructor.decl: %S.cpp_destructor.type = fn_decl @S.cpp_destructor [concrete = constants.%S.cpp_destructor] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.12c = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.12c = ref_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %S = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %S = ref_binding self, %self.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -857,8 +816,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_17.3: ref %S = value_as_ref %.loc8_17.2
 // CHECK:STDOUT:   %addr: %ptr.887 = addr_of %.loc8_17.3
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %impl_witness_table = impl_witness_table (imports.%S.cpp_destructor.decl), invalid [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness %impl_witness_table [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc8_15.4, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc8_15.4)
 // CHECK:STDOUT:   <elided>
@@ -875,17 +832,14 @@ fn F() {
 // CHECK:STDOUT:   %O: type = class_type @O [concrete]
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
 // CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.7c9: type = pattern_type %S [concrete]
 // CHECK:STDOUT:   %ptr.149: type = ptr_type %S [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cff: type = pattern_type %O [concrete]
 // CHECK:STDOUT:   %O.cpp_destructor.type: type = fn_type @O.cpp_destructor [concrete]
 // CHECK:STDOUT:   %O.cpp_destructor: %O.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %impl_witness.47b: <witness> = impl_witness @F.%impl_witness_table.loc9 [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor.type: type = fn_type @S.cpp_destructor [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor: %S.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %impl_witness.ef0: <witness> = impl_witness @F.%impl_witness_table.loc8 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -901,20 +855,6 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %O.cpp_destructor.decl: %O.cpp_destructor.type = fn_decl @O.cpp_destructor [concrete = constants.%O.cpp_destructor] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.cff = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.cff = ref_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %O = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %O = ref_binding self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %S.cpp_destructor.decl: %S.cpp_destructor.type = fn_decl @S.cpp_destructor [concrete = constants.%S.cpp_destructor] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.7c9 = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.7c9 = ref_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %S = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %S = ref_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -944,12 +884,8 @@ fn F() {
 // CHECK:STDOUT:     %O.ref.loc9: type = name_ref O, imports.%O.decl [concrete = constants.%O]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %O = ref_binding x, %x.var
-// CHECK:STDOUT:   %impl_witness_table.loc9 = impl_witness_table (imports.%O.cpp_destructor.decl), invalid [concrete]
-// CHECK:STDOUT:   %impl_witness.loc9: <witness> = impl_witness %impl_witness_table.loc9 [concrete = constants.%impl_witness.47b]
 // CHECK:STDOUT:   %O.cpp_destructor.bound: <bound method> = bound_method %x.var, constants.%O.cpp_destructor
 // CHECK:STDOUT:   %O.cpp_destructor.call: init %empty_tuple.type = call %O.cpp_destructor.bound(%x.var)
-// CHECK:STDOUT:   %impl_witness_table.loc8 = impl_witness_table (imports.%S.cpp_destructor.decl), invalid [concrete]
-// CHECK:STDOUT:   %impl_witness.loc8: <witness> = impl_witness %impl_witness_table.loc8 [concrete = constants.%impl_witness.ef0]
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc8_12.4, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc8_12.4)
 // CHECK:STDOUT:   <elided>
@@ -969,13 +905,11 @@ fn F() {
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.7da: type = pattern_type %S [concrete]
 // CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor.type: type = fn_type @S.cpp_destructor [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor: %S.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness @F.%impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -992,13 +926,6 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %S.cpp_destructor.decl: %S.cpp_destructor.type = fn_decl @S.cpp_destructor [concrete = constants.%S.cpp_destructor] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.7da = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.7da = ref_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %S = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %S = ref_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1021,8 +948,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc9_14.3: ref %S = value_as_ref %.loc9_14.2
 // CHECK:STDOUT:   %addr: %ptr.5c7 = addr_of %.loc9_14.3
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %impl_witness_table = impl_witness_table (imports.%S.cpp_destructor.decl), invalid [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness %impl_witness_table [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc9_12.4, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc9_12.4)
 // CHECK:STDOUT:   <elided>
@@ -1038,7 +963,6 @@ fn F() {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
 // CHECK:STDOUT:   %S.val: %S = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.7da: type = pattern_type %S [concrete]
 // CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
@@ -1048,7 +972,6 @@ fn F() {
 // CHECK:STDOUT:   %S.bar: %S.bar.type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor.type: type = fn_type @S.cpp_destructor [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor: %S.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness @F.%impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1066,13 +989,6 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.bar.cpp_overload_set.value: %S.bar.cpp_overload_set.type = cpp_overload_set_value @S.bar.cpp_overload_set [concrete = constants.%S.bar.cpp_overload_set.value]
 // CHECK:STDOUT:   %S.bar.decl: %S.bar.type = fn_decl @S.bar [concrete = constants.%S.bar] {} {}
-// CHECK:STDOUT:   %S.cpp_destructor.decl: %S.cpp_destructor.type = fn_decl @S.cpp_destructor [concrete = constants.%S.cpp_destructor] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.7da = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.7da = ref_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %S = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %S = ref_binding self, %self.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -1094,8 +1010,6 @@ fn F() {
 // CHECK:STDOUT:   %S.ref.loc9: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   %bar.ref: %S.bar.cpp_overload_set.type = name_ref bar, imports.%S.bar.cpp_overload_set.value [concrete = constants.%S.bar.cpp_overload_set.value]
 // CHECK:STDOUT:   %S.bar.call: init %empty_tuple.type = call imports.%S.bar.decl()
-// CHECK:STDOUT:   %impl_witness_table = impl_witness_table (imports.%S.cpp_destructor.decl), invalid [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness %impl_witness_table [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc8_12.4, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc8_12.4)
 // CHECK:STDOUT:   <elided>
@@ -1180,13 +1094,11 @@ fn F() {
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %S: type = class_type @S [concrete]
-// CHECK:STDOUT:   %pattern_type.7da: type = pattern_type %S [concrete]
 // CHECK:STDOUT:   %ptr.5c7: type = ptr_type %S [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor.type: type = fn_type @S.cpp_destructor [concrete]
 // CHECK:STDOUT:   %S.cpp_destructor: %S.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness @F.%impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1200,13 +1112,6 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %S.cpp_destructor.decl: %S.cpp_destructor.type = fn_decl @S.cpp_destructor [concrete = constants.%S.cpp_destructor] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.7da = ref_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.7da = ref_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %S = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %S = ref_binding self, %self.param
-// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -1218,8 +1123,6 @@ fn F() {
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %.loc8_11.2: init %S = in_place_init %foo__carbon_thunk.call, %.loc8_11.1
 // CHECK:STDOUT:   %.loc8_11.3: ref %S = temporary %.loc8_11.1, %.loc8_11.2
-// CHECK:STDOUT:   %impl_witness_table = impl_witness_table (imports.%S.cpp_destructor.decl), invalid [concrete]
-// CHECK:STDOUT:   %impl_witness: <witness> = impl_witness %impl_witness_table [concrete = constants.%impl_witness]
 // CHECK:STDOUT:   %S.cpp_destructor.bound: <bound method> = bound_method %.loc8_11.3, constants.%S.cpp_destructor
 // CHECK:STDOUT:   %S.cpp_destructor.call: init %empty_tuple.type = call %S.cpp_destructor.bound(%.loc8_11.3)
 // CHECK:STDOUT:   <elided>

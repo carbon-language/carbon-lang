@@ -82,9 +82,9 @@ impl C as B {}
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %B.type: type = facet_type <@B> [concrete]
-// CHECK:STDOUT:   %Self.861: %B.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.719: %B.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.861 [symbolic]
+// CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self.719 [symbolic]
 // CHECK:STDOUT:   %T: %B.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %B.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -94,11 +94,11 @@ impl C as B {}
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I = import_ref Main//b, I, unloaded
 // CHECK:STDOUT:   %Main.B: type = import_ref Main//b, B, loaded [concrete = constants.%B.type]
-// CHECK:STDOUT:   %Main.import_ref.8df = import_ref Main//b, loc3_13, unloaded
-// CHECK:STDOUT:   %Main.import_ref.b7c: type = import_ref Main//b, loc5_18, loaded [symbolic = @B.require0.%Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:   %Main.import_ref.0d5 = import_ref Main//b, loc3_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.ca6: type = import_ref Main//b, loc5_18, loaded [symbolic = @B.require0.%Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %Main.import_ref.301: type = import_ref Main//b, loc5_24, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref.dec: %B.type = import_ref Main//b, loc4_14, loaded [symbolic = constants.%Self.861]
-// CHECK:STDOUT:   %Main.import_ref.cae = import_ref Main//b, loc4_14, unloaded
+// CHECK:STDOUT:   %Main.import_ref.40f: %B.type = import_ref Main//b, loc4_14, loaded [symbolic = constants.%Self.719]
+// CHECK:STDOUT:   %Main.import_ref.5a1 = import_ref Main//b, loc4_14, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -122,7 +122,7 @@ impl C as B {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "b.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.8df
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.0d5
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -130,16 +130,16 @@ impl C as B {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @B [from "b.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.cae
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.5a1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @B.require0 {
-// CHECK:STDOUT:     require imports.%Main.import_ref.b7c impls imports.%Main.import_ref.301
+// CHECK:STDOUT:     require imports.%Main.import_ref.ca6 impls imports.%Main.import_ref.301
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @B.require0(imports.%Main.import_ref.dec: %B.type) [from "b.carbon"] {
-// CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.861)]
+// CHECK:STDOUT: generic require @B.require0(imports.%Main.import_ref.40f: %B.type) [from "b.carbon"] {
+// CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.719)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -154,8 +154,8 @@ impl C as B {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B.require0(constants.%Self.861) {
-// CHECK:STDOUT:   %Self => constants.%Self.861
+// CHECK:STDOUT: specific @B.require0(constants.%Self.719) {
+// CHECK:STDOUT:   %Self => constants.%Self.719
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

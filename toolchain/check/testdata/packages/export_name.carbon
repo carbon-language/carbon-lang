@@ -397,14 +397,14 @@ private export C;
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct.948: %struct_type.x = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
+// CHECK:STDOUT:   %.9c1: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %NSC: type = class_type @NSC [concrete]
 // CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type.9f4: <witness> = complete_type_witness %struct_type.y [concrete]
-// CHECK:STDOUT:   %pattern_type.373: type = pattern_type %NSC [concrete]
+// CHECK:STDOUT:   %pattern_type.6a2: type = pattern_type %NSC [concrete]
 // CHECK:STDOUT:   %struct.8ce: %struct_type.y = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.062: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete]
+// CHECK:STDOUT:   %.2ba: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete]
 // CHECK:STDOUT:   %NSC.val: %NSC = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -439,8 +439,8 @@ private export C;
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %nsc.patt: %pattern_type.373 = ref_binding_pattern nsc [concrete]
-// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.373 = var_pattern %nsc.patt [concrete]
+// CHECK:STDOUT:     %nsc.patt: %pattern_type.6a2 = ref_binding_pattern nsc [concrete]
+// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.6a2 = var_pattern %nsc.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var %nsc.var_patt [concrete]
 // CHECK:STDOUT:   %.loc7: type = splice_block %NSC.ref [concrete = constants.%NSC] {
@@ -470,7 +470,7 @@ private export C;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_20.1: %struct_type.x = struct_literal (%.loc6_19.1) [concrete = constants.%struct.948]
-// CHECK:STDOUT:   %.loc6_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.b62]
+// CHECK:STDOUT:   %.loc6_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.9c1]
 // CHECK:STDOUT:   %.loc6_19.2: init %empty_tuple.type = tuple_init () to %.loc6_20.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_20.3: init %empty_tuple.type = converted %.loc6_19.1, %.loc6_19.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_20.4: init %C = class_init (%.loc6_20.3), file.%c.var [concrete = constants.%C.val]
@@ -478,7 +478,7 @@ private export C;
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   %.loc7_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_27.1: %struct_type.y = struct_literal (%.loc7_26.1) [concrete = constants.%struct.8ce]
-// CHECK:STDOUT:   %.loc7_27.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.062]
+// CHECK:STDOUT:   %.loc7_27.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.2ba]
 // CHECK:STDOUT:   %.loc7_26.2: init %empty_tuple.type = tuple_init () to %.loc7_27.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_27.3: init %empty_tuple.type = converted %.loc7_26.1, %.loc7_26.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_27.4: init %NSC = class_init (%.loc7_27.3), file.%nsc.var [concrete = constants.%NSC.val]
@@ -497,14 +497,14 @@ private export C;
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct.948: %struct_type.x = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
+// CHECK:STDOUT:   %.9c1: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %NSC: type = class_type @NSC [concrete]
 // CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type.9f4: <witness> = complete_type_witness %struct_type.y [concrete]
-// CHECK:STDOUT:   %pattern_type.c0b: type = pattern_type %NSC [concrete]
+// CHECK:STDOUT:   %pattern_type.fab: type = pattern_type %NSC [concrete]
 // CHECK:STDOUT:   %struct.8ce: %struct_type.y = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.0f0: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete]
+// CHECK:STDOUT:   %.a77: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete]
 // CHECK:STDOUT:   %NSC.val: %NSC = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -540,8 +540,8 @@ private export C;
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %nsc.patt: %pattern_type.c0b = ref_binding_pattern nsc [concrete]
-// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.c0b = var_pattern %nsc.patt [concrete]
+// CHECK:STDOUT:     %nsc.patt: %pattern_type.fab = ref_binding_pattern nsc [concrete]
+// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.fab = var_pattern %nsc.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var %nsc.var_patt [concrete]
 // CHECK:STDOUT:   %.loc5: type = splice_block %NSC.ref [concrete = constants.%NSC] {
@@ -571,7 +571,7 @@ private export C;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_20.1: %struct_type.x = struct_literal (%.loc4_19.1) [concrete = constants.%struct.948]
-// CHECK:STDOUT:   %.loc4_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.b62]
+// CHECK:STDOUT:   %.loc4_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.9c1]
 // CHECK:STDOUT:   %.loc4_19.2: init %empty_tuple.type = tuple_init () to %.loc4_20.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_20.3: init %empty_tuple.type = converted %.loc4_19.1, %.loc4_19.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_20.4: init %C = class_init (%.loc4_20.3), file.%c.var [concrete = constants.%C.val]
@@ -579,7 +579,7 @@ private export C;
 // CHECK:STDOUT:   assign file.%c.var, %.loc4_1
 // CHECK:STDOUT:   %.loc5_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_27.1: %struct_type.y = struct_literal (%.loc5_26.1) [concrete = constants.%struct.8ce]
-// CHECK:STDOUT:   %.loc5_27.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.0f0]
+// CHECK:STDOUT:   %.loc5_27.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.a77]
 // CHECK:STDOUT:   %.loc5_26.2: init %empty_tuple.type = tuple_init () to %.loc5_27.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_27.3: init %empty_tuple.type = converted %.loc5_26.1, %.loc5_26.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_27.4: init %NSC = class_init (%.loc5_27.3), file.%nsc.var [concrete = constants.%NSC.val]
@@ -598,14 +598,14 @@ private export C;
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct.948: %struct_type.x = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
+// CHECK:STDOUT:   %.9c1: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %NSC: type = class_type @NSC [concrete]
 // CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type.9f4: <witness> = complete_type_witness %struct_type.y [concrete]
-// CHECK:STDOUT:   %pattern_type.c0b: type = pattern_type %NSC [concrete]
+// CHECK:STDOUT:   %pattern_type.fab: type = pattern_type %NSC [concrete]
 // CHECK:STDOUT:   %struct.8ce: %struct_type.y = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.0f0: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete]
+// CHECK:STDOUT:   %.a77: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete]
 // CHECK:STDOUT:   %NSC.val: %NSC = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -640,8 +640,8 @@ private export C;
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %nsc.patt: %pattern_type.c0b = ref_binding_pattern nsc [concrete]
-// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.c0b = var_pattern %nsc.patt [concrete]
+// CHECK:STDOUT:     %nsc.patt: %pattern_type.fab = ref_binding_pattern nsc [concrete]
+// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.fab = var_pattern %nsc.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var %nsc.var_patt [concrete]
 // CHECK:STDOUT:   %.loc7: type = splice_block %NSC.ref [concrete = constants.%NSC] {
@@ -671,7 +671,7 @@ private export C;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_20.1: %struct_type.x = struct_literal (%.loc6_19.1) [concrete = constants.%struct.948]
-// CHECK:STDOUT:   %.loc6_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.b62]
+// CHECK:STDOUT:   %.loc6_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.9c1]
 // CHECK:STDOUT:   %.loc6_19.2: init %empty_tuple.type = tuple_init () to %.loc6_20.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_20.3: init %empty_tuple.type = converted %.loc6_19.1, %.loc6_19.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_20.4: init %C = class_init (%.loc6_20.3), file.%c.var [concrete = constants.%C.val]
@@ -679,7 +679,7 @@ private export C;
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   %.loc7_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_27.1: %struct_type.y = struct_literal (%.loc7_26.1) [concrete = constants.%struct.8ce]
-// CHECK:STDOUT:   %.loc7_27.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.0f0]
+// CHECK:STDOUT:   %.loc7_27.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.a77]
 // CHECK:STDOUT:   %.loc7_26.2: init %empty_tuple.type = tuple_init () to %.loc7_27.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_27.3: init %empty_tuple.type = converted %.loc7_26.1, %.loc7_26.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_27.4: init %NSC = class_init (%.loc7_27.3), file.%nsc.var [concrete = constants.%NSC.val]
@@ -777,14 +777,14 @@ private export C;
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct.948: %struct_type.x = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
+// CHECK:STDOUT:   %.9c1: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %NSC: type = class_type @NSC [concrete]
 // CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type.9f4: <witness> = complete_type_witness %struct_type.y [concrete]
-// CHECK:STDOUT:   %pattern_type.d03: type = pattern_type %NSC [concrete]
+// CHECK:STDOUT:   %pattern_type.b4a: type = pattern_type %NSC [concrete]
 // CHECK:STDOUT:   %struct.8ce: %struct_type.y = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.99d: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete]
+// CHECK:STDOUT:   %.97a: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete]
 // CHECK:STDOUT:   %NSC.val: %NSC = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -819,8 +819,8 @@ private export C;
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %nsc.patt: %pattern_type.d03 = ref_binding_pattern nsc [concrete]
-// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.d03 = var_pattern %nsc.patt [concrete]
+// CHECK:STDOUT:     %nsc.patt: %pattern_type.b4a = ref_binding_pattern nsc [concrete]
+// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.b4a = var_pattern %nsc.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var %nsc.var_patt [concrete]
 // CHECK:STDOUT:   %.loc8: type = splice_block %NSC.ref [concrete = constants.%NSC] {
@@ -850,7 +850,7 @@ private export C;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_20.1: %struct_type.x = struct_literal (%.loc7_19.1) [concrete = constants.%struct.948]
-// CHECK:STDOUT:   %.loc7_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.b62]
+// CHECK:STDOUT:   %.loc7_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.9c1]
 // CHECK:STDOUT:   %.loc7_19.2: init %empty_tuple.type = tuple_init () to %.loc7_20.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_20.3: init %empty_tuple.type = converted %.loc7_19.1, %.loc7_19.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_20.4: init %C = class_init (%.loc7_20.3), file.%c.var [concrete = constants.%C.val]
@@ -858,7 +858,7 @@ private export C;
 // CHECK:STDOUT:   assign file.%c.var, %.loc7_1
 // CHECK:STDOUT:   %.loc8_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_27.1: %struct_type.y = struct_literal (%.loc8_26.1) [concrete = constants.%struct.8ce]
-// CHECK:STDOUT:   %.loc8_27.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.99d]
+// CHECK:STDOUT:   %.loc8_27.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.97a]
 // CHECK:STDOUT:   %.loc8_26.2: init %empty_tuple.type = tuple_init () to %.loc8_27.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_27.3: init %empty_tuple.type = converted %.loc8_26.1, %.loc8_26.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_27.4: init %NSC = class_init (%.loc8_27.3), file.%nsc.var [concrete = constants.%NSC.val]
@@ -877,14 +877,14 @@ private export C;
 // CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct.948: %struct_type.x = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
+// CHECK:STDOUT:   %.9c1: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %NSC: type = class_type @NSC [concrete]
 // CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type.9f4: <witness> = complete_type_witness %struct_type.y [concrete]
-// CHECK:STDOUT:   %pattern_type.373: type = pattern_type %NSC [concrete]
+// CHECK:STDOUT:   %pattern_type.6a2: type = pattern_type %NSC [concrete]
 // CHECK:STDOUT:   %struct.8ce: %struct_type.y = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.062: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete]
+// CHECK:STDOUT:   %.2ba: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete]
 // CHECK:STDOUT:   %NSC.val: %NSC = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -919,8 +919,8 @@ private export C;
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %nsc.patt: %pattern_type.373 = ref_binding_pattern nsc [concrete]
-// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.373 = var_pattern %nsc.patt [concrete]
+// CHECK:STDOUT:     %nsc.patt: %pattern_type.6a2 = ref_binding_pattern nsc [concrete]
+// CHECK:STDOUT:     %nsc.var_patt: %pattern_type.6a2 = var_pattern %nsc.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %nsc.var: ref %NSC = var %nsc.var_patt [concrete]
 // CHECK:STDOUT:   %.loc8: type = splice_block %NSC.ref [concrete = constants.%NSC] {
@@ -950,7 +950,7 @@ private export C;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_20.1: %struct_type.x = struct_literal (%.loc7_19.1) [concrete = constants.%struct.948]
-// CHECK:STDOUT:   %.loc7_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.b62]
+// CHECK:STDOUT:   %.loc7_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.9c1]
 // CHECK:STDOUT:   %.loc7_19.2: init %empty_tuple.type = tuple_init () to %.loc7_20.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_20.3: init %empty_tuple.type = converted %.loc7_19.1, %.loc7_19.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_20.4: init %C = class_init (%.loc7_20.3), file.%c.var [concrete = constants.%C.val]
@@ -958,7 +958,7 @@ private export C;
 // CHECK:STDOUT:   assign file.%c.var, %.loc7_1
 // CHECK:STDOUT:   %.loc8_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_27.1: %struct_type.y = struct_literal (%.loc8_26.1) [concrete = constants.%struct.8ce]
-// CHECK:STDOUT:   %.loc8_27.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.062]
+// CHECK:STDOUT:   %.loc8_27.2: ref %empty_tuple.type = class_element_access file.%nsc.var, element0 [concrete = constants.%.2ba]
 // CHECK:STDOUT:   %.loc8_26.2: init %empty_tuple.type = tuple_init () to %.loc8_27.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_27.3: init %empty_tuple.type = converted %.loc8_26.1, %.loc8_26.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_27.4: init %NSC = class_init (%.loc8_27.3), file.%nsc.var [concrete = constants.%NSC.val]
@@ -1035,7 +1035,7 @@ private export C;
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.x = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.b62: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
+// CHECK:STDOUT:   %.9c1: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1073,7 +1073,7 @@ private export C;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_20.1: %struct_type.x = struct_literal (%.loc6_19.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc6_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.b62]
+// CHECK:STDOUT:   %.loc6_20.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.9c1]
 // CHECK:STDOUT:   %.loc6_19.2: init %empty_tuple.type = tuple_init () to %.loc6_20.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_20.3: init %empty_tuple.type = converted %.loc6_19.1, %.loc6_19.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_20.4: init %C = class_init (%.loc6_20.3), file.%c.var [concrete = constants.%C.val]

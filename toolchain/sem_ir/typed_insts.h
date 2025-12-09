@@ -754,6 +754,22 @@ struct CppOverloadSetValue {
   CppOverloadSetId overload_set_id;
 };
 
+// A witness synthesized for a C++ construct such as a constructor, conversion
+// function, or overloaded operator.
+struct CppWitness {
+  static constexpr auto Kind = InstKind::CppWitness.Define<Parse::NodeId>(
+      {.ir_name = "cpp_witness",
+       .constant_kind = InstConstantKind::Always,
+       // TODO: For dynamic dispatch, we might want to lower witness tables as
+       // constants.
+       .is_lowered = false});
+
+  // Always the type of the builtin `WitnessType` singleton instruction.
+  TypeId type_id;
+  // The witness table of instructions.
+  InstBlockId elements_id;
+};
+
 // The type of the name of a generic class. The corresponding value is an empty
 // `StructValue`.
 struct GenericClassType {
@@ -2066,9 +2082,10 @@ struct WhereExpr {
   InstBlockId requirements_id;
 };
 
-// The type of `ImplWitness` and `LookupImplWitness` instructions. The latter
-// will evaluate at some point during specific computation into the former, and
-// their types should not change in the process.
+// The type of `ImplWitness`, `CppWitness`, and `LookupImplWitness`
+// instructions. The latter will evaluate at some point during specific
+// computation into one of the former two, and their types should not change in
+// the process.
 //
 // Also the type of `RequireCompleteType` instructions.
 //

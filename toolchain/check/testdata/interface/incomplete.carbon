@@ -195,8 +195,8 @@ interface A(T:! type) {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %A.type.495: type = generic_interface_type @A [concrete]
 // CHECK:STDOUT:   %A.generic: %A.type.495 = struct_value () [concrete]
-// CHECK:STDOUT:   %A.type.c1c: type = facet_type <@A, @A(%T)> [symbolic]
-// CHECK:STDOUT:   %Self: %A.type.c1c = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %A.type.00e: type = facet_type <@A, @A(%T)> [symbolic]
+// CHECK:STDOUT:   %Self: %A.type.00e = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
@@ -219,11 +219,11 @@ interface A(T:! type) {
 // CHECK:STDOUT:   %T.loc3_13.1: type = symbolic_binding T, 0 [symbolic = %T.loc3_13.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %A.type: type = facet_type <@A, @A(%T.loc3_13.1)> [symbolic = %A.type (constants.%A.type.c1c)]
-// CHECK:STDOUT:   %Self.loc3_23.2: @A.%A.type (%A.type.c1c) = symbolic_binding Self, 1 [symbolic = %Self.loc3_23.2 (constants.%Self)]
+// CHECK:STDOUT:   %A.type: type = facet_type <@A, @A(%T.loc3_13.1)> [symbolic = %A.type (constants.%A.type.00e)]
+// CHECK:STDOUT:   %Self.loc3_23.2: @A.%A.type (%A.type.00e) = symbolic_binding Self, 1 [symbolic = %Self.loc3_23.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc3_23.1: @A.%A.type (%A.type.c1c) = symbolic_binding Self, 1 [symbolic = %Self.loc3_23.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.loc3_23.1: @A.%A.type (%A.type.00e) = symbolic_binding Self, 1 [symbolic = %Self.loc3_23.2 (constants.%Self)]
 // CHECK:STDOUT:     %A.require0.decl = require_decl @A.require0 [concrete] {
 // CHECK:STDOUT:       require %Self.as_type impls %A.type.loc11_28
 // CHECK:STDOUT:     } {
@@ -243,10 +243,10 @@ interface A(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @A.require0(@A.%T.loc3_13.2: type, @A.%Self.loc3_23.1: @A.%A.type (%A.type.c1c)) {
+// CHECK:STDOUT: generic require @A.require0(@A.%T.loc3_13.2: type, @A.%Self.loc3_23.1: @A.%A.type (%A.type.00e)) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %A.type.loc11_18: type = facet_type <@A, @A(%T)> [symbolic = %A.type.loc11_18 (constants.%A.type.c1c)]
-// CHECK:STDOUT:   %Self: @A.require0.%A.type.loc11_18 (%A.type.c1c) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %A.type.loc11_18: type = facet_type <@A, @A(%T)> [symbolic = %A.type.loc11_18 (constants.%A.type.00e)]
+// CHECK:STDOUT:   %Self: @A.require0.%A.type.loc11_18 (%A.type.00e) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -260,7 +260,7 @@ interface A(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.require0(constants.%T, constants.%Self) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %A.type.loc11_18 => constants.%A.type.c1c
+// CHECK:STDOUT:   %A.type.loc11_18 => constants.%A.type.00e
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }

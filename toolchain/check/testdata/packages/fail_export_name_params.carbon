@@ -100,8 +100,8 @@ export C2(T:! type);
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Foo.C1: %C1.type = import_ref Foo//a, C1, loaded [concrete = constants.%C1.generic]
 // CHECK:STDOUT:   %Foo.C2: %C2.type = import_ref Foo//a, C2, loaded [concrete = constants.%C2.generic]
-// CHECK:STDOUT:   %Foo.import_ref.efcd44.1: type = import_ref Foo//a, loc4_10, loaded [symbolic = @C1.%T (constants.%T)]
-// CHECK:STDOUT:   %Foo.import_ref.efcd44.2: type = import_ref Foo//a, loc5_10, loaded [symbolic = @C2.%T (constants.%T)]
+// CHECK:STDOUT:   %Foo.import_ref.b3bc94.1: type = import_ref Foo//a, loc4_10, loaded [symbolic = @C1.%T (constants.%T)]
+// CHECK:STDOUT:   %Foo.import_ref.b3bc94.2: type = import_ref Foo//a, loc5_10, loaded [symbolic = @C2.%T (constants.%T)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -116,13 +116,13 @@ export C2(T:! type);
 // CHECK:STDOUT:   %C2: %C2.type = export C2, imports.%Foo.C2 [concrete = constants.%C2.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C1(imports.%Foo.import_ref.efcd44.1: type) [from "a.carbon"] {
+// CHECK:STDOUT: generic class @C1(imports.%Foo.import_ref.b3bc94.1: type) [from "a.carbon"] {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C2(imports.%Foo.import_ref.efcd44.2: type) [from "a.carbon"] {
+// CHECK:STDOUT: generic class @C2(imports.%Foo.import_ref.b3bc94.2: type) [from "a.carbon"] {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class;
