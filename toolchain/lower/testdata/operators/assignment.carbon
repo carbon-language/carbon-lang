@@ -10,13 +10,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/operators/assignment.carbon
 
-fn Main() -> i32 {
+fn F() -> i32 {
   var a: i32 = 12;
   a = 9;
   return a;
 }
 
-fn Sane() -> (i32, i32) {
+fn G() -> (i32, i32) {
   var b: (i32, i32);
   b = (1, 2);
   return b;
@@ -28,7 +28,7 @@ fn Sane() -> (i32, i32) {
 // CHECK:STDOUT: @tuple.21c.loc21_5 = internal constant { i32, i32 } { i32 1, i32 2 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CMain.Main() #0 !dbg !4 {
+// CHECK:STDOUT: define i32 @_CF.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca i32, align 4, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !8
@@ -39,7 +39,7 @@ fn Sane() -> (i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CSane.Main(ptr sret({ i32, i32 }) %return) #0 !dbg !12 {
+// CHECK:STDOUT: define void @_CG.Main(ptr sret({ i32, i32 }) %return) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %b.var = alloca { i32, i32 }, align 8, !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !16
@@ -77,7 +77,7 @@ fn Sane() -> (i32, i32) {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "assignment.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{!7}
 // CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
@@ -85,7 +85,7 @@ fn Sane() -> (i32, i32) {
 // CHECK:STDOUT: !9 = !DILocation(line: 15, column: 3, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 16, column: 10, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 16, column: 3, scope: !4)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Sane", linkageName: "_CSane.Main", scope: null, file: !3, line: 19, type: !13, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 19, type: !13, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{!15}
 // CHECK:STDOUT: !15 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
