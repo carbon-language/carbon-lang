@@ -72,9 +72,8 @@ auto HandleParseNode(Context& context, Parse::ImplTypeAsId node_id) -> bool {
   const auto& introducer = context.decl_introducer_state_stack().innermost();
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     // TODO: Also handle the parent scope being a mixin.
-    auto class_scope =
-        TryAsClassScope(context, context.decl_name_stack().PeekParentScopeId());
-    if (class_scope) {
+    if (auto class_scope = TryAsClassScope(
+            context, context.decl_name_stack().PeekParentScopeId())) {
       // If we're not inside a class at all, that will be diagnosed against the
       // `extend` elsewhere.
       auto extend_node = introducer.modifier_node_id(ModifierOrder::Extend);
@@ -114,9 +113,8 @@ auto HandleParseNode(Context& context, Parse::ImplDefaultSelfAsId node_id)
     -> bool {
   auto self_inst_id = SemIR::TypeInstId::None;
 
-  auto class_scope =
-      TryAsClassScope(context, context.decl_name_stack().PeekParentScopeId());
-  if (class_scope) {
+  if (auto class_scope = TryAsClassScope(
+          context, context.decl_name_stack().PeekParentScopeId())) {
     auto self_type_id = GetImplDefaultSelfType(context, *class_scope);
     // Build the implicit access to the enclosing `Self`.
     // TODO: Consider calling `HandleNameAsExpr` to build this implicit `Self`
