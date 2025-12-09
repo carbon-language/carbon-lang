@@ -20,8 +20,6 @@ fn F2(index: i64) -> char {
     return c;
 }
 
-
-
 // CHECK:STDOUT: ; ModuleID = 'string_indexing.carbon'
 // CHECK:STDOUT: source_filename = "string_indexing.carbon"
 // CHECK:STDOUT:
