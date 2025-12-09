@@ -229,8 +229,6 @@ fn J(n: i32);
 fn G(_: i32) {}
 // ❌ Error: name of parameter does not match declaration.
 fn H(m: i32) {}
-// ✅ Does not use `n`.
-fn J(unused n: i32);
 ```
 
 ##### Alternatives considered
@@ -343,25 +341,41 @@ _pattern_ `=` _expression_ `;`.
 
 ### `unused`
 
-An `unused` prefix indicate that names are visible for name lookup but uses are
-invalid, including when they cause ambiguous name lookup errors. If attempted to
-be used, a compiler error will be shown to the user, instructing them to either
-remove the `unused` qualifier or remove the use.
+When a name introduced by a binding is not used, a warning is issued. It is
+possible to avoid the warning while keeping a name, by using an `unused` marker.
+
+An `unused` marker indicates that all names in a pattern are visible for name
+lookup but uses are invalid. This includes situations when they cause ambiguous
+name lookup errors. If attempted to be used, a compiler error will be shown to
+the user, instructing them to either remove the `unused` qualifier or remove the
+use.
 
 -   _proper-pattern_ ::= `unused` _proper-pattern_
 
-An `unused` pattern cannot be nested within another `unused` pattern.
+An `unused` marker can be applied to any pattern and it will apply to all name
+bindings in a pattern. Nesting `unused` markers is an error. When an `unused`
+marker applies only to anonymous bindings `_` and is thus redundant, a warning
+is produced. `var` and `unused` may appear in any order in a pattern.
 
-As specified in [#3763](/proposals/p3763.md), the `unused` marker may only
-appear on definitions, not on non-defining declarations. Function redeclarations
-that are also definitions may mark names with `unused`, which does not affect
-the matching redeclaration check.
+As specified in [#3763](/proposals/p3763.md), `unused` markers may only appear
+on definitions, not on non-defining declarations. Function redeclarations that
+are also definitions may have difference due to `unused` markers, but they may
+not have different names.
 
 ```carbon
 fn J(n: i32);
 
 // ✅ Does not use `n`.
 fn J(unused n: i32) { ... };
+
+fn G() {
+  match ((1, 2)) {
+    // `x` is unused
+    case (var n: i32, unused x: i32) => { F(&n); }
+    // `n` and `m` are both unused
+    case unused (n: i32, m: i32) => { J(42); }
+  }
+}
 ```
 
 ### Tuple patterns

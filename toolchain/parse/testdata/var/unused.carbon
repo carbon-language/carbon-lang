@@ -8,6 +8,14 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/var/unused.carbon
 
+// --- fail_unused_does_not_start_declaration.carbon
+
+// CHECK:STDERR: fail_unused_does_not_start_declaration.carbon:[[@LINE+4]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR: unused y: i32;
+// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:
+unused y: i32;
+
 // --- let_var_unused.carbon
 var unused y: i32;
 let unused y: i32;
@@ -31,44 +39,13 @@ let var unused (x: (), y: ()) = ((), ());
 // --- var_unused_function.carbon
 fn F(x: (), var unused y: ());
 
+// --- fail_ref_unused.carbon
 
-// --- fail_unused.carbon
-
-// CHECK:STDERR: fail_unused.carbon:[[@LINE+4]]:5: error: found `ref` inside `var` pattern [RefInsideVar]
-// CHECK:STDERR: var ref unused y: i32;
-// CHECK:STDERR:     ^~~
+// CHECK:STDERR: fail_ref_unused.carbon:[[@LINE+4]]:10: error: expected name in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR: fn F(ref unused y: i32);
+// CHECK:STDERR:          ^~~~~~
 // CHECK:STDERR:
-var ref unused y: i32;
-
-
-// --- fail_var_ref_unused.carbon
-
-// CHECK:STDERR: fail_var_ref_unused.carbon:[[@LINE+4]]:5: error: found `ref` inside `var` pattern [RefInsideVar]
-// CHECK:STDERR: var ref unused y: i32;
-// CHECK:STDERR:     ^~~
-// CHECK:STDERR:
-var ref unused y: i32;
-
-// --- fail_var_ref_unused_function.carbon
-
-// CHECK:STDERR: fail_var_ref_unused_function.carbon:[[@LINE+4]]:17: error: found `ref` inside `var` pattern [RefInsideVar]
-// CHECK:STDERR: fn F(x: (), var ref unused y: ());
-// CHECK:STDERR:                 ^~~
-// CHECK:STDERR:
-fn F(x: (), var ref unused y: ());
-
-// CHECK:STDERR: fail_var_ref_unused_function.carbon:[[@LINE+4]]:24: error: found `ref` inside `var` pattern [RefInsideVar]
-// CHECK:STDERR: fn G(x: (), var unused ref y: ());
-// CHECK:STDERR:                        ^~~
-// CHECK:STDERR:
-fn G(x: (), var unused ref y: ());
-
-// CHECK:STDERR: fail_var_ref_unused_function.carbon:[[@LINE+4]]:24: error: found `ref` inside `var` pattern [RefInsideVar]
-// CHECK:STDERR: fn I(x: (), unused var ref y: ());
-// CHECK:STDERR:                        ^~~
-// CHECK:STDERR:
-fn I(x: (), unused var ref y: ());
-
+fn F(ref unused y: i32);
 
 // --- fail_nested.carbon
 
@@ -84,7 +61,13 @@ var unused unused x: i32 = 0;
 // CHECK:STDERR:
 var unused (unused y: i32) = (0,);
 
-
+// CHECK:STDOUT: - filename: fail_unused_does_not_start_declaration.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'InvalidParseStart', text: 'unused', has_error: yes},
+// CHECK:STDOUT:     {kind: 'InvalidParseSubtree', text: ';', has_error: yes, subtree_size: 2},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: let_var_unused.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
@@ -305,79 +288,17 @@ var unused (unused y: i32) = (0,);
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 16},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
-// CHECK:STDOUT: - filename: fail_unused.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'unused', has_error: yes},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: 'unused', has_error: yes},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: 'ref', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
-// CHECK:STDOUT: - filename: fail_var_ref_unused.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'unused', has_error: yes},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: 'unused', has_error: yes},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: 'ref', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
-// CHECK:STDOUT: - filename: fail_var_ref_unused_function.carbon
+// CHECK:STDOUT: - filename: fail_ref_unused.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
 // CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'F'},
 // CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
-// CHECK:STDOUT:             {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:           {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'unused', has_error: yes},
-// CHECK:STDOUT:             {kind: 'InvalidParse', text: 'unused', has_error: yes},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: 'ref', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 14},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'G'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
-// CHECK:STDOUT:             {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:           {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeParams', text: 'y'},
-// CHECK:STDOUT:               {kind: 'RefBindingName', text: 'ref', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:               {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'VarBindingPattern', text: ':', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'UnusedPattern', text: 'unused', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 7},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 14},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 17},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'I'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
-// CHECK:STDOUT:             {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:           {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeParams', text: 'y'},
-// CHECK:STDOUT:               {kind: 'RefBindingName', text: 'ref', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:               {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'VarBindingPattern', text: ':', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'UnusedPattern', text: 'unused', has_error: yes, subtree_size: 7},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 14},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 17},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'unused', has_error: yes},
+// CHECK:STDOUT:           {kind: 'InvalidParse', text: 'unused', has_error: yes},
+// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: 'ref', has_error: yes, subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 5},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 8},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_nested.carbon
