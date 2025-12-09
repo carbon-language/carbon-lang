@@ -19,6 +19,9 @@ fn SimpleUsed() {
   x = 1;
   var _: i32 = x;
   // TODO: ensure no warning.
+  let y: i32 = 1;
+  var _: i32 = y;
+  // TODO: ensure no warning.
 }
 
 fn RefParam(ref x: i32) {
