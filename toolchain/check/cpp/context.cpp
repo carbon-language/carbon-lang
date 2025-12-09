@@ -8,7 +8,8 @@
 
 namespace Carbon::Check {
 
-CppContext::CppContext(clang::ASTUnit* ast_unit) : ast_unit_(ast_unit) {}
+CppContext::CppContext(std::unique_ptr<clang::FrontendAction> action)
+    : action_(std::move(action)) {}
 
 CppContext::~CppContext() = default;
 

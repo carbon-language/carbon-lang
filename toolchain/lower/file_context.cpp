@@ -76,13 +76,9 @@ auto FileContext::PrepareToLower() -> void {
         const_cast<clang::ASTContext&>(cpp_file()->ast_context()));
 
     // Emit any top-level declarations now.
-    cpp_file()->VisitLocalTopLevelDecls([&](const clang::Decl* decl) {
-      // CodeGenerator won't modify the declaration it's given, but we can
-      // only call it via the ASTConsumer interface which doesn't know that.
-      auto* non_const_decl = const_cast<clang::Decl*>(decl);
-      cpp_code_generator_->HandleTopLevelDecl(
-          clang::DeclGroupRef(non_const_decl));
-    });
+    for (auto decl_group : cpp_file()->decl_groups()) {
+      cpp_code_generator_->HandleTopLevelDecl(decl_group);
+    }
   }
 
   // Lower all types that were required to be complete.

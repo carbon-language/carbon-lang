@@ -6,8 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_CPP_FILE_H_
 
 #include "clang/Basic/Diagnostic.h"
-#include "clang/Frontend/ASTUnit.h"
-#include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/Support/FileSystem.h"
 
@@ -17,44 +16,49 @@ namespace Carbon::SemIR {
 // imported C++ headers and any inline C++ fragments.
 class CppFile {
  public:
-  explicit CppFile(std::unique_ptr<clang::ASTUnit> ast_unit)
-      : ast_unit_(std::move(ast_unit)) {}
+  explicit CppFile(std::unique_ptr<clang::CompilerInstance> clang)
+      : clang_(std::move(clang)) {}
 
   // Access to compilation options.
   auto diagnostic_options() const -> const clang::DiagnosticOptions& {
-    return ast_unit_->getDiagnostics().getDiagnosticOptions();
+    return clang_->getDiagnostics().getDiagnosticOptions();
   }
   auto lang_options() const -> const clang::LangOptions& {
-    return ast_unit_->getLangOpts();
+    return clang_->getLangOpts();
   }
 
   // Access to Clang's compilation environment.
   auto source_manager() -> clang::SourceManager& {
-    return ast_unit_->getSourceManager();
+    return clang_->getSourceManager();
   }
   auto source_manager() const -> const clang::SourceManager& {
-    return ast_unit_->getSourceManager();
+    return clang_->getSourceManager();
   }
   // TODO: This doesn't really belong here, but is currently used by lowering
   // because Clang's code generation may produce diagnostics.
   auto diagnostics() const -> clang::DiagnosticsEngine& {
-    return ast_unit_->getDiagnostics();
+    return clang_->getDiagnostics();
   }
 
   // Access to layers of Clang's C++ representation.
-  auto ast_context() -> clang::ASTContext& {
-    return ast_unit_->getASTContext();
-  }
+  auto ast_context() -> clang::ASTContext& { return clang_->getASTContext(); }
   auto ast_context() const -> const clang::ASTContext& {
-    return ast_unit_->getASTContext();
+    return clang_->getASTContext();
   }
 
-  // Visit all top-level declarations in the file.
-  auto VisitLocalTopLevelDecls(
-      llvm::function_ref<auto(const clang::Decl*)->void> visitor) const -> void;
+  // A list of all the top-level decl groups produced in this compilation.
+  // TODO: Attach a code generation consumer to the clang invocation and remove
+  // this.
+  auto decl_groups() -> llvm::SmallVector<clang::DeclGroupRef>& {
+    return decl_groups_;
+  }
+  auto decl_groups() const -> const llvm::SmallVector<clang::DeclGroupRef>& {
+    return decl_groups_;
+  }
 
  private:
-  std::unique_ptr<clang::ASTUnit> ast_unit_;
+  std::unique_ptr<clang::CompilerInstance> clang_;
+  llvm::SmallVector<clang::DeclGroupRef> decl_groups_;
 };
 
 }  // namespace Carbon::SemIR

@@ -8,7 +8,8 @@
 #include <memory>
 
 #include "clang/Basic/SourceLocation.h"
-#include "clang/Frontend/ASTUnit.h"
+#include "clang/Frontend/CompilerInstance.h"
+#include "clang/Frontend/FrontendAction.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace Carbon::Check {
@@ -20,13 +21,18 @@ namespace Carbon::Check {
 // declarations, and similar values.
 class CppContext {
  public:
-  explicit CppContext(clang::ASTUnit* ast_unit);
+  explicit CppContext(std::unique_ptr<clang::FrontendAction> action);
   ~CppContext();
 
+  auto action() -> clang::FrontendAction& { return *action_; }
+
   auto ast_context() -> clang::ASTContext& {
-    return ast_unit_->getASTContext();
+    return action_->getCompilerInstance().getASTContext();
   }
-  auto sema() -> clang::Sema& { return ast_unit_->getSema(); }
+
+  auto sema() -> clang::Sema& {
+    return action_->getCompilerInstance().getSema();
+  }
 
   auto clang_mangle_context() -> clang::MangleContext&;
 
@@ -35,8 +41,8 @@ class CppContext {
   }
 
  private:
-  // The ASTUnit is owned by the `CppFile`.
-  clang::ASTUnit* ast_unit_;
+  // The clang action that is generating the C++ AST.
+  std::unique_ptr<clang::FrontendAction> action_;
 
   // Per-Carbon-file start locations for corresponding Clang source buffers.
   // Owned and managed by code in location.cpp.

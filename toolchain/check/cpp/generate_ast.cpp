@@ -11,8 +11,10 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/TextDiagnostic.h"
 #include "clang/Lex/PreprocessorOptions.h"
+#include "clang/Sema/ExternalSemaSource.h"
 #include "common/check.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
@@ -23,6 +25,7 @@
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/sem_ir/cpp_file.h"
 
 namespace Carbon::Check {
 
@@ -319,10 +322,51 @@ class ShallowCopyCompilerInvocation : public clang::CompilerInvocation {
       const clang::CompilerInvocation& invocation) {
     shallow_copy_assign(invocation);
 
-    // The preprocessor options are modified to hold a replacement includes
-    // buffer, so make our own version of those options.
+    // Make a deep copy of options that we modify.
+    FrontendOpts = std::make_shared<clang::FrontendOptions>(*FrontendOpts);
     PPOpts = std::make_shared<clang::PreprocessorOptions>(*PPOpts);
   }
+};
+
+// An AST consumer that tracks top-level declarations so they can be handed off
+// to code generation later.
+class BufferingConsumer : public clang::ASTConsumer {
+ public:
+  explicit BufferingConsumer(SemIR::CppFile& file) : file_(&file) {}
+
+  auto HandleTopLevelDecl(clang::DeclGroupRef decl_group) -> bool override {
+    file_->decl_groups().push_back(decl_group);
+    return true;
+  }
+
+ private:
+  SemIR::CppFile* file_;
+};
+
+// An action and a set of registered Clang callbacks used to generate an AST
+// from a set of Cpp imports.
+class GenerateASTAction : public clang::ASTFrontendAction {
+ public:
+  explicit GenerateASTAction(Context& context) : context_(&context) {}
+
+ protected:
+  auto CreateASTConsumer(clang::CompilerInstance& /*clang*/,
+                         llvm::StringRef /*file*/)
+      -> std::unique_ptr<clang::ASTConsumer> override {
+    return std::make_unique<BufferingConsumer>(*context_->sem_ir().cpp_file());
+  }
+
+  auto BeginSourceFileAction(clang::CompilerInstance& /*clang*/)
+      -> bool override {
+    // TODO: Consider creating an `ExternalSemaSource` here and attaching it to
+    // the compilation.
+    // TODO: `clang.getPreprocessor().enableIncrementalProcessing();` to avoid
+    // the TU scope getting torn down before we're done parsing macros.
+    return true;
+  }
+
+ private:
+  Context* context_;
 };
 
 }  // namespace
@@ -337,6 +381,9 @@ auto GenerateAst(Context& context,
 
   auto invocation =
       std::make_shared<ShallowCopyCompilerInvocation>(*base_invocation);
+
+  // Ask Clang to not leak memory.
+  invocation->getFrontendOpts().DisableFree = false;
 
   // Build a diagnostics engine.
   llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> diags(
@@ -364,19 +411,35 @@ auto GenerateAst(Context& context,
 
   clang::DiagnosticErrorTrap trap(*diags);
 
-  // Create the AST unit.
-  auto ast = clang::ASTUnit::LoadFromCompilerInvocation(
-      invocation, std::make_shared<clang::PCHContainerOperations>(), nullptr,
-      diags, new clang::FileManager(invocation->getFileSystemOpts(), fs));
-
-  // Attach the AST to SemIR. This needs to be done before we can emit any
-  // diagnostics, so their locations can be properly interpreted by our
-  // diagnostics machinery.
-  context.set_cpp_context(std::make_unique<CppContext>(ast.get()));
+  auto clang = std::make_unique<clang::CompilerInstance>(invocation);
+  auto& clang_ref = *clang.get();
   context.sem_ir().set_cpp_file(
-      std::make_unique<SemIR::CppFile>(std::move(ast)));
+      std::make_unique<SemIR::CppFile>(std::move(clang)));
 
-  // Emit any diagnostics we queued up while building the AST.
+  clang_ref.setDiagnostics(diags);
+  clang_ref.setVirtualFileSystem(fs);
+  clang_ref.createFileManager();
+  clang_ref.createSourceManager();
+  if (!clang_ref.createTarget()) {
+    return false;
+  }
+
+  context.set_cpp_context(std::make_unique<CppContext>(
+      std::make_unique<GenerateASTAction>(context)));
+
+  if (!context.cpp_context()->action().BeginSourceFile(clang_ref, inputs[0])) {
+    return false;
+  }
+
+  if (llvm::Error error = context.cpp_context()->action().Execute()) {
+    // `Execute` currently never fails, but its contract allows it to.
+    context.TODO(SemIR::LocId::None, "failed to execute clang action: " +
+                                         llvm::toString(std::move(error)));
+    return false;
+  }
+
+  // Flush any diagnostics. We know we're not part-way through emitting a
+  // diagnostic now.
   context.emitter().Flush();
 
   return !trap.hasErrorOccurred();
