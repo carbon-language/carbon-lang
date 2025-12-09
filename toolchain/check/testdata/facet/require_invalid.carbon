@@ -129,6 +129,10 @@ library "[[@TEST_NAME]]";
 
 interface Y {}
 
+// The erroneous self-type for an `extend` should cause the error to be
+// propagated into the interface scope.
+//
+//@dump-sem-ir-begin
 interface Z {
   // CHECK:STDERR: fail_extend_require_with_nonexistent_type.carbon:[[@LINE+4]]:18: error: name `nonexistent` not found [NameNotFound]
   // CHECK:STDERR:   extend require nonexistent impls Y;
@@ -136,6 +140,7 @@ interface Z {
   // CHECK:STDERR:
   extend require nonexistent impls Y;
 }
+//@dump-sem-ir-end
 
 // --- fail_extend_require_with_nonexistent_type_pointer.carbon
 library "[[@TEST_NAME]]";
@@ -149,3 +154,28 @@ interface Z {
   // CHECK:STDERR:
   extend require nonexistent* impls Y;
 }
+
+// CHECK:STDOUT: --- fail_extend_require_with_nonexistent_type.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
+// CHECK:STDOUT:   %Self.3b3: %Z.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Z.decl: type = interface_decl @Z [concrete = constants.%Z.type] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @Z {
+// CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.3b3]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .nonexistent = <poisoned>
+// CHECK:STDOUT:   .Y = <poisoned>
+// CHECK:STDOUT:   has_error
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
