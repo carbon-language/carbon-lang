@@ -30,6 +30,7 @@ fn G[T:! Core.Copy & Core.Destroy](x: T) -> T {
 fn M() -> i32 {
   var n: i32 = 0;
   var m: i32;
+
   F(n);
   m = G(n);
   return m;
@@ -46,13 +47,13 @@ fn M() -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !8
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %m.var), !dbg !9
-// CHECK:STDOUT:   %.loc33 = load i32, ptr %n.var, align 4, !dbg !10
-// CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %.loc33), !dbg !11
-// CHECK:STDOUT:   %.loc34_9 = load i32, ptr %n.var, align 4, !dbg !12
-// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.68e44d468a50c22e(i32 %.loc34_9), !dbg !13
+// CHECK:STDOUT:   %.loc34 = load i32, ptr %n.var, align 4, !dbg !10
+// CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %.loc34), !dbg !11
+// CHECK:STDOUT:   %.loc35_9 = load i32, ptr %n.var, align 4, !dbg !12
+// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.68e44d468a50c22e(i32 %.loc35_9), !dbg !13
 // CHECK:STDOUT:   store i32 %G.call, ptr %m.var, align 4, !dbg !14
-// CHECK:STDOUT:   %.loc35 = load i32, ptr %m.var, align 4, !dbg !15
-// CHECK:STDOUT:   ret i32 %.loc35, !dbg !16
+// CHECK:STDOUT:   %.loc36 = load i32, ptr %m.var, align 4, !dbg !15
+// CHECK:STDOUT:   ret i32 %.loc36, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -101,13 +102,13 @@ fn M() -> i32 {
 // CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !8 = !DILocation(line: 31, column: 3, scope: !4)
 // CHECK:STDOUT: !9 = !DILocation(line: 32, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 33, column: 5, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 33, column: 3, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 34, column: 9, scope: !4)
-// CHECK:STDOUT: !13 = !DILocation(line: 34, column: 7, scope: !4)
-// CHECK:STDOUT: !14 = !DILocation(line: 34, column: 3, scope: !4)
-// CHECK:STDOUT: !15 = !DILocation(line: 35, column: 10, scope: !4)
-// CHECK:STDOUT: !16 = !DILocation(line: 35, column: 3, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 34, column: 5, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 34, column: 3, scope: !4)
+// CHECK:STDOUT: !12 = !DILocation(line: 35, column: 9, scope: !4)
+// CHECK:STDOUT: !13 = !DILocation(line: 35, column: 7, scope: !4)
+// CHECK:STDOUT: !14 = !DILocation(line: 35, column: 3, scope: !4)
+// CHECK:STDOUT: !15 = !DILocation(line: 36, column: 10, scope: !4)
+// CHECK:STDOUT: !16 = !DILocation(line: 36, column: 3, scope: !4)
 // CHECK:STDOUT: !17 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.b88d1103f417c6d4", scope: null, file: !3, line: 16, type: !18, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !20)
 // CHECK:STDOUT: !18 = !DISubroutineType(types: !19)
 // CHECK:STDOUT: !19 = !{null, !7}
