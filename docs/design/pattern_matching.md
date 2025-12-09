@@ -192,13 +192,13 @@ fn F() -> i32 {
 }
 ```
 
-When `self` is used instead of an identifier, and the pattern is an implicit
-parameter of a class function (optionally enclosed in a `var` pattern), that
-marks the function as a method (as discussed [here](classes.md#methods)). During
-pattern matching, the parameter pattern containing `self` is matched with the
-object that the method was invoked on. Other than that, a `self` pattern behaves
-just like an ordinary binding pattern, introducing a binding named `self` into
-scope, just as if `self` were an identifier rather than a keyword.
+When `self` is used instead of an identifier, the pattern must appear in the
+implicit parameter list of a method (as discussed [here](classes.md#methods)).
+During pattern matching in a method call, the parameter pattern containing
+`self` is matched with the object that the method was invoked on. In all other
+respects, the `self` pattern behaves just like an ordinary binding pattern,
+introducing a binding named `self` into scope, just as if `self` were an
+identifier rather than a keyword.
 
 #### Unused bindings
 
@@ -868,14 +868,14 @@ scrutinee calls themselves out of order, the program is ill-formed. For example:
 ```carbon
 // ❌ Error: visiting `.c: C` first leads to evaluating `MakeA()` before
 // `MakeB()`
-var {.c: C, .d: D} = {.d = MakeB(), .c = MakeA()};
+var {c: C, d: D} = {.d = MakeB(), .c = MakeA()};
 
 // ✅ OK: only one pattern, and we use scrutinee order to visit its children.
 var cd: {.c: C, .d: D} = {.d = MakeB(), .c = MakeA()};
 
 // ✅ OK: only one scrutinee call, so it can't be out of order.
 fn MakeAB() -> {.d: B, .c: A};
-var {.c: C, .d: D} = MakeAB();
+var {c: C, d: D} = MakeAB();
 ```
 
 As a result, the overall evaluation order is always consistent with the written
