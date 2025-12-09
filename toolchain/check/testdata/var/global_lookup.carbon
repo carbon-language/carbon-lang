@@ -23,8 +23,8 @@ var y: {.v: ()} = x;
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.v [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.v = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.2d8: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete]
-// CHECK:STDOUT:   %.423: ref %empty_tuple.type = struct_access file.%y.var, element0 [concrete]
+// CHECK:STDOUT:   %.f23: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete]
+// CHECK:STDOUT:   %.de6: ref %empty_tuple.type = struct_access file.%y.var, element0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -60,15 +60,15 @@ var y: {.v: ()} = x;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc15_27.1: %struct_type.v = struct_literal (%.loc15_26.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc15_27.2: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete = constants.%.2d8]
+// CHECK:STDOUT:   %.loc15_27.2: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete = constants.%.f23]
 // CHECK:STDOUT:   %.loc15_26.2: init %empty_tuple.type = tuple_init () to %.loc15_27.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc15_27.3: init %empty_tuple.type = converted %.loc15_26.1, %.loc15_26.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc15_27.4: init %struct_type.v = struct_init (%.loc15_27.3) to file.%x.var [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc15_1: init %struct_type.v = converted %.loc15_27.1, %.loc15_27.4 [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc15_1
 // CHECK:STDOUT:   %x.ref: ref %struct_type.v = name_ref x, file.%x [concrete = file.%x.var]
-// CHECK:STDOUT:   %.loc16_19.1: ref %empty_tuple.type = struct_access %x.ref, element0 [concrete = constants.%.2d8]
-// CHECK:STDOUT:   %.loc16_19.2: ref %empty_tuple.type = struct_access file.%y.var, element0 [concrete = constants.%.423]
+// CHECK:STDOUT:   %.loc16_19.1: ref %empty_tuple.type = struct_access %x.ref, element0 [concrete = constants.%.f23]
+// CHECK:STDOUT:   %.loc16_19.2: ref %empty_tuple.type = struct_access file.%y.var, element0 [concrete = constants.%.de6]
 // CHECK:STDOUT:   %.loc16_19.3: init %empty_tuple.type = tuple_init () to %.loc16_19.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc16_19.4: init %empty_tuple.type = converted %.loc16_19.1, %.loc16_19.3 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc16_19.5: init %struct_type.v = struct_init (%.loc16_19.4) to file.%y.var [concrete = constants.%struct]

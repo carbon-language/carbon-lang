@@ -311,11 +311,9 @@ class Context {
     return sem_ir().import_ir_insts();
   }
   auto ast_context() -> clang::ASTContext& {
-    return sem_ir().clang_ast_unit()->getASTContext();
+    return sem_ir().cpp_file()->ast_context();
   }
-  auto clang_sema() -> clang::Sema& {
-    return sem_ir().clang_ast_unit()->getSema();
-  }
+  auto clang_sema() -> clang::Sema& { return sem_ir().cpp_file()->sema(); }
   auto clang_decls() -> SemIR::ClangDeclStore& {
     return sem_ir().clang_decls();
   }

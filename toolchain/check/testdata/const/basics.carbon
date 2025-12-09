@@ -168,38 +168,38 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
-// CHECK:STDOUT:   %T.417: %Copy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %const.as.Copy.impl.Op.type.cd8: type = fn_type @const.as.Copy.impl.Op, @const.as.Copy.impl(%T.417) [symbolic]
-// CHECK:STDOUT:   %const.as.Copy.impl.Op.d38: %const.as.Copy.impl.Op.type.cd8 = struct_value () [symbolic]
-// CHECK:STDOUT:   %T.d9f: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.75b: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.d9f) [symbolic]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.692: %ptr.as.Copy.impl.Op.type.75b = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.58b: <witness> = impl_witness imports.%Copy.impl_witness_table.67d, @ptr.as.Copy.impl(%ptr.801) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.d40: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%ptr.801) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.e2b: %ptr.as.Copy.impl.Op.type.d40 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet.c96: %Copy.type = facet_value %ptr.564, (%Copy.impl_witness.58b) [concrete]
-// CHECK:STDOUT:   %.422: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.c96 [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn.7ea: <specific function> = specific_function %ptr.as.Copy.impl.Op.e2b, @ptr.as.Copy.impl.Op(%ptr.801) [concrete]
+// CHECK:STDOUT:   %T.f92: %Copy.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %const.as.Copy.impl.Op.type.d9d: type = fn_type @const.as.Copy.impl.Op, @const.as.Copy.impl(%T.f92) [symbolic]
+// CHECK:STDOUT:   %const.as.Copy.impl.Op.f04: %const.as.Copy.impl.Op.type.d9d = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.b05: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.8b8: %ptr.as.Copy.impl.Op.type.b05 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.803: <witness> = impl_witness imports.%Copy.impl_witness_table.027, @ptr.as.Copy.impl(%ptr.801) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.d4e: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%ptr.801) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.64d: %ptr.as.Copy.impl.Op.type.d4e = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet.6e4: %Copy.type = facet_value %ptr.564, (%Copy.impl_witness.803) [concrete]
+// CHECK:STDOUT:   %.14d: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.6e4 [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn.9c0: <specific function> = specific_function %ptr.as.Copy.impl.Op.64d, @ptr.as.Copy.impl.Op(%ptr.801) [concrete]
 // CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %const.2b1: type = const_type %ptr.019 [concrete]
 // CHECK:STDOUT:   %pattern_type.3a2: type = pattern_type %const.2b1 [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.17a: <witness> = impl_witness imports.%Copy.impl_witness_table.67d, @ptr.as.Copy.impl(%C) [concrete]
-// CHECK:STDOUT:   %Copy.facet.499: %Copy.type = facet_value %ptr.019, (%Copy.impl_witness.17a) [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.b04: <witness> = impl_witness imports.%Copy.impl_witness_table.899, @const.as.Copy.impl(%Copy.facet.499) [concrete]
-// CHECK:STDOUT:   %const.as.Copy.impl.Op.type.f1e: type = fn_type @const.as.Copy.impl.Op, @const.as.Copy.impl(%Copy.facet.499) [concrete]
-// CHECK:STDOUT:   %const.as.Copy.impl.Op.79d: %const.as.Copy.impl.Op.type.f1e = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet.fcf: %Copy.type = facet_value %const.2b1, (%Copy.impl_witness.b04) [concrete]
-// CHECK:STDOUT:   %.2f4: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.fcf [concrete]
-// CHECK:STDOUT:   %const.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %const.as.Copy.impl.Op.79d, @const.as.Copy.impl.Op(%Copy.facet.499) [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.bbd: <witness> = impl_witness imports.%Copy.impl_witness_table.027, @ptr.as.Copy.impl(%C) [concrete]
+// CHECK:STDOUT:   %Copy.facet.ecf: %Copy.type = facet_value %ptr.019, (%Copy.impl_witness.bbd) [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.067: <witness> = impl_witness imports.%Copy.impl_witness_table.1bf, @const.as.Copy.impl(%Copy.facet.ecf) [concrete]
+// CHECK:STDOUT:   %const.as.Copy.impl.Op.type.332: type = fn_type @const.as.Copy.impl.Op, @const.as.Copy.impl(%Copy.facet.ecf) [concrete]
+// CHECK:STDOUT:   %const.as.Copy.impl.Op.e86: %const.as.Copy.impl.Op.type.332 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet.d79: %Copy.type = facet_value %const.2b1, (%Copy.impl_witness.067) [concrete]
+// CHECK:STDOUT:   %.1a6: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.d79 [concrete]
+// CHECK:STDOUT:   %const.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %const.as.Copy.impl.Op.e86, @const.as.Copy.impl.Op(%Copy.facet.ecf) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.e05: @const.as.Copy.impl.%const.as.Copy.impl.Op.type (%const.as.Copy.impl.Op.type.cd8) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @const.as.Copy.impl.%const.as.Copy.impl.Op (constants.%const.as.Copy.impl.Op.d38)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.899 = impl_witness_table (%Core.import_ref.e05), @const.as.Copy.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.659: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.75b) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.692)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.67d = impl_witness_table (%Core.import_ref.659), @ptr.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.422: @const.as.Copy.impl.%const.as.Copy.impl.Op.type (%const.as.Copy.impl.Op.type.d9d) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @const.as.Copy.impl.%const.as.Copy.impl.Op (constants.%const.as.Copy.impl.Op.f04)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.1bf = impl_witness_table (%Core.import_ref.422), @const.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.301: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.b05) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.8b8)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.027 = impl_witness_table (%Core.import_ref.301), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -248,9 +248,9 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT: fn @A(%p.param: %ptr.564) -> %ptr.564 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.564 = name_ref p, %p
-// CHECK:STDOUT:   %impl.elem0: %.422 = impl_witness_access constants.%Copy.impl_witness.58b, element0 [concrete = constants.%ptr.as.Copy.impl.Op.e2b]
+// CHECK:STDOUT:   %impl.elem0: %.14d = impl_witness_access constants.%Copy.impl_witness.803, element0 [concrete = constants.%ptr.as.Copy.impl.Op.64d]
 // CHECK:STDOUT:   %bound_method.loc7_10.1: <bound method> = bound_method %p.ref, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%ptr.801) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn.7ea]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%ptr.801) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn.9c0]
 // CHECK:STDOUT:   %bound_method.loc7_10.2: <bound method> = bound_method %p.ref, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.564 = call %bound_method.loc7_10.2(%p.ref)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call to %return
@@ -259,9 +259,9 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT: fn @B(%p.param: %const.2b1) -> %const.2b1 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %const.2b1 = name_ref p, %p
-// CHECK:STDOUT:   %impl.elem0: %.2f4 = impl_witness_access constants.%Copy.impl_witness.b04, element0 [concrete = constants.%const.as.Copy.impl.Op.79d]
+// CHECK:STDOUT:   %impl.elem0: %.1a6 = impl_witness_access constants.%Copy.impl_witness.067, element0 [concrete = constants.%const.as.Copy.impl.Op.e86]
 // CHECK:STDOUT:   %bound_method.loc11_10.1: <bound method> = bound_method %p.ref, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @const.as.Copy.impl.Op(constants.%Copy.facet.499) [concrete = constants.%const.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @const.as.Copy.impl.Op(constants.%Copy.facet.ecf) [concrete = constants.%const.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc11_10.2: <bound method> = bound_method %p.ref, %specific_fn
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.call: init %const.2b1 = call %bound_method.loc11_10.2(%p.ref)
 // CHECK:STDOUT:   return %const.as.Copy.impl.Op.call to %return
@@ -279,20 +279,20 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
-// CHECK:STDOUT:   %T.d9f: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.75b: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.d9f) [symbolic]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.692: %ptr.as.Copy.impl.Op.type.75b = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.58b: <witness> = impl_witness imports.%Copy.impl_witness_table.67d, @ptr.as.Copy.impl(%ptr.801) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.d40: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%ptr.801) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.e2b: %ptr.as.Copy.impl.Op.type.d40 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.564, (%Copy.impl_witness.58b) [concrete]
-// CHECK:STDOUT:   %.422: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.e2b, @ptr.as.Copy.impl.Op(%ptr.801) [concrete]
+// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.b05: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.8b8: %ptr.as.Copy.impl.Op.type.b05 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.803: <witness> = impl_witness imports.%Copy.impl_witness_table.027, @ptr.as.Copy.impl(%ptr.801) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.d4e: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%ptr.801) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.64d: %ptr.as.Copy.impl.Op.type.d4e = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.564, (%Copy.impl_witness.803) [concrete]
+// CHECK:STDOUT:   %.14d: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.64d, @ptr.as.Copy.impl.Op(%ptr.801) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.659: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.75b) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.692)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.67d = impl_witness_table (%Core.import_ref.659), @ptr.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.301: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.b05) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.8b8)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.027 = impl_witness_table (%Core.import_ref.301), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -323,7 +323,7 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT: fn @F(%p.param: %ptr.564) -> %ptr.564 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.564 = name_ref p, %p
-// CHECK:STDOUT:   %impl.elem0: %.422 = impl_witness_access constants.%Copy.impl_witness.58b, element0 [concrete = constants.%ptr.as.Copy.impl.Op.e2b]
+// CHECK:STDOUT:   %impl.elem0: %.14d = impl_witness_access constants.%Copy.impl_witness.803, element0 [concrete = constants.%ptr.as.Copy.impl.Op.64d]
 // CHECK:STDOUT:   %bound_method.loc12_10.1: <bound method> = bound_method %p.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%ptr.801) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc12_10.2: <bound method> = bound_method %p.ref, %specific_fn

@@ -56,7 +56,7 @@ static auto GetFileInfo(Context& context, SemIR::CheckIRId ir_id) -> FileInfo {
 
 auto GetCppLocation(Context& context, SemIR::LocId loc_id)
     -> clang::SourceLocation {
-  if (!context.sem_ir().clang_ast_unit()) {
+  if (!context.sem_ir().cpp_file()) {
     return clang::SourceLocation();
   }
 

@@ -501,10 +501,10 @@ fn Make() {
 // CHECK:STDOUT: ; ModuleID = 'generic_use.carbon'
 // CHECK:STDOUT: source_filename = "generic_use.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @"_CBase.Main.$vtable.b29a32b2b49cc0f3" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main.b29a32b2b49cc0f3 to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable.b29a32b2b49cc0f3" to i64)) to i32)]
-// CHECK:STDOUT: @"_CBase.Main.$vtable.aa6c84e7fdd60e03" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main.aa6c84e7fdd60e03 to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable.aa6c84e7fdd60e03" to i64)) to i32)]
-// CHECK:STDOUT: @Base.val.58c.loc16_3 = internal constant { ptr } { ptr @"_CBase.Main.$vtable.b29a32b2b49cc0f3" }
-// CHECK:STDOUT: @Base.val.a96.loc17_3 = internal constant { ptr } { ptr @"_CBase.Main.$vtable.aa6c84e7fdd60e03" }
+// CHECK:STDOUT: @"_CBase.Main.$vtable.8094ecf7c8eb7783" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main.8094ecf7c8eb7783 to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable.8094ecf7c8eb7783" to i64)) to i32)]
+// CHECK:STDOUT: @"_CBase.Main.$vtable.da8f5a5fdbfdbdd7" = unnamed_addr constant [1 x i32] [i32 trunc (i64 sub (i64 ptrtoint (ptr @_CF.Base.Main.da8f5a5fdbfdbdd7 to i64), i64 ptrtoint (ptr @"_CBase.Main.$vtable.da8f5a5fdbfdbdd7" to i64)) to i32)]
+// CHECK:STDOUT: @Base.val.562.loc16_3 = internal constant { ptr } { ptr @"_CBase.Main.$vtable.8094ecf7c8eb7783" }
+// CHECK:STDOUT: @Base.val.baf.loc17_3 = internal constant { ptr } { ptr @"_CBase.Main.$vtable.da8f5a5fdbfdbdd7" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main() #0 !dbg !4 {
@@ -513,15 +513,15 @@ fn Make() {
 // CHECK:STDOUT:   %t2.var = alloca { ptr }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %t1.var), !dbg !7
 // CHECK:STDOUT:   %.loc16_23.2.vptr = getelementptr inbounds nuw { ptr }, ptr %t1.var, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %t1.var, ptr align 8 @Base.val.58c.loc16_3, i64 8, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %t1.var, ptr align 8 @Base.val.562.loc16_3, i64 8, i1 false), !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %t2.var), !dbg !8
 // CHECK:STDOUT:   %.loc17_23.2.vptr = getelementptr inbounds nuw { ptr }, ptr %t2.var, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %t2.var, ptr align 8 @Base.val.a96.loc17_3, i64 8, i1 false), !dbg !8
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %t2.var, ptr align 8 @Base.val.baf.loc17_3, i64 8, i1 false), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.b29a32b2b49cc0f3(ptr %self) #0 !dbg !12 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.8094ecf7c8eb7783(ptr %self) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %v.var = alloca {}, align 8, !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !18
@@ -529,7 +529,7 @@ fn Make() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.aa6c84e7fdd60e03(ptr %self) #0 !dbg !20 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.da8f5a5fdbfdbdd7(ptr %self) #0 !dbg !20 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %v.var = alloca { {} }, align 8, !dbg !23
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !23
@@ -565,7 +565,7 @@ fn Make() {
 // CHECK:STDOUT: !9 = !DILocation(line: 16, column: 22, scope: !4)
 // CHECK:STDOUT: !10 = !DILocation(line: 17, column: 22, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 15, column: 1, scope: !4)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main.b29a32b2b49cc0f3", scope: null, file: !3, line: 5, type: !13, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !16)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main.8094ecf7c8eb7783", scope: null, file: !3, line: 5, type: !13, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !16)
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{null, !15}
 // CHECK:STDOUT: !15 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
@@ -573,7 +573,7 @@ fn Make() {
 // CHECK:STDOUT: !17 = !DILocalVariable(arg: 1, scope: !12, type: !15)
 // CHECK:STDOUT: !18 = !DILocation(line: 6, column: 5, scope: !12)
 // CHECK:STDOUT: !19 = !DILocation(line: 5, column: 3, scope: !12)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main.aa6c84e7fdd60e03", scope: null, file: !3, line: 5, type: !13, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !21)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main.da8f5a5fdbfdbdd7", scope: null, file: !3, line: 5, type: !13, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !21)
 // CHECK:STDOUT: !21 = !{!22}
 // CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !20, type: !15)
 // CHECK:STDOUT: !23 = !DILocation(line: 6, column: 5, scope: !20)

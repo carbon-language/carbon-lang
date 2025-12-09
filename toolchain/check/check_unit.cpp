@@ -154,11 +154,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
 
   const auto& cpp_imports = unit_and_imports_->cpp_imports;
   if (!cpp_imports.empty()) {
-    auto* clang_ast_unit = unit_and_imports_->unit->clang_ast_unit;
-    CARBON_CHECK(clang_ast_unit);
-    CARBON_CHECK(!clang_ast_unit->get());
-    *clang_ast_unit =
-        ImportCppFiles(context_, cpp_imports, fs_, clang_invocation_);
+    ImportCpp(context_, cpp_imports, fs_, clang_invocation_);
   }
 }
 
@@ -584,10 +580,10 @@ auto CheckUnit::FinishRun() -> void {
   CheckPoisonedConcreteImplLookupQueries();
   CheckImpls();
 
-  if (auto* clang_ast = context_.sem_ir().clang_ast_unit()) {
+  if (auto* cpp_file = context_.sem_ir().cpp_file()) {
     // Ask Clang to perform any cleanups required, including instantiating used
     // templates.
-    clang_ast->getSema().ActOnEndOfTranslationUnit();
+    cpp_file->sema().ActOnEndOfTranslationUnit();
     context_.emitter().Flush();
   }
 

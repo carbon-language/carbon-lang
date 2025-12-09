@@ -907,6 +907,10 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstName("const");
       return;
     }
+    case CppWitness::Kind: {
+      AddInstName("cpp_witness");
+      return;
+    }
     case CARBON_KIND(FacetAccessType inst): {
       auto name_id = SemIR::NameId::None;
       if (auto name =

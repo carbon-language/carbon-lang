@@ -121,7 +121,7 @@ struct Worklist {
     } else {
       Add(entity_name.name_id);
     }
-    // TODO: Should we include the parent index?
+    Add(entity_name.parent_scope_id);
   }
 
   auto AddInFile(const File* file, InstId inner_id) -> void {

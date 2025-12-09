@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_FILE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_FILE_H_
 
-#include "clang/Frontend/ASTUnit.h"
 #include "common/error.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator_range.h"
@@ -21,6 +20,7 @@
 #include "toolchain/sem_ir/associated_constant.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/cpp_file.h"
 #include "toolchain/sem_ir/cpp_global_var.h"
 #include "toolchain/sem_ir/cpp_overload_set.h"
 #include "toolchain/sem_ir/entity_name.h"
@@ -228,14 +228,12 @@ class File : public Printable<File> {
   auto import_ir_insts() const -> const ImportIRInstStore& {
     return import_ir_insts_;
   }
-  auto clang_ast_unit() -> clang::ASTUnit* { return clang_ast_unit_; }
-  auto clang_ast_unit() const -> const clang::ASTUnit* {
-    return clang_ast_unit_;
-  }
-  // TODO: When the AST can be created before creating `File`, initialize the
-  // pointer in the constructor and remove this function. This is part of
-  // https://github.com/carbon-language/carbon-lang/issues/4666
-  auto set_clang_ast_unit(clang::ASTUnit* clang_ast_unit) -> void;
+  auto cpp_file() -> SemIR::CppFile* { return cpp_file_.get(); }
+  auto cpp_file() const -> const SemIR::CppFile* { return cpp_file_.get(); }
+  // TODO: We should be able to create the initial C++ AST before creating the
+  // `File` and initialize the pointer in the constructor instead of using a
+  // setter.
+  auto set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void;
   auto clang_mangle_context() -> clang::MangleContext* {
     return clang_mangle_context_.get();
   }
@@ -381,12 +379,12 @@ class File : public Printable<File> {
   // that are import-related.
   ImportIRInstStore import_ir_insts_;
 
-  // The Clang AST to use when looking up `Cpp` names. Null if there are no
-  // `Cpp` imports.
-  clang::ASTUnit* clang_ast_unit_ = nullptr;
+  // The C++ file to use when looking up `Cpp` names. Null if there are no `Cpp`
+  // imports.
+  std::unique_ptr<SemIR::CppFile> cpp_file_;
 
   // The Clang mangle context for the target in the ASTContext. Initialized
-  // together with `clang_ast_unit_`.
+  // together with `cpp_file_`.
   std::unique_ptr<clang::MangleContext> clang_mangle_context_;
 
   // Clang AST declarations pointing to the AST and their mapped Carbon
