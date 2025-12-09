@@ -43,6 +43,36 @@ class C {
   // CHECK:STDERR:               ^~~~~~~~~~~
   // CHECK:STDERR:
   extend impl nonexistent as I {}
+
+  fn F() {
+    // The erroneous self-type for an `extend` causes the error to be propagated
+    // into the class scope, which prevents errors if we fail to find a name
+    // in that scope.
+    Self.A;
+  }
+}
+
+// --- fail_impl_nonexistent.carbon
+
+library "[[@TEST_NAME]]";
+
+interface I {}
+
+class C {
+  // CHECK:STDERR: fail_impl_nonexistent.carbon:[[@LINE+4]]:8: error: name `nonexistent` not found [NameNotFound]
+  // CHECK:STDERR:   impl nonexistent as I {}
+  // CHECK:STDERR:        ^~~~~~~~~~~
+  // CHECK:STDERR:
+  impl nonexistent as I {}
+
+  fn F() {
+    // The name lookup error still happens, since the `require` is not `extend`.
+    // CHECK:STDERR: fail_impl_nonexistent.carbon:[[@LINE+4]]:5: error: member name `A` not found in `C` [MemberNameNotFoundInInstScope]
+    // CHECK:STDERR:     Self.A;
+    // CHECK:STDERR:     ^~~~~~
+    // CHECK:STDERR:
+    Self.A;
+  }
 }
 
 // --- fail_extend_impl_nonexistent_pointer.carbon
@@ -57,6 +87,13 @@ class C {
   // CHECK:STDERR:               ^~~~~~~~~~~
   // CHECK:STDERR:
   extend impl nonexistent* as I {}
+
+  fn F() {
+    // The erroneous self-type for an `extend` causes the error to be propagated
+    // into the class scope, which prevents errors if we fail to find a name
+    // in that scope.
+    Self.A;
+  }
 }
 
 // --- fail_extend_impl_nonexistent_outside_class.carbon
