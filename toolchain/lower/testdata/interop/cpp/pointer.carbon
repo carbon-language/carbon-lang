@@ -62,7 +62,7 @@ auto TakePtrWithThunk(C*, int = 0) -> void;
 auto ReturnPtrWithThunk(int = 0) -> C*;
 ''';
 
-fn PassPtr(p: Core.Optional(Cpp.C*)) {
+fn PassPtr(_: Core.Optional(Cpp.C*)) {
   // TODO: Add support for passing an optional here.
   // Cpp.TakePtr(p);
 }
@@ -77,7 +77,7 @@ fn ReturnPtr() -> Core.Optional(Cpp.C*) {
   return Cpp.ReturnPtr();
 }
 
-fn PassPtrWithThunk(p: Core.Optional(Cpp.C*)) {
+fn PassPtrWithThunk(_: Core.Optional(Cpp.C*)) {
   // TODO: Add support for passing an optional here.
   // Cpp.TakePtrWithThunk(p);
 }
@@ -189,7 +189,7 @@ fn ReturnPtrWithThunk() -> Core.Optional(Cpp.C*) {
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassPtr.Main(ptr %p) #0 !dbg !7 {
+// CHECK:STDOUT: define void @_CPassPtr.Main(ptr %_) #0 !dbg !7 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
@@ -218,7 +218,7 @@ fn ReturnPtrWithThunk() -> Core.Optional(Cpp.C*) {
 // CHECK:STDOUT: declare ptr @_Z9ReturnPtrv()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassPtrWithThunk.Main(ptr %p) #0 !dbg !25 {
+// CHECK:STDOUT: define void @_CPassPtrWithThunk.Main(ptr %_) #0 !dbg !25 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }

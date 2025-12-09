@@ -34,7 +34,7 @@ impl Y as I where .T = i32 {
 // Cannot coalesce the lowering for G specifics, as they call different functions.
 // Check different functions are still emitted when trying to deduplicate emitted definitons.
 fn G(U:! I) {
-  let x: U.T = U.F();
+  let _: U.T = U.F();
 }
 
 fn Run() {

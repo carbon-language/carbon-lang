@@ -16,7 +16,7 @@ interface I {
 
 // There are no interesting runtime operations here, but there's no rule saying
 // you can't pass a facet around at runtime, so make sure it works.
-fn F(T: I) {}
+fn F(_: I) {}
 
 fn G() -> I;
 
@@ -26,7 +26,7 @@ fn H() -> I { return G(); }
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.Main({} %T) #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CF.Main({} %_) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }

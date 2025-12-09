@@ -21,14 +21,14 @@ fn Convert(o: Core.Optional(i32*)) -> Core.Optional(i32) {
 }
 
 fn AddOrRemoveConst(a: i32, b: const i32) {
-  var oa: Core.Optional(i32) = a;
-  var coa: const Core.Optional(i32) = a;
-  var oca: Core.Optional(const i32) = a;
-  var coca: const Core.Optional(const i32) = a;
-  var ob: Core.Optional(i32) = b;
-  var cob: const Core.Optional(i32) = b;
-  var ocb: Core.Optional(const i32) = b;
-  var cocb: const Core.Optional(const i32) = b;
+  var _: Core.Optional(i32) = a;
+  var _: const Core.Optional(i32) = a;
+  var _: Core.Optional(const i32) = a;
+  var _: const Core.Optional(const i32) = a;
+  var _: Core.Optional(i32) = b;
+  var _: const Core.Optional(i32) = b;
+  var _: Core.Optional(const i32) = b;
+  var _: const Core.Optional(const i32) = b;
 }
 
 // CHECK:STDOUT: ; ModuleID = 'optional.carbon'
@@ -54,30 +54,30 @@ fn AddOrRemoveConst(a: i32, b: const i32) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CAddOrRemoveConst.Main(i32 %a, i32 %b) #0 !dbg !17 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %oa.var = alloca { i32, i1 }, align 8, !dbg !24
-// CHECK:STDOUT:   %coa.var = alloca { i32, i1 }, align 8, !dbg !25
-// CHECK:STDOUT:   %oca.var = alloca { i32, i1 }, align 8, !dbg !26
-// CHECK:STDOUT:   %coca.var = alloca { i32, i1 }, align 8, !dbg !27
-// CHECK:STDOUT:   %ob.var = alloca { i32, i1 }, align 8, !dbg !28
-// CHECK:STDOUT:   %cob.var = alloca { i32, i1 }, align 8, !dbg !29
-// CHECK:STDOUT:   %ocb.var = alloca { i32, i1 }, align 8, !dbg !30
-// CHECK:STDOUT:   %cocb.var = alloca { i32, i1 }, align 8, !dbg !31
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %oa.var), !dbg !24
-// CHECK:STDOUT:   call void @"_CConvert.8432e4edee1e3855:ImplicitAs.Core.76895dc907db9a3f"(ptr %oa.var, i32 %a), !dbg !24
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %coa.var), !dbg !25
-// CHECK:STDOUT:   call void @"_CConvert.b911a754667cc32d:ImplicitAs.Core.2ad288ff76f5b81b"(ptr %coa.var, i32 %a), !dbg !25
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %oca.var), !dbg !26
-// CHECK:STDOUT:   call void @"_CConvert.8432e4edee1e3855:ImplicitAs.Core.e4d8d712312f87c7"(ptr %oca.var, i32 %a), !dbg !26
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %coca.var), !dbg !27
-// CHECK:STDOUT:   call void @"_CConvert.b911a754667cc32d:ImplicitAs.Core.cb259d1cd9f87a45"(ptr %coca.var, i32 %a), !dbg !27
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ob.var), !dbg !28
-// CHECK:STDOUT:   call void @"_CConvert.342b90dd3c63ffbd:ImplicitAs.Core.2ad288ff76f5b81b"(ptr %ob.var, i32 %b), !dbg !28
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %cob.var), !dbg !29
-// CHECK:STDOUT:   call void @"_CConvert.342b90dd3c63ffbd:ImplicitAs.Core.4625c39d8336f8c2"(ptr %cob.var, i32 %b), !dbg !29
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ocb.var), !dbg !30
-// CHECK:STDOUT:   call void @"_CConvert.342b90dd3c63ffbd:ImplicitAs.Core.cb259d1cd9f87a45"(ptr %ocb.var, i32 %b), !dbg !30
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %cocb.var), !dbg !31
-// CHECK:STDOUT:   call void @"_CConvert.342b90dd3c63ffbd:ImplicitAs.Core.84138ae972513b15"(ptr %cocb.var, i32 %b), !dbg !31
+// CHECK:STDOUT:   %_.var.loc24 = alloca { i32, i1 }, align 8, !dbg !24
+// CHECK:STDOUT:   %_.var.loc25 = alloca { i32, i1 }, align 8, !dbg !25
+// CHECK:STDOUT:   %_.var.loc26 = alloca { i32, i1 }, align 8, !dbg !26
+// CHECK:STDOUT:   %_.var.loc27 = alloca { i32, i1 }, align 8, !dbg !27
+// CHECK:STDOUT:   %_.var.loc28 = alloca { i32, i1 }, align 8, !dbg !28
+// CHECK:STDOUT:   %_.var.loc29 = alloca { i32, i1 }, align 8, !dbg !29
+// CHECK:STDOUT:   %_.var.loc30 = alloca { i32, i1 }, align 8, !dbg !30
+// CHECK:STDOUT:   %_.var.loc31 = alloca { i32, i1 }, align 8, !dbg !31
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc24), !dbg !24
+// CHECK:STDOUT:   call void @"_CConvert.8432e4edee1e3855:ImplicitAs.Core.76895dc907db9a3f"(ptr %_.var.loc24, i32 %a), !dbg !24
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc25), !dbg !25
+// CHECK:STDOUT:   call void @"_CConvert.b911a754667cc32d:ImplicitAs.Core.2ad288ff76f5b81b"(ptr %_.var.loc25, i32 %a), !dbg !25
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc26), !dbg !26
+// CHECK:STDOUT:   call void @"_CConvert.8432e4edee1e3855:ImplicitAs.Core.e4d8d712312f87c7"(ptr %_.var.loc26, i32 %a), !dbg !26
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc27), !dbg !27
+// CHECK:STDOUT:   call void @"_CConvert.b911a754667cc32d:ImplicitAs.Core.cb259d1cd9f87a45"(ptr %_.var.loc27, i32 %a), !dbg !27
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc28), !dbg !28
+// CHECK:STDOUT:   call void @"_CConvert.342b90dd3c63ffbd:ImplicitAs.Core.2ad288ff76f5b81b"(ptr %_.var.loc28, i32 %b), !dbg !28
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc29), !dbg !29
+// CHECK:STDOUT:   call void @"_CConvert.342b90dd3c63ffbd:ImplicitAs.Core.4625c39d8336f8c2"(ptr %_.var.loc29, i32 %b), !dbg !29
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc30), !dbg !30
+// CHECK:STDOUT:   call void @"_CConvert.342b90dd3c63ffbd:ImplicitAs.Core.cb259d1cd9f87a45"(ptr %_.var.loc30, i32 %b), !dbg !30
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc31), !dbg !31
+// CHECK:STDOUT:   call void @"_CConvert.342b90dd3c63ffbd:ImplicitAs.Core.84138ae972513b15"(ptr %_.var.loc31, i32 %b), !dbg !31
 // CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

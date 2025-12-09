@@ -13,7 +13,7 @@
 fn F() -> (i32, i32) { return (12, 24); }
 
 fn Run() {
-  var t: array(i32, 2) = F();
+  var _: array(i32, 2) = F();
 }
 
 // CHECK:STDOUT: ; ModuleID = 'assign_return_value.carbon'
@@ -33,18 +33,18 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @main() #0 !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %t.var = alloca [2 x i32], align 4, !dbg !13
+// CHECK:STDOUT:   %_.var = alloca [2 x i32], align 4, !dbg !13
 // CHECK:STDOUT:   %.loc16_28.1.temp = alloca { i32, i32 }, align 8, !dbg !14
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %t.var), !dbg !13
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !13
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_28.1.temp), !dbg !14
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_28.1.temp), !dbg !14
 // CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc16_28.1.temp, i32 0, i32 0, !dbg !14
 // CHECK:STDOUT:   %.loc16_28.3 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !14
-// CHECK:STDOUT:   %.loc16_28.4.array.index = getelementptr inbounds [2 x i32], ptr %t.var, i32 0, i64 0, !dbg !14
+// CHECK:STDOUT:   %.loc16_28.4.array.index = getelementptr inbounds [2 x i32], ptr %_.var, i32 0, i64 0, !dbg !14
 // CHECK:STDOUT:   store i32 %.loc16_28.3, ptr %.loc16_28.4.array.index, align 4, !dbg !14
 // CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc16_28.1.temp, i32 0, i32 1, !dbg !14
 // CHECK:STDOUT:   %.loc16_28.6 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !14
-// CHECK:STDOUT:   %.loc16_28.7.array.index = getelementptr inbounds [2 x i32], ptr %t.var, i32 0, i64 1, !dbg !14
+// CHECK:STDOUT:   %.loc16_28.7.array.index = getelementptr inbounds [2 x i32], ptr %_.var, i32 0, i64 1, !dbg !14
 // CHECK:STDOUT:   store i32 %.loc16_28.6, ptr %.loc16_28.7.array.index, align 4, !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }

@@ -55,7 +55,7 @@ interface I(T:! type) {
 class C(U:! type) {}
 
 impl forall [V:! type] C(V) as I(V) {
-  fn F[self: Self](x: A) -> B { return {}; }
+  fn F[self: Self](_: A) -> B { return {}; }
 }
 
 fn Call(c: C(()), b: B) -> A {
@@ -225,7 +225,7 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CF.C.Main:I.Main.e43630e9a6c38c3f"(ptr sret({}) %return, ptr %self, ptr %x) #0 !dbg !26 {
+// CHECK:STDOUT: define linkonce_odr void @"_CF.C.Main:I.Main.e43630e9a6c38c3f"(ptr sret({}) %return, ptr %self, ptr %_) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @B.val.loc18_42, i64 0, i1 false), !dbg !30
 // CHECK:STDOUT:   ret void, !dbg !30

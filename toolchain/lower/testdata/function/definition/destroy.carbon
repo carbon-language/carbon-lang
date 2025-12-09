@@ -16,7 +16,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-fn F(x: C) {
+fn F(_: C) {
 }
 
 fn G();
@@ -34,7 +34,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-fn F(var x: C) {
+fn F(var _: C) {
 }
 
 fn G();
@@ -63,12 +63,12 @@ fn Forward() -> C {
 }
 
 fn InitVar() {
-  var local: C = F();
+  var _: C = F();
   G();
 }
 
 fn InitLet() {
-  let local: C = F();
+  let _: C = F();
   G();
 }
 
@@ -78,7 +78,7 @@ fn InitLet() {
 // CHECK:STDOUT: @C.val.loc12_6.3 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.Main(ptr %x) #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CF.Main(ptr %_) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
@@ -133,7 +133,7 @@ fn InitLet() {
 // CHECK:STDOUT: @C.val.loc6_6.2 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.Main(ptr %x) #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CF.Main(ptr %_) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
@@ -206,9 +206,9 @@ fn InitLet() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CInitVar.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %local.var = alloca {}, align 8, !dbg !15
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %local.var), !dbg !15
-// CHECK:STDOUT:   call void @_CF.Main(ptr %local.var), !dbg !16
+// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !15
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !15
+// CHECK:STDOUT:   call void @_CF.Main(ptr %_.var), !dbg !16
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
@@ -216,9 +216,9 @@ fn InitLet() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CInitLet.Main() #0 !dbg !19 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_20.1.temp = alloca {}, align 8, !dbg !20
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_20.1.temp), !dbg !20
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc22_20.1.temp), !dbg !20
+// CHECK:STDOUT:   %.loc22_16.1.temp = alloca {}, align 8, !dbg !20
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_16.1.temp), !dbg !20
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc22_16.1.temp), !dbg !20
 // CHECK:STDOUT:   call void @_CG.Main(), !dbg !21
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
@@ -255,10 +255,10 @@ fn InitLet() {
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{null}
 // CHECK:STDOUT: !15 = !DILocation(line: 17, column: 3, scope: !12)
-// CHECK:STDOUT: !16 = !DILocation(line: 17, column: 18, scope: !12)
+// CHECK:STDOUT: !16 = !DILocation(line: 17, column: 14, scope: !12)
 // CHECK:STDOUT: !17 = !DILocation(line: 18, column: 3, scope: !12)
 // CHECK:STDOUT: !18 = !DILocation(line: 16, column: 1, scope: !12)
 // CHECK:STDOUT: !19 = distinct !DISubprogram(name: "InitLet", linkageName: "_CInitLet.Main", scope: null, file: !3, line: 21, type: !13, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !20 = !DILocation(line: 22, column: 18, scope: !19)
+// CHECK:STDOUT: !20 = !DILocation(line: 22, column: 14, scope: !19)
 // CHECK:STDOUT: !21 = !DILocation(line: 23, column: 3, scope: !19)
 // CHECK:STDOUT: !22 = !DILocation(line: 21, column: 1, scope: !19)

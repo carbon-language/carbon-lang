@@ -26,7 +26,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "global.h";
 
 fn MyF() {
-  let local: Cpp.C = Cpp.global;
+  let _: Cpp.C = Cpp.global;
 }
 
 // CHECK:STDOUT: ; ModuleID = 'import_global.carbon'

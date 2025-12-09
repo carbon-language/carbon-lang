@@ -15,7 +15,7 @@ fn MakeImplicitEmptyTuple() {
 }
 
 fn Main() {
-  var b: () = MakeImplicitEmptyTuple();
+  var _: () = MakeImplicitEmptyTuple();
 }
 
 // CHECK:STDOUT: ; ModuleID = 'return_implicit.carbon'
@@ -30,8 +30,8 @@ fn Main() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %b.var = alloca {}, align 8, !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !9
+// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !9
 // CHECK:STDOUT:   call void @_CMakeImplicitEmptyTuple.Main(), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }

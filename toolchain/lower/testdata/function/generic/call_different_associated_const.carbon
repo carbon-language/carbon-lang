@@ -20,7 +20,7 @@ interface I {
 }
 
 fn G(U:! I) {
-  var x: U.T*;
+  var _: U.T*;
 }
 
 class C {}
@@ -51,8 +51,8 @@ fn H() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CG.Main.105e251602f0e987() #0 !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x.var = alloca ptr, align 8, !dbg !11
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !11
+// CHECK:STDOUT:   %_.var = alloca ptr, align 8, !dbg !11
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !11
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

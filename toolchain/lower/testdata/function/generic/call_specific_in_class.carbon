@@ -40,7 +40,7 @@ fn M() {
   F(var_i32);
   var var_f64: f64 = 0.0;
   F(var_f64);
-  var c: C;
+  var _: C;
   F(C);
 }
 
@@ -57,7 +57,7 @@ fn M() {
 // CHECK:STDOUT:   %ptr_i8.var = alloca ptr, align 8, !dbg !9
 // CHECK:STDOUT:   %var_i32.var = alloca i32, align 4, !dbg !10
 // CHECK:STDOUT:   %var_f64.var = alloca double, align 8, !dbg !11
-// CHECK:STDOUT:   %c.var = alloca {}, align 8, !dbg !12
+// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !12
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr_i32.var), !dbg !7
 // CHECK:STDOUT:   %.loc34_5 = load ptr, ptr %ptr_i32.var, align 8, !dbg !13
 // CHECK:STDOUT:   %F.call.loc34 = call ptr @_CF.Main.4b30cda44e16b9ec(ptr %.loc34_5), !dbg !14
@@ -75,7 +75,7 @@ fn M() {
 // CHECK:STDOUT:   store double 0.000000e+00, ptr %var_f64.var, align 8, !dbg !11
 // CHECK:STDOUT:   %.loc42_5 = load double, ptr %var_f64.var, align 8, !dbg !21
 // CHECK:STDOUT:   %F.call.loc42 = call double @_CF.Main.286b0f7890e5304c(double %.loc42_5), !dbg !22
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !12
 // CHECK:STDOUT:   %F.call.loc44 = call %type @_CF.Main.93e33f284107e304(%type zeroinitializer), !dbg !23
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }

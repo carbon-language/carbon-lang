@@ -129,6 +129,7 @@ fn MyF() {
   var value: i32 = Cpp.SimpleReturnValue();
   value = Cpp.SimpleReturnValue(3);
   value = Cpp.SimpleReturnValue(3, 4);
+  let _: i32 = value;
 }
 
 // CHECK:STDOUT: ; ModuleID = 'import_function_decl.carbon'
@@ -368,7 +369,8 @@ fn MyF() {
 // CHECK:STDOUT:   store i32 %SimpleReturnValue__carbon_thunk.call.loc12, ptr %value.var, align 4, !dbg !16
 // CHECK:STDOUT:   %SimpleReturnValue.call = call i32 @_Z17SimpleReturnValueii(i32 3, i32 4), !dbg !17
 // CHECK:STDOUT:   store i32 %SimpleReturnValue.call, ptr %value.var, align 4, !dbg !18
-// CHECK:STDOUT:   ret void, !dbg !19
+// CHECK:STDOUT:   %.loc14_16 = load i32, ptr %value.var, align 4, !dbg !19
+// CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z13NoReturnValueii(i32, i32)
@@ -438,4 +440,5 @@ fn MyF() {
 // CHECK:STDOUT: !16 = !DILocation(line: 12, column: 3, scope: !7)
 // CHECK:STDOUT: !17 = !DILocation(line: 13, column: 11, scope: !7)
 // CHECK:STDOUT: !18 = !DILocation(line: 13, column: 3, scope: !7)
-// CHECK:STDOUT: !19 = !DILocation(line: 6, column: 1, scope: !7)
+// CHECK:STDOUT: !19 = !DILocation(line: 14, column: 16, scope: !7)
+// CHECK:STDOUT: !20 = !DILocation(line: 6, column: 1, scope: !7)

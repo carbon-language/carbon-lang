@@ -54,7 +54,7 @@ fn Make() {
   // mangled name for D (a complete object constructor), which should call
   // constructors with `...C2` mangled names for A, B, and C (base subobject
   // constructors).
-  var d: Cpp.D = Cpp.D.D();
+  var _: Cpp.D = Cpp.D.D();
 }
 
 fn AccessD(d: Cpp.D) -> i32 {
@@ -111,10 +111,10 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMake.Main() #0 !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %d.var = alloca [40 x i8], align 1, !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %d.var), !dbg !10
-// CHECK:STDOUT:   call void @_ZN1DC1Ev.carbon_thunk(ptr %d.var), !dbg !11
-// CHECK:STDOUT:   call void @_ZN1DD1Ev(ptr %d.var), !dbg !10
+// CHECK:STDOUT:   %_.var = alloca [40 x i8], align 1, !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !10
+// CHECK:STDOUT:   call void @_ZN1DC1Ev.carbon_thunk(ptr %_.var), !dbg !11
+// CHECK:STDOUT:   call void @_ZN1DD1Ev(ptr %_.var), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -10,13 +10,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/definition/params_two.carbon
 
-fn Foo(a: i32, b: i32) {}
+fn Foo(_: i32, _: i32) {}
 
 // CHECK:STDOUT: ; ModuleID = 'params_two.carbon'
 // CHECK:STDOUT: source_filename = "params_two.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CFoo.Main(i32 %a, i32 %b) #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CFoo.Main(i32 %_, i32 %_1) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
