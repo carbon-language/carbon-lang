@@ -257,9 +257,8 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
     // In an `extend` decl, errors get propagated into the parent scope just as
     // names do.
     if (extend) {
-      context.name_scopes()
-          .Get(context.scope_stack().PeekNameScopeId())
-          .set_has_error();
+      auto scope_id = context.scope_stack().PeekNameScopeId();
+      context.name_scopes().Get(scope_id).set_has_error();
     }
     DiscardGenericDecl(context);
     return true;
