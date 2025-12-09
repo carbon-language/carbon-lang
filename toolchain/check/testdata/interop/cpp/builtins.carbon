@@ -14,7 +14,7 @@
 
 library "[[@TEST_NAME]]";
 
-import Cpp inline "";
+import Cpp;
 
 fn F() {
   //@dump-sem-ir-begin
@@ -48,7 +48,7 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-import Cpp inline "";
+import Cpp;
 
 fn F() {
   //@dump-sem-ir-begin
@@ -68,7 +68,7 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-import Cpp inline "";
+import Cpp;
 
 fn F() {
   // CHECK:STDERR: fail_not_builtin.carbon:[[@LINE+4]]:21: error: member name `not_builtin` not found in `Cpp` [MemberNameNotFoundInInstScope]

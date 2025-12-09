@@ -52,6 +52,8 @@ interface I {
 // CHECK:STDOUT:   .C = %C.decl
 // CHECK:STDOUT:   .I = <poisoned>
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @C.as.I.impl(@I.%Self: %I.type) {

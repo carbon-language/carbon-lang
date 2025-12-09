@@ -94,10 +94,17 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
                          std::optional<AccessInfo> access_info = std::nullopt)
     -> LookupResult;
 
+// Returns the `InstId` corresponding to a qualified name in the core package,
+// or BuiltinErrorInst if not found.
+auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
+                      llvm::ArrayRef<llvm::StringRef> names) -> SemIR::InstId;
+
 // Returns the `InstId` corresponding to a name in the core package, or
 // BuiltinErrorInst if not found.
-auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
-                      llvm::StringRef name) -> SemIR::InstId;
+inline auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
+                             llvm::StringRef name) -> SemIR::InstId {
+  return LookupNameInCore(context, loc_id, llvm::ArrayRef{name});
+}
 
 // Checks whether a name is accessible in the given access context. Produces a
 // diagnostic if not.

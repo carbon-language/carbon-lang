@@ -72,6 +72,8 @@ interface I {
 // CHECK:STDOUT:   .U = @U.%assoc1
 // CHECK:STDOUT:   .G = %assoc2
 // CHECK:STDOUT:   witness = (%I.F.decl, %U, %I.G.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @U(@I.%Self: %I.type) {

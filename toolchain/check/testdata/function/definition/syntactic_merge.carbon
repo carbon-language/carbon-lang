@@ -940,9 +940,10 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:     %a.param_patt: %pattern_type = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %const = value_param call_param0
-// CHECK:STDOUT:     %.loc18: type = splice_block %const [concrete = constants.%const] {
+// CHECK:STDOUT:     %.loc18: type = splice_block %const.loc18_11 [concrete = constants.%const] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %const: type = const_type %C.ref [concrete = constants.%const]
+// CHECK:STDOUT:       %const.loc18_18: type = const_type %C.ref [concrete = constants.%const]
+// CHECK:STDOUT:       %const.loc18_11: type = const_type %const.loc18_18 [concrete = constants.%const]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: %const = value_binding a, %a.param
 // CHECK:STDOUT:   }

@@ -15,6 +15,7 @@
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/generic.h"
+#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"
 
 namespace Carbon::Check {
@@ -496,7 +497,8 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
 // TODO: Consider tracking the Core package in SemIR so we don't need to use
 // name lookup to find it.
 static auto GetCorePackage(Context& context, SemIR::LocId loc_id,
-                           llvm::StringRef name) -> SemIR::NameScopeId {
+                           llvm::ArrayRef<llvm::StringRef> names)
+    -> SemIR::NameScopeId {
   auto packaging = context.parse_tree().packaging_decl();
   if (packaging && packaging->names.package_id == PackageNameId::Core) {
     return SemIR::NameScopeId::Package;
@@ -520,33 +522,54 @@ static auto GetCorePackage(Context& context, SemIR::LocId loc_id,
       CoreNotFound, Error,
       "`Core.{0}` implicitly referenced here, but package `Core` not found",
       std::string);
-  context.emitter().Emit(loc_id, CoreNotFound, name.str());
+  context.emitter().Emit(loc_id, CoreNotFound, llvm::join(names, "."));
   return SemIR::NameScopeId::None;
 }
 
 auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
-                      llvm::StringRef name) -> SemIR::InstId {
-  auto core_package_id = GetCorePackage(context, loc_id, name);
+                      llvm::ArrayRef<llvm::StringRef> names) -> SemIR::InstId {
+  CARBON_CHECK(!names.empty());
+
+  auto core_package_id = GetCorePackage(context, loc_id, names);
   if (!core_package_id.has_value()) {
     return SemIR::ErrorInst::InstId;
   }
 
-  auto name_id = SemIR::NameId::ForIdentifier(context.identifiers().Add(name));
-  auto scope_result =
-      LookupNameInExactScope(context, loc_id, name_id, core_package_id,
-                             context.name_scopes().Get(core_package_id));
-  if (!scope_result.is_found()) {
-    CARBON_DIAGNOSTIC(
-        CoreNameNotFound, Error,
-        "name `Core.{0}` implicitly referenced here, but not found",
-        SemIR::NameId);
-    context.emitter().Emit(loc_id, CoreNameNotFound, name_id);
-    return SemIR::ErrorInst::InstId;
+  auto inst_id = SemIR::InstId::None;
+  for (auto name : names) {
+    auto name_id =
+        SemIR::NameId::ForIdentifier(context.identifiers().Add(name));
+
+    auto scope_id = SemIR::NameScopeId::None;
+    if (inst_id.has_value()) {
+      auto namespace_inst = context.insts().TryGetAs<SemIR::Namespace>(inst_id);
+      if (namespace_inst) {
+        scope_id = namespace_inst->name_scope_id;
+      }
+    } else {
+      scope_id = core_package_id;
+    }
+
+    auto scope_result =
+        scope_id.has_value()
+            ? LookupNameInExactScope(context, loc_id, name_id, scope_id,
+                                     context.name_scopes().Get(scope_id))
+            : SemIR::ScopeLookupResult::MakeNotFound();
+    if (!scope_result.is_found()) {
+      CARBON_DIAGNOSTIC(
+          CoreNameNotFound, Error,
+          "name `Core.{0}` implicitly referenced here, but not found",
+          std::string);
+      context.emitter().Emit(loc_id, CoreNameNotFound, llvm::join(names, "."));
+      return SemIR::ErrorInst::InstId;
+    }
+
+    // Look through import_refs and aliases.
+    inst_id = context.constant_values().GetConstantInstId(
+        scope_result.target_inst_id());
   }
 
-  // Look through import_refs and aliases.
-  return context.constant_values().GetConstantInstId(
-      scope_result.target_inst_id());
+  return inst_id;
 }
 
 auto DiagnoseDuplicateName(Context& context, SemIR::NameId name_id,

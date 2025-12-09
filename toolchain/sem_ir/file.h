@@ -36,6 +36,7 @@
 #include "toolchain/sem_ir/name.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/named_constraint.h"
+#include "toolchain/sem_ir/require_impls.h"
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
@@ -92,6 +93,12 @@ class File : public Printable<File> {
     Yaml::Print(out, OutputYaml(include_singletons));
   }
   auto OutputYaml(bool include_singletons) const -> Yaml::OutputMapping;
+
+  // Returns the set of all insts corresponding to expressions that are used
+  // in positions where a `ref` tag is needed. Should only be called if
+  // has_errors is false. This is intended for validation purposes, and should
+  // only be called if !NDEBUG, because it walks the entire IR.
+  auto CollectRefTagsNeeded() const -> Set<SemIR::InstId>;
 
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
@@ -177,6 +184,16 @@ class File : public Printable<File> {
   }
   auto named_constraints() const -> const NamedConstraintStore& {
     return named_constraints_;
+  }
+  auto require_impls() -> RequireImplsStore& { return require_impls_; }
+  auto require_impls() const -> const RequireImplsStore& {
+    return require_impls_;
+  }
+  auto require_impls_blocks() -> RequireImplsBlockStore& {
+    return require_impls_blocks_;
+  }
+  auto require_impls_blocks() const -> const RequireImplsBlockStore& {
+    return require_impls_blocks_;
   }
   auto associated_constants() -> AssociatedConstantStore& {
     return associated_constants_;
@@ -328,6 +345,12 @@ class File : public Printable<File> {
 
   // Storage for named constraints.
   NamedConstraintStore named_constraints_;
+
+  // Storage for interface requirements.
+  RequireImplsStore require_impls_;
+
+  // Storage for blocks of RequireImpls.
+  RequireImplsBlockStore require_impls_blocks_;
 
   // Storage for associated constants.
   AssociatedConstantStore associated_constants_;

@@ -264,6 +264,8 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     .Self = %Self.loc3_23.1
 // CHECK:STDOUT:     .X = @X.%assoc0
 // CHECK:STDOUT:     witness = (%X)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -605,6 +607,8 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     .Self = %Self.loc3_23.1
 // CHECK:STDOUT:     .X = @X.%assoc0
 // CHECK:STDOUT:     witness = (%X)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -614,6 +618,8 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @X(@Z.%T.loc3_13.2: type, @Z.%Self.loc3_23.1: @Z.%Z.type (%Z.type.4d7)) {
@@ -848,7 +854,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %t.patt: @F.%pattern_type.loc9_20 (%pattern_type.e68) = ref_binding_pattern t [concrete]
-// CHECK:STDOUT:     %t.param_patt: @F.%pattern_type.loc9_20 (%pattern_type.e68) = ref_param_pattern %t.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %t.param_patt: @F.%pattern_type.loc9_20 (%pattern_type.e68) = var_param_pattern %t.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %t.var_patt: @F.%pattern_type.loc9_20 (%pattern_type.e68) = var_pattern %t.param_patt [concrete]
 // CHECK:STDOUT:     %return.patt: @F.%pattern_type.loc9_26 (%pattern_type.a60) = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc9_26 (%pattern_type.a60) = out_param_pattern %return.patt, call_param1 [concrete]
@@ -879,6 +885,8 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Type = @Type.%assoc0
 // CHECK:STDOUT:   witness = (%Type)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @Type(@Ptr.%Self: %Ptr.type) {
@@ -1047,7 +1055,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.3d8 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %t.patt: @F.%pattern_type.loc9_19 (%pattern_type.6f0) = ref_binding_pattern t [concrete]
-// CHECK:STDOUT:     %t.param_patt: @F.%pattern_type.loc9_19 (%pattern_type.6f0) = ref_param_pattern %t.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %t.param_patt: @F.%pattern_type.loc9_19 (%pattern_type.6f0) = var_param_pattern %t.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %t.var_patt: @F.%pattern_type.loc9_19 (%pattern_type.6f0) = var_pattern %t.param_patt [concrete]
 // CHECK:STDOUT:     %return.patt: @F.%pattern_type.loc9_25 (%pattern_type.425) = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc9_25 (%pattern_type.425) = out_param_pattern %return.patt, call_param1 [concrete]
@@ -1084,6 +1092,8 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Type = @Type.%assoc0
 // CHECK:STDOUT:   witness = (%Type)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @Type(@Ptr.%Self: %Ptr.type) {
@@ -1252,7 +1262,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.3d8 = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:     %t.patt: @F.%pattern_type.loc9_19 (%pattern_type.6f0) = ref_binding_pattern t [concrete]
-// CHECK:STDOUT:     %t.param_patt: @F.%pattern_type.loc9_19 (%pattern_type.6f0) = ref_param_pattern %t.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %t.param_patt: @F.%pattern_type.loc9_19 (%pattern_type.6f0) = var_param_pattern %t.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %t.var_patt: @F.%pattern_type.loc9_19 (%pattern_type.6f0) = var_pattern %t.param_patt [concrete]
 // CHECK:STDOUT:     %return.patt: @F.%pattern_type.loc9_25 (%pattern_type.425) = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc9_25 (%pattern_type.425) = out_param_pattern %return.patt, call_param1 [concrete]
@@ -1288,6 +1298,8 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Type = @Type.%assoc0
 // CHECK:STDOUT:   witness = (%Type)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic assoc_const @Type(@Ptr.%Self: %Ptr.type) {

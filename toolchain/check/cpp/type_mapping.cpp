@@ -149,6 +149,9 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
     case SemIR::TypeLiteralInfo::Char: {
       return context.ast_context().CharTy;
     }
+    case SemIR::TypeLiteralInfo::CppNullptrT: {
+      return context.ast_context().NullPtrTy;
+    }
     case SemIR::TypeLiteralInfo::Str: {
       return LookupCppType(context, {"std", "string_view"});
     }

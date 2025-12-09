@@ -98,6 +98,20 @@ fn Var() {
   var x: Cpp.X = Cpp.Make();
 }
 
+// --- indirect_return_with_args.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+class C {};
+class D {};
+C f(D);
+''';
+
+fn Call(x: Cpp.D) -> Cpp.C {
+  return Cpp.f(x);
+}
+
 // CHECK:STDOUT: ; ModuleID = 'import_ints.carbon'
 // CHECK:STDOUT: source_filename = "import_ints.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -481,3 +495,53 @@ fn Var() {
 // CHECK:STDOUT: !16 = !DILocation(line: 13, column: 3, scope: !15)
 // CHECK:STDOUT: !17 = !DILocation(line: 13, column: 18, scope: !15)
 // CHECK:STDOUT: !18 = !DILocation(line: 12, column: 1, scope: !15)
+// CHECK:STDOUT: ; ModuleID = 'indirect_return_with_args.carbon'
+// CHECK:STDOUT: source_filename = "indirect_return_with_args.carbon"
+// CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
+// CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
+// CHECK:STDOUT:
+// CHECK:STDOUT: %class.D = type { i8 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CCall.Main(ptr sret({}) %return, ptr %x) #0 !dbg !7 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_Z1f1D.carbon_thunk(ptr %x, ptr %return), !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !11
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress
+// CHECK:STDOUT: define dso_local void @_Z1f1D.carbon_thunk(ptr %0, ptr %return) #1 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %agg.tmp = alloca %class.D, align 1
+// CHECK:STDOUT:   %undef.agg.tmp = alloca %class.D, align 1
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8
+// CHECK:STDOUT:   %1 = load ptr, ptr %return.addr, align 8
+// CHECK:STDOUT:   %2 = load ptr, ptr %.addr, align 8
+// CHECK:STDOUT:   call void @_Z1f1D()
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_Z1f1D() #2
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { "no-trapping-math"="true" "stack-protector-buffer-size"="0" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
+// CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
+// CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !6 = !DIFile(filename: "indirect_return_with_args.carbon", directory: "")
+// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !6, line: 10, type: !8, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
+// CHECK:STDOUT: !9 = !{}
+// CHECK:STDOUT: !10 = !DILocation(line: 11, column: 10, scope: !7)
+// CHECK:STDOUT: !11 = !DILocation(line: 11, column: 3, scope: !7)

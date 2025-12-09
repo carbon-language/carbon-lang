@@ -101,6 +101,8 @@ interface BeingDefined {
 // CHECK:STDOUT:   .BeingDefined = <poisoned>
 // CHECK:STDOUT:   .H = %assoc0
 // CHECK:STDOUT:   witness = (%BeingDefined.H.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();

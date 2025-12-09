@@ -27,6 +27,7 @@
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/kind_switch.h"
@@ -37,6 +38,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/custom_type_mapping.h"
+#include "toolchain/check/cpp/macros.h"
 #include "toolchain/check/cpp/thunk.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
@@ -44,6 +46,7 @@
 #include "toolchain/check/import.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
+#include "toolchain/check/member_access.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pattern.h"
@@ -102,7 +105,7 @@ static auto GenerateCppIncludesHeaderCode(
                   << "\n";
       // TODO: Inject a clang pragma here to produce an error if there are
       // unclosed scopes at the end of this inline C++ fragment.
-    } else {
+    } else if (import.library_id.has_value()) {
       // Translate `import Cpp library "foo.h";` into `#include "foo.h"`.
       GenerateLineMarker(context, code_stream,
                          context.tokens().GetLineNumber(
@@ -1104,6 +1107,12 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
   return TypeExpr::None;
 }
 
+static auto MapNullptrType(Context& context, SemIR::LocId loc_id) -> TypeExpr {
+  return ExprAsType(
+      context, loc_id,
+      LookupNameInCore(context, loc_id, {"CppCompat", "NullptrT"}));
+}
+
 // Maps a C++ builtin type to a Carbon type.
 // TODO: Support more builtin types.
 static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
@@ -1132,6 +1141,8 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
   } else if (type.isVoidType()) {
     return ExprAsType(context, Parse::NodeId::None,
                       SemIR::CppVoidType::TypeInstId);
+  } else if (type.isNullPtrType()) {
+    return MapNullptrType(context, loc_id);
   }
 
   return TypeExpr::None;
@@ -2095,10 +2106,10 @@ static auto IsTopCppScope(Context& context, SemIR::NameScopeId scope_id)
   return name_scope.parent_scope_id() == SemIR::NameScopeId::Package;
 }
 
-// For builtin names like `Cpp.long`, return the associated types.
-static auto LookupBuiltinTypes(Context& context, SemIR::LocId loc_id,
-                               SemIR::NameScopeId scope_id,
-                               SemIR::NameId name_id) -> SemIR::InstId {
+// For a builtin name like `Cpp.long`, returns the associated type.
+static auto LookupBuiltinName(Context& context, SemIR::LocId loc_id,
+                              SemIR::NameScopeId scope_id,
+                              SemIR::NameId name_id) -> SemIR::InstId {
   if (!IsTopCppScope(context, scope_id)) {
     return SemIR::InstId::None;
   }
@@ -2130,6 +2141,12 @@ static auto LookupBuiltinTypes(Context& context, SemIR::LocId loc_id,
           .Case("void", ast_context.VoidTy)
           .Default(clang::QualType());
   if (builtin_type.isNull()) {
+    if (*name == "nullptr") {
+      // Map `Cpp.nullptr` to an uninitialized value of type `Core.CppNullptrT`.
+      auto type_id = MapNullptrType(context, loc_id).type_id;
+      return GetOrAddInst<SemIR::UninitializedValue>(
+          context, SemIR::LocId::None, {.type_id = type_id});
+    }
     return SemIR::InstId::None;
   }
 
@@ -2225,14 +2242,14 @@ static auto ImportConstructorsIntoScope(Context& context, SemIR::LocId loc_id,
                                     naming_class, std::move(overload_set));
 }
 
-// Imports a builtin type from Clang to Carbon and adds the name into the
-// scope.
-static auto ImportBuiltinTypesIntoScope(Context& context, SemIR::LocId loc_id,
-                                        SemIR::NameScopeId scope_id,
-                                        SemIR::NameId name_id)
+// Attempts to import a builtin name from Clang to Carbon and adds the name into
+// the scope.
+static auto ImportBuiltinNameIntoScope(Context& context, SemIR::LocId loc_id,
+                                       SemIR::NameScopeId scope_id,
+                                       SemIR::NameId name_id)
     -> SemIR::ScopeLookupResult {
   SemIR::InstId builtin_inst_id =
-      LookupBuiltinTypes(context, loc_id, scope_id, name_id);
+      LookupBuiltinName(context, loc_id, scope_id, name_id);
   if (builtin_inst_id.has_value()) {
     AddNameToScope(context, scope_id, name_id, SemIR::AccessKind::Public,
                    builtin_inst_id);
@@ -2252,6 +2269,86 @@ static auto IsIncompleteClass(Context& context, SemIR::NameScopeId scope_id)
              context.classes().Get(class_decl->class_id).self_type_id);
 }
 
+// Maps a Clang constant expression to a Carbon constant. Currently supports
+// only integer constants.
+// TODO: Add support for the other constant types for which a C++ to Carbon type
+// mapping exists.
+static auto MapConstant(Context& context, SemIR::LocId loc_id,
+                        clang::Expr* expr) -> SemIR::InstId {
+  CARBON_CHECK(expr, "empty expression");
+  auto* integer_literal = dyn_cast<clang::IntegerLiteral>(expr);
+  if (!integer_literal) {
+    context.TODO(
+        loc_id, "Unsupported: constant type: " + expr->getType().getAsString());
+    return SemIR::ErrorInst::InstId;
+  }
+  SemIR::TypeId type_id =
+      MapType(context, loc_id, integer_literal->getType()).type_id;
+  if (!type_id.has_value()) {
+    CARBON_DIAGNOSTIC(InCppConstantMapping, Error, "invalid integer type");
+    context.emitter().Emit(loc_id, InCppConstantMapping);
+    return SemIR::ErrorInst::InstId;
+  }
+  auto int_id = context.ints().Add(integer_literal->getValue().getSExtValue());
+  auto inst_id = AddInstInNoBlock<SemIR::IntValue>(
+      context, loc_id, {.type_id = type_id, .int_id = int_id});
+  context.imports().push_back(inst_id);
+  return inst_id;
+}
+
+// Imports a macro definition into the scope. Currently supports only simple
+// object-like macros that expand to a constant integer value.
+// TODO: Add support for other macro types and non-integer literal values.
+static auto ImportMacro(Context& context, SemIR::LocId loc_id,
+                        SemIR::NameScopeId scope_id, SemIR::NameId name_id,
+                        clang::MacroInfo* macro_info)
+    -> SemIR::ScopeLookupResult {
+  clang::Expr* macro_expr =
+      TryEvaluateMacroToConstant(context, loc_id, name_id, macro_info);
+
+  if (!macro_expr) {
+    return SemIR::ScopeLookupResult::MakeNotFound();
+  }
+
+  auto inst_id = MapConstant(context, loc_id, macro_expr);
+  if (inst_id == SemIR::ErrorInst::InstId) {
+    return SemIR::ScopeLookupResult::MakeNotFound();
+  }
+
+  AddNameToScope(context, scope_id, name_id, SemIR::AccessKind::Public,
+                 inst_id);
+  return SemIR::ScopeLookupResult::MakeWrappedLookupResult(
+      inst_id, SemIR::AccessKind::Public);
+}
+
+// Looks up a macro definition in the top-level `Cpp` scope. Returns nullptr if
+// the macro is not found or the scope is not the top-level `Cpp` scope.
+static auto LookupMacro(Context& context, SemIR::NameScopeId scope_id,
+                        SemIR::NameId name_id) -> clang::MacroInfo* {
+  auto name_str_opt = context.names().GetAsStringIfIdentifier(name_id);
+  if (!name_str_opt || !IsTopCppScope(context, scope_id)) {
+    return nullptr;
+  }
+
+  clang::Preprocessor& preprocessor = context.clang_sema().getPreprocessor();
+  // TODO: Do the identifier lookup only once, rather than both here and in
+  // ClangLookupName.
+  clang::IdentifierInfo* identifier_info =
+      preprocessor.getIdentifierInfo(*name_str_opt);
+
+  if (!identifier_info) {
+    return nullptr;
+  }
+
+  clang::MacroInfo* macro_info = preprocessor.getMacroInfo(identifier_info);
+  if (macro_info && !macro_info->isUsedForHeaderGuard() &&
+      !macro_info->isFunctionLike() && !macro_info->isBuiltinMacro()) {
+    return macro_info;
+  }
+
+  return nullptr;
+}
+
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> SemIR::ScopeLookupResult {
@@ -2264,9 +2361,12 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
   if (IsIncompleteClass(context, scope_id)) {
     return SemIR::ScopeLookupResult::MakeError();
   }
+  if (clang::MacroInfo* macro_info = LookupMacro(context, scope_id, name_id)) {
+    return ImportMacro(context, loc_id, scope_id, name_id, macro_info);
+  }
   auto lookup = ClangLookupName(context, scope_id, name_id);
   if (!lookup) {
-    return ImportBuiltinTypesIntoScope(context, loc_id, scope_id, name_id);
+    return ImportBuiltinNameIntoScope(context, loc_id, scope_id, name_id);
   }
   // Access checks are performed separately by the Carbon name lookup logic.
   lookup->suppressAccessDiagnostics();
@@ -2280,6 +2380,7 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                                       lookup->getNamingClass(),
                                       std::move(overload_set));
   }
+
   if (!lookup->isSingleResult()) {
     // Clang will diagnose ambiguous lookup results for us.
     if (!lookup->isAmbiguous()) {

@@ -115,6 +115,10 @@ class Context {
     return field_decls_stack_;
   }
 
+  auto require_impls_stack() -> ArrayStack<SemIR::RequireImplsId>& {
+    return require_impls_stack_;
+  }
+
   auto decl_name_stack() -> DeclNameStack& { return decl_name_stack_; }
 
   auto decl_introducer_state_stack() -> DeclIntroducerStateStack& {
@@ -187,6 +191,13 @@ class Context {
 
   auto var_storage_map() -> Map<SemIR::InstId, SemIR::InstId>& {
     return var_storage_map_;
+  }
+
+  enum class RefTag { Present, NotRequired };
+
+  auto ref_tags() -> Map<SemIR::InstId, RefTag>& { return ref_tags_; }
+  auto ref_tags() const -> const Map<SemIR::InstId, RefTag>& {
+    return ref_tags_;
   }
 
   // During Choice typechecking, each alternative turns into a name binding on
@@ -267,6 +278,12 @@ class Context {
   auto interfaces() -> SemIR::InterfaceStore& { return sem_ir().interfaces(); }
   auto named_constraints() -> SemIR::NamedConstraintStore& {
     return sem_ir().named_constraints();
+  }
+  auto require_impls() -> SemIR::RequireImplsStore& {
+    return sem_ir().require_impls();
+  }
+  auto require_impls_blocks() -> SemIR::RequireImplsBlockStore& {
+    return sem_ir().require_impls_blocks();
   }
   auto associated_constants() -> SemIR::AssociatedConstantStore& {
     return sem_ir().associated_constants();
@@ -351,9 +368,10 @@ class Context {
 
   // The stack of instruction blocks being used for type information while
   // processing arguments. This is used in parallel with
-  // param_and_arg_refs_stack_. It's currently only used for struct literals,
-  // where we need to track names for a type separate from the literal
-  // arguments.
+  // param_and_arg_refs_stack_. It's used for:
+  // - Struct literals, where we need to track names for a type separate from
+  //   the literal arguments.
+  // - The associated entries witness table, while parsing an interface.
   InstBlockStack args_type_info_stack_;
 
   // The stack of StructTypeFields for in-progress StructTypeLiterals.
@@ -361,6 +379,10 @@ class Context {
 
   // The stack of FieldDecls for in-progress Class definitions.
   ArrayStack<SemIR::InstId> field_decls_stack_;
+
+  // The stack of RequireImpls for in-progress Interface and Constraint
+  // definitions.
+  ArrayStack<SemIR::RequireImplsId> require_impls_stack_;
 
   // The stack used for qualified declaration name construction.
   DeclNameStack decl_name_stack_;
@@ -429,6 +451,13 @@ class Context {
   // VarStorage insts are allocated, emitted, and stored in the map after
   // processing the enclosing full-pattern.
   Map<SemIR::InstId, SemIR::InstId> var_storage_map_;
+
+  // Insts in this map are syntactically permitted to be bound to a reference
+  // parameter, either because they've been explicitly tagged with `ref` in the
+  // source code, or because they appear in a position where that tag is not
+  // required, such as an operator operand (the RefTag value indicates which
+  // of those is the case).
+  Map<SemIR::InstId, RefTag> ref_tags_;
 
   // Each alternative in a Choice gets an entry here, they are stored in
   // declaration order. The vector is consumed and emptied at the end of the

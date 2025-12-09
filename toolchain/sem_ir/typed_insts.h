@@ -1296,7 +1296,8 @@ struct RefBindingPattern {
   EntityNameId entity_name_id;
 };
 
-// A by-reference `Call` parameter. See AnyParam for member documentation.
+// A by-reference `Call` parameter. See AnyParam for member documentation. Note
+// that this may correspond to either a RefParamPattern or a VarParamPattern.
 struct RefParam {
   // TODO: Make Parse::NodeId more specific.
   static constexpr auto Kind = InstKind::RefParam.Define<Parse::NodeId>(
@@ -1307,7 +1308,7 @@ struct RefParam {
   NameId pretty_name_id;
 };
 
-// A pattern that represents a by-reference `Call` parameter. See
+// A pattern that represents a `ref`-qualified `Call` parameter. See
 // `AnyParamPattern` for member documentation.
 struct RefParamPattern {
   // TODO: Make Parse::NodeId more specific.
@@ -1339,6 +1340,18 @@ struct RequireCompleteType {
   TypeId type_id;
   // The type that is required to be complete.
   TypeInstId complete_type_inst_id;
+};
+
+// A `require` declaration, such as `require Self impls Z`.
+struct RequireImplsDecl {
+  static constexpr auto Kind =
+      InstKind::RequireImplsDecl.Define<Parse::RequireDeclId>(
+          {.ir_name = "require_decl",
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+
+  RequireImplsId require_impls_id;
+  DeclInstBlockId decl_block_id;
 };
 
 // A requirement that `.Self` implements a facet type, specified as the first
@@ -1823,6 +1836,16 @@ struct UnboundElementType {
   TypeInstId element_type_inst_id;
 };
 
+// An uninitialized constant value.
+struct UninitializedValue {
+  static constexpr auto Kind =
+      InstKind::UninitializedValue.Define<Parse::NodeId>(
+          {.ir_name = "uninitialized_value",
+           .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+};
+
 // Converts from a value expression to an ephemeral reference expression, in
 // the case where the value representation of the type is a pointer. For
 // example, when indexing a value expression of array type, this is used to
@@ -1892,6 +1915,21 @@ struct ValueParamPattern {
   static constexpr auto Kind =
       InstKind::ValueParamPattern.Define<Parse::NodeId>(
           {.ir_name = "value_param_pattern",
+           .constant_kind = InstConstantKind::AlwaysUnique,
+           .is_lowered = false});
+
+  TypeId type_id;
+  InstId subpattern_id;
+  CallParamIndex index;
+};
+
+// A pattern that represents a `Call` parameter corresponding to a `var`
+// pattern. See `AnyParamPattern` for member documentation. Note that there is
+// no `VarParam` -- a `VarParamPattern` corresponds to a `RefParam`.
+struct VarParamPattern {
+  static constexpr auto Kind =
+      InstKind::VarParamPattern.Define<Parse::VariablePatternId>(
+          {.ir_name = "var_param_pattern",
            .constant_kind = InstConstantKind::AlwaysUnique,
            .is_lowered = false});
 

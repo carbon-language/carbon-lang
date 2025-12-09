@@ -214,6 +214,8 @@ class X(U:! type) {
 // CHECK:STDOUT:     .F = %assoc0.loc5_14.1
 // CHECK:STDOUT:     .Param = <poisoned>
 // CHECK:STDOUT:     witness = (%HasF.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -487,6 +489,8 @@ class X(U:! type) {
 // CHECK:STDOUT:     .F = %assoc0.loc5_25.1
 // CHECK:STDOUT:     .U = <poisoned>
 // CHECK:STDOUT:     witness = (%I.F.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

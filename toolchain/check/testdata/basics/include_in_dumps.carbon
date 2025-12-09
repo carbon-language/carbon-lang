@@ -108,6 +108,8 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- exclude/included_with_range.carbon
@@ -154,6 +156,8 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Op = %assoc0
 // CHECK:STDOUT:   witness = (%I.Op.decl)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.Op(@I.%Self: %I.type) {
@@ -246,6 +250,8 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.8df
 // CHECK:STDOUT:   .Op = imports.%Main.import_ref.9cd
 // CHECK:STDOUT:   witness = (imports.%Main.Op)
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: imports.%Main.import_ref.29a as imports.%Main.import_ref.301 [from "exclude/included_with_range.carbon"] {

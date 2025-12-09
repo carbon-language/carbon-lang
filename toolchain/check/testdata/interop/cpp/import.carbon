@@ -115,6 +115,43 @@ fn F() {
   //@dump-sem-ir-end
 }
 
+// ============================================================================
+// Import Cpp without a header
+// ============================================================================
+
+// --- no_header.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+fn F(input: Cpp.int) {
+  let output: i32 = input;
+}
+
+// ============================================================================
+// Import Cpp without a header, with a header and inline
+// ============================================================================
+
+// --- header_function.h
+
+auto MyHeaderFunction(int) -> void;
+
+// --- no_header_with_header_inline.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+import Cpp library "header_function.h";
+import Cpp inline '''
+auto MyInlineFunction(short) -> void;
+''';
+
+fn F() {
+  Cpp.MyHeaderFunction(8 as Cpp.int);
+  Cpp.MyInlineFunction(9 as Cpp.short);
+}
+
 // CHECK:STDOUT: --- fail_todo_import_struct_api.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
