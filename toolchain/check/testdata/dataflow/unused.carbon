@@ -70,7 +70,10 @@ fn RefParamUnused(unused ref y: i32) {
 
 library "unused_warning";
 
-fn LetUnused() {
+// --- todo_fail_local_let_named_not_used.carbon
+library "[[@TEST_NAME]]";
+
+fn F() {
   let x: i32 = 0;
   // TODO: warning, x is unused.
 }
