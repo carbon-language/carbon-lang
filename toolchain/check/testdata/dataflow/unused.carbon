@@ -11,8 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/dataflow/unused.carbon
 
 // --- todo_ensure_no_warning.carbon
-
-library "no_unused_warning";
+library "[[@TEST_NAME]]";
 
 fn ReturnVar() -> i32 {
   var x: i32 = 0;
