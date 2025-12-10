@@ -499,7 +499,7 @@ static auto GetCoreQualifiedName(llvm::ArrayRef<WellKnownIdentifier> qualifiers)
   RawStringOstream str;
   str << "Core";
   for (auto qualifier : qualifiers) {
-    str << "." << qualifier.name();
+    str << "." << qualifier;
   }
   return str.TakeStr();
 }
