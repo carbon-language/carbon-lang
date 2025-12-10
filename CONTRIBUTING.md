@@ -253,10 +253,10 @@ or using AI-based tools:
 2. **Each PR should be transparent about the tooling used** in proportion to how
    much of the PR was produced by the tool and whether the tool is a standard
    one for the project. For example, formatting with the standard tools is
-   reasonable to assume without further comment. But a PR that is largely
+   reasonable to assume without further comment. But if a PR is largely
    derived from running a specific Python script, regular expression, or
-   AI-based tool over the codebase, we ask the PR to be transparent about this.
-   Ideally, this include a prose description of how the tool was used to
+   AI-based tool over the codebase, we ask that its description is transparent about this.
+   Ideally, this should include a prose description of how the tool was used to
    formulate the change. Where relevant, we also encourage following the pattern
    established by the Fedora Project to mark commits with `Assisted-by: ...`.
 
@@ -267,7 +267,7 @@ with several other open source projects:
 -   [LLVM Developer Policy around AI generated code](https://llvm.org/docs/DeveloperPolicy.html#ai-generated-contributions)
 
 As the open source community evolves and learns how best to integrate these
-tools into the project and development workflows, we expect to reflect that with
+tools into project and development workflows, we expect to reflect that with
 updates and improvements here.
 
 ### Contribution guidelines and standards
