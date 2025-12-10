@@ -121,7 +121,10 @@ fn F() -> i32 {
   return var;
 }
 
-fn Underscore(x: i32) {
+// --- todo_fail_read_from_unused_local_var.carbon
+library "[[@TEST_NAME]]";
+	
+fn F(x: i32) {
   var _: i32 = x;
   var unused y: i32 = x;
   // TODO: error, marked "unused", but used
