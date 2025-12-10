@@ -144,7 +144,7 @@ fn Use() {
 // CHECK:STDOUT:   %ptr.58e: type = ptr_type %MaybeUnformed.275 [concrete]
 // CHECK:STDOUT:   %pattern_type.460: type = pattern_type %ptr.58e [concrete]
 // CHECK:STDOUT:   %reference.var: ref %MaybeUnformed.275 = var file.%reference.var_patt [concrete]
-// CHECK:STDOUT:   %addr.ef8: %ptr.58e = addr_of %reference.var [concrete]
+// CHECK:STDOUT:   %addr.75d: %ptr.58e = addr_of %reference.var [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -168,7 +168,7 @@ fn Use() {
 // CHECK:STDOUT:   %MaybeUnformed.loc12_70: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.275]
 // CHECK:STDOUT:   %.loc12_47.1: ref %MaybeUnformed.275 = as_compatible %reference.ref [concrete = constants.%reference.var]
 // CHECK:STDOUT:   %.loc12_47.2: ref %MaybeUnformed.275 = converted %reference.ref, %.loc12_47.1 [concrete = constants.%reference.var]
-// CHECK:STDOUT:   %addr: %ptr.58e = addr_of %.loc12_47.2 [concrete = constants.%addr.ef8]
+// CHECK:STDOUT:   %addr: %ptr.58e = addr_of %.loc12_47.2 [concrete = constants.%addr.75d]
 // CHECK:STDOUT:   %.loc12_31: type = splice_block %ptr.loc12 [concrete = constants.%ptr.58e] {
 // CHECK:STDOUT:     %Core.ref.loc12_10: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %MaybeUnformed.ref.loc12_14: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
@@ -220,8 +220,8 @@ fn Use() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %MaybeUnformed.275, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.495: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.90e: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.495 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.417: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.ec7: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.417 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -276,7 +276,7 @@ fn Use() {
 // CHECK:STDOUT:     %MaybeUnformed.loc27_30: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.275]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: %MaybeUnformed.275 = value_binding v, <error> [concrete = <error>]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %i.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.90e
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %i.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.ec7
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %i.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%i.var)
@@ -298,7 +298,7 @@ fn Use() {
 // CHECK:STDOUT:   %ptr.d17: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %pattern_type.1c6: type = pattern_type %ptr.d17 [concrete]
 // CHECK:STDOUT:   %reference.var: ref %X = var file.%reference.var_patt [concrete]
-// CHECK:STDOUT:   %addr.f90: %ptr.d17 = addr_of %reference.var [concrete]
+// CHECK:STDOUT:   %addr.93d: %ptr.d17 = addr_of %reference.var [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -322,7 +322,7 @@ fn Use() {
 // CHECK:STDOUT:   %X.ref.loc14_37: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc14_34.1: ref %X = as_compatible %reference.ref [concrete = constants.%reference.var]
 // CHECK:STDOUT:   %.loc14_34.2: ref %X = converted %reference.ref, %.loc14_34.1 [concrete = constants.%reference.var]
-// CHECK:STDOUT:   %addr: %ptr.d17 = addr_of %.loc14_34.2 [concrete = constants.%addr.f90]
+// CHECK:STDOUT:   %addr: %ptr.d17 = addr_of %.loc14_34.2 [concrete = constants.%addr.93d]
 // CHECK:STDOUT:   %.loc14_11: type = splice_block %ptr.loc14 [concrete = constants.%ptr.d17] {
 // CHECK:STDOUT:     %X.ref.loc14_10: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %ptr.loc14: type = ptr_type %X.ref.loc14_10 [concrete = constants.%ptr.d17]

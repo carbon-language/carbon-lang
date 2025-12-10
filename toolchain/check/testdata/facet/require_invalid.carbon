@@ -122,4 +122,73 @@ interface Z {
   // CHECK:STDERR:                  ^~
   // CHECK:STDERR:
   extend require () impls Y;
+
+  fn F() {
+    // The erroneous self-type for an `extend` causes the error to be propagated
+    // into the interface scope, which prevents errors if we fail to find a name
+    // in that scope.
+    Self.A;
+  }
+}
+
+// --- fail_require_with_nonexistent_type.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+
+interface Z {
+  // CHECK:STDERR: fail_require_with_nonexistent_type.carbon:[[@LINE+4]]:11: error: name `nonexistent` not found [NameNotFound]
+  // CHECK:STDERR:   require nonexistent impls Y;
+  // CHECK:STDERR:           ^~~~~~~~~~~
+  // CHECK:STDERR:
+  require nonexistent impls Y;
+
+  fn F() {
+    // The name lookup error still happens, since the `require` is not `extend`.
+    // CHECK:STDERR: fail_require_with_nonexistent_type.carbon:[[@LINE+4]]:5: error: member name `A` not found in `Z` [MemberNameNotFoundInInstScope]
+    // CHECK:STDERR:     Self.A;
+    // CHECK:STDERR:     ^~~~~~
+    // CHECK:STDERR:
+    Self.A;
+  }
+}
+
+// --- fail_extend_require_with_nonexistent_type.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+
+interface Z {
+  // CHECK:STDERR: fail_extend_require_with_nonexistent_type.carbon:[[@LINE+4]]:18: error: name `nonexistent` not found [NameNotFound]
+  // CHECK:STDERR:   extend require nonexistent impls Y;
+  // CHECK:STDERR:                  ^~~~~~~~~~~
+  // CHECK:STDERR:
+  extend require nonexistent impls Y;
+
+  fn F() {
+    // The erroneous self-type for an `extend` causes the error to be propagated
+    // into the interface scope, which prevents errors if we fail to find a name
+    // in that scope.
+    Self.A;
+  }
+}
+
+// --- fail_extend_require_with_nonexistent_type_pointer.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+
+interface Z {
+  // CHECK:STDERR: fail_extend_require_with_nonexistent_type_pointer.carbon:[[@LINE+4]]:18: error: name `nonexistent` not found [NameNotFound]
+  // CHECK:STDERR:   extend require nonexistent* impls Y;
+  // CHECK:STDERR:                  ^~~~~~~~~~~
+  // CHECK:STDERR:
+  extend require nonexistent* impls Y;
+
+  fn F() {
+    // The erroneous self-type for an `extend` causes the error to be propagated
+    // into the interface scope, which prevents errors if we fail to find a name
+    // in that scope.
+    Self.A;
+  }
 }

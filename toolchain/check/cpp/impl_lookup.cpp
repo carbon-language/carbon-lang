@@ -66,30 +66,30 @@ static auto BuildWitness(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::InstId;
   }
 
-  // Prepare an empty witness table.
-  auto witness_table_id =
-      context.inst_blocks().AddUninitialized(assoc_entities.size());
-  auto witness_table = context.inst_blocks().GetMutable(witness_table_id);
-  for (auto& witness_value_id : witness_table) {
-    witness_value_id = SemIR::InstId::ImplWitnessTablePlaceholder;
-  }
+  llvm::SmallVector<SemIR::InstId> entries;
 
-  // Build a witness. We use an `ImplWitness` with an `impl_id` of `None` to
-  // represent a synthesized witness.
-  // TODO: Stop using `ImplWitnessTable` here and add a distinct instruction
-  // that doesn't contain an `InstId` and supports deduplication.
-  auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
-      context, loc_id,
-      {.elements_id = witness_table_id, .impl_id = SemIR::ImplId::None});
-  auto witness_id = AddInst<SemIR::ImplWitness>(
-      context, loc_id,
-      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-       .witness_table_id = witness_table_inst_id,
-       .specific_id = SemIR::SpecificId::None});
+  // Build a witness with the current contents of the witness table. This will
+  // grow as we progress through the impl. In theory this will build O(n^2)
+  // table entries, but in practice n <= 2, so that's OK.
+  //
+  // This is necessary because later associated entities may refer to earlier
+  // associated entities in their signatures. In particular, an associated
+  // result type may be used as the return type of an associated function.
+  //
+  // TODO: Consider building one witness after all associated constants, and
+  // then a second after all associated functions, rather than building one at
+  // each step. For now this doesn't really matter since we don't have more than
+  // one of each anyway.
+  auto make_witness = [&] {
+    return context.constant_values().GetInstId(EvalOrAddInst<SemIR::CppWitness>(
+        context, loc_id,
+        {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+         .elements_id = context.inst_blocks().Add(entries)}));
+  };
 
   // Fill in the witness table.
-  for (const auto& [assoc_entity_id, value_id, witness_value_id] :
-       llvm::zip_equal(assoc_entities, values, witness_table)) {
+  for (const auto& [assoc_entity_id, value_id] :
+       llvm::zip_equal(assoc_entities, values)) {
     LoadImportRef(context, assoc_entity_id);
     auto decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
@@ -104,11 +104,13 @@ static auto BuildWitness(Context& context, SemIR::LocId loc_id,
         // TODO: If a thunk is needed, this will build a different value each
         // time it's called, so we won't properly deduplicate repeated
         // witnesses.
-        witness_value_id = CheckAssociatedFunctionImplementation(
+        // TODO: Skip calling make_witness if this function signature doesn't
+        // involve `Self`.
+        entries.push_back(CheckAssociatedFunctionImplementation(
             context,
             context.types().GetAs<SemIR::FunctionType>(struct_value.type_id),
-            value_id, self_type_id, witness_id,
-            /*defer_thunk_definition=*/false);
+            value_id, self_type_id, make_witness(),
+            /*defer_thunk_definition=*/false));
         break;
       }
       case SemIR::AssociatedConstantDecl::Kind: {
@@ -123,7 +125,27 @@ static auto BuildWitness(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  return witness_id;
+  return make_witness();
+}
+
+static auto BuildSingleFunctionWitness(
+    Context& context, SemIR::LocId loc_id, clang::FunctionDecl* cpp_fn,
+    clang::DeclAccessPair found_decl, int num_params,
+    SemIR::TypeId self_type_id, SemIR::SpecificInterface specific_interface)
+    -> SemIR::InstId {
+  auto fn_id = context.clang_sema().DiagnoseUseOfOverloadedDecl(
+                   cpp_fn, GetCppLocation(context, loc_id))
+                   ? SemIR::ErrorInst::InstId
+                   : ImportCppFunctionDecl(context, loc_id, cpp_fn, num_params);
+  if (auto fn_decl =
+          context.insts().TryGetAsWithId<SemIR::FunctionDecl>(fn_id)) {
+    CheckCppOverloadAccess(context, loc_id, found_decl, fn_decl->inst_id);
+  } else {
+    CARBON_CHECK(fn_id == SemIR::ErrorInst::InstId);
+    return SemIR::ErrorInst::InstId;
+  }
+  return BuildWitness(context, loc_id, self_type_id, specific_interface,
+                      {fn_id});
 }
 
 static auto LookupCopyImpl(Context& context, SemIR::LocId loc_id,
@@ -144,22 +166,32 @@ static auto LookupCopyImpl(Context& context, SemIR::LocId loc_id,
     return SemIR::InstId::None;
   }
 
-  auto ctor_id =
-      context.clang_sema().DiagnoseUseOfOverloadedDecl(
-          ctor, GetCppLocation(context, loc_id))
-          ? SemIR::ErrorInst::InstId
-          : ImportCppFunctionDecl(context, loc_id, ctor, /*num_params=*/1);
-  if (auto ctor_decl =
-          context.insts().TryGetAsWithId<SemIR::FunctionDecl>(ctor_id)) {
-    CheckCppOverloadAccess(context, loc_id,
-                           clang::DeclAccessPair::make(ctor, ctor->getAccess()),
-                           ctor_decl->inst_id);
-  } else {
-    CARBON_CHECK(ctor_id == SemIR::ErrorInst::InstId);
-    return SemIR::ErrorInst::InstId;
+  return BuildSingleFunctionWitness(
+      context, loc_id, ctor,
+      clang::DeclAccessPair::make(ctor, ctor->getAccess()), /*num_params=*/1,
+      self_type_id, specific_interface);
+}
+
+static auto LookupDestroyImpl(Context& context, SemIR::LocId loc_id,
+                              SemIR::TypeId self_type_id,
+                              SemIR::SpecificInterface specific_interface)
+    -> SemIR::InstId {
+  auto* class_decl = TypeAsClassDecl(context, self_type_id);
+  if (!class_decl) {
+    return SemIR::InstId::None;
   }
-  return BuildWitness(context, loc_id, self_type_id, specific_interface,
-                      {ctor_id});
+
+  auto* dtor = context.clang_sema().LookupDestructor(class_decl);
+  if (!dtor) {
+    // TODO: If the impl lookup failure is an error, we should produce a
+    // diagnostic explaining why the class is not destructible.
+    return SemIR::InstId::None;
+  }
+
+  return BuildSingleFunctionWitness(
+      context, loc_id, dtor,
+      clang::DeclAccessPair::make(dtor, dtor->getAccess()), /*num_params=*/0,
+      self_type_id, specific_interface);
 }
 
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
@@ -178,6 +210,11 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
 
   if (context.identifiers().Get(interface.name_id.AsIdentifierId()) == "Copy") {
     return LookupCopyImpl(context, loc_id, self_type_id, specific_interface);
+  }
+
+  if (context.identifiers().Get(interface.name_id.AsIdentifierId()) ==
+      "Destroy") {
+    return LookupDestroyImpl(context, loc_id, self_type_id, specific_interface);
   }
 
   // TODO: Handle other interfaces.

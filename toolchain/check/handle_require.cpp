@@ -75,6 +75,7 @@ auto HandleParseNode(Context& context, Parse::RequireDefaultSelfImplsId node_id)
   }
 
   CARBON_CHECK(context.types().Is<SemIR::FacetType>(self_type_id));
+  // TODO: We could simplify with a call to ExprAsType, like below?
   auto self_facet_as_type = AddTypeInst<SemIR::FacetAccessType>(
       context, node_id,
       {.type_id = SemIR::TypeType::TypeId,
@@ -86,16 +87,21 @@ auto HandleParseNode(Context& context, Parse::RequireDefaultSelfImplsId node_id)
 auto HandleParseNode(Context& context, Parse::RequireTypeImplsId node_id)
     -> bool {
   auto [self_node_id, self_inst_id] = context.node_stack().PopExprWithNodeId();
+  auto self_type = ExprAsType(context, self_node_id, self_inst_id);
 
-  auto introducer = context.decl_introducer_state_stack().innermost();
+  const auto& introducer = context.decl_introducer_state_stack().innermost();
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
-    CARBON_DIAGNOSTIC(RequireImplsExtendWithExplicitSelf, Error,
-                      "`extend require impls` with explicit type");
-    context.emitter().Emit(self_node_id, RequireImplsExtendWithExplicitSelf);
-    self_inst_id = SemIR::ErrorInst::InstId;
+    if (self_type.type_id != SemIR::ErrorInst::TypeId) {
+      CARBON_DIAGNOSTIC(RequireImplsExtendWithExplicitSelf, Error,
+                        "`extend require impls` with explicit type");
+      // TODO: If the explicit self-type matches a lookup of NameId::SelfType,
+      // add a note to the diagnostic: "remove the explicit `Self` type here",
+      // and continue without an ErrorInst. See ExtendImplSelfAsDefault.
+      context.emitter().Emit(self_node_id, RequireImplsExtendWithExplicitSelf);
+    }
+    self_type.inst_id = SemIR::ErrorInst::TypeInstId;
   }
 
-  auto self_type = ExprAsType(context, self_node_id, self_inst_id);
   context.node_stack().Push(node_id, self_type.inst_id);
   return true;
 }
@@ -240,6 +246,7 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Require>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Extend);
+  bool extend = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend);
 
   auto scope_inst_id =
       context.node_stack().Pop<Parse::NodeKind::RequireIntroducer>();
@@ -247,6 +254,12 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   auto validated = ValidateRequire(context, node_id, self_inst_id,
                                    constraint_inst_id, scope_inst_id);
   if (!validated) {
+    // In an `extend` decl, errors get propagated into the parent scope just as
+    // names do.
+    if (extend) {
+      auto scope_id = context.scope_stack().PeekNameScopeId();
+      context.name_scopes().Get(scope_id).set_has_error();
+    }
     DiscardGenericDecl(context);
     return true;
   }
@@ -254,11 +267,10 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   auto [constraint_type_id, identified_facet_type] = *validated;
   if (identified_facet_type->required_interfaces().empty()) {
     // A `require T impls type` adds no actual constraints, so nothing to do.
+    // This is not an error though.
     DiscardGenericDecl(context);
     return true;
   }
-
-  bool extend = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend);
 
   auto require_impls_decl =
       SemIR::RequireImplsDecl{// To be filled in after.

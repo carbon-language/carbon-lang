@@ -288,8 +288,11 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   %.loc10_4.c = getelementptr inbounds nuw [12 x i8], ptr %x.var, i32 0, i32 8, !dbg !13
 // CHECK:STDOUT:   store i32 3, ptr %.loc10_4.c, align 4, !dbg !13
 // CHECK:STDOUT:   call void @_Z11pass_struct1X.carbon_thunk(ptr %x.var), !dbg !14
+// CHECK:STDOUT:   call void @_ZN1XD1Ev(ptr %x.var), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_ZN1XD1Ev(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
@@ -364,8 +367,11 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   %.loc10_4.c = getelementptr inbounds nuw [12 x i8], ptr %y.var, i32 0, i32 8, !dbg !13
 // CHECK:STDOUT:   store i32 3, ptr %.loc10_4.c, align 4, !dbg !13
 // CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk(ptr %y.var), !dbg !14
+// CHECK:STDOUT:   call void @_ZN1YD1Ev(ptr %y.var), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_ZN1YD1Ev(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CMake.Main(ptr sret([12 x i8]))
 // CHECK:STDOUT:
@@ -376,6 +382,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_24.1.temp), !dbg !17
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.loc17_24.1.temp), !dbg !17
 // CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk(ptr %.loc17_24.1.temp), !dbg !18
+// CHECK:STDOUT:   call void @_ZN1YD1Ev(ptr %.loc17_24.1.temp), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

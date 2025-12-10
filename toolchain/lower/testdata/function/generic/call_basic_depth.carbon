@@ -49,7 +49,7 @@ fn M() {
 // CHECK:STDOUT:   %.loc34 = load i32, ptr %n.var, align 4, !dbg !9
 // CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %.loc34), !dbg !10
 // CHECK:STDOUT:   %.loc35_9 = load i32, ptr %n.var, align 4, !dbg !11
-// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.d756e33fa3337243(i32 %.loc35_9), !dbg !12
+// CHECK:STDOUT:   %G.call = call i32 @_CG.Main.8f6678536f937ba4(i32 %.loc35_9), !dbg !12
 // CHECK:STDOUT:   store i32 %G.call, ptr %m.var, align 4, !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
@@ -64,18 +64,18 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.d756e33fa3337243(i32 %x) #0 !dbg !22 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CG.Main.8f6678536f937ba4(i32 %x) #0 !dbg !22 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc25_6.3.temp = alloca i32, align 4, !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_6.3.temp), !dbg !27
-// CHECK:STDOUT:   %H.call = call i32 @_CH.Main.5450dc8e8b8e0899(i32 %x), !dbg !27
+// CHECK:STDOUT:   %H.call = call i32 @_CH.Main.d35bd5561e71da34(i32 %x), !dbg !27
 // CHECK:STDOUT:   store i32 %H.call, ptr %.loc25_6.3.temp, align 4, !dbg !27
 // CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %x), !dbg !28
 // CHECK:STDOUT:   ret i32 %x, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CH.Main.5450dc8e8b8e0899(i32 %x) #0 !dbg !30 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CH.Main.d35bd5561e71da34(i32 %x) #0 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Main.b88d1103f417c6d4(i32 %x), !dbg !33
 // CHECK:STDOUT:   ret i32 %x, !dbg !34
@@ -112,7 +112,7 @@ fn M() {
 // CHECK:STDOUT: !19 = !{!20}
 // CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !15, type: !18)
 // CHECK:STDOUT: !21 = !DILocation(line: 16, column: 1, scope: !15)
-// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.d756e33fa3337243", scope: null, file: !3, line: 24, type: !23, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !25)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.8f6678536f937ba4", scope: null, file: !3, line: 24, type: !23, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !25)
 // CHECK:STDOUT: !23 = !DISubroutineType(types: !24)
 // CHECK:STDOUT: !24 = !{!18, !18}
 // CHECK:STDOUT: !25 = !{!26}
@@ -120,7 +120,7 @@ fn M() {
 // CHECK:STDOUT: !27 = !DILocation(line: 25, column: 3, scope: !22)
 // CHECK:STDOUT: !28 = !DILocation(line: 26, column: 3, scope: !22)
 // CHECK:STDOUT: !29 = !DILocation(line: 27, column: 3, scope: !22)
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main.5450dc8e8b8e0899", scope: null, file: !3, line: 19, type: !23, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !31)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main.d35bd5561e71da34", scope: null, file: !3, line: 19, type: !23, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !31)
 // CHECK:STDOUT: !31 = !{!32}
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !30, type: !18)
 // CHECK:STDOUT: !33 = !DILocation(line: 20, column: 3, scope: !30)

@@ -462,8 +462,11 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   %.loc9_27.1.temp = alloca [16 x i8], align 1, !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_27.1.temp), !dbg !16
 // CHECK:STDOUT:   call void @_Z4Makev.carbon_thunk(ptr %.loc9_27.1.temp), !dbg !16
+// CHECK:STDOUT:   call void @_ZN1XD1Ev(ptr %.loc9_27.1.temp), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_ZN1XD1Ev(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CVar.Main() #0 !dbg !18 {
@@ -471,6 +474,7 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   %x.var = alloca [16 x i8], align 1, !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !19
 // CHECK:STDOUT:   call void @_Z4Makev.carbon_thunk(ptr %x.var), !dbg !20
+// CHECK:STDOUT:   call void @_ZN1XD1Ev(ptr %x.var), !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -15,6 +15,7 @@
 interface I {
   let T:! type;
   let N:! i32;
+  let Empty:! ();
 }
 
 // CHECK:STDOUT: --- assoc_const.carbon
@@ -26,9 +27,11 @@ interface I {
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%T [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, @I.%N [concrete]
+// CHECK:STDOUT:   %assoc2: %I.assoc_type = assoc_entity element2, @I.%Empty [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -57,12 +60,16 @@ interface I {
 // CHECK:STDOUT:   %N: %i32 = assoc_const_decl @N [concrete] {
 // CHECK:STDOUT:     %assoc1: %I.assoc_type = assoc_entity element1, @I.%N [concrete = constants.%assoc1]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Empty: %empty_tuple.type = assoc_const_decl @Empty [concrete] {
+// CHECK:STDOUT:     %assoc2: %I.assoc_type = assoc_entity element2, @I.%Empty [concrete = constants.%assoc2]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .T = @T.%assoc0
 // CHECK:STDOUT:   .N = @N.%assoc1
-// CHECK:STDOUT:   witness = (%T, %N)
+// CHECK:STDOUT:   .Empty = @Empty.%assoc2
+// CHECK:STDOUT:   witness = (%T, %N, %Empty)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
@@ -75,7 +82,13 @@ interface I {
 // CHECK:STDOUT:   assoc_const N:! %i32;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: generic assoc_const @Empty(@I.%Self: %I.type) {
+// CHECK:STDOUT:   assoc_const Empty:! %empty_tuple.type;
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Empty(constants.%Self) {}
 // CHECK:STDOUT:
