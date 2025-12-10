@@ -55,7 +55,9 @@ fn F(ref unused y: i32);
 // CHECK:STDERR:
 var unused unused x: i32 = 0;
 
-// CHECK:STDERR: fail_nested.carbon:[[@LINE+4]]:13: error: `unused` nested within another `unused` [NestedUnused]
+// --- fail_nested_parens.carbon
+
+// CHECK:STDERR: fail_nested_parens.carbon:[[@LINE+4]]:13: error: `unused` nested within another `unused` [NestedUnused]
 // CHECK:STDERR: var unused (unused y: i32) = (0,);
 // CHECK:STDERR:             ^~~~~~
 // CHECK:STDERR:
