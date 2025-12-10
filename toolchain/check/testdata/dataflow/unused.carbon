@@ -107,7 +107,10 @@ fn RefParamUnused(unused ref y: i32) {
   // TODO: ensure error, marked "unused" but used.
 }
 
-fn ReturnVarUnused() -> i32 {
+// --- todo_fail_unused_returned_var.carbon
+library "[[@TEST_NAME]]";
+
+fn F() -> i32 {
   returned var unused x: i32 = 0;
   // TODO: ensure error, marked "unused" but used.
   return var;
