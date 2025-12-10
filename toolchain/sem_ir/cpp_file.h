@@ -47,8 +47,6 @@ class CppFile {
   }
 
   // A list of all the top-level decl groups produced in this compilation.
-  // TODO: Attach a code generation consumer to the clang invocation and remove
-  // this.
   auto decl_groups() -> llvm::SmallVector<clang::DeclGroupRef>& {
     return decl_groups_;
   }
