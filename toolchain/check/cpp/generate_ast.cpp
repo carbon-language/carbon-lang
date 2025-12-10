@@ -327,10 +327,11 @@ class ShallowCopyCompilerInvocation : public clang::CompilerInvocation {
 
 }  // namespace
 
-auto GenerateAst(
-    Context& context, llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-    std::shared_ptr<clang::CompilerInvocation> base_invocation) -> bool {
+auto GenerateAst(Context& context,
+                 llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
+                 llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                 std::shared_ptr<clang::CompilerInvocation> base_invocation)
+    -> bool {
   CARBON_CHECK(!context.cpp_context());
   CARBON_CHECK(!context.sem_ir().cpp_file());
 

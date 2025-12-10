@@ -15,10 +15,11 @@ namespace Carbon::Check {
 // Generates a Clang AST for the given C++ imports and sets it as the context's
 // `cpp_context` and the SemIR's `cpp_file`. Returns a bool that represents
 // whether compilation was successful.
-auto GenerateAst(
-    Context& context, llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-    std::shared_ptr<clang::CompilerInvocation> base_invocation) -> bool;
+auto GenerateAst(Context& context,
+                 llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
+                 llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                 std::shared_ptr<clang::CompilerInvocation> base_invocation)
+    -> bool;
 
 }  // namespace Carbon::Check
 

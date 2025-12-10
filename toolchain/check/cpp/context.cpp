@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/check/cpp/context.h"
+
 #include "clang/AST/Mangle.h"
 
 namespace Carbon::Check {
