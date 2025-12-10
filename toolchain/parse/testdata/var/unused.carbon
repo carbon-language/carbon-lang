@@ -39,6 +39,21 @@ let var unused (x: (), y: ()) = ((), ());
 // --- var_unused_function.carbon
 fn F(x: (), var unused y: ());
 
+// --- var_unused_match.carbon
+fn F() -> i32 {
+  var x: i32 = 3;
+  match (f(x)) {
+    case unused var (a: i32, b: i32) => { return 0; }
+    case (a: i32) if (a < 0) => { return 2; }
+    case var unused a: i32 if (a != x) => { return 3; }
+    default => { return 4; }
+  }
+  return 0;
+}
+
+// --- fail_unused_var_function.carbon
+fn F(x: (), unused var y: ());
+
 // --- fail_ref_unused.carbon
 
 // CHECK:STDERR: fail_ref_unused.carbon:[[@LINE+4]]:10: error: expected name in binding pattern [ExpectedBindingPattern]
@@ -290,6 +305,121 @@ var unused (unused y: i32) = (0,);
 // CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 16},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: var_unused_match.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:         {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
+// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
+// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
+// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:         {kind: 'IntLiteral', text: '3'},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:           {kind: 'MatchIntroducer', text: 'match'},
+// CHECK:STDOUT:             {kind: 'MatchConditionStart', text: '('},
+// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'f'},
+// CHECK:STDOUT:               {kind: 'CallExprStart', text: '(', subtree_size: 2},
+// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'x'},
+// CHECK:STDOUT:             {kind: 'CallExpr', text: ')', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'MatchCondition', text: ')', subtree_size: 6},
+// CHECK:STDOUT:         {kind: 'MatchStatementStart', text: '{', subtree_size: 8},
+// CHECK:STDOUT:             {kind: 'MatchCaseIntroducer', text: 'case'},
+// CHECK:STDOUT:                   {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:                     {kind: 'IdentifierNameNotBeforeParams', text: 'a'},
+// CHECK:STDOUT:                     {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:                   {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:                   {kind: 'PatternListComma', text: ','},
+// CHECK:STDOUT:                     {kind: 'IdentifierNameNotBeforeParams', text: 'b'},
+// CHECK:STDOUT:                     {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:                   {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:                 {kind: 'TuplePattern', text: ')', subtree_size: 9},
+// CHECK:STDOUT:               {kind: 'VariablePattern', text: 'var', subtree_size: 10},
+// CHECK:STDOUT:             {kind: 'UnusedPattern', text: 'unused', subtree_size: 11},
+// CHECK:STDOUT:             {kind: 'MatchCaseEqualGreater', text: '=>'},
+// CHECK:STDOUT:           {kind: 'MatchCaseStart', text: '{', subtree_size: 14},
+// CHECK:STDOUT:             {kind: 'ReturnStatementStart', text: 'return'},
+// CHECK:STDOUT:             {kind: 'IntLiteral', text: '0'},
+// CHECK:STDOUT:           {kind: 'ReturnStatement', text: ';', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'MatchCase', text: '}', subtree_size: 18},
+// CHECK:STDOUT:             {kind: 'MatchCaseIntroducer', text: 'case'},
+// CHECK:STDOUT:               {kind: 'TuplePatternStart', text: '('},
+// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeParams', text: 'a'},
+// CHECK:STDOUT:                 {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:               {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'TuplePattern', text: ')', subtree_size: 5},
+// CHECK:STDOUT:               {kind: 'MatchCaseGuardIntroducer', text: 'if'},
+// CHECK:STDOUT:               {kind: 'MatchCaseGuardStart', text: '('},
+// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'a'},
+// CHECK:STDOUT:                 {kind: 'IntLiteral', text: '0'},
+// CHECK:STDOUT:               {kind: 'InfixOperatorLess', text: '<', subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'MatchCaseGuard', text: ')', subtree_size: 6},
+// CHECK:STDOUT:             {kind: 'MatchCaseEqualGreater', text: '=>'},
+// CHECK:STDOUT:           {kind: 'MatchCaseStart', text: '{', subtree_size: 14},
+// CHECK:STDOUT:             {kind: 'ReturnStatementStart', text: 'return'},
+// CHECK:STDOUT:             {kind: 'IntLiteral', text: '2'},
+// CHECK:STDOUT:           {kind: 'ReturnStatement', text: ';', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'MatchCase', text: '}', subtree_size: 18},
+// CHECK:STDOUT:             {kind: 'MatchCaseIntroducer', text: 'case'},
+// CHECK:STDOUT:                   {kind: 'IdentifierNameNotBeforeParams', text: 'a'},
+// CHECK:STDOUT:                   {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:                 {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:               {kind: 'UnusedPattern', text: 'unused', subtree_size: 4},
+// CHECK:STDOUT:             {kind: 'VariablePattern', text: 'var', subtree_size: 5},
+// CHECK:STDOUT:               {kind: 'MatchCaseGuardIntroducer', text: 'if'},
+// CHECK:STDOUT:               {kind: 'MatchCaseGuardStart', text: '('},
+// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'a'},
+// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'x'},
+// CHECK:STDOUT:               {kind: 'InfixOperatorExclaimEqual', text: '!=', subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'MatchCaseGuard', text: ')', subtree_size: 6},
+// CHECK:STDOUT:             {kind: 'MatchCaseEqualGreater', text: '=>'},
+// CHECK:STDOUT:           {kind: 'MatchCaseStart', text: '{', subtree_size: 14},
+// CHECK:STDOUT:             {kind: 'ReturnStatementStart', text: 'return'},
+// CHECK:STDOUT:             {kind: 'IntLiteral', text: '3'},
+// CHECK:STDOUT:           {kind: 'ReturnStatement', text: ';', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'MatchCase', text: '}', subtree_size: 18},
+// CHECK:STDOUT:             {kind: 'MatchDefaultIntroducer', text: 'default'},
+// CHECK:STDOUT:             {kind: 'MatchDefaultEqualGreater', text: '=>'},
+// CHECK:STDOUT:           {kind: 'MatchDefaultStart', text: '{', subtree_size: 3},
+// CHECK:STDOUT:             {kind: 'ReturnStatementStart', text: 'return'},
+// CHECK:STDOUT:             {kind: 'IntLiteral', text: '4'},
+// CHECK:STDOUT:           {kind: 'ReturnStatement', text: ';', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'MatchDefault', text: '}', subtree_size: 7},
+// CHECK:STDOUT:       {kind: 'MatchStatement', text: '}', subtree_size: 70},
+// CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
+// CHECK:STDOUT:         {kind: 'IntLiteral', text: '0'},
+// CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', subtree_size: 3},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 89},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_unused_var_function.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
+// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
+// CHECK:STDOUT:       {kind: 'IdentifierNameBeforeParams', text: 'F'},
+// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
+// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'x'},
+// CHECK:STDOUT:             {kind: 'TupleLiteralStart', text: '('},
+// CHECK:STDOUT:           {kind: 'TupleLiteral', text: ')', subtree_size: 2},
+// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'PatternListComma', text: ','},
+// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeParams', text: 'y'},
+// CHECK:STDOUT:                 {kind: 'TupleLiteralStart', text: '('},
+// CHECK:STDOUT:               {kind: 'TupleLiteral', text: ')', subtree_size: 2},
+// CHECK:STDOUT:             {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
+// CHECK:STDOUT:           {kind: 'VariablePattern', text: 'var', subtree_size: 5},
+// CHECK:STDOUT:         {kind: 'UnusedPattern', text: 'unused', subtree_size: 6},
+// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 13},
+// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 16},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
 // CHECK:STDOUT: - filename: fail_ref_unused.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
@@ -316,6 +446,11 @@ var unused (unused y: i32) = (0,);
 // CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:       {kind: 'IntLiteral', text: '0'},
 // CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 10},
+// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
+// CHECK:STDOUT:   ]
+// CHECK:STDOUT: - filename: fail_nested_parens.carbon
+// CHECK:STDOUT:   parse_tree: [
+// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:             {kind: 'TuplePatternStart', text: '('},
 // CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeParams', text: 'y'},
