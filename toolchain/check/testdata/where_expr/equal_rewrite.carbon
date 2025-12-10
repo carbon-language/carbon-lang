@@ -162,17 +162,19 @@ interface I {
 // CHECK:STDERR:
 fn RewriteTypeMismatch(X:! I where .Member = 2);
 
-// --- todo_let.carbon
+// --- fail_todo_let.carbon
 
 library "[[@TEST_NAME]]";
 
 interface A {}
 class D {}
 impl D as A {}
-// TODO: This should be a compile-time binding, once that is supported at file scope.
-let B: type where .Self impls A = D;
 
 fn F() {
+  // CHECK:STDERR: fail_todo_let.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported: we should re-evaluate the contents of the eval block in a synthesized specific to form these values, in order to propagate the values.` [SemanticsTodo]
+  // CHECK:STDERR:   let E:! type where .Self impls A = D;
+  // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   let E:! type where .Self impls A = D;
 }
 

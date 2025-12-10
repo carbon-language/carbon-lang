@@ -29,6 +29,10 @@ fn F(c: C) {}
 
 fn CallF() {
   //@dump-sem-ir-begin
+  // CHECK:STDERR: symbolic.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported: we should re-evaluate the contents of the eval block in a synthesized specific to form these values, in order to propagate the values.` [SemanticsTodo]
+  // CHECK:STDERR:   let c:! C = {};
+  // CHECK:STDERR:       ^~~~~
+  // CHECK:STDERR:
   let c:! C = {};
   F(c);
   //@dump-sem-ir-end
@@ -81,46 +85,7 @@ fn CallF() {
 // CHECK:STDOUT: --- symbolic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value %C, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.eeb: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.88a: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.eeb = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallF() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = symbolic_binding_pattern c, 0 [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc9_11: type = splice_block %C.ref [concrete = constants.%C] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9_16.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc9_16.3: init %C = class_init (), %.loc9_16.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc9_16.4: ref %C = temporary %.loc9_16.2, %.loc9_16.3
-// CHECK:STDOUT:   %.loc9_16.5: ref %C = converted %.loc9_16.1, %.loc9_16.4
-// CHECK:STDOUT:   %.loc9_16.6: %C = acquire_value %.loc9_16.5
-// CHECK:STDOUT:   %c: %C = symbolic_binding c, 0, %.loc9_16.6
-// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%c.ref)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc9_16.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.88a
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc9_16.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc9_16.4)
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @CallF();
 // CHECK:STDOUT:

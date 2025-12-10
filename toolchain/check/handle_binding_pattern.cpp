@@ -28,6 +28,78 @@ auto HandleParseNode(Context& context, Parse::UnderscoreNameId node_id)
   return true;
 }
 
+// Returns the `InstKind` corresponding to the pattern's `NodeKind`.
+static auto GetPatternInstKind(Parse::NodeKind node_kind, bool is_ref)
+    -> SemIR::InstKind {
+  switch (node_kind) {
+    case Parse::NodeKind::CompileTimeBindingPattern:
+      return SemIR::InstKind::SymbolicBindingPattern;
+    case Parse::NodeKind::LetBindingPattern:
+      return is_ref ? SemIR::InstKind::RefBindingPattern
+                    : SemIR::InstKind::ValueBindingPattern;
+    case Parse::NodeKind::VarBindingPattern:
+      return SemIR::InstKind::RefBindingPattern;
+    default:
+      CARBON_FATAL("Unexpected node kind: {0}", node_kind);
+  }
+}
+
+// Returns true if a parameter is valid in the given `introducer_kind`.
+static auto IsValidParamForIntroducer(Context& context, Parse::NodeId node_id,
+                                      SemIR::NameId name_id,
+                                      Lex::TokenKind introducer_kind,
+                                      bool is_generic) -> bool {
+  switch (introducer_kind) {
+    case Lex::TokenKind::Fn: {
+      if (context.full_pattern_stack().CurrentKind() ==
+              FullPatternStack::Kind::ImplicitParamList &&
+          !(is_generic || name_id == SemIR::NameId::SelfValue)) {
+        CARBON_DIAGNOSTIC(
+            ImplictParamMustBeConstant, Error,
+            "implicit parameters of functions must be constant or `self`");
+        context.emitter().Emit(node_id, ImplictParamMustBeConstant);
+        return false;
+      }
+      // Parameters can have incomplete types in a function declaration, but not
+      // in a function definition. We don't know which kind we have here, so
+      // don't validate it.
+      return true;
+    }
+    case Lex::TokenKind::Choice:
+      if (context.scope_stack().PeekInstId().has_value()) {
+        // We are building a pattern for a choice alternative, not the
+        // choice type itself.
+
+        // Implicit param lists are prevented during parse.
+        CARBON_CHECK(context.full_pattern_stack().CurrentKind() !=
+                         FullPatternStack::Kind::ImplicitParamList,
+                     "choice alternative with implicit parameters");
+        // Don't fall through to the `Class` logic for choice alternatives.
+        return true;
+      }
+      [[fallthrough]];
+    case Lex::TokenKind::Class:
+    case Lex::TokenKind::Impl:
+    case Lex::TokenKind::Interface: {
+      if (name_id == SemIR::NameId::SelfValue) {
+        CARBON_DIAGNOSTIC(SelfParameterNotAllowed, Error,
+                          "`self` parameter only allowed on functions");
+        context.emitter().Emit(node_id, SelfParameterNotAllowed);
+        return false;
+      }
+      if (!is_generic) {
+        CARBON_DIAGNOSTIC(GenericParamMustBeConstant, Error,
+                          "parameters of generic types must be constant");
+        context.emitter().Emit(node_id, GenericParamMustBeConstant);
+        return false;
+      }
+      return true;
+    }
+    default:
+      return true;
+  }
+}
+
 // TODO: make this function shorter by factoring pieces out.
 static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
                                     Parse::NodeKind node_kind) -> bool {
@@ -52,24 +124,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       context.node_stack()
           .PopAndDiscardSoloNodeIdIf<Parse::NodeKind::RefBindingName>();
 
-  SemIR::InstKind pattern_inst_kind;
-  switch (node_kind) {
-    case Parse::NodeKind::CompileTimeBindingPattern:
-      pattern_inst_kind = SemIR::InstKind::SymbolicBindingPattern;
-      break;
-    case Parse::NodeKind::LetBindingPattern:
-      if (is_ref) {
-        pattern_inst_kind = SemIR::InstKind::RefBindingPattern;
-      } else {
-        pattern_inst_kind = SemIR::InstKind::ValueBindingPattern;
-      }
-      break;
-    case Parse::NodeKind::VarBindingPattern:
-      pattern_inst_kind = SemIR::InstKind::RefBindingPattern;
-      break;
-    default:
-      CARBON_FATAL("Unexpected node kind: {0}", node_kind);
-  }
+  SemIR::InstKind pattern_inst_kind = GetPatternInstKind(node_kind, is_ref);
 
   auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 
@@ -112,88 +167,51 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     context.emitter().Emit(node_id, SelfOutsideImplicitParamList);
   }
 
+  if (node_kind == Parse::NodeKind::CompileTimeBindingPattern &&
+      introducer.kind == Lex::TokenKind::Let) {
+    return context.TODO(
+        node_id,
+        "local `let :!` bindings are currently unsupported: we should "
+        "re-evaluate the contents of the eval block in a synthesized specific "
+        "to form these values, in order to propagate the values.");
+  }
+
   // Allocate an instruction of the appropriate kind, linked to the name for
   // error locations.
   switch (context.full_pattern_stack().CurrentKind()) {
     case FullPatternStack::Kind::ImplicitParamList:
     case FullPatternStack::Kind::ExplicitParamList: {
-      // Parameters can have incomplete types in a function declaration, but not
-      // in a function definition. We don't know which kind we have here.
-      bool had_error = false;
-      switch (introducer.kind) {
-        case Lex::TokenKind::Fn: {
-          if (context.full_pattern_stack().CurrentKind() ==
-                  FullPatternStack::Kind::ImplicitParamList &&
-              !(is_generic || name_id == SemIR::NameId::SelfValue)) {
-            CARBON_DIAGNOSTIC(
-                ImplictParamMustBeConstant, Error,
-                "implicit parameters of functions must be constant or `self`");
-            context.emitter().Emit(node_id, ImplictParamMustBeConstant);
-            had_error = true;
-          }
-          break;
-        }
-        case Lex::TokenKind::Choice:
-          if (context.scope_stack().PeekInstId().has_value()) {
-            // We are building a pattern for a choice alternative, not the
-            // choice type itself.
-
-            // Implicit param lists are prevented during parse.
-            CARBON_CHECK(context.full_pattern_stack().CurrentKind() !=
-                             FullPatternStack::Kind::ImplicitParamList,
-                         "choice alternative with implicit parameters");
-            // Don't fall through to the `Class` logic for choice alternatives.
-            break;
-          }
-          [[fallthrough]];
-        case Lex::TokenKind::Class:
-        case Lex::TokenKind::Impl:
-        case Lex::TokenKind::Interface: {
-          if (name_id == SemIR::NameId::SelfValue) {
-            CARBON_DIAGNOSTIC(SelfParameterNotAllowed, Error,
-                              "`self` parameter only allowed on functions");
-            context.emitter().Emit(node_id, SelfParameterNotAllowed);
-            had_error = true;
-          } else if (!is_generic) {
-            CARBON_DIAGNOSTIC(GenericParamMustBeConstant, Error,
-                              "parameters of generic types must be constant");
-            context.emitter().Emit(node_id, GenericParamMustBeConstant);
-            had_error = true;
-          }
-          break;
-        }
-        default:
-          break;
-      }
-      auto result_inst_id = SemIR::InstId::None;
-      if (had_error) {
+      if (!IsValidParamForIntroducer(context, node_id, name_id, introducer.kind,
+                                     is_generic)) {
         if (name_id != SemIR::NameId::Underscore) {
           AddNameToLookup(context, name_id, SemIR::ErrorInst::InstId);
         }
         // Replace the parameter with `ErrorInst` so that we don't try
         // constructing a generic based on it.
-        result_inst_id = SemIR::ErrorInst::InstId;
-      } else {
-        result_inst_id = make_binding_pattern();
+        context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+        break;
+      }
 
-        // A binding pattern in a function signature is a `Call` parameter
-        // unless it's nested inside a `var` pattern (because then the
-        // enclosing `var` pattern is), or it's a compile-time binding pattern
-        // (because then it's not passed to the `Call` inst).
-        if (node_kind == Parse::NodeKind::LetBindingPattern) {
-          if (is_ref) {
-            result_inst_id = AddPatternInst<SemIR::RefParamPattern>(
-                context, node_id,
-                {.type_id = context.insts().Get(result_inst_id).type_id(),
-                 .subpattern_id = result_inst_id,
-                 .index = SemIR::CallParamIndex::None});
-          } else {
-            result_inst_id = AddPatternInst<SemIR::ValueParamPattern>(
-                context, node_id,
-                {.type_id = context.insts().Get(result_inst_id).type_id(),
-                 .subpattern_id = result_inst_id,
-                 .index = SemIR::CallParamIndex::None});
-          }
+      auto result_inst_id = make_binding_pattern();
+
+      // A binding pattern in a function signature is a `Call` parameter
+      // unless it's nested inside a `var` pattern (because then the
+      // enclosing `var` pattern is), or it's a compile-time binding pattern
+      // (because then it's not passed to the `Call` inst).
+      if (node_kind == Parse::NodeKind::LetBindingPattern) {
+        auto type_id = context.insts().GetAttachedType(result_inst_id);
+        if (is_ref) {
+          result_inst_id = AddPatternInst<SemIR::RefParamPattern>(
+              context, node_id,
+              {.type_id = type_id,
+               .subpattern_id = result_inst_id,
+               .index = SemIR::CallParamIndex::None});
+        } else {
+          result_inst_id = AddPatternInst<SemIR::ValueParamPattern>(
+              context, node_id,
+              {.type_id = type_id,
+               .subpattern_id = result_inst_id,
+               .index = SemIR::CallParamIndex::None});
         }
       }
       context.node_stack().Push(node_id, result_inst_id);

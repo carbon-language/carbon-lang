@@ -941,100 +941,62 @@ fn F(T:! I where .X = (I where .Y = (I where .X = .Y, ))) {}
 // `.Self` references in the same position in the parameter of `F`. If not, the
 // `.X` within becomes self-referential and makes a cycle.
 
-fn G1() {
+fn G1(Constant:! type) {
+  // CHECK:STDERR: fail_nested_facet_type_from_constant.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported: we should re-evaluate the contents of the eval block in a synthesized specific to form these values, in order to propagate the values.` [SemanticsTodo]
+  // CHECK:STDERR:   let Constant:! type = I where .X = .Y;
+  // CHECK:STDERR:       ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   let Constant:! type = I where .X = .Y;
 
   fn G(T:! I where .X = (I where .Y = (Constant, ))) {
-    // CHECK:STDERR: fail_nested_facet_type_from_constant.carbon:[[@LINE+7]]:5: error: cannot convert type `T` that implements `I where .(I.X) = I where .(I.Y) = (Constant,)` into type implementing `I where .(I.X) = I where .(I.Y) = (I where .(I.X) = .(I.Y),)` [ConversionFailureFacetToFacet]
-    // CHECK:STDERR:     F(T);
-    // CHECK:STDERR:     ^~~~
-    // CHECK:STDERR: fail_nested_facet_type_from_constant.carbon:[[@LINE-16]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-    // CHECK:STDERR: fn F(T:! I where .X = (I where .Y = (I where .X = .Y, ))) {}
-    // CHECK:STDERR:      ^
-    // CHECK:STDERR:
     F(T);
   }
 }
 
-fn G2() {
+fn G2(Constant:! type) {
   let Constant:! type = (I where .X = .Y, );
 
   fn G(T:! I where .X = (I where .Y = Constant)) {
-    // CHECK:STDERR: fail_nested_facet_type_from_constant.carbon:[[@LINE+7]]:5: error: cannot convert type `T` that implements `I where .(I.X) = I where .(I.Y) = Constant` into type implementing `I where .(I.X) = I where .(I.Y) = (I where .(I.X) = .(I.Y),)` [ConversionFailureFacetToFacet]
-    // CHECK:STDERR:     F(T);
-    // CHECK:STDERR:     ^~~~
-    // CHECK:STDERR: fail_nested_facet_type_from_constant.carbon:[[@LINE-31]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-    // CHECK:STDERR: fn F(T:! I where .X = (I where .Y = (I where .X = .Y, ))) {}
-    // CHECK:STDERR:      ^
-    // CHECK:STDERR:
     F(T);
   }
 }
 
-fn G3() {
+fn G3(Constant:! type) {
   let Constant:! type = I where .Y = (I where .X = .Y, );
 
   fn G(T:! I where .X = Constant) {
-    // CHECK:STDERR: fail_nested_facet_type_from_constant.carbon:[[@LINE+7]]:5: error: cannot convert type `T` that implements `I where .(I.X) = Constant` into type implementing `I where .(I.X) = I where .(I.Y) = (I where .(I.X) = .(I.Y),)` [ConversionFailureFacetToFacet]
-    // CHECK:STDERR:     F(T);
-    // CHECK:STDERR:     ^~~~
-    // CHECK:STDERR: fail_nested_facet_type_from_constant.carbon:[[@LINE-46]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-    // CHECK:STDERR: fn F(T:! I where .X = (I where .Y = (I where .X = .Y, ))) {}
-    // CHECK:STDERR:      ^
-    // CHECK:STDERR:
     F(T);
   }
 }
 
-fn G4() {
+fn G4(Constant:! type) {
   let Constant2:! type = (I where .X = .Y, );
   let Constant:! type = Constant2;
 
   fn G(T:! I where .X = (I where .Y = Constant)) {
-    // CHECK:STDERR: fail_nested_facet_type_from_constant.carbon:[[@LINE+7]]:5: error: cannot convert type `T` that implements `I where .(I.X) = I where .(I.Y) = Constant` into type implementing `I where .(I.X) = I where .(I.Y) = (I where .(I.X) = .(I.Y),)` [ConversionFailureFacetToFacet]
-    // CHECK:STDERR:     F(T);
-    // CHECK:STDERR:     ^~~~
-    // CHECK:STDERR: fail_nested_facet_type_from_constant.carbon:[[@LINE-62]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-    // CHECK:STDERR: fn F(T:! I where .X = (I where .Y = (I where .X = .Y, ))) {}
-    // CHECK:STDERR:      ^
-    // CHECK:STDERR:
     F(T);
   }
 }
 
-fn G5() {
+fn G5(Constant:! type) {
   let Constant2:! type = I where .X = .Y;
   let Constant:! type = (Constant2, );
 
   fn G(T:! I where .X = (I where .Y = Constant)) {
-    // CHECK:STDERR: fail_nested_facet_type_from_constant.carbon:[[@LINE+7]]:5: error: cannot convert type `T` that implements `I where .(I.X) = I where .(I.Y) = Constant` into type implementing `I where .(I.X) = I where .(I.Y) = (I where .(I.X) = .(I.Y),)` [ConversionFailureFacetToFacet]
-    // CHECK:STDERR:     F(T);
-    // CHECK:STDERR:     ^~~~
-    // CHECK:STDERR: fail_nested_facet_type_from_constant.carbon:[[@LINE-78]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-    // CHECK:STDERR: fn F(T:! I where .X = (I where .Y = (I where .X = .Y, ))) {}
-    // CHECK:STDERR:      ^
-    // CHECK:STDERR:
     F(T);
   }
 }
 
-fn G6() {
+fn G6(Constant:! type) {
   let Constant2:! type = (I where .X = .Y, );
   let Constant:! type = I where .Y = Constant2;
 
   fn G(T:! I where .X = Constant) {
-    // CHECK:STDERR: fail_nested_facet_type_from_constant.carbon:[[@LINE+7]]:5: error: cannot convert type `T` that implements `I where .(I.X) = Constant` into type implementing `I where .(I.X) = I where .(I.Y) = (I where .(I.X) = .(I.Y),)` [ConversionFailureFacetToFacet]
-    // CHECK:STDERR:     F(T);
-    // CHECK:STDERR:     ^~~~
-    // CHECK:STDERR: fail_nested_facet_type_from_constant.carbon:[[@LINE-94]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-    // CHECK:STDERR: fn F(T:! I where .X = (I where .Y = (I where .X = .Y, ))) {}
-    // CHECK:STDERR:      ^
-    // CHECK:STDERR:
     F(T);
   }
 }
 
-// ---fail_nested_facet_type_from_constant_differs.carbon
+// --- fail_nested_facet_type_from_constant_differs.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -1045,16 +1007,13 @@ interface I {
 fn F(T:! I where .X = (I where .Y = (I where .X = .Y, ))) {}
 
 fn G1() {
+  // CHECK:STDERR: fail_nested_facet_type_from_constant_differs.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported: we should re-evaluate the contents of the eval block in a synthesized specific to form these values, in order to propagate the values.` [SemanticsTodo]
+  // CHECK:STDERR:   let Constant:! type = I where .X = () and .Y = ();
+  // CHECK:STDERR:       ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   let Constant:! type = I where .X = () and .Y = ();
 
   fn G(T:! I where .X = (I where .Y = (Constant, ))) {
-    // CHECK:STDERR: fail_nested_facet_type_from_constant_differs.carbon:[[@LINE+7]]:5: error: cannot convert type `T` that implements `I where .(I.X) = I where .(I.Y) = (Constant,)` into type implementing `I where .(I.X) = I where .(I.Y) = (I where .(I.X) = .(I.Y),)` [ConversionFailureFacetToFacet]
-    // CHECK:STDERR:     F(T);
-    // CHECK:STDERR:     ^~~~
-    // CHECK:STDERR: fail_nested_facet_type_from_constant_differs.carbon:[[@LINE-9]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-    // CHECK:STDERR: fn F(T:! I where .X = (I where .Y = (I where .X = .Y, ))) {}
-    // CHECK:STDERR:      ^
-    // CHECK:STDERR:
     F(T);
   }
 }

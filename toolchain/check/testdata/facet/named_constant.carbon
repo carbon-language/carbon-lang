@@ -18,9 +18,7 @@ interface I {
   let Y:! type;
 }
 
-fn Test() {
-  let Constant:! type = ();
-
+fn Test(Constant:! type) {
   fn F(T:! I where .X = Constant) {}
 
   fn G(T:! I where .X = Constant) {
@@ -45,6 +43,10 @@ interface I {
 }
 
 fn Test() {
+  // CHECK:STDERR: fail_todo_named_constant_two_levels_in_rewrite.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported: we should re-evaluate the contents of the eval block in a synthesized specific to form these values, in order to propagate the values.` [SemanticsTodo]
+  // CHECK:STDERR:   let Constant2:! type = ();
+  // CHECK:STDERR:       ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   let Constant2:! type = ();
   let Constant:! type = (Constant2, );
 
@@ -52,13 +54,6 @@ fn Test() {
 
   fn G(T:! I where .X = Constant) {
     // TODO: The facet type T in G should match the facet type T in F.
-    // CHECK:STDERR: fail_todo_named_constant_two_levels_in_rewrite.carbon:[[@LINE+7]]:5: error: cannot deduce value for generic parameter `Constant2` [DeductionIncomplete]
-    // CHECK:STDERR:     F(T);
-    // CHECK:STDERR:     ^~~~
-    // CHECK:STDERR: fail_todo_named_constant_two_levels_in_rewrite.carbon:[[@LINE-7]]:3: note: while deducing parameters of generic declared here [DeductionGenericHere]
-    // CHECK:STDERR:   fn F(T:! I where .X = Constant) {}
-    // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR:
     F(T);
   }
 }
@@ -71,9 +66,7 @@ interface I {
   let Y:! type;
 }
 
-fn Test() {
-  let Constant:! type = ();
-
+fn Test(Constant:! type) {
   fn F(T:! I where .X = Constant) {}
 
   fn G(T:! I where .X = ()) {
@@ -97,9 +90,7 @@ interface I {
   let Y:! type;
 }
 
-fn Test() {
-  let Constant:! type = ();
-
+fn Test(Constant:! type) {
   fn F(T:! I where .X = ()) {}
 
   fn G(T:! I where .X = Constant) {
@@ -123,9 +114,7 @@ interface I {
   let Y:! type;
 }
 
-fn Test() {
-  let Constant:! type = ();
-
+fn Test(Constant:! type) {
   // TODO: The .Self reference in each .X should be different, there should be
   // no cycle here.
   // CHECK:STDERR: fail_todo_named_constant_in_nested_facet_type.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.(I.X)` [FacetTypeConstraintCycle]
@@ -152,9 +141,7 @@ interface I {
   let Y:! type;
 }
 
-fn Test() {
-  let Constant:! type = ();
-
+fn Test(Constant:! type) {
   fn F(T:! I where .X = (I where .X = ())) {}
 
   // TODO: The .Self reference in each .X should be different, there should be
@@ -177,9 +164,7 @@ interface I {
   let Y:! type;
 }
 
-fn Test() {
-  let Constant:! type = ();
-
+fn Test(Constant:! type) {
   // TODO: The .Self reference in each .X should be different, there should be
   // no cycle here.
   // CHECK:STDERR: fail_named_constant_in_nested_facet_type_callee.carbon:[[@LINE+4]]:12: error: found cycle in facet type constraint for `.(I.X)` [FacetTypeConstraintCycle]
