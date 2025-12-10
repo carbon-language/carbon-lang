@@ -38,7 +38,7 @@ auto StringRefContainsPointer(llvm::StringRef ref, const char* ptr) -> bool;
 // command line argument lists.
 //
 // Accepts a `tool_name` for logging, and a `tool_path` that will be used as
-// the first C-string argument to simulate and `argv[0]` entry.
+// the first C-string argument to simulate an `argv[0]` entry.
 //
 // Accepts a `cstr_arg_storage` that will provide the underlying storage for
 // the C-strings, and returns a small vector of the C-string pointers. The
