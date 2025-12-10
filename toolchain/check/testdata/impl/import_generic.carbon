@@ -23,7 +23,9 @@ interface J(T:! type) {
 // --- basic_import_generic_interface.impl.carbon
 impl library "[[@TEST_NAME]]";
 
-impl {} as J({}) {}
+class C {}
+
+impl C as J({}) {}
 
 // --- basic_import_generic_constraint.carbon
 library "[[@TEST_NAME]]";
@@ -36,7 +38,9 @@ constraint J(T:! type) {
 // --- basic_import_generic_constraint.impl.carbon
 impl library "[[@TEST_NAME]]";
 
-impl {} as J({}) {}
+class C {}
+
+impl C as J({}) {}
 
 // --- import_generic.carbon
 
@@ -299,8 +303,9 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: --- basic_import_generic_interface.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %J.type.2b8: type = generic_interface_type @J [concrete]
 // CHECK:STDOUT:   %J.generic: %J.type.2b8 = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
@@ -310,11 +315,12 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.213: %I.type.17e = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.a17 [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.17e [symbolic]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %J.type.457: type = facet_type <@J, @J(%empty_struct_type)> [concrete]
 // CHECK:STDOUT:   %Self.5cb: %J.type.457 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %I.type.399: type = facet_type <@I, @I(%empty_struct_type)> [concrete]
 // CHECK:STDOUT:   %Self.5c3: %I.type.399 = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %I.type.399 [concrete]
+// CHECK:STDOUT:   %complete_type.e4b: <witness> = complete_type_witness %I.type.399 [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness file.%J.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -335,18 +341,19 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .I = imports.%Main.I
 // CHECK:STDOUT:     .J = imports.%Main.J
+// CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc1_46.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc1_46.2 = import <none>
-// CHECK:STDOUT:   impl_decl @empty_struct_type.as.J.impl [concrete] {} {
-// CHECK:STDOUT:     %.loc3_7.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc3_7.2: type = converted %.loc3_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   impl_decl @C.as.J.impl [concrete] {} {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %J.ref: %J.type.2b8 = name_ref J, imports.%Main.J [concrete = constants.%J.generic]
-// CHECK:STDOUT:     %.loc3_15: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc3_16: type = converted %.loc3_15, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc5_14: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc5_15: type = converted %.loc5_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %J.type: type = facet_type <@J, @J(constants.%empty_struct_type)> [concrete = constants.%J.type.457]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (), @empty_struct_type.as.J.impl [concrete]
+// CHECK:STDOUT:   %J.impl_witness_table = impl_witness_table (), @C.as.J.impl [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness %J.impl_witness_table [concrete = constants.%J.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -395,9 +402,17 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T)> [symbolic = %I.type (constants.%I.type.17e)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_struct_type.as.J.impl: %.loc3_7.2 as %J.type {
+// CHECK:STDOUT: impl @C.as.J.impl: %C.ref as %J.type {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%J.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%T) {
@@ -427,7 +442,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %J.type => constants.%J.type.457
 // CHECK:STDOUT:   %Self => constants.%Self.5cb
 // CHECK:STDOUT:   %I.type => constants.%I.type.399
-// CHECK:STDOUT:   %require_complete => constants.%complete_type
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.e4b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%empty_struct_type) {
@@ -557,8 +572,9 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT: --- basic_import_generic_constraint.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %empty_struct.a40: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %J.type.267: type = generic_named_constaint_type @J [concrete]
 // CHECK:STDOUT:   %empty_struct.b6f: %J.type.267 = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
@@ -568,11 +584,12 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.213: %I.type.17e = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self.84c873.1 [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.17e [symbolic]
+// CHECK:STDOUT:   %empty_struct.a40: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %J.type.b8d23b.2: type = facet_type <@J, @J(%empty_struct_type)> [concrete]
 // CHECK:STDOUT:   %I.type.399: type = facet_type <@I, @I(%empty_struct_type)> [concrete]
 // CHECK:STDOUT:   %Self.84c873.2: %J.type.b8d23b.2 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.5c3: %I.type.399 = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %I.type.399 [concrete]
+// CHECK:STDOUT:   %complete_type.e4b: <witness> = complete_type_witness %I.type.399 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -593,18 +610,19 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .I = imports.%Main.I
 // CHECK:STDOUT:     .J = imports.%Main.J
+// CHECK:STDOUT:     .C = %C.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc1_47.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc1_47.2 = import <none>
-// CHECK:STDOUT:   impl_decl @empty_struct_type.as.I.impl [concrete] {} {
-// CHECK:STDOUT:     %.loc3_7.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:     %.loc3_7.2: type = converted %.loc3_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   impl_decl @C.as.I.impl [concrete] {} {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %J.ref: %J.type.267 = name_ref J, imports.%Main.J [concrete = constants.%empty_struct.b6f]
-// CHECK:STDOUT:     %.loc3_15: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:     %.loc3_16: type = converted %.loc3_15, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc5_14: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:     %.loc5_15: type = converted %.loc5_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %J.type: type = facet_type <@J, @J(constants.%empty_struct_type)> [concrete = constants.%J.type.b8d23b.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @empty_struct_type.as.I.impl [concrete]
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -652,9 +670,17 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T)> [symbolic = %I.type (constants.%I.type.17e)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_struct_type.as.I.impl: %.loc3_7.2 as %J.type {
+// CHECK:STDOUT: impl @C.as.I.impl: %C.ref as %J.type {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = file.%I.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J(constants.%T) {
@@ -684,7 +710,7 @@ impl forall [T:! type] D as N(T*) {}
 // CHECK:STDOUT:   %J.type => constants.%J.type.b8d23b.2
 // CHECK:STDOUT:   %Self => constants.%Self.84c873.2
 // CHECK:STDOUT:   %I.type => constants.%I.type.399
-// CHECK:STDOUT:   %require_complete => constants.%complete_type
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.e4b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.require0(constants.%empty_struct_type, constants.%Self.84c873.1) {
