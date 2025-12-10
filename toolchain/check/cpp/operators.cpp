@@ -13,6 +13,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/check/well_known_identifier.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -20,147 +21,153 @@ namespace Carbon::Check {
 
 // Maps Carbon operator interface and operator names to Clang operator kinds.
 static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
-                                 llvm::StringLiteral interface_name,
-                                 llvm::StringLiteral op_name)
+                                 WellKnownIdentifier interface_name,
+                                 WellKnownIdentifier op_name)
     -> std::optional<clang::OverloadedOperatorKind> {
-  // Unary operators.
-  if (interface_name == "Destroy" || interface_name == "As" ||
-      interface_name == "ImplicitAs" || interface_name == "Copy") {
-    // TODO: Support destructors and conversions.
-    return std::nullopt;
-  }
-
-  // Increment and Decrement.
-  if (interface_name == "Inc") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_PlusPlus;
-  }
-  if (interface_name == "Dec") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_MinusMinus;
-  }
-
-  // Arithmetic.
-  if (interface_name == "Negate") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_Minus;
-  }
-
-  // Binary operators.
-
-  // Arithmetic Operators.
-  if (interface_name == "AddWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_Plus;
-  }
-  if (interface_name == "SubWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_Minus;
-  }
-  if (interface_name == "MulWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_Star;
-  }
-  if (interface_name == "DivWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_Slash;
-  }
-  if (interface_name == "ModWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_Percent;
-  }
-
-  // Bitwise Operators.
-  if (interface_name == "BitAndWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_Amp;
-  }
-  if (interface_name == "BitOrWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_Pipe;
-  }
-  if (interface_name == "BitXorWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_Caret;
-  }
-  if (interface_name == "LeftShiftWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_LessLess;
-  }
-  if (interface_name == "RightShiftWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_GreaterGreater;
-  }
-
-  // Compound Assignment Arithmetic Operators.
-  if (interface_name == "AddAssignWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_PlusEqual;
-  }
-  if (interface_name == "SubAssignWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_MinusEqual;
-  }
-  if (interface_name == "MulAssignWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_StarEqual;
-  }
-  if (interface_name == "DivAssignWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_SlashEqual;
-  }
-  if (interface_name == "ModAssignWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_PercentEqual;
-  }
-
-  // Compound Assignment Bitwise Operators.
-  if (interface_name == "BitAndAssignWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_AmpEqual;
-  }
-  if (interface_name == "BitOrAssignWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_PipeEqual;
-  }
-  if (interface_name == "BitXorAssignWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_CaretEqual;
-  }
-  if (interface_name == "LeftShiftAssignWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_LessLessEqual;
-  }
-  if (interface_name == "RightShiftAssignWith") {
-    CARBON_CHECK(op_name == "Op");
-    return clang::OO_GreaterGreaterEqual;
-  }
-
-  // Relational Operators.
-  if (interface_name == "EqWith") {
-    if (op_name == "Equal") {
-      return clang::OO_EqualEqual;
+  switch (interface_name) {
+      // Unary operators.
+    case WellKnownIdentifier::Destroy:
+    case WellKnownIdentifier::As:
+    case WellKnownIdentifier::ImplicitAs:
+    case WellKnownIdentifier::Copy: {
+      // TODO: Support destructors and conversions.
+      return std::nullopt;
     }
-    CARBON_CHECK(op_name == "NotEqual");
-    return clang::OO_ExclaimEqual;
-  }
-  if (interface_name == "OrderedWith") {
-    if (op_name == "Less") {
-      return clang::OO_Less;
-    }
-    if (op_name == "Greater") {
-      return clang::OO_Greater;
-    }
-    if (op_name == "LessOrEquivalent") {
-      return clang::OO_LessEqual;
-    }
-    CARBON_CHECK(op_name == "GreaterOrEquivalent");
-    return clang::OO_GreaterEqual;
-  }
 
-  context.TODO(loc_id, llvm::formatv("Unsupported operator interface `{0}`",
-                                     interface_name));
-  return std::nullopt;
+    // Increment and decrement.
+    case WellKnownIdentifier::Inc: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_PlusPlus;
+    }
+    case WellKnownIdentifier::Dec: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_MinusMinus;
+    }
+
+    // Arithmetic.
+    case WellKnownIdentifier::Negate: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_Minus;
+    }
+
+    // Binary operators.
+
+    // Arithmetic operators.
+    case WellKnownIdentifier::AddWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_Plus;
+    }
+    case WellKnownIdentifier::SubWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_Minus;
+    }
+    case WellKnownIdentifier::MulWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_Star;
+    }
+    case WellKnownIdentifier::DivWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_Slash;
+    }
+    case WellKnownIdentifier::ModWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_Percent;
+    }
+
+    // Bitwise operators.
+    case WellKnownIdentifier::BitAndWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_Amp;
+    }
+    case WellKnownIdentifier::BitOrWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_Pipe;
+    }
+    case WellKnownIdentifier::BitXorWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_Caret;
+    }
+    case WellKnownIdentifier::LeftShiftWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_LessLess;
+    }
+    case WellKnownIdentifier::RightShiftWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_GreaterGreater;
+    }
+
+    // Compound assignment arithmetic operators.
+    case WellKnownIdentifier::AddAssignWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_PlusEqual;
+    }
+    case WellKnownIdentifier::SubAssignWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_MinusEqual;
+    }
+    case WellKnownIdentifier::MulAssignWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_StarEqual;
+    }
+    case WellKnownIdentifier::DivAssignWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_SlashEqual;
+    }
+    case WellKnownIdentifier::ModAssignWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_PercentEqual;
+    }
+
+    // Compound assignment bitwise operators.
+    case WellKnownIdentifier::BitAndAssignWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_AmpEqual;
+    }
+    case WellKnownIdentifier::BitOrAssignWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_PipeEqual;
+    }
+    case WellKnownIdentifier::BitXorAssignWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_CaretEqual;
+    }
+    case WellKnownIdentifier::LeftShiftAssignWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_LessLessEqual;
+    }
+    case WellKnownIdentifier::RightShiftAssignWith: {
+      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+      return clang::OO_GreaterGreaterEqual;
+    }
+
+    // Relational operators.
+    case WellKnownIdentifier::EqWith: {
+      if (op_name == WellKnownIdentifier::Equal) {
+        return clang::OO_EqualEqual;
+      }
+      CARBON_CHECK(op_name == WellKnownIdentifier::NotEqual);
+      return clang::OO_ExclaimEqual;
+    }
+    case WellKnownIdentifier::OrderedWith: {
+      switch (op_name) {
+        case WellKnownIdentifier::Less:
+          return clang::OO_Less;
+        case WellKnownIdentifier::Greater:
+          return clang::OO_Greater;
+        case WellKnownIdentifier::LessOrEquivalent:
+          return clang::OO_LessEqual;
+        case WellKnownIdentifier::GreaterOrEquivalent:
+          return clang::OO_GreaterEqual;
+        default:
+          CARBON_FATAL("Unexpected OrderedWith op `{0}`", op_name);
+      }
+    }
+
+    default:
+      context.TODO(loc_id, llvm::formatv("Unsupported operator interface `{0}`",
+                                         interface_name));
+      return std::nullopt;
+  }
 }
 
 auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,

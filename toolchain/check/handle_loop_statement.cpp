@@ -14,6 +14,7 @@
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/well_known_identifier.h"
 #include "toolchain/sem_ir/absolute_node_id.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -135,10 +136,10 @@ auto HandleParseNode(Context& context, Parse::ForInId node_id) -> bool {
 // For a value or reference of type `Optional(T)`, call the given accessor.
 static auto CallOptionalAccessor(Context& context, Parse::NodeId node_id,
                                  SemIR::InstId optional_id,
-                                 llvm::StringLiteral accessor_name)
+                                 WellKnownIdentifier accessor_name)
     -> SemIR::InstId {
   auto accessor_name_id =
-      SemIR::NameId::ForIdentifier(context.identifiers().Add(accessor_name));
+      context.well_known_identifiers().AddNameId(accessor_name);
   auto accessor_id =
       PerformMemberAccess(context, node_id, optional_id, accessor_name_id);
   return PerformCall(context, node_id, accessor_id, {});
@@ -160,9 +161,11 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   // Create the cursor variable.
   // TODO: Produce a custom diagnostic if the range operand can't be used as a
   // range.
-  auto cursor_id = BuildUnaryOperator(
-      context, node_id, {.interface_name = "Iterate", .op_name = "NewCursor"},
-      range_id);
+  auto cursor_id =
+      BuildUnaryOperator(context, node_id,
+                         {.interface_name = WellKnownIdentifier::Iterate,
+                          .op_name = WellKnownIdentifier::NewCursor},
+                         range_id);
   auto cursor_type_id = context.insts().Get(cursor_id).type_id();
   auto cursor_var_id = AddInstWithCleanup<SemIR::VarStorage>(
       context, node_id,
@@ -180,9 +183,11 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
       context, node_id,
       {.type_id = GetPointerType(context, cursor_type_inst_id),
        .lvalue_id = cursor_var_id});
-  auto element_id = BuildBinaryOperator(
-      context, node_id, {.interface_name = "Iterate", .op_name = "Next"},
-      range_id, cursor_addr_id);
+  auto element_id =
+      BuildBinaryOperator(context, node_id,
+                          {.interface_name = WellKnownIdentifier::Iterate,
+                           .op_name = WellKnownIdentifier::Next},
+                          range_id, cursor_addr_id);
   // We need to convert away from an initializing expression in order to call
   // `HasValue` and then separately pattern-match against the element.
   // TODO: Instead, form a `.Some(pattern_id)` pattern and pattern-match against
@@ -190,8 +195,8 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   element_id = ConvertToValueOrRefExpr(context, element_id);
 
   // Branch to the loop body if the optional element has a value.
-  auto cond_value_id =
-      CallOptionalAccessor(context, node_id, element_id, "HasValue");
+  auto cond_value_id = CallOptionalAccessor(context, node_id, element_id,
+                                            WellKnownIdentifier::HasValue);
   BranchAndStartLoopBody(context, node_id, loop_header_id, cond_value_id);
 
   // The loop pattern's initializer is now complete, and any bindings in it
@@ -203,8 +208,8 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   AddPatternVarStorage(context, pattern_block_id, /*is_returned_var=*/false);
 
   // Initialize the pattern from `<element>.Get()`.
-  auto element_value_id =
-      CallOptionalAccessor(context, node_id, element_id, "Get");
+  auto element_value_id = CallOptionalAccessor(context, node_id, element_id,
+                                               WellKnownIdentifier::Get);
   LocalPatternMatch(context, pattern_id, element_value_id);
   return true;
 }

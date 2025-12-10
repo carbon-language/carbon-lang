@@ -135,6 +135,7 @@ cc_library(
     ],
     deps = [
         ":node_stack",
+        ":well_known_identifier",
         "//common:array_stack",
         "//common:check",
         "//common:concepts",
@@ -220,6 +221,7 @@ cc_library(
         ":diagnostic_emitter",
         ":dump",
         ":scope_stack",
+        ":well_known_identifier",
         "//common:check",
         "//common:error",
         "//common:find",
@@ -319,6 +321,19 @@ cc_library(
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "well_known_identifier",
+    srcs = ["well_known_identifier.cpp"],
+    hdrs = ["well_known_identifier.h"],
+    textual_hdrs = ["well_known_identifier.def"],
+    deps = [
+        "//common:enum_base",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/base:value_ids",
+        "//toolchain/sem_ir:typed_insts",
     ],
 )
 

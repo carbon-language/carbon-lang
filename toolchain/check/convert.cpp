@@ -24,6 +24,7 @@
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/check/well_known_identifier.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
 #include "toolchain/sem_ir/expr_info.h"
@@ -1367,7 +1368,8 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id,
   }
 
   auto copy_id = BuildUnaryOperator(
-      context, SemIR::LocId(expr_id), {"Copy"}, expr_id, [&] {
+      context, SemIR::LocId(expr_id),
+      {.interface_name = WellKnownIdentifier::Copy}, expr_id, [&] {
         if (!target.diagnose) {
           return context.emitter().BuildSuppressed();
         }
@@ -1407,14 +1409,14 @@ static auto ConvertValueForCppThunkRef(Context& context, SemIR::InstId expr_id)
 
 // Returns the Core interface name to use for a given kind of conversion.
 static auto GetConversionInterfaceName(ConversionTarget::Kind kind)
-    -> llvm::StringLiteral {
+    -> WellKnownIdentifier {
   switch (kind) {
     case ConversionTarget::ExplicitAs:
-      return "As";
+      return WellKnownIdentifier::As;
     case ConversionTarget::ExplicitUnsafeAs:
-      return "UnsafeAs";
+      return WellKnownIdentifier::UnsafeAs;
     default:
-      return "ImplicitAs";
+      return WellKnownIdentifier::ImplicitAs;
   }
 }
 
@@ -1559,7 +1561,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     Operator op = {
         .interface_name = GetConversionInterfaceName(target.kind),
         .interface_args_ref = interface_args,
-        .op_name = "Convert",
+        .op_name = WellKnownIdentifier::Convert,
     };
     expr_id = BuildUnaryOperator(context, loc_id, op, expr_id, [&] {
       if (!target.diagnose) {

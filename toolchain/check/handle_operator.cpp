@@ -10,6 +10,7 @@
 #include "toolchain/check/operator.h"
 #include "toolchain/check/pointer_dereference.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/well_known_identifier.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/expr_info.h"
@@ -18,17 +19,19 @@ namespace Carbon::Check {
 
 // Common logic for unary operator handlers.
 static auto HandleUnaryOperator(Context& context, Parse::AnyExprId expr_node_id,
-                                Operator op) -> bool {
+                                WellKnownIdentifier interface_name) -> bool {
   auto operand_id = context.node_stack().PopExpr();
-  auto result_id = BuildUnaryOperator(context, expr_node_id, op, operand_id);
+  auto result_id = BuildUnaryOperator(
+      context, expr_node_id, {.interface_name = interface_name}, operand_id);
   context.node_stack().Push(expr_node_id, result_id);
   return true;
 }
 
 // Common logic for binary operator handlers.
-static auto HandleBinaryOperator(Context& context,
-                                 Parse::AnyExprId expr_node_id, Operator op)
-    -> bool {
+static auto HandleBinaryOperator(
+    Context& context, Parse::AnyExprId expr_node_id,
+    WellKnownIdentifier interface_name,
+    WellKnownIdentifier op_name = WellKnownIdentifier::Op) -> bool {
   auto rhs_id = context.node_stack().PopExpr();
   auto lhs_id = context.node_stack().PopExpr();
   // All the `*With` binary operator interfaces take a single argument that is
@@ -36,9 +39,11 @@ static auto HandleBinaryOperator(Context& context,
   // this function for it.
   SemIR::InstId args[] = {
       context.types().GetInstId(context.insts().Get(rhs_id).type_id())};
-  op.interface_args_ref = args;
-  auto result_id =
-      BuildBinaryOperator(context, expr_node_id, op, lhs_id, rhs_id);
+  auto result_id = BuildBinaryOperator(context, expr_node_id,
+                                       {.interface_name = interface_name,
+                                        .interface_args_ref = args,
+                                        .op_name = op_name},
+                                       lhs_id, rhs_id);
   context.node_stack().Push(expr_node_id, result_id);
   return true;
 }
@@ -46,12 +51,14 @@ static auto HandleBinaryOperator(Context& context,
 auto HandleParseNode(Context& context, Parse::InfixOperatorAmpId node_id)
     -> bool {
   // TODO: Facet type intersection may need to be handled directly.
-  return HandleBinaryOperator(context, node_id, {"BitAndWith"});
+  return HandleBinaryOperator(context, node_id,
+                              WellKnownIdentifier::BitAndWith);
 }
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorAmpEqualId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"BitAndAssignWith"});
+  return HandleBinaryOperator(context, node_id,
+                              WellKnownIdentifier::BitAndAssignWith);
 }
 
 auto HandleParseNode(Context& context, Parse::UnsafeModifierId node_id)
@@ -78,12 +85,14 @@ auto HandleParseNode(Context& context, Parse::InfixOperatorAsId node_id)
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorCaretId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"BitXorWith"});
+  return HandleBinaryOperator(context, node_id,
+                              WellKnownIdentifier::BitXorWith);
 }
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorCaretEqualId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"BitXorAssignWith"});
+  return HandleBinaryOperator(context, node_id,
+                              WellKnownIdentifier::BitXorAssignWith);
 }
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorEqualId node_id)
@@ -91,7 +100,8 @@ auto HandleParseNode(Context& context, Parse::InfixOperatorEqualId node_id)
   // TODO: Switch to using assignment interface for most assignment. Some cases
   // may need to be handled directly.
   //
-  //   return HandleBinaryOperator(context, node_id, {"AssignWith"});
+  //   return HandleBinaryOperator(context, node_id,
+  //                               WellKnownIdentifier::AssignWith);
 
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
   auto [lhs_node, lhs_id] = context.node_stack().PopExprWithNodeId();
@@ -117,45 +127,55 @@ auto HandleParseNode(Context& context, Parse::InfixOperatorEqualId node_id)
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorEqualEqualId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"EqWith", {}, "Equal"});
+  return HandleBinaryOperator(context, node_id, WellKnownIdentifier::EqWith,
+                              WellKnownIdentifier::Equal);
 }
 
 auto HandleParseNode(Context& context,
                      Parse::InfixOperatorExclaimEqualId node_id) -> bool {
-  return HandleBinaryOperator(context, node_id, {"EqWith", {}, "NotEqual"});
+  return HandleBinaryOperator(context, node_id, WellKnownIdentifier::EqWith,
+                              WellKnownIdentifier::NotEqual);
 }
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorGreaterId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"OrderedWith", {}, "Greater"});
+  return HandleBinaryOperator(context, node_id,
+                              WellKnownIdentifier::OrderedWith,
+                              WellKnownIdentifier::Greater);
 }
 
 auto HandleParseNode(Context& context,
                      Parse::InfixOperatorGreaterEqualId node_id) -> bool {
   return HandleBinaryOperator(context, node_id,
-                              {"OrderedWith", {}, "GreaterOrEquivalent"});
+                              WellKnownIdentifier::OrderedWith,
+                              WellKnownIdentifier::GreaterOrEquivalent);
 }
 
 auto HandleParseNode(Context& context,
                      Parse::InfixOperatorGreaterGreaterId node_id) -> bool {
-  return HandleBinaryOperator(context, node_id, {"RightShiftWith"});
+  return HandleBinaryOperator(context, node_id,
+                              WellKnownIdentifier::RightShiftWith);
 }
 
 auto HandleParseNode(Context& context,
                      Parse::InfixOperatorGreaterGreaterEqualId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"RightShiftAssignWith"});
+  return HandleBinaryOperator(context, node_id,
+                              WellKnownIdentifier::RightShiftAssignWith);
 }
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorLessId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"OrderedWith", {}, "Less"});
+  return HandleBinaryOperator(context, node_id,
+                              WellKnownIdentifier::OrderedWith,
+                              WellKnownIdentifier::Less);
 }
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorLessEqualId node_id)
     -> bool {
   return HandleBinaryOperator(context, node_id,
-                              {"OrderedWith", {}, "LessOrEquivalent"});
+                              WellKnownIdentifier::OrderedWith,
+                              WellKnownIdentifier::LessOrEquivalent);
 }
 
 auto HandleParseNode(Context& context,
@@ -165,72 +185,80 @@ auto HandleParseNode(Context& context,
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorLessLessId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"LeftShiftWith"});
+  return HandleBinaryOperator(context, node_id,
+                              WellKnownIdentifier::LeftShiftWith);
 }
 
 auto HandleParseNode(Context& context,
                      Parse::InfixOperatorLessLessEqualId node_id) -> bool {
-  return HandleBinaryOperator(context, node_id, {"LeftShiftAssignWith"});
+  return HandleBinaryOperator(context, node_id,
+                              WellKnownIdentifier::LeftShiftAssignWith);
 }
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorMinusId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"SubWith"});
+  return HandleBinaryOperator(context, node_id, WellKnownIdentifier::SubWith);
 }
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorMinusEqualId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"SubAssignWith"});
+  return HandleBinaryOperator(context, node_id,
+                              WellKnownIdentifier::SubAssignWith);
 }
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorPercentId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"ModWith"});
+  return HandleBinaryOperator(context, node_id, WellKnownIdentifier::ModWith);
 }
 
 auto HandleParseNode(Context& context,
                      Parse::InfixOperatorPercentEqualId node_id) -> bool {
-  return HandleBinaryOperator(context, node_id, {"ModAssignWith"});
+  return HandleBinaryOperator(context, node_id,
+                              WellKnownIdentifier::ModAssignWith);
 }
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorPipeId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"BitOrWith"});
+  return HandleBinaryOperator(context, node_id, WellKnownIdentifier::BitOrWith);
 }
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorPipeEqualId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"BitOrAssignWith"});
+  return HandleBinaryOperator(context, node_id,
+                              WellKnownIdentifier::BitOrAssignWith);
 }
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorPlusId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"AddWith"});
+  return HandleBinaryOperator(context, node_id, WellKnownIdentifier::AddWith);
 }
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorPlusEqualId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"AddAssignWith"});
+  return HandleBinaryOperator(context, node_id,
+                              WellKnownIdentifier::AddAssignWith);
 }
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorSlashId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"DivWith"});
+  return HandleBinaryOperator(context, node_id, WellKnownIdentifier::DivWith);
 }
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorSlashEqualId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"DivAssignWith"});
+  return HandleBinaryOperator(context, node_id,
+                              WellKnownIdentifier::DivAssignWith);
 }
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorStarId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"MulWith"});
+  return HandleBinaryOperator(context, node_id, WellKnownIdentifier::MulWith);
 }
 
 auto HandleParseNode(Context& context, Parse::InfixOperatorStarEqualId node_id)
     -> bool {
-  return HandleBinaryOperator(context, node_id, {"MulAssignWith"});
+  return HandleBinaryOperator(context, node_id,
+                              WellKnownIdentifier::MulAssignWith);
 }
 
 auto HandleParseNode(Context& context, Parse::PostfixOperatorStarId node_id)
@@ -271,7 +299,8 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorAmpId node_id)
 
 auto HandleParseNode(Context& context, Parse::PrefixOperatorCaretId node_id)
     -> bool {
-  return HandleUnaryOperator(context, node_id, {"BitComplement"});
+  return HandleUnaryOperator(context, node_id,
+                             WellKnownIdentifier::BitComplement);
 }
 
 auto HandleParseNode(Context& context, Parse::PrefixOperatorConstId node_id)
@@ -296,12 +325,12 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorConstId node_id)
 
 auto HandleParseNode(Context& context, Parse::PrefixOperatorMinusId node_id)
     -> bool {
-  return HandleUnaryOperator(context, node_id, {"Negate"});
+  return HandleUnaryOperator(context, node_id, WellKnownIdentifier::Negate);
 }
 
 auto HandleParseNode(Context& context,
                      Parse::PrefixOperatorMinusMinusId node_id) -> bool {
-  return HandleUnaryOperator(context, node_id, {"Dec"});
+  return HandleUnaryOperator(context, node_id, WellKnownIdentifier::Dec);
 }
 
 auto HandleParseNode(Context& context, Parse::PrefixOperatorNotId node_id)
@@ -338,7 +367,7 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorPartialId node_id)
 
 auto HandleParseNode(Context& context, Parse::PrefixOperatorPlusPlusId node_id)
     -> bool {
-  return HandleUnaryOperator(context, node_id, {"Inc"});
+  return HandleUnaryOperator(context, node_id, WellKnownIdentifier::Inc);
 }
 
 auto HandleParseNode(Context& context, Parse::PrefixOperatorStarId node_id)

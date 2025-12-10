@@ -51,6 +51,7 @@
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/check/well_known_identifier.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/clang_decl.h"
 #include "toolchain/sem_ir/class.h"
@@ -730,16 +731,17 @@ static auto MakeIntType(Context& context, IntId size_id, bool is_signed)
 }
 
 static auto MakeCppCompatType(Context& context, SemIR::LocId loc_id,
-                              llvm::StringRef name) -> TypeExpr {
+                              WellKnownIdentifier name) -> TypeExpr {
   return ExprAsType(context, loc_id,
-                    LookupNameInCore(context, loc_id, {"CppCompat", name}));
+                    LookupNameInCore(context, loc_id,
+                                     {WellKnownIdentifier::CppCompat, name}));
 }
 
 // Maps a C++ builtin integer type to a Carbon `Core.CppCompat` type.
 static auto MapBuiltinCppCompatIntegerType(Context& context,
                                            unsigned int cpp_width,
                                            unsigned int carbon_width,
-                                           llvm::StringRef cpp_compat_name)
+                                           WellKnownIdentifier cpp_compat_name)
     -> TypeExpr {
   if (cpp_width != carbon_width) {
     return TypeExpr::None;
@@ -775,23 +777,27 @@ static auto MapBuiltinIntegerType(Context& context, SemIR::LocId loc_id,
                       MakeCharTypeLiteral(context, Parse::NodeId::None));
   }
   if (clang::ASTContext::hasSameType(qual_type, ast_context.LongTy)) {
-    return MapBuiltinCppCompatIntegerType(context, width, 32, "Long32");
+    return MapBuiltinCppCompatIntegerType(context, width, 32,
+                                          WellKnownIdentifier::Long32);
   }
   if (clang::ASTContext::hasSameType(qual_type, ast_context.UnsignedLongTy)) {
-    return MapBuiltinCppCompatIntegerType(context, width, 32, "ULong32");
+    return MapBuiltinCppCompatIntegerType(context, width, 32,
+                                          WellKnownIdentifier::ULong32);
   }
   if (clang::ASTContext::hasSameType(qual_type, ast_context.LongLongTy)) {
-    return MapBuiltinCppCompatIntegerType(context, width, 64, "LongLong64");
+    return MapBuiltinCppCompatIntegerType(context, width, 64,
+                                          WellKnownIdentifier::LongLong64);
   }
   if (clang::ASTContext::hasSameType(qual_type,
                                      ast_context.UnsignedLongLongTy)) {
-    return MapBuiltinCppCompatIntegerType(context, width, 64, "ULongLong64");
+    return MapBuiltinCppCompatIntegerType(context, width, 64,
+                                          WellKnownIdentifier::ULongLong64);
   }
   return TypeExpr::None;
 }
 
 static auto MapNullptrType(Context& context, SemIR::LocId loc_id) -> TypeExpr {
-  return MakeCppCompatType(context, loc_id, "NullptrT");
+  return MakeCppCompatType(context, loc_id, WellKnownIdentifier::NullptrT);
 }
 
 // Maps a C++ builtin type to a Carbon type.
@@ -820,7 +826,7 @@ static auto MapBuiltinType(Context& context, SemIR::LocId loc_id,
     }
     // TODO: Handle floating-point types that map to named aliases.
   } else if (type.isVoidType()) {
-    return MakeCppCompatType(context, loc_id, "VoidBase");
+    return MakeCppCompatType(context, loc_id, WellKnownIdentifier::VoidBase);
   } else if (type.isNullPtrType()) {
     return MapNullptrType(context, loc_id);
   }
@@ -937,7 +943,8 @@ static auto ClangGetUnqualifiedTypePreserveNonNull(
 // `inner_type_inst_id`.
 static auto MakeOptionalType(Context& context, SemIR::LocId loc_id,
                              SemIR::InstId inner_type_inst_id) -> TypeExpr {
-  auto fn_inst_id = LookupNameInCore(context, loc_id, "Optional");
+  auto fn_inst_id =
+      LookupNameInCore(context, loc_id, WellKnownIdentifier::Optional);
   auto call_id = PerformCall(context, loc_id, fn_inst_id, {inner_type_inst_id});
   return ExprAsType(context, loc_id, call_id);
 }
