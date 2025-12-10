@@ -53,7 +53,8 @@ fn ParametersUsed(x: i32) -> i32 {
   return x;
 }
 
-// --- fail_todo_ensure_no_warning.carbon
+// --- fail_todo_unused_ref_param.carbon
+library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_todo_ensure_no_warning.carbon:[[@LINE+4]]:19: error: semantics TODO: `unused` [SemanticsTodo]
 // CHECK:STDERR: fn RefParamUnused(unused ref y: i32) {
