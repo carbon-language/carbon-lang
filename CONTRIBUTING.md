@@ -234,7 +234,7 @@ as well as helpful tooling that will ease the contribution process. For example,
 All submissions to Carbon need to follow our
 [Contributor License Agreement (CLA)](#contributor-license-agreements-clas),
 which covers any original work of authorship included in the submission. This
-doesn’t prohibit the use of coding assistance tools, including tool-, AI-, or
+doesn't prohibit the use of coding assistance tools, including tool-, AI-, or
 machine-generated code, as long as these submissions abide by the CLA's
 requirements.
 
