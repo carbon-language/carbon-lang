@@ -95,7 +95,10 @@ fn Parameters(p: i32) {
   // TODO: warning, p is unused.
 }
 
-fn RefParamUnused(ref y: i32) {
+// --- todo_fail_param_ref_named_not_used.carbon
+library "[[@TEST_NAME]]";
+
+fn F(ref y: i32) {
   // TODO: warning, y is unused.
 }
 
