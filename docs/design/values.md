@@ -131,7 +131,8 @@ copy-initialization and materialization. Non-durable-reference expressions
 cannot be implicitly converted to durable reference expressions at all.
 
 > **TODO:** Determine how these reference sub-categories relate to memory-safety
-> properties like uniqueness.
+> properties like uniqueness, and make sure their names are aligned with
+> memory-safety terminology.
 
 #### Value binding
 
@@ -186,10 +187,10 @@ converting it into one as necessary.
 
 A _variable pattern_ is introduced with the `var` keyword. The matched
 expression must be an ephemeral entire reference expression (which typically
-requires the matched expression to be materialized); the `var` pattern "adopts"
-the temporary storage it refers to, which extends its lifetime to the end of the
-enclosing scope. The subpattern is then matched against a _durable_ entire
-reference expression to the object in that storage.
+requires the matched expression to be materialized); the `var` pattern takes
+ownership of the newly-allocated temporary storage it refers to, which extends
+its lifetime to the end of the enclosing scope. The subpattern is then matched
+against a _durable_ entire reference expression to the object in that storage.
 
 A _reference binding pattern_ is a binding pattern that is nested under a `var`
 pattern. It introduces a name called a _reference binding_ that is a
@@ -206,8 +207,8 @@ fn Example() {
   // `2` also starts as a value expression, but the variable pattern requires it
   // to be converted to an ephemeral entire reference expression by using the
   // value `2` to initialize temporary storage, which the variable pattern
-  // adopts. The reference binding pattern is then bound to a durable reference
-  // to the newly-initialized object.
+  // takes ownership of. The reference binding pattern is then bound to a
+  // durable reference to the newly-initialized object.
   var y: i64 = 2;
 
   // Allowed to take the address and mutate `y` as it is a durable reference
@@ -247,8 +248,8 @@ fn DestructuringExample() {
   // Both `1` and `2` start as value expressions. The `x` binding directly
   // matches `1`. For `2`, the variable pattern requires it to be converted to
   // an ephemeral entire reference expression by using the value `2` to
-  // initialize temporary storage, which the variable pattern adopts.
-  // The reference binding `y` is then bound to a durable reference to the
+  // initialize temporary storage, which the variable pattern takes ownership
+  // of. The reference binding `y` is then bound to a durable reference to the
   // newly-initialized object.
   let (x: i64, var y: i64) = (1, 2);
 
@@ -798,7 +799,7 @@ A _primitive form_ currently consists of a type, an expression category, an
 expression phase, and optionally a constant value (which is present if and only
 if the expression phase is not "runtime"). When dealing with primitive forms,
 which is the common case, we can treat each of those properties as independent.
-For convenience, in this section we will use the notation `[T, C, P, V]` to
+For convenience, in this section we will use the notation `<T, C, P, V>` to
 represent a primitive form with type `T`, category `C`, phase `P` and value `V`,
 but this is not Carbon syntax.
 
@@ -817,7 +818,7 @@ forms of the corresponding fields of the struct literal.
 
 The _type component_ of a form is defined as follows:
 
--   The type component of a primitive form `[T, C, P, V]` is `T`.
+-   The type component of a primitive form `<T, C, P, V>` is `T`.
 -   The type component of a tuple form is a tuple of the type components of its
     elements.
 -   The type component of a struct form is a struct whose field names are the
@@ -843,6 +844,8 @@ recursively in terms of the expression's form:
 An expression and its outcome always have the same form.
 
 ### Initializing outcomes
+
+> **TODO:** Find a clearer way to articulate this concept.
 
 An _initializing outcome_ is the notional result of evaluating an initializing
 expression, and represents an obligation to provide storage for an object of the
@@ -969,13 +972,13 @@ category to a primitive form as follows (where `min` as applied to phases uses
 the ordering "runtime" < "symbolic" < "template"):
 
 -   An expression of tuple form
-    `([T1, C, P1, V1], [T2, C, P2, V2], ... [TN, C, PN, VN])` can be converted
+    `(<T1, C, P1, V1>, <T2, C, P2, V2>, ... <TN, C, PN, VN>)` can be converted
     to a primitive form
-    `[(T1, T2, ..., TN), C, min(P1, P2, ..., PN), (V1, V2, ... VN)]`.
+    `<(T1, T2, ..., TN), C, min(P1, P2, ..., PN), (V1, V2, ... VN)>`.
 -   An expression of struct form
-    `{.a = [Ta, C, Pa, Va], .b = [Tb, C, Pb, Vb], ... .z = [Tz, C, Pz, Vz]}` can
+    `{.a = <Ta, C, Pa, Va>, .b = <Tb, C, Pb, Vb>, ... .z = <Tz, C, Pz, Vz>}` can
     be converted to a primitive form
-    `[{.a = Ta, .b = Tb, ... .z = Tz}, C, min(Pa, Pb, ... Pz), {.a = Va, .b = Vb, ... .z = Vz}]`.
+    `<{.a = Ta, .b = Tb, ... .z = Tz}, C, min(Pa, Pb, ... Pz), {.a = Va, .b = Vb, ... .z = Vz}>`.
 
 When `C` is "value", composition forms a value representation of the aggregate
 from value representations of the elements. When `C` is "initializing", it
@@ -987,13 +990,13 @@ replaced by a reference to a single aggregate object in a single step.
 _Form decomposition_ is the inverse of form composition. It converts a
 primitive-form expression to a composite form as follows:
 
--   An expression with primitive form `[(T0, T1, ..., TN), C, P, V]` can be
+-   An expression with primitive form `<(T0, T1, ..., TN), C, P, V>` can be
     converted to a tuple form
-    `([T0, CC, P, V.0], [T1, CC, P, V.1], ... [TN, CC, P, V.N])`.
+    `(<T0, CC, P, V.0>, <T1, CC, P, V.1>, ... <TN, CC, P, V.N>)`.
 -   An expression with primitive form
-    `[{.a = Ta, .b = Tb, ... .z = Tz}, C, P, V]` can be converted to a struct
+    `<{.a = Ta, .b = Tb, ... .z = Tz}, C, P, V>` can be converted to a struct
     form
-    `{.a = [Ta, CC, P, V.a], .b = [Tb, CC, P, V.b], ... .z = [Tz, CC, P, V.z]}`.
+    `{.a = <Ta, CC, P, V.a>, .b = <Tb, CC, P, V.b>, ... .z = <Tz, CC, P, V.z>}`.
 
 The category `CC` of the resulting sub-forms is the same as `C`, with two
 exceptions:

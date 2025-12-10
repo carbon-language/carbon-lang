@@ -303,8 +303,9 @@ scrutinee.
 
 The scrutinee is expected to have the same type as the resolved type of the
 nested _pattern_, and it is expected to be a runtime-phase ephemeral entire
-reference expression. The scrutinee expression is converted as needed to satisfy
-those expectations, and the `var` pattern takes adopts the referenced object,
+reference expression, which therefore refers to a newly-allocated temporary
+object. The scrutinee expression is converted as needed to satisfy those
+expectations, and the `var` pattern takes ownership of the referenced object,
 promotes it to a _durable_ entire reference expression, and matches the nested
 _pattern_ with it.
 
