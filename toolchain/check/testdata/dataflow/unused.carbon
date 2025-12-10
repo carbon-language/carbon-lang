@@ -66,10 +66,6 @@ fn RefParamUnused(unused ref y: i32) {
   // TODO: ensure no warning
 }
 
-// --- todo_ensure_warning.carbon
-
-library "unused_warning";
-
 // --- todo_fail_local_let_named_not_used.carbon
 library "[[@TEST_NAME]]";
 
