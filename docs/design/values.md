@@ -787,7 +787,7 @@ directly observe the storage provided for initialization of a function's return.
 ## Expression forms
 
 We typically treat the category and type of an expression as independent
-properties. However, in some cases we need deal with them as an integrated
+properties. However, in some cases we need to deal with them as an integrated
 whole. The _form_ of an expression captures all of the information about it that
 is visible to the type system, while abstracting away all other information
 about it. Thus, forms are a generalization of types: what we conventionally call
