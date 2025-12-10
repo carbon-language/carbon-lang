@@ -96,10 +96,8 @@ fn RefParamUnused(ref y: i32) {
   // TODO: warning, y is unused.
 }
 
-// --- fail_todo_ensure_error.carbon
-// CHECK:STDERR: fail_todo_ensure_error.carbon: error: `Main//default` previously provided by `fail_todo_ensure_no_warning.carbon` [DuplicateMainApi]
-// CHECK:STDERR:
-
+// --- fail_todo_read_from_param_unused_ref.carbon
+library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_todo_ensure_error.carbon:[[@LINE+4]]:19: error: semantics TODO: `unused` [SemanticsTodo]
 // CHECK:STDERR: fn RefParamUnused(unused ref y: i32) {
 // CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~
