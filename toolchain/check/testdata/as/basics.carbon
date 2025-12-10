@@ -381,7 +381,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %struct.948: %struct_type.x = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %X.val: %X = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %As.type.cd7: type = facet_type <@As, @As(%Y)> [concrete]
-// CHECK:STDOUT:   %As.impl_witness.362: <witness> = impl_witness file.%As.impl_witness_table.loc14 [concrete]
+// CHECK:STDOUT:   %As.impl_witness.362: <witness> = impl_witness @X.as.As.impl.%As.impl_witness_table [concrete]
 // CHECK:STDOUT:   %As.Convert.type.5a7: type = fn_type @As.Convert, @As(%Y) [concrete]
 // CHECK:STDOUT:   %X.as.As.impl.Convert.type: type = fn_type @X.as.As.impl.Convert [concrete]
 // CHECK:STDOUT:   %X.as.As.impl.Convert: %X.as.As.impl.Convert.type = struct_value () [concrete]

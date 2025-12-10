@@ -89,7 +89,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   %OrderedWith.generic: %OrderedWith.type.270 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %OrderedWith.type.069: type = facet_type <@OrderedWith, @OrderedWith(%C)> [concrete]
-// CHECK:STDOUT:   %OrderedWith.impl_witness: <witness> = impl_witness file.%OrderedWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %OrderedWith.impl_witness: <witness> = impl_witness @C.as.OrderedWith.impl.%OrderedWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %OrderedWith.Less.type.65f: type = fn_type @OrderedWith.Less, @OrderedWith(%C) [concrete]
 // CHECK:STDOUT:   %OrderedWith.LessOrEquivalent.type.554: type = fn_type @OrderedWith.LessOrEquivalent, @OrderedWith(%C) [concrete]
 // CHECK:STDOUT:   %OrderedWith.Greater.type.58c: type = fn_type @OrderedWith.Greater, @OrderedWith(%C) [concrete]
@@ -149,8 +149,6 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %C.ref.loc6_28: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %OrderedWith.type: type = facet_type <@OrderedWith, @OrderedWith(constants.%C)> [concrete = constants.%OrderedWith.type.069]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %OrderedWith.impl_witness_table = impl_witness_table (@C.as.OrderedWith.impl.%C.as.OrderedWith.impl.Less.decl, @C.as.OrderedWith.impl.%C.as.OrderedWith.impl.LessOrEquivalent.decl, @C.as.OrderedWith.impl.%C.as.OrderedWith.impl.Greater.decl, @C.as.OrderedWith.impl.%C.as.OrderedWith.impl.GreaterOrEquivalent.decl), @C.as.OrderedWith.impl [concrete]
-// CHECK:STDOUT:   %OrderedWith.impl_witness: <witness> = impl_witness %OrderedWith.impl_witness_table [concrete = constants.%OrderedWith.impl_witness]
 // CHECK:STDOUT:   %TestLess.decl: %TestLess.type = fn_decl @TestLess [concrete = constants.%TestLess] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.476 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.476 = value_param_pattern %a.patt, call_param0 [concrete]
@@ -314,6 +312,8 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %OrderedWith.impl_witness_table = impl_witness_table (%C.as.OrderedWith.impl.Less.decl, %C.as.OrderedWith.impl.LessOrEquivalent.decl, %C.as.OrderedWith.impl.Greater.decl, %C.as.OrderedWith.impl.GreaterOrEquivalent.decl), @C.as.OrderedWith.impl [concrete]
+// CHECK:STDOUT:   %OrderedWith.impl_witness: <witness> = impl_witness %OrderedWith.impl_witness_table [concrete = constants.%OrderedWith.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
@@ -321,7 +321,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   .LessOrEquivalent = %C.as.OrderedWith.impl.LessOrEquivalent.decl
 // CHECK:STDOUT:   .Greater = %C.as.OrderedWith.impl.Greater.decl
 // CHECK:STDOUT:   .GreaterOrEquivalent = %C.as.OrderedWith.impl.GreaterOrEquivalent.decl
-// CHECK:STDOUT:   witness = file.%OrderedWith.impl_witness
+// CHECK:STDOUT:   witness = %OrderedWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

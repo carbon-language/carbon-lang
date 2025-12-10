@@ -317,7 +317,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %SubscriptType [symbolic]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.type.5ee: type = facet_type <@IndexWith, @IndexWith(%empty_tuple.type, %empty_tuple.type)> [concrete]
-// CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness file.%IndexWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness @C.as.IndexWith.impl.%IndexWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.a75: %IndexWith.type.5ee = symbolic_binding Self, 2 [symbolic]
 // CHECK:STDOUT:   %IndexWith.At.type.1a9: type = fn_type @IndexWith.At, @IndexWith(%empty_tuple.type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %IndexWith.At.721: %IndexWith.At.type.1a9 = struct_value () [concrete]
@@ -379,8 +379,6 @@ fn F() {
 // CHECK:STDOUT:     %.loc8_32.2: type = converted %.loc8_31, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%empty_tuple.type, constants.%empty_tuple.type)> [concrete = constants.%IndexWith.type.5ee]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (@C.as.IndexWith.impl.%C.as.IndexWith.impl.At.decl), @C.as.IndexWith.impl [concrete]
-// CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness %IndexWith.impl_witness_table [concrete = constants.%IndexWith.impl_witness]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -429,10 +427,12 @@ fn F() {
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param2
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (%C.as.IndexWith.impl.At.decl), @C.as.IndexWith.impl [concrete]
+// CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness %IndexWith.impl_witness_table [concrete = constants.%IndexWith.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .At = %C.as.IndexWith.impl.At.decl
-// CHECK:STDOUT:   witness = file.%IndexWith.impl_witness
+// CHECK:STDOUT:   witness = %IndexWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

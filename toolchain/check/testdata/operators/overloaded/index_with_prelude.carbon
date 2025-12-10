@@ -104,7 +104,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.lookup_impl_witness.16d: <witness> = lookup_impl_witness %.Self, @IndexWith, @IndexWith(%SubscriptType.9ec) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.2a7: type = impl_witness_access %IndexWith.lookup_impl_witness.16d, element0 [symbolic_self]
 // CHECK:STDOUT:   %IndexWith_where.type: type = facet_type <@IndexWith, @IndexWith(%SubscriptType.9ec) where %impl.elem0.2a7 = %ElementType> [concrete]
-// CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness file.%IndexWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness @C.as.IndexWith.impl.%IndexWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.541: type = pattern_type %SubscriptType.9ec [concrete]
 // CHECK:STDOUT:   %pattern_type.fde: type = pattern_type %ElementType [concrete]
@@ -164,9 +164,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %ElementType.ref.loc8_62
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant, @C.as.IndexWith.impl.%C.as.IndexWith.impl.At.decl), @C.as.IndexWith.impl [concrete]
-// CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness %IndexWith.impl_witness_table [concrete = constants.%IndexWith.impl_witness]
-// CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%ElementType [concrete = constants.%ElementType]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type.541 = value_binding_pattern s [concrete]
 // CHECK:STDOUT:   }
@@ -215,12 +212,15 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %return.param: ref %ElementType = out_param call_param2
 // CHECK:STDOUT:     %return: ref %ElementType = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant, %C.as.IndexWith.impl.At.decl), @C.as.IndexWith.impl [concrete]
+// CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness %IndexWith.impl_witness_table [concrete = constants.%IndexWith.impl_witness]
+// CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%ElementType [concrete = constants.%ElementType]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .SubscriptType = <poisoned>
 // CHECK:STDOUT:   .ElementType = <poisoned>
 // CHECK:STDOUT:   .At = %C.as.IndexWith.impl.At.decl
-// CHECK:STDOUT:   witness = file.%IndexWith.impl_witness
+// CHECK:STDOUT:   witness = %IndexWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -294,7 +294,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.lookup_impl_witness.e03: <witness> = lookup_impl_witness %.Self, @IndexWith, @IndexWith(Core.IntLiteral) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.f03: type = impl_witness_access %IndexWith.lookup_impl_witness.e03, element0 [symbolic_self]
 // CHECK:STDOUT:   %IndexWith_where.type: type = facet_type <@IndexWith, @IndexWith(Core.IntLiteral) where %impl.elem0.f03 = %C> [concrete]
-// CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness file.%IndexWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness @tuple.type.as.IndexWith.impl.%IndexWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.c3b: type = pattern_type %tuple.type.d23 [concrete]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
@@ -357,9 +357,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %C.ref.loc8_71
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant, @tuple.type.as.IndexWith.impl.%tuple.type.as.IndexWith.impl.At.decl), @tuple.type.as.IndexWith.impl [concrete]
-// CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness %IndexWith.impl_witness_table [concrete = constants.%IndexWith.impl_witness]
-// CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type.c3b = value_binding_pattern s [concrete]
 // CHECK:STDOUT:   }
@@ -410,11 +407,14 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant, %tuple.type.as.IndexWith.impl.At.decl), @tuple.type.as.IndexWith.impl [concrete]
+// CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness %IndexWith.impl_witness_table [concrete = constants.%IndexWith.impl_witness]
+// CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .At = %tuple.type.as.IndexWith.impl.At.decl
-// CHECK:STDOUT:   witness = file.%IndexWith.impl_witness
+// CHECK:STDOUT:   witness = %IndexWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -483,7 +483,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %IndexWith.lookup_impl_witness.16d: <witness> = lookup_impl_witness %.Self, @IndexWith, @IndexWith(%SubscriptType.9ec) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.2a7: type = impl_witness_access %IndexWith.lookup_impl_witness.16d, element0 [symbolic_self]
 // CHECK:STDOUT:   %IndexWith_where.type: type = facet_type <@IndexWith, @IndexWith(%SubscriptType.9ec) where %impl.elem0.2a7 = %ElementType> [concrete]
-// CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness file.%IndexWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness @C.as.IndexWith.impl.%IndexWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.541: type = pattern_type %SubscriptType.9ec [concrete]
 // CHECK:STDOUT:   %pattern_type.fde: type = pattern_type %ElementType [concrete]
@@ -540,9 +540,6 @@ let x: i32 = c[0];
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %ElementType.ref.loc8_62
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant, @C.as.IndexWith.impl.%C.as.IndexWith.impl.At.decl), @C.as.IndexWith.impl [concrete]
-// CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness %IndexWith.impl_witness_table [concrete = constants.%IndexWith.impl_witness]
-// CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%ElementType [concrete = constants.%ElementType]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.7c7 = value_binding_pattern c [concrete]
 // CHECK:STDOUT:   }
@@ -579,12 +576,15 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %return.param: ref %ElementType = out_param call_param2
 // CHECK:STDOUT:     %return: ref %ElementType = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant, %C.as.IndexWith.impl.At.decl), @C.as.IndexWith.impl [concrete]
+// CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness %IndexWith.impl_witness_table [concrete = constants.%IndexWith.impl_witness]
+// CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%ElementType [concrete = constants.%ElementType]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .SubscriptType = <poisoned>
 // CHECK:STDOUT:   .ElementType = <poisoned>
 // CHECK:STDOUT:   .At = %C.as.IndexWith.impl.At.decl
-// CHECK:STDOUT:   witness = file.%IndexWith.impl_witness
+// CHECK:STDOUT:   witness = %IndexWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

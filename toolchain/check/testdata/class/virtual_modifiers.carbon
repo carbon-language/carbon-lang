@@ -2003,7 +2003,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %ImplicitAs.type.cc7: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.cc7 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.865: type = facet_type <@ImplicitAs, @ImplicitAs(%T1)> [concrete]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness file.%ImplicitAs.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness @T2.as.ImplicitAs.impl.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.b8b: type = pattern_type %T2 [concrete]
 // CHECK:STDOUT:   %pattern_type.818: type = pattern_type %T1 [concrete]
 // CHECK:STDOUT:   %T2.as.ImplicitAs.impl.Convert.type: type = fn_type @T2.as.ImplicitAs.impl.Convert [concrete]
@@ -2055,8 +2055,6 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [concrete = constants.%T1]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%T1)> [concrete = constants.%ImplicitAs.type.865]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (@T2.as.ImplicitAs.impl.%T2.as.ImplicitAs.impl.Convert.decl), @T2.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness %ImplicitAs.impl_witness_table [concrete = constants.%ImplicitAs.impl_witness]
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT: }
@@ -2075,11 +2073,13 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %return.param: ref %T1 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %T1 = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (%T2.as.ImplicitAs.impl.Convert.decl), @T2.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness %ImplicitAs.impl_witness_table [concrete = constants.%ImplicitAs.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .T1 = <poisoned>
 // CHECK:STDOUT:   .Convert = %T2.as.ImplicitAs.impl.Convert.decl
-// CHECK:STDOUT:   witness = file.%ImplicitAs.impl_witness
+// CHECK:STDOUT:   witness = %ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @T1 {

@@ -91,7 +91,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %EqWith.generic: %EqWith.type.c2e = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %EqWith.type.6f2: type = facet_type <@EqWith, @EqWith(%C)> [concrete]
-// CHECK:STDOUT:   %EqWith.impl_witness: <witness> = impl_witness file.%EqWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %EqWith.impl_witness: <witness> = impl_witness @C.as.EqWith.impl.%EqWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %EqWith.Equal.type.ab8: type = fn_type @EqWith.Equal, @EqWith(%C) [concrete]
 // CHECK:STDOUT:   %EqWith.NotEqual.type.d5e: type = fn_type @EqWith.NotEqual, @EqWith(%C) [concrete]
 // CHECK:STDOUT:   %pattern_type.476: type = pattern_type %C [concrete]
@@ -137,8 +137,6 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %C.ref.loc6_23: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %EqWith.type: type = facet_type <@EqWith, @EqWith(constants.%C)> [concrete = constants.%EqWith.type.6f2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %EqWith.impl_witness_table = impl_witness_table (@C.as.EqWith.impl.%C.as.EqWith.impl.Equal.decl, @C.as.EqWith.impl.%C.as.EqWith.impl.NotEqual.decl), @C.as.EqWith.impl [concrete]
-// CHECK:STDOUT:   %EqWith.impl_witness: <witness> = impl_witness %EqWith.impl_witness_table [concrete = constants.%EqWith.impl_witness]
 // CHECK:STDOUT:   %TestEqual.decl: %TestEqual.type = fn_decl @TestEqual [concrete = constants.%TestEqual] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.476 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.476 = value_param_pattern %a.patt, call_param0 [concrete]
@@ -222,12 +220,14 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %EqWith.impl_witness_table = impl_witness_table (%C.as.EqWith.impl.Equal.decl, %C.as.EqWith.impl.NotEqual.decl), @C.as.EqWith.impl [concrete]
+// CHECK:STDOUT:   %EqWith.impl_witness: <witness> = impl_witness %EqWith.impl_witness_table [concrete = constants.%EqWith.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .Equal = %C.as.EqWith.impl.Equal.decl
 // CHECK:STDOUT:   .NotEqual = %C.as.EqWith.impl.NotEqual.decl
-// CHECK:STDOUT:   witness = file.%EqWith.impl_witness
+// CHECK:STDOUT:   witness = %EqWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -375,7 +375,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   %EqWith.generic: %EqWith.type.c2e = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %EqWith.type.8a7: type = facet_type <@EqWith, @EqWith(%C)> [concrete]
-// CHECK:STDOUT:   %EqWith.impl_witness: <witness> = impl_witness file.%EqWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %EqWith.impl_witness: <witness> = impl_witness @C.as.EqWith.impl.%EqWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.224: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
@@ -419,8 +419,6 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %C.ref.loc7_23: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %EqWith.type: type = facet_type <@EqWith, @EqWith(constants.%C)> [concrete = constants.%EqWith.type.8a7]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %EqWith.impl_witness_table = impl_witness_table (@C.as.EqWith.impl.%C.as.EqWith.impl.Equal.decl, @C.as.EqWith.impl.%C.as.EqWith.impl.NotEqual.decl), @C.as.EqWith.impl [concrete]
-// CHECK:STDOUT:   %EqWith.impl_witness: <witness> = impl_witness %EqWith.impl_witness_table [concrete = constants.%EqWith.impl_witness]
 // CHECK:STDOUT:   %TestRhsBad.decl: %TestRhsBad.type = fn_decl @TestRhsBad [concrete = constants.%TestRhsBad] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.224 = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.224 = value_param_pattern %a.patt, call_param0 [concrete]
@@ -504,12 +502,14 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %EqWith.impl_witness_table = impl_witness_table (%C.as.EqWith.impl.Equal.decl, %C.as.EqWith.impl.NotEqual.decl), @C.as.EqWith.impl [concrete]
+// CHECK:STDOUT:   %EqWith.impl_witness: <witness> = impl_witness %EqWith.impl_witness_table [concrete = constants.%EqWith.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .Equal = %C.as.EqWith.impl.Equal.decl
 // CHECK:STDOUT:   .NotEqual = %C.as.EqWith.impl.NotEqual.decl
-// CHECK:STDOUT:   witness = file.%EqWith.impl_witness
+// CHECK:STDOUT:   witness = %EqWith.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {

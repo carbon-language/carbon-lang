@@ -70,7 +70,7 @@ fn Run() {
 // CHECK:STDOUT:   %Optional.Get.0e5: %Optional.Get.type.b87 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Optional.HasValue.type.c70: type = fn_type @Optional.HasValue, @Optional(%T.f92) [symbolic]
 // CHECK:STDOUT:   %Optional.HasValue.c68: %Optional.HasValue.type.c70 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness @TrivialRange.%Iterate.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness @TrivialRange.as.Iterate.impl.%Iterate.impl_witness_table [concrete]
 // CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.NewCursor.type.b01a0a.1: type = fn_type @TrivialRange.as.Iterate.impl.NewCursor.loc6_32.1 [concrete]
 // CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.NewCursor.843a65.1: %TrivialRange.as.Iterate.impl.NewCursor.type.b01a0a.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.843: type = ptr_type %empty_tuple.type [concrete]

@@ -519,6 +519,7 @@ auto Formatter::FormatImpl(ImplId id, const Impl& impl_info) -> void {
     out_ << ' ';
     OpenBrace();
     FormatCodeBlock(impl_info.body_block_id);
+    FormatCodeBlock(impl_info.witness_block_id);
 
     // Print the !members label even if the name scope is empty because we
     // always list the witness in this section.

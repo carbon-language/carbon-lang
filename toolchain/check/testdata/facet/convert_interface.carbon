@@ -29,7 +29,7 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:   %Self.f2a: %Eats.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete]
 // CHECK:STDOUT:   %Self.614: %Animal.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness file.%Eats.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness @Animal.type.as.Eats.impl.%Eats.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Eats.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -61,8 +61,6 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:     %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:     %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Eats.impl_witness_table = impl_witness_table (), @Animal.type.as.Eats.impl [concrete]
-// CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness %Eats.impl_witness_table [concrete = constants.%Eats.impl_witness]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %e.patt: %pattern_type = value_binding_pattern e [concrete]
 // CHECK:STDOUT:     %e.param_patt: %pattern_type = value_param_pattern %e.patt, call_param0 [concrete]
@@ -95,8 +93,11 @@ fn G() { F(Animal); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @Animal.type.as.Eats.impl: %Animal.ref as %Eats.ref {
+// CHECK:STDOUT:   %Eats.impl_witness_table = impl_witness_table (), @Animal.type.as.Eats.impl [concrete]
+// CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness %Eats.impl_witness_table [concrete = constants.%Eats.impl_witness]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = file.%Eats.impl_witness
+// CHECK:STDOUT:   witness = %Eats.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%e.param: %Eats.type) {

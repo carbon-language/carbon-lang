@@ -35,7 +35,7 @@ fn TestOp() {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Dec.type: type = facet_type <@Dec> [concrete]
-// CHECK:STDOUT:   %Dec.impl_witness: <witness> = impl_witness file.%Dec.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Dec.impl_witness: <witness> = impl_witness @C.as.Dec.impl.%Dec.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Dec.Op.type: type = fn_type @Dec.Op [concrete]
 // CHECK:STDOUT:   %C.as.Dec.impl.Op.type: type = fn_type @C.as.Dec.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.Dec.impl.Op: %C.as.Dec.impl.Op.type = struct_value () [concrete]

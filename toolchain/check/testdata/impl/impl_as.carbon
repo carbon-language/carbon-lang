@@ -36,7 +36,7 @@ class C {
 // CHECK:STDOUT:   %Simple.assoc_type: type = assoc_entity_type @Simple [concrete]
 // CHECK:STDOUT:   %assoc0.e8d: %Simple.assoc_type = assoc_entity element0, @Simple.%Simple.F.decl [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness @C.%Simple.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness @C.as.Simple.impl.%Simple.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.Simple.impl.F.type: type = fn_type @C.as.Simple.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.Simple.impl.F: %C.as.Simple.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %C, (%Simple.impl_witness) [concrete]
@@ -88,11 +88,13 @@ class C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.Simple.impl: %Self.ref as %Simple.ref {
 // CHECK:STDOUT:   %C.as.Simple.impl.F.decl: %C.as.Simple.impl.F.type = fn_decl @C.as.Simple.impl.F [concrete = constants.%C.as.Simple.impl.F] {} {}
+// CHECK:STDOUT:   %Simple.impl_witness_table = impl_witness_table (%C.as.Simple.impl.F.decl), @C.as.Simple.impl [concrete]
+// CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table [concrete = constants.%Simple.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %C.as.Simple.impl.F.decl
 // CHECK:STDOUT:   .C = <poisoned>
-// CHECK:STDOUT:   witness = @C.%Simple.impl_witness
+// CHECK:STDOUT:   witness = %Simple.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -100,8 +102,6 @@ class C {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Simple.impl_witness_table = impl_witness_table (@C.as.Simple.impl.%C.as.Simple.impl.F.decl), @C.as.Simple.impl [concrete]
-// CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table [concrete = constants.%Simple.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

@@ -244,7 +244,7 @@ class X {
 // CHECK:STDOUT:   %<error>.as.Z.impl.Method: %<error>.as.Z.impl.Method.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete.604: <witness> = require_complete_type %Self.binding.as_type.f61 [symbolic]
 // CHECK:STDOUT:   %Point: type = class_type @Point [concrete]
-// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness @Point.%Z.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness @Point.as.Z.impl.%Z.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Point.as.Z.impl.Zero.type: type = fn_type @Point.as.Z.impl.Zero [concrete]
 // CHECK:STDOUT:   %Point.as.Z.impl.Zero: %Point.as.Z.impl.Zero.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.c86: type = pattern_type %Point [concrete]
@@ -360,11 +360,13 @@ class X {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Point [concrete = constants.%Point]
 // CHECK:STDOUT:     %self: %Point = value_binding self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Z.impl_witness_table = impl_witness_table (%Point.as.Z.impl.Zero.decl, %Point.as.Z.impl.Method.decl), @Point.as.Z.impl [concrete]
+// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness %Z.impl_witness_table [concrete = constants.%Z.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Zero = %Point.as.Z.impl.Zero.decl
 // CHECK:STDOUT:   .Method = %Point.as.Z.impl.Method.decl
-// CHECK:STDOUT:   witness = @Point.%Z.impl_witness
+// CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Point {
@@ -372,8 +374,6 @@ class X {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Point [concrete = constants.%Point]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Z.impl_witness_table = impl_witness_table (@Point.as.Z.impl.%Point.as.Z.impl.Zero.decl, @Point.as.Z.impl.%Point.as.Z.impl.Method.decl), @Point.as.Z.impl [concrete]
-// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness %Z.impl_witness_table [concrete = constants.%Z.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -503,7 +503,7 @@ class X {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness @X.%A.impl_witness_table [concrete]
+// CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness @X.as.A.impl.%A.impl_witness_table [concrete]
 // CHECK:STDOUT:   %X.as.A.impl.B.type: type = fn_type @X.as.A.impl.B [concrete]
 // CHECK:STDOUT:   %X.as.A.impl.B: %X.as.A.impl.B.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A.facet: %A.type = facet_value %X, (%A.impl_witness) [concrete]
@@ -561,12 +561,14 @@ class X {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.as.A.impl.B.decl: %X.as.A.impl.B.type = fn_decl @X.as.A.impl.B [concrete = constants.%X.as.A.impl.B] {} {}
+// CHECK:STDOUT:   %A.impl_witness_table = impl_witness_table (%X.as.A.impl.B.decl), @X.as.A.impl [concrete]
+// CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness %A.impl_witness_table [concrete = constants.%A.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .B = %X.as.A.impl.B.decl
 // CHECK:STDOUT:   .G = <poisoned>
-// CHECK:STDOUT:   witness = @X.%A.impl_witness
+// CHECK:STDOUT:   witness = %A.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @<error>.as.C.impl: <error> as %C.ref {
@@ -579,8 +581,6 @@ class X {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%X [concrete = constants.%X]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.impl_witness_table = impl_witness_table (@X.as.A.impl.%X.as.A.impl.B.decl), @X.as.A.impl [concrete]
-// CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness %A.impl_witness_table [concrete = constants.%A.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

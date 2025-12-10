@@ -79,7 +79,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %complete_type.1ec: <witness> = complete_type_witness %struct_type.x.ed6 [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %HasF.type.31f: type = facet_type <@HasF, @HasF(%Param)> [concrete]
-// CHECK:STDOUT:   %HasF.impl_witness: <witness> = impl_witness @C.%HasF.impl_witness_table [concrete]
+// CHECK:STDOUT:   %HasF.impl_witness: <witness> = impl_witness @C.as.HasF.impl.%HasF.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.e81: %HasF.type.31f = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %HasF.F.type.f31: type = fn_type @HasF.F, @HasF(%Param) [concrete]
 // CHECK:STDOUT:   %HasF.F.85a: %HasF.F.type.f31 = struct_value () [concrete]
@@ -227,11 +227,13 @@ class X(U:! type) {
 // CHECK:STDOUT:     %return.param: ref %Param = out_param call_param0
 // CHECK:STDOUT:     %return: ref %Param = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %HasF.impl_witness_table = impl_witness_table (%C.as.HasF.impl.F.decl), @C.as.HasF.impl [concrete]
+// CHECK:STDOUT:   %HasF.impl_witness: <witness> = impl_witness %HasF.impl_witness_table [concrete = constants.%HasF.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Param = <poisoned>
 // CHECK:STDOUT:   .F = %C.as.HasF.impl.F.decl
-// CHECK:STDOUT:   witness = @C.%HasF.impl_witness
+// CHECK:STDOUT:   witness = %HasF.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Param {
@@ -253,8 +255,6 @@ class X(U:! type) {
 // CHECK:STDOUT:     %Param.ref: type = name_ref Param, file.%Param.decl [concrete = constants.%Param]
 // CHECK:STDOUT:     %HasF.type: type = facet_type <@HasF, @HasF(constants.%Param)> [concrete = constants.%HasF.type.31f]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %HasF.impl_witness_table = impl_witness_table (@C.as.HasF.impl.%C.as.HasF.impl.F.decl), @C.as.HasF.impl [concrete]
-// CHECK:STDOUT:   %HasF.impl_witness: <witness> = impl_witness %HasF.impl_witness_table [concrete = constants.%HasF.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -400,7 +400,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %X.generic: %X.type = struct_value () [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X, @X(%U) [symbolic]
 // CHECK:STDOUT:   %I.type.d71ca1.2: type = facet_type <@I, @I(%U)> [symbolic]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @X.%I.impl_witness_table, @X.as.I.impl(%U) [symbolic]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @X.as.I.impl.%I.impl_witness_table, @X.as.I.impl(%U) [symbolic]
 // CHECK:STDOUT:   %Self.bb7324.2: %I.type.d71ca1.2 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %I.F.type.93703d.2: type = fn_type @I.F, @I(%U) [symbolic]
 // CHECK:STDOUT:   %I.F.a37974.2: %I.F.type.93703d.2 = struct_value () [symbolic]
@@ -494,7 +494,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:   %X: type = class_type @X, @X(%U) [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:   %I.type.loc9_21.1: type = facet_type <@I, @I(%U)> [symbolic = %I.type.loc9_21.1 (constants.%I.type.d71ca1.2)]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @X.%I.impl_witness_table, @X.as.I.impl(%U) [symbolic = %I.impl_witness (constants.%I.impl_witness)]
+// CHECK:STDOUT:   %I.impl_witness.loc9_23.2: <witness> = impl_witness %I.impl_witness_table, @X.as.I.impl(%U) [symbolic = %I.impl_witness.loc9_23.2 (constants.%I.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.loc9_21.1 [symbolic = %require_complete (constants.%require_complete.073)]
@@ -518,11 +518,13 @@ class X(U:! type) {
 // CHECK:STDOUT:       %U.ref: type = name_ref U, @X.%U.loc8_9.2 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:       %t: @X.as.I.impl.F.%U (%U) = value_binding t, %t.param
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (%X.as.I.impl.F.decl), @X.as.I.impl [concrete]
+// CHECK:STDOUT:     %I.impl_witness.loc9_23.1: <witness> = impl_witness %I.impl_witness_table, @X.as.I.impl(constants.%U) [symbolic = %I.impl_witness.loc9_23.2 (constants.%I.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .U = <poisoned>
 // CHECK:STDOUT:     .F = %X.as.I.impl.F.decl
-// CHECK:STDOUT:     witness = @X.%I.impl_witness
+// CHECK:STDOUT:     witness = %I.impl_witness.loc9_23.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -540,8 +542,6 @@ class X(U:! type) {
 // CHECK:STDOUT:       %U.ref: type = name_ref U, @X.%U.loc8_9.2 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:       %I.type.loc9_21.2: type = facet_type <@I, @I(constants.%U)> [symbolic = %I.type.loc9_21.1 (constants.%I.type.d71ca1.2)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (@X.as.I.impl.%X.as.I.impl.F.decl), @X.as.I.impl [concrete]
-// CHECK:STDOUT:     %I.impl_witness: <witness> = impl_witness %I.impl_witness_table, @X.as.I.impl(constants.%U) [symbolic = @X.as.I.impl.%I.impl_witness (constants.%I.impl_witness)]
 // CHECK:STDOUT:     %.loc9: type = specific_constant @X.as.I.impl.%I.type.loc9_21.2, @X.as.I.impl(constants.%U) [symbolic = %I.type (constants.%I.type.d71ca1.2)]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -620,7 +620,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT:   %X => constants.%X
 // CHECK:STDOUT:   %I.type.loc9_21.1 => constants.%I.type.d71ca1.2
-// CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness
+// CHECK:STDOUT:   %I.impl_witness.loc9_23.2 => constants.%I.impl_witness
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.073

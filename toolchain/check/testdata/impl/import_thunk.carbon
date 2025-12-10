@@ -118,7 +118,7 @@ fn G() {
 // CHECK:STDOUT:   %C.c8540f.2: type = class_type @C, @C(%Y) [symbolic]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self.50f: %I.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table, @C.as.I.impl(%Y) [symbolic]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table, @C.as.I.impl(%Y) [symbolic]
 // CHECK:STDOUT:   %I.F.type: type = fn_type @I.F [concrete]
 // CHECK:STDOUT:   %I.F: %I.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
@@ -200,8 +200,6 @@ fn G() {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Y.loc7_14.2: %empty_tuple.type = symbolic_binding Y, 0 [symbolic = %Y.loc7_14.1 (constants.%Y)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (@C.as.I.impl.%C.as.I.impl.F.decl.loc8_17.2), @C.as.I.impl [concrete]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl(constants.%Y) [symbolic = @C.as.I.impl.%I.impl_witness (constants.%I.impl_witness)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "a.carbon"] {
@@ -216,7 +214,7 @@ fn G() {
 // CHECK:STDOUT: generic impl @C.as.I.impl(%Y.loc7_14.2: %empty_tuple.type) {
 // CHECK:STDOUT:   %Y.loc7_14.1: %empty_tuple.type = symbolic_binding Y, 0 [symbolic = %Y.loc7_14.1 (constants.%Y)]
 // CHECK:STDOUT:   %C.loc7_25.1: type = class_type @C, @C(%Y.loc7_14.1) [symbolic = %C.loc7_25.1 (constants.%C.c8540f.2)]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table, @C.as.I.impl(%Y.loc7_14.1) [symbolic = %I.impl_witness (constants.%I.impl_witness)]
+// CHECK:STDOUT:   %I.impl_witness.loc7_32.2: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl(%Y.loc7_14.1) [symbolic = %I.impl_witness.loc7_32.2 (constants.%I.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C.as.I.impl.F.type.loc8_17.1: type = fn_type @C.as.I.impl.F.loc8_17.1, @C.as.I.impl(%Y.loc7_14.1) [symbolic = %C.as.I.impl.F.type.loc8_17.1 (constants.%C.as.I.impl.F.type.503216.1)]
@@ -244,12 +242,14 @@ fn G() {
 // CHECK:STDOUT:       %x.param: %empty_struct_type = value_param call_param0
 // CHECK:STDOUT:       %x: %empty_struct_type = value_binding x, %x.param
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (%C.as.I.impl.F.decl.loc8_17.2), @C.as.I.impl [concrete]
+// CHECK:STDOUT:     %I.impl_witness.loc7_32.1: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl(constants.%Y) [symbolic = %I.impl_witness.loc7_32.2 (constants.%I.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .C = <poisoned>
 // CHECK:STDOUT:     .Y = <poisoned>
 // CHECK:STDOUT:     .F = %C.as.I.impl.F.decl.loc8_17.1
-// CHECK:STDOUT:     witness = file.%I.impl_witness
+// CHECK:STDOUT:     witness = %I.impl_witness.loc7_32.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -338,7 +338,7 @@ fn G() {
 // CHECK:STDOUT: specific @C.as.I.impl(constants.%Y) {
 // CHECK:STDOUT:   %Y.loc7_14.1 => constants.%Y
 // CHECK:STDOUT:   %C.loc7_25.1 => constants.%C.c8540f.2
-// CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness
+// CHECK:STDOUT:   %I.impl_witness.loc7_32.2 => constants.%I.impl_witness
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C.as.I.impl.F.type.loc8_17.1 => constants.%C.as.I.impl.F.type.503216.1
