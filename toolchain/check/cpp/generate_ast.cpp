@@ -350,13 +350,13 @@ class GenerateASTAction : public clang::ASTFrontendAction {
   explicit GenerateASTAction(Context& context) : context_(&context) {}
 
  protected:
-  auto CreateASTConsumer(clang::CompilerInstance& /*clang*/,
+  auto CreateASTConsumer(clang::CompilerInstance& /*clang_instance*/,
                          llvm::StringRef /*file*/)
       -> std::unique_ptr<clang::ASTConsumer> override {
     return std::make_unique<BufferingConsumer>(*context_->sem_ir().cpp_file());
   }
 
-  auto BeginSourceFileAction(clang::CompilerInstance& /*clang*/)
+  auto BeginSourceFileAction(clang::CompilerInstance& /*clang_instance*/)
       -> bool override {
     // TODO: Consider creating an `ExternalSemaSource` here and attaching it to
     // the compilation.
@@ -411,23 +411,25 @@ auto GenerateAst(Context& context,
 
   clang::DiagnosticErrorTrap trap(*diags);
 
-  auto clang = std::make_unique<clang::CompilerInstance>(invocation);
-  auto& clang_ref = *clang.get();
+  auto clang_instance_ptr =
+      std::make_unique<clang::CompilerInstance>(invocation);
+  auto& clang_instance = *clang_instance_ptr;
   context.sem_ir().set_cpp_file(
-      std::make_unique<SemIR::CppFile>(std::move(clang)));
+      std::make_unique<SemIR::CppFile>(std::move(clang_instance_ptr)));
 
-  clang_ref.setDiagnostics(diags);
-  clang_ref.setVirtualFileSystem(fs);
-  clang_ref.createFileManager();
-  clang_ref.createSourceManager();
-  if (!clang_ref.createTarget()) {
+  clang_instance.setDiagnostics(diags);
+  clang_instance.setVirtualFileSystem(fs);
+  clang_instance.createFileManager();
+  clang_instance.createSourceManager();
+  if (!clang_instance.createTarget()) {
     return false;
   }
 
   context.set_cpp_context(std::make_unique<CppContext>(
       std::make_unique<GenerateASTAction>(context)));
 
-  if (!context.cpp_context()->action().BeginSourceFile(clang_ref, inputs[0])) {
+  if (!context.cpp_context()->action().BeginSourceFile(clang_instance,
+                                                       inputs[0])) {
     return false;
   }
 
