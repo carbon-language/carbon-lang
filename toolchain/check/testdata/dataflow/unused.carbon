@@ -58,7 +58,7 @@ fn ParametersUsed(x: i32) -> i32 {
 // --- fail_todo_unused_ref_param.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_ensure_no_warning.carbon:[[@LINE+4]]:19: error: semantics TODO: `unused` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_unused_ref_param.carbon:[[@LINE+4]]:19: error: semantics TODO: `unused` [SemanticsTodo]
 // CHECK:STDERR: fn RefParamUnused(unused ref y: i32) {
 // CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -102,7 +102,8 @@ fn F(ref y: i32) {
 
 // --- fail_todo_read_from_param_unused_ref.carbon
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_todo_ensure_error.carbon:[[@LINE+4]]:19: error: semantics TODO: `unused` [SemanticsTodo]
+
+// CHECK:STDERR: fail_todo_read_from_param_unused_ref.carbon:[[@LINE+4]]:19: error: semantics TODO: `unused` [SemanticsTodo]
 // CHECK:STDERR: fn RefParamUnused(unused ref y: i32) {
 // CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -111,21 +112,48 @@ fn RefParamUnused(unused ref y: i32) {
   // TODO: ensure error, marked "unused" but used.
 }
 
-// --- todo_fail_unused_returned_var.carbon
+// --- fail_todo_fail_unused_returned_var.carbon
 library "[[@TEST_NAME]]";
 
 fn F() -> i32 {
+  // CHECK:STDERR: fail_todo_fail_unused_returned_var.carbon:[[@LINE+4]]:16: error: semantics TODO: `unused` [SemanticsTodo]
+  // CHECK:STDERR:   returned var unused x: i32 = 0;
+  // CHECK:STDERR:                ^~~~~~~~~~~~~
+  // CHECK:STDERR:
   returned var unused x: i32 = 0;
   // TODO: ensure error, marked "unused" but used.
   return var;
 }
 
-// --- todo_fail_read_from_unused_local_var.carbon
+// --- fail_todo_fail_read_from_unused_local_var.carbon
 library "[[@TEST_NAME]]";
-	
+
 fn F(x: i32) {
   var _: i32 = x;
+  // CHECK:STDERR: fail_todo_fail_read_from_unused_local_var.carbon:[[@LINE+4]]:7: error: semantics TODO: `unused` [SemanticsTodo]
+  // CHECK:STDERR:   var unused y: i32 = x;
+  // CHECK:STDERR:       ^~~~~~~~~~~~~
+  // CHECK:STDERR:
   var unused y: i32 = x;
   // TODO: error, marked "unused", but used
   var unused z: i32 = y;
+}
+
+// --- fail_todo_match.carbon
+library "[[@TEST_NAME]]";
+
+fn F() -> i32 {
+  var x: i32 = 3;
+  // CHECK:STDERR: fail_todo_match.carbon:[[@LINE+4]]:3: error: semantics TODO: `HandleMatchIntroducer` [SemanticsTodo]
+  // CHECK:STDERR:   match (f(x)) {
+  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:
+  match (f(x)) {
+    case unused var (a: i32, b: i32) => { return 0; }
+    case (a: i32) if (a < 0) => { return 2; }
+    case var unused a: i32 if (a != x) => { return 3; }
+    default => { return 4; }
+  }
+  return 0;
+  // TODO: ensure no warning (after match is implemented).
 }
