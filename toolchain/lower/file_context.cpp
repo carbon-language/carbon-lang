@@ -680,7 +680,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     function_lowering.SetLocal(param_id, param_value);
   };
 
-  // Lower the return slot parameter.
+  // Lower to the return slot parameter.
   auto return_patterns = sem_ir_->inst_blocks().GetOrEmpty(
       declaration_function.return_patterns_id);
   if (!return_patterns.empty()) {
