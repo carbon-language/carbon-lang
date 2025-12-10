@@ -20,7 +20,8 @@ namespace Carbon::Check {
 // declarations, and similar values.
 class CppContext {
  public:
-  explicit CppContext(clang::ASTUnit* ast_unit) : ast_unit_(ast_unit) {}
+  explicit CppContext(clang::ASTUnit* ast_unit);
+  ~CppContext();
 
   auto ast_context() -> clang::ASTContext& {
     return ast_unit_->getASTContext();
