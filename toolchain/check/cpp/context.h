@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CPP_CONTEXT_H_
 #define CARBON_TOOLCHAIN_CHECK_CPP_CONTEXT_H_
 
+#include <memory>
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "llvm/ADT/SmallVector.h"
@@ -25,6 +26,8 @@ class CppContext {
   }
   auto sema() -> clang::Sema& { return ast_unit_->getSema(); }
 
+  auto clang_mangle_context() -> clang::MangleContext&;
+
   auto carbon_file_locations()
       -> llvm::SmallVector<clang::SourceLocation>& {
     return carbon_file_locations_;
@@ -37,6 +40,9 @@ class CppContext {
   // Per-Carbon-file start locations for corresponding Clang source buffers.
   // Owned and managed by code in location.cpp.
   llvm::SmallVector<clang::SourceLocation> carbon_file_locations_;
+
+  // The Clang mangle context for the target in the ASTContext.
+  std::unique_ptr<clang::MangleContext> clang_mangle_context_;
 };
 
 }  // namespace Carbon::Check

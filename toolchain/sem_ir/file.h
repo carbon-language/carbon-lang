@@ -234,9 +234,6 @@ class File : public Printable<File> {
   // `File` and initialize the pointer in the constructor instead of using a
   // setter.
   auto set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void;
-  auto clang_mangle_context() -> clang::MangleContext* {
-    return clang_mangle_context_.get();
-  }
   auto clang_decls() -> ClangDeclStore& { return clang_decls_; }
   auto clang_decls() const -> const ClangDeclStore& { return clang_decls_; }
   auto names() const -> NameStoreWrapper {
@@ -382,10 +379,6 @@ class File : public Printable<File> {
   // The C++ file to use when looking up `Cpp` names. Null if there are no `Cpp`
   // imports.
   std::unique_ptr<SemIR::CppFile> cpp_file_;
-
-  // The Clang mangle context for the target in the ASTContext. Initialized
-  // together with `cpp_file_`.
-  std::unique_ptr<clang::MangleContext> clang_mangle_context_;
 
   // Clang AST declarations pointing to the AST and their mapped Carbon
   // instructions. When calling `Lookup()`, `inst_id` is ignored. `Add()` will

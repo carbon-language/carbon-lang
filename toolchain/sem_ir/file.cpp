@@ -8,7 +8,6 @@
 #include <string>
 #include <utility>
 
-#include "clang/AST/Mangle.h"
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -224,7 +223,6 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
 
 auto File::set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void {
   cpp_file_ = std::move(cpp_file);
-  clang_mangle_context_.reset(cpp_file_->ast_context().createMangleContext());
 }
 
 }  // namespace Carbon::SemIR

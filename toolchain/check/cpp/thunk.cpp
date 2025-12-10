@@ -346,7 +346,7 @@ static auto CreateThunkFunctionDecl(
   thunk_function_decl->addAttr(clang::AsmLabelAttr::CreateImplicit(
       ast_context,
       GenerateThunkMangledName(
-          *context.sem_ir().clang_mangle_context(), *callee_info.decl,
+          context.cpp_context()->clang_mangle_context(), *callee_info.decl,
           callee_info.num_params - callee_info.has_explicit_object_parameter()),
       clang_loc));
 
