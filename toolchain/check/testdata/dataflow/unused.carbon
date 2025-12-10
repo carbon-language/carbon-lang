@@ -14,13 +14,16 @@
 
 library "no_unused_warning";
 
-fn SimpleUsed() {
+fn ReturnVar() -> i32 {
   var x: i32 = 0;
   x = 1;
-  var _: i32 = x;
-  // TODO: ensure no warning.
+  return x;
+   // TODO: ensure no warning.
+ }
+
+fn ReturnLet() -> i32 {
   let y: i32 = 1;
-  var _: i32 = y;
+  return y;
   // TODO: ensure no warning.
 }
 
