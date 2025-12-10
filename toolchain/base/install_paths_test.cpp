@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/install/install_paths.h"
+#include "toolchain/base/install_paths.h"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
@@ -121,7 +121,7 @@ TEST_F(InstallPathsTest, TestRunfiles) {
 
 TEST_F(InstallPathsTest, BinaryRunfiles) {
   std::filesystem::path test_binary_path =
-      test_runfiles_->Rlocation("carbon/toolchain/install/test_binary");
+      test_runfiles_->Rlocation("carbon/toolchain/base/test_binary");
   ASSERT_THAT(Filesystem::Cwd().Access(test_binary_path,
                                        Filesystem::AccessCheckFlags::Execute),
               IsSuccess(Eq(true)))

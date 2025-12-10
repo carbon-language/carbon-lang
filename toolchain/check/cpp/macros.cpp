@@ -25,7 +25,6 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
 
   clang::Sema& sema = context.clang_sema();
   clang::Preprocessor& preprocessor = sema.getPreprocessor();
-
   clang::Parser parser(preprocessor, sema, false);
 
   llvm::SmallVector<clang::Token> tokens(macro_info->tokens().begin(),
@@ -67,6 +66,8 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
     return nullptr;
   }
 
+  result_expr = result_expr->IgnoreParenImpCasts();
+
   if (isa<clang::StringLiteral>(result_expr) ||
       isa<clang::CharacterLiteral>(result_expr) ||
       isa<clang::CXXNullPtrLiteralExpr>(result_expr)) {
@@ -78,6 +79,16 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
                                                    sema.getASTContext()));
 
   clang::APValue ap_value = evaluated_result.Val;
+  // TODO: Add support for other types.
+  if (ap_value.isLValue()) {
+    if (!result_expr->EvaluateAsInt(evaluated_result, sema.getASTContext())) {
+      context.TODO(loc_id,
+                   "Unsupported: macro evaluated to a non-integer LValue");
+      return nullptr;
+    }
+    ap_value = evaluated_result.Val;
+  }
+
   switch (ap_value.getKind()) {
     case clang::APValue::Int:
       if (result_expr->getType()->isBooleanType()) {

@@ -115,6 +115,9 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
                                  sem_ir_->types().GetInstId(*type_id)) +
            "`";
   }
+  if (auto* facet_type_id = llvm::any_cast<SemIR::FacetTypeId>(&arg)) {
+    return "`" + StringifyFacetType(*sem_ir_, *facet_type_id) + "`";
+  }
   if (auto* specific_id = llvm::any_cast<SemIR::SpecificId>(&arg)) {
     return "`" + StringifySpecific(*sem_ir_, *specific_id) + "`";
   }

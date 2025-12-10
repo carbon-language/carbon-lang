@@ -22,8 +22,8 @@
 #include "testing/base/capture_std_streams.h"
 #include "testing/base/file_helpers.h"
 #include "testing/base/global_exe_path.h"
+#include "toolchain/base/install_paths.h"
 #include "toolchain/driver/runtimes_cache.h"
-#include "toolchain/install/install_paths.h"
 
 namespace Carbon {
 namespace {

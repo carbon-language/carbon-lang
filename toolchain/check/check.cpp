@@ -394,11 +394,12 @@ static auto MaybeDumpCppAST(llvm::ArrayRef<Unit> units,
   }
 
   for (const Unit& unit : units) {
-    if (!unit.clang_ast_unit || !*unit.clang_ast_unit) {
-      continue;
+    if (options.include_in_dumps->Get(unit.sem_ir->check_ir_id())) {
+      if (auto* cpp_file = unit.sem_ir->cpp_file()) {
+        cpp_file->ast_context().getTranslationUnitDecl()->dump(
+            *options.dump_cpp_ast_stream);
+      }
     }
-    clang::ASTContext& ast_context = (*unit.clang_ast_unit)->getASTContext();
-    ast_context.getTranslationUnitDecl()->dump(*options.dump_cpp_ast_stream);
   }
 }
 

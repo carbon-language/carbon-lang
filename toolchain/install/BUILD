@@ -22,66 +22,6 @@ package(default_visibility = ["//visibility:public"])
 # This populates a synthetic Carbon toolchain installation under the
 # `prefix_root` directory. For details on its layout, see `install_dirs` below.
 
-# A library for computing install paths for the toolchain. Note that this
-# library does *not* include the data itself, as that would form a dependency
-# cycle. Each part of the toolchain should add the narrow data file groups to
-# their data dependencies, and then use this library to locate them.
-cc_library(
-    name = "install_paths",
-    srcs = ["install_paths.cpp"],
-    hdrs = ["install_paths.h"],
-    deps = [
-        "//common:check",
-        "//common:error",
-        "//common:filesystem",
-        "//toolchain/base:llvm_tools",
-        "@bazel_tools//tools/cpp/runfiles",
-        "@llvm-project//clang:basic",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_binary(
-    name = "test_binary",
-    testonly = 1,
-    srcs = ["test_binary.cpp"],
-    data = [":install_data"],
-)
-
-cc_test(
-    name = "install_paths_test",
-    size = "small",
-    srcs = ["install_paths_test.cpp"],
-    data = [
-        ":install_data",
-        ":test_binary",
-    ],
-    deps = [
-        ":install_paths",
-        "//common:check",
-        "//common:error_test_helpers",
-        "//common:filesystem",
-        "//common:ostream",
-        "//testing/base:global_exe_path",
-        "//testing/base:gtest_main",
-        "@bazel_tools//tools/cpp/runfiles",
-        "@googletest//:gtest",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
-cc_library(
-    name = "install_paths_test_helpers",
-    testonly = 1,
-    srcs = ["install_paths_test_helpers.cpp"],
-    hdrs = ["install_paths_test_helpers.h"],
-    deps = [
-        ":install_paths",
-        "//testing/base:global_exe_path",
-        "@llvm-project//llvm:Support",
-    ],
-)
-
 cc_library(
     name = "busybox_info",
     srcs = ["busybox_info.cpp"],
@@ -115,13 +55,13 @@ cc_binary(
     srcs = ["busybox_main.cpp"],
     deps = [
         ":busybox_info",
-        ":install_paths",
         "//common:all_llvm_targets",
         "//common:bazel_working_dir",
         "//common:error",
         "//common:exe_path",
         "//common:init_llvm",
         "//common:version_stamp",
+        "//toolchain/base:install_paths",
         "//toolchain/base:llvm_tools_def",
         "//toolchain/driver",
         "@llvm-project//llvm:Support",
@@ -450,7 +390,6 @@ cc_binary(
     name = "make-installation-digest",
     srcs = ["make_installation_digest.cpp"],
     deps = [
-        ":install_paths",
         "//common:bazel_working_dir",
         "//common:error",
         "//common:exe_path",
@@ -458,6 +397,7 @@ cc_binary(
         "//common:init_llvm",
         "//common:map",
         "//common:vlog",
+        "//toolchain/base:install_paths",
         "@llvm-project//llvm:Support",
     ],
 )

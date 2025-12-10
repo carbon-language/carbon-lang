@@ -222,10 +222,9 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "types_"), types_);
 }
 
-auto File::set_clang_ast_unit(clang::ASTUnit* clang_ast_unit) -> void {
-  clang_ast_unit_ = clang_ast_unit;
-  clang_mangle_context_.reset(
-      clang_ast_unit->getASTContext().createMangleContext());
+auto File::set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void {
+  cpp_file_ = std::move(cpp_file);
+  clang_mangle_context_.reset(cpp_file_->ast_context().createMangleContext());
 }
 
 }  // namespace Carbon::SemIR

@@ -227,6 +227,12 @@ class Context {
     return impl_lookup_stack_;
   }
 
+  // A map from a (self, interface) pair to a final witness.
+  using ImplLookupCacheMap =
+      Map<std::pair<SemIR::ConstantId, SemIR::SpecificInterfaceId>,
+          SemIR::InstId>;
+  auto impl_lookup_cache() -> ImplLookupCacheMap& { return impl_lookup_cache_; }
+
   // An impl lookup query that resulted in a concrete witness from finding an
   // `impl` declaration (not though a facet value), and its result. Used to look
   // for conflicting `impl` declarations.
@@ -305,11 +311,9 @@ class Context {
     return sem_ir().import_ir_insts();
   }
   auto ast_context() -> clang::ASTContext& {
-    return sem_ir().clang_ast_unit()->getASTContext();
+    return sem_ir().cpp_file()->ast_context();
   }
-  auto clang_sema() -> clang::Sema& {
-    return sem_ir().clang_ast_unit()->getSema();
-  }
+  auto clang_sema() -> clang::Sema& { return sem_ir().cpp_file()->sema(); }
   auto clang_decls() -> SemIR::ClangDeclStore& {
     return sem_ir().clang_decls();
   }
@@ -473,6 +477,10 @@ class Context {
   // Tracks all ongoing impl lookups in order to ensure that lookup terminates
   // via the acyclic rule and the termination rule.
   llvm::SmallVector<ImplLookupStackEntry> impl_lookup_stack_;
+
+  // Tracks a mapping from (self, interface) to witness, for queries that had
+  // final results.
+  ImplLookupCacheMap impl_lookup_cache_;
 
   // Tracks impl lookup queries that lead to concrete witness results, along
   // with those results. Used to verify that the same queries produce the same

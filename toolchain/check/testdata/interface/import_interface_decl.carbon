@@ -54,7 +54,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.B = import_ref Main//b, B, unloaded
-// CHECK:STDOUT:   %Main.import_ref.5c0 = import_ref Main//b, loc2_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.3bc = import_ref Main//b, loc2_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e5c: type = import_ref Main//b, loc7_7, loaded [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %Main.import_ref.171: type = import_ref Main//b, loc7_12, loaded [concrete = constants.%B.type]
 // CHECK:STDOUT: }
@@ -69,7 +69,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @B [from "fail_b.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.5c0
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.3bc
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:

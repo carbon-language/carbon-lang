@@ -10,11 +10,11 @@
 
 #include "clang-tools-extra/clangd/LSPBinder.h"
 #include "common/map.h"
+#include "toolchain/base/install_paths.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/diagnostic_consumer.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/diagnostics/file_diagnostics.h"
-#include "toolchain/install/install_paths.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"

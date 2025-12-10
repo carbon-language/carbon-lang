@@ -198,6 +198,7 @@ impl () as B(1) {}
 // CHECK:STDOUT:     .Self = %Self
 // CHECK:STDOUT:     .A = <poisoned>
 // CHECK:STDOUT:     .X = <poisoned>
+// CHECK:STDOUT:     has_error
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
 // CHECK:STDOUT:   }

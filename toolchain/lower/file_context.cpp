@@ -73,27 +73,16 @@ auto FileContext::PrepareToLower() -> void {
     // Clang code generation should not actually modify the AST, but isn't
     // const-correct.
     cpp_code_generator_->Initialize(
-        const_cast<clang::ASTContext&>(clang_ast_unit()->getASTContext()));
-
-    // Work around `visitLocalTopLevelDecls` not being const. It doesn't modify
-    // the AST unit other than triggering deserialization.
-    auto* non_const_ast_unit = const_cast<clang::ASTUnit*>(clang_ast_unit());
+        const_cast<clang::ASTContext&>(cpp_file()->ast_context()));
 
     // Emit any top-level declarations now.
-    // TODO: This may miss things that we need to emit which are handed to the
-    // ASTConsumer in other ways. Instead of doing this, we should create the
-    // CodeGenerator earlier and register it as an ASTConsumer before we parse
-    // the C++ inputs.
-    non_const_ast_unit->visitLocalTopLevelDecls(
-        cpp_code_generator_.get(),
-        [](void* codegen_ptr, const clang::Decl* decl) {
-          auto* codegen = static_cast<clang::CodeGenerator*>(codegen_ptr);
-          // CodeGenerator won't modify the declaration it's given, but we can
-          // only call it via the ASTConsumer interface which doesn't know that.
-          auto* non_const_decl = const_cast<clang::Decl*>(decl);
-          codegen->HandleTopLevelDecl(clang::DeclGroupRef(non_const_decl));
-          return true;
-        });
+    cpp_file()->VisitLocalTopLevelDecls([&](const clang::Decl* decl) {
+      // CodeGenerator won't modify the declaration it's given, but we can
+      // only call it via the ASTConsumer interface which doesn't know that.
+      auto* non_const_decl = const_cast<clang::Decl*>(decl);
+      cpp_code_generator_->HandleTopLevelDecl(
+          clang::DeclGroupRef(non_const_decl));
+    });
   }
 
   // Lower all types that were required to be complete.
@@ -180,7 +169,7 @@ auto FileContext::Finalize() -> void {
     // Clang code generation should not actually modify the AST, but isn't
     // const-correct.
     cpp_code_generator_->HandleTranslationUnit(
-        const_cast<clang::ASTContext&>(clang_ast_unit()->getASTContext()));
+        const_cast<clang::ASTContext&>(cpp_file()->ast_context()));
     bool link_error = llvm::Linker::linkModules(
         /*Dest=*/llvm_module(),
         /*Src=*/std::unique_ptr<llvm::Module>(
@@ -196,7 +185,7 @@ auto FileContext::Finalize() -> void {
 
 auto FileContext::CreateCppCodeGenerator()
     -> std::unique_ptr<clang::CodeGenerator> {
-  if (!clang_ast_unit()) {
+  if (!cpp_file()) {
     return nullptr;
   }
 
@@ -207,10 +196,9 @@ auto FileContext::CreateCppCodeGenerator()
   cpp_code_gen_options_.EmitVersionIdentMetadata = false;
 
   return std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
-      clang_ast_unit()->getASTContext().getDiagnostics(),
-      clang_module_name_stream.TakeStr(), context().file_system(),
-      cpp_header_search_options_, cpp_preprocessor_options_,
-      cpp_code_gen_options_, llvm_context()));
+      cpp_file()->diagnostics(), clang_module_name_stream.TakeStr(),
+      context().file_system(), cpp_header_search_options_,
+      cpp_preprocessor_options_, cpp_code_gen_options_, llvm_context()));
 }
 
 auto FileContext::GetConstant(SemIR::ConstantId const_id,
@@ -403,10 +391,6 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
 
 auto FileContext::HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
     -> void {
-  // TODO: To support recursive inline functions, collect all calls to
-  // `HandleTopLevelDecl()` in a custom `ASTConsumer` configured in the
-  // `ASTUnit`, and replay them in lowering in the `CodeGenerator`. See
-  // https://discord.com/channels/655572317891461132/768530752592805919/1370509111585935443
   clang::FunctionDecl* cpp_def = cpp_decl->getDefinition();
   if (!cpp_def) {
     return;

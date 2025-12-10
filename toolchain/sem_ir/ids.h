@@ -354,6 +354,7 @@ struct AssociatedConstantId : public IdBase<AssociatedConstantId> {
 // The ID of a `FacetTypeInfo`.
 struct FacetTypeId : public IdBase<FacetTypeId> {
   static constexpr llvm::StringLiteral Label = "facet_type";
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
   using IdBase::IdBase;
 };
@@ -587,6 +588,10 @@ inline constexpr FloatKind FloatKind::PPCFloat128 = FloatKind(6);
   X(Core)                                                        \
   /* The name of the package `Cpp`. */                           \
   X(Cpp)                                                         \
+  /* The name of imported C++ destructors. */                    \
+  X(CppDestructor)                                               \
+  /* The name of imported C++ operator functions */              \
+  X(CppOperator)                                                 \
   /* The name of `package`. */                                   \
   X(PackageNamespace)                                            \
   /* The name of `.Self`. */                                     \
@@ -600,9 +605,7 @@ inline constexpr FloatKind FloatKind::PPCFloat128 = FloatKind(6);
   /* The name of `_`. */                                         \
   X(Underscore)                                                  \
   /* The name of `vptr`. */                                      \
-  X(Vptr)                                                        \
-  /* The name of imported C++ operator functions */              \
-  X(CppOperator)
+  X(Vptr)
 
 // The ID of a name. A name is either a string or a special name such as
 // `self`, `Self`, or `base`.

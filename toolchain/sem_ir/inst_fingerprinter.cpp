@@ -121,7 +121,7 @@ struct Worklist {
     } else {
       Add(entity_name.name_id);
     }
-    // TODO: Should we include the parent index?
+    Add(entity_name.parent_scope_id);
   }
 
   auto AddInFile(const File* file, InstId inner_id) -> void {
@@ -264,6 +264,11 @@ struct Worklist {
   }
 
   auto Add(ImplId impl_id) -> void {
+    if (!impl_id.has_value()) {
+      AddInvalid();
+      return;
+    }
+
     const auto& impl = sem_ir->impls().Get(impl_id);
     Add(sem_ir->constant_values().Get(impl.self_id));
     Add(sem_ir->constant_values().Get(impl.constraint_id));
