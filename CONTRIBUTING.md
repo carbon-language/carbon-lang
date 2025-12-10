@@ -255,9 +255,9 @@ or using AI-based tools:
    one for the project. For example, formatting with the standard tools is
    reasonable to assume without further comment. But if a PR is largely derived
    from running a specific Python script, regular expression, or AI-based tool
-   over the codebase, we ask that its description is transparent about this.
-   Ideally, this should include a prose description of how the tool was used to
-   formulate the change. Where relevant, we also encourage following the pattern
+   over the codebase, we ask that its description is transparent about this and
+   include a description of how the tool was used to formulate the change. For
+   PRs largely derived from AI-based tooling, we suggest following the pattern
    established by the Fedora Project to mark commits with `Assisted-by: ...`.
 
 Our policies and practices here are inspired by and aim to be roughly compatible
