@@ -171,7 +171,7 @@ class D {}
 impl D as A {}
 
 fn F() {
-  // CHECK:STDERR: fail_todo_let.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported: we should re-evaluate the contents of the eval block in a synthesized specific to form these values, in order to propagate the values.` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_let.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported` [SemanticsTodo]
   // CHECK:STDERR:   let E:! type where .Self impls A = D;
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

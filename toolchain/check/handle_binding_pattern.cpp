@@ -169,11 +169,11 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
 
   if (node_kind == Parse::NodeKind::CompileTimeBindingPattern &&
       introducer.kind == Lex::TokenKind::Let) {
-    return context.TODO(
-        node_id,
-        "local `let :!` bindings are currently unsupported: we should "
-        "re-evaluate the contents of the eval block in a synthesized specific "
-        "to form these values, in order to propagate the values.");
+    // TODO: We should re-evaluate the contents of the eval block in a
+    // synthesized specific to form these values, in order to propagate the
+    // values.
+    return context.TODO(node_id,
+                        "local `let :!` bindings are currently unsupported");
   }
 
   // Allocate an instruction of the appropriate kind, linked to the name for

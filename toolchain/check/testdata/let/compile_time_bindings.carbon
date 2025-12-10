@@ -64,7 +64,7 @@ class C {
   // CHECK:STDERR:   let d:! ((), (), ()) = ((), (), ());
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE-11]]:9: error: semantics TODO: `local `let :!` bindings are currently unsupported: we should re-evaluate the contents of the eval block in a synthesized specific to form these values, in order to propagate the values.` [SemanticsTodo]
+  // CHECK:STDERR: fail_multiple_lets.carbon:[[@LINE-11]]:9: error: semantics TODO: `local `let :!` bindings are currently unsupported` [SemanticsTodo]
   // CHECK:STDERR:     let c:! ((), ()) = ((), ());
   // CHECK:STDERR:         ^~~~~~~~~~~~
   // CHECK:STDERR:
@@ -93,7 +93,7 @@ class C {
 library "[[@TEST_NAME]]";
 
 fn F() -> i32 {
-  // CHECK:STDERR: fail_todo_use_in_function.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported: we should re-evaluate the contents of the eval block in a synthesized specific to form these values, in order to propagate the values.` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_use_in_function.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported` [SemanticsTodo]
   // CHECK:STDERR:   let Zero:! i32 = 0;
   // CHECK:STDERR:       ^~~~~~~~~~
   // CHECK:STDERR:
@@ -107,7 +107,7 @@ library "[[@TEST_NAME]]";
 
 fn F() -> i32 {
   if (true) {
-    // CHECK:STDERR: fail_todo_use_in_block.carbon:[[@LINE+4]]:9: error: semantics TODO: `local `let :!` bindings are currently unsupported: we should re-evaluate the contents of the eval block in a synthesized specific to form these values, in order to propagate the values.` [SemanticsTodo]
+    // CHECK:STDERR: fail_todo_use_in_block.carbon:[[@LINE+4]]:9: error: semantics TODO: `local `let :!` bindings are currently unsupported` [SemanticsTodo]
     // CHECK:STDERR:     let Zero:! i32 = 0;
     // CHECK:STDERR:         ^~~~~~~~~~
     // CHECK:STDERR:

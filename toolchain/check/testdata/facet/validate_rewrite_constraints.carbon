@@ -941,8 +941,8 @@ fn F(T:! I where .X = (I where .Y = (I where .X = .Y, ))) {}
 // `.Self` references in the same position in the parameter of `F`. If not, the
 // `.X` within becomes self-referential and makes a cycle.
 
-fn G1(Constant:! type) {
-  // CHECK:STDERR: fail_nested_facet_type_from_constant.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported: we should re-evaluate the contents of the eval block in a synthesized specific to form these values, in order to propagate the values.` [SemanticsTodo]
+fn G1() {
+  // CHECK:STDERR: fail_nested_facet_type_from_constant.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported` [SemanticsTodo]
   // CHECK:STDERR:   let Constant:! type = I where .X = .Y;
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -953,7 +953,7 @@ fn G1(Constant:! type) {
   }
 }
 
-fn G2(Constant:! type) {
+fn G2() {
   let Constant:! type = (I where .X = .Y, );
 
   fn G(T:! I where .X = (I where .Y = Constant)) {
@@ -961,7 +961,7 @@ fn G2(Constant:! type) {
   }
 }
 
-fn G3(Constant:! type) {
+fn G3() {
   let Constant:! type = I where .Y = (I where .X = .Y, );
 
   fn G(T:! I where .X = Constant) {
@@ -969,7 +969,7 @@ fn G3(Constant:! type) {
   }
 }
 
-fn G4(Constant:! type) {
+fn G4() {
   let Constant2:! type = (I where .X = .Y, );
   let Constant:! type = Constant2;
 
@@ -978,7 +978,7 @@ fn G4(Constant:! type) {
   }
 }
 
-fn G5(Constant:! type) {
+fn G5() {
   let Constant2:! type = I where .X = .Y;
   let Constant:! type = (Constant2, );
 
@@ -987,7 +987,7 @@ fn G5(Constant:! type) {
   }
 }
 
-fn G6(Constant:! type) {
+fn G6() {
   let Constant2:! type = (I where .X = .Y, );
   let Constant:! type = I where .Y = Constant2;
 
@@ -1007,7 +1007,7 @@ interface I {
 fn F(T:! I where .X = (I where .Y = (I where .X = .Y, ))) {}
 
 fn G1() {
-  // CHECK:STDERR: fail_nested_facet_type_from_constant_differs.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported: we should re-evaluate the contents of the eval block in a synthesized specific to form these values, in order to propagate the values.` [SemanticsTodo]
+  // CHECK:STDERR: fail_nested_facet_type_from_constant_differs.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported` [SemanticsTodo]
   // CHECK:STDERR:   let Constant:! type = I where .X = () and .Y = ();
   // CHECK:STDERR:       ^~~~~~~~~~~~~~~
   // CHECK:STDERR:

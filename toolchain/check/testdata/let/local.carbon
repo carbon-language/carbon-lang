@@ -29,7 +29,7 @@ fn F(c: C) {}
 
 fn CallF() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: symbolic.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported: we should re-evaluate the contents of the eval block in a synthesized specific to form these values, in order to propagate the values.` [SemanticsTodo]
+  // CHECK:STDERR: symbolic.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported` [SemanticsTodo]
   // CHECK:STDERR:   let c:! C = {};
   // CHECK:STDERR:       ^~~~~
   // CHECK:STDERR:
