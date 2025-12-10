@@ -20,7 +20,7 @@ fn F(a: i32) -> i32 {
   //@dump-sem-ir-end
 }
 
-// --- symbolic.carbon
+// --- fail_todo_symbolic.carbon
 library "[[@TEST_NAME]]";
 
 class C {}
@@ -29,7 +29,7 @@ fn F(c: C) {}
 
 fn CallF() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: symbolic.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_symbolic.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported` [SemanticsTodo]
   // CHECK:STDERR:   let c:! C = {};
   // CHECK:STDERR:       ^~~~~
   // CHECK:STDERR:
@@ -82,7 +82,7 @@ fn CallF() {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- symbolic.carbon
+// CHECK:STDOUT: --- fail_todo_symbolic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT: }
