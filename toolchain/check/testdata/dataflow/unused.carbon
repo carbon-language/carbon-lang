@@ -74,12 +74,18 @@ fn F() {
   // TODO: warning, x is unused.
 }
 
-fn VarUnused() {
+// --- todo_fail_local_var_named_not_used.carbon
+library "[[@TEST_NAME]]";
+
+fn F() {
   var a: i32 = 0;
   // TODO: warning, a is unused.
 }
 
-fn Shadowing() {
+// --- todo_fail_local_var_shadowed_not_used.carbon
+library "[[@TEST_NAME]]";
+
+fn F() {
   var x: i32 = 0;
   if (true) {
     var x: i32 = 1;
@@ -89,7 +95,10 @@ fn Shadowing() {
   // TODO: warning, x is unused.
 }
 
-fn Parameters(p: i32) {
+// --- todo_fail_param_let_named_not_used.carbon
+library "[[@TEST_NAME]]";
+
+fn F(p: i32) {
   // TODO: warning, p is unused.
 }
 
