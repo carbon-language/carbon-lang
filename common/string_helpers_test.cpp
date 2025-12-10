@@ -269,8 +269,8 @@ TEST(BuildCStrArgsWithPrefix, PrefixOnly) {
   auto result = BuildCStrArgs("tool", prefix_args, {}, storage);
   ASSERT_THAT(result.size(), Eq(3));
   EXPECT_THAT(result[0], StrEq("tool"));
-  EXPECT_THAT(result[1], StrEq("p_arg1"));
-  EXPECT_THAT(result[2], StrEq("p_arg2"));
+  EXPECT_THAT(result[1], Eq(prefix_args[0].c_str()));
+  EXPECT_THAT(result[2], Eq(prefix_args[1].c_str()));
 }
 
 TEST(BuildCStrArgsWithPrefix, ArgsOnly) {
@@ -288,8 +288,8 @@ TEST(BuildCStrArgsWithPrefix, BothPrefixAndArgs) {
   auto result = BuildCStrArgs("tool", prefix_args, {"arg1", "arg2"}, storage);
   ASSERT_THAT(result.size(), Eq(5));
   EXPECT_THAT(result[0], StrEq("tool"));
-  EXPECT_THAT(result[1], StrEq("p_arg1"));
-  EXPECT_THAT(result[2], StrEq("p_arg2"));
+  EXPECT_THAT(result[1], Eq(prefix_args[0].c_str()));
+  EXPECT_THAT(result[2], Eq(prefix_args[1].c_str()));
   EXPECT_THAT(result[3], StrEq("arg1"));
   EXPECT_THAT(result[4], StrEq("arg2"));
 }

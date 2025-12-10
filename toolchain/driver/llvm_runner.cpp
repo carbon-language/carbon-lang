@@ -29,7 +29,7 @@ auto LLVMRunner::Run(LLVMTool tool, llvm::ArrayRef<llvm::StringRef> args)
       BuildCStrArgs(path, args, cstr_arg_storage);
 
   CARBON_VLOG("Running LLVM's {0} tool with args:\n", tool.name());
-  for (const char* cstr_arg : llvm::ArrayRef(cstr_args)) {
+  for (const char* cstr_arg : cstr_args) {
     CARBON_VLOG("    '{0}'\n", cstr_arg);
   }
 

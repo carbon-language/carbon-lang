@@ -34,11 +34,9 @@ auto ParseBlockStringLiteral(llvm::StringRef source, int hashtag_num = 0)
 // correctness.
 auto StringRefContainsPointer(llvm::StringRef ref, const char* ptr) -> bool;
 
-// Translates `args` into C-string arguments for APIs based on `main`-like
-// command line argument lists.
-//
-// Accepts a `tool_name` for logging, and a `tool_path` that will be used as
-// the first C-string argument to simulate an `argv[0]` entry.
+// Converts `tool_path` and each of the `args` into C-strings and returns the
+// results. This is intended for use with APIs that expect `argv`-like command
+// line argument lists.
 //
 // Accepts a `cstr_arg_storage` that will provide the underlying storage for
 // the C-strings, and returns a small vector of the C-string pointers. The
@@ -49,9 +47,9 @@ auto BuildCStrArgs(llvm::StringRef tool_path,
                    llvm::OwningArrayRef<char>& cstr_arg_storage)
     -> llvm::SmallVector<const char*, 64>;
 
-// An overload of `BuildCStrArgs` with the same core behavior as the above,
-// but with an extra series of `prefix_args` that are prepended to the
-// argument list after the executable name.
+// An overload of `BuildCStrArgs` with the same core behavior as the above, but
+// with an extra series of `prefix_args` that are placed between the `tool_path`
+// and the `args` in the resulting list.
 //
 // Unlike the tool path and the main `args`, the `prefix_args` are accepted as
 // an array of `std::string`s and those string object's `c_str()` method is used

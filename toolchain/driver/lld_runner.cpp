@@ -38,7 +38,7 @@ auto LldRunner::LinkHelper(llvm::StringLiteral label,
       BuildCStrArgs(path, args, cstr_arg_storage);
 
   CARBON_VLOG("Running LLD {0}-platform link with args:\n", label);
-  for (const char* cstr_arg : llvm::ArrayRef(cstr_args)) {
+  for (const char* cstr_arg : cstr_args) {
     CARBON_VLOG("    '{0}'\n", cstr_arg);
   }
 

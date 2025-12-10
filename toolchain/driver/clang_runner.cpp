@@ -211,14 +211,15 @@ auto ClangRunner::RunInternal(
     std::optional<llvm::StringRef> target_resource_dir_path,
     bool enable_leaking) -> bool {
   std::string clang_path = installation_->clang_path();
+
+  // Rebuild the args as C-string args.
   llvm::OwningArrayRef<char> cstr_arg_storage;
+  llvm::SmallVector<const char*, 64> cstr_args =
+      BuildCStrArgs(clang_path, args, cstr_arg_storage);
 
   // Handle special dispatch for CC1 commands as they don't use the driver and
   // we don't synthesize any default arguments there.
   if (!args.empty() && args[0].starts_with("-cc1")) {
-    llvm::SmallVector<const char*, 64> cstr_args =
-        BuildCStrArgs(clang_path, args, cstr_arg_storage);
-
     if (args[0] == "-cc1") {
       CARBON_VLOG("Dispatching `-cc1` command line...");
       int exit_code =
@@ -244,10 +245,6 @@ auto ClangRunner::RunInternal(
     // TODO: Should this be forwarding the full exit code?
     return exit_code == 0;
   }
-
-  // Rebuild the args as C-string args.
-  llvm::SmallVector<const char*, 64> cstr_args =
-      BuildCStrArgs(clang_path, prefix_args, args, cstr_arg_storage);
 
   CARBON_VLOG("Running Clang driver with the following arguments:\n");
   for (const char* cstr_arg : llvm::ArrayRef(cstr_args)) {
