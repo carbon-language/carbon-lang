@@ -1618,6 +1618,10 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   // Finalize the `VarStorage` instruction.
   ReplaceInstBeforeConstantUse(context, var_storage_inst_id, var_storage);
 
+  // Inform Clang that the variable has been referenced.
+  context.clang_sema().MarkVariableReferenced(GetCppLocation(context, loc_id),
+                                              var_decl);
+
   return var_storage_inst_id;
 }
 
