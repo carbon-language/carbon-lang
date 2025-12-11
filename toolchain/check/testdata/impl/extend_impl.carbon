@@ -66,7 +66,7 @@ class C {
   impl nonexistent as I {}
 
   fn F() {
-    // The name lookup error still happens, since the `require` is not `extend`.
+    // The name lookup error still happens, since the `impl` is not `extend`.
     // CHECK:STDERR: fail_impl_nonexistent.carbon:[[@LINE+4]]:5: error: member name `A` not found in `C` [MemberNameNotFoundInInstScope]
     // CHECK:STDERR:     Self.A;
     // CHECK:STDERR:     ^~~~~~

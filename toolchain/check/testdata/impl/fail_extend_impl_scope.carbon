@@ -17,7 +17,7 @@ library "[[@TEST_NAME]]";
 
 interface I {}
 
-// CHECK:STDERR: fail_extend_impl_file_scope.carbon:[[@LINE+4]]:1: error: `extend impl` can only be used in a class [ExtendImplOutsideClass]
+// CHECK:STDERR: fail_extend_impl_file_scope.carbon:[[@LINE+4]]:1: error: `extend impl` can only be used in an interface or class [ExtendImplOutsideClass]
 // CHECK:STDERR: extend impl () as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -29,7 +29,7 @@ library "[[@TEST_NAME]]";
 interface J {}
 
 fn F() {
-  // CHECK:STDERR: fail_extend_impl_function_scope.carbon:[[@LINE+4]]:3: error: `extend impl` can only be used in a class [ExtendImplOutsideClass]
+  // CHECK:STDERR: fail_extend_impl_function_scope.carbon:[[@LINE+4]]:3: error: `extend impl` can only be used in an interface or class [ExtendImplOutsideClass]
   // CHECK:STDERR:   extend impl {} as J {}
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

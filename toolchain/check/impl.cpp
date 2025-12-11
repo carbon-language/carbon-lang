@@ -386,12 +386,13 @@ static auto ApplyExtendImplAs(Context& context, SemIR::LocId loc_id,
                               SemIR::LocId implicit_params_loc_id) -> bool {
   auto parent_scope_id = context.decl_name_stack().PeekParentScopeId();
 
-  // TODO: Also handle the parent scope being a mixin.
+  // TODO: Also handle the parent scope being a mixin or an interface.
   auto class_scope = TryAsClassScope(context, parent_scope_id);
   if (!class_scope) {
     if (impl.witness_id != SemIR::ErrorInst::InstId) {
-      CARBON_DIAGNOSTIC(ExtendImplOutsideClass, Error,
-                        "`extend impl` can only be used in a class");
+      CARBON_DIAGNOSTIC(
+          ExtendImplOutsideClass, Error,
+          "`extend impl` can only be used in an interface or class");
       context.emitter().Emit(loc_id, ExtendImplOutsideClass);
     }
     return false;
