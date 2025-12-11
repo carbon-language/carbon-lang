@@ -341,9 +341,10 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
     // TODO: Add note pointing to the impl declaration.
     context.emitter().Emit(inst_id, ImplAccessMemberBeforeSet);
     return ConstantEvalResult::Error;
-  } else if (auto cpp_witness =
-                 context.insts().TryGetAs<SemIR::CppWitness>(inst.witness_id)) {
-    auto elements = context.inst_blocks().Get(cpp_witness->elements_id);
+  } else if (auto custom_witness =
+                 context.insts().TryGetAs<SemIR::CustomWitness>(
+                     inst.witness_id)) {
+    auto elements = context.inst_blocks().Get(custom_witness->elements_id);
     auto index = static_cast<size_t>(inst.index.index);
     // `elements` can be shorter than the number of associated entities while
     // we're building the synthetic witness.

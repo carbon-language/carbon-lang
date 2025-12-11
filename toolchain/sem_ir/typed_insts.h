@@ -754,11 +754,11 @@ struct CppOverloadSetValue {
   CppOverloadSetId overload_set_id;
 };
 
-// A witness synthesized for a C++ construct such as a constructor, conversion
-// function, or overloaded operator.
-struct CppWitness {
-  static constexpr auto Kind = InstKind::CppWitness.Define<Parse::NodeId>(
-      {.ir_name = "cpp_witness",
+// A witness synthesized for an arbitrary construct. For example, a `Destroy`
+// witness, or a C++ overloaded operator.
+struct CustomWitness {
+  static constexpr auto Kind = InstKind::CustomWitness.Define<Parse::NodeId>(
+      {.ir_name = "custom_witness",
        .constant_kind = InstConstantKind::Always,
        // TODO: For dynamic dispatch, we might want to lower witness tables as
        // constants.
@@ -2078,7 +2078,7 @@ struct WhereExpr {
   InstBlockId requirements_id;
 };
 
-// The type of `ImplWitness`, `CppWitness`, and `LookupImplWitness`
+// The type of `ImplWitness`, `CustomWitness`, and `LookupImplWitness`
 // instructions. The latter will evaluate at some point during specific
 // computation into one of the former two, and their types should not change in
 // the process.

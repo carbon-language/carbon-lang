@@ -907,8 +907,8 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstName("const");
       return;
     }
-    case CppWitness::Kind: {
-      AddInstName("cpp_witness");
+    case CustomWitness::Kind: {
+      AddInstName("custom_witness");
       return;
     }
     case CARBON_KIND(FacetAccessType inst): {

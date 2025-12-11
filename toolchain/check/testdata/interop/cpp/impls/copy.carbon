@@ -202,9 +202,9 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   %Copyable__carbon_thunk: %Copyable__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copyable.Op.type: type = fn_type @Copyable.Op [concrete]
 // CHECK:STDOUT:   %Copyable.Op: %Copyable.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %cpp_witness.524: <witness> = cpp_witness (%Copyable.Op) [concrete]
-// CHECK:STDOUT:   %Copy.facet.2cd: %Copy.type = facet_value %Copyable, (%cpp_witness.524) [concrete]
-// CHECK:STDOUT:   %.dc1: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.2cd [concrete]
+// CHECK:STDOUT:   %custom_witness.0b0: <witness> = custom_witness (%Copyable.Op) [concrete]
+// CHECK:STDOUT:   %Copy.facet.157: %Copy.type = facet_value %Copyable, (%custom_witness.0b0) [concrete]
+// CHECK:STDOUT:   %.07b: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.157 [concrete]
 // CHECK:STDOUT:   %ExplicitCopy: type = class_type @ExplicitCopy [concrete]
 // CHECK:STDOUT:   %ExplicitCopy.ExplicitCopy.type: type = fn_type @ExplicitCopy.ExplicitCopy [concrete]
 // CHECK:STDOUT:   %ExplicitCopy.ExplicitCopy: %ExplicitCopy.ExplicitCopy.type = struct_value () [concrete]
@@ -215,9 +215,9 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   %ExplicitCopy__carbon_thunk: %ExplicitCopy__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ExplicitCopy.Op.type: type = fn_type @ExplicitCopy.Op [concrete]
 // CHECK:STDOUT:   %ExplicitCopy.Op: %ExplicitCopy.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %cpp_witness.b38: <witness> = cpp_witness (%ExplicitCopy.Op) [concrete]
-// CHECK:STDOUT:   %Copy.facet.27f: %Copy.type = facet_value %ExplicitCopy, (%cpp_witness.b38) [concrete]
-// CHECK:STDOUT:   %.82a: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.27f [concrete]
+// CHECK:STDOUT:   %custom_witness.fa3: <witness> = custom_witness (%ExplicitCopy.Op) [concrete]
+// CHECK:STDOUT:   %Copy.facet.40c: %Copy.type = facet_value %ExplicitCopy, (%custom_witness.fa3) [concrete]
+// CHECK:STDOUT:   %.167: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.40c [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -247,7 +247,7 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Copyable = name_ref c, %c
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %impl.elem0: %.dc1 = impl_witness_access constants.%cpp_witness.524, element0 [concrete = constants.%Copyable.Op]
+// CHECK:STDOUT:   %impl.elem0: %.07b = impl_witness_access constants.%custom_witness.0b0, element0 [concrete = constants.%Copyable.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc8_10.1: ref %Copyable = temporary_storage
 // CHECK:STDOUT:   %Op.ref: %Copyable.Copyable.type = name_ref Op, imports.%Copyable.Copyable.decl [concrete = constants.%Copyable.Copyable]
@@ -266,7 +266,7 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %ExplicitCopy = name_ref c, %c
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %impl.elem0: %.82a = impl_witness_access constants.%cpp_witness.b38, element0 [concrete = constants.%ExplicitCopy.Op]
+// CHECK:STDOUT:   %impl.elem0: %.167 = impl_witness_access constants.%custom_witness.fa3, element0 [concrete = constants.%ExplicitCopy.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc14_10.1: ref %ExplicitCopy = temporary_storage
 // CHECK:STDOUT:   %Op.ref: %ExplicitCopy.ExplicitCopy.type = name_ref Op, imports.%ExplicitCopy.ExplicitCopy.decl [concrete = constants.%ExplicitCopy.ExplicitCopy]
@@ -294,17 +294,17 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   %Copyable: type = class_type @Copyable [concrete]
 // CHECK:STDOUT:   %Copyable.Op.type: type = fn_type @Copyable.Op [concrete]
 // CHECK:STDOUT:   %Copyable.Op: %Copyable.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %cpp_witness.524: <witness> = cpp_witness (%Copyable.Op) [concrete]
-// CHECK:STDOUT:   %Copy.facet.2cd: %Copy.type.705 = facet_value %Copyable, (%cpp_witness.524) [concrete]
-// CHECK:STDOUT:   %Copy.specific_fn: <specific function> = specific_function %Copy, @Copy.loc6(%Copy.facet.2cd) [concrete]
-// CHECK:STDOUT:   %Wrap.380: type = class_type @Wrap, @Wrap(%Copy.facet.2cd) [concrete]
-// CHECK:STDOUT:   %ptr.ca9: type = ptr_type %Wrap.380 [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.5d2: <witness> = impl_witness imports.%Copy.impl_witness_table.027, @ptr.as.Copy.impl(%Wrap.380) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.a25: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Wrap.380) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.a20: %ptr.as.Copy.impl.Op.type.a25 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet.b54: %Copy.type.705 = facet_value %ptr.ca9, (%Copy.impl_witness.5d2) [concrete]
-// CHECK:STDOUT:   %.b2d: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.b54 [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.a20, @ptr.as.Copy.impl.Op(%Wrap.380) [concrete]
+// CHECK:STDOUT:   %custom_witness.0b0: <witness> = custom_witness (%Copyable.Op) [concrete]
+// CHECK:STDOUT:   %Copy.facet.157: %Copy.type.705 = facet_value %Copyable, (%custom_witness.0b0) [concrete]
+// CHECK:STDOUT:   %Copy.specific_fn: <specific function> = specific_function %Copy, @Copy.loc6(%Copy.facet.157) [concrete]
+// CHECK:STDOUT:   %Wrap.7dc: type = class_type @Wrap, @Wrap(%Copy.facet.157) [concrete]
+// CHECK:STDOUT:   %ptr.62c: type = ptr_type %Wrap.7dc [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.1e6: <witness> = impl_witness imports.%Copy.impl_witness_table.027, @ptr.as.Copy.impl(%Wrap.7dc) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.518: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Wrap.7dc) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.fff: %ptr.as.Copy.impl.Op.type.518 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet.622: %Copy.type.705 = facet_value %ptr.62c, (%Copy.impl_witness.1e6) [concrete]
+// CHECK:STDOUT:   %.19b: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet.622 [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.fff, @ptr.as.Copy.impl.Op(%Wrap.7dc) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -317,24 +317,24 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   %Copy.ref: %Copy.type.6f0 = name_ref Copy, file.%Copy.decl [concrete = constants.%Copy]
 // CHECK:STDOUT:   %c.ref: %Copyable = name_ref c, %c
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Copy.facet.loc12_16.1: %Copy.type.705 = facet_value constants.%Copyable, (constants.%cpp_witness.524) [concrete = constants.%Copy.facet.2cd]
-// CHECK:STDOUT:   %.loc12_16.1: %Copy.type.705 = converted constants.%Copyable, %Copy.facet.loc12_16.1 [concrete = constants.%Copy.facet.2cd]
-// CHECK:STDOUT:   %Copy.facet.loc12_16.2: %Copy.type.705 = facet_value constants.%Copyable, (constants.%cpp_witness.524) [concrete = constants.%Copy.facet.2cd]
-// CHECK:STDOUT:   %.loc12_16.2: %Copy.type.705 = converted constants.%Copyable, %Copy.facet.loc12_16.2 [concrete = constants.%Copy.facet.2cd]
-// CHECK:STDOUT:   %Copy.specific_fn: <specific function> = specific_function %Copy.ref, @Copy.loc6(constants.%Copy.facet.2cd) [concrete = constants.%Copy.specific_fn]
+// CHECK:STDOUT:   %Copy.facet.loc12_16.1: %Copy.type.705 = facet_value constants.%Copyable, (constants.%custom_witness.0b0) [concrete = constants.%Copy.facet.157]
+// CHECK:STDOUT:   %.loc12_16.1: %Copy.type.705 = converted constants.%Copyable, %Copy.facet.loc12_16.1 [concrete = constants.%Copy.facet.157]
+// CHECK:STDOUT:   %Copy.facet.loc12_16.2: %Copy.type.705 = facet_value constants.%Copyable, (constants.%custom_witness.0b0) [concrete = constants.%Copy.facet.157]
+// CHECK:STDOUT:   %.loc12_16.2: %Copy.type.705 = converted constants.%Copyable, %Copy.facet.loc12_16.2 [concrete = constants.%Copy.facet.157]
+// CHECK:STDOUT:   %Copy.specific_fn: <specific function> = specific_function %Copy.ref, @Copy.loc6(constants.%Copy.facet.157) [concrete = constants.%Copy.specific_fn]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Copy.call: init %Copyable = call %Copy.specific_fn(%c.ref) to %.loc10_28
 // CHECK:STDOUT:   return %Copy.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @EqualWitnesses(%p.param: %ptr.ca9) -> %ptr.ca9 {
+// CHECK:STDOUT: fn @EqualWitnesses(%p.param: %ptr.62c) -> %ptr.62c {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %ptr.ca9 = name_ref p, %p
-// CHECK:STDOUT:   %impl.elem0: %.b2d = impl_witness_access constants.%Copy.impl_witness.5d2, element0 [concrete = constants.%ptr.as.Copy.impl.Op.a20]
+// CHECK:STDOUT:   %p.ref: %ptr.62c = name_ref p, %p
+// CHECK:STDOUT:   %impl.elem0: %.19b = impl_witness_access constants.%Copy.impl_witness.1e6, element0 [concrete = constants.%ptr.as.Copy.impl.Op.fff]
 // CHECK:STDOUT:   %bound_method.loc20_10.1: <bound method> = bound_method %p.ref, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%Wrap.380) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%Wrap.7dc) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc20_10.2: <bound method> = bound_method %p.ref, %specific_fn
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.ca9 = call %bound_method.loc20_10.2(%p.ref)
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.62c = call %bound_method.loc20_10.2(%p.ref)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
