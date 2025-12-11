@@ -1279,12 +1279,16 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
 
   llvm::ArrayRef<InstId> args = sem_ir_->inst_blocks().Get(inst.args_id);
 
-  auto return_info = ReturnTypeInfo::ForType(*sem_ir_, inst.type_id);
+  auto return_info = ReturnTypeInfo::ForCallee(*sem_ir_, inst.callee_id);
   if (!return_info.is_valid()) {
     out_ << "(<invalid return info>)";
     return;
   }
-  bool has_return_slot = return_info.has_return_slot();
+
+  // Error in the inst type may indicate that the return type was incomplete
+  // when the inst was created, and so no return slot was added.
+  bool has_return_slot =
+      return_info.has_return_slot() && inst.type_id != SemIR::ErrorInst::TypeId;
   InstId return_slot_arg_id = InstId::None;
   if (has_return_slot) {
     return_slot_arg_id = args.consume_back();

@@ -338,7 +338,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Same.F [concrete = constants.%F]
-// CHECK:STDOUT:   %F.call: init <error> = call %F.ref()
+// CHECK:STDOUT:   %F.call: init <error> = call %F.ref(<invalid return info>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -382,7 +382,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Same.ref: <namespace> = name_ref Same, imports.%Same [concrete = imports.%Same]
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Same.F [concrete = constants.%F]
-// CHECK:STDOUT:   %F.call: init <error> = call %F.ref()
+// CHECK:STDOUT:   %F.call: init <error> = call %F.ref(<invalid return info>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -159,20 +159,19 @@ struct InitRepr : Printable<InitRepr> {
 
 // Information about a function's return type.
 struct ReturnTypeInfo : public Printable<ReturnTypeInfo> {
-  // Builds return type information for a given declared return type.
-  static auto ForType(const File& file, TypeId type_id) -> ReturnTypeInfo {
+  // Builds return type information for a given function.
+  static auto ForFunction(const File& file, const Function& function,
+                          SpecificId specific_id = SpecificId::None)
+      -> ReturnTypeInfo {
+    auto type_id = function.GetDeclaredReturnType(file, specific_id);
     return {.type_id = type_id,
             .init_repr = type_id.has_value()
                              ? InitRepr::ForType(file, type_id)
                              : InitRepr{.kind = InitRepr::None}};
   }
 
-  // Builds return type information for a given function.
-  static auto ForFunction(const File& file, const Function& function,
-                          SpecificId specific_id = SpecificId::None)
-      -> ReturnTypeInfo {
-    return ForType(file, function.GetDeclaredReturnType(file, specific_id));
-  }
+  // Builds return type information for a given callee inst.
+  static auto ForCallee(const File& file, InstId callee_id) -> ReturnTypeInfo;
 
   // Returns whether the return information could be fully computed.
   auto is_valid() const -> bool { return init_repr.is_valid(); }
