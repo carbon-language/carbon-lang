@@ -6,16 +6,16 @@
 #define CARBON_TOOLCHAIN_CHECK_OPERATOR_H_
 
 #include "toolchain/check/context.h"
-#include "toolchain/check/well_known_identifier.h"
+#include "toolchain/check/core_identifier.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
 struct Operator {
-  WellKnownIdentifier interface_name;
+  CoreIdentifier interface_name;
   llvm::ArrayRef<SemIR::InstId> interface_args_ref = {};
-  WellKnownIdentifier op_name = WellKnownIdentifier::Op;
+  CoreIdentifier op_name = CoreIdentifier::Op;
 };
 
 // Checks and builds SemIR for a unary operator expression. For example,

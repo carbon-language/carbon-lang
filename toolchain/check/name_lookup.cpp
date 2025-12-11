@@ -494,7 +494,7 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
 }
 
 // Returns a `Core.<qualifiers>` name for diagnostics.
-static auto GetCoreQualifiedName(llvm::ArrayRef<WellKnownIdentifier> qualifiers)
+static auto GetCoreQualifiedName(llvm::ArrayRef<CoreIdentifier> qualifiers)
     -> std::string {
   RawStringOstream str;
   str << "Core";
@@ -509,7 +509,7 @@ static auto GetCoreQualifiedName(llvm::ArrayRef<WellKnownIdentifier> qualifiers)
 // TODO: Consider tracking the Core package in SemIR so we don't need to use
 // name lookup to find it.
 static auto GetCorePackage(Context& context, SemIR::LocId loc_id,
-                           llvm::ArrayRef<WellKnownIdentifier> qualifiers)
+                           llvm::ArrayRef<CoreIdentifier> qualifiers)
     -> SemIR::NameScopeId {
   auto packaging = context.parse_tree().packaging_decl();
   if (packaging && packaging->names.package_id == PackageNameId::Core) {
@@ -540,7 +540,7 @@ static auto GetCorePackage(Context& context, SemIR::LocId loc_id,
 }
 
 auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
-                      llvm::ArrayRef<WellKnownIdentifier> qualifiers)
+                      llvm::ArrayRef<CoreIdentifier> qualifiers)
     -> SemIR::InstId {
   CARBON_CHECK(!qualifiers.empty());
 
@@ -551,7 +551,7 @@ auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
 
   auto inst_id = SemIR::InstId::None;
   for (auto qualifier : qualifiers) {
-    auto name_id = context.well_known_identifiers().AddNameId(qualifier);
+    auto name_id = context.core_identifiers().AddNameId(qualifier);
 
     auto scope_id = SemIR::NameScopeId::None;
     if (inst_id.has_value()) {

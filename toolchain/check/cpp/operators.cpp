@@ -6,6 +6,7 @@
 
 #include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
+#include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/overload_resolution.h"
@@ -13,7 +14,6 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
-#include "toolchain/check/well_known_identifier.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -21,142 +21,142 @@ namespace Carbon::Check {
 
 // Maps Carbon operator interface and operator names to Clang operator kinds.
 static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
-                                 WellKnownIdentifier interface_name,
-                                 WellKnownIdentifier op_name)
+                                 CoreIdentifier interface_name,
+                                 CoreIdentifier op_name)
     -> std::optional<clang::OverloadedOperatorKind> {
   switch (interface_name) {
       // Unary operators.
-    case WellKnownIdentifier::Destroy:
-    case WellKnownIdentifier::As:
-    case WellKnownIdentifier::ImplicitAs:
-    case WellKnownIdentifier::Copy: {
+    case CoreIdentifier::Destroy:
+    case CoreIdentifier::As:
+    case CoreIdentifier::ImplicitAs:
+    case CoreIdentifier::Copy: {
       // TODO: Support destructors and conversions.
       return std::nullopt;
     }
 
     // Increment and decrement.
-    case WellKnownIdentifier::Inc: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::Inc: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_PlusPlus;
     }
-    case WellKnownIdentifier::Dec: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::Dec: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_MinusMinus;
     }
 
     // Arithmetic.
-    case WellKnownIdentifier::Negate: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::Negate: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_Minus;
     }
 
     // Binary operators.
 
     // Arithmetic operators.
-    case WellKnownIdentifier::AddWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::AddWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_Plus;
     }
-    case WellKnownIdentifier::SubWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::SubWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_Minus;
     }
-    case WellKnownIdentifier::MulWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::MulWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_Star;
     }
-    case WellKnownIdentifier::DivWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::DivWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_Slash;
     }
-    case WellKnownIdentifier::ModWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::ModWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_Percent;
     }
 
     // Bitwise operators.
-    case WellKnownIdentifier::BitAndWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::BitAndWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_Amp;
     }
-    case WellKnownIdentifier::BitOrWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::BitOrWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_Pipe;
     }
-    case WellKnownIdentifier::BitXorWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::BitXorWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_Caret;
     }
-    case WellKnownIdentifier::LeftShiftWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::LeftShiftWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_LessLess;
     }
-    case WellKnownIdentifier::RightShiftWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::RightShiftWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_GreaterGreater;
     }
 
     // Compound assignment arithmetic operators.
-    case WellKnownIdentifier::AddAssignWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::AddAssignWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_PlusEqual;
     }
-    case WellKnownIdentifier::SubAssignWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::SubAssignWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_MinusEqual;
     }
-    case WellKnownIdentifier::MulAssignWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::MulAssignWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_StarEqual;
     }
-    case WellKnownIdentifier::DivAssignWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::DivAssignWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_SlashEqual;
     }
-    case WellKnownIdentifier::ModAssignWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::ModAssignWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_PercentEqual;
     }
 
     // Compound assignment bitwise operators.
-    case WellKnownIdentifier::BitAndAssignWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::BitAndAssignWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_AmpEqual;
     }
-    case WellKnownIdentifier::BitOrAssignWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::BitOrAssignWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_PipeEqual;
     }
-    case WellKnownIdentifier::BitXorAssignWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::BitXorAssignWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_CaretEqual;
     }
-    case WellKnownIdentifier::LeftShiftAssignWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::LeftShiftAssignWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_LessLessEqual;
     }
-    case WellKnownIdentifier::RightShiftAssignWith: {
-      CARBON_CHECK(op_name == WellKnownIdentifier::Op);
+    case CoreIdentifier::RightShiftAssignWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_GreaterGreaterEqual;
     }
 
     // Relational operators.
-    case WellKnownIdentifier::EqWith: {
-      if (op_name == WellKnownIdentifier::Equal) {
+    case CoreIdentifier::EqWith: {
+      if (op_name == CoreIdentifier::Equal) {
         return clang::OO_EqualEqual;
       }
-      CARBON_CHECK(op_name == WellKnownIdentifier::NotEqual);
+      CARBON_CHECK(op_name == CoreIdentifier::NotEqual);
       return clang::OO_ExclaimEqual;
     }
-    case WellKnownIdentifier::OrderedWith: {
+    case CoreIdentifier::OrderedWith: {
       switch (op_name) {
-        case WellKnownIdentifier::Less:
+        case CoreIdentifier::Less:
           return clang::OO_Less;
-        case WellKnownIdentifier::Greater:
+        case CoreIdentifier::Greater:
           return clang::OO_Greater;
-        case WellKnownIdentifier::LessOrEquivalent:
+        case CoreIdentifier::LessOrEquivalent:
           return clang::OO_LessEqual;
-        case WellKnownIdentifier::GreaterOrEquivalent:
+        case CoreIdentifier::GreaterOrEquivalent:
           return clang::OO_GreaterEqual;
         default:
           CARBON_FATAL("Unexpected OrderedWith op `{0}`", op_name);

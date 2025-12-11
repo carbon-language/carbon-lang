@@ -39,7 +39,7 @@ Context::Context(DiagnosticEmitterBase* emitter,
       region_stack_([this](SemIR::LocId loc_id, std::string label) {
         TODO(loc_id, label);
       }),
-      well_known_identifiers_(&identifiers()) {
+      core_identifiers_(&identifiers()) {
   // Prepare fields which relate to the number of IRs available for import.
   import_irs().Reserve(imported_ir_count);
   import_ir_constant_values_.reserve(imported_ir_count);

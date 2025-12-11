@@ -8,7 +8,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/check/context.h"
-#include "toolchain/check/well_known_identifier.h"
+#include "toolchain/check/core_identifier.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -98,13 +98,13 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
 // Returns the `InstId` corresponding to a qualified name in the `Core` package,
 // or BuiltinErrorInst if not found.
 auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
-                      llvm::ArrayRef<WellKnownIdentifier> qualifiers)
+                      llvm::ArrayRef<CoreIdentifier> qualifiers)
     -> SemIR::InstId;
 
 // Returns the `InstId` corresponding to a name in the `Core`, or
 // BuiltinErrorInst if not found.
 inline auto LookupNameInCore(Context& context, SemIR::LocId loc_id,
-                             WellKnownIdentifier identifier) -> SemIR::InstId {
+                             CoreIdentifier identifier) -> SemIR::InstId {
   return LookupNameInCore(context, loc_id, llvm::ArrayRef{identifier});
 }
 
