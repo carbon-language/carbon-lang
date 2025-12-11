@@ -194,8 +194,8 @@ struct AnyType {
 
 // Constraint that checks if a type is Core.String.
 struct CoreStringType {
-  static auto Check(const File& sem_ir, ValidateState& /*state*/,
-                    TypeId type_id) -> bool {
+  static auto CheckType(const File& sem_ir, ValidateState& /*state*/,
+                        TypeId type_id) -> bool {
     auto type_inst_id = sem_ir.types().GetInstId(type_id);
     auto class_type = sem_ir.insts().TryGetAs<ClassType>(type_inst_id);
     if (!class_type) {
@@ -209,8 +209,8 @@ struct CoreStringType {
 
 // Constraint that checks if a type is Core.Char.
 struct CoreCharType {
-  static auto Check(const File& sem_ir, ValidateState& /*state*/,
-                    TypeId type_id) -> bool {
+  static auto CheckType(const File& sem_ir, ValidateState& /*state*/,
+                        TypeId type_id) -> bool {
     auto type_inst_id = sem_ir.types().GetInstId(type_id);
     auto class_type = sem_ir.insts().TryGetAs<ClassType>(type_inst_id);
     if (!class_type) {
