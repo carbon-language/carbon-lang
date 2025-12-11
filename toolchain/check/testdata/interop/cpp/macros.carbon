@@ -613,32 +613,13 @@ constexpr auto operator""_kb(unsigned long long k) -> unsigned long long {
 }
 #define M_1KB 1_kb
 
-// --- fail_todo_import_user_defined_literal.carbon
+// --- import_user_defined_literal.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./user_defined_literal.h:4:16: error: no matching literal operator for call to 'operator""_kb' with argument of type 'unsigned long long' or 'const char *', and no matching literal operator template [CppInteropParseError]
-// CHECK:STDERR:     4 | #define M_1KB 1_kb
-// CHECK:STDERR:       |                ^
 import Cpp library "user_defined_literal.h";
 
 fn F() {
- // CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+15]]:2: note: in `Cpp` name lookup for `M_1KB` [InCppNameLookup]
- // CHECK:STDERR:  Cpp.M_1KB;
- // CHECK:STDERR:  ^~~~~~~~~
- // CHECK:STDERR:
- // CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+11]]:2: error: failed to parse macro Cpp.M_1KB to a valid constant expression [InCppMacroEvaluation]
- // CHECK:STDERR:  Cpp.M_1KB;
- // CHECK:STDERR:  ^~~~~~~~~
- // CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+8]]:2: note: in `Cpp` name lookup for `M_1KB` [InCppNameLookup]
- // CHECK:STDERR:  Cpp.M_1KB;
- // CHECK:STDERR:  ^~~~~~~~~
- // CHECK:STDERR:
- // CHECK:STDERR: fail_todo_import_user_defined_literal.carbon:[[@LINE+4]]:2: error: member name `M_1KB` not found in `Cpp` [MemberNameNotFoundInInstScope]
- // CHECK:STDERR:  Cpp.M_1KB;
- // CHECK:STDERR:  ^~~~~~~~~
- // CHECK:STDERR:
  Cpp.M_1KB;
 }
 
@@ -657,27 +638,16 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_enums_no_scope.carbon
+// --- enums_no_scope.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
   enum A { a = 1, b = 2 };
-  // CHECK:STDERR: fail_todo_enums_no_scope.carbon:[[@LINE+7]]:24: error: use of undeclared identifier 'a'; did you mean '::a'? [CppInteropParseError]
-  // CHECK:STDERR:    13 |   #define M_A_NO_SCOPE a
-  // CHECK:STDERR:       |                        ^
-  // CHECK:STDERR:       |                        ::a
-  // CHECK:STDERR: fail_todo_enums_no_scope.carbon:[[@LINE-5]]:12: note: '::a' declared here [CppInteropParseNote]
-  // CHECK:STDERR:     5 |   enum A { a = 1, b = 2 };
-  // CHECK:STDERR:       |            ^
   #define M_A_NO_SCOPE a
 ''';
 
 fn F() {
-  // CHECK:STDERR: fail_todo_enums_no_scope.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `M_A_NO_SCOPE` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.M_A_NO_SCOPE;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   Cpp.M_A_NO_SCOPE;
 }
 
@@ -696,27 +666,16 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// --- fail_import_constexpr_no_scope.carbon
+// --- import_constexpr_no_scope.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
    constexpr int a = 1;
-   // CHECK:STDERR: fail_import_constexpr_no_scope.carbon:[[@LINE+7]]:33: error: use of undeclared identifier 'a'; did you mean '::a'? [CppInteropParseError]
-   // CHECK:STDERR:    13 |    #define M_CONSTEXPR_NO_SCOPE a
-   // CHECK:STDERR:       |                                 ^
-   // CHECK:STDERR:       |                                 ::a
-   // CHECK:STDERR: fail_import_constexpr_no_scope.carbon:[[@LINE-5]]:18: note: '::a' declared here [CppInteropParseNote]
-   // CHECK:STDERR:     5 |    constexpr int a = 1;
-   // CHECK:STDERR:       |                  ^
    #define M_CONSTEXPR_NO_SCOPE a
 ''';
 
 fn F() {
-  // CHECK:STDERR: fail_import_constexpr_no_scope.carbon:[[@LINE+4]]:16: note: in `Cpp` name lookup for `M_CONSTEXPR_NO_SCOPE` [InCppNameLookup]
-  // CHECK:STDERR:   let a: i32 = Cpp.M_CONSTEXPR_NO_SCOPE;
-  // CHECK:STDERR:                ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   let a: i32 = Cpp.M_CONSTEXPR_NO_SCOPE;
 }
 
