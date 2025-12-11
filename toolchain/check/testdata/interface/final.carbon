@@ -230,7 +230,7 @@ fn Use() { UseJ(C); }
 // CHECK:STDOUT:     %.loc11_19.1: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type.b90)]
 // CHECK:STDOUT:     %impl.elem0.loc11_19.1: @UseI.%.loc11_19.2 (%.19a) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_19.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %specific_impl_fn.loc11_19.1: <specific function> = specific_impl_function %impl.elem0.loc11_19.1, @I.F(constants.%T.cfb) [symbolic = %specific_impl_fn.loc11_19.2 (constants.%specific_impl_fn)]
-// CHECK:STDOUT:     %.loc11_22: init %empty_tuple.type = call %specific_impl_fn.loc11_19.1()
+// CHECK:STDOUT:     %I.F.call: init %empty_tuple.type = call %specific_impl_fn.loc11_19.1()
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

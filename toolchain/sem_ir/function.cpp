@@ -37,6 +37,10 @@ auto GetCallee(const File& sem_ir, InstId callee_id, SpecificId specific_id)
           sem_ir.insts().TryGetAs<SpecificFunction>(callee_id)) {
     fn.resolved_specific_id = specific_function->specific_id;
     callee_id = specific_function->callee_id;
+  } else if (auto specific_impl_function =
+                 sem_ir.insts().TryGetAs<SpecificImplFunction>(callee_id)) {
+    fn.resolved_specific_id = specific_impl_function->specific_id;
+    callee_id = specific_impl_function->callee_id;
   }
 
   // Identify the function we're calling by its type.

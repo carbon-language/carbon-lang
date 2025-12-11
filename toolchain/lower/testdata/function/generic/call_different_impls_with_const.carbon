@@ -76,11 +76,11 @@ fn Run() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc37_20.1.temp = alloca i1, align 1, !dbg !23
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc37_20.1.temp), !dbg !23
-// CHECK:STDOUT:   %.loc37_20.2 = call i1 @"_CF.X.Main:I.Main"(), !dbg !23
-// CHECK:STDOUT:   %.loc37_20.3 = zext i1 %.loc37_20.2 to i8, !dbg !23
-// CHECK:STDOUT:   store i8 %.loc37_20.3, ptr %.loc37_20.1.temp, align 1, !dbg !23
-// CHECK:STDOUT:   %.loc37_20.4 = load i8, ptr %.loc37_20.1.temp, align 1, !dbg !23
-// CHECK:STDOUT:   %.loc37_20.41 = trunc i8 %.loc37_20.4 to i1, !dbg !23
+// CHECK:STDOUT:   %I.F.call = call i1 @"_CF.X.Main:I.Main"(), !dbg !23
+// CHECK:STDOUT:   %.loc37_20.2 = zext i1 %I.F.call to i8, !dbg !23
+// CHECK:STDOUT:   store i8 %.loc37_20.2, ptr %.loc37_20.1.temp, align 1, !dbg !23
+// CHECK:STDOUT:   %.loc37_20.3 = load i8, ptr %.loc37_20.1.temp, align 1, !dbg !23
+// CHECK:STDOUT:   %.loc37_20.31 = trunc i8 %.loc37_20.3 to i1, !dbg !23
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -89,9 +89,9 @@ fn Run() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc37_20.1.temp = alloca i32, align 4, !dbg !26
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc37_20.1.temp), !dbg !26
-// CHECK:STDOUT:   %.loc37_20.2 = call i32 @"_CF.Y.Main:I.Main"(), !dbg !26
-// CHECK:STDOUT:   store i32 %.loc37_20.2, ptr %.loc37_20.1.temp, align 4, !dbg !26
-// CHECK:STDOUT:   %.loc37_20.4 = load i32, ptr %.loc37_20.1.temp, align 4, !dbg !26
+// CHECK:STDOUT:   %I.F.call = call i32 @"_CF.Y.Main:I.Main"(), !dbg !26
+// CHECK:STDOUT:   store i32 %I.F.call, ptr %.loc37_20.1.temp, align 4, !dbg !26
+// CHECK:STDOUT:   %.loc37_20.3 = load i32, ptr %.loc37_20.1.temp, align 4, !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
