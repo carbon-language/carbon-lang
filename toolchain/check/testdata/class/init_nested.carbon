@@ -39,6 +39,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %Inner.elem: type = unbound_element_type %Inner, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.705: <witness> = complete_type_witness %struct_type.a.b [concrete]
+// CHECK:STDOUT:   %.74f: form = init_form %Inner, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.84b: type = pattern_type %Inner [concrete]
 // CHECK:STDOUT:   %MakeInner.type: type = fn_type @MakeInner [concrete]
 // CHECK:STDOUT:   %MakeInner: %MakeInner.type = struct_value () [concrete]
@@ -46,6 +47,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %Outer.elem: type = unbound_element_type %Outer, %Inner [concrete]
 // CHECK:STDOUT:   %struct_type.c.d.8f4: type = struct_type {.c: %Inner, .d: %Inner} [concrete]
 // CHECK:STDOUT:   %complete_type.3ed: <witness> = complete_type_witness %struct_type.c.d.8f4 [concrete]
+// CHECK:STDOUT:   %.416: form = init_form %Outer, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.9ae: type = pattern_type %Outer [concrete]
 // CHECK:STDOUT:   %MakeOuter.type: type = fn_type @MakeOuter [concrete]
 // CHECK:STDOUT:   %MakeOuter: %MakeOuter.type = struct_value () [concrete]
@@ -75,6 +77,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.84b = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, file.%Inner.decl [concrete = constants.%Inner]
+// CHECK:STDOUT:     %.loc20: form = init_form %Inner.ref, call_param0 [concrete = constants.%.74f]
 // CHECK:STDOUT:     %return.param: ref %Inner = out_param call_param0
 // CHECK:STDOUT:     %return: ref %Inner = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -84,6 +87,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.9ae = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
+// CHECK:STDOUT:     %.loc27: form = init_form %Outer.ref, call_param0 [concrete = constants.%.416]
 // CHECK:STDOUT:     %return.param: ref %Outer = out_param call_param0
 // CHECK:STDOUT:     %return: ref %Outer = return_slot %return.param
 // CHECK:STDOUT:   }

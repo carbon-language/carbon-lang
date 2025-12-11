@@ -3237,6 +3237,24 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::InitForm inst) -> ResolveResult {
+  auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
+  auto type_component_const_id =
+      GetLocalConstantId(resolver, inst.type_component_inst_id);
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+  return ResolveResult::Deduplicated<SemIR::InitForm>(
+      resolver,
+      SemIR::InitForm{
+          .type_id =
+              resolver.local_types().GetTypeIdForTypeConstantId(type_const_id),
+          .type_component_inst_id = resolver.local_constant_values().GetInstId(
+              type_component_const_id),
+          .index = inst.index});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::IntValue inst) -> ResolveResult {
   auto type_id = GetLocalConstantId(resolver, inst.type_id);
   if (resolver.HasNewWork()) {
@@ -3806,6 +3824,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     }
     case CARBON_KIND(SemIR::ImportRefLoaded inst): {
       return TryResolveTypedInst(resolver, inst, constant_inst_id);
+    }
+    case CARBON_KIND(SemIR::InitForm inst): {
+      return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::IntValue inst): {
       return TryResolveTypedInst(resolver, inst);

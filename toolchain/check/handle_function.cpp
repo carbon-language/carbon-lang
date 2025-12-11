@@ -53,10 +53,7 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
-  // Propagate the type expression.
   auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
-  auto as_type = ExprAsType(context, type_node_id, type_inst_id);
-  context.PushReturnTypeInstId(as_type.inst_id);
 
   // If the previous node was `IdentifierNameBeforeParams`, then it would have
   // caused these entries to be pushed to the pattern stacks. But it's possible
@@ -71,16 +68,40 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
         FullPatternStack::Kind::ExplicitParamList);
   }
 
-  auto pattern_type_id = GetPatternType(context, as_type.type_id);
-  auto return_slot_pattern_id = AddPatternInst<SemIR::ReturnSlotPattern>(
-      context, node_id,
-      {.type_id = pattern_type_id, .type_inst_id = as_type.inst_id});
-  auto param_pattern_id = AddPatternInst<SemIR::OutParamPattern>(
-      context, node_id,
-      {.type_id = pattern_type_id,
-       .subpattern_id = return_slot_pattern_id,
-       .index = context.full_pattern_stack().NextCallParamIndex()});
-  context.node_stack().Push(node_id, param_pattern_id);
+  // Propagate the type expression.
+  auto form_expr = ExprAsReturnForm(context, type_node_id, type_inst_id);
+  context.PushReturnForm(form_expr);
+
+  llvm::SmallVector<SemIR::InstId, 1> return_patterns;
+  auto form_inst = context.insts().Get(form_expr.form_inst_id);
+  CARBON_KIND_SWITCH(form_inst) {
+    case SemIR::RefForm::Kind: {
+      break;
+    }
+    case CARBON_KIND(SemIR::InitForm init_form): {
+      auto pattern_type_id = GetPatternType(context, form_expr.type_id);
+      auto return_slot_pattern_id = AddPatternInst<SemIR::ReturnSlotPattern>(
+          context, node_id,
+          {.type_id = pattern_type_id,
+           .type_inst_id = form_expr.type_component_id});
+      return_patterns.push_back(AddPatternInst(
+          context,
+          SemIR::LocIdAndInst::UncheckedLoc(
+              type_node_id,
+              SemIR::OutParamPattern{.type_id = pattern_type_id,
+                                     .subpattern_id = return_slot_pattern_id,
+                                     .index = init_form.index})));
+      break;
+    }
+    case SemIR::ErrorInst::Kind: {
+      break;
+    }
+    default:
+      CARBON_FATAL("unexpected inst kind: {0}", form_inst);
+  }
+
+  context.node_stack().Push(
+      node_id, context.inst_blocks().AddCanonical(return_patterns));
   return true;
 }
 
@@ -385,17 +406,16 @@ static auto BuildFunctionDecl(Context& context,
                               Parse::AnyFunctionDeclId node_id,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
-  llvm::SmallVector<SemIR::InstId> return_patterns;
+  auto return_patterns_id = SemIR::InstBlockId::None;
   auto return_type_inst_id = SemIR::TypeInstId::None;
-  if (auto [return_node, maybe_return_slot_pattern_id] =
+  if (auto [return_node, maybe_return_patterns_id] =
           context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ReturnType>();
-      maybe_return_slot_pattern_id) {
-    return_patterns.push_back(*maybe_return_slot_pattern_id);
-    return_type_inst_id = context.PopReturnTypeInstId();
+      maybe_return_patterns_id) {
+    return_patterns_id = *maybe_return_patterns_id;
+    return_type_inst_id = context.PopReturnForm().type_component_id;
     CARBON_CHECK(return_type_inst_id.has_value());
   }
 
-  auto return_patterns_id = context.inst_blocks().Add(return_patterns);
   auto name = PopNameComponent(context, return_patterns_id);
   auto name_context = context.decl_name_stack().FinishName(name);
 

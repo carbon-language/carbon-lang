@@ -60,6 +60,7 @@ fn G() -> {.v: ()} {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete]
+// CHECK:STDOUT:   %.4c9: form = init_form %struct_type.v, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.v [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
@@ -87,6 +88,7 @@ fn G() -> {.v: ()} {
 // CHECK:STDOUT:     %.loc6_17.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc6_17.2: type = converted %.loc6_17.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete = constants.%struct_type.v]
+// CHECK:STDOUT:     %.loc6_18: form = init_form %struct_type.v, call_param0 [concrete = constants.%.4c9]
 // CHECK:STDOUT:     %return.param: ref %struct_type.v = out_param call_param0
 // CHECK:STDOUT:     %return: ref %struct_type.v = return_slot %return.param
 // CHECK:STDOUT:   }

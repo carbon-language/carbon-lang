@@ -139,8 +139,6 @@ auto CheckFunctionDefinitionSignature(Context& context,
   if (function.return_type_inst_id.has_value()) {
     CheckFunctionReturnType(context, SemIR::LocId(function.return_type_inst_id),
                             function, SemIR::SpecificId::None);
-    // Don't re-check the return type below.
-    params_to_complete.consume_back();
   }
 
   // Check the parameter types are complete.

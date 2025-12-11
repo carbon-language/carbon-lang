@@ -109,6 +109,7 @@ class FileContext {
 
   // Returns the empty LLVM struct type used to represent the type `type`.
   auto GetTypeType() -> llvm::StructType* { return context().GetTypeType(); }
+  auto GetFormType() -> llvm::StructType* { return context().GetFormType(); }
 
   auto context() -> Context& { return *context_; }
   auto llvm_context() -> llvm::LLVMContext& { return context().llvm_context(); }

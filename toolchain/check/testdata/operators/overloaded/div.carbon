@@ -71,7 +71,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %impl.elem1: %.96d = impl_witness_access constants.%DivWith.impl_witness, element1 [concrete = constants.%C.as.DivWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %C.as.DivWith.impl.Op.call: init %C = call %bound_method(%a.ref, %b.ref) to %.loc30
+// CHECK:STDOUT:   %C.as.DivWith.impl.Op.call: init %C = call %bound_method(%a.ref, %b.ref) to %.loc30_23
 // CHECK:STDOUT:   return %C.as.DivWith.impl.Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

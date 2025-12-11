@@ -73,6 +73,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %tuple.4b9: %tuple.type.24b = tuple_value (%T, %U) [symbolic]
 // CHECK:STDOUT:   %tuple.type.a5e: type = tuple_type (%T, %U) [symbolic]
 // CHECK:STDOUT:   %pattern_type.eee: type = pattern_type %tuple.type.a5e [symbolic]
+// CHECK:STDOUT:   %.ead: form = init_form %U, call_param1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.946: type = pattern_type %U [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -82,6 +83,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %tuple.a0a: %tuple.type.24b = tuple_value (%C, %D) [concrete]
 // CHECK:STDOUT:   %tuple.type.281: type = tuple_type (%C, %D) [concrete]
 // CHECK:STDOUT:   %pattern_type.881: type = pattern_type %tuple.type.281 [concrete]
+// CHECK:STDOUT:   %.bb8: form = init_form %D, call_param1 [concrete]
 // CHECK:STDOUT:   %pattern_type.9c8: type = pattern_type %D [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
@@ -116,6 +118,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc7_40 (%pattern_type.946) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref.loc7_43: type = name_ref U, %U.loc7_16.2 [symbolic = %U.loc7_16.1 (constants.%U)]
+// CHECK:STDOUT:     %.loc7_43.2: form = init_form %U.ref.loc7_43, call_param1 [symbolic = %.loc7_43.1 (constants.%.ead)]
 // CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc7_6.2: type = symbolic_binding T, 0 [symbolic = %T.loc7_6.1 (constants.%T)]
 // CHECK:STDOUT:     %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -138,6 +141,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.9c8 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref.loc9_23: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %.loc9_23: form = init_form %D.ref.loc9_23, call_param1 [concrete = constants.%.bb8]
 // CHECK:STDOUT:     %pair.param: %tuple.type.281 = value_param call_param0
 // CHECK:STDOUT:     %.loc9_17.1: type = splice_block %.loc9_17.3 [concrete = constants.%tuple.type.281] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -173,6 +177,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%T.loc7_6.1, %U.loc7_16.1) [symbolic = %tuple (constants.%tuple.4b9)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%T.loc7_6.1, %U.loc7_16.1) [symbolic = %tuple.type (constants.%tuple.type.a5e)]
 // CHECK:STDOUT:   %pattern_type.loc7_26: type = pattern_type %tuple.type [symbolic = %pattern_type.loc7_26 (constants.%pattern_type.eee)]
+// CHECK:STDOUT:   %.loc7_43.1: form = init_form %U.loc7_16.1, call_param1 [symbolic = %.loc7_43.1 (constants.%.ead)]
 // CHECK:STDOUT:   %pattern_type.loc7_40: type = pattern_type %U.loc7_16.1 [symbolic = %pattern_type.loc7_40 (constants.%pattern_type.946)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -207,6 +212,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %tuple => constants.%tuple.4b9
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.a5e
 // CHECK:STDOUT:   %pattern_type.loc7_26 => constants.%pattern_type.eee
+// CHECK:STDOUT:   %.loc7_43.1 => constants.%.ead
 // CHECK:STDOUT:   %pattern_type.loc7_40 => constants.%pattern_type.946
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -221,6 +227,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %tuple => constants.%tuple.a0a
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.281
 // CHECK:STDOUT:   %pattern_type.loc7_26 => constants.%pattern_type.881
+// CHECK:STDOUT:   %.loc7_43.1 => constants.%.bb8
 // CHECK:STDOUT:   %pattern_type.loc7_40 => constants.%pattern_type.9c8
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -255,6 +262,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %tuple.9c9: %tuple.type.d07 = tuple_value (%A, %B) [symbolic]
 // CHECK:STDOUT:   %HasPair.2e7: type = class_type @HasPair, @HasPair(%tuple.9c9) [symbolic]
 // CHECK:STDOUT:   %pattern_type.dc2: type = pattern_type %HasPair.2e7 [symbolic]
+// CHECK:STDOUT:   %.4d5: form = init_form %i32, call_param1 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.76f: <witness> = require_complete_type %HasPair.2e7 [symbolic]
@@ -352,6 +360,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc6_47: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc6_47: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc6_47: form = init_form %i32.loc6_47, call_param1 [concrete = constants.%.4d5]
 // CHECK:STDOUT:     %.loc6_10: type = splice_block %i32.loc6_10 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %int_32.loc6_10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -386,6 +395,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc8_29: form = init_form %i32, call_param1 [concrete = constants.%.4d5]
 // CHECK:STDOUT:     %h.param: %HasPair.867 = value_param call_param0
 // CHECK:STDOUT:     %.loc8_23.1: type = splice_block %HasPair [concrete = constants.%HasPair.867] {
 // CHECK:STDOUT:       %HasPair.ref: %HasPair.type = name_ref HasPair, file.%HasPair.decl [concrete = constants.%HasPair.generic]
@@ -515,12 +525,14 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %tuple.11e: %tuple.type.24b = tuple_value (%T, %T) [symbolic]
 // CHECK:STDOUT:   %tuple.type.07a: type = tuple_type (%T, %T) [symbolic]
 // CHECK:STDOUT:   %pattern_type.c3f: type = pattern_type %tuple.type.07a [symbolic]
+// CHECK:STDOUT:   %.e5f: form = init_form %T, call_param1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %tuple.a0a: %tuple.type.24b = tuple_value (%C, %D) [concrete]
 // CHECK:STDOUT:   %tuple.type.281: type = tuple_type (%C, %D) [concrete]
 // CHECK:STDOUT:   %pattern_type.881: type = pattern_type %tuple.type.281 [concrete]
+// CHECK:STDOUT:   %.bb8: form = init_form %D, call_param1 [concrete]
 // CHECK:STDOUT:   %pattern_type.9c8: type = pattern_type %D [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
@@ -552,6 +564,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc7_30 (%pattern_type.51d) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc7_33: type = name_ref T, %T.loc7_6.2 [symbolic = %T.loc7_6.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc7_33.2: form = init_form %T.ref.loc7_33, call_param1 [symbolic = %.loc7_33.1 (constants.%.e5f)]
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc7_6.2: type = symbolic_binding T, 0 [symbolic = %T.loc7_6.1 (constants.%T)]
 // CHECK:STDOUT:     %pair.param: @F.%tuple.type (%tuple.type.07a) = value_param call_param0
@@ -572,6 +585,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.9c8 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref.loc9_23: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %.loc9_23: form = init_form %D.ref.loc9_23, call_param1 [concrete = constants.%.bb8]
 // CHECK:STDOUT:     %pair.param: %tuple.type.281 = value_param call_param0
 // CHECK:STDOUT:     %.loc9_17.1: type = splice_block %.loc9_17.3 [concrete = constants.%tuple.type.281] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -606,6 +620,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%T.loc7_6.1, %T.loc7_6.1) [symbolic = %tuple (constants.%tuple.11e)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%T.loc7_6.1, %T.loc7_6.1) [symbolic = %tuple.type (constants.%tuple.type.07a)]
 // CHECK:STDOUT:   %pattern_type.loc7_16: type = pattern_type %tuple.type [symbolic = %pattern_type.loc7_16 (constants.%pattern_type.c3f)]
+// CHECK:STDOUT:   %.loc7_33.1: form = init_form %T.loc7_6.1, call_param1 [symbolic = %.loc7_33.1 (constants.%.e5f)]
 // CHECK:STDOUT:   %pattern_type.loc7_30: type = pattern_type %T.loc7_6.1 [symbolic = %pattern_type.loc7_30 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%pair.param: @F.%tuple.type (%tuple.type.07a)) -> @F.%T.loc7_6.1 (%T);
@@ -623,6 +638,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %tuple => constants.%tuple.11e
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.07a
 // CHECK:STDOUT:   %pattern_type.loc7_16 => constants.%pattern_type.c3f
+// CHECK:STDOUT:   %.loc7_33.1 => constants.%.e5f
 // CHECK:STDOUT:   %pattern_type.loc7_30 => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

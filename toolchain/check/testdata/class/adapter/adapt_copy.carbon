@@ -178,6 +178,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [concrete]
 // CHECK:STDOUT:   %pattern_type.e78: type = pattern_type %AdaptCopyable [concrete]
+// CHECK:STDOUT:   %.f02: form = init_form %AdaptCopyable, call_param1 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -192,6 +193,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %tuple.fd0: %tuple.type.24b = tuple_value (%AdaptCopyable, %u32) [concrete]
 // CHECK:STDOUT:   %tuple.type.d78: type = tuple_type (%AdaptCopyable, %u32) [concrete]
 // CHECK:STDOUT:   %pattern_type.87f: type = pattern_type %tuple.type.d78 [concrete]
+// CHECK:STDOUT:   %.25c: form = init_form %tuple.type.d78, call_param1 [concrete]
 // CHECK:STDOUT:   %InTuple.type: type = fn_type @InTuple [concrete]
 // CHECK:STDOUT:   %InTuple: %InTuple.type = struct_value () [concrete]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.type.68f: type = fn_type @UInt.as.Copy.impl.Op, @UInt.as.Copy.impl(%N) [symbolic]
@@ -239,6 +241,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.e78 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptCopyable.ref.loc8_27: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
+// CHECK:STDOUT:     %.loc8: form = init_form %AdaptCopyable.ref.loc8_27, call_param1 [concrete = constants.%.f02]
 // CHECK:STDOUT:     %c.param: %AdaptCopyable = value_param call_param0
 // CHECK:STDOUT:     %AdaptCopyable.ref.loc8_9: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
 // CHECK:STDOUT:     %c: %AdaptCopyable = value_binding c, %c.param
@@ -256,6 +259,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     %u32.loc27_56: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
 // CHECK:STDOUT:     %.loc27_59.1: %tuple.type.24b = tuple_literal (%AdaptCopyable.ref.loc27_41, %u32.loc27_56) [concrete = constants.%tuple.fd0]
 // CHECK:STDOUT:     %.loc27_59.2: type = converted %.loc27_59.1, constants.%tuple.type.d78 [concrete = constants.%tuple.type.d78]
+// CHECK:STDOUT:     %.loc27_59.3: form = init_form %.loc27_59.2, call_param1 [concrete = constants.%.25c]
 // CHECK:STDOUT:     %c.param: %tuple.type.d78 = value_param call_param0
 // CHECK:STDOUT:     %.loc27_34.1: type = splice_block %.loc27_34.3 [concrete = constants.%tuple.type.d78] {
 // CHECK:STDOUT:       %AdaptCopyable.ref.loc27_16: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
@@ -369,6 +373,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %complete_type.65d: <witness> = complete_type_witness %tuple.type.d07 [concrete]
 // CHECK:STDOUT:   %pattern_type.6cd: type = pattern_type %AdaptTuple [concrete]
+// CHECK:STDOUT:   %.2ab: form = init_form %AdaptTuple, call_param1 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -390,6 +395,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %tuple.b75: %tuple.type.24b = tuple_value (%AdaptTuple, %u32) [concrete]
 // CHECK:STDOUT:   %tuple.type.3c7: type = tuple_type (%AdaptTuple, %u32) [concrete]
 // CHECK:STDOUT:   %pattern_type.6f4: type = pattern_type %tuple.type.3c7 [concrete]
+// CHECK:STDOUT:   %.81e: form = init_form %tuple.type.3c7, call_param1 [concrete]
 // CHECK:STDOUT:   %InTuple.type: type = fn_type @InTuple [concrete]
 // CHECK:STDOUT:   %InTuple: %InTuple.type = struct_value () [concrete]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.type.68f: type = fn_type @UInt.as.Copy.impl.Op, @UInt.as.Copy.impl(%N) [symbolic]
@@ -439,6 +445,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6cd = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptTuple.ref.loc8_24: type = name_ref AdaptTuple, file.%AdaptTuple.decl [concrete = constants.%AdaptTuple]
+// CHECK:STDOUT:     %.loc8: form = init_form %AdaptTuple.ref.loc8_24, call_param1 [concrete = constants.%.2ab]
 // CHECK:STDOUT:     %c.param: %AdaptTuple = value_param call_param0
 // CHECK:STDOUT:     %AdaptTuple.ref.loc8_9: type = name_ref AdaptTuple, file.%AdaptTuple.decl [concrete = constants.%AdaptTuple]
 // CHECK:STDOUT:     %c: %AdaptTuple = value_binding c, %c.param
@@ -456,6 +463,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     %u32.loc13_50: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
 // CHECK:STDOUT:     %.loc13_53.1: %tuple.type.24b = tuple_literal (%AdaptTuple.ref.loc13_38, %u32.loc13_50) [concrete = constants.%tuple.b75]
 // CHECK:STDOUT:     %.loc13_53.2: type = converted %.loc13_53.1, constants.%tuple.type.3c7 [concrete = constants.%tuple.type.3c7]
+// CHECK:STDOUT:     %.loc13_53.3: form = init_form %.loc13_53.2, call_param1 [concrete = constants.%.81e]
 // CHECK:STDOUT:     %c.param: %tuple.type.3c7 = value_param call_param0
 // CHECK:STDOUT:     %.loc13_31.1: type = splice_block %.loc13_31.3 [concrete = constants.%tuple.type.3c7] {
 // CHECK:STDOUT:       %AdaptTuple.ref.loc13_16: type = name_ref AdaptTuple, file.%AdaptTuple.decl [concrete = constants.%AdaptTuple]
@@ -651,6 +659,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %AdaptNoncopyable: type = class_type @AdaptNoncopyable [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %pattern_type.92b: type = pattern_type %AdaptNoncopyable [concrete]
+// CHECK:STDOUT:   %.152: form = init_form %AdaptNoncopyable, call_param1 [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -687,6 +696,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.92b = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptNoncopyable.ref.loc12_30: type = name_ref AdaptNoncopyable, file.%AdaptNoncopyable.decl [concrete = constants.%AdaptNoncopyable]
+// CHECK:STDOUT:     %.loc12: form = init_form %AdaptNoncopyable.ref.loc12_30, call_param1 [concrete = constants.%.152]
 // CHECK:STDOUT:     %a.param: %AdaptNoncopyable = value_param call_param0
 // CHECK:STDOUT:     %AdaptNoncopyable.ref.loc12_9: type = name_ref AdaptNoncopyable, file.%AdaptNoncopyable.decl [concrete = constants.%AdaptNoncopyable]
 // CHECK:STDOUT:     %a: %AdaptNoncopyable = value_binding a, %a.param
@@ -752,6 +762,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %tuple.type.7f9: type = tuple_type (%i32, %Noncopyable, %i32) [concrete]
 // CHECK:STDOUT:   %complete_type.381: <witness> = complete_type_witness %tuple.type.7f9 [concrete]
 // CHECK:STDOUT:   %pattern_type.ca6: type = pattern_type %AdaptNoncopyableIndirect [concrete]
+// CHECK:STDOUT:   %.954: form = init_form %AdaptNoncopyableIndirect, call_param1 [concrete]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -801,6 +812,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.ca6 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptNoncopyableIndirect.ref.loc12_38: type = name_ref AdaptNoncopyableIndirect, file.%AdaptNoncopyableIndirect.decl [concrete = constants.%AdaptNoncopyableIndirect]
+// CHECK:STDOUT:     %.loc12: form = init_form %AdaptNoncopyableIndirect.ref.loc12_38, call_param1 [concrete = constants.%.954]
 // CHECK:STDOUT:     %a.param: %AdaptNoncopyableIndirect = value_param call_param0
 // CHECK:STDOUT:     %AdaptNoncopyableIndirect.ref.loc12_9: type = name_ref AdaptNoncopyableIndirect, file.%AdaptNoncopyableIndirect.decl [concrete = constants.%AdaptNoncopyableIndirect]
 // CHECK:STDOUT:     %a: %AdaptNoncopyableIndirect = value_binding a, %a.param
@@ -890,6 +902,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %struct_type.e.f: type = struct_type {.e: %i32, .f: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.511: <witness> = complete_type_witness %struct_type.e.f [concrete]
 // CHECK:STDOUT:   %pattern_type.341: type = pattern_type %AdaptStruct [concrete]
+// CHECK:STDOUT:   %.688: form = init_form %AdaptStruct, call_param1 [concrete]
 // CHECK:STDOUT:   %I.type: type = fn_type @I [concrete]
 // CHECK:STDOUT:   %I: %I.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -912,6 +925,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %tuple.556: %tuple.type.24b = tuple_value (%AdaptStruct, %u32) [concrete]
 // CHECK:STDOUT:   %tuple.type.691: type = tuple_type (%AdaptStruct, %u32) [concrete]
 // CHECK:STDOUT:   %pattern_type.b13: type = pattern_type %tuple.type.691 [concrete]
+// CHECK:STDOUT:   %.b52: form = init_form %tuple.type.691, call_param1 [concrete]
 // CHECK:STDOUT:   %InTuple.type: type = fn_type @InTuple [concrete]
 // CHECK:STDOUT:   %InTuple: %InTuple.type = struct_value () [concrete]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.type.68f: type = fn_type @UInt.as.Copy.impl.Op, @UInt.as.Copy.impl(%N) [symbolic]
@@ -961,6 +975,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.341 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptStruct.ref.loc8_25: type = name_ref AdaptStruct, file.%AdaptStruct.decl [concrete = constants.%AdaptStruct]
+// CHECK:STDOUT:     %.loc8: form = init_form %AdaptStruct.ref.loc8_25, call_param1 [concrete = constants.%.688]
 // CHECK:STDOUT:     %g.param: %AdaptStruct = value_param call_param0
 // CHECK:STDOUT:     %AdaptStruct.ref.loc8_9: type = name_ref AdaptStruct, file.%AdaptStruct.decl [concrete = constants.%AdaptStruct]
 // CHECK:STDOUT:     %g: %AdaptStruct = value_binding g, %g.param
@@ -978,6 +993,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     %u32.loc13_52: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
 // CHECK:STDOUT:     %.loc13_55.1: %tuple.type.24b = tuple_literal (%AdaptStruct.ref.loc13_39, %u32.loc13_52) [concrete = constants.%tuple.556]
 // CHECK:STDOUT:     %.loc13_55.2: type = converted %.loc13_55.1, constants.%tuple.type.691 [concrete = constants.%tuple.type.691]
+// CHECK:STDOUT:     %.loc13_55.3: form = init_form %.loc13_55.2, call_param1 [concrete = constants.%.b52]
 // CHECK:STDOUT:     %c.param: %tuple.type.691 = value_param call_param0
 // CHECK:STDOUT:     %.loc13_32.1: type = splice_block %.loc13_32.3 [concrete = constants.%tuple.type.691] {
 // CHECK:STDOUT:       %AdaptStruct.ref.loc13_16: type = name_ref AdaptStruct, file.%AdaptStruct.decl [concrete = constants.%AdaptStruct]

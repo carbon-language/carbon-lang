@@ -1985,6 +1985,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %ImplicitAs.type.8c9: type = facet_type <@ImplicitAs, @ImplicitAs(%T1)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness @T2.as.ImplicitAs.impl.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.b8b: type = pattern_type %T2 [concrete]
+// CHECK:STDOUT:   %.a4b: form = init_form %T1, call_param1 [concrete]
 // CHECK:STDOUT:   %pattern_type.818: type = pattern_type %T1 [concrete]
 // CHECK:STDOUT:   %T2.as.ImplicitAs.impl.Convert.type: type = fn_type @T2.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %T2.as.ImplicitAs.impl.Convert: %T2.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
@@ -2001,6 +2002,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [concrete]
 // CHECK:STDOUT:   %pattern_type.9f6: type = pattern_type %Derived [concrete]
+// CHECK:STDOUT:   %.ad5: form = init_form %T2, call_param1 [concrete]
 // CHECK:STDOUT:   %Derived.F.type: type = fn_type @Derived.F [concrete]
 // CHECK:STDOUT:   %Derived.F: %Derived.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Derived.vtable_decl: ref %ptr.454 = vtable_decl @Derived.vtable [concrete]
@@ -2047,6 +2049,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.818 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [concrete = constants.%T1]
+// CHECK:STDOUT:     %.loc11: form = init_form %T1.ref, call_param1 [concrete = constants.%.a4b]
 // CHECK:STDOUT:     %self.param: %T2 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @T2.as.ImplicitAs.impl.%T2.ref [concrete = constants.%T2]
 // CHECK:STDOUT:     %self: %T2 = value_binding self, %self.param
@@ -2086,6 +2089,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.818 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T1.ref: type = name_ref T1, file.%T1.decl [concrete = constants.%T1]
+// CHECK:STDOUT:     %.loc17: form = init_form %T1.ref, call_param1 [concrete = constants.%.a4b]
 // CHECK:STDOUT:     %self.param: %Base = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Base [concrete = constants.%Base]
 // CHECK:STDOUT:     %self: %Base = value_binding self, %self.param
@@ -2114,6 +2118,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.b8b = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T2.ref: type = name_ref T2, file.%T2.decl [concrete = constants.%T2]
+// CHECK:STDOUT:     %.loc29: form = init_form %T2.ref, call_param1 [concrete = constants.%.ad5]
 // CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
 // CHECK:STDOUT:     %self: %Derived = value_binding self, %self.param

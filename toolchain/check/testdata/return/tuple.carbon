@@ -27,6 +27,7 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple.95a: %tuple.type.24b = tuple_value (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
+// CHECK:STDOUT:   %.073: form = init_form %tuple.type.d07, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.511: type = pattern_type %tuple.type.d07 [concrete]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
@@ -85,6 +86,7 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:     %i32.loc16_20: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc16_23.1: %tuple.type.24b = tuple_literal (%i32.loc16_15, %i32.loc16_20) [concrete = constants.%tuple.95a]
 // CHECK:STDOUT:     %.loc16_23.2: type = converted %.loc16_23.1, constants.%tuple.type.d07 [concrete = constants.%tuple.type.d07]
+// CHECK:STDOUT:     %.loc16_23.3: form = init_form %.loc16_23.2, call_param0 [concrete = constants.%.073]
 // CHECK:STDOUT:     %return.param: ref %tuple.type.d07 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %tuple.type.d07 = return_slot %return.param
 // CHECK:STDOUT:   }
