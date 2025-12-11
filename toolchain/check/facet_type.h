@@ -39,10 +39,10 @@ auto GetImplWitnessAccessWithoutSubstitution(Context& context,
                                              SemIR::InstId inst_id)
     -> SemIR::InstId;
 
-// Creates a impl witness instruction for a facet type. A placeholder witness
-// table is created if there are no rewrites in the declaration, and
-// `AllocateFacetTypeImplWitness` will construct the table of the appropriate
-// size at the `impl` definition.
+// Creates and returns an impl witness instruction for an impl declaration.
+//
+// If there are no rewrites into a name of the interface being implemented, a
+// placeholder witness table is created, to be replaced in the impl definition.
 //
 // Adds and returns an `ImplWitness` instruction (created with location set to
 // `witness_loc_id`) that shows "`Self` type" of type "facet type" (the value of

@@ -146,8 +146,9 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
       witness_table.elements_id != SemIR::InstBlockId::Empty &&
       witness_block.empty();
   if (witness_table_is_placeholder) {
-    // TODO: We could skip an allocation here if we could `ReplacePlaceholder`
-    // with a size and value.
+    // TODO: Since our `empty_table` repeats the same value throughout, we could
+    // skip an allocation here if there was a `ReplacePlaceholder` function that
+    // took a size and value instead of an array of values.
     llvm::SmallVector<SemIR::InstId> empty_table(
         assoc_entities.size(), SemIR::InstId::ImplWitnessTablePlaceholder);
     context.inst_blocks().ReplacePlaceholder(witness_table.elements_id,
