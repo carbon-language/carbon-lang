@@ -51,7 +51,7 @@ fn F() -> i32 {
   return 0;
 }
 
-// --- fail_unused_var_function.carbon
+// --- unused_var_function.carbon
 fn F(x: (), unused var y: ());
 
 // --- fail_ref_unused.carbon
@@ -399,7 +399,7 @@ var unused (unused y: i32) = (0,);
 // CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 89},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]
-// CHECK:STDOUT: - filename: fail_unused_var_function.carbon
+// CHECK:STDOUT: - filename: unused_var_function.carbon
 // CHECK:STDOUT:   parse_tree: [
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
