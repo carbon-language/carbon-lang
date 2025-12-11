@@ -137,11 +137,9 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   auto witness_block =
       context.inst_blocks().GetMutable(witness_table.elements_id);
 
-  // We can detect that the witness table is a placeholder table if it's not the
-  // `Empty` id, but it is empty still. This happens when a forward declaration
-  // makes the table before the interface is known to be complete (so the
-  // table's required size was unknown). Then we replace the placeholder table
-  // here in the definition, as the interface must be complete.
+  // The impl declaration may have created a placeholder witness table, or a
+  // full witness table. We can detect that the witness table is a placeholder
+  // table if it's not the `Empty` id, but it is empty still.
   bool witness_table_is_placeholder =
       witness_table.elements_id != SemIR::InstBlockId::Empty &&
       witness_block.empty();
