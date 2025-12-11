@@ -139,7 +139,9 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
 
   // The impl declaration may have created a placeholder witness table, or a
   // full witness table. We can detect that the witness table is a placeholder
-  // table if it's not the `Empty` id, but it is empty still.
+  // table if it's not the `Empty` id, but it is empty still. If it was a
+  // placeholder, we can replace the placeholder here with a table of the proper
+  // size, since the interface must be complete for the impl definition.
   bool witness_table_is_placeholder =
       witness_table.elements_id != SemIR::InstBlockId::Empty &&
       witness_block.empty();
