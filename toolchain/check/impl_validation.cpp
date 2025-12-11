@@ -170,7 +170,6 @@ static auto DiagnoseOrphanImpl(Context& context, const ImplInfo& impl,
       }
       case CARBON_KIND(Step::ClassStartOnly start): {
         auto inst_id = context.classes().Get(start.class_id).definition_id;
-        [[maybe_unused]] auto ir = GetIRId(context, inst_id);
         if (IsSameLibrary(context, inst_id)) {
           return true;
         }
@@ -182,33 +181,34 @@ static auto DiagnoseOrphanImpl(Context& context, const ImplInfo& impl,
         // instruction itself is evaluated to a callable StructValue in the
         // type, but the specific also contains the callable's type which is one
         // of these.
-        if (auto generic_class =
-                context.types().TryGetAs<SemIR::GenericClassType>(
-                    type.type_id)) {
-          auto class_id = generic_class->class_id;
-          auto inst_id = context.classes().Get(class_id).definition_id;
-          if (IsSameLibrary(context, inst_id)) {
-            return true;
+        CARBON_KIND_SWITCH(context.types().GetAsInst(type.type_id)) {
+          case CARBON_KIND(SemIR::GenericClassType class_type): {
+            auto class_id = class_type.class_id;
+            auto inst_id = context.classes().Get(class_id).definition_id;
+            if (IsSameLibrary(context, inst_id)) {
+              return true;
+            }
+            break;
           }
-        } else if (auto generic_interface =
-                       context.types().TryGetAs<SemIR::GenericInterfaceType>(
-                           type.type_id)) {
-          auto interface_id = generic_interface->interface_id;
-          auto inst_id = context.interfaces().Get(interface_id).definition_id;
-          if (IsSameLibrary(context, inst_id)) {
-            return true;
+          case CARBON_KIND(SemIR::GenericInterfaceType interface_type): {
+            auto interface_id = interface_type.interface_id;
+            auto inst_id = context.interfaces().Get(interface_id).definition_id;
+            if (IsSameLibrary(context, inst_id)) {
+              return true;
+            }
+            break;
           }
-        } else if (auto generic_constraint =
-                       context.types()
-                           .TryGetAs<SemIR::GenericNamedConstraintType>(
-                               type.type_id)) {
-          auto named_constraint_id = generic_constraint->named_constraint_id;
-          auto inst_id = context.named_constraints()
-                             .Get(named_constraint_id)
-                             .definition_id;
-          if (IsSameLibrary(context, inst_id)) {
-            return true;
+          case CARBON_KIND(SemIR::GenericNamedConstraintType constraint_type): {
+            auto constraint_id = constraint_type.named_constraint_id;
+            auto inst_id =
+                context.named_constraints().Get(constraint_id).definition_id;
+            if (IsSameLibrary(context, inst_id)) {
+              return true;
+            }
+            break;
           }
+          default:
+            break;
         }
         break;
       }
