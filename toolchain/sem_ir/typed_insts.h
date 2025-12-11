@@ -515,6 +515,30 @@ struct ConvertToValueAction {
   TypeInstId target_type_inst_id;
 };
 
+// The type of an overloaded C++ function.
+struct CppOverloadSetType {
+  static constexpr auto Kind =
+      InstKind::CppOverloadSetType.Define<Parse::NodeId>(
+          {.ir_name = "cpp_overload_set_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::WheneverPossible});
+
+  TypeId type_id;
+  CppOverloadSetId overload_set_id;
+  SpecificId specific_id;
+};
+
+// An unresolved C++ overload set value.
+struct CppOverloadSetValue {
+  static constexpr auto Kind =
+      InstKind::CppOverloadSetValue.Define<Parse::NodeId>(
+          {.ir_name = "cpp_overload_set_value",
+           .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+  CppOverloadSetId overload_set_id;
+};
+
 // A type whose layout is determined externally. This is used as the object
 // representation of class types imported from C++.
 struct CustomLayoutType {
@@ -527,6 +551,22 @@ struct CustomLayoutType {
   TypeId type_id;
   StructTypeFieldsId fields_id;
   CustomLayoutId layout_id;
+};
+
+// A witness synthesized for an arbitrary construct. For example, a `Destroy`
+// witness, or a C++ overloaded operator.
+struct CustomWitness {
+  static constexpr auto Kind = InstKind::CustomWitness.Define<Parse::NodeId>(
+      {.ir_name = "custom_witness",
+       .constant_kind = InstConstantKind::Always,
+       // TODO: For dynamic dispatch, we might want to lower witness tables as
+       // constants.
+       .is_lowered = false});
+
+  // Always the type of the builtin `WitnessType` singleton instruction.
+  TypeId type_id;
+  // The witness table of instructions.
+  InstBlockId elements_id;
 };
 
 // The `*` dereference operator, as in `*pointer`.
@@ -728,46 +768,6 @@ struct FunctionTypeWithSelfType {
   // The value to use for `Self` in this function. May be a type or a facet
   // value.
   InstId self_id;
-};
-
-// The type of an overloaded C++ function.
-struct CppOverloadSetType {
-  static constexpr auto Kind =
-      InstKind::CppOverloadSetType.Define<Parse::NodeId>(
-          {.ir_name = "cpp_overload_set_type",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::WheneverPossible});
-
-  TypeId type_id;
-  CppOverloadSetId overload_set_id;
-  SpecificId specific_id;
-};
-
-// An unresolved C++ overload set value.
-struct CppOverloadSetValue {
-  static constexpr auto Kind =
-      InstKind::CppOverloadSetValue.Define<Parse::NodeId>(
-          {.ir_name = "cpp_overload_set_value",
-           .constant_kind = InstConstantKind::Always});
-
-  TypeId type_id;
-  CppOverloadSetId overload_set_id;
-};
-
-// A witness synthesized for an arbitrary construct. For example, a `Destroy`
-// witness, or a C++ overloaded operator.
-struct CustomWitness {
-  static constexpr auto Kind = InstKind::CustomWitness.Define<Parse::NodeId>(
-      {.ir_name = "custom_witness",
-       .constant_kind = InstConstantKind::Always,
-       // TODO: For dynamic dispatch, we might want to lower witness tables as
-       // constants.
-       .is_lowered = false});
-
-  // Always the type of the builtin `WitnessType` singleton instruction.
-  TypeId type_id;
-  // The witness table of instructions.
-  InstBlockId elements_id;
 };
 
 // The type of the name of a generic class. The corresponding value is an empty
