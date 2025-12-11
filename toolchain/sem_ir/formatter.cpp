@@ -1448,8 +1448,7 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
     }
   }
 
-  if (info.other_requirements || !info.builtin_constraint_mask.empty() ||
-      !info.self_impls_constraints.empty() ||
+  if (info.other_requirements || !info.self_impls_constraints.empty() ||
       !info.rewrite_constraints.empty()) {
     out_ << " where ";
     llvm::ListSeparator and_sep(" and ");
@@ -1479,10 +1478,6 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
       FormatArg(rewrite.lhs_id);
       out_ << " = ";
       FormatArg(rewrite.rhs_id);
-    }
-    if (info.builtin_constraint_mask.HasAnyOf(
-            BuiltinConstraintMask::TypeCanDestroy)) {
-      out_ << and_sep << ".Self impls <CanDestroy>";
     }
     if (info.other_requirements) {
       out_ << and_sep << "TODO";

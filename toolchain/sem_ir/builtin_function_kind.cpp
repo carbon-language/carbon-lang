@@ -723,16 +723,6 @@ constexpr BuiltinInfo PointerIsNull = {
 constexpr BuiltinInfo TypeAnd = {"type.and",
                                  ValidateSignature<auto(Type, Type)->Type>};
 
-// The implementation of `Destroy` for a type. The argument must be checked with
-// `type.can_destroy` first.
-constexpr BuiltinInfo TypeDestroy = {
-    "type.destroy", ValidateSignature<auto(ByRef<AnyType>)->NoReturn>};
-
-// Returns a facet type that's used to determine whether a type can use
-// `type.destroy`.
-constexpr BuiltinInfo TypeCanDestroy = {"type.can_destroy",
-                                        ValidateSignature<auto()->Type>};
-
 }  // namespace BuiltinFunctionInfo
 
 CARBON_DEFINE_ENUM_CLASS_NAMES(BuiltinFunctionKind) {
@@ -843,10 +833,6 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
       return AnyLiteralTypes(sem_ir, arg_ids, return_type_id);
 
     case TypeAnd:
-      return true;
-
-    case TypeCanDestroy:
-      // Type queries must be compile-time.
       return true;
 
     default:

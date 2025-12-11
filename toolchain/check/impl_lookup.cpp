@@ -201,7 +201,6 @@ static auto FindAndDiagnoseImplLookupCycle(
 
 struct InterfacesFromConstantId {
   llvm::ArrayRef<SemIR::SpecificInterface> interfaces;
-  SemIR::BuiltinConstraintMask builtin_constraint_mask;
   bool other_requirements;
 };
 
@@ -230,7 +229,6 @@ static auto GetInterfacesFromConstantId(
   return {{.interfaces = context.identified_facet_types()
                              .Get(identified_id)
                              .required_interfaces(),
-           .builtin_constraint_mask = facet_type_info.builtin_constraint_mask,
            .other_requirements = facet_type_info.other_requirements}};
 }
 
@@ -287,8 +285,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(deduced_constraint_facet_type_info.extend_constraints.size() ==
                1);
 
-  if (deduced_constraint_facet_type_info.other_requirements ||
-      !deduced_constraint_facet_type_info.builtin_constraint_mask.empty()) {
+  if (deduced_constraint_facet_type_info.other_requirements) {
     return EvalImplLookupResult::MakeNone();
   }
 
@@ -567,8 +564,8 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
 }
 
 // Returns true if the `Self` should impl `Destroy`.
-static auto TypeCanDestroy(Context& context,
-                           SemIR::ConstantId query_self_const_id) -> bool {
+[[maybe_unused]] static auto TypeCanDestroy(
+    Context& context, SemIR::ConstantId query_self_const_id) -> bool {
   auto inst = context.insts().Get(context.constant_values().GetInstId(
       GetCanonicalFacetOrTypeValue(context, query_self_const_id)));
 
@@ -576,10 +573,8 @@ static auto TypeCanDestroy(Context& context,
   if (auto facet_type =
           context.types().TryGetAs<SemIR::FacetType>(inst.type_id())) {
     const auto& info = context.facet_types().Get(facet_type->facet_type_id);
-    if (info.builtin_constraint_mask.HasAnyOf(
-            SemIR::BuiltinConstraintMask::TypeCanDestroy)) {
-      return true;
-    }
+    // TODO: Look for interfaces.
+    (void)info;
   }
 
   CARBON_KIND_SWITCH(inst) {
@@ -637,15 +632,9 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   if (!interfaces_from_constant_id) {
     return SemIR::InstBlockIdOrError::MakeError();
   }
-  auto [interfaces, builtin_constraint_mask, other_requirements] =
-      *interfaces_from_constant_id;
+  auto [interfaces, other_requirements] = *interfaces_from_constant_id;
   if (other_requirements) {
     // TODO: Remove this when other requirements go away.
-    return SemIR::InstBlockId::None;
-  }
-  if (builtin_constraint_mask.HasAnyOf(
-          SemIR::BuiltinConstraintMask::TypeCanDestroy) &&
-      !TypeCanDestroy(context, query_self_const_id)) {
     return SemIR::InstBlockId::None;
   }
   if (interfaces.empty()) {

@@ -3082,7 +3082,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   SemIR::FacetTypeInfo local_facet_type_info = {
-      .builtin_constraint_mask = import_facet_type_info.builtin_constraint_mask,
       // TODO: Also process the other requirements.
       .other_requirements = import_facet_type_info.other_requirements};
   // Re-resolve and add values to the local `FacetTypeInfo`.
