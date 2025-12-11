@@ -204,16 +204,14 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
   if (!context.name_scopes().IsCorePackage(interface.parent_scope_id)) {
     return SemIR::InstId::None;
   }
-  if (!interface.name_id.AsIdentifierId().has_value()) {
-    return SemIR::InstId::None;
-  }
 
-  if (context.identifiers().Get(interface.name_id.AsIdentifierId()) == "Copy") {
+  if (interface.name_id ==
+      context.core_identifiers().AddNameId(CoreIdentifier::Copy)) {
     return LookupCopyImpl(context, loc_id, self_type_id, specific_interface);
   }
 
-  if (context.identifiers().Get(interface.name_id.AsIdentifierId()) ==
-      "Destroy") {
+  if (interface.name_id ==
+      context.core_identifiers().AddNameId(CoreIdentifier::Destroy)) {
     return LookupDestroyImpl(context, loc_id, self_type_id, specific_interface);
   }
 
