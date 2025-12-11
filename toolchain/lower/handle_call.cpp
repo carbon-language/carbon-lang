@@ -315,6 +315,34 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
     }
 
+    case SemIR::BuiltinFunctionKind::StringAt: {
+      auto string_inst_id = arg_ids[0];
+      auto* string_arg = context.GetValue(string_inst_id);
+
+      auto string_type_id = context.GetTypeIdOfInst(string_inst_id);
+      auto* string_type = context.GetType(string_type_id);
+      auto* string_value =
+          context.builder().CreateLoad(string_type, string_arg, "string.load");
+
+      auto* string_ptr_field =
+          context.builder().CreateExtractValue(string_value, {0}, "string.ptr");
+
+      auto* index_value = context.GetValue(arg_ids[1]);
+
+      auto* char_ptr = context.builder().CreateInBoundsGEP(
+          llvm::Type::getInt8Ty(context.llvm_context()), string_ptr_field,
+          index_value, "string.char_ptr");
+
+      auto* char_i8 = context.builder().CreateLoad(
+          llvm::Type::getInt8Ty(context.llvm_context()), char_ptr,
+          "string.char");
+
+      context.SetLocal(inst_id, context.builder().CreateZExt(
+                                    char_i8, context.GetTypeOfInst(inst_id),
+                                    "string.char.zext"));
+      return;
+    }
+
     case SemIR::BuiltinFunctionKind::TypeAnd: {
       context.SetLocal(inst_id, context.GetTypeAsValue());
       return;

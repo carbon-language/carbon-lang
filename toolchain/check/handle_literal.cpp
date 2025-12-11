@@ -77,7 +77,7 @@ auto HandleParseNode(Context& context, Parse::StringLiteralId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::BoolTypeLiteralId node_id)
     -> bool {
-  auto fn_inst_id = LookupNameInCore(context, node_id, "Bool");
+  auto fn_inst_id = LookupNameInCore(context, node_id, CoreIdentifier::Bool);
   auto type_inst_id = PerformCall(context, node_id, fn_inst_id, {});
   context.node_stack().Push(node_id, type_inst_id);
   return true;

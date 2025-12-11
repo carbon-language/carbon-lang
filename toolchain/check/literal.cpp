@@ -27,15 +27,17 @@ auto MakeIntLiteral(Context& context, Parse::NodeId node_id, IntId int_id)
 
 auto MakeCharTypeLiteral(Context& context, Parse::NodeId node_id)
     -> SemIR::InstId {
-  return LookupNameInCore(context, node_id, "Char");
+  return LookupNameInCore(context, node_id, CoreIdentifier::Char);
 }
 
 auto MakeIntTypeLiteral(Context& context, Parse::NodeId node_id,
                         SemIR::IntKind int_kind, IntId size_id)
     -> SemIR::InstId {
   auto width_id = MakeIntLiteral(context, node_id, size_id);
-  auto fn_inst_id = LookupNameInCore(
-      context, node_id, int_kind == SemIR::IntKind::Signed ? "Int" : "UInt");
+  auto fn_inst_id = LookupNameInCore(context, node_id,
+                                     int_kind == SemIR::IntKind::Signed
+                                         ? CoreIdentifier::Int
+                                         : CoreIdentifier::UInt);
   return PerformCall(context, node_id, fn_inst_id, {width_id});
 }
 
@@ -48,7 +50,7 @@ auto MakeIntType(Context& context, Parse::NodeId node_id,
 auto MakeFloatTypeLiteral(Context& context, Parse::NodeId node_id,
                           IntId size_id) -> SemIR::InstId {
   auto width_id = MakeIntLiteral(context, node_id, size_id);
-  auto fn_inst_id = LookupNameInCore(context, node_id, "Float");
+  auto fn_inst_id = LookupNameInCore(context, node_id, CoreIdentifier::Float);
   return PerformCall(context, node_id, fn_inst_id, {width_id});
 }
 
@@ -169,7 +171,7 @@ auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
 
 auto MakeStringTypeLiteral(Context& context, SemIR::LocId loc_id)
     -> SemIR::InstId {
-  return LookupNameInCore(context, loc_id, "String");
+  return LookupNameInCore(context, loc_id, CoreIdentifier::String);
 }
 
 auto MakeStringType(Context& context, SemIR::LocId loc_id) -> TypeExpr {

@@ -12,6 +12,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/value_store.h"
+#include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/context.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
@@ -279,6 +280,8 @@ class Context {
     return *std::exchange(return_type_inst_id_, std::nullopt);
   }
 
+  auto core_identifiers() -> CoreIdentifierCache& { return core_identifiers_; }
+
   // --------------------------------------------------------------------------
   // Directly expose SemIR::File data accessors for brevity in calls.
   // --------------------------------------------------------------------------
@@ -517,6 +520,9 @@ class Context {
 
   // Declared return type for the in-progress function declaration, if any.
   std::optional<SemIR::TypeInstId> return_type_inst_id_;
+
+  // See `CoreIdentifierCache` for details.
+  CoreIdentifierCache core_identifiers_;
 };
 
 }  // namespace Carbon::Check

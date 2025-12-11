@@ -134,6 +134,7 @@ cc_library(
         "type_structure.h",
     ],
     deps = [
+        ":core_identifier",
         ":node_stack",
         "//common:array_stack",
         "//common:check",
@@ -217,6 +218,7 @@ cc_library(
     hdrs = ["check.h"],
     deps = [
         ":context",
+        ":core_identifier",
         ":diagnostic_emitter",
         ":dump",
         ":scope_stack",
@@ -319,6 +321,19 @@ cc_library(
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "core_identifier",
+    srcs = ["core_identifier.cpp"],
+    hdrs = ["core_identifier.h"],
+    textual_hdrs = ["core_identifier.def"],
+    deps = [
+        "//common:enum_base",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/base:value_ids",
+        "//toolchain/sem_ir:typed_insts",
     ],
 )
 
