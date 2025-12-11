@@ -552,7 +552,7 @@ auto GetOrAddImpl(Context& context, SemIR::LocId loc_id,
 
   // Look to see if there are any generic bindings on the `impl` declaration
   // that are not deducible. If so, and the `impl` does not actually use all its
-  // generic bindings, and will never be matched. This should be diagnossed to
+  // generic bindings, and will never be matched. This should be diagnosed to
   // the user.
   if (!VerifyAllGenericBindingsUsed(context, loc_id, implicit_params_loc_id,
                                     stored_impl)) {
