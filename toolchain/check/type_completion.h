@@ -72,7 +72,7 @@ auto AsConcreteType(Context& context, SemIR::TypeId type_id,
 // Requires the named constraints in the facet type to be complete, so that the
 // set of interfaces the facet type requires is known. Diagnoses an error and
 // returns None if any named constraint is not complete.
-auto RequireIdentifiedFacetType(Context& context,
+auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                                 const SemIR::FacetType& facet_type,
                                 MakeDiagnosticBuilderFn diagnoser)
     -> SemIR::IdentifiedFacetTypeId;

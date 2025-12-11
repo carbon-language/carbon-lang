@@ -43,6 +43,7 @@ fn G() {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %tuple.type.ff9: type = tuple_type (type, type, type) [concrete]
+// CHECK:STDOUT:   %tuple.e64: %tuple.type.ff9 = tuple_value (%i32, %i32, %i32) [concrete]
 // CHECK:STDOUT:   %tuple.type.189: type = tuple_type (%i32, %i32, %i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.b5a: type = pattern_type %tuple.type.189 [concrete]
 // CHECK:STDOUT: }
@@ -64,7 +65,7 @@ fn G() {
 // CHECK:STDOUT:     %i32.loc8_16: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_32.loc8_21: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc8_21: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc8_24.2: %tuple.type.ff9 = tuple_literal (%i32.loc8_11, %i32.loc8_16, %i32.loc8_21)
+// CHECK:STDOUT:     %.loc8_24.2: %tuple.type.ff9 = tuple_literal (%i32.loc8_11, %i32.loc8_16, %i32.loc8_21) [concrete = constants.%tuple.e64]
 // CHECK:STDOUT:     %.loc8_24.3: type = converted %.loc8_24.2, constants.%tuple.type.189 [concrete = constants.%tuple.type.189]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple.elem0.loc8: ref %i32 = tuple_access %v.ref, element0

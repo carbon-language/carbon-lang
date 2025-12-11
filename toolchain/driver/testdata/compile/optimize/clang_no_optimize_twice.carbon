@@ -36,8 +36,8 @@ fn Call() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: noinline nounwind optnone
 // CHECK:STDOUT: define i32 @_CCall.Main() #0 !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %g.call = call i32 @_Z1gv(), !dbg !10
-// CHECK:STDOUT:   ret i32 %g.call, !dbg !11
+// CHECK:STDOUT:   %g.call = call i32 @_Z1gv(), !dbg !11
+// CHECK:STDOUT:   ret i32 %g.call, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline optnone
@@ -65,10 +65,11 @@ fn Call() -> i32 {
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
 // CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !6 = !DIFile(filename: "foo.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !6, line: 12, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{}
-// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 10, scope: !7)
-// CHECK:STDOUT: !11 = !DILocation(line: 13, column: 3, scope: !7)
+// CHECK:STDOUT: !9 = !{!10}
+// CHECK:STDOUT: !10 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !11 = !DILocation(line: 13, column: 10, scope: !7)
+// CHECK:STDOUT: !12 = !DILocation(line: 13, column: 3, scope: !7)

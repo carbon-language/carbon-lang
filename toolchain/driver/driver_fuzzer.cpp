@@ -11,8 +11,8 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 #include "testing/fuzzing/libfuzzer.h"
+#include "toolchain/base/install_paths.h"
 #include "toolchain/driver/driver.h"
-#include "toolchain/install/install_paths.h"
 
 namespace Carbon::Testing {
 

@@ -36,7 +36,7 @@ class BuiltinFunctionKind : public CARBON_ENUM_BASE(BuiltinFunctionKind) {
 
   // Determines whether this builtin function kind can have the specified
   // function type.
-  auto IsValidType(const File& sem_ir, llvm::ArrayRef<TypeId> arg_types,
+  auto IsValidType(const File& sem_ir, llvm::ArrayRef<InstId> call_params,
                    TypeId return_type) const -> bool;
 
   // Returns whether this is a compile-time-only function.

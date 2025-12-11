@@ -139,20 +139,28 @@ auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
   }
 }
 
-auto AddSelfParamPattern(Context& context, SemIR::LocId loc_id,
-                         SemIR::ExprRegionId type_expr_region_id,
-                         SemIR::TypeId type_id) -> SemIR::InstId {
+auto AddParamPattern(Context& context, SemIR::LocId loc_id,
+                     SemIR::NameId name_id,
+                     SemIR::ExprRegionId type_expr_region_id,
+                     SemIR::TypeId type_id, bool is_ref) -> SemIR::InstId {
+  const auto& binding_pattern_kind = is_ref ? SemIR::RefBindingPattern::Kind
+                                            : SemIR::ValueBindingPattern::Kind;
   SemIR::InstId pattern_id =
-      AddBindingPattern(context, loc_id, SemIR::NameId::SelfValue, type_id,
-                        type_expr_region_id, SemIR::ValueBindingPattern::Kind,
+      AddBindingPattern(context, loc_id, name_id, type_id, type_expr_region_id,
+                        binding_pattern_kind,
                         /*is_template=*/false)
           .pattern_id;
 
-  pattern_id = AddPatternInst<SemIR::ValueParamPattern>(
-      context, loc_id,
-      {.type_id = context.insts().Get(pattern_id).type_id(),
-       .subpattern_id = pattern_id,
-       .index = SemIR::CallParamIndex::None});
+  const auto& param_pattern_kind =
+      is_ref ? SemIR::RefParamPattern::Kind : SemIR::ValueParamPattern::Kind;
+  pattern_id = AddPatternInst(
+      context,
+      SemIR::LocIdAndInst::UncheckedLoc(
+          loc_id, SemIR::AnyParamPattern{
+                      .kind = param_pattern_kind,
+                      .type_id = context.insts().Get(pattern_id).type_id(),
+                      .subpattern_id = pattern_id,
+                      .index = SemIR::CallParamIndex::None}));
 
   return pattern_id;
 }

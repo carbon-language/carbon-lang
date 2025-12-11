@@ -298,7 +298,7 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 
   auto result = EvalLookupSingleImplWitness(context, SemIR::LocId(inst_id),
                                             inst, self_facet_value_inst_id,
-                                            /*poison_final_results=*/true);
+                                            EvalImplLookupMode::Normal);
   if (!result.has_value()) {
     // We use NotConstant to communicate back to impl lookup that the lookup
     // failed. This can not happen for a deferred symbolic lookup in a generic
@@ -316,6 +316,8 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::ImplWitnessAccess inst) -> ConstantEvalResult {
+  CARBON_DIAGNOSTIC(ImplAccessMemberBeforeSet, Error,
+                    "accessing member from impl before it has a defined value");
   if (auto witness =
           context.insts().TryGetAs<SemIR::ImplWitness>(inst.witness_id)) {
     // This is PerformAggregateAccess followed by GetConstantValueInSpecific.
@@ -334,10 +336,24 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
             context.sem_ir(), witness->specific_id, element));
       }
     }
-    CARBON_DIAGNOSTIC(
-        ImplAccessMemberBeforeSet, Error,
-        "accessing member from impl before it has a defined value");
+    // If we get here, this impl witness table entry has not been populated yet,
+    // because the impl was referenced within its own definition.
     // TODO: Add note pointing to the impl declaration.
+    context.emitter().Emit(inst_id, ImplAccessMemberBeforeSet);
+    return ConstantEvalResult::Error;
+  } else if (auto cpp_witness =
+                 context.insts().TryGetAs<SemIR::CppWitness>(inst.witness_id)) {
+    auto elements = context.inst_blocks().Get(cpp_witness->elements_id);
+    auto index = static_cast<size_t>(inst.index.index);
+    // `elements` can be shorter than the number of associated entities while
+    // we're building the synthetic witness.
+    if (index < elements.size()) {
+      return ConstantEvalResult::Existing(
+          context.constant_values().Get(elements[index]));
+    }
+    // If we get here, this synthesized witness table entry has not been
+    // populated yet.
+    // TODO: Is this reachable? We have no test coverage for this diagnostic.
     context.emitter().Emit(inst_id, ImplAccessMemberBeforeSet);
     return ConstantEvalResult::Error;
   } else if (auto witness = context.insts().TryGetAs<SemIR::LookupImplWitness>(
@@ -516,6 +532,13 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
+auto EvalConstantInst(Context& context, SemIR::RequireSpecificDefinition inst)
+    -> ConstantEvalResult {
+  // This can return false, we just need to try it.
+  ResolveSpecificDefinition(context, SemIR::LocId::None, inst.specific_id);
+  return ConstantEvalResult::NewSamePhase(inst);
+}
+
 auto EvalConstantInst(Context& context, SemIR::SpecificConstant inst)
     -> ConstantEvalResult {
   // Pull the constant value out of the specific.
@@ -634,6 +657,12 @@ auto EvalConstantInst(Context& /*context*/, SemIR::StructInit inst)
       .type_id = inst.type_id, .elements_id = inst.elements_id});
 }
 
+auto EvalConstantInst(Context& /*context*/, SemIR::StructLiteral inst)
+    -> ConstantEvalResult {
+  return ConstantEvalResult::NewSamePhase(SemIR::StructValue{
+      .type_id = inst.type_id, .elements_id = inst.elements_id});
+}
+
 auto EvalConstantInst(Context& /*context*/, SemIR::Temporary /*inst*/)
     -> ConstantEvalResult {
   // TODO: Handle this. Can we just return the value of `init_id`?
@@ -646,6 +675,12 @@ auto EvalConstantInst(Context& context, SemIR::TupleAccess inst)
 }
 
 auto EvalConstantInst(Context& /*context*/, SemIR::TupleInit inst)
+    -> ConstantEvalResult {
+  return ConstantEvalResult::NewSamePhase(SemIR::TupleValue{
+      .type_id = inst.type_id, .elements_id = inst.elements_id});
+}
+
+auto EvalConstantInst(Context& /*context*/, SemIR::TupleLiteral inst)
     -> ConstantEvalResult {
   return ConstantEvalResult::NewSamePhase(SemIR::TupleValue{
       .type_id = inst.type_id, .elements_id = inst.elements_id});

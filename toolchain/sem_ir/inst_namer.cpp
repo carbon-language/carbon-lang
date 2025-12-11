@@ -25,6 +25,8 @@
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/pattern.h"
 #include "toolchain/sem_ir/singleton_insts.h"
+#include "toolchain/sem_ir/specific_interface.h"
+#include "toolchain/sem_ir/specific_named_constraint.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -618,7 +620,8 @@ auto InstNamer::PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
       llvm::formatv("{0}{1}require{2}", scope_prefix,
                     scope_prefix.empty() ? "" : ".", require_impls_id.index));
 
-  AddBlockLabel(scope_id, require.body_block_id, "require", require_loc);
+  auto decl = sem_ir_->insts().GetAs<SemIR::RequireImplsDecl>(require.decl_id);
+  AddBlockLabel(scope_id, decl.decl_block_id, "require", require_loc);
 
   // Push blocks in reverse order.
   PushGeneric(scope_id, require.generic_id);
@@ -764,15 +767,15 @@ auto InstNamer::NamingContext::AddIntOrFloatTypeName(char type_literal_prefix,
 auto InstNamer::NamingContext::AddWitnessTableName(InstId witness_table_inst_id,
                                                    std::string name) -> void {
   auto witness_table =
-      sem_ir().insts().GetAs<ImplWitnessTable>(witness_table_inst_id);
-  if (!witness_table.impl_id.has_value()) {
-    // TODO: The witness comes from a facet value. Can we get the
-    // interface names from it? Store the facet value instruction in the
+      sem_ir().insts().TryGetAs<ImplWitnessTable>(witness_table_inst_id);
+  if (!witness_table || !witness_table->impl_id.has_value()) {
+    // TODO: If `impl_id` is None, the witness comes from a facet value. Can we
+    // get the interface names from it? Store the facet value instruction in the
     // table?
     AddInstName(name);
     return;
   }
-  const auto& impl = sem_ir().impls().Get(witness_table.impl_id);
+  const auto& impl = sem_ir().impls().Get(witness_table->impl_id);
   auto name_id = sem_ir().interfaces().Get(impl.interface.interface_id).name_id;
 
   std::string suffix = llvm::formatv(".{}", name);
@@ -866,12 +869,15 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(ClassType inst): {
-      if (auto literal_info = TypeLiteralInfo::ForType(sem_ir(), inst);
-          literal_info.is_valid()) {
-        AddInstName(literal_info.GetLiteralAsString(sem_ir()));
-      } else {
-        AddEntityNameAndMaybePush(inst.class_id);
+      if (auto type_info = RecognizedTypeInfo::ForType(sem_ir(), inst);
+          type_info.is_valid()) {
+        RawStringOstream out;
+        if (type_info.PrintLiteral(sem_ir(), out)) {
+          AddInstName(out.TakeStr());
+          return;
+        }
       }
+      AddEntityNameAndMaybePush(inst.class_id);
       return;
     }
     case CompleteTypeWitness::Kind: {
@@ -899,6 +905,10 @@ auto InstNamer::NamingContext::NameInst() -> void {
     case ConstType::Kind: {
       // TODO: Can we figure out the name of the type argument?
       AddInstName("const");
+      return;
+    }
+    case CppWitness::Kind: {
+      AddInstName("cpp_witness");
       return;
     }
     case CARBON_KIND(FacetAccessType inst): {
@@ -960,8 +970,18 @@ auto InstNamer::NamingContext::NameInst() -> void {
               sem_ir().types().TryGetAs<FacetType>(inst.type_id)) {
         const auto& facet_type_info =
             sem_ir().facet_types().Get(facet_type->facet_type_id);
-        if (auto interface = facet_type_info.TryAsSingleInterface()) {
-          AddEntityNameAndMaybePush(interface->interface_id, ".facet");
+        if (auto single = facet_type_info.TryAsSingleExtend()) {
+          CARBON_KIND_SWITCH(*single) {
+            case CARBON_KIND(SemIR::SpecificInterface interface): {
+              AddEntityNameAndMaybePush(interface.interface_id, ".facet");
+              break;
+            }
+            case CARBON_KIND(SemIR::SpecificNamedConstraint constraint): {
+              AddEntityNameAndMaybePush(constraint.named_constraint_id,
+                                        ".facet");
+              break;
+            }
+          }
           return;
         }
       }
@@ -1212,6 +1232,20 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstName("str");
       return;
     }
+    case CARBON_KIND(StructType inst): {
+      const auto& fields = sem_ir().struct_type_fields().Get(inst.fields_id);
+      if (fields.empty()) {
+        AddInstName("empty_struct_type");
+        return;
+      }
+      std::string name = "struct_type";
+      for (auto field : fields) {
+        name += ".";
+        name += sem_ir().names().GetIRBaseName(field.name_id).str();
+      }
+      AddInstName(std::move(name));
+      return;
+    }
     case CARBON_KIND(StructValue inst): {
       if (auto fn_ty = sem_ir().types().TryGetAs<FunctionType>(inst.type_id)) {
         AddEntityNameAndMaybePush(fn_ty->function_id);
@@ -1237,20 +1271,6 @@ auto InstNamer::NamingContext::NameInst() -> void {
           AddInstName("struct");
         }
       }
-      return;
-    }
-    case CARBON_KIND(StructType inst): {
-      const auto& fields = sem_ir().struct_type_fields().Get(inst.fields_id);
-      if (fields.empty()) {
-        AddInstName("empty_struct_type");
-        return;
-      }
-      std::string name = "struct_type";
-      for (auto field : fields) {
-        name += ".";
-        name += sem_ir().names().GetIRBaseName(field.name_id).str();
-      }
-      AddInstName(std::move(name));
       return;
     }
     case CARBON_KIND(TupleAccess inst): {

@@ -35,6 +35,26 @@ fn F() {
   //@dump-sem-ir-end
 }
 
+// ============================================================================
+// Undeduced return type
+// ============================================================================
+
+// --- fail_return_undeduced_auto.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+auto UndeducedReturn();
+''';
+
+fn Call() {
+  // CHECK:STDERR: fail_return_undeduced_auto.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: return type: auto` [SemanticsTodo]
+  // CHECK:STDERR:   Cpp.UndeducedReturn();
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  Cpp.UndeducedReturn();
+}
+
 // CHECK:STDOUT: --- import_multiple.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

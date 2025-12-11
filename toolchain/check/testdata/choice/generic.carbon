@@ -28,6 +28,7 @@ choice Always(T:! type) {
 // CHECK:STDOUT:   %struct_type.discriminant: type = struct_type {.discriminant: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.discriminant [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.discriminant = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Always [symbolic]
 // CHECK:STDOUT:   %Always.val: %Always = struct_value (%empty_tuple) [symbolic]
 // CHECK:STDOUT: }
@@ -54,10 +55,10 @@ choice Always(T:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.discriminant [concrete = constants.%complete_type]
-// CHECK:STDOUT:     %.loc16_1.1: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc16_1.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc16_1.2: %empty_tuple.type = converted %.loc16_1.1, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc16_1.3: %struct_type.discriminant = struct_literal (%.loc16_1.2)
+// CHECK:STDOUT:     %.loc16_1.3: %struct_type.discriminant = struct_literal (%.loc16_1.2) [concrete = constants.%struct]
 // CHECK:STDOUT:     %.loc16_1.4: ref @Always.%Always (%Always) = temporary_storage
 // CHECK:STDOUT:     %.loc16_1.5: ref %empty_tuple.type = class_element_access %.loc16_1.4, element0
 // CHECK:STDOUT:     %.loc16_1.6: init %empty_tuple.type = tuple_init () to %.loc16_1.5 [concrete = constants.%empty_tuple]

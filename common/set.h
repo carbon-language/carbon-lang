@@ -30,17 +30,15 @@ class Set;
 // structure.
 //
 // This should always be preferred to a `const`-ref parameter for the `SetBase`
-// or `Set` type as it provides more flexibility and a cleaner API.
-//
-// Note that while this type is a read-only view, that applies to the underlying
-// *set* data structure, not the individual entries stored within it. Those can
-// be mutated freely as long as both the hashes and equality of the keys are
-// preserved. If we applied a deep-`const` design here, it would prevent using
-// this type in situations where the keys carry state (unhashed and not part of
-// equality) that is mutated while the associative container is not. A view of
-// immutable data can always be obtained by using `SetView<const T>`, and we
-// enable conversions to more-const views. This mirrors the semantics of views
-// like `std::span`.
+// or `Set` type as it provides more flexibility and a cleaner API. By default
+// a `SetView` provides no more immutability than a `const Set`: elements
+// can't be added or removed, but they can be mutated, and the user is
+// responsible for avoiding mutations that affect the hash value or equality
+// comparison. However, a `SetView<T>` can be converted to a `SetView<const T>`,
+// which prevents mutating the elements. As with any other view type, `const`
+// on the `SetView` itself is "shallow": it prevents rebinding the `SetView` to
+// a different underlying set, but doesn't affect mutability of the underlying
+// set.
 //
 // A specific `KeyContextT` type can optionally be provided to configure how
 // keys will be hashed and compared. The default is `DefaultKeyContext` which is
@@ -95,7 +93,7 @@ class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
 
   // Run the provided callback for every key in the set.
   template <typename CallbackT>
-  auto ForEach(CallbackT callback) -> void
+  auto ForEach(CallbackT callback) const -> void
     requires(std::invocable<CallbackT, KeyT&>);
 
   // This routine is relatively inefficient and only intended for use in
@@ -122,6 +120,13 @@ class SetView : RawHashtable::ViewImpl<InputKeyT, void, InputKeyContextT> {
 
 // A base class for a `Set` type that remains mutable while type-erasing the
 // `SmallSize` (SSO) template parameter.
+//
+// Note that `SetBase` has "shallow" const semantics: a `const SetBase<T>&`
+// can't be used to mutate the set data structure itself (e.g. by changing
+// the number of elements), but it can be used to mutate the `T` elements it
+// contains. The user is responsible for avoiding mutations that would change
+// the hash value or equality of an element. A `SetView<const T>` can be used
+// to provide read-only access to the elements of a `SetBase<T>`.
 //
 // A pointer or reference to this type is the preferred way to pass a mutable
 // handle to a `Set` type across API boundaries as it avoids encoding specific
@@ -186,7 +191,7 @@ class SetBase
 
   // Convenience forwarder to the view type.
   template <typename CallbackT>
-  auto ForEach(CallbackT callback) -> void
+  auto ForEach(CallbackT callback) const -> void
     requires(std::invocable<CallbackT, KeyT&>)
   {
     return ViewT(*this).ForEach(callback);
@@ -283,7 +288,8 @@ class SetBase
 // allocations the performance of hashtable routines may be unacceptably bad and
 // another data structure or key design is likely preferable.
 //
-// Note that this type should typically not appear on API boundaries; either
+// Note that `Set`, like `SetBase`, has "shallow" const semantics. Note also
+// that this type should typically not appear on API boundaries; either
 // `SetBase` or `SetView` should be used instead.
 template <typename InputKeyT, ssize_t SmallSize = 0,
           typename InputKeyContextT = DefaultKeyContext>
@@ -328,7 +334,8 @@ auto SetView<InputKeyT, InputKeyContextT>::Lookup(LookupKeyT lookup_key,
 
 template <typename InputKeyT, typename InputKeyContextT>
 template <typename CallbackT>
-auto SetView<InputKeyT, InputKeyContextT>::ForEach(CallbackT callback) -> void
+auto SetView<InputKeyT, InputKeyContextT>::ForEach(CallbackT callback) const
+    -> void
   requires(std::invocable<CallbackT, KeyT&>)
 {
   this->ForEachEntry([callback](EntryT& entry) { callback(entry.key()); },

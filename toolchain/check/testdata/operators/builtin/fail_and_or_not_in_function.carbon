@@ -178,10 +178,10 @@ fn F() {
 // CHECK:STDOUT: --- fail_nested.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %B.931: bool = symbolic_binding B, 0 [symbolic]
+// CHECK:STDOUT:   %B.a76: bool = symbolic_binding B, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(%B.931) [symbolic]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%B.a76) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %B.d97: type = class_type @B [concrete]
@@ -190,7 +190,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(<unexpected>.inst{{[0-9A-F]+}}.loc4_14: bool) {
-// CHECK:STDOUT:   %B: bool = symbolic_binding B, 0 [symbolic = %B (constants.%B.931)]
+// CHECK:STDOUT:   %B: bool = symbolic_binding B, 0 [symbolic = %B (constants.%B.a76)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -218,7 +218,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%B.931) {
-// CHECK:STDOUT:   %B => constants.%B.931
+// CHECK:STDOUT: specific @C(constants.%B.a76) {
+// CHECK:STDOUT:   %B => constants.%B.a76
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

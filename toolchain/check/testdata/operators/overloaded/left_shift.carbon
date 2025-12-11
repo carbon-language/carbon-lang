@@ -24,7 +24,7 @@ impl C as Core.LeftShiftWith(C) where .Result = C {
   }
 }
 impl C as Core.LeftShiftAssignWith(C) {
-  fn Op[addr self: C*](other: C) {}
+  fn Op[ref self: C](other: C) {}
 }
 
 fn TestOp(a: C, b: C) -> C {
@@ -53,11 +53,11 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %LeftShiftAssignWith.type.981: type = facet_type <@LeftShiftAssignWith, @LeftShiftAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %LeftShiftAssignWith.Op.type.30f: type = fn_type @LeftShiftAssignWith.Op, @LeftShiftAssignWith(%C) [concrete]
 // CHECK:STDOUT:   %LeftShiftAssignWith.impl_witness: <witness> = impl_witness file.%LeftShiftAssignWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %C.as.LeftShiftAssignWith.impl.Op.type: type = fn_type @C.as.LeftShiftAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.LeftShiftAssignWith.impl.Op: %C.as.LeftShiftAssignWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %LeftShiftAssignWith.facet: %LeftShiftAssignWith.type.981 = facet_value %C, (%LeftShiftAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.944: type = fn_type_with_self_type %LeftShiftWith.Op.type.097, %LeftShiftWith.facet [concrete]
+// CHECK:STDOUT:   %.fba: type = fn_type_with_self_type %LeftShiftWith.Op.type.097, %LeftShiftWith.facet [concrete]
+// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %.f59: type = fn_type_with_self_type %LeftShiftAssignWith.Op.type.30f, %LeftShiftAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -68,7 +68,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem1: %.944 = impl_witness_access constants.%LeftShiftWith.impl_witness, element1 [concrete = constants.%C.as.LeftShiftWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem1: %.fba = impl_witness_access constants.%LeftShiftWith.impl_witness, element1 [concrete = constants.%C.as.LeftShiftWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.as.LeftShiftWith.impl.Op.call: init %C = call %bound_method(%a.ref, %b.ref) to %.loc30
@@ -82,8 +82,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0: %.f59 = impl_witness_access constants.%LeftShiftAssignWith.impl_witness, element0 [concrete = constants.%C.as.LeftShiftAssignWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc38, %impl.elem0
-// CHECK:STDOUT:   %addr: %ptr.019 = addr_of %.loc38
-// CHECK:STDOUT:   %C.as.LeftShiftAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(%addr, %b.ref)
+// CHECK:STDOUT:   %C.as.LeftShiftAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc38, %b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

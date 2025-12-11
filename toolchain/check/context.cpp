@@ -72,6 +72,7 @@ auto Context::VerifyOnFinish() const -> void {
   vtable_stack_.VerifyOnFinish();
   region_stack_.VerifyOnFinish();
   CARBON_CHECK(impl_lookup_stack_.empty());
+  CARBON_CHECK(return_type_inst_id_ == std::nullopt);
 
 #ifndef NDEBUG
   if (auto verify = sem_ir_->Verify(); !verify.ok()) {

@@ -64,6 +64,7 @@ static auto GetAggregateElement(FunctionContext& context,
   switch (SemIR::GetExprCategory(context.sem_ir(), aggr_inst_id)) {
     case SemIR::ExprCategory::Error:
     case SemIR::ExprCategory::NotExpr:
+    case SemIR::ExprCategory::Pattern:
     case SemIR::ExprCategory::Initializing:
     case SemIR::ExprCategory::Mixed:
       CARBON_FATAL(

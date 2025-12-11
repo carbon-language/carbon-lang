@@ -48,7 +48,8 @@ class StepStack {
  public:
   // An individual step in the stack, which stringifies some component of a type
   // name.
-  using Step = std::variant<InstId, llvm::StringRef, NameId, ElementIndex>;
+  using Step =
+      std::variant<InstId, llvm::StringRef, NameId, ElementIndex, FacetTypeId>;
 
   // Support `Push` for a qualified name. e.g., `A.B.C`.
   using QualifiedNameItem = std::pair<NameScopeId, NameId>;
@@ -73,6 +74,9 @@ class StepStack {
   auto PushNameId(NameId name_id) -> void { steps_.push_back(name_id); }
   auto PushElementIndex(ElementIndex element_index) -> void {
     steps_.push_back(element_index);
+  }
+  auto PushFacetType(FacetTypeId facet_type_id) -> void {
+    steps_.push_back(facet_type_id);
   }
 
   // Pushes all components of a qualified name (`A.B.C`) onto the stack.
@@ -300,10 +304,11 @@ class Stringifier {
 
   auto StringifyInst(InstId /*inst_id*/, ClassType inst) -> void {
     const auto& class_info = sem_ir_->classes().Get(inst.class_id);
-    if (auto literal_info = TypeLiteralInfo::ForType(*sem_ir_, inst);
-        literal_info.is_valid()) {
-      literal_info.PrintLiteral(*sem_ir_, *out_);
-      return;
+    if (auto type_info = RecognizedTypeInfo::ForType(*sem_ir_, inst);
+        type_info.is_valid()) {
+      if (type_info.PrintLiteral(*sem_ir_, *out_)) {
+        return;
+      }
     }
     step_stack_->PushEntityName(class_info, inst.specific_id);
   }
@@ -334,64 +339,7 @@ class Stringifier {
   }
 
   auto StringifyInst(InstId /*inst_id*/, FacetType inst) -> void {
-    const FacetTypeInfo& facet_type_info =
-        sem_ir_->facet_types().Get(inst.facet_type_id);
-    // Output `where` restrictions.
-    bool some_where = false;
-    if (facet_type_info.other_requirements) {
-      step_stack_->PushString("...");
-      some_where = true;
-    }
-    if (facet_type_info.builtin_constraint_mask.HasAnyOf(
-            SemIR::BuiltinConstraintMask::TypeCanDestroy)) {
-      if (some_where) {
-        step_stack_->PushString(" and");
-      }
-      step_stack_->PushString(" .Self impls Core.CanDestroy");
-      some_where = true;
-    }
-    for (auto rewrite : llvm::reverse(facet_type_info.rewrite_constraints)) {
-      if (some_where) {
-        step_stack_->PushString(" and");
-      }
-      step_stack_->Push(" ", rewrite.lhs_id, " = ", rewrite.rhs_id);
-      some_where = true;
-    }
-    if (!facet_type_info.self_impls_constraints.empty() ||
-        !facet_type_info.self_impls_named_constraints.empty()) {
-      if (some_where) {
-        step_stack_->PushString(" and");
-      }
-      llvm::ListSeparator sep(" & ");
-      for (auto impls :
-           llvm::reverse(facet_type_info.self_impls_named_constraints)) {
-        step_stack_->Push(impls, &sep);
-      }
-      for (auto impls : llvm::reverse(facet_type_info.self_impls_constraints)) {
-        step_stack_->Push(impls, &sep);
-      }
-      step_stack_->PushString(" .Self impls ");
-      some_where = true;
-    }
-    // TODO: Other restrictions from facet_type_info.
-    if (some_where) {
-      step_stack_->PushString(" where");
-    }
-
-    // Output extend interface and named constraint requirements.
-    if (facet_type_info.extend_constraints.empty() &&
-        facet_type_info.extend_named_constraints.empty()) {
-      step_stack_->PushString("type");
-      return;
-    }
-    llvm::ListSeparator sep(" & ");
-    for (auto extend :
-         llvm::reverse(facet_type_info.extend_named_constraints)) {
-      step_stack_->Push(extend, &sep);
-    }
-    for (auto extend : llvm::reverse(facet_type_info.extend_constraints)) {
-      step_stack_->Push(extend, &sep);
-    }
+    step_stack_->PushFacetType(inst.facet_type_id);
   }
 
   auto StringifyInst(InstId /*inst_id*/, FacetValue inst) -> void {
@@ -654,7 +602,7 @@ class Stringifier {
     step_stack_->PushString("}");
     llvm::ListSeparator sep;
     for (auto [field, value_inst_id] :
-         llvm::reverse(llvm::zip(fields, field_values))) {
+         llvm::reverse(llvm::zip_equal(fields, field_values))) {
       step_stack_->Push(".", field.name_id, " = ", value_inst_id, &sep);
     }
   }
@@ -720,6 +668,67 @@ class Stringifier {
     *out_ << "<vtable ptr>";
   }
 
+  auto StringifyFacetType(FacetTypeId facet_type_id) -> void {
+    const FacetTypeInfo& facet_type_info =
+        sem_ir_->facet_types().Get(facet_type_id);
+    // Output `where` restrictions.
+    bool some_where = false;
+    if (facet_type_info.other_requirements) {
+      step_stack_->PushString("...");
+      some_where = true;
+    }
+    if (facet_type_info.builtin_constraint_mask.HasAnyOf(
+            SemIR::BuiltinConstraintMask::TypeCanDestroy)) {
+      if (some_where) {
+        step_stack_->PushString(" and");
+      }
+      step_stack_->PushString(" .Self impls Core.CanDestroy");
+      some_where = true;
+    }
+    for (auto rewrite : llvm::reverse(facet_type_info.rewrite_constraints)) {
+      if (some_where) {
+        step_stack_->PushString(" and");
+      }
+      step_stack_->Push(" ", rewrite.lhs_id, " = ", rewrite.rhs_id);
+      some_where = true;
+    }
+    if (!facet_type_info.self_impls_constraints.empty() ||
+        !facet_type_info.self_impls_named_constraints.empty()) {
+      if (some_where) {
+        step_stack_->PushString(" and");
+      }
+      llvm::ListSeparator sep(" & ");
+      for (auto impls :
+           llvm::reverse(facet_type_info.self_impls_named_constraints)) {
+        step_stack_->Push(impls, &sep);
+      }
+      for (auto impls : llvm::reverse(facet_type_info.self_impls_constraints)) {
+        step_stack_->Push(impls, &sep);
+      }
+      step_stack_->PushString(" .Self impls ");
+      some_where = true;
+    }
+    // TODO: Other restrictions from facet_type_info.
+    if (some_where) {
+      step_stack_->PushString(" where");
+    }
+
+    // Output extend interface and named constraint requirements.
+    if (facet_type_info.extend_constraints.empty() &&
+        facet_type_info.extend_named_constraints.empty()) {
+      step_stack_->PushString("type");
+      return;
+    }
+    llvm::ListSeparator sep(" & ");
+    for (auto extend :
+         llvm::reverse(facet_type_info.extend_named_constraints)) {
+      step_stack_->Push(extend, &sep);
+    }
+    for (auto extend : llvm::reverse(facet_type_info.extend_constraints)) {
+      step_stack_->Push(extend, &sep);
+    }
+  }
+
  private:
   const File* sem_ir_;
   StepStack* step_stack_;
@@ -762,6 +771,9 @@ static auto Stringify(const File& sem_ir, StepStack& step_stack)
       case CARBON_KIND(ElementIndex element_index):
         out << element_index.index;
         break;
+      case CARBON_KIND(FacetTypeId facet_type_id):
+        stringifier.StringifyFacetType(facet_type_id);
+        break;
     }
   }
 
@@ -787,14 +799,15 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
       // Print `Core.Int(N)` as `iN`.
       // TODO: This duplicates work done in StringifyInst for ClassType.
       const auto& class_info = sem_ir.classes().Get(class_decl.class_id);
-      if (auto literal_info = TypeLiteralInfo::ForType(
+      if (auto type_info = RecognizedTypeInfo::ForType(
               sem_ir, ClassType{.type_id = TypeType::TypeId,
                                 .class_id = class_decl.class_id,
                                 .specific_id = specific_id});
-          literal_info.is_valid()) {
+          type_info.is_valid()) {
         RawStringOstream out;
-        literal_info.PrintLiteral(sem_ir, out);
-        return out.TakeStr();
+        if (type_info.PrintLiteral(sem_ir, out)) {
+          return out.TakeStr();
+        }
       }
       step_stack.PushEntityName(class_info, specific_id);
       break;
@@ -812,6 +825,16 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
     case CARBON_KIND(InterfaceDecl interface_decl): {
       step_stack.PushEntityName(
           sem_ir.interfaces().Get(interface_decl.interface_id), specific_id);
+      break;
+    }
+    case CARBON_KIND(NamedConstraintDecl constraint_decl): {
+      step_stack.PushEntityName(
+          sem_ir.named_constraints().Get(constraint_decl.named_constraint_id),
+          specific_id);
+      break;
+    }
+    case CARBON_KIND(RequireImplsDecl _): {
+      step_stack.Push("require");
       break;
     }
     default: {
@@ -833,6 +856,13 @@ auto StringifySpecificInterface(const File& sem_ir,
         sem_ir.interfaces().Get(specific_interface.interface_id).name_id;
     return sem_ir.names().GetFormatted(name_id).str();
   }
+}
+
+auto StringifyFacetType(const File& sem_ir, FacetTypeId facet_type_id)
+    -> std::string {
+  StepStack step_stack(&sem_ir);
+  step_stack.PushFacetType(facet_type_id);
+  return Stringify(sem_ir, step_stack);
 }
 
 }  // namespace Carbon::SemIR

@@ -52,6 +52,12 @@ struct Worklist {
     if (store.size() == 0) {
       return 0;
     }
+    // These InstIds are constant values, so not in the ValueStore. We use a
+    // constant (negative) fingerprint for them.
+    if (inst_id == InstId::InitTombstone ||
+        inst_id == InstId::ImplWitnessTablePlaceholder) {
+      return inst_id.index;
+    }
     return store.Get(inst_id);
   }
 
@@ -115,7 +121,7 @@ struct Worklist {
     } else {
       Add(entity_name.name_id);
     }
-    // TODO: Should we include the parent index?
+    Add(entity_name.parent_scope_id);
   }
 
   auto AddInFile(const File* file, InstId inner_id) -> void {
@@ -246,8 +252,10 @@ struct Worklist {
   auto Add(RequireImplsId require_id) -> void {
     CARBON_CHECK(require_id.has_value());
     const auto& require = sem_ir->require_impls().Get(require_id);
-    Add(require.self_id);
-    Add(require.facet_type_id);
+    Add(sem_ir->constant_values().Get(require.self_id));
+    Add(sem_ir->constant_values().Get(require.facet_type_inst_id));
+    contents.push_back(require.extend_self);
+    Add(require.parent_scope_id);
   }
 
   auto Add(AssociatedConstantId assoc_const_id) -> void {
@@ -256,6 +264,11 @@ struct Worklist {
   }
 
   auto Add(ImplId impl_id) -> void {
+    if (!impl_id.has_value()) {
+      AddInvalid();
+      return;
+    }
+
     const auto& impl = sem_ir->impls().Get(impl_id);
     Add(sem_ir->constant_values().Get(impl.self_id));
     Add(sem_ir->constant_values().Get(impl.constraint_id));

@@ -4,6 +4,7 @@
 
 #include "toolchain/check/type_completion.h"
 
+#include "common/concepts.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/import.h"
@@ -13,7 +14,9 @@
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/specific_named_constraint.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -67,6 +70,49 @@ static auto NoteIncompleteNamedConstraint(
     builder.Note(constraint.latest_decl_id(),
                  NamedConstraintForwardDeclaredHere);
   }
+}
+
+static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
+                                     const SemIR::FacetType& facet_type,
+                                     MakeDiagnosticBuilderFn diagnoser)
+    -> bool {
+  const auto& facet_type_info =
+      context.facet_types().Get(facet_type.facet_type_id);
+
+  for (auto extends : facet_type_info.extend_constraints) {
+    auto interface_id = extends.interface_id;
+    const auto& interface = context.interfaces().Get(interface_id);
+    if (!interface.is_complete()) {
+      if (diagnoser) {
+        auto builder = diagnoser();
+        NoteIncompleteInterface(context, interface_id, builder);
+        builder.Emit();
+      }
+      return false;
+    }
+    if (interface.generic_id.has_value()) {
+      ResolveSpecificDefinition(context, loc_id, extends.specific_id);
+    }
+  }
+
+  for (auto extends : facet_type_info.extend_named_constraints) {
+    auto named_constraint_id = extends.named_constraint_id;
+    const auto& constraint =
+        context.named_constraints().Get(named_constraint_id);
+    if (!constraint.is_complete()) {
+      if (diagnoser) {
+        auto builder = diagnoser();
+        NoteIncompleteNamedConstraint(context, named_constraint_id, builder);
+        builder.Emit();
+      }
+      return false;
+    }
+    if (constraint.generic_id.has_value()) {
+      ResolveSpecificDefinition(context, loc_id, extends.specific_id);
+    }
+  }
+
+  return true;
 }
 
 namespace {
@@ -147,8 +193,9 @@ class TypeCompleter {
              SemIR::CharLiteralType, SemIR::ErrorInst, SemIR::FacetType,
              SemIR::FloatLiteralType, SemIR::FloatType, SemIR::IntType,
              SemIR::IntLiteralType, SemIR::NamespaceType, SemIR::PatternType,
-             SemIR::PointerType, SemIR::SpecificFunctionType, SemIR::TypeType,
-             SemIR::VtableType, SemIR::WitnessType>())
+             SemIR::PointerType, SemIR::RequireSpecificDefinitionType,
+             SemIR::SpecificFunctionType, SemIR::TypeType, SemIR::VtableType,
+             SemIR::WitnessType>())
   auto BuildInfoForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
     return {.value_repr = MakeCopyValueRepr(type_id)};
@@ -194,12 +241,6 @@ class TypeCompleter {
 
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/, SemIR::ConstType inst) const
       -> SemIR::CompleteTypeInfo;
-
-  auto BuildInfoForInst(SemIR::TypeId /*type_id*/,
-                        SemIR::CppVoidType /*inst*/) const
-      -> SemIR::CompleteTypeInfo {
-    CARBON_FATAL("`CppVoidType` is always-incomplete");
-  }
 
   auto BuildInfoForInst(SemIR::TypeId type_id,
                         SemIR::CustomLayoutType inst) const
@@ -374,14 +415,6 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       Push(context_->types().GetTypeIdForTypeInstId(inst.inner_id));
       break;
     }
-    case SemIR::CppVoidType::Kind: {
-      if (diagnoser_) {
-        CARBON_DIAGNOSTIC(CppVoidIncomplete, Note,
-                          "`Cpp.void` is always-incomplete");
-        diagnoser_().Note(SemIR::LocId::None, CppVoidIncomplete).Emit();
-      }
-      return false;
-    }
     case CARBON_KIND(SemIR::CustomLayoutType inst): {
       for (auto field : context_->struct_type_fields().Get(inst.fields_id)) {
         Push(context_->types().GetTypeIdForTypeInstId(field.type_inst_id));
@@ -397,31 +430,8 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       break;
     }
     case CARBON_KIND(SemIR::FacetType inst): {
-      // TODO: Get the complete facet type here.
-      auto identified_id =
-          RequireIdentifiedFacetType(*context_, inst, diagnoser_);
-      if (!identified_id.has_value()) {
+      if (!RequireCompleteFacetType(*context_, loc_id_, inst, diagnoser_)) {
         return false;
-      }
-      const auto& identified =
-          context_->identified_facet_types().Get(identified_id);
-      // Every mentioned interface needs to be complete.
-      for (auto req_interface : identified.required_interfaces()) {
-        auto interface_id = req_interface.interface_id;
-        const auto& interface = context_->interfaces().Get(interface_id);
-        if (!interface.is_complete()) {
-          if (diagnoser_) {
-            auto builder = diagnoser_();
-            NoteIncompleteInterface(*context_, interface_id, builder);
-            builder.Emit();
-          }
-          return false;
-        }
-
-        if (req_interface.specific_id.has_value()) {
-          ResolveSpecificDefinition(*context_, loc_id_,
-                                    req_interface.specific_id);
-        }
       }
       break;
     }
@@ -771,18 +781,11 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
   return true;
 }
 
-auto RequireIdentifiedFacetType(Context& context,
-                                const SemIR::FacetType& facet_type,
-                                MakeDiagnosticBuilderFn diagnoser)
-    -> SemIR::IdentifiedFacetTypeId {
-  if (auto identified_id =
-          context.identified_facet_types().TryGetId(facet_type.facet_type_id);
-      identified_id.has_value()) {
-    return identified_id;
-  }
-  const auto& facet_type_info =
-      context.facet_types().Get(facet_type.facet_type_id);
-
+// Require all named constraints in the facet type are identified. For a named
+// constraint, this means the constraint definition is complete.
+static auto RequireIdentifiedNamedConstraints(
+    Context& context, const SemIR::FacetTypeInfo& facet_type_info,
+    MakeDiagnosticBuilderFn diagnoser) -> bool {
   auto named_constraint_ids = llvm::map_range(
       llvm::concat<const SemIR::SpecificNamedConstraint>(
           facet_type_info.extend_named_constraints,
@@ -797,15 +800,159 @@ auto RequireIdentifiedFacetType(Context& context,
         NoteIncompleteNamedConstraint(context, named_constraint_id, builder);
         builder.Emit();
       }
+      return false;
+    }
+  }
+  return true;
+}
+
+// Get the specific of a RequireImpls from the specific of its enclosing
+// interface or named constraint. Since a `require` declaration can not
+// introduce new generic bindings, the specific for the RequireImpls can be
+// constructed from the enclosing one.
+static auto GetRequireImplsSpecificFromEnclosingSpecific(
+    Context& context, const SemIR::RequireImpls& require,
+    SemIR::SpecificId enclosing_specific_id) -> SemIR::SpecificId {
+  auto enclosing_specific_args_id =
+      context.specifics().GetArgsOrEmpty(enclosing_specific_id);
+  auto enclosing_specific_args =
+      context.inst_blocks().Get(enclosing_specific_args_id);
+  llvm::SmallVector<SemIR::InstId> arg_ids;
+  arg_ids.reserve(enclosing_specific_args.size() + 1);
+  // Start with the args from the enclosing specific.
+  llvm::append_range(arg_ids, enclosing_specific_args);
+
+  // Specifics inside an interface/constraint also include the `Self` of the
+  // enclosing entity. We copy that `Self` from the self-specific of the
+  // RequireImpls generic.
+  const auto& require_generic = context.generics().Get(require.generic_id);
+  const auto& require_self_specific =
+      context.specifics().Get(require_generic.self_specific_id);
+  auto require_self_specific_args =
+      context.inst_blocks().Get(require_self_specific.args_id);
+  // The last argument of a `require` generic is always `Self`, as `require` can
+  // not have any parameters of its own, only enclosing parameters.
+  auto self_inst_id = require_self_specific_args.back();
+  CARBON_CHECK(context.insts().Is<SemIR::SymbolicBinding>(self_inst_id));
+  arg_ids.push_back(self_inst_id);
+
+  return MakeSpecific(context, SemIR::LocId(require.decl_id),
+                      require.generic_id, arg_ids);
+}
+
+// Returns the `facet_type` mapped into `specific_id`. If an error results, it
+// returns None. In particular, this can surface as a monomorphization error
+// where the facet type was valid as a symbolic but becomes invalid with some
+// concrete specific.
+static auto TryGetFacetTypeInSpecific(Context& context,
+                                      SemIR::InstId facet_type,
+                                      SemIR::SpecificId specific_id)
+    -> SemIR::FacetTypeId {
+  auto const_facet_type = SemIR::GetConstantValueInSpecific(
+      context.sem_ir(), specific_id, facet_type);
+  auto facet_type_in_specific = context.insts().TryGetAs<SemIR::FacetType>(
+      context.constant_values().GetInstId(const_facet_type));
+  if (!facet_type_in_specific.has_value()) {
+    return SemIR::FacetTypeId::None;
+  }
+  return facet_type_in_specific->facet_type_id;
+}
+
+auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
+                                const SemIR::FacetType& facet_type,
+                                MakeDiagnosticBuilderFn diagnoser)
+    -> SemIR::IdentifiedFacetTypeId {
+  if (auto identified_id =
+          context.identified_facet_types().TryGetId(facet_type.facet_type_id);
+      identified_id.has_value()) {
+    return identified_id;
+  }
+
+  // Work queue.
+  llvm::SmallVector<SemIR::FacetTypeId> extend_facet_types = {
+      facet_type.facet_type_id};
+  llvm::SmallVector<SemIR::FacetTypeId> impls_facet_types;
+
+  // Outputs for the IdentifiedFacetType.
+  llvm::SmallVector<SemIR::SpecificInterface> extends;
+  llvm::SmallVector<SemIR::SpecificInterface> self_impls;
+
+  while (true) {
+    auto next_facet_type_id = SemIR::FacetTypeId::None;
+    bool facet_type_extends = false;
+    if (!extend_facet_types.empty()) {
+      next_facet_type_id = extend_facet_types.pop_back_val();
+      facet_type_extends = true;
+    } else if (!impls_facet_types.empty()) {
+      next_facet_type_id = impls_facet_types.pop_back_val();
+      facet_type_extends = false;
+    } else {
+      break;
+    }
+
+    const auto& facet_type_info = context.facet_types().Get(next_facet_type_id);
+
+    if (!RequireIdentifiedNamedConstraints(context, facet_type_info,
+                                           diagnoser)) {
       return SemIR::IdentifiedFacetTypeId::None;
+    }
+
+    if (facet_type_extends) {
+      llvm::append_range(extends, facet_type_info.extend_constraints);
+    } else {
+      llvm::append_range(self_impls, facet_type_info.extend_constraints);
+    }
+    llvm::append_range(self_impls, facet_type_info.self_impls_constraints);
+
+    Diagnostics::AnnotationScope annotate_diagnostics(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC(IdentifyingFacetTypeHere, Note,
+                            "identifying facet type {0} here",
+                            SemIR::FacetTypeId);
+          builder.Note(loc_id, IdentifyingFacetTypeHere,
+                       facet_type.facet_type_id);
+        });
+
+    for (auto extends : facet_type_info.extend_named_constraints) {
+      const auto& constraint =
+          context.named_constraints().Get(extends.named_constraint_id);
+      for (auto require_impls_id : context.require_impls_blocks().Get(
+               constraint.require_impls_block_id)) {
+        const auto& require = context.require_impls().Get(require_impls_id);
+        auto require_specific_id = GetRequireImplsSpecificFromEnclosingSpecific(
+            context, require, extends.specific_id);
+        auto facet_type_id = TryGetFacetTypeInSpecific(
+            context, require.facet_type_inst_id, require_specific_id);
+        if (facet_type_id.has_value()) {
+          if (facet_type_extends && require.extend_self) {
+            extend_facet_types.push_back(facet_type_id);
+          } else {
+            impls_facet_types.push_back(facet_type_id);
+          }
+        }
+      }
+    }
+
+    for (auto impls : facet_type_info.self_impls_named_constraints) {
+      const auto& constraint =
+          context.named_constraints().Get(impls.named_constraint_id);
+      for (auto require_impls_id : context.require_impls_blocks().Get(
+               constraint.require_impls_block_id)) {
+        const auto& require = context.require_impls().Get(require_impls_id);
+        auto require_specific_id = GetRequireImplsSpecificFromEnclosingSpecific(
+            context, require, impls.specific_id);
+        auto facet_type_id = TryGetFacetTypeInSpecific(
+            context, require.facet_type_inst_id, require_specific_id);
+        if (facet_type_id.has_value()) {
+          impls_facet_types.push_back(facet_type_id);
+        }
+      }
     }
   }
 
-  // TODO: expand named constraints
   // TODO: Process other kinds of requirements.
-  return context.identified_facet_types().Add(
-      facet_type.facet_type_id, {facet_type_info.extend_constraints,
-                                 facet_type_info.self_impls_constraints});
+  return context.identified_facet_types().Add(facet_type.facet_type_id,
+                                              {extends, self_impls});
 }
 
 auto AsCompleteType(Context& context, SemIR::TypeId type_id,

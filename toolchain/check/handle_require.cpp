@@ -13,6 +13,7 @@
 #include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/named_constraint.h"
@@ -68,8 +69,13 @@ auto HandleParseNode(Context& context, Parse::RequireDefaultSelfImplsId node_id)
 
   auto self_inst_id = lookup_result.target_inst_id();
   auto self_type_id = context.insts().Get(self_inst_id).type_id();
-  CARBON_CHECK(context.types().Is<SemIR::FacetType>(self_type_id));
+  if (self_type_id == SemIR::ErrorInst::TypeId) {
+    context.node_stack().Push(node_id, SemIR::ErrorInst::TypeInstId);
+    return true;
+  }
 
+  CARBON_CHECK(context.types().Is<SemIR::FacetType>(self_type_id));
+  // TODO: We could simplify with a call to ExprAsType, like below?
   auto self_facet_as_type = AddTypeInst<SemIR::FacetAccessType>(
       context, node_id,
       {.type_id = SemIR::TypeType::TypeId,
@@ -82,6 +88,20 @@ auto HandleParseNode(Context& context, Parse::RequireTypeImplsId node_id)
     -> bool {
   auto [self_node_id, self_inst_id] = context.node_stack().PopExprWithNodeId();
   auto self_type = ExprAsType(context, self_node_id, self_inst_id);
+
+  const auto& introducer = context.decl_introducer_state_stack().innermost();
+  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
+    if (self_type.type_id != SemIR::ErrorInst::TypeId) {
+      CARBON_DIAGNOSTIC(RequireImplsExtendWithExplicitSelf, Error,
+                        "`extend require impls` with explicit type");
+      // TODO: If the explicit self-type matches a lookup of NameId::SelfType,
+      // add a note to the diagnostic: "remove the explicit `Self` type here",
+      // and continue without an ErrorInst. See ExtendImplSelfAsDefault.
+      context.emitter().Emit(self_node_id, RequireImplsExtendWithExplicitSelf);
+    }
+    self_type.inst_id = SemIR::ErrorInst::TypeInstId;
+  }
+
   context.node_stack().Push(node_id, self_type.inst_id);
   return true;
 }
@@ -143,8 +163,9 @@ static auto TypeStructureReferencesSelf(
 }
 
 struct ValidateRequireResult {
-  SemIR::FacetType facet_type;
-  const SemIR::IdentifiedFacetType* identified;
+  // The TypeId of a FacetType.
+  SemIR::TypeId constraint_type_id;
+  const SemIR::IdentifiedFacetType* identified_facet_type;
 };
 
 // Returns nullopt if a diagnostic has been emitted and the `require` decl is
@@ -154,12 +175,14 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
                             SemIR::InstId constraint_inst_id,
                             SemIR::InstId scope_inst_id)
     -> std::optional<ValidateRequireResult> {
-  auto constraint_constant_value_inst_id =
-      context.constant_values().GetConstantInstId(constraint_inst_id);
-  auto constraint_facet_type = context.insts().TryGetAs<SemIR::FacetType>(
-      constraint_constant_value_inst_id);
+  auto constraint_constant_value_id =
+      context.constant_values().Get(constraint_inst_id);
+  auto constraint_type_id =
+      SemIR::TypeId::ForTypeConstant(constraint_constant_value_id);
+  auto constraint_facet_type =
+      context.types().TryGetAs<SemIR::FacetType>(constraint_type_id);
   if (!constraint_facet_type) {
-    if (constraint_constant_value_inst_id != SemIR::ErrorInst::InstId) {
+    if (constraint_constant_value_id != SemIR::ErrorInst::ConstantId) {
       CARBON_DIAGNOSTIC(
           RequireImplsMissingFacetType, Error,
           "`require` declaration constrained by a non-facet type; "
@@ -170,8 +193,8 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
     return std::nullopt;
   }
 
-  auto identified_facet_type_id =
-      RequireIdentifiedFacetType(context, *constraint_facet_type, [&] {
+  auto identified_facet_type_id = RequireIdentifiedFacetType(
+      context, SemIR::LocId(constraint_inst_id), *constraint_facet_type, [&] {
         CARBON_DIAGNOSTIC(
             RequireImplsUnidentifiedFacetType, Error,
             "facet type {0} cannot be identified in `require` declaration",
@@ -207,8 +230,8 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
     return std::nullopt;
   }
 
-  return ValidateRequireResult{.facet_type = *constraint_facet_type,
-                               .identified = &identified};
+  return ValidateRequireResult{.constraint_type_id = constraint_type_id,
+                               .identified_facet_type = &identified};
 }
 
 auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
@@ -223,6 +246,7 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   auto introducer =
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Require>();
   LimitModifiersOnDecl(context, introducer, KeywordModifierSet::Extend);
+  bool extend = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend);
 
   auto scope_inst_id =
       context.node_stack().Pop<Parse::NodeKind::RequireIntroducer>();
@@ -230,13 +254,20 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
   auto validated = ValidateRequire(context, node_id, self_inst_id,
                                    constraint_inst_id, scope_inst_id);
   if (!validated) {
+    // In an `extend` decl, errors get propagated into the parent scope just as
+    // names do.
+    if (extend) {
+      auto scope_id = context.scope_stack().PeekNameScopeId();
+      context.name_scopes().Get(scope_id).set_has_error();
+    }
     DiscardGenericDecl(context);
     return true;
   }
 
-  auto [constraint_facet_type, identified] = *validated;
-  if (identified->required_interfaces().empty()) {
+  auto [constraint_type_id, identified_facet_type] = *validated;
+  if (identified_facet_type->required_interfaces().empty()) {
     // A `require T impls type` adds no actual constraints, so nothing to do.
+    // This is not an error though.
     DiscardGenericDecl(context);
     return true;
   }
@@ -250,17 +281,35 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
       {.self_id = self_inst_id,
        .facet_type_inst_id =
            context.types().GetAsTypeInstId(constraint_inst_id),
-       .facet_type_id = constraint_facet_type.facet_type_id,
+       .extend_self = extend,
        .decl_id = decl_id,
        .parent_scope_id = context.scope_stack().PeekNameScopeId(),
-       .body_block_id = decl_block_id,
        .generic_id = BuildGenericDecl(context, decl_id)});
 
   require_impls_decl.require_impls_id = require_impls_id;
   ReplaceInstBeforeConstantUse(context, decl_id, require_impls_decl);
 
-  context.require_impls_stack().AppendToTop(require_impls_id);
+  // We look for a complete type after BuildGenericDecl, so that the resulting
+  // RequireCompleteType instruction is part of the enclosing interface or named
+  // constraint generic definition. Then requiring enclosing entity to be
+  // complete will resolve that definition (via ResolveSpecificDefinition()) and
+  // also construct a specific for the `constraint_inst_id`, finding any
+  // monomorphization errors that result.
+  if (extend) {
+    if (!RequireCompleteType(
+            context, constraint_type_id, SemIR::LocId(constraint_inst_id), [&] {
+              CARBON_DIAGNOSTIC(RequireImplsIncompleteFacetType, Error,
+                                "`extend require` of incomplete facet type {0}",
+                                InstIdAsType);
+              return context.emitter().Build(constraint_inst_id,
+                                             RequireImplsIncompleteFacetType,
+                                             constraint_inst_id);
+            })) {
+      return true;
+    }
+  }
 
+  context.require_impls_stack().AppendToTop(require_impls_id);
   return true;
 }
 

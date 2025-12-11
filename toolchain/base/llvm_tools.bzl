@@ -24,7 +24,6 @@ LLVM_MAIN_TOOLS = {
     "nm": struct(bin_name = "llvm-nm", lib = "@llvm-project//llvm:llvm-nm-lib"),
     "objcopy": struct(bin_name = "llvm-objcopy", lib = "@llvm-project//llvm:llvm-objcopy-lib"),
     "objdump": struct(bin_name = "llvm-objdump", lib = "@llvm-project//llvm:llvm-objdump-lib"),
-    "profdata": struct(bin_name = "llvm-profdata", lib = "@llvm-project//llvm:llvm-profdata-lib"),
     "rc": struct(bin_name = "llvm-rc", lib = "@llvm-project//llvm:llvm-rc-lib"),
     "readobj": struct(bin_name = "llvm-readobj", lib = "@llvm-project//llvm:llvm-readobj-lib"),
     "sancov": struct(bin_name = "sancov", lib = "@llvm-project//llvm:sancov-lib"),

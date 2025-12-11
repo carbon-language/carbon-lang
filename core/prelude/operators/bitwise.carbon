@@ -32,7 +32,7 @@ interface BitAndWith(Other:! type) {
 
 // Bitwise AND with assignment: `a &= b`.
 interface BitAndAssignWith(Other:! type) {
-  fn Op[addr self: Self*](other: Other);
+  fn Op[ref self: Self](other: Other);
 }
 
 // Bitwise OR: `a | b`.
@@ -43,7 +43,7 @@ interface BitOrWith(Other:! type) {
 
 // Bitwise OR with assignment: `a |= b`.
 interface BitOrAssignWith(Other:! type) {
-  fn Op[addr self: Self*](other: Other);
+  fn Op[ref self: Self](other: Other);
 }
 
 // Bitwise XOR: `a ^ b`.
@@ -54,7 +54,7 @@ interface BitXorWith(Other:! type) {
 
 // Bitwise XOR with assignment: `a ^= b`.
 interface BitXorAssignWith(Other:! type) {
-  fn Op[addr self: Self*](other: Other);
+  fn Op[ref self: Self](other: Other);
 }
 
 // Left shift: `a << b`.
@@ -65,7 +65,7 @@ interface LeftShiftWith(Other:! type) {
 
 // Left shift with assignment: `a <<= b`.
 interface LeftShiftAssignWith(Other:! type) {
-  fn Op[addr self: Self*](other: Other);
+  fn Op[ref self: Self](other: Other);
 }
 
 // Right shift: `a >> b`.
@@ -76,7 +76,7 @@ interface RightShiftWith(Other:! type) {
 
 // Right shift with assignment: `a >>= b`.
 interface RightShiftAssignWith(Other:! type) {
-  fn Op[addr self: Self*](other: Other);
+  fn Op[ref self: Self](other: Other);
 }
 
 

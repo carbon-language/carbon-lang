@@ -41,9 +41,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
-// CHECK:STDOUT:   %Self.29b: %Y.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.c8d: %Y.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %W.type: type = facet_type <@W> [concrete]
-// CHECK:STDOUT:   %Self.ffd: %W.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.dda: %W.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %DD: type = class_type @DD [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -55,9 +55,9 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.6e5: type = pattern_type %Y.type [concrete]
 // CHECK:STDOUT:   %CC.type: type = generic_class_type @CC [concrete]
 // CHECK:STDOUT:   %CC.generic: %CC.type = struct_value () [concrete]
-// CHECK:STDOUT:   %CC.c67: type = class_type @CC, @CC(%D) [symbolic]
+// CHECK:STDOUT:   %CC.b5e: type = class_type @CC, @CC(%D) [symbolic]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
-// CHECK:STDOUT:   %Self.3b3: %Z.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.b70: %Z.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %BitAndWith.type.f2e: type = generic_interface_type @BitAndWith [concrete]
 // CHECK:STDOUT:   %BitAndWith.generic: %BitAndWith.type.f2e = struct_value () [concrete]
 // CHECK:STDOUT:   %BitAndWith.type.8a6: type = facet_type <@BitAndWith, @BitAndWith(type)> [concrete]
@@ -73,16 +73,16 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.50c: type = pattern_type %facet_type [concrete]
 // CHECK:STDOUT:   %E.binding.as_type: type = symbolic_binding_type E, 0, %E [symbolic]
 // CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %E, @Y [symbolic]
-// CHECK:STDOUT:   %Y.facet.a6e: %Y.type = facet_value %E.binding.as_type, (%Y.lookup_impl_witness) [symbolic]
-// CHECK:STDOUT:   %CC.eab: type = class_type @CC, @CC(%Y.facet.a6e) [symbolic]
-// CHECK:STDOUT:   %Z.impl_witness.acb: <witness> = impl_witness file.%Z.impl_witness_table, @CC.as.Z.impl(%E) [symbolic]
+// CHECK:STDOUT:   %Y.facet.c54: %Y.type = facet_value %E.binding.as_type, (%Y.lookup_impl_witness) [symbolic]
+// CHECK:STDOUT:   %CC.afb: type = class_type @CC, @CC(%Y.facet.c54) [symbolic]
+// CHECK:STDOUT:   %Z.impl_witness.6e3: <witness> = impl_witness file.%Z.impl_witness_table, @CC.as.Z.impl(%E) [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Y.facet.4e8: %Y.type = facet_value %DD, (%Y.impl_witness) [concrete]
 // CHECK:STDOUT:   %CC.3b3: type = class_type @CC, @CC(%Y.facet.4e8) [concrete]
 // CHECK:STDOUT:   %facet_value: %facet_type = facet_value %DD, (%Y.impl_witness, %W.impl_witness) [concrete]
-// CHECK:STDOUT:   %Z.impl_witness.ac9: <witness> = impl_witness file.%Z.impl_witness_table, @CC.as.Z.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %CC.3b3, (%Z.impl_witness.ac9) [concrete]
+// CHECK:STDOUT:   %Z.impl_witness.d2d: <witness> = impl_witness file.%Z.impl_witness_table, @CC.as.Z.impl(%facet_value) [concrete]
+// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %CC.3b3, (%Z.impl_witness.d2d) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -138,9 +138,9 @@ fn F() {
 // CHECK:STDOUT:     %CC.ref: %CC.type = name_ref CC, file.%CC.decl [concrete = constants.%CC.generic]
 // CHECK:STDOUT:     %E.ref: %facet_type = name_ref E, %E.loc19_14.1 [symbolic = %E.loc19_14.2 (constants.%E)]
 // CHECK:STDOUT:     %E.as_type: type = facet_access_type %E.ref [symbolic = %E.binding.as_type (constants.%E.binding.as_type)]
-// CHECK:STDOUT:     %Y.facet.loc19_29.1: %Y.type = facet_value %E.as_type, (constants.%Y.lookup_impl_witness) [symbolic = %Y.facet.loc19_29.2 (constants.%Y.facet.a6e)]
-// CHECK:STDOUT:     %.loc19_29: %Y.type = converted %E.ref, %Y.facet.loc19_29.1 [symbolic = %Y.facet.loc19_29.2 (constants.%Y.facet.a6e)]
-// CHECK:STDOUT:     %CC.loc19_29.1: type = class_type @CC, @CC(constants.%Y.facet.a6e) [symbolic = %CC.loc19_29.2 (constants.%CC.eab)]
+// CHECK:STDOUT:     %Y.facet.loc19_29.1: %Y.type = facet_value %E.as_type, (constants.%Y.lookup_impl_witness) [symbolic = %Y.facet.loc19_29.2 (constants.%Y.facet.c54)]
+// CHECK:STDOUT:     %.loc19_29: %Y.type = converted %E.ref, %Y.facet.loc19_29.1 [symbolic = %Y.facet.loc19_29.2 (constants.%Y.facet.c54)]
+// CHECK:STDOUT:     %CC.loc19_29.1: type = class_type @CC, @CC(constants.%Y.facet.c54) [symbolic = %CC.loc19_29.2 (constants.%CC.afb)]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:     %.loc19_20.1: type = splice_block %.loc19_20.3 [concrete = constants.%facet_type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -155,12 +155,12 @@ fn F() {
 // CHECK:STDOUT:     %E.loc19_14.1: %facet_type = symbolic_binding E, 0 [symbolic = %E.loc19_14.2 (constants.%E)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Z.impl_witness_table = impl_witness_table (), @CC.as.Z.impl [concrete]
-// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness %Z.impl_witness_table, @CC.as.Z.impl(constants.%E) [symbolic = @CC.as.Z.impl.%Z.impl_witness (constants.%Z.impl_witness.acb)]
+// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness %Z.impl_witness_table, @CC.as.Z.impl(constants.%E) [symbolic = @CC.as.Z.impl.%Z.impl_witness (constants.%Z.impl_witness.6e3)]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Y {
-// CHECK:STDOUT:   %Self: %Y.type = symbolic_binding Self, 0 [symbolic = constants.%Self.29b]
+// CHECK:STDOUT:   %Self: %Y.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c8d]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -170,7 +170,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @W {
-// CHECK:STDOUT:   %Self: %W.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ffd]
+// CHECK:STDOUT:   %Self: %W.type = symbolic_binding Self, 0 [symbolic = constants.%Self.dda]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -180,7 +180,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Z {
-// CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.3b3]
+// CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.b70]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -203,9 +203,9 @@ fn F() {
 // CHECK:STDOUT:   %E.loc19_14.2: %facet_type = symbolic_binding E, 0 [symbolic = %E.loc19_14.2 (constants.%E)]
 // CHECK:STDOUT:   %E.binding.as_type: type = symbolic_binding_type E, 0, %E.loc19_14.2 [symbolic = %E.binding.as_type (constants.%E.binding.as_type)]
 // CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %E.loc19_14.2, @Y [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness)]
-// CHECK:STDOUT:   %Y.facet.loc19_29.2: %Y.type = facet_value %E.binding.as_type, (%Y.lookup_impl_witness) [symbolic = %Y.facet.loc19_29.2 (constants.%Y.facet.a6e)]
-// CHECK:STDOUT:   %CC.loc19_29.2: type = class_type @CC, @CC(%Y.facet.loc19_29.2) [symbolic = %CC.loc19_29.2 (constants.%CC.eab)]
-// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness file.%Z.impl_witness_table, @CC.as.Z.impl(%E.loc19_14.2) [symbolic = %Z.impl_witness (constants.%Z.impl_witness.acb)]
+// CHECK:STDOUT:   %Y.facet.loc19_29.2: %Y.type = facet_value %E.binding.as_type, (%Y.lookup_impl_witness) [symbolic = %Y.facet.loc19_29.2 (constants.%Y.facet.c54)]
+// CHECK:STDOUT:   %CC.loc19_29.2: type = class_type @CC, @CC(%Y.facet.loc19_29.2) [symbolic = %CC.loc19_29.2 (constants.%CC.afb)]
+// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness file.%Z.impl_witness_table, @CC.as.Z.impl(%E.loc19_14.2) [symbolic = %Z.impl_witness (constants.%Z.impl_witness.6e3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -233,7 +233,7 @@ fn F() {
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%CC.c67
+// CHECK:STDOUT:     .Self = constants.%CC.b5e
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -245,7 +245,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc22_9: %Y.type = converted %DD.ref, %Y.facet [concrete = constants.%Y.facet.4e8]
 // CHECK:STDOUT:   %CC: type = class_type @CC, @CC(constants.%Y.facet.4e8) [concrete = constants.%CC.3b3]
 // CHECK:STDOUT:   %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
-// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %CC, (constants.%Z.impl_witness.ac9) [concrete = constants.%Z.facet]
+// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %CC, (constants.%Z.impl_witness.d2d) [concrete = constants.%Z.facet]
 // CHECK:STDOUT:   %.loc22_12: %Z.type = converted %CC, %Z.facet [concrete = constants.%Z.facet]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -254,17 +254,17 @@ fn F() {
 // CHECK:STDOUT:   %D.loc12_10.1 => constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @CC(constants.%Y.facet.a6e) {
-// CHECK:STDOUT:   %D.loc12_10.1 => constants.%Y.facet.a6e
+// CHECK:STDOUT: specific @CC(constants.%Y.facet.c54) {
+// CHECK:STDOUT:   %D.loc12_10.1 => constants.%Y.facet.c54
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CC.as.Z.impl(constants.%E) {
 // CHECK:STDOUT:   %E.loc19_14.2 => constants.%E
 // CHECK:STDOUT:   %E.binding.as_type => constants.%E.binding.as_type
 // CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness
-// CHECK:STDOUT:   %Y.facet.loc19_29.2 => constants.%Y.facet.a6e
-// CHECK:STDOUT:   %CC.loc19_29.2 => constants.%CC.eab
-// CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness.acb
+// CHECK:STDOUT:   %Y.facet.loc19_29.2 => constants.%Y.facet.c54
+// CHECK:STDOUT:   %CC.loc19_29.2 => constants.%CC.afb
+// CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness.6e3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CC(constants.%Y.facet.4e8) {
@@ -277,7 +277,7 @@ fn F() {
 // CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.impl_witness
 // CHECK:STDOUT:   %Y.facet.loc19_29.2 => constants.%Y.facet.4e8
 // CHECK:STDOUT:   %CC.loc19_29.2 => constants.%CC.3b3
-// CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness.ac9
+// CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness.d2d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

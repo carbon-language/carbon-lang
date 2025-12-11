@@ -22,16 +22,13 @@ struct RequireImpls : Printable<RequireImpls> {
   TypeInstId self_id;
   // Evaluates to the `FacetType` that the self-type must implement.
   TypeInstId facet_type_inst_id;
-  // The `FacetTypeInfo` derived from the `facet_type_inst_id` instruction.
-  FacetTypeId facet_type_id;
+  // If the facet type extends `Self`. When true, the `self_id` will be `Self`.
+  bool extend_self;
 
   // The location of the `require` declaration.
   InstId decl_id;
   // The interface or named constraint which contains the `require` declaration.
   NameScopeId parent_scope_id;
-  // The instructions that make up the `require` declaration. It will contain
-  // instructions that provide the `self_id` and `facet_type_inst_id`.
-  InstBlockId body_block_id;
   // A `require` declaration is always generic over `Self` since it's inside an
   // interface or named constraint definition.
   GenericId generic_id;
@@ -40,6 +37,7 @@ struct RequireImpls : Printable<RequireImpls> {
     out << '{';
     out << "self_id: " << self_id
         << ", facet_type_inst_id: " << facet_type_inst_id
+        << ", extend_self: " << extend_self
         << ", parent_scope: " << parent_scope_id;
     out << '}';
   }

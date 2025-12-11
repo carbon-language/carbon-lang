@@ -15,7 +15,7 @@
 #include "common/ostream.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
-#include "toolchain/install/install_paths.h"
+#include "toolchain/base/install_paths.h"
 
 namespace Carbon {
 
@@ -46,6 +46,8 @@ class Runtimes {
 
   enum Component {
     ClangResourceDir,
+    LibUnwind,
+    Libcxx,
 
     NumComponents,
   };
@@ -136,6 +138,10 @@ class Runtimes {
     switch (component) {
       case ClangResourceDir:
         return "clang_resource_dir";
+      case LibUnwind:
+        return "libunwind";
+      case Libcxx:
+        return "libcxx";
       case NumComponents:
         CARBON_FATAL("Invalid component");
     }

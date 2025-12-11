@@ -13,7 +13,7 @@ package Core library "prelude/destroy";
 // it does not deallocate memory.
 interface Destroy {
   // TODO: This should be `final fn Op[ref self: Self]() = "type.destroy"`.
-  fn Op[addr self: Self*]();
+  fn Op[ref self: Self]();
 }
 
 // Returns a constraint that matches all types that should have a `Destroy` impl.
@@ -21,5 +21,5 @@ private fn CanDestroy() -> type = "type.can_destroy";
 
 // Destroys an instance of `DestroyT`. This is also used for trivial types.
 final impl forall [DestroyT:! CanDestroy()] DestroyT as Destroy {
-  fn Op[addr self: Self*]() = "type.destroy";
+  fn Op[ref self: Self]() = "type.destroy";
 }

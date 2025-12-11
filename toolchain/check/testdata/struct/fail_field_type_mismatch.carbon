@@ -29,6 +29,7 @@ var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDOUT:   %pattern_type.268: type = pattern_type %struct_type.a [concrete]
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: Core.FloatLiteral} [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.b = struct_value (%float) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -62,7 +63,7 @@ var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float]
-// CHECK:STDOUT:   %.loc19: %struct_type.b = struct_literal (%float)
+// CHECK:STDOUT:   %.loc19: %struct_type.b = struct_literal (%float) [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

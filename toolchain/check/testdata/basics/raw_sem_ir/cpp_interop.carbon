@@ -63,7 +63,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:   cpp_global_vars:
 // CHECK:STDOUT:     cpp_global_var60000000: {key: {entity_name_id: entity_name60000003}, clang_decl_id: clang_decl_id60000007}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function60000000: {name: name0, parent_scope: name_scope0, call_params_id: inst_block60000006, body: [inst_block60000009]}
+// CHECK:STDOUT:     function60000000: {name: name0, parent_scope: name_scope0, call_params_id: inst_block60000006, return_patterns_id: inst_block_empty, body: [inst_block60000009]}
 // CHECK:STDOUT:     function60000001: {name: name3, parent_scope: name_scope60000001, call_params_id: inst_block_empty}
 // CHECK:STDOUT:     function60000002: {name: name6, parent_scope: name_scope60000001, call_params_id: inst_block_empty}
 // CHECK:STDOUT:     function60000003: {name: name3, parent_scope: name_scope60000001, call_params_id: inst_block6000000D}
@@ -73,7 +73,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}
 // CHECK:STDOUT:   struct_type_fields:
-// CHECK:STDOUT:     struct_type_fields0: {}
+// CHECK:STDOUT:     struct_type_fields_empty: {}
 // CHECK:STDOUT:     struct_type_fields60000001:
 // CHECK:STDOUT:       0:               {name_id: name5, type_inst_id: inst6000001F}
 // CHECK:STDOUT:     struct_type_fields60000002:
@@ -117,12 +117,12 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     'inst(BoolType)':  {kind: BoolType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(BoundMethodType)': {kind: BoundMethodType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(CharLiteralType)': {kind: CharLiteralType, type: type(TypeType)}
-// CHECK:STDOUT:     'inst(CppVoidType)': {kind: CppVoidType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(ErrorInst)': {kind: ErrorInst, type: type(Error)}
 // CHECK:STDOUT:     'inst(FloatLiteralType)': {kind: FloatLiteralType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(InstType)':  {kind: InstType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(IntLiteralType)': {kind: IntLiteralType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(NamespaceType)': {kind: NamespaceType, type: type(TypeType)}
+// CHECK:STDOUT:     'inst(RequireSpecificDefinitionType)': {kind: RequireSpecificDefinitionType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(SpecificFunctionType)': {kind: SpecificFunctionType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(VtableType)': {kind: VtableType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(WitnessType)': {kind: WitnessType, type: type(TypeType)}
@@ -206,12 +206,12 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:       'inst(BoolType)':  concrete_constant(inst(BoolType))
 // CHECK:STDOUT:       'inst(BoundMethodType)': concrete_constant(inst(BoundMethodType))
 // CHECK:STDOUT:       'inst(CharLiteralType)': concrete_constant(inst(CharLiteralType))
-// CHECK:STDOUT:       'inst(CppVoidType)': concrete_constant(inst(CppVoidType))
 // CHECK:STDOUT:       'inst(ErrorInst)': concrete_constant(inst(ErrorInst))
 // CHECK:STDOUT:       'inst(FloatLiteralType)': concrete_constant(inst(FloatLiteralType))
 // CHECK:STDOUT:       'inst(InstType)':  concrete_constant(inst(InstType))
 // CHECK:STDOUT:       'inst(IntLiteralType)': concrete_constant(inst(IntLiteralType))
 // CHECK:STDOUT:       'inst(NamespaceType)': concrete_constant(inst(NamespaceType))
+// CHECK:STDOUT:       'inst(RequireSpecificDefinitionType)': concrete_constant(inst(RequireSpecificDefinitionType))
 // CHECK:STDOUT:       'inst(SpecificFunctionType)': concrete_constant(inst(SpecificFunctionType))
 // CHECK:STDOUT:       'inst(VtableType)': concrete_constant(inst(VtableType))
 // CHECK:STDOUT:       'inst(WitnessType)': concrete_constant(inst(WitnessType))
@@ -281,8 +281,8 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:       4:               inst6000002F
 // CHECK:STDOUT:       5:               inst6000003A
 // CHECK:STDOUT:       6:               inst60000042
-// CHECK:STDOUT:       7:               inst6000004E
-// CHECK:STDOUT:       8:               inst6000004B
+// CHECK:STDOUT:       7:               inst6000004B
+// CHECK:STDOUT:       8:               inst6000004E
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     inst_block60000004:
 // CHECK:STDOUT:       0:               inst60000011

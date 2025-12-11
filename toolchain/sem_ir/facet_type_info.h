@@ -15,6 +15,8 @@
 
 namespace Carbon::SemIR {
 
+class File;
+
 #define CARBON_BUILTIN_CONSTRAINT_MASK(X)                  \
   /* Verifies types can use the builtin `type.destroy`. */ \
   X(TypeCanDestroy)
@@ -41,6 +43,11 @@ class BuiltinConstraintMask
   CARBON_ENUM_MASK_CONSTANT_DEFINITION(BuiltinConstraintMask, X)
 CARBON_BUILTIN_CONSTRAINT_MASK(CARBON_BUILTIN_CONSTRAINT_MASK_WITH_TYPE)
 #undef CARBON_BUILTIN_CONSTRAINT_MASK_WITH_TYPE
+
+// A representation of a facet type that extends a single interface or
+// named constraint.
+using SingleExtendFacetType =
+    std::variant<SpecificInterface, SpecificNamedConstraint>;
 
 struct FacetTypeInfo : Printable<FacetTypeInfo> {
   // Returns a FacetTypeInfo that combines `lhs` and `rhs`. It is not
@@ -98,17 +105,23 @@ struct FacetTypeInfo : Printable<FacetTypeInfo> {
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
-  // In some cases, a facet type is expected to represent a single interface.
-  // For example, an interface declaration or an associated constant are
-  // associated with a facet type that will always be a single interface with no
-  // other constraints. This returns the single interface that this facet type
-  // represents, or `std::nullopt` if it has any other constraints.
-  auto TryAsSingleInterface() const -> std::optional<ImplsConstraint> {
-    if (extend_constraints.size() == 1 && self_impls_constraints.empty() &&
-        extend_named_constraints.empty() &&
-        self_impls_named_constraints.empty() && rewrite_constraints.empty() &&
-        builtin_constraint_mask.empty() && !other_requirements) {
+  // In some cases, a facet type is expected to represent a single interface or
+  // named constraint. For example, an interface declaration, or an associated
+  // constant are associated with a facet type that will always be a single
+  // interface with no other requirements. This returns the single interface or
+  // named constraint that this facet type represents, or `std::nullopt` if it
+  // has any other requirements.
+  auto TryAsSingleExtend() const -> std::optional<SingleExtendFacetType> {
+    if (!self_impls_constraints.empty() ||
+        !self_impls_named_constraints.empty() || !rewrite_constraints.empty() ||
+        !builtin_constraint_mask.empty() || other_requirements) {
+      return std::nullopt;
+    }
+    if (extend_constraints.size() == 1 && extend_named_constraints.empty()) {
       return extend_constraints.front();
+    }
+    if (extend_constraints.empty() && extend_named_constraints.size() == 1) {
+      return extend_named_constraints.front();
     }
     return std::nullopt;
   }
@@ -200,8 +213,14 @@ inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)
   return static_cast<HashCode>(hasher);
 }
 
-// Declared:
-// (Carbon::HashCode)  (value_ = 12557349131240970624)
+// Given an array of witnesses, sorts them to match the ordering of the specific
+// interfaces in the IdentifiedFacetType that produced the witness set, which is
+// the canonical witness order, and returns the resulting block ID. This assumes
+// witnesses have already been deduplicated, and do not contain errors, because
+// it's mainly for imports.
+auto AddCanonicalWitnessesBlock(File& sem_ir,
+                                llvm::SmallVector<InstId>& witnesses)
+    -> InstBlockId;
 
 }  // namespace Carbon::SemIR
 

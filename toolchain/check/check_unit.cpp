@@ -154,11 +154,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
 
   const auto& cpp_imports = unit_and_imports_->cpp_imports;
   if (!cpp_imports.empty()) {
-    auto* clang_ast_unit = unit_and_imports_->unit->clang_ast_unit;
-    CARBON_CHECK(clang_ast_unit);
-    CARBON_CHECK(!clang_ast_unit->get());
-    *clang_ast_unit =
-        ImportCppFiles(context_, cpp_imports, fs_, clang_invocation_);
+    ImportCpp(context_, cpp_imports, fs_, clang_invocation_);
   }
 }
 
@@ -526,9 +522,14 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
   for (const auto& poison : poisoned_queries) {
     auto witness_result = EvalLookupSingleImplWitness(
         context_, poison.loc_id, poison.query, poison.query.query_self_inst_id,
-        /*poison_final_results=*/false);
+        EvalImplLookupMode::RecheckPoisonedLookup);
     CARBON_CHECK(witness_result.has_final_value());
     auto found_witness_id = witness_result.final_witness();
+    if (found_witness_id == SemIR::ErrorInst::InstId) {
+      // Errors may have been diagnosed with the impl used in the poisoned query
+      // in the meantime (such as a missing definition).
+      continue;
+    }
     if (found_witness_id != poison.impl_witness) {
       auto witness_to_impl_id = [&](SemIR::InstId witness_id) {
         auto table_id = context_.insts()
@@ -579,10 +580,10 @@ auto CheckUnit::FinishRun() -> void {
   CheckPoisonedConcreteImplLookupQueries();
   CheckImpls();
 
-  if (auto* clang_ast = context_.sem_ir().clang_ast_unit()) {
+  if (auto* cpp_context = context_.cpp_context()) {
     // Ask Clang to perform any cleanups required, including instantiating used
     // templates.
-    clang_ast->getSema().ActOnEndOfTranslationUnit();
+    cpp_context->sema().ActOnEndOfTranslationUnit();
     context_.emitter().Flush();
   }
 

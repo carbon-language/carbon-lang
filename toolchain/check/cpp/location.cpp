@@ -33,7 +33,7 @@ static auto GetFileInfo(Context& context, SemIR::CheckIRId ir_id) -> FileInfo {
   }
 
   // If we've seen this file before, reuse the same FileID.
-  auto& file_start_locs = context.cpp_carbon_file_locations();
+  auto& file_start_locs = context.cpp_context()->carbon_file_locations();
   if (static_cast<int>(file_start_locs.size()) <= file_index) {
     // Never valid; prepare a slot for the caching below.
     file_start_locs.resize(file_index + 1);
@@ -56,7 +56,7 @@ static auto GetFileInfo(Context& context, SemIR::CheckIRId ir_id) -> FileInfo {
 
 auto GetCppLocation(Context& context, SemIR::LocId loc_id)
     -> clang::SourceLocation {
-  if (!context.sem_ir().clang_ast_unit()) {
+  if (!context.sem_ir().cpp_file()) {
     return clang::SourceLocation();
   }
 

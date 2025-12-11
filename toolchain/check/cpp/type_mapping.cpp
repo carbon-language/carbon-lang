@@ -28,6 +28,25 @@
 
 namespace Carbon::Check {
 
+// A function that wraps a C++ type to form another C++ type. Note that this is
+// a raw function pointer; we don't currently use any lambda captures here. This
+// can be replaced by a `std::function` if captures are found to be needed.
+using WrapFn = auto (*)(Context& context, clang::QualType inner_type)
+    -> clang::QualType;
+
+// Represents a type that requires a subtype to be mapped into a Clang type
+// before it can be mapped.
+struct WrappedType {
+  // The type contained in this wrapped type.
+  SemIR::TypeId inner_type_id;
+  // A function to construct the wrapped type from the mapped unwrapped type.
+  WrapFn wrap_fn;
+};
+
+// Possible results from attempting to map a type. A null QualType indicates
+// that the type couldn't be mapped.
+using TryMapTypeResult = std::variant<clang::QualType, WrappedType>;
+
 // Find the bit width of an integer literal. Following the C++ standard rules
 // for assigning a type to a decimal integer literal, the first signed integer
 // in which the value could fit among bit widths of 32, 64 and 128 is selected.
@@ -44,9 +63,12 @@ static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id)
     // TODO: Add tests for these cases.
     return IntId::None;
   }
-  auto arg = context.insts().GetAs<SemIR::IntValue>(
+  auto arg = context.insts().TryGetAs<SemIR::IntValue>(
       context.constant_values().GetInstId(arg_const_id));
-  llvm::APInt arg_val = context.ints().Get(arg.int_id);
+  if (!arg) {
+    return IntId::None;
+  }
+  llvm::APInt arg_val = context.ints().Get(arg->int_id);
   int arg_non_sign_bits = arg_val.getSignificantBits() - 1;
 
   if (arg_non_sign_bits >= 128) {
@@ -55,7 +77,7 @@ static auto FindIntLiteralBitWidth(Context& context, SemIR::InstId arg_id)
                       "integer type; requires {1} bits, but max is 128",
                       TypedInt, int);
     context.emitter().Emit(arg_id, IntTooLargeForCppType,
-                           {.type = arg.type_id, .value = arg_val},
+                           {.type = arg->type_id, .value = arg_val},
                            arg_non_sign_bits + 1);
     return IntId::None;
   }
@@ -100,10 +122,23 @@ static auto LookupCppType(
                    : clang::QualType();
 }
 
+// Returns the given integer type if its width is as expected. Otherwise returns
+// the null type.
+static auto VerifyIntegerTypeWidth(Context& context, clang::QualType type,
+                                   unsigned int expected_width)
+    -> clang::QualType {
+  if (context.ast_context().getIntWidth(type) == expected_width) {
+    return type;
+  }
+  return clang::QualType();
+}
+
 // Maps a Carbon class type to a C++ type. Returns a null `QualType` if the
 // type is not supported.
 static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
-    -> clang::QualType {
+    -> TryMapTypeResult {
+  clang::ASTContext& ast_context = context.ast_context();
+
   // If the class was imported from C++, return the original C++ type.
   auto clang_decl_id =
       context.name_scopes()
@@ -112,47 +147,83 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
   if (clang_decl_id.has_value()) {
     clang::Decl* clang_decl = context.clang_decls().Get(clang_decl_id).key.decl;
     auto* tag_type_decl = clang::cast<clang::TagDecl>(clang_decl);
-    return context.ast_context().getCanonicalTagType(tag_type_decl);
+    return ast_context.getCanonicalTagType(tag_type_decl);
   }
 
   // If the class represents a Carbon type literal, map it to the corresponding
   // C++ builtin type.
-  auto literal = SemIR::TypeLiteralInfo::ForType(context.sem_ir(), class_type);
-  switch (literal.kind) {
-    case SemIR::TypeLiteralInfo::None: {
+  auto type_info =
+      SemIR::RecognizedTypeInfo::ForType(context.sem_ir(), class_type);
+  switch (type_info.kind) {
+    case SemIR::RecognizedTypeInfo::None: {
       break;
     }
-    case SemIR::TypeLiteralInfo::Numeric: {
-      // Carbon supports large bit width beyond C++ builtins; we don't need to
-      // translate those.
-      if (!literal.numeric.bit_width_id.is_embedded_value()) {
-        return clang::QualType();
+    case SemIR::RecognizedTypeInfo::Numeric: {
+      // Carbon supports large bit width beyond C++ builtins; we don't translate
+      // those into integer types.
+      if (!type_info.numeric.bit_width_id.is_embedded_value()) {
+        break;
       }
-      int bit_width = literal.numeric.bit_width_id.AsValue();
+      int bit_width = type_info.numeric.bit_width_id.AsValue();
 
-      switch (literal.numeric.kind) {
+      switch (type_info.numeric.kind) {
         case SemIR::NumericTypeLiteralInfo::None: {
           CARBON_FATAL("Unexpected invalid numeric type literal");
         }
         case SemIR::NumericTypeLiteralInfo::Float: {
-          return context.ast_context().getRealTypeForBitwidth(
+          return ast_context.getRealTypeForBitwidth(
               bit_width, clang::FloatModeKind::NoFloat);
         }
         case SemIR::NumericTypeLiteralInfo::Int: {
-          return context.ast_context().getIntTypeForBitwidth(bit_width, true);
+          return ast_context.getIntTypeForBitwidth(bit_width, true);
         }
         case SemIR::NumericTypeLiteralInfo::UInt: {
-          return context.ast_context().getIntTypeForBitwidth(bit_width, false);
+          return ast_context.getIntTypeForBitwidth(bit_width, false);
         }
       }
     }
-    case SemIR::TypeLiteralInfo::Char: {
-      return context.ast_context().CharTy;
+    case SemIR::RecognizedTypeInfo::Char: {
+      return ast_context.CharTy;
     }
-    case SemIR::TypeLiteralInfo::CppNullptrT: {
-      return context.ast_context().NullPtrTy;
+    case SemIR::RecognizedTypeInfo::CppLong32: {
+      return VerifyIntegerTypeWidth(context, ast_context.LongTy, 32);
     }
-    case SemIR::TypeLiteralInfo::Str: {
+    case SemIR::RecognizedTypeInfo::CppULong32: {
+      return VerifyIntegerTypeWidth(context, ast_context.UnsignedLongTy, 32);
+    }
+    case SemIR::RecognizedTypeInfo::CppLongLong64: {
+      return VerifyIntegerTypeWidth(context, ast_context.LongLongTy, 64);
+    }
+    case SemIR::RecognizedTypeInfo::CppULongLong64: {
+      return VerifyIntegerTypeWidth(context, ast_context.UnsignedLongLongTy,
+                                    64);
+    }
+    case SemIR::RecognizedTypeInfo::CppNullptrT: {
+      return ast_context.NullPtrTy;
+    }
+    case SemIR::RecognizedTypeInfo::CppVoidBase: {
+      return ast_context.VoidTy;
+    }
+    case SemIR::RecognizedTypeInfo::Optional: {
+      auto args = context.inst_blocks().GetOrEmpty(type_info.args_id);
+      if (args.size() == 1) {
+        auto arg_id = args[0];
+        if (auto facet = context.insts().TryGetAs<SemIR::FacetValue>(arg_id)) {
+          arg_id = facet->type_inst_id;
+        }
+        if (auto pointer_type =
+                context.insts().TryGetAs<SemIR::PointerType>(arg_id)) {
+          return WrappedType{
+              .inner_type_id = context.types().GetTypeIdForTypeInstId(
+                  pointer_type->pointee_id),
+              .wrap_fn = [](Context& context, clang::QualType inner_type) {
+                return context.ast_context().getPointerType(inner_type);
+              }};
+        }
+      }
+      break;
+    }
+    case SemIR::RecognizedTypeInfo::Str: {
       return LookupCppType(context, {"std", "string_view"});
     }
   }
@@ -163,12 +234,13 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
   return clang::QualType();
 }
 
-// Maps a non-wrapper (no const or pointer) Carbon type to a C++ type. Returns a
-// null QualType if the type is not supported.
+// Maps a Carbon type to a C++ type. Either returns the mapped type, a null type
+// as a placeholder indicating the type can't be mapped, or a `WrappedType`
+// representing a type that needs more work before it can be mapped.
 // TODO: Have both Carbon -> C++ and C++ -> Carbon mappings in a single place
 // to keep them in sync.
-static auto MapNonWrapperType(Context& context, SemIR::InstId inst_id,
-                              SemIR::TypeId type_id) -> clang::QualType {
+static auto TryMapType(Context& context, SemIR::TypeId type_id)
+    -> TryMapTypeResult {
   auto type_inst = context.types().GetAsInst(type_id);
 
   CARBON_KIND_SWITCH(type_inst) {
@@ -181,98 +253,62 @@ static auto MapNonWrapperType(Context& context, SemIR::InstId inst_id,
     case CARBON_KIND(SemIR::ClassType class_type): {
       return TryMapClassType(context, class_type);
     }
-    case SemIR::IntLiteralType::Kind: {
-      IntId bit_width_id = FindIntLiteralBitWidth(context, inst_id);
-      if (bit_width_id == IntId::None) {
-        return clang::QualType();
-      }
-      return context.ast_context().getIntTypeForBitwidth(bit_width_id.AsValue(),
-                                                         true);
+    case CARBON_KIND(SemIR::ConstType const_type): {
+      return WrappedType{
+          .inner_type_id =
+              context.types().GetTypeIdForTypeInstId(const_type.inner_id),
+          .wrap_fn = [](Context& /*context*/, clang::QualType inner_type) {
+            return inner_type.withConst();
+          }};
     }
     case SemIR::FloatLiteralType::Kind: {
       return context.ast_context().DoubleTy;
     }
+    case CARBON_KIND(SemIR::PointerType pointer_type): {
+      return WrappedType{
+          .inner_type_id =
+              context.types().GetTypeIdForTypeInstId(pointer_type.pointee_id),
+          .wrap_fn = [](Context& context, clang::QualType inner_type) {
+            auto pointer_type =
+                context.ast_context().getPointerType(inner_type);
+            return context.ast_context().getAttributedType(
+                clang::attr::TypeNonNull, pointer_type, pointer_type);
+          }};
+    }
+
     default: {
       return clang::QualType();
     }
   }
+
+  return clang::QualType();
 }
 
-// Returns `void*` if the type is a wrapped `Cpp.void*`, consuming the pointer
-// from `wrapper_types`. Otherwise returns no type.
-static auto TryMapVoidPointer(Context& context, SemIR::TypeId type_id,
-                              llvm::SmallVector<SemIR::TypeId>& wrapper_types)
-    -> clang::QualType {
-  if (type_id != SemIR::CppVoidType::TypeId || wrapper_types.empty()) {
-    return clang::QualType();
-  }
-
-  if (context.types().Is<SemIR::PointerType>(wrapper_types.back())) {
-    // `void*`.
-    wrapper_types.pop_back();
-  } else if (wrapper_types.size() >= 2 &&
-             context.types().Is<SemIR::ConstType>(wrapper_types.back()) &&
-             context.types().Is<SemIR::PointerType>(
-                 wrapper_types[wrapper_types.size() - 2])) {
-    // `const void*`.
-    wrapper_types.erase(wrapper_types.end() - 2);
-  } else {
-    return clang::QualType();
-  }
-
-  return context.ast_context().getAttributedType(
-      clang::attr::TypeNonNull, context.ast_context().VoidPtrTy,
-      context.ast_context().VoidPtrTy);
-}
-
-// Maps a Carbon type to a C++ type. Accepts an InstId, representing a value
-// whose type is mapped to a C++ type. Returns `clang::QualType` if the mapping
+// Maps a Carbon type to a C++ type. Returns `clang::QualType` if the mapping
 // succeeds, or `clang::QualType::isNull()` if the type is not supported.
 // TODO: unify this with the C++ to Carbon type mapping function.
-static auto MapToCppType(Context& context, SemIR::InstId inst_id)
+static auto MapToCppType(Context& context, SemIR::TypeId type_id)
     -> clang::QualType {
-  auto type_id = context.insts().Get(inst_id).type_id();
-  llvm::SmallVector<SemIR::TypeId> wrapper_types;
+  llvm::SmallVector<WrapFn> wrap_fns;
   while (true) {
-    SemIR::TypeId orig_type_id = type_id;
-    if (auto const_type = context.types().TryGetAs<SemIR::ConstType>(type_id);
-        const_type) {
-      type_id = context.types().GetTypeIdForTypeInstId(const_type->inner_id);
-    } else if (auto pointer_type =
-                   context.types().TryGetAs<SemIR::PointerType>(type_id);
-               pointer_type) {
-      type_id =
-          context.types().GetTypeIdForTypeInstId(pointer_type->pointee_id);
-    } else {
-      break;
-    }
-    wrapper_types.push_back(orig_type_id);
-  }
+    CARBON_KIND_SWITCH(TryMapType(context, type_id)) {
+      case CARBON_KIND(clang::QualType type): {
+        for (auto wrap_fn : llvm::reverse(wrap_fns)) {
+          if (type.isNull()) {
+            break;
+          }
+          type = wrap_fn(context, type);
+        }
+        return type;
+      }
 
-  clang::QualType mapped_type =
-      TryMapVoidPointer(context, type_id, wrapper_types);
-  if (mapped_type.isNull()) {
-    mapped_type = MapNonWrapperType(context, inst_id, type_id);
-    if (mapped_type.isNull()) {
-      return mapped_type;
+      case CARBON_KIND(WrappedType wrapped): {
+        wrap_fns.push_back(wrapped.wrap_fn);
+        type_id = wrapped.inner_type_id;
+        break;
+      }
     }
   }
-
-  for (auto wrapper_type_id : llvm::reverse(wrapper_types)) {
-    if (auto const_type =
-            context.types().TryGetAs<SemIR::ConstType>(wrapper_type_id);
-        const_type) {
-      mapped_type.addConst();
-    } else if (context.types().TryGetAs<SemIR::PointerType>(wrapper_type_id)) {
-      auto pointer_type = context.ast_context().getPointerType(mapped_type);
-      mapped_type = context.ast_context().getAttributedType(
-          clang::attr::TypeNonNull, pointer_type, pointer_type);
-    } else {
-      return clang::QualType();
-    }
-  }
-
-  return mapped_type;
 }
 
 auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr* {
@@ -280,6 +316,9 @@ auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr* {
   switch (SemIR::GetExprCategory(context.sem_ir(), arg_id)) {
     case SemIR::ExprCategory::Error:
       return nullptr;
+
+    case SemIR::ExprCategory::Pattern:
+      CARBON_FATAL("Passing a pattern as a function argument");
 
     case SemIR::ExprCategory::DurableRef:
       value_kind = clang::ExprValueKind::VK_LValue;
@@ -312,7 +351,25 @@ auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr* {
     return nullptr;
   }
 
-  clang::QualType arg_cpp_type = MapToCppType(context, arg_id);
+  clang::QualType arg_cpp_type;
+
+  // Special case: if the argument is an integer literal, look at its value.
+  // TODO: Consider producing a `clang::IntegerLiteral` in this case instead, so
+  // that C++ overloads that behave differently for zero-valued int literals can
+  // recognize it.
+  auto type_id = context.insts().Get(arg_id).type_id();
+  if (context.types().Is<SemIR::IntLiteralType>(type_id)) {
+    IntId bit_width_id = FindIntLiteralBitWidth(context, arg_id);
+    if (bit_width_id != IntId::None) {
+      arg_cpp_type = context.ast_context().getIntTypeForBitwidth(
+          bit_width_id.AsValue(), true);
+    }
+  }
+
+  if (arg_cpp_type.isNull()) {
+    arg_cpp_type = MapToCppType(context, type_id);
+  }
+
   if (arg_cpp_type.isNull()) {
     CARBON_DIAGNOSTIC(CppCallArgTypeNotSupported, Error,
                       "call argument of type {0} is not supported",

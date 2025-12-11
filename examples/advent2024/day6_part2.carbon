@@ -13,17 +13,17 @@ class LoopDetector {
     return {.last = ((-1, -1), (-1, -1)), .steps = 1, .next_steps = 1};
   }
 
-  fn Check[addr self: Self*](next: ((i32, i32), (i32, i32))) -> bool {
-    // TODO: if (next == self->last) {
-    if (next.0.0 == self->last.0.0 and next.0.1 == self->last.0.1 and
-        next.1.0 == self->last.1.0 and next.1.1 == self->last.1.1) {
+  fn Check[ref self: Self](next: ((i32, i32), (i32, i32))) -> bool {
+    // TODO: if (next == self.last) {
+    if (next.0.0 == self.last.0.0 and next.0.1 == self.last.0.1 and
+        next.1.0 == self.last.1.0 and next.1.1 == self.last.1.1) {
       return true;
     }
-    --self->steps;
-    if (self->steps == 0) {
-      self->steps = self->next_steps;
-      self->next_steps <<= 1;
-      self->last = next;
+    --self.steps;
+    if (self.steps == 0) {
+      self.steps = self.next_steps;
+      self.next_steps <<= 1;
+      self.last = next;
     }
     return false;
   }

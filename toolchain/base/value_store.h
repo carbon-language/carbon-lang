@@ -51,14 +51,18 @@ struct IdTag {
   }
 
   auto Apply(int32_t index) const -> int32_t {
+    CARBON_DCHECK(index >= 0, "{0}", index);
     if (index < initial_reserved_ids_) {
       return index;
     }
     // TODO: Assert that id_tag_ doesn't have the second highest bit set.
-    return index ^ id_tag_;
+    auto tagged_index = index ^ id_tag_;
+    CARBON_DCHECK(tagged_index >= 0, "{0}", tagged_index);
+    return tagged_index;
   }
 
   auto Remove(int32_t tagged_index) const -> int32_t {
+    CARBON_DCHECK(tagged_index >= 0, "{0}", tagged_index);
     if (!HasTag(tagged_index)) {
       CARBON_DCHECK(tagged_index < initial_reserved_ids_,
                     "This untagged index is outside the initial reserved ids "
@@ -221,6 +225,20 @@ class ValueStore
     return chunks_[chunk_index].Get(pos);
   }
 
+  // Returns the value for an ID, or a specified default value if a value has
+  // not yet been added for this ID.
+  auto GetWithDefault(IdType id,  //
+                      ConstRefType default_value [[clang::lifetimebound]]) const
+      -> ConstRefType {
+    CARBON_DCHECK(id.index >= 0, "{0}", id);
+    auto index = tag_.Remove(id.index);
+    if (index >= size_) {
+      return default_value;
+    }
+    auto [chunk_index, pos] = RawIndexToChunkIndices(index);
+    return chunks_[chunk_index].Get(pos);
+  }
+
   // Reserves space.
   auto Reserve(int32_t size) -> void {
     if (size <= size_) {
@@ -311,8 +329,8 @@ class ValueStore
 
   auto GetIdTag() const -> IdTag { return tag_; }
   auto GetRawIndex(IdT id) const -> int32_t {
+    CARBON_DCHECK(id.index >= 0, "{0}", index);
     auto index = tag_.Remove(id.index);
-    CARBON_DCHECK(index >= 0, "{0}", index);
 #ifndef NDEBUG
     if (index >= size_) {
       // Attempt to decompose id.index to include extra detail in the check

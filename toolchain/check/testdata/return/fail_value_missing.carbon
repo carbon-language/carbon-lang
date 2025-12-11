@@ -16,9 +16,9 @@ fn Main() -> i32 {
   // CHECK:STDERR: fail_value_missing.carbon:[[@LINE+7]]:3: error: missing return value [ReturnStatementMissingExpr]
   // CHECK:STDERR:   return;
   // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE-4]]:11: note: return type of function is `i32` [ReturnTypeHereNote]
+  // CHECK:STDERR: fail_value_missing.carbon:[[@LINE-4]]:14: note: return type of function is `i32` [ReturnTypeHereNote]
   // CHECK:STDERR: fn Main() -> i32 {
-  // CHECK:STDERR:           ^~~~~~
+  // CHECK:STDERR:              ^~~
   // CHECK:STDERR:
   return;
 }

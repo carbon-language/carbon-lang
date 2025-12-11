@@ -61,9 +61,9 @@ class PageList {
     return var;
   }
 
-  fn Add[addr self: Self*](page: i32) {
-    self->pages[self->num_pages] = page;
-    ++self->num_pages;
+  fn Add[ref self: Self](page: i32) {
+    self.pages[self.num_pages] = page;
+    ++self.num_pages;
   }
 
   fn FollowsRules[self: Self](rules: Rules) -> bool {
@@ -87,12 +87,12 @@ class PageList {
     return true;
   }
 
-  fn ExtractPossibleFirstPage[addr self: Self*](rules: Rules) -> i32 {
-    for (i: i32 in Core.Range(self->num_pages)) {
-      var page: i32 = self->pages[i];
-      if (self->IsPossibleFirstPage(rules, page)) {
-        self->pages[i] = self->pages[self->num_pages - 1];
-        --self->num_pages;
+  fn ExtractPossibleFirstPage[ref self: Self](rules: Rules) -> i32 {
+    for (i: i32 in Core.Range(self.num_pages)) {
+      var page: i32 = self.pages[i];
+      if (self.IsPossibleFirstPage(rules, page)) {
+        self.pages[i] = self.pages[self.num_pages - 1];
+        --self.num_pages;
         return page;
       }
     }

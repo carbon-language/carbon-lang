@@ -35,28 +35,15 @@ namespace Carbon::Check {
 static auto EndAssociatedConstantDeclRegion(Context& context,
                                             SemIR::InterfaceId interface_id)
     -> SemIR::GenericId {
-  // TODO: Stop special-casing tuple patterns once they behave like other
-  // patterns.
-  if (context.node_stack().PeekIs(Parse::NodeKind::TuplePattern)) {
-    DiscardGenericDecl(context);
-    return SemIR::GenericId::None;
-  }
-
   // Peek the pattern. For a valid associated constant, the corresponding
   // instruction will be an `AssociatedConstantDecl` instruction.
   auto decl_id = context.node_stack().PeekPattern();
   auto assoc_const_decl =
-      context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id);
-  if (!assoc_const_decl) {
-    // The pattern wasn't suitable for an associated constant. We'll detect
-    // and diagnose this later. For now, just clean up the generic stack.
-    DiscardGenericDecl(context);
-    return SemIR::GenericId::None;
-  }
+      context.insts().GetAs<SemIR::AssociatedConstantDecl>(decl_id);
 
   // Finish the declaration region of this generic.
   auto& assoc_const =
-      context.associated_constants().Get(assoc_const_decl->assoc_const_id);
+      context.associated_constants().Get(assoc_const_decl.assoc_const_id);
   assoc_const.generic_id = BuildGenericDecl(context, decl_id);
 
   // Build a corresponding associated entity and add it into scope. Note

@@ -65,9 +65,9 @@ import library "b";
 // CHECK:STDERR: class A.C;
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR: fail_named_indirectly_same_package.carbon:[[@LINE-10]]:1: in import [InImport]
-// CHECK:STDERR: b.carbon:7:8: note: return type declared here [IncompleteReturnTypeHere]
+// CHECK:STDERR: b.carbon:7:11: note: return type declared here [IncompleteReturnTypeHere]
 // CHECK:STDERR: fn F() -> A.C;
-// CHECK:STDERR:        ^~~~~~
+// CHECK:STDERR:           ^~~
 // CHECK:STDERR:
 fn G() { F(); }
 
@@ -86,9 +86,9 @@ import Same library "b";
 // CHECK:STDERR: class A.C;
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR: fail_named_indirectly_different_package.carbon:[[@LINE-10]]:1: in import [InImport]
-// CHECK:STDERR: b.carbon:7:8: note: return type declared here [IncompleteReturnTypeHere]
+// CHECK:STDERR: b.carbon:7:11: note: return type declared here [IncompleteReturnTypeHere]
 // CHECK:STDERR: fn F() -> A.C;
-// CHECK:STDERR:        ^~~~~~
+// CHECK:STDERR:           ^~~
 // CHECK:STDERR:
 fn G() { Same.F(); }
 
@@ -239,6 +239,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [concrete]
 // CHECK:STDOUT:   %D: %D.type = struct_value () [concrete]
@@ -278,7 +279,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var %e.var_patt [concrete]
 // CHECK:STDOUT:   %.loc5_9.1: type = splice_block %.loc5_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc5_9.2: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:     %.loc5_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc5_9.3: type = converted %.loc5_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = ref_binding e, %e.var [concrete = %e.var]

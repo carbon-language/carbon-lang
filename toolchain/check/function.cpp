@@ -135,9 +135,8 @@ auto CheckFunctionDefinitionSignature(Context& context,
       context.inst_blocks().GetOrEmpty(function.call_params_id);
 
   // Check the return type is complete.
-  if (function.return_slot_pattern_id.has_value()) {
-    CheckFunctionReturnType(context,
-                            SemIR::LocId(function.return_slot_pattern_id),
+  if (function.return_type_inst_id.has_value()) {
+    CheckFunctionReturnType(context, SemIR::LocId(function.return_type_inst_id),
                             function, SemIR::SpecificId::None);
     // Don't re-check the return type below.
     params_to_complete.consume_back();

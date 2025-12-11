@@ -59,6 +59,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   %PartialConstant: %PartialConstant.type = struct_value () [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -122,7 +123,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !if.expr.result.loc9(%.loc9_29.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc9:
-// CHECK:STDOUT:   %.loc9_40: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc9_40: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc9_34: type = converted %.loc9_40, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   br !if.expr.result.loc9(%.loc9_34)
 // CHECK:STDOUT:
@@ -160,7 +161,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !if.expr.result.loc14(%.loc14_29.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc14:
-// CHECK:STDOUT:   %.loc14_40: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc14_40: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc14_34: type = converted %.loc14_40, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   br !if.expr.result.loc14(%.loc14_34)
 // CHECK:STDOUT:
@@ -183,6 +184,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %KnownValueButNonConstantCondition: %KnownValueButNonConstantCondition.type = struct_value () [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT: }
@@ -247,7 +249,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !if.expr.result.loc11(%.loc11_30.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc11:
-// CHECK:STDOUT:   %.loc11_41: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc11_41: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_35: type = converted %.loc11_41, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   br !if.expr.result.loc11(%.loc11_35)
 // CHECK:STDOUT:
@@ -285,7 +287,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   br !if.expr.result.loc16(%.loc16_28.2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.else.loc16:
-// CHECK:STDOUT:   %.loc16_39: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc16_39: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc16_33: type = converted %.loc16_39, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   br !if.expr.result.loc16(%.loc16_33)
 // CHECK:STDOUT:

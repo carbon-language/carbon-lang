@@ -10,7 +10,7 @@
 namespace Carbon::SemIR {
 
 // Returns the pattern instruction corresponding to the given ID, after
-// unwrapping any simple pattern operators such as `var` and `addr`.
+// unwrapping any simple pattern operators such as `var`.
 static auto GetUnwrapped(const File& sem_ir, InstId pattern_id)
     -> std::pair<InstId, Inst> {
   auto inst_id = pattern_id;
@@ -18,11 +18,6 @@ static auto GetUnwrapped(const File& sem_ir, InstId pattern_id)
 
   if (auto var_pattern = inst.TryAs<VarPattern>()) {
     inst_id = var_pattern->subpattern_id;
-    inst = sem_ir.insts().Get(inst_id);
-  }
-
-  if (auto addr_pattern = inst.TryAs<AddrPattern>()) {
-    inst_id = addr_pattern->inner_id;
     inst = sem_ir.insts().Get(inst_id);
   }
 

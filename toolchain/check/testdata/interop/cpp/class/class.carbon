@@ -477,12 +477,11 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
 // CHECK:STDOUT:   %Bar.f.cpp_overload_set.value: %Bar.f.cpp_overload_set.type = cpp_overload_set_value @Bar.f.cpp_overload_set [concrete = constants.%Bar.f.cpp_overload_set.value]
 // CHECK:STDOUT:   %Bar.f.decl: %Bar.f.type = fn_decl @Bar.f [concrete = constants.%Bar.f] {
-// CHECK:STDOUT:     %self.patt: %pattern_type.146 = value_binding_pattern self [concrete]
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.146 = value_param_pattern %self.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %.loc8: %pattern_type.07b = addr_pattern %self.param_patt [concrete]
+// CHECK:STDOUT:     %self.patt: %pattern_type.07b = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.07b = ref_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: %ptr.f68 = value_param call_param0
-// CHECK:STDOUT:     %self: %ptr.f68 = value_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Bar = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Bar = ref_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -507,8 +506,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   %.loc8: ref %Bar = deref %bar.ref
 // CHECK:STDOUT:   %f.ref: %Bar.f.cpp_overload_set.type = name_ref f, imports.%Bar.f.cpp_overload_set.value [concrete = constants.%Bar.f.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8, %f.ref
-// CHECK:STDOUT:   %addr: %ptr.f68 = addr_of %.loc8
-// CHECK:STDOUT:   %Bar.f.call: init %empty_tuple.type = call imports.%Bar.f.decl(%addr)
+// CHECK:STDOUT:   %Bar.f.call: init %empty_tuple.type = call imports.%Bar.f.decl(%.loc8)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

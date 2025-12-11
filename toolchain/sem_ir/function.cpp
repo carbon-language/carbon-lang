@@ -37,6 +37,10 @@ auto GetCallee(const File& sem_ir, InstId callee_id, SpecificId specific_id)
           sem_ir.insts().TryGetAs<SpecificFunction>(callee_id)) {
     fn.resolved_specific_id = specific_function->specific_id;
     callee_id = specific_function->callee_id;
+  } else if (auto specific_impl_function =
+                 sem_ir.insts().TryGetAs<SpecificImplFunction>(callee_id)) {
+    fn.resolved_specific_id = specific_impl_function->specific_id;
+    callee_id = specific_impl_function->callee_id;
   }
 
   // Identify the function we're calling by its type.
@@ -113,7 +117,6 @@ auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
   auto inst_id = pattern_id;
   auto inst = sem_ir.insts().Get(inst_id);
 
-  sem_ir.insts().TryUnwrap(inst, inst_id, &AddrPattern::inner_id);
   sem_ir.insts().TryUnwrap(inst, inst_id, &VarPattern::subpattern_id);
   auto [param_pattern, param_pattern_id] =
       sem_ir.insts().TryUnwrap(inst, inst_id, &AnyParamPattern::subpattern_id);
@@ -129,11 +132,11 @@ auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
 
 auto Function::GetDeclaredReturnType(const File& file,
                                      SpecificId specific_id) const -> TypeId {
-  if (!return_slot_pattern_id.has_value()) {
+  if (!return_type_inst_id.has_value()) {
     return TypeId::None;
   }
-  return ExtractScrutineeType(
-      file, GetTypeOfInstInSpecific(file, specific_id, return_slot_pattern_id));
+  return file.types().GetTypeIdForTypeConstantId(
+      GetConstantValueInSpecific(file, specific_id, return_type_inst_id));
 }
 
 }  // namespace Carbon::SemIR

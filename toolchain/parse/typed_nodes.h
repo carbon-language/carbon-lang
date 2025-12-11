@@ -387,15 +387,6 @@ struct CompileTimeBindingPattern {
   AnyExprId type;
 };
 
-// An address-of binding: `addr self: Self*`.
-struct Addr {
-  static constexpr auto Kind = NodeKind::Addr.Define(
-      {.category = NodeCategory::Pattern, .child_count = 1});
-
-  Lex::AddrTokenIndex token;
-  AnyPatternId inner;
-};
-
 using TuplePatternStart =
     LeafNode<NodeKind::TuplePatternStart, Lex::OpenParenTokenIndex>;
 using PatternListComma =

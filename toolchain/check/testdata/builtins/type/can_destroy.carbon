@@ -128,9 +128,11 @@ impl C as TypeAnd(I, CanDestroy()) {}
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %facet_value.ff9: %type_where = facet_value %empty_tuple.type, () [concrete]
 // CHECK:STDOUT:   %F.specific_fn.1af: <specific function> = specific_function %F, @F(%facet_value.ff9) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %facet_value.7c2: %type_where = facet_value %empty_struct_type, () [concrete]
 // CHECK:STDOUT:   %F.specific_fn.da1: <specific function> = specific_function %F, @F(%facet_value.7c2) [concrete]
 // CHECK:STDOUT: }
@@ -141,13 +143,13 @@ impl C as TypeAnd(I, CanDestroy()) {}
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref.loc9: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc9_6: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc9_6: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %facet_value.loc9: %type_where = facet_value constants.%empty_tuple.type, () [concrete = constants.%facet_value.ff9]
 // CHECK:STDOUT:   %.loc9_7: %type_where = converted %.loc9_6, %facet_value.loc9 [concrete = constants.%facet_value.ff9]
 // CHECK:STDOUT:   %F.specific_fn.loc9: <specific function> = specific_function %F.ref.loc9, @F(constants.%facet_value.ff9) [concrete = constants.%F.specific_fn.1af]
 // CHECK:STDOUT:   %F.call.loc9: init %empty_tuple.type = call %F.specific_fn.loc9()
 // CHECK:STDOUT:   %F.ref.loc10: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc10_6: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc10_6: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %facet_value.loc10: %type_where = facet_value constants.%empty_struct_type, () [concrete = constants.%facet_value.7c2]
 // CHECK:STDOUT:   %.loc10_7: %type_where = converted %.loc10_6, %facet_value.loc10 [concrete = constants.%facet_value.7c2]
 // CHECK:STDOUT:   %F.specific_fn.loc10: <specific function> = specific_function %F.ref.loc10, @F(constants.%facet_value.7c2) [concrete = constants.%F.specific_fn.da1]
@@ -162,9 +164,11 @@ impl C as TypeAnd(I, CanDestroy()) {}
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %facet_value.ff9: %type_where = facet_value %empty_tuple.type, () [concrete]
 // CHECK:STDOUT:   %F.specific_fn.1af: <specific function> = specific_function %F, @F(%facet_value.ff9) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %facet_value.7c2: %type_where = facet_value %empty_struct_type, () [concrete]
 // CHECK:STDOUT:   %F.specific_fn.da1: <specific function> = specific_function %F, @F(%facet_value.7c2) [concrete]
 // CHECK:STDOUT: }
@@ -175,13 +179,13 @@ impl C as TypeAnd(I, CanDestroy()) {}
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref.loc9: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc9_6: %empty_tuple.type = tuple_literal ()
+// CHECK:STDOUT:   %.loc9_6: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %facet_value.loc9: %type_where = facet_value constants.%empty_tuple.type, () [concrete = constants.%facet_value.ff9]
 // CHECK:STDOUT:   %.loc9_7: %type_where = converted %.loc9_6, %facet_value.loc9 [concrete = constants.%facet_value.ff9]
 // CHECK:STDOUT:   %F.specific_fn.loc9: <specific function> = specific_function %F.ref.loc9, @F(constants.%facet_value.ff9) [concrete = constants.%F.specific_fn.1af]
 // CHECK:STDOUT:   %F.call.loc9: init %empty_tuple.type = call %F.specific_fn.loc9()
 // CHECK:STDOUT:   %F.ref.loc10: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc10_6: %empty_struct_type = struct_literal ()
+// CHECK:STDOUT:   %.loc10_6: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %facet_value.loc10: %type_where = facet_value constants.%empty_struct_type, () [concrete = constants.%facet_value.7c2]
 // CHECK:STDOUT:   %.loc10_7: %type_where = converted %.loc10_6, %facet_value.loc10 [concrete = constants.%facet_value.7c2]
 // CHECK:STDOUT:   %F.specific_fn.loc10: <specific function> = specific_function %F.ref.loc10, @F(constants.%facet_value.7c2) [concrete = constants.%F.specific_fn.da1]

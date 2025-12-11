@@ -11,8 +11,9 @@
 namespace Carbon::Check {
 
 // Returns whether the given C++ imported function requires a C++ thunk to be
-// used to call it. A C++ thunk is required for functions that use any type
-// except void, pointer types and signed 32-bit and 64-bit integers.
+// used to call it. A C++ thunk is required for functions whose ABI uses any
+// type except void, pointer and reference types, and signed 32-bit and 64-bit
+// integers.
 auto IsCppThunkRequired(Context& context, const SemIR::Function& function)
     -> bool;
 

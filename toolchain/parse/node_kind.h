@@ -80,7 +80,7 @@ class NodeKind : public CARBON_ENUM_BASE(NodeKind) {
   CARBON_ENUM_CONSTANT_DEFINITION(NodeKind, Name)
 #include "toolchain/parse/node_kind.def"
 
-constexpr int NodeKind::ValidCount = 0
+inline constexpr int NodeKind::ValidCount = 0
 #define CARBON_PARSE_NODE_KIND(Name) +1
 #include "toolchain/parse/node_kind.def"
     ;

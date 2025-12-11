@@ -149,7 +149,7 @@ struct TypeExpr {
   SemIR::TypeId type_id;
 };
 
-constexpr inline TypeExpr TypeExpr::None = {.inst_id = SemIR::TypeInstId::None,
+inline constexpr TypeExpr TypeExpr::None = {.inst_id = SemIR::TypeInstId::None,
                                             .type_id = SemIR::TypeId::None};
 
 // Converts an expression for use as a type.
