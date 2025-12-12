@@ -31,7 +31,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     entity_name60000000: {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0}
 // CHECK:STDOUT:   cpp_global_vars: {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function60000000: {name: name0, parent_scope: name_scope0, call_params_id: inst_block6000000B, return_type_inst_id: inst60000020, return_patterns_id: inst_block6000000A, body: [inst_block6000000E]}
+// CHECK:STDOUT:     function60000000: {name: name0, parent_scope: name_scope0, call_params_id: inst_block6000000B, return_type_inst_id: inst60000020, return_form_inst_id: inst60000021, return_patterns_id: inst_block6000000A, body: [inst_block6000000E]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   generics:        {}
 // CHECK:STDOUT:   specifics:       {}

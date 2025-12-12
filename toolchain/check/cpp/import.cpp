@@ -1218,6 +1218,7 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
 // fields of SemIR::Function with the same names.
 struct ReturnInfo {
   SemIR::TypeInstId return_type_inst_id;
+  SemIR::InstId return_form_inst_id;
   SemIR::InstBlockId return_patterns_id;
 };
 
@@ -1231,10 +1232,12 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
   if (!type_inst_id.has_value()) {
     // void.
     return {.return_type_inst_id = type_inst_id,
+            .return_form_inst_id = SemIR::InstId::None,
             .return_patterns_id = SemIR::InstBlockId::None};
   }
   if (type_inst_id == SemIR::ErrorInst::TypeInstId) {
     return {.return_type_inst_id = type_inst_id,
+            .return_form_inst_id = SemIR::InstId::None,
             .return_patterns_id = SemIR::InstBlockId::None};
   }
   auto pattern_type_id = GetPatternType(context, type_id);
@@ -1254,16 +1257,25 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
                    context, return_type_import_ir_inst_id,
                    SemIR::ReturnSlotPattern({.type_id = pattern_type_id,
                                              .type_inst_id = type_inst_id})));
+  auto return_index = context.full_pattern_stack().NextCallParamIndex();
   SemIR::InstId param_pattern_id = AddPatternInst(
       context,
       MakeImportedLocIdAndInst(
           context, return_type_import_ir_inst_id,
-          SemIR::OutParamPattern(
-              {.type_id = pattern_type_id,
-               .subpattern_id = return_slot_pattern_id,
-               .index = context.full_pattern_stack().NextCallParamIndex()})));
+          SemIR::OutParamPattern({.type_id = pattern_type_id,
+                                  .subpattern_id = return_slot_pattern_id,
+                                  .index = return_index})));
   auto return_patterns_id = context.inst_blocks().Add({param_pattern_id});
+
+  // For consistency with how C++ import handles types, we use TryEvalInst to
+  // directly create a constant rather than adding it to insts() first.
+  auto return_form_const_id = TryEvalInst(
+      context, SemIR::InitForm{.type_id = SemIR::FormType::TypeId,
+                               .type_component_inst_id = type_inst_id,
+                               .index = return_index});
   return {.return_type_inst_id = type_inst_id,
+          .return_form_inst_id =
+              context.constant_values().GetInstId(return_form_const_id),
           .return_patterns_id = return_patterns_id};
 }
 
@@ -1275,6 +1287,7 @@ struct FunctionSignatureInsts {
   SemIR::InstBlockId implicit_param_patterns_id;
   SemIR::InstBlockId param_patterns_id;
   SemIR::TypeInstId return_type_inst_id;
+  SemIR::InstId return_form_inst_id;
   SemIR::InstBlockId return_patterns_id;
   SemIR::InstBlockId call_params_id;
 };
@@ -1305,7 +1318,7 @@ static auto CreateFunctionSignatureInsts(Context& context, SemIR::LocId loc_id,
   if (!param_patterns_id.has_value()) {
     return std::nullopt;
   }
-  auto [return_type_inst_id, return_patterns_id] =
+  auto [return_type_inst_id, return_form_inst_id, return_patterns_id] =
       GetReturnInfo(context, loc_id, clang_decl);
   if (return_type_inst_id == SemIR::ErrorInst::TypeInstId) {
     return std::nullopt;
@@ -1319,6 +1332,7 @@ static auto CreateFunctionSignatureInsts(Context& context, SemIR::LocId loc_id,
   return {{.implicit_param_patterns_id = implicit_param_patterns_id,
            .param_patterns_id = param_patterns_id,
            .return_type_inst_id = return_type_inst_id,
+           .return_form_inst_id = return_form_inst_id,
            .return_patterns_id = return_patterns_id,
            .call_params_id = call_params_id}};
 }
@@ -1410,6 +1424,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
        .definition_id = SemIR::InstId::None},
       {.call_params_id = function_params_insts->call_params_id,
        .return_type_inst_id = function_params_insts->return_type_inst_id,
+       .return_form_inst_id = function_params_insts->return_form_inst_id,
        .return_patterns_id = function_params_insts->return_patterns_id,
        .virtual_modifier = virtual_modifier,
        .virtual_index = virtual_index,

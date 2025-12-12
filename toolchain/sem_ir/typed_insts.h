@@ -371,7 +371,7 @@ struct Call {
   // conversions.
   static constexpr auto Kind = InstKind::Call.Define<Parse::NodeId>(
       {.ir_name = "call",
-       .expr_category = ExprCategory::Initializing,
+       .expr_category = ComputedExprCategory::DependsOnOperands,
        .constant_needs_inst_id =
            InstConstantNeedsInstIdKind::DuringEvaluation});
 

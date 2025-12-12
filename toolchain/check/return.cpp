@@ -4,6 +4,7 @@
 
 #include "toolchain/check/return.h"
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
@@ -153,9 +154,26 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
     // convert to it.
     expr_id = SemIR::ErrorInst::InstId;
   } else {
-    return_slot_id = GetCurrentReturnSlot(context);
-    CARBON_CHECK(return_slot_id.has_value());
-    expr_id = Initialize(context, loc_id, return_slot_id, expr_id);
+    auto return_form =
+        context.insts().Get(function.GetDeclaredReturnForm(context.sem_ir()));
+    CARBON_KIND_SWITCH(return_form) {
+      case CARBON_KIND(SemIR::InitForm _): {
+        return_slot_id = GetCurrentReturnSlot(context);
+        CARBON_CHECK(return_slot_id.has_value());
+        expr_id = Initialize(context, loc_id, return_slot_id, expr_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::RefForm ref_form): {
+        expr_id = Convert(
+            context, loc_id, expr_id,
+            ConversionTarget{.kind = ConversionTarget::DurableRef,
+                             .type_id = context.types().GetTypeIdForTypeInstId(
+                                 ref_form.type_component_inst_id)});
+        break;
+      }
+      default:
+        CARBON_FATAL("Unexpected inst kind: {0}", return_form);
+    }
   }
 
   AddReturnCleanupBlockWithExpr(

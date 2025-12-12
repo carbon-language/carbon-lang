@@ -50,6 +50,7 @@ auto GlobalInit::Finalize() -> void {
         .first_owning_decl_id = SemIR::InstId::None},
        {.call_params_id = SemIR::InstBlockId::Empty,
         .return_type_inst_id = SemIR::TypeInstId::None,
+        .return_form_inst_id = SemIR::InstId::None,
         .return_patterns_id = SemIR::InstBlockId::None,
         .body_block_ids = {SemIR::InstBlockId::GlobalInit}}}));
 }

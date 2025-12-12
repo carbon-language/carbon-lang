@@ -190,6 +190,7 @@ static auto MergeFunctionRedecl(Context& context,
     prev_function.MergeDefinition(new_function);
     prev_function.call_params_id = new_function.call_params_id;
     prev_function.return_type_inst_id = new_function.return_type_inst_id;
+    prev_function.return_form_inst_id = new_function.return_form_inst_id;
     prev_function.return_patterns_id = new_function.return_patterns_id;
     prev_function.self_param_id = new_function.self_param_id;
   }
@@ -408,12 +409,14 @@ static auto BuildFunctionDecl(Context& context,
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
   auto return_patterns_id = SemIR::InstBlockId::None;
   auto return_type_inst_id = SemIR::TypeInstId::None;
+  auto return_form_inst_id = SemIR::InstId::None;
   if (auto [return_node, maybe_return_patterns_id] =
           context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ReturnType>();
       maybe_return_patterns_id) {
     return_patterns_id = *maybe_return_patterns_id;
-    return_type_inst_id = context.PopReturnForm().type_component_id;
-    CARBON_CHECK(return_type_inst_id.has_value());
+    auto return_form = context.PopReturnForm();
+    return_type_inst_id = return_form.type_component_id;
+    return_form_inst_id = return_form.form_inst_id;
   }
 
   auto name = PopNameComponent(context, return_patterns_id);
@@ -448,6 +451,7 @@ static auto BuildFunctionDecl(Context& context,
                           name, decl_id, is_extern, introducer.extern_library),
                       {.call_params_id = name.call_params_id,
                        .return_type_inst_id = return_type_inst_id,
+                       .return_form_inst_id = return_form_inst_id,
                        .return_patterns_id = return_patterns_id,
                        .virtual_modifier = virtual_modifier,
                        .self_param_id = self_param_id}};
@@ -569,7 +573,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   // If the `}` of the function is reachable, reject if we need a return value
   // and otherwise add an implicit `return;`.
   if (IsCurrentPositionReachable(context)) {
-    if (context.functions().Get(function_id).return_type_inst_id.has_value()) {
+    if (context.functions().Get(function_id).return_form_inst_id.has_value()) {
       CARBON_DIAGNOSTIC(
           MissingReturnStatement, Error,
           "missing `return` at end of function with declared return type");

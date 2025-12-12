@@ -97,6 +97,7 @@ static auto MakeNoOpFunction(Context& context, SemIR::LocId loc_id,
       {
           .call_params_id = call_params_id,
           .return_type_inst_id = SemIR::TypeInstId::None,
+          .return_form_inst_id = SemIR::InstId::None,
           .return_patterns_id = SemIR::InstBlockId::None,
           .self_param_id = self_param_id,
       }};
