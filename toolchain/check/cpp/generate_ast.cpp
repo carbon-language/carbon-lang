@@ -367,14 +367,14 @@ class GenerateASTAction : public clang::ASTFrontendAction {
     return true;
   }
 
+  // Parse the imports and inline C++ fragments. This is notionally very similar
+  // to `clang::ParseAST`, which `ASTFrontendAction::ExecuteAction` calls, but
+  // this version doesn't parse C++20 modules and stops just before reaching the
+  // end of the translation unit.
   auto ExecuteAction() -> void override {
     clang::CompilerInstance& clang_instance = getCompilerInstance();
     clang_instance.createSema(getTranslationUnitKind(),
                               /*CompletionConsumer=*/nullptr);
-
-    // Parse the imports and inline C++ fragments. This is notionally very
-    // similar to `ParseAST`, but doesn't parse C++20 modules and stops just
-    // before reaching the end of the translation unit.
 
     context_->cpp_context()->set_parser(std::make_unique<clang::Parser>(
         clang_instance.getPreprocessor(), clang_instance.getSema(),
