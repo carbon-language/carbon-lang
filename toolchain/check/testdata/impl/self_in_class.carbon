@@ -138,9 +138,9 @@ class A {
 // CHECK:STDOUT: fn @C.as.DefaultConstructible.impl.Make() -> %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc25_33.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc25_33.2: init %C = class_init (), %return [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc25_33.2: init %C = class_init (), %return.param [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc25_34: init %C = converted %.loc25_33.1, %.loc25_33.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   return %.loc25_34 to %return
+// CHECK:STDOUT:   return %.loc25_34 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DefaultConstructible.Make(constants.%Self) {

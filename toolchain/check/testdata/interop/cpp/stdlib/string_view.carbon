@@ -110,7 +110,7 @@ fn G() -> str {
 // CHECK:STDOUT:     %return.patt: %pattern_type.461 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.461 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc13_11: form = init_form constants.%str.ee0, call_param0 [concrete = constants.%.a70]
+// CHECK:STDOUT:     %.loc13_11.2: form = init_form constants.%str.ee0, call_param0 [concrete = constants.%.a70]
 // CHECK:STDOUT:     %return.param: ref %str.ee0 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %str.ee0 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -133,10 +133,10 @@ fn G() -> str {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Produce.ref: %Produce.cpp_overload_set.type = name_ref Produce, imports.%Produce.cpp_overload_set.value [concrete = constants.%Produce.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc13_8: ref %str.ee0 = splice_block %return {}
-// CHECK:STDOUT:   %addr: %ptr.85f = addr_of %.loc13_8
+// CHECK:STDOUT:   %.loc13_11.1: ref %str.ee0 = splice_block %return.param {}
+// CHECK:STDOUT:   %addr: %ptr.85f = addr_of %.loc13_11.1
 // CHECK:STDOUT:   %Produce__carbon_thunk.call: init %empty_tuple.type = call imports.%Produce__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc14: init %str.ee0 = in_place_init %Produce__carbon_thunk.call, %.loc13_8
-// CHECK:STDOUT:   return %.loc14 to %return
+// CHECK:STDOUT:   %.loc14: init %str.ee0 = in_place_init %Produce__carbon_thunk.call, %.loc13_11.1
+// CHECK:STDOUT:   return %.loc14 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

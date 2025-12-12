@@ -171,7 +171,7 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   %IsNullEmptyStruct.ref: %IsNullEmptyStruct.type = name_ref IsNullEmptyStruct, file.%IsNullEmptyStruct.decl [concrete = constants.%IsNullEmptyStruct]
 // CHECK:STDOUT:   %s.ref: %.b2d = name_ref s, %s
 // CHECK:STDOUT:   %IsNullEmptyStruct.call: init bool = call %IsNullEmptyStruct.ref(%s.ref)
-// CHECK:STDOUT:   return %IsNullEmptyStruct.call to %return
+// CHECK:STDOUT:   return %IsNullEmptyStruct.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestC(%c.param: %.edf) -> bool {
@@ -179,7 +179,7 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   %IsNullC.ref: %IsNullC.type = name_ref IsNullC, file.%IsNullC.decl [concrete = constants.%IsNullC]
 // CHECK:STDOUT:   %c.ref: %.edf = name_ref c, %c
 // CHECK:STDOUT:   %IsNullC.call: init bool = call %IsNullC.ref(%c.ref)
-// CHECK:STDOUT:   return %IsNullC.call to %return
+// CHECK:STDOUT:   return %IsNullC.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call_generic.carbon
@@ -269,7 +269,7 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   %s.ref: %.b2d = name_ref s, %s
 // CHECK:STDOUT:   %IsNull.specific_fn: <specific function> = specific_function %IsNull.ref, @IsNull(constants.%empty_struct_type) [concrete = constants.%IsNull.specific_fn.34e]
 // CHECK:STDOUT:   %IsNull.call: init bool = call %IsNull.specific_fn(%s.ref)
-// CHECK:STDOUT:   return %IsNull.call to %return
+// CHECK:STDOUT:   return %IsNull.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestC(%c.param: %.edf) -> bool {
@@ -278,6 +278,6 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   %c.ref: %.edf = name_ref c, %c
 // CHECK:STDOUT:   %IsNull.specific_fn: <specific function> = specific_function %IsNull.ref, @IsNull(constants.%C) [concrete = constants.%IsNull.specific_fn.b1f]
 // CHECK:STDOUT:   %IsNull.call: init bool = call %IsNull.specific_fn(%c.ref)
-// CHECK:STDOUT:   return %IsNull.call to %return
+// CHECK:STDOUT:   return %IsNull.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

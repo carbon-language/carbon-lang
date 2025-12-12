@@ -50,6 +50,6 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> bool {
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %Less.call: init bool = call %Less.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   return %Less.call to %return
+// CHECK:STDOUT:   return %Less.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

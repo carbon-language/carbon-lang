@@ -88,15 +88,15 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst6000002D:    {kind: NameRef, arg0: name1, arg1: inst60000014, type: type(inst60000010)}
 // CHECK:STDOUT:     inst6000002E:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst60000010)}
 // CHECK:STDOUT:     inst6000002F:    {kind: TupleLiteral, arg0: inst_block6000000F, type: type(inst6000001A)}
-// CHECK:STDOUT:     inst60000030:    {kind: TupleAccess, arg0: inst60000029, arg1: element0, type: type(inst60000010)}
+// CHECK:STDOUT:     inst60000030:    {kind: TupleAccess, arg0: inst60000028, arg1: element0, type: type(inst60000010)}
 // CHECK:STDOUT:     inst60000031:    {kind: TupleInit, arg0: inst_block60000010, arg1: inst60000030, type: type(inst60000010)}
 // CHECK:STDOUT:     inst60000032:    {kind: Converted, arg0: inst6000002D, arg1: inst60000031, type: type(inst60000010)}
-// CHECK:STDOUT:     inst60000033:    {kind: TupleAccess, arg0: inst60000029, arg1: element1, type: type(inst60000010)}
+// CHECK:STDOUT:     inst60000033:    {kind: TupleAccess, arg0: inst60000028, arg1: element1, type: type(inst60000010)}
 // CHECK:STDOUT:     inst60000034:    {kind: TupleInit, arg0: inst_block_empty, arg1: inst60000033, type: type(inst60000010)}
 // CHECK:STDOUT:     inst60000035:    {kind: Converted, arg0: inst6000002E, arg1: inst60000034, type: type(inst60000010)}
-// CHECK:STDOUT:     inst60000036:    {kind: TupleInit, arg0: inst_block60000011, arg1: inst60000029, type: type(inst6000001A)}
+// CHECK:STDOUT:     inst60000036:    {kind: TupleInit, arg0: inst_block60000011, arg1: inst60000028, type: type(inst6000001A)}
 // CHECK:STDOUT:     inst60000037:    {kind: Converted, arg0: inst6000002F, arg1: inst60000036, type: type(inst6000001A)}
-// CHECK:STDOUT:     inst60000038:    {kind: ReturnExpr, arg0: inst60000037, arg1: inst60000029}
+// CHECK:STDOUT:     inst60000038:    {kind: ReturnExpr, arg0: inst60000037, arg1: inst60000028}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
 // CHECK:STDOUT:       instF:           concrete_constant(instF)
@@ -250,14 +250,14 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   %n.ref: %empty_tuple.type = name_ref n, %n
 // CHECK:STDOUT:   %.loc17_15.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc17_16.1: %tuple.type = tuple_literal (%n.ref, %.loc17_15.1)
-// CHECK:STDOUT:   %tuple.elem0: ref %empty_tuple.type = tuple_access %return, element0
+// CHECK:STDOUT:   %tuple.elem0: ref %empty_tuple.type = tuple_access %return.param, element0
 // CHECK:STDOUT:   %.loc17_11: init %empty_tuple.type = tuple_init () to %tuple.elem0 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc17_16.2: init %empty_tuple.type = converted %n.ref, %.loc17_11 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %tuple.elem1: ref %empty_tuple.type = tuple_access %return, element1
+// CHECK:STDOUT:   %tuple.elem1: ref %empty_tuple.type = tuple_access %return.param, element1
 // CHECK:STDOUT:   %.loc17_15.2: init %empty_tuple.type = tuple_init () to %tuple.elem1 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc17_16.3: init %empty_tuple.type = converted %.loc17_15.1, %.loc17_15.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc17_16.4: init %tuple.type = tuple_init (%.loc17_16.2, %.loc17_16.3) to %return [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc17_16.4: init %tuple.type = tuple_init (%.loc17_16.2, %.loc17_16.3) to %return.param [concrete = constants.%tuple]
 // CHECK:STDOUT:   %.loc17_17: init %tuple.type = converted %.loc17_16.1, %.loc17_16.4 [concrete = constants.%tuple]
-// CHECK:STDOUT:   return %.loc17_17 to %return
+// CHECK:STDOUT:   return %.loc17_17 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

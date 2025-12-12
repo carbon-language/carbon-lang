@@ -22,17 +22,26 @@ auto GetCurrentFunctionForReturn(Context& context) -> SemIR::Function& {
   return context.functions().Get(function_id);
 }
 
-auto GetCurrentReturnSlot(Context& context) -> SemIR::InstId {
-  // TODO: this does some unnecessary work to compute non-lexical scopes,
-  // so a separate API on ScopeStack could be more efficient.
-  auto return_slot_id = context.scope_stack()
-                            .LookupInLexicalScopes(SemIR::NameId::ReturnSlot)
-                            .first;
-  return return_slot_id;
+auto GetReturnedVarParam(Context& context, const SemIR::Function& function)
+    -> SemIR::InstId {
+  auto return_form_id = function.GetDeclaredReturnForm(context.sem_ir());
+  if (return_form_id.has_value()) {
+    if (auto return_form =
+            context.insts().TryGetAs<SemIR::InitForm>(return_form_id)) {
+      auto call_params = context.inst_blocks().Get(function.call_params_id);
+      auto return_param_id = call_params[return_form->index.index];
+      auto return_type_id = context.insts().Get(return_param_id).type_id();
+      if (SemIR::InitRepr::ForType(context.sem_ir(), return_type_id)
+              .MightBeInPlace()) {
+        return return_param_id;
+      }
+    }
+  }
+  return SemIR::InstId::None;
 }
 
-// Gets the currently in scope `returned var`, if any, that would be returned
-// by a `return var;`.
+// Gets the currently in scope `returned var` binding, if any, that would be
+// returned by a `return var;`.
 static auto GetCurrentReturnedVar(Context& context) -> SemIR::InstId {
   CARBON_CHECK(context.scope_stack().IsInFunctionScope(),
                "Handling return but not in a function");
@@ -128,7 +137,7 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
                          SemIR::InstId expr_id) -> void {
   const auto& function = GetCurrentFunctionForReturn(context);
   auto returned_var_id = GetCurrentReturnedVar(context);
-  auto return_slot_id = SemIR::InstId::None;
+  auto out_param_id = SemIR::InstId::None;
   auto return_info =
       SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(), function);
 
@@ -157,10 +166,12 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
     auto return_form =
         context.insts().Get(function.GetDeclaredReturnForm(context.sem_ir()));
     CARBON_KIND_SWITCH(return_form) {
-      case CARBON_KIND(SemIR::InitForm _): {
-        return_slot_id = GetCurrentReturnSlot(context);
-        CARBON_CHECK(return_slot_id.has_value());
-        expr_id = Initialize(context, loc_id, return_slot_id, expr_id);
+      case CARBON_KIND(SemIR::InitForm init_form): {
+        auto call_params = context.inst_blocks().Get(
+            GetCurrentFunctionForReturn(context).call_params_id);
+        out_param_id = call_params[init_form.index.index];
+        CARBON_CHECK(out_param_id.has_value());
+        expr_id = Initialize(context, loc_id, out_param_id, expr_id);
         break;
       }
       case CARBON_KIND(SemIR::RefForm ref_form): {
@@ -176,8 +187,8 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  AddReturnCleanupBlockWithExpr(
-      context, loc_id, {.expr_id = expr_id, .dest_id = return_slot_id});
+  AddReturnCleanupBlockWithExpr(context, loc_id,
+                                {.expr_id = expr_id, .dest_id = out_param_id});
 }
 
 auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
@@ -192,18 +203,16 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
     returned_var_id = SemIR::ErrorInst::InstId;
   }
 
-  auto return_slot_id = GetCurrentReturnSlot(context);
-  if (!SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(), function)
-           .has_return_slot()) {
+  auto return_param_id = GetReturnedVarParam(context, function);
+  if (!return_param_id.has_value()) {
     // If we don't have a return slot, we're returning by value. Convert to a
     // value expression.
     returned_var_id = ConvertToValueExpr(context, returned_var_id);
-    return_slot_id = SemIR::InstId::None;
   }
 
   AddReturnCleanupBlockWithExpr(
       context, node_id,
-      {.expr_id = returned_var_id, .dest_id = return_slot_id});
+      {.expr_id = returned_var_id, .dest_id = return_param_id});
 }
 
 }  // namespace Carbon::Check

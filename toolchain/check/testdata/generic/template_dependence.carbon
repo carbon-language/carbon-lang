@@ -110,7 +110,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %specific_impl_fn.loc6_10.1: <specific function> = specific_impl_function %impl.elem0.loc6_10.1, @Copy.Op(constants.%Copy.facet) [template = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.b84)]
 // CHECK:STDOUT:     %bound_method.loc6_10.2: <bound method> = bound_method %.loc6_10.2, %specific_impl_fn.loc6_10.1
 // CHECK:STDOUT:     %Copy.Op.call: init @F.%ptr.loc5_29.1 (%ptr.e8f8f9.1) = call %bound_method.loc6_10.2(%.loc6_10.2)
-// CHECK:STDOUT:     return %Copy.Op.call to %return
+// CHECK:STDOUT:     return %Copy.Op.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -152,9 +152,9 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc5: type = name_ref T, %T.loc5_15.2 [template = %T.loc5_15.1 (constants.%T)]
 // CHECK:STDOUT:     %U.ref.loc5: type = name_ref U, %U.loc5_25.2 [symbolic = %U.loc5_25.1 (constants.%U)]
-// CHECK:STDOUT:     %.loc5_43.2: %tuple.type.24b = tuple_literal (%T.ref.loc5, %U.ref.loc5) [template = %tuple (constants.%tuple)]
-// CHECK:STDOUT:     %.loc5_43.3: type = converted %.loc5_43.2, constants.%tuple.type.a5e [template = %tuple.type (constants.%tuple.type.a5e)]
-// CHECK:STDOUT:     %.loc5_43.4: form = init_form %.loc5_43.3, call_param0 [template = %.loc5_43.1 (constants.%.5b7)]
+// CHECK:STDOUT:     %.loc5_43.3: %tuple.type.24b = tuple_literal (%T.ref.loc5, %U.ref.loc5) [template = %tuple (constants.%tuple)]
+// CHECK:STDOUT:     %.loc5_43.4: type = converted %.loc5_43.3, constants.%tuple.type.a5e [template = %tuple.type (constants.%tuple.type.a5e)]
+// CHECK:STDOUT:     %.loc5_43.5: form = init_form %.loc5_43.4, call_param0 [template = %.loc5_43.2 (constants.%.5b7)]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %T.loc5_15.2: type = symbolic_binding T, 0, template [template = %T.loc5_15.1 (constants.%T)]
 // CHECK:STDOUT:     <elided>
@@ -169,7 +169,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %U.loc5_25.1: type = symbolic_binding U, 1 [symbolic = %U.loc5_25.1 (constants.%U)]
 // CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%T.loc5_15.1, %U.loc5_25.1) [template = %tuple (constants.%tuple)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%T.loc5_15.1, %U.loc5_25.1) [template = %tuple.type (constants.%tuple.type.a5e)]
-// CHECK:STDOUT:   %.loc5_43.1: form = init_form %tuple.type, call_param0 [template = %.loc5_43.1 (constants.%.5b7)]
+// CHECK:STDOUT:   %.loc5_43.2: form = init_form %tuple.type, call_param0 [template = %.loc5_43.2 (constants.%.5b7)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %tuple.type [template = %pattern_type (constants.%pattern_type.eee)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -182,9 +182,9 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %T.ref.loc6: type = name_ref T, %T.loc5_15.2 [template = %T.loc5_15.1 (constants.%T)]
 // CHECK:STDOUT:     %U.ref.loc6: type = name_ref U, %U.loc5_25.2 [symbolic = %U.loc5_25.1 (constants.%U)]
 // CHECK:STDOUT:     %F.specific_fn.loc6_10.1: <specific function> = specific_function %F.ref, @F(constants.%T, constants.%U) [template = %F.specific_fn.loc6_10.2 (constants.%F.specific_fn)]
-// CHECK:STDOUT:     %.loc5_35: ref @F.%tuple.type (%tuple.type.a5e) = splice_block %return {}
-// CHECK:STDOUT:     %F.call: init @F.%tuple.type (%tuple.type.a5e) = call %F.specific_fn.loc6_10.1() to %.loc5_35
-// CHECK:STDOUT:     return %F.call to %return
+// CHECK:STDOUT:     %.loc5_43.1: ref @F.%tuple.type (%tuple.type.a5e) = splice_block %return.param {}
+// CHECK:STDOUT:     %F.call: init @F.%tuple.type (%tuple.type.a5e) = call %F.specific_fn.loc6_10.1() to %.loc5_43.1
+// CHECK:STDOUT:     return %F.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -193,7 +193,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %U.loc5_25.1 => constants.%U
 // CHECK:STDOUT:   %tuple => constants.%tuple
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.a5e
-// CHECK:STDOUT:   %.loc5_43.1 => constants.%.5b7
+// CHECK:STDOUT:   %.loc5_43.2 => constants.%.5b7
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.eee
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
