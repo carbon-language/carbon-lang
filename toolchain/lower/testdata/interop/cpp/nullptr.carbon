@@ -129,7 +129,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.Core.b88d1103f417c6d4"(ptr %self) #0 !dbg !36 {
-// CHECK:STDOUT:   %1 = call ptr @_CNone.Optional.Core.cf8ee64e4b27ee7a(), !dbg !42
+// CHECK:STDOUT:   %1 = call ptr @_CNone.Optional.Core.7bfe1822cd6dd563(), !dbg !42
 // CHECK:STDOUT:   ret ptr %1, !dbg !43
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -139,7 +139,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: declare ptr @_CMake.NullptrT.CppCompat.Core()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CNone.Optional.Core.cf8ee64e4b27ee7a() #0 !dbg !44 {
+// CHECK:STDOUT: define linkonce_odr ptr @_CNone.Optional.Core.7bfe1822cd6dd563() #0 !dbg !44 {
 // CHECK:STDOUT:   ret ptr null, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -224,6 +224,6 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !36, type: !18)
 // CHECK:STDOUT: !42 = !DILocation(line: 47, column: 14, scope: !36)
 // CHECK:STDOUT: !43 = !DILocation(line: 47, column: 7, scope: !36)
-// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "None", linkageName: "_CNone.Optional.Core.cf8ee64e4b27ee7a", scope: null, file: !45, line: 26, type: !16, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "None", linkageName: "_CNone.Optional.Core.7bfe1822cd6dd563", scope: null, file: !45, line: 26, type: !16, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !45 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
 // CHECK:STDOUT: !46 = !DILocation(line: 27, column: 5, scope: !44)

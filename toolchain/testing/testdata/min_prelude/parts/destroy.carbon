@@ -14,5 +14,6 @@ package Core library "prelude/parts/destroy";
 // Destroys objects. This will invoke `Destructor` impls recursively on members;
 // it does not deallocate memory.
 interface Destroy {
+  // TODO: This should be `final fn Op[ref self: Self]() = "type.destroy"`.
   fn Op[ref self: Self]();
 }

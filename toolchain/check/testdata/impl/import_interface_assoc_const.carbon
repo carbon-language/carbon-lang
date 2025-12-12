@@ -206,17 +206,17 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %Self.dba: %I.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.ab9: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0.e06: %I.assoc_type = assoc_entity element0, @I.%T [concrete]
 // CHECK:STDOUT:   %I3.type: type = facet_type <@I3> [concrete]
-// CHECK:STDOUT:   %Self.838: %I3.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.70b: %I3.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %I3.assoc_type: type = assoc_entity_type @I3 [concrete]
 // CHECK:STDOUT:   %assoc0.236: %I3.assoc_type = assoc_entity element0, @I3.%T1 [concrete]
 // CHECK:STDOUT:   %assoc1: %I3.assoc_type = assoc_entity element1, @I3.%T2 [concrete]
 // CHECK:STDOUT:   %assoc2: %I3.assoc_type = assoc_entity element2, @I3.%T3 [concrete]
 // CHECK:STDOUT:   %NonType.type: type = facet_type <@NonType> [concrete]
-// CHECK:STDOUT:   %Self.17c: %NonType.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.13f: %NonType.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %struct_type.a.225: type = struct_type {.a: %empty_struct_type} [concrete]
 // CHECK:STDOUT:   %NonType.assoc_type: type = assoc_entity_type @NonType [concrete]
@@ -235,7 +235,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.dba]
+// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ab9]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {
 // CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%T [concrete = constants.%assoc0.e06]
 // CHECK:STDOUT:   }
@@ -249,7 +249,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I3 {
-// CHECK:STDOUT:   %Self: %I3.type = symbolic_binding Self, 0 [symbolic = constants.%Self.838]
+// CHECK:STDOUT:   %Self: %I3.type = symbolic_binding Self, 0 [symbolic = constants.%Self.70b]
 // CHECK:STDOUT:   %T1: type = assoc_const_decl @T1 [concrete] {
 // CHECK:STDOUT:     %assoc0: %I3.assoc_type = assoc_entity element0, @I3.%T1 [concrete = constants.%assoc0.236]
 // CHECK:STDOUT:   }
@@ -271,7 +271,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NonType {
-// CHECK:STDOUT:   %Self: %NonType.type = symbolic_binding Self, 0 [symbolic = constants.%Self.17c]
+// CHECK:STDOUT:   %Self: %NonType.type = symbolic_binding Self, 0 [symbolic = constants.%Self.13f]
 // CHECK:STDOUT:   %Y: %struct_type.a.225 = assoc_const_decl @Y [concrete] {
 // CHECK:STDOUT:     %assoc0: %NonType.assoc_type = assoc_entity element0, @NonType.%Y [concrete = constants.%assoc0.b16]
 // CHECK:STDOUT:   }
@@ -304,15 +304,15 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   assoc_const Y:! %struct_type.a.225;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T(constants.%Self.dba) {}
+// CHECK:STDOUT: specific @T(constants.%Self.ab9) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T1(constants.%Self.838) {}
+// CHECK:STDOUT: specific @T1(constants.%Self.70b) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T2(constants.%Self.838) {}
+// CHECK:STDOUT: specific @T2(constants.%Self.70b) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @T3(constants.%Self.838) {}
+// CHECK:STDOUT: specific @T3(constants.%Self.70b) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y(constants.%Self.17c) {}
+// CHECK:STDOUT: specific @Y(constants.%Self.13f) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- basic.carbon
 // CHECK:STDOUT:
@@ -337,12 +337,12 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
 // CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %Main.import_ref.cdf = import_ref Main//interface, loc3_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.873: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [concrete = %T]
 // CHECK:STDOUT:   %Main.import_ref.be8: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.3d2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.236: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -374,14 +374,14 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.cdf
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.c82
 // CHECK:STDOUT:   .T = imports.%Main.import_ref.873
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.3d2: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.236: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -429,12 +429,12 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
 // CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %Main.import_ref.cdf = import_ref Main//interface, loc3_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.873: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [concrete = %T]
 // CHECK:STDOUT:   %Main.import_ref.be8: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.3d2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.236: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -482,14 +482,14 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.cdf
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.c82
 // CHECK:STDOUT:   .T = imports.%Main.import_ref.873
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.3d2: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.236: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -530,19 +530,19 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = %empty_struct_type> [concrete]
-// CHECK:STDOUT:   %I.impl_witness.27c: <witness> = impl_witness @C3.as.I.impl.048.%I.impl_witness_table [concrete]
+// CHECK:STDOUT:   %I.impl_witness.721: <witness> = impl_witness @C3.as.I.impl.b9a.%I.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
 // CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %Main.import_ref.cdf = import_ref Main//interface, loc3_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.873: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [concrete = %T]
 // CHECK:STDOUT:   %Main.import_ref.be8: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.3d2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.236: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -554,11 +554,11 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C3.decl: type = class_decl @C3 [concrete = constants.%C3] {} {}
-// CHECK:STDOUT:   impl_decl @C3.as.I.impl.7fe [concrete] {} {
+// CHECK:STDOUT:   impl_decl @C3.as.I.impl.4fb [concrete] {} {
 // CHECK:STDOUT:     %C3.ref: type = name_ref C3, file.%C3.decl [concrete = constants.%C3]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @C3.as.I.impl.048 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @C3.as.I.impl.b9a [concrete] {} {
 // CHECK:STDOUT:     %C3.ref: type = name_ref C3, file.%C3.decl [concrete = constants.%C3]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -578,22 +578,22 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.cdf
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.c82
 // CHECK:STDOUT:   .T = imports.%Main.import_ref.873
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.3d2: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.236: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C3.as.I.impl.7fe: %C3.ref as %I.ref;
+// CHECK:STDOUT: impl @C3.as.I.impl.4fb: %C3.ref as %I.ref;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C3.as.I.impl.048: %C3.ref as %.loc10_14 {
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @C3.as.I.impl.048 [concrete]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.27c]
+// CHECK:STDOUT: impl @C3.as.I.impl.b9a: %C3.ref as %.loc10_14 {
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @C3.as.I.impl.b9a [concrete]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.721]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -628,22 +628,22 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %I_where.type.aa2: type = facet_type <@I where %impl.elem0 = %empty_struct_type> [concrete]
+// CHECK:STDOUT:   %I_where.type.1c0: type = facet_type <@I where %impl.elem0 = %empty_struct_type> [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %I_where.type.a10: type = facet_type <@I where %impl.elem0 = %empty_tuple.type> [concrete]
-// CHECK:STDOUT:   %I.impl_witness.969: <witness> = impl_witness @C4.as.I.impl.49c.%I.impl_witness_table [concrete]
+// CHECK:STDOUT:   %I_where.type.0f9: type = facet_type <@I where %impl.elem0 = %empty_tuple.type> [concrete]
+// CHECK:STDOUT:   %I.impl_witness.68c: <witness> = impl_witness @C4.as.I.impl.95c.%I.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
 // CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %Main.import_ref.cdf = import_ref Main//interface, loc3_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.873: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [concrete = %T]
 // CHECK:STDOUT:   %Main.import_ref.be8: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.3d2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.236: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -655,7 +655,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C4.decl: type = class_decl @C4 [concrete = constants.%C4] {} {}
-// CHECK:STDOUT:   impl_decl @C4.as.I.impl.944 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @C4.as.I.impl.2eb [concrete] {} {
 // CHECK:STDOUT:     %C4.ref: type = name_ref C4, file.%C4.decl [concrete = constants.%C4]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -666,12 +666,12 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc9_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc9_26.2: type = converted %.loc9_26.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc9_14: type = where_expr %.Self [concrete = constants.%I_where.type.aa2] {
+// CHECK:STDOUT:     %.loc9_14: type = where_expr %.Self [concrete = constants.%I_where.type.1c0] {
 // CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc9_26.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @C4.as.I.impl.49c [concrete] {} {
+// CHECK:STDOUT:   impl_decl @C4.as.I.impl.95c [concrete] {} {
 // CHECK:STDOUT:     %C4.ref: type = name_ref C4, file.%C4.decl [concrete = constants.%C4]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -682,7 +682,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %impl.elem0: type = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %.loc10_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc10_26.2: type = converted %.loc10_26.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc10_14: type = where_expr %.Self [concrete = constants.%I_where.type.a10] {
+// CHECK:STDOUT:     %.loc10_14: type = where_expr %.Self [concrete = constants.%I_where.type.0f9] {
 // CHECK:STDOUT:       requirement_base_facet_type constants.%I.type
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc10_26.2
 // CHECK:STDOUT:     }
@@ -691,22 +691,22 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.cdf
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.c82
 // CHECK:STDOUT:   .T = imports.%Main.import_ref.873
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.3d2: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.236: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C4.as.I.impl.944: %C4.ref as %.loc9_14;
+// CHECK:STDOUT: impl @C4.as.I.impl.2eb: %C4.ref as %.loc9_14;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C4.as.I.impl.49c: %C4.ref as %.loc10_14 {
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @C4.as.I.impl.49c [concrete]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.969]
+// CHECK:STDOUT: impl @C4.as.I.impl.95c: %C4.ref as %.loc10_14 {
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @C4.as.I.impl.95c [concrete]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.68c]
 // CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -752,7 +752,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.I = import_ref Main//interface, I, unloaded
 // CHECK:STDOUT:   %Main.I3: type = import_ref Main//interface, I3, loaded [concrete = constants.%I3.type]
 // CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %Main.import_ref.d5f = import_ref Main//interface, loc5_14, unloaded
+// CHECK:STDOUT:   %Main.import_ref.6d9 = import_ref Main//interface, loc5_14, unloaded
 // CHECK:STDOUT:   %Main.import_ref.264: %I3.assoc_type = import_ref Main//interface, loc6_9, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.import_ref.242: %I3.assoc_type = import_ref Main//interface, loc7_9, loaded [concrete = constants.%assoc1]
 // CHECK:STDOUT:   %Main.import_ref.9b6: %I3.assoc_type = import_ref Main//interface, loc8_9, loaded [concrete = constants.%assoc2]
@@ -761,13 +761,13 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.T3 = import_ref Main//interface, T3, unloaded
 // CHECK:STDOUT:   %Main.import_ref.922: type = import_ref Main//interface, loc6_9, loaded [concrete = %T1]
 // CHECK:STDOUT:   %T1: type = assoc_const_decl @T1 [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.6d4ce4.1: %I3.type = import_ref Main//interface, loc5_14, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.e58186.1: %I3.type = import_ref Main//interface, loc5_14, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.8d8: type = import_ref Main//interface, loc7_9, loaded [concrete = %T2]
 // CHECK:STDOUT:   %T2: type = assoc_const_decl @T2 [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.6d4ce4.2: %I3.type = import_ref Main//interface, loc5_14, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.e58186.2: %I3.type = import_ref Main//interface, loc5_14, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.b42: type = import_ref Main//interface, loc8_9, loaded [concrete = %T3]
 // CHECK:STDOUT:   %T3: type = assoc_const_decl @T3 [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.6d4ce4.3: %I3.type = import_ref Main//interface, loc5_14, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.e58186.3: %I3.type = import_ref Main//interface, loc5_14, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -849,7 +849,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I3 [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.d5f
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.6d9
 // CHECK:STDOUT:   .T1 = imports.%Main.import_ref.264
 // CHECK:STDOUT:   .T2 = imports.%Main.import_ref.242
 // CHECK:STDOUT:   .T3 = imports.%Main.import_ref.9b6
@@ -858,15 +858,15 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T1(imports.%Main.import_ref.6d4ce4.1: %I3.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T1(imports.%Main.import_ref.e58186.1: %I3.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T1:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T2(imports.%Main.import_ref.6d4ce4.2: %I3.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T2(imports.%Main.import_ref.e58186.2: %I3.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T2:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T3(imports.%Main.import_ref.6d4ce4.3: %I3.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T3(imports.%Main.import_ref.e58186.3: %I3.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T3:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -913,19 +913,19 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0 = %empty_struct_type> [concrete]
-// CHECK:STDOUT:   %I.impl_witness.ffb: <witness> = impl_witness @C6.as.I.impl.08e.%I.impl_witness_table [concrete]
+// CHECK:STDOUT:   %I.impl_witness.9dc: <witness> = impl_witness @C6.as.I.impl.27c.%I.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
 // CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %Main.import_ref.cdf = import_ref Main//interface, loc3_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.873: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [concrete = %T]
 // CHECK:STDOUT:   %Main.import_ref.be8: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.3d2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.236: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -937,7 +937,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C6.decl: type = class_decl @C6 [concrete = constants.%C6] {} {}
-// CHECK:STDOUT:   impl_decl @C6.as.I.impl.6a9 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @C6.as.I.impl.756 [concrete] {} {
 // CHECK:STDOUT:     %C6.ref: type = name_ref C6, file.%C6.decl [concrete = constants.%C6]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -953,7 +953,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:       requirement_rewrite %impl.elem0, %.loc5_26.2
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @C6.as.I.impl.08e [concrete] {} {
+// CHECK:STDOUT:   impl_decl @C6.as.I.impl.27c [concrete] {} {
 // CHECK:STDOUT:     %C6.ref: type = name_ref C6, file.%C6.decl [concrete = constants.%C6]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -961,22 +961,22 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.cdf
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.c82
 // CHECK:STDOUT:   .T = imports.%Main.import_ref.873
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.3d2: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.236: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C6.as.I.impl.6a9: %C6.ref as %.loc5_14;
+// CHECK:STDOUT: impl @C6.as.I.impl.756: %C6.ref as %.loc5_14;
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C6.as.I.impl.08e: %C6.ref as %I.ref {
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (<error>), @C6.as.I.impl.08e [concrete]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.ffb]
+// CHECK:STDOUT: impl @C6.as.I.impl.27c: %C6.ref as %I.ref {
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (<error>), @C6.as.I.impl.27c [concrete]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.9dc]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %I.impl_witness
@@ -1017,12 +1017,12 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
 // CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %Main.import_ref.cdf = import_ref Main//interface, loc3_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.873: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T = import_ref Main//interface, T, unloaded
 // CHECK:STDOUT:   %Main.import_ref.be8: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.3d2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.236: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1063,14 +1063,14 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.cdf
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.c82
 // CHECK:STDOUT:   .T = imports.%Main.import_ref.873
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.3d2: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.236: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1113,12 +1113,12 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
 // CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %Main.import_ref.cdf = import_ref Main//interface, loc3_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.873: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T = import_ref Main//interface, T, unloaded
 // CHECK:STDOUT:   %Main.import_ref.be8: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.3d2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.236: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1159,14 +1159,14 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.cdf
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.c82
 // CHECK:STDOUT:   .T = imports.%Main.import_ref.873
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.3d2: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.236: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1208,12 +1208,12 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
 // CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %Main.import_ref.cdf = import_ref Main//interface, loc3_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.873: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T = import_ref Main//interface, T, unloaded
 // CHECK:STDOUT:   %Main.import_ref.be8: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.3d2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.236: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1254,14 +1254,14 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.cdf
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.c82
 // CHECK:STDOUT:   .T = imports.%Main.import_ref.873
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.3d2: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.236: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1302,12 +1302,12 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
 // CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %Main.import_ref.cdf = import_ref Main//interface, loc3_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.873: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T = import_ref Main//interface, T, unloaded
 // CHECK:STDOUT:   %Main.import_ref.be8: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.3d2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.236: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1348,14 +1348,14 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.cdf
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.c82
 // CHECK:STDOUT:   .T = imports.%Main.import_ref.873
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.3d2: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.236: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1399,12 +1399,12 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//interface, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
 // CHECK:STDOUT:   %Main.NonType = import_ref Main//interface, NonType, unloaded
-// CHECK:STDOUT:   %Main.import_ref.cdf = import_ref Main//interface, loc3_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.c82 = import_ref Main//interface, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.873: %I.assoc_type = import_ref Main//interface, loc3_20, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.T: type = import_ref Main//interface, T, loaded [concrete = %T]
 // CHECK:STDOUT:   %Main.import_ref.be8: type = import_ref Main//interface, loc3_20, loaded [concrete = %T]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.3d2: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.236: %I.type = import_ref Main//interface, loc3_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1445,14 +1445,14 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.cdf
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.c82
 // CHECK:STDOUT:   .T = imports.%Main.import_ref.873
 // CHECK:STDOUT:   witness = (imports.%Main.T)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.3d2: %I.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @T(imports.%Main.import_ref.236: %I.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const T:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1502,12 +1502,12 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %Main.I = import_ref Main//interface, I, unloaded
 // CHECK:STDOUT:   %Main.I3 = import_ref Main//interface, I3, unloaded
 // CHECK:STDOUT:   %Main.NonType: type = import_ref Main//interface, NonType, loaded [concrete = constants.%NonType.type]
-// CHECK:STDOUT:   %Main.import_ref.54c = import_ref Main//interface, loc11_19, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e7e = import_ref Main//interface, loc11_19, unloaded
 // CHECK:STDOUT:   %Main.import_ref.048: %NonType.assoc_type = import_ref Main//interface, loc12_8, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.Y: %struct_type.a.225 = import_ref Main//interface, Y, loaded [concrete = %Y]
 // CHECK:STDOUT:   %Main.import_ref.074: %struct_type.a.225 = import_ref Main//interface, loc12_8, loaded [concrete = %Y]
 // CHECK:STDOUT:   %Y: %struct_type.a.225 = assoc_const_decl @Y [concrete] {}
-// CHECK:STDOUT:   %Main.import_ref.f65: %NonType.type = import_ref Main//interface, loc11_19, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.a24: %NonType.type = import_ref Main//interface, loc11_19, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1543,14 +1543,14 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NonType [from "interface.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.54c
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.e7e
 // CHECK:STDOUT:   .Y = imports.%Main.import_ref.048
 // CHECK:STDOUT:   witness = (imports.%Main.Y)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic assoc_const @Y(imports.%Main.import_ref.f65: %NonType.type) [from "interface.carbon"] {
+// CHECK:STDOUT: generic assoc_const @Y(imports.%Main.import_ref.a24: %NonType.type) [from "interface.carbon"] {
 // CHECK:STDOUT:   assoc_const Y:! %struct_type.a.225;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1627,8 +1627,8 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %IF.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @IF [symbolic_self]
 // CHECK:STDOUT:   %IF.F.type: type = fn_type @IF.F [concrete]
 // CHECK:STDOUT:   %IF.F: %IF.F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.45b: type = fn_type_with_self_type %IF.F.type, %.Self [symbolic_self]
-// CHECK:STDOUT:   %impl.elem0: %.45b = impl_witness_access %IF.lookup_impl_witness, element0 [symbolic_self]
+// CHECK:STDOUT:   %.f6e: type = fn_type_with_self_type %IF.F.type, %.Self [symbolic_self]
+// CHECK:STDOUT:   %impl.elem0: %.f6e = impl_witness_access %IF.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %IF_where.type: type = facet_type <@IF where %impl.elem0 = %int_0> [concrete]
 // CHECK:STDOUT:   %IF.impl_witness: <witness> = impl_witness @CD.as.IF.impl.%IF.impl_witness_table [concrete]
@@ -1639,11 +1639,11 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.IF: type = import_ref Main//interface_with_function, IF, loaded [concrete = constants.%IF.type]
-// CHECK:STDOUT:   %Main.import_ref.988 = import_ref Main//interface_with_function, loc3_14, unloaded
+// CHECK:STDOUT:   %Main.import_ref.b9e = import_ref Main//interface_with_function, loc3_14, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9af: %IF.assoc_type = import_ref Main//interface_with_function, loc3_22, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.F: %IF.F.type = import_ref Main//interface_with_function, F, loaded [concrete = constants.%IF.F]
 // CHECK:STDOUT:   %Main.import_ref.a87: %IF.F.type = import_ref Main//interface_with_function, loc3_22, loaded [concrete = constants.%IF.F]
-// CHECK:STDOUT:   %Main.import_ref.a0f: %IF.type = import_ref Main//interface_with_function, loc3_14, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.e88: %IF.type = import_ref Main//interface_with_function, loc3_14, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1661,7 +1661,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %F.ref: %IF.assoc_type = name_ref F, imports.%Main.import_ref.9af [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %.loc10_21: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:     %impl.elem0: %.45b = impl_witness_access constants.%IF.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
+// CHECK:STDOUT:     %impl.elem0: %.f6e = impl_witness_access constants.%IF.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:     %.loc10_15: type = where_expr %.Self [concrete = constants.%IF_where.type] {
 // CHECK:STDOUT:       requirement_base_facet_type constants.%IF.type
@@ -1672,7 +1672,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @IF [from "interface_with_function.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.988
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.b9e
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.9af
 // CHECK:STDOUT:   witness = (imports.%Main.F)
 // CHECK:STDOUT:
@@ -1697,7 +1697,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   .Self = constants.%CD
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @IF.F(imports.%Main.import_ref.a0f: %IF.type) [from "interface_with_function.carbon"] {
+// CHECK:STDOUT: generic fn @IF.F(imports.%Main.import_ref.e88: %IF.type) [from "interface_with_function.carbon"] {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -86,15 +86,6 @@ auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
                                 SemIR::TypeInstId constraint_id)
     -> SemIR::SpecificInterface;
 
-// Builds a witness that the given type implements the given interface,
-// populating it with the specified set of values. Returns a corresponding
-// lookup result. Produces a diagnostic and returns `None` if the specified
-// values aren't suitable for the interface.
-auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
-                        SemIR::TypeId self_type_id,
-                        SemIR::SpecificInterface specific_interface,
-                        llvm::ArrayRef<SemIR::InstId> values) -> SemIR::InstId;
-
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_IMPL_H_

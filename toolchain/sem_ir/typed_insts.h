@@ -583,6 +583,8 @@ struct CustomWitness {
   TypeId type_id;
   // The witness table of instructions.
   InstBlockId elements_id;
+  // The `SpecificInterface` of the lookup query.
+  SpecificInterfaceId query_specific_interface_id;
 };
 
 // The `*` dereference operator, as in `*pointer`.

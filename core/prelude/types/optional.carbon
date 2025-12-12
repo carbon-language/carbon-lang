@@ -89,12 +89,12 @@ impl forall [T:! OptionalStorage, U:! OptionalAs(T)]
 // `bool` is `false`.
 //
 // TODO: Revisit this once we have choice types implemented in the toolchain.
-private class DefaultOptionalStorage(T:! Copy) {
+private class DefaultOptionalStorage(T:! Copy & Destroy) {
   var value: MaybeUnformed(T);
   var has_value: bool;
 }
 
-impl forall [T:! Copy] T as OptionalStorage
+impl forall [T:! Copy & Destroy] T as OptionalStorage
     where .Type = DefaultOptionalStorage(T) {
   fn None() -> DefaultOptionalStorage(T) {
     returned var me: DefaultOptionalStorage(T);

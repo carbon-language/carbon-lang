@@ -62,7 +62,7 @@ impl Core.MaybeUnformed(C) as I {}
 impl partial C as I {}
 impl C* as I {}
 
-// CHECK:STDERR: fail_maybe_unformed_overlap.carbon:[[@LINE+7]]:1: error: redefinition of `impl Core.MaybeUnformed(C) as I` [ImplRedefinition]
+// CHECK:STDERR: fail_maybe_unformed_overlap.carbon:[[@LINE+7]]:1: error: redefinition of `impl Core.MaybeUnformed(C as Core.Destroy) as I` [ImplRedefinition]
 // CHECK:STDERR: impl Core.MaybeUnformed(C) as I {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_maybe_unformed_overlap.carbon:[[@LINE-7]]:1: note: previous definition was here [ImplPreviousDefinition]
