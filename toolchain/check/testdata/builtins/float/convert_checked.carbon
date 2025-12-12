@@ -341,11 +341,11 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.094: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.d0c: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table, @Core.FloatLiteral.as.ImplicitAs.impl(%int_64) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.42f: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table, @Core.FloatLiteral.as.ImplicitAs.impl(%int_64) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.4bc: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%int_64) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.4bc = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.73d = facet_value Core.FloatLiteral, (%ImplicitAs.impl_witness.d0c) [concrete]
-// CHECK:STDOUT:   %.e60: type = fn_type_with_self_type %ImplicitAs.Convert.type.726, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.73d = facet_value Core.FloatLiteral, (%ImplicitAs.impl_witness.42f) [concrete]
+// CHECK:STDOUT:   %.6db: type = fn_type_with_self_type %ImplicitAs.Convert.type.726, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound.dfd: <bound method> = bound_method %float.1f7, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(%int_64) [concrete]
 // CHECK:STDOUT:   %bound_method.c3e: <bound method> = bound_method %float.1f7, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -362,8 +362,8 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Float64ToFloat64: %Float64ToFloat64.type = import_ref Main//f64, Float64ToFloat64, loaded [concrete = constants.%Float64ToFloat64]
-// CHECK:STDOUT:   %Core.import_ref.cf3: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4) = import_ref Core//prelude/parts/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.094)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (%Core.import_ref.cf3), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.13c: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4) = import_ref Core//prelude/parts/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.094)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (%Core.import_ref.13c), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -403,7 +403,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Float64ToFloat64.ref.loc6: %Float64ToFloat64.type = name_ref Float64ToFloat64, imports.%Main.Float64ToFloat64 [concrete = constants.%Float64ToFloat64]
 // CHECK:STDOUT:   %float.loc6: Core.FloatLiteral = float_literal_value 0e-1 [concrete = constants.%float.1f7]
-// CHECK:STDOUT:   %impl.elem0.loc6: %.e60 = impl_witness_access constants.%ImplicitAs.impl_witness.d0c, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea]
+// CHECK:STDOUT:   %impl.elem0.loc6: %.6db = impl_witness_access constants.%ImplicitAs.impl_witness.42f, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea]
 // CHECK:STDOUT:   %bound_method.loc6_31.1: <bound method> = bound_method %float.loc6, %impl.elem0.loc6 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound.dfd]
 // CHECK:STDOUT:   %specific_fn.loc6: <specific function> = specific_function %impl.elem0.loc6, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc6_31.2: <bound method> = bound_method %float.loc6, %specific_fn.loc6 [concrete = constants.%bound_method.c3e]
@@ -413,7 +413,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %Float64ToFloat64.call.loc6: init %f64.d77 = call %Float64ToFloat64.ref.loc6(%.loc6_31.2) [concrete = constants.%float.0a8]
 // CHECK:STDOUT:   %Float64ToFloat64.ref.loc7: %Float64ToFloat64.type = name_ref Float64ToFloat64, imports.%Main.Float64ToFloat64 [concrete = constants.%Float64ToFloat64]
 // CHECK:STDOUT:   %float.loc7: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.674]
-// CHECK:STDOUT:   %impl.elem0.loc7: %.e60 = impl_witness_access constants.%ImplicitAs.impl_witness.d0c, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea]
+// CHECK:STDOUT:   %impl.elem0.loc7: %.6db = impl_witness_access constants.%ImplicitAs.impl_witness.42f, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea]
 // CHECK:STDOUT:   %bound_method.loc7_31.1: <bound method> = bound_method %float.loc7, %impl.elem0.loc7 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound.f37]
 // CHECK:STDOUT:   %specific_fn.loc7: <specific function> = specific_function %impl.elem0.loc7, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_31.2: <bound method> = bound_method %float.loc7, %specific_fn.loc7 [concrete = constants.%bound_method.7cb]
@@ -423,7 +423,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %Float64ToFloat64.call.loc7: init %f64.d77 = call %Float64ToFloat64.ref.loc7(%.loc7_31.2) [concrete = constants.%float.d20]
 // CHECK:STDOUT:   %Float64ToFloat64.ref.loc8: %Float64ToFloat64.type = name_ref Float64ToFloat64, imports.%Main.Float64ToFloat64 [concrete = constants.%Float64ToFloat64]
 // CHECK:STDOUT:   %float.loc8: Core.FloatLiteral = float_literal_value 10e307 [concrete = constants.%float.173]
-// CHECK:STDOUT:   %impl.elem0.loc8: %.e60 = impl_witness_access constants.%ImplicitAs.impl_witness.d0c, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea]
+// CHECK:STDOUT:   %impl.elem0.loc8: %.6db = impl_witness_access constants.%ImplicitAs.impl_witness.42f, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea]
 // CHECK:STDOUT:   %bound_method.loc8_31.1: <bound method> = bound_method %float.loc8, %impl.elem0.loc8 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound.efa]
 // CHECK:STDOUT:   %specific_fn.loc8: <specific function> = specific_function %impl.elem0.loc8, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_31.2: <bound method> = bound_method %float.loc8, %specific_fn.loc8 [concrete = constants.%bound_method.023]
@@ -448,11 +448,11 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.094: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.d25: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table, @Core.FloatLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.958: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table, @Core.FloatLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.85a: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.4f8: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.85a = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.921 = facet_value Core.FloatLiteral, (%ImplicitAs.impl_witness.d25) [concrete]
-// CHECK:STDOUT:   %.b83: type = fn_type_with_self_type %ImplicitAs.Convert.type.b8c, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.921 = facet_value Core.FloatLiteral, (%ImplicitAs.impl_witness.958) [concrete]
+// CHECK:STDOUT:   %.ed8: type = fn_type_with_self_type %ImplicitAs.Convert.type.b8c, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound.7bc: <bound method> = bound_method %float.1f7, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.4f8 [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.ImplicitAs.impl.Convert.4f8, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.2ac: <bound method> = bound_method %float.1f7, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -469,8 +469,8 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Float32ToFloat32: %Float32ToFloat32.type = import_ref Main//f32, Float32ToFloat32, loaded [concrete = constants.%Float32ToFloat32]
-// CHECK:STDOUT:   %Core.import_ref.cf3: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4) = import_ref Core//prelude/parts/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.094)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (%Core.import_ref.cf3), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.13c: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4) = import_ref Core//prelude/parts/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.094)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (%Core.import_ref.13c), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -510,7 +510,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Float32ToFloat32.ref.loc6: %Float32ToFloat32.type = name_ref Float32ToFloat32, imports.%Main.Float32ToFloat32 [concrete = constants.%Float32ToFloat32]
 // CHECK:STDOUT:   %float.loc6: Core.FloatLiteral = float_literal_value 0e-1 [concrete = constants.%float.1f7]
-// CHECK:STDOUT:   %impl.elem0.loc6: %.b83 = impl_witness_access constants.%ImplicitAs.impl_witness.d25, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.4f8]
+// CHECK:STDOUT:   %impl.elem0.loc6: %.ed8 = impl_witness_access constants.%ImplicitAs.impl_witness.958, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.4f8]
 // CHECK:STDOUT:   %bound_method.loc6_31.1: <bound method> = bound_method %float.loc6, %impl.elem0.loc6 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound.7bc]
 // CHECK:STDOUT:   %specific_fn.loc6: <specific function> = specific_function %impl.elem0.loc6, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc6_31.2: <bound method> = bound_method %float.loc6, %specific_fn.loc6 [concrete = constants.%bound_method.2ac]
@@ -520,7 +520,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %Float32ToFloat32.call.loc6: init %f32.97e = call %Float32ToFloat32.ref.loc6(%.loc6_31.2) [concrete = constants.%float.4db]
 // CHECK:STDOUT:   %Float32ToFloat32.ref.loc7: %Float32ToFloat32.type = name_ref Float32ToFloat32, imports.%Main.Float32ToFloat32 [concrete = constants.%Float32ToFloat32]
 // CHECK:STDOUT:   %float.loc7: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.674]
-// CHECK:STDOUT:   %impl.elem0.loc7: %.b83 = impl_witness_access constants.%ImplicitAs.impl_witness.d25, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.4f8]
+// CHECK:STDOUT:   %impl.elem0.loc7: %.ed8 = impl_witness_access constants.%ImplicitAs.impl_witness.958, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.4f8]
 // CHECK:STDOUT:   %bound_method.loc7_31.1: <bound method> = bound_method %float.loc7, %impl.elem0.loc7 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound.5bd]
 // CHECK:STDOUT:   %specific_fn.loc7: <specific function> = specific_function %impl.elem0.loc7, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_31.2: <bound method> = bound_method %float.loc7, %specific_fn.loc7 [concrete = constants.%bound_method.1cf]
@@ -530,7 +530,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %Float32ToFloat32.call.loc7: init %f32.97e = call %Float32ToFloat32.ref.loc7(%.loc7_31.2) [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %Float32ToFloat32.ref.loc8: %Float32ToFloat32.type = name_ref Float32ToFloat32, imports.%Main.Float32ToFloat32 [concrete = constants.%Float32ToFloat32]
 // CHECK:STDOUT:   %float.loc8: Core.FloatLiteral = float_literal_value 10e37 [concrete = constants.%float.516]
-// CHECK:STDOUT:   %impl.elem0.loc8: %.b83 = impl_witness_access constants.%ImplicitAs.impl_witness.d25, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.4f8]
+// CHECK:STDOUT:   %impl.elem0.loc8: %.ed8 = impl_witness_access constants.%ImplicitAs.impl_witness.958, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.4f8]
 // CHECK:STDOUT:   %bound_method.loc8_31.1: <bound method> = bound_method %float.loc8, %impl.elem0.loc8 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound.201]
 // CHECK:STDOUT:   %specific_fn.loc8: <specific function> = specific_function %impl.elem0.loc8, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_31.2: <bound method> = bound_method %float.loc8, %specific_fn.loc8 [concrete = constants.%bound_method.d38]
@@ -557,11 +557,11 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.094: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.d0c: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table, @Core.FloatLiteral.as.ImplicitAs.impl(%int_64) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.42f: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table, @Core.FloatLiteral.as.ImplicitAs.impl(%int_64) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.4bc: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%int_64) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.4bc = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.73d = facet_value Core.FloatLiteral, (%ImplicitAs.impl_witness.d0c) [concrete]
-// CHECK:STDOUT:   %.e60: type = fn_type_with_self_type %ImplicitAs.Convert.type.726, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.73d = facet_value Core.FloatLiteral, (%ImplicitAs.impl_witness.42f) [concrete]
+// CHECK:STDOUT:   %.6db: type = fn_type_with_self_type %ImplicitAs.Convert.type.726, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %float.674, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(%int_64) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float.674, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -571,8 +571,8 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Float64ToFloat32: %Float64ToFloat32.type = import_ref Main//f32, Float64ToFloat32, loaded [concrete = constants.%Float64ToFloat32]
-// CHECK:STDOUT:   %Core.import_ref.cf3: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4) = import_ref Core//prelude/parts/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.094)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (%Core.import_ref.cf3), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.13c: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4) = import_ref Core//prelude/parts/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.094)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (%Core.import_ref.13c), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -592,7 +592,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Float64ToFloat32.ref: %Float64ToFloat32.type = name_ref Float64ToFloat32, imports.%Main.Float64ToFloat32 [concrete = constants.%Float64ToFloat32]
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.674]
-// CHECK:STDOUT:   %impl.elem0: %.e60 = impl_witness_access constants.%ImplicitAs.impl_witness.d0c, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea]
+// CHECK:STDOUT:   %impl.elem0: %.6db = impl_witness_access constants.%ImplicitAs.impl_witness.42f, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea]
 // CHECK:STDOUT:   %bound_method.loc6_31.1: <bound method> = bound_method %float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc6_31.2: <bound method> = bound_method %float, %specific_fn [concrete = constants.%bound_method]
@@ -620,11 +620,11 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.094: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.d0c: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table, @Core.FloatLiteral.as.ImplicitAs.impl(%int_64) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.42f: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table, @Core.FloatLiteral.as.ImplicitAs.impl(%int_64) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.4bc: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%int_64) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.4bc = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.73d = facet_value Core.FloatLiteral, (%ImplicitAs.impl_witness.d0c) [concrete]
-// CHECK:STDOUT:   %.e60: type = fn_type_with_self_type %ImplicitAs.Convert.type.726, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.73d = facet_value Core.FloatLiteral, (%ImplicitAs.impl_witness.42f) [concrete]
+// CHECK:STDOUT:   %.6db: type = fn_type_with_self_type %ImplicitAs.Convert.type.726, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %float.bfd691.1, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(%int_64) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float.bfd691.1, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -641,8 +641,8 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %Main.FloatLiteralToFloat32: %FloatLiteralToFloat32.type = import_ref Main//f32, FloatLiteralToFloat32, loaded [concrete = constants.%FloatLiteralToFloat32]
 // CHECK:STDOUT:   %Main.Float64ToFloat32: %Float64ToFloat32.type = import_ref Main//f32, Float64ToFloat32, loaded [concrete = constants.%Float64ToFloat32]
 // CHECK:STDOUT:   %Main.FloatLiteralToFloat64: %FloatLiteralToFloat64.type = import_ref Main//f64, FloatLiteralToFloat64, loaded [concrete = constants.%FloatLiteralToFloat64]
-// CHECK:STDOUT:   %Core.import_ref.cf3: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4) = import_ref Core//prelude/parts/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.094)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (%Core.import_ref.cf3), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.13c: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4) = import_ref Core//prelude/parts/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.094)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (%Core.import_ref.13c), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -682,7 +682,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Float64ToFloat32.ref: %Float64ToFloat32.type = name_ref Float64ToFloat32, imports.%Main.Float64ToFloat32 [concrete = constants.%Float64ToFloat32]
 // CHECK:STDOUT:   %float.loc11: Core.FloatLiteral = float_literal_value 10e38 [concrete = constants.%float.bfd691.1]
-// CHECK:STDOUT:   %impl.elem0: %.e60 = impl_witness_access constants.%ImplicitAs.impl_witness.d0c, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea]
+// CHECK:STDOUT:   %impl.elem0: %.6db = impl_witness_access constants.%ImplicitAs.impl_witness.42f, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea]
 // CHECK:STDOUT:   %bound_method.loc11_31.1: <bound method> = bound_method %float.loc11, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc11_31.2: <bound method> = bound_method %float.loc11, %specific_fn [concrete = constants.%bound_method]
@@ -715,11 +715,11 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.094: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.d25: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table, @Core.FloatLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.958: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table, @Core.FloatLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.85a: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.4f8: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.85a = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.921 = facet_value Core.FloatLiteral, (%ImplicitAs.impl_witness.d25) [concrete]
-// CHECK:STDOUT:   %.b83: type = fn_type_with_self_type %ImplicitAs.Convert.type.b8c, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.921 = facet_value Core.FloatLiteral, (%ImplicitAs.impl_witness.958) [concrete]
+// CHECK:STDOUT:   %.ed8: type = fn_type_with_self_type %ImplicitAs.Convert.type.b8c, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound.5bd: <bound method> = bound_method %float.674, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.4f8 [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.ImplicitAs.impl.Convert.4f8, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.1cf: <bound method> = bound_method %float.674, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -734,8 +734,8 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Float32ToFloat64: %Float32ToFloat64.type = import_ref Main//f32, Float32ToFloat64, loaded [concrete = constants.%Float32ToFloat64]
-// CHECK:STDOUT:   %Core.import_ref.cf3: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4) = import_ref Core//prelude/parts/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.094)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (%Core.import_ref.cf3), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.13c: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4) = import_ref Core//prelude/parts/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.094)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (%Core.import_ref.13c), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -765,7 +765,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Float32ToFloat64.ref.loc6: %Float32ToFloat64.type = name_ref Float32ToFloat64, imports.%Main.Float32ToFloat64 [concrete = constants.%Float32ToFloat64]
 // CHECK:STDOUT:   %float.loc6: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.674]
-// CHECK:STDOUT:   %impl.elem0.loc6: %.b83 = impl_witness_access constants.%ImplicitAs.impl_witness.d25, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.4f8]
+// CHECK:STDOUT:   %impl.elem0.loc6: %.ed8 = impl_witness_access constants.%ImplicitAs.impl_witness.958, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.4f8]
 // CHECK:STDOUT:   %bound_method.loc6_31.1: <bound method> = bound_method %float.loc6, %impl.elem0.loc6 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound.5bd]
 // CHECK:STDOUT:   %specific_fn.loc6: <specific function> = specific_function %impl.elem0.loc6, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc6_31.2: <bound method> = bound_method %float.loc6, %specific_fn.loc6 [concrete = constants.%bound_method.1cf]
@@ -775,7 +775,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %Float32ToFloat64.call.loc6: init %f64.d77 = call %Float32ToFloat64.ref.loc6(%.loc6_31.2) [concrete = constants.%float.d20]
 // CHECK:STDOUT:   %Float32ToFloat64.ref.loc7: %Float32ToFloat64.type = name_ref Float32ToFloat64, imports.%Main.Float32ToFloat64 [concrete = constants.%Float32ToFloat64]
 // CHECK:STDOUT:   %float.loc7: Core.FloatLiteral = float_literal_value 10e29 [concrete = constants.%float.9bd]
-// CHECK:STDOUT:   %impl.elem0.loc7: %.b83 = impl_witness_access constants.%ImplicitAs.impl_witness.d25, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.4f8]
+// CHECK:STDOUT:   %impl.elem0.loc7: %.ed8 = impl_witness_access constants.%ImplicitAs.impl_witness.958, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.4f8]
 // CHECK:STDOUT:   %bound_method.loc7_31.1: <bound method> = bound_method %float.loc7, %impl.elem0.loc7 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound.f55]
 // CHECK:STDOUT:   %specific_fn.loc7: <specific function> = specific_function %impl.elem0.loc7, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_31.2: <bound method> = bound_method %float.loc7, %specific_fn.loc7 [concrete = constants.%bound_method.05e]
@@ -798,11 +798,11 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.094: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.d0c: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table, @Core.FloatLiteral.as.ImplicitAs.impl(%int_64) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.42f: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table, @Core.FloatLiteral.as.ImplicitAs.impl(%int_64) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.4bc: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%int_64) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.4bc = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.73d = facet_value Core.FloatLiteral, (%ImplicitAs.impl_witness.d0c) [concrete]
-// CHECK:STDOUT:   %.e60: type = fn_type_with_self_type %ImplicitAs.Convert.type.726, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.73d = facet_value Core.FloatLiteral, (%ImplicitAs.impl_witness.42f) [concrete]
+// CHECK:STDOUT:   %.6db: type = fn_type_with_self_type %ImplicitAs.Convert.type.726, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %float.1f7, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(%int_64) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float.1f7, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -813,8 +813,8 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Float64ToFloat64: %Float64ToFloat64.type = import_ref Main//f64, Float64ToFloat64, loaded [concrete = constants.%Float64ToFloat64]
-// CHECK:STDOUT:   %Core.import_ref.cf3: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4) = import_ref Core//prelude/parts/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.094)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (%Core.import_ref.cf3), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.13c: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.fd4) = import_ref Core//prelude/parts/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.094)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (%Core.import_ref.13c), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -825,7 +825,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:     %int_64.loc6: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %f64.loc6: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl.elem0: %.e60 = impl_witness_access constants.%ImplicitAs.impl_witness.d0c, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea]
+// CHECK:STDOUT:   %impl.elem0: %.6db = impl_witness_access constants.%ImplicitAs.impl_witness.42f, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bea]
 // CHECK:STDOUT:   %bound_method.loc6_28.1: <bound method> = bound_method @__global_init.%float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc6_28.2: <bound method> = bound_method @__global_init.%float, %specific_fn [concrete = constants.%bound_method]

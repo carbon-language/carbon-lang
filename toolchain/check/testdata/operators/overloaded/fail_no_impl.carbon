@@ -52,7 +52,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %pattern_type.476: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %TestUnary.type: type = fn_type @TestUnary [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %TestUnary: %TestUnary.type = struct_value () [concrete]
@@ -71,9 +71,9 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
 // CHECK:STDOUT:   %facet_value: %type_where = facet_value %C, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.857: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.68a: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.857 = struct_value () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.68a, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.142: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.cfa: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.142 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.cfa, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -104,10 +104,10 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %TestUnary.decl: %TestUnary.type = fn_decl @TestUnary [concrete = constants.%TestUnary] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.c48 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.c48 = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.c48 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.c48 = out_param_pattern %return.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.476 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.476 = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.476 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.476 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc19_23: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
@@ -117,12 +117,12 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestBinary.decl: %TestBinary.type = fn_decl @TestBinary [concrete = constants.%TestBinary] {
-// CHECK:STDOUT:     %a.patt: %pattern_type.c48 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.c48 = value_param_pattern %a.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %b.patt: %pattern_type.c48 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.c48 = value_param_pattern %b.patt, call_param1 [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.c48 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.c48 = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.476 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.476 = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.476 = value_binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.476 = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.476 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.476 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc27_30: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
@@ -135,8 +135,8 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestRef.decl: %TestRef.type = fn_decl @TestRef [concrete = constants.%TestRef] {
-// CHECK:STDOUT:     %b.patt: %pattern_type.c48 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.param_patt: %pattern_type.c48 = value_param_pattern %b.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.476 = value_binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.476 = value_param_pattern %b.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc35: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -168,8 +168,8 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: fn @TestRef(%b.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.c48 = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.c48 = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.476 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.476 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %C = var %a.var_patt
 // CHECK:STDOUT:   %.loc36_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -181,8 +181,8 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %a.ref.loc41: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %a.ref.loc46: ref %C = name_ref a, %a
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %a.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.68a
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.68a, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %a.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.cfa
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.cfa, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%a.var)
 // CHECK:STDOUT:   return

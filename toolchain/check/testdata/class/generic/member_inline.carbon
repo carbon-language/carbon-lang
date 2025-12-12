@@ -58,7 +58,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:   %pattern_type.c769df.1: type = pattern_type %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F, @Class(%T.f92) [symbolic]
 // CHECK:STDOUT:   %Class.F: %Class.F.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %pattern_type.0bc: type = pattern_type %Class [symbolic]
+// CHECK:STDOUT:   %pattern_type.6e6: type = pattern_type %Class [symbolic]
 // CHECK:STDOUT:   %Class.G.type: type = fn_type @Class.G, @Class(%T.f92) [symbolic]
 // CHECK:STDOUT:   %Class.G: %Class.G.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete.91e: <witness> = require_complete_type %T.binding.as_type [symbolic]
@@ -70,7 +70,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:   %.232: type = fn_type_with_self_type %Copy.Op.type, %T.f92 [symbolic]
 // CHECK:STDOUT:   %impl.elem0.8df: %.232 = impl_witness_access %Copy.lookup_impl_witness.edd, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.5c4: <specific function> = specific_impl_function %impl.elem0.8df, @Copy.Op(%T.f92) [symbolic]
-// CHECK:STDOUT:   %require_complete.3be: <witness> = require_complete_type %Class [symbolic]
+// CHECK:STDOUT:   %require_complete.aea: <witness> = require_complete_type %Class [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -131,8 +131,8 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:       %return: ref @Class.F.%T.binding.as_type (%T.binding.as_type) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Class.G.decl: @Class.%Class.G.type (%Class.G.type) = fn_decl @Class.G [symbolic = @Class.%Class.G (constants.%Class.G)] {
-// CHECK:STDOUT:       %self.patt: @Class.G.%pattern_type.loc10_8 (%pattern_type.0bc) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:       %self.param_patt: @Class.G.%pattern_type.loc10_8 (%pattern_type.0bc) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %self.patt: @Class.G.%pattern_type.loc10_8 (%pattern_type.6e6) = value_binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @Class.G.%pattern_type.loc10_8 (%pattern_type.6e6) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %return.patt: @Class.G.%pattern_type.loc10_22 (%pattern_type.c769df.1) = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: @Class.G.%pattern_type.loc10_22 (%pattern_type.c769df.1) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:     } {
@@ -192,12 +192,12 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT: generic fn @Class.G(@Class.%T.loc5_13.2: %Copy.type) {
 // CHECK:STDOUT:   %T: %Copy.type = symbolic_binding T, 0 [symbolic = %T (constants.%T.f92)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:   %pattern_type.loc10_8: type = pattern_type %Class [symbolic = %pattern_type.loc10_8 (constants.%pattern_type.0bc)]
+// CHECK:STDOUT:   %pattern_type.loc10_8: type = pattern_type %Class [symbolic = %pattern_type.loc10_8 (constants.%pattern_type.6e6)]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type.loc10_22: type = pattern_type %T.binding.as_type [symbolic = %pattern_type.loc10_22 (constants.%pattern_type.c769df.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc10: <witness> = require_complete_type %Class [symbolic = %require_complete.loc10 (constants.%require_complete.3be)]
+// CHECK:STDOUT:   %require_complete.loc10: <witness> = require_complete_type %Class [symbolic = %require_complete.loc10 (constants.%require_complete.aea)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.binding.as_type [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %require_complete.loc11: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc11 (constants.%require_complete.91e)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.edd)]
@@ -246,7 +246,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT: specific @Class.G(constants.%T.f92) {
 // CHECK:STDOUT:   %T => constants.%T.f92
 // CHECK:STDOUT:   %Class => constants.%Class
-// CHECK:STDOUT:   %pattern_type.loc10_8 => constants.%pattern_type.0bc
+// CHECK:STDOUT:   %pattern_type.loc10_8 => constants.%pattern_type.6e6
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %pattern_type.loc10_22 => constants.%pattern_type.c769df.1
 // CHECK:STDOUT: }

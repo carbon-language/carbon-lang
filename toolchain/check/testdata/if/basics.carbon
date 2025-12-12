@@ -223,9 +223,9 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.a56: <witness> = impl_witness imports.%Copy.impl_witness_table.189 [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value bool, (%Copy.impl_witness.a56) [concrete]
-// CHECK:STDOUT:   %.05c: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.665: <witness> = impl_witness imports.%Copy.impl_witness_table.920 [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value bool, (%Copy.impl_witness.665) [concrete]
+// CHECK:STDOUT:   %.521: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.type: type = fn_type @bool.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op: %bool.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.bound.4eb: <bound method> = bound_method %false, %bool.as.Copy.impl.Op [concrete]
@@ -234,8 +234,8 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.cc5: %bool.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%bool.as.Copy.impl.Op]
-// CHECK:STDOUT:   %Copy.impl_witness_table.189 = impl_witness_table (%Core.import_ref.cc5), @bool.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.588: %bool.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%bool.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Copy.impl_witness_table.920 = impl_witness_table (%Core.import_ref.588), @bool.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -267,14 +267,14 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.then:
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:   %impl.elem0.loc6: %.05c = impl_witness_access constants.%Copy.impl_witness.a56, element0 [concrete = constants.%bool.as.Copy.impl.Op]
+// CHECK:STDOUT:   %impl.elem0.loc6: %.521 = impl_witness_access constants.%Copy.impl_witness.665, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc6: <bound method> = bound_method %false, %impl.elem0.loc6 [concrete = constants.%bool.as.Copy.impl.Op.bound.4eb]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call.loc6: init bool = call %bound_method.loc6(%false) [concrete = constants.%false]
 // CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call.loc6 to %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %impl.elem0.loc8: %.05c = impl_witness_access constants.%Copy.impl_witness.a56, element0 [concrete = constants.%bool.as.Copy.impl.Op]
+// CHECK:STDOUT:   %impl.elem0.loc8: %.521 = impl_witness_access constants.%Copy.impl_witness.665, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %true, %impl.elem0.loc8 [concrete = constants.%bool.as.Copy.impl.Op.bound.5ee]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call.loc8: init bool = call %bound_method.loc8(%true) [concrete = constants.%true]
 // CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call.loc8 to %return

@@ -36,7 +36,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %Self.1c6: %I.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.dba: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -47,12 +47,12 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.fe2: type = struct_type {.a: bool, .b: %tuple.type.d07} [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
-// CHECK:STDOUT:   %assoc0.e7f: %I.assoc_type = assoc_entity element0, @I.%X [concrete]
+// CHECK:STDOUT:   %assoc0.a48: %I.assoc_type = assoc_entity element0, @I.%X [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %.Self.ec7: %I.type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.ec7 [symbolic_self]
-// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.ec7, @I [symbolic_self]
-// CHECK:STDOUT:   %impl.elem0.05f: %struct_type.a.b.fe2 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
+// CHECK:STDOUT:   %.Self.7a5: %I.type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.7a5 [symbolic_self]
+// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.7a5, @I [symbolic_self]
+// CHECK:STDOUT:   %impl.elem0.71a: %struct_type.a.b.fe2 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
@@ -67,11 +67,11 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.412: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.740: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.412 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.ec0: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.99e, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.57f: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.8c3, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.84b: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.84b = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.d14 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.ec0) [concrete]
-// CHECK:STDOUT:   %.d28: type = fn_type_with_self_type %ImplicitAs.Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.d14 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.57f) [concrete]
+// CHECK:STDOUT:   %.dbf: type = fn_type_with_self_type %ImplicitAs.Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.3d4: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.d3a: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -89,7 +89,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   %SubWith.Op.type.95d: type = fn_type @SubWith.Op, @SubWith(Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %SubWith.impl_witness: <witness> = impl_witness imports.%SubWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %SubWith.facet: %SubWith.type.928 = facet_value Core.IntLiteral, (%SubWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.423: type = fn_type_with_self_type %SubWith.Op.type.95d, %SubWith.facet [concrete]
+// CHECK:STDOUT:   %.a17: type = fn_type_with_self_type %SubWith.Op.type.95d, %SubWith.facet [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.SubWith.impl.Op.type: type = fn_type @Core.IntLiteral.as.SubWith.impl.Op [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.SubWith.impl.Op: %Core.IntLiteral.as.SubWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.SubWith.impl.Op.bound: <bound method> = bound_method %int_3, %Core.IntLiteral.as.SubWith.impl.Op [concrete]
@@ -100,11 +100,11 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   %DivWith.Op.type.c64: type = fn_type @DivWith.Op, @DivWith(Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %DivWith.impl_witness: <witness> = impl_witness imports.%DivWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %DivWith.facet: %DivWith.type.baf = facet_value Core.IntLiteral, (%DivWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.52e: type = fn_type_with_self_type %DivWith.Op.type.c64, %DivWith.facet [concrete]
+// CHECK:STDOUT:   %.8b3: type = fn_type_with_self_type %DivWith.Op.type.c64, %DivWith.facet [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.DivWith.impl.Op.type: type = fn_type @Core.IntLiteral.as.DivWith.impl.Op [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.DivWith.impl.Op: %Core.IntLiteral.as.DivWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.DivWith.impl.Op.bound: <bound method> = bound_method %int_4, %Core.IntLiteral.as.DivWith.impl.Op [concrete]
-// CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0.05f = %struct.682> [concrete]
+// CHECK:STDOUT:   %I_where.type: type = facet_type <@I where %impl.elem0.71a = %struct.682> [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness file.%I.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -121,16 +121,16 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/types/bool, Bool, loaded [concrete = constants.%Bool]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.3e1: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.412) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.740)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.99e = impl_witness_table (%Core.import_ref.3e1), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.1b5: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.412) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.740)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.8c3 = impl_witness_table (%Core.import_ref.1b5), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %Core.SubWith: %SubWith.type.378 = import_ref Core//prelude/operators/arithmetic, SubWith, loaded [concrete = constants.%SubWith.generic]
 // CHECK:STDOUT:   %Core.import_ref.abd97d.1 = import_ref Core//prelude/operators/arithmetic, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.592: %Core.IntLiteral.as.SubWith.impl.Op.type = import_ref Core//prelude/operators/arithmetic, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.SubWith.impl.Op]
-// CHECK:STDOUT:   %SubWith.impl_witness_table = impl_witness_table (%Core.import_ref.abd97d.1, %Core.import_ref.592), @Core.IntLiteral.as.SubWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.658: %Core.IntLiteral.as.SubWith.impl.Op.type = import_ref Core//prelude/operators/arithmetic, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.SubWith.impl.Op]
+// CHECK:STDOUT:   %SubWith.impl_witness_table = impl_witness_table (%Core.import_ref.abd97d.1, %Core.import_ref.658), @Core.IntLiteral.as.SubWith.impl [concrete]
 // CHECK:STDOUT:   %Core.DivWith: %DivWith.type.fc9 = import_ref Core//prelude/operators/arithmetic, DivWith, loaded [concrete = constants.%DivWith.generic]
 // CHECK:STDOUT:   %Core.import_ref.abd97d.2 = import_ref Core//prelude/operators/arithmetic, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.626: %Core.IntLiteral.as.DivWith.impl.Op.type = import_ref Core//prelude/operators/arithmetic, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.DivWith.impl.Op]
-// CHECK:STDOUT:   %DivWith.impl_witness_table = impl_witness_table (%Core.import_ref.abd97d.2, %Core.import_ref.626), @Core.IntLiteral.as.DivWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.fe5: %Core.IntLiteral.as.DivWith.impl.Op.type = import_ref Core//prelude/operators/arithmetic, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.DivWith.impl.Op]
+// CHECK:STDOUT:   %DivWith.impl_witness_table = impl_witness_table (%Core.import_ref.abd97d.2, %Core.import_ref.fe5), @Core.IntLiteral.as.DivWith.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -144,25 +144,25 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:     %.loc6_7.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc6_7.2: type = converted %.loc6_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:     %.Self: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.ec7]
-// CHECK:STDOUT:     %.Self.ref.loc6_20: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self.ec7]
-// CHECK:STDOUT:     %X.ref.loc6_20: %I.assoc_type = name_ref X, @X.%assoc0 [concrete = constants.%assoc0.e7f]
+// CHECK:STDOUT:     %.Self: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.7a5]
+// CHECK:STDOUT:     %.Self.ref.loc6_20: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self.7a5]
+// CHECK:STDOUT:     %X.ref.loc6_20: %I.assoc_type = name_ref X, @X.%assoc0 [concrete = constants.%assoc0.a48]
 // CHECK:STDOUT:     %.Self.as_type.loc6_20: type = facet_access_type %.Self.ref.loc6_20 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %.loc6_20: type = converted %.Self.ref.loc6_20, %.Self.as_type.loc6_20 [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:     %impl.elem0.loc6_20: %struct_type.a.b.fe2 = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0.05f]
+// CHECK:STDOUT:     %impl.elem0.loc6_20: %struct_type.a.b.fe2 = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0.71a]
 // CHECK:STDOUT:     %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %int_2.loc6_46: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:     %.loc6_47.1: %tuple.type.f94 = tuple_literal (%int_1, %int_2.loc6_46) [concrete = constants.%tuple.ad8]
 // CHECK:STDOUT:     %.loc6_48.1: %struct_type.a.b.aa4 = struct_literal (%true, %.loc6_47.1) [concrete = constants.%struct.e57]
-// CHECK:STDOUT:     %impl.elem0.loc6_47.1: %.d28 = impl_witness_access constants.%ImplicitAs.impl_witness.ec0, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
+// CHECK:STDOUT:     %impl.elem0.loc6_47.1: %.dbf = impl_witness_access constants.%ImplicitAs.impl_witness.57f, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
 // CHECK:STDOUT:     %bound_method.loc6_47.1: <bound method> = bound_method %int_1, %impl.elem0.loc6_47.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.3d4]
 // CHECK:STDOUT:     %specific_fn.loc6_47.1: <specific function> = specific_function %impl.elem0.loc6_47.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc6_47.2: <bound method> = bound_method %int_1, %specific_fn.loc6_47.1 [concrete = constants.%bound_method.d3a]
 // CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_47.1: init %i32 = call %bound_method.loc6_47.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:     %.loc6_47.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_47.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:     %.loc6_47.3: %i32 = converted %int_1, %.loc6_47.2 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:     %impl.elem0.loc6_47.2: %.d28 = impl_witness_access constants.%ImplicitAs.impl_witness.ec0, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
+// CHECK:STDOUT:     %impl.elem0.loc6_47.2: %.dbf = impl_witness_access constants.%ImplicitAs.impl_witness.57f, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
 // CHECK:STDOUT:     %bound_method.loc6_47.3: <bound method> = bound_method %int_2.loc6_46, %impl.elem0.loc6_47.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.c08]
 // CHECK:STDOUT:     %specific_fn.loc6_47.2: <specific function> = specific_function %impl.elem0.loc6_47.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc6_47.4: <bound method> = bound_method %int_2.loc6_46, %specific_fn.loc6_47.2 [concrete = constants.%bound_method.6f5]
@@ -173,27 +173,27 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:     %.loc6_48.2: %tuple.type.d07 = converted %.loc6_47.1, %tuple.loc6_47 [concrete = constants.%tuple.21c]
 // CHECK:STDOUT:     %struct.loc6_48: %struct_type.a.b.fe2 = struct_value (%true, %.loc6_48.2) [concrete = constants.%struct.682]
 // CHECK:STDOUT:     %.loc6_48.3: %struct_type.a.b.fe2 = converted %.loc6_48.1, %struct.loc6_48 [concrete = constants.%struct.682]
-// CHECK:STDOUT:     %.Self.ref.loc6_54: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self.ec7]
-// CHECK:STDOUT:     %X.ref.loc6_54: %I.assoc_type = name_ref X, @X.%assoc0 [concrete = constants.%assoc0.e7f]
+// CHECK:STDOUT:     %.Self.ref.loc6_54: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self.7a5]
+// CHECK:STDOUT:     %X.ref.loc6_54: %I.assoc_type = name_ref X, @X.%assoc0 [concrete = constants.%assoc0.a48]
 // CHECK:STDOUT:     %.Self.as_type.loc6_54: type = facet_access_type %.Self.ref.loc6_54 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %.loc6_54: type = converted %.Self.ref.loc6_54, %.Self.as_type.loc6_54 [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:     %impl.elem0.loc6_54: %struct_type.a.b.fe2 = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0.05f]
+// CHECK:STDOUT:     %impl.elem0.loc6_54: %struct_type.a.b.fe2 = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0.71a]
 // CHECK:STDOUT:     %impl.elem0.subst: %struct_type.a.b.fe2 = impl_witness_access_substituted %impl.elem0.loc6_54, %.loc6_48.3 [concrete = constants.%struct.682]
 // CHECK:STDOUT:     %false: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:     %.loc6_65: bool = not %false [concrete = constants.%true]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:     %int_2.loc6_86: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:     %impl.elem1.loc6_84: %.423 = impl_witness_access constants.%SubWith.impl_witness, element1 [concrete = constants.%Core.IntLiteral.as.SubWith.impl.Op]
+// CHECK:STDOUT:     %impl.elem1.loc6_84: %.a17 = impl_witness_access constants.%SubWith.impl_witness, element1 [concrete = constants.%Core.IntLiteral.as.SubWith.impl.Op]
 // CHECK:STDOUT:     %bound_method.loc6_84: <bound method> = bound_method %int_3, %impl.elem1.loc6_84 [concrete = constants.%Core.IntLiteral.as.SubWith.impl.Op.bound]
 // CHECK:STDOUT:     %Core.IntLiteral.as.SubWith.impl.Op.call: init Core.IntLiteral = call %bound_method.loc6_84(%int_3, %int_2.loc6_86) [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4]
 // CHECK:STDOUT:     %int_2.loc6_93: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:     %impl.elem1.loc6_91: %.52e = impl_witness_access constants.%DivWith.impl_witness, element1 [concrete = constants.%Core.IntLiteral.as.DivWith.impl.Op]
+// CHECK:STDOUT:     %impl.elem1.loc6_91: %.8b3 = impl_witness_access constants.%DivWith.impl_witness, element1 [concrete = constants.%Core.IntLiteral.as.DivWith.impl.Op]
 // CHECK:STDOUT:     %bound_method.loc6_91: <bound method> = bound_method %int_4, %impl.elem1.loc6_91 [concrete = constants.%Core.IntLiteral.as.DivWith.impl.Op.bound]
 // CHECK:STDOUT:     %Core.IntLiteral.as.DivWith.impl.Op.call: init Core.IntLiteral = call %bound_method.loc6_91(%int_4, %int_2.loc6_93) [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:     %.loc6_94.1: %tuple.type.f94 = tuple_literal (%Core.IntLiteral.as.SubWith.impl.Op.call, %Core.IntLiteral.as.DivWith.impl.Op.call) [concrete = constants.%tuple.ad8]
 // CHECK:STDOUT:     %.loc6_95.1: %struct_type.a.b.aa4 = struct_literal (%.loc6_65, %.loc6_94.1) [concrete = constants.%struct.e57]
-// CHECK:STDOUT:     %impl.elem0.loc6_94.1: %.d28 = impl_witness_access constants.%ImplicitAs.impl_witness.ec0, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
+// CHECK:STDOUT:     %impl.elem0.loc6_94.1: %.dbf = impl_witness_access constants.%ImplicitAs.impl_witness.57f, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
 // CHECK:STDOUT:     %bound_method.loc6_94.1: <bound method> = bound_method %Core.IntLiteral.as.SubWith.impl.Op.call, %impl.elem0.loc6_94.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.3d4]
 // CHECK:STDOUT:     %specific_fn.loc6_94.1: <specific function> = specific_function %impl.elem0.loc6_94.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc6_94.2: <bound method> = bound_method %Core.IntLiteral.as.SubWith.impl.Op.call, %specific_fn.loc6_94.1 [concrete = constants.%bound_method.d3a]
@@ -202,7 +202,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_94.1: init %i32 = call %bound_method.loc6_94.2(%.loc6_84.2) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:     %.loc6_94.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_94.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:     %.loc6_94.3: %i32 = converted %Core.IntLiteral.as.SubWith.impl.Op.call, %.loc6_94.2 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:     %impl.elem0.loc6_94.2: %.d28 = impl_witness_access constants.%ImplicitAs.impl_witness.ec0, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
+// CHECK:STDOUT:     %impl.elem0.loc6_94.2: %.dbf = impl_witness_access constants.%ImplicitAs.impl_witness.57f, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
 // CHECK:STDOUT:     %bound_method.loc6_94.3: <bound method> = bound_method %Core.IntLiteral.as.DivWith.impl.Op.call, %impl.elem0.loc6_94.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.c08]
 // CHECK:STDOUT:     %specific_fn.loc6_94.2: <specific function> = specific_function %impl.elem0.loc6_94.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc6_94.4: <bound method> = bound_method %Core.IntLiteral.as.DivWith.impl.Op.call, %specific_fn.loc6_94.2 [concrete = constants.%bound_method.6f5]
@@ -227,9 +227,9 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.1c6]
+// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.dba]
 // CHECK:STDOUT:   %X: %struct_type.a.b.fe2 = assoc_const_decl @X [concrete] {
-// CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%X [concrete = constants.%assoc0.e7f]
+// CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%X [concrete = constants.%assoc0.a48]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -249,15 +249,15 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   witness = file.%I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%Self.1c6) {}
+// CHECK:STDOUT: specific @X(constants.%Self.dba) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%.Self.ec7) {}
+// CHECK:STDOUT: specific @X(constants.%.Self.7a5) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_two_different_non_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %Self.1c6: %I.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.dba: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -268,12 +268,12 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   %tuple.type.d07: type = tuple_type (%i32, %i32) [concrete]
 // CHECK:STDOUT:   %struct_type.a.b.fe2: type = struct_type {.a: bool, .b: %tuple.type.d07} [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
-// CHECK:STDOUT:   %assoc0.e7f: %I.assoc_type = assoc_entity element0, @I.%X [concrete]
+// CHECK:STDOUT:   %assoc0.a48: %I.assoc_type = assoc_entity element0, @I.%X [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %.Self: %I.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self [symbolic_self]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %.Self, @I [symbolic_self]
-// CHECK:STDOUT:   %impl.elem0.05f: %struct_type.a.b.fe2 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
+// CHECK:STDOUT:   %impl.elem0.71a: %struct_type.a.b.fe2 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
@@ -288,11 +288,11 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.412: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.740: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.412 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.ec0: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.99e, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.57f: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.8c3, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.84b: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.84b = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.d14 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.ec0) [concrete]
-// CHECK:STDOUT:   %.d28: type = fn_type_with_self_type %ImplicitAs.Convert.type.1b6, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.d14 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.57f) [concrete]
+// CHECK:STDOUT:   %.dbf: type = fn_type_with_self_type %ImplicitAs.Convert.type.1b6, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.3d4: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.d3a: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -328,8 +328,8 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   %Core.Bool: %Bool.type = import_ref Core//prelude/types/bool, Bool, loaded [concrete = constants.%Bool]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.cc7 = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.3e1: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.412) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.740)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.99e = impl_witness_table (%Core.import_ref.3e1), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.1b5: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.412) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.740)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.8c3 = impl_witness_table (%Core.import_ref.1b5), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -345,23 +345,23 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %.Self.ref.loc10_20: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %X.ref.loc10_20: %I.assoc_type = name_ref X, @X.%assoc0 [concrete = constants.%assoc0.e7f]
+// CHECK:STDOUT:     %X.ref.loc10_20: %I.assoc_type = name_ref X, @X.%assoc0 [concrete = constants.%assoc0.a48]
 // CHECK:STDOUT:     %.Self.as_type.loc10_20: type = facet_access_type %.Self.ref.loc10_20 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %.loc10_20: type = converted %.Self.ref.loc10_20, %.Self.as_type.loc10_20 [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:     %impl.elem0.loc10_20: %struct_type.a.b.fe2 = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0.05f]
+// CHECK:STDOUT:     %impl.elem0.loc10_20: %struct_type.a.b.fe2 = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0.71a]
 // CHECK:STDOUT:     %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:     %.loc10_47.1: %tuple.type.f94 = tuple_literal (%int_1, %int_2) [concrete = constants.%tuple.ad8]
 // CHECK:STDOUT:     %.loc10_48.1: %struct_type.a.b.aa4 = struct_literal (%true, %.loc10_47.1) [concrete = constants.%struct.e57]
-// CHECK:STDOUT:     %impl.elem0.loc10_47.1: %.d28 = impl_witness_access constants.%ImplicitAs.impl_witness.ec0, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
+// CHECK:STDOUT:     %impl.elem0.loc10_47.1: %.dbf = impl_witness_access constants.%ImplicitAs.impl_witness.57f, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
 // CHECK:STDOUT:     %bound_method.loc10_47.1: <bound method> = bound_method %int_1, %impl.elem0.loc10_47.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.3d4]
 // CHECK:STDOUT:     %specific_fn.loc10_47.1: <specific function> = specific_function %impl.elem0.loc10_47.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc10_47.2: <bound method> = bound_method %int_1, %specific_fn.loc10_47.1 [concrete = constants.%bound_method.d3a]
 // CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_47.1: init %i32 = call %bound_method.loc10_47.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:     %.loc10_47.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_47.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:     %.loc10_47.3: %i32 = converted %int_1, %.loc10_47.2 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:     %impl.elem0.loc10_47.2: %.d28 = impl_witness_access constants.%ImplicitAs.impl_witness.ec0, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
+// CHECK:STDOUT:     %impl.elem0.loc10_47.2: %.dbf = impl_witness_access constants.%ImplicitAs.impl_witness.57f, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
 // CHECK:STDOUT:     %bound_method.loc10_47.3: <bound method> = bound_method %int_2, %impl.elem0.loc10_47.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.c08]
 // CHECK:STDOUT:     %specific_fn.loc10_47.2: <specific function> = specific_function %impl.elem0.loc10_47.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc10_47.4: <bound method> = bound_method %int_2, %specific_fn.loc10_47.2 [concrete = constants.%bound_method.6f5]
@@ -373,24 +373,24 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:     %struct.loc10_48: %struct_type.a.b.fe2 = struct_value (%true, %.loc10_48.2) [concrete = constants.%struct.682]
 // CHECK:STDOUT:     %.loc10_48.3: %struct_type.a.b.fe2 = converted %.loc10_48.1, %struct.loc10_48 [concrete = constants.%struct.682]
 // CHECK:STDOUT:     %.Self.ref.loc10_54: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %X.ref.loc10_54: %I.assoc_type = name_ref X, @X.%assoc0 [concrete = constants.%assoc0.e7f]
+// CHECK:STDOUT:     %X.ref.loc10_54: %I.assoc_type = name_ref X, @X.%assoc0 [concrete = constants.%assoc0.a48]
 // CHECK:STDOUT:     %.Self.as_type.loc10_54: type = facet_access_type %.Self.ref.loc10_54 [symbolic_self = constants.%.Self.binding.as_type]
 // CHECK:STDOUT:     %.loc10_54: type = converted %.Self.ref.loc10_54, %.Self.as_type.loc10_54 [symbolic_self = constants.%.Self.binding.as_type]
-// CHECK:STDOUT:     %impl.elem0.loc10_54: %struct_type.a.b.fe2 = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0.05f]
+// CHECK:STDOUT:     %impl.elem0.loc10_54: %struct_type.a.b.fe2 = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0.71a]
 // CHECK:STDOUT:     %impl.elem0.subst: %struct_type.a.b.fe2 = impl_witness_access_substituted %impl.elem0.loc10_54, %.loc10_48.3 [concrete = constants.%struct.682]
 // CHECK:STDOUT:     %false: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4.0c1]
 // CHECK:STDOUT:     %.loc10_82.1: %tuple.type.f94 = tuple_literal (%int_3, %int_4) [concrete = constants.%tuple.302]
 // CHECK:STDOUT:     %.loc10_83.1: %struct_type.a.b.aa4 = struct_literal (%false, %.loc10_82.1) [concrete = constants.%struct.1ec]
-// CHECK:STDOUT:     %impl.elem0.loc10_82.1: %.d28 = impl_witness_access constants.%ImplicitAs.impl_witness.ec0, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
+// CHECK:STDOUT:     %impl.elem0.loc10_82.1: %.dbf = impl_witness_access constants.%ImplicitAs.impl_witness.57f, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
 // CHECK:STDOUT:     %bound_method.loc10_82.1: <bound method> = bound_method %int_3, %impl.elem0.loc10_82.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.ad4]
 // CHECK:STDOUT:     %specific_fn.loc10_82.1: <specific function> = specific_function %impl.elem0.loc10_82.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc10_82.2: <bound method> = bound_method %int_3, %specific_fn.loc10_82.1 [concrete = constants.%bound_method.7cb]
 // CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_82.1: init %i32 = call %bound_method.loc10_82.2(%int_3) [concrete = constants.%int_3.822]
 // CHECK:STDOUT:     %.loc10_82.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_82.1 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:     %.loc10_82.3: %i32 = converted %int_3, %.loc10_82.2 [concrete = constants.%int_3.822]
-// CHECK:STDOUT:     %impl.elem0.loc10_82.2: %.d28 = impl_witness_access constants.%ImplicitAs.impl_witness.ec0, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
+// CHECK:STDOUT:     %impl.elem0.loc10_82.2: %.dbf = impl_witness_access constants.%ImplicitAs.impl_witness.57f, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f0]
 // CHECK:STDOUT:     %bound_method.loc10_82.3: <bound method> = bound_method %int_4, %impl.elem0.loc10_82.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.c71]
 // CHECK:STDOUT:     %specific_fn.loc10_82.2: <specific function> = specific_function %impl.elem0.loc10_82.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc10_82.4: <bound method> = bound_method %int_4, %specific_fn.loc10_82.2 [concrete = constants.%bound_method.a9f]
@@ -410,9 +410,9 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.1c6]
+// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.dba]
 // CHECK:STDOUT:   %X: %struct_type.a.b.fe2 = assoc_const_decl @X [concrete] {
-// CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%X [concrete = constants.%assoc0.e7f]
+// CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%X [concrete = constants.%assoc0.a48]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -432,7 +432,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X(constants.%Self.1c6) {}
+// CHECK:STDOUT: specific @X(constants.%Self.dba) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X(constants.%.Self) {}
 // CHECK:STDOUT:

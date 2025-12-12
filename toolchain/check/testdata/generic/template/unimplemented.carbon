@@ -166,7 +166,7 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self.c97: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %c: %C = symbolic_binding c, 0, template [template]
-// CHECK:STDOUT:   %pattern_type.c48: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -195,7 +195,7 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.c48 = symbolic_binding_pattern c, 0, template [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.7c7 = symbolic_binding_pattern c, 0, template [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.7ce = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7ce = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {

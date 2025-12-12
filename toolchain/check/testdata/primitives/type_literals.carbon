@@ -468,7 +468,7 @@ var test_str: str = ();
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.f57: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%char) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.3be = facet_value Core.CharLiteral, (%ImplicitAs.impl_witness) [concrete]
-// CHECK:STDOUT:   %.8d6: type = fn_type_with_self_type %ImplicitAs.Convert.type.f57, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %.7f1: type = fn_type_with_self_type %ImplicitAs.Convert.type.f57, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.type: type = fn_type @Core.CharLiteral.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert: %Core.CharLiteral.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %.b9b, %Core.CharLiteral.as.ImplicitAs.impl.Convert [concrete]
@@ -476,15 +476,15 @@ var test_str: str = ();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.543: %Core.CharLiteral.as.ImplicitAs.impl.Convert.type = import_ref Core//prelude/parts/char, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (%Core.import_ref.543), @Core.CharLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.e21: %Core.CharLiteral.as.ImplicitAs.impl.Convert.type = import_ref Core//prelude/parts/char, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table = impl_witness_table (%Core.import_ref.e21), @Core.CharLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_char.patt: %pattern_type.b09 = value_binding_pattern test_char [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl.elem0: %.8d6 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %impl.elem0: %.7f1 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method @__global_init.%.loc5, %impl.elem0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call: init %char = call %bound_method(@__global_init.%.loc5) [concrete = constants.%int_99]
 // CHECK:STDOUT:   %.loc5_23.1: %char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_99]
@@ -539,17 +539,17 @@ var test_str: str = ();
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.de9: <witness> = impl_witness imports.%Copy.impl_witness_table.40f [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.de9) [concrete]
-// CHECK:STDOUT:   %.98f: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.286: <witness> = impl_witness imports.%Copy.impl_witness_table.087 [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.286) [concrete]
+// CHECK:STDOUT:   %.703: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.type: type = fn_type @type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.bound: <bound method> = bound_method %i32, %type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.f97: %type.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%type.as.Copy.impl.Op]
-// CHECK:STDOUT:   %Copy.impl_witness_table.40f = impl_witness_table (%Core.import_ref.f97), @type.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.ae7: %type.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%type.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Copy.impl_witness_table.087 = impl_witness_table (%Core.import_ref.ae7), @type.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -565,7 +565,7 @@ var test_str: str = ();
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0: %.98f = impl_witness_access constants.%Copy.impl_witness.de9, element0 [concrete = constants.%type.as.Copy.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.703 = impl_witness_access constants.%Copy.impl_witness.286, element0 [concrete = constants.%type.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %i32, %impl.elem0 [concrete = constants.%type.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%i32) [concrete = constants.%i32]
 // CHECK:STDOUT:   assign file.%test_type.var, %type.as.Copy.impl.Op.call

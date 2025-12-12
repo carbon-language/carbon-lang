@@ -511,15 +511,13 @@ static auto GetCoreQualifiedName(llvm::ArrayRef<CoreIdentifier> qualifiers)
 static auto GetCorePackage(Context& context, SemIR::LocId loc_id,
                            llvm::ArrayRef<CoreIdentifier> qualifiers)
     -> SemIR::NameScopeId {
-  auto packaging = context.parse_tree().packaging_decl();
-  if (packaging && packaging->names.package_id == PackageNameId::Core) {
+  if (context.name_scopes().IsCorePackage(SemIR::NameScopeId::Package)) {
     return SemIR::NameScopeId::Package;
   }
-  auto core_name_id = SemIR::NameId::Core;
 
   // Look up `package.Core`.
   auto core_scope_result = LookupNameInExactScope(
-      context, loc_id, core_name_id, SemIR::NameScopeId::Package,
+      context, loc_id, SemIR::NameId::Core, SemIR::NameScopeId::Package,
       context.name_scopes().Get(SemIR::NameScopeId::Package));
   if (core_scope_result.is_found()) {
     // We expect it to be a namespace.

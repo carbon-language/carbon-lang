@@ -106,7 +106,7 @@ fn Run() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.import_ref.8f2: <witness> = import_ref Other//a, loc5_14, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.ca8 = import_ref Other//a, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Other.import_ref.751 = import_ref Other//a, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -145,7 +145,7 @@ fn Run() {
 // CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Other.import_ref.ca8
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.751
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %return.param: %A {
@@ -184,15 +184,15 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [concrete] {
 // CHECK:STDOUT:     .F = %Other.F
-// CHECK:STDOUT:     .NS1 = %NS1.2f2
+// CHECK:STDOUT:     .NS1 = %NS1.f3d
 // CHECK:STDOUT:     import Other//b
 // CHECK:STDOUT:     import Other//a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.F: %F.type = import_ref Other//b, F, loaded [concrete = constants.%F]
 // CHECK:STDOUT:   %Other.import_ref.8db: <witness> = import_ref Other//b, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Other.import_ref.bbd = import_ref Other//b, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Other.import_ref.8b6 = import_ref Other//b, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT:   %Other.NS1: <namespace> = import_ref Other//b, NS1, loaded
-// CHECK:STDOUT:   %NS1.2f2: <namespace> = namespace %Other.NS1, [concrete] {
+// CHECK:STDOUT:   %NS1.f3d: <namespace> = namespace %Other.NS1, [concrete] {
 // CHECK:STDOUT:     .A = %Other.A
 // CHECK:STDOUT:     import Other//b
 // CHECK:STDOUT:     import Other//a
@@ -216,7 +216,7 @@ fn Run() {
 // CHECK:STDOUT:   complete_type_witness = imports.%Other.import_ref.8db
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Other.import_ref.bbd
+// CHECK:STDOUT:   .Self = imports.%Other.import_ref.8b6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -233,7 +233,7 @@ fn Run() {
 // CHECK:STDOUT:   %a.var: ref %A = var %a.var_patt
 // CHECK:STDOUT:   %.loc10: type = splice_block %A.ref [concrete = constants.%A] {
 // CHECK:STDOUT:     %Other.ref.loc10: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
-// CHECK:STDOUT:     %NS1.ref: <namespace> = name_ref NS1, imports.%NS1.2f2 [concrete = imports.%NS1.2f2]
+// CHECK:STDOUT:     %NS1.ref: <namespace> = name_ref NS1, imports.%NS1.f3d [concrete = imports.%NS1.f3d]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Other.A [concrete = constants.%A]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %A = ref_binding a, %a.var

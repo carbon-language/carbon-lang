@@ -26,9 +26,9 @@ fn G() { F(Animal); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Eats.type: type = facet_type <@Eats> [concrete]
-// CHECK:STDOUT:   %Self.ca7: %Eats.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.f2a: %Eats.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete]
-// CHECK:STDOUT:   %Self.d93: %Animal.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.614: %Animal.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness file.%Eats.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Eats.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -75,7 +75,7 @@ fn G() { F(Animal); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Eats {
-// CHECK:STDOUT:   %Self: %Eats.type = symbolic_binding Self, 0 [symbolic = constants.%Self.ca7]
+// CHECK:STDOUT:   %Self: %Eats.type = symbolic_binding Self, 0 [symbolic = constants.%Self.f2a]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -85,7 +85,7 @@ fn G() { F(Animal); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Animal {
-// CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic = constants.%Self.d93]
+// CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic = constants.%Self.614]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

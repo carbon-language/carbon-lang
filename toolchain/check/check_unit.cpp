@@ -104,11 +104,19 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   auto namespace_type_id =
       GetSingletonType(context_, SemIR::NamespaceType::TypeInstId);
 
+  // Use the name of the package for the package scope.
+  SemIR::NameId package_name_id = SemIR::NameId::MainPackage;
+  const auto& packaging = context_.parse_tree().packaging_decl();
+  if (packaging && packaging->names.package_id.has_value()) {
+    package_name_id =
+        SemIR::NameId::ForPackageName(packaging->names.package_id);
+  }
+
   // Define the package scope, with an instruction for `package` expressions to
   // reference.
-  auto package_scope_id = context_.name_scopes().Add(
-      SemIR::Namespace::PackageInstId, SemIR::NameId::PackageNamespace,
-      SemIR::NameScopeId::None);
+  auto package_scope_id =
+      context_.name_scopes().Add(SemIR::Namespace::PackageInstId,
+                                 package_name_id, SemIR::NameScopeId::None);
   CARBON_CHECK(package_scope_id == SemIR::NameScopeId::Package);
 
   auto package_inst_id =
@@ -121,7 +129,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   // Call `SetSpecialImportIRs()` to set `ImportIRId::ApiForImpl` and
   // `ImportIRId::Cpp` first, as required.
   if (unit_and_imports_->api_for_impl) {
-    const auto& names = context_.parse_tree().packaging_decl()->names;
+    const auto& names = packaging->names;
     auto import_decl_id = AddInst<SemIR::ImportDecl>(
         context_, names.node_id,
         {.package_id = SemIR::NameId::ForPackageName(names.package_id)});

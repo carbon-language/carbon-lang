@@ -72,7 +72,7 @@ fn G(T:! Z) {
 // CHECK:STDOUT:   %BitAndWith.Op.type.9a3: type = fn_type @BitAndWith.Op, @BitAndWith(type) [concrete]
 // CHECK:STDOUT:   %BitAndWith.impl_witness: <witness> = impl_witness imports.%BitAndWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %BitAndWith.facet: %BitAndWith.type.8a6 = facet_value type, (%BitAndWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %.fa7: type = fn_type_with_self_type %BitAndWith.Op.type.9a3, %BitAndWith.facet [concrete]
+// CHECK:STDOUT:   %.cdf: type = fn_type_with_self_type %BitAndWith.Op.type.9a3, %BitAndWith.facet [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.type: type = fn_type @type.as.BitAndWith.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op: %type.as.BitAndWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.bound: <bound method> = bound_method %E.type, %type.as.BitAndWith.impl.Op [concrete]
@@ -82,8 +82,8 @@ fn G(T:! Z) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.636: %type.as.BitAndWith.impl.Op.type = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, loaded [concrete = constants.%type.as.BitAndWith.impl.Op]
-// CHECK:STDOUT:   %BitAndWith.impl_witness_table = impl_witness_table (%Core.import_ref.636), @type.as.BitAndWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.d76: %type.as.BitAndWith.impl.Op.type = import_ref Core//prelude/parts/as, loc{{\d+_\d+}}, loaded [concrete = constants.%type.as.BitAndWith.impl.Op]
+// CHECK:STDOUT:   %BitAndWith.impl_witness_table = impl_witness_table (%Core.import_ref.d76), @type.as.BitAndWith.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -94,7 +94,7 @@ fn G(T:! Z) {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %E.ref.loc8_10: type = name_ref E, file.%E.decl [concrete = constants.%E.type]
 // CHECK:STDOUT:       %E.ref.loc8_14: type = name_ref E, file.%E.decl [concrete = constants.%E.type]
-// CHECK:STDOUT:       %impl.elem0: %.fa7 = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
+// CHECK:STDOUT:       %impl.elem0: %.cdf = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
 // CHECK:STDOUT:       %bound_method: <bound method> = bound_method %E.ref.loc8_10, %impl.elem0 [concrete = constants.%type.as.BitAndWith.impl.Op.bound]
 // CHECK:STDOUT:       %type.as.BitAndWith.impl.Op.call: init type = call %bound_method(%E.ref.loc8_10, %E.ref.loc8_14) [concrete = constants.%E.type]
 // CHECK:STDOUT:       %.loc8_12.2: type = value_of_initializer %type.as.BitAndWith.impl.Op.call [concrete = constants.%E.type]

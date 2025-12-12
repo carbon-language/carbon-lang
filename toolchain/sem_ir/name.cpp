@@ -29,7 +29,9 @@ static auto GetSpecialName(NameId name_id, bool for_ir) -> llvm::StringRef {
       return for_ir ? "cpp_destructor" : "<C++ destructor>";
     case NameId::SpecialNameId::CppOperator:
       return for_ir ? "cpp_operator" : "<C++ operator>";
-    case NameId::SpecialNameId::PackageNamespace:
+    case NameId::SpecialNameId::MainPackage:
+      return "Main";
+    case NameId::SpecialNameId::PackageKeyword:
       return "package";
     case NameId::SpecialNameId::PeriodSelf:
       return ".Self";

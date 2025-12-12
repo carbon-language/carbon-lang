@@ -150,11 +150,11 @@ let never: Never = {};
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.5a9: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.7a4: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.5a9 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.628: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.ef0, @Core.IntLiteral.as.ImplicitAs.impl(%int_2.ecc) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.4d5: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.6dd, @Core.IntLiteral.as.ImplicitAs.impl(%int_2.ecc) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.d04: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_2.ecc) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.1ef: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.d04 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.d83 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.628) [concrete]
-// CHECK:STDOUT:   %.2e6: type = fn_type_with_self_type %ImplicitAs.Convert.type.f0e, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.d83 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.4d5) [concrete]
+// CHECK:STDOUT:   %.bde: type = fn_type_with_self_type %ImplicitAs.Convert.type.f0e, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.c5e: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.1ef [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.1ef, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_2.ecc) [concrete]
 // CHECK:STDOUT:   %bound_method.f18: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -164,15 +164,15 @@ let never: Never = {};
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.type.86c: type = fn_type @UInt.as.Copy.impl.Op, @UInt.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.4eb: %UInt.as.Copy.impl.Op.type.86c = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.123: <witness> = impl_witness imports.%Copy.impl_witness_table.4bf, @UInt.as.Copy.impl(%int_2.ecc) [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.1d0: <witness> = impl_witness imports.%Copy.impl_witness_table.129, @UInt.as.Copy.impl(%int_2.ecc) [concrete]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.type.22b: type = fn_type @UInt.as.Copy.impl.Op, @UInt.as.Copy.impl(%int_2.ecc) [concrete]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.129: %UInt.as.Copy.impl.Op.type.22b = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %u2, (%Copy.impl_witness.123) [concrete]
-// CHECK:STDOUT:   %.351: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %u2, (%Copy.impl_witness.1d0) [concrete]
+// CHECK:STDOUT:   %.bdf: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.bound.6ce: <bound method> = bound_method %int_0.9fd, %UInt.as.Copy.impl.Op.129 [concrete]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %UInt.as.Copy.impl.Op.129, @UInt.as.Copy.impl.Op(%int_2.ecc) [concrete]
 // CHECK:STDOUT:   %bound_method.481: <bound method> = bound_method %int_0.9fd, %UInt.as.Copy.impl.Op.specific_fn [concrete]
-// CHECK:STDOUT:   %Ordering.val.a29: %Ordering = struct_value (%int_0.9fd) [concrete]
+// CHECK:STDOUT:   %Ordering.val.9ea: %Ordering = struct_value (%int_0.9fd) [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.680: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.1ef [concrete]
 // CHECK:STDOUT:   %bound_method.9ae: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -180,14 +180,14 @@ let never: Never = {};
 // CHECK:STDOUT:   %struct.0ff: %struct_type.discriminant = struct_value (%int_1.b2c) [concrete]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.bound.44e: <bound method> = bound_method %int_1.b2c, %UInt.as.Copy.impl.Op.129 [concrete]
 // CHECK:STDOUT:   %bound_method.09e: <bound method> = bound_method %int_1.b2c, %UInt.as.Copy.impl.Op.specific_fn [concrete]
-// CHECK:STDOUT:   %Ordering.val.927: %Ordering = struct_value (%int_1.b2c) [concrete]
+// CHECK:STDOUT:   %Ordering.val.d41: %Ordering = struct_value (%int_1.b2c) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.210: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.1ef [concrete]
 // CHECK:STDOUT:   %bound_method.eb1: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_2.788: %u2 = int_value 2 [concrete]
 // CHECK:STDOUT:   %struct.6e6: %struct_type.discriminant = struct_value (%int_2.788) [concrete]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.bound.a8d: <bound method> = bound_method %int_2.788, %UInt.as.Copy.impl.Op.129 [concrete]
 // CHECK:STDOUT:   %bound_method.9e4: <bound method> = bound_method %int_2.788, %UInt.as.Copy.impl.Op.specific_fn [concrete]
-// CHECK:STDOUT:   %Ordering.val.968: %Ordering = struct_value (%int_2.788) [concrete]
+// CHECK:STDOUT:   %Ordering.val.e86: %Ordering = struct_value (%int_2.788) [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.3fb: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.1ef [concrete]
 // CHECK:STDOUT:   %bound_method.1e6: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -195,36 +195,36 @@ let never: Never = {};
 // CHECK:STDOUT:   %struct.7bd: %struct_type.discriminant = struct_value (%int_3.975) [concrete]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.bound.1e7: <bound method> = bound_method %int_3.975, %UInt.as.Copy.impl.Op.129 [concrete]
 // CHECK:STDOUT:   %bound_method.5d8: <bound method> = bound_method %int_3.975, %UInt.as.Copy.impl.Op.specific_fn [concrete]
-// CHECK:STDOUT:   %Ordering.val.8a7: %Ordering = struct_value (%int_3.975) [concrete]
-// CHECK:STDOUT:   %pattern_type.308: type = pattern_type %Ordering [concrete]
+// CHECK:STDOUT:   %Ordering.val.a17: %Ordering = struct_value (%int_3.975) [concrete]
+// CHECK:STDOUT:   %pattern_type.a36: type = pattern_type %Ordering [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.d80: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.5a9) = import_ref Core//prelude/parts/uint, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.7a4)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.ef0 = impl_witness_table (%Core.import_ref.d80), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.cac: @UInt.as.Copy.impl.%UInt.as.Copy.impl.Op.type (%UInt.as.Copy.impl.Op.type.86c) = import_ref Core//prelude/parts/uint, loc{{\d+_\d+}}, loaded [symbolic = @UInt.as.Copy.impl.%UInt.as.Copy.impl.Op (constants.%UInt.as.Copy.impl.Op.4eb)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.4bf = impl_witness_table (%Core.import_ref.cac), @UInt.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.af5: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.5a9) = import_ref Core//prelude/parts/uint, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.7a4)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.6dd = impl_witness_table (%Core.import_ref.af5), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.c23: @UInt.as.Copy.impl.%UInt.as.Copy.impl.Op.type (%UInt.as.Copy.impl.Op.type.86c) = import_ref Core//prelude/parts/uint, loc{{\d+_\d+}}, loaded [symbolic = @UInt.as.Copy.impl.%UInt.as.Copy.impl.Op (constants.%UInt.as.Copy.impl.Op.4eb)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.129 = impl_witness_table (%Core.import_ref.c23), @UInt.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Ordering.decl: type = class_decl @Ordering [concrete = constants.%Ordering] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %less.patt: %pattern_type.308 = value_binding_pattern less [concrete]
+// CHECK:STDOUT:     %less.patt: %pattern_type.a36 = value_binding_pattern less [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Ordering.ref.loc11: type = name_ref Ordering, %Ordering.decl [concrete = constants.%Ordering]
 // CHECK:STDOUT:   %less: %Ordering = value_binding less, @__global_init.%Less.ref
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %equiv.patt: %pattern_type.308 = value_binding_pattern equiv [concrete]
+// CHECK:STDOUT:     %equiv.patt: %pattern_type.a36 = value_binding_pattern equiv [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Ordering.ref.loc12: type = name_ref Ordering, %Ordering.decl [concrete = constants.%Ordering]
 // CHECK:STDOUT:   %equiv: %Ordering = value_binding equiv, @__global_init.%Equivalent.ref
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %greater.patt: %pattern_type.308 = value_binding_pattern greater [concrete]
+// CHECK:STDOUT:     %greater.patt: %pattern_type.a36 = value_binding_pattern greater [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Ordering.ref.loc13: type = name_ref Ordering, %Ordering.decl [concrete = constants.%Ordering]
 // CHECK:STDOUT:   %greater: %Ordering = value_binding greater, @__global_init.%Greater.ref
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %inc.patt: %pattern_type.308 = value_binding_pattern inc [concrete]
+// CHECK:STDOUT:     %inc.patt: %pattern_type.a36 = value_binding_pattern inc [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Ordering.ref.loc14: type = name_ref Ordering, %Ordering.decl [concrete = constants.%Ordering]
 // CHECK:STDOUT:   %inc: %Ordering = value_binding inc, @__global_init.%Incomparable.ref
@@ -235,7 +235,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %u2: type = class_type @UInt, @UInt(constants.%int_2.ecc) [concrete = constants.%u2]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.discriminant [concrete = constants.%complete_type.de2]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
-// CHECK:STDOUT:   %impl.elem0.loc5_7.1: %.2e6 = impl_witness_access constants.%ImplicitAs.impl_witness.628, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1ef]
+// CHECK:STDOUT:   %impl.elem0.loc5_7.1: %.bde = impl_witness_access constants.%ImplicitAs.impl_witness.4d5, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1ef]
 // CHECK:STDOUT:   %bound_method.loc5_7.1: <bound method> = bound_method %int_0, %impl.elem0.loc5_7.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.c5e]
 // CHECK:STDOUT:   %specific_fn.loc5_7.1: <specific function> = specific_function %impl.elem0.loc5_7.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_2.ecc) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc5_7.2: <bound method> = bound_method %int_0, %specific_fn.loc5_7.1 [concrete = constants.%bound_method.f18]
@@ -243,7 +243,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc5_7.1: %u2 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc5 [concrete = constants.%int_0.9fd]
 // CHECK:STDOUT:   %.loc5_7.2: %u2 = converted %int_0, %.loc5_7.1 [concrete = constants.%int_0.9fd]
 // CHECK:STDOUT:   %.loc5_7.3: %struct_type.discriminant = struct_literal (%.loc5_7.2) [concrete = constants.%struct.559]
-// CHECK:STDOUT:   %impl.elem0.loc5_7.2: %.351 = impl_witness_access constants.%Copy.impl_witness.123, element0 [concrete = constants.%UInt.as.Copy.impl.Op.129]
+// CHECK:STDOUT:   %impl.elem0.loc5_7.2: %.bdf = impl_witness_access constants.%Copy.impl_witness.1d0, element0 [concrete = constants.%UInt.as.Copy.impl.Op.129]
 // CHECK:STDOUT:   %bound_method.loc5_7.3: <bound method> = bound_method %.loc5_7.2, %impl.elem0.loc5_7.2 [concrete = constants.%UInt.as.Copy.impl.Op.bound.6ce]
 // CHECK:STDOUT:   %specific_fn.loc5_7.2: <specific function> = specific_function %impl.elem0.loc5_7.2, @UInt.as.Copy.impl.Op(constants.%int_2.ecc) [concrete = constants.%UInt.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc5_7.4: <bound method> = bound_method %.loc5_7.2, %specific_fn.loc5_7.2 [concrete = constants.%bound_method.481]
@@ -251,13 +251,13 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc5_7.4: ref %Ordering = temporary_storage
 // CHECK:STDOUT:   %.loc5_7.5: ref %u2 = class_element_access %.loc5_7.4, element0
 // CHECK:STDOUT:   %.loc5_7.6: init %u2 = initialize_from %UInt.as.Copy.impl.Op.call.loc5 to %.loc5_7.5 [concrete = constants.%int_0.9fd]
-// CHECK:STDOUT:   %.loc5_7.7: init %Ordering = class_init (%.loc5_7.6), %.loc5_7.4 [concrete = constants.%Ordering.val.a29]
+// CHECK:STDOUT:   %.loc5_7.7: init %Ordering = class_init (%.loc5_7.6), %.loc5_7.4 [concrete = constants.%Ordering.val.9ea]
 // CHECK:STDOUT:   %.loc5_7.8: ref %Ordering = temporary %.loc5_7.4, %.loc5_7.7
 // CHECK:STDOUT:   %.loc5_7.9: ref %Ordering = converted %.loc5_7.3, %.loc5_7.8
 // CHECK:STDOUT:   %.loc5_7.10: %Ordering = acquire_value %.loc5_7.9
 // CHECK:STDOUT:   %Less: %Ordering = value_binding Less, %.loc5_7.10
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0.loc6_13.1: %.2e6 = impl_witness_access constants.%ImplicitAs.impl_witness.628, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1ef]
+// CHECK:STDOUT:   %impl.elem0.loc6_13.1: %.bde = impl_witness_access constants.%ImplicitAs.impl_witness.4d5, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1ef]
 // CHECK:STDOUT:   %bound_method.loc6_13.1: <bound method> = bound_method %int_1, %impl.elem0.loc6_13.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.680]
 // CHECK:STDOUT:   %specific_fn.loc6_13.1: <specific function> = specific_function %impl.elem0.loc6_13.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_2.ecc) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc6_13.2: <bound method> = bound_method %int_1, %specific_fn.loc6_13.1 [concrete = constants.%bound_method.9ae]
@@ -265,7 +265,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc6_13.1: %u2 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6 [concrete = constants.%int_1.b2c]
 // CHECK:STDOUT:   %.loc6_13.2: %u2 = converted %int_1, %.loc6_13.1 [concrete = constants.%int_1.b2c]
 // CHECK:STDOUT:   %.loc6_13.3: %struct_type.discriminant = struct_literal (%.loc6_13.2) [concrete = constants.%struct.0ff]
-// CHECK:STDOUT:   %impl.elem0.loc6_13.2: %.351 = impl_witness_access constants.%Copy.impl_witness.123, element0 [concrete = constants.%UInt.as.Copy.impl.Op.129]
+// CHECK:STDOUT:   %impl.elem0.loc6_13.2: %.bdf = impl_witness_access constants.%Copy.impl_witness.1d0, element0 [concrete = constants.%UInt.as.Copy.impl.Op.129]
 // CHECK:STDOUT:   %bound_method.loc6_13.3: <bound method> = bound_method %.loc6_13.2, %impl.elem0.loc6_13.2 [concrete = constants.%UInt.as.Copy.impl.Op.bound.44e]
 // CHECK:STDOUT:   %specific_fn.loc6_13.2: <specific function> = specific_function %impl.elem0.loc6_13.2, @UInt.as.Copy.impl.Op(constants.%int_2.ecc) [concrete = constants.%UInt.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc6_13.4: <bound method> = bound_method %.loc6_13.2, %specific_fn.loc6_13.2 [concrete = constants.%bound_method.09e]
@@ -273,13 +273,13 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc6_13.4: ref %Ordering = temporary_storage
 // CHECK:STDOUT:   %.loc6_13.5: ref %u2 = class_element_access %.loc6_13.4, element0
 // CHECK:STDOUT:   %.loc6_13.6: init %u2 = initialize_from %UInt.as.Copy.impl.Op.call.loc6 to %.loc6_13.5 [concrete = constants.%int_1.b2c]
-// CHECK:STDOUT:   %.loc6_13.7: init %Ordering = class_init (%.loc6_13.6), %.loc6_13.4 [concrete = constants.%Ordering.val.927]
+// CHECK:STDOUT:   %.loc6_13.7: init %Ordering = class_init (%.loc6_13.6), %.loc6_13.4 [concrete = constants.%Ordering.val.d41]
 // CHECK:STDOUT:   %.loc6_13.8: ref %Ordering = temporary %.loc6_13.4, %.loc6_13.7
 // CHECK:STDOUT:   %.loc6_13.9: ref %Ordering = converted %.loc6_13.3, %.loc6_13.8
 // CHECK:STDOUT:   %.loc6_13.10: %Ordering = acquire_value %.loc6_13.9
 // CHECK:STDOUT:   %Equivalent: %Ordering = value_binding Equivalent, %.loc6_13.10
 // CHECK:STDOUT:   %int_2.loc7: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
-// CHECK:STDOUT:   %impl.elem0.loc7_10.1: %.2e6 = impl_witness_access constants.%ImplicitAs.impl_witness.628, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1ef]
+// CHECK:STDOUT:   %impl.elem0.loc7_10.1: %.bde = impl_witness_access constants.%ImplicitAs.impl_witness.4d5, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1ef]
 // CHECK:STDOUT:   %bound_method.loc7_10.1: <bound method> = bound_method %int_2.loc7, %impl.elem0.loc7_10.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.210]
 // CHECK:STDOUT:   %specific_fn.loc7_10.1: <specific function> = specific_function %impl.elem0.loc7_10.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_2.ecc) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_10.2: <bound method> = bound_method %int_2.loc7, %specific_fn.loc7_10.1 [concrete = constants.%bound_method.eb1]
@@ -287,7 +287,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc7_10.1: %u2 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc7 [concrete = constants.%int_2.788]
 // CHECK:STDOUT:   %.loc7_10.2: %u2 = converted %int_2.loc7, %.loc7_10.1 [concrete = constants.%int_2.788]
 // CHECK:STDOUT:   %.loc7_10.3: %struct_type.discriminant = struct_literal (%.loc7_10.2) [concrete = constants.%struct.6e6]
-// CHECK:STDOUT:   %impl.elem0.loc7_10.2: %.351 = impl_witness_access constants.%Copy.impl_witness.123, element0 [concrete = constants.%UInt.as.Copy.impl.Op.129]
+// CHECK:STDOUT:   %impl.elem0.loc7_10.2: %.bdf = impl_witness_access constants.%Copy.impl_witness.1d0, element0 [concrete = constants.%UInt.as.Copy.impl.Op.129]
 // CHECK:STDOUT:   %bound_method.loc7_10.3: <bound method> = bound_method %.loc7_10.2, %impl.elem0.loc7_10.2 [concrete = constants.%UInt.as.Copy.impl.Op.bound.a8d]
 // CHECK:STDOUT:   %specific_fn.loc7_10.2: <specific function> = specific_function %impl.elem0.loc7_10.2, @UInt.as.Copy.impl.Op(constants.%int_2.ecc) [concrete = constants.%UInt.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_10.4: <bound method> = bound_method %.loc7_10.2, %specific_fn.loc7_10.2 [concrete = constants.%bound_method.9e4]
@@ -295,13 +295,13 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc7_10.4: ref %Ordering = temporary_storage
 // CHECK:STDOUT:   %.loc7_10.5: ref %u2 = class_element_access %.loc7_10.4, element0
 // CHECK:STDOUT:   %.loc7_10.6: init %u2 = initialize_from %UInt.as.Copy.impl.Op.call.loc7 to %.loc7_10.5 [concrete = constants.%int_2.788]
-// CHECK:STDOUT:   %.loc7_10.7: init %Ordering = class_init (%.loc7_10.6), %.loc7_10.4 [concrete = constants.%Ordering.val.968]
+// CHECK:STDOUT:   %.loc7_10.7: init %Ordering = class_init (%.loc7_10.6), %.loc7_10.4 [concrete = constants.%Ordering.val.e86]
 // CHECK:STDOUT:   %.loc7_10.8: ref %Ordering = temporary %.loc7_10.4, %.loc7_10.7
 // CHECK:STDOUT:   %.loc7_10.9: ref %Ordering = converted %.loc7_10.3, %.loc7_10.8
 // CHECK:STDOUT:   %.loc7_10.10: %Ordering = acquire_value %.loc7_10.9
 // CHECK:STDOUT:   %Greater: %Ordering = value_binding Greater, %.loc7_10.10
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:   %impl.elem0.loc9_1.1: %.2e6 = impl_witness_access constants.%ImplicitAs.impl_witness.628, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1ef]
+// CHECK:STDOUT:   %impl.elem0.loc9_1.1: %.bde = impl_witness_access constants.%ImplicitAs.impl_witness.4d5, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.1ef]
 // CHECK:STDOUT:   %bound_method.loc9_1.1: <bound method> = bound_method %int_3, %impl.elem0.loc9_1.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.3fb]
 // CHECK:STDOUT:   %specific_fn.loc9_1.1: <specific function> = specific_function %impl.elem0.loc9_1.1, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_2.ecc) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc9_1.2: <bound method> = bound_method %int_3, %specific_fn.loc9_1.1 [concrete = constants.%bound_method.1e6]
@@ -309,7 +309,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc9_1.1: %u2 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9 [concrete = constants.%int_3.975]
 // CHECK:STDOUT:   %.loc9_1.2: %u2 = converted %int_3, %.loc9_1.1 [concrete = constants.%int_3.975]
 // CHECK:STDOUT:   %.loc9_1.3: %struct_type.discriminant = struct_literal (%.loc9_1.2) [concrete = constants.%struct.7bd]
-// CHECK:STDOUT:   %impl.elem0.loc9_1.2: %.351 = impl_witness_access constants.%Copy.impl_witness.123, element0 [concrete = constants.%UInt.as.Copy.impl.Op.129]
+// CHECK:STDOUT:   %impl.elem0.loc9_1.2: %.bdf = impl_witness_access constants.%Copy.impl_witness.1d0, element0 [concrete = constants.%UInt.as.Copy.impl.Op.129]
 // CHECK:STDOUT:   %bound_method.loc9_1.3: <bound method> = bound_method %.loc9_1.2, %impl.elem0.loc9_1.2 [concrete = constants.%UInt.as.Copy.impl.Op.bound.1e7]
 // CHECK:STDOUT:   %specific_fn.loc9_1.2: <specific function> = specific_function %impl.elem0.loc9_1.2, @UInt.as.Copy.impl.Op(constants.%int_2.ecc) [concrete = constants.%UInt.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc9_1.4: <bound method> = bound_method %.loc9_1.2, %specific_fn.loc9_1.2 [concrete = constants.%bound_method.5d8]
@@ -317,7 +317,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc9_1.4: ref %Ordering = temporary_storage
 // CHECK:STDOUT:   %.loc9_1.5: ref %u2 = class_element_access %.loc9_1.4, element0
 // CHECK:STDOUT:   %.loc9_1.6: init %u2 = initialize_from %UInt.as.Copy.impl.Op.call.loc9 to %.loc9_1.5 [concrete = constants.%int_3.975]
-// CHECK:STDOUT:   %.loc9_1.7: init %Ordering = class_init (%.loc9_1.6), %.loc9_1.4 [concrete = constants.%Ordering.val.8a7]
+// CHECK:STDOUT:   %.loc9_1.7: init %Ordering = class_init (%.loc9_1.6), %.loc9_1.4 [concrete = constants.%Ordering.val.a17]
 // CHECK:STDOUT:   %.loc9_1.8: ref %Ordering = temporary %.loc9_1.4, %.loc9_1.7
 // CHECK:STDOUT:   %.loc9_1.9: ref %Ordering = converted %.loc9_1.3, %.loc9_1.8
 // CHECK:STDOUT:   %.loc9_1.10: %Ordering = acquire_value %.loc9_1.9

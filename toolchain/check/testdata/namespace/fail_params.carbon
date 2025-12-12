@@ -50,14 +50,14 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT: --- fail_params.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type.bd7: type = fn_type @F.loc22 [concrete]
-// CHECK:STDOUT:   %F.199: %F.type.bd7 = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type.6d5: type = fn_type @F.loc22 [concrete]
+// CHECK:STDOUT:   %F.e11: %F.type.6d5 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %F.type.b25: type = fn_type @F.loc48 [concrete]
-// CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type.117: type = fn_type @F.loc48 [concrete]
+// CHECK:STDOUT:   %F.d98: %F.type.117 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -80,7 +80,7 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %A: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .F = %F.decl.loc22
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl.loc22: %F.type.bd7 = fn_decl @F.loc22 [concrete = constants.%F.199] {} {}
+// CHECK:STDOUT:   %F.decl.loc22: %F.type.6d5 = fn_decl @F.loc22 [concrete = constants.%F.e11] {} {}
 // CHECK:STDOUT:   %n.param: <error> = value_param call_param0
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %n: <error> = value_binding n, %n.param
@@ -92,7 +92,7 @@ fn D(T:! type).F() {}
 // CHECK:STDOUT:   %x: %T = value_binding x, %x.param
 // CHECK:STDOUT:   %C: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT:   %F.decl.loc48: %F.type.b25 = fn_decl @F.loc48 [concrete = constants.%F.c41] {} {
+// CHECK:STDOUT:   %F.decl.loc48: %F.type.117 = fn_decl @F.loc48 [concrete = constants.%F.d98] {} {
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc48_6.2: type = symbolic_binding T, 0 [symbolic = %T.loc48_6.1 (constants.%T)]
 // CHECK:STDOUT:   }
