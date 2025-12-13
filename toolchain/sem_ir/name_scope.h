@@ -342,18 +342,10 @@ class NameScopeStore {
   auto GetInstIfValid(NameScopeId scope_id) const
       -> std::pair<InstId, std::optional<Inst>>;
 
-  // Returns whether the provided scope ID is for a package scope.
-  auto IsPackage(NameScopeId scope_id) const -> bool {
-    if (!scope_id.has_value()) {
-      return false;
-    }
-    // A package is either the current package or an imported package.
-    return scope_id == NameScopeId::Package ||
-           Get(scope_id).is_imported_package();
-  }
-
   // Returns whether the provided scope ID is for the Core package.
-  auto IsCorePackage(NameScopeId scope_id) const -> bool;
+  auto IsCorePackage(NameScopeId scope_id) const -> bool {
+    return scope_id.has_value() && Get(scope_id).name_id() == NameId::Core;
+  }
 
   // Returns whether the provided scope ID is valid and is directly contained
   // within the Core package.

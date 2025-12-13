@@ -200,8 +200,8 @@ struct Worklist {
     }
     const auto& scope = sem_ir->name_scopes().Get(name_scope_id);
     Add(scope.name_id());
-    if (!sem_ir->name_scopes().IsPackage(name_scope_id) &&
-        scope.parent_scope_id().has_value()) {
+    // For non-package scopes, add the parent scope.
+    if (!scope.is_imported_package() && scope.parent_scope_id().has_value()) {
       Add(sem_ir->name_scopes().Get(scope.parent_scope_id()).inst_id());
     }
   }
