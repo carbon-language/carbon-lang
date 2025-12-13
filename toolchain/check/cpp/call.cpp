@@ -50,7 +50,15 @@ auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
 
 // Synthesize a placeholder `void{}` template argument, that will never be a
 // valid argument for any template parameter. This is used in order to get Clang
-// to diagnose invalid template argument errors for us.
+// to diagnose invalid template argument errors for us. The location of the
+// Carbon expression is used as the location of the C++ expression, so
+// Clang's diagnostics will point into the Carbon code.
+//
+// TODO: If Clang ever tries to print the type of the expression or to
+// pretty-print the expression itself, it would print the wrong thing. Currently
+// this doesn't appear to happen, but in principle it could. Ideally we'd add an
+// extension point to Clang to represent a "foreign expression" and use it here
+// instead of creating a bogus placeholder expression.
 static auto MakePlaceholderTemplateArg(Context& context, SemIR::InstId arg_id)
     -> clang::TemplateArgumentLoc {
   auto arg_loc = GetCppLocation(context, SemIR::LocId(arg_id));
