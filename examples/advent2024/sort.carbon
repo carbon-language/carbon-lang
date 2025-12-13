@@ -4,40 +4,58 @@
 
 library "sort";
 
-// TODO: Generalize this for other container types once we implement lowering
-// for generic functions.
-
-fn Swap(p: array(i32, 1000)*, from: i32, to: i32) {
-  var tmp: i32 = (*p)[from];
-  (*p)[from] = (*p)[to];
-  (*p)[to] = tmp;
+interface Ordered {
+  // extend require impls Core.OrderedWith(Self);
+  fn Less[self: Self](other: Self) -> bool;
+  fn LessOrEquivalent[self: Self](other: Self) -> bool;
+  fn Greater[self: Self](other: Self) -> bool;
+  fn GreaterOrEquivalent[self: Self](other: Self) -> bool;
 }
 
-fn Partition(p: array(i32, 1000)*, from_in: i32, to_in: i32) -> i32 {
+impl i32 as Ordered {
+  fn Less[self: Self](other: Self) -> bool { return self < other; }
+  fn LessOrEquivalent[self: Self](other: Self) -> bool { return self <= other; }
+  fn Greater[self: Self](other: Self) -> bool { return self > other; }
+  fn GreaterOrEquivalent[self: Self](other: Self) -> bool { return self >= other; }
+}
+
+fn Swap[T:! Core.Copy & Core.Destroy](ref from: T, ref to: T) {
+  var tmp: T = from;
+  from = to;
+  to = tmp;
+}
+
+fn Partition
+    [T:! Core.Copy & Core.Destroy & Ordered, N:! Core.IntLiteral()]
+    (ref a: array(T, N), from_in: i32, to_in: i32) -> i32 {
   var pivot_index: i32 = from_in;
-  var pivot: i32 = (*p)[pivot_index];
+  let pivot: T = a[pivot_index];
   var from: i32 = from_in + 1;
   var to: i32 = to_in;
   while (from < to) {
-    if ((*p)[from] <= pivot) {
+    // TODO: if (a[from] <= pivot) {
+    if (a[from].(Ordered.LessOrEquivalent)(pivot)) {
       ++from;
-    } else if ((*p)[to - 1] > pivot) {
+    // TODO: } else if ((*p)[to - 1] > pivot) {
+    } else if (a[to - 1].(Ordered.Greater)(pivot)) {
       --to;
     } else {
       // Element at `from` is > pivot, and
-      // element at `to` is <= pivot.
-      Swap(p, from, to - 1);
+      // element at `to - 1` is <= pivot.
+      Swap(ref a[from], ref a[to - 1]);
       ++from;
       --to;
     }
   }
-  Swap(p, pivot_index, from - 1);
+  Swap(ref a[pivot_index], ref a[from - 1]);
   return from - 1;
 }
 
-fn Quicksort(p: array(i32, 1000)*, from: i32, to: i32) {
+fn Quicksort
+    [T:! Core.Copy & Core.Destroy & Ordered, N:! Core.IntLiteral()]
+    (ref a: array(T, N), from: i32, to: i32) {
   if (from + 1 >= to) { return; }
-  var pivot: i32 = Partition(p, from, to);
-  Quicksort(p, from, pivot);
-  Quicksort(p, pivot + 1, to);
+  var pivot: i32 = Partition(ref a, from, to);
+  Quicksort(ref a, from, pivot);
+  Quicksort(ref a, pivot + 1, to);
 }

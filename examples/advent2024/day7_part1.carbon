@@ -11,11 +11,11 @@ import library "io_utils";
 
 fn Run() {
   var total: i64 = 0;
-  while (PeekChar() != Core.EOF()) {
+  while (PeekChar() != CharOrEOF.EOF()) {
     var eq: Equation = Equation.Read();
     if (eq.Solve(false)) {
       total += eq.result;
     }
   }
-  PrintInt64(total);
+  PrintInt(total);
 }
