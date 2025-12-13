@@ -87,7 +87,6 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.7a8: <witness> = lookup_impl_witness %Int.fc6021.1, @Copy [symbolic]
 // CHECK:STDOUT:   %Copy.facet.118: %Copy.type = facet_value %Int.fc6021.1, (%Copy.lookup_impl_witness.7a8) [symbolic]
 // CHECK:STDOUT:   %Iterate_where.type: type = facet_type <@Iterate where %impl.elem1.ff5 = %Int.fc6021.1 and %impl.elem0.546 = %Copy.facet.118> [symbolic]
-// CHECK:STDOUT:   %require_complete.fbb: <witness> = require_complete_type %Iterate_where.type [symbolic]
 // CHECK:STDOUT:   %OptionalStorage.type: type = facet_type <@OptionalStorage> [concrete]
 // CHECK:STDOUT:   %Optional.type: type = generic_class_type @Optional [concrete]
 // CHECK:STDOUT:   %Optional.generic: %Optional.type = struct_value () [concrete]
@@ -97,6 +96,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %Optional.None.type.401: type = fn_type @Optional.None, @Optional(%T.8ba) [symbolic]
 // CHECK:STDOUT:   %Optional.None.c2f: %Optional.None.type.401 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness @IntRange.%Iterate.impl_witness_table, @IntRange.as.Iterate.impl(%N) [symbolic]
+// CHECK:STDOUT:   %require_complete.fbb: <witness> = require_complete_type %Iterate_where.type [symbolic]
 // CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor.type: type = fn_type @IntRange.as.Iterate.impl.NewCursor, @IntRange.as.Iterate.impl(%N) [symbolic]
 // CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor: %IntRange.as.Iterate.impl.NewCursor.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.c9c: type = ptr_type %Int.fc6021.1 [symbolic]
@@ -303,10 +303,10 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc9_54.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.7a8)]
 // CHECK:STDOUT:   %Copy.facet.loc9_85.1: %Copy.type = facet_value %Int.loc9_54.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet.loc9_85.1 (constants.%Copy.facet.118)]
 // CHECK:STDOUT:   %Iterate_where.type: type = facet_type <@Iterate where constants.%impl.elem1.ff5 = %Int.loc9_54.1 and constants.%impl.elem0.546 = %Copy.facet.loc9_85.1> [symbolic = %Iterate_where.type (constants.%Iterate_where.type)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Iterate_where.type [symbolic = %require_complete (constants.%require_complete.fbb)]
 // CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness @IntRange.%Iterate.impl_witness_table, @IntRange.as.Iterate.impl(%N) [symbolic = %Iterate.impl_witness (constants.%Iterate.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Iterate_where.type [symbolic = %require_complete (constants.%require_complete.fbb)]
 // CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor.type: type = fn_type @IntRange.as.Iterate.impl.NewCursor, @IntRange.as.Iterate.impl(%N) [symbolic = %IntRange.as.Iterate.impl.NewCursor.type (constants.%IntRange.as.Iterate.impl.NewCursor.type)]
 // CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor: @IntRange.as.Iterate.impl.%IntRange.as.Iterate.impl.NewCursor.type (%IntRange.as.Iterate.impl.NewCursor.type) = struct_value () [symbolic = %IntRange.as.Iterate.impl.NewCursor (constants.%IntRange.as.Iterate.impl.NewCursor)]
 // CHECK:STDOUT:   %.loc11: require_specific_def_type = require_specific_def @T.binding.as_type.as.OptionalStorage.impl(%Copy.facet.loc9_85.1) [symbolic = %.loc11 (constants.%.4f3)]
@@ -766,10 +766,10 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.lookup_impl_witness.7a8
 // CHECK:STDOUT:   %Copy.facet.loc9_85.1 => constants.%Copy.facet.118
 // CHECK:STDOUT:   %Iterate_where.type => constants.%Iterate_where.type
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.fbb
 // CHECK:STDOUT:   %Iterate.impl_witness => constants.%Iterate.impl_witness
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.fbb
 // CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor.type => constants.%IntRange.as.Iterate.impl.NewCursor.type
 // CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor => constants.%IntRange.as.Iterate.impl.NewCursor
 // CHECK:STDOUT:   %.loc11 => constants.%.4f3

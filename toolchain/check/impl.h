@@ -14,8 +14,8 @@ namespace Carbon::Check {
 //
 // `has_definition` is whether this declaration is immediately followed by the
 // opening of the definition.
-auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl,
-                               bool has_definition) -> SemIR::InstId;
+auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl)
+    -> SemIR::InstId;
 
 // Update `impl`'s witness at the start of a definition.
 auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void;
@@ -26,10 +26,6 @@ auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void;
 // Sets all unset members of the witness for `impl` to the error instruction and
 // sets the witness id in the `Impl` to an error.
 auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void;
-
-// Sets the `ImplId` in the `ImplWitnessTable`.
-auto AssignImplIdInWitness(Context& context, SemIR::ImplId impl_id,
-                           SemIR::InstId witness_id) -> void;
 
 // Returns whether the impl is either `final` explicitly, or implicitly due to
 // being concrete.
@@ -60,8 +56,7 @@ auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
 // with it.
 auto GetOrAddImpl(Context& context, SemIR::LocId loc_id,
                   SemIR::LocId implicit_params_loc_id, SemIR::Impl impl,
-                  bool is_definition, Parse::NodeId extend_node)
-    -> SemIR::ImplId;
+                  Parse::NodeId extend_node) -> SemIR::ImplId;
 
 }  // namespace Carbon::Check
 
