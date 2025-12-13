@@ -15,7 +15,8 @@
 template<typename> struct A {};
 template<typename> struct B {};
 
-template<template<typename> typename, template<typename> typename> struct TwoTemplates {};
+template<template<typename> typename, template<typename> typename>
+struct TwoTemplates {};
 
 // --- fail_todo_valid.carbon
 

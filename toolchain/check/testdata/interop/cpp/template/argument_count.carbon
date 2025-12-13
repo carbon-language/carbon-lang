@@ -22,6 +22,9 @@ template<typename ...T> struct TypePack {};
 
 template<typename, typename> concept True = true;
 
+// FixedSizePack<T1, T2, ..., Tn>::Inner has a template parameter pack of fixed
+// size `n`, because it's expanded to an arity of exactly `n` when instantiating
+// the enclosing template, because the inner pack mentions the outer one.
 template<typename ...T> struct FixedSizePack {
   template<True<T> ...U> struct Inner {};
 };
@@ -99,8 +102,8 @@ import Cpp library "templates.h";
 // CHECK:STDERR:    14 | var too_few: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B);
 // CHECK:STDERR:       |                                                         ^
 // CHECK:STDERR: fail_fixed_size_pack_wrong_size.carbon:[[@LINE-5]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./templates.h:12:33: note: template is declared here [CppInteropParseNote]
-// CHECK:STDERR:    12 |   template<True<T> ...U> struct Inner {};
+// CHECK:STDERR: ./templates.h:15:33: note: template is declared here [CppInteropParseNote]
+// CHECK:STDERR:    15 |   template<True<T> ...U> struct Inner {};
 // CHECK:STDERR:       |   ~~~~~~~~~~~~~~~~~~~~~~        ^
 // CHECK:STDERR:
 var too_few: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B);
@@ -109,8 +112,8 @@ var too_few: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B);
 // CHECK:STDERR:    24 | var too_many: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B, Cpp.B, Cpp.B);
 // CHECK:STDERR:       |                                                                      ~~^
 // CHECK:STDERR: fail_fixed_size_pack_wrong_size.carbon:[[@LINE-15]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./templates.h:12:33: note: template is declared here [CppInteropParseNote]
-// CHECK:STDERR:    12 |   template<True<T> ...U> struct Inner {};
+// CHECK:STDERR: ./templates.h:15:33: note: template is declared here [CppInteropParseNote]
+// CHECK:STDERR:    15 |   template<True<T> ...U> struct Inner {};
 // CHECK:STDERR:       |   ~~~~~~~~~~~~~~~~~~~~~~        ^
 // CHECK:STDERR:
 var too_many: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B, Cpp.B, Cpp.B);
