@@ -17,6 +17,14 @@
 
 namespace Carbon::Check {
 
+auto MakeBoolLiteral(Context& context, SemIR::LocId loc_id,
+                     SemIR::BoolValue value) -> SemIR::InstId {
+  return AddInst<SemIR::BoolLiteral>(
+      context, loc_id,
+      {.type_id = GetSingletonType(context, SemIR::BoolType::TypeInstId),
+       .value = value});
+}
+
 auto MakeIntLiteral(Context& context, Parse::NodeId node_id, IntId int_id)
     -> SemIR::InstId {
   return AddInst<SemIR::IntValue>(

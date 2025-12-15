@@ -178,6 +178,12 @@ auto GetCppOverloadSetType(Context& context,
       context, overload_set_id, specific_id);
 }
 
+auto GetCppTemplateNameType(Context& context, SemIR::EntityNameId name_id,
+                            SemIR::ClangDeclId decl_id) -> SemIR::TypeId {
+  return GetCompleteTypeImpl<SemIR::CppTemplateNameType>(context, name_id,
+                                                         decl_id);
+}
+
 auto GetFunctionType(Context& context, SemIR::FunctionId fn_id,
                      SemIR::SpecificId specific_id) -> SemIR::TypeId {
   return GetCompleteTypeImpl<SemIR::FunctionType>(context, fn_id, specific_id);

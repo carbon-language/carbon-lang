@@ -907,6 +907,10 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstName("const");
       return;
     }
+    case CARBON_KIND(CppTemplateNameType inst): {
+      AddInstNameId(sem_ir().entity_names().Get(inst.name_id).name_id, ".type");
+      return;
+    }
     case CppWitness::Kind: {
       AddInstName("cpp_witness");
       return;
@@ -1264,6 +1268,12 @@ auto InstNamer::NamingContext::NameInst() -> void {
                           .Get(generic_interface_ty->interface_id)
                           .name_id,
                       ".generic");
+      } else if (auto template_name_ty =
+                     sem_ir().types().TryGetAs<CppTemplateNameType>(
+                         inst.type_id)) {
+        AddInstNameId(
+            sem_ir().entity_names().Get(template_name_ty->name_id).name_id,
+            ".template");
       } else {
         if (sem_ir().inst_blocks().Get(inst.elements_id).empty()) {
           AddInstName("empty_struct");
