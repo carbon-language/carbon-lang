@@ -22,15 +22,15 @@
 
 namespace Carbon::Check {
 
-auto HandleParseNode(Context& context,
-                     Parse::UnderscoreNameId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::UnderscoreNameId node_id)
+    -> bool {
   context.node_stack().Push(node_id, SemIR::NameId::Underscore);
   return true;
 }
 
 // Returns the `InstKind` corresponding to the pattern's `NodeKind`.
-static auto GetPatternInstKind(Parse::NodeKind node_kind,
-                               bool is_ref) -> SemIR::InstKind {
+static auto GetPatternInstKind(Parse::NodeKind node_kind, bool is_ref)
+    -> SemIR::InstKind {
   switch (node_kind) {
     case Parse::NodeKind::CompileTimeBindingPattern:
       return SemIR::InstKind::SymbolicBindingPattern;
@@ -213,11 +213,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           if (class_info.inheritance_kind ==
               SemIR::Class::InheritanceKind::Abstract) {
             auto builder = abstract_diagnoser();
-            CARBON_DIAGNOSTIC(
-                ClassAbstractHere, Note,
-                "{0:=0:uses class that|=1:class} was declared abstract here",
-                Diagnostics::IntAsSelect);
-            builder.Note(class_info.definition_id, ClassAbstractHere, 1);
+            auto direct_use = true;
+            NoteAbstractClass(context, class_type.class_id, direct_use,
+                              builder);
             builder.Emit();
             cast_type_id = SemIR::ErrorInst::TypeId;
           }
@@ -289,14 +287,14 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
   return true;
 }
 
-auto HandleParseNode(Context& context,
-                     Parse::LetBindingPatternId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::LetBindingPatternId node_id)
+    -> bool {
   return HandleAnyBindingPattern(context, node_id,
                                  Parse::NodeKind::LetBindingPattern);
 }
 
-auto HandleParseNode(Context& context,
-                     Parse::VarBindingPatternId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::VarBindingPatternId node_id)
+    -> bool {
   return HandleAnyBindingPattern(context, node_id,
                                  Parse::NodeKind::VarBindingPattern);
 }
@@ -396,8 +394,8 @@ auto HandleParseNode(Context& context,
   return true;
 }
 
-auto HandleParseNode(Context& context,
-                     Parse::FieldNameAndTypeId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::FieldNameAndTypeId node_id)
+    -> bool {
   auto [type_node, parsed_type_id] = context.node_stack().PopExprWithNodeId();
   auto [cast_type_inst_id, cast_type_id] =
       ExprAsType(context, type_node, parsed_type_id);
@@ -444,14 +442,14 @@ auto HandleParseNode(Context& context,
   return true;
 }
 
-auto HandleParseNode(Context& context,
-                     Parse::RefBindingNameId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::RefBindingNameId node_id)
+    -> bool {
   context.node_stack().Push(node_id);
   return true;
 }
 
-auto HandleParseNode(Context& context,
-                     Parse::TemplateBindingNameId node_id) -> bool {
+auto HandleParseNode(Context& context, Parse::TemplateBindingNameId node_id)
+    -> bool {
   context.node_stack().Push(node_id);
   return true;
 }
