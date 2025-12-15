@@ -28,6 +28,15 @@ abstract class C { }
 fn A(p: partial C);
 //@dump-sem-ir-end
 
+// --- abstract_var.carbon
+library "[[@TEST_NAME]]";
+
+abstract class C { }
+
+//@dump-sem-ir-begin
+fn A(var p: partial C);
+//@dump-sem-ir-end
+
 // --- fail_partial_nondynamic.carbon
 library "[[@TEST_NAME]]";
 
@@ -219,6 +228,36 @@ fn F[T:! type](p: partial T*);
 // CHECK:STDOUT:       %.loc6_9.2: type = partial_type %C.ref [concrete = constants.%.43f]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %.43f = value_binding p, %p.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @A(%p.param: %.43f);
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- abstract_var.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %.43f: type = partial_type %C [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %.43f [concrete]
+// CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
+// CHECK:STDOUT:     %p.patt: %pattern_type = ref_binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type = var_param_pattern %p.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %p.var_patt: %pattern_type = var_pattern %p.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %p.param: ref %.43f = ref_param call_param0
+// CHECK:STDOUT:     %.loc6_13.1: type = splice_block %.loc6_13.2 [concrete = constants.%.43f] {
+// CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:       %.loc6_13.2: type = partial_type %C.ref [concrete = constants.%.43f]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %p: ref %.43f = ref_binding p, %p.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

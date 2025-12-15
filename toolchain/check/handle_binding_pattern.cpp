@@ -204,9 +204,11 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       // Using `AsConcreteType` here causes `fn F[var self: Self]();`
       // to fail since `Self` is an incomplete type.
       if (node_kind == Parse::NodeKind::VarBindingPattern) {
-        auto unqualified_type_id =
-            context.types().GetUnqualifiedType(cast_type_id);
-        if (context.types().Is<SemIR::ClassType>(unqualified_type_id)) {
+        auto [unqualified_type_id, qualifiers] =
+            context.types().GetUnqualifiedTypeAndQualifiers(cast_type_id);
+        if ((qualifiers & SemIR::TypeQualifiers::Partial) !=
+                SemIR::TypeQualifiers::Partial &&
+            context.types().Is<SemIR::ClassType>(unqualified_type_id)) {
           auto class_type =
               context.types().GetAs<SemIR::ClassType>(unqualified_type_id);
           auto& class_info = context.classes().Get(class_type.class_id);
