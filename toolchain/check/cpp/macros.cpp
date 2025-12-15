@@ -25,7 +25,7 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
 
   clang::Sema& sema = context.clang_sema();
   clang::Preprocessor& preprocessor = sema.getPreprocessor();
-  clang::Parser parser(preprocessor, sema, false);
+  auto& parser = context.cpp_context()->parser();
 
   llvm::SmallVector<clang::Token> tokens(macro_info->tokens().begin(),
                                          macro_info->tokens().end());
@@ -45,11 +45,7 @@ auto TryEvaluateMacroToConstant(Context& context, SemIR::LocId loc_id,
                                 /*IsReinject=*/false);
   parser.ConsumeAnyToken(true);
 
-  // TODO: Identifiers are still only available if prefixed with "::" (e.g.
-  // "#define M_Var ::myVar").
-  parser.EnterScope(clang::Scope::DeclScope);
   clang::ExprResult result = parser.ParseConstantExpression();
-  parser.ExitScope();
 
   clang::Expr* result_expr = result.get();
 

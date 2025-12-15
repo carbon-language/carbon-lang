@@ -7,9 +7,16 @@
 
 #include "clang/AST/Type.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
+
+// Converts a Carbon type to a corresponding C++ type. This uses the default
+// type mapping, which is suitable for template arguments, typedefs, etc. but
+// may not be the right mapping to use in a function signature. Returns a null
+// type if there is no mapping.
+auto MapToCppType(Context& context, SemIR::TypeId type_id) -> clang::QualType;
 
 // Invents a Clang argument expression to use in overload resolution to
 // represent the given Carbon argument instruction.

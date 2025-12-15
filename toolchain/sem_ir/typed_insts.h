@@ -539,6 +539,22 @@ struct CppOverloadSetValue {
   CppOverloadSetId overload_set_id;
 };
 
+// The type of the name of a C++ template. The corresponding value is an empty
+// `StructValue`. This does not handle function templates, which are instead
+// represented as a `CppOverloadSetValue` of type `CppOverloadSetType`.
+struct CppTemplateNameType {
+  // This is only ever created as a constant, so doesn't have a location.
+  static constexpr auto Kind =
+      InstKind::CppTemplateNameType.Define<Parse::NoneNodeId>(
+          {.ir_name = "cpp_type_template_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::Always});
+
+  TypeId type_id;
+  EntityNameId name_id;
+  ClangDeclId decl_id;
+};
+
 // A type whose layout is determined externally. This is used as the object
 // representation of class types imported from C++.
 struct CustomLayoutType {

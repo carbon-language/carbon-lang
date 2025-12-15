@@ -94,20 +94,6 @@ struct ClangDecl : public Printable<ClangDecl> {
   auto GetAsKey() const -> ClangDeclKey { return key; }
 };
 
-// The ID of a `ClangDecl`.
-//
-// These IDs are importantly distinct from the `inst_id` associated with each
-// declaration. These form a dense range of IDs that is used to reference the
-// AST node pointers without storing those pointers directly into SemIR and
-// needing space to hold a full pointer. We can't avoid having these IDs without
-// embedding pointers directly into the storage of SemIR as part of an
-// instruction.
-struct ClangDeclId : public IdBase<ClangDeclId> {
-  static constexpr llvm::StringLiteral Label = "clang_decl_id";
-
-  using IdBase::IdBase;
-};
-
 // Use the AST node pointer directly when doing `Lookup` to find an ID.
 using ClangDeclStore =
     CanonicalValueStore<ClangDeclId, ClangDeclKey, ClangDecl>;

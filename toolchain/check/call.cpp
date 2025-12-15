@@ -324,6 +324,10 @@ static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
   auto type_inst =
       context.types().GetAsInst(context.insts().Get(callee_id).type_id());
   CARBON_KIND_SWITCH(type_inst) {
+    case CARBON_KIND(SemIR::CppTemplateNameType template_name): {
+      return PerformCallToCppTemplateName(context, loc_id,
+                                          template_name.decl_id, arg_ids);
+    }
     case CARBON_KIND(SemIR::GenericClassType generic_class): {
       return PerformCallToGenericClass(context, loc_id, generic_class.class_id,
                                        generic_class.enclosing_specific_id,

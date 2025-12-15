@@ -10,6 +10,8 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
+#include "clang/Parse/Parser.h"
+#include "common/check.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace Carbon::Check {
@@ -34,6 +36,12 @@ class CppContext {
     return action_->getCompilerInstance().getSema();
   }
 
+  auto parser() -> clang::Parser& { return *parser_; }
+  auto set_parser(std::unique_ptr<clang::Parser> parser) {
+    CARBON_CHECK(!parser_);
+    parser_ = std::move(parser);
+  }
+
   auto clang_mangle_context() -> clang::MangleContext&;
 
   auto carbon_file_locations() -> llvm::SmallVector<clang::SourceLocation>& {
@@ -50,6 +58,9 @@ class CppContext {
 
   // The Clang mangle context for the target in the ASTContext.
   std::unique_ptr<clang::MangleContext> clang_mangle_context_;
+
+  // The Clang parser.
+  std::unique_ptr<clang::Parser> parser_;
 };
 
 }  // namespace Carbon::Check

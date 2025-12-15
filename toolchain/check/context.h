@@ -90,7 +90,7 @@ class Context {
 
   // TODO: Remove this and pass the C++ context to the constructor.
   auto set_cpp_context(std::unique_ptr<CppContext> cpp_context) {
-    CARBON_CHECK(cpp_context, "C++ context set more than once");
+    CARBON_CHECK(!cpp_context_ || !cpp_context, "Already have a C++ context");
     cpp_context_ = std::move(cpp_context);
   }
 

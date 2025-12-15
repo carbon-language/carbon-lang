@@ -209,25 +209,19 @@ fn MyF() {
 
 // --- template.h
 
+struct X {};
+
 template<typename T>
 class Bar {};
 
-// --- fail_todo_import_template.carbon
+// --- import_template.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_import_template.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./template.h:3:7: error: semantics TODO: `Unsupported: Declaration type ClassTemplate` [SemanticsTodo]
-// CHECK:STDERR: class Bar {};
-// CHECK:STDERR:       ^
 import Cpp library "template.h";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_todo_import_template.carbon:[[@LINE+4]]:13: note: in `Cpp` name lookup for `Bar` [InCppNameLookup]
-// CHECK:STDERR: fn MyF(bar: Cpp.Bar*);
-// CHECK:STDERR:             ^~~~~~~
-// CHECK:STDERR:
-fn MyF(bar: Cpp.Bar*);
+fn MyF(bar: Cpp.Bar(Cpp.X)*);
 //@dump-sem-ir-end
 
 // CHECK:STDOUT: --- import_declaration.carbon
@@ -564,34 +558,46 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_template.carbon
+// CHECK:STDOUT: --- import_template.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Bar.type: type = cpp_type_template_type Bar [concrete]
+// CHECK:STDOUT:   %Bar.template: %Bar.type = struct_value () [concrete]
+// CHECK:STDOUT:   %X: type = class_type @X [concrete]
+// CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Bar [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .Bar = <error>
+// CHECK:STDOUT:     .Bar = %Bar.template
+// CHECK:STDOUT:     .X = %X.decl
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Bar.template: %Bar.type = struct_value () [concrete = constants.%Bar.template]
+// CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
+// CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.patt: <error> = value_binding_pattern bar [concrete]
-// CHECK:STDOUT:     %bar.param_patt: <error> = value_param_pattern %bar.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %bar.patt: %pattern_type = value_binding_pattern bar [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern %bar.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %bar.param: <error> = value_param call_param0
-// CHECK:STDOUT:     %.loc15: type = splice_block %ptr [concrete = <error>] {
-// CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:       %Bar.ref: <error> = name_ref Bar, <error> [concrete = <error>]
-// CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
+// CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
+// CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:       %Cpp.ref.loc7_13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:       %Bar.ref: %Bar.type = name_ref Bar, imports.%Bar.template [concrete = constants.%Bar.template]
+// CHECK:STDOUT:       %Cpp.ref.loc7_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:       %X.ref: type = name_ref X, imports.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:       %ptr: type = ptr_type imports.%Bar.decl [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %bar: <error> = value_binding bar, %bar.param
+// CHECK:STDOUT:     %bar: %ptr = value_binding bar, %bar.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%bar.param: <error>);
+// CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
 // CHECK:STDOUT:

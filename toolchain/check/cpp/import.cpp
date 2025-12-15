@@ -293,9 +293,6 @@ static auto ImportNamespaceDecl(Context& context,
   return result.inst_id;
 }
 
-static auto ImportTypeAndDependencies(Context& context, SemIR::LocId loc_id,
-                                      clang::QualType type) -> TypeExpr;
-
 // Creates a class declaration for the given class name in the given scope.
 // Returns the `InstId` for the declaration.
 static auto BuildClassDecl(Context& context,
@@ -470,7 +467,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
     }
 
     auto [base_type_inst_id, base_type_id] =
-        ImportTypeAndDependencies(context, import_ir_inst_id, base.getType());
+        ImportCppType(context, import_ir_inst_id, base.getType());
     if (!base_type_id.has_value()) {
       // TODO: If the base class's type can't be mapped, skip it.
       continue;
@@ -552,7 +549,7 @@ static auto ImportClassObjectRepr(Context& context, SemIR::ClassId class_id,
 
     auto field_name_id = AddIdentifierName(context, field->getName());
     auto [field_type_inst_id, field_type_id] =
-        ImportTypeAndDependencies(context, import_ir_inst_id, field->getType());
+        ImportCppType(context, import_ir_inst_id, field->getType());
     if (!field_type_inst_id.has_value()) {
       // TODO: For now, just skip over fields whose types we can't map.
       continue;
@@ -1624,7 +1621,43 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   // Finalize the `VarStorage` instruction.
   ReplaceInstBeforeConstantUse(context, var_storage_inst_id, var_storage);
 
+  // Inform Clang that the variable has been referenced.
+  context.clang_sema().MarkVariableReferenced(GetCppLocation(context, loc_id),
+                                              var_decl);
+
   return var_storage_inst_id;
+}
+
+static auto ImportTemplateDecl(Context& context,
+                               clang::TemplateDecl* template_decl)
+    -> SemIR::InstId {
+  auto key = SemIR::ClangDeclKey(template_decl);
+
+  // TODO: Avoid doing this lookup both here and in the insertion below.
+  if (SemIR::InstId existing_inst_id = LookupClangDeclInstId(context, key);
+      existing_inst_id.has_value()) {
+    return existing_inst_id;
+  }
+
+  // Add a placeholder instruction to resolve cycle between the clang
+  // declaration and the type.
+  auto import_loc_id =
+      AddImportIRInst(context.sem_ir(), template_decl->getLocation());
+  SemIR::StructValue value = {.type_id = SemIR::TypeId::None,
+                              .elements_id = SemIR::InstBlockId::Empty};
+  auto inst_id = AddPlaceholderImportedInstInNoBlock(
+      context, MakeImportedLocIdAndInst(context, import_loc_id, value));
+
+  // Create a type for the constant value.
+  auto name_id = context.entity_names().Add(
+      {.name_id = AddIdentifierName(context, template_decl->getName()),
+       .parent_scope_id = GetParentNameScopeId(context, template_decl)});
+  auto decl_id = context.clang_decls().Add({.key = key, .inst_id = inst_id});
+  value.type_id = GetCppTemplateNameType(context, name_id, decl_id);
+
+  // Update the value with its type.
+  ReplaceInstBeforeConstantUse(context, inst_id, value);
+  return inst_id;
 }
 
 // Imports a declaration from Clang to Carbon. Returns the instruction for the
@@ -1668,6 +1701,9 @@ static auto ImportDeclAfterDependencies(Context& context, SemIR::LocId loc_id,
   }
   if (auto* var_decl = dyn_cast<clang::VarDecl>(clang_decl)) {
     return ImportVarDecl(context, loc_id, var_decl);
+  }
+  if (auto* template_decl = dyn_cast<clang::TemplateDecl>(clang_decl)) {
+    return ImportTemplateDecl(context, template_decl);
   }
 
   context.TODO(AddImportIRInst(context.sem_ir(), clang_decl->getLocation()),
@@ -1714,12 +1750,8 @@ static auto ImportDeclSet(Context& context, SemIR::LocId loc_id,
   return true;
 }
 
-// Imports a declaration from Clang to Carbon. If successful, returns the
-// instruction for the new Carbon declaration. All unimported dependencies are
-// imported first.
-static auto ImportDeclAndDependencies(Context& context, SemIR::LocId loc_id,
-                                      SemIR::ClangDeclKey key)
-    -> SemIR::InstId {
+auto ImportCppDecl(Context& context, SemIR::LocId loc_id,
+                   SemIR::ClangDeclKey key) -> SemIR::InstId {
   // Collect dependencies by walking the dependency graph in depth-first order.
   ImportWorklist worklist;
   AddDependentDecl(context, key, worklist);
@@ -1729,10 +1761,8 @@ static auto ImportDeclAndDependencies(Context& context, SemIR::LocId loc_id,
   return LookupClangDeclInstId(context, key);
 }
 
-// Imports a type from Clang to Carbon. If successful, returns the imported
-// TypeId. All unimported dependencies are imported first.
-static auto ImportTypeAndDependencies(Context& context, SemIR::LocId loc_id,
-                                      clang::QualType type) -> TypeExpr {
+auto ImportCppType(Context& context, SemIR::LocId loc_id, clang::QualType type)
+    -> TypeExpr {
   // Collect dependencies by walking the dependency graph in depth-first order.
   ImportWorklist worklist;
   AddDependentUnimportedTypeDecls(context, type, worklist);
@@ -1743,14 +1773,6 @@ static auto ImportTypeAndDependencies(Context& context, SemIR::LocId loc_id,
   return MapType(context, loc_id, type);
 }
 
-auto ImportCppFunctionDecl(Context& context, SemIR::LocId loc_id,
-                           clang::FunctionDecl* clang_decl, int num_params)
-    -> SemIR::InstId {
-  return ImportDeclAndDependencies(
-      context, loc_id,
-      SemIR::ClangDeclKey::ForFunctionDecl(clang_decl, num_params));
-}
-
 // Imports a Clang declaration into Carbon and adds that name into the
 // `NameScope`.
 static auto ImportNameDeclIntoScope(Context& context, SemIR::LocId loc_id,
@@ -1759,7 +1781,7 @@ static auto ImportNameDeclIntoScope(Context& context, SemIR::LocId loc_id,
                                     SemIR::ClangDeclKey key,
                                     SemIR::AccessKind access_kind)
     -> SemIR::ScopeLookupResult {
-  SemIR::InstId inst_id = ImportDeclAndDependencies(context, loc_id, key);
+  SemIR::InstId inst_id = ImportCppDecl(context, loc_id, key);
   if (!inst_id.has_value()) {
     return SemIR::ScopeLookupResult::MakeNotFound();
   }
