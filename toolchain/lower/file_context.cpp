@@ -76,13 +76,9 @@ auto FileContext::PrepareToLower() -> void {
         const_cast<clang::ASTContext&>(cpp_file()->ast_context()));
 
     // Emit any top-level declarations now.
-    cpp_file()->VisitLocalTopLevelDecls([&](const clang::Decl* decl) {
-      // CodeGenerator won't modify the declaration it's given, but we can
-      // only call it via the ASTConsumer interface which doesn't know that.
-      auto* non_const_decl = const_cast<clang::Decl*>(decl);
-      cpp_code_generator_->HandleTopLevelDecl(
-          clang::DeclGroupRef(non_const_decl));
-    });
+    for (auto decl_group : cpp_file()->decl_groups()) {
+      cpp_code_generator_->HandleTopLevelDecl(decl_group);
+    }
   }
 
   // Lower all types that were required to be complete.
@@ -333,7 +329,11 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
   if (return_info.has_return_slot()) {
     param_types.push_back(
         llvm::PointerType::get(llvm_context(), /*AddressSpace=*/0));
-    return_param_id = function.return_slot_pattern_id;
+    auto return_patterns =
+        sem_ir_->inst_blocks().Get(function.return_patterns_id);
+    CARBON_CHECK(return_patterns.size() == 1,
+                 "TODO: implement support for multiple return params");
+    return_param_id = return_patterns[0];
     param_inst_ids.push_back(return_param_id);
   }
   for (auto param_pattern_id : llvm::concat<const SemIR::InstId>(
@@ -676,13 +676,19 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     function_lowering.SetLocal(param_id, param_value);
   };
 
-  // Lower the return slot parameter.
-  if (declaration_function.return_slot_pattern_id.has_value()) {
+  // Lower to the return slot parameter.
+  auto return_patterns = sem_ir_->inst_blocks().GetOrEmpty(
+      declaration_function.return_patterns_id);
+  if (!return_patterns.empty()) {
+    CARBON_CHECK(sem_ir_->inst_blocks()
+                         .Get(declaration_function.return_patterns_id)
+                         .size() == 1,
+                 "TODO: implement support for multiple return patterns");
     auto call_param_id = call_param_ids.consume_back();
     // The LLVM calling convention has the return slot first rather than last.
     // Note that this queries whether there is a return slot at the LLVM level,
-    // whereas `function.return_slot_pattern_id.has_value()` queries whether
-    // there is a return slot at the SemIR level.
+    // whereas `return_patterns.empty()` queries whether there are any output
+    // parameters at the SemIR level.
     if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), declaration_function,
                                            specific_id)
             .has_return_slot()) {
@@ -776,7 +782,7 @@ auto FileContext::BuildDISubroutineType(const SemIR::Function& function,
 
   auto return_info =
       SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
-  if (function.return_slot_pattern_id.has_value()) {
+  if (function.return_type_inst_id.has_value()) {
     // TODO: If int_repr.kind == SemIR::InitRepr::ByCopy - be sure the return
     // type is tagged with indirect calling convention.
   }
@@ -1004,7 +1010,8 @@ static auto BuildTypeForInst(FileContext& context,
 template <typename InstT>
   requires(InstT::Kind.template IsAnyOf<
            SemIR::AssociatedEntityType, SemIR::AutoType, SemIR::BoundMethodType,
-           SemIR::CharLiteralType, SemIR::CppOverloadSetType, SemIR::FacetType,
+           SemIR::CharLiteralType, SemIR::CppOverloadSetType,
+           SemIR::CppTemplateNameType, SemIR::FacetType,
            SemIR::FloatLiteralType, SemIR::FunctionType,
            SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
            SemIR::GenericInterfaceType, SemIR::GenericNamedConstraintType,

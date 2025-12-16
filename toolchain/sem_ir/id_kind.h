@@ -33,6 +33,7 @@ using IdKind = TypeEnum<
     BoolValue,
     CallParamIndex,
     CharId,
+    ClangDeclId,
     ClassId,
     CompileTimeBindIndex,
     ConstantId,

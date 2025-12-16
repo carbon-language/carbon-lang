@@ -65,7 +65,6 @@ cc_library(
 
 cc_library(
     name = "cpp_file",
-    srcs = ["cpp_file.cpp"],
     hdrs = ["cpp_file.h"],
     deps = [
         "//common:check",

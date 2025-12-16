@@ -17,6 +17,7 @@
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/type_iterator.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -45,6 +46,35 @@ static auto GetIRId(Context& context, SemIR::InstId owning_inst_id)
     return SemIR::ImportIRId::None;
   }
   return GetCanonicalImportIRInst(context, owning_inst_id).ir_id();
+}
+
+// Returns if `owning_inst_id` is from the current file. This does not count an
+// api and impl file as the same file.
+static auto IsSameFile(Context& context, SemIR::InstId owning_inst_id) -> bool {
+  if (!owning_inst_id.has_value()) {
+    return false;
+  }
+  auto ir_id = GetCanonicalImportIRInst(context, owning_inst_id).ir_id();
+  return !ir_id.has_value();
+}
+
+// Returns if `owning_inst_id` is from the current library. This does count api
+// and impl files as the same library.
+static auto IsSameLibrary(Context& context, SemIR::InstId owning_inst_id)
+    -> bool {
+  if (!owning_inst_id.has_value()) {
+    return false;
+  }
+  auto ir_id = GetCanonicalImportIRInst(context, owning_inst_id).ir_id();
+  if (!ir_id.has_value()) {
+    return true;
+  }
+  if (const auto* api =
+          context.import_irs().Get(SemIR::ImportIRId::ApiForImpl).sem_ir) {
+    auto& ir = context.import_irs().Get(ir_id);
+    return ir.sem_ir == api;
+  }
+  return false;
 }
 
 static auto GetImplInfo(Context& context, SemIR::ImplId impl_id) -> ImplInfo {
@@ -78,15 +108,15 @@ static auto DiagnoseFinalImplNotInSameFileAsRootSelfTypeOrInterface(
   using Step = SemIR::TypeIterator::Step;
   CARBON_KIND_SWITCH(step.any) {
     case CARBON_KIND(Step::ClassStart start): {
-      auto inst_id = context.classes().Get(start.class_id).first_owning_decl_id;
-      if (!GetIRId(context, inst_id).has_value()) {
+      auto inst_id = context.classes().Get(start.class_id).definition_id;
+      if (IsSameFile(context, inst_id)) {
         self_type_same_file = true;
       }
       break;
     }
     case CARBON_KIND(Step::ClassStartOnly start): {
-      auto inst_id = context.classes().Get(start.class_id).first_owning_decl_id;
-      if (!GetIRId(context, inst_id).has_value()) {
+      auto inst_id = context.classes().Get(start.class_id).definition_id;
+      if (IsSameFile(context, inst_id)) {
         self_type_same_file = true;
       }
       break;
@@ -110,6 +140,93 @@ static auto DiagnoseFinalImplNotInSameFileAsRootSelfTypeOrInterface(
     return true;
   }
 
+  return false;
+}
+
+static auto DiagnoseOrphanImpl(Context& context, const ImplInfo& impl,
+                               SemIR::ImportIRId interface_ir_id) -> bool {
+  // If the interface is defined in this file, then the impl is not an orphan.
+  if (!interface_ir_id.has_value()) {
+    return true;
+  }
+
+  // Look for a class in the self type, or the interface specific, that is from
+  // this file to show the impl is not an orphan.
+  auto type_iter = SemIR::TypeIterator(&context.sem_ir());
+  type_iter.Add(impl.self_id);
+  type_iter.Add(impl.interface);
+
+  for (auto done = false; !done;) {
+    auto step = type_iter.Next();
+
+    using Step = SemIR::TypeIterator::Step;
+    CARBON_KIND_SWITCH(step.any) {
+      case CARBON_KIND(Step::ClassStart start): {
+        auto inst_id = context.classes().Get(start.class_id).definition_id;
+        if (IsSameLibrary(context, inst_id)) {
+          return true;
+        }
+        break;
+      }
+      case CARBON_KIND(Step::ClassStartOnly start): {
+        auto inst_id = context.classes().Get(start.class_id).definition_id;
+        if (IsSameLibrary(context, inst_id)) {
+          return true;
+        }
+        break;
+      }
+      case CARBON_KIND(Step::ConcreteType type): {
+        // These are found in a specific when a `GenericClass`, a
+        // `GenericInterface` or a `GenericNamedConstraint` appears. The generic
+        // instruction itself is evaluated to a callable StructValue in the
+        // type, but the specific also contains the callable's type which is one
+        // of these.
+        CARBON_KIND_SWITCH(context.types().GetAsInst(type.type_id)) {
+          case CARBON_KIND(SemIR::GenericClassType class_type): {
+            auto class_id = class_type.class_id;
+            auto inst_id = context.classes().Get(class_id).definition_id;
+            if (IsSameLibrary(context, inst_id)) {
+              return true;
+            }
+            break;
+          }
+          case CARBON_KIND(SemIR::GenericInterfaceType interface_type): {
+            auto interface_id = interface_type.interface_id;
+            auto inst_id = context.interfaces().Get(interface_id).definition_id;
+            if (IsSameLibrary(context, inst_id)) {
+              return true;
+            }
+            break;
+          }
+          case CARBON_KIND(SemIR::GenericNamedConstraintType constraint_type): {
+            auto constraint_id = constraint_type.named_constraint_id;
+            auto inst_id =
+                context.named_constraints().Get(constraint_id).definition_id;
+            if (IsSameLibrary(context, inst_id)) {
+              return true;
+            }
+            break;
+          }
+          default:
+            break;
+        }
+        break;
+      }
+
+      case CARBON_KIND(Step::Done _): {
+        done = true;
+        break;
+      }
+
+      default:
+        break;
+    }
+  }
+
+  CARBON_DIAGNOSTIC(ImplIsOrphan, Error,
+                    "orphan `impl` found; something in the self-type or "
+                    "constraint must be defined in the same file");
+  context.emitter().Emit(impl.latest_decl_id, ImplIsOrphan);
   return false;
 }
 
@@ -249,6 +366,8 @@ static auto ValidateImplsForInterface(Context& context,
       // =======================================================================
       DiagnoseFinalImplNotInSameFileAsRootSelfTypeOrInterface(context, impl,
                                                               interface_ir_id);
+    } else if (impl.is_local) {
+      DiagnoseOrphanImpl(context, impl, interface_ir_id);
     }
   }
 

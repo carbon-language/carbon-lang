@@ -58,7 +58,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:   %pattern_type.c769df.1: type = pattern_type %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F, @Class(%T.f92) [symbolic]
 // CHECK:STDOUT:   %Class.F: %Class.F.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %pattern_type.0bc: type = pattern_type %Class [symbolic]
+// CHECK:STDOUT:   %pattern_type.6e6: type = pattern_type %Class [symbolic]
 // CHECK:STDOUT:   %Class.G.type: type = fn_type @Class.G, @Class(%T.f92) [symbolic]
 // CHECK:STDOUT:   %Class.G: %Class.G.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %require_complete.91e: <witness> = require_complete_type %T.binding.as_type [symbolic]
@@ -70,7 +70,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:   %.232: type = fn_type_with_self_type %Copy.Op.type, %T.f92 [symbolic]
 // CHECK:STDOUT:   %impl.elem0.8df: %.232 = impl_witness_access %Copy.lookup_impl_witness.edd, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.5c4: <specific function> = specific_impl_function %impl.elem0.8df, @Copy.Op(%T.f92) [symbolic]
-// CHECK:STDOUT:   %require_complete.3be: <witness> = require_complete_type %Class [symbolic]
+// CHECK:STDOUT:   %require_complete.aea: <witness> = require_complete_type %Class [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -131,8 +131,8 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:       %return: ref @Class.F.%T.binding.as_type (%T.binding.as_type) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Class.G.decl: @Class.%Class.G.type (%Class.G.type) = fn_decl @Class.G [symbolic = @Class.%Class.G (constants.%Class.G)] {
-// CHECK:STDOUT:       %self.patt: @Class.G.%pattern_type.loc10_8 (%pattern_type.0bc) = value_binding_pattern self [concrete]
-// CHECK:STDOUT:       %self.param_patt: @Class.G.%pattern_type.loc10_8 (%pattern_type.0bc) = value_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:       %self.patt: @Class.G.%pattern_type.loc10_8 (%pattern_type.6e6) = value_binding_pattern self [concrete]
+// CHECK:STDOUT:       %self.param_patt: @Class.G.%pattern_type.loc10_8 (%pattern_type.6e6) = value_param_pattern %self.patt, call_param0 [concrete]
 // CHECK:STDOUT:       %return.patt: @Class.G.%pattern_type.loc10_22 (%pattern_type.c769df.1) = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: @Class.G.%pattern_type.loc10_22 (%pattern_type.c769df.1) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:     } {
@@ -172,37 +172,37 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete (constants.%require_complete.91e)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.edd)]
-// CHECK:STDOUT:   %.loc7_12.2: type = fn_type_with_self_type constants.%Copy.Op.type, %T [symbolic = %.loc7_12.2 (constants.%.232)]
-// CHECK:STDOUT:   %impl.elem0.loc7_12.2: @Class.F.%.loc7_12.2 (%.232) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_12.2 (constants.%impl.elem0.8df)]
+// CHECK:STDOUT:   %.loc7: type = fn_type_with_self_type constants.%Copy.Op.type, %T [symbolic = %.loc7 (constants.%.232)]
+// CHECK:STDOUT:   %impl.elem0.loc7_12.2: @Class.F.%.loc7 (%.232) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_12.2 (constants.%impl.elem0.8df)]
 // CHECK:STDOUT:   %specific_impl_fn.loc7_12.2: <specific function> = specific_impl_function %impl.elem0.loc7_12.2, @Copy.Op(%T) [symbolic = %specific_impl_fn.loc7_12.2 (constants.%specific_impl_fn.5c4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%n.param: @Class.F.%T.binding.as_type (%T.binding.as_type)) -> %return.param: @Class.F.%T.binding.as_type (%T.binding.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %n.ref: @Class.F.%T.binding.as_type (%T.binding.as_type) = name_ref n, %n
-// CHECK:STDOUT:     %impl.elem0.loc7_12.1: @Class.F.%.loc7_12.2 (%.232) = impl_witness_access constants.%Copy.lookup_impl_witness.edd, element0 [symbolic = %impl.elem0.loc7_12.2 (constants.%impl.elem0.8df)]
+// CHECK:STDOUT:     %impl.elem0.loc7_12.1: @Class.F.%.loc7 (%.232) = impl_witness_access constants.%Copy.lookup_impl_witness.edd, element0 [symbolic = %impl.elem0.loc7_12.2 (constants.%impl.elem0.8df)]
 // CHECK:STDOUT:     %bound_method.loc7_12.1: <bound method> = bound_method %n.ref, %impl.elem0.loc7_12.1
 // CHECK:STDOUT:     %specific_impl_fn.loc7_12.1: <specific function> = specific_impl_function %impl.elem0.loc7_12.1, @Copy.Op(constants.%T.f92) [symbolic = %specific_impl_fn.loc7_12.2 (constants.%specific_impl_fn.5c4)]
 // CHECK:STDOUT:     %bound_method.loc7_12.2: <bound method> = bound_method %n.ref, %specific_impl_fn.loc7_12.1
 // CHECK:STDOUT:     %.loc6_14: ref @Class.F.%T.binding.as_type (%T.binding.as_type) = splice_block %return {}
-// CHECK:STDOUT:     %.loc7_12.1: init @Class.F.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc7_12.2(%n.ref) to %.loc6_14
-// CHECK:STDOUT:     return %.loc7_12.1 to %return
+// CHECK:STDOUT:     %Copy.Op.call: init @Class.F.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc7_12.2(%n.ref) to %.loc6_14
+// CHECK:STDOUT:     return %Copy.Op.call to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Class.G(@Class.%T.loc5_13.2: %Copy.type) {
 // CHECK:STDOUT:   %T: %Copy.type = symbolic_binding T, 0 [symbolic = %T (constants.%T.f92)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:   %pattern_type.loc10_8: type = pattern_type %Class [symbolic = %pattern_type.loc10_8 (constants.%pattern_type.0bc)]
+// CHECK:STDOUT:   %pattern_type.loc10_8: type = pattern_type %Class [symbolic = %pattern_type.loc10_8 (constants.%pattern_type.6e6)]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type.loc10_22: type = pattern_type %T.binding.as_type [symbolic = %pattern_type.loc10_22 (constants.%pattern_type.c769df.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc10: <witness> = require_complete_type %Class [symbolic = %require_complete.loc10 (constants.%require_complete.3be)]
+// CHECK:STDOUT:   %require_complete.loc10: <witness> = require_complete_type %Class [symbolic = %require_complete.loc10 (constants.%require_complete.aea)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.binding.as_type [symbolic = %Class.elem (constants.%Class.elem)]
 // CHECK:STDOUT:   %require_complete.loc11: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc11 (constants.%require_complete.91e)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.edd)]
-// CHECK:STDOUT:   %.loc11_16.4: type = fn_type_with_self_type constants.%Copy.Op.type, %T [symbolic = %.loc11_16.4 (constants.%.232)]
-// CHECK:STDOUT:   %impl.elem0.loc11_16.2: @Class.G.%.loc11_16.4 (%.232) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_16.2 (constants.%impl.elem0.8df)]
+// CHECK:STDOUT:   %.loc11_16.3: type = fn_type_with_self_type constants.%Copy.Op.type, %T [symbolic = %.loc11_16.3 (constants.%.232)]
+// CHECK:STDOUT:   %impl.elem0.loc11_16.2: @Class.G.%.loc11_16.3 (%.232) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_16.2 (constants.%impl.elem0.8df)]
 // CHECK:STDOUT:   %specific_impl_fn.loc11_16.2: <specific function> = specific_impl_function %impl.elem0.loc11_16.2, @Copy.Op(%T) [symbolic = %specific_impl_fn.loc11_16.2 (constants.%specific_impl_fn.5c4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @Class.G.%Class (%Class)) -> %return.param: @Class.G.%T.binding.as_type (%T.binding.as_type) {
@@ -211,13 +211,13 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT:     %n.ref: @Class.G.%Class.elem (%Class.elem) = name_ref n, @Class.%.loc14_8 [concrete = @Class.%.loc14_8]
 // CHECK:STDOUT:     %.loc11_16.1: ref @Class.G.%T.binding.as_type (%T.binding.as_type) = class_element_access %self.ref, element0
 // CHECK:STDOUT:     %.loc11_16.2: @Class.G.%T.binding.as_type (%T.binding.as_type) = acquire_value %.loc11_16.1
-// CHECK:STDOUT:     %impl.elem0.loc11_16.1: @Class.G.%.loc11_16.4 (%.232) = impl_witness_access constants.%Copy.lookup_impl_witness.edd, element0 [symbolic = %impl.elem0.loc11_16.2 (constants.%impl.elem0.8df)]
+// CHECK:STDOUT:     %impl.elem0.loc11_16.1: @Class.G.%.loc11_16.3 (%.232) = impl_witness_access constants.%Copy.lookup_impl_witness.edd, element0 [symbolic = %impl.elem0.loc11_16.2 (constants.%impl.elem0.8df)]
 // CHECK:STDOUT:     %bound_method.loc11_16.1: <bound method> = bound_method %.loc11_16.2, %impl.elem0.loc11_16.1
 // CHECK:STDOUT:     %specific_impl_fn.loc11_16.1: <specific function> = specific_impl_function %impl.elem0.loc11_16.1, @Copy.Op(constants.%T.f92) [symbolic = %specific_impl_fn.loc11_16.2 (constants.%specific_impl_fn.5c4)]
 // CHECK:STDOUT:     %bound_method.loc11_16.2: <bound method> = bound_method %.loc11_16.2, %specific_impl_fn.loc11_16.1
 // CHECK:STDOUT:     %.loc10_22: ref @Class.G.%T.binding.as_type (%T.binding.as_type) = splice_block %return {}
-// CHECK:STDOUT:     %.loc11_16.3: init @Class.G.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc11_16.2(%.loc11_16.2) to %.loc10_22
-// CHECK:STDOUT:     return %.loc11_16.3 to %return
+// CHECK:STDOUT:     %Copy.Op.call: init @Class.G.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc11_16.2(%.loc11_16.2) to %.loc10_22
+// CHECK:STDOUT:     return %Copy.Op.call to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -246,7 +246,7 @@ class C(T:! Core.Copy) {
 // CHECK:STDOUT: specific @Class.G(constants.%T.f92) {
 // CHECK:STDOUT:   %T => constants.%T.f92
 // CHECK:STDOUT:   %Class => constants.%Class
-// CHECK:STDOUT:   %pattern_type.loc10_8 => constants.%pattern_type.0bc
+// CHECK:STDOUT:   %pattern_type.loc10_8 => constants.%pattern_type.6e6
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %pattern_type.loc10_22 => constants.%pattern_type.c769df.1
 // CHECK:STDOUT: }

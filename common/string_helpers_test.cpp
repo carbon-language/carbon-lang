@@ -10,8 +10,12 @@
 #include <optional>
 #include <string>
 
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringRef.h"
+
 using ::testing::Eq;
 using ::testing::Optional;
+using ::testing::StrEq;
 
 namespace Carbon {
 namespace {
@@ -226,6 +230,68 @@ TEST(ParseBlockStringLiteral, OkMultipleSlashes) {
      ''')";
   constexpr char Expected[] = "A block string literal";
   EXPECT_THAT(*ParseBlockStringLiteral(Input), Eq(Expected));
+}
+
+TEST(BuildCStrArgs, NoArgs) {
+  llvm::OwningArrayRef<char> storage;
+  auto result = BuildCStrArgs("tool", {}, storage);
+  ASSERT_THAT(result.size(), Eq(1));
+  EXPECT_THAT(result[0], StrEq("tool"));
+}
+
+TEST(BuildCStrArgs, OneArg) {
+  llvm::OwningArrayRef<char> storage;
+  auto result = BuildCStrArgs("tool", {"arg1"}, storage);
+  ASSERT_THAT(result.size(), Eq(2));
+  EXPECT_THAT(result[0], StrEq("tool"));
+  EXPECT_THAT(result[1], StrEq("arg1"));
+}
+
+TEST(BuildCStrArgs, MultipleArgs) {
+  llvm::OwningArrayRef<char> storage;
+  auto result = BuildCStrArgs("tool", {"arg1", "arg2"}, storage);
+  ASSERT_THAT(result.size(), Eq(3));
+  EXPECT_THAT(result[0], StrEq("tool"));
+  EXPECT_THAT(result[1], StrEq("arg1"));
+  EXPECT_THAT(result[2], StrEq("arg2"));
+}
+
+TEST(BuildCStrArgsWithPrefix, NoArgs) {
+  llvm::OwningArrayRef<char> storage;
+  auto result = BuildCStrArgs("tool", {}, {}, storage);
+  ASSERT_THAT(result.size(), Eq(1));
+  EXPECT_THAT(result[0], StrEq("tool"));
+}
+
+TEST(BuildCStrArgsWithPrefix, PrefixOnly) {
+  llvm::OwningArrayRef<char> storage;
+  std::string prefix_args[] = {"p_arg1", "p_arg2"};
+  auto result = BuildCStrArgs("tool", prefix_args, {}, storage);
+  ASSERT_THAT(result.size(), Eq(3));
+  EXPECT_THAT(result[0], StrEq("tool"));
+  EXPECT_THAT(result[1], Eq(prefix_args[0].c_str()));
+  EXPECT_THAT(result[2], Eq(prefix_args[1].c_str()));
+}
+
+TEST(BuildCStrArgsWithPrefix, ArgsOnly) {
+  llvm::OwningArrayRef<char> storage;
+  auto result = BuildCStrArgs("tool", {}, {"arg1", "arg2"}, storage);
+  ASSERT_THAT(result.size(), Eq(3));
+  EXPECT_THAT(result[0], StrEq("tool"));
+  EXPECT_THAT(result[1], StrEq("arg1"));
+  EXPECT_THAT(result[2], StrEq("arg2"));
+}
+
+TEST(BuildCStrArgsWithPrefix, BothPrefixAndArgs) {
+  llvm::OwningArrayRef<char> storage;
+  std::string prefix_args[] = {"p_arg1", "p_arg2"};
+  auto result = BuildCStrArgs("tool", prefix_args, {"arg1", "arg2"}, storage);
+  ASSERT_THAT(result.size(), Eq(5));
+  EXPECT_THAT(result[0], StrEq("tool"));
+  EXPECT_THAT(result[1], Eq(prefix_args[0].c_str()));
+  EXPECT_THAT(result[2], Eq(prefix_args[1].c_str()));
+  EXPECT_THAT(result[3], StrEq("arg1"));
+  EXPECT_THAT(result[4], StrEq("arg2"));
 }
 
 }  // namespace

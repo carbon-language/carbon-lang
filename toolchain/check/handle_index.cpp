@@ -35,9 +35,9 @@ static auto PerformIndexWith(Context& context, Parse::NodeId node_id,
                              SemIR::InstId index_inst_id) -> SemIR::InstId {
   SemIR::InstId args[] = {
       context.types().GetInstId(context.insts().Get(index_inst_id).type_id())};
-  Operator op{.interface_name = "IndexWith",
+  Operator op{.interface_name = CoreIdentifier::IndexWith,
               .interface_args_ref = args,
-              .op_name = "At"};
+              .op_name = CoreIdentifier::At};
   return BuildBinaryOperator(context, node_id, op, operand_inst_id,
                              index_inst_id);
 }

@@ -56,6 +56,7 @@ auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
   // Propagate the type expression.
   auto [type_node_id, type_inst_id] = context.node_stack().PopExprWithNodeId();
   auto as_type = ExprAsType(context, type_node_id, type_inst_id);
+  context.PushReturnTypeInstId(as_type.inst_id);
 
   // If the previous node was `IdentifierNameBeforeParams`, then it would have
   // caused these entries to be pushed to the pattern stacks. But it's possible
@@ -167,7 +168,8 @@ static auto MergeFunctionRedecl(Context& context,
     // match IDs in the signature.
     prev_function.MergeDefinition(new_function);
     prev_function.call_params_id = new_function.call_params_id;
-    prev_function.return_slot_pattern_id = new_function.return_slot_pattern_id;
+    prev_function.return_type_inst_id = new_function.return_type_inst_id;
+    prev_function.return_patterns_id = new_function.return_patterns_id;
     prev_function.self_param_id = new_function.self_param_id;
   }
   if (prev_import_ir_id.has_value()) {
@@ -383,14 +385,18 @@ static auto BuildFunctionDecl(Context& context,
                               Parse::AnyFunctionDeclId node_id,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
-  auto return_slot_pattern_id = SemIR::InstId::None;
+  llvm::SmallVector<SemIR::InstId> return_patterns;
+  auto return_type_inst_id = SemIR::TypeInstId::None;
   if (auto [return_node, maybe_return_slot_pattern_id] =
           context.node_stack().PopWithNodeIdIf<Parse::NodeKind::ReturnType>();
       maybe_return_slot_pattern_id) {
-    return_slot_pattern_id = *maybe_return_slot_pattern_id;
+    return_patterns.push_back(*maybe_return_slot_pattern_id);
+    return_type_inst_id = context.PopReturnTypeInstId();
+    CARBON_CHECK(return_type_inst_id.has_value());
   }
 
-  auto name = PopNameComponent(context, return_slot_pattern_id);
+  auto return_patterns_id = context.inst_blocks().Add(return_patterns);
+  auto name = PopNameComponent(context, return_patterns_id);
   auto name_context = context.decl_name_stack().FinishName(name);
 
   context.node_stack()
@@ -421,7 +427,8 @@ static auto BuildFunctionDecl(Context& context,
       SemIR::Function{name_context.MakeEntityWithParamsBase(
                           name, decl_id, is_extern, introducer.extern_library),
                       {.call_params_id = name.call_params_id,
-                       .return_slot_pattern_id = name.return_slot_pattern_id,
+                       .return_type_inst_id = return_type_inst_id,
+                       .return_patterns_id = return_patterns_id,
                        .virtual_modifier = virtual_modifier,
                        .self_param_id = self_param_id}};
   if (is_definition) {
@@ -542,9 +549,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   // If the `}` of the function is reachable, reject if we need a return value
   // and otherwise add an implicit `return;`.
   if (IsCurrentPositionReachable(context)) {
-    if (context.functions()
-            .Get(function_id)
-            .return_slot_pattern_id.has_value()) {
+    if (context.functions().Get(function_id).return_type_inst_id.has_value()) {
       CARBON_DIAGNOSTIC(
           MissingReturnStatement, Error,
           "missing `return` at end of function with declared return type");
@@ -610,11 +615,12 @@ static auto IsValidBuiltinDeclaration(Context& context,
     return false;
   }
 
-  // Find the list of call parameters other than the implicit return slot.
-  auto call_params = context.inst_blocks().Get(function.call_params_id);
-  if (function.return_slot_pattern_id.has_value()) {
-    call_params.consume_back();
-  }
+  // Find the list of call parameters other than the implicit return slots.
+  auto call_params = context.inst_blocks()
+                         .Get(function.call_params_id)
+                         .drop_back(context.inst_blocks()
+                                        .GetOrEmpty(function.return_patterns_id)
+                                        .size());
 
   // Get the return type. This is `()` if none was specified.
   auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());

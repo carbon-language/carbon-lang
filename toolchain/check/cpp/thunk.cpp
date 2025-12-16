@@ -349,7 +349,7 @@ static auto CreateThunkFunctionDecl(
   thunk_function_decl->addAttr(clang::AsmLabelAttr::CreateImplicit(
       ast_context,
       GenerateThunkMangledName(
-          *context.sem_ir().clang_mangle_context(), *callee_info.decl,
+          context.cpp_context()->clang_mangle_context(), *callee_info.decl,
           callee_info.num_params - callee_info.has_explicit_object_parameter()),
       clang_loc));
 
@@ -559,19 +559,26 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
   auto& callee_function = context.functions().Get(callee_function_id);
   auto callee_function_params =
       context.inst_blocks().Get(callee_function.call_params_id);
+  auto callee_return_patterns =
+      context.inst_blocks().GetOrEmpty(callee_function.return_patterns_id);
 
   auto thunk_callee = GetCalleeAsFunction(context.sem_ir(), thunk_callee_id);
   auto& thunk_function = context.functions().Get(thunk_callee.function_id);
   auto thunk_function_params =
       context.inst_blocks().Get(thunk_function.call_params_id);
+  auto thunk_return_patterns =
+      context.inst_blocks().GetOrEmpty(thunk_function.return_patterns_id);
+
+  CARBON_CHECK(
+      callee_return_patterns.size() <= 1 && thunk_return_patterns.size() <= 1,
+      "TODO: generalize this logic to support multiple return patterns.");
 
   // Whether we need to pass a return address to the thunk as a final argument.
   bool thunk_takes_return_address =
-      callee_function.return_slot_pattern_id.has_value() &&
-      !thunk_function.return_slot_pattern_id.has_value();
+      !callee_return_patterns.empty() && thunk_return_patterns.empty();
 
   // The number of arguments we should be acquiring in order to call the thunk.
-  // This includes the return address parameter, if any.
+  // This includes the return address parameters, if any.
   unsigned num_thunk_args =
       context.inst_blocks().Get(thunk_function.param_patterns_id).size();
 
@@ -585,15 +592,13 @@ auto PerformCppThunkCall(Context& context, SemIR::LocId loc_id,
     return_slot_id = callee_arg_ids.consume_back();
   }
 
-  // If there's a return slot pattern, drop the corresponding parameter.
+  // If there are return slot patterns, drop the corresponding parameters.
   // TODO: The parameter should probably only be created if the return pattern
   // actually needs a return address to be passed in.
-  if (thunk_function.return_slot_pattern_id.has_value()) {
-    thunk_function_params.consume_back();
-  }
-  if (callee_function.return_slot_pattern_id.has_value()) {
-    callee_function_params.consume_back();
-  }
+  thunk_function_params =
+      thunk_function_params.drop_back(thunk_return_patterns.size());
+  callee_function_params =
+      callee_function_params.drop_back(callee_return_patterns.size());
 
   // We assume that the call parameters exactly match the parameter patterns for
   // both the thunk and the callee. This is currently guaranteed because we only

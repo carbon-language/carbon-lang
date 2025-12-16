@@ -48,7 +48,7 @@ interface Z {}
 
 class C {}
 
-// CHECK:STDERR: fail_final_extend_impl_outside_class.carbon:[[@LINE+4]]:1: error: `extend impl` can only be used in a class [ExtendImplOutsideClass]
+// CHECK:STDERR: fail_final_extend_impl_outside_class.carbon:[[@LINE+4]]:1: error: `extend impl` can only be used in an interface or class [ExtendImplOutsideClass]
 // CHECK:STDERR: extend final impl C as Z {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

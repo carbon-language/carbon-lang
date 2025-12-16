@@ -21,6 +21,7 @@
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/check/type_structure.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -198,8 +199,9 @@ static auto ApplyExtendImplAs(Context& context, SemIR::LocId loc_id,
   auto class_scope = TryAsClassScope(context, parent_scope_id);
   if (!class_scope) {
     if (impl.witness_id != SemIR::ErrorInst::InstId) {
-      CARBON_DIAGNOSTIC(ExtendImplOutsideClass, Error,
-                        "`extend impl` can only be used in a class");
+      CARBON_DIAGNOSTIC(
+          ExtendImplOutsideClass, Error,
+          "`extend impl` can only be used in an interface or class");
       context.emitter().Emit(loc_id, ExtendImplOutsideClass);
     }
     return false;
@@ -536,17 +538,18 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   auto witness_block =
       context.inst_blocks().GetMutable(witness_table.elements_id);
 
-  // We can detect that the witness table is a placeholder table if it's not the
-  // `Empty` id, but it is empty still. This happens when a forward declaration
-  // makes the table before the interface is known to be complete (so the
-  // table's required size was unknown). Then we replace the placeholder table
-  // here in the definition, as the interface must be complete.
+  // The impl declaration may have created a placeholder witness table, or a
+  // full witness table. We can detect that the witness table is a placeholder
+  // table if it's not the `Empty` id, but it is empty still. If it was a
+  // placeholder, we can replace the placeholder here with a table of the proper
+  // size, since the interface must be complete for the impl definition.
   bool witness_table_is_placeholder =
       witness_table.elements_id != SemIR::InstBlockId::Empty &&
       witness_block.empty();
   if (witness_table_is_placeholder) {
-    // TODO: We could skip an allocation here if we could `ReplacePlaceholder`
-    // with a size and value.
+    // TODO: Since our `empty_table` repeats the same value throughout, we could
+    // skip an allocation here if there was a `ReplacePlaceholder` function that
+    // took a size and value instead of an array of values.
     llvm::SmallVector<SemIR::InstId> empty_table(
         assoc_entities.size(), SemIR::InstId::ImplWitnessTablePlaceholder);
     context.inst_blocks().ReplacePlaceholder(witness_table.elements_id,
@@ -719,6 +722,85 @@ auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
     return SemIR::SpecificInterface::None;
   }
   return identified.impl_as_target_interface();
+}
+
+auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
+                        SemIR::TypeId self_type_id,
+                        SemIR::SpecificInterface specific_interface,
+                        llvm::ArrayRef<SemIR::InstId> values) -> SemIR::InstId {
+  const auto& interface =
+      context.interfaces().Get(specific_interface.interface_id);
+  auto assoc_entities =
+      context.inst_blocks().GetOrEmpty(interface.associated_entities_id);
+  if (assoc_entities.size() != values.size()) {
+    context.TODO(loc_id, ("Unsupported definition of interface " +
+                          context.names().GetFormatted(interface.name_id))
+                             .str());
+    return SemIR::ErrorInst::InstId;
+  }
+
+  llvm::SmallVector<SemIR::InstId> entries;
+
+  // Build a witness with the current contents of the witness table. This will
+  // grow as we progress through the impl. In theory this will build O(n^2)
+  // table entries, but in practice n <= 2, so that's OK.
+  //
+  // This is necessary because later associated entities may refer to earlier
+  // associated entities in their signatures. In particular, an associated
+  // result type may be used as the return type of an associated function.
+  //
+  // TODO: Consider building one witness after all associated constants, and
+  // then a second after all associated functions, rather than building one at
+  // each step. For now this doesn't really matter since we don't have more than
+  // one of each anyway.
+  auto make_witness = [&] {
+    return context.constant_values().GetInstId(
+        EvalOrAddInst<SemIR::CustomWitness>(
+            context, loc_id,
+            {.type_id =
+                 GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+             .elements_id = context.inst_blocks().Add(entries)}));
+  };
+
+  // Fill in the witness table.
+  for (const auto& [assoc_entity_id, value_id] :
+       llvm::zip_equal(assoc_entities, values)) {
+    LoadImportRef(context, assoc_entity_id);
+    auto decl_id =
+        context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
+            context.sem_ir(), specific_interface.specific_id, assoc_entity_id));
+    CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
+    auto decl = context.insts().Get(decl_id);
+    CARBON_KIND_SWITCH(decl) {
+      case CARBON_KIND(SemIR::StructValue struct_value): {
+        if (struct_value.type_id == SemIR::ErrorInst::TypeId) {
+          return SemIR::ErrorInst::InstId;
+        }
+        // TODO: If a thunk is needed, this will build a different value each
+        // time it's called, so we won't properly deduplicate repeated
+        // witnesses.
+        // TODO: Skip calling make_witness if this function signature doesn't
+        // involve `Self`.
+        entries.push_back(CheckAssociatedFunctionImplementation(
+            context,
+            context.types().GetAs<SemIR::FunctionType>(struct_value.type_id),
+            value_id, self_type_id, make_witness(),
+            /*defer_thunk_definition=*/false));
+        break;
+      }
+      case SemIR::AssociatedConstantDecl::Kind: {
+        context.TODO(loc_id,
+                     "Associated constant in interface with synthesized impl");
+        return SemIR::ErrorInst::InstId;
+      }
+      default:
+        CARBON_CHECK(decl_id == SemIR::ErrorInst::InstId,
+                     "Unexpected kind of associated entity {0}", decl);
+        return SemIR::ErrorInst::InstId;
+    }
+  }
+
+  return make_witness();
 }
 
 }  // namespace Carbon::Check

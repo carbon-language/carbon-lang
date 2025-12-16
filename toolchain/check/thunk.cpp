@@ -145,6 +145,19 @@ static auto ClonePatternBlock(Context& context, SemIR::SpecificId specific_id,
       });
 }
 
+static auto CloneTypeInstId(Context& context, SemIR::SpecificId specific_id,
+                            SemIR::TypeInstId inst_id) -> SemIR::TypeInstId {
+  if (!inst_id.has_value()) {
+    return SemIR::TypeInstId::None;
+  }
+
+  return context.types().GetAsTypeInstId(
+      GetOrAddInst<SemIR::SpecificConstant>(context, SemIR::LocId(inst_id),
+                                            {.type_id = SemIR::TypeType::TypeId,
+                                             .inst_id = inst_id,
+                                             .specific_id = specific_id}));
+}
+
 static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
                               SemIR::FunctionId signature_id,
                               SemIR::SpecificId signature_specific_id,
@@ -160,8 +173,10 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
       context, signature_specific_id, signature.implicit_param_patterns_id);
   auto param_patterns_id = ClonePatternBlock(context, signature_specific_id,
                                              signature.param_patterns_id);
-  auto return_slot_pattern_id = ClonePattern(context, signature_specific_id,
-                                             signature.return_slot_pattern_id);
+  auto return_patterns_id = ClonePatternBlock(context, signature_specific_id,
+                                              signature.return_patterns_id);
+  auto return_type_inst_id = CloneTypeInstId(context, signature_specific_id,
+                                             signature.return_type_inst_id);
   auto self_param_id = FindSelfPattern(context, implicit_param_patterns_id);
   auto pattern_block_id = context.pattern_block_stack().Pop();
 
@@ -169,7 +184,7 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
   context.inst_block_stack().Push();
   auto call_params_id =
       CalleePatternMatch(context, implicit_param_patterns_id, param_patterns_id,
-                         return_slot_pattern_id);
+                         return_patterns_id);
   auto decl_block_id = context.inst_block_stack().Pop();
 
   // Create the `FunctionDecl` instruction.
@@ -196,7 +211,8 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
                        .first_owning_decl_id = decl_id,
                        .definition_id = decl_id},
                       {.call_params_id = call_params_id,
-                       .return_slot_pattern_id = return_slot_pattern_id,
+                       .return_type_inst_id = return_type_inst_id,
+                       .return_patterns_id = return_patterns_id,
                        .virtual_modifier = callee.virtual_modifier,
                        .virtual_index = callee.virtual_index,
                        .self_param_id = self_param_id}});
@@ -209,9 +225,7 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
 
 static auto HasDeclaredReturnType(Context& context,
                                   SemIR::FunctionId function_id) -> bool {
-  return context.functions()
-      .Get(function_id)
-      .return_slot_pattern_id.has_value();
+  return context.functions().Get(function_id).return_type_inst_id.has_value();
 }
 
 // Build an expression that names the value matched by a pattern.

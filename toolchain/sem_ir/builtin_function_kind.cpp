@@ -192,6 +192,36 @@ struct AnyType {
   }
 };
 
+// Constraint that checks if a type is Core.String.
+struct CoreStringType {
+  static auto CheckType(const File& sem_ir, ValidateState& /*state*/,
+                        TypeId type_id) -> bool {
+    auto type_inst_id = sem_ir.types().GetInstId(type_id);
+    auto class_type = sem_ir.insts().TryGetAs<ClassType>(type_inst_id);
+    if (!class_type) {
+      return false;
+    }
+
+    const auto& class_info = sem_ir.classes().Get(class_type->class_id);
+    return sem_ir.names().GetFormatted(class_info.name_id).str() == "String";
+  }
+};
+
+// Constraint that checks if a type is Core.Char.
+struct CoreCharType {
+  static auto CheckType(const File& sem_ir, ValidateState& /*state*/,
+                        TypeId type_id) -> bool {
+    auto type_inst_id = sem_ir.types().GetInstId(type_id);
+    auto class_type = sem_ir.insts().TryGetAs<ClassType>(type_inst_id);
+    if (!class_type) {
+      return false;
+    }
+
+    const auto& class_info = sem_ir.classes().Get(class_type->class_id);
+    return sem_ir.names().GetFormatted(class_info.name_id).str() == "Char";
+  }
+};
+
 // Constraint that requires the type to be the type type.
 using Type = BuiltinType<TypeType::TypeInstId>;
 
@@ -372,6 +402,11 @@ constexpr BuiltinInfo PrintInt = {
 // Reads a single character from stdin.
 constexpr BuiltinInfo ReadChar = {"read.char",
                                   ValidateSignature<auto()->AnySizedInt>};
+
+// Gets a character from a string at the given index.
+constexpr BuiltinInfo StringAt = {
+    "string.at",
+    ValidateSignature<auto(CoreStringType, AnyType)->CoreCharType>};
 
 // Returns the `Core.CharLiteral` type.
 constexpr BuiltinInfo CharLiteralMakeType = {"char_literal.make_type",

@@ -15,6 +15,7 @@
 #include "toolchain/check/action.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
+#include "toolchain/check/core_identifier.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/impl_lookup.h"
@@ -1367,7 +1368,8 @@ static auto PerformCopy(Context& context, SemIR::InstId expr_id,
   }
 
   auto copy_id = BuildUnaryOperator(
-      context, SemIR::LocId(expr_id), {"Copy"}, expr_id, [&] {
+      context, SemIR::LocId(expr_id), {.interface_name = CoreIdentifier::Copy},
+      expr_id, [&] {
         if (!target.diagnose) {
           return context.emitter().BuildSuppressed();
         }
@@ -1407,14 +1409,14 @@ static auto ConvertValueForCppThunkRef(Context& context, SemIR::InstId expr_id)
 
 // Returns the Core interface name to use for a given kind of conversion.
 static auto GetConversionInterfaceName(ConversionTarget::Kind kind)
-    -> llvm::StringLiteral {
+    -> CoreIdentifier {
   switch (kind) {
     case ConversionTarget::ExplicitAs:
-      return "As";
+      return CoreIdentifier::As;
     case ConversionTarget::ExplicitUnsafeAs:
-      return "UnsafeAs";
+      return CoreIdentifier::UnsafeAs;
     default:
-      return "ImplicitAs";
+      return CoreIdentifier::ImplicitAs;
   }
 }
 
@@ -1559,7 +1561,7 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     Operator op = {
         .interface_name = GetConversionInterfaceName(target.kind),
         .interface_args_ref = interface_args,
-        .op_name = "Convert",
+        .op_name = CoreIdentifier::Convert,
     };
     expr_id = BuildUnaryOperator(context, loc_id, op, expr_id, [&] {
       if (!target.diagnose) {
@@ -1811,7 +1813,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
     -> SemIR::InstBlockId {
   auto param_patterns =
       context.inst_blocks().GetOrEmpty(callee.param_patterns_id);
-  auto return_slot_pattern_id = callee.return_slot_pattern_id;
+  auto return_patterns_id = callee.return_patterns_id;
 
   // The caller should have ensured this callee has the right arity.
   CARBON_CHECK(arg_refs.size() == param_patterns.size());
@@ -1828,7 +1830,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
   }
 
   return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
-                            callee.param_patterns_id, return_slot_pattern_id,
+                            callee.param_patterns_id, return_patterns_id,
                             self_id, arg_refs, return_slot_arg_id);
 }
 

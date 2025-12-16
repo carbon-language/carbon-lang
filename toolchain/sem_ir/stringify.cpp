@@ -327,6 +327,11 @@ class Stringifier {
     step_stack_->PushInstId(inst.inner_id);
   }
 
+  auto StringifyInst(InstId /*inst_id*/, CppTemplateNameType inst) -> void {
+    *out_ << "<type of ";
+    step_stack_->Push(inst.name_id, ">");
+  }
+
   auto StringifyInst(InstId /*inst_id*/, CustomLayoutType inst) -> void {
     auto layout = sem_ir_->custom_layouts().Get(inst.layout_id);
     *out_ << "<size " << layout[CustomLayoutId::SizeIndex] << ", align "

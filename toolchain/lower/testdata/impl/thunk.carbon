@@ -214,7 +214,7 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCallCallGeneric.Main(ptr sret({}) %return, ptr %c, ptr %b) #0 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CCallGeneric.Main.c19c515d38e64c29(ptr %return, ptr %c, ptr %b), !dbg !24
+// CHECK:STDOUT:   call void @_CCallGeneric.Main.aa7acd970176ba06(ptr %return, ptr %c, ptr %b), !dbg !24
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -232,7 +232,7 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CCallGeneric.Main.c19c515d38e64c29(ptr sret({}) %return, ptr %c, ptr %b) #0 !dbg !31 {
+// CHECK:STDOUT: define linkonce_odr void @_CCallGeneric.Main.aa7acd970176ba06(ptr sret({}) %return, ptr %c, ptr %b) #0 !dbg !31 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @"_CF:thunk.C.Main:I.Main.e43630e9a6c38c3f"(ptr %return, ptr %c, ptr %b), !dbg !35
 // CHECK:STDOUT:   ret void, !dbg !36
@@ -296,7 +296,7 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !26, type: !7)
 // CHECK:STDOUT: !29 = !DILocalVariable(arg: 2, scope: !26, type: !7)
 // CHECK:STDOUT: !30 = !DILocation(line: 18, column: 33, scope: !26)
-// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "CallGeneric", linkageName: "_CCallGeneric.Main.c19c515d38e64c29", scope: null, file: !3, line: 25, type: !12, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !32)
+// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "CallGeneric", linkageName: "_CCallGeneric.Main.aa7acd970176ba06", scope: null, file: !3, line: 25, type: !12, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !32)
 // CHECK:STDOUT: !32 = !{!33, !34}
 // CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !31, type: !7)
 // CHECK:STDOUT: !34 = !DILocalVariable(arg: 2, scope: !31, type: !7)

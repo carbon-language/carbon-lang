@@ -23,7 +23,9 @@ cc_library(
         "convert.cpp",
         "cpp/access.cpp",
         "cpp/call.cpp",
+        "cpp/context.cpp",
         "cpp/custom_type_mapping.cpp",
+        "cpp/generate_ast.cpp",
         "cpp/impl_lookup.cpp",
         "cpp/import.cpp",
         "cpp/location.cpp",
@@ -78,7 +80,9 @@ cc_library(
         "convert.h",
         "cpp/access.h",
         "cpp/call.h",
+        "cpp/context.h",
         "cpp/custom_type_mapping.h",
+        "cpp/generate_ast.h",
         "cpp/impl_lookup.h",
         "cpp/import.h",
         "cpp/location.h",
@@ -130,6 +134,7 @@ cc_library(
         "type_structure.h",
     ],
     deps = [
+        ":core_identifier",
         ":node_stack",
         "//common:array_stack",
         "//common:check",
@@ -213,6 +218,7 @@ cc_library(
     hdrs = ["check.h"],
     deps = [
         ":context",
+        ":core_identifier",
         ":diagnostic_emitter",
         ":dump",
         ":scope_stack",
@@ -315,6 +321,19 @@ cc_library(
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "core_identifier",
+    srcs = ["core_identifier.cpp"],
+    hdrs = ["core_identifier.h"],
+    textual_hdrs = ["core_identifier.def"],
+    deps = [
+        "//common:enum_base",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/base:value_ids",
+        "//toolchain/sem_ir:typed_insts",
     ],
 )
 

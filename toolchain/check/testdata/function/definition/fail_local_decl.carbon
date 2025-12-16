@@ -54,8 +54,8 @@ fn F() {
 // CHECK:STDOUT: --- fail_virtual.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type.b25: type = fn_type @F.loc4 [concrete]
-// CHECK:STDOUT:   %F.c41: %F.type.b25 = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type.117: type = fn_type @F.loc4 [concrete]
+// CHECK:STDOUT:   %F.d98: %F.type.117 = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type.21a: type = fn_type @F.loc9 [concrete]
 // CHECK:STDOUT:   %F.c14: %F.type.21a = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
@@ -77,7 +77,7 @@ fn F() {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %F.decl: %F.type.b25 = fn_decl @F.loc4 [concrete = constants.%F.c41] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.117 = fn_decl @F.loc4 [concrete = constants.%F.d98] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.loc4() {

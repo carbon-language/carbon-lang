@@ -13,6 +13,10 @@
 
 namespace Carbon::Check {
 
+// Forms a BoolLiteral instruction with the given value and returns it.
+auto MakeBoolLiteral(Context& context, SemIR::LocId loc_id,
+                     SemIR::BoolValue value) -> SemIR::InstId;
+
 // Forms an IntValue instruction with type `IntLiteral` for a given literal
 // integer value, which is assumed to be unsigned.
 auto MakeIntLiteral(Context& context, Parse::NodeId node_id, IntId int_id)

@@ -1086,6 +1086,13 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       return;
     }
 
+    case CARBON_KIND(CppTemplateNameType type): {
+      // Omit the Clang declaration. We don't have a good way to format it, and
+      // the entity name should suffice to identify the template.
+      FormatArgs(type.name_id);
+      return;
+    }
+
     case CARBON_KIND(CustomLayoutType type): {
       out_ << " {";
       auto layout = sem_ir_->custom_layouts().Get(type.layout_id);

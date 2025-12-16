@@ -37,7 +37,7 @@ fn CallF() -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !9
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !9
 // CHECK:STDOUT:   %.loc22_14 = load i32, ptr %n.var, align 4, !dbg !10
-// CHECK:STDOUT:   %C.F.call = call i32 @_CF.C.Main.d35bd5561e71da34(ptr %c.var, i32 %.loc22_14), !dbg !11
+// CHECK:STDOUT:   %C.F.call = call i32 @_CF.C.Main.3440082c84c3c17b(ptr %c.var, i32 %.loc22_14), !dbg !11
 // CHECK:STDOUT:   ret i32 %C.F.call, !dbg !12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -48,7 +48,7 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.C.Main.d35bd5561e71da34(ptr %self, i32 %x) #0 !dbg !13 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.C.Main.3440082c84c3c17b(ptr %self, i32 %x) #0 !dbg !13 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %x, !dbg !20
 // CHECK:STDOUT: }
@@ -76,7 +76,7 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: !10 = !DILocation(line: 22, column: 14, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 22, column: 10, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 22, column: 3, scope: !4)
-// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.d35bd5561e71da34", scope: null, file: !3, line: 14, type: !14, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !17)
+// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.3440082c84c3c17b", scope: null, file: !3, line: 14, type: !14, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !17)
 // CHECK:STDOUT: !14 = !DISubroutineType(types: !15)
 // CHECK:STDOUT: !15 = !{!7, !16, !7}
 // CHECK:STDOUT: !16 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)

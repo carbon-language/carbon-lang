@@ -19,8 +19,8 @@ namespace Carbon::Check {
 // as a descendant are matched by the caller.
 
 // Emits the pattern-match IR for the declaration of a parameterized entity with
-// the given implicit and explicit parameter patterns, and the given return slot
-// pattern (any of which may be `None` if not applicable). This IR performs the
+// the given implicit and explicit parameter patterns, and the given return
+// patterns (any of which may be `None` if not applicable). This IR performs the
 // callee side of pattern matching, starting at the `ParamPattern` insts, and
 // matching them against the corresponding `Call` parameters (see
 // entity_with_params_base.h for the definition of that term).
@@ -29,7 +29,7 @@ namespace Carbon::Check {
 auto CalleePatternMatch(Context& context,
                         SemIR::InstBlockId implicit_param_patterns_id,
                         SemIR::InstBlockId param_patterns_id,
-                        SemIR::InstId return_slot_pattern_id)
+                        SemIR::InstBlockId return_patterns_id)
     -> SemIR::InstBlockId;
 
 // Emits the pattern-match IR for matching the given arguments with the given
@@ -38,7 +38,7 @@ auto CalleePatternMatch(Context& context,
 auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
                         SemIR::InstId self_pattern_id,
                         SemIR::InstBlockId param_patterns_id,
-                        SemIR::InstId return_slot_pattern_id,
+                        SemIR::InstBlockId return_patterns_id,
                         SemIR::InstId self_arg_id,
                         llvm::ArrayRef<SemIR::InstId> arg_refs,
                         SemIR::InstId return_slot_arg_id) -> SemIR::InstBlockId;
