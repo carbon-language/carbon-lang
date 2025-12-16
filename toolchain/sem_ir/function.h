@@ -232,13 +232,14 @@ struct CalleeNonFunction {};
 using Callee = std::variant<CalleeCppOverloadSet, CalleeError, CalleeFunction,
                             CalleeNonFunction>;
 
-// Returns information for the function corresponding to callee_id.
+// Returns information for the function corresponding to callee_id in
+// caller_specific_id.
 auto GetCallee(const File& sem_ir, InstId callee_id,
-               SpecificId specific_id = SpecificId::None) -> Callee;
+               SpecificId caller_specific_id = SpecificId::None) -> Callee;
 
 // Like `GetCallee`, but restricts to the `Function` callee kind.
 auto GetCalleeAsFunction(const File& sem_ir, InstId callee_id,
-                         SpecificId specific_id = SpecificId::None)
+                         SpecificId callee_specific_id = SpecificId::None)
     -> CalleeFunction;
 
 struct DecomposedVirtualFunction {

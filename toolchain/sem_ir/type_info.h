@@ -170,8 +170,11 @@ struct ReturnTypeInfo : public Printable<ReturnTypeInfo> {
                              : InitRepr{.kind = InitRepr::None}};
   }
 
-  // Builds return type information for a given callee inst.
-  static auto ForCallee(const File& file, InstId callee_id) -> ReturnTypeInfo;
+  // Builds return type information for the function corresponding to callee_id
+  // in caller_specific_id.
+  static auto ForCallee(const File& file, InstId callee_id,
+                        SpecificId caller_specific_id = SemIR::SpecificId::None)
+      -> ReturnTypeInfo;
 
   // Returns whether the return information could be fully computed.
   auto is_valid() const -> bool { return init_repr.is_valid(); }
