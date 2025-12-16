@@ -911,8 +911,8 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstNameId(sem_ir().entity_names().Get(inst.name_id).name_id, ".type");
       return;
     }
-    case CppWitness::Kind: {
-      AddInstName("cpp_witness");
+    case CustomWitness::Kind: {
+      AddInstName("custom_witness");
       return;
     }
     case CARBON_KIND(FacetAccessType inst): {

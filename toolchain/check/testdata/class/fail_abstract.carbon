@@ -48,6 +48,23 @@ fn Var() {
   var v: Abstract;
 }
 
+// --- fail_abstract_var_function_param.carbon
+
+library "[[@TEST_NAME]]";
+
+abstract class Abstract {
+}
+
+// CHECK:STDERR: fail_abstract_var_function_param.carbon:[[@LINE+7]]:13: error: binding pattern has abstract type `Abstract` in `var` pattern [AbstractTypeInVarPattern]
+// CHECK:STDERR: fn F(var p: Abstract) {
+// CHECK:STDERR:             ^~~~~~~~
+// CHECK:STDERR: fail_abstract_var_function_param.carbon:[[@LINE-6]]:1: note: class was declared abstract here [ClassAbstractHere]
+// CHECK:STDERR: abstract class Abstract {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn F(var p: Abstract) {
+}
+
 // --- abstract_let.carbon
 
 library "[[@TEST_NAME]]";
@@ -288,6 +305,55 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %v: ref <error> = ref_binding v, <error> [concrete = <error>]
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_abstract_var_function_param.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Abstract = %Abstract.decl
+// CHECK:STDOUT:     .F = %F.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [concrete = constants.%Abstract] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %p.patt: <error> = ref_binding_pattern p [concrete]
+// CHECK:STDOUT:     %p.param_patt: <error> = var_param_pattern %p.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %p.var_patt: <error> = var_pattern %p.param_patt [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %p.param: ref <error> = ref_param call_param0
+// CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
+// CHECK:STDOUT:     %p: ref <error> = ref_binding p, %p.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Abstract {
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Abstract
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%p.param: <error>) {
+// CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
