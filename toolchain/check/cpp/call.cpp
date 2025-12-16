@@ -48,6 +48,21 @@ auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
   }
 }
 
+// Synthesize a placeholder `void{}` template argument, that will never be a
+// valid argument for any template parameter. This is used in order to get Clang
+// to diagnose invalid template argument errors for us.
+static auto MakePlaceholderTemplateArg(Context& context, SemIR::InstId arg_id)
+    -> clang::TemplateArgumentLoc {
+  auto arg_loc = GetCppLocation(context, SemIR::LocId(arg_id));
+  auto void_type = context.ast_context().VoidTy;
+  auto* arg = new (context.ast_context()) clang::CXXScalarValueInitExpr(
+      void_type,
+      context.ast_context().getTrivialTypeSourceInfo(void_type, arg_loc),
+      arg_loc);
+  return clang::TemplateArgumentLoc(
+      clang::TemplateArgument(arg, /*IsCanonical=*/false), arg);
+}
+
 // Converts an argument in a call to a C++ template name into a corresponding
 // clang template argument, given the template parameter it will be matched
 // against.
@@ -72,10 +87,20 @@ static auto ConvertArgToTemplateArg(Context& context,
   }
 
   if (isa<clang::TemplateTemplateParmDecl>(param_decl)) {
-    // TODO: Check the type of the argument `CppTemplateNameType` and
-    // convert it to a `clang::TemplateName`.
-    context.TODO(arg_id, "argument for template template parameter");
-    return std::nullopt;
+    auto inst = context.sem_ir().insts().Get(arg_id);
+    if (auto template_name_type =
+            context.types().TryGetAs<SemIR::CppTemplateNameType>(
+                inst.type_id())) {
+      clang::TemplateName name(cast<clang::TemplateDecl>(
+          context.clang_decls().Get(template_name_type->decl_id).key.decl));
+      return clang::TemplateArgumentLoc(
+          context.ast_context(), clang::TemplateArgument(name),
+          /*TemplateKWLoc=*/clang::SourceLocation(),
+          clang::NestedNameSpecifierLoc(),
+          GetCppLocation(context, SemIR::LocId(arg_id)));
+    }
+
+    return MakePlaceholderTemplateArg(context, arg_id);
   }
 
   if (isa<clang::NonTypeTemplateParmDecl>(param_decl)) {
@@ -120,14 +145,7 @@ static auto ConvertArgsToTemplateArgs(Context& context,
   // placeholder template arguments so that Clang will diagnose it for us.
   for (auto arg_id : arg_ids) {
     // Synthesize a placeholder `void{}` template argument.
-    auto arg_loc = GetCppLocation(context, SemIR::LocId(arg_id));
-    auto void_type = context.ast_context().VoidTy;
-    auto* arg = new (context.ast_context()) clang::CXXScalarValueInitExpr(
-        void_type,
-        context.ast_context().getTrivialTypeSourceInfo(void_type, arg_loc),
-        arg_loc);
-    arg_list.addArgument(clang::TemplateArgumentLoc(
-        clang::TemplateArgument(arg, /*IsCanonical=*/false), arg));
+    arg_list.addArgument(MakePlaceholderTemplateArg(context, arg_id));
   }
 
   return true;
