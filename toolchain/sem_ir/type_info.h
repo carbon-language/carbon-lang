@@ -85,7 +85,7 @@ struct CompleteTypeInfo : public Printable<CompleteTypeInfo> {
   ClassId abstract_class_id = ClassId::None;
 };
 
-// The initializing representation to use when returning by value.
+// The representation to use for an initializing expression of some type.
 struct InitRepr : Printable<InitRepr> {
   // Returns information about the initializing representation to use for a
   // type.
@@ -104,7 +104,9 @@ struct InitRepr : Printable<InitRepr> {
     // An initializing expression takes a location as input, which is
     // initialized as a side effect of evaluating the expression.
     InPlace,
-    // No initializing expressions should exist because the type is not
+    // No initializing expressions should exist because the type is abstract.
+    Abstract,
+    // No initializing expressions should exist yet, because the type is not
     // complete.
     Incomplete,
     // TODO: Consider adding a kind where the expression takes an advisory
@@ -114,9 +116,11 @@ struct InitRepr : Printable<InitRepr> {
   // The kind of initializing representation used by this type.
   Kind kind;
 
-  // Returns whether the initializing representation information could be fully
-  // computed.
-  auto is_valid() const -> bool { return kind != Incomplete; }
+  // Returns whether the type can be used as the type of an initializing
+  // expression in the current context.
+  auto is_valid() const -> bool {
+    return kind != Incomplete && kind != Abstract;
+  }
 
   // Returns whether the initializing representation is a copy of the object
   // representation of the type. Provided for symmetry with `ValueRepr`.
@@ -148,6 +152,9 @@ struct InitRepr : Printable<InitRepr> {
         break;
       case InPlace:
         out << "InPlace";
+        break;
+      case Abstract:
+        out << "Abstract";
         break;
       case Incomplete:
         out << "Incomplete";

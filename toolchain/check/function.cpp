@@ -100,7 +100,8 @@ auto CheckFunctionReturnType(Context& context, SemIR::LocId loc_id,
 
   // If we couldn't determine the return information due to the return type
   // being incomplete, try to complete it now.
-  if (return_info.init_repr.kind == SemIR::InitRepr::Incomplete) {
+  if (return_info.init_repr.kind == SemIR::InitRepr::Incomplete ||
+      return_info.init_repr.kind == SemIR::InitRepr::Abstract) {
     auto diagnose_incomplete_return_type = [&] {
       CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
                         "function returns incomplete type {0}", SemIR::TypeId);

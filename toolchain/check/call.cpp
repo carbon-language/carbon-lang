@@ -268,9 +268,11 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
       break;
     case SemIR::InitRepr::ByCopy:
       break;
+    case SemIR::InitRepr::Abstract:
     case SemIR::InitRepr::Incomplete:
-      // Don't form an initializing expression with an incomplete type.
-      // CheckFunctionReturnType will have diagnosed this for us if needed.
+      // Don't form an initializing expression with an abstract or incomplete
+      // type. CheckFunctionReturnType will have diagnosed this for us if
+      // needed.
       return_info.type_id = SemIR::ErrorInst::TypeId;
       break;
   }

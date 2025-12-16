@@ -207,6 +207,10 @@ static auto EmitAggregateInitializer(FunctionContext& context,
           name);
     }
 
+    case SemIR::InitRepr::Abstract:
+      CARBON_FATAL("Lowering aggregate initialization of abstract type {0}",
+                   type.file->types().GetAsInst(type.type_id));
+
     case SemIR::InitRepr::Incomplete:
       CARBON_FATAL("Lowering aggregate initialization of incomplete type {0}",
                    type.file->types().GetAsInst(type.type_id));
