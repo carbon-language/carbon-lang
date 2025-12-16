@@ -93,7 +93,8 @@ fn UnreadChar(c: CharOrEOF) {
 
 fn ReadInt[N:! Core.IntLiteral()](ref p: Core.Int(N)) -> bool {
   var read_any_digits: bool = false;
-  // TODO: p = 0; crashes the toolchain.
+  // TODO: `p = 0;` crashes the toolchain, see
+  // https://github.com/carbon-language/carbon-lang/issues/6500.
   p = (0 as i32) as Core.Int(N);
 
   while (true) {
