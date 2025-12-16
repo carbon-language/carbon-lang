@@ -6,7 +6,6 @@ library "io_utils";
 
 import Core library "io";
 import Core library "range";
-import Cpp library "<cstdio>";
 
 class EOFType {}
 
@@ -78,7 +77,7 @@ fn ReadChar() -> CharOrEOF {
   }
 
   var value: i32 = Core.ReadChar();
-  if (value == Cpp.EOF) {
+  if (value == Core.EOF()) {
     return CharOrEOF.EOF();
   } else {
     return value as CharOrEOF;

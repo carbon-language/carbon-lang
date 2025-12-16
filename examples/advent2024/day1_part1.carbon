@@ -6,10 +6,11 @@
 
 import Core library "io";
 import Core library "range";
-import Cpp library "<cstdlib>";
 
 import library "day1_common";
 import library "sort";
+
+fn Abs(n: i32) -> i32 { return if n < 0 then -n else n; }
 
 fn Run() {
   var a: array(i32, 1000);
@@ -20,7 +21,7 @@ fn Run() {
 
   var difference: i32 = 0;
   for (i: i32 in Core.Range(n)) {
-    difference += Cpp.std.abs(a[i] - b[i]);
+    difference += Abs(a[i] - b[i]);
   }
   Core.Print(difference);
 }
