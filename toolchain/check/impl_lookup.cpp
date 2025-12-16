@@ -319,7 +319,8 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
     ResolveSpecificDefinition(context, loc_id, specific_id);
   }
 
-  if (query_is_concrete || IsImplEffectivelyFinal(context, impl)) {
+  if (query_is_concrete ||
+      impl.final_kind != SemIR::FinalImplKind::Specializable) {
     return EvalImplLookupResult::MakeFinal(
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
             context.sem_ir(), specific_id, impl.witness_id)));
@@ -837,7 +838,7 @@ static auto CollectCandidateImplsForQuery(
   for (auto [id, impl] : context.impls().enumerate()) {
     CARBON_CHECK(impl.witness_id.has_value());
 
-    if (final_only && !IsImplEffectivelyFinal(context, impl)) {
+    if (final_only && impl.final_kind == SemIR::FinalImplKind::Specializable) {
       continue;
     }
 
@@ -1031,8 +1032,8 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
       // new impl decl was written that changes the result.
       if (mode != EvalImplLookupMode::RecheckPoisonedLookup &&
           result.has_final_value() &&
-          !IsImplEffectivelyFinal(context,
-                                  context.impls().Get(candidate.impl_id))) {
+          context.impls().Get(candidate.impl_id).final_kind ==
+              SemIR::FinalImplKind::Specializable) {
         context.poisoned_concrete_impl_lookup_queries().push_back(
             {.loc_id = loc_id,
              .query = eval_query,

@@ -235,13 +235,16 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
 
   auto impl_id = SemIR::ImplId::None;
   {
-    SemIR::Impl impl = {name_context.MakeEntityWithParamsBase(
-                            name, impl_decl_id,
-                            /*is_extern=*/false, SemIR::LibraryNameId::None),
-                        {.self_id = self_type_inst_id,
-                         .constraint_id = constraint_type_inst_id,
-                         .interface = specific_interface,
-                         .is_final = is_final}};
+    SemIR::Impl impl = {
+        name_context.MakeEntityWithParamsBase(name, impl_decl_id,
+                                              /*is_extern=*/false,
+                                              SemIR::LibraryNameId::None),
+        {.self_id = self_type_inst_id,
+         .constraint_id = constraint_type_inst_id,
+         .interface = specific_interface,
+         // We determine whether the impl is effectively final in `AddImpl`.
+         .final_kind = is_final ? SemIR::FinalImplKind::DeclaredFinal
+                                : SemIR::FinalImplKind::Specializable}};
     // There's a bunch of places that may represent a diagnostic that occurred
     // in checking the impl up to this point, which we consolidate into this
     // bool. Due to lack of an instruction to set to `ErrorInst`, an

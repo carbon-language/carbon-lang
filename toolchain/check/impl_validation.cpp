@@ -16,6 +16,7 @@
 #include "toolchain/check/type_structure.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/type_iterator.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -81,7 +82,7 @@ static auto GetImplInfo(Context& context, SemIR::ImplId impl_id) -> ImplInfo {
   const auto& impl = context.impls().Get(impl_id);
   auto ir_id = GetIRId(context, impl.first_owning_decl_id);
   return {.impl_id = impl_id,
-          .is_final = impl.is_final,
+          .is_final = impl.final_kind == SemIR::FinalImplKind::DeclaredFinal,
           .witness_id = impl.witness_id,
           .self_id = impl.self_id,
           .latest_decl_id = impl.latest_decl_id(),
@@ -523,7 +524,8 @@ static auto ImportFinalImplsWithImplInFile(Context& context) -> void {
   for (auto [ir_id, interface_id] : interfaces_to_import) {
     const SemIR::File& sem_ir = *context.import_irs().Get(ir_id).sem_ir;
     for (auto [impl_id, impl] : sem_ir.impls().enumerate()) {
-      if (impl.is_final && impl.interface.interface_id == interface_id) {
+      if (impl.final_kind == SemIR::FinalImplKind::DeclaredFinal &&
+          impl.interface.interface_id == interface_id) {
         impls_to_import.push_back({.ir_id = ir_id, .import_impl_id = impl_id});
       }
     }

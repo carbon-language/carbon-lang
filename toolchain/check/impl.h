@@ -65,10 +65,6 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl_id) -> void;
 // sets the witness id in the `Impl` to an error.
 auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void;
 
-// Returns whether the impl is either `final` explicitly, or implicitly due to
-// being concrete.
-auto IsImplEffectivelyFinal(Context& context, const SemIR::Impl& impl) -> bool;
-
 // Checks that `impl_function_id` is a valid implementation of the function
 // described in the interface as `interface_function_id`. Returns the value to
 // put into the corresponding slot in the witness table, which can be

@@ -15,6 +15,21 @@
 
 namespace Carbon::SemIR {
 
+// Whether an impl is final or specializable.
+enum class FinalImplKind {
+  // This impl appears to be specializable. That is, there could be a more
+  // specialized impl in another library that is not visible at the point where
+  // this impl is declared, for which at least one query matches both impls.
+  Specializable,
+  // This impl is declared to be `final`.
+  DeclaredFinal,
+  // This impl is not declared to be `final`, but is nonetheless not
+  // specializable, because none of its generic parameters can have a value that
+  // would introduce a new associated library. As a special case, this includes
+  // all non-generic impls.
+  EffectivelyFinal,
+};
+
 struct ImplFields {
   // This following members always have values and do not change.
 
@@ -41,8 +56,8 @@ struct ImplFields {
   // TODO: Handle control flow in the impl body, such as if-expressions.
   InstBlockId body_block_id = InstBlockId::None;
 
-  // Whether the impl declaration is marked `final`.
-  bool is_final;
+  // Whether the impl declaration is declared `final` or effectively final.
+  FinalImplKind final_kind;
 
   // The following members are set at the `}` of the impl definition.
   bool defined = false;
