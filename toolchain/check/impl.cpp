@@ -682,9 +682,36 @@ auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void {
 }
 
 auto IsImplEffectivelyFinal(Context& context, const SemIR::Impl& impl) -> bool {
-  return impl.is_final ||
-         (context.constant_values().Get(impl.self_id).is_concrete() &&
-          context.constant_values().Get(impl.constraint_id).is_concrete());
+  // If the impl is declared final, it's effectively final.
+  if (impl.is_final) {
+    return true;
+  }
+
+  // If the impl's signature is concrete, it's effectively final even if it
+  // wasn't declared `final`.
+  // TODO: Can we instead check whether the impl has a `generic_id` of `None`?
+  if (context.constant_values().Get(impl.self_id).is_concrete() &&
+      context.constant_values().Get(impl.constraint_id).is_concrete()) {
+    return true;
+  }
+
+  // If the types of all the generic bindings for the impl do not allow values
+  // with associated libraries, then no further specialization is possible in
+  // any other library, so the impl is effectively final.
+  for (auto binding_id : context.inst_blocks().Get(
+           context.generics().Get(impl.generic_id).bindings_id)) {
+    auto type_id = context.insts().Get(binding_id).type_id();
+    // TODO: A binding whose type has a facet type subobject could also have
+    // associated libraries. Eg, given `interface I(X:! (type, type))`, an
+    // `impl forall [X:! (type, type)] () as I(X);` can be specialized by
+    // `impl () as I((MyA, MyB))`.
+    if (context.types().IsFacetTypeOrError(type_id)) {
+      return false;
+    }
+  }
+
+  // All bindings are non-type bindings, and so cannot be specialized.
+  return true;
 }
 
 auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
