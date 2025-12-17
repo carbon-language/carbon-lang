@@ -154,3 +154,37 @@ impl forall [T:! Incomplete] () as A(T) where .Result = {} {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 fn Type(T:! Incomplete) -> (() as A(T)).Result { return {}; }
+
+// --- fail_specialized_after_concrete_use.carbon
+
+library "[[@TEST_NAME]]";
+
+interface A[T:! type](V:! T) { let Result:! type; }
+
+impl forall [B:! bool] () as A(B) where .Result = {} {}
+
+// CHECK:STDERR: fail_specialized_after_concrete_use.carbon:[[@LINE+3]]:15: error: found `impl` that would change the result of an earlier use of `() as A(true)` [PoisonedImplLookupConcreteResult]
+// CHECK:STDERR: fn Bool() -> (() as A(true)).Result { return {}; }
+// CHECK:STDERR:               ^~~~~~~~~~~~~
+fn Bool() -> (() as A(true)).Result { return {}; }
+
+// CHECK:STDERR: fail_specialized_after_concrete_use.carbon:[[@LINE+7]]:1: note: the use would select the `impl` here but it was not found yet [PoisonedImplLookupConcreteResultNoteBadImpl]
+// CHECK:STDERR: impl () as A(true) where .Result = () {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_specialized_after_concrete_use.carbon:[[@LINE-10]]:1: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
+// CHECK:STDERR: impl forall [B:! bool] () as A(B) where .Result = {} {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as A(true) where .Result = () {}
+
+// --- fail_specialized_after_generic_use.carbon
+
+library "[[@TEST_NAME]]";
+
+interface A[T:! type](V:! T) { let Result:! type; }
+
+impl forall [B:! bool] () as A(B) where .Result = {} {}
+
+fn Bool(B:! bool) -> (() as A(B)).Result { return {}; }
+
+impl () as A(true) where .Result = () {}
