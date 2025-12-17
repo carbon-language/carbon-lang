@@ -246,11 +246,11 @@ class C;
 
 // The root type must be defined in the same library, not just declared.
 //
-// CHECK:STDERR: fail_final_root_self_type_not_defined.carbon:[[@LINE+4]]:1: error: `final impl` found in file that does not contain the root self type nor the interface definition [FinalImplInvalidFile]
-// CHECK:STDERR: final impl C as Z(()) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_final_root_self_type_not_defined.carbon:[[@LINE+4]]:1: error: `final impl` found in file that does not contain the root self type nor the interface definition, and might be specialized in other files [FinalImplInvalidFile]
+// CHECK:STDERR: final impl forall [T:! type] C as Z(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-final impl C as Z(()) {}
+final impl forall [T:! type] C as Z(T) {}
 
 // --- fail_final_different_file_from_self_and_interface.carbon
 library "[[@TEST_NAME]]";
@@ -263,11 +263,11 @@ class C {}
 // Can't make a final impl that is not in the same file as the self type nor
 // the interface.
 //
-// CHECK:STDERR: fail_final_different_file_from_self_and_interface.carbon:[[@LINE+4]]:1: error: `final impl` found in file that does not contain the root self type nor the interface definition [FinalImplInvalidFile]
-// CHECK:STDERR: final impl D(C) as Z(()) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_final_different_file_from_self_and_interface.carbon:[[@LINE+4]]:1: error: `final impl` found in file that does not contain the root self type nor the interface definition, and might be specialized in other files [FinalImplInvalidFile]
+// CHECK:STDERR: final impl forall [T:! type] D(C) as Z(T) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-final impl D(C) as Z(()) {}
+final impl forall [T:! type] D(C) as Z(T) {}
 
 // --- fail_final_different_file_from_self_and_interface_with_generic_self.carbon
 library "[[@TEST_NAME]]";
@@ -279,7 +279,7 @@ class C {}
 // Can't make a final impl that is not in the same file as the self type nor
 // the interface.
 //
-// CHECK:STDERR: fail_final_different_file_from_self_and_interface_with_generic_self.carbon:[[@LINE+4]]:1: error: `final impl` found in file that does not contain the root self type nor the interface definition [FinalImplInvalidFile]
+// CHECK:STDERR: fail_final_different_file_from_self_and_interface_with_generic_self.carbon:[[@LINE+4]]:1: error: `final impl` found in file that does not contain the root self type nor the interface definition, and might be specialized in other files [FinalImplInvalidFile]
 // CHECK:STDERR: final impl forall [T:! type] T as Z(C) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

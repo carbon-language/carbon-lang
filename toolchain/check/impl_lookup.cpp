@@ -237,8 +237,9 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
                                 bool query_is_concrete,
                                 SemIR::ConstantId query_self_const_id,
                                 const SemIR::SpecificInterface& interface,
-                                const SemIR::Impl& impl)
-    -> EvalImplLookupResult {
+                                SemIR::ImplId impl_id) -> EvalImplLookupResult {
+  const SemIR::Impl& impl = context.impls().Get(impl_id);
+
   // The impl may have generic arguments, in which case we need to deduce them
   // to find what they are given the specific type and interface query. We use
   // that specific to map values in the impl to the deduced values.
@@ -318,8 +319,12 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
     ResolveSpecificDefinition(context, loc_id, specific_id);
   }
 
-  if (query_is_concrete ||
-      impl.final_kind != SemIR::FinalImplKind::Specializable) {
+  if (query_is_concrete || impl.is_final) {
+    // TODO: These final results should be cached somehow. Positive (non-None)
+    // results could be cached globally, as they can not change. But
+    // negative results can change after a final impl is written, so
+    // they can only be cached in a limited way, or the cache needs to
+    // be invalidated by writing a final impl that would match.
     return EvalImplLookupResult::MakeFinal(
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
             context.sem_ir(), specific_id, impl.witness_id)));
@@ -837,7 +842,7 @@ static auto CollectCandidateImplsForQuery(
   for (auto [id, impl] : context.impls().enumerate()) {
     CARBON_CHECK(impl.witness_id.has_value());
 
-    if (final_only && impl.final_kind == SemIR::FinalImplKind::Specializable) {
+    if (final_only && !IsImplEffectivelyFinal(context, impl)) {
       continue;
     }
 
@@ -1019,21 +1024,20 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
       context.impl_lookup_stack().back().impl_loc = candidate.loc_inst_id;
     }
 
-    auto& impl = context.impls().Get(candidate.impl_id);
-    auto result = GetWitnessIdForImpl(context, loc_id, kind == Concrete,
-                                      query_self_const_id,
-                                      query_specific_interface, impl);
+    auto result = GetWitnessIdForImpl(
+        context, loc_id, kind == Concrete, query_self_const_id,
+        query_specific_interface, candidate.impl_id);
     if (result.has_value()) {
-      // Record the query if it found a final impl witness using a generic impl.
-      // It's illegal to write a more specialized impl afterward that would
-      // match the same query.
+      // Record the query which found a final impl witness. It's illegal to
+      // write a final impl afterward that would match the same query.
       //
-      // If the impl was declared final, then we don't need to poison here. A
+      // If the impl was effectively final, then we don't need to poison here. A
       // change of query result will already be diagnosed at the point where the
       // new impl decl was written that changes the result.
       if (mode != EvalImplLookupMode::RecheckPoisonedLookup &&
-          result.has_final_value() && impl.generic_id.has_value() &&
-          impl.final_kind != SemIR::FinalImplKind::DeclaredFinal) {
+          result.has_final_value() &&
+          !IsImplEffectivelyFinal(context,
+                                  context.impls().Get(candidate.impl_id))) {
         context.poisoned_concrete_impl_lookup_queries().push_back(
             {.loc_id = loc_id,
              .query = eval_query,
@@ -1104,7 +1108,7 @@ auto LookupMatchesImpl(Context& context, SemIR::LocId loc_id,
   }
   auto result = GetWitnessIdForImpl(
       context, loc_id, /*query_is_concrete=*/false, query_self_const_id,
-      query_specific_interface, context.impls().Get(target_impl));
+      query_specific_interface, target_impl);
   return result.has_value();
 }
 

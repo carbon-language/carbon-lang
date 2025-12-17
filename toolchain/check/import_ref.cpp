@@ -2478,7 +2478,7 @@ static auto MakeImplDeclaration(ImportContext& context,
         .witness_id = witness_id,
         .scope_id = import_impl.is_complete() ? AddPlaceholderNameScope(context)
                                               : SemIR::NameScopeId::None,
-        .final_kind = import_impl.final_kind}});
+        .is_final = import_impl.is_final}});
 
   // Write the impl ID into the ImplDecl.
   auto impl_const_id =

@@ -24,7 +24,7 @@ impl forall [N:! IntLiteral()] UInt(N) as Copy {
 
 // Conversions.
 
-impl forall [To:! IntLiteral()] IntLiteral() as ImplicitAs(UInt(To)) {
+final impl forall [To:! IntLiteral()] IntLiteral() as ImplicitAs(UInt(To)) {
   fn Convert[self: Self]() -> UInt(To) = "int.convert_checked";
 }
 
@@ -33,7 +33,7 @@ final impl forall [From:! IntLiteral()] UInt(From) as ImplicitAs(IntLiteral()) {
 }
 
 // TODO: Remove these once ImplicitAs extends As.
-impl forall [To:! IntLiteral()] IntLiteral() as As(UInt(To)) {
+final impl forall [To:! IntLiteral()] IntLiteral() as As(UInt(To)) {
   fn Convert[self: Self]() -> UInt(To) = "int.convert_checked";
 }
 

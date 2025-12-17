@@ -16,7 +16,6 @@
 #include "toolchain/check/type_structure.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
-#include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/type_iterator.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -78,11 +77,94 @@ static auto IsSameLibrary(Context& context, SemIR::InstId owning_inst_id)
   return false;
 }
 
+// Determines whether the given generic parameter type can have a value that
+// introduces additional associated libraries during impl lookup.
+static auto TypeCanIntroduceAssociatedLibraries(Context& context,
+                                                SemIR::TypeId initial_type_id)
+    -> bool {
+  llvm::SmallVector<SemIR::TypeId> worklist = {initial_type_id};
+  auto push_type_inst_id = [&](SemIR::TypeInstId type_inst_id) {
+    worklist.push_back(context.types().GetTypeIdForTypeInstId(type_inst_id));
+  };
+
+  while (!worklist.empty()) {
+    auto type_id = worklist.pop_back_val();
+
+    type_id = context.types().GetObjectRepr(type_id);
+    if (!type_id.has_value()) {
+      // TODO: How should we handle the case where the parameter type is
+      // incomplete? Can we defer determining whether an impl is effectively
+      // final until we see its definition? It's not clear that a parameter of
+      // incomplete type can be used in an impl declaration, so this may not
+      // matter. For now we treat such impls as not effectively final.
+      return false;
+    }
+    CARBON_KIND_SWITCH(context.types().GetAsInst(type_id)) {
+      case CARBON_KIND(SemIR::ArrayType inst): {
+        push_type_inst_id(inst.element_type_inst_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::StructType inst): {
+        for (auto field : context.struct_type_fields().Get(inst.fields_id)) {
+          push_type_inst_id(field.type_inst_id);
+        }
+        break;
+      }
+      case CARBON_KIND(SemIR::TupleType inst): {
+        for (auto inst_id : context.inst_blocks().Get(inst.type_elements_id)) {
+          push_type_inst_id(context.types().GetAsTypeInstId(inst_id));
+        }
+        break;
+      }
+      case SemIR::BoolType::Kind:
+      case SemIR::CharLiteralType::Kind:
+      case SemIR::FloatLiteralType::Kind:
+      case SemIR::FloatType::Kind:
+      case SemIR::IntLiteralType::Kind:
+      case SemIR::IntType::Kind: {
+        // Values of these types cannot introduce any associated library
+        // dependence.
+        return false;
+      }
+      default: {
+        // Conservatively assume any other type can introduce associated
+        // libraries.
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// Returns whether the given `impl` is specializable in libraries other than the
+// one in which it's defined. If not, we allow it to be declared as `final`.
+static auto IsImplExternallySpecializable(Context& context,
+                                          const SemIR::Impl& impl) -> bool {
+  // If the impl is not generic, it can't be specialized.
+  if (!impl.generic_id.has_value()) {
+    return false;
+  }
+
+  // If the types of all the generic bindings for the impl do not allow values
+  // with associated libraries, then no further specialization is possible in
+  // any other library, so the impl is effectively final.
+  for (auto binding_id : context.inst_blocks().Get(
+           context.generics().Get(impl.generic_id).bindings_id)) {
+    if (TypeCanIntroduceAssociatedLibraries(
+            context, context.insts().Get(binding_id).type_id())) {
+      return true;
+    }
+  }
+
+  // All bindings are non-type bindings, and so cannot be specialized.
+  return false;
+}
+
 static auto GetImplInfo(Context& context, SemIR::ImplId impl_id) -> ImplInfo {
   const auto& impl = context.impls().Get(impl_id);
   auto ir_id = GetIRId(context, impl.first_owning_decl_id);
   return {.impl_id = impl_id,
-          .is_final = impl.final_kind == SemIR::FinalImplKind::DeclaredFinal,
+          .is_final = impl.is_final,
           .witness_id = impl.witness_id,
           .self_id = impl.self_id,
           .latest_decl_id = impl.latest_decl_id(),
@@ -133,10 +215,13 @@ static auto DiagnoseFinalImplNotInSameFileAsRootSelfTypeOrInterface(
 
   bool interface_same_file = !interface_ir_id.has_value();
 
-  if (!self_type_same_file && !interface_same_file) {
+  if (!self_type_same_file && !interface_same_file &&
+      IsImplExternallySpecializable(context,
+                                    context.impls().Get(impl.impl_id))) {
     CARBON_DIAGNOSTIC(FinalImplInvalidFile, Error,
                       "`final impl` found in file that does not contain "
-                      "the root self type nor the interface definition");
+                      "the root self type nor the interface definition, "
+                      "and might be specialized in other files");
     context.emitter().Emit(impl.latest_decl_id, FinalImplInvalidFile);
     return true;
   }
@@ -524,8 +609,7 @@ static auto ImportFinalImplsWithImplInFile(Context& context) -> void {
   for (auto [ir_id, interface_id] : interfaces_to_import) {
     const SemIR::File& sem_ir = *context.import_irs().Get(ir_id).sem_ir;
     for (auto [impl_id, impl] : sem_ir.impls().enumerate()) {
-      if (impl.final_kind == SemIR::FinalImplKind::DeclaredFinal &&
-          impl.interface.interface_id == interface_id) {
+      if (impl.is_final && impl.interface.interface_id == interface_id) {
         impls_to_import.push_back({.ir_id = ir_id, .import_impl_id = impl_id});
       }
     }

@@ -23,6 +23,7 @@
 #include "toolchain/check/type_completion.h"
 #include "toolchain/check/type_structure.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
+#include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
@@ -142,89 +143,6 @@ static auto IsValidImplRedecl(Context& context, const SemIR::Impl& new_impl,
 
   // TODO: Only allow redeclaration in a match_first/impl_priority block.
 
-  return true;
-}
-
-// Determines whether the given generic parameter type can have a value that
-// introduces additional associated libraries during impl lookup.
-static auto TypeCanIntroduceAssociatedLibraries(Context& context,
-                                                SemIR::TypeId initial_type_id) -> bool {
-  llvm::SmallVector<SemIR::TypeId> worklist = {initial_type_id};
-  auto push_type_inst_id = [&](SemIR::TypeInstId type_inst_id) {
-    worklist.push_back(context.types().GetTypeIdForTypeInstId(type_inst_id));
-  };
-
-  while (!worklist.empty()) {
-    auto type_id = worklist.pop_back_val();
-
-    type_id = context.types().GetObjectRepr(type_id);
-    if (!type_id.has_value()) {
-      // TODO: How should we handle the case where the parameter type is
-      // incomplete? Can we defer determining whether an impl is effectively
-      // final until we see its definition? It's not clear that a parameter of
-      // incomplete type can be used in an impl declaration, so this may not
-      // matter. For now we treat such impls as not effectively final.
-      return false;
-    }
-    CARBON_KIND_SWITCH(context.types().GetAsInst(type_id)) {
-      case CARBON_KIND(SemIR::ArrayType inst): {
-        push_type_inst_id(inst.element_type_inst_id);
-        break;
-      }
-      case CARBON_KIND(SemIR::StructType inst): {
-        for (auto field : context.struct_type_fields().Get(inst.fields_id)) {
-          push_type_inst_id(field.type_inst_id);
-        }
-        break;
-      }
-      case CARBON_KIND(SemIR::TupleType inst): {
-        for (auto inst_id : context.inst_blocks().Get(inst.type_elements_id)) {
-          push_type_inst_id(context.types().GetAsTypeInstId(inst_id));
-        }
-        break;
-      }
-      case SemIR::BoolType::Kind:
-      case SemIR::CharLiteralType::Kind:
-      case SemIR::FloatLiteralType::Kind:
-      case SemIR::FloatType::Kind:
-      case SemIR::IntLiteralType::Kind:
-      case SemIR::IntType::Kind: {
-        // Values of these types cannot introduce any associated library
-        // dependence.
-        return false;
-      }
-      default: {
-        // Conservatively assume any other type can introduce associated
-        // libraries.
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-// Returns whether the given `impl` is effectively final, meaning that it can't
-// be specialized in a library that is not currently visible, despite not
-// necessarily being declared `final`.
-static auto IsImplEffectivelyFinal(Context& context, const SemIR::Impl& impl)
-    -> bool {
-  // If the impl is not generic, it's effectively final.
-  if (!impl.generic_id.has_value()) {
-    return true;
-  }
-
-  // If the types of all the generic bindings for the impl do not allow values
-  // with associated libraries, then no further specialization is possible in
-  // any other library, so the impl is effectively final.
-  for (auto binding_id : context.inst_blocks().Get(
-           context.generics().Get(impl.generic_id).bindings_id)) {
-    if (TypeCanIntroduceAssociatedLibraries(
-            context, context.insts().Get(binding_id).type_id())) {
-      return false;
-    }
-  }
-
-  // All bindings are non-type bindings, and so cannot be specialized.
   return true;
 }
 
@@ -387,12 +305,6 @@ auto AddImpl(Context& context, const SemIR::Impl& impl,
   AssignImplIdInWitness(context, impl_id, impl.witness_id);
 
   auto& stored_impl = context.impls().Get(impl_id);
-
-  // Determine whether this impl is effectively final.
-  if (stored_impl.final_kind == SemIR::FinalImplKind::Specializable &&
-      IsImplEffectivelyFinal(context, stored_impl)) {
-    stored_impl.final_kind = SemIR::FinalImplKind::EffectivelyFinal;
-  }
 
   // Look to see if there are any generic bindings on the `impl` declaration
   // that are not deducible. If so, and the `impl` does not actually use all
@@ -768,6 +680,12 @@ auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void {
     }
   }
   impl.witness_id = SemIR::ErrorInst::InstId;
+}
+
+auto IsImplEffectivelyFinal(Context& context, const SemIR::Impl& impl) -> bool {
+  return impl.is_final ||
+         (context.constant_values().Get(impl.self_id).is_concrete() &&
+          context.constant_values().Get(impl.constraint_id).is_concrete());
 }
 
 auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
