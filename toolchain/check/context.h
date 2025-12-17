@@ -226,7 +226,7 @@ class Context {
     SemIR::ConstantId query_self_const_id;
     SemIR::ConstantId query_facet_type_const_id;
     // The location of the impl being looked at for the stack entry.
-    SemIR::LocId impl_loc = SemIR::LocId::None;
+    SemIR::InstId impl_loc = SemIR::InstId::None;
   };
   auto impl_lookup_stack() -> llvm::SmallVector<ImplLookupStackEntry>& {
     return impl_lookup_stack_;

@@ -1023,31 +1023,31 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
 
   struct LookupResult {
     EvalImplLookupResult result;
-    std::optional<TypeStructure> impl_type_structure;
+    const TypeStructure* impl_type_structure = nullptr;
     SemIR::LocId impl_loc = SemIR::LocId::None;
   };
 
   LookupResult lookup_result = {.result = facet_lookup_result};
 
-  for (auto [impl, type_structure] : candidates.impls) {
-    SemIR::LocId candidate_loc_id(impl->definition_id);
+  for (const auto& candidate : candidates.impls) {
+    const auto& impl = *candidate.impl;
 
     // In deferred lookup for a symbolic impl witness, while building a
     // specific, there may be no stack yet as this may be the first lookup. If
     // further lookups are started as a result in deduce, they will build the
     // stack.
     if (!context.impl_lookup_stack().empty()) {
-      context.impl_lookup_stack().back().impl_loc = candidate_loc_id;
+      context.impl_lookup_stack().back().impl_loc = impl.definition_id;
     }
 
     auto result = GetWitnessIdForImpl(context, loc_id, query_is_concrete,
                                       query_self_const_id,
-                                      query_specific_interface, *impl);
+                                      query_specific_interface, impl);
     if (result.has_value()) {
-      PoisonImplLookupQuery(context, loc_id, mode, eval_query, result, *impl);
+      PoisonImplLookupQuery(context, loc_id, mode, eval_query, result, impl);
       lookup_result = {.result = result,
-                       .impl_type_structure = std::move(type_structure),
-                       .impl_loc = candidate_loc_id};
+                       .impl_type_structure = &candidate.type_structure,
+                       .impl_loc = SemIR::LocId(impl.definition_id)};
       break;
     }
   }
@@ -1057,9 +1057,7 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
     // `impl` we may have found in Carbon.
     auto cpp_witness_id = LookupCppImpl(
         context, loc_id, GetFacetAsType(context, loc_id, query_self_const_id),
-        query_specific_interface,
-        lookup_result.impl_type_structure ? &*lookup_result.impl_type_structure
-                                          : nullptr,
+        query_specific_interface, lookup_result.impl_type_structure,
         lookup_result.impl_loc);
     if (cpp_witness_id.has_value()) {
       lookup_result = {.result =
