@@ -11,6 +11,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/impl_lookup.h"
+#include "toolchain/check/custom_witness.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
@@ -1055,15 +1056,17 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   if (query_is_concrete && candidates.consider_cpp_candidates) {
     auto core_interface =
         GetCoreInterface(context, query_specific_interface.interface_id);
-    // Also check for a C++ candidate that is a better match than whatever
-    // `impl` we may have found in Carbon.
-    auto cpp_witness_id = LookupCppImpl(
-        context, loc_id, GetFacetAsType(context, loc_id, query_self_const_id),
-        core_interface, query_specific_interface,
-        lookup_result.impl_type_structure, lookup_result.impl_loc_id);
-    if (cpp_witness_id.has_value()) {
-      lookup_result = {.result =
-                           EvalImplLookupResult::MakeFinal(cpp_witness_id)};
+    if (core_interface != CoreInterface::Unknown) {
+      // Also check for a C++ candidate that is a better match than whatever
+      // `impl` we may have found in Carbon.
+      auto cpp_witness_id = LookupCppImpl(
+          context, loc_id, GetFacetAsType(context, loc_id, query_self_const_id),
+          core_interface, query_specific_interface,
+          lookup_result.impl_type_structure, lookup_result.impl_loc_id);
+      if (cpp_witness_id.has_value()) {
+        lookup_result = {.result =
+                             EvalImplLookupResult::MakeFinal(cpp_witness_id)};
+      }
     }
   }
 

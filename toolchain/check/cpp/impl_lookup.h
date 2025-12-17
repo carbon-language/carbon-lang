@@ -17,11 +17,10 @@ namespace Carbon::Check {
 // Performs lookup for an impl witness for a query involving C++ types. Returns
 // a witness value, or `None` if a synthesized C++ witness should not be used.
 //
-// If `core_interface` is an interface for which we can synthesize a witness
-// based on C++ operator overloads or special member functions, performs the
-// suitable C++ lookup to determine if this interface should be considered
-// implemented for the specified type, and if so, synthesizes and returns a
-// suitable witness.
+// Given a known `core_interface`, we can synthesize a witness based on C++
+// operator overloads or special member functions. Performs the suitable C++
+// lookup to determine if this interface should be considered implemented for
+// the specified type, and if so, synthesizes and returns a suitable witness.
 //
 // `best_impl_type_structure` provides the type structure of the best-matching
 // impl declaration. If this is better than every viable C++ candidate, a "none"
