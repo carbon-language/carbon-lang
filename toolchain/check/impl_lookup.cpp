@@ -1024,7 +1024,7 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   struct LookupResult {
     EvalImplLookupResult result;
     const TypeStructure* impl_type_structure = nullptr;
-    SemIR::LocId impl_loc = SemIR::LocId::None;
+    SemIR::LocId impl_loc_id = SemIR::LocId::None;
   };
 
   LookupResult lookup_result = {.result = facet_lookup_result};
@@ -1047,7 +1047,7 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
       PoisonImplLookupQuery(context, loc_id, mode, eval_query, result, impl);
       lookup_result = {.result = result,
                        .impl_type_structure = &candidate.type_structure,
-                       .impl_loc = SemIR::LocId(impl.definition_id)};
+                       .impl_loc_id = SemIR::LocId(impl.definition_id)};
       break;
     }
   }
@@ -1058,7 +1058,7 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
     auto cpp_witness_id = LookupCppImpl(
         context, loc_id, GetFacetAsType(context, loc_id, query_self_const_id),
         query_specific_interface, lookup_result.impl_type_structure,
-        lookup_result.impl_loc);
+        lookup_result.impl_loc_id);
     if (cpp_witness_id.has_value()) {
       lookup_result = {.result =
                            EvalImplLookupResult::MakeFinal(cpp_witness_id)};
