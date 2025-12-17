@@ -226,16 +226,16 @@ class Context {
     SemIR::ConstantId query_self_const_id;
     SemIR::ConstantId query_facet_type_const_id;
     // The location of the impl being looked at for the stack entry.
-    SemIR::InstId impl_loc = SemIR::InstId::None;
+    SemIR::LocId impl_loc = SemIR::LocId::None;
   };
   auto impl_lookup_stack() -> llvm::SmallVector<ImplLookupStackEntry>& {
     return impl_lookup_stack_;
   }
 
   // A map from a (self, interface) pair to a final witness.
-  using ImplLookupCacheMap =
-      Map<std::pair<SemIR::ConstantId, SemIR::SpecificInterfaceId>,
-          SemIR::InstId>;
+  using ImplLookupCacheKey =
+      std::pair<SemIR::ConstantId, SemIR::SpecificInterfaceId>;
+  using ImplLookupCacheMap = Map<ImplLookupCacheKey, SemIR::InstId>;
   auto impl_lookup_cache() -> ImplLookupCacheMap& { return impl_lookup_cache_; }
 
   // An impl lookup query that resulted in a concrete witness from finding an
