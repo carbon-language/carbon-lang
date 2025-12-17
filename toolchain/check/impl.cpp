@@ -148,14 +148,14 @@ static auto IsValidImplRedecl(Context& context, const SemIR::Impl& new_impl,
 // Determines whether the given generic parameter type can have a value that
 // introduces additional associated libraries during impl lookup.
 static auto TypeCanIntroduceAssociatedLibraries(Context& context,
-                                                SemIR::TypeId type_id) -> bool {
-  llvm::SmallVector<SemIR::TypeId> worklist = {type_id};
+                                                SemIR::TypeId initial_type_id) -> bool {
+  llvm::SmallVector<SemIR::TypeId> worklist = {initial_type_id};
   auto push_type_inst_id = [&](SemIR::TypeInstId type_inst_id) {
     worklist.push_back(context.types().GetTypeIdForTypeInstId(type_inst_id));
   };
 
   while (!worklist.empty()) {
-    type_id = worklist.pop_back_val();
+    auto type_id = worklist.pop_back_val();
 
     type_id = context.types().GetObjectRepr(type_id);
     if (!type_id.has_value()) {
