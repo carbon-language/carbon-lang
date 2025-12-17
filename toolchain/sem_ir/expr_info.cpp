@@ -174,15 +174,39 @@ auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id)
         return init.dest_id;
       }
       case CARBON_KIND(Call call): {
-        if (!ReturnTypeInfo::ForCallee(sem_ir, call.callee_id)
-                 .has_return_slot()) {
+        auto callee_function = GetCalleeAsFunction(sem_ir, call.callee_id);
+        const auto& function =
+            sem_ir.functions().Get(callee_function.function_id);
+        if (!function.return_form_inst_id.has_value()) {
           return InstId::None;
         }
-        if (!call.args_id.has_value()) {
-          // Argument initialization failed, so we have no return slot.
-          return InstId::None;
+        auto return_form_constant_id = GetConstantValueInSpecific(
+            sem_ir, callee_function.resolved_specific_id,
+            function.return_form_inst_id);
+        auto return_form = sem_ir.insts().Get(
+            sem_ir.constant_values().GetInstId(return_form_constant_id));
+        CARBON_KIND_SWITCH(return_form) {
+          case CARBON_KIND(InitForm init_form): {
+            auto type_id = sem_ir.types().GetTypeIdForTypeInstId(
+                init_form.type_component_inst_id);
+            if (!InitRepr::ForType(sem_ir, type_id).MightBeInPlace()) {
+              return InstId::None;
+            }
+
+            if (!call.args_id.has_value()) {
+              // Argument initialization failed, so we have no return slot.
+              return InstId::None;
+            }
+
+            return sem_ir.inst_blocks().Get(
+                call.args_id)[init_form.index.index];
+          }
+          case CARBON_KIND(RefForm _): {
+            return InstId::None;
+          }
+          default:
+            CARBON_FATAL("Unexpected inst kind: {0}", return_form);
         }
-        return sem_ir.inst_blocks().Get(call.args_id).back();
       }
       case CARBON_KIND(ErrorInst _): {
         return InstId::None;
