@@ -239,7 +239,7 @@ auto GetCallee(const File& sem_ir, InstId callee_id,
 
 // Like `GetCallee`, but restricts to the `Function` callee kind.
 auto GetCalleeAsFunction(const File& sem_ir, InstId callee_id,
-                         SpecificId callee_specific_id = SpecificId::None)
+                         SpecificId caller_specific_id = SpecificId::None)
     -> CalleeFunction;
 
 struct DecomposedVirtualFunction {
