@@ -346,13 +346,13 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
           static_cast<size_t>(param_pattern.index.index) == results_.size(),
           "Parameters out of order; expecting {0} but got {1}", results_.size(),
           param_pattern.index.index);
-      CARBON_CHECK(entry.scrutinee_id.has_value());
-      CARBON_CHECK(
-          context.insts().Get(entry.scrutinee_id).type_id() ==
-          ExtractScrutineeType(
-              context.sem_ir(),
-              SemIR::GetTypeOfInstInSpecific(
-                  context.sem_ir(), callee_specific_id_, entry.pattern_id)));
+      CARBON_CHECK(!entry.scrutinee_id.has_value() ||
+                   context.insts().Get(entry.scrutinee_id).type_id() ==
+                       ExtractScrutineeType(
+                           context.sem_ir(),
+                           SemIR::GetTypeOfInstInSpecific(context.sem_ir(),
+                                                          callee_specific_id_,
+                                                          entry.pattern_id)));
       results_.push_back(entry.scrutinee_id);
       // Do not traverse farther, because the caller side of the pattern
       // ends here.
@@ -629,17 +629,22 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
                         SemIR::InstBlockId return_patterns_id,
                         SemIR::InstId self_arg_id,
                         llvm::ArrayRef<SemIR::InstId> arg_refs,
-                        SemIR::InstId return_slot_arg_id,
+                        llvm::ArrayRef<SemIR::InstId> return_arg_ids,
                         bool is_operator_syntax) -> SemIR::InstBlockId {
   MatchContext match(MatchKind::Caller, specific_id);
 
   auto return_patterns = context.inst_blocks().GetOrEmpty(return_patterns_id);
   // Track the return storage, if present.
-  if (return_slot_arg_id.has_value()) {
-    CARBON_CHECK(return_patterns.size() == 1,
-                 "TODO: implement support for multiple return patterns");
-    match.AddWork(
-        {.pattern_id = return_patterns[0], .scrutinee_id = return_slot_arg_id});
+  for (auto [return_pattern_id, return_arg_id] :
+       llvm::zip_equal(return_patterns, return_arg_ids)) {
+    if (return_arg_id.has_value()) {
+      match.AddWork(
+          {.pattern_id = return_pattern_id, .scrutinee_id = return_arg_id});
+    } else {
+      CARBON_CHECK(return_arg_ids.size() == 1,
+                   "TODO: do the match even if return_arg_id is None, so that "
+                   "subsequent args are at the right index in the arg block");
+    }
   }
 
   // Check type conversions per-element.

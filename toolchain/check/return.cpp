@@ -129,10 +129,13 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
   const auto& function = GetCurrentFunctionForReturn(context);
   auto returned_var_id = GetCurrentReturnedVar(context);
   auto return_slot_id = SemIR::InstId::None;
-  auto return_info =
-      SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(), function);
 
-  if (!return_info.type_id.has_value()) {
+  auto return_type_id = SemIR::TypeId::None;
+  if (function.return_type_inst_id.has_value()) {
+    return_type_id =
+        context.types().GetTypeIdForTypeInstId(function.return_type_inst_id);
+  }
+  if (!return_type_id.has_value()) {
     CARBON_DIAGNOSTIC(
         ReturnStatementDisallowExpr, Error,
         "no return expression should be provided in this context");
@@ -148,8 +151,9 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
     NoteReturnedVar(diag, returned_var_id);
     diag.Emit();
     expr_id = SemIR::ErrorInst::InstId;
-  } else if (!return_info.is_valid() ||
-             return_info.type_id == SemIR::ErrorInst::TypeId) {
+  } else if (!SemIR::InitRepr::ForType(context.sem_ir(), return_type_id)
+                  .is_valid() ||
+             return_type_id == SemIR::ErrorInst::TypeId) {
     // We already diagnosed that the return type is invalid. Don't try to
     // convert to it.
     expr_id = SemIR::ErrorInst::InstId;

@@ -215,7 +215,7 @@ static auto BuildCalleeSpecificFunction(
 static auto CheckCalleeFunctionReturnType(Context& context, SemIR::LocId loc_id,
                                           SemIR::FunctionId callee_function_id,
                                           SemIR::SpecificId callee_specific_id)
-    -> SemIR::ReturnTypeInfo {
+    -> SemIR::TypeId {
   auto& function = context.functions().Get(callee_function_id);
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
@@ -247,43 +247,39 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
                                             *callee_specific_id);
   }
 
-  // If there is a return slot, build storage for the result.
-  SemIR::ReturnTypeInfo return_info = CheckCalleeFunctionReturnType(
+  auto return_type_id = CheckCalleeFunctionReturnType(
       context, loc_id, callee_function.function_id, *callee_specific_id);
-  SemIR::InstId return_slot_arg_id = SemIR::InstId::None;
-  switch (return_info.init_repr.kind) {
-    case SemIR::InitRepr::InPlace:
-    case SemIR::InitRepr::Dependent:
-      // Tentatively put storage for a temporary in the function's return slot.
-      // This will be replaced if necessary when we perform initialization.
-      return_slot_arg_id = AddInst<SemIR::TemporaryStorage>(
-          context, loc_id, {.type_id = return_info.type_id});
-      break;
-    case SemIR::InitRepr::None:
-      // For functions with an implicit return type, the return type is the
-      // empty tuple type.
-      if (!return_info.type_id.has_value()) {
-        return_info.type_id = GetTupleType(context, {});
-      }
-      break;
-    case SemIR::InitRepr::ByCopy:
-      break;
-    case SemIR::InitRepr::Abstract:
-    case SemIR::InitRepr::Incomplete:
-      // Don't form an initializing expression with an abstract or incomplete
-      // type. CheckFunctionReturnType will have diagnosed this for us if
-      // needed.
-      return_info.type_id = SemIR::ErrorInst::TypeId;
-      break;
-  }
 
   auto& callee = context.functions().Get(callee_function.function_id);
 
+  // Build storage for any output parameters.
+  llvm::SmallVector<SemIR::InstId, 1> return_arg_ids;
+  for (auto return_pattern_id :
+       context.inst_blocks().GetOrEmpty(callee.return_patterns_id)) {
+    auto arg_type_id = SemIR::ExtractScrutineeType(
+        context.sem_ir(),
+        SemIR::GetTypeOfInstInSpecific(context.sem_ir(), *callee_specific_id,
+                                       return_pattern_id));
+    switch (SemIR::InitRepr::ForType(context.sem_ir(), arg_type_id).kind) {
+      case SemIR::InitRepr::InPlace:
+      case SemIR::InitRepr::Dependent:
+        // Tentatively use storage for a temporary as the return argument.
+        // This will be replaced if necessary when we perform initialization.
+        return_arg_ids.push_back(AddInst<SemIR::TemporaryStorage>(
+            context, loc_id, {.type_id = arg_type_id}));
+        break;
+      case SemIR::InitRepr::None:
+      case SemIR::InitRepr::ByCopy:
+      case SemIR::InitRepr::Incomplete:
+      case SemIR::InitRepr::Abstract:
+        return_arg_ids.push_back(SemIR::InstId::None);
+        break;
+    }
+  }
   // Convert the arguments to match the parameters.
   auto converted_args_id = ConvertCallArgs(
-      context, loc_id, callee_function.self_id, arg_ids, return_slot_arg_id,
-      callee, *callee_specific_id, is_operator_syntax);
-
+      context, loc_id, callee_function.self_id, arg_ids, return_arg_ids, callee,
+      *callee_specific_id, is_operator_syntax);
   switch (callee.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::Thunk: {
       // If we're about to form a direct call to a thunk, inline it.
@@ -310,7 +306,7 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
     case SemIR::Function::SpecialFunctionKind::None:
     case SemIR::Function::SpecialFunctionKind::Builtin: {
       return GetOrAddInst<SemIR::Call>(context, loc_id,
-                                       {.type_id = return_info.type_id,
+                                       {.type_id = return_type_id,
                                         .callee_id = callee_id,
                                         .args_id = converted_args_id});
     }
