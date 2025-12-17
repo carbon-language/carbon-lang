@@ -16,8 +16,8 @@ fn B() -> array(i32, 2) { return (1, 2); }
 fn Run() {
   var a: array(i32, 2) = A();
   var b: i32 = 1;
-  var c: i32 = a[b];
-  var d: i32 = B()[1];
+  var _: i32 = a[b];
+  var _: i32 = B()[1];
 }
 
 // CHECK:STDOUT: ; ModuleID = 'array_element_access.carbon'
@@ -50,8 +50,8 @@ fn Run() {
 // CHECK:STDOUT:   %a.var = alloca [2 x i32], align 4, !dbg !16
 // CHECK:STDOUT:   %.loc17_28.1.temp = alloca { i32, i32 }, align 8, !dbg !17
 // CHECK:STDOUT:   %b.var = alloca i32, align 4, !dbg !18
-// CHECK:STDOUT:   %c.var = alloca i32, align 4, !dbg !19
-// CHECK:STDOUT:   %d.var = alloca i32, align 4, !dbg !20
+// CHECK:STDOUT:   %_.var.loc19 = alloca i32, align 4, !dbg !19
+// CHECK:STDOUT:   %_.var.loc20 = alloca i32, align 4, !dbg !20
 // CHECK:STDOUT:   %.loc20_18.1.temp = alloca [2 x i32], align 4, !dbg !21
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_28.1.temp), !dbg !17
@@ -66,17 +66,17 @@ fn Run() {
 // CHECK:STDOUT:   store i32 %.loc17_28.6, ptr %.loc17_28.7.array.index, align 4, !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !18
 // CHECK:STDOUT:   store i32 1, ptr %b.var, align 4, !dbg !18
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !19
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc19), !dbg !19
 // CHECK:STDOUT:   %.loc19_18 = load i32, ptr %b.var, align 4, !dbg !22
 // CHECK:STDOUT:   %.loc19_19.1.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i32 %.loc19_18, !dbg !23
 // CHECK:STDOUT:   %.loc19_19.2 = load i32, ptr %.loc19_19.1.array.index, align 4, !dbg !23
-// CHECK:STDOUT:   store i32 %.loc19_19.2, ptr %c.var, align 4, !dbg !19
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %d.var), !dbg !20
+// CHECK:STDOUT:   store i32 %.loc19_19.2, ptr %_.var.loc19, align 4, !dbg !19
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc20), !dbg !20
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_18.1.temp), !dbg !21
 // CHECK:STDOUT:   call void @_CB.Main(ptr %.loc20_18.1.temp), !dbg !21
 // CHECK:STDOUT:   %.loc20_21.1.array.index = getelementptr inbounds [2 x i32], ptr %.loc20_18.1.temp, i32 0, i32 1, !dbg !21
 // CHECK:STDOUT:   %.loc20_21.2 = load i32, ptr %.loc20_21.1.array.index, align 4, !dbg !21
-// CHECK:STDOUT:   store i32 %.loc20_21.2, ptr %d.var, align 4, !dbg !20
+// CHECK:STDOUT:   store i32 %.loc20_21.2, ptr %_.var.loc20, align 4, !dbg !20
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

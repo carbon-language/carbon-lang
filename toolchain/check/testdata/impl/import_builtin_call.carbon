@@ -100,7 +100,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %iN.builtin: type = int_type signed, %N [symbolic]
 // CHECK:STDOUT:   %require_complete.269: <witness> = require_complete_type %iN.builtin [symbolic]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %iN.builtin [symbolic]
-// CHECK:STDOUT:   %Add.impl_witness: <witness> = impl_witness file.%Add.impl_witness_table, @MyInt.as.Add.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Add.impl_witness: <witness> = impl_witness @MyInt.as.Add.impl.%Add.impl_witness_table, @MyInt.as.Add.impl(%N) [symbolic]
 // CHECK:STDOUT:   %pattern_type.1a3: type = pattern_type %MyInt [symbolic]
 // CHECK:STDOUT:   %MyInt.as.Add.impl.Op.type: type = fn_type @MyInt.as.Add.impl.Op, @MyInt.as.Add.impl(%N) [symbolic]
 // CHECK:STDOUT:   %MyInt.as.Add.impl.Op: %MyInt.as.Add.impl.Op.type = struct_value () [symbolic]
@@ -177,8 +177,6 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc15_14.2: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N.loc15_14.1 (constants.%N)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Add.impl_witness_table = impl_witness_table (@MyInt.as.Add.impl.%MyInt.as.Add.impl.Op.decl), @MyInt.as.Add.impl [concrete]
-// CHECK:STDOUT:   %Add.impl_witness: <witness> = impl_witness %Add.impl_witness_table, @MyInt.as.Add.impl(constants.%N) [symbolic = @MyInt.as.Add.impl.%Add.impl_witness (constants.%Add.impl_witness)]
 // CHECK:STDOUT:   %Double.decl: %Double.type = fn_decl @Double [concrete = constants.%Double] {
 // CHECK:STDOUT:     %N.patt: %pattern_type.dc0 = symbolic_binding_pattern N, 0 [concrete]
 // CHECK:STDOUT:     %x.patt: @Double.%pattern_type (%pattern_type.1a3) = value_binding_pattern x [concrete]
@@ -252,7 +250,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT: generic impl @MyInt.as.Add.impl(%N.loc15_14.2: Core.IntLiteral) {
 // CHECK:STDOUT:   %N.loc15_14.1: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N.loc15_14.1 (constants.%N)]
 // CHECK:STDOUT:   %MyInt.loc15_39.1: type = class_type @MyInt, @MyInt(%N.loc15_14.1) [symbolic = %MyInt.loc15_39.1 (constants.%MyInt)]
-// CHECK:STDOUT:   %Add.impl_witness: <witness> = impl_witness file.%Add.impl_witness_table, @MyInt.as.Add.impl(%N.loc15_14.1) [symbolic = %Add.impl_witness (constants.%Add.impl_witness)]
+// CHECK:STDOUT:   %Add.impl_witness.loc15_48.2: <witness> = impl_witness %Add.impl_witness_table, @MyInt.as.Add.impl(%N.loc15_14.1) [symbolic = %Add.impl_witness.loc15_48.2 (constants.%Add.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %MyInt.as.Add.impl.Op.type: type = fn_type @MyInt.as.Add.impl.Op, @MyInt.as.Add.impl(%N.loc15_14.1) [symbolic = %MyInt.as.Add.impl.Op.type (constants.%MyInt.as.Add.impl.Op.type)]
@@ -278,10 +276,12 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:       %return.param: ref @MyInt.as.Add.impl.Op.%MyInt (%MyInt) = out_param call_param2
 // CHECK:STDOUT:       %return: ref @MyInt.as.Add.impl.Op.%MyInt (%MyInt) = return_slot %return.param
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %Add.impl_witness_table = impl_witness_table (%MyInt.as.Add.impl.Op.decl), @MyInt.as.Add.impl [concrete]
+// CHECK:STDOUT:     %Add.impl_witness.loc15_48.1: <witness> = impl_witness %Add.impl_witness_table, @MyInt.as.Add.impl(constants.%N) [symbolic = %Add.impl_witness.loc15_48.2 (constants.%Add.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Op = %MyInt.as.Add.impl.Op.decl
-// CHECK:STDOUT:     witness = file.%Add.impl_witness
+// CHECK:STDOUT:     witness = %Add.impl_witness.loc15_48.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -383,7 +383,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT: specific @MyInt.as.Add.impl(constants.%N) {
 // CHECK:STDOUT:   %N.loc15_14.1 => constants.%N
 // CHECK:STDOUT:   %MyInt.loc15_39.1 => constants.%MyInt
-// CHECK:STDOUT:   %Add.impl_witness => constants.%Add.impl_witness
+// CHECK:STDOUT:   %Add.impl_witness.loc15_48.2 => constants.%Add.impl_witness
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %MyInt.as.Add.impl.Op.type => constants.%MyInt.as.Add.impl.Op.type

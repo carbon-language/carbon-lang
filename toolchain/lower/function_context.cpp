@@ -282,6 +282,9 @@ auto FunctionContext::FinishInit(TypeInFile type, SemIR::InstId dest_id,
     case SemIR::InitRepr::ByCopy:
       CopyValue(type, source_id, dest_id);
       break;
+    case SemIR::InitRepr::Abstract:
+      CARBON_FATAL("Lowering aggregate initialization of abstract type {0}",
+                   type.file->types().GetAsInst(type.type_id));
     case SemIR::InitRepr::Incomplete:
       CARBON_FATAL("Lowering aggregate initialization of incomplete type {0}",
                    type.file->types().GetAsInst(type.type_id));

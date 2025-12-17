@@ -44,7 +44,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness file.%Simple.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness @i32.as.Simple.impl.%Simple.impl_witness_table [concrete]
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.type.85d775.1: type = fn_type @i32.as.Simple.impl.G.loc24_27.1 [concrete]
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.38af97.1: %i32.as.Simple.impl.G.type.85d775.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %i32, (%Simple.impl_witness) [concrete]
@@ -79,8 +79,6 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Simple.impl_witness_table = impl_witness_table (@i32.as.Simple.impl.%i32.as.Simple.impl.G.decl.loc24_27.2), @i32.as.Simple.impl [concrete]
-// CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table [concrete = constants.%Simple.impl_witness]
 // CHECK:STDOUT:   %InstanceCall.decl: %InstanceCall.type = fn_decl @InstanceCall [concrete = constants.%InstanceCall] {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.7ce = value_param_pattern %n.patt, call_param0 [concrete]
@@ -134,11 +132,13 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %self.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %self: %i32 = value_binding self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Simple.impl_witness_table = impl_witness_table (%i32.as.Simple.impl.G.decl.loc24_27.2), @i32.as.Simple.impl [concrete]
+// CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table [concrete = constants.%Simple.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Undeclared = <poisoned>
 // CHECK:STDOUT:   .G = %i32.as.Simple.impl.G.decl.loc24_27.1
-// CHECK:STDOUT:   witness = file.%Simple.impl_witness
+// CHECK:STDOUT:   witness = %Simple.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Simple.G(@Simple.%Self: %Simple.type) {

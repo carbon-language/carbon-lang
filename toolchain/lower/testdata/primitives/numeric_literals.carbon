@@ -13,13 +13,13 @@
 fn F() {
   // 8 and 9 trigger special behavior in APInt when mishandling signed versus
   // unsigned, so we pay extra attention to those.
-  var ints: array(i32, 4) = (
+  var _: array(i32, 4) = (
     8,
     9,
     0x8,
     0b1000,
   );
-  var floats: array(f64, 6) = (
+  var _: array(f64, 6) = (
     0.9,
     8.0,
     80.0,
@@ -38,22 +38,22 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ints.var = alloca [4 x i32], align 4, !dbg !7
-// CHECK:STDOUT:   %floats.var = alloca [6 x double], align 8, !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ints.var), !dbg !7
-// CHECK:STDOUT:   %.loc21_3.3.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i64 0, !dbg !9
-// CHECK:STDOUT:   %.loc21_3.6.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i64 1, !dbg !9
-// CHECK:STDOUT:   %.loc21_3.9.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i64 2, !dbg !9
-// CHECK:STDOUT:   %.loc21_3.12.array.index = getelementptr inbounds [4 x i32], ptr %ints.var, i32 0, i64 3, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %ints.var, ptr align 4 @array.712.loc16_3, i64 16, i1 false), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %floats.var), !dbg !8
-// CHECK:STDOUT:   %.loc29_3.3.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 0, !dbg !10
-// CHECK:STDOUT:   %.loc29_3.6.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 1, !dbg !10
-// CHECK:STDOUT:   %.loc29_3.9.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 2, !dbg !10
-// CHECK:STDOUT:   %.loc29_3.12.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 3, !dbg !10
-// CHECK:STDOUT:   %.loc29_3.15.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 4, !dbg !10
-// CHECK:STDOUT:   %.loc29_3.18.array.index = getelementptr inbounds [6 x double], ptr %floats.var, i32 0, i64 5, !dbg !10
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %floats.var, ptr align 8 @array.6e0.loc22_3, i64 48, i1 false), !dbg !8
+// CHECK:STDOUT:   %_.var.loc16 = alloca [4 x i32], align 4, !dbg !7
+// CHECK:STDOUT:   %_.var.loc22 = alloca [6 x double], align 8, !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc16), !dbg !7
+// CHECK:STDOUT:   %.loc21_3.3.array.index = getelementptr inbounds [4 x i32], ptr %_.var.loc16, i32 0, i64 0, !dbg !9
+// CHECK:STDOUT:   %.loc21_3.6.array.index = getelementptr inbounds [4 x i32], ptr %_.var.loc16, i32 0, i64 1, !dbg !9
+// CHECK:STDOUT:   %.loc21_3.9.array.index = getelementptr inbounds [4 x i32], ptr %_.var.loc16, i32 0, i64 2, !dbg !9
+// CHECK:STDOUT:   %.loc21_3.12.array.index = getelementptr inbounds [4 x i32], ptr %_.var.loc16, i32 0, i64 3, !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %_.var.loc16, ptr align 4 @array.712.loc16_3, i64 16, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc22), !dbg !8
+// CHECK:STDOUT:   %.loc29_3.3.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc22, i32 0, i64 0, !dbg !10
+// CHECK:STDOUT:   %.loc29_3.6.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc22, i32 0, i64 1, !dbg !10
+// CHECK:STDOUT:   %.loc29_3.9.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc22, i32 0, i64 2, !dbg !10
+// CHECK:STDOUT:   %.loc29_3.12.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc22, i32 0, i64 3, !dbg !10
+// CHECK:STDOUT:   %.loc29_3.15.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc22, i32 0, i64 4, !dbg !10
+// CHECK:STDOUT:   %.loc29_3.18.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc22, i32 0, i64 5, !dbg !10
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var.loc22, ptr align 8 @array.6e0.loc22_3, i64 48, i1 false), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -83,6 +83,6 @@ fn F() {
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 16, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 22, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 29, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 22, column: 31, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 26, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 22, column: 26, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 13, column: 1, scope: !4)

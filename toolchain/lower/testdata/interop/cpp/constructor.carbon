@@ -32,7 +32,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "default.h";
 
 fn F() {
-  let c: Cpp.C = Cpp.C.C();
+  let _: Cpp.C = Cpp.C.C();
 }
 
 // ============================================================================

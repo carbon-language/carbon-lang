@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/call/ref_param.carbon
 
-fn DoNothing(ref a: i32) {}
+fn DoNothing(ref _: i32) {}
 
 fn Main() {
   var a: i32 = 0;
@@ -21,7 +21,7 @@ fn Main() {
 // CHECK:STDOUT: source_filename = "ref_param.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CDoNothing.Main(ptr %a) #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CDoNothing.Main(ptr %_) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }

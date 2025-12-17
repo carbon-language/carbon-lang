@@ -15,7 +15,7 @@ interface Copy {
 }
 
 fn F[T:! Copy & Core.Destroy](a: T) -> T {
-  var v: T = a.(Copy.Op)();
+  var _: T = a.(Copy.Op)();
   return a.(Copy.Op)();
 }
 
@@ -169,10 +169,10 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.4301ec5c5ecd651f(i32 %a) #0 !dbg !60 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %v.var = alloca i32, align 4, !dbg !63
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !63
+// CHECK:STDOUT:   %_.var = alloca i32, align 4, !dbg !63
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !63
 // CHECK:STDOUT:   %Copy.Op.call.loc18 = call i32 @"_COp.Int.Core:Copy.Main"(i32 %a), !dbg !64
-// CHECK:STDOUT:   store i32 %Copy.Op.call.loc18, ptr %v.var, align 4, !dbg !63
+// CHECK:STDOUT:   store i32 %Copy.Op.call.loc18, ptr %_.var, align 4, !dbg !63
 // CHECK:STDOUT:   %Copy.Op.call.loc19 = call i32 @"_COp.Int.Core:Copy.Main"(i32 %a), !dbg !65
 // CHECK:STDOUT:   ret i32 %Copy.Op.call.loc19, !dbg !66
 // CHECK:STDOUT: }
@@ -180,9 +180,9 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.8bb618905c12e223(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !67 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %v.var = alloca { i32, i32 }, align 8, !dbg !70
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !70
-// CHECK:STDOUT:   call void @"_COp.X.Main:Copy.Main"(ptr %v.var, ptr %a), !dbg !71
+// CHECK:STDOUT:   %_.var = alloca { i32, i32 }, align 8, !dbg !70
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !70
+// CHECK:STDOUT:   call void @"_COp.X.Main:Copy.Main"(ptr %_.var, ptr %a), !dbg !71
 // CHECK:STDOUT:   call void @"_COp.X.Main:Copy.Main"(ptr %return, ptr %a), !dbg !72
 // CHECK:STDOUT:   ret void, !dbg !73
 // CHECK:STDOUT: }
@@ -190,8 +190,8 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.92c61b43c9f740f5() #0 !dbg !74 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %v.var = alloca {}, align 8, !dbg !75
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !75
+// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !75
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !75
 // CHECK:STDOUT:   call void @"_COp.61ea2aba74ab3bf1:Copy.Main"(), !dbg !76
 // CHECK:STDOUT:   call void @"_COp.61ea2aba74ab3bf1:Copy.Main"(), !dbg !77
 // CHECK:STDOUT:   ret void, !dbg !78
@@ -200,9 +200,9 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.444df219ccd81c52(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !79 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %v.var = alloca { i32, i32 }, align 8, !dbg !82
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !82
-// CHECK:STDOUT:   call void @"_COp.d07e2731f1087d49:Copy.Main"(ptr %v.var, ptr %a), !dbg !83
+// CHECK:STDOUT:   %_.var = alloca { i32, i32 }, align 8, !dbg !82
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !82
+// CHECK:STDOUT:   call void @"_COp.d07e2731f1087d49:Copy.Main"(ptr %_.var, ptr %a), !dbg !83
 // CHECK:STDOUT:   call void @"_COp.d07e2731f1087d49:Copy.Main"(ptr %return, ptr %a), !dbg !84
 // CHECK:STDOUT:   ret void, !dbg !85
 // CHECK:STDOUT: }
@@ -210,9 +210,9 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.ce36b8714ed574a4(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %a) #0 !dbg !86 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %v.var = alloca { { i32, i32 }, { i32, i32 } }, align 8, !dbg !89
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !89
-// CHECK:STDOUT:   call void @"_COp.a6c7c55658a5a74c:Copy.Main"(ptr %v.var, ptr %a), !dbg !90
+// CHECK:STDOUT:   %_.var = alloca { { i32, i32 }, { i32, i32 } }, align 8, !dbg !89
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !89
+// CHECK:STDOUT:   call void @"_COp.a6c7c55658a5a74c:Copy.Main"(ptr %_.var, ptr %a), !dbg !90
 // CHECK:STDOUT:   call void @"_COp.a6c7c55658a5a74c:Copy.Main"(ptr %return, ptr %a), !dbg !91
 // CHECK:STDOUT:   ret void, !dbg !92
 // CHECK:STDOUT: }

@@ -41,7 +41,7 @@ class A {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
-// CHECK:STDOUT:   %DefaultConstructible.impl_witness: <witness> = impl_witness @A.%DefaultConstructible.impl_witness_table [concrete]
+// CHECK:STDOUT:   %DefaultConstructible.impl_witness: <witness> = impl_witness @C.as.DefaultConstructible.impl.%DefaultConstructible.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %C.as.DefaultConstructible.impl.Make.type: type = fn_type @C.as.DefaultConstructible.impl.Make [concrete]
 // CHECK:STDOUT:   %C.as.DefaultConstructible.impl.Make: %C.as.DefaultConstructible.impl.Make.type = struct_value () [concrete]
@@ -92,10 +92,12 @@ class A {
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %DefaultConstructible.impl_witness_table = impl_witness_table (%C.as.DefaultConstructible.impl.Make.decl), @C.as.DefaultConstructible.impl [concrete]
+// CHECK:STDOUT:   %DefaultConstructible.impl_witness: <witness> = impl_witness %DefaultConstructible.impl_witness_table [concrete = constants.%DefaultConstructible.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Make = %C.as.DefaultConstructible.impl.Make.decl
-// CHECK:STDOUT:   witness = @A.%DefaultConstructible.impl_witness
+// CHECK:STDOUT:   witness = %DefaultConstructible.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -111,8 +113,6 @@ class A {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %DefaultConstructible.ref: type = name_ref DefaultConstructible, file.%DefaultConstructible.decl [concrete = constants.%DefaultConstructible.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %DefaultConstructible.impl_witness_table = impl_witness_table (@C.as.DefaultConstructible.impl.%C.as.DefaultConstructible.impl.Make.decl), @C.as.DefaultConstructible.impl [concrete]
-// CHECK:STDOUT:   %DefaultConstructible.impl_witness: <witness> = impl_witness %DefaultConstructible.impl_witness_table [concrete = constants.%DefaultConstructible.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

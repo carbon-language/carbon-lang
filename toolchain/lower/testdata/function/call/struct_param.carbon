@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/call/struct_param.carbon
 
-fn F(a: {}, b: {.a: i32}, c: {.a: i32, .b: i32}) {}
+fn F(_: {}, _: {.a: i32}, _: {.a: i32, .b: i32}) {}
 
 fn Main() {
   F({}, {.a = 1}, {.a = 2, .b = 3});
@@ -22,7 +22,7 @@ fn Main() {
 // CHECK:STDOUT: @struct.9ae.loc16_34.6 = internal constant { i32, i32 } { i32 2, i32 3 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.Main({ i32 } %b, ptr %c) #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CF.Main({ i32 } %_, ptr %_1) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }

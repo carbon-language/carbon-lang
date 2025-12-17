@@ -15,7 +15,7 @@ fn Echo(a: ()) -> () {
 }
 
 fn Main() {
-  var b: () = Echo(());
+  var _: () = Echo(());
 }
 
 // CHECK:STDOUT: ; ModuleID = 'empty_tuple.carbon'
@@ -30,8 +30,8 @@ fn Main() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !9 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %b.var = alloca {}, align 8, !dbg !12
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !12
+// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !12
 // CHECK:STDOUT:   call void @_CEcho.Main(), !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }

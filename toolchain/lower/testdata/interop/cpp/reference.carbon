@@ -92,13 +92,13 @@ auto ReturnConstIntRef() -> const int&;
 ''';
 
 fn GetRefs() {
-  var c1: Cpp.C* = Cpp.ReturnCRef();
-  var c2: Cpp.C* = Cpp.ReturnCRRef();
-  var c3: const Cpp.C* = Cpp.ReturnConstCRef();
+  var _: Cpp.C* = Cpp.ReturnCRef();
+  var _: Cpp.C* = Cpp.ReturnCRRef();
+  var _: const Cpp.C* = Cpp.ReturnConstCRef();
 
-  var n1: i32* = Cpp.ReturnIntRef();
-  var n2: i32* = Cpp.ReturnIntRRef();
-  var n3: const i32* = Cpp.ReturnConstIntRef();
+  var _: i32* = Cpp.ReturnIntRef();
+  var _: i32* = Cpp.ReturnIntRRef();
+  var _: const i32* = Cpp.ReturnConstIntRef();
 }
 
 // --- return_references_via_thunk.carbon
@@ -119,13 +119,13 @@ auto ReturnConstIntRef(ForceThunk = {}) -> const int&;
 ''';
 
 fn GetRefs() {
-  var c1: Cpp.C* = Cpp.ReturnCRef();
-  var c2: Cpp.C* = Cpp.ReturnCRRef();
-  var c3: const Cpp.C* = Cpp.ReturnConstCRef();
+  var _: Cpp.C* = Cpp.ReturnCRef();
+  var _: Cpp.C* = Cpp.ReturnCRRef();
+  var _: const Cpp.C* = Cpp.ReturnConstCRef();
 
-  var n1: i32* = Cpp.ReturnIntRef();
-  var n2: i32* = Cpp.ReturnIntRRef();
-  var n3: const i32* = Cpp.ReturnConstIntRef();
+  var _: i32* = Cpp.ReturnIntRef();
+  var _: i32* = Cpp.ReturnIntRRef();
+  var _: const i32* = Cpp.ReturnConstIntRef();
 }
 
 // CHECK:STDOUT: ; ModuleID = 'pass_references.carbon'
@@ -426,30 +426,30 @@ fn GetRefs() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CGetRefs.Main() #0 !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c1.var = alloca ptr, align 8, !dbg !10
-// CHECK:STDOUT:   %c2.var = alloca ptr, align 8, !dbg !11
-// CHECK:STDOUT:   %c3.var = alloca ptr, align 8, !dbg !12
-// CHECK:STDOUT:   %n1.var = alloca ptr, align 8, !dbg !13
-// CHECK:STDOUT:   %n2.var = alloca ptr, align 8, !dbg !14
-// CHECK:STDOUT:   %n3.var = alloca ptr, align 8, !dbg !15
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c1.var), !dbg !10
+// CHECK:STDOUT:   %_.var.loc17 = alloca ptr, align 8, !dbg !10
+// CHECK:STDOUT:   %_.var.loc18 = alloca ptr, align 8, !dbg !11
+// CHECK:STDOUT:   %_.var.loc19 = alloca ptr, align 8, !dbg !12
+// CHECK:STDOUT:   %_.var.loc21 = alloca ptr, align 8, !dbg !13
+// CHECK:STDOUT:   %_.var.loc22 = alloca ptr, align 8, !dbg !14
+// CHECK:STDOUT:   %_.var.loc23 = alloca ptr, align 8, !dbg !15
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc17), !dbg !10
 // CHECK:STDOUT:   %ReturnCRef.call = call ptr @_Z10ReturnCRefv(), !dbg !16
-// CHECK:STDOUT:   store ptr %ReturnCRef.call, ptr %c1.var, align 8, !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c2.var), !dbg !11
+// CHECK:STDOUT:   store ptr %ReturnCRef.call, ptr %_.var.loc17, align 8, !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc18), !dbg !11
 // CHECK:STDOUT:   %ReturnCRRef.call = call ptr @_Z11ReturnCRRefv(), !dbg !17
-// CHECK:STDOUT:   store ptr %ReturnCRRef.call, ptr %c2.var, align 8, !dbg !11
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c3.var), !dbg !12
+// CHECK:STDOUT:   store ptr %ReturnCRRef.call, ptr %_.var.loc18, align 8, !dbg !11
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc19), !dbg !12
 // CHECK:STDOUT:   %ReturnConstCRef.call = call ptr @_Z15ReturnConstCRefv(), !dbg !18
-// CHECK:STDOUT:   store ptr %ReturnConstCRef.call, ptr %c3.var, align 8, !dbg !12
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n1.var), !dbg !13
+// CHECK:STDOUT:   store ptr %ReturnConstCRef.call, ptr %_.var.loc19, align 8, !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc21), !dbg !13
 // CHECK:STDOUT:   %ReturnIntRef.call = call ptr @_Z12ReturnIntRefv(), !dbg !19
-// CHECK:STDOUT:   store ptr %ReturnIntRef.call, ptr %n1.var, align 8, !dbg !13
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n2.var), !dbg !14
+// CHECK:STDOUT:   store ptr %ReturnIntRef.call, ptr %_.var.loc21, align 8, !dbg !13
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc22), !dbg !14
 // CHECK:STDOUT:   %ReturnIntRRef.call = call ptr @_Z13ReturnIntRRefv(), !dbg !20
-// CHECK:STDOUT:   store ptr %ReturnIntRRef.call, ptr %n2.var, align 8, !dbg !14
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n3.var), !dbg !15
+// CHECK:STDOUT:   store ptr %ReturnIntRRef.call, ptr %_.var.loc22, align 8, !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc23), !dbg !15
 // CHECK:STDOUT:   %ReturnConstIntRef.call = call ptr @_Z17ReturnConstIntRefv(), !dbg !21
-// CHECK:STDOUT:   store ptr %ReturnConstIntRef.call, ptr %n3.var, align 8, !dbg !15
+// CHECK:STDOUT:   store ptr %ReturnConstIntRef.call, ptr %_.var.loc23, align 8, !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -493,12 +493,12 @@ fn GetRefs() {
 // CHECK:STDOUT: !13 = !DILocation(line: 21, column: 3, scope: !7)
 // CHECK:STDOUT: !14 = !DILocation(line: 22, column: 3, scope: !7)
 // CHECK:STDOUT: !15 = !DILocation(line: 23, column: 3, scope: !7)
-// CHECK:STDOUT: !16 = !DILocation(line: 17, column: 20, scope: !7)
-// CHECK:STDOUT: !17 = !DILocation(line: 18, column: 20, scope: !7)
-// CHECK:STDOUT: !18 = !DILocation(line: 19, column: 26, scope: !7)
-// CHECK:STDOUT: !19 = !DILocation(line: 21, column: 18, scope: !7)
-// CHECK:STDOUT: !20 = !DILocation(line: 22, column: 18, scope: !7)
-// CHECK:STDOUT: !21 = !DILocation(line: 23, column: 24, scope: !7)
+// CHECK:STDOUT: !16 = !DILocation(line: 17, column: 19, scope: !7)
+// CHECK:STDOUT: !17 = !DILocation(line: 18, column: 19, scope: !7)
+// CHECK:STDOUT: !18 = !DILocation(line: 19, column: 25, scope: !7)
+// CHECK:STDOUT: !19 = !DILocation(line: 21, column: 17, scope: !7)
+// CHECK:STDOUT: !20 = !DILocation(line: 22, column: 17, scope: !7)
+// CHECK:STDOUT: !21 = !DILocation(line: 23, column: 23, scope: !7)
 // CHECK:STDOUT: !22 = !DILocation(line: 16, column: 1, scope: !7)
 // CHECK:STDOUT: ; ModuleID = 'return_references_via_thunk.carbon'
 // CHECK:STDOUT: source_filename = "return_references_via_thunk.carbon"
@@ -510,30 +510,30 @@ fn GetRefs() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CGetRefs.Main() #0 !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c1.var = alloca ptr, align 8, !dbg !10
-// CHECK:STDOUT:   %c2.var = alloca ptr, align 8, !dbg !11
-// CHECK:STDOUT:   %c3.var = alloca ptr, align 8, !dbg !12
-// CHECK:STDOUT:   %n1.var = alloca ptr, align 8, !dbg !13
-// CHECK:STDOUT:   %n2.var = alloca ptr, align 8, !dbg !14
-// CHECK:STDOUT:   %n3.var = alloca ptr, align 8, !dbg !15
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c1.var), !dbg !10
+// CHECK:STDOUT:   %_.var.loc18 = alloca ptr, align 8, !dbg !10
+// CHECK:STDOUT:   %_.var.loc19 = alloca ptr, align 8, !dbg !11
+// CHECK:STDOUT:   %_.var.loc20 = alloca ptr, align 8, !dbg !12
+// CHECK:STDOUT:   %_.var.loc22 = alloca ptr, align 8, !dbg !13
+// CHECK:STDOUT:   %_.var.loc23 = alloca ptr, align 8, !dbg !14
+// CHECK:STDOUT:   %_.var.loc24 = alloca ptr, align 8, !dbg !15
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc18), !dbg !10
 // CHECK:STDOUT:   %ReturnCRef__carbon_thunk.call = call ptr @_Z10ReturnCRef10ForceThunk.carbon_thunk0(), !dbg !16
-// CHECK:STDOUT:   store ptr %ReturnCRef__carbon_thunk.call, ptr %c1.var, align 8, !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c2.var), !dbg !11
+// CHECK:STDOUT:   store ptr %ReturnCRef__carbon_thunk.call, ptr %_.var.loc18, align 8, !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc19), !dbg !11
 // CHECK:STDOUT:   %ReturnCRRef__carbon_thunk.call = call ptr @_Z11ReturnCRRef10ForceThunk.carbon_thunk0(), !dbg !17
-// CHECK:STDOUT:   store ptr %ReturnCRRef__carbon_thunk.call, ptr %c2.var, align 8, !dbg !11
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c3.var), !dbg !12
+// CHECK:STDOUT:   store ptr %ReturnCRRef__carbon_thunk.call, ptr %_.var.loc19, align 8, !dbg !11
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc20), !dbg !12
 // CHECK:STDOUT:   %ReturnConstCRef__carbon_thunk.call = call ptr @_Z15ReturnConstCRef10ForceThunk.carbon_thunk0(), !dbg !18
-// CHECK:STDOUT:   store ptr %ReturnConstCRef__carbon_thunk.call, ptr %c3.var, align 8, !dbg !12
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n1.var), !dbg !13
+// CHECK:STDOUT:   store ptr %ReturnConstCRef__carbon_thunk.call, ptr %_.var.loc20, align 8, !dbg !12
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc22), !dbg !13
 // CHECK:STDOUT:   %ReturnIntRef__carbon_thunk.call = call ptr @_Z12ReturnIntRef10ForceThunk.carbon_thunk0(), !dbg !19
-// CHECK:STDOUT:   store ptr %ReturnIntRef__carbon_thunk.call, ptr %n1.var, align 8, !dbg !13
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n2.var), !dbg !14
+// CHECK:STDOUT:   store ptr %ReturnIntRef__carbon_thunk.call, ptr %_.var.loc22, align 8, !dbg !13
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc23), !dbg !14
 // CHECK:STDOUT:   %ReturnIntRRef__carbon_thunk.call = call ptr @_Z13ReturnIntRRef10ForceThunk.carbon_thunk0(), !dbg !20
-// CHECK:STDOUT:   store ptr %ReturnIntRRef__carbon_thunk.call, ptr %n2.var, align 8, !dbg !14
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n3.var), !dbg !15
+// CHECK:STDOUT:   store ptr %ReturnIntRRef__carbon_thunk.call, ptr %_.var.loc23, align 8, !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc24), !dbg !15
 // CHECK:STDOUT:   %ReturnConstIntRef__carbon_thunk.call = call ptr @_Z17ReturnConstIntRef10ForceThunk.carbon_thunk0(), !dbg !21
-// CHECK:STDOUT:   store ptr %ReturnConstIntRef__carbon_thunk.call, ptr %n3.var, align 8, !dbg !15
+// CHECK:STDOUT:   store ptr %ReturnConstIntRef__carbon_thunk.call, ptr %_.var.loc24, align 8, !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -627,10 +627,10 @@ fn GetRefs() {
 // CHECK:STDOUT: !13 = !DILocation(line: 22, column: 3, scope: !7)
 // CHECK:STDOUT: !14 = !DILocation(line: 23, column: 3, scope: !7)
 // CHECK:STDOUT: !15 = !DILocation(line: 24, column: 3, scope: !7)
-// CHECK:STDOUT: !16 = !DILocation(line: 18, column: 20, scope: !7)
-// CHECK:STDOUT: !17 = !DILocation(line: 19, column: 20, scope: !7)
-// CHECK:STDOUT: !18 = !DILocation(line: 20, column: 26, scope: !7)
-// CHECK:STDOUT: !19 = !DILocation(line: 22, column: 18, scope: !7)
-// CHECK:STDOUT: !20 = !DILocation(line: 23, column: 18, scope: !7)
-// CHECK:STDOUT: !21 = !DILocation(line: 24, column: 24, scope: !7)
+// CHECK:STDOUT: !16 = !DILocation(line: 18, column: 19, scope: !7)
+// CHECK:STDOUT: !17 = !DILocation(line: 19, column: 19, scope: !7)
+// CHECK:STDOUT: !18 = !DILocation(line: 20, column: 25, scope: !7)
+// CHECK:STDOUT: !19 = !DILocation(line: 22, column: 17, scope: !7)
+// CHECK:STDOUT: !20 = !DILocation(line: 23, column: 17, scope: !7)
+// CHECK:STDOUT: !21 = !DILocation(line: 24, column: 23, scope: !7)
 // CHECK:STDOUT: !22 = !DILocation(line: 17, column: 1, scope: !7)

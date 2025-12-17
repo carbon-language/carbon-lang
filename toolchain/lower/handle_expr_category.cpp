@@ -67,6 +67,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
               "TODO: Add support for InPlaceInit with custom value rep");
       }
       break;
+    case SemIR::InitRepr::Abstract:
+      CARBON_FATAL("Unexpected abstract type");
     case SemIR::InitRepr::Incomplete:
       CARBON_FATAL("Unexpected incomplete type");
     case SemIR::InitRepr::Dependent:

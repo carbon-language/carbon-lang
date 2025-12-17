@@ -380,10 +380,11 @@ impl () as I({}) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %empty_tuple.type.as.I.impl.F.decl.loc10_48.1
-// CHECK:STDOUT:   witness = file.%I.impl_witness
+// CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @empty_tuple.type.as.I.impl.F.loc10_48.1(%y.param: %struct_type.b.a.40c) -> %return.param: %struct_type.d.c.b36;
@@ -476,12 +477,13 @@ impl () as I({}) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = %B.as.X.impl.F.decl.loc14_37.1
-// CHECK:STDOUT:   witness = file.%X.impl_witness
+// CHECK:STDOUT:   witness = %X.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.1(%self.param: %A, %other.param: %ptr.643) -> %ptr.31e;
@@ -542,11 +544,12 @@ impl () as I({}) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .F = %B.as.X.impl.F.decl.loc13_26.1
-// CHECK:STDOUT:   witness = file.%X.impl_witness
+// CHECK:STDOUT:   witness = %X.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B.as.X.impl.F.loc13_26.1(%self.param: %A, %other.param: %A);
@@ -624,12 +627,13 @@ impl () as I({}) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = %B.as.X.impl.F.decl.loc14_37.1
-// CHECK:STDOUT:   witness = file.%X.impl_witness
+// CHECK:STDOUT:   witness = %X.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.1(%self.param: %A, %other.param: %ptr.643) -> %ptr.31e;
@@ -718,12 +722,13 @@ impl () as I({}) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = %B.as.X.impl.F.decl.loc14_37.1
-// CHECK:STDOUT:   witness = file.%X.impl_witness
+// CHECK:STDOUT:   witness = %X.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B.as.X.impl.F.loc14_37.1(%self.param: %A, %other.param: %ptr.643) -> %ptr.31e;
@@ -784,11 +789,12 @@ impl () as I({}) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .F = %A.as.X.impl.F.decl.loc23_14.1
-// CHECK:STDOUT:   witness = file.%X.impl_witness
+// CHECK:STDOUT:   witness = %X.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.as.X.impl.F.loc23_14.1() -> %return.param: %B;
@@ -883,10 +889,11 @@ impl () as I({}) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %empty_tuple.type.as.I.impl.F.decl.loc10_34.1
-// CHECK:STDOUT:   witness = file.%I.impl_witness
+// CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @empty_tuple.type.as.I.impl.F.loc10_34.1(%U.loc10_8.2: %Copy.type) {
@@ -1047,10 +1054,11 @@ impl () as I({}) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %empty_tuple.type.as.I.impl.F.decl.loc10_44.1
-// CHECK:STDOUT:   witness = file.%I.impl_witness
+// CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @empty_tuple.type.as.I.impl.F.loc10_44.1(%U.loc10_18.2: %Copy.type) {
@@ -1171,10 +1179,11 @@ impl () as I({}) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %empty_tuple.type.as.I.impl.F.decl.loc10_29.1
-// CHECK:STDOUT:   witness = file.%I.impl_witness
+// CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @empty_tuple.type.as.I.impl.F.loc10_29.1() -> %return.param: %struct_type.b.a.1b0;

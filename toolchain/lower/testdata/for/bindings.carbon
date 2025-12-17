@@ -15,7 +15,7 @@ class EmptyRange(T:! Core.Copy) {
     fn NewCursor[self: Self]() -> {} {
       return {};
     }
-    fn Next[self: Self](cursor: {}*) -> Core.Optional(T) {
+    fn Next[self: Self](_: {}*) -> Core.Optional(T) {
       return Core.Optional(T).None();
     }
   }
@@ -87,7 +87,7 @@ fn For() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CNext.EmptyRange.Main:Iterate.Core.f3fd01d4dee2d7f7"(ptr sret({ { i32, i32 }, i1 }) %return, ptr %self, ptr %cursor) #0 !dbg !20 {
+// CHECK:STDOUT: define linkonce_odr void @"_CNext.EmptyRange.Main:Iterate.Core.f3fd01d4dee2d7f7"(ptr sret({ { i32, i32 }, i1 }) %return, ptr %self, ptr %_) #0 !dbg !20 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CNone.Optional.Core.9925d053027dadb9(ptr %return), !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !27

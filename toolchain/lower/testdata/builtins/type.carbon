@@ -16,7 +16,7 @@ library "[[@TEST_NAME]]";
 fn CanDestroy() -> type = "type.can_destroy";
 
 fn F() {
-  let t: type = CanDestroy();
+  let _: type = CanDestroy();
 }
 
 // --- destroy.carbon

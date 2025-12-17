@@ -230,7 +230,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %Action.type.15e: type = facet_type <@Action, @Action(%B)> [concrete]
-// CHECK:STDOUT:   %Action.impl_witness: <witness> = impl_witness file.%Action.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Action.impl_witness: <witness> = impl_witness @A.as.Action.impl.%Action.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.b1b: %Action.type.15e = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Action.Op.type.30c: type = fn_type @Action.Op, @Action(%B) [concrete]
 // CHECK:STDOUT:   %Action.Op.aa4: %Action.Op.type.30c = struct_value () [concrete]
@@ -277,8 +277,6 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:     %Action.type: type = facet_type <@Action, @Action(constants.%B)> [concrete = constants.%Action.type.15e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Action.impl_witness_table = impl_witness_table (@A.as.Action.impl.%A.as.Action.impl.Op.decl), @A.as.Action.impl [concrete]
-// CHECK:STDOUT:   %Action.impl_witness: <witness> = impl_witness %Action.impl_witness_table [concrete = constants.%Action.impl_witness]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.patt: %pattern_type.1ab = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.1ab = value_param_pattern %a.patt, call_param0 [concrete]
@@ -335,10 +333,12 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @A.as.Action.impl.%A.ref [concrete = constants.%A]
 // CHECK:STDOUT:     %self: %A = value_binding self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Action.impl_witness_table = impl_witness_table (%A.as.Action.impl.Op.decl), @A.as.Action.impl [concrete]
+// CHECK:STDOUT:   %Action.impl_witness: <witness> = impl_witness %Action.impl_witness_table [concrete = constants.%Action.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Op = %A.as.Action.impl.Op.decl
-// CHECK:STDOUT:   witness = file.%Action.impl_witness
+// CHECK:STDOUT:   witness = %Action.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
@@ -829,7 +829,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %Factory.type.345: type = facet_type <@Factory, @Factory(%B)> [concrete]
-// CHECK:STDOUT:   %Factory.impl_witness: <witness> = impl_witness file.%Factory.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Factory.impl_witness: <witness> = impl_witness @A.as.Factory.impl.%Factory.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.d2a: %Factory.type.345 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Factory.Make.type.662: type = fn_type @Factory.Make, @Factory(%B) [concrete]
 // CHECK:STDOUT:   %Factory.Make.e72: %Factory.Make.type.662 = struct_value () [concrete]
@@ -876,8 +876,6 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:     %Factory.type: type = facet_type <@Factory, @Factory(constants.%B)> [concrete = constants.%Factory.type.345]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Factory.impl_witness_table = impl_witness_table (@A.as.Factory.impl.%A.as.Factory.impl.Make.decl, @A.as.Factory.impl.%A.as.Factory.impl.Method.decl), @A.as.Factory.impl [concrete]
-// CHECK:STDOUT:   %Factory.impl_witness: <witness> = impl_witness %Factory.impl_witness_table [concrete = constants.%Factory.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Factory(%T.loc4_19.2: type) {
@@ -958,12 +956,14 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %return.param: ref %B = out_param call_param1
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Factory.impl_witness_table = impl_witness_table (%A.as.Factory.impl.Make.decl, %A.as.Factory.impl.Method.decl), @A.as.Factory.impl [concrete]
+// CHECK:STDOUT:   %Factory.impl_witness: <witness> = impl_witness %Factory.impl_witness_table [concrete = constants.%Factory.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .B = <poisoned>
 // CHECK:STDOUT:   .Make = %A.as.Factory.impl.Make.decl
 // CHECK:STDOUT:   .Method = %A.as.Factory.impl.Method.decl
-// CHECK:STDOUT:   witness = file.%Factory.impl_witness
+// CHECK:STDOUT:   witness = %Factory.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {

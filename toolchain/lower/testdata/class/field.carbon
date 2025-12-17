@@ -45,7 +45,7 @@ fn Run() {
   var o: Other;
   // .a is initialized with a non-constant expression
   // .b is initialized with in-place class_init
-  var u: Use = {.a = &o, .b = {}};
+  var _: Use = {.a = &o, .b = {}};
 }
 
 // --- implicit_init_with_nonempty_nonconst.carbon
@@ -65,7 +65,7 @@ fn Run() {
   var o: Other;
   // .a is initialized with a non-constant expression
   // .b is initialized with in-place class_init
-  var u: Use = {.a = &o, .b = {.v = 42}};
+  var _: Use = {.a = &o, .b = {.v = 42}};
 }
 
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
@@ -134,12 +134,12 @@ fn Run() {
 // CHECK:STDOUT: define void @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %o.var = alloca {}, align 8, !dbg !7
-// CHECK:STDOUT:   %u.var = alloca { ptr, {} }, align 8, !dbg !8
+// CHECK:STDOUT:   %_.var = alloca { ptr, {} }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %o.var), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %u.var), !dbg !8
-// CHECK:STDOUT:   %.loc15_33.2.a = getelementptr inbounds nuw { ptr, {} }, ptr %u.var, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !8
+// CHECK:STDOUT:   %.loc15_33.2.a = getelementptr inbounds nuw { ptr, {} }, ptr %_.var, i32 0, i32 0, !dbg !9
 // CHECK:STDOUT:   store ptr %o.var, ptr %.loc15_33.2.a, align 8, !dbg !9
-// CHECK:STDOUT:   %.loc15_33.4.b = getelementptr inbounds nuw { ptr, {} }, ptr %u.var, i32 0, i32 1, !dbg !9
+// CHECK:STDOUT:   %.loc15_33.4.b = getelementptr inbounds nuw { ptr, {} }, ptr %_.var, i32 0, i32 1, !dbg !9
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc15_33.4.b, ptr align 1 @Other.val.loc15_33.5, i64 0, i1 false), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
@@ -180,12 +180,12 @@ fn Run() {
 // CHECK:STDOUT: define void @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %o.var = alloca { i32 }, align 8, !dbg !7
-// CHECK:STDOUT:   %u.var = alloca { ptr, { i32 } }, align 8, !dbg !8
+// CHECK:STDOUT:   %_.var = alloca { ptr, { i32 } }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %o.var), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %u.var), !dbg !8
-// CHECK:STDOUT:   %.loc17_40.2.a = getelementptr inbounds nuw { ptr, { i32 } }, ptr %u.var, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !8
+// CHECK:STDOUT:   %.loc17_40.2.a = getelementptr inbounds nuw { ptr, { i32 } }, ptr %_.var, i32 0, i32 0, !dbg !9
 // CHECK:STDOUT:   store ptr %o.var, ptr %.loc17_40.2.a, align 8, !dbg !9
-// CHECK:STDOUT:   %.loc17_40.4.b = getelementptr inbounds nuw { ptr, { i32 } }, ptr %u.var, i32 0, i32 1, !dbg !9
+// CHECK:STDOUT:   %.loc17_40.4.b = getelementptr inbounds nuw { ptr, { i32 } }, ptr %_.var, i32 0, i32 1, !dbg !9
 // CHECK:STDOUT:   %.loc17_39.3.v = getelementptr inbounds nuw { i32 }, ptr %.loc17_40.4.b, i32 0, i32 0, !dbg !10
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc17_40.4.b, ptr align 4 @Other.val.loc17_40.5, i64 4, i1 false), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !11

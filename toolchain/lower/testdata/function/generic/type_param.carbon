@@ -12,7 +12,7 @@
 
 fn F(T:! type) {
   var p: T*;
-  let n: T = *p;
+  let _: T = *p;
 }
 
 // CHECK:STDOUT: ; ModuleID = 'type_param.carbon'

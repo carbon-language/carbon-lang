@@ -91,11 +91,11 @@ import Cpp library "class.h";
 fn GetX() -> Cpp.X { return Cpp.Make(); }
 
 fn Let() {
-  let x: Cpp.X = Cpp.Make();
+  let _: Cpp.X = Cpp.Make();
 }
 
 fn Var() {
-  var x: Cpp.X = Cpp.Make();
+  var _: Cpp.X = Cpp.Make();
 }
 
 // --- indirect_return_with_args.carbon
@@ -471,10 +471,10 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CVar.Main() #0 !dbg !18 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x.var = alloca [16 x i8], align 1, !dbg !19
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !19
-// CHECK:STDOUT:   call void @_Z4Makev.carbon_thunk(ptr %x.var), !dbg !20
-// CHECK:STDOUT:   call void @_ZN1XD1Ev(ptr %x.var), !dbg !19
+// CHECK:STDOUT:   %_.var = alloca [16 x i8], align 1, !dbg !19
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !19
+// CHECK:STDOUT:   call void @_Z4Makev.carbon_thunk(ptr %_.var), !dbg !20
+// CHECK:STDOUT:   call void @_ZN1XD1Ev(ptr %_.var), !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

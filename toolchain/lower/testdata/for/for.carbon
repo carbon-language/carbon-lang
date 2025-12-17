@@ -18,7 +18,7 @@ fn H();
 
 fn For() {
   F();
-  for (n: i32 in Core.Range(100)) {
+  for (_: i32 in Core.Range(100)) {
     G();
   }
   H();

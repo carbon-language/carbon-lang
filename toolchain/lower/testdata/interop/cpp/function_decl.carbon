@@ -121,7 +121,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "with_default_args.h";
 
-fn MyF() {
+fn MyF() -> i32 {
   Cpp.NoReturnValue();
   Cpp.NoReturnValue(3);
   Cpp.NoReturnValue(3, 4);
@@ -129,6 +129,7 @@ fn MyF() {
   var value: i32 = Cpp.SimpleReturnValue();
   value = Cpp.SimpleReturnValue(3);
   value = Cpp.SimpleReturnValue(3, 4);
+  return value;
 }
 
 // CHECK:STDOUT: ; ModuleID = 'import_function_decl.carbon'
@@ -355,20 +356,21 @@ fn MyF() {
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !7 {
+// CHECK:STDOUT: define i32 @_CMyF.Main() #0 !dbg !7 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %value.var = alloca i32, align 4, !dbg !10
-// CHECK:STDOUT:   call void @_Z13NoReturnValueii.carbon_thunk0(), !dbg !11
-// CHECK:STDOUT:   call void @_Z13NoReturnValueii.carbon_thunk1(i32 3), !dbg !12
-// CHECK:STDOUT:   call void @_Z13NoReturnValueii(i32 3, i32 4), !dbg !13
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %value.var), !dbg !10
-// CHECK:STDOUT:   %SimpleReturnValue__carbon_thunk.call.loc11 = call i32 @_Z17SimpleReturnValueii.carbon_thunk0(), !dbg !14
-// CHECK:STDOUT:   store i32 %SimpleReturnValue__carbon_thunk.call.loc11, ptr %value.var, align 4, !dbg !10
-// CHECK:STDOUT:   %SimpleReturnValue__carbon_thunk.call.loc12 = call i32 @_Z17SimpleReturnValueii.carbon_thunk1(i32 3), !dbg !15
-// CHECK:STDOUT:   store i32 %SimpleReturnValue__carbon_thunk.call.loc12, ptr %value.var, align 4, !dbg !16
-// CHECK:STDOUT:   %SimpleReturnValue.call = call i32 @_Z17SimpleReturnValueii(i32 3, i32 4), !dbg !17
-// CHECK:STDOUT:   store i32 %SimpleReturnValue.call, ptr %value.var, align 4, !dbg !18
-// CHECK:STDOUT:   ret void, !dbg !19
+// CHECK:STDOUT:   %value.var = alloca i32, align 4, !dbg !11
+// CHECK:STDOUT:   call void @_Z13NoReturnValueii.carbon_thunk0(), !dbg !12
+// CHECK:STDOUT:   call void @_Z13NoReturnValueii.carbon_thunk1(i32 3), !dbg !13
+// CHECK:STDOUT:   call void @_Z13NoReturnValueii(i32 3, i32 4), !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %value.var), !dbg !11
+// CHECK:STDOUT:   %SimpleReturnValue__carbon_thunk.call.loc11 = call i32 @_Z17SimpleReturnValueii.carbon_thunk0(), !dbg !15
+// CHECK:STDOUT:   store i32 %SimpleReturnValue__carbon_thunk.call.loc11, ptr %value.var, align 4, !dbg !11
+// CHECK:STDOUT:   %SimpleReturnValue__carbon_thunk.call.loc12 = call i32 @_Z17SimpleReturnValueii.carbon_thunk1(i32 3), !dbg !16
+// CHECK:STDOUT:   store i32 %SimpleReturnValue__carbon_thunk.call.loc12, ptr %value.var, align 4, !dbg !17
+// CHECK:STDOUT:   %SimpleReturnValue.call = call i32 @_Z17SimpleReturnValueii(i32 3, i32 4), !dbg !18
+// CHECK:STDOUT:   store i32 %SimpleReturnValue.call, ptr %value.var, align 4, !dbg !19
+// CHECK:STDOUT:   %.loc14 = load i32, ptr %value.var, align 4, !dbg !20
+// CHECK:STDOUT:   ret i32 %.loc14, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z13NoReturnValueii(i32, i32)
@@ -428,14 +430,16 @@ fn MyF() {
 // CHECK:STDOUT: !6 = !DIFile(filename: "call_with_default_args.carbon", directory: "")
 // CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{null}
-// CHECK:STDOUT: !10 = !DILocation(line: 11, column: 3, scope: !7)
-// CHECK:STDOUT: !11 = !DILocation(line: 7, column: 3, scope: !7)
-// CHECK:STDOUT: !12 = !DILocation(line: 8, column: 3, scope: !7)
-// CHECK:STDOUT: !13 = !DILocation(line: 9, column: 3, scope: !7)
-// CHECK:STDOUT: !14 = !DILocation(line: 11, column: 20, scope: !7)
-// CHECK:STDOUT: !15 = !DILocation(line: 12, column: 11, scope: !7)
-// CHECK:STDOUT: !16 = !DILocation(line: 12, column: 3, scope: !7)
-// CHECK:STDOUT: !17 = !DILocation(line: 13, column: 11, scope: !7)
-// CHECK:STDOUT: !18 = !DILocation(line: 13, column: 3, scope: !7)
-// CHECK:STDOUT: !19 = !DILocation(line: 6, column: 1, scope: !7)
+// CHECK:STDOUT: !9 = !{!10}
+// CHECK:STDOUT: !10 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !11 = !DILocation(line: 11, column: 3, scope: !7)
+// CHECK:STDOUT: !12 = !DILocation(line: 7, column: 3, scope: !7)
+// CHECK:STDOUT: !13 = !DILocation(line: 8, column: 3, scope: !7)
+// CHECK:STDOUT: !14 = !DILocation(line: 9, column: 3, scope: !7)
+// CHECK:STDOUT: !15 = !DILocation(line: 11, column: 20, scope: !7)
+// CHECK:STDOUT: !16 = !DILocation(line: 12, column: 11, scope: !7)
+// CHECK:STDOUT: !17 = !DILocation(line: 12, column: 3, scope: !7)
+// CHECK:STDOUT: !18 = !DILocation(line: 13, column: 11, scope: !7)
+// CHECK:STDOUT: !19 = !DILocation(line: 13, column: 3, scope: !7)
+// CHECK:STDOUT: !20 = !DILocation(line: 14, column: 10, scope: !7)
+// CHECK:STDOUT: !21 = !DILocation(line: 14, column: 3, scope: !7)

@@ -673,6 +673,7 @@ auto InstNamer::PushEntity(ImplId impl_id, ScopeId scope_id, Scope& scope)
 
   // Push blocks in reverse order.
   PushGeneric(scope_id, impl.generic_id);
+  PushBlockId(scope_id, impl.witness_block_id);
   PushBlockId(scope_id, impl.body_block_id);
   PushBlockId(scope_id, impl.pattern_block_id);
 }

@@ -18,7 +18,7 @@ impl IntWrapper as Core.ImplicitAs(i32) {
   fn Convert[self: Self]() -> i32 { return self.n; }
 }
 
-fn Consume(n: i32) {}
+fn Consume(_: i32) {}
 
 fn DoIt() {
   var w: IntWrapper = {.n = 42};
@@ -39,7 +39,7 @@ fn DoIt() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CConsume.Main(i32 %n) #0 !dbg !13 {
+// CHECK:STDOUT: define void @_CConsume.Main(i32 %_) #0 !dbg !13 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }

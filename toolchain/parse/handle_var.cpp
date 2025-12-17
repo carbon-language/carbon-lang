@@ -25,7 +25,8 @@ static auto HandleVar(Context& context, StateKind finish_state_kind,
     context.AddLeafNode(NodeKind::ReturnedModifier, returned_token);
   }
 
-  context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/true);
+  context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/true,
+                              /*in_unused_pattern=*/false);
 }
 
 auto HandleVarAsRegular(Context& context) -> void {
@@ -142,7 +143,8 @@ auto HandleVariablePattern(Context& context) -> void {
   context.PushState(StateKind::FinishVariablePattern);
   context.ConsumeChecked(Lex::TokenKind::Var);
 
-  context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/true);
+  context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/true,
+                              state.in_unused_pattern);
 }
 
 auto HandleFinishVariablePattern(Context& context) -> void {

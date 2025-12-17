@@ -17,7 +17,7 @@ fn G() -> bool;
 fn H();
 
 fn For() {
-  for (n: i32 in Core.Range(100)) {
+  for (_: i32 in Core.Range(100)) {
     if (F()) { break; }
     if (G()) { continue; }
     H();

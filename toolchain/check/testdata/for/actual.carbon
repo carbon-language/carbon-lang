@@ -95,7 +95,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %Optional.Some.6de: %Optional.Some.type.2b8 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Optional.None.type.401: type = fn_type @Optional.None, @Optional(%T.8ba) [symbolic]
 // CHECK:STDOUT:   %Optional.None.c2f: %Optional.None.type.401 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness @IntRange.%Iterate.impl_witness_table, @IntRange.as.Iterate.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness @IntRange.as.Iterate.impl.%Iterate.impl_witness_table, @IntRange.as.Iterate.impl(%N) [symbolic]
 // CHECK:STDOUT:   %require_complete.fbb: <witness> = require_complete_type %Iterate_where.type [symbolic]
 // CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor.type: type = fn_type @IntRange.as.Iterate.impl.NewCursor, @IntRange.as.Iterate.impl(%N) [symbolic]
 // CHECK:STDOUT:   %IntRange.as.Iterate.impl.NewCursor: %IntRange.as.Iterate.impl.NewCursor.type = struct_value () [symbolic]
@@ -303,7 +303,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc9_54.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.7a8)]
 // CHECK:STDOUT:   %Copy.facet.loc9_85.1: %Copy.type = facet_value %Int.loc9_54.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet.loc9_85.1 (constants.%Copy.facet.118)]
 // CHECK:STDOUT:   %Iterate_where.type: type = facet_type <@Iterate where constants.%impl.elem1.ff5 = %Int.loc9_54.1 and constants.%impl.elem0.546 = %Copy.facet.loc9_85.1> [symbolic = %Iterate_where.type (constants.%Iterate_where.type)]
-// CHECK:STDOUT:   %Iterate.impl_witness: <witness> = impl_witness @IntRange.%Iterate.impl_witness_table, @IntRange.as.Iterate.impl(%N) [symbolic = %Iterate.impl_witness (constants.%Iterate.impl_witness)]
+// CHECK:STDOUT:   %Iterate.impl_witness.loc9_87.2: <witness> = impl_witness %Iterate.impl_witness_table, @IntRange.as.Iterate.impl(%N) [symbolic = %Iterate.impl_witness.loc9_87.2 (constants.%Iterate.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Iterate_where.type [symbolic = %require_complete (constants.%require_complete.fbb)]
@@ -368,12 +368,16 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:       %return.param: ref @IntRange.as.Iterate.impl.Next.%Optional.loc11_75.1 (%Optional.0d9) = out_param call_param2
 // CHECK:STDOUT:       %return: ref @IntRange.as.Iterate.impl.Next.%Optional.loc11_75.1 (%Optional.0d9) = return_slot %return.param
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %Iterate.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant.loc9_87.2, %impl_witness_assoc_constant.loc9_87.1, %IntRange.as.Iterate.impl.NewCursor.decl, %IntRange.as.Iterate.impl.Next.decl), @IntRange.as.Iterate.impl [concrete]
+// CHECK:STDOUT:     %Iterate.impl_witness.loc9_87.1: <witness> = impl_witness %Iterate.impl_witness_table, @IntRange.as.Iterate.impl(constants.%N) [symbolic = %Iterate.impl_witness.loc9_87.2 (constants.%Iterate.impl_witness)]
+// CHECK:STDOUT:     %impl_witness_assoc_constant.loc9_87.1: type = impl_witness_assoc_constant constants.%Int.fc6021.1 [symbolic = %Int.loc9_54.1 (constants.%Int.fc6021.1)]
+// CHECK:STDOUT:     %impl_witness_assoc_constant.loc9_87.2: %Copy.type = impl_witness_assoc_constant constants.%Copy.facet.118 [symbolic = %Copy.facet.loc9_85.1 (constants.%Copy.facet.118)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .N = <poisoned>
 // CHECK:STDOUT:     .NewCursor = %IntRange.as.Iterate.impl.NewCursor.decl
 // CHECK:STDOUT:     .Next = %IntRange.as.Iterate.impl.Next.decl
-// CHECK:STDOUT:     witness = @IntRange.%Iterate.impl_witness
+// CHECK:STDOUT:     witness = %Iterate.impl_witness.loc9_87.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -452,10 +456,6 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc9_85.2
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %Iterate.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant.loc9_87.2, %impl_witness_assoc_constant.loc9_87.1, @IntRange.as.Iterate.impl.%IntRange.as.Iterate.impl.NewCursor.decl, @IntRange.as.Iterate.impl.%IntRange.as.Iterate.impl.Next.decl), @IntRange.as.Iterate.impl [concrete]
-// CHECK:STDOUT:     %Iterate.impl_witness: <witness> = impl_witness %Iterate.impl_witness_table, @IntRange.as.Iterate.impl(constants.%N) [symbolic = @IntRange.as.Iterate.impl.%Iterate.impl_witness (constants.%Iterate.impl_witness)]
-// CHECK:STDOUT:     %impl_witness_assoc_constant.loc9_87.1: type = impl_witness_assoc_constant constants.%Int.fc6021.1 [symbolic = @IntRange.as.Iterate.impl.%Int.loc9_54.1 (constants.%Int.fc6021.1)]
-// CHECK:STDOUT:     %impl_witness_assoc_constant.loc9_87.2: %Copy.type = impl_witness_assoc_constant constants.%Copy.facet.118 [symbolic = @IntRange.as.Iterate.impl.%Copy.facet.loc9_85.1 (constants.%Copy.facet.118)]
 // CHECK:STDOUT:     %Core.ref.loc22: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %Int.ref.loc22: %Int.type = name_ref Int, imports.%Core.Int [concrete = constants.%Int.generic]
 // CHECK:STDOUT:     %N.ref.loc22: Core.IntLiteral = name_ref N, %N.loc4_16.2 [symbolic = %N.loc4_16.1 (constants.%N)]
@@ -766,7 +766,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.lookup_impl_witness.7a8
 // CHECK:STDOUT:   %Copy.facet.loc9_85.1 => constants.%Copy.facet.118
 // CHECK:STDOUT:   %Iterate_where.type => constants.%Iterate_where.type
-// CHECK:STDOUT:   %Iterate.impl_witness => constants.%Iterate.impl_witness
+// CHECK:STDOUT:   %Iterate.impl_witness.loc9_87.2 => constants.%Iterate.impl_witness
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.fbb

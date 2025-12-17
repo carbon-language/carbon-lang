@@ -102,10 +102,10 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %assoc0.62d: %WithAssocFn.assoc_type.b93 = assoc_entity element0, @WithAssocFn.%WithAssocFn.F.decl [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %Simple.type.1a3: type = facet_type <@Simple, @Simple(%C)> [concrete]
-// CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness @C.%Simple.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness @C.as.Simple.impl.%Simple.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.25c: %Simple.type.1a3 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %WithAssocFn.type.e28: type = facet_type <@WithAssocFn, @WithAssocFn(%C)> [concrete]
-// CHECK:STDOUT:   %WithAssocFn.impl_witness: <witness> = impl_witness @C.%WithAssocFn.impl_witness_table [concrete]
+// CHECK:STDOUT:   %WithAssocFn.impl_witness: <witness> = impl_witness @C.as.WithAssocFn.impl.%WithAssocFn.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.062: %WithAssocFn.type.e28 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %WithAssocFn.F.type.233: type = fn_type @WithAssocFn.F, @WithAssocFn(%C) [concrete]
 // CHECK:STDOUT:   %WithAssocFn.F.5a8: %WithAssocFn.F.type.233 = struct_value () [concrete]
@@ -249,8 +249,11 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.Simple.impl: %Self.ref as %Simple.type {
+// CHECK:STDOUT:   %Simple.impl_witness_table = impl_witness_table (), @C.as.Simple.impl [concrete]
+// CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table [concrete = constants.%Simple.impl_witness]
+// CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = @C.%Simple.impl_witness
+// CHECK:STDOUT:   witness = %Simple.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.WithAssocFn.impl: %Self.ref as %WithAssocFn.type {
@@ -262,11 +265,13 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:     %return.param: ref %X = out_param call_param0
 // CHECK:STDOUT:     %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %WithAssocFn.impl_witness_table = impl_witness_table (%C.as.WithAssocFn.impl.F.decl), @C.as.WithAssocFn.impl [concrete]
+// CHECK:STDOUT:   %WithAssocFn.impl_witness: <witness> = impl_witness %WithAssocFn.impl_witness_table [concrete = constants.%WithAssocFn.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .X = <poisoned>
 // CHECK:STDOUT:   .F = %C.as.WithAssocFn.impl.F.decl
-// CHECK:STDOUT:   witness = @C.%WithAssocFn.impl_witness
+// CHECK:STDOUT:   witness = %WithAssocFn.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @X {
@@ -284,16 +289,12 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %Simple.type: type = facet_type <@Simple, @Simple(constants.%C)> [concrete = constants.%Simple.type.1a3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Simple.impl_witness_table = impl_witness_table (), @C.as.Simple.impl [concrete]
-// CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table [concrete = constants.%Simple.impl_witness]
 // CHECK:STDOUT:   impl_decl @C.as.WithAssocFn.impl [concrete] {} {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %WithAssocFn.ref: %WithAssocFn.type.daa = name_ref WithAssocFn, file.%WithAssocFn.decl [concrete = constants.%WithAssocFn.generic]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %WithAssocFn.type: type = facet_type <@WithAssocFn, @WithAssocFn(constants.%C)> [concrete = constants.%WithAssocFn.type.e28]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %WithAssocFn.impl_witness_table = impl_witness_table (@C.as.WithAssocFn.impl.%C.as.WithAssocFn.impl.F.decl), @C.as.WithAssocFn.impl [concrete]
-// CHECK:STDOUT:   %WithAssocFn.impl_witness: <witness> = impl_witness %WithAssocFn.impl_witness_table [concrete = constants.%WithAssocFn.impl_witness]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

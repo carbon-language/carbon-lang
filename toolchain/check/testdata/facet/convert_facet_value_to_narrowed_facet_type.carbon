@@ -507,7 +507,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %A: %Animal.type = symbolic_binding A, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.71b: type = pattern_type %Animal.type [concrete]
 // CHECK:STDOUT:   %A.binding.as_type: type = symbolic_binding_type A, 0, %A [symbolic]
-// CHECK:STDOUT:   %Eats.impl_witness.bef: <witness> = impl_witness file.%Eats.impl_witness_table, @A.binding.as_type.as.Eats.impl(%A) [symbolic]
+// CHECK:STDOUT:   %Eats.impl_witness.bef: <witness> = impl_witness @A.binding.as_type.as.Eats.impl.%Eats.impl_witness_table, @A.binding.as_type.as.Eats.impl(%A) [symbolic]
 // CHECK:STDOUT:   %BitAndWith.type.f2e: type = generic_interface_type @BitAndWith [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %BitAndWith.generic: %BitAndWith.type.f2e = struct_value () [concrete]
@@ -538,7 +538,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:   %require_complete.7aa: <witness> = require_complete_type %W.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Animal.lookup_impl_witness: <witness> = lookup_impl_witness %W, @Animal [symbolic]
 // CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %W.binding.as_type, (%Animal.lookup_impl_witness) [symbolic]
-// CHECK:STDOUT:   %Eats.impl_witness.f70: <witness> = impl_witness file.%Eats.impl_witness_table, @A.binding.as_type.as.Eats.impl(%Animal.facet) [symbolic]
+// CHECK:STDOUT:   %Eats.impl_witness.f70: <witness> = impl_witness @A.binding.as_type.as.Eats.impl.%Eats.impl_witness_table, @A.binding.as_type.as.Eats.impl(%Animal.facet) [symbolic]
 // CHECK:STDOUT:   %.dc8: require_specific_def_type = require_specific_def @A.binding.as_type.as.Eats.impl(%Animal.facet) [symbolic]
 // CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %W, @Eats [symbolic]
 // CHECK:STDOUT:   %Tame.lookup_impl_witness: <witness> = lookup_impl_witness %W, @Tame [symbolic]
@@ -583,8 +583,6 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %A.loc7_14.1: %Animal.type = symbolic_binding A, 0 [symbolic = %A.loc7_14.2 (constants.%A)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Eats.impl_witness_table = impl_witness_table (), @A.binding.as_type.as.Eats.impl [concrete]
-// CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness %Eats.impl_witness_table, @A.binding.as_type.as.Eats.impl(constants.%A) [symbolic = @A.binding.as_type.as.Eats.impl.%Eats.impl_witness (constants.%Eats.impl_witness.bef)]
 // CHECK:STDOUT:   %FeedTame2.decl: %FeedTame2.type = fn_decl @FeedTame2 [concrete = constants.%FeedTame2] {
 // CHECK:STDOUT:     %V.patt: %pattern_type.556 = symbolic_binding_pattern V, 0 [concrete]
 // CHECK:STDOUT:     %v.patt: @FeedTame2.%pattern_type (%pattern_type.493) = value_binding_pattern v [concrete]
@@ -668,13 +666,16 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT: generic impl @A.binding.as_type.as.Eats.impl(%A.loc7_14.1: %Animal.type) {
 // CHECK:STDOUT:   %A.loc7_14.2: %Animal.type = symbolic_binding A, 0 [symbolic = %A.loc7_14.2 (constants.%A)]
 // CHECK:STDOUT:   %A.binding.as_type: type = symbolic_binding_type A, 0, %A.loc7_14.2 [symbolic = %A.binding.as_type (constants.%A.binding.as_type)]
-// CHECK:STDOUT:   %Eats.impl_witness: <witness> = impl_witness file.%Eats.impl_witness_table, @A.binding.as_type.as.Eats.impl(%A.loc7_14.2) [symbolic = %Eats.impl_witness (constants.%Eats.impl_witness.bef)]
+// CHECK:STDOUT:   %Eats.impl_witness.loc7_36.2: <witness> = impl_witness %Eats.impl_witness_table, @A.binding.as_type.as.Eats.impl(%A.loc7_14.2) [symbolic = %Eats.impl_witness.loc7_36.2 (constants.%Eats.impl_witness.bef)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc7_26 as %Eats.ref {
+// CHECK:STDOUT:     %Eats.impl_witness_table = impl_witness_table (), @A.binding.as_type.as.Eats.impl [concrete]
+// CHECK:STDOUT:     %Eats.impl_witness.loc7_36.1: <witness> = impl_witness %Eats.impl_witness_table, @A.binding.as_type.as.Eats.impl(constants.%A) [symbolic = %Eats.impl_witness.loc7_36.2 (constants.%Eats.impl_witness.bef)]
+// CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     witness = file.%Eats.impl_witness
+// CHECK:STDOUT:     witness = %Eats.impl_witness.loc7_36.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -724,7 +725,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT: specific @A.binding.as_type.as.Eats.impl(constants.%A) {
 // CHECK:STDOUT:   %A.loc7_14.2 => constants.%A
 // CHECK:STDOUT:   %A.binding.as_type => constants.%A.binding.as_type
-// CHECK:STDOUT:   %Eats.impl_witness => constants.%Eats.impl_witness.bef
+// CHECK:STDOUT:   %Eats.impl_witness.loc7_36.2 => constants.%Eats.impl_witness.bef
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedTame2(constants.%V) {
@@ -742,7 +743,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT: specific @A.binding.as_type.as.Eats.impl(constants.%Animal.facet) {
 // CHECK:STDOUT:   %A.loc7_14.2 => constants.%Animal.facet
 // CHECK:STDOUT:   %A.binding.as_type => constants.%W.binding.as_type
-// CHECK:STDOUT:   %Eats.impl_witness => constants.%Eats.impl_witness.f70
+// CHECK:STDOUT:   %Eats.impl_witness.loc7_36.2 => constants.%Eats.impl_witness.f70
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }

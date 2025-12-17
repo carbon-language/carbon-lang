@@ -281,6 +281,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
           // impl unusable for impl lookup.
           impl.witness_id = SemIR::ErrorInst::InstId;
         } else {
+          context.inst_block_stack().Push();
           // This makes either a placeholder witness table or a full witness
           // table. The full witness table is deferred to the impl definition
           // unless the declaration uses rewrite constraints to set values of
@@ -293,6 +294,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
           impl.witness_id = AddImplWitnessForDeclaration(
               context, node_id, impl,
               context.generics().GetSelfSpecific(impl.generic_id));
+          impl.witness_block_id = context.inst_block_stack().Pop();
         }
 
         FinishGenericDecl(context, node_id, impl.generic_id);

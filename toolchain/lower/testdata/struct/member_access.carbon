@@ -13,7 +13,7 @@
 fn Run() -> i32 {
   var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
   var y: i32 = x.b;
-  var z: i32 = y;
+  var _: i32 = y;
   return 0;
 }
 
@@ -27,7 +27,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { double, i32 }, align 8, !dbg !8
 // CHECK:STDOUT:   %y.var = alloca i32, align 4, !dbg !9
-// CHECK:STDOUT:   %z.var = alloca i32, align 4, !dbg !10
+// CHECK:STDOUT:   %_.var = alloca i32, align 4, !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !8
 // CHECK:STDOUT:   %.loc14_48.3.a = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 0, !dbg !11
 // CHECK:STDOUT:   %.loc14_48.6.b = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 1, !dbg !11
@@ -36,9 +36,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc15_17.1.b = getelementptr inbounds nuw { double, i32 }, ptr %x.var, i32 0, i32 1, !dbg !12
 // CHECK:STDOUT:   %.loc15_17.2 = load i32, ptr %.loc15_17.1.b, align 4, !dbg !12
 // CHECK:STDOUT:   store i32 %.loc15_17.2, ptr %y.var, align 4, !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %z.var), !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !10
 // CHECK:STDOUT:   %.loc16_16 = load i32, ptr %y.var, align 4, !dbg !13
-// CHECK:STDOUT:   store i32 %.loc16_16, ptr %z.var, align 4, !dbg !10
+// CHECK:STDOUT:   store i32 %.loc16_16, ptr %_.var, align 4, !dbg !10
 // CHECK:STDOUT:   ret i32 0, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -34,12 +34,12 @@ package Create;
 import Classes;
 
 fn Create() {
-  var b: Classes.Base = {};
-  var i: Classes.Intermediate = {.base = {}};
-  var d: Classes.Derived = {.base = {.base = {}}};
+  var _: Classes.Base = {};
+  var _: Classes.Intermediate = {.base = {}};
+  var _: Classes.Derived = {.base = {.base = {}}};
   // Implicit initialization creates an object with the unformed state, which
   // doesn't include vptr initialization.
-  var d2: Classes.Derived;
+  var _: Classes.Derived;
 }
 
 fn Use(v: Classes.Intermediate*) {
@@ -59,7 +59,7 @@ fn Fn() {
   var i: i32 = 3;
   var v: Base = {.m = i};
   v.m = 5;
-  var u: Base = {.m = 3};
+  var _: Base = {.m = 3};
 }
 
 // --- member_brace_init.carbon
@@ -75,7 +75,7 @@ class Derived {
 }
 
 fn Use() {
-  var v : Derived = {.base = {}};
+  var _ : Derived = {.base = {}};
 }
 
 // --- call.carbon
@@ -122,7 +122,7 @@ library "[[@TEST_NAME]]";
 
 base class Base(T:! Core.Destroy) {
   virtual fn F[self: Self]() {
-    var v: T;
+    var _: T;
   }
 }
 
@@ -132,8 +132,8 @@ class T2 {
 }
 
 fn F() {
-  var t1: Base(T1) = {};
-  var t2: Base(T2) = {};
+  var _: Base(T1) = {};
+  var _: Base(T2) = {};
 }
 
 // --- generic_base.carbon
@@ -151,7 +151,7 @@ class Derived {
 }
 
 fn Make() {
-  var v: Derived;
+  var _: Derived;
 }
 
 // CHECK:STDOUT: ; ModuleID = 'classes.carbon'
@@ -204,22 +204,22 @@ fn Make() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCreate.Create() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %b.var = alloca {}, align 8, !dbg !7
-// CHECK:STDOUT:   %i.var = alloca { ptr, {} }, align 8, !dbg !8
-// CHECK:STDOUT:   %d.var = alloca { { ptr, {} } }, align 8, !dbg !9
-// CHECK:STDOUT:   %d2.var = alloca { { ptr, {} } }, align 8, !dbg !10
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !7
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %b.var, ptr align 1 @Base.val.loc7_3, i64 0, i1 false), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %i.var), !dbg !8
-// CHECK:STDOUT:   %.loc8_44.2.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %i.var, i32 0, i32 0, !dbg !11
-// CHECK:STDOUT:   %.loc8_44.4.base = getelementptr inbounds nuw { ptr, {} }, ptr %i.var, i32 0, i32 1, !dbg !11
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %i.var, ptr align 8 @Intermediate.val.ec2.loc8_3, i64 8, i1 false), !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %d.var), !dbg !9
-// CHECK:STDOUT:   %.loc9_49.2.base = getelementptr inbounds nuw { { ptr, {} } }, ptr %d.var, i32 0, i32 0, !dbg !12
+// CHECK:STDOUT:   %_.var.loc7 = alloca {}, align 8, !dbg !7
+// CHECK:STDOUT:   %_.var.loc8 = alloca { ptr, {} }, align 8, !dbg !8
+// CHECK:STDOUT:   %_.var.loc9 = alloca { { ptr, {} } }, align 8, !dbg !9
+// CHECK:STDOUT:   %_.var.loc12 = alloca { { ptr, {} } }, align 8, !dbg !10
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc7), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %_.var.loc7, ptr align 1 @Base.val.loc7_3, i64 0, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc8), !dbg !8
+// CHECK:STDOUT:   %.loc8_44.2.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %_.var.loc8, i32 0, i32 0, !dbg !11
+// CHECK:STDOUT:   %.loc8_44.4.base = getelementptr inbounds nuw { ptr, {} }, ptr %_.var.loc8, i32 0, i32 1, !dbg !11
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var.loc8, ptr align 8 @Intermediate.val.ec2.loc8_3, i64 8, i1 false), !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc9), !dbg !9
+// CHECK:STDOUT:   %.loc9_49.2.base = getelementptr inbounds nuw { { ptr, {} } }, ptr %_.var.loc9, i32 0, i32 0, !dbg !12
 // CHECK:STDOUT:   %.loc9_48.2.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %.loc9_49.2.base, i32 0, i32 0, !dbg !13
 // CHECK:STDOUT:   %.loc9_48.4.base = getelementptr inbounds nuw { ptr, {} }, ptr %.loc9_49.2.base, i32 0, i32 1, !dbg !13
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %d.var, ptr align 8 @Derived.val.loc9_3, i64 8, i1 false), !dbg !9
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %d2.var), !dbg !10
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var.loc9, ptr align 8 @Derived.val.loc9_3, i64 8, i1 false), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc12), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -297,7 +297,7 @@ fn Make() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %i.var = alloca i32, align 4, !dbg !14
 // CHECK:STDOUT:   %v.var = alloca { ptr, i32 }, align 8, !dbg !15
-// CHECK:STDOUT:   %u.var = alloca { ptr, i32 }, align 8, !dbg !16
+// CHECK:STDOUT:   %_.var = alloca { ptr, i32 }, align 8, !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %i.var), !dbg !14
 // CHECK:STDOUT:   store i32 3, ptr %i.var, align 4, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !15
@@ -308,10 +308,10 @@ fn Make() {
 // CHECK:STDOUT:   store ptr @"_CBase.MemberInit.$vtable", ptr %.loc11_24.2.vptr, align 8, !dbg !17
 // CHECK:STDOUT:   %.loc12_4.m = getelementptr inbounds nuw { ptr, i32 }, ptr %v.var, i32 0, i32 1, !dbg !19
 // CHECK:STDOUT:   store i32 5, ptr %.loc12_4.m, align 4, !dbg !19
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %u.var), !dbg !16
-// CHECK:STDOUT:   %.loc13_24.2.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %u.var, i32 0, i32 0, !dbg !20
-// CHECK:STDOUT:   %.loc13_24.5.m = getelementptr inbounds nuw { ptr, i32 }, ptr %u.var, i32 0, i32 1, !dbg !20
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %u.var, ptr align 8 @Base.val.loc13_3, i64 16, i1 false), !dbg !16
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !16
+// CHECK:STDOUT:   %.loc13_24.2.vptr = getelementptr inbounds nuw { ptr, i32 }, ptr %_.var, i32 0, i32 0, !dbg !20
+// CHECK:STDOUT:   %.loc13_24.5.m = getelementptr inbounds nuw { ptr, i32 }, ptr %_.var, i32 0, i32 1, !dbg !20
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var, ptr align 8 @Base.val.loc13_3, i64 16, i1 false), !dbg !16
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -365,11 +365,11 @@ fn Make() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CUse.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %v.var = alloca { { ptr } }, align 8, !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !7
-// CHECK:STDOUT:   %.loc13_32.2.base = getelementptr inbounds nuw { { ptr } }, ptr %v.var, i32 0, i32 0, !dbg !8
+// CHECK:STDOUT:   %_.var = alloca { { ptr } }, align 8, !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !7
+// CHECK:STDOUT:   %.loc13_32.2.base = getelementptr inbounds nuw { { ptr } }, ptr %_.var, i32 0, i32 0, !dbg !8
 // CHECK:STDOUT:   %.loc13_31.2.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc13_32.2.base, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %v.var, ptr align 8 @Derived.val.loc13_3, i64 8, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var, ptr align 8 @Derived.val.loc13_3, i64 8, i1 false), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -509,30 +509,30 @@ fn Make() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %t1.var = alloca { ptr }, align 8, !dbg !7
-// CHECK:STDOUT:   %t2.var = alloca { ptr }, align 8, !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %t1.var), !dbg !7
-// CHECK:STDOUT:   %.loc16_23.2.vptr = getelementptr inbounds nuw { ptr }, ptr %t1.var, i32 0, i32 0, !dbg !9
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %t1.var, ptr align 8 @Base.val.439.loc16_3, i64 8, i1 false), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %t2.var), !dbg !8
-// CHECK:STDOUT:   %.loc17_23.2.vptr = getelementptr inbounds nuw { ptr }, ptr %t2.var, i32 0, i32 0, !dbg !10
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %t2.var, ptr align 8 @Base.val.5bf.loc17_3, i64 8, i1 false), !dbg !8
+// CHECK:STDOUT:   %_.var.loc16 = alloca { ptr }, align 8, !dbg !7
+// CHECK:STDOUT:   %_.var.loc17 = alloca { ptr }, align 8, !dbg !8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc16), !dbg !7
+// CHECK:STDOUT:   %.loc16_22.2.vptr = getelementptr inbounds nuw { ptr }, ptr %_.var.loc16, i32 0, i32 0, !dbg !9
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var.loc16, ptr align 8 @Base.val.439.loc16_3, i64 8, i1 false), !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc17), !dbg !8
+// CHECK:STDOUT:   %.loc17_22.2.vptr = getelementptr inbounds nuw { ptr }, ptr %_.var.loc17, i32 0, i32 0, !dbg !10
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var.loc17, ptr align 8 @Base.val.5bf.loc17_3, i64 8, i1 false), !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.4ff89889d3f52e25(ptr %self) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %v.var = alloca {}, align 8, !dbg !18
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !18
+// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !18
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Base.Main.af40b72a3cc0ef58(ptr %self) #0 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %v.var = alloca { {} }, align 8, !dbg !23
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !23
+// CHECK:STDOUT:   %_.var = alloca { {} }, align 8, !dbg !23
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !23
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -562,8 +562,8 @@ fn Make() {
 // CHECK:STDOUT: !6 = !{null}
 // CHECK:STDOUT: !7 = !DILocation(line: 16, column: 3, scope: !4)
 // CHECK:STDOUT: !8 = !DILocation(line: 17, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 22, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 17, column: 22, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 16, column: 21, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 17, column: 21, scope: !4)
 // CHECK:STDOUT: !11 = !DILocation(line: 15, column: 1, scope: !4)
 // CHECK:STDOUT: !12 = distinct !DISubprogram(name: "F", linkageName: "_CF.Base.Main.4ff89889d3f52e25", scope: null, file: !3, line: 5, type: !13, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !16)
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
@@ -586,8 +586,8 @@ fn Make() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMake.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %v.var = alloca { { ptr } }, align 8, !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !7
+// CHECK:STDOUT:   %_.var = alloca { { ptr } }, align 8, !dbg !7
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -12,10 +12,10 @@
 
 fn MaybeUnformedBuiltin(t: type) -> type = "maybe_unformed.make_type";
 
-fn TakeI32(x: MaybeUnformedBuiltin(i32)) {}
+fn TakeI32(_: MaybeUnformedBuiltin(i32)) {}
 fn MakeI32() -> MaybeUnformedBuiltin(i32);
 
-fn TakeBool(x: MaybeUnformedBuiltin(bool)) {}
+fn TakeBool(_: MaybeUnformedBuiltin(bool)) {}
 fn MakeBool() -> MaybeUnformedBuiltin(bool);
 
 fn PassI32() {
@@ -39,7 +39,7 @@ class MaybeUnformedAdapter(T:! type) {
   adapt MaybeUnformedBuiltin(T);
 }
 
-fn TakeAdapterI32(x: MaybeUnformedAdapter(i32)) {}
+fn TakeAdapterI32(_: MaybeUnformedAdapter(i32)) {}
 fn MakeAdapterI32() -> MaybeUnformedAdapter(i32);
 
 fn PassAdapterI32() {
@@ -48,7 +48,7 @@ fn PassAdapterI32() {
   TakeAdapterI32(MakeAdapterI32());
 }
 
-fn TakeAdapterBool(x: MaybeUnformedAdapter(bool)) {}
+fn TakeAdapterBool(_: MaybeUnformedAdapter(bool)) {}
 fn MakeAdapterBool() -> MaybeUnformedAdapter(bool);
 
 fn PassAdapterBool() {
@@ -59,7 +59,7 @@ fn PassAdapterBool() {
 // CHECK:STDOUT: source_filename = "maybe_unformed.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CTakeI32.Main(i32 %x) #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CTakeI32.Main(i32 %_) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
@@ -67,7 +67,7 @@ fn PassAdapterBool() {
 // CHECK:STDOUT: declare i32 @_CMakeI32.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CTakeBool.Main(ptr %x) #0 !dbg !11 {
+// CHECK:STDOUT: define void @_CTakeBool.Main(ptr %_) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
@@ -100,7 +100,7 @@ fn PassAdapterBool() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CTakeAdapterI32.Main(i32 %x) #0 !dbg !33 {
+// CHECK:STDOUT: define void @_CTakeAdapterI32.Main(i32 %_) #0 !dbg !33 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !36
 // CHECK:STDOUT: }
@@ -120,7 +120,7 @@ fn PassAdapterBool() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CTakeAdapterBool.Main(ptr %x) #0 !dbg !41 {
+// CHECK:STDOUT: define void @_CTakeAdapterBool.Main(ptr %_) #0 !dbg !41 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !44
 // CHECK:STDOUT: }

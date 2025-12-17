@@ -19,7 +19,7 @@ fn F(c: C) -> C;
 
 fn Run() {
   var c: C;
-  var d: C = F(c);
+  var _: C = F(c);
 }
 
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
@@ -31,10 +31,10 @@ fn Run() {
 // CHECK:STDOUT: define void @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca { i32, ptr }, align 8, !dbg !7
-// CHECK:STDOUT:   %d.var = alloca { i32, ptr }, align 8, !dbg !8
+// CHECK:STDOUT:   %_.var = alloca { i32, ptr }, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !7
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %d.var), !dbg !8
-// CHECK:STDOUT:   call void @_CF.Main(ptr %d.var, ptr %c.var), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !8
+// CHECK:STDOUT:   call void @_CF.Main(ptr %_.var, ptr %c.var), !dbg !9
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

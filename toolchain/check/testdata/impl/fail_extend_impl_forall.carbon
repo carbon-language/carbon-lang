@@ -43,7 +43,7 @@ class C {
 // CHECK:STDOUT:   %GenericInterface.assoc_type: type = assoc_entity_type @GenericInterface, @GenericInterface(%T) [symbolic]
 // CHECK:STDOUT:   %assoc0: %GenericInterface.assoc_type = assoc_entity element0, @GenericInterface.%GenericInterface.F.decl [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %GenericInterface.impl_witness: <witness> = impl_witness @C.%GenericInterface.impl_witness_table, @C.as.GenericInterface.impl(%T) [symbolic]
+// CHECK:STDOUT:   %GenericInterface.impl_witness: <witness> = impl_witness @C.as.GenericInterface.impl.%GenericInterface.impl_witness_table, @C.as.GenericInterface.impl(%T) [symbolic]
 // CHECK:STDOUT:   %C.as.GenericInterface.impl.F.type: type = fn_type @C.as.GenericInterface.impl.F, @C.as.GenericInterface.impl(%T) [symbolic]
 // CHECK:STDOUT:   %C.as.GenericInterface.impl.F: %C.as.GenericInterface.impl.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -101,7 +101,7 @@ class C {
 // CHECK:STDOUT: generic impl @C.as.GenericInterface.impl(%T.loc24_23.2: type) {
 // CHECK:STDOUT:   %T.loc24_23.1: type = symbolic_binding T, 0 [symbolic = %T.loc24_23.1 (constants.%T)]
 // CHECK:STDOUT:   %GenericInterface.type.loc24_54.1: type = facet_type <@GenericInterface, @GenericInterface(%T.loc24_23.1)> [symbolic = %GenericInterface.type.loc24_54.1 (constants.%GenericInterface.type.690)]
-// CHECK:STDOUT:   %GenericInterface.impl_witness: <witness> = impl_witness @C.%GenericInterface.impl_witness_table, @C.as.GenericInterface.impl(%T.loc24_23.1) [symbolic = %GenericInterface.impl_witness (constants.%GenericInterface.impl_witness)]
+// CHECK:STDOUT:   %GenericInterface.impl_witness.loc24_56.2: <witness> = impl_witness %GenericInterface.impl_witness_table, @C.as.GenericInterface.impl(%T.loc24_23.1) [symbolic = %GenericInterface.impl_witness.loc24_56.2 (constants.%GenericInterface.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C.as.GenericInterface.impl.F.type: type = fn_type @C.as.GenericInterface.impl.F, @C.as.GenericInterface.impl(%T.loc24_23.1) [symbolic = %C.as.GenericInterface.impl.F.type (constants.%C.as.GenericInterface.impl.F.type)]
@@ -116,6 +116,8 @@ class C {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @C.as.GenericInterface.impl.%T.loc24_23.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %x: @C.as.GenericInterface.impl.F.%T (%T) = value_binding x, %x.param
 // CHECK:STDOUT:     }
+// CHECK:STDOUT:     %GenericInterface.impl_witness_table = impl_witness_table (), @C.as.GenericInterface.impl [concrete]
+// CHECK:STDOUT:     %GenericInterface.impl_witness.loc24_56.1: <witness> = impl_witness %GenericInterface.impl_witness_table, @C.as.GenericInterface.impl(constants.%T) [symbolic = %GenericInterface.impl_witness.loc24_56.2 (constants.%GenericInterface.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .T = <poisoned>
@@ -135,8 +137,6 @@ class C {
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc24_23.2: type = symbolic_binding T, 0 [symbolic = %T.loc24_23.1 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %GenericInterface.impl_witness_table = impl_witness_table (), @C.as.GenericInterface.impl [concrete]
-// CHECK:STDOUT:   %GenericInterface.impl_witness: <witness> = impl_witness %GenericInterface.impl_witness_table, @C.as.GenericInterface.impl(constants.%T) [symbolic = @C.as.GenericInterface.impl.%GenericInterface.impl_witness (constants.%GenericInterface.impl_witness)]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -178,7 +178,7 @@ class C {
 // CHECK:STDOUT: specific @C.as.GenericInterface.impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc24_23.1 => constants.%T
 // CHECK:STDOUT:   %GenericInterface.type.loc24_54.1 => constants.%GenericInterface.type.690
-// CHECK:STDOUT:   %GenericInterface.impl_witness => constants.%GenericInterface.impl_witness
+// CHECK:STDOUT:   %GenericInterface.impl_witness.loc24_56.2 => constants.%GenericInterface.impl_witness
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C.as.GenericInterface.impl.F.type => constants.%C.as.GenericInterface.impl.F.type

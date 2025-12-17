@@ -13,7 +13,7 @@
 fn F() -> (i32, i32) { return (12, 24); }
 
 fn Run() {
-  var t: i32 = F().1;
+  var _: i32 = F().1;
 }
 
 // CHECK:STDOUT: ; ModuleID = 'return_value_access.carbon'
@@ -33,14 +33,14 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @main() #0 !dbg !10 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %t.var = alloca i32, align 4, !dbg !13
+// CHECK:STDOUT:   %_.var = alloca i32, align 4, !dbg !13
 // CHECK:STDOUT:   %.loc16_18.1.temp = alloca { i32, i32 }, align 8, !dbg !14
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %t.var), !dbg !13
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !13
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_18.1.temp), !dbg !14
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_18.1.temp), !dbg !14
 // CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc16_18.1.temp, i32 0, i32 1, !dbg !14
 // CHECK:STDOUT:   %.loc16_19 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !14
-// CHECK:STDOUT:   store i32 %.loc16_19, ptr %t.var, align 4, !dbg !13
+// CHECK:STDOUT:   store i32 %.loc16_19, ptr %_.var, align 4, !dbg !13
 // CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

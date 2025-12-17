@@ -146,15 +146,14 @@ class Derived {
   var d: {};
 }
 
+// CHECK:STDERR: fail_return_abstract.carbon:[[@LINE+7]]:27: error: function returns abstract type `Abstract` [AbstractTypeInFunctionReturnType]
+// CHECK:STDERR: fn Return(a: Abstract) -> Abstract {
+// CHECK:STDERR:                           ^~~~~~~~
+// CHECK:STDERR: fail_return_abstract.carbon:[[@LINE-12]]:1: note: class was declared abstract here [ClassAbstractHere]
+// CHECK:STDERR: abstract class Abstract {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 fn Return(a: Abstract) -> Abstract {
-  // TODO: Seems like this would be better off failing with "function returns abstract type" here instead of this \/
-  // CHECK:STDERR: fail_return_abstract.carbon:[[@LINE+7]]:3: error: initialization of abstract type `Abstract` [AbstractTypeInInit]
-  // CHECK:STDERR:   return a;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_return_abstract.carbon:[[@LINE-14]]:1: note: class was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   return a;
 }
 
@@ -643,9 +642,9 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Abstract.ref.loc13_27: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
+// CHECK:STDOUT:     %Abstract.ref.loc20_27: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:     %a.param: %Abstract = value_param call_param0
-// CHECK:STDOUT:     %Abstract.ref.loc13_14: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
+// CHECK:STDOUT:     %Abstract.ref.loc20_14: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
 // CHECK:STDOUT:     %a: %Abstract = value_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %Abstract = out_param call_param1
 // CHECK:STDOUT:     %return: ref %Abstract = return_slot %return.param
@@ -677,10 +676,10 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   extend %Abstract.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Return(%a.param: %Abstract) -> %return.param: %Abstract {
+// CHECK:STDOUT: fn @Return(%a.param: %Abstract) -> %Abstract {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Abstract = name_ref a, %a
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- access_abstract_subobject.carbon
@@ -871,7 +870,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   .Self = constants.%Abstract
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnAbstract() -> %return.param: %Abstract;
+// CHECK:STDOUT: fn @ReturnAbstract() -> %Abstract;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallReturnAbstract() {
 // CHECK:STDOUT: !entry:

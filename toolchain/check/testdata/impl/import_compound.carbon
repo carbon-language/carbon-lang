@@ -110,7 +110,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %assoc0.8b2: %NonInstance.assoc_type = assoc_entity element0, @NonInstance.%NonInstance.F.decl [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct_type.i: type = struct_type {.i: %empty_tuple.type} [concrete]
-// CHECK:STDOUT:   %NonInstance.impl_witness: <witness> = impl_witness file.%NonInstance.impl_witness_table [concrete]
+// CHECK:STDOUT:   %NonInstance.impl_witness: <witness> = impl_witness @struct_type.i.as.NonInstance.impl.%NonInstance.impl_witness_table [concrete]
 // CHECK:STDOUT:   %struct_type.i.as.NonInstance.impl.F.type: type = fn_type @struct_type.i.as.NonInstance.impl.F [concrete]
 // CHECK:STDOUT:   %struct_type.i.as.NonInstance.impl.F: %struct_type.i.as.NonInstance.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %NonInstance.facet: %NonInstance.type = facet_value %struct_type.i, (%NonInstance.impl_witness) [concrete]
@@ -122,7 +122,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Instance.G: %Instance.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Instance.assoc_type: type = assoc_entity_type @Instance [concrete]
 // CHECK:STDOUT:   %assoc0.2e5: %Instance.assoc_type = assoc_entity element0, @Instance.%Instance.G.decl [concrete]
-// CHECK:STDOUT:   %Instance.impl_witness: <witness> = impl_witness file.%Instance.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Instance.impl_witness: <witness> = impl_witness @struct_type.i.as.Instance.impl.%Instance.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.9b2: type = pattern_type %struct_type.i [concrete]
 // CHECK:STDOUT:   %struct_type.i.as.Instance.impl.G.type: type = fn_type @struct_type.i.as.Instance.impl.G [concrete]
 // CHECK:STDOUT:   %struct_type.i.as.Instance.impl.G: %struct_type.i.as.Instance.impl.G.type = struct_value () [concrete]
@@ -150,8 +150,6 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:     %struct_type.i: type = struct_type {.i: %empty_tuple.type} [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:     %NonInstance.ref: type = name_ref NonInstance, file.%NonInstance.decl [concrete = constants.%NonInstance.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %NonInstance.impl_witness_table = impl_witness_table (@struct_type.i.as.NonInstance.impl.%struct_type.i.as.NonInstance.impl.F.decl), @struct_type.i.as.NonInstance.impl [concrete]
-// CHECK:STDOUT:   %NonInstance.impl_witness: <witness> = impl_witness %NonInstance.impl_witness_table [concrete = constants.%NonInstance.impl_witness]
 // CHECK:STDOUT:   %Instance.decl: type = interface_decl @Instance [concrete = constants.%Instance.type] {} {}
 // CHECK:STDOUT:   impl_decl @struct_type.i.as.Instance.impl [concrete] {} {
 // CHECK:STDOUT:     %.loc15_12.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
@@ -159,8 +157,6 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:     %struct_type.i: type = struct_type {.i: %empty_tuple.type} [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:     %Instance.ref: type = name_ref Instance, file.%Instance.decl [concrete = constants.%Instance.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Instance.impl_witness_table = impl_witness_table (@struct_type.i.as.Instance.impl.%struct_type.i.as.Instance.impl.G.decl), @struct_type.i.as.Instance.impl [concrete]
-// CHECK:STDOUT:   %Instance.impl_witness: <witness> = impl_witness %Instance.impl_witness_table [concrete = constants.%Instance.impl_witness]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NonInstance {
@@ -202,10 +198,12 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @struct_type.i.as.NonInstance.impl: %struct_type.i as %NonInstance.ref {
 // CHECK:STDOUT:   %struct_type.i.as.NonInstance.impl.F.decl: %struct_type.i.as.NonInstance.impl.F.type = fn_decl @struct_type.i.as.NonInstance.impl.F [concrete = constants.%struct_type.i.as.NonInstance.impl.F] {} {}
+// CHECK:STDOUT:   %NonInstance.impl_witness_table = impl_witness_table (%struct_type.i.as.NonInstance.impl.F.decl), @struct_type.i.as.NonInstance.impl [concrete]
+// CHECK:STDOUT:   %NonInstance.impl_witness: <witness> = impl_witness %NonInstance.impl_witness_table [concrete = constants.%NonInstance.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .F = %struct_type.i.as.NonInstance.impl.F.decl
-// CHECK:STDOUT:   witness = file.%NonInstance.impl_witness
+// CHECK:STDOUT:   witness = %NonInstance.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @struct_type.i.as.Instance.impl: %struct_type.i as %Instance.ref {
@@ -217,10 +215,12 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @struct_type.i.as.Instance.impl.%struct_type.i [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:     %self: %struct_type.i = value_binding self, %self.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Instance.impl_witness_table = impl_witness_table (%struct_type.i.as.Instance.impl.G.decl), @struct_type.i.as.Instance.impl [concrete]
+// CHECK:STDOUT:   %Instance.impl_witness: <witness> = impl_witness %Instance.impl_witness_table [concrete = constants.%Instance.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .G = %struct_type.i.as.Instance.impl.G.decl
-// CHECK:STDOUT:   witness = file.%Instance.impl_witness
+// CHECK:STDOUT:   witness = %Instance.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @NonInstance.F(@NonInstance.%Self: %NonInstance.type) {

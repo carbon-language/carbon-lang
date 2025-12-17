@@ -33,7 +33,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness file.%Simple.impl_witness_table, @T.as.Simple.impl(%T) [symbolic]
+// CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness @T.as.Simple.impl.%Simple.impl_witness_table, @T.as.Simple.impl(%T) [symbolic]
 // CHECK:STDOUT:   %T.as.Simple.impl.F.type: type = fn_type @T.as.Simple.impl.F, @T.as.Simple.impl(%T) [symbolic]
 // CHECK:STDOUT:   %T.as.Simple.impl.F: %T.as.Simple.impl.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %T, (%Simple.impl_witness) [symbolic]
@@ -52,8 +52,6 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc19_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc19_14.1 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Simple.impl_witness_table = impl_witness_table (@T.as.Simple.impl.%T.as.Simple.impl.F.decl), @T.as.Simple.impl [concrete]
-// CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness %Simple.impl_witness_table, @T.as.Simple.impl(constants.%T) [symbolic = @T.as.Simple.impl.%Simple.impl_witness (constants.%Simple.impl_witness)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Simple {
@@ -71,7 +69,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic impl @T.as.Simple.impl(%T.loc19_14.2: type) {
 // CHECK:STDOUT:   %T.loc19_14.1: type = symbolic_binding T, 0 [symbolic = %T.loc19_14.1 (constants.%T)]
-// CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness file.%Simple.impl_witness_table, @T.as.Simple.impl(%T.loc19_14.1) [symbolic = %Simple.impl_witness (constants.%Simple.impl_witness)]
+// CHECK:STDOUT:   %Simple.impl_witness.loc19_36.2: <witness> = impl_witness %Simple.impl_witness_table, @T.as.Simple.impl(%T.loc19_14.1) [symbolic = %Simple.impl_witness.loc19_36.2 (constants.%Simple.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as.Simple.impl.F.type: type = fn_type @T.as.Simple.impl.F, @T.as.Simple.impl(%T.loc19_14.1) [symbolic = %T.as.Simple.impl.F.type (constants.%T.as.Simple.impl.F.type)]
@@ -79,10 +77,12 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %T.ref as %Simple.ref {
 // CHECK:STDOUT:     %T.as.Simple.impl.F.decl: @T.as.Simple.impl.%T.as.Simple.impl.F.type (%T.as.Simple.impl.F.type) = fn_decl @T.as.Simple.impl.F [symbolic = @T.as.Simple.impl.%T.as.Simple.impl.F (constants.%T.as.Simple.impl.F)] {} {}
+// CHECK:STDOUT:     %Simple.impl_witness_table = impl_witness_table (%T.as.Simple.impl.F.decl), @T.as.Simple.impl [concrete]
+// CHECK:STDOUT:     %Simple.impl_witness.loc19_36.1: <witness> = impl_witness %Simple.impl_witness_table, @T.as.Simple.impl(constants.%T) [symbolic = %Simple.impl_witness.loc19_36.2 (constants.%Simple.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .F = %T.as.Simple.impl.F.decl
-// CHECK:STDOUT:     witness = file.%Simple.impl_witness
+// CHECK:STDOUT:     witness = %Simple.impl_witness.loc19_36.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -103,7 +103,7 @@ impl forall [T:! type] T as Simple {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.as.Simple.impl(constants.%T) {
 // CHECK:STDOUT:   %T.loc19_14.1 => constants.%T
-// CHECK:STDOUT:   %Simple.impl_witness => constants.%Simple.impl_witness
+// CHECK:STDOUT:   %Simple.impl_witness.loc19_36.2 => constants.%Simple.impl_witness
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as.Simple.impl.F.type => constants.%T.as.Simple.impl.F.type

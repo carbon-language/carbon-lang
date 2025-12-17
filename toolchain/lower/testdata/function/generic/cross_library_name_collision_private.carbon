@@ -14,7 +14,7 @@
 
 library "[[@TEST_NAME]]";
 
-private fn F[T:! Core.Copy](a: T, b: T) -> T {
+private fn F[T:! Core.Copy](a: T, _: T) -> T {
   return a;
 }
 
@@ -29,7 +29,7 @@ library "[[@TEST_NAME]]";
 // Duplicate function name in different files. Shouldn't be a name conflict
 // because of `private`. However, we currently use the same mangling for both
 // functions.
-private fn F[T:! Core.Copy](a: T, b: T) -> T {
+private fn F[T:! Core.Copy](_: T, b: T) -> T {
   return b;
 }
 
@@ -47,8 +47,8 @@ import library "lib1";
 import library "lib2";
 
 fn Run() {
-  let a: i32 = Lib1CallF(1 as i32, 2 as i32);
-  let b: i32 = Lib2CallF(1 as i32, 2 as i32);
+  let _: i32 = Lib1CallF(1 as i32, 2 as i32);
+  let _: i32 = Lib2CallF(1 as i32, 2 as i32);
 }
 
 // CHECK:STDOUT: ; ModuleID = 'lib1.carbon'
@@ -95,7 +95,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.d7c78c5f84c57c86(i32 %a, i32 %b) #0 !dbg !27 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.d7c78c5f84c57c86(i32 %a, i32 %_) #0 !dbg !27 {
 // CHECK:STDOUT:   ret i32 %a, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

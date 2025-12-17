@@ -69,7 +69,7 @@ impl i32 as I {
 // CHECK:STDOUT:   %assoc0.524: %I.assoc_type = assoc_entity element0, @I.%I.F.decl [concrete]
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
-// CHECK:STDOUT:   %I.impl_witness.dac: <witness> = impl_witness file.%I.impl_witness_table.loc28 [concrete]
+// CHECK:STDOUT:   %I.impl_witness.dac: <witness> = impl_witness @bool.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet.8da: %I.type = facet_value bool, (%I.impl_witness.dac) [concrete]
 // CHECK:STDOUT:   %C.fb0: type = class_type @C, @C(%I.type, %I.facet.8da) [concrete]
 // CHECK:STDOUT:   %pattern_type.a26: type = pattern_type %C.fb0 [concrete]
@@ -79,7 +79,7 @@ impl i32 as I {
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %I.impl_witness.5e1: <witness> = impl_witness file.%I.impl_witness_table.loc35 [concrete]
+// CHECK:STDOUT:   %I.impl_witness.5e1: <witness> = impl_witness @i32.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.899: type = class_type @C, @C(type, %i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.619: type = pattern_type %C.899 [concrete]
 // CHECK:STDOUT:   %i32.as.I.impl.F.type.cea5c5.1: type = fn_type @i32.as.I.impl.F.loc43_18.1 [concrete]
@@ -132,15 +132,11 @@ impl i32 as I {
 // CHECK:STDOUT:     %.loc28_6.2: type = converted %Bool.call, %.loc28_6.1 [concrete = bool]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table.loc28 = impl_witness_table (@bool.as.I.impl.%bool.as.I.impl.F.decl), @bool.as.I.impl [concrete]
-// CHECK:STDOUT:   %I.impl_witness.loc28: <witness> = impl_witness %I.impl_witness_table.loc28 [concrete = constants.%I.impl_witness.dac]
 // CHECK:STDOUT:   impl_decl @i32.as.I.impl [concrete] {} {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.impl_witness_table.loc35 = impl_witness_table (@i32.as.I.impl.%i32.as.I.impl.F.decl.loc43_18.2), @i32.as.I.impl [concrete]
-// CHECK:STDOUT:   %I.impl_witness.loc35: <witness> = impl_witness %I.impl_witness_table.loc35 [concrete = constants.%I.impl_witness.5e1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -184,12 +180,14 @@ impl i32 as I {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %C.fb0 = value_binding c, %c.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%bool.as.I.impl.F.decl), @bool.as.I.impl [concrete]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.dac]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .I = <poisoned>
 // CHECK:STDOUT:   .F = %bool.as.I.impl.F.decl
-// CHECK:STDOUT:   witness = file.%I.impl_witness.loc28
+// CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @i32.as.I.impl: %i32 as %I.ref {
@@ -213,11 +211,13 @@ impl i32 as I {
 // CHECK:STDOUT:     %c.param: %C.469 = value_param call_param0
 // CHECK:STDOUT:     %c: %C.469 = value_binding c, %c.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%i32.as.I.impl.F.decl.loc43_18.2), @i32.as.I.impl [concrete]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness.5e1]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   .F = %i32.as.I.impl.F.decl.loc43_18.1
-// CHECK:STDOUT:   witness = file.%I.impl_witness.loc35
+// CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(%T.loc15_9.2: type, %X.loc15_19.2: @C.%T.loc15_9.1 (%T)) {

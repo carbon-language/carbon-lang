@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/definition/empty_struct.carbon
 
-fn Echo(a: {}) {
+fn Echo(_: {}) {
 }
 
 // CHECK:STDOUT: ; ModuleID = 'empty_struct.carbon'
