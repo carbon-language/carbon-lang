@@ -94,7 +94,8 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
         entries.push_back(CheckAssociatedFunctionImplementation(
             context,
             context.types().GetAs<SemIR::FunctionType>(struct_value.type_id),
-            value_id, self_type_id, make_witness(),
+            specific_interface.specific_id, value_id, self_type_id,
+            make_witness(),
             /*defer_thunk_definition=*/false));
         break;
       }

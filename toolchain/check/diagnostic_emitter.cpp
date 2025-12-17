@@ -130,6 +130,10 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     sem_ir_->reals().Get(*real_id).Print(out);
     return out.TakeStr();
   }
+  if (auto* specific_interface =
+          llvm::any_cast<SemIR::SpecificInterface>(&arg)) {
+    return StringifySpecificInterface(*sem_ir_, *specific_interface);
+  }
   if (auto* specific_interface_id =
           llvm::any_cast<SemIR::SpecificInterfaceId>(&arg)) {
     auto specific_interface =

@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/facet/require_satisified.carbon
 
-// --- todo_fail_missing_require_for_concrete_type.carbon
+// --- fail_missing_require_for_concrete_type.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {}
@@ -22,11 +22,14 @@ interface Y {
 // () does not need to impl Z yet.
 impl () as Y;
 
-// TODO: This should be an error. () needs to impl Z at the start of the
-// definition.
+// () needs to impl Z at the start of the definition.
+// CHECK:STDERR: fail_missing_require_for_concrete_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `()` implements `Z` [RequireImplsNotImplemented]
+// CHECK:STDERR: impl () as Y {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl () as Y {}
 
-// --- todo_fail_missing_require_for_symbolic_type.carbon
+// --- fail_missing_require_for_symbolic_type.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {}
@@ -38,29 +41,57 @@ interface Y {
 // T does not need to impl Z yet.
 impl forall [T:! type] T as Y;
 
-// TODO: This should be an error. T needs to impl Z at the start of the
-// definition.
+// T needs to impl Z at the start of the definition.
+// CHECK:STDERR: fail_missing_require_for_symbolic_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `T` implements `Z` [RequireImplsNotImplemented]
+// CHECK:STDERR: impl forall [T:! type] T as Y {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl forall [T:! type] T as Y {}
+
+// --- fail_missing_require_double.carbon
+library "[[@TEST_NAME]]";
+
+interface Z1(T:! type) {}
+interface Z2(T:! type) {}
+
+class A;
+class B;
+
+interface Y(U:! type) {
+  extend require impls Z1(U) & Z2(B);
+}
+
+// CHECK:STDERR: fail_missing_require_double.carbon:[[@LINE+4]]:1: error: interface `Y(A)` being implemented requires that `()` implements `Z1(A) & Z2(B)` [RequireImplsNotImplemented]
+// CHECK:STDERR: impl () as Y(A) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as Y(A) {}
 
 // --- require_for_concrete_type.carbon
 library "[[@TEST_NAME]]";
 
-interface Z {}
+interface Z1(T:! type) {}
+interface Z2(T:! type) {}
 
-interface Y {
-  extend require impls Z;
+class A;
+class B;
+
+interface Y(U:! type) {
+  extend require impls Z1(U) & Z2(B);
 }
 
-// () does not need to impl Z yet.
-impl () as Y;
+// () does not need to impl Z1(A) and Z2(B) yet.
+impl () as Y(A);
 
-// Now we know () impls Z.
-impl () as Z;
+// Now we know () impls Z1(A) and Z2(B).
+impl () as Z1(A);
+impl () as Z2(B);
 
 // So no error here.
-impl () as Y {}
+impl () as Y(A) {}
 
-impl () as Z {}
+impl () as Z1(A) {}
+impl () as Z2(B) {}
 
 // --- require_for_symbolic_type.carbon
 library "[[@TEST_NAME]]";
