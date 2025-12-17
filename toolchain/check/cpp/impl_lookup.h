@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_CPP_IMPL_LOOKUP_H_
 
 #include "toolchain/check/context.h"
+#include "toolchain/check/custom_witness.h"
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/type_structure.h"
 #include "toolchain/sem_ir/ids.h"
@@ -34,7 +35,7 @@ namespace Carbon::Check {
 // type structure, and can be `None` if `best_impl_type_structure` is null. This
 // parameter is used only for ambiguity diagnostics.
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
-                   SemIR::TypeId self_type_id,
+                   SemIR::TypeId self_type_id, CoreInterface core_interface,
                    SemIR::SpecificInterface specific_interface,
                    const TypeStructure* best_impl_type_structure,
                    SemIR::LocId best_impl_loc_id) -> SemIR::InstId;

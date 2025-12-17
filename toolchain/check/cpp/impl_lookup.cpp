@@ -114,29 +114,21 @@ static auto LookupDestroyImpl(Context& context, SemIR::LocId loc_id,
 }
 
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
-                   SemIR::TypeId self_type_id,
+                   SemIR::TypeId self_type_id, CoreInterface core_interface,
                    SemIR::SpecificInterface specific_interface,
                    const TypeStructure* best_impl_type_structure,
                    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
-  // Determine whether this is an interface that we have special knowledge of.
-  auto& interface = context.interfaces().Get(specific_interface.interface_id);
-  if (!context.name_scopes().IsCorePackage(interface.parent_scope_id)) {
-    return SemIR::InstId::None;
-  }
-  if (!interface.name_id.AsIdentifierId().has_value()) {
-    return SemIR::InstId::None;
-  }
-
-  if (context.identifiers().Get(interface.name_id.AsIdentifierId()) == "Copy") {
-    return LookupCopyImpl(context, loc_id, self_type_id, specific_interface);
-  }
-
-  if (context.identifiers().Get(interface.name_id.AsIdentifierId()) ==
-      "Destroy") {
-    return LookupDestroyImpl(context, loc_id, self_type_id, specific_interface);
-  }
-
   // TODO: Handle other interfaces.
+  switch (core_interface) {
+    case CoreInterface::Copy:
+      return LookupCopyImpl(context, loc_id, self_type_id, specific_interface);
+    case CoreInterface::Destroy:
+      return LookupDestroyImpl(context, loc_id, self_type_id,
+                               specific_interface);
+
+    case CoreInterface::Unknown:
+      CARBON_FATAL("shouldn't be called with `Unknown`");
+  }
 
   // TODO: Infer a C++ type structure and check whether it's less strict than
   // the best Carbon type structure.

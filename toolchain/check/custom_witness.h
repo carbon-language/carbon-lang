@@ -19,6 +19,20 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
                         SemIR::SpecificInterface specific_interface,
                         llvm::ArrayRef<SemIR::InstId> values) -> SemIR::InstId;
 
+// Significant interfaces in `Core` which correspond to language features and
+// can have custom witnesses.
+enum class CoreInterface {
+  Copy,
+  Destroy,
+
+  Unknown,
+};
+
+// Given an interface, returns the corresponding enum if it's covered by
+// `CoreInterface`, or `Unknown` if it's some other interface.
+auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
+    -> CoreInterface;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CUSTOM_WITNESS_H_

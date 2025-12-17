@@ -91,4 +91,23 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
   return make_witness();
 }
 
+auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
+    -> CoreInterface {
+  const auto& interface = context.interfaces().Get(interface_id);
+  if (!context.name_scopes().IsCorePackage(interface.parent_scope_id) ||
+      !interface.name_id.AsIdentifierId().has_value()) {
+    return CoreInterface::Unknown;
+  }
+
+  for (auto [core_identifier, core_interface] :
+       {std::pair{CoreIdentifier::Copy, CoreInterface::Copy},
+        std::pair{CoreIdentifier::Destroy, CoreInterface::Destroy}}) {
+    if (interface.name_id ==
+        context.core_identifiers().AddNameId(core_identifier)) {
+      return core_interface;
+    }
+  }
+  return CoreInterface::Unknown;
+}
+
 }  // namespace Carbon::Check

@@ -11,6 +11,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/impl_lookup.h"
+#include "toolchain/check/custom_witness.h"
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
@@ -979,6 +980,11 @@ static auto EvalLookupSingleImplWitnessUncached(
       context, kind == LookupKind::FoundInFacet, query_self_const_id,
       *query_type_structure, query_specific_interface);
 
+  auto core_interface =
+      candidates.consider_cpp_candidates
+          ? CoreInterface::Unknown
+          : GetCoreInterface(context, query_specific_interface.interface_id);
+
   for (const auto& candidate : candidates.impls) {
     // In deferred lookup for a symbolic impl witness, while building a
     // specific, there may be no stack yet as this may be the first lookup. If
@@ -1016,7 +1022,7 @@ static auto EvalLookupSingleImplWitnessUncached(
         auto cpp_witness_id = LookupCppImpl(
             context, loc_id,
             GetFacetAsType(context, loc_id, query_self_const_id),
-            query_specific_interface, &candidate.type_structure,
+            core_interface, query_specific_interface, &candidate.type_structure,
             SemIR::LocId(
                 context.impls().Get(candidate.impl_id).first_owning_decl_id));
         if (cpp_witness_id.has_value()) {
@@ -1034,10 +1040,11 @@ static auto EvalLookupSingleImplWitnessUncached(
       if (candidates.consider_cpp_candidates) {
         // Look for a matching C++ result, with no Carbon candidate to compare
         // against.
-        auto cpp_witness_id = LookupCppImpl(
-            context, loc_id,
-            GetFacetAsType(context, loc_id, query_self_const_id),
-            query_specific_interface, nullptr, SemIR::LocId::None);
+        auto cpp_witness_id =
+            LookupCppImpl(context, loc_id,
+                          GetFacetAsType(context, loc_id, query_self_const_id),
+                          core_interface, query_specific_interface, nullptr,
+                          SemIR::LocId::None);
         if (cpp_witness_id.has_value()) {
           return EvalImplLookupResult::MakeFinal(cpp_witness_id);
         }
