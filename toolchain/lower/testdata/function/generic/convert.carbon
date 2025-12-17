@@ -36,32 +36,38 @@ fn TestOperator() {
 // CHECK:STDOUT: source_filename = "convert.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CTestLiteral.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !7
 // CHECK:STDOUT:   %m.var = alloca i64, align 8, !dbg !8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !7
-// CHECK:STDOUT:   %Literal.call.loc24 = call i32 @_CLiteral.Main.be1e879c1ad406d8(), !dbg !9
-// CHECK:STDOUT:   store i32 %Literal.call.loc24, ptr %n.var, align 4, !dbg !7
+// CHECK:STDOUT:   %Literal.call.loc18 = call i32 @_CLiteral.Main.be1e879c1ad406d8(), !dbg !9
+// CHECK:STDOUT:   store i32 %Literal.call.loc18, ptr %n.var, align 4, !dbg !7
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %m.var), !dbg !8
-// CHECK:STDOUT:   %Literal.call.loc25 = call i64 @_CLiteral.Main.9025b11fc94ef1f2(), !dbg !10
-// CHECK:STDOUT:   store i64 %Literal.call.loc25, ptr %m.var, align 4, !dbg !8
+// CHECK:STDOUT:   %Literal.call.loc19 = call i64 @_CLiteral.Main.9025b11fc94ef1f2(), !dbg !10
+// CHECK:STDOUT:   store i64 %Literal.call.loc19, ptr %m.var, align 4, !dbg !8
 // CHECK:STDOUT:   ret void, !dbg !11
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CTestOperator.Main() #0 !dbg !12 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CLiteral.Main.be1e879c1ad406d8() #0 !dbg !12 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CLiteral.Main.be1e879c1ad406d8() #0 !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 123, !dbg !16
+// CHECK:STDOUT:   ret i32 123, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i64 @_CLiteral.Main.9025b11fc94ef1f2() #0 !dbg !17 {
+// CHECK:STDOUT: define linkonce_odr i64 @_CLiteral.Main.9025b11fc94ef1f2() #0 !dbg !19 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i64 123, !dbg !21
+// CHECK:STDOUT:   ret i64 123, !dbg !23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -77,21 +83,23 @@ fn TestOperator() {
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !3 = !DIFile(filename: "convert.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !3, line: 23, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "TestLiteral", linkageName: "_CTestLiteral.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null}
-// CHECK:STDOUT: !7 = !DILocation(line: 24, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 25, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 24, column: 16, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 25, column: 16, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 23, column: 1, scope: !4)
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "Literal", linkageName: "_CLiteral.Main.be1e879c1ad406d8", scope: null, file: !3, line: 13, type: !13, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
-// CHECK:STDOUT: !14 = !{!15}
-// CHECK:STDOUT: !15 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !16 = !DILocation(line: 14, column: 3, scope: !12)
-// CHECK:STDOUT: !17 = distinct !DISubprogram(name: "Literal", linkageName: "_CLiteral.Main.9025b11fc94ef1f2", scope: null, file: !3, line: 13, type: !18, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !18 = !DISubroutineType(types: !19)
-// CHECK:STDOUT: !19 = !{!20}
-// CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 64, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !21 = !DILocation(line: 14, column: 3, scope: !17)
+// CHECK:STDOUT: !7 = !DILocation(line: 18, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = !DILocation(line: 19, column: 3, scope: !4)
+// CHECK:STDOUT: !9 = !DILocation(line: 18, column: 16, scope: !4)
+// CHECK:STDOUT: !10 = !DILocation(line: 19, column: 16, scope: !4)
+// CHECK:STDOUT: !11 = !DILocation(line: 17, column: 1, scope: !4)
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "TestOperator", linkageName: "_CTestOperator.Main", scope: null, file: !3, line: 28, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !13 = !DILocation(line: 28, column: 1, scope: !12)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "Literal", linkageName: "_CLiteral.Main.be1e879c1ad406d8", scope: null, file: !3, line: 13, type: !15, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !15 = !DISubroutineType(types: !16)
+// CHECK:STDOUT: !16 = !{!17}
+// CHECK:STDOUT: !17 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !18 = !DILocation(line: 14, column: 3, scope: !14)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Literal", linkageName: "_CLiteral.Main.9025b11fc94ef1f2", scope: null, file: !3, line: 13, type: !20, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !20 = !DISubroutineType(types: !21)
+// CHECK:STDOUT: !21 = !{!22}
+// CHECK:STDOUT: !22 = !DIBasicType(name: "int", size: 64, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !23 = !DILocation(line: 14, column: 3, scope: !19)

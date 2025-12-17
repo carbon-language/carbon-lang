@@ -90,6 +90,7 @@ static auto TypeCanIntroduceAssociatedLibraries(Context& context,
   while (!worklist.empty()) {
     auto type_id = worklist.pop_back_val();
 
+    // Remove type qualifiers and look through adapters.
     type_id = context.types().GetObjectRepr(type_id);
     if (!type_id.has_value()) {
       // TODO: How should we handle the case where the parameter type is
@@ -99,6 +100,7 @@ static auto TypeCanIntroduceAssociatedLibraries(Context& context,
       // matter. For now we treat such impls as not effectively final.
       return false;
     }
+
     CARBON_KIND_SWITCH(context.types().GetAsInst(type_id)) {
       case CARBON_KIND(SemIR::ArrayType inst): {
         push_type_inst_id(inst.element_type_inst_id);

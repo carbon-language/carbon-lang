@@ -51,17 +51,26 @@ final impl forall [N:! f64] () as I(A(N)) {}
 
 final impl forall [N:! Core.FloatLiteral()] () as I(A(N)) {}
 
-// - array of one of the above
+// - array of such types
 
 final impl forall [Arr:! array(i32, 4)] () as I(A(Arr)) {}
 
-// - struct containing the above
+// - struct containing such types
 
 final impl forall [S:! {.a: i32, .b: f64}] () as I(A(S)) {}
 
-// - tuple containing the above
+// - tuple containing such types
 
 final impl forall [T:! (i32, f64)] () as I(A(T)) {}
+
+// - qualified form of such a type
+
+final impl forall [N:! const i32] () as I(A(N)) {}
+
+// - adapter for such a type
+
+class Adapt { adapt i32; }
+final impl forall [N:! Adapt] () as I(A(N)) {}
 
 // - (recursively)
 
