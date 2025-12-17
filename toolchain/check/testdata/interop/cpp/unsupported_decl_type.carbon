@@ -19,20 +19,20 @@ auto [a, b] = X{};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_use_structured_binding.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./structured_binding.h:3:7: error: semantics TODO: `Unsupported: Declaration type Binding` [SemanticsTodo]
-// CHECK:STDERR: auto [a, b] = X{};
-// CHECK:STDERR:       ^
 import Cpp library "structured_binding.h";
 
 fn F() -> i32 {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_use_template.carbon:[[@LINE+4]]:17: note: in `Cpp` name lookup for `C` [InCppNameLookup]
+  // CHECK:STDERR: fail_todo_use_structured_binding.carbon:[[@LINE+4]]:17: error: member name `C` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:   var unused c: Cpp.C({});
   // CHECK:STDERR:                 ^~~~~
   // CHECK:STDERR:
   var unused c: Cpp.C({});
   //@dump-sem-ir-end
+// CHECK:STDERR: fail_todo_use_structured_binding.carbon:[[@LINE+4]]:1: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+// CHECK:STDERR: }
+// CHECK:STDERR: ^
+// CHECK:STDERR:
 }
 
 // CHECK:STDOUT: --- fail_todo_use_structured_binding.carbon
@@ -43,16 +43,16 @@ fn F() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .a = <error>
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [concrete = <error>]
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: <error> = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.var_patt: <error> = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c.var: ref <error> = var %c.var_patt [concrete = <error>]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %c: ref <error> = ref_binding c, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

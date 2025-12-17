@@ -25,7 +25,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-fn F(c: C) {}
+fn F(_: C) {}
 
 fn CallF() {
   //@dump-sem-ir-begin

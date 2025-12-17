@@ -364,7 +364,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %V.loc7_13.2: %facet_type.f7c = symbolic_binding V, 0 [symbolic = %V.loc7_13.1 (constants.%V)]
 // CHECK:STDOUT:     %v.param: @FeedTame.%V.binding.as_type (%V.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc7_40.1: type = splice_block %.loc7_40.2 [symbolic = %V.binding.as_type (constants.%V.binding.as_type)] {
-// CHECK:STDOUT:       %V.ref: %facet_type.807 = name_ref V, %V.loc7_13.2 [symbolic = %V.loc7_13.1 (constants.%V)]
+// CHECK:STDOUT:       %V.ref: %facet_type.f7c = name_ref V, %V.loc7_13.2 [symbolic = %V.loc7_13.1 (constants.%V)]
 // CHECK:STDOUT:       %V.as_type: type = facet_access_type %V.ref [symbolic = %V.binding.as_type (constants.%V.binding.as_type)]
 // CHECK:STDOUT:       %.loc7_40.2: type = converted %V.ref, %V.as_type [symbolic = %V.binding.as_type (constants.%V.binding.as_type)]
 // CHECK:STDOUT:     }
@@ -601,7 +601,7 @@ fn CallsWithTypeExplicit(U:! type) {
 // CHECK:STDOUT:     %V.loc9_14.2: %facet_type.f7c = symbolic_binding V, 0 [symbolic = %V.loc9_14.1 (constants.%V)]
 // CHECK:STDOUT:     %v.param: @FeedTame2.%V.binding.as_type (%V.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc9_41.1: type = splice_block %.loc9_41.2 [symbolic = %V.binding.as_type (constants.%V.binding.as_type)] {
-// CHECK:STDOUT:       %V.ref: %facet_type.807 = name_ref V, %V.loc9_14.2 [symbolic = %V.loc9_14.1 (constants.%V)]
+// CHECK:STDOUT:       %V.ref: %facet_type.f7c = name_ref V, %V.loc9_14.2 [symbolic = %V.loc9_14.1 (constants.%V)]
 // CHECK:STDOUT:       %V.as_type: type = facet_access_type %V.ref [symbolic = %V.binding.as_type (constants.%V.binding.as_type)]
 // CHECK:STDOUT:       %.loc9_41.2: type = converted %V.ref, %V.as_type [symbolic = %V.binding.as_type (constants.%V.binding.as_type)]
 // CHECK:STDOUT:     }

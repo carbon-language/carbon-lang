@@ -450,9 +450,9 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %Noncopyable.ref: type = name_ref Noncopyable, file.%Noncopyable.decl [concrete = constants.%Noncopyable]
 // CHECK:STDOUT:   %.loc14_49.1: %tuple.type.c8c = tuple_literal (%.loc14_35, %Noncopyable.ref) [concrete = constants.%tuple]
 // CHECK:STDOUT:   %.loc14_49.2: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %.loc14_49.3: type = converted %.loc14_49.1, constants.%tuple.type.a10 [concrete = constants.%tuple.type.a10]
-// CHECK:STDOUT:   %.loc14_30.1: %tuple.type.a10 = as_compatible %a.ref
-// CHECK:STDOUT:   %.loc14_30.2: %tuple.type.a10 = converted %a.ref, %.loc14_30.1
+// CHECK:STDOUT:   %.loc14_49.3: type = converted %.loc14_49.1, constants.%tuple.type.037 [concrete = constants.%tuple.type.037]
+// CHECK:STDOUT:   %.loc14_30.1: %tuple.type.037 = as_compatible %a.ref
+// CHECK:STDOUT:   %.loc14_30.2: %tuple.type.037 = converted %a.ref, %.loc14_30.1
 // CHECK:STDOUT:   %A.ref.loc14_55: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %.loc14_52.1: %A = as_compatible %.loc14_30.2
 // CHECK:STDOUT:   %.loc14_52.2: %A = converted %.loc14_30.2, %.loc14_52.1

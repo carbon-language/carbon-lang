@@ -56,13 +56,13 @@ abstract class Abstract {
 }
 
 // CHECK:STDERR: fail_abstract_var_function_param.carbon:[[@LINE+7]]:13: error: binding pattern has abstract type `Abstract` in `var` pattern [AbstractTypeInVarPattern]
-// CHECK:STDERR: fn F(var p: Abstract) {
+// CHECK:STDERR: fn F(var _: Abstract) {
 // CHECK:STDERR:             ^~~~~~~~
 // CHECK:STDERR: fail_abstract_var_function_param.carbon:[[@LINE-6]]:1: note: class was declared abstract here [ClassAbstractHere]
 // CHECK:STDERR: abstract class Abstract {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn F(var p: Abstract) {
+fn F(var _: Abstract) {
 }
 
 // --- abstract_let.carbon
@@ -333,13 +333,13 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Abstract.decl: type = class_decl @Abstract [concrete = constants.%Abstract] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %p.patt: <error> = ref_binding_pattern p [concrete]
-// CHECK:STDOUT:     %p.param_patt: <error> = var_param_pattern %p.patt, call_param0 [concrete]
-// CHECK:STDOUT:     %p.var_patt: <error> = var_pattern %p.param_patt [concrete]
+// CHECK:STDOUT:     %_.patt: <error> = ref_binding_pattern _ [concrete]
+// CHECK:STDOUT:     %_.param_patt: <error> = var_param_pattern %_.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %_.var_patt: <error> = var_pattern %_.param_patt [concrete]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %p.param: ref <error> = ref_param call_param0
+// CHECK:STDOUT:     %_.param: ref <error> = ref_param call_param0
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %p: ref <error> = ref_binding p, %p.param
+// CHECK:STDOUT:     %_: ref <error> = ref_binding _, %_.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -351,7 +351,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   .Self = constants.%Abstract
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%p.param: <error>) {
+// CHECK:STDOUT: fn @F(%_.param: <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

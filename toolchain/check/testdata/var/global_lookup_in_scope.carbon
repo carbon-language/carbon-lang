@@ -77,7 +77,7 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %struct_type.v = var %y.var_patt
 // CHECK:STDOUT:   %x.ref: ref %struct_type.v = name_ref x, file.%x [concrete = file.%x.var]
-// CHECK:STDOUT:   %.loc5_28.1: ref %empty_tuple.type = struct_access %x.ref, element0 [concrete = constants.%.2d8]
+// CHECK:STDOUT:   %.loc5_28.1: ref %empty_tuple.type = struct_access %x.ref, element0 [concrete = constants.%.c0c]
 // CHECK:STDOUT:   %.loc5_28.2: ref %empty_tuple.type = struct_access %y.var, element0
 // CHECK:STDOUT:   %.loc5_28.3: init %empty_tuple.type = tuple_init () to %.loc5_28.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_28.4: init %empty_tuple.type = converted %.loc5_28.1, %.loc5_28.3 [concrete = constants.%empty_tuple]

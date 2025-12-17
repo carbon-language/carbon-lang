@@ -151,7 +151,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %p.patt: %pattern_type.9fb = value_binding_pattern p [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %input.ref: %ptr.019 = name_ref input, %input
+// CHECK:STDOUT:   %input.ref: %ptr.31e = name_ref input, %input
 // CHECK:STDOUT:   %.loc17_25: type = splice_block %ptr.loc17 [concrete = constants.%ptr.874] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %void.ref: type = name_ref void, constants.%Cpp.void [concrete = constants.%Cpp.void]
@@ -220,11 +220,11 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %input.ref: %ptr.874 = name_ref input, %input
 // CHECK:STDOUT:   %C.ref.loc17_31: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %ptr.loc17_32: type = ptr_type %C.ref.loc17_31 [concrete = constants.%ptr.019]
-// CHECK:STDOUT:   %.loc17_28: %ptr.019 = converted %input.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc17_18: type = splice_block %ptr.loc17_18 [concrete = constants.%ptr.019] {
+// CHECK:STDOUT:   %ptr.loc17_32: type = ptr_type %C.ref.loc17_31 [concrete = constants.%ptr.31e]
+// CHECK:STDOUT:   %.loc17_28: %ptr.31e = converted %input.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc17_18: type = splice_block %ptr.loc17_18 [concrete = constants.%ptr.31e] {
 // CHECK:STDOUT:     %C.ref.loc17_17: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr.loc17_18: type = ptr_type %C.ref.loc17_17 [concrete = constants.%ptr.019]
+// CHECK:STDOUT:     %ptr.loc17_18: type = ptr_type %C.ref.loc17_17 [concrete = constants.%ptr.31e]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.31e = value_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>

@@ -181,3 +181,10 @@ fn F() -> i32 {
   return 0;
   // TODO: ensure no warning (after match is implemented).
 }
+
+// --- fail_unused_decl.carbon
+// CHECK:STDERR: fail_unused_decl.carbon:[[@LINE+4]]:13: error: `unused` maker cannot be used on a declaration that is not a definition [UnusedMarkerInDeclaration]
+// CHECK:STDERR: fn F(unused x: i32);
+// CHECK:STDERR:             ^
+// CHECK:STDERR:
+fn F(unused x: i32);

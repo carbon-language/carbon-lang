@@ -34,8 +34,16 @@ let x: ElementType = c[s];
 
 library "[[@TEST_NAME]]";
 
-impl (i32, i32) as Core.IndexWith(Core.IntLiteral()) where .ElementType = i32 {
-  fn At[self: Self](unused subscript: Core.IntLiteral()) -> i32 {
+class C {
+  adapt ();
+}
+
+impl (C, C) as Core.IndexWith(Core.IntLiteral()) where .ElementType = C {
+  // CHECK:STDERR: overloaded_builtin.carbon:[[@LINE+4]]:21: warning: binding `subscript` is unused [UnusedBinding]
+  // CHECK:STDERR:   fn At[self: Self](subscript: Core.IntLiteral()) -> C {
+  // CHECK:STDERR:                     ^~~~~~~~~
+  // CHECK:STDERR:
+  fn At[self: Self](subscript: Core.IntLiteral()) -> C {
     return self.0;
   }
 }
@@ -356,26 +364,26 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type.c3b = value_binding_pattern s [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14_13.1: type = splice_block %.loc14_13.3 [concrete = constants.%tuple.type.d23] {
-// CHECK:STDOUT:     %C.ref.loc14_9: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %C.ref.loc14_12: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc14_13.2: %tuple.type.24b = tuple_literal (%C.ref.loc14_9, %C.ref.loc14_12) [concrete = constants.%tuple.6f4]
-// CHECK:STDOUT:     %.loc14_13.3: type = converted %.loc14_13.2, constants.%tuple.type.d23 [concrete = constants.%tuple.type.d23]
+// CHECK:STDOUT:   %.loc18_13.1: type = splice_block %.loc18_13.3 [concrete = constants.%tuple.type.d23] {
+// CHECK:STDOUT:     %C.ref.loc18_9: type = name_ref C, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc18_12: type = name_ref C, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %.loc18_13.2: %tuple.type.24b = tuple_literal (%C.ref.loc18_9, %C.ref.loc18_12) [concrete = constants.%tuple.6f4]
+// CHECK:STDOUT:     %.loc18_13.3: type = converted %.loc18_13.2, constants.%tuple.type.d23 [concrete = constants.%tuple.type.d23]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %tuple.loc14: %tuple.type.d23 = tuple_value (@__global_init.%.loc14_21.2, @__global_init.%.loc14_30.2) [concrete = constants.%tuple.d21]
-// CHECK:STDOUT:   %.loc14_34: %tuple.type.d23 = converted @__global_init.%.loc14_34, %tuple.loc14 [concrete = constants.%tuple.d21]
-// CHECK:STDOUT:   %s: %tuple.type.d23 = value_binding s, %.loc14_34
+// CHECK:STDOUT:   %tuple.loc18: %tuple.type.d23 = tuple_value (@__global_init.%.loc18_21.2, @__global_init.%.loc18_30.2) [concrete = constants.%tuple.d21]
+// CHECK:STDOUT:   %.loc18_34: %tuple.type.d23 = converted @__global_init.%.loc18_34, %tuple.loc18 [concrete = constants.%tuple.d21]
+// CHECK:STDOUT:   %s: %tuple.type.d23 = value_binding s, %.loc18_34
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.7c7 = value_binding_pattern e [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.ref.loc15: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc15_15.1: init %empty_tuple.type = as_compatible @__global_init.%tuple.type.as.IndexWith.impl.At.call
-// CHECK:STDOUT:   %.loc15_15.2: ref %empty_tuple.type = temporary_storage
-// CHECK:STDOUT:   %.loc15_15.3: ref %empty_tuple.type = temporary %.loc15_15.2, %.loc15_15.1
-// CHECK:STDOUT:   %tuple.loc15: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple.af4]
-// CHECK:STDOUT:   %.loc15_15.4: %C = as_compatible %tuple.loc15 [concrete = constants.%empty_tuple.bfb]
-// CHECK:STDOUT:   %.loc15_15.5: %C = converted @__global_init.%tuple.type.as.IndexWith.impl.At.call, %.loc15_15.4 [concrete = constants.%empty_tuple.bfb]
-// CHECK:STDOUT:   %e: %C = value_binding e, %.loc15_15.5
+// CHECK:STDOUT:   %C.ref.loc19: type = name_ref C, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc19_15.1: init %empty_tuple.type = as_compatible @__global_init.%tuple.type.as.IndexWith.impl.At.call
+// CHECK:STDOUT:   %.loc19_15.2: ref %empty_tuple.type = temporary_storage
+// CHECK:STDOUT:   %.loc19_15.3: ref %empty_tuple.type = temporary %.loc19_15.2, %.loc19_15.1
+// CHECK:STDOUT:   %tuple.loc19: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple.af4]
+// CHECK:STDOUT:   %.loc19_15.4: %C = as_compatible %tuple.loc19 [concrete = constants.%empty_tuple.bfb]
+// CHECK:STDOUT:   %.loc19_15.5: %C = converted @__global_init.%tuple.type.as.IndexWith.impl.At.call, %.loc19_15.4 [concrete = constants.%empty_tuple.bfb]
+// CHECK:STDOUT:   %e: %C = value_binding e, %.loc19_15.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @tuple.type.as.IndexWith.impl: %.loc8_11.2 as %.loc8_50 {
@@ -392,12 +400,12 @@ let x: i32 = c[0];
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @tuple.type.as.IndexWith.impl.%.loc8_11.2 [concrete = constants.%tuple.type.d23]
 // CHECK:STDOUT:     %self: %tuple.type.d23 = value_binding self, %self.param
 // CHECK:STDOUT:     %subscript.param: Core.IntLiteral = value_param call_param1
-// CHECK:STDOUT:     %.loc5_55.1: type = splice_block %.loc5_55.3 [concrete = Core.IntLiteral] {
+// CHECK:STDOUT:     %.loc13_48.1: type = splice_block %.loc13_48.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:       %IntLiteral.ref: %IntLiteral.type = name_ref IntLiteral, imports.%Core.IntLiteral [concrete = constants.%IntLiteral]
 // CHECK:STDOUT:       %IntLiteral.call: init type = call %IntLiteral.ref() [concrete = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc5_55.2: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
-// CHECK:STDOUT:       %.loc5_55.3: type = converted %IntLiteral.call, %.loc5_55.2 [concrete = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc13_48.2: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
+// CHECK:STDOUT:       %.loc13_48.3: type = converted %IntLiteral.call, %.loc13_48.2 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %subscript: Core.IntLiteral = value_binding subscript, %subscript.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param2
@@ -429,27 +437,27 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %self.ref: %tuple.type.d23 = name_ref self, %self
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %tuple.elem0: %C = tuple_access %self.ref, element0
-// CHECK:STDOUT:   %.loc10_18.1: %empty_tuple.type = as_compatible %tuple.elem0
-// CHECK:STDOUT:   %.loc10_18.2: ref %empty_tuple.type = as_compatible %return
-// CHECK:STDOUT:   %.loc10_18.3: init %empty_tuple.type = tuple_init () to %.loc10_18.2 [concrete = constants.%empty_tuple.af4]
-// CHECK:STDOUT:   %.loc10_18.4: init %C = as_compatible %.loc10_18.3 [concrete = constants.%empty_tuple.bfb]
-// CHECK:STDOUT:   %.loc10_18.5: init %C = converted %tuple.elem0, %.loc10_18.4 [concrete = constants.%empty_tuple.bfb]
-// CHECK:STDOUT:   return %.loc10_18.5 to %return
+// CHECK:STDOUT:   %.loc14_18.1: %empty_tuple.type = as_compatible %tuple.elem0
+// CHECK:STDOUT:   %.loc14_18.2: ref %empty_tuple.type = as_compatible %return
+// CHECK:STDOUT:   %.loc14_18.3: init %empty_tuple.type = tuple_init () to %.loc14_18.2 [concrete = constants.%empty_tuple.af4]
+// CHECK:STDOUT:   %.loc14_18.4: init %C = as_compatible %.loc14_18.3 [concrete = constants.%empty_tuple.bfb]
+// CHECK:STDOUT:   %.loc14_18.5: init %C = converted %tuple.elem0, %.loc14_18.4 [concrete = constants.%empty_tuple.bfb]
+// CHECK:STDOUT:   return %.loc14_18.5 to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc14_19: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple.af4]
-// CHECK:STDOUT:   %C.ref.loc14_24: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %empty_tuple.loc14_19: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple.af4]
-// CHECK:STDOUT:   %.loc14_21.1: %C = as_compatible %empty_tuple.loc14_19 [concrete = constants.%empty_tuple.bfb]
-// CHECK:STDOUT:   %.loc14_21.2: %C = converted %.loc14_19, %.loc14_21.1 [concrete = constants.%empty_tuple.bfb]
-// CHECK:STDOUT:   %.loc14_28: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple.af4]
-// CHECK:STDOUT:   %C.ref.loc14_33: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %empty_tuple.loc14_28: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple.af4]
-// CHECK:STDOUT:   %.loc14_30.1: %C = as_compatible %empty_tuple.loc14_28 [concrete = constants.%empty_tuple.bfb]
-// CHECK:STDOUT:   %.loc14_30.2: %C = converted %.loc14_28, %.loc14_30.1 [concrete = constants.%empty_tuple.bfb]
-// CHECK:STDOUT:   %.loc14_34: %tuple.type.d23 = tuple_literal (%.loc14_21.2, %.loc14_30.2) [concrete = constants.%tuple.d21]
+// CHECK:STDOUT:   %.loc18_19: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple.af4]
+// CHECK:STDOUT:   %C.ref.loc18_24: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %empty_tuple.loc18_19: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple.af4]
+// CHECK:STDOUT:   %.loc18_21.1: %C = as_compatible %empty_tuple.loc18_19 [concrete = constants.%empty_tuple.bfb]
+// CHECK:STDOUT:   %.loc18_21.2: %C = converted %.loc18_19, %.loc18_21.1 [concrete = constants.%empty_tuple.bfb]
+// CHECK:STDOUT:   %.loc18_28: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple.af4]
+// CHECK:STDOUT:   %C.ref.loc18_33: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %empty_tuple.loc18_28: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple.af4]
+// CHECK:STDOUT:   %.loc18_30.1: %C = as_compatible %empty_tuple.loc18_28 [concrete = constants.%empty_tuple.bfb]
+// CHECK:STDOUT:   %.loc18_30.2: %C = converted %.loc18_28, %.loc18_30.1 [concrete = constants.%empty_tuple.bfb]
+// CHECK:STDOUT:   %.loc18_34: %tuple.type.d23 = tuple_literal (%.loc18_21.2, %.loc18_30.2) [concrete = constants.%tuple.d21]
 // CHECK:STDOUT:   %s.ref: %tuple.type.d23 = name_ref s, file.%s
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %impl.elem1: %.b34 = impl_witness_access constants.%IndexWith.impl_witness, element1 [concrete = constants.%tuple.type.as.IndexWith.impl.At]

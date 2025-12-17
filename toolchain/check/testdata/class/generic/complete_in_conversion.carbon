@@ -246,16 +246,16 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.191 = value_binding_pattern b [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.ref: %ptr.b65 = name_ref a, %a
-// CHECK:STDOUT:   %.loc20_18: type = splice_block %ptr.loc20 [concrete = constants.%ptr.e79] {
+// CHECK:STDOUT:   %a.ref: %ptr.0e2 = name_ref a, %a
+// CHECK:STDOUT:   %.loc20_18: type = splice_block %ptr.loc20 [concrete = constants.%ptr.27c] {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:     %ptr.loc20: type = ptr_type %B.ref [concrete = constants.%ptr.27c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc20_22.1: ref %A.6fc = deref %a.ref
+// CHECK:STDOUT:   %.loc20_22.1: ref %A.dc6 = deref %a.ref
 // CHECK:STDOUT:   %.loc20_22.2: ref %B = class_element_access %.loc20_22.1, element0
-// CHECK:STDOUT:   %addr: %ptr.e79 = addr_of %.loc20_22.2
-// CHECK:STDOUT:   %.loc20_22.3: %ptr.e79 = converted %a.ref, %addr
-// CHECK:STDOUT:   %b: %ptr.e79 = value_binding b, %.loc20_22.3
+// CHECK:STDOUT:   %addr: %ptr.27c = addr_of %.loc20_22.2
+// CHECK:STDOUT:   %.loc20_22.3: %ptr.27c = converted %a.ref, %addr
+// CHECK:STDOUT:   %b: %ptr.27c = value_binding b, %.loc20_22.3
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

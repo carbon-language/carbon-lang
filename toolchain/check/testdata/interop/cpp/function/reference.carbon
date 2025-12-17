@@ -879,7 +879,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_44.4: ref %ptr = temporary %.loc8_44.3, %.loc8_44.2
 // CHECK:STDOUT:   %.loc8_44.5: %ptr = acquire_value %.loc8_44.4
 // CHECK:STDOUT:   %s: %ptr = value_binding s, %.loc8_44.5
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_44.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.d4c
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc8_44.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.c35
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc8_44.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc8_44.4)

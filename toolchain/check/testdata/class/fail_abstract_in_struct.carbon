@@ -233,8 +233,8 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:     %l.patt: %pattern_type.816 = value_binding_pattern l [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %Abstract3 = name_ref a, %a
-// CHECK:STDOUT:   %.loc7_44: %struct_type.m3.fe4 = struct_literal (%a.ref)
-// CHECK:STDOUT:   %.loc7_32: type = splice_block %struct_type.m3 [concrete = constants.%struct_type.m3.fe4] {
+// CHECK:STDOUT:   %.loc7_44: %struct_type.m3.b1b = struct_literal (%a.ref)
+// CHECK:STDOUT:   %.loc7_32: type = splice_block %struct_type.m3 [concrete = constants.%struct_type.m3.b1b] {
 // CHECK:STDOUT:     %Abstract3.ref.loc7: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
 // CHECK:STDOUT:     %struct_type.m3: type = struct_type {.m3: %Abstract3} [concrete = constants.%struct_type.m3.b1b]
 // CHECK:STDOUT:   }

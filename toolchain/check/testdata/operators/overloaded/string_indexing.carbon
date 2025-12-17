@@ -15,10 +15,10 @@ library "[[@TEST_NAME]]";
 
 fn TestLiteralNegativeIndex() {
   // CHECK:STDERR: fail_literal_negative_index.carbon:[[@LINE+4]]:17: error: index `-1` is negative. [StringAtIndexNegative]
-  // CHECK:STDERR:   let c: char = "Test"[-1];
+  // CHECK:STDERR:   let _: char = "Test"[-1];
   // CHECK:STDERR:                 ^~~~~~~~~~
   // CHECK:STDERR:
-  let c: char = "Test"[-1];
+  let _: char = "Test"[-1];
 }
 
 // --- fail_literal_out_of_bounds.carbon
@@ -26,10 +26,10 @@ library "[[@TEST_NAME]]";
 
 fn TestLiteralOutOfBounds() {
   // CHECK:STDERR: fail_literal_out_of_bounds.carbon:[[@LINE+4]]:17: error: string index `4` is out of bounds; string has length 4. [StringAtIndexOutOfBounds]
-  // CHECK:STDERR:   let c: char = "Test"[4];
+  // CHECK:STDERR:   let _: char = "Test"[4];
   // CHECK:STDERR:                 ^~~~~~~~~
   // CHECK:STDERR:
-  let c: char = "Test"[4];
+  let _: char = "Test"[4];
 }
 
 // --- fail_wrong_type.carbon
@@ -72,8 +72,8 @@ library "[[@TEST_NAME]]";
 
 fn TestStringIndexing() {
   //@dump-sem-ir-begin
-  let c: char = "Test"[0];
-  let d: char = "Test"[3];
+  let _: char = "Test"[0];
+  let _: char = "Test"[3];
   //@dump-sem-ir-end
 }
 
@@ -150,7 +150,7 @@ fn TestStringIndexing() {
 // CHECK:STDOUT: fn @TestStringIndexing() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.b09 = value_binding_pattern c [concrete]
+// CHECK:STDOUT:     %_.patt.loc5: %pattern_type.b09 = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %str.loc5: %ptr.fb0 = string_literal "Test" [concrete = constants.%str.0a6]
 // CHECK:STDOUT:   %int_4.loc5: %u64 = int_value 4 [concrete = constants.%int_4]
@@ -167,9 +167,9 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.call.loc5: init %char = call %bound_method.loc5_25.2(%String.val.loc5, %int_0) [concrete = constants.%int_84]
 // CHECK:STDOUT:   %.loc5_25.3: %char = value_of_initializer %str.as.IndexWith.impl.At.call.loc5 [concrete = constants.%int_84]
 // CHECK:STDOUT:   %.loc5_25.4: %char = converted %str.as.IndexWith.impl.At.call.loc5, %.loc5_25.3 [concrete = constants.%int_84]
-// CHECK:STDOUT:   %c: %char = value_binding c, %.loc5_25.4
+// CHECK:STDOUT:   %_.loc5: %char = value_binding _, %.loc5_25.4
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type.b09 = value_binding_pattern d [concrete]
+// CHECK:STDOUT:     %_.patt.loc6: %pattern_type.b09 = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %str.loc6: %ptr.fb0 = string_literal "Test" [concrete = constants.%str.0a6]
 // CHECK:STDOUT:   %int_4.loc6: %u64 = int_value 4 [concrete = constants.%int_4]
@@ -186,7 +186,7 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.call.loc6: init %char = call %bound_method.loc6_25.2(%String.val.loc6, %int_3) [concrete = constants.%int_116]
 // CHECK:STDOUT:   %.loc6_25.3: %char = value_of_initializer %str.as.IndexWith.impl.At.call.loc6 [concrete = constants.%int_116]
 // CHECK:STDOUT:   %.loc6_25.4: %char = converted %str.as.IndexWith.impl.At.call.loc6, %.loc6_25.3 [concrete = constants.%int_116]
-// CHECK:STDOUT:   %d: %char = value_binding d, %.loc6_25.4
+// CHECK:STDOUT:   %_.loc6: %char = value_binding _, %.loc6_25.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

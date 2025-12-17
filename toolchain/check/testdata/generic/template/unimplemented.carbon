@@ -345,10 +345,10 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:     %.loc14_3.1: @F.%.loc14_3.4 (@F.%.loc14_3.4) = splice_inst %.loc14_3.3
 // CHECK:STDOUT:     %.loc14_3.2: @F.%T.binding.as_type (%T.binding.as_type.132) = converted %int_0, <error> [concrete = <error>]
 // CHECK:STDOUT:     assign %v.var, <error>
-// CHECK:STDOUT:     %.loc14_17.1: type = splice_block %.loc14_17.2 [template = %T.binding.as_type (constants.%T.binding.as_type.d87)] {
-// CHECK:STDOUT:       %T.ref.loc14: %Destroy.type = name_ref T, %T.loc4_15.2 [template = %T.loc4_15.1 (constants.%T.afb)]
-// CHECK:STDOUT:       %T.as_type.loc14: type = facet_access_type %T.ref.loc14 [template = %T.binding.as_type (constants.%T.binding.as_type.d87)]
-// CHECK:STDOUT:       %.loc14_17.2: type = converted %T.ref.loc14, %T.as_type.loc14 [template = %T.binding.as_type (constants.%T.binding.as_type.d87)]
+// CHECK:STDOUT:     %.loc14_17.1: type = splice_block %.loc14_17.2 [template = %T.binding.as_type (constants.%T.binding.as_type.132)] {
+// CHECK:STDOUT:       %T.ref.loc14: %Destroy.type = name_ref T, %T.loc4_15.2 [template = %T.loc4_15.1 (constants.%T.110)]
+// CHECK:STDOUT:       %T.as_type.loc14: type = facet_access_type %T.ref.loc14 [template = %T.binding.as_type (constants.%T.binding.as_type.132)]
+// CHECK:STDOUT:       %.loc14_17.2: type = converted %T.ref.loc14, %T.as_type.loc14 [template = %T.binding.as_type (constants.%T.binding.as_type.132)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %v: ref @F.%T.binding.as_type (%T.binding.as_type.132) = ref_binding v, %v.var
 // CHECK:STDOUT:     name_binding_decl {

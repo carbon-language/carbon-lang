@@ -198,18 +198,18 @@ var a: array(1, 1);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref %array_type = var %v.var_patt
 // CHECK:STDOUT:   %F.ref.loc10_40: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc10_48.1: ref %tuple.type.734 = splice_block %.loc10_48.6 {
+// CHECK:STDOUT:   %.loc10_48.1: ref %tuple.type.e56 = splice_block %.loc10_48.6 {
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:     %.loc10_48.6: ref %tuple.type.734 = array_index %v.var, %int_0
+// CHECK:STDOUT:     %.loc10_48.6: ref %tuple.type.e56 = array_index %v.var, %int_0
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.call.loc10_42: init %tuple.type.734 = call %F.ref.loc10_40() to %.loc10_48.1
+// CHECK:STDOUT:   %F.call.loc10_42: init %tuple.type.e56 = call %F.ref.loc10_40() to %.loc10_48.1
 // CHECK:STDOUT:   %F.ref.loc10_45: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc10_48.2: ref %tuple.type.734 = splice_block %.loc10_48.5 {
+// CHECK:STDOUT:   %.loc10_48.2: ref %tuple.type.e56 = splice_block %.loc10_48.5 {
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:     %.loc10_48.5: ref %tuple.type.734 = array_index %v.var, %int_1
+// CHECK:STDOUT:     %.loc10_48.5: ref %tuple.type.e56 = array_index %v.var, %int_1
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.call.loc10_47: init %tuple.type.734 = call %F.ref.loc10_45() to %.loc10_48.2
-// CHECK:STDOUT:   %.loc10_48.3: %tuple.type.14a = tuple_literal (%F.call.loc10_42, %F.call.loc10_47)
+// CHECK:STDOUT:   %F.call.loc10_47: init %tuple.type.e56 = call %F.ref.loc10_45() to %.loc10_48.2
+// CHECK:STDOUT:   %.loc10_48.3: %tuple.type.708 = tuple_literal (%F.call.loc10_42, %F.call.loc10_47)
 // CHECK:STDOUT:   %.loc10_48.4: init %array_type = array_init (%F.call.loc10_42, %F.call.loc10_47) to %v.var
 // CHECK:STDOUT:   %.loc10_3: init %array_type = converted %.loc10_48.3, %.loc10_48.4
 // CHECK:STDOUT:   assign %v.var, %.loc10_3
@@ -219,7 +219,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:     %C.ref.loc10_30: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %.loc10_31.1: %tuple.type.ff9 = tuple_literal (%C.ref.loc10_24, %C.ref.loc10_27, %C.ref.loc10_30) [concrete = constants.%tuple]
 // CHECK:STDOUT:     %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:     %.loc10_31.2: type = converted %.loc10_31.1, constants.%tuple.type.734 [concrete = constants.%tuple.type.734]
+// CHECK:STDOUT:     %.loc10_31.2: type = converted %.loc10_31.1, constants.%tuple.type.e56 [concrete = constants.%tuple.type.e56]
 // CHECK:STDOUT:     %array_type: type = array_type %int_2, %.loc10_31.2 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref %array_type = ref_binding v, %v.var
@@ -345,11 +345,11 @@ var a: array(1, 1);
 // CHECK:STDOUT:     %array_type: type = array_type %int_1, %.loc8_24.2 [concrete = constants.%array_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: ref %array_type = ref_binding t, %t.var
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_34: <bound method> = bound_method %.loc8_34.2, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.452
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_34: <bound method> = bound_method %.loc8_34.2, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.baa
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8_34: <bound method> = bound_method %.loc8_34.2, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc8_34: init %empty_tuple.type = call %bound_method.loc8_34(%.loc8_34.2)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_3: <bound method> = bound_method %t.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.731
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc8_3: <bound method> = bound_method %t.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.ade
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc8_3: <bound method> = bound_method %t.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc8_3: init %empty_tuple.type = call %bound_method.loc8_3(%t.var)

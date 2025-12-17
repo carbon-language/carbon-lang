@@ -150,11 +150,11 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT: generic fn @F(%N.loc4_6.2: Core.IntLiteral) {
 // CHECK:STDOUT:   %N.loc4_6.1: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N.loc4_6.1 (constants.%N)]
 // CHECK:STDOUT:   %Int.loc4_49.1: type = class_type @Int, @Int(%N.loc4_6.1) [symbolic = %Int.loc4_49.1 (constants.%Int)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Int.loc4_49.1 [symbolic = %pattern_type (constants.%pattern_type.60f)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Int.loc4_49.1 [symbolic = %pattern_type (constants.%pattern_type.764)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Int.loc4_49.1 [symbolic = %require_complete (constants.%require_complete.e66)]
-// CHECK:STDOUT:   %Core.IntLiteral.as.Copy.impl.Op.bound: <bound method> = bound_method %N.loc4_6.1, constants.%Core.IntLiteral.as.Copy.impl.Op [symbolic = %Core.IntLiteral.as.Copy.impl.Op.bound (constants.%Core.IntLiteral.as.Copy.impl.Op.bound.66a)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Int.loc4_49.1 [symbolic = %require_complete (constants.%require_complete.901)]
+// CHECK:STDOUT:   %Core.IntLiteral.as.Copy.impl.Op.bound: <bound method> = bound_method %N.loc4_6.1, constants.%Core.IntLiteral.as.Copy.impl.Op [symbolic = %Core.IntLiteral.as.Copy.impl.Op.bound (constants.%Core.IntLiteral.as.Copy.impl.Op.bound.0a7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%n.param: @F.%Int.loc4_49.1 (%Int)) -> Core.IntLiteral {
 // CHECK:STDOUT:   !entry:
@@ -178,7 +178,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT: specific @F(constants.%N) {
 // CHECK:STDOUT:   %N.loc4_6.1 => constants.%N
 // CHECK:STDOUT:   %Int.loc4_49.1 => constants.%Int
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.60f
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.764
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%int_64) {
@@ -305,11 +305,11 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT: generic fn @F(%N.loc4_6.2: Core.IntLiteral) {
 // CHECK:STDOUT:   %N.loc4_6.1: Core.IntLiteral = symbolic_binding N, 0 [symbolic = %N.loc4_6.1 (constants.%N)]
 // CHECK:STDOUT:   %Float.loc4_51.1: type = class_type @Float, @Float(%N.loc4_6.1) [symbolic = %Float.loc4_51.1 (constants.%Float)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Float.loc4_51.1 [symbolic = %pattern_type (constants.%pattern_type.e87)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Float.loc4_51.1 [symbolic = %pattern_type (constants.%pattern_type.7d0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Float.loc4_51.1 [symbolic = %require_complete (constants.%require_complete.8ab)]
-// CHECK:STDOUT:   %Core.IntLiteral.as.Copy.impl.Op.bound: <bound method> = bound_method %N.loc4_6.1, constants.%Core.IntLiteral.as.Copy.impl.Op [symbolic = %Core.IntLiteral.as.Copy.impl.Op.bound (constants.%Core.IntLiteral.as.Copy.impl.Op.bound.66a)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Float.loc4_51.1 [symbolic = %require_complete (constants.%require_complete.dc0)]
+// CHECK:STDOUT:   %Core.IntLiteral.as.Copy.impl.Op.bound: <bound method> = bound_method %N.loc4_6.1, constants.%Core.IntLiteral.as.Copy.impl.Op [symbolic = %Core.IntLiteral.as.Copy.impl.Op.bound (constants.%Core.IntLiteral.as.Copy.impl.Op.bound.0a7)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%n.param: @F.%Float.loc4_51.1 (%Float)) -> Core.IntLiteral {
 // CHECK:STDOUT:   !entry:
@@ -333,7 +333,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT: specific @F(constants.%N) {
 // CHECK:STDOUT:   %N.loc4_6.1 => constants.%N
 // CHECK:STDOUT:   %Float.loc4_51.1 => constants.%Float
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e87
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7d0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%int_64) {

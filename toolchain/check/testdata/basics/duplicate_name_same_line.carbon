@@ -66,11 +66,11 @@ fn A() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.done:
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc18_32: <bound method> = bound_method %n.var.loc18_32, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.72f
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc18_32: <bound method> = bound_method %n.var.loc18_32, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.144
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc18_32: <bound method> = bound_method %n.var.loc18_32, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.1
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc18_32: init %empty_tuple.type = call %bound_method.loc18_32(%n.var.loc18_32)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc18_5: <bound method> = bound_method %n.var.loc18_5, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.72f
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc18_5: <bound method> = bound_method %n.var.loc18_5, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.144
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %bound_method.loc18_5: <bound method> = bound_method %n.var.loc18_5, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.2
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc18_5: init %empty_tuple.type = call %bound_method.loc18_5(%n.var.loc18_5)

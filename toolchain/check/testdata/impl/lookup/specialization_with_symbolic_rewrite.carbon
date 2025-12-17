@@ -328,9 +328,9 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.56b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete (constants.%require_complete.9c0)]
-// CHECK:STDOUT:   %.loc15_18.4: require_specific_def_type = require_specific_def @T.as.Z.impl.030(%T.binding.as_type) [symbolic = %.loc15_18.4 (constants.%.1c1)]
-// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness file.%Z.impl_witness_table.loc11, @T.as.Z.impl.030(%T.binding.as_type) [symbolic = %Z.impl_witness (constants.%Z.impl_witness.f1f)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete (constants.%require_complete.d5c)]
+// CHECK:STDOUT:   %.loc15_18.4: require_specific_def_type = require_specific_def @T.as.Z.impl.294(%T.binding.as_type) [symbolic = %.loc15_18.4 (constants.%.c6f)]
+// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness @T.as.Z.impl.294.%Z.impl_witness_table, @T.as.Z.impl.294(%T.binding.as_type) [symbolic = %Z.impl_witness (constants.%Z.impl_witness.ad1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%t.param: @F.%T.binding.as_type (%T.binding.as_type)) {
 // CHECK:STDOUT:   !entry:
@@ -339,12 +339,12 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %t.ref: @F.%T.binding.as_type (%T.binding.as_type) = name_ref t, %t
 // CHECK:STDOUT:     %.loc15_18.1: type = splice_block %impl.elem0 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)] {
-// CHECK:STDOUT:       %T.ref.loc15: %Z.type.a71 = name_ref T, %T.loc13_6.2 [symbolic = %T.loc13_6.1 (constants.%T.38e)]
-// CHECK:STDOUT:       %.loc15_18.2: %Z.assoc_type.252 = specific_constant @X.%assoc0, @Z(constants.%C) [concrete = constants.%assoc0.ea4]
-// CHECK:STDOUT:       %X.ref: %Z.assoc_type.252 = name_ref X, %.loc15_18.2 [concrete = constants.%assoc0.ea4]
+// CHECK:STDOUT:       %T.ref.loc15: %Z.type.9f9 = name_ref T, %T.loc13_6.2 [symbolic = %T.loc13_6.1 (constants.%T.f89)]
+// CHECK:STDOUT:       %.loc15_18.2: %Z.assoc_type.553 = specific_constant @X.%assoc0, @Z(constants.%C) [concrete = constants.%assoc0.20f]
+// CHECK:STDOUT:       %X.ref: %Z.assoc_type.553 = name_ref X, %.loc15_18.2 [concrete = constants.%assoc0.20f]
 // CHECK:STDOUT:       %T.as_type.loc15: type = facet_access_type %T.ref.loc15 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %.loc15_18.3: type = converted %T.ref.loc15, %T.as_type.loc15 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%Z.impl_witness.f1f, element0 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%Z.impl_witness.ad1, element0 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: @F.%T.binding.as_type (%T.binding.as_type) = value_binding a, %t.ref
 // CHECK:STDOUT:     return
@@ -683,15 +683,15 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %pattern_type.loc14: type = pattern_type %T.binding.as_type [symbolic = %pattern_type.loc14 (constants.%pattern_type.56b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc14: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc14 (constants.%require_complete.9c0)]
-// CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc14_6.1, @Z, @Z(constants.%C) [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness.420)]
-// CHECK:STDOUT:   %impl.elem0.loc22_18.2: type = impl_witness_access %Z.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc22_18.2 (constants.%impl.elem0.99d)]
-// CHECK:STDOUT:   %require_complete.loc22_18: <witness> = require_complete_type %impl.elem0.loc22_18.2 [symbolic = %require_complete.loc22_18 (constants.%require_complete.35b)]
-// CHECK:STDOUT:   %pattern_type.loc22: type = pattern_type %impl.elem0.loc22_18.2 [symbolic = %pattern_type.loc22 (constants.%pattern_type.3f9)]
-// CHECK:STDOUT:   %ImplicitAs.type.loc22_23.2: type = facet_type <@ImplicitAs, @ImplicitAs(%impl.elem0.loc22_18.2)> [symbolic = %ImplicitAs.type.loc22_23.2 (constants.%ImplicitAs.type.4d8)]
-// CHECK:STDOUT:   %require_complete.loc22_23: <witness> = require_complete_type %ImplicitAs.type.loc22_23.2 [symbolic = %require_complete.loc22_23 (constants.%require_complete.a5d)]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%impl.elem0.loc22_18.2) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.0e5)]
-// CHECK:STDOUT:   %assoc0: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.0e5) = assoc_entity element0, imports.%Core.import_ref.b91 [symbolic = %assoc0 (constants.%assoc0.f67)]
+// CHECK:STDOUT:   %require_complete.loc14: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete.loc14 (constants.%require_complete.d5c)]
+// CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc14_6.1, @Z, @Z(constants.%C) [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness.191)]
+// CHECK:STDOUT:   %impl.elem0.loc22_18.2: type = impl_witness_access %Z.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc22_18.2 (constants.%impl.elem0.00a)]
+// CHECK:STDOUT:   %require_complete.loc22_18: <witness> = require_complete_type %impl.elem0.loc22_18.2 [symbolic = %require_complete.loc22_18 (constants.%require_complete.c99)]
+// CHECK:STDOUT:   %pattern_type.loc22: type = pattern_type %impl.elem0.loc22_18.2 [symbolic = %pattern_type.loc22 (constants.%pattern_type.5d1)]
+// CHECK:STDOUT:   %ImplicitAs.type.loc22_23.2: type = facet_type <@ImplicitAs, @ImplicitAs(%impl.elem0.loc22_18.2)> [symbolic = %ImplicitAs.type.loc22_23.2 (constants.%ImplicitAs.type.6ad)]
+// CHECK:STDOUT:   %require_complete.loc22_23: <witness> = require_complete_type %ImplicitAs.type.loc22_23.2 [symbolic = %require_complete.loc22_23 (constants.%require_complete.177)]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%impl.elem0.loc22_18.2) [symbolic = %ImplicitAs.assoc_type (constants.%ImplicitAs.assoc_type.787)]
+// CHECK:STDOUT:   %assoc0: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.787) = assoc_entity element0, imports.%Core.import_ref.218 [symbolic = %assoc0 (constants.%assoc0.7a6)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%t.param: @F.%T.binding.as_type (%T.binding.as_type)) {
 // CHECK:STDOUT:   !entry:
@@ -699,19 +699,19 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:       %a.patt: @F.%pattern_type.loc22 (%pattern_type.5d1) = value_binding_pattern a [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %t.ref: @F.%T.binding.as_type (%T.binding.as_type) = name_ref t, %t
-// CHECK:STDOUT:     %.loc22_18.1: type = splice_block %impl.elem0.loc22_18.1 [symbolic = %impl.elem0.loc22_18.2 (constants.%impl.elem0.99d)] {
-// CHECK:STDOUT:       %T.ref.loc22: %Z.type.a71 = name_ref T, %T.loc14_6.2 [symbolic = %T.loc14_6.1 (constants.%T.38e)]
-// CHECK:STDOUT:       %.loc22_18.2: %Z.assoc_type.252 = specific_constant @X.%assoc0, @Z(constants.%C) [concrete = constants.%assoc0.ea4]
-// CHECK:STDOUT:       %X.ref: %Z.assoc_type.252 = name_ref X, %.loc22_18.2 [concrete = constants.%assoc0.ea4]
+// CHECK:STDOUT:     %.loc22_18.1: type = splice_block %impl.elem0.loc22_18.1 [symbolic = %impl.elem0.loc22_18.2 (constants.%impl.elem0.00a)] {
+// CHECK:STDOUT:       %T.ref.loc22: %Z.type.9f9 = name_ref T, %T.loc14_6.2 [symbolic = %T.loc14_6.1 (constants.%T.f89)]
+// CHECK:STDOUT:       %.loc22_18.2: %Z.assoc_type.553 = specific_constant @X.%assoc0, @Z(constants.%C) [concrete = constants.%assoc0.20f]
+// CHECK:STDOUT:       %X.ref: %Z.assoc_type.553 = name_ref X, %.loc22_18.2 [concrete = constants.%assoc0.20f]
 // CHECK:STDOUT:       %T.as_type.loc22: type = facet_access_type %T.ref.loc22 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:       %.loc22_18.3: type = converted %T.ref.loc22, %T.as_type.loc22 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:       %impl.elem0.loc22_18.1: type = impl_witness_access constants.%Z.lookup_impl_witness.420, element0 [symbolic = %impl.elem0.loc22_18.2 (constants.%impl.elem0.99d)]
+// CHECK:STDOUT:       %impl.elem0.loc22_18.1: type = impl_witness_access constants.%Z.lookup_impl_witness.191, element0 [symbolic = %impl.elem0.loc22_18.2 (constants.%impl.elem0.00a)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %ImplicitAs.type.loc22_23.1: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%impl.elem0.99d)> [symbolic = %ImplicitAs.type.loc22_23.2 (constants.%ImplicitAs.type.4d8)]
-// CHECK:STDOUT:     %.loc22_23.1: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.0e5) = specific_constant imports.%Core.import_ref.b9c, @ImplicitAs(constants.%impl.elem0.99d) [symbolic = %assoc0 (constants.%assoc0.f67)]
-// CHECK:STDOUT:     %Convert.ref: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.0e5) = name_ref Convert, %.loc22_23.1 [symbolic = %assoc0 (constants.%assoc0.f67)]
-// CHECK:STDOUT:     %.loc22_23.2: @F.%impl.elem0.loc22_18.2 (%impl.elem0.99d) = converted %t.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:     %a: @F.%impl.elem0.loc22_18.2 (%impl.elem0.99d) = value_binding a, <error> [concrete = <error>]
+// CHECK:STDOUT:     %ImplicitAs.type.loc22_23.1: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%impl.elem0.00a)> [symbolic = %ImplicitAs.type.loc22_23.2 (constants.%ImplicitAs.type.6ad)]
+// CHECK:STDOUT:     %.loc22_23.1: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.787) = specific_constant imports.%Core.import_ref.a80, @ImplicitAs(constants.%impl.elem0.00a) [symbolic = %assoc0 (constants.%assoc0.7a6)]
+// CHECK:STDOUT:     %Convert.ref: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.787) = name_ref Convert, %.loc22_23.1 [symbolic = %assoc0 (constants.%assoc0.7a6)]
+// CHECK:STDOUT:     %.loc22_23.2: @F.%impl.elem0.loc22_18.2 (%impl.elem0.00a) = converted %t.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:     %a: @F.%impl.elem0.loc22_18.2 (%impl.elem0.00a) = value_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

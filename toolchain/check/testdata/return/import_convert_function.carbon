@@ -1400,8 +1400,8 @@ fn F0(unused n: i32) -> P.D {
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, imports.%P.Make [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc6_22.9: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc6_22.9
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc14_24.2: <bound method> = bound_method %.loc14_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.85d
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.37: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.85d, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.488) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.eb6]
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc14_24.2: <bound method> = bound_method %.loc14_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.18d
+// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.37: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.18d, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value.488) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.fa3]
 // CHECK:STDOUT:   %bound_method.loc14_24.2: <bound method> = bound_method %.loc14_24.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn.37
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call.loc14_24.2: init %empty_tuple.type = call %bound_method.loc14_24.2(%.loc14_24.4)
 // CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound.loc13_24.3: <bound method> = bound_method %.loc13_24.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.ca0

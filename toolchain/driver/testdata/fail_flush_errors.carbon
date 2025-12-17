@@ -38,9 +38,13 @@ fn F() {
 
   // Add the name into the string table via a declaration rather than an expression.
   if (true) { let undeclared3: () = (); }
-  // CHECK:STDERR: fail_flush_errors.carbon:[[@LINE+4]]:3: error: name `undeclared3` not found [NameNotFound]
+  // CHECK:STDERR: fail_flush_errors.carbon:[[@LINE+8]]:3: error: name `undeclared3` not found [NameNotFound]
   // CHECK:STDERR:   undeclared3;
   // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_flush_errors.carbon:[[@LINE-5]]:19: warning: binding `undeclared3` is unused [UnusedBinding]
+  // CHECK:STDERR:   if (true) { let undeclared3: () = (); }
+  // CHECK:STDERR:                   ^~~~~~~~~~~
   // CHECK:STDERR:
   undeclared3;
 }

@@ -226,10 +226,10 @@ fn Var5() {
 // CHECK:STDOUT:     %v.var_patt: <error> = var_pattern %v.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v.var: ref <error> = var %v.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc13_28.1: type = splice_block %.loc13_28.3 [concrete = constants.%tuple.type.ac6] {
+// CHECK:STDOUT:   %.loc13_28.1: type = splice_block %.loc13_28.3 [concrete = constants.%tuple.type.d46] {
 // CHECK:STDOUT:     %Abstract2.ref: type = name_ref Abstract2, file.%Abstract2.decl [concrete = constants.%Abstract2]
 // CHECK:STDOUT:     %.loc13_28.2: %tuple.type.85c = tuple_literal (%Abstract2.ref) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc13_28.3: type = converted %.loc13_28.2, constants.%tuple.type.ac6 [concrete = constants.%tuple.type.ac6]
+// CHECK:STDOUT:     %.loc13_28.3: type = converted %.loc13_28.2, constants.%tuple.type.d46 [concrete = constants.%tuple.type.d46]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: ref <error> = ref_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
@@ -289,11 +289,11 @@ fn Var5() {
 // CHECK:STDOUT:     %l.patt: %pattern_type.016 = value_binding_pattern l [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: %Abstract3 = name_ref a, %a
-// CHECK:STDOUT:   %.loc7_35: %tuple.type.fa1 = tuple_literal (%a.ref)
-// CHECK:STDOUT:   %.loc7_28.1: type = splice_block %.loc7_28.3 [concrete = constants.%tuple.type.fa1] {
+// CHECK:STDOUT:   %.loc7_35: %tuple.type.c99 = tuple_literal (%a.ref)
+// CHECK:STDOUT:   %.loc7_28.1: type = splice_block %.loc7_28.3 [concrete = constants.%tuple.type.c99] {
 // CHECK:STDOUT:     %Abstract3.ref.loc7: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
 // CHECK:STDOUT:     %.loc7_28.2: %tuple.type.85c = tuple_literal (%Abstract3.ref.loc7) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc7_28.3: type = converted %.loc7_28.2, constants.%tuple.type.fa1 [concrete = constants.%tuple.type.fa1]
+// CHECK:STDOUT:     %.loc7_28.3: type = converted %.loc7_28.2, constants.%tuple.type.c99 [concrete = constants.%tuple.type.c99]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %l: %tuple.type.c99 = value_binding l, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
@@ -359,11 +359,11 @@ fn Var5() {
 // CHECK:STDOUT:     %v2.var_patt: <error> = var_pattern %v2.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2.var: ref <error> = var %v2.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc14_39.1: type = splice_block %.loc14_39.3 [concrete = constants.%tuple.type.e3e] {
+// CHECK:STDOUT:   %.loc14_39.1: type = splice_block %.loc14_39.3 [concrete = constants.%tuple.type.fa1] {
 // CHECK:STDOUT:     %Abstract4.ref: type = name_ref Abstract4, file.%Abstract4.decl [concrete = constants.%Abstract4]
 // CHECK:STDOUT:     %Abstract5.ref: type = name_ref Abstract5, file.%Abstract5.decl [concrete = constants.%Abstract5]
 // CHECK:STDOUT:     %.loc14_39.2: %tuple.type.24b = tuple_literal (%Abstract4.ref, %Abstract5.ref) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc14_39.3: type = converted %.loc14_39.2, constants.%tuple.type.e3e [concrete = constants.%tuple.type.e3e]
+// CHECK:STDOUT:     %.loc14_39.3: type = converted %.loc14_39.2, constants.%tuple.type.fa1 [concrete = constants.%tuple.type.fa1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2: ref <error> = ref_binding v2, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
@@ -419,12 +419,12 @@ fn Var5() {
 // CHECK:STDOUT:     %v3.var_patt: <error> = var_pattern %v3.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v3.var: ref <error> = var %v3.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc13_32.1: type = splice_block %.loc13_32.4 [concrete = constants.%tuple.type.d93] {
+// CHECK:STDOUT:   %.loc13_32.1: type = splice_block %.loc13_32.4 [concrete = constants.%tuple.type.a75] {
 // CHECK:STDOUT:     %Abstract6.ref: type = name_ref Abstract6, file.%Abstract6.decl [concrete = constants.%Abstract6]
 // CHECK:STDOUT:     %.loc13_31: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc13_32.2: %tuple.type.159 = tuple_literal (%Abstract6.ref, %.loc13_31) [concrete = constants.%tuple]
 // CHECK:STDOUT:     %.loc13_32.3: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc13_32.4: type = converted %.loc13_32.2, constants.%tuple.type.d93 [concrete = constants.%tuple.type.d93]
+// CHECK:STDOUT:     %.loc13_32.4: type = converted %.loc13_32.2, constants.%tuple.type.a75 [concrete = constants.%tuple.type.a75]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v3: ref <error> = ref_binding v3, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
@@ -480,12 +480,12 @@ fn Var5() {
 // CHECK:STDOUT:     %v4.var_patt: <error> = var_pattern %v4.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v4.var: ref <error> = var %v4.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc13_32.1: type = splice_block %.loc13_32.4 [concrete = constants.%tuple.type.919] {
+// CHECK:STDOUT:   %.loc13_32.1: type = splice_block %.loc13_32.4 [concrete = constants.%tuple.type.ff9] {
 // CHECK:STDOUT:     %.loc13_20: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %Abstract7.ref: type = name_ref Abstract7, file.%Abstract7.decl [concrete = constants.%Abstract7]
 // CHECK:STDOUT:     %.loc13_32.2: %tuple.type.c8c = tuple_literal (%.loc13_20, %Abstract7.ref) [concrete = constants.%tuple]
 // CHECK:STDOUT:     %.loc13_32.3: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc13_32.4: type = converted %.loc13_32.2, constants.%tuple.type.919 [concrete = constants.%tuple.type.919]
+// CHECK:STDOUT:     %.loc13_32.4: type = converted %.loc13_32.2, constants.%tuple.type.ff9 [concrete = constants.%tuple.type.ff9]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v4: ref <error> = ref_binding v4, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
@@ -574,10 +574,10 @@ fn Var5() {
 // CHECK:STDOUT:     %v5.var_patt: <error> = var_pattern %v5.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v5.var: ref <error> = var %v5.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc14_28.1: type = splice_block %.loc14_28.3 [concrete = constants.%tuple.type.555] {
+// CHECK:STDOUT:   %.loc14_28.1: type = splice_block %.loc14_28.3 [concrete = constants.%tuple.type.e3a] {
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, imports.%Main.Abstract [concrete = constants.%Abstract]
 // CHECK:STDOUT:     %.loc14_28.2: %tuple.type.85c = tuple_literal (%Abstract.ref) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc14_28.3: type = converted %.loc14_28.2, constants.%tuple.type.555 [concrete = constants.%tuple.type.555]
+// CHECK:STDOUT:     %.loc14_28.3: type = converted %.loc14_28.2, constants.%tuple.type.e3a [concrete = constants.%tuple.type.e3a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v5: ref <error> = ref_binding v5, <error> [concrete = <error>]
 // CHECK:STDOUT:   return

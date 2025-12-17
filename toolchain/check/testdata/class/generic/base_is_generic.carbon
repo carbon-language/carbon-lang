@@ -700,10 +700,10 @@ fn H() {
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %int_32.loc13_25: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc13_25: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.98a]
-// CHECK:STDOUT:   %.loc13_29: %X.G.type.862 = specific_constant @X.%X.G.decl, @X(constants.%i32) [concrete = constants.%X.G.d5e]
-// CHECK:STDOUT:   %G.ref: %X.G.type.862 = name_ref G, %.loc13_29 [concrete = constants.%X.G.d5e]
-// CHECK:STDOUT:   %X.G.specific_fn: <specific function> = specific_function %G.ref, @X.G(constants.%i32) [concrete = constants.%X.G.specific_fn.1a2]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.b13]
+// CHECK:STDOUT:   %.loc13_29: %X.G.type.f75 = specific_constant @X.%X.G.decl, @X(constants.%i32) [concrete = constants.%X.G.e2a]
+// CHECK:STDOUT:   %G.ref: %X.G.type.f75 = name_ref G, %.loc13_29 [concrete = constants.%X.G.e2a]
+// CHECK:STDOUT:   %X.G.specific_fn: <specific function> = specific_function %G.ref, @X.G(constants.%i32) [concrete = constants.%X.G.specific_fn.54d]
 // CHECK:STDOUT:   %X.G.call: init %i32 = call %X.G.specific_fn()
 // CHECK:STDOUT:   %.loc13_17: type = splice_block %i32.loc13_17 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc13_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -899,10 +899,10 @@ fn H() {
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%Main.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %int_32.loc7_25: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:   %i32.loc7_25: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.98a]
-// CHECK:STDOUT:   %.loc7_29: %X.G.type.862 = specific_constant imports.%Main.import_ref.e33, @X(constants.%i32) [concrete = constants.%X.G.d5e]
-// CHECK:STDOUT:   %G.ref: %X.G.type.862 = name_ref G, %.loc7_29 [concrete = constants.%X.G.d5e]
-// CHECK:STDOUT:   %X.G.specific_fn: <specific function> = specific_function %G.ref, @X.G(constants.%i32) [concrete = constants.%X.G.specific_fn.1a2]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.b13]
+// CHECK:STDOUT:   %.loc7_29: %X.G.type.f75 = specific_constant imports.%Main.import_ref.940, @X(constants.%i32) [concrete = constants.%X.G.e2a]
+// CHECK:STDOUT:   %G.ref: %X.G.type.f75 = name_ref G, %.loc7_29 [concrete = constants.%X.G.e2a]
+// CHECK:STDOUT:   %X.G.specific_fn: <specific function> = specific_function %G.ref, @X.G(constants.%i32) [concrete = constants.%X.G.specific_fn.54d]
 // CHECK:STDOUT:   %X.G.call: init %i32 = call %X.G.specific_fn()
 // CHECK:STDOUT:   %.loc7_17: type = splice_block %i32.loc7_17 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc7_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

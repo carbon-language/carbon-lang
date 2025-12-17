@@ -495,8 +495,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %pattern_type.loc7_22: type = pattern_type %T.loc7 [symbolic = %pattern_type.loc7_22 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc11_31: <witness> = require_complete_type %B [symbolic = %require_complete.loc11_31 (constants.%require_complete.607)]
-// CHECK:STDOUT:   %require_complete.loc11_47: <witness> = require_complete_type %T.loc7 [symbolic = %require_complete.loc11_47 (constants.%require_complete.4b7)]
+// CHECK:STDOUT:   %require_complete.loc11_31: <witness> = require_complete_type %B [symbolic = %require_complete.loc11_31 (constants.%require_complete.7cc)]
+// CHECK:STDOUT:   %require_complete.loc11_47: <witness> = require_complete_type %T.loc7 [symbolic = %require_complete.loc11_47 (constants.%require_complete.944)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param.loc11: @B.F.%B (%B), %a.param.loc11: @B.F.%T.loc7 (%T)) {
 // CHECK:STDOUT:   !entry:

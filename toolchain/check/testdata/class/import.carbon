@@ -395,14 +395,14 @@ fn Run() {
 // CHECK:STDOUT:     %d.patt: %pattern_type.77e = ref_binding_pattern d [concrete]
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.77e = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %ptr.6cf = var %d.var_patt
-// CHECK:STDOUT:   %c.ref.loc16: ref %ForwardDeclared.7b34f2.1 = name_ref c, %c
-// CHECK:STDOUT:   %addr: %ptr.6cf = addr_of %c.ref.loc16
-// CHECK:STDOUT:   %impl.elem0.loc16: %.05a = impl_witness_access constants.%Copy.impl_witness.bf8, element0 [concrete = constants.%ptr.as.Copy.impl.Op.8de]
+// CHECK:STDOUT:   %d.var: ref %ptr.006 = var %d.var_patt
+// CHECK:STDOUT:   %c.ref.loc16: ref %ForwardDeclared.20f323.1 = name_ref c, %c
+// CHECK:STDOUT:   %addr: %ptr.006 = addr_of %c.ref.loc16
+// CHECK:STDOUT:   %impl.elem0.loc16: %.3c5 = impl_witness_access constants.%Copy.impl_witness.6d0, element0 [concrete = constants.%ptr.as.Copy.impl.Op.a1d]
 // CHECK:STDOUT:   %bound_method.loc16_36.1: <bound method> = bound_method %addr, %impl.elem0.loc16
-// CHECK:STDOUT:   %specific_fn.loc16: <specific function> = specific_function %impl.elem0.loc16, @ptr.as.Copy.impl.Op(constants.%ForwardDeclared.7b34f2.1) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %specific_fn.loc16: <specific function> = specific_function %impl.elem0.loc16, @ptr.as.Copy.impl.Op(constants.%ForwardDeclared.20f323.1) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc16_36.2: <bound method> = bound_method %addr, %specific_fn.loc16
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.6cf = call %bound_method.loc16_36.2(%addr)
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.006 = call %bound_method.loc16_36.2(%addr)
 // CHECK:STDOUT:   assign %d.var, %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT:   %.loc16: type = splice_block %ptr.loc16 [concrete = constants.%ptr.006] {
 // CHECK:STDOUT:     %ForwardDeclared.ref.loc16: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.20f323.1]

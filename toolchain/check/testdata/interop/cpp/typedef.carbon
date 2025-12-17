@@ -133,7 +133,7 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:   %p.var: ref %ptr.235 = var %p.var_patt
 // CHECK:STDOUT:   %n.ref: ref %i32 = name_ref n, %n
 // CHECK:STDOUT:   %addr: %ptr.235 = addr_of %n.ref
-// CHECK:STDOUT:   %impl.elem0.loc10: %.cbc = impl_witness_access constants.%Copy.impl_witness.be3, element0 [concrete = constants.%ptr.as.Copy.impl.Op.687]
+// CHECK:STDOUT:   %impl.elem0.loc10: %.fef = impl_witness_access constants.%Copy.impl_witness.9c7, element0 [concrete = constants.%ptr.as.Copy.impl.Op.624]
 // CHECK:STDOUT:   %bound_method.loc10_28.1: <bound method> = bound_method %addr, %impl.elem0.loc10
 // CHECK:STDOUT:   %specific_fn.loc10: <specific function> = specific_function %impl.elem0.loc10, @ptr.as.Copy.impl.Op(constants.%i32) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_28.2: <bound method> = bound_method %addr, %specific_fn.loc10
@@ -201,7 +201,7 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:   %pd.var: ref %ptr.d9e = var %pd.var_patt
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:   %addr.loc9: %ptr.d9e = addr_of %c.ref
-// CHECK:STDOUT:   %impl.elem0.loc9: %.f83 = impl_witness_access constants.%Copy.impl_witness.485, element0 [concrete = constants.%ptr.as.Copy.impl.Op.898]
+// CHECK:STDOUT:   %impl.elem0.loc9: %.52c = impl_witness_access constants.%Copy.impl_witness.cd9, element0 [concrete = constants.%ptr.as.Copy.impl.Op.406]
 // CHECK:STDOUT:   %bound_method.loc9_27.1: <bound method> = bound_method %addr.loc9, %impl.elem0.loc9
 // CHECK:STDOUT:   %specific_fn.loc9: <specific function> = specific_function %impl.elem0.loc9, @ptr.as.Copy.impl.Op(constants.%C) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc9_27.2: <bound method> = bound_method %addr.loc9, %specific_fn.loc9
@@ -220,7 +220,7 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:   %pc.var: ref %ptr.d9e = var %pc.var_patt
 // CHECK:STDOUT:   %d.ref: ref %C = name_ref d, %d
 // CHECK:STDOUT:   %addr.loc10: %ptr.d9e = addr_of %d.ref
-// CHECK:STDOUT:   %impl.elem0.loc10: %.f83 = impl_witness_access constants.%Copy.impl_witness.485, element0 [concrete = constants.%ptr.as.Copy.impl.Op.898]
+// CHECK:STDOUT:   %impl.elem0.loc10: %.52c = impl_witness_access constants.%Copy.impl_witness.cd9, element0 [concrete = constants.%ptr.as.Copy.impl.Op.406]
 // CHECK:STDOUT:   %bound_method.loc10_27.1: <bound method> = bound_method %addr.loc10, %impl.elem0.loc10
 // CHECK:STDOUT:   %specific_fn.loc10: <specific function> = specific_function %impl.elem0.loc10, @ptr.as.Copy.impl.Op(constants.%C) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_27.2: <bound method> = bound_method %addr.loc10, %specific_fn.loc10
