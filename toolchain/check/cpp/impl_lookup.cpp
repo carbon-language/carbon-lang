@@ -9,6 +9,7 @@
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/overload_resolution.h"
+#include "toolchain/check/custom_witness.h"
 #include "toolchain/check/impl.h"
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
