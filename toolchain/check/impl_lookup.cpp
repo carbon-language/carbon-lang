@@ -954,13 +954,6 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   SemIR::ConstantId query_self_const_id =
       context.constant_values().Get(eval_query.query_self_inst_id);
 
-  auto query_type_structure = BuildTypeStructure(
-      context, context.constant_values().GetInstId(query_self_const_id),
-      query_specific_interface);
-  if (!query_type_structure) {
-    return EvalImplLookupResult::MakeNone();
-  }
-
   auto facet_lookup_result = LookupImplWitnessInSelfFacetValue(
       context, loc_id, self_facet_value_inst_id, query_specific_interface);
   if (facet_lookup_result.has_final_value()) {
@@ -988,6 +981,13 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
         return facet_lookup_result;
       }
     }
+  }
+
+  auto query_type_structure = BuildTypeStructure(
+      context, context.constant_values().GetInstId(query_self_const_id),
+      query_specific_interface);
+  if (!query_type_structure) {
+    return EvalImplLookupResult::MakeNone();
   }
 
   // Check to see if this result is in the cache. But skip the cache if we're
@@ -1027,9 +1027,9 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
     SemIR::LocId impl_loc = SemIR::LocId::None;
   };
 
-  auto lookup_result = LookupResult{.result = facet_lookup_result};
+  LookupResult lookup_result = {.result = facet_lookup_result};
 
-  for (const auto& [impl, type_structure] : candidates.impls) {
+  for (auto [impl, type_structure] : candidates.impls) {
     SemIR::LocId candidate_loc_id(impl->definition_id);
 
     // In deferred lookup for a symbolic impl witness, while building a
@@ -1046,7 +1046,7 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
     if (result.has_value()) {
       PoisonImplLookupQuery(context, loc_id, mode, eval_query, result, *impl);
       lookup_result = {.result = result,
-                       .impl_type_structure = type_structure,
+                       .impl_type_structure = std::move(type_structure),
                        .impl_loc = candidate_loc_id};
       break;
     }
