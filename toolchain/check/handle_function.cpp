@@ -491,7 +491,7 @@ static auto BuildFunctionDecl(Context& context,
 
 CARBON_DIAGNOSTIC(
     UnusedMarkerInDeclaration, Error,
-    "`unused` maker cannot be used on a declaration that is not a "
+    "`unused` marker cannot be used on a declaration that is not a "
     "definition");
 
 static auto CheckUnusedBindingsInPattern(Context& context,

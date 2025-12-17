@@ -183,7 +183,7 @@ fn F() -> i32 {
 }
 
 // --- fail_unused_decl.carbon
-// CHECK:STDERR: fail_unused_decl.carbon:[[@LINE+4]]:13: error: `unused` maker cannot be used on a declaration that is not a definition [UnusedMarkerInDeclaration]
+// CHECK:STDERR: fail_unused_decl.carbon:[[@LINE+4]]:13: error: `unused` marker cannot be used on a declaration that is not a definition [UnusedMarkerInDeclaration]
 // CHECK:STDERR: fn F(unused x: i32);
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
