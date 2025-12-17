@@ -23,9 +23,11 @@ namespace Carbon::Check {
 // If the given type is a C++ class type, returns the corresponding class
 // declaration. Otherwise returns nullptr.
 // TODO: Handle qualified types.
-static auto TypeAsClassDecl(Context& context, SemIR::TypeId type_id)
+static auto TypeAsClassDecl(Context& context,
+                            SemIR::ConstantId query_self_const_id)
     -> clang::CXXRecordDecl* {
-  auto class_type = context.types().TryGetAs<SemIR::ClassType>(type_id);
+  auto self_inst_id = context.constant_values().GetInstId(query_self_const_id);
+  auto class_type = context.insts().TryGetAs<SemIR::ClassType>(self_inst_id);
   if (!class_type) {
     // Not a class.
     return nullptr;
@@ -50,8 +52,8 @@ static auto TypeAsClassDecl(Context& context, SemIR::TypeId type_id)
 static auto BuildSingleFunctionWitness(
     Context& context, SemIR::LocId loc_id, clang::FunctionDecl* cpp_fn,
     clang::DeclAccessPair found_decl, int num_params,
-    SemIR::TypeId self_type_id, SemIR::SpecificInterface specific_interface)
-    -> SemIR::InstId {
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterface specific_interface) -> SemIR::InstId {
   auto fn_id = context.clang_sema().DiagnoseUseOfOverloadedDecl(
                    cpp_fn, GetCppLocation(context, loc_id))
                    ? SemIR::ErrorInst::InstId
@@ -63,15 +65,15 @@ static auto BuildSingleFunctionWitness(
     CARBON_CHECK(fn_id == SemIR::ErrorInst::InstId);
     return SemIR::ErrorInst::InstId;
   }
-  return BuildCustomWitness(context, loc_id, self_type_id, specific_interface,
-                            {fn_id});
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            specific_interface, {fn_id});
 }
 
 static auto LookupCopyImpl(Context& context, SemIR::LocId loc_id,
-                           SemIR::TypeId self_type_id,
+                           SemIR::ConstantId query_self_const_id,
                            SemIR::SpecificInterface specific_interface)
     -> SemIR::InstId {
-  auto* class_decl = TypeAsClassDecl(context, self_type_id);
+  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
   if (!class_decl) {
     // TODO: Should we also provide a `Copy` implementation for enumerations?
     return SemIR::InstId::None;
@@ -88,14 +90,14 @@ static auto LookupCopyImpl(Context& context, SemIR::LocId loc_id,
   return BuildSingleFunctionWitness(
       context, loc_id, ctor,
       clang::DeclAccessPair::make(ctor, ctor->getAccess()), /*num_params=*/1,
-      self_type_id, specific_interface);
+      query_self_const_id, specific_interface);
 }
 
 static auto LookupDestroyImpl(Context& context, SemIR::LocId loc_id,
-                              SemIR::TypeId self_type_id,
+                              SemIR::ConstantId query_self_const_id,
                               SemIR::SpecificInterface specific_interface)
     -> SemIR::InstId {
-  auto* class_decl = TypeAsClassDecl(context, self_type_id);
+  auto* class_decl = TypeAsClassDecl(context, query_self_const_id);
   if (!class_decl) {
     return SemIR::InstId::None;
   }
@@ -110,20 +112,22 @@ static auto LookupDestroyImpl(Context& context, SemIR::LocId loc_id,
   return BuildSingleFunctionWitness(
       context, loc_id, dtor,
       clang::DeclAccessPair::make(dtor, dtor->getAccess()), /*num_params=*/0,
-      self_type_id, specific_interface);
+      query_self_const_id, specific_interface);
 }
 
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
-                   SemIR::TypeId self_type_id, CoreInterface core_interface,
+                   CoreInterface core_interface,
+                   SemIR::ConstantId query_self_const_id,
                    SemIR::SpecificInterface specific_interface,
                    const TypeStructure* best_impl_type_structure,
                    SemIR::LocId best_impl_loc_id) -> SemIR::InstId {
   // TODO: Handle other interfaces.
   switch (core_interface) {
     case CoreInterface::Copy:
-      return LookupCopyImpl(context, loc_id, self_type_id, specific_interface);
+      return LookupCopyImpl(context, loc_id, query_self_const_id,
+                            specific_interface);
     case CoreInterface::Destroy:
-      return LookupDestroyImpl(context, loc_id, self_type_id,
+      return LookupDestroyImpl(context, loc_id, query_self_const_id,
                                specific_interface);
 
     case CoreInterface::Unknown:

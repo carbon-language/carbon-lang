@@ -35,7 +35,8 @@ namespace Carbon::Check {
 // type structure, and can be `None` if `best_impl_type_structure` is null. This
 // parameter is used only for ambiguity diagnostics.
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
-                   SemIR::TypeId self_type_id, CoreInterface core_interface,
+                   CoreInterface core_interface,
+                   SemIR::ConstantId query_self_const_id,
                    SemIR::SpecificInterface specific_interface,
                    const TypeStructure* best_impl_type_structure,
                    SemIR::LocId best_impl_loc_id) -> SemIR::InstId;

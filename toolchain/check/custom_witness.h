@@ -15,7 +15,7 @@ namespace Carbon::Check {
 // lookup result. Produces a diagnostic and returns `None` if the specified
 // values aren't suitable for the interface.
 auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
-                        SemIR::TypeId self_type_id,
+                        SemIR::ConstantId query_self_const_id,
                         SemIR::SpecificInterface specific_interface,
                         llvm::ArrayRef<SemIR::InstId> values) -> SemIR::InstId;
 

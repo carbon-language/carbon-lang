@@ -12,8 +12,28 @@
 
 namespace Carbon::Check {
 
+// Given a value whose type `IsFacetTypeOrError`, returns the corresponding
+// type.
+static auto GetFacetAsType(Context& context, SemIR::LocId loc_id,
+                           SemIR::ConstantId facet_or_type_const_id)
+    -> SemIR::TypeId {
+  auto facet_or_type_id =
+      context.constant_values().GetInstId(facet_or_type_const_id);
+  auto type_type_id = context.insts().Get(facet_or_type_id).type_id();
+  CARBON_CHECK(context.types().IsFacetTypeOrError(type_type_id));
+
+  if (context.types().Is<SemIR::FacetType>(type_type_id)) {
+    // It's a facet; access its type.
+    facet_or_type_id = GetOrAddInst<SemIR::FacetAccessType>(
+        context, loc_id,
+        {.type_id = SemIR::TypeType::TypeId,
+         .facet_value_inst_id = facet_or_type_id});
+  }
+  return context.types().GetTypeIdForTypeInstId(facet_or_type_id);
+}
+
 auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
-                        SemIR::TypeId self_type_id,
+                        SemIR::ConstantId query_self_const_id,
                         SemIR::SpecificInterface specific_interface,
                         llvm::ArrayRef<SemIR::InstId> values) -> SemIR::InstId {
   const auto& interface =
@@ -64,6 +84,8 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
         if (struct_value.type_id == SemIR::ErrorInst::TypeId) {
           return SemIR::ErrorInst::InstId;
         }
+        auto self_type_id =
+            GetFacetAsType(context, loc_id, query_self_const_id);
         // TODO: If a thunk is needed, this will build a different value each
         // time it's called, so we won't properly deduplicate repeated
         // witnesses.

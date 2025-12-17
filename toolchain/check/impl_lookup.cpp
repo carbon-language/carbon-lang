@@ -896,26 +896,6 @@ static auto CollectCandidateImplsForQuery(
   return candidates;
 }
 
-// Given a value whose type `IsFacetTypeOrError`, returns the corresponding
-// type.
-static auto GetFacetAsType(Context& context, SemIR::LocId loc_id,
-                           SemIR::ConstantId facet_or_type_const_id)
-    -> SemIR::TypeId {
-  auto facet_or_type_id =
-      context.constant_values().GetInstId(facet_or_type_const_id);
-  auto type_type_id = context.insts().Get(facet_or_type_id).type_id();
-  CARBON_CHECK(context.types().IsFacetTypeOrError(type_type_id));
-
-  if (context.types().Is<SemIR::FacetType>(type_type_id)) {
-    // It's a facet; access its type.
-    facet_or_type_id = GetOrAddInst<SemIR::FacetAccessType>(
-        context, loc_id,
-        {.type_id = SemIR::TypeType::TypeId,
-         .facet_value_inst_id = facet_or_type_id});
-  }
-  return context.types().GetTypeIdForTypeInstId(facet_or_type_id);
-}
-
 // Record the query which found a final impl witness. It's illegal to
 // write a final impl afterward that would match the same query.
 static auto PoisonImplLookupQuery(Context& context, SemIR::LocId loc_id,
@@ -1060,9 +1040,9 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
       // Also check for a C++ candidate that is a better match than whatever
       // `impl` we may have found in Carbon.
       auto cpp_witness_id = LookupCppImpl(
-          context, loc_id, GetFacetAsType(context, loc_id, query_self_const_id),
-          core_interface, query_specific_interface,
-          lookup_result.impl_type_structure, lookup_result.impl_loc_id);
+          context, loc_id, core_interface, query_self_const_id,
+          query_specific_interface, lookup_result.impl_type_structure,
+          lookup_result.impl_loc_id);
       if (cpp_witness_id.has_value()) {
         lookup_result = {.result =
                              EvalImplLookupResult::MakeFinal(cpp_witness_id)};
