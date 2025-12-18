@@ -964,14 +964,12 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   // TODO: This needs to expand to more interfaces, and we might want to have
   // that dispatch in custom_witness.cpp instead of here.
   bool used_custom_witness = false;
-  if (core_interface == CoreInterface::Destroy) {
-    auto witness_id =
-        LookupDestroyCustomWitness(context, loc_id, query_self_const_id,
-                                   eval_query.query_specific_interface_id);
-    if (witness_id.has_value()) {
-      lookup_result = {.result = EvalImplLookupResult::MakeFinal(witness_id)};
-      used_custom_witness = true;
-    }
+  if (auto witness_id = LookupCustomWitness(
+          context, loc_id, core_interface, query_self_const_id,
+          eval_query.query_specific_interface_id);
+      witness_id.has_value()) {
+    lookup_result = {.result = EvalImplLookupResult::MakeFinal(witness_id)};
+    used_custom_witness = true;
   }
 
   // Only consider candidates when a custom witness didn't apply.

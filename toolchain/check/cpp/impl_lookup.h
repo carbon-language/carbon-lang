@@ -16,9 +16,9 @@
 namespace Carbon::Check {
 
 // Performs lookup for an impl witness for a query involving C++ types.
-// Shouldn't be called with `CoreInterface::None`, because only core interfaces
-// can have lookup results. Returns a witness value, or `None` if a synthesized
-// C++ witness should not be used.
+// Shouldn't be called with `CoreInterface::Unknown`, because only core
+// interfaces can have lookup results. Returns a witness value, or `None` if a
+// synthesized C++ witness should not be used.
 //
 // Given a known `core_interface`, we can synthesize a witness based on C++
 // operator overloads or special member functions. Performs the suitable C++

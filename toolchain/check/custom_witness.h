@@ -33,12 +33,13 @@ enum class CoreInterface {
 auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
     -> CoreInterface;
 
-// Returns a witness for a `Destroy` `CustomWitness`, or `None` if no witness
-// should be provided for `query_self_const_id`.
-auto LookupDestroyCustomWitness(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId;
+// Returns a witness for a `CoreInterface` `CustomWitness`, or `None` if no
+// witness should be provided for `query_self_const_id`.
+auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
+                         CoreInterface core_interface,
+                         SemIR::ConstantId query_self_const_id,
+                         SemIR::SpecificInterfaceId query_specific_interface_id)
+    -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

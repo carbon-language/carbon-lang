@@ -209,39 +209,16 @@ auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
   return CoreInterface::Unknown;
 }
 
-// Returns `Core.Destroy` if it's a valid interface, or `None` otherwise.
-static auto GetDestroyInterface(Context& context, SemIR::LocId loc_id)
-    -> SemIR::InterfaceId {
-  auto destroy_id = LookupNameInCore(context, loc_id, CoreIdentifier::Destroy);
-  auto destroy_facet_type =
-      context.insts().TryGetAs<SemIR::FacetType>(destroy_id);
-  if (!destroy_facet_type) {
-    return SemIR::InterfaceId::None;
-  }
-  const auto& destroy_facet_type_info =
-      context.facet_types().Get(destroy_facet_type->facet_type_id);
-  auto destroy_extend = destroy_facet_type_info.TryAsSingleExtend();
-  if (!destroy_extend ||
-      !std::holds_alternative<SemIR::SpecificInterface>(*destroy_extend)) {
-    return SemIR::InterfaceId::None;
-  }
-
-  return std::get<SemIR::SpecificInterface>(*destroy_extend).interface_id;
-}
-
 // Returns true if the `Self` should impl `Destroy`.
-static auto TypeCanDestroy(Context& context, SemIR::LocId loc_id,
-                           SemIR::ConstantId query_self_const_id) -> bool {
+static auto TypeCanDestroy(Context& context,
+                           SemIR::ConstantId query_self_const_id,
+                           SemIR::InterfaceId destroy_interface_id) -> bool {
   auto inst = context.insts().Get(context.constant_values().GetInstId(
       GetCanonicalFacetOrTypeValue(context, query_self_const_id)));
 
   // For facet values, look if the FacetType provides the same.
   if (auto facet_type =
           context.types().TryGetAs<SemIR::FacetType>(inst.type_id())) {
-    auto destroy_interface_id = GetDestroyInterface(context, loc_id);
-    if (!destroy_interface_id.has_value()) {
-      return false;
-    }
     const auto& info = context.facet_types().Get(facet_type->facet_type_id);
     for (auto interface : info.extend_constraints) {
       if (interface.interface_id == destroy_interface_id) {
@@ -279,24 +256,29 @@ static auto TypeCanDestroy(Context& context, SemIR::LocId loc_id,
   }
 }
 
-auto LookupDestroyCustomWitness(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
-  // If we're looking up `Destroy`, first try builtin support without looking at
-  // `impl`s.
-  if (!TypeCanDestroy(context, loc_id, query_self_const_id)) {
+auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
+                         CoreInterface core_interface,
+                         SemIR::ConstantId query_self_const_id,
+                         SemIR::SpecificInterfaceId query_specific_interface_id)
+    -> SemIR::InstId {
+  // TODO: Handle more interfaces, particularly copy, move, and conversion.
+  if (core_interface != CoreInterface::Destroy) {
+    return SemIR::InstId::None;
+  }
+
+  auto query_specific_interface =
+      context.specific_interfaces().Get(query_specific_interface_id);
+
+  if (!TypeCanDestroy(context, query_self_const_id,
+                      query_specific_interface.interface_id)) {
     return SemIR::InstId::None;
   }
 
   // TODO: This needs more complex logic to apply the correct behavior. Also, we
   // should avoid building a new function on each lookup since a similar query
   // could result in identical functions.
-  auto specific_id = context.specific_interfaces()
-                         .Get(query_specific_interface_id)
-                         .specific_id;
-  auto noop_id =
-      MakeNoOpFunction(context, loc_id, query_self_const_id, specific_id);
+  auto noop_id = MakeNoOpFunction(context, loc_id, query_self_const_id,
+                                  query_specific_interface.specific_id);
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface_id, {noop_id});
 }
