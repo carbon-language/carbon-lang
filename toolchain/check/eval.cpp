@@ -617,8 +617,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
                                      SemIR::LocId loc_id,
                                      const SemIR::FacetTypeInfo& orig,
                                      Phase* phase) -> SemIR::FacetTypeInfo {
-  SemIR::FacetTypeInfo info = {// TODO: Process other requirements.
-                               .other_requirements = orig.other_requirements};
+  SemIR::FacetTypeInfo info = {};
 
   info.extend_constraints.reserve(orig.extend_constraints.size());
   for (const auto& extend : orig.extend_constraints) {
@@ -678,6 +677,9 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
                                                          rewrite.rhs_id, phase);
     rewrite = {.lhs_id = lhs_id, .rhs_id = rhs_id};
   }
+
+  // TODO: Process other requirements.
+  info.other_requirements = orig.other_requirements;
 
   info.Canonicalize();
   return info;
