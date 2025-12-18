@@ -965,9 +965,9 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   // that dispatch in custom_witness.cpp instead of here.
   bool used_custom_witness = false;
   if (core_interface == CoreInterface::Destroy) {
-    auto witness_id = LookupDestroyCustomWitness(
-        context, loc_id, query_self_const_id,
-        eval_query.query_specific_interface_id, query_specific_interface);
+    auto witness_id =
+        LookupDestroyCustomWitness(context, loc_id, query_self_const_id,
+                                   eval_query.query_specific_interface_id);
     if (witness_id.has_value()) {
       lookup_result = {.result = EvalImplLookupResult::MakeFinal(witness_id)};
       used_custom_witness = true;
@@ -1006,7 +1006,7 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
     // `impl` we may have found in Carbon.
     auto cpp_witness_id = LookupCppImpl(
         context, loc_id, core_interface, query_self_const_id,
-        eval_query.query_specific_interface_id, query_specific_interface,
+        eval_query.query_specific_interface_id,
         lookup_result.impl_type_structure, lookup_result.impl_loc_id);
     if (cpp_witness_id.has_value()) {
       lookup_result = {.result =

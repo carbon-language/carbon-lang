@@ -17,7 +17,6 @@ namespace Carbon::Check {
 auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
                         SemIR::ConstantId query_self_const_id,
                         SemIR::SpecificInterfaceId query_specific_interface_id,
-                        SemIR::SpecificInterface query_specific_interface,
                         llvm::ArrayRef<SemIR::InstId> values) -> SemIR::InstId;
 
 // Significant interfaces in `Core` which correspond to language features and
@@ -39,8 +38,7 @@ auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
 auto LookupDestroyCustomWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id,
-    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId;
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

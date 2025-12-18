@@ -108,8 +108,9 @@ static auto MakeNoOpFunction(Context& context, SemIR::LocId loc_id,
 auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
                         SemIR::ConstantId query_self_const_id,
                         SemIR::SpecificInterfaceId query_specific_interface_id,
-                        SemIR::SpecificInterface query_specific_interface,
                         llvm::ArrayRef<SemIR::InstId> values) -> SemIR::InstId {
+  const auto query_specific_interface =
+      context.specific_interfaces().Get(query_specific_interface_id);
   const auto& interface =
       context.interfaces().Get(query_specific_interface.interface_id);
   auto assoc_entities =
@@ -281,8 +282,7 @@ static auto TypeCanDestroy(Context& context, SemIR::LocId loc_id,
 auto LookupDestroyCustomWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterfaceId query_specific_interface_id,
-    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
+    SemIR::SpecificInterfaceId query_specific_interface_id) -> SemIR::InstId {
   // If we're looking up `Destroy`, first try builtin support without looking at
   // `impl`s.
   if (!TypeCanDestroy(context, loc_id, query_self_const_id)) {
@@ -292,11 +292,13 @@ auto LookupDestroyCustomWitness(
   // TODO: This needs more complex logic to apply the correct behavior. Also, we
   // should avoid building a new function on each lookup since a similar query
   // could result in identical functions.
-  auto noop_id = MakeNoOpFunction(context, loc_id, query_self_const_id,
-                                  query_specific_interface.specific_id);
+  auto specific_id = context.specific_interfaces()
+                         .Get(query_specific_interface_id)
+                         .specific_id;
+  auto noop_id =
+      MakeNoOpFunction(context, loc_id, query_self_const_id, specific_id);
   return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface_id,
-                            query_specific_interface, {noop_id});
+                            query_specific_interface_id, {noop_id});
 }
 
 }  // namespace Carbon::Check
