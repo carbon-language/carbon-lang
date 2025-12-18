@@ -489,11 +489,12 @@ static auto BuildFunctionDecl(Context& context,
   return {function_decl.function_id, decl_id};
 }
 
-CARBON_DIAGNOSTIC(
-    UnusedMarkerInDeclaration, Error,
-    "`unused` marker cannot be used on a declaration that is not a "
-    "definition");
-
+// Checks that "unused" marker does not appear in declarations that
+// are not definitions and emit a diagnostic for every binding that
+// is marked unused.
+// We do this by looking at all name bindings, with special treatment
+// for the name "_" which is implicitly unused but actually permitted
+// in declarations.
 static auto CheckUnusedBindingsInPattern(Context& context,
                                          SemIR::InstId pattern_id) -> void {
   auto inst = context.insts().Get(pattern_id);
@@ -501,8 +502,14 @@ static auto CheckUnusedBindingsInPattern(Context& context,
     CheckUnusedBindingsInPattern(context, param->subpattern_id);
   } else if (auto bind = inst.TryAs<SemIR::AnyBindingPattern>()) {
     auto& entity_name = context.entity_names().Get(bind->entity_name_id);
+    //
     if (entity_name.is_unused &&
         entity_name.name_id != SemIR::NameId::Underscore) {
+      CARBON_DIAGNOSTIC(
+          UnusedMarkerInDeclaration, Error,
+          "`unused` marker cannot be used on a declaration that is not a "
+          "definition");
+
       context.emitter().Emit(LocIdForDiagnostics(pattern_id),
                              UnusedMarkerInDeclaration);
     }

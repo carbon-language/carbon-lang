@@ -460,6 +460,10 @@ auto HandleParseNode(Context& context, Parse::TemplateBindingNameId node_id)
   return true;
 }
 
+// Within a pattern with an unused-marker, sets the is_unused on all
+// entity names and also returns whether any names were found. The result
+// is needed to emit a diagnostic when the unused-marker is
+// unnecessary.
 static auto MarkPatternUnused(Context& context, SemIR::InstId inst_id) -> bool {
   bool any_marked = false;
   auto inst = context.insts().Get(inst_id);
@@ -497,7 +501,6 @@ static auto MarkPatternUnused(Context& context, SemIR::InstId inst_id) -> bool {
         break;
     }
   }
-  // TODO: Handle other patterns if necessary.
   return any_marked;
 }
 
