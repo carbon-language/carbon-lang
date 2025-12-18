@@ -223,7 +223,7 @@ fn F(d: Derived) {
   let base_static_data: i32 = Cpp.C.static_data;
 }
 
-// --- todo_fail_import_non_function_member_private_extend_static_within_member_function.carbon
+// --- fail_import_non_function_member_private_extend_static_within_member_function.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -233,6 +233,13 @@ class Derived {
   extend base: Cpp.C;
   fn F() {
     // TODO: `C.static_data` is private, so this should fail.
+    // CHECK:STDERR: fail_import_non_function_member_private_extend_static_within_member_function.carbon:[[@LINE+7]]:40: error: cannot access private member `static_data` of type `Cpp.C` [ClassInvalidMemberAccess]
+    // CHECK:STDERR:     let unqualified_static_data: i32 = static_data;
+    // CHECK:STDERR:                                        ^~~~~~~~~~~
+    // CHECK:STDERR: fail_import_non_function_member_private_extend_static_within_member_function.carbon:[[@LINE+4]]:40: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:     let unqualified_static_data: i32 = static_data;
+    // CHECK:STDERR:                                        ^~~~~~~~~~~
+    // CHECK:STDERR:
     let unqualified_static_data: i32 = static_data;
   }
 }
@@ -364,10 +371,12 @@ class Derived {
     // CHECK:STDERR:     ^~~~~~~~~~~~~~~~
     // CHECK:STDERR:
     self.instance_fn();
-    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+5]]:5: error: cannot access private member `static_fn` of type `Cpp.C` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+7]]:5: error: cannot access private member `static_fn` of type `Cpp.C` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     static_fn();
-    // CHECK:STDERR:     ^~~~~~~~~~~
-    // CHECK:STDERR: fail_import_function_member_private.carbon: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:     ^~~~~~~~~
+    // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:     static_fn();
+    // CHECK:STDERR:     ^~~~~~~~~
     // CHECK:STDERR:
     static_fn();
     // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+7]]:5: error: cannot access private member `static_fn` of type `Cpp.C` [ClassInvalidMemberAccess]
@@ -393,7 +402,7 @@ fn F(c: Cpp.C*) {
   // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE+7]]:3: error: cannot access private member `instance_fn` of type `Cpp.C` [ClassInvalidMemberAccess]
   // CHECK:STDERR:   c->instance_fn();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE-30]]:5: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR: fail_import_function_member_private.carbon:[[@LINE-32]]:5: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:     self.instance_fn();
   // CHECK:STDERR:     ^~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -746,22 +755,28 @@ class Derived {
   extend base: Cpp.Private;
 
   fn F() {
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+5]]:5: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+7]]:5: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     Overload(Cpp.PublicCall.PublicCall());
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:     ^~~~~~~~
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+4]]:5: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:     Overload(Cpp.PublicCall.PublicCall());
+    // CHECK:STDERR:     ^~~~~~~~
     // CHECK:STDERR:
     Overload(Cpp.PublicCall.PublicCall());
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+5]]:5: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+7]]:5: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     Overload(Cpp.ProtectedCall.ProtectedCall());
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:     ^~~~~~~~
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE-4]]:5: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:     Overload(Cpp.PublicCall.PublicCall());
+    // CHECK:STDERR:     ^~~~~~~~
     // CHECK:STDERR:
     Overload(Cpp.ProtectedCall.ProtectedCall());
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+5]]:5: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE+7]]:5: error: cannot access private member `Overload` of type `Cpp.Private` [ClassInvalidMemberAccess]
     // CHECK:STDERR:     Overload(Cpp.PrivateCall.PrivateCall());
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:     ^~~~~~~~
+    // CHECK:STDERR: fail_import_overload_set_private_base_class_derived.carbon:[[@LINE-12]]:5: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:     Overload(Cpp.PublicCall.PublicCall());
+    // CHECK:STDERR:     ^~~~~~~~
     // CHECK:STDERR:
     Overload(Cpp.PrivateCall.PrivateCall());
   }

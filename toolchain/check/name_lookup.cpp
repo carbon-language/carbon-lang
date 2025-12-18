@@ -398,6 +398,7 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
   LookupResult result = {
       .specific_id = SemIR::SpecificId::None,
       .scope_result = SemIR::ScopeLookupResult::MakeNotFound()};
+  auto parent_const_id = SemIR::ConstantId::None;
   bool has_error = false;
   bool is_parent_access = false;
 
@@ -414,6 +415,13 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
     const SemIR::ScopeLookupResult scope_result =
         LookupNameInExactScope(context, loc_id, name_id, scope_id, name_scope);
     SemIR::AccessKind access_kind = scope_result.access_kind();
+
+    if (is_parent_access && scope_result.is_found() &&
+        !access_info.has_value()) {
+      access_info =
+          AccessInfo{.constant_id = parent_const_id,
+                     .highest_allowed_access = SemIR::AccessKind::Protected};
+    }
 
     auto is_access_prohibited =
         IsAccessProhibited(access_info, access_kind, is_parent_access);
@@ -448,6 +456,7 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
         }
       }
       is_parent_access |= !extended.empty();
+      parent_const_id = context.constant_values().Get(name_scope.inst_id());
       continue;
     }
 
@@ -467,7 +476,8 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
     result.specific_id = specific_id;
   }
 
-  if (required && !result.scope_result.is_found()) {
+  if ((!prohibited_accesses.empty() || required) &&
+      !result.scope_result.is_found()) {
     if (!has_error) {
       if (prohibited_accesses.empty()) {
         DiagnoseMemberNameNotFound(context, loc_id, name_id, lookup_scopes);
