@@ -259,6 +259,13 @@ class Inst : public Printable<Inst> {
     return Internal::InstLikeTypeInfo<TypedInst>::IsKind(kind());
   }
 
+  // Returns whether this instruction has one of the specified types.
+  template <typename... TypedInsts>
+    requires(... && Internal::InstLikeType<TypedInsts>)
+  auto IsOneOf() const -> bool {
+    return (... || Internal::InstLikeTypeInfo<TypedInsts>::IsKind(kind()));
+  }
+
   // Casts this instruction to the given typed instruction, which must match the
   // instruction's kind, and returns the typed instruction.
   template <typename TypedInst>
@@ -502,6 +509,12 @@ class InstStore {
   template <typename InstT>
   auto Is(InstId inst_id) const -> bool {
     return Get(inst_id).Is<InstT>();
+  }
+
+  // Returns whether the requested instruction is one of the specified types.
+  template <typename... InstTs>
+  auto IsOneOf(InstId inst_id) const -> bool {
+    return Get(inst_id).Is<InstTs...>();
   }
 
   // Returns the requested instruction, which is known to have the specified
