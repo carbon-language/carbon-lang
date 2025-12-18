@@ -497,32 +497,30 @@ CARBON_DIAGNOSTIC(
 static auto CheckUnusedBindingsInPattern(Context& context,
                                          SemIR::InstId pattern_id) -> void {
   auto inst = context.insts().Get(pattern_id);
-  if (auto var_pattern = inst.TryAs<SemIR::VarPattern>()) {
-    CheckUnusedBindingsInPattern(context, var_pattern->subpattern_id);
-  } else if (auto var_param = inst.TryAs<SemIR::VarParamPattern>()) {
-    CheckUnusedBindingsInPattern(context, var_param->subpattern_id);
-  } else if (auto ref_param = inst.TryAs<SemIR::RefParamPattern>()) {
-    CheckUnusedBindingsInPattern(context, ref_param->subpattern_id);
-  } else if (auto val_param = inst.TryAs<SemIR::ValueParamPattern>()) {
-    CheckUnusedBindingsInPattern(context, val_param->subpattern_id);
-  } else if (auto ref_bind = inst.TryAs<SemIR::RefBindingPattern>()) {
-    auto& entity_name = context.entity_names().Get(ref_bind->entity_name_id);
+  if (auto param = inst.TryAs<SemIR::AnyParamPattern>()) {
+    CheckUnusedBindingsInPattern(context, param->subpattern_id);
+  } else if (auto bind = inst.TryAs<SemIR::AnyBindingPattern>()) {
+    auto& entity_name = context.entity_names().Get(bind->entity_name_id);
     if (entity_name.is_unused &&
         entity_name.name_id != SemIR::NameId::Underscore) {
       context.emitter().Emit(LocIdForDiagnostics(pattern_id),
                              UnusedMarkerInDeclaration);
     }
-  } else if (auto val_bind = inst.TryAs<SemIR::ValueBindingPattern>()) {
-    auto& entity_name = context.entity_names().Get(val_bind->entity_name_id);
-    if (entity_name.is_unused &&
-        entity_name.name_id != SemIR::NameId::Underscore) {
-      context.emitter().Emit(LocIdForDiagnostics(pattern_id),
-                             UnusedMarkerInDeclaration);
-    }
-  } else if (auto tuple_pattern = inst.TryAs<SemIR::TuplePattern>()) {
-    auto elements = context.inst_blocks().Get(tuple_pattern->elements_id);
-    for (auto element_id : elements) {
-      CheckUnusedBindingsInPattern(context, element_id);
+  } else {
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(SemIR::VarPattern var_pattern): {
+        CheckUnusedBindingsInPattern(context, var_pattern.subpattern_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::TuplePattern tuple_pattern): {
+        auto elements = context.inst_blocks().Get(tuple_pattern.elements_id);
+        for (auto element_id : elements) {
+          CheckUnusedBindingsInPattern(context, element_id);
+        }
+        break;
+      }
+      default:
+        break;
     }
   }
 }

@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include <utility>
+
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/facet_type.h"
@@ -463,30 +466,35 @@ static auto MarkPatternUnused(Context& context, SemIR::InstId inst_id) -> bool {
   if (auto bind = inst.TryAs<SemIR::AnyBindingPattern>()) {
     auto& name = context.entity_names().Get(bind->entity_name_id);
     name.is_unused = true;
+    // We treat `_` as not marking the pattern as unused for the purpose of
+    // deciding whether to issue a warning for `unused` on a pattern that
+    // doesn't contain any bindings. `_` is implicitly unused, so marking it
+    // `unused` is redundant but harmless.
     if (name.name_id != SemIR::NameId::Underscore) {
       any_marked = true;
     }
-  } else if (auto tuple = inst.TryAs<SemIR::TuplePattern>()) {
-    for (auto elem_id : context.inst_blocks().Get(tuple->elements_id)) {
-      if (MarkPatternUnused(context, elem_id)) {
-        any_marked = true;
+  } else if (auto param = inst.TryAs<SemIR::AnyParamPattern>()) {
+    if (MarkPatternUnused(context, param->subpattern_id)) {
+      any_marked = true;
+    }
+  } else {
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(SemIR::TuplePattern tuple): {
+        for (auto elem_id : context.inst_blocks().Get(tuple.elements_id)) {
+          if (MarkPatternUnused(context, elem_id)) {
+            any_marked = true;
+          }
+        }
+        break;
       }
-    }
-  } else if (auto var = inst.TryAs<SemIR::VarPattern>()) {
-    if (MarkPatternUnused(context, var->subpattern_id)) {
-      any_marked = true;
-    }
-  } else if (auto var_param = inst.TryAs<SemIR::VarParamPattern>()) {
-    if (MarkPatternUnused(context, var_param->subpattern_id)) {
-      any_marked = true;
-    }
-  } else if (auto ref_param = inst.TryAs<SemIR::RefParamPattern>()) {
-    if (MarkPatternUnused(context, ref_param->subpattern_id)) {
-      any_marked = true;
-    }
-  } else if (auto val_param = inst.TryAs<SemIR::ValueParamPattern>()) {
-    if (MarkPatternUnused(context, val_param->subpattern_id)) {
-      any_marked = true;
+      case CARBON_KIND(SemIR::VarPattern var): {
+        if (MarkPatternUnused(context, var.subpattern_id)) {
+          any_marked = true;
+        }
+        break;
+      }
+      default:
+        break;
     }
   }
   // TODO: Handle other patterns if necessary.
