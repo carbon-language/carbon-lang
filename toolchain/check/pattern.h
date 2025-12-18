@@ -37,6 +37,9 @@ struct BindingPatternInfo {
 
 // Creates a binding pattern. Returns the binding pattern and the bind name
 // instruction.
+// - `pattern_kind` specifies the kind of instruction to create.
+// - `is_template` indicates whether this is a template binding.
+// - `is_unused` indicates whether the binding was explicitly marked `unused`.
 // TODO: remove is_template once we have a separate InstKind for template
 // bindings.
 auto AddBindingPattern(Context& context, SemIR::LocId name_loc,

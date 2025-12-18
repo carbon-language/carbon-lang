@@ -188,3 +188,19 @@ fn F() -> i32 {
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
 fn F(unused x: i32);
+
+// --- fail_multiple_uses_of_unused.carbon
+library "[[@TEST_NAME]]";
+
+fn F() {
+  // CHECK:STDERR: fail_multiple_uses_of_unused.carbon:[[@LINE+3]]:14: error: variable `x` is marked `unused` but is used [UnusedButUsed]
+  // CHECK:STDERR:   var unused x: i32 = 0;
+  // CHECK:STDERR:              ^
+  var unused x: i32 = 0;
+  // CHECK:STDERR: fail_multiple_uses_of_unused.carbon:[[@LINE+4]]:3: note: usage is here [UnusedButUsedHere]
+  // CHECK:STDERR:   x;
+  // CHECK:STDERR:   ^
+  // CHECK:STDERR:
+  x;
+  x;
+}

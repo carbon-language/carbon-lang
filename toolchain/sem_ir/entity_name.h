@@ -70,11 +70,15 @@ struct EntityNameStore : public ValueStore<EntityNameId, EntityName> {
   auto AddSymbolicBindingName(NameId name_id, NameScopeId parent_scope_id,
                               CompileTimeBindIndex bind_index, bool is_template,
                               bool is_unused) -> EntityNameId {
-    return Add({.name_id = name_id,
-                .parent_scope_id = parent_scope_id,
-                .bind_index_value = bind_index.index,
-                .is_template = is_template,
-                .is_unused = is_unused});
+    EntityName name = {.name_id = name_id,
+                       .parent_scope_id = parent_scope_id,
+                       .bind_index_value = bind_index.index,
+                       .is_template = is_template,
+                       .is_unused = is_unused};
+    CARBON_CHECK(name.bind_index_value == bind_index.index,
+                 "Bind index out of range for bit-field: {0}",
+                 bind_index.index);
+    return Add(name);
   }
 
   // Convert an `EntityName` to a canonical ID. All calls to this with
