@@ -13,6 +13,7 @@
 
 #include "toolchain/check/dataflow_analysis.h"
 
+#include "common/hashing.h"
 #include "common/map.h"
 #include "common/set.h"
 #include "llvm/ADT/BitVector.h"
@@ -31,46 +32,53 @@
 namespace Carbon::Check {
 
 // Represents a single fact with two IDs.
-// The meaning of `id1` and `id2` depends on the `FactType`.
-// We use `int32_t` to store the raw index values of the various Id types
-// (like `SemIR::InstId` or `SemIR::EntityNameId`).
-// The alternative is to define a specific struct for every fact type,
-// where we can then use more specific id types.
-// This choice may be revisited if we need facts with different arities.
+template <typename Id1, typename Id2>
 struct Fact {
-  int32_t id1;
-  int32_t id2;
+  Id1 first;
+  Id2 second;
 
   friend auto operator==(const Fact& lhs, const Fact& rhs) -> bool = default;
 };
 
 // Hasher for Fact to use with Carbon::Set.
-inline auto CarbonHashValue(const Fact& fact, uint64_t seed) -> HashCode {
+template <typename Id1, typename Id2>
+inline auto CarbonHashValue(const Fact<Id1, Id2>& fact, uint64_t seed)
+    -> HashCode {
   Hasher hasher(seed);
-  hasher.HashRaw(fact.id1);
-  hasher.HashRaw(fact.id2);
+  hasher.Hash(fact.first);
+  hasher.Hash(fact.second);
   return static_cast<HashCode>(hasher);
 }
+
+// Facts about the control flow graph.
+using LeaderFact = Fact<SemIR::InstBlockId, SemIR::InstId>;
+using EdgeFact = Fact<SemIR::InstId, SemIR::InstId>;
+using BranchEdgeFact = Fact<SemIR::InstId, SemIR::InstBlockId>;
+
+// Facts about variables.
+// The first ID is the instruction where the fact holds or is generated.
+// The second ID is the variable (EntityNameId).
+using VarFact = Fact<SemIR::InstId, SemIR::EntityNameId>;
 
 // Collection of dataflow facts gathered from the SemIR.
 struct DataflowFacts {
   // Leader(block_id, inst_id): The first instruction of a basic block.
-  Set<Fact> leaders;
+  Set<LeaderFact> leaders;
   // Edge(inst_id_from, inst_id_to): Control flow edge between instructions.
-  Set<Fact> edges;
+  Set<EdgeFact> edges;
   // BranchEdge(inst_id_from, block_id_to): Control flow edge from a terminator
   // to a block.
-  Set<Fact> branch_edges;
+  Set<BranchEdgeFact> branch_edges;
   // Def(inst_id, var_id): Definition of a variable (VarStorage) at `inst_id`.
   // `var_id` is the `EntityNameId` index.
-  Set<Fact> defs;
+  Set<VarFact> defs;
   // Assign(inst_id, var_id): Assignment to `var_id` at `inst_id`.
-  Set<Fact> assigns;
+  Set<VarFact> assigns;
   // Use(inst_id, var_id): Usage of `var_id` at `inst_id`.
-  Set<Fact> uses;
+  Set<VarFact> uses;
   // Live(inst_id, var_id): `var_id` is live at `inst_id` (not currently used,
   // but standard dataflow fact).
-  Set<Fact> live;
+  Set<VarFact> live;
 };
 
 // Recursive helper to find EntityNameIds from a pattern.
@@ -196,7 +204,7 @@ static auto BuildDataflowFacts(const SemIR::File& sem_ir,
       CollectEntityNamesFromPattern(sem_ir, pattern_id, entity_names);
       for (auto [entity_name_id, def_inst_id] : entity_names) {
         // Use the pattern_id as the instruction ID for the definition.
-        facts.defs.Insert(Fact{def_inst_id.index, entity_name_id.index});
+        facts.defs.Insert(VarFact{def_inst_id, entity_name_id});
 
         // Identify ref parameters.
         auto inst = sem_ir.insts().Get(pattern_id);
@@ -212,7 +220,7 @@ static auto BuildDataflowFacts(const SemIR::File& sem_ir,
 
     // Emit leader fact for non-empty blocks.
     if (!block.empty()) {
-      facts.leaders.Insert(Fact{block_id.index, block.front().index});
+      facts.leaders.Insert(LeaderFact{block_id, block.front()});
     }
 
     // First pass: identify LHS of assignments to avoid counting them as uses.
@@ -230,7 +238,7 @@ static auto BuildDataflowFacts(const SemIR::File& sem_ir,
       // Intra-block edge
       if (i + 1 < block.size()) {
         auto next_inst_id = block[i + 1];
-        facts.edges.Insert(Fact{inst_id.index, next_inst_id.index});
+        facts.edges.Insert(EdgeFact{inst_id, next_inst_id});
       }
 
       CARBON_KIND_SWITCH(inst) {
@@ -239,7 +247,7 @@ static auto BuildDataflowFacts(const SemIR::File& sem_ir,
           (void)var_storage;
           auto var_infos = GetVarInfos(sem_ir, inst_id);
           for (auto [var_id, def_inst_id] : var_infos) {
-            facts.defs.Insert(Fact{def_inst_id.index, var_id.index});
+            facts.defs.Insert(VarFact{def_inst_id, var_id});
           }
           break;
         }
@@ -247,7 +255,7 @@ static auto BuildDataflowFacts(const SemIR::File& sem_ir,
           (void)val_bind;
           auto var_infos = GetVarInfos(sem_ir, inst_id);
           for (auto [var_id, def_inst_id] : var_infos) {
-            facts.defs.Insert(Fact{def_inst_id.index, var_id.index});
+            facts.defs.Insert(VarFact{def_inst_id, var_id});
           }
           break;
         }
@@ -256,7 +264,7 @@ static auto BuildDataflowFacts(const SemIR::File& sem_ir,
         case CARBON_KIND(SemIR::Assign assign): {
           auto var_infos = GetVarInfos(sem_ir, assign.lhs_id);
           for (auto [var_id, _] : var_infos) {
-            facts.assigns.Insert(Fact{inst_id.index, var_id.index});
+            facts.assigns.Insert(VarFact{inst_id, var_id});
           }
           break;
         }
@@ -269,7 +277,7 @@ static auto BuildDataflowFacts(const SemIR::File& sem_ir,
             bool is_lhs = assigned_lhs.Contains(inst_id);
             // If it's a ref parameter, assignment counts as a use.
             if (!is_lhs || ref_params.Contains(var_id.index)) {
-              facts.uses.Insert(Fact{inst_id.index, var_id.index});
+              facts.uses.Insert(VarFact{inst_id, var_id});
             }
           }
           break;
@@ -280,7 +288,7 @@ static auto BuildDataflowFacts(const SemIR::File& sem_ir,
         case CARBON_KIND(SemIR::ValueOfInitializer val_init): {
           auto var_infos = GetVarInfos(sem_ir, val_init.init_id);
           for (auto [var_id, _] : var_infos) {
-            facts.uses.Insert(Fact{inst_id.index, var_id.index});
+            facts.uses.Insert(VarFact{inst_id, var_id});
           }
           break;
         }
@@ -291,7 +299,7 @@ static auto BuildDataflowFacts(const SemIR::File& sem_ir,
         case CARBON_KIND(SemIR::AcquireValue acquire): {
           auto var_infos = GetVarInfos(sem_ir, acquire.value_id);
           for (auto [var_id, _] : var_infos) {
-            facts.uses.Insert(Fact{inst_id.index, var_id.index});
+            facts.uses.Insert(VarFact{inst_id, var_id});
           }
           break;
         }
@@ -302,7 +310,7 @@ static auto BuildDataflowFacts(const SemIR::File& sem_ir,
         case CARBON_KIND(SemIR::ReturnExpr ret): {
           auto var_infos = GetVarInfos(sem_ir, ret.expr_id);
           for (auto [var_id, _] : var_infos) {
-            facts.uses.Insert(Fact{inst_id.index, var_id.index});
+            facts.uses.Insert(VarFact{inst_id, var_id});
           }
           break;
         }
@@ -312,25 +320,24 @@ static auto BuildDataflowFacts(const SemIR::File& sem_ir,
         case CARBON_KIND(SemIR::ReturnSlot return_slot): {
           auto var_infos = GetVarInfos(sem_ir, return_slot.storage_id);
           for (auto [var_id, _] : var_infos) {
-            facts.uses.Insert(Fact{inst_id.index, var_id.index});
+            facts.uses.Insert(VarFact{inst_id, var_id});
           }
           break;
         }
 
         // 8. Edges (Terminators)
         case CARBON_KIND(SemIR::Branch branch): {
-          facts.branch_edges.Insert(
-              Fact{inst_id.index, branch.target_id.index});
+          facts.branch_edges.Insert(BranchEdgeFact{inst_id, branch.target_id});
           break;
         }
         case CARBON_KIND(SemIR::BranchIf branch_if): {
           facts.branch_edges.Insert(
-              Fact{inst_id.index, branch_if.target_id.index});
+              BranchEdgeFact{inst_id, branch_if.target_id});
           break;
         }
         case CARBON_KIND(SemIR::BranchWithArg branch_arg): {
           facts.branch_edges.Insert(
-              Fact{inst_id.index, branch_arg.target_id.index});
+              BranchEdgeFact{inst_id, branch_arg.target_id});
           break;
         }
 
@@ -349,27 +356,27 @@ static auto CheckUnusedBindings(Context& context, const DataflowFacts& facts)
   // Collect usage locations. We track the first source-location use for each
   // variable.
   Map<int32_t, SemIR::InstId> first_use;
-  facts.uses.ForEach([&](const Fact& use) {
-    auto result = first_use.Insert(use.id2, SemIR::InstId(use.id1));
+  facts.uses.ForEach([&](const VarFact& use) {
+    // use.second is EntityNameId, index is int32_t.
+    auto result = first_use.Insert(use.second.index, use.first);
     if (!result.is_inserted()) {
       // Keep the earliest instruction ID.
-      if (use.id1 < result.value().index) {
-        result.value() = SemIR::InstId(use.id1);
+      if (use.first.index < result.value().index) {
+        result.value() = use.first;
       }
     }
   });
 
   // Collect definitions to diagnose.
   // We use SmallVector and sort them to ensure deterministic diagnostic output.
-  llvm::SmallVector<Fact> unused_defs;
-  llvm::SmallVector<Fact> unused_but_used_defs;
+  llvm::SmallVector<VarFact> unused_defs;
+  llvm::SmallVector<VarFact> unused_but_used_defs;
 
-  facts.defs.ForEach([&](const Fact& def) {
-    auto var_id = def.id2;
-    auto entity_name_id = SemIR::EntityNameId(var_id);
+  facts.defs.ForEach([&](const VarFact& def) {
+    auto entity_name_id = def.second;
     const auto& entity_name = sem_ir.entity_names().Get(entity_name_id);
 
-    if (!first_use.Contains(var_id)) {
+    if (!first_use.Contains(entity_name_id.index)) {
       if (!entity_name.is_unused) {
         unused_defs.push_back(def);
       }
@@ -381,25 +388,26 @@ static auto CheckUnusedBindings(Context& context, const DataflowFacts& facts)
   });
 
   // Sort by instruction ID (location).
-  auto sort_facts = [](const Fact& a, const Fact& b) { return a.id1 < b.id1; };
+  auto sort_facts = [](const VarFact& a, const VarFact& b) {
+    return a.first.index < b.first.index;
+  };
   llvm::sort(unused_defs, sort_facts);
   llvm::sort(unused_but_used_defs, sort_facts);
 
   // Emit diagnostics.
   for (const auto& def : unused_but_used_defs) {
-    auto var_id = def.id2;
-    auto entity_name_id = SemIR::EntityNameId(var_id);
+    auto entity_name_id = def.second;
     const auto& entity_name = sem_ir.entity_names().Get(entity_name_id);
     auto name_id = entity_name.name_id;
     llvm::StringRef name = sem_ir.names().GetFormatted(name_id);
-    auto inst_id = SemIR::InstId(def.id1);
+    auto inst_id = def.first;
     auto loc_id = sem_ir.insts().GetCanonicalLocId(inst_id);
     CARBON_DIAGNOSTIC(UnusedButUsed, Error,
                       "variable `{0}` is marked `unused` but is used",
                       std::string);
     auto diag = context.emitter().Build(LocIdForDiagnostics(loc_id),
                                         UnusedButUsed, name.str());
-    auto use_inst_id = *first_use[var_id];
+    auto use_inst_id = *first_use[entity_name_id.index];
     auto use_loc_id = sem_ir.insts().GetCanonicalLocId(use_inst_id);
     CARBON_DIAGNOSTIC(UnusedButUsedHere, Note, "usage is here");
     diag.Note(LocIdForDiagnostics(use_loc_id), UnusedButUsedHere);
@@ -407,12 +415,11 @@ static auto CheckUnusedBindings(Context& context, const DataflowFacts& facts)
   }
 
   for (const auto& def : unused_defs) {
-    auto var_id = def.id2;
-    auto entity_name_id = SemIR::EntityNameId(var_id);
+    auto entity_name_id = def.second;
     const auto& entity_name = sem_ir.entity_names().Get(entity_name_id);
     auto name_id = entity_name.name_id;
     llvm::StringRef name = sem_ir.names().GetFormatted(name_id);
-    auto inst_id = SemIR::InstId(def.id1);
+    auto inst_id = def.first;
     auto loc_id = sem_ir.insts().GetCanonicalLocId(inst_id);
     CARBON_DIAGNOSTIC(UnusedBinding, Warning, "binding `{0}` is unused",
                       std::string);
