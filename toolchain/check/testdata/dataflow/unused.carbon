@@ -17,13 +17,11 @@ fn ReturnVar() -> i32 {
   var x: i32 = 0;
   x = 1;
   return x;
-   // TODO: ensure no warning.
  }
 
 fn ReturnLet() -> i32 {
   let y: i32 = 1;
   return y;
-  // TODO: ensure no warning.
 }
 
 fn RefParam(ref x: i32) {
