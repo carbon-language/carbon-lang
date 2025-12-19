@@ -44,7 +44,7 @@ def cmd_dump(debugger: Any, command: Any, result: Any, dict: Any) -> None:
 Dumps the value of an associated ID, using the C++ Dump() functions.
 
 Usage:
-  dump <CONTEXT> [<EXPR>|-- <EXPR>|<TYPE><ID>]
+  dump <CONTEXT> [<EXPR>|-- <EXPR>|<TYPE><ID>|<TYPE> <ID>]
 
 Args:
   CONTEXT is the dump context, such a SemIR::Context reference, a SemIR::File,
@@ -123,6 +123,17 @@ Example usage:
                 return
             make_id_fn = id_types[m[1]]
             id = int(m[2], 16)
+            print_dump(context, f"{make_id_fn}({id})")
+            found_id_type = True
+
+    # Look for <type> <id> as two arguments.
+    if args[1] in id_types:
+        if len(args) != 3:
+            print_usage()
+            return
+        if m := re.fullmatch("(?:0x)?([0-9A-Fa-f]+)", args[2]):
+            make_id_fn = id_types[args[1]]
+            id = int(m[1], 16)
             print_dump(context, f"{make_id_fn}({id})")
             found_id_type = True
 
