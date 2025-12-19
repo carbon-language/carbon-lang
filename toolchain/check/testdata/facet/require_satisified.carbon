@@ -124,3 +124,39 @@ interface Y {
 
 // This only matches T that impl Z so no error here.
 impl forall [T:! Z] T as Y {}
+
+// --- fail_require_non_self_missing.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+
+class C;
+
+interface Y(U:! type) {
+  require C impls Z(Self);
+}
+
+// Y requires that C impls Z(Self), but it does not do so.
+// CHECK:STDERR: fail_require_non_self_missing.carbon:[[@LINE+4]]:1: error: interface `Y(())` being implemented requires that `C` implements `Z(())` [RequireImplsNotImplemented]
+// CHECK:STDERR: impl () as Y(()) {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as Y(()) {}
+
+// --- require_non_self.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+
+class C;
+
+interface Y(U:! type) {
+  require C impls Z(Self);
+}
+
+impl C as Z(());
+
+// Y requires that C impls Z(Self), which is done above.
+impl () as Y(Self) {}
+
+impl C as Z(()) {}
