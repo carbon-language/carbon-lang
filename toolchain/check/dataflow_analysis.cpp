@@ -131,14 +131,13 @@ static auto CollectEntityNamesFromPattern(
   }
 }
 
-struct VarInfo {
-  SemIR::EntityNameId entity_id;
-  // The instruction defining the variable (e.g., VarStorage or binding).
-  // For diagnostics, we want to point to the specific place where a variable
-  // is defined, in order to distinguish different variables that may have
-  // the same name.
-  SemIR::InstId def_inst_id;
-};
+// A variable together with the ID of the instruction defining the variable
+// (e.g., VarStorage or binding).
+//
+// For diagnostics, we want to point to the specific place where a variable
+// is defined, in order to distinguish different variables that may have
+// the same name.
+using VarInfo = std::pair<SemIR::EntityNameId, SemIR::InstId>;
 
 // Helper to get variable info from various instructions.
 static auto GetVarInfos(const SemIR::File& sem_ir, SemIR::InstId inst_id)
