@@ -200,7 +200,7 @@ static auto BuildDataflowFacts(const SemIR::File& sem_ir,
   }
 
   // Track ref params to treat assignments as uses.
-  Set<int32_t> ref_params;
+  Set<SemIR::EntityNameId> ref_params;
 
   // Collect definitions from parameters.
   if (function.param_patterns_id.has_value()) {
@@ -216,7 +216,7 @@ static auto BuildDataflowFacts(const SemIR::File& sem_ir,
         // Identify ref parameters.
         auto inst = sem_ir.insts().Get(pattern_id);
         if (inst.Is<SemIR::RefParamPattern>()) {
-          ref_params.Insert(entity_name_id.index);
+          ref_params.Insert(entity_name_id);
         }
       }
     }
@@ -283,7 +283,7 @@ static auto BuildDataflowFacts(const SemIR::File& sem_ir,
           for (auto [var_id, _] : var_infos) {
             bool is_lhs = assigned_lhs.Contains(inst_id);
             // If it's a ref parameter, assignment counts as a use.
-            if (!is_lhs || ref_params.Contains(var_id.index)) {
+            if (!is_lhs || ref_params.Contains(var_id)) {
               facts.uses.Insert(VarFact{inst_id, var_id});
             }
           }
