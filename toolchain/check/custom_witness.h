@@ -16,7 +16,7 @@ namespace Carbon::Check {
 // values aren't suitable for the interface.
 auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
                         SemIR::ConstantId query_self_const_id,
-                        SemIR::SpecificInterface specific_interface,
+                        SemIR::SpecificInterfaceId query_specific_interface_id,
                         llvm::ArrayRef<SemIR::InstId> values) -> SemIR::InstId;
 
 // Significant interfaces in `Core` which correspond to language features and
@@ -32,6 +32,14 @@ enum class CoreInterface {
 // `CoreInterface`, or `Unknown` if it's some other interface.
 auto GetCoreInterface(Context& context, SemIR::InterfaceId interface_id)
     -> CoreInterface;
+
+// Returns a witness for a `CoreInterface` `CustomWitness`, or `None` if no
+// witness should be provided for `query_self_const_id`.
+auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
+                         CoreInterface core_interface,
+                         SemIR::ConstantId query_self_const_id,
+                         SemIR::SpecificInterfaceId query_specific_interface_id)
+    -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

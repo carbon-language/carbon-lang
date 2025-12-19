@@ -201,7 +201,6 @@ static auto FindAndDiagnoseImplLookupCycle(
 
 struct InterfacesFromConstantId {
   llvm::ArrayRef<SemIR::SpecificInterface> interfaces;
-  SemIR::BuiltinConstraintMask builtin_constraint_mask;
   bool other_requirements;
 };
 
@@ -230,7 +229,6 @@ static auto GetInterfacesFromConstantId(
   return {{.interfaces = context.identified_facet_types()
                              .Get(identified_id)
                              .required_interfaces(),
-           .builtin_constraint_mask = facet_type_info.builtin_constraint_mask,
            .other_requirements = facet_type_info.other_requirements}};
 }
 
@@ -287,8 +285,7 @@ static auto GetWitnessIdForImpl(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(deduced_constraint_facet_type_info.extend_constraints.size() ==
                1);
 
-  if (deduced_constraint_facet_type_info.other_requirements ||
-      !deduced_constraint_facet_type_info.builtin_constraint_mask.empty()) {
+  if (deduced_constraint_facet_type_info.other_requirements) {
     return EvalImplLookupResult::MakeNone();
   }
 
@@ -566,50 +563,6 @@ static auto GetOrAddLookupImplWitness(Context& context, SemIR::LocId loc_id,
   return context.constant_values().GetInstId(witness_const_id);
 }
 
-// Returns true if the `Self` should impl `Destroy`.
-static auto TypeCanDestroy(Context& context,
-                           SemIR::ConstantId query_self_const_id) -> bool {
-  auto inst = context.insts().Get(context.constant_values().GetInstId(
-      GetCanonicalFacetOrTypeValue(context, query_self_const_id)));
-
-  // For facet values, look if the FacetType provides the same.
-  if (auto facet_type =
-          context.types().TryGetAs<SemIR::FacetType>(inst.type_id())) {
-    const auto& info = context.facet_types().Get(facet_type->facet_type_id);
-    if (info.builtin_constraint_mask.HasAnyOf(
-            SemIR::BuiltinConstraintMask::TypeCanDestroy)) {
-      return true;
-    }
-  }
-
-  CARBON_KIND_SWITCH(inst) {
-    case CARBON_KIND(SemIR::ClassType class_type): {
-      auto class_info = context.classes().Get(class_type.class_id);
-      // Incomplete and abstract classes can't be destroyed.
-      // TODO: Return false if the object repr doesn't impl `Destroy`.
-      // TODO: Return false for C++ types that lack a destructor.
-      return class_info.is_complete() &&
-             class_info.inheritance_kind !=
-                 SemIR::Class::InheritanceKind::Abstract;
-    }
-    case SemIR::ArrayType::Kind:
-    case SemIR::ConstType::Kind:
-    case SemIR::MaybeUnformedType::Kind:
-    case SemIR::PartialType::Kind:
-    case SemIR::StructType::Kind:
-    case SemIR::TupleType::Kind:
-      // TODO: Return false for types that indirectly reference a type that
-      // doesn't impl `Destroy`.
-      return true;
-    case SemIR::BoolType::Kind:
-    case SemIR::PointerType::Kind:
-      // Trivially destructible.
-      return true;
-    default:
-      return false;
-  }
-}
-
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId query_self_const_id,
                        SemIR::ConstantId query_facet_type_const_id)
@@ -637,15 +590,9 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   if (!interfaces_from_constant_id) {
     return SemIR::InstBlockIdOrError::MakeError();
   }
-  auto [interfaces, builtin_constraint_mask, other_requirements] =
-      *interfaces_from_constant_id;
+  auto [interfaces, other_requirements] = *interfaces_from_constant_id;
   if (other_requirements) {
     // TODO: Remove this when other requirements go away.
-    return SemIR::InstBlockId::None;
-  }
-  if (builtin_constraint_mask.HasAnyOf(
-          SemIR::BuiltinConstraintMask::TypeCanDestroy) &&
-      !TypeCanDestroy(context, query_self_const_id)) {
     return SemIR::InstBlockId::None;
   }
   if (interfaces.empty()) {
@@ -1010,43 +957,58 @@ auto EvalLookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
 
   LookupResult lookup_result = {.result = facet_lookup_result};
 
-  for (const auto& candidate : candidates.impls) {
-    const auto& impl = *candidate.impl;
+  auto core_interface =
+      GetCoreInterface(context, query_specific_interface.interface_id);
 
-    // In deferred lookup for a symbolic impl witness, while building a
-    // specific, there may be no stack yet as this may be the first lookup. If
-    // further lookups are started as a result in deduce, they will build the
-    // stack.
-    if (!context.impl_lookup_stack().empty()) {
-      context.impl_lookup_stack().back().impl_loc = impl.definition_id;
-    }
+  // Consider a custom witness for core interfaces.
+  // TODO: This needs to expand to more interfaces, and we might want to have
+  // that dispatch in custom_witness.cpp instead of here.
+  bool used_custom_witness = false;
+  if (auto witness_id = LookupCustomWitness(
+          context, loc_id, core_interface, query_self_const_id,
+          eval_query.query_specific_interface_id);
+      witness_id.has_value()) {
+    lookup_result = {.result = EvalImplLookupResult::MakeFinal(witness_id)};
+    used_custom_witness = true;
+  }
 
-    auto result = GetWitnessIdForImpl(context, loc_id, query_is_concrete,
-                                      query_self_const_id,
-                                      query_specific_interface, impl);
-    if (result.has_value()) {
-      PoisonImplLookupQuery(context, loc_id, mode, eval_query, result, impl);
-      lookup_result = {.result = result,
-                       .impl_type_structure = &candidate.type_structure,
-                       .impl_loc_id = SemIR::LocId(impl.definition_id)};
-      break;
+  // Only consider candidates when a custom witness didn't apply.
+  if (!used_custom_witness) {
+    for (const auto& candidate : candidates.impls) {
+      const auto& impl = *candidate.impl;
+
+      // In deferred lookup for a symbolic impl witness, while building a
+      // specific, there may be no stack yet as this may be the first lookup. If
+      // further lookups are started as a result in deduce, they will build the
+      // stack.
+      if (!context.impl_lookup_stack().empty()) {
+        context.impl_lookup_stack().back().impl_loc = impl.definition_id;
+      }
+
+      auto result = GetWitnessIdForImpl(context, loc_id, query_is_concrete,
+                                        query_self_const_id,
+                                        query_specific_interface, impl);
+      if (result.has_value()) {
+        PoisonImplLookupQuery(context, loc_id, mode, eval_query, result, impl);
+        lookup_result = {.result = result,
+                         .impl_type_structure = &candidate.type_structure,
+                         .impl_loc_id = SemIR::LocId(impl.definition_id)};
+        break;
+      }
     }
   }
 
-  if (query_is_concrete && candidates.consider_cpp_candidates) {
-    auto core_interface =
-        GetCoreInterface(context, query_specific_interface.interface_id);
-    if (core_interface != CoreInterface::Unknown) {
-      // Also check for a C++ candidate that is a better match than whatever
-      // `impl` we may have found in Carbon.
-      auto cpp_witness_id = LookupCppImpl(
-          context, loc_id, core_interface, query_self_const_id,
-          query_specific_interface, lookup_result.impl_type_structure,
-          lookup_result.impl_loc_id);
-      if (cpp_witness_id.has_value()) {
-        lookup_result = {.result =
-                             EvalImplLookupResult::MakeFinal(cpp_witness_id)};
-      }
+  if (query_is_concrete && candidates.consider_cpp_candidates &&
+      core_interface != CoreInterface::Unknown) {
+    // Also check for a C++ candidate that is a better match than whatever
+    // `impl` we may have found in Carbon.
+    auto cpp_witness_id = LookupCppImpl(
+        context, loc_id, core_interface, query_self_const_id,
+        eval_query.query_specific_interface_id,
+        lookup_result.impl_type_structure, lookup_result.impl_loc_id);
+    if (cpp_witness_id.has_value()) {
+      lookup_result = {.result =
+                           EvalImplLookupResult::MakeFinal(cpp_witness_id)};
     }
   }
 

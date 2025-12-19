@@ -13,10 +13,6 @@
 
 namespace Carbon::SemIR {
 
-CARBON_DEFINE_ENUM_MASK_NAMES(BuiltinConstraintMask) {
-  CARBON_BUILTIN_CONSTRAINT_MASK(CARBON_ENUM_MASK_NAME_STRING)
-};
-
 template <typename T>
 using LessThanFn = llvm::function_ref<auto(const T&, const T&)->bool>;
 
@@ -134,8 +130,6 @@ auto FacetTypeInfo::Combine(const FacetTypeInfo& lhs, const FacetTypeInfo& rhs)
                  rhs.self_impls_named_constraints);
   CombineVectors(info.rewrite_constraints, lhs.rewrite_constraints,
                  rhs.rewrite_constraints);
-  info.builtin_constraint_mask =
-      lhs.builtin_constraint_mask | rhs.builtin_constraint_mask;
   info.other_requirements = lhs.other_requirements || rhs.other_requirements;
   return info;
 }
@@ -207,10 +201,6 @@ auto FacetTypeInfo::Print(llvm::raw_ostream& out) const -> void {
     }
   }
 
-  if (!builtin_constraint_mask.empty()) {
-    out << outer_sep << "builtin_constraint_mask: " << builtin_constraint_mask;
-  }
-
   if (other_requirements) {
     out << outer_sep << "+ TODO requirements";
   }
@@ -250,6 +240,12 @@ auto AddCanonicalWitnessesBlock(File& sem_ir,
   for (auto witness_id : witnesses) {
     auto inst = sem_ir.insts().Get(witness_id);
     CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(CustomWitness witness): {
+        sortable.push_back({sem_ir.specific_interfaces().Get(
+                                witness.query_specific_interface_id),
+                            witness_id});
+        break;
+      }
       case CARBON_KIND(ImplWitness witness): {
         auto table =
             sem_ir.insts().GetAs<ImplWitnessTable>(witness.witness_table_id);

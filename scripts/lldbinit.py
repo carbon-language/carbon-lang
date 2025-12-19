@@ -44,7 +44,7 @@ def cmd_dump(debugger: Any, command: Any, result: Any, dict: Any) -> None:
 Dumps the value of an associated ID, using the C++ Dump() functions.
 
 Usage:
-  dump <CONTEXT> [<EXPR>|-- <EXPR>|<TYPE><ID>]
+  dump <CONTEXT> [<EXPR>|-- <EXPR>|<TYPE><ID>|<TYPE> <ID>]
 
 Args:
   CONTEXT is the dump context, such a SemIR::Context reference, a SemIR::File,
@@ -55,7 +55,9 @@ Args:
        the `Label` string in `IdBase` classes to find possible TYPE names,
        though only Id types that have a matching `Make...Id()` function are
        supported.
-  ID is an integer number, such as `42`, in hex, such as in `inst6000000A`.
+  ID is an integer number, such as `42`, in hex, such as in `inst6000000A`. It
+       can come with a `0x` prefix, allowing easier copy-paste from raw printed
+       hex values (such as via the `p/x` lldb command).
 
 Example usage:
   # Dumps the `inst_id` local variable, with a `context` local variable.
@@ -91,6 +93,8 @@ Example usage:
         "name": "SemIR::MakeNameId",
         "name_scope": "SemIR::MakeNameScopeId",
         "identified_facet_type": "SemIR::MakeIdentifiedFacetTypeId",
+        "require_block": "SemIR::MakeRequireImplsBlockId",
+        "require": "SemIR::MakeRequireImplsId",
         "specific": "SemIR::MakeSpecificId",
         "specific_interface": "SemIR::MakeSpecificInterfaceId",
         "struct_type_fields": "SemIR::MakeStructTypeFieldsId",
@@ -114,13 +118,24 @@ Example usage:
     found_id_type = False
 
     # Look for <type><id> as a single argument.
-    if m := re.fullmatch("([a-z_]+)([0-9A-Fa-f]+)", args[1]):
+    if m := re.fullmatch("([a-z_]+)(?:0x)?([0-9A-Fa-f]+)", args[1]):
         if m[1] in id_types:
             if len(args) != 2:
                 print_usage()
                 return
             make_id_fn = id_types[m[1]]
             id = int(m[2], 16)
+            print_dump(context, f"{make_id_fn}({id})")
+            found_id_type = True
+
+    # Look for <type> <id> as two arguments.
+    if args[1] in id_types:
+        if len(args) != 3:
+            print_usage()
+            return
+        if m := re.fullmatch("(?:0x)?([0-9A-Fa-f]+)", args[2]):
+            make_id_fn = id_types[args[1]]
+            id = int(m[1], 16)
             print_dump(context, f"{make_id_fn}({id})")
             found_id_type = True
 

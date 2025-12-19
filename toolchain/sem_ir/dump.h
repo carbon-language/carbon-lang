@@ -37,6 +37,9 @@ auto Dump(const File& file, NameId name_id) -> std::string;
 auto Dump(const File& file, NameScopeId name_scope_id) -> std::string;
 auto Dump(const File& file, NamedConstraintId named_constraint_id)
     -> std::string;
+auto Dump(const File& file, RequireImplsBlockId require_impls_block_id)
+    -> std::string;
+auto Dump(const File& file, RequireImplsId require_impls_id) -> std::string;
 auto Dump(const File& file, SpecificId specific_id) -> std::string;
 auto Dump(const File& file, SpecificInterfaceId specific_interface_id)
     -> std::string;

@@ -8,14 +8,17 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/custom_witness.h"
 #include "toolchain/check/impl_lookup.h"
+#include "toolchain/check/interface.h"
 #include "toolchain/check/type_structure.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/specific_interface.h"
 
 namespace Carbon::Check {
 
-// Performs lookup for an impl witness for a query involving C++ types. Returns
-// a witness value, or `None` if a synthesized C++ witness should not be used.
+// Performs lookup for an impl witness for a query involving C++ types.
+// Shouldn't be called with `CoreInterface::Unknown`, because only core
+// interfaces can have lookup results. Returns a witness value, or `None` if a
+// synthesized C++ witness should not be used.
 //
 // Given a known `core_interface`, we can synthesize a witness based on C++
 // operator overloads or special member functions. Performs the suitable C++
@@ -37,7 +40,7 @@ namespace Carbon::Check {
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                    CoreInterface core_interface,
                    SemIR::ConstantId query_self_const_id,
-                   SemIR::SpecificInterface specific_interface,
+                   SemIR::SpecificInterfaceId query_specific_interface_id,
                    const TypeStructure* best_impl_type_structure,
                    SemIR::LocId best_impl_loc_id) -> SemIR::InstId;
 
