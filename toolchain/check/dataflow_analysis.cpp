@@ -2,14 +2,22 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-// This dataflow analysis implementation is based on the concepts from the
-// Dragon book (Compilers: Principles, Techniques, and Tools, 2nd Edition),
-// specifically Chapter 9.2 "Introduction to Dataflow Analysis" and Chapter 12.3
-// "A Logical Representation of Data Flow" for datalog.
-// Dataflow analysis is a framework for program analysis where
-// information is collected and propagated along all control flow paths.
+// Dataflow analysis is a technique for gathering information about the
+// possible set of values calculated at various points in a computer program.
+// It involves setting up a system of dataflow equations (or constraints) that
+// relate information at different points in the program, based on the semantics
+// of instructions and the control flow graph. These equations are then solved,
+// typically using an iterative algorithm that propagates information through
+// the graph until a fixpoint is reached.
 // TODO: This is only a partial implementation, fixpoint computation and
 // live variable analysis is left for later.
+//
+// Good resources on dataflow analysis are:
+// * Anders Møller and Michael I. Schwartzbach "Static Program Analysis" or
+// also "Lecture Notes on Static Analysis"
+// * the Dragon book (Compilers: Principles, Techniques, and Tools, 2nd
+// Edition), specifically Chapter 9.2 "Introduction to Dataflow Analysis" and
+// Chapter 12.3 "A Logical Representation of Data Flow" for datalog.
 
 #include "toolchain/check/dataflow_analysis.h"
 

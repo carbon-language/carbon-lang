@@ -494,47 +494,53 @@ static auto BuildFunctionDecl(Context& context,
 // is marked unused.
 static auto CheckUnusedBindingsInPattern(Context& context,
                                          SemIR::InstId pattern_id) -> void {
-  auto inst = context.insts().Get(pattern_id);
-  CARBON_KIND_SWITCH(inst) {
-    case SemIR::OutParamPattern::Kind:
-    case SemIR::RefParamPattern::Kind:
-    case SemIR::ValueParamPattern::Kind:
-    case SemIR::VarParamPattern::Kind: {
-      auto param = inst.As<SemIR::AnyParamPattern>();
-      CheckUnusedBindingsInPattern(context, param.subpattern_id);
-      break;
-    }
-    case SemIR::RefBindingPattern::Kind:
-    case SemIR::SymbolicBindingPattern::Kind:
-    case SemIR::ValueBindingPattern::Kind: {
-      auto bind = inst.As<SemIR::AnyBindingPattern>();
-      auto& entity_name = context.entity_names().Get(bind.entity_name_id);
-      // We need special treatment for the name "_" which is implicitly
-      // unused but actually permitted in declarations.
-      if (entity_name.is_unused &&
-          entity_name.name_id != SemIR::NameId::Underscore) {
-        CARBON_DIAGNOSTIC(
-            UnusedMarkerInDeclaration, Error,
-            "`unused` marker cannot be used on a declaration that is not a "
-            "definition");
-        context.emitter().Emit(LocIdForDiagnostics(pattern_id),
-                               UnusedMarkerInDeclaration);
+  llvm::SmallVector<SemIR::InstId> work_list;
+  work_list.push_back(pattern_id);
+
+  while (!work_list.empty()) {
+    auto current_id = work_list.pop_back_val();
+    auto inst = context.insts().Get(current_id);
+    CARBON_KIND_SWITCH(inst) {
+      case SemIR::OutParamPattern::Kind:
+      case SemIR::RefParamPattern::Kind:
+      case SemIR::ValueParamPattern::Kind:
+      case SemIR::VarParamPattern::Kind: {
+        auto param = inst.As<SemIR::AnyParamPattern>();
+        work_list.push_back(param.subpattern_id);
+        break;
       }
-      break;
-    }
-    case CARBON_KIND(SemIR::VarPattern var_pattern): {
-      CheckUnusedBindingsInPattern(context, var_pattern.subpattern_id);
-      break;
-    }
-    case CARBON_KIND(SemIR::TuplePattern tuple_pattern): {
-      auto elements = context.inst_blocks().Get(tuple_pattern.elements_id);
-      for (auto element_id : elements) {
-        CheckUnusedBindingsInPattern(context, element_id);
+      case SemIR::RefBindingPattern::Kind:
+      case SemIR::SymbolicBindingPattern::Kind:
+      case SemIR::ValueBindingPattern::Kind: {
+        auto bind = inst.As<SemIR::AnyBindingPattern>();
+        auto& entity_name = context.entity_names().Get(bind.entity_name_id);
+        // We need special treatment for the name "_" which is implicitly
+        // unused but actually permitted in declarations.
+        if (entity_name.is_unused &&
+            entity_name.name_id != SemIR::NameId::Underscore) {
+          CARBON_DIAGNOSTIC(
+              UnusedMarkerInDeclaration, Error,
+              "`unused` marker cannot be used on a declaration that is not a "
+              "definition");
+          context.emitter().Emit(LocIdForDiagnostics(current_id),
+                                 UnusedMarkerInDeclaration);
+        }
+        break;
       }
-      break;
+      case CARBON_KIND(SemIR::VarPattern var_pattern): {
+        work_list.push_back(var_pattern.subpattern_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::TuplePattern tuple_pattern): {
+        auto elements = context.inst_blocks().Get(tuple_pattern.elements_id);
+        for (auto element_id : llvm::reverse(elements)) {
+          work_list.push_back(element_id);
+        }
+        break;
+      }
+      default:
+        break;
     }
-    default:
-      break;
   }
 }
 
