@@ -204,3 +204,32 @@ fn F() {
   x;
   x;
 }
+
+// --- unreachable.carbon
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: unreachable.carbon:[[@LINE+4]]:6: warning: binding `x` is unused [UnusedBinding]
+// CHECK:STDERR: fn F(x: i32) {
+// CHECK:STDERR:      ^
+// CHECK:STDERR:
+fn F(x: i32) {
+  return;
+  // Unreachable use is ignored, so UnusedBinding warning.
+  var y: i32 = x;
+}
+
+fn G(unused x: i32) {
+  return;
+  // Unreachable use is ignored, so no UnusedButUsed error.
+  var y: i32 = x;
+}
+
+// CHECK:STDERR: unreachable.carbon:[[@LINE+4]]:10: warning: binding `x` is unused [UnusedBinding]
+// CHECK:STDERR: fn H(ref x: i32) {
+// CHECK:STDERR:          ^
+// CHECK:STDERR:
+fn H(ref x: i32) {
+  return;
+  // Unreachable assignment is ignored. So UnusedBinding warning.
+  x = 0;
+}
