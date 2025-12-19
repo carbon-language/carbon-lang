@@ -70,7 +70,7 @@ struct DataflowFacts {
   // to a block.
   Set<BranchEdgeFact> branch_edges;
   // Def(inst_id, var_id): Definition of a variable (VarStorage) at `inst_id`.
-  // `var_id` is the `EntityNameId` index.
+  // `var_id` is the `EntityNameId`.
   Set<VarFact> defs;
   // Assign(inst_id, var_id): Assignment to `var_id` at `inst_id`.
   Set<VarFact> assigns;
@@ -362,10 +362,9 @@ static auto CheckUnusedBindings(Context& context, const DataflowFacts& facts)
 
   // Collect usage locations. We track the first source-location use for each
   // variable.
-  Map<int32_t, SemIR::InstId> first_use;
+  Map<SemIR::EntityNameId, SemIR::InstId> first_use;
   facts.uses.ForEach([&](const VarFact& use) {
-    // use.second is EntityNameId, index is int32_t.
-    auto result = first_use.Insert(use.second.index, use.first);
+    auto result = first_use.Insert(use.second, use.first);
     if (!result.is_inserted()) {
       // Keep the earliest instruction ID.
       if (use.first.index < result.value().index) {
@@ -383,7 +382,7 @@ static auto CheckUnusedBindings(Context& context, const DataflowFacts& facts)
     auto entity_name_id = def.second;
     const auto& entity_name = sem_ir.entity_names().Get(entity_name_id);
 
-    if (!first_use.Contains(entity_name_id.index)) {
+    if (!first_use.Contains(entity_name_id)) {
       if (!entity_name.is_unused) {
         unused_defs.push_back(def);
       }
@@ -414,7 +413,7 @@ static auto CheckUnusedBindings(Context& context, const DataflowFacts& facts)
                       std::string);
     auto diag = context.emitter().Build(LocIdForDiagnostics(loc_id),
                                         UnusedButUsed, name.str());
-    auto use_inst_id = *first_use[entity_name_id.index];
+    auto use_inst_id = *first_use[entity_name_id];
     auto use_loc_id = sem_ir.insts().GetCanonicalLocId(use_inst_id);
     CARBON_DIAGNOSTIC(UnusedButUsedHere, Note, "usage is here");
     diag.Note(LocIdForDiagnostics(use_loc_id), UnusedButUsedHere);
