@@ -153,17 +153,8 @@ static auto GetVarInfos(const SemIR::File& sem_ir, SemIR::InstId inst_id)
       // NameRef.value_id points to the binding (RefBinding/ValueBinding).
       auto binding_id = name_ref.value_id;
       auto binding_inst = sem_ir.insts().Get(binding_id);
-      CARBON_KIND_SWITCH(binding_inst) {
-        case CARBON_KIND(SemIR::RefBinding ref_bind): {
-          infos.push_back({ref_bind.entity_name_id, binding_id});
-          break;
-        }
-        case CARBON_KIND(SemIR::ValueBinding val_bind): {
-          infos.push_back({val_bind.entity_name_id, binding_id});
-          break;
-        }
-        default:
-          break;
+      if (auto binding = binding_inst.TryAs<SemIR::AnyBinding>()) {
+        infos.push_back({binding->entity_name_id, binding_id});
       }
       break;
     }
