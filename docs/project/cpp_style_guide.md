@@ -255,7 +255,7 @@ class entity, we might call these `class_id`, `class_inst_id`, and
 
 We choose iterative over recursive algorithms, and use clang-tidy to help
 enforce this. We expect Carbon to be used in codebases which stress test the
-compiler, for example due to complex interactions of APIs or due simply due to
+compiler, for example due to complex interactions of APIs or simply due to
 repetitive code structures from code generators.
 
 Other solutions that make recursion work better have been considered, but we
