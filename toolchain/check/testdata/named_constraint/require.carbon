@@ -303,7 +303,7 @@ constraint Z {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8c0]
-// CHECK:STDOUT:   %Z.require0.decl = require_decl @Z.require0 [concrete] {
+// CHECK:STDOUT:   %Z.require60000000.decl = require_decl @Z.require60000000 [concrete] {
 // CHECK:STDOUT:     require %Self.as_type impls %Y.ref
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @Z.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
@@ -315,17 +315,17 @@ constraint Z {
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require0 {
-// CHECK:STDOUT:     require @Z.require0.%Self.as_type impls @Z.require0.%Y.ref
+// CHECK:STDOUT:   @Z.require60000000 {
+// CHECK:STDOUT:     require @Z.require60000000.%Self.as_type impls @Z.require60000000.%Y.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @Z.require0(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: generic require @Z.require60000000(@Z.%Self: %Z.type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.8c0)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.require0(constants.%Self.8c0) {
+// CHECK:STDOUT: specific @Z.require60000000(constants.%Self.8c0) {
 // CHECK:STDOUT:   %Self => constants.%Self.8c0
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
@@ -348,7 +348,7 @@ constraint Z {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8c0]
-// CHECK:STDOUT:   %Z.require0.decl = require_decl @Z.require0 [concrete] {
+// CHECK:STDOUT:   %Z.require50000000.decl = require_decl @Z.require50000000 [concrete] {
 // CHECK:STDOUT:     require %Self.as_type impls %Y.ref
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @Z.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
@@ -360,17 +360,17 @@ constraint Z {
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require0 {
-// CHECK:STDOUT:     require @Z.require0.%Self.as_type impls @Z.require0.%Y.ref
+// CHECK:STDOUT:   @Z.require50000000 {
+// CHECK:STDOUT:     require @Z.require50000000.%Self.as_type impls @Z.require50000000.%Y.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @Z.require0(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: generic require @Z.require50000000(@Z.%Self: %Z.type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.8c0)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.require0(constants.%Self.8c0) {
+// CHECK:STDOUT: specific @Z.require50000000(constants.%Self.8c0) {
 // CHECK:STDOUT:   %Self => constants.%Self.8c0
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
@@ -393,7 +393,7 @@ constraint Z {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8c0]
-// CHECK:STDOUT:   %Z.require0.decl = require_decl @Z.require0 [concrete] {
+// CHECK:STDOUT:   %Z.require70000000.decl = require_decl @Z.require70000000 [concrete] {
 // CHECK:STDOUT:     require %.loc9 impls %Y.ref
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: %Z.type = name_ref Self, @Z.%Self [symbolic = %Self (constants.%Self.8c0)]
@@ -407,17 +407,17 @@ constraint Z {
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require0 {
-// CHECK:STDOUT:     require @Z.require0.%.loc9 impls @Z.require0.%Y.ref
+// CHECK:STDOUT:   @Z.require70000000 {
+// CHECK:STDOUT:     require @Z.require70000000.%.loc9 impls @Z.require70000000.%Y.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @Z.require0(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: generic require @Z.require70000000(@Z.%Self: %Z.type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.8c0)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.require0(constants.%Self.8c0) {
+// CHECK:STDOUT: specific @Z.require70000000(constants.%Self.8c0) {
 // CHECK:STDOUT:   %Self => constants.%Self.8c0
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
@@ -443,7 +443,7 @@ constraint Z {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8c0]
-// CHECK:STDOUT:   %Z.require0.decl = require_decl @Z.require0 [concrete] {
+// CHECK:STDOUT:   %Z.require58000000.decl = require_decl @Z.require58000000 [concrete] {
 // CHECK:STDOUT:     require %C.loc9_17.1 impls %Y.ref
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
@@ -460,18 +460,18 @@ constraint Z {
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require0 {
-// CHECK:STDOUT:     require @Z.require0.%C.loc9_17.1 impls @Z.require0.%Y.ref
+// CHECK:STDOUT:   @Z.require58000000 {
+// CHECK:STDOUT:     require @Z.require58000000.%C.loc9_17.1 impls @Z.require58000000.%Y.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @Z.require0(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: generic require @Z.require58000000(@Z.%Self: %Z.type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.8c0)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %C.loc9_17.2: type = class_type @C, @C(%Self.binding.as_type) [symbolic = %C.loc9_17.2 (constants.%C.2ee)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.require0(constants.%Self.8c0) {
+// CHECK:STDOUT: specific @Z.require58000000(constants.%Self.8c0) {
 // CHECK:STDOUT:   %Self => constants.%Self.8c0
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %C.loc9_17.2 => constants.%C.2ee
@@ -504,7 +504,7 @@ constraint Z {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8c0]
-// CHECK:STDOUT:   %Z.require0.decl = require_decl @Z.require0 [concrete] {
+// CHECK:STDOUT:   %Z.require78000000.decl = require_decl @Z.require78000000 [concrete] {
 // CHECK:STDOUT:     require %Self.as_type impls %.loc7_19
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @Z.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
@@ -528,17 +528,17 @@ constraint Z {
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require0 {
-// CHECK:STDOUT:     require @Z.require0.%Self.as_type impls @Z.require0.%.loc7_19
+// CHECK:STDOUT:   @Z.require78000000 {
+// CHECK:STDOUT:     require @Z.require78000000.%Self.as_type impls @Z.require78000000.%.loc7_19
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @Z.require0(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: generic require @Z.require78000000(@Z.%Self: %Z.type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.8c0)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.require0(constants.%Self.8c0) {
+// CHECK:STDOUT: specific @Z.require78000000(constants.%Self.8c0) {
 // CHECK:STDOUT:   %Self => constants.%Self.8c0
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
@@ -713,7 +713,7 @@ constraint Z {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @Z {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.8c0]
-// CHECK:STDOUT:   %Z.require0.decl = require_decl @Z.require0 [concrete] {
+// CHECK:STDOUT:   %Z.require62000000.decl = require_decl @Z.require62000000 [concrete] {
 // CHECK:STDOUT:     require %Self.as_type.loc10_11 impls %.loc10_19
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type.loc10_11: type = facet_access_type @Z.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
@@ -738,18 +738,18 @@ constraint Z {
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Z.require0 {
-// CHECK:STDOUT:     require @Z.require0.%Self.as_type.loc10_11 impls @Z.require0.%.loc10_19
+// CHECK:STDOUT:   @Z.require62000000 {
+// CHECK:STDOUT:     require @Z.require62000000.%Self.as_type.loc10_11 impls @Z.require62000000.%.loc10_19
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @Z.require0(@Z.%Self: %Z.type) {
+// CHECK:STDOUT: generic require @Z.require62000000(@Z.%Self: %Z.type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.8c0)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %Y_where.type: type = facet_type <@Y where constants.%impl.elem0 = %Self.binding.as_type> [symbolic = %Y_where.type (constants.%Y_where.type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.require0(constants.%Self.8c0) {
+// CHECK:STDOUT: specific @Z.require62000000(constants.%Self.8c0) {
 // CHECK:STDOUT:   %Self => constants.%Self.8c0
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %Y_where.type => constants.%Y_where.type

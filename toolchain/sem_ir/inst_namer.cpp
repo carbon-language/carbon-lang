@@ -617,7 +617,7 @@ auto InstNamer::PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
       *this, require_loc,
       // TODO: Include the Interface being required if there's only one, instead
       // of the index.
-      llvm::formatv("{0}{1}require{2}", scope_prefix,
+      llvm::formatv("{0}{1}require{2:x-}", scope_prefix,
                     scope_prefix.empty() ? "" : ".", require_impls_id.index));
 
   auto decl = sem_ir_->insts().GetAs<SemIR::RequireImplsDecl>(require.decl_id);

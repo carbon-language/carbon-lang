@@ -95,7 +95,7 @@ impl C as B {}
 // CHECK:STDOUT:   %Main.I = import_ref Main//b, I, unloaded
 // CHECK:STDOUT:   %Main.B: type = import_ref Main//b, B, loaded [concrete = constants.%B.type]
 // CHECK:STDOUT:   %Main.import_ref.cdf = import_ref Main//b, loc3_13, unloaded
-// CHECK:STDOUT:   %Main.import_ref.a4a: type = import_ref Main//b, loc5_18, loaded [symbolic = @B.require0.%Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:   %Main.import_ref.a4a: type = import_ref Main//b, loc5_18, loaded [symbolic = @B.require48000000.%Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %Main.import_ref.72a: type = import_ref Main//b, loc5_24, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.import_ref.5d6: %B.type = import_ref Main//b, loc4_14, loaded [symbolic = constants.%Self.719]
 // CHECK:STDOUT:   %Main.import_ref.41f = import_ref Main//b, loc4_14, unloaded
@@ -133,12 +133,12 @@ impl C as B {}
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.41f
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @B.require0 {
+// CHECK:STDOUT:   @B.require48000000 {
 // CHECK:STDOUT:     require imports.%Main.import_ref.a4a impls imports.%Main.import_ref.72a
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @B.require0(imports.%Main.import_ref.5d6: %B.type) [from "b.carbon"] {
+// CHECK:STDOUT: generic require @B.require48000000(imports.%Main.import_ref.5d6: %B.type) [from "b.carbon"] {
 // CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.719)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT: }
@@ -154,7 +154,7 @@ impl C as B {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @B.require0(constants.%Self.719) {
+// CHECK:STDOUT: specific @B.require48000000(constants.%Self.719) {
 // CHECK:STDOUT:   %Self => constants.%Self.719
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT: }
