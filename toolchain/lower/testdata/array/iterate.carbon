@@ -229,9 +229,9 @@ fn F() {
 // CHECK:STDOUT: !49 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8", scope: null, file: !50, line: 341, type: !51, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !53)
 // CHECK:STDOUT: !50 = !DIFile(filename: "{{.*}}/prelude/types/int.carbon", directory: "")
 // CHECK:STDOUT: !51 = !DISubroutineType(types: !52)
-// CHECK:STDOUT: !52 = !{null, !16}
+// CHECK:STDOUT: !52 = !{null, !17}
 // CHECK:STDOUT: !53 = !{!54}
-// CHECK:STDOUT: !54 = !DILocalVariable(arg: 1, scope: !49, type: !16)
+// CHECK:STDOUT: !54 = !DILocalVariable(arg: 1, scope: !49, type: !17)
 // CHECK:STDOUT: !55 = !DILocation(line: 343, column: 5, scope: !49)
 // CHECK:STDOUT: !56 = !DILocation(line: 341, column: 3, scope: !49)
 // CHECK:STDOUT: !57 = distinct !DISubprogram(name: "Some", linkageName: "_CSome.Optional.Core.75e118c322ac5019", scope: null, file: !37, line: 29, type: !58, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !60)
@@ -258,9 +258,9 @@ fn F() {
 // CHECK:STDOUT: !78 = !DILocation(line: 127, column: 5, scope: !74)
 // CHECK:STDOUT: !79 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.e2da7149b7fcf782.Core.dcdd24268af36579", scope: null, file: !50, line: 277, type: !80, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !82)
 // CHECK:STDOUT: !80 = !DISubroutineType(types: !81)
-// CHECK:STDOUT: !81 = !{null, !16, !16}
+// CHECK:STDOUT: !81 = !{null, !17, !16}
 // CHECK:STDOUT: !82 = !{!83, !84}
-// CHECK:STDOUT: !83 = !DILocalVariable(arg: 1, scope: !79, type: !16)
+// CHECK:STDOUT: !83 = !DILocalVariable(arg: 1, scope: !79, type: !17)
 // CHECK:STDOUT: !84 = !DILocalVariable(arg: 2, scope: !79, type: !16)
 // CHECK:STDOUT: !85 = !DILocation(line: 4294967295, scope: !79)
 // CHECK:STDOUT: !86 = !DILocation(line: 277, column: 3, scope: !79)

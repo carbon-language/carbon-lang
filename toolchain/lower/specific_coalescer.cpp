@@ -6,6 +6,7 @@
 
 #include "common/check.h"
 #include "common/vlog.h"
+#include "toolchain/lower/file_context.h"
 
 namespace Carbon::Lower {
 
@@ -172,11 +173,11 @@ auto SpecificCoalescer::UpdateAndDeleteLLVMFunction(
     LoweredLlvmFunctionStore& lowered_llvm_functions,
     SemIR::SpecificId specific_id) -> void {
   UpdateEquivalentSpecific(specific_id);
-  auto* old_function = lowered_llvm_functions.Get(specific_id);
-  auto* new_function =
+  auto& old_function = lowered_llvm_functions.Get(specific_id);
+  auto& new_function =
       lowered_llvm_functions.Get(equivalent_specifics_.Get(specific_id));
-  old_function->replaceAllUsesWith(new_function);
-  old_function->eraseFromParent();
+  old_function->llvm_function->replaceAllUsesWith(new_function->llvm_function);
+  old_function->llvm_function->eraseFromParent();
   lowered_llvm_functions.Set(specific_id, new_function);
 }
 

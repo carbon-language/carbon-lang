@@ -65,31 +65,31 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: vector.body:                                      ; preds = %vector.body, %entry
 // CHECK:STDOUT:   %index = phi i32 [ 0, %entry ], [ %index.next.1, %vector.body ], !dbg !23
-// CHECK:STDOUT:   %0 = zext nneg i32 %index to i64, !dbg !38
-// CHECK:STDOUT:   %1 = getelementptr inbounds nuw i32, ptr %a, i64 %0, !dbg !38
-// CHECK:STDOUT:   %2 = getelementptr inbounds nuw i8, ptr %1, i64 16, !dbg !38
-// CHECK:STDOUT:   %wide.load = load <4 x i32>, ptr %1, align 4, !dbg !38
-// CHECK:STDOUT:   %wide.load4 = load <4 x i32>, ptr %2, align 4, !dbg !38
-// CHECK:STDOUT:   %3 = shl <4 x i32> %wide.load, splat (i32 1), !dbg !38
-// CHECK:STDOUT:   %4 = shl <4 x i32> %wide.load4, splat (i32 1), !dbg !38
-// CHECK:STDOUT:   store <4 x i32> %3, ptr %1, align 4, !dbg !38
-// CHECK:STDOUT:   store <4 x i32> %4, ptr %2, align 4, !dbg !38
-// CHECK:STDOUT:   %5 = zext nneg i32 %index to i64, !dbg !38
-// CHECK:STDOUT:   %6 = getelementptr inbounds nuw i32, ptr %a, i64 %5, !dbg !38
-// CHECK:STDOUT:   %7 = getelementptr inbounds nuw i8, ptr %6, i64 32, !dbg !38
-// CHECK:STDOUT:   %8 = getelementptr inbounds nuw i8, ptr %6, i64 48, !dbg !38
-// CHECK:STDOUT:   %wide.load.1 = load <4 x i32>, ptr %7, align 4, !dbg !38
-// CHECK:STDOUT:   %wide.load4.1 = load <4 x i32>, ptr %8, align 4, !dbg !38
-// CHECK:STDOUT:   %9 = shl <4 x i32> %wide.load.1, splat (i32 1), !dbg !38
-// CHECK:STDOUT:   %10 = shl <4 x i32> %wide.load4.1, splat (i32 1), !dbg !38
-// CHECK:STDOUT:   store <4 x i32> %9, ptr %7, align 4, !dbg !38
-// CHECK:STDOUT:   store <4 x i32> %10, ptr %8, align 4, !dbg !38
+// CHECK:STDOUT:   %0 = zext nneg i32 %index to i64, !dbg !36
+// CHECK:STDOUT:   %1 = getelementptr inbounds nuw i32, ptr %a, i64 %0, !dbg !36
+// CHECK:STDOUT:   %2 = getelementptr inbounds nuw i8, ptr %1, i64 16, !dbg !36
+// CHECK:STDOUT:   %wide.load = load <4 x i32>, ptr %1, align 4, !dbg !36
+// CHECK:STDOUT:   %wide.load4 = load <4 x i32>, ptr %2, align 4, !dbg !36
+// CHECK:STDOUT:   %3 = shl <4 x i32> %wide.load, splat (i32 1), !dbg !36
+// CHECK:STDOUT:   %4 = shl <4 x i32> %wide.load4, splat (i32 1), !dbg !36
+// CHECK:STDOUT:   store <4 x i32> %3, ptr %1, align 4, !dbg !36
+// CHECK:STDOUT:   store <4 x i32> %4, ptr %2, align 4, !dbg !36
+// CHECK:STDOUT:   %5 = zext nneg i32 %index to i64, !dbg !36
+// CHECK:STDOUT:   %6 = getelementptr inbounds nuw i32, ptr %a, i64 %5, !dbg !36
+// CHECK:STDOUT:   %7 = getelementptr inbounds nuw i8, ptr %6, i64 32, !dbg !36
+// CHECK:STDOUT:   %8 = getelementptr inbounds nuw i8, ptr %6, i64 48, !dbg !36
+// CHECK:STDOUT:   %wide.load.1 = load <4 x i32>, ptr %7, align 4, !dbg !36
+// CHECK:STDOUT:   %wide.load4.1 = load <4 x i32>, ptr %8, align 4, !dbg !36
+// CHECK:STDOUT:   %9 = shl <4 x i32> %wide.load.1, splat (i32 1), !dbg !36
+// CHECK:STDOUT:   %10 = shl <4 x i32> %wide.load4.1, splat (i32 1), !dbg !36
+// CHECK:STDOUT:   store <4 x i32> %9, ptr %7, align 4, !dbg !36
+// CHECK:STDOUT:   store <4 x i32> %10, ptr %8, align 4, !dbg !36
 // CHECK:STDOUT:   %index.next.1 = add nuw nsw i32 %index, 16, !dbg !23
 // CHECK:STDOUT:   %11 = icmp eq i32 %index.next.1, 65536, !dbg !22
-// CHECK:STDOUT:   br i1 %11, label %while.done, label %vector.body, !dbg !22, !llvm.loop !39
+// CHECK:STDOUT:   br i1 %11, label %while.done, label %vector.body, !dbg !22, !llvm.loop !37
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done:                                       ; preds = %vector.body
-// CHECK:STDOUT:   ret void, !dbg !42
+// CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT:   uselistorder i32 %index, { 1, 0, 2 }
@@ -132,19 +132,17 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.5375cfcbca6d9e35.Core.75bec4d236c9daa5", scope: null, file: !25, line: 277, type: !26, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !28)
 // CHECK:STDOUT: !25 = !DIFile(filename: "{{.*}}/prelude/types/int.carbon", directory: "")
 // CHECK:STDOUT: !26 = !DISubroutineType(types: !27)
-// CHECK:STDOUT: !27 = !{null, !7, !7}
+// CHECK:STDOUT: !27 = !{null, !19, !7}
 // CHECK:STDOUT: !28 = !{!29, !30}
-// CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !24, type: !7)
+// CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !24, type: !19)
 // CHECK:STDOUT: !30 = !DILocalVariable(arg: 2, scope: !24, type: !7)
-// CHECK:STDOUT: !31 = distinct !DILocation(line: 343, column: 5, scope: !32, inlinedAt: !37)
-// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8", scope: null, file: !25, line: 341, type: !33, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !35)
-// CHECK:STDOUT: !33 = !DISubroutineType(types: !34)
-// CHECK:STDOUT: !34 = !{null, !7}
-// CHECK:STDOUT: !35 = !{!36}
-// CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !32, type: !7)
-// CHECK:STDOUT: !37 = distinct !DILocation(line: 20, column: 5, scope: !16)
-// CHECK:STDOUT: !38 = !DILocation(line: 19, column: 5, scope: !16)
-// CHECK:STDOUT: !39 = distinct !{!39, !40, !41}
-// CHECK:STDOUT: !40 = !{!"llvm.loop.isvectorized", i32 1}
-// CHECK:STDOUT: !41 = !{!"llvm.loop.unroll.runtime.disable"}
-// CHECK:STDOUT: !42 = !DILocation(line: 15, column: 1, scope: !16)
+// CHECK:STDOUT: !31 = distinct !DILocation(line: 343, column: 5, scope: !32, inlinedAt: !35)
+// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8", scope: null, file: !25, line: 341, type: !17, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !33)
+// CHECK:STDOUT: !33 = !{!34}
+// CHECK:STDOUT: !34 = !DILocalVariable(arg: 1, scope: !32, type: !19)
+// CHECK:STDOUT: !35 = distinct !DILocation(line: 20, column: 5, scope: !16)
+// CHECK:STDOUT: !36 = !DILocation(line: 19, column: 5, scope: !16)
+// CHECK:STDOUT: !37 = distinct !{!37, !38, !39}
+// CHECK:STDOUT: !38 = !{!"llvm.loop.isvectorized", i32 1}
+// CHECK:STDOUT: !39 = !{!"llvm.loop.unroll.runtime.disable"}
+// CHECK:STDOUT: !40 = !DILocation(line: 15, column: 1, scope: !16)

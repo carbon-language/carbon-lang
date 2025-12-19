@@ -6,24 +6,26 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/function/call/ref_param.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/lower/testdata/function/call/ref_return.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/call/ref_param.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/call/ref_return.carbon
 
-fn DoNothing(ref _: i32) {}
+fn Echo(ref x: i32) -> ref i32 {
+  return x;
+}
 
 fn Main() {
   var a: i32 = 0;
-  DoNothing(ref a);
+  Echo(ref a) = 1;
 }
 
-// CHECK:STDOUT: ; ModuleID = 'ref_param.carbon'
-// CHECK:STDOUT: source_filename = "ref_param.carbon"
+// CHECK:STDOUT: ; ModuleID = 'ref_return.carbon'
+// CHECK:STDOUT: source_filename = "ref_return.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CDoNothing.Main(ptr %_) #0 !dbg !4 {
+// CHECK:STDOUT: define ptr @_CEcho.Main(ptr %x) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !10
+// CHECK:STDOUT:   ret ptr %x, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -32,7 +34,8 @@ fn Main() {
 // CHECK:STDOUT:   %a.var = alloca i32, align 4, !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !14
 // CHECK:STDOUT:   store i32 0, ptr %a.var, align 4, !dbg !14
-// CHECK:STDOUT:   call void @_CDoNothing.Main(ptr %a.var), !dbg !15
+// CHECK:STDOUT:   %Echo.call = call ptr @_CEcho.Main(ptr %a.var), !dbg !15
+// CHECK:STDOUT:   store i32 1, ptr %Echo.call, align 4, !dbg !15
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -48,17 +51,17 @@ fn Main() {
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "ref_param.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "DoNothing", linkageName: "_CDoNothing.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
+// CHECK:STDOUT: !3 = !DIFile(filename: "ref_return.carbon", directory: "")
+// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Echo", linkageName: "_CEcho.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{null, !7}
+// CHECK:STDOUT: !6 = !{!7, !7}
 // CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
 // CHECK:STDOUT: !8 = !{!9}
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
-// CHECK:STDOUT: !10 = !DILocation(line: 13, column: 1, scope: !4)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 15, type: !12, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !10 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 17, type: !12, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null}
-// CHECK:STDOUT: !14 = !DILocation(line: 16, column: 3, scope: !11)
-// CHECK:STDOUT: !15 = !DILocation(line: 17, column: 3, scope: !11)
-// CHECK:STDOUT: !16 = !DILocation(line: 15, column: 1, scope: !11)
+// CHECK:STDOUT: !14 = !DILocation(line: 18, column: 3, scope: !11)
+// CHECK:STDOUT: !15 = !DILocation(line: 19, column: 3, scope: !11)
+// CHECK:STDOUT: !16 = !DILocation(line: 17, column: 1, scope: !11)

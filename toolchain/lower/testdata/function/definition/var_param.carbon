@@ -42,23 +42,23 @@ fn Call() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_COneVar_X.Main(ptr %_) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !17
+// CHECK:STDOUT:   ret void, !dbg !14
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CTwoVars.Main(ptr %_, ptr %_1) #0 !dbg !18 {
+// CHECK:STDOUT: define void @_CTwoVars.Main(ptr %_, ptr %_1) #0 !dbg !15 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !24
+// CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CVarThenLet.Main(ptr %_, ptr %_1) #0 !dbg !25 {
+// CHECK:STDOUT: define void @_CVarThenLet.Main(ptr %_, ptr %_1) #0 !dbg !22 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !29
+// CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CLetThenVar.Main(i32 %_, ptr %_1) #0 !dbg !30 {
+// CHECK:STDOUT: define void @_CLetThenVar.Main(i32 %_, ptr %_1) #0 !dbg !27 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !34
 // CHECK:STDOUT: }
@@ -119,34 +119,34 @@ fn Call() {
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "OneVar_i32", linkageName: "_COneVar_i32.Main", scope: null, file: !3, line: 15, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !8)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
 // CHECK:STDOUT: !6 = !{null, !7}
-// CHECK:STDOUT: !7 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
 // CHECK:STDOUT: !8 = !{!9}
 // CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
 // CHECK:STDOUT: !10 = !DILocation(line: 15, column: 1, scope: !4)
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "OneVar_X", linkageName: "_COneVar_X.Main", scope: null, file: !3, line: 16, type: !12, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !15)
-// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
-// CHECK:STDOUT: !13 = !{null, !14}
-// CHECK:STDOUT: !14 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
-// CHECK:STDOUT: !15 = !{!16}
-// CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !11, type: !14)
-// CHECK:STDOUT: !17 = !DILocation(line: 16, column: 1, scope: !11)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "TwoVars", linkageName: "_CTwoVars.Main", scope: null, file: !3, line: 18, type: !19, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !21)
-// CHECK:STDOUT: !19 = !DISubroutineType(types: !20)
-// CHECK:STDOUT: !20 = !{null, !7, !14}
-// CHECK:STDOUT: !21 = !{!22, !23}
-// CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !18, type: !7)
-// CHECK:STDOUT: !23 = !DILocalVariable(arg: 2, scope: !18, type: !14)
-// CHECK:STDOUT: !24 = !DILocation(line: 18, column: 1, scope: !18)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "VarThenLet", linkageName: "_CVarThenLet.Main", scope: null, file: !3, line: 20, type: !19, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !26)
-// CHECK:STDOUT: !26 = !{!27, !28}
-// CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !25, type: !7)
-// CHECK:STDOUT: !28 = !DILocalVariable(arg: 2, scope: !25, type: !14)
-// CHECK:STDOUT: !29 = !DILocation(line: 20, column: 1, scope: !25)
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "LetThenVar", linkageName: "_CLetThenVar.Main", scope: null, file: !3, line: 21, type: !19, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !31)
+// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "OneVar_X", linkageName: "_COneVar_X.Main", scope: null, file: !3, line: 16, type: !5, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !12)
+// CHECK:STDOUT: !12 = !{!13}
+// CHECK:STDOUT: !13 = !DILocalVariable(arg: 1, scope: !11, type: !7)
+// CHECK:STDOUT: !14 = !DILocation(line: 16, column: 1, scope: !11)
+// CHECK:STDOUT: !15 = distinct !DISubprogram(name: "TwoVars", linkageName: "_CTwoVars.Main", scope: null, file: !3, line: 18, type: !16, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !18)
+// CHECK:STDOUT: !16 = !DISubroutineType(types: !17)
+// CHECK:STDOUT: !17 = !{null, !7, !7}
+// CHECK:STDOUT: !18 = !{!19, !20}
+// CHECK:STDOUT: !19 = !DILocalVariable(arg: 1, scope: !15, type: !7)
+// CHECK:STDOUT: !20 = !DILocalVariable(arg: 2, scope: !15, type: !7)
+// CHECK:STDOUT: !21 = !DILocation(line: 18, column: 1, scope: !15)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "VarThenLet", linkageName: "_CVarThenLet.Main", scope: null, file: !3, line: 20, type: !16, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !23)
+// CHECK:STDOUT: !23 = !{!24, !25}
+// CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !22, type: !7)
+// CHECK:STDOUT: !25 = !DILocalVariable(arg: 2, scope: !22, type: !7)
+// CHECK:STDOUT: !26 = !DILocation(line: 20, column: 1, scope: !22)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "LetThenVar", linkageName: "_CLetThenVar.Main", scope: null, file: !3, line: 21, type: !28, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !31)
+// CHECK:STDOUT: !28 = !DISubroutineType(types: !29)
+// CHECK:STDOUT: !29 = !{null, !30, !7}
+// CHECK:STDOUT: !30 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !31 = !{!32, !33}
-// CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !30, type: !7)
-// CHECK:STDOUT: !33 = !DILocalVariable(arg: 2, scope: !30, type: !14)
-// CHECK:STDOUT: !34 = !DILocation(line: 21, column: 1, scope: !30)
+// CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !27, type: !30)
+// CHECK:STDOUT: !33 = !DILocalVariable(arg: 2, scope: !27, type: !7)
+// CHECK:STDOUT: !34 = !DILocation(line: 21, column: 1, scope: !27)
 // CHECK:STDOUT: !35 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !3, line: 23, type: !36, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !36 = !DISubroutineType(types: !37)
 // CHECK:STDOUT: !37 = !{null}

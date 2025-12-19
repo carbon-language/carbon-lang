@@ -24,16 +24,16 @@ fn Main() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CEcho.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !8
+// CHECK:STDOUT:   ret void, !dbg !7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !9 {
+// CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !12
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !12
-// CHECK:STDOUT:   call void @_CEcho.Main(), !dbg !13
-// CHECK:STDOUT:   ret void, !dbg !14
+// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !9
+// CHECK:STDOUT:   call void @_CEcho.Main(), !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -51,12 +51,9 @@ fn Main() {
 // CHECK:STDOUT: !3 = !DIFile(filename: "empty_struct.carbon", directory: "")
 // CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Echo", linkageName: "_CEcho.Main", scope: null, file: !3, line: 13, type: !5, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{!7}
-// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
-// CHECK:STDOUT: !8 = !DILocation(line: 14, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 17, type: !10, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !10 = !DISubroutineType(types: !11)
-// CHECK:STDOUT: !11 = !{null}
-// CHECK:STDOUT: !12 = !DILocation(line: 18, column: 3, scope: !9)
-// CHECK:STDOUT: !13 = !DILocation(line: 18, column: 15, scope: !9)
-// CHECK:STDOUT: !14 = !DILocation(line: 17, column: 1, scope: !9)
+// CHECK:STDOUT: !6 = !{null}
+// CHECK:STDOUT: !7 = !DILocation(line: 14, column: 3, scope: !4)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !3, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !2)
+// CHECK:STDOUT: !9 = !DILocation(line: 18, column: 3, scope: !8)
+// CHECK:STDOUT: !10 = !DILocation(line: 18, column: 15, scope: !8)
+// CHECK:STDOUT: !11 = !DILocation(line: 17, column: 1, scope: !8)

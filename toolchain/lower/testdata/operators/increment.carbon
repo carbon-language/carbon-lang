@@ -43,16 +43,16 @@ fn IncrSigned() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.5375cfcbca6d9e35.Core.75bec4d236c9daa5"(ptr %self, i32 %other) #2 !dbg !19 {
-// CHECK:STDOUT:   %1 = call i32 @"_CConvert.14b8745117b2bc54:ImplicitAs.a9271c1e04015f9c.Core.64ccbb8e5d9a0b8e"(i32 %other), !dbg !25
-// CHECK:STDOUT:   %2 = load i32, ptr %self, align 4, !dbg !26
-// CHECK:STDOUT:   %3 = add i32 %2, %1, !dbg !26
-// CHECK:STDOUT:   store i32 %3, ptr %self, align 4, !dbg !26
-// CHECK:STDOUT:   ret void, !dbg !26
+// CHECK:STDOUT:   %1 = call i32 @"_CConvert.14b8745117b2bc54:ImplicitAs.a9271c1e04015f9c.Core.64ccbb8e5d9a0b8e"(i32 %other), !dbg !26
+// CHECK:STDOUT:   %2 = load i32, ptr %self, align 4, !dbg !27
+// CHECK:STDOUT:   %3 = add i32 %2, %1, !dbg !27
+// CHECK:STDOUT:   store i32 %3, ptr %self, align 4, !dbg !27
+// CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.14b8745117b2bc54:ImplicitAs.a9271c1e04015f9c.Core.64ccbb8e5d9a0b8e"(i32 %self) #0 !dbg !27 {
-// CHECK:STDOUT:   ret i32 %self, !dbg !33
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.14b8745117b2bc54:ImplicitAs.a9271c1e04015f9c.Core.64ccbb8e5d9a0b8e"(i32 %self) #0 !dbg !28 {
+// CHECK:STDOUT:   ret i32 %self, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -76,23 +76,24 @@ fn IncrSigned() {
 // CHECK:STDOUT: !11 = !DIFile(filename: "{{.*}}/prelude/types/int.carbon", directory: "")
 // CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
 // CHECK:STDOUT: !13 = !{null, !14}
-// CHECK:STDOUT: !14 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !14 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 8)
 // CHECK:STDOUT: !15 = !{!16}
 // CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !10, type: !14)
 // CHECK:STDOUT: !17 = !DILocation(line: 343, column: 5, scope: !10)
 // CHECK:STDOUT: !18 = !DILocation(line: 341, column: 3, scope: !10)
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.5375cfcbca6d9e35.Core.75bec4d236c9daa5", scope: null, file: !11, line: 277, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !22)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.5375cfcbca6d9e35.Core.75bec4d236c9daa5", scope: null, file: !11, line: 277, type: !20, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !23)
 // CHECK:STDOUT: !20 = !DISubroutineType(types: !21)
-// CHECK:STDOUT: !21 = !{null, !14, !14}
-// CHECK:STDOUT: !22 = !{!23, !24}
-// CHECK:STDOUT: !23 = !DILocalVariable(arg: 1, scope: !19, type: !14)
-// CHECK:STDOUT: !24 = !DILocalVariable(arg: 2, scope: !19, type: !14)
-// CHECK:STDOUT: !25 = !DILocation(line: 4294967295, scope: !19)
-// CHECK:STDOUT: !26 = !DILocation(line: 277, column: 3, scope: !19)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.14b8745117b2bc54:ImplicitAs.a9271c1e04015f9c.Core.64ccbb8e5d9a0b8e", scope: null, file: !28, line: 32, type: !29, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !31)
-// CHECK:STDOUT: !28 = !DIFile(filename: "{{.*}}/prelude/operators/as.carbon", directory: "")
-// CHECK:STDOUT: !29 = !DISubroutineType(types: !30)
-// CHECK:STDOUT: !30 = !{!14, !14}
-// CHECK:STDOUT: !31 = !{!32}
-// CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !27, type: !14)
-// CHECK:STDOUT: !33 = !DILocation(line: 32, column: 38, scope: !27)
+// CHECK:STDOUT: !21 = !{null, !14, !22}
+// CHECK:STDOUT: !22 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !23 = !{!24, !25}
+// CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !19, type: !14)
+// CHECK:STDOUT: !25 = !DILocalVariable(arg: 2, scope: !19, type: !22)
+// CHECK:STDOUT: !26 = !DILocation(line: 4294967295, scope: !19)
+// CHECK:STDOUT: !27 = !DILocation(line: 277, column: 3, scope: !19)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.14b8745117b2bc54:ImplicitAs.a9271c1e04015f9c.Core.64ccbb8e5d9a0b8e", scope: null, file: !29, line: 32, type: !30, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !32)
+// CHECK:STDOUT: !29 = !DIFile(filename: "{{.*}}/prelude/operators/as.carbon", directory: "")
+// CHECK:STDOUT: !30 = !DISubroutineType(types: !31)
+// CHECK:STDOUT: !31 = !{!22, !22}
+// CHECK:STDOUT: !32 = !{!33}
+// CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !28, type: !22)
+// CHECK:STDOUT: !34 = !DILocation(line: 32, column: 38, scope: !28)
