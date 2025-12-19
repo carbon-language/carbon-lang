@@ -13,6 +13,7 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/interface.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/name_scope.h"
@@ -72,11 +73,19 @@ auto HandleParseNode(Context& context, Parse::ImplTypeAsId node_id) -> bool {
   auto [self_node, self_id] = context.node_stack().PopExprWithNodeId();
   auto self_type = ExprAsType(context, self_node, self_id);
 
+  auto enclosing_scope_id = context.decl_name_stack().PeekParentScopeId();
+  if (TryAsInterfaceScope(context, enclosing_scope_id) ||
+      TryAsNamedConstraintScope(context, enclosing_scope_id)) {
+    DiagnoseDeclInInterfaceOrNamedConstraint(context, node_id,
+                                             Lex::TokenKind::Impl);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::TypeInstId);
+    return true;
+  }
+
   const auto& introducer = context.decl_introducer_state_stack().innermost();
   if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extend)) {
     // TODO: Also handle the parent scope being a mixin.
-    if (auto class_scope = TryAsClassScope(
-            context, context.decl_name_stack().PeekParentScopeId())) {
+    if (auto class_scope = TryAsClassScope(context, enclosing_scope_id)) {
       // If we're not inside a class at all, that will be diagnosed against the
       // `extend` elsewhere.
       auto extend_node = introducer.modifier_node_id(ModifierOrder::Extend);
@@ -115,8 +124,8 @@ auto HandleParseNode(Context& context, Parse::ImplDefaultSelfAsId node_id)
     -> bool {
   auto self_inst_id = SemIR::TypeInstId::None;
 
-  if (auto class_scope = TryAsClassScope(
-          context, context.decl_name_stack().PeekParentScopeId())) {
+  auto enclosing_scope_id = context.decl_name_stack().PeekParentScopeId();
+  if (auto class_scope = TryAsClassScope(context, enclosing_scope_id)) {
     auto self_type_id = GetImplDefaultSelfType(context, *class_scope);
     // Build the implicit access to the enclosing `Self`.
     // TODO: Consider calling `HandleNameAsExpr` to build this implicit `Self`

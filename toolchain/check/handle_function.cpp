@@ -24,6 +24,7 @@
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/name_scope.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/lex/token_kind.h"
@@ -249,12 +250,19 @@ static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
 
 // Adds the declaration to name lookup when appropriate.
 static auto MaybeAddToNameLookup(
-    Context& context, const DeclNameStack::NameContext& name_context,
+    Context& context, SemIR::LocId loc_id,
+    const DeclNameStack::NameContext& name_context,
     const KeywordModifierSet& modifier_set,
     const std::optional<SemIR::Inst>& parent_scope_inst, SemIR::InstId decl_id)
     -> void {
   if (name_context.state == DeclNameStack::NameContext::State::Poisoned ||
       name_context.prev_inst_id().has_value()) {
+    return;
+  }
+
+  if (parent_scope_inst &&
+      parent_scope_inst->Is<SemIR::NamedConstraintDecl>()) {
+    context.TODO(loc_id, "`fn` in named constraint");
     return;
   }
 
@@ -475,7 +483,7 @@ static auto BuildFunctionDecl(Context& context,
   }
 
   // Add to name lookup if needed, now that the decl is built.
-  MaybeAddToNameLookup(context, name_context, introducer.modifier_set,
+  MaybeAddToNameLookup(context, node_id, name_context, introducer.modifier_set,
                        parent_scope_inst, decl_id);
 
   ValidateForEntryPoint(context, node_id, function_decl.function_id,

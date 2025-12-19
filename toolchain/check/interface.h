@@ -61,6 +61,10 @@ auto TryGetExistingDecl(Context& context, const NameComponent& name,
                         const EntityT& entity, bool is_definition)
     -> std::optional<SemIR::Inst>;
 
+auto DiagnoseDeclInInterfaceOrNamedConstraint(Context& context,
+                                              SemIR::LocId loc_id,
+                                              Lex::TokenKind tok) -> void;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_INTERFACE_H_

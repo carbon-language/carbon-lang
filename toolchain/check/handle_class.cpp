@@ -18,12 +18,15 @@
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/interface.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/name_scope.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
@@ -181,6 +184,14 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
   auto name_context = context.decl_name_stack().FinishName(name);
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::ClassIntroducer>();
+
+  auto enclosing_scope_id = context.decl_name_stack().PeekParentScopeId();
+  if (TryAsInterfaceScope(context, enclosing_scope_id) ||
+      TryAsNamedConstraintScope(context, enclosing_scope_id)) {
+    DiagnoseDeclInInterfaceOrNamedConstraint(context, node_id,
+                                             Lex::TokenKind::Class);
+    // TODO: Make an ErrorInst somewhere.
+  }
 
   // Process modifiers.
   auto [_, parent_scope_inst] =

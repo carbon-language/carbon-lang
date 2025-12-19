@@ -105,6 +105,10 @@ class ScopeStack {
 
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
+  //
+  // TODO: Consider adding TryAs*Scope functions in name_scope.h to replace use
+  // of this, as they could handle any NameScopeId instead of just the current
+  // one.
   template <typename InstT>
   auto GetCurrentScopeAs() -> std::optional<InstT> {
     auto inst_id = PeekInstId();

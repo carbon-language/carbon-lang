@@ -49,7 +49,8 @@ enum DeclContextKind : int8_t {
   RegularContext = 0,
   ClassContext = 1,
   InterfaceContext = 2,
-  MaxDeclContextKind = InterfaceContext,
+  NamedConstraintContext = 2,
+  MaxDeclContextKind = NamedConstraintContext,
 };
 
 // The kind of declaration introduced by an introducer keyword.
@@ -137,6 +138,9 @@ static constexpr auto DeclIntroducers = [] {
   set_contextual(Lex::TokenKind::Let, ClassContext, NodeKind::LetIntroducer,
                  StateKind::Let);
   set_contextual(Lex::TokenKind::Let, InterfaceContext,
+                 NodeKind::AssociatedConstantIntroducer,
+                 StateKind::AssociatedConstant);
+  set_contextual(Lex::TokenKind::Let, NamedConstraintContext,
                  NodeKind::AssociatedConstantIntroducer,
                  StateKind::AssociatedConstant);
   set_contextual(Lex::TokenKind::Var, RegularContext,
@@ -311,6 +315,10 @@ auto HandleDeclAsInterface(Context& context) -> void {
   HandleDecl(context, InterfaceContext);
 }
 
+auto HandleDeclAsNamedConstraint(Context& context) -> void {
+  HandleDecl(context, InterfaceContext);
+}
+
 auto HandleDeclAsRegular(Context& context) -> void {
   HandleDecl(context, RegularContext);
 }
@@ -334,6 +342,10 @@ auto HandleDeclScopeLoopAsClass(Context& context) -> void {
 
 auto HandleDeclScopeLoopAsInterface(Context& context) -> void {
   HandleDeclScopeLoop(context, StateKind::DeclAsInterface);
+}
+
+auto HandleDeclScopeLoopAsNamedConstraint(Context& context) -> void {
+  HandleDeclScopeLoop(context, StateKind::DeclAsNamedConstraint);
 }
 
 auto HandleDeclScopeLoopAsRegular(Context& context) -> void {

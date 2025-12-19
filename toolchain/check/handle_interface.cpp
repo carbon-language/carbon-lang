@@ -15,6 +15,7 @@
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/name_scope.h"
 #include "toolchain/check/type.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
@@ -47,6 +48,14 @@ static auto BuildInterfaceDecl(Context& context,
   auto name_context = context.decl_name_stack().FinishName(name);
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::InterfaceIntroducer>();
+
+  auto enclosing_scope_id = context.decl_name_stack().PeekParentScopeId();
+  if (TryAsInterfaceScope(context, enclosing_scope_id) ||
+      TryAsNamedConstraintScope(context, enclosing_scope_id)) {
+    DiagnoseDeclInInterfaceOrNamedConstraint(context, node_id,
+                                             Lex::TokenKind::Interface);
+    // TODO: Produce an ErrorInst somewhere.
+  }
 
   // Process modifiers.
   auto [_, parent_scope_inst] =

@@ -350,4 +350,11 @@ template auto TryGetExistingDecl(Context& context, const NameComponent& name,
                                  bool is_definition)
     -> std::optional<SemIR::Inst>;
 
+auto DiagnoseDeclInInterfaceOrNamedConstraint(Context& context,
+                                              SemIR::LocId loc_id,
+                                              Lex::TokenKind tok) -> void {
+  context.TODO(loc_id,
+               llvm::formatv("`{0}` decl in interface or constraint", tok));
+}
+
 }  // namespace Carbon::Check

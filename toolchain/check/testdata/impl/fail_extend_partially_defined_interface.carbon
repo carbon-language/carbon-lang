@@ -13,16 +13,14 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/fail_extend_partially_defined_interface.carbon
 
 interface I {
-  class C {
-    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+7]]:5: error: `extend impl as` incomplete facet type `I` [ExtendImplAsIncomplete]
-    // CHECK:STDERR:     extend impl as I;
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE-5]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
-    // CHECK:STDERR: interface I {
-    // CHECK:STDERR: ^~~~~~~~~~~~~
-    // CHECK:STDERR:
-    extend impl as I;
-  }
+  // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+7]]:18: error: member access into incomplete facet type `I` [QualifiedExprInIncompleteFacetTypeScope]
+  // CHECK:STDERR:   let X:! type = I.Y;
+  // CHECK:STDERR:                  ^~~
+  // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE-4]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
+  // CHECK:STDERR: interface I {
+  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  let X:! type = I.Y;
 }
 
 // CHECK:STDOUT: --- fail_extend_partially_defined_interface.carbon
@@ -30,10 +28,8 @@ interface I {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(%Self) [symbolic]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table, @C.as.I.impl(%Self) [symbolic]
-// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.%X [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -45,48 +41,26 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [symbolic = constants.%C] {} {}
+// CHECK:STDOUT:   %X: type = assoc_const_decl @X [concrete] {
+// CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.%X [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
+// CHECK:STDOUT:     %Y.ref: <error> = name_ref Y, <error> [concrete = <error>]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
-// CHECK:STDOUT:   .C = %C.decl
+// CHECK:STDOUT:   .X = @X.%assoc0
 // CHECK:STDOUT:   .I = <poisoned>
-// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:   witness = (%X)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic impl @C.as.I.impl(@I.%Self: %I.type) {
-// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(%Self) [symbolic = %C (constants.%C)]
-// CHECK:STDOUT:   %I.impl_witness.loc24_21.2: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl(%Self) [symbolic = %I.impl_witness.loc24_21.2 (constants.%I.impl_witness)]
-// CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %Self.ref as %I.ref;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(@I.%Self: %I.type) {
+// CHECK:STDOUT: generic assoc_const @X(@I.%Self: %I.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   class {
-// CHECK:STDOUT:     impl_decl @C.as.I.impl [concrete] {} {
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%C [symbolic = %C (constants.%C)]
-// CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:     }
-// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
-// CHECK:STDOUT:     complete_type_witness = %complete_type
-// CHECK:STDOUT:
-// CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C
-// CHECK:STDOUT:     .I = <poisoned>
-// CHECK:STDOUT:     has_error
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   assoc_const X:! type = <error>;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(constants.%Self) {}
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @C.as.I.impl(constants.%Self) {
-// CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %C => constants.%C
-// CHECK:STDOUT:   %I.impl_witness.loc24_21.2 => constants.%I.impl_witness
-// CHECK:STDOUT: }
+// CHECK:STDOUT: specific @X(constants.%Self) {}
 // CHECK:STDOUT:

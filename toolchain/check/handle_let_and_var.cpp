@@ -13,6 +13,7 @@
 #include "toolchain/check/interface.h"
 #include "toolchain/check/keyword_modifier_set.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/check/name_scope.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
@@ -207,7 +208,7 @@ struct DeclInfo {
 template <const Lex::TokenKind& IntroducerTokenKind,
           const Parse::NodeKind& IntroducerNodeKind,
           const Parse::NodeKind& InitializerNodeKind>
-static auto HandleDecl(Context& context) -> DeclInfo {
+static auto HandleDecl(Context& context, SemIR::LocId loc_id) -> DeclInfo {
   DeclInfo decl_info = DeclInfo();
 
   // Handle the optional initializer.
@@ -222,9 +223,13 @@ static auto HandleDecl(Context& context) -> DeclInfo {
     // For an associated constant declaration, handle the completed declaration
     // now. We will have done this at the `=` if there was an initializer.
     if (IntroducerNodeKind == Parse::NodeKind::AssociatedConstantIntroducer) {
-      auto interface_decl =
-          context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>();
-      EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
+      if (auto interface_decl =
+              context.scope_stack().GetCurrentScopeAs<SemIR::InterfaceDecl>()) {
+        EndAssociatedConstantDeclRegion(context, interface_decl->interface_id);
+      } else {
+        DiscardGenericDecl(context);
+        context.TODO(loc_id, "associated constant in constraint");
+      }
     }
 
     EndFullPattern(context);
@@ -252,7 +257,7 @@ static auto HandleDecl(Context& context) -> DeclInfo {
 auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   auto decl_info =
       HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::LetIntroducer,
-                 Parse::NodeKind::LetInitializer>(context);
+                 Parse::NodeKind::LetInitializer>(context, node_id);
 
   LimitModifiersOnDecl(
       context, decl_info.introducer,
@@ -278,10 +283,10 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
     -> bool {
-  auto decl_info =
-      HandleDecl<Lex::TokenKind::Let,
-                 Parse::NodeKind::AssociatedConstantIntroducer,
-                 Parse::NodeKind::AssociatedConstantInitializer>(context);
+  auto decl_info = HandleDecl<Lex::TokenKind::Let,
+                              Parse::NodeKind::AssociatedConstantIntroducer,
+                              Parse::NodeKind::AssociatedConstantInitializer>(
+      context, node_id);
 
   LimitModifiersOnDecl(
       context, decl_info.introducer,
@@ -333,11 +338,10 @@ auto HandleParseNode(Context& context, Parse::AssociatedConstantDeclId node_id)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::VariableDeclId /*node_id*/)
-    -> bool {
+auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
   auto decl_info =
       HandleDecl<Lex::TokenKind::Var, Parse::NodeKind::VariableIntroducer,
-                 Parse::NodeKind::VariableInitializer>(context);
+                 Parse::NodeKind::VariableInitializer>(context, node_id);
 
   LimitModifiersOnDecl(
       context, decl_info.introducer,

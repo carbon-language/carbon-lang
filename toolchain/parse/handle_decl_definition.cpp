@@ -26,6 +26,8 @@ static auto HandleDeclOrDefinition(Context& context, NodeKind decl_kind,
     context.PushState(StateKind::DeclScopeLoopAsClass);
   } else if (decl_kind == NodeKind::InterfaceDecl) {
     context.PushState(StateKind::DeclScopeLoopAsInterface);
+  } else if (decl_kind == NodeKind::NamedConstraintDecl) {
+    context.PushState(StateKind::DeclScopeLoopAsNamedConstraint);
   } else {
     context.PushState(StateKind::DeclScopeLoopAsRegular);
   }

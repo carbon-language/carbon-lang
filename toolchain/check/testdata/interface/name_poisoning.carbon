@@ -117,11 +117,11 @@ alias N.I = I;
 
 library "[[@TEST_NAME]]";
 
-interface I1;
+class I1;
 
-interface I2 {
-  interface I3 {
-    interface I4 {
+class I2 {
+  class I3 {
+    class I4 {
       // Use `package.I1` and poison:
       // * `I2.I1`
       // * `I2.I3.I1`
@@ -131,29 +131,29 @@ interface I2 {
       // CHECK:STDERR:                ^~
       fn F(x:! I1);
 
-      // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:17: note: declared here [NameUseBeforeDeclNote]
-      // CHECK:STDERR:       interface I1;
-      // CHECK:STDERR:                 ^~
+      // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:13: note: declared here [NameUseBeforeDeclNote]
+      // CHECK:STDERR:       class I1;
+      // CHECK:STDERR:             ^~
       // CHECK:STDERR:
       // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-6]]:16: error: name `I1` used before it was declared [NameUseBeforeDecl]
       // CHECK:STDERR:       fn F(x:! I1);
       // CHECK:STDERR:                ^~
-      interface I1;
+      class I1;
     }
-    // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:15: note: declared here [NameUseBeforeDeclNote]
-    // CHECK:STDERR:     interface I1;
-    // CHECK:STDERR:               ^~
+    // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:11: note: declared here [NameUseBeforeDeclNote]
+    // CHECK:STDERR:     class I1;
+    // CHECK:STDERR:           ^~
     // CHECK:STDERR:
     // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-15]]:16: error: name `I1` used before it was declared [NameUseBeforeDecl]
     // CHECK:STDERR:       fn F(x:! I1);
     // CHECK:STDERR:                ^~
-    interface I1;
+    class I1;
   }
-  // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+4]]:13: note: declared here [NameUseBeforeDeclNote]
-  // CHECK:STDERR:   interface I1;
-  // CHECK:STDERR:             ^~
+  // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+4]]:9: note: declared here [NameUseBeforeDeclNote]
+  // CHECK:STDERR:   class I1;
+  // CHECK:STDERR:         ^~
   // CHECK:STDERR:
-  interface I1;
+  class I1;
 }
 
 // --- ignored_poison_in_import.carbon

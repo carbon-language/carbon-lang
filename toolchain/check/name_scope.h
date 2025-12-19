@@ -7,6 +7,7 @@
 
 #include <optional>
 
+#include "common/concepts.h"
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -22,6 +23,26 @@ struct ClassScope {
 // class declaration.
 auto TryAsClassScope(Context& context, SemIR::NameScopeId scope_id)
     -> std::optional<ClassScope>;
+
+struct InterfaceScope {
+  SemIR::InterfaceDecl interface_decl;
+  SemIR::NameScope* name_scope;
+};
+
+// If the specified name scope corresponds to a interface, returns the
+// corresponding interface declaration.
+auto TryAsInterfaceScope(Context& context, SemIR::NameScopeId scope_id)
+    -> std::optional<InterfaceScope>;
+
+struct NamedConstraintScope {
+  SemIR::NamedConstraintDecl constraint_decl;
+  SemIR::NameScope* name_scope;
+};
+
+// If the specified name scope corresponds to a named constraint, returns the
+// corresponding constraint declaration.
+auto TryAsNamedConstraintScope(Context& context, SemIR::NameScopeId scope_id)
+    -> std::optional<NamedConstraintScope>;
 
 }  // namespace Carbon::Check
 

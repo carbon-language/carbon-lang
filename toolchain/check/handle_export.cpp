@@ -7,9 +7,11 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/interface.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/name_scope.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -39,6 +41,14 @@ auto HandleParseNode(Context& context, Parse::ExportDeclId node_id) -> bool {
 
   if (name_context.state == DeclNameStack::NameContext::State::Error) {
     // Should already be diagnosed.
+    return true;
+  }
+
+  auto enclosing_scope_id = context.scope_stack().PeekNameScopeId();
+  if (TryAsInterfaceScope(context, enclosing_scope_id) ||
+      TryAsNamedConstraintScope(context, enclosing_scope_id)) {
+    DiagnoseDeclInInterfaceOrNamedConstraint(context, node_id,
+                                             Lex::TokenKind::Export);
     return true;
   }
 

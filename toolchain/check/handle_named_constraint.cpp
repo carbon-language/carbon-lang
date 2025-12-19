@@ -8,6 +8,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/modifiers.h"
+#include "toolchain/check/name_scope.h"
 #include "toolchain/check/type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/named_constraint.h"
@@ -42,6 +43,14 @@ static auto BuildNamedConstraintDecl(Context& context,
 
   // TODO: PopSoloNodeId(`template`) if it's present, and track that in the
   // NamedConstraint. Or maybe it should be a modifier, like `abstract class`?
+
+  auto enclosing_scope_id = context.decl_name_stack().PeekParentScopeId();
+  if (TryAsInterfaceScope(context, enclosing_scope_id) ||
+      TryAsNamedConstraintScope(context, enclosing_scope_id)) {
+    DiagnoseDeclInInterfaceOrNamedConstraint(context, node_id,
+                                             Lex::TokenKind::Constraint);
+    // TODO: Produce an ErrorInst somewhere.
+  }
 
   // Process modifiers.
   auto [_, parent_scope_inst] =

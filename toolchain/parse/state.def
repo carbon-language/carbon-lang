@@ -388,7 +388,7 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // ??? ;
 // ^~~~~
 //   (state done)
-CARBON_PARSE_STATE_VARIANTS3(Decl, Class, Interface, Regular)
+CARBON_PARSE_STATE_VARIANTS4(Decl, Class, Interface, NamedConstraint, Regular)
 
 // Handles processing of a declaration scope, which contains a sequence of
 // declarations.
@@ -404,7 +404,8 @@ CARBON_PARSE_STATE_VARIANTS3(Decl, Class, Interface, Regular)
 //   1. DeclAs(Class|Interface|Regular)
 //   2. DeclScopeLoopAs(Class|Interface|Regular)
 //
-CARBON_PARSE_STATE_VARIANTS3(DeclScopeLoop, Class, Interface, Regular)
+CARBON_PARSE_STATE_VARIANTS4(DeclScopeLoop, Class, Interface, NamedConstraint,
+                             Regular)
 
 // Handles periods. Only does one `.<expression>` segment; the source is
 // responsible for handling chaining.
