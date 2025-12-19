@@ -952,14 +952,14 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
 
 // The ID of a `RequireImpls`.
 struct RequireImplsId : public IdBase<RequireImplsId> {
-  static constexpr llvm::StringLiteral Label = "require_impls";
+  static constexpr llvm::StringLiteral Label = "require";
 
   using IdBase::IdBase;
 };
 
 // The ID of a `RequireImplsId` block.
 struct RequireImplsBlockId : public IdBase<RequireImplsBlockId> {
-  static constexpr llvm::StringLiteral Label = "require_impls_block";
+  static constexpr llvm::StringLiteral Label = "require_block";
 
   // The canonical empty block, reused to avoid allocating empty vectors. Always
   // the 0-index block.
