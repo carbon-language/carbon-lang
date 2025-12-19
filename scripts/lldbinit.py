@@ -55,7 +55,9 @@ Args:
        the `Label` string in `IdBase` classes to find possible TYPE names,
        though only Id types that have a matching `Make...Id()` function are
        supported.
-  ID is an integer number, such as `42`, in hex, such as in `inst6000000A`.
+  ID is an integer number, such as `42`, in hex, such as in `inst6000000A`. It
+       can come with a `0x` prefix, allowing easier copy-paste from raw printed
+       hex values (such as via the `p/x` lldb command).
 
 Example usage:
   # Dumps the `inst_id` local variable, with a `context` local variable.
@@ -114,7 +116,7 @@ Example usage:
     found_id_type = False
 
     # Look for <type><id> as a single argument.
-    if m := re.fullmatch("([a-z_]+)([0-9A-Fa-f]+)", args[1]):
+    if m := re.fullmatch("([a-z_]+)(?:0x)?([0-9A-Fa-f]+)", args[1]):
         if m[1] in id_types:
             if len(args) != 2:
                 print_usage()
