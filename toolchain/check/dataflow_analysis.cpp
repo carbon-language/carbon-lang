@@ -83,44 +83,51 @@ struct DataflowFacts {
 
 // Recursive helper to find EntityNameIds from a pattern.
 static auto CollectEntityNamesFromPattern(
-    const SemIR::File& sem_ir, SemIR::InstId pattern_id,
+    const SemIR::File& sem_ir, SemIR::InstId root_pattern_id,
     llvm::SmallVectorImpl<std::pair<SemIR::EntityNameId, SemIR::InstId>>& names)
     -> void {
-  auto inst = sem_ir.insts().Get(pattern_id);
-  CARBON_KIND_SWITCH(inst) {
-    case CARBON_KIND(SemIR::VarPattern var_pattern): {
-      CollectEntityNamesFromPattern(sem_ir, var_pattern.subpattern_id, names);
-      break;
-    }
-    case CARBON_KIND(SemIR::VarParamPattern var_param): {
-      CollectEntityNamesFromPattern(sem_ir, var_param.subpattern_id, names);
-      break;
-    }
-    case CARBON_KIND(SemIR::RefParamPattern ref_param): {
-      CollectEntityNamesFromPattern(sem_ir, ref_param.subpattern_id, names);
-      break;
-    }
-    case CARBON_KIND(SemIR::ValueParamPattern val_param): {
-      CollectEntityNamesFromPattern(sem_ir, val_param.subpattern_id, names);
-      break;
-    }
-    case CARBON_KIND(SemIR::RefBindingPattern ref_bind): {
-      names.push_back({ref_bind.entity_name_id, pattern_id});
-      break;
-    }
-    case CARBON_KIND(SemIR::ValueBindingPattern val_bind): {
-      names.push_back({val_bind.entity_name_id, pattern_id});
-      break;
-    }
-    case CARBON_KIND(SemIR::TuplePattern tuple_pattern): {
-      auto elements = sem_ir.inst_blocks().Get(tuple_pattern.elements_id);
-      for (auto element_id : elements) {
-        CollectEntityNamesFromPattern(sem_ir, element_id, names);
+  llvm::SmallVector<SemIR::InstId> work_list;
+  work_list.push_back(root_pattern_id);
+
+  while (!work_list.empty()) {
+    auto pattern_id = work_list.pop_back_val();
+    auto inst = sem_ir.insts().Get(pattern_id);
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(SemIR::VarPattern var_pattern): {
+        work_list.push_back(var_pattern.subpattern_id);
+        break;
       }
-      break;
+      case CARBON_KIND(SemIR::VarParamPattern var_param): {
+        work_list.push_back(var_param.subpattern_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::RefParamPattern ref_param): {
+        work_list.push_back(ref_param.subpattern_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::ValueParamPattern val_param): {
+        work_list.push_back(val_param.subpattern_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::RefBindingPattern ref_bind): {
+        names.push_back({ref_bind.entity_name_id, pattern_id});
+        break;
+      }
+      case CARBON_KIND(SemIR::ValueBindingPattern val_bind): {
+        names.push_back({val_bind.entity_name_id, pattern_id});
+        break;
+      }
+      case CARBON_KIND(SemIR::TuplePattern tuple_pattern): {
+        auto elements = sem_ir.inst_blocks().Get(tuple_pattern.elements_id);
+        // Push in reverse order so we pop and process in forward order.
+        for (auto element_id : llvm::reverse(elements)) {
+          work_list.push_back(element_id);
+        }
+        break;
+      }
+      default:
+        break;
     }
-    default:
-      break;
   }
 }
 
