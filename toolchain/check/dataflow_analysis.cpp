@@ -33,22 +33,7 @@ namespace Carbon::Check {
 
 // Represents a single fact with two IDs.
 template <typename Id1, typename Id2>
-struct Fact {
-  Id1 first;
-  Id2 second;
-
-  friend auto operator==(const Fact& lhs, const Fact& rhs) -> bool = default;
-};
-
-// Hasher for Fact to use with Carbon::Set.
-template <typename Id1, typename Id2>
-inline auto CarbonHashValue(const Fact<Id1, Id2>& fact, uint64_t seed)
-    -> HashCode {
-  Hasher hasher(seed);
-  hasher.Hash(fact.first);
-  hasher.Hash(fact.second);
-  return static_cast<HashCode>(hasher);
-}
+using Fact = std::pair<Id1, Id2>;
 
 // Facts about the control flow graph.
 using LeaderFact = Fact<SemIR::InstBlockId, SemIR::InstId>;
