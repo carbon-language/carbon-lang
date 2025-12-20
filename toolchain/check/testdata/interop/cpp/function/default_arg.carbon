@@ -807,7 +807,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: %X) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @X.cpp_destructor(%self.param: %X);
+// CHECK:STDOUT: fn @X.cpp_destructor(%self.param: %X) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_call_too_few_args.carbon
 // CHECK:STDOUT:

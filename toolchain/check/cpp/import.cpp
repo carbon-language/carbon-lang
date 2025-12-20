@@ -1479,6 +1479,19 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     // instantiation if needed.
     context.clang_sema().MarkFunctionReferenced(GetCppLocation(context, loc_id),
                                                 clang_decl);
+
+    // If the function is trivial, mark it as being a builtin if possible.
+    if (clang_decl->isTrivial()) {
+      // Trivial destructors map to a "no_op" builtin.
+      if (isa<clang::CXXDestructorDecl>(clang_decl)) {
+        function_info.SetBuiltinFunction(SemIR::BuiltinFunctionKind::NoOp);
+      }
+      // TODO: Should we model a trivial default constructor as performing
+      // value-initialization (zero-initializing all fields) or
+      // default-initialization (leaving fields uniniitalized)? Either way we
+      // could model that effect as a builtin.
+      // TODO: Add a builtin to model trivial copies.
+    }
   }
 
   return function_info.first_owning_decl_id;
