@@ -97,7 +97,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%p.param: %const.fa2) -> %const.20a {
+// CHECK:STDOUT: fn @F(%p.param: %const.fa2, %return.param: ref %const.20a) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %const.fa2 = name_ref p, %p
 // CHECK:STDOUT:   %.loc17_11.1: ref %const.58f = deref %p.ref
@@ -109,6 +109,6 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @const.as.Copy.impl.Op(constants.%Copy.facet.de4) [concrete = constants.%const.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc17_10.2: <bound method> = bound_method %.loc17_10.2, %specific_fn
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.call: init %const.20a = call %bound_method.loc17_10.2(%.loc17_10.2)
-// CHECK:STDOUT:   return %const.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %const.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -505,12 +505,12 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %empty_tuple.type {
+// CHECK:STDOUT:   fn(%return.param: ref %empty_tuple.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc9_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc9_11.2: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc9_11.2: init %empty_tuple.type = tuple_init () %return [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc9_12: init %empty_tuple.type = converted %.loc9_11.1, %.loc9_11.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     return %.loc9_12 to %return
+// CHECK:STDOUT:     return %.loc9_12 %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -521,12 +521,12 @@ fn F[U:! Core.Destroy where .Self impls I(.Self)](u: U) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %empty_tuple.type {
+// CHECK:STDOUT:   fn(%return.param: ref %empty_tuple.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc13_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc13_11.2: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc13_11.2: init %empty_tuple.type = tuple_init () %return [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc13_12: init %empty_tuple.type = converted %.loc13_11.1, %.loc13_11.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     return %.loc13_12 to %return
+// CHECK:STDOUT:     return %.loc13_12 %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

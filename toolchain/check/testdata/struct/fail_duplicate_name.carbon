@@ -159,7 +159,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   %y: ref %struct_type.b.c = ref_binding y, %y.var [concrete = %y.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> <error>;
+// CHECK:STDOUT: fn @F(%return.param: ref <error>);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

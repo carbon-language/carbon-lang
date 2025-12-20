@@ -137,7 +137,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   .n = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%oi.param: %Inner) -> %i32 {
+// CHECK:STDOUT: fn @F(%oi.param: %Inner, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %oi.ref: %Inner = name_ref oi, %oi
 // CHECK:STDOUT:   %n.ref: %Inner.elem = name_ref n, @Inner.%.loc17 [concrete = @Inner.%.loc17]
@@ -148,7 +148,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc22_12.2: <bound method> = bound_method %.loc22_12.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc22_12.2(%.loc22_12.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%o.param: %Outer) {
@@ -168,5 +168,5 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Inner) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Inner) = "no_op";
 // CHECK:STDOUT:

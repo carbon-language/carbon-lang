@@ -149,7 +149,7 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return.param: %array_type;
+// CHECK:STDOUT: fn @F(%return.param: ref %array_type);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%b.param: %array_type) {
 // CHECK:STDOUT: !entry:
@@ -214,7 +214,7 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:   %pf.var: ref %ptr.235 = var %pf.var_patt
 // CHECK:STDOUT:   %F.ref.loc36: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc36_21.1: ref %array_type = temporary_storage
-// CHECK:STDOUT:   %F.call.loc36: init %array_type = call %F.ref.loc36() to %.loc36_21.1
+// CHECK:STDOUT:   %F.call.loc36: init %array_type = call %F.ref.loc36(%.loc36_21.1)
 // CHECK:STDOUT:   %int_0.loc36: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc36_21.2: ref %array_type = temporary %.loc36_21.1, %F.call.loc36
 // CHECK:STDOUT:   %int_32.loc36_24: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -243,7 +243,7 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:   %pf: ref %ptr.235 = ref_binding pf, %pf.var
 // CHECK:STDOUT:   %F.ref.loc41: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc41_5.1: ref %array_type = temporary_storage
-// CHECK:STDOUT:   %F.call.loc41: init %array_type = call %F.ref.loc41() to %.loc41_5.1
+// CHECK:STDOUT:   %F.call.loc41: init %array_type = call %F.ref.loc41(%.loc41_5.1)
 // CHECK:STDOUT:   %int_0.loc41: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc41_5.2: ref %array_type = temporary %.loc41_5.1, %F.call.loc41
 // CHECK:STDOUT:   %int_32.loc41: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -276,7 +276,7 @@ fn G(b: array(i32, 3)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc41(%self.param: %array_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc41(%self.param: ref %array_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc36(%self.param: %ptr.235) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc36(%self.param: ref %ptr.235) = "no_op";
 // CHECK:STDOUT:

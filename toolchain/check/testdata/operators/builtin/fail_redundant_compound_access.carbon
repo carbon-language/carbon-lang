@@ -116,7 +116,7 @@ fn Main() {
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %i32 {
+// CHECK:STDOUT: fn @F(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
@@ -125,7 +125,7 @@ fn Main() {
 // CHECK:STDOUT:   %bound_method.loc15_25.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method.d2e]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc15_25.2(%int_0) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc15: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   return %.loc15 to %return
+// CHECK:STDOUT:   return %.loc15 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -168,5 +168,5 @@ fn Main() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i32) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:

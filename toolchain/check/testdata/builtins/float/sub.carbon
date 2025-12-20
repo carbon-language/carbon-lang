@@ -89,13 +89,13 @@ fn SubLiteral(a: Literal(), b: Literal()) -> Literal() = "float.sub";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.d77, %b.param: %f64.d77) -> %f64.d77 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.d77, %b.param: %f64.d77, %return.param: ref %f64.d77) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Sub.ref: %Sub.type = name_ref Sub, file.%Sub.decl [concrete = constants.%Sub]
 // CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %f64.d77 = name_ref b, %b
 // CHECK:STDOUT:   %Sub.call: init %f64.d77 = call %Sub.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   return %Sub.call to %return
+// CHECK:STDOUT:   return %Sub.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -114,7 +114,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %i32 {
+// CHECK:STDOUT: fn @F(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = ref_binding_pattern n [concrete]
@@ -166,10 +166,10 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %DestroyOp.call.loc17: init %empty_tuple.type = call %DestroyOp.bound.loc17(%p.var)
 // CHECK:STDOUT:   %DestroyOp.bound.loc16: <bound method> = bound_method %n.var, constants.%DestroyOp.b0ebf8.2
 // CHECK:STDOUT:   %DestroyOp.call.loc16: init %empty_tuple.type = call %DestroyOp.bound.loc16(%n.var)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc17(%self.param: %ptr.235) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc17(%self.param: ref %ptr.235) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc16(%self.param: %i32) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc16(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:

@@ -265,7 +265,7 @@ fn Call() {
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.743
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Get() -> %C;
+// CHECK:STDOUT: fn @Get(%return.param: ref %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- call.carbon
 // CHECK:STDOUT:
@@ -356,7 +356,7 @@ fn Call() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Get.ref: %Get.type = name_ref Get, imports.%Main.Get [concrete = constants.%Get]
 // CHECK:STDOUT:   %.loc9_7.1: ref %C = temporary_storage
-// CHECK:STDOUT:   %Get.call: init %C = call %Get.ref() to %.loc9_7.1
+// CHECK:STDOUT:   %Get.call: init %C = call %Get.ref(%.loc9_7.1)
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.ce7 [concrete = constants.%assoc0.a72]
 // CHECK:STDOUT:   %impl.elem0: %.d13 = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C.as.I.impl.F]
@@ -381,7 +381,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.I.impl.F [from "c.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.F(constants.%Self.651) {
 // CHECK:STDOUT:   %Self => constants.%Self.651

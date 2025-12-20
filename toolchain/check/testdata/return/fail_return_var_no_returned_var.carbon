@@ -45,7 +45,7 @@ fn Procedure() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Procedure() -> %empty_struct_type {
+// CHECK:STDOUT: fn @Procedure(%return.param: ref %empty_struct_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

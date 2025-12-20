@@ -351,7 +351,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   .Self = constants.%Abstract
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%p.param: <error>) {
+// CHECK:STDOUT: fn @F(%p.param: ref <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -594,12 +594,12 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   extend %Abstract.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return.param: %Derived {
+// CHECK:STDOUT: fn @Make(%return.param: ref %Derived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc22_20: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc22_29: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc22_30: %struct_type.base.d.e0f = struct_literal (%.loc22_20, %.loc22_29) [concrete = constants.%struct]
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error> %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_return_abstract.carbon
@@ -676,7 +676,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   extend %Abstract.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Return(%a.param: %Abstract) -> %Abstract {
+// CHECK:STDOUT: fn @Return(%a.param: %Abstract, %return.param: ref %Abstract) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Abstract = name_ref a, %a
 // CHECK:STDOUT:   return <error>
@@ -764,13 +764,13 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   extend %Abstract.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Access(%d.param: %Derived) -> %empty_struct_type {
+// CHECK:STDOUT: fn @Access(%d.param: %Derived, %return.param: ref %empty_struct_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %base.ref: %Derived.elem.032 = name_ref base, @Derived.%.loc9 [concrete = @Derived.%.loc9]
 // CHECK:STDOUT:   %.loc15: ref %Abstract = class_element_access %d.ref, element0
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [concrete = <error>]
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error> %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- abstract_let_temporary.carbon
@@ -870,7 +870,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT:   .Self = constants.%Abstract
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnAbstract() -> %Abstract;
+// CHECK:STDOUT: fn @ReturnAbstract(%return.param: ref %Abstract);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallReturnAbstract() {
 // CHECK:STDOUT: !entry:

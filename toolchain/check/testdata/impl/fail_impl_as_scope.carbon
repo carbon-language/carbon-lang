@@ -450,7 +450,7 @@ class X {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Point) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Point) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.Zero(constants.%Self.c59) {}
 // CHECK:STDOUT:

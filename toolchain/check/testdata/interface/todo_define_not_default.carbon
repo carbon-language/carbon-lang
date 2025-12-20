@@ -172,7 +172,7 @@ interface I {
 // CHECK:STDOUT: generic fn @I.G(@I.%Self: %I.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%a.param: %i32, %b.param: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT:   fn(%a.param: %i32, %b.param: %i32, %return.param: ref %i32) = "int.sadd";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.F(constants.%Self.ab9) {}

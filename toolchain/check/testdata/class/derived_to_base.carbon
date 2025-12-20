@@ -285,7 +285,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %ConvertInit.decl: %ConvertInit.type = fn_decl @ConvertInit [concrete = constants.%ConvertInit] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConvertCToB(%p.param: %ptr.31e) -> %ptr.27c {
+// CHECK:STDOUT: fn @ConvertCToB(%p.param: %ptr.31e, %return.param: ref %ptr.27c) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.31e = name_ref p, %p
 // CHECK:STDOUT:   %.loc19_39.1: ref %C = deref %p.ref
@@ -297,10 +297,10 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%B) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn.695]
 // CHECK:STDOUT:   %bound_method.loc19_39.2: <bound method> = bound_method %.loc19_39.3, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.27c = call %bound_method.loc19_39.2(%.loc19_39.3)
-// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConvertBToA(%p.param: %ptr.27c) -> %ptr.643 {
+// CHECK:STDOUT: fn @ConvertBToA(%p.param: %ptr.27c, %return.param: ref %ptr.643) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.27c = name_ref p, %p
 // CHECK:STDOUT:   %.loc20_39.1: ref %B = deref %p.ref
@@ -312,10 +312,10 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%A) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn.05b]
 // CHECK:STDOUT:   %bound_method.loc20_39.2: <bound method> = bound_method %.loc20_39.3, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.643 = call %bound_method.loc20_39.2(%.loc20_39.3)
-// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConvertCToA(%p.param: %ptr.31e) -> %ptr.643 {
+// CHECK:STDOUT: fn @ConvertCToA(%p.param: %ptr.31e, %return.param: ref %ptr.643) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.31e = name_ref p, %p
 // CHECK:STDOUT:   %.loc21_39.1: ref %C = deref %p.ref
@@ -328,7 +328,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%A) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn.05b]
 // CHECK:STDOUT:   %bound_method.loc21_39.2: <bound method> = bound_method %.loc21_39.4, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.643 = call %bound_method.loc21_39.2(%.loc21_39.4)
-// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertValue(%c.param: %C) {
@@ -346,7 +346,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConvertRef(%c.param: %ptr.31e) -> %ptr.643 {
+// CHECK:STDOUT: fn @ConvertRef(%c.param: %ptr.31e, %return.param: ref %ptr.643) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %ptr.31e = name_ref c, %c
 // CHECK:STDOUT:   %.loc28_12: ref %C = deref %c.ref
@@ -360,7 +360,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%A) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn.05b]
 // CHECK:STDOUT:   %bound_method.loc28_10.2: <bound method> = bound_method %addr, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.643 = call %bound_method.loc28_10.2(%addr)
-// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConvertInit() {
@@ -385,7 +385,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %.loc32_57.3: ref %B = class_element_access %.loc32_57.2, element0
 // CHECK:STDOUT:   %.loc32_48.2: ref %A = class_element_access %.loc32_57.3, element0
 // CHECK:STDOUT:   %.loc32_39.3: ref %i32 = class_element_access %.loc32_48.2, element0
-// CHECK:STDOUT:   %.loc32_39.4: init %i32 = initialize_from %.loc32_39.2 to %.loc32_39.3 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc32_39.4: init %i32 = initialize_from %.loc32_39.2, %.loc32_39.3 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc32_39.5: init %A = class_init (%.loc32_39.4), %.loc32_48.2 [concrete = constants.%A.val]
 // CHECK:STDOUT:   %.loc32_48.3: init %A = converted %.loc32_39.1, %.loc32_39.5 [concrete = constants.%A.val]
 // CHECK:STDOUT:   %impl.elem0.loc32_48: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
@@ -395,7 +395,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc32_48: init %i32 = call %bound_method.loc32_48.2(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc32_48.4: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc32_48 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc32_48.5: ref %i32 = class_element_access %.loc32_57.3, element1
-// CHECK:STDOUT:   %.loc32_48.6: init %i32 = initialize_from %.loc32_48.4 to %.loc32_48.5 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc32_48.6: init %i32 = initialize_from %.loc32_48.4, %.loc32_48.5 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc32_48.7: init %B = class_init (%.loc32_48.3, %.loc32_48.6), %.loc32_57.3 [concrete = constants.%B.val]
 // CHECK:STDOUT:   %.loc32_57.4: init %B = converted %.loc32_48.1, %.loc32_48.7 [concrete = constants.%B.val]
 // CHECK:STDOUT:   %impl.elem0.loc32_57: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
@@ -405,7 +405,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc32_57: init %i32 = call %bound_method.loc32_57.2(%int_3) [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc32_57.5: init %i32 = converted %int_3, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc32_57 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc32_57.6: ref %i32 = class_element_access %.loc32_57.2, element1
-// CHECK:STDOUT:   %.loc32_57.7: init %i32 = initialize_from %.loc32_57.5 to %.loc32_57.6 [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   %.loc32_57.7: init %i32 = initialize_from %.loc32_57.5, %.loc32_57.6 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc32_57.8: init %C = class_init (%.loc32_57.4, %.loc32_57.7), %.loc32_57.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc32_57.9: ref %C = temporary %.loc32_57.2, %.loc32_57.8
 // CHECK:STDOUT:   %.loc32_59.1: ref %C = converted %.loc32_57.1, %.loc32_57.9
@@ -420,7 +420,7 @@ fn PassConstB(p: const B) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- qualified.carbon
 // CHECK:STDOUT:

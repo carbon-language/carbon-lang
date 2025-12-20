@@ -239,7 +239,7 @@ fn Test() {
 // CHECK:STDOUT:   .n = %.loc16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @i32.as.ImplicitAs.impl.Convert(%self.param: %i32) -> %return.param: %X {
+// CHECK:STDOUT: fn @i32.as.ImplicitAs.impl.Convert(%self.param: %i32, %return.param: ref %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %i32 = name_ref self, %self
 // CHECK:STDOUT:   %.loc20_51.1: %struct_type.n = struct_literal (%self.ref)
@@ -249,13 +249,13 @@ fn Test() {
 // CHECK:STDOUT:   %bound_method.loc20_47.2: <bound method> = bound_method %self.ref, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc20_47.2(%self.ref)
 // CHECK:STDOUT:   %.loc20_51.2: ref %i32 = class_element_access %return, element0
-// CHECK:STDOUT:   %.loc20_51.3: init %i32 = initialize_from %Int.as.Copy.impl.Op.call to %.loc20_51.2
+// CHECK:STDOUT:   %.loc20_51.3: init %i32 = initialize_from %Int.as.Copy.impl.Op.call, %.loc20_51.2
 // CHECK:STDOUT:   %.loc20_51.4: init %X = class_init (%.loc20_51.3), %return
 // CHECK:STDOUT:   %.loc20_52: init %X = converted %.loc20_51.1, %.loc20_51.4
-// CHECK:STDOUT:   return %.loc20_52 to %return
+// CHECK:STDOUT:   return %.loc20_52 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @X.as.ImplicitAs.impl.Convert(%self.param: %X) -> %i32 {
+// CHECK:STDOUT: fn @X.as.ImplicitAs.impl.Convert(%self.param: %X, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %X = name_ref self, %self
 // CHECK:STDOUT:   %n.ref: %X.elem = name_ref n, @X.%.loc16 [concrete = @X.%.loc16]
@@ -266,7 +266,7 @@ fn Test() {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc24_45.2: <bound method> = bound_method %.loc24_45.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc24_45.2(%.loc24_45.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Sink_i32(%n.param: %i32);
@@ -281,14 +281,14 @@ fn Test() {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc31_11.1 [symbolic = %require_complete (constants.%require_complete.944)]
 // CHECK:STDOUT:   %Source.specific_fn.loc31_35.2: <specific function> = specific_function constants.%Source, @Source(%T.loc31_11.1) [symbolic = %Source.specific_fn.loc31_35.2 (constants.%Source.specific_fn.24a)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return.param: @Source.%T.loc31_11.1 (%T.67d) {
+// CHECK:STDOUT:   fn(%return.param: ref @Source.%T.loc31_11.1 (%T.67d)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Source.ref: %Source.type = name_ref Source, file.%Source.decl [concrete = constants.%Source]
 // CHECK:STDOUT:     %T.ref.loc31_42: type = name_ref T, %T.loc31_11.2 [symbolic = %T.loc31_11.1 (constants.%T.67d)]
 // CHECK:STDOUT:     %Source.specific_fn.loc31_35.1: <specific function> = specific_function %Source.ref, @Source(constants.%T.67d) [symbolic = %Source.specific_fn.loc31_35.2 (constants.%Source.specific_fn.24a)]
 // CHECK:STDOUT:     %.loc31: ref @Source.%T.loc31_11.1 (%T.67d) = splice_block %return {}
-// CHECK:STDOUT:     %Source.call: init @Source.%T.loc31_11.1 (%T.67d) = call %Source.specific_fn.loc31_35.1() to %.loc31
-// CHECK:STDOUT:     return %Source.call to %return
+// CHECK:STDOUT:     %Source.call: init @Source.%T.loc31_11.1 (%T.67d) = call %Source.specific_fn.loc31_35.1(%.loc31)
+// CHECK:STDOUT:     return %Source.call %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -299,7 +299,7 @@ fn Test() {
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %Source.specific_fn.loc34: <specific function> = specific_function %Source.ref.loc34, @Source(constants.%X) [concrete = constants.%Source.specific_fn.b43]
 // CHECK:STDOUT:   %.loc34_20.1: ref %X = temporary_storage
-// CHECK:STDOUT:   %Source.call.loc34: init %X = call %Source.specific_fn.loc34() to %.loc34_20.1
+// CHECK:STDOUT:   %Source.call.loc34: init %X = call %Source.specific_fn.loc34(%.loc34_20.1)
 // CHECK:STDOUT:   %impl.elem0.loc34: %.3af = impl_witness_access constants.%ImplicitAs.impl_witness.d6a, element0 [concrete = constants.%X.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method.loc34: <bound method> = bound_method %Source.call.loc34, %impl.elem0.loc34
 // CHECK:STDOUT:   %.loc34_20.2: ref %X = temporary %.loc34_20.1, %Source.call.loc34
@@ -319,7 +319,7 @@ fn Test() {
 // CHECK:STDOUT:   %.loc35_20.1: ref %X = temporary_storage
 // CHECK:STDOUT:   %.loc35_20.2: %i32 = value_of_initializer %Source.call.loc35
 // CHECK:STDOUT:   %.loc35_20.3: %i32 = converted %Source.call.loc35, %.loc35_20.2
-// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call: init %X = call %bound_method.loc35(%.loc35_20.3) to %.loc35_20.1
+// CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.call: init %X = call %bound_method.loc35(%.loc35_20.3, %.loc35_20.1)
 // CHECK:STDOUT:   %.loc35_20.4: init %X = converted %Source.call.loc35, %i32.as.ImplicitAs.impl.Convert.call
 // CHECK:STDOUT:   %.loc35_20.5: ref %X = temporary %.loc35_20.1, %.loc35_20.4
 // CHECK:STDOUT:   %.loc35_20.6: %X = acquire_value %.loc35_20.5
@@ -331,7 +331,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %X) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc31_11.1 => constants.%T.67d

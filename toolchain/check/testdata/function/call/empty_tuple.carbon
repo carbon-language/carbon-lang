@@ -57,12 +57,12 @@ fn Main() {
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Echo(%a.param: %empty_tuple.type) -> %empty_tuple.type {
+// CHECK:STDOUT: fn @Echo(%a.param: %empty_tuple.type, %return.param: ref %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %empty_tuple.type = name_ref a, %a
-// CHECK:STDOUT:   %.loc16_10: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc16_10: init %empty_tuple.type = tuple_init () %return [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc16_11: init %empty_tuple.type = converted %a.ref, %.loc16_10 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   return %.loc16_11 to %return
+// CHECK:STDOUT:   return %.loc16_11 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

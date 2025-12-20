@@ -188,7 +188,7 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT:   %Copy.impl_witness_table.e76 = impl_witness_table (%Core.import_ref.18d), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF() -> %i32 {
+// CHECK:STDOUT: fn @MyF(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
@@ -199,7 +199,7 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_13.2: <bound method> = bound_method %.loc10, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc10_13.2(%.loc10)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- extern_c_with_special_name.carbon
@@ -220,7 +220,7 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyF(%a.param: %X, %b.param: %X) -> %return.param: %X {
+// CHECK:STDOUT: fn @MyF(%a.param: %X, %b.param: %X, %return.param: ref %X) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %X = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %X = name_ref b, %b
@@ -232,6 +232,6 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT:   %addr.loc11_12.3: %ptr.1f9 = addr_of %.loc9_28
 // CHECK:STDOUT:   %operator+__carbon_thunk.call: init %empty_tuple.type = call imports.%operator+__carbon_thunk.decl(%addr.loc11_12.1, %addr.loc11_12.2, %addr.loc11_12.3)
 // CHECK:STDOUT:   %.loc11_12: init %X = in_place_init %operator+__carbon_thunk.call, %.loc9_28
-// CHECK:STDOUT:   return %.loc11_12 to %return
+// CHECK:STDOUT:   return %.loc11_12 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

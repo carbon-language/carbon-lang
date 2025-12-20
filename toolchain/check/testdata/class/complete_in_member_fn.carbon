@@ -96,7 +96,7 @@ class C {
 // CHECK:STDOUT:   .a = %.loc18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.F(%c.param: %C) -> %i32 {
+// CHECK:STDOUT: fn @C.F(%c.param: %C, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %a.ref: %C.elem = name_ref a, @C.%.loc18 [concrete = @C.%.loc18]
@@ -107,6 +107,6 @@ class C {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc16_31.2: <bound method> = bound_method %.loc16_31.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc16_31.2(%.loc16_31.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

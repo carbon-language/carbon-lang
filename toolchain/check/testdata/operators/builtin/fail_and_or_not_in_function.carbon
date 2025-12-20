@@ -103,7 +103,7 @@ fn F() {
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%b.param: bool) -> type {
+// CHECK:STDOUT: fn @F(%b.param: bool, %return.param: ref type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst{{[0-9A-F]+}}.loc5_6
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
@@ -123,7 +123,7 @@ fn F() {
 // CHECK:STDOUT:   %impl.elem0: %.436 = impl_witness_access constants.%Copy.impl_witness.b47, element0 [concrete = constants.%type.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc6, %impl.elem0
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc6)
-// CHECK:STDOUT:   return %type.as.Copy.impl.Op.call to <unexpected>.inst{{[0-9A-F]+}}.loc5_15
+// CHECK:STDOUT:   return %type.as.Copy.impl.Op.call <unexpected>.inst{{[0-9A-F]+}}.loc5_15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_and_val.carbon
@@ -147,7 +147,7 @@ fn F() {
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%b.param: bool) -> type {
+// CHECK:STDOUT: fn @F(%b.param: bool, %return.param: ref type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst{{[0-9A-F]+}}.loc5_6
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
@@ -167,7 +167,7 @@ fn F() {
 // CHECK:STDOUT:   %impl.elem0: %.436 = impl_witness_access constants.%Copy.impl_witness.b47, element0 [concrete = constants.%type.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc6, %impl.elem0
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc6)
-// CHECK:STDOUT:   return %type.as.Copy.impl.Op.call to <unexpected>.inst{{[0-9A-F]+}}.loc5_15
+// CHECK:STDOUT:   return %type.as.Copy.impl.Op.call <unexpected>.inst{{[0-9A-F]+}}.loc5_15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_or_val.carbon

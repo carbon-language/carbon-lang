@@ -49,10 +49,10 @@ fn F() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %i32 {
+// CHECK:STDOUT: fn @F(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, <error> [concrete = <error>]
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error> %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -61,7 +61,7 @@ fn MixedTypes(ref a: i32, b: i64) = "int.umul_assign";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Call(%a.param: %i32, %b.param: %i32) {
+// CHECK:STDOUT: fn @Call(%a.param: ref %i32, %b.param: %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Builtin.ref: %Builtin.type = name_ref Builtin, file.%Builtin.decl [concrete = constants.%Builtin]
 // CHECK:STDOUT:   %a.ref: ref %i32 = name_ref a, %a

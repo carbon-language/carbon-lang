@@ -485,9 +485,9 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   witness = %ImplicitAs.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @IntLiteral() -> type = "int_literal.make_type";
+// CHECK:STDOUT: fn @IntLiteral(%return.param: ref type) = "int_literal.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%N.param: Core.IntLiteral) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @Int(%N.param: Core.IntLiteral, %return.param: ref type) = "int.make_type_signed";
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @AddWith.Op(@AddWith.%T.loc7_19.2: type, @AddWith.%Self.loc7_29.1: @AddWith.%AddWith.type (%AddWith.type.26b)) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
@@ -496,7 +496,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 1, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.73e)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.1f3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @AddWith.Op.%Self.binding.as_type (%Self.binding.as_type.73e), %other.param: @AddWith.Op.%Self.binding.as_type (%Self.binding.as_type.73e)) -> @AddWith.Op.%Self.binding.as_type (%Self.binding.as_type.73e);
+// CHECK:STDOUT:   fn(%self.param: @AddWith.Op.%Self.binding.as_type (%Self.binding.as_type.73e), %other.param: @AddWith.Op.%Self.binding.as_type (%Self.binding.as_type.73e), %return.param: ref @AddWith.Op.%Self.binding.as_type (%Self.binding.as_type.73e));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @As.Convert(@As.%T.loc11_14.2: type, @As.%Self.loc11_24.1: @As.%As.type (%As.type.b54)) {
@@ -507,7 +507,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %pattern_type.loc12_14: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.loc12_14 (constants.%pattern_type.24e)]
 // CHECK:STDOUT:   %pattern_type.loc12_28: type = pattern_type %T [symbolic = %pattern_type.loc12_28 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @As.Convert.%Self.binding.as_type (%Self.binding.as_type.69d)) -> @As.Convert.%T (%T);
+// CHECK:STDOUT:   fn(%self.param: @As.Convert.%Self.binding.as_type (%Self.binding.as_type.69d), %return.param: ref @As.Convert.%T (%T));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @ImplicitAs.Convert(@ImplicitAs.%T.loc15_22.2: type, @ImplicitAs.%Self.loc15_32.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.9fe)) {
@@ -518,16 +518,16 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %pattern_type.loc16_14: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.loc16_14 (constants.%pattern_type.8de)]
 // CHECK:STDOUT:   %pattern_type.loc16_28: type = pattern_type %T [symbolic = %pattern_type.loc16_28 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @ImplicitAs.Convert.%Self.binding.as_type (%Self.binding.as_type.984)) -> @ImplicitAs.Convert.%T (%T);
+// CHECK:STDOUT:   fn(%self.param: @ImplicitAs.Convert.%Self.binding.as_type (%Self.binding.as_type.984), %return.param: ref @ImplicitAs.Convert.%T (%T));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @i32.builtin.as.AddWith.impl.Op(%self.param: %i32.builtin, %other.param: %i32.builtin) -> %i32.builtin = "int.sadd";
+// CHECK:STDOUT: fn @i32.builtin.as.AddWith.impl.Op(%self.param: %i32.builtin, %other.param: %i32.builtin, %return.param: ref %i32.builtin) = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Core.IntLiteral.as.As.impl.Convert(%self.param: Core.IntLiteral) -> %i32.builtin = "int.convert_checked";
+// CHECK:STDOUT: fn @Core.IntLiteral.as.As.impl.Convert(%self.param: Core.IntLiteral, %return.param: ref %i32.builtin) = "int.convert_checked";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Core.IntLiteral.as.ImplicitAs.impl.Convert(%self.param: Core.IntLiteral) -> %i32.builtin = "int.convert_checked";
+// CHECK:STDOUT: fn @Core.IntLiteral.as.ImplicitAs.impl.Convert(%self.param: Core.IntLiteral, %return.param: ref %i32.builtin) = "int.convert_checked";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @i32.builtin.as.ImplicitAs.impl.Convert(%self.param: %i32.builtin) -> Core.IntLiteral = "int.convert_checked";
+// CHECK:STDOUT: fn @i32.builtin.as.ImplicitAs.impl.Convert(%self.param: %i32.builtin, %return.param: ref Core.IntLiteral) = "int.convert_checked";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AddWith(constants.%T) {
 // CHECK:STDOUT:   %T.loc7_19.1 => constants.%T
@@ -1031,18 +1031,18 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %.loc4_78.2: init %i32.builtin = converted %int_3.loc4_49, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc4_78.1 [concrete = constants.%int_3.a0f]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc4_78.3: ref %i32.builtin = array_index file.%arr.var, %int_0
-// CHECK:STDOUT:   %.loc4_78.4: init %i32.builtin = initialize_from %.loc4_78.2 to %.loc4_78.3 [concrete = constants.%int_3.a0f]
+// CHECK:STDOUT:   %.loc4_78.4: init %i32.builtin = initialize_from %.loc4_78.2, %.loc4_78.3 [concrete = constants.%int_3.a0f]
 // CHECK:STDOUT:   %impl.elem0.loc4_78.2: %.7de = impl_witness_access constants.%ImplicitAs.impl_witness.586, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method.loc4_78.2: <bound method> = bound_method %int_4.loc4_52, %impl.elem0.loc4_78.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.762]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc4_78.2: init %i32.builtin = call %bound_method.loc4_78.2(%int_4.loc4_52) [concrete = constants.%int_4.4f1]
 // CHECK:STDOUT:   %.loc4_78.5: init %i32.builtin = converted %int_4.loc4_52, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc4_78.2 [concrete = constants.%int_4.4f1]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc4_78.6: ref %i32.builtin = array_index file.%arr.var, %int_1
-// CHECK:STDOUT:   %.loc4_78.7: init %i32.builtin = initialize_from %.loc4_78.5 to %.loc4_78.6 [concrete = constants.%int_4.4f1]
+// CHECK:STDOUT:   %.loc4_78.7: init %i32.builtin = initialize_from %.loc4_78.5, %.loc4_78.6 [concrete = constants.%int_4.4f1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc4_78.8: ref %i32.builtin = array_index file.%arr.var, %int_2
-// CHECK:STDOUT:   %.loc4_78.9: init %i32.builtin = initialize_from %i32.builtin.as.AddWith.impl.Op.call to %.loc4_78.8 [concrete = constants.%int_7]
-// CHECK:STDOUT:   %.loc4_78.10: init %array_type = array_init (%.loc4_78.4, %.loc4_78.7, %.loc4_78.9) to file.%arr.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc4_78.9: init %i32.builtin = initialize_from %i32.builtin.as.AddWith.impl.Op.call, %.loc4_78.8 [concrete = constants.%int_7]
+// CHECK:STDOUT:   %.loc4_78.10: init %array_type = array_init (%.loc4_78.4, %.loc4_78.7, %.loc4_78.9) file.%arr.var [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc4_1: init %array_type = converted %.loc4_78.1, %.loc4_78.10 [concrete = constants.%array]
 // CHECK:STDOUT:   assign file.%arr.var, %.loc4_1
 // CHECK:STDOUT:   return

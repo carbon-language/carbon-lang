@@ -151,13 +151,13 @@ class A {
 // CHECK:STDOUT:   .n = %.loc23
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.F() -> %i32 {
+// CHECK:STDOUT: fn @A.F(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %Make.ref: %B.Make.type = name_ref Make, @B.%B.Make.decl [concrete = constants.%B.Make]
 // CHECK:STDOUT:   %.loc26_19.1: ref %B = temporary_storage
-// CHECK:STDOUT:   %B.Make.call: init %B = call %Make.ref() to %.loc26_19.1
+// CHECK:STDOUT:   %B.Make.call: init %B = call %Make.ref(%.loc26_19.1)
 // CHECK:STDOUT:   %.loc26_19.2: ref %B = temporary %.loc26_19.1, %B.Make.call
 // CHECK:STDOUT:   %n.ref: %B.elem = name_ref n, @B.%.loc23 [concrete = @B.%.loc23]
 // CHECK:STDOUT:   %.loc26_20.1: ref %i32 = class_element_access %.loc26_19.2, element0
@@ -169,10 +169,10 @@ class A {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc26_20.2(%.loc26_20.2)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc26_19.2, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc26_19.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.Make() -> %return.param: %B {
+// CHECK:STDOUT: fn @B.Make(%return.param: ref %B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.971 = ref_binding_pattern b [concrete]
@@ -187,14 +187,14 @@ class A {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc19_39.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc19_39.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc19_39.3: ref %i32 = class_element_access %return, element0
-// CHECK:STDOUT:   %.loc19_39.4: init %i32 = initialize_from %.loc19_39.2 to %.loc19_39.3 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc19_39.4: init %i32 = initialize_from %.loc19_39.2, %.loc19_39.3 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc19_39.5: init %B = class_init (%.loc19_39.4), %return [concrete = constants.%B.val]
 // CHECK:STDOUT:   %.loc19_18: init %B = converted %.loc19_39.1, %.loc19_39.5 [concrete = constants.%B.val]
 // CHECK:STDOUT:   assign %return, %.loc19_18
 // CHECK:STDOUT:   %Self.ref.loc19: type = name_ref Self, constants.%B [concrete = constants.%B]
 // CHECK:STDOUT:   %b: ref %B = ref_binding b, %return
-// CHECK:STDOUT:   return %b to %return
+// CHECK:STDOUT:   return %b %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %B) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %B) = "no_op";
 // CHECK:STDOUT:

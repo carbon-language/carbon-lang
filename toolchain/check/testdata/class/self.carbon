@@ -168,7 +168,7 @@ class Class {
 // CHECK:STDOUT:   .n = %.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.F(%self.param.loc11: %Class) -> %i32 {
+// CHECK:STDOUT: fn @Class.F(%self.param.loc11: %Class, %return.param.loc11: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc11
 // CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc8 [concrete = @Class.%.loc8]
@@ -179,10 +179,10 @@ class Class {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc12_14.2: <bound method> = bound_method %.loc12_14.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc12_14.2(%.loc12_14.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return.loc11
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return.loc11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.G(%self.param.loc15: %Class) -> %i32 {
+// CHECK:STDOUT: fn @Class.G(%self.param.loc15: ref %Class, %return.param.loc15: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: ref %Class = name_ref self, %self.loc15
 // CHECK:STDOUT:   %n.ref: %Class.elem = name_ref n, @Class.%.loc8 [concrete = @Class.%.loc8]
@@ -193,7 +193,7 @@ class Class {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc16_14.2: <bound method> = bound_method %.loc16_14.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc16_14.2(%.loc16_14.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return.loc15
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return.loc15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_return_self_value.carbon
@@ -250,5 +250,5 @@ class Class {
 // CHECK:STDOUT:   .F = %Class.F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.F(%self.param: %Class) -> <error>;
+// CHECK:STDOUT: fn @Class.F(%self.param: %Class, %return.param: ref <error>);
 // CHECK:STDOUT:

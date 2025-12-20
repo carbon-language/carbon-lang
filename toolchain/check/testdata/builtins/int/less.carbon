@@ -44,12 +44,12 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> bool {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32, %return.param: ref bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Less.ref: %Less.type = name_ref Less, file.%Less.decl [concrete = constants.%Less]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %Less.call: init bool = call %Less.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   return %Less.call to %return
+// CHECK:STDOUT:   return %Less.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

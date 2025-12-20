@@ -93,9 +93,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   .F = %Class.F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.F() -> %i32;
+// CHECK:STDOUT: fn @Class.F(%return.param: ref %i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Run() -> %i32 {
+// CHECK:STDOUT: fn @Run(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.904 = ref_binding_pattern c [concrete]
@@ -109,8 +109,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %F.ref()
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %c.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%c.var)
-// CHECK:STDOUT:   return %Class.F.call to %return
+// CHECK:STDOUT:   return %Class.F.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Class) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Class) = "no_op";
 // CHECK:STDOUT:

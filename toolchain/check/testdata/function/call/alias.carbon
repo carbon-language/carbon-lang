@@ -66,12 +66,12 @@ fn Main() {
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() -> %empty_tuple.type {
+// CHECK:STDOUT: fn @A(%return.param: ref %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_24.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc15_24.2: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc15_24.2: init %empty_tuple.type = tuple_init () %return [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc15_25: init %empty_tuple.type = converted %.loc15_24.1, %.loc15_24.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   return %.loc15_25 to %return
+// CHECK:STDOUT:   return %.loc15_25 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
@@ -94,5 +94,5 @@ fn Main() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:

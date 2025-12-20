@@ -210,7 +210,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Derived.SelfBase(%self.param.loc26: %Base) -> %i32 {
+// CHECK:STDOUT: fn @Derived.SelfBase(%self.param.loc26: %Base, %return.param.loc26: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Base = name_ref self, %self.loc26
 // CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc16 [concrete = @Base.%.loc16]
@@ -221,10 +221,10 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc27_14.2: <bound method> = bound_method %.loc27_14.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc27_14.2(%.loc27_14.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return.loc26
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return.loc26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Derived.RefSelfBase(%self.param.loc30: %Base) {
+// CHECK:STDOUT: fn @Derived.RefSelfBase(%self.param.loc30: ref %Base) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: ref %Base = name_ref self, %self.loc30
 // CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc16 [concrete = @Base.%.loc16]
@@ -240,7 +240,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Call(%p.param: %ptr.f74) -> %i32 {
+// CHECK:STDOUT: fn @Call(%p.param: %ptr.f74, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref.loc35: %ptr.f74 = name_ref p, %p
 // CHECK:STDOUT:   %.loc35_4.1: ref %Derived = deref %p.ref.loc35
@@ -257,6 +257,6 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %.loc36_11.3: ref %Base = converted %.loc36_11.1, %.loc36_11.2
 // CHECK:STDOUT:   %.loc36_11.4: %Base = acquire_value %.loc36_11.3
 // CHECK:STDOUT:   %Derived.SelfBase.call: init %i32 = call %Derived.SelfBase.bound(%.loc36_11.4)
-// CHECK:STDOUT:   return %Derived.SelfBase.call to %return
+// CHECK:STDOUT:   return %Derived.SelfBase.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -52,7 +52,7 @@ fn F(T:! type, n: T*) -> T* {
 // CHECK:STDOUT:   %impl.elem0.loc7_10.2: @F.%.loc7_10.2 (%.b46) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_10.2 (constants.%impl.elem0.201)]
 // CHECK:STDOUT:   %specific_impl_fn.loc7_10.2: <specific function> = specific_impl_function %impl.elem0.loc7_10.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc7_10.2 (constants.%specific_impl_fn.b84)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%n.param: @F.%ptr.loc4_20.1 (%ptr)) -> @F.%ptr.loc4_20.1 (%ptr) {
+// CHECK:STDOUT:   fn(%n.param: @F.%ptr.loc4_20.1 (%ptr), %return.param: ref @F.%ptr.loc4_20.1 (%ptr)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %m.patt: @F.%pattern_type (%pattern_type.4f4) = value_binding_pattern m [concrete]
@@ -69,7 +69,7 @@ fn F(T:! type, n: T*) -> T* {
 // CHECK:STDOUT:     %specific_impl_fn.loc7_10.1: <specific function> = specific_impl_function %impl.elem0.loc7_10.1, @Copy.Op(constants.%Copy.facet) [symbolic = %specific_impl_fn.loc7_10.2 (constants.%specific_impl_fn.b84)]
 // CHECK:STDOUT:     %bound_method.loc7_10.2: <bound method> = bound_method %m.ref, %specific_impl_fn.loc7_10.1
 // CHECK:STDOUT:     %Copy.Op.call: init @F.%ptr.loc4_20.1 (%ptr) = call %bound_method.loc7_10.2(%m.ref)
-// CHECK:STDOUT:     return %Copy.Op.call to %return
+// CHECK:STDOUT:     return %Copy.Op.call %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

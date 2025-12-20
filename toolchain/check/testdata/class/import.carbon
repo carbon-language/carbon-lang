@@ -151,7 +151,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ForwardDeclared.F(%self.param: %ForwardDeclared);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ForwardDeclared.G(%self.param: %ForwardDeclared);
+// CHECK:STDOUT: fn @ForwardDeclared.G(%self.param: ref %ForwardDeclared);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
@@ -343,7 +343,7 @@ fn Run() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9: init %i32 = call %bound_method.loc9_25.2(%int_1) [concrete = constants.%int_1.47b]
 // CHECK:STDOUT:   %.loc9_25.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9 [concrete = constants.%int_1.47b]
 // CHECK:STDOUT:   %.loc9_25.3: ref %i32 = class_element_access %b.var, element0
-// CHECK:STDOUT:   %.loc9_25.4: init %i32 = initialize_from %.loc9_25.2 to %.loc9_25.3 [concrete = constants.%int_1.47b]
+// CHECK:STDOUT:   %.loc9_25.4: init %i32 = initialize_from %.loc9_25.2, %.loc9_25.3 [concrete = constants.%int_1.47b]
 // CHECK:STDOUT:   %.loc9_25.5: init %Field = class_init (%.loc9_25.4), %b.var [concrete = constants.%Field.val]
 // CHECK:STDOUT:   %.loc9_3: init %Field = converted %.loc9_25.1, %.loc9_25.5 [concrete = constants.%Field.val]
 // CHECK:STDOUT:   assign %b.var, %.loc9_3
@@ -425,13 +425,13 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ForwardDeclared.G [from "a.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc18(%self.param: %ptr.8c3) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc18(%self.param: ref %ptr.8c3) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc16(%self.param: %ptr.006) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc16(%self.param: ref %ptr.006) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: %ForwardDeclared.20f323.1) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc12(%self.param: ref %ForwardDeclared.20f323.1) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: %Field) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: ref %Field) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc7(%self.param: %Empty) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc7(%self.param: ref %Empty) = "no_op";
 // CHECK:STDOUT:

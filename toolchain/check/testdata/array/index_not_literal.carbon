@@ -104,7 +104,7 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.74f = impl_witness_table (%Core.import_ref.42d), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%arr.param: %array_type, %i.param: %i32) -> %i32 {
+// CHECK:STDOUT: fn @F(%arr.param: %array_type, %i.param: %i32, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %arr.ref: %array_type = name_ref arr, %arr
 // CHECK:STDOUT:   %i.ref: %i32 = name_ref i, %i
@@ -118,10 +118,10 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc4_15.2: <bound method> = bound_method %.loc4_15.3, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc4_15.2(%.loc4_15.3)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %i32 {
+// CHECK:STDOUT: fn @G(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %int_1.loc10_13: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -138,7 +138,7 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %.loc10_20.3: ref %array_type = temporary_storage
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc10_20.4: ref %i32 = array_index %.loc10_20.3, %int_0
-// CHECK:STDOUT:   %.loc10_20.5: init %i32 = initialize_from %.loc10_20.2 to %.loc10_20.4 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc10_20.5: init %i32 = initialize_from %.loc10_20.2, %.loc10_20.4 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %impl.elem0.loc10_20.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc10_20.3: <bound method> = bound_method %int_2.loc10_16, %impl.elem0.loc10_20.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
 // CHECK:STDOUT:   %specific_fn.loc10_20.2: <specific function> = specific_function %impl.elem0.loc10_20.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -147,7 +147,7 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %.loc10_20.6: init %i32 = converted %int_2.loc10_16, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_20.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %int_1.loc10_20: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc10_20.7: ref %i32 = array_index %.loc10_20.3, %int_1.loc10_20
-// CHECK:STDOUT:   %.loc10_20.8: init %i32 = initialize_from %.loc10_20.6 to %.loc10_20.7 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc10_20.8: init %i32 = initialize_from %.loc10_20.6, %.loc10_20.7 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %impl.elem0.loc10_20.3: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc10_20.5: <bound method> = bound_method %int_3, %impl.elem0.loc10_20.3 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.061]
 // CHECK:STDOUT:   %specific_fn.loc10_20.3: <specific function> = specific_function %impl.elem0.loc10_20.3, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -156,8 +156,8 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %.loc10_20.9: init %i32 = converted %int_3, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_20.3 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %int_2.loc10_20: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc10_20.10: ref %i32 = array_index %.loc10_20.3, %int_2.loc10_20
-// CHECK:STDOUT:   %.loc10_20.11: init %i32 = initialize_from %.loc10_20.9 to %.loc10_20.10 [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc10_20.12: init %array_type = array_init (%.loc10_20.5, %.loc10_20.8, %.loc10_20.11) to %.loc10_20.3 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc10_20.11: init %i32 = initialize_from %.loc10_20.9, %.loc10_20.10 [concrete = constants.%int_3.822]
+// CHECK:STDOUT:   %.loc10_20.12: init %array_type = array_init (%.loc10_20.5, %.loc10_20.8, %.loc10_20.11) %.loc10_20.3 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc10_20.13: init %array_type = converted %.loc10_20.1, %.loc10_20.12 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc10_20.14: ref %array_type = temporary %.loc10_20.3, %.loc10_20.13
 // CHECK:STDOUT:   %.loc10_20.15: %array_type = acquire_value %.loc10_20.14
@@ -171,10 +171,10 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.ref(%.loc10_20.15, %.loc10_23.2)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc10_20.14, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc10_20.14)
-// CHECK:STDOUT:   return %F.call to %return
+// CHECK:STDOUT:   return %F.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %array_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %array_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- index_non_literal.carbon
 // CHECK:STDOUT:
@@ -209,7 +209,7 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.74f = impl_witness_table (%Core.import_ref.42d), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.param: %array_type) -> %empty_struct_type {
+// CHECK:STDOUT: fn @F(%a.param: %array_type, %return.param: ref %empty_struct_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %array_type = name_ref a, %a
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
@@ -230,8 +230,8 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %.loc6_30.2: ref %empty_struct_type = array_index %.loc6_30.1, %.loc6_24.3
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc6_30.3: %empty_struct_type = converted %.loc6_30.2, %empty_struct [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc6_30.4: init %empty_struct_type = struct_init () to %return [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc6_30.4: init %empty_struct_type = struct_init () %return [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc6_31: init %empty_struct_type = converted %.loc6_30.3, %.loc6_30.4 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   return %.loc6_31 to %return
+// CHECK:STDOUT:   return %.loc6_31 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

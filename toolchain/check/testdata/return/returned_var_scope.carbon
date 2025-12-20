@@ -127,7 +127,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UnrelatedScopes() -> %i32 {
+// CHECK:STDOUT: fn @UnrelatedScopes(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true.loc16: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   if %true.loc16 br !if.then.loc16 else br !if.else.loc16
@@ -190,12 +190,12 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %DestroyOp.call.loc20: init %empty_tuple.type = call %DestroyOp.bound.loc20(%w.var)
 // CHECK:STDOUT:   %DestroyOp.bound.loc17: <bound method> = bound_method %v.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call.loc17: init %empty_tuple.type = call %DestroyOp.bound.loc17(%v.var)
-// CHECK:STDOUT:   return %.loc22 to %return
+// CHECK:STDOUT:   return %.loc22 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i32) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @EnclosingButAfter(%b.param: bool) -> %i32 {
+// CHECK:STDOUT: fn @EnclosingButAfter(%b.param: bool, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else

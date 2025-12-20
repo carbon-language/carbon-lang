@@ -137,13 +137,13 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:   %.loc11_11.4: <instruction> = access_member_action %.loc11_11.1, n [template]
 // CHECK:STDOUT:   %.loc11_11.5: type = type_of_inst %.loc11_11.4 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.%T.loc6_15.1 (%T)) -> %i32 {
+// CHECK:STDOUT:   fn(%x.param: @F.%T.loc6_15.1 (%T), %return.param: ref %i32) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @F.%T.loc6_15.1 (%T) = name_ref x, %x
 // CHECK:STDOUT:     %.loc11_11.1: @F.%T.loc6_15.1 (%T) = splice_inst %.loc11_11.3
 // CHECK:STDOUT:     %.loc11_11.2: @F.%.loc11_11.5 (@F.%.loc11_11.5) = splice_inst %.loc11_11.4
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:     return <error> to %return
+// CHECK:STDOUT:     return <error> %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -230,12 +230,12 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:   %.loc16_11.2: <instruction> = access_member_action %c.ref, n [template]
 // CHECK:STDOUT:   %.loc16_11.3: type = type_of_inst %.loc16_11.2 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %i32 {
+// CHECK:STDOUT:   fn(%return.param: ref %i32) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %c.ref: %C = name_ref c, %c.loc11_15.2 [template = %c.loc11_15.1 (constants.%c)]
 // CHECK:STDOUT:     %.loc16_11.1: @F.%.loc16_11.3 (@F.%.loc16_11.3) = splice_inst %.loc16_11.2
 // CHECK:STDOUT:     %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:     return <error> to %return
+// CHECK:STDOUT:     return <error> %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -366,9 +366,9 @@ fn F[template T:! Core.Destroy](x: T) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc22(%self.param: %i32) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc22(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc14(%self.param: @F.%T.binding.as_type (%T.binding.as_type.140)) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc14(%self.param: ref @F.%T.binding.as_type (%T.binding.as_type.140)) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.765) {
 // CHECK:STDOUT:   %T.loc4_15.1 => constants.%T.765

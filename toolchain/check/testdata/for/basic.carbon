@@ -140,7 +140,7 @@ fn Run() {
 // CHECK:STDOUT:   %bound_method.loc18_35.2: <bound method> = bound_method %.loc18_20.1, %impl.elem3
 // CHECK:STDOUT:   %.loc18_35.1: ref %Optional.311 = temporary_storage
 // CHECK:STDOUT:   %.loc18_20.3: %TrivialRange = acquire_value %.loc18_20.1
-// CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.Next.call: init %Optional.311 = call %bound_method.loc18_35.2(%.loc18_20.3, %addr) to %.loc18_35.1
+// CHECK:STDOUT:   %TrivialRange.as.Iterate.impl.Next.call: init %Optional.311 = call %bound_method.loc18_35.2(%.loc18_20.3, %addr, %.loc18_35.1)
 // CHECK:STDOUT:   %.loc18_35.2: ref %Optional.311 = temporary %.loc18_35.1, %TrivialRange.as.Iterate.impl.Next.call
 // CHECK:STDOUT:   %.loc18_35.3: %Optional.HasValue.type.4db = specific_constant imports.%Core.import_ref.228, @Optional(constants.%Copy.facet) [concrete = constants.%Optional.HasValue.4fc]
 // CHECK:STDOUT:   %HasValue.ref: %Optional.HasValue.type.4db = name_ref HasValue, %.loc18_35.3 [concrete = constants.%Optional.HasValue.4fc]
@@ -188,9 +188,9 @@ fn Run() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc18_35.1(%self.param: %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc18_35.1(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc18_35.2(%self.param: %Optional.311) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc18_35.2(%self.param: ref %Optional.311) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc18_18(%self.param: %TrivialRange) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc18_18(%self.param: ref %TrivialRange) = "no_op";
 // CHECK:STDOUT:

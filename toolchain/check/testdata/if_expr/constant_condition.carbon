@@ -201,7 +201,7 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() -> %i32 {
+// CHECK:STDOUT: fn @A(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
@@ -210,10 +210,10 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %bound_method.loc15_25.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method.38b]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc15_25.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc15: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   return %.loc15 to %return
+// CHECK:STDOUT:   return %.loc15 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B() -> %i32 {
+// CHECK:STDOUT: fn @B(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %impl.elem0: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
@@ -222,10 +222,10 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %bound_method.loc16_25.2: <bound method> = bound_method %int_2, %specific_fn [concrete = constants.%bound_method.646]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc16_25.2(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc16: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   return %.loc16 to %return
+// CHECK:STDOUT:   return %.loc16 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %i32 {
+// CHECK:STDOUT: fn @F(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   if %true br !if.expr.then else br !if.expr.else
@@ -251,10 +251,10 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc19_10.2: <bound method> = bound_method %.loc19_10, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc19_10.2(%.loc19_10)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %i32 {
+// CHECK:STDOUT: fn @G(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:   if %false br !if.expr.then else br !if.expr.else
@@ -280,10 +280,10 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc23_10.2: <bound method> = bound_method %.loc23_10, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc23_10.2(%.loc23_10)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Constant() -> %i32 {
+// CHECK:STDOUT: fn @Constant(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.7ce = ref_binding_pattern v [concrete]
@@ -370,14 +370,14 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %DestroyOp.call.loc28: init %empty_tuple.type = call %DestroyOp.bound.loc28(%w.var)
 // CHECK:STDOUT:   %DestroyOp.bound.loc27: <bound method> = bound_method %v.var, constants.%DestroyOp.b0ebf8.2
 // CHECK:STDOUT:   %DestroyOp.call.loc27: init %empty_tuple.type = call %DestroyOp.bound.loc27(%v.var)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc28(%self.param: %ptr.235) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc28(%self.param: ref %ptr.235) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc27(%self.param: %i32) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc27(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @PartiallyConstant(%t.param: type) -> %i32 {
+// CHECK:STDOUT: fn @PartiallyConstant(%t.param: type, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.7ce = ref_binding_pattern v [concrete]
@@ -461,6 +461,6 @@ fn PartiallyConstant(t: type) -> i32 {
 // CHECK:STDOUT:   %DestroyOp.call.loc34: init %empty_tuple.type = call %DestroyOp.bound.loc34(%w.var)
 // CHECK:STDOUT:   %DestroyOp.bound.loc33: <bound method> = bound_method %v.var, constants.%DestroyOp.b0ebf8.2
 // CHECK:STDOUT:   %DestroyOp.call.loc33: init %empty_tuple.type = call %DestroyOp.bound.loc33(%v.var)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

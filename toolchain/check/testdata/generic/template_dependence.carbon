@@ -97,7 +97,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %impl.elem0.loc6_10.2: @F.%.loc6_10.4 (%.b46) = impl_witness_access %Copy.lookup_impl_witness, element0 [template = %impl.elem0.loc6_10.2 (constants.%impl.elem0.201)]
 // CHECK:STDOUT:   %specific_impl_fn.loc6_10.2: <specific function> = specific_impl_function %impl.elem0.loc6_10.2, @Copy.Op(%Copy.facet) [template = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.b84)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.%ptr.loc5_30.1 (%ptr.125)) -> @F.%ptr.loc5_29.1 (%ptr.e8f8f9.1) {
+// CHECK:STDOUT:   fn(%x.param: @F.%ptr.loc5_30.1 (%ptr.125), %return.param: ref @F.%ptr.loc5_29.1 (%ptr.e8f8f9.1)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @F.%ptr.loc5_30.1 (%ptr.125) = name_ref x, %x
 // CHECK:STDOUT:     %.loc6_10.1: ref @F.%ptr.loc5_29.1 (%ptr.e8f8f9.1) = deref %x.ref
@@ -107,7 +107,7 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:     %specific_impl_fn.loc6_10.1: <specific function> = specific_impl_function %impl.elem0.loc6_10.1, @Copy.Op(constants.%Copy.facet) [template = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.b84)]
 // CHECK:STDOUT:     %bound_method.loc6_10.2: <bound method> = bound_method %.loc6_10.2, %specific_impl_fn.loc6_10.1
 // CHECK:STDOUT:     %Copy.Op.call: init @F.%ptr.loc5_29.1 (%ptr.e8f8f9.1) = call %bound_method.loc6_10.2(%.loc6_10.2)
-// CHECK:STDOUT:     return %Copy.Op.call to %return
+// CHECK:STDOUT:     return %Copy.Op.call %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -169,15 +169,15 @@ fn F(template T:! type, U:! type) -> (T, U) {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %tuple.type [template = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %F.specific_fn.loc6_10.2: <specific function> = specific_function constants.%F, @F(%T.loc5_15.1, %U.loc5_25.1) [template = %F.specific_fn.loc6_10.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return.param: @F.%tuple.type (%tuple.type.a5e) {
+// CHECK:STDOUT:   fn(%return.param: ref @F.%tuple.type (%tuple.type.a5e)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %T.ref.loc6: type = name_ref T, %T.loc5_15.2 [template = %T.loc5_15.1 (constants.%T)]
 // CHECK:STDOUT:     %U.ref.loc6: type = name_ref U, %U.loc5_25.2 [symbolic = %U.loc5_25.1 (constants.%U)]
 // CHECK:STDOUT:     %F.specific_fn.loc6_10.1: <specific function> = specific_function %F.ref, @F(constants.%T, constants.%U) [template = %F.specific_fn.loc6_10.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %.loc5_35: ref @F.%tuple.type (%tuple.type.a5e) = splice_block %return {}
-// CHECK:STDOUT:     %F.call: init @F.%tuple.type (%tuple.type.a5e) = call %F.specific_fn.loc6_10.1() to %.loc5_35
-// CHECK:STDOUT:     return %F.call to %return
+// CHECK:STDOUT:     %F.call: init @F.%tuple.type (%tuple.type.a5e) = call %F.specific_fn.loc6_10.1(%.loc5_35)
+// CHECK:STDOUT:     return %F.call %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

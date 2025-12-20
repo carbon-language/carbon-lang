@@ -115,7 +115,7 @@ interface BeingDefined {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @BeingDefined.H(@BeingDefined.%Self: %BeingDefined.type) {
-// CHECK:STDOUT:   fn() -> <error>;
+// CHECK:STDOUT:   fn(%return.param: ref <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @BeingDefined.I(@BeingDefined.%Self: %BeingDefined.type) {

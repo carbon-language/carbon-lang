@@ -117,9 +117,9 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   .F = %Class.F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.F(%self.param: %Class);
+// CHECK:STDOUT: fn @Class.F(%self.param: ref %Class);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return.param: %Class;
+// CHECK:STDOUT: fn @Make(%return.param: ref %Class);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param: %Class, %p.param: %ptr.8e5) {
 // CHECK:STDOUT: !entry:
@@ -134,7 +134,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %Class.F.call.loc32: init %empty_tuple.type = call %Class.F.bound.loc32(%.loc32)
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc35_8.1: ref %Class = temporary_storage
-// CHECK:STDOUT:   %Make.call: init %Class = call %Make.ref() to %.loc35_8.1
+// CHECK:STDOUT:   %Make.call: init %Class = call %Make.ref(%.loc35_8.1)
 // CHECK:STDOUT:   %.loc35_8.2: ref %Class = temporary %.loc35_8.1, %Make.call
 // CHECK:STDOUT:   %F.ref.loc35: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
 // CHECK:STDOUT:   %Class.F.bound.loc35: <bound method> = bound_method %.loc35_8.2, %F.ref.loc35
@@ -144,5 +144,5 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Class) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Class) = "no_op";
 // CHECK:STDOUT:

@@ -163,7 +163,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "a.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %C;
+// CHECK:STDOUT: fn @F(%return.param: ref %C);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- c.carbon
 // CHECK:STDOUT:

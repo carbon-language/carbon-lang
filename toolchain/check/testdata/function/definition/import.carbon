@@ -218,7 +218,7 @@ fn D() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b.param: %i32) -> %i32 {
+// CHECK:STDOUT: fn @B(%b.param: %i32, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem0: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
@@ -226,10 +226,10 @@ fn D() {}
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc5_30.2: <bound method> = bound_method %b.ref, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc5_30.2(%b.ref)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.param: %tuple.type.a1c) -> %struct_type.c {
+// CHECK:STDOUT: fn @C(%c.param: %tuple.type.a1c, %return.param: ref %struct_type.c) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %tuple.type.a1c = name_ref c, %c
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
@@ -240,9 +240,9 @@ fn D() {}
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc6_46.2: <bound method> = bound_method %tuple.elem0, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_46.2(%tuple.elem0)
-// CHECK:STDOUT:   %.loc6_48.2: init %struct_type.c = struct_init (%Int.as.Copy.impl.Op.call) to %return
+// CHECK:STDOUT:   %.loc6_48.2: init %struct_type.c = struct_init (%Int.as.Copy.impl.Op.call) %return
 // CHECK:STDOUT:   %.loc6_49: init %struct_type.c = converted %.loc6_48.1, %.loc6_48.2
-// CHECK:STDOUT:   return %.loc6_49 to %return
+// CHECK:STDOUT:   return %.loc6_49 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D();

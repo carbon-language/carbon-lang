@@ -72,7 +72,7 @@ interface UseSelf {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type)) -> @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type);
+// CHECK:STDOUT:   fn(%self.param: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type), %return.param: ref @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @UseSelf.F(constants.%Self) {

@@ -392,7 +392,7 @@ class B {
 // CHECK:STDOUT:   extend %Shape.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Circle.GetPosition(%self.param: %Circle) -> %return.param: %tuple.type.d07 {
+// CHECK:STDOUT: fn @Circle.GetPosition(%self.param: %Circle, %return.param: ref %tuple.type.d07) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref.loc13_13: %Circle = name_ref self, %self
 // CHECK:STDOUT:   %x.ref: %Shape.elem = name_ref x, @Shape.%.loc5 [concrete = @Shape.%.loc5]
@@ -412,7 +412,7 @@ class B {
 // CHECK:STDOUT:   %bound_method.loc13_17.2: <bound method> = bound_method %.loc13_17.4, %specific_fn.loc13_17
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc13_17: init %i32 = call %bound_method.loc13_17.2(%.loc13_17.4)
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return, element0
-// CHECK:STDOUT:   %.loc13_27.2: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc13_17 to %tuple.elem0
+// CHECK:STDOUT:   %.loc13_27.2: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc13_17, %tuple.elem0
 // CHECK:STDOUT:   %.loc13_25.4: %i32 = acquire_value %.loc13_25.3
 // CHECK:STDOUT:   %impl.elem0.loc13_25: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
 // CHECK:STDOUT:   %bound_method.loc13_25.1: <bound method> = bound_method %.loc13_25.4, %impl.elem0.loc13_25
@@ -420,10 +420,10 @@ class B {
 // CHECK:STDOUT:   %bound_method.loc13_25.2: <bound method> = bound_method %.loc13_25.4, %specific_fn.loc13_25
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc13_25: init %i32 = call %bound_method.loc13_25.2(%.loc13_25.4)
 // CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return, element1
-// CHECK:STDOUT:   %.loc13_27.3: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc13_25 to %tuple.elem1
-// CHECK:STDOUT:   %.loc13_27.4: init %tuple.type.d07 = tuple_init (%.loc13_27.2, %.loc13_27.3) to %return
+// CHECK:STDOUT:   %.loc13_27.3: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc13_25, %tuple.elem1
+// CHECK:STDOUT:   %.loc13_27.4: init %tuple.type.d07 = tuple_init (%.loc13_27.2, %.loc13_27.3) %return
 // CHECK:STDOUT:   %.loc13_28: init %tuple.type.d07 = converted %.loc13_27.1, %.loc13_27.4
-// CHECK:STDOUT:   return %.loc13_28 to %return
+// CHECK:STDOUT:   return %.loc13_28 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- shadowing_access.carbon
@@ -543,14 +543,14 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.F() -> %i32;
+// CHECK:STDOUT: fn @B.F(%return.param: ref %i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.G(%self.param: %C) -> %empty_tuple.type {
+// CHECK:STDOUT: fn @C.G(%self.param: %C, %return.param: ref %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %C = name_ref self, %self
 // CHECK:STDOUT:   %F.ref: %A.F.type = name_ref F, @A.%A.F.decl [concrete = constants.%A.F]
 // CHECK:STDOUT:   %A.F.call: init %empty_tuple.type = call %F.ref()
-// CHECK:STDOUT:   return %A.F.call to %return
+// CHECK:STDOUT:   return %A.F.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- inherited_member_access.carbon
@@ -701,7 +701,7 @@ class B {
 // CHECK:STDOUT:   extend %A.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.SomeProtectedFunction() -> %i32 {
+// CHECK:STDOUT: fn @A.SomeProtectedFunction(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:   %impl.elem0: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
@@ -710,10 +710,10 @@ class B {
 // CHECK:STDOUT:   %bound_method.loc7_13.2: <bound method> = bound_method %int_5, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc7_13.2(%int_5) [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc7: init %i32 = converted %int_5, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_5.0f6]
-// CHECK:STDOUT:   return %.loc7 to %return
+// CHECK:STDOUT:   return %.loc7 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.G() -> %i32 {
+// CHECK:STDOUT: fn @B.G(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %SOME_CONSTANT.ref: %i32 = name_ref SOME_CONSTANT, @A.%SOME_CONSTANT
@@ -722,15 +722,15 @@ class B {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc15_13.2: <bound method> = bound_method %SOME_CONSTANT.ref, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc15_13.2(%SOME_CONSTANT.ref)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.H() -> %i32 {
+// CHECK:STDOUT: fn @B.H(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %SomeProtectedFunction.ref: %A.SomeProtectedFunction.type = name_ref SomeProtectedFunction, @A.%A.SomeProtectedFunction.decl [concrete = constants.%A.SomeProtectedFunction]
 // CHECK:STDOUT:   %A.SomeProtectedFunction.call: init %i32 = call %SomeProtectedFunction.ref()
-// CHECK:STDOUT:   return %A.SomeProtectedFunction.call to %return
+// CHECK:STDOUT:   return %A.SomeProtectedFunction.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_inherited_private_field_access.carbon
@@ -815,11 +815,11 @@ class B {
 // CHECK:STDOUT:   extend %Shape.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Square.GetPosition(%self.param: %Square) -> %i32 {
+// CHECK:STDOUT: fn @Square.GetPosition(%self.param: %Square, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Square = name_ref self, %self
 // CHECK:STDOUT:   %y.ref: <error> = name_ref y, <error> [concrete = <error>]
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error> %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- noninstance_private_on_self.carbon
@@ -1165,10 +1165,10 @@ class B {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.G1() -> %i32 {
+// CHECK:STDOUT: fn @C.G1(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %SOME_PRIVATE_CONSTANT.ref: <error> = name_ref SOME_PRIVATE_CONSTANT, <error> [concrete = <error>]
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error> %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.G2() {
@@ -1428,23 +1428,23 @@ class B {
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.G() -> %i32 {
+// CHECK:STDOUT: fn @B.G(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref.loc24: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %SOME_PRIVATE_CONSTANT.ref: <error> = name_ref SOME_PRIVATE_CONSTANT, <error> [concrete = <error>]
 // CHECK:STDOUT:   %A.ref.loc33: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %SOME_PROTECTED_CONSTANT.ref: <error> = name_ref SOME_PROTECTED_CONSTANT, <error> [concrete = <error>]
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error> %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.SomeFunc(%self.param: %B) -> %i32 {
+// CHECK:STDOUT: fn @B.SomeFunc(%self.param: %B, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self
 // CHECK:STDOUT:   %internal.ref: %B.elem = name_ref internal, @B.%.loc14 [concrete = @B.%.loc14]
 // CHECK:STDOUT:   %.loc44_16.1: ref %Internal = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc44_16.2: %Internal = acquire_value %.loc44_16.1
 // CHECK:STDOUT:   %INTERNAL_CONSTANT.ref: <error> = name_ref INTERNAL_CONSTANT, <error> [concrete = <error>]
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error> %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_compound_member_access.carbon

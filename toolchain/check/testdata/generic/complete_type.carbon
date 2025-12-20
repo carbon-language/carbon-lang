@@ -298,7 +298,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: @F.%ptr.loc7_11.2 (%ptr.e8f)) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref @F.%ptr.loc7_11.2 (%ptr.e8f)) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
@@ -418,7 +418,7 @@ fn G() { F(B); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: @F.%ptr.loc7_11.2 (%ptr.e8f)) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref @F.%ptr.loc7_11.2 (%ptr.e8f)) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:

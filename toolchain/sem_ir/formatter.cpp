@@ -571,9 +571,7 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
 
   llvm::SaveAndRestore function_scope(scope_, inst_namer_.GetScopeFor(id));
 
-  auto return_type_info = ReturnTypeInfo::ForFunction(*sem_ir_, fn);
-  FormatParamList(fn.call_params_id, return_type_info.is_valid() &&
-                                         return_type_info.has_return_slot());
+  FormatParamList(fn.call_params_id);
 
   if (fn.builtin_function_kind() != BuiltinFunctionKind::None) {
     out_ << " = \""
@@ -726,50 +724,26 @@ auto Formatter::FormatGenericEnd() -> void {
   out_ << '\n';
 }
 
-auto Formatter::FormatParamList(InstBlockId params_id, bool has_return_slot)
-    -> void {
+auto Formatter::FormatParamList(InstBlockId params_id) -> void {
   if (!params_id.has_value()) {
     // TODO: This happens for imported functions, for which we don't currently
     // import the call parameters list.
     return;
   }
 
-  llvm::StringLiteral close = ")";
   out_ << "(";
 
   llvm::ListSeparator sep;
   for (InstId param_id : sem_ir_->inst_blocks().Get(params_id)) {
-    auto is_out_param = sem_ir_->insts().Is<OutParam>(param_id);
-    if (is_out_param) {
-      // TODO: An input parameter following an output parameter is formatted a
-      // bit strangely. For example, alternating input and output parameters
-      // produces:
-      //
-      //   fn @F(%in1: %t) -> %out1: %t, %in2: %t -> %out2: %t
-      //
-      // This doesn't actually happen right now, though.
-      out_ << std::exchange(close, llvm::StringLiteral(""));
-      out_ << " -> ";
-    } else {
-      out_ << sep;
-    }
+    out_ << sep;
     if (!param_id.has_value()) {
       out_ << "invalid";
       continue;
     }
-    // Don't include the name of the return slot parameter if the function
-    // doesn't have a return slot; the name won't be used for anything in that
-    // case.
-    // TODO: Should the call parameter even exist in that case? There isn't a
-    // corresponding argument in a `call` instruction.
-    if (!is_out_param || has_return_slot) {
-      FormatName(param_id);
-      out_ << ": ";
-    }
-    FormatTypeOfInst(param_id);
+    FormatInstLhs(param_id, sem_ir_->insts().GetWithAttachedType(param_id));
   }
 
-  out_ << close;
+  out_ << ")";
 }
 
 auto Formatter::FormatCodeBlock(InstBlockId block_id) -> void {
@@ -909,7 +883,9 @@ auto Formatter::FormatInst(InstId inst_id) -> void {
       return;
     }
     default: {
-      FormatInstLhs(inst_id, inst);
+      if (FormatInstLhs(inst_id, inst)) {
+        out_ << " = ";
+      }
       out_ << inst.kind().ir_name();
 
       // Add constants for everything except `ImportRefUnloaded`.
@@ -985,14 +961,14 @@ auto Formatter::FormatPendingConstantValue(AddSpace space_where) -> void {
   pending_constant_value_ = ConstantId::NotConstant;
 }
 
-auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
+auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> bool {
   // Every typed instruction is named, and there are some untyped instructions
   // that have names (such as `ImportRefUnloaded`). When there's a typed
   // instruction with no name, it means an instruction is incorrectly not named
   // -- but should be printed as such.
   bool has_name = inst_namer_.has_name(inst_id);
   if (!has_name && !inst.kind().has_type()) {
-    return;
+    return false;
   }
 
   FormatName(inst_id);
@@ -1017,7 +993,7 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
     FormatTypeOfInst(inst_id);
   }
 
-  out_ << " = ";
+  return true;
 }
 
 auto Formatter::FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void {
@@ -1031,7 +1007,8 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
     case InstKind::TupleInit: {
       auto init = inst.As<AnyAggregateInit>();
       FormatArgs(init.elements_id);
-      FormatReturnSlotArg(init.dest_id);
+      out_ << " ";
+      FormatArg(init.dest_id);
       return;
     }
 
@@ -1138,8 +1115,7 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
     }
 
     case CARBON_KIND(InitializeFrom init): {
-      FormatArgs(init.src_id);
-      FormatReturnSlotArg(init.dest_id);
+      FormatArgs(init.src_id, init.dest_id);
       return;
     }
 
@@ -1204,7 +1180,7 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
     case CARBON_KIND(ReturnExpr ret): {
       FormatArgs(ret.expr_id);
       if (ret.dest_id.has_value()) {
-        FormatReturnSlotArg(ret.dest_id);
+        FormatArgs(ret.dest_id);
       }
       return;
     }
@@ -1287,17 +1263,6 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
 
   llvm::ArrayRef<InstId> args = sem_ir_->inst_blocks().Get(inst.args_id);
 
-  auto return_info = ReturnTypeInfo::ForType(*sem_ir_, inst.type_id);
-  if (!return_info.is_valid()) {
-    out_ << "(<invalid return info>)";
-    return;
-  }
-  bool has_return_slot = return_info.has_return_slot();
-  InstId return_slot_arg_id = InstId::None;
-  if (has_return_slot) {
-    return_slot_arg_id = args.consume_back();
-  }
-
   llvm::ListSeparator sep;
   out_ << '(';
   for (auto inst_id : args) {
@@ -1305,10 +1270,6 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
     FormatArg(inst_id);
   }
   out_ << ')';
-
-  if (has_return_slot) {
-    FormatReturnSlotArg(return_slot_arg_id);
-  }
 }
 
 auto Formatter::FormatImportCppDeclRhs() -> void {
@@ -1536,11 +1497,6 @@ auto Formatter::FormatArg(StringLiteralValueId id) -> void {
        << FormatEscaped(sem_ir_->string_literal_values().Get(id),
                         /*use_hex_escapes=*/true)
        << '"';
-}
-
-auto Formatter::FormatReturnSlotArg(InstId dest_id) -> void {
-  out_ << " to ";
-  FormatArg(dest_id);
 }
 
 auto Formatter::FormatName(NameId id) -> void {

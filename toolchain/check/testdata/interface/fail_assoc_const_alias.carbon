@@ -169,7 +169,7 @@ interface C {
 // CHECK:STDOUT:   %pattern_type.loc4_14: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type.loc4_14 (constants.%pattern_type.8de)]
 // CHECK:STDOUT:   %pattern_type.loc4_28: type = pattern_type %Dest [symbolic = %pattern_type.loc4_28 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @ImplicitAs.Convert.%Self.binding.as_type (%Self.binding.as_type)) -> @ImplicitAs.Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn(%self.param: @ImplicitAs.Convert.%Self.binding.as_type (%Self.binding.as_type), %return.param: ref @ImplicitAs.Convert.%Dest (%Dest));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
@@ -266,7 +266,7 @@ interface C {
 // CHECK:STDOUT:   %Self: %J.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.8a1)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> <error>;
+// CHECK:STDOUT:   fn(%return.param: ref <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%Self.ab9) {}
@@ -427,7 +427,7 @@ interface C {
 // CHECK:STDOUT:   %impl.elem0.loc15_14.1: type = impl_witness_access %I2.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc15_14.1 (constants.%impl.elem0.006)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %impl.elem0.loc15_14.1 [symbolic = %pattern_type (constants.%pattern_type.a14)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @J2.F2.%impl.elem0.loc15_14.1 (%impl.elem0.006);
+// CHECK:STDOUT:   fn(%return.param: ref @J2.F2.%impl.elem0.loc15_14.1 (%impl.elem0.006));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T2(constants.%Self.36e) {}
@@ -557,14 +557,14 @@ interface C {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.55a)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.df1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @A.F.%Self.binding.as_type (%Self.binding.as_type.55a)) -> type;
+// CHECK:STDOUT:   fn(%self.param: @A.F.%Self.binding.as_type (%Self.binding.as_type.55a), %return.param: ref type);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @B.G(@B.%Self: %B.type) {
 // CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.d0b)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.8ee)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> <error>;
+// CHECK:STDOUT:   fn(%return.param: ref <error>);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.F(constants.%Self.c51) {

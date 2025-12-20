@@ -282,9 +282,9 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc13_30(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc13_30(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc13_6(%self.param: %HoldsType.a31) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc13_6(%self.param: ref %HoldsType.a31) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_17.1 => constants.%T
@@ -483,9 +483,9 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc13_33(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc13_33(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc13_6(%self.param: %HoldsType.673) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc13_6(%self.param: ref %HoldsType.673) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_17.1 => constants.%T
@@ -724,7 +724,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc26(%self.param: @G.%HoldsType.loc26_22.2 (%HoldsType.47b504.2)) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc26(%self.param: ref @G.%HoldsType.loc26_22.2 (%HoldsType.47b504.2)) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:
@@ -736,7 +736,7 @@ fn G() {
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%C.ref) [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc37_12.2: ref %Class = temporary_storage
 // CHECK:STDOUT:   %.loc37_12.3: ref type = class_element_access %.loc37_12.2, element0
-// CHECK:STDOUT:   %.loc37_12.4: init type = initialize_from %type.as.Copy.impl.Op.call to %.loc37_12.3 [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc37_12.4: init type = initialize_from %type.as.Copy.impl.Op.call, %.loc37_12.3 [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc37_12.5: init %Class = class_init (%.loc37_12.4), %.loc37_12.2 [concrete = constants.%Class.val]
 // CHECK:STDOUT:   %.loc37_12.6: ref %Class = temporary %.loc37_12.2, %.loc37_12.5
 // CHECK:STDOUT:   %.loc37_13.1: ref %Class = converted %.loc37_12.1, %.loc37_12.6
@@ -746,7 +746,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc37(%self.param: %Class) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc37(%self.param: ref %Class) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%T.d7d) {
 // CHECK:STDOUT:   %T.loc8_17.1 => constants.%T.d7d
@@ -963,8 +963,8 @@ fn G() {
 // CHECK:STDOUT:   %.loc24_25.2: ref %array_type = temporary_storage
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc24_25.3: ref type = array_index %.loc24_25.2, %int_0
-// CHECK:STDOUT:   %.loc24_25.4: init type = initialize_from %type.as.Copy.impl.Op.call to %.loc24_25.3 [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc24_25.5: init %array_type = array_init (%.loc24_25.4) to %.loc24_25.2 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc24_25.4: init type = initialize_from %type.as.Copy.impl.Op.call, %.loc24_25.3 [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc24_25.5: init %array_type = array_init (%.loc24_25.4) %.loc24_25.2 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc24_27.1: init %array_type = converted %.loc24_25.1, %.loc24_25.5 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc24_27.2: ref %array_type = temporary %.loc24_25.2, %.loc24_27.1
 // CHECK:STDOUT:   %.loc24_27.3: %array_type = acquire_value %.loc24_27.2
@@ -974,7 +974,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %array_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %array_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%T.9b7) {
 // CHECK:STDOUT:   %T.loc4_17.1 => constants.%T.9b7

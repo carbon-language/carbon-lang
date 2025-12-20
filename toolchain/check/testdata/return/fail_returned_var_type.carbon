@@ -96,7 +96,7 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Mismatch() -> %i32 {
+// CHECK:STDOUT: fn @Mismatch(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.0ae = ref_binding_pattern v [concrete]
@@ -122,5 +122,5 @@ fn Mismatch() -> i32 {
 // CHECK:STDOUT:   return %.loc23_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %f64.d77) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %f64.d77) = "no_op";
 // CHECK:STDOUT:

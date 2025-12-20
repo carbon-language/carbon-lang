@@ -134,12 +134,12 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %Class.val: @Class.MakeSelf.%Class (%Class) = struct_value () [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return.param: @Class.MakeSelf.%Class (%Class) {
+// CHECK:STDOUT:   fn(%return.param: ref @Class.MakeSelf.%Class (%Class)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc18_35.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc18_35.2: init @Class.MakeSelf.%Class (%Class) = class_init (), %return [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:     %.loc18_36: init @Class.MakeSelf.%Class (%Class) = converted %.loc18_35.1, %.loc18_35.2 [symbolic = %Class.val (constants.%Class.val)]
-// CHECK:STDOUT:     return %.loc18_36 to %return
+// CHECK:STDOUT:     return %.loc18_36 %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -152,12 +152,12 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Class.loc19_28.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %Class.val: @Class.MakeClass.%Class.loc19_28.1 (%Class) = struct_value () [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return.param: @Class.MakeClass.%Class.loc19_28.1 (%Class) {
+// CHECK:STDOUT:   fn(%return.param: ref @Class.MakeClass.%Class.loc19_28.1 (%Class)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc19_40.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc19_40.2: init @Class.MakeClass.%Class.loc19_28.1 (%Class) = class_init (), %return [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:     %.loc19_41: init @Class.MakeClass.%Class.loc19_28.1 (%Class) = converted %.loc19_40.1, %.loc19_40.2 [symbolic = %Class.val (constants.%Class.val)]
-// CHECK:STDOUT:     return %.loc19_41 to %return
+// CHECK:STDOUT:     return %.loc19_41 %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -187,7 +187,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %MakeSelf.ref: @Class.F.%Class.MakeSelf.type (%Class.MakeSelf.type) = name_ref MakeSelf, %.loc21_23 [symbolic = %Class.MakeSelf (constants.%Class.MakeSelf)]
 // CHECK:STDOUT:     %Class.MakeSelf.specific_fn.loc21_23.1: <specific function> = specific_function %MakeSelf.ref, @Class.MakeSelf(constants.%T) [symbolic = %Class.MakeSelf.specific_fn.loc21_23.2 (constants.%Class.MakeSelf.specific_fn)]
 // CHECK:STDOUT:     %.loc21_5: ref @Class.F.%Class.loc21_19.2 (%Class) = splice_block %c.var {}
-// CHECK:STDOUT:     %Class.MakeSelf.call: init @Class.F.%Class.loc21_19.2 (%Class) = call %Class.MakeSelf.specific_fn.loc21_23.1() to %.loc21_5
+// CHECK:STDOUT:     %Class.MakeSelf.call: init @Class.F.%Class.loc21_19.2 (%Class) = call %Class.MakeSelf.specific_fn.loc21_23.1(%.loc21_5)
 // CHECK:STDOUT:     assign %c.var, %Class.MakeSelf.call
 // CHECK:STDOUT:     %.loc21_19: type = splice_block %Class.loc21_19.1 [symbolic = %Class.loc21_19.2 (constants.%Class)] {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
@@ -204,7 +204,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:     %MakeClass.ref: @Class.F.%Class.MakeClass.type (%Class.MakeClass.type) = name_ref MakeClass, %.loc22_19 [symbolic = %Class.MakeClass (constants.%Class.MakeClass)]
 // CHECK:STDOUT:     %Class.MakeClass.specific_fn.loc22_19.1: <specific function> = specific_function %MakeClass.ref, @Class.MakeClass(constants.%T) [symbolic = %Class.MakeClass.specific_fn.loc22_19.2 (constants.%Class.MakeClass.specific_fn)]
 // CHECK:STDOUT:     %.loc22_5.1: ref @Class.F.%Class.loc21_19.2 (%Class) = splice_block %s.var {}
-// CHECK:STDOUT:     %Class.MakeClass.call: init @Class.F.%Class.loc21_19.2 (%Class) = call %Class.MakeClass.specific_fn.loc22_19.1() to %.loc22_5.1
+// CHECK:STDOUT:     %Class.MakeClass.call: init @Class.F.%Class.loc21_19.2 (%Class) = call %Class.MakeClass.specific_fn.loc22_19.1(%.loc22_5.1)
 // CHECK:STDOUT:     assign %s.var, %Class.MakeClass.call
 // CHECK:STDOUT:     %.loc22_12.1: type = splice_block %Self.ref [symbolic = %Class.loc21_19.2 (constants.%Class)] {
 // CHECK:STDOUT:       %.loc22_12.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class.loc21_19.2 (constants.%Class)]
@@ -219,7 +219,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: @Class.F.%Class.loc21_19.2 (%Class)) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref @Class.F.%Class.loc21_19.2 (%Class)) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
 // CHECK:STDOUT:   %T.loc15_13.1 => constants.%T

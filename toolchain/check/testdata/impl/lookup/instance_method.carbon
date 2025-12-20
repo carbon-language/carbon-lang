@@ -166,19 +166,19 @@ fn F(c: C) -> i32 {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.fa0)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @I.F.%Self.binding.as_type (%Self.binding.as_type)) -> %i32;
+// CHECK:STDOUT:   fn(%self.param: @I.F.%Self.binding.as_type (%Self.binding.as_type), %return.param: ref %i32);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.I.impl.F(%self.param: %C) -> %i32;
+// CHECK:STDOUT: fn @C.as.I.impl.F(%self.param: %C, %return.param: ref %i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%c.param: %C) -> %i32 {
+// CHECK:STDOUT: fn @F(%c.param: %C, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, @I.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %impl.elem0: %.7a3 = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C.as.I.impl.F]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:   %C.as.I.impl.F.call: init %i32 = call %bound_method(%c.ref)
-// CHECK:STDOUT:   return %C.as.I.impl.F.call to %return
+// CHECK:STDOUT:   return %C.as.I.impl.F.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.F(constants.%Self) {

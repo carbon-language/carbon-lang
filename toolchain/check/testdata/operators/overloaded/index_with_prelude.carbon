@@ -247,12 +247,12 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   .Self = constants.%SubscriptType.9ec
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.IndexWith.impl.At(%self.param: %C, %subscript.param: %SubscriptType.9ec) -> %return.param: %ElementType {
+// CHECK:STDOUT: fn @C.as.IndexWith.impl.At(%self.param: %C, %subscript.param: %SubscriptType.9ec, %return.param: ref %ElementType) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_13.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc10_13.2: init %ElementType = class_init (), %return [concrete = constants.%ElementType.val]
 // CHECK:STDOUT:   %.loc10_14: init %ElementType = converted %.loc10_13.1, %.loc10_13.2 [concrete = constants.%ElementType.val]
-// CHECK:STDOUT:   return %.loc10_14 to %return
+// CHECK:STDOUT:   return %.loc10_14 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -264,7 +264,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %impl.elem1: %.068 = impl_witness_access constants.%IndexWith.impl_witness, element1 [concrete = constants.%C.as.IndexWith.impl.At]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem1
 // CHECK:STDOUT:   %.loc16: ref %ElementType = temporary_storage
-// CHECK:STDOUT:   %C.as.IndexWith.impl.At.call: init %ElementType = call %bound_method(%c.ref, %s.ref) to %.loc16
+// CHECK:STDOUT:   %C.as.IndexWith.impl.At.call: init %ElementType = call %bound_method(%c.ref, %s.ref, %.loc16)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -428,17 +428,17 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @tuple.type.as.IndexWith.impl.At(%self.param: %tuple.type.d23, %subscript.param: Core.IntLiteral) -> %C {
+// CHECK:STDOUT: fn @tuple.type.as.IndexWith.impl.At(%self.param: %tuple.type.d23, %subscript.param: Core.IntLiteral, %return.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %tuple.type.d23 = name_ref self, %self
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %tuple.elem0: %C = tuple_access %self.ref, element0
 // CHECK:STDOUT:   %.loc10_18.1: %empty_tuple.type = as_compatible %tuple.elem0
 // CHECK:STDOUT:   %.loc10_18.2: ref %empty_tuple.type = as_compatible %return
-// CHECK:STDOUT:   %.loc10_18.3: init %empty_tuple.type = tuple_init () to %.loc10_18.2 [concrete = constants.%empty_tuple.af4]
+// CHECK:STDOUT:   %.loc10_18.3: init %empty_tuple.type = tuple_init () %.loc10_18.2 [concrete = constants.%empty_tuple.af4]
 // CHECK:STDOUT:   %.loc10_18.4: init %C = as_compatible %.loc10_18.3 [concrete = constants.%empty_tuple.bfb]
 // CHECK:STDOUT:   %.loc10_18.5: init %C = converted %tuple.elem0, %.loc10_18.4 [concrete = constants.%empty_tuple.bfb]
-// CHECK:STDOUT:   return %.loc10_18.5 to %return
+// CHECK:STDOUT:   return %.loc10_18.5 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -611,12 +611,12 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   .Self = constants.%SubscriptType.9ec
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.IndexWith.impl.At(%self.param: %C, %subscript.param: %SubscriptType.9ec) -> %return.param: %ElementType {
+// CHECK:STDOUT: fn @C.as.IndexWith.impl.At(%self.param: %C, %subscript.param: %SubscriptType.9ec, %return.param: ref %ElementType) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_13.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc10_13.2: init %ElementType = class_init (), %return [concrete = constants.%ElementType.val]
 // CHECK:STDOUT:   %.loc10_14: init %ElementType = converted %.loc10_13.1, %.loc10_13.2 [concrete = constants.%ElementType.val]
-// CHECK:STDOUT:   return %.loc10_14 to %return
+// CHECK:STDOUT:   return %.loc10_14 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

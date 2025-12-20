@@ -260,7 +260,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @If(%b.param: bool) -> bool {
+// CHECK:STDOUT: fn @If(%b.param: bool, %return.param: ref bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
@@ -270,13 +270,13 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   %impl.elem0.loc6: %.56b = impl_witness_access constants.%Copy.impl_witness.348, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc6: <bound method> = bound_method %false, %impl.elem0.loc6 [concrete = constants.%bool.as.Copy.impl.Op.bound.082]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call.loc6: init bool = call %bound_method.loc6(%false) [concrete = constants.%false]
-// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call.loc6 to %return
+// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call.loc6 %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %impl.elem0.loc8: %.56b = impl_witness_access constants.%Copy.impl_witness.348, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %true, %impl.elem0.loc8 [concrete = constants.%bool.as.Copy.impl.Op.bound.12b]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call.loc8: init bool = call %bound_method.loc8(%true) [concrete = constants.%true]
-// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call.loc8 to %return
+// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call.loc8 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

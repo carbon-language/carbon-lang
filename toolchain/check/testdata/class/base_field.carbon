@@ -149,7 +149,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Access(%p.param: %ptr.f74) -> %ptr.235 {
+// CHECK:STDOUT: fn @Access(%p.param: %ptr.f74, %return.param: ref %ptr.235) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.f74 = name_ref p, %p
 // CHECK:STDOUT:   %.loc29_12: ref %Derived = deref %p.ref
@@ -163,6 +163,6 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%i32) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc29_10.2: <bound method> = bound_method %addr, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.235 = call %bound_method.loc29_10.2(%addr)
-// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -142,7 +142,7 @@ fn F(T:! Empty) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: @F.%ptr.loc22_11.2 (%ptr)) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref @F.%ptr.loc22_11.2 (%ptr)) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
 // CHECK:STDOUT:   %T.loc21_6.1 => constants.%T

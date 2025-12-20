@@ -257,7 +257,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %.loc5_16.3: <instruction> = refine_type_action %x.ref, %T.loc4_15.1 [template]
 // CHECK:STDOUT:   %.loc5_16.4: <instruction> = convert_to_value_action %.loc5_16.1, constants.%i32 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.1 (%T.67db0b.1)) -> %i32 {
+// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.1 (%T.67db0b.1), %return.param: ref %i32) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
@@ -276,20 +276,20 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc6_10.2: <bound method> = bound_method %n.ref, %specific_fn
 // CHECK:STDOUT:     %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_10.2(%n.ref)
-// CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Test1(%n.param: %i32) -> %i32 {
+// CHECK:STDOUT: fn @Test1(%n.param: %i32, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%i32) [concrete = constants.%F.specific_fn.d18]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%n.ref)
-// CHECK:STDOUT:   return %F.call to %return
+// CHECK:STDOUT:   return %F.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert(%self.param: %C) -> %i32 {
+// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert(%self.param: %C, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %C = name_ref self, %self
 // CHECK:STDOUT:   %n.ref: %C.elem = name_ref n, @C.%.loc14 [concrete = @C.%.loc14]
@@ -300,16 +300,16 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc16_50.2: <bound method> = bound_method %.loc16_50.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc16_50.2(%.loc16_50.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Test2(%c.param: %C) -> %i32 {
+// CHECK:STDOUT: fn @Test2(%c.param: %C, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [concrete = constants.%F.specific_fn.540]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%c.ref)
-// CHECK:STDOUT:   return %F.call to %return
+// CHECK:STDOUT:   return %F.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67db0b.1) {
@@ -457,7 +457,7 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:   %.loc11_16.3: <instruction> = refine_type_action %x.ref, %T.loc4_15.1 [template]
 // CHECK:STDOUT:   %.loc11_16.4: <instruction> = convert_to_value_action %.loc11_16.1, constants.%i32 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.1 (%T.67db0b.1)) -> %i32 {
+// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.1 (%T.67db0b.1), %return.param: ref %i32) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
@@ -476,17 +476,17 @@ fn Test(d: D) -> i32 {
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc12_10.2: <bound method> = bound_method %n.ref, %specific_fn
 // CHECK:STDOUT:     %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc12_10.2(%n.ref)
-// CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Test(%d.param: %D) -> %i32 {
+// CHECK:STDOUT: fn @Test(%d.param: %D, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %d.ref: %D = name_ref d, %d
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%D) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%d.ref)
-// CHECK:STDOUT:   return %F.call to %return
+// CHECK:STDOUT:   return %F.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67db0b.1) {

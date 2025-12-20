@@ -157,13 +157,13 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.loc4_20.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %F.specific_fn.loc7_10.2: <specific function> = specific_function constants.%F, @F(%T.loc4_6.1) [symbolic = %F.specific_fn.loc7_10.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @F.%ptr.loc4_20.1 (%ptr) {
+// CHECK:STDOUT:   fn(%return.param.loc6: ref @F.%ptr.loc4_20.1 (%ptr)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl.loc4 [concrete = constants.%F]
 // CHECK:STDOUT:     %T.ref.loc7: type = name_ref T, %T.loc6 [symbolic = %T.loc4_6.1 (constants.%T)]
 // CHECK:STDOUT:     %F.specific_fn.loc7_10.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %F.specific_fn.loc7_10.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %F.call: init @F.%ptr.loc4_20.1 (%ptr) = call %F.specific_fn.loc7_10.1()
-// CHECK:STDOUT:     return %F.call to %return.loc6
+// CHECK:STDOUT:     return %F.call %return.loc6
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -247,7 +247,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %ptr.loc4_30.1: type = ptr_type %T.loc4_6.1 [symbolic = %ptr.loc4_30.1 (constants.%ptr.e8f)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc4_30.1 [symbolic = %pattern_type (constants.%pattern_type.4f4)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @F.loc4.%ptr.loc4_30.1 (%ptr.e8f);
+// CHECK:STDOUT:   fn(%return.param: ref @F.loc4.%ptr.loc4_30.1 (%ptr.e8f));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.loc13(%T.loc13_6.2: type, %U.loc13_16.2: type) {
@@ -259,11 +259,11 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.loc13_30.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @F.loc13.%ptr.loc13_30.1 (%ptr.18e) {
+// CHECK:STDOUT:   fn(%return.param: ref @F.loc13.%ptr.loc13_30.1 (%ptr.18e)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type.117dbc.1 = name_ref F, file.%F.decl.loc4 [concrete = constants.%F.d98bd5.1]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_6.2 [symbolic = %T.loc13_6.1 (constants.%T)]
-// CHECK:STDOUT:     return <error> to %return
+// CHECK:STDOUT:     return <error> %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -353,7 +353,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %ptr.loc4_30.1: type = ptr_type %T.loc4_6.1 [symbolic = %ptr.loc4_30.1 (constants.%ptr.e8f)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc4_30.1 [symbolic = %pattern_type (constants.%pattern_type.4f4)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @F.loc4.%ptr.loc4_30.1 (%ptr.e8f);
+// CHECK:STDOUT:   fn(%return.param: ref @F.loc4.%ptr.loc4_30.1 (%ptr.e8f));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.loc13(%U.loc13_6.2: type, %T.loc13_16.2: type) {
@@ -365,11 +365,11 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.loc13_30.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @F.loc13.%ptr.loc13_30.1 (%ptr.18e) {
+// CHECK:STDOUT:   fn(%return.param: ref @F.loc13.%ptr.loc13_30.1 (%ptr.18e)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type.117dbc.1 = name_ref F, file.%F.decl.loc4 [concrete = constants.%F.d98bd5.1]
 // CHECK:STDOUT:     %T.ref.loc21: type = name_ref T, %T.loc13_16.2 [symbolic = %T.loc13_16.1 (constants.%T.091)]
-// CHECK:STDOUT:     return <error> to %return
+// CHECK:STDOUT:     return <error> %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -459,7 +459,7 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT:   %ptr.loc4_30.1: type = ptr_type %T.loc4_6.1 [symbolic = %ptr.loc4_30.1 (constants.%ptr.e8f8f9.1)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc4_30.1 [symbolic = %pattern_type (constants.%pattern_type.4f4b84.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @F.loc4.%ptr.loc4_30.1 (%ptr.e8f8f9.1);
+// CHECK:STDOUT:   fn(%return.param: ref @F.loc4.%ptr.loc4_30.1 (%ptr.e8f8f9.1));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F.loc13(%U.loc13_6.2: type, %T.loc13_16.2: type) {
@@ -471,11 +471,11 @@ fn F(U:! type, T:! type) -> U* {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.loc13_30.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @F.loc13.%ptr.loc13_30.1 (%ptr.e8f8f9.2) {
+// CHECK:STDOUT:   fn(%return.param: ref @F.loc13.%ptr.loc13_30.1 (%ptr.e8f8f9.2)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type.117dbc.1 = name_ref F, file.%F.decl.loc4 [concrete = constants.%F.d98bd5.1]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc13_16.2 [symbolic = %T.loc13_16.1 (constants.%T.091)]
-// CHECK:STDOUT:     return <error> to %return
+// CHECK:STDOUT:     return <error> %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

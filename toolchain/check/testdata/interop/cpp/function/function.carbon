@@ -385,7 +385,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %i32 {
+// CHECK:STDOUT: fn @G(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %bar.ref: %bar.cpp_overload_set.type = name_ref bar, imports.%bar.cpp_overload_set.value [concrete = constants.%bar.cpp_overload_set.value]
@@ -400,6 +400,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc14_20.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc14_20.2: %i32 = converted %int_1, %.loc14_20.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %bar.call: init %i32 = call imports.%bar.decl(%.loc14_20.2)
-// CHECK:STDOUT:   return %bar.call to %return
+// CHECK:STDOUT:   return %bar.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

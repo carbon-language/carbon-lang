@@ -117,12 +117,12 @@ fn Test(n: Core.IntLiteral()) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> bool {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32, %return.param: ref bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %LessEq.ref: %LessEq.type = name_ref LessEq, file.%LessEq.decl [concrete = constants.%LessEq]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %LessEq.call: init bool = call %LessEq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   return %LessEq.call to %return
+// CHECK:STDOUT:   return %LessEq.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

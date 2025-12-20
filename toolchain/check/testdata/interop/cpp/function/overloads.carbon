@@ -540,7 +540,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @bar__carbon_thunk(%a.param: %ptr.251);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i16) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i16) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_overloaded_functions.carbon
 // CHECK:STDOUT:
@@ -811,7 +811,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo__carbon_thunk(%a.param: %ptr.251);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i16) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i16) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_multiple_overloaded_sets.carbon
 // CHECK:STDOUT:
@@ -1385,15 +1385,15 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo.1(%a.param: %i32) -> %i32;
+// CHECK:STDOUT: fn @foo.1(%a.param: %i32, %return.param: ref %i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo.2(%a.param: %i64) -> %i64;
+// CHECK:STDOUT: fn @foo.2(%a.param: %i64, %return.param: ref %i64);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo.3(%a.param: %i128) -> %i128;
+// CHECK:STDOUT: fn @foo.3(%a.param: %i128, %return.param: ref %i128);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo__carbon_thunk(%a.param: %ptr.974, %return.param: %ptr.974);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i128) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i128) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_large_int_literal.carbon
 // CHECK:STDOUT:
@@ -1826,11 +1826,11 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo(%a.param: %f64.d77) -> %f64.d77;
+// CHECK:STDOUT: fn @foo(%a.param: %f64.d77, %return.param: ref %f64.d77);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo__carbon_thunk(%a.param: %ptr.bcc, %return.param: %ptr.bcc);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %f64.d77) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %f64.d77) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_large_floating_point_literal.carbon
 // CHECK:STDOUT:
@@ -1961,11 +1961,11 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @foo(%a.param: %f64.d77) -> %f64.d77;
+// CHECK:STDOUT: fn @foo(%a.param: %f64.d77, %return.param: ref %f64.d77);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo__carbon_thunk(%a.param: %ptr.bcc, %return.param: %ptr.bcc);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %f64.d77) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %f64.d77) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_struct_literal_call_arg.carbon
 // CHECK:STDOUT:

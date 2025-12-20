@@ -322,7 +322,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_non_default.carbon
 // CHECK:STDOUT:
@@ -416,7 +416,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_multiple.carbon
 // CHECK:STDOUT:
@@ -536,7 +536,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_default_arguments.carbon
 // CHECK:STDOUT:
@@ -664,7 +664,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_template.carbon
 // CHECK:STDOUT:
@@ -826,9 +826,9 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: bool) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_implicit_single_argument.carbon
 // CHECK:STDOUT:
@@ -943,7 +943,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_implicit_multi_arguments.carbon
 // CHECK:STDOUT:
@@ -1104,5 +1104,5 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:

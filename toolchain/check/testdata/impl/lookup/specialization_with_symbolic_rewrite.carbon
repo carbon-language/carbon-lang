@@ -934,7 +934,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %impl.elem0.loc10_10.2: @F.%.loc10_10.2 (%.b46) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_10.2 (constants.%impl.elem0.201)]
 // CHECK:STDOUT:   %specific_impl_fn.loc10_10.2: <specific function> = specific_impl_function %impl.elem0.loc10_10.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc10_10.2 (constants.%specific_impl_fn.b84)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%t.param: @F.%T.loc9_6.1 (%T.67d)) -> @F.%ptr (%ptr.e8f8f9.2) {
+// CHECK:STDOUT:   fn(%t.param: ref @F.%T.loc9_6.1 (%T.67d), %return.param: ref @F.%ptr (%ptr.e8f8f9.2)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %t.ref: ref @F.%T.loc9_6.1 (%T.67d) = name_ref t, %t
 // CHECK:STDOUT:     %addr: @F.%ptr (%ptr.e8f8f9.2) = addr_of %t.ref
@@ -943,7 +943,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     %specific_impl_fn.loc10_10.1: <specific function> = specific_impl_function %impl.elem0.loc10_10.1, @Copy.Op(constants.%Copy.facet) [symbolic = %specific_impl_fn.loc10_10.2 (constants.%specific_impl_fn.b84)]
 // CHECK:STDOUT:     %bound_method.loc10_10.2: <bound method> = bound_method %addr, %specific_impl_fn.loc10_10.1
 // CHECK:STDOUT:     %Copy.Op.call: init @F.%ptr (%ptr.e8f8f9.2) = call %bound_method.loc10_10.2(%addr)
-// CHECK:STDOUT:     return %Copy.Op.call to %return
+// CHECK:STDOUT:     return %Copy.Op.call %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1146,7 +1146,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %impl.elem0.loc10_10.2: @F.%.loc10_10.2 (%.4b6) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_10.2 (constants.%impl.elem0.8b5)]
 // CHECK:STDOUT:   %specific_impl_fn.loc10_10.2: <specific function> = specific_impl_function %impl.elem0.loc10_10.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc10_10.2 (constants.%specific_impl_fn.4b3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%t.param: @F.%T.binding.as_type (%T.binding.as_type.3dc)) -> @F.%ptr (%ptr.a86) {
+// CHECK:STDOUT:   fn(%t.param: ref @F.%T.binding.as_type (%T.binding.as_type.3dc), %return.param: ref @F.%ptr (%ptr.a86)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %t.ref: ref @F.%T.binding.as_type (%T.binding.as_type.3dc) = name_ref t, %t
 // CHECK:STDOUT:     %addr: @F.%ptr (%ptr.a86) = addr_of %t.ref
@@ -1155,7 +1155,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     %specific_impl_fn.loc10_10.1: <specific function> = specific_impl_function %impl.elem0.loc10_10.1, @Copy.Op(constants.%Copy.facet) [symbolic = %specific_impl_fn.loc10_10.2 (constants.%specific_impl_fn.4b3)]
 // CHECK:STDOUT:     %bound_method.loc10_10.2: <bound method> = bound_method %addr, %specific_impl_fn.loc10_10.1
 // CHECK:STDOUT:     %Copy.Op.call: init @F.%ptr (%ptr.a86) = call %bound_method.loc10_10.2(%addr)
-// CHECK:STDOUT:     return %Copy.Op.call to %return
+// CHECK:STDOUT:     return %Copy.Op.call %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1357,7 +1357,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %impl.elem0.loc10_10.2: @F.%.loc10_10.2 (%.4b6) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_10.2 (constants.%impl.elem0.8b5)]
 // CHECK:STDOUT:   %specific_impl_fn.loc10_10.2: <specific function> = specific_impl_function %impl.elem0.loc10_10.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc10_10.2 (constants.%specific_impl_fn.4b3)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%t.param: @F.%T.binding.as_type (%T.binding.as_type.3dc)) -> @F.%ptr (%ptr.a86) {
+// CHECK:STDOUT:   fn(%t.param: ref @F.%T.binding.as_type (%T.binding.as_type.3dc), %return.param: ref @F.%ptr (%ptr.a86)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %t.ref: ref @F.%T.binding.as_type (%T.binding.as_type.3dc) = name_ref t, %t
 // CHECK:STDOUT:     %addr: @F.%ptr (%ptr.a86) = addr_of %t.ref
@@ -1366,7 +1366,7 @@ fn F[T:! Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:     %specific_impl_fn.loc10_10.1: <specific function> = specific_impl_function %impl.elem0.loc10_10.1, @Copy.Op(constants.%Copy.facet) [symbolic = %specific_impl_fn.loc10_10.2 (constants.%specific_impl_fn.4b3)]
 // CHECK:STDOUT:     %bound_method.loc10_10.2: <bound method> = bound_method %addr, %specific_impl_fn.loc10_10.1
 // CHECK:STDOUT:     %Copy.Op.call: init @F.%ptr (%ptr.a86) = call %bound_method.loc10_10.2(%addr)
-// CHECK:STDOUT:     return %Copy.Op.call to %return
+// CHECK:STDOUT:     return %Copy.Op.call %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -95,12 +95,12 @@ fn G(_:! I(.Self) where .I1 = ()) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %empty_tuple.type {
+// CHECK:STDOUT:   fn(%return.param: ref %empty_tuple.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc19_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc19_11.2: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc19_11.2: init %empty_tuple.type = tuple_init () %return [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc19_12: init %empty_tuple.type = converted %.loc19_11.1, %.loc19_11.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     return %.loc19_12 to %return
+// CHECK:STDOUT:     return %.loc19_12 %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

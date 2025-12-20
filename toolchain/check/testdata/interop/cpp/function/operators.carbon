@@ -1137,7 +1137,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_binary_operators.carbon
 // CHECK:STDOUT:
@@ -1877,7 +1877,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- multiple_calls.carbon
 // CHECK:STDOUT:
@@ -2024,7 +2024,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_rewrite_spaceship.carbon
 // CHECK:STDOUT:
@@ -2186,7 +2186,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_rewrite_equal.carbon
 // CHECK:STDOUT:
@@ -2307,7 +2307,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_single_namespace.carbon
 // CHECK:STDOUT:
@@ -2419,7 +2419,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_multiple_namespaces.carbon
 // CHECK:STDOUT:
@@ -2582,9 +2582,9 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: %C2) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: ref %C2) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: %C1) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: ref %C1) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_operands_in_namespace_operator_in_global.carbon
 // CHECK:STDOUT:
@@ -2677,7 +2677,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_inner_class.carbon
 // CHECK:STDOUT:
@@ -2787,7 +2787,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_inner_class_in_namespace.carbon
 // CHECK:STDOUT:
@@ -2906,7 +2906,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_member_add_with.carbon
 // CHECK:STDOUT:
@@ -3040,7 +3040,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- indirect_template_instantiation.carbon
 // CHECK:STDOUT:
@@ -3061,7 +3061,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param: %B) -> %i32 {
+// CHECK:STDOUT: fn @F(%x.param: %B, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc14_10: %B = name_ref x, %x
 // CHECK:STDOUT:   %x.ref.loc14_14: %B = name_ref x, %x
@@ -3070,7 +3070,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc14_14: ref %B = value_as_ref %x.ref.loc14_14
 // CHECK:STDOUT:   %addr.loc14_12.2: %ptr.a04 = addr_of %.loc14_14
 // CHECK:STDOUT:   %operator+__carbon_thunk.call: init %i32 = call imports.%operator+__carbon_thunk.decl(%addr.loc14_12.1, %addr.loc14_12.2)
-// CHECK:STDOUT:   return %operator+__carbon_thunk.call to %return
+// CHECK:STDOUT:   return %operator+__carbon_thunk.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_overloading.carbon
@@ -3127,5 +3127,5 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:

@@ -233,12 +233,12 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:   .Self = constants.%RuntimeConvertTo
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeConvertFrom.as.ImplicitAs.impl.Convert(%self.param: %RuntimeConvertFrom) -> %return.param: %RuntimeConvertTo {
+// CHECK:STDOUT: fn @RuntimeConvertFrom.as.ImplicitAs.impl.Convert(%self.param: %RuntimeConvertFrom, %return.param: ref %RuntimeConvertTo) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc24_58.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc24_58.2: init %RuntimeConvertTo = class_init (), %return [concrete = constants.%RuntimeConvertTo.val]
 // CHECK:STDOUT:   %.loc24_59: init %RuntimeConvertTo = converted %.loc24_58.1, %.loc24_58.2 [concrete = constants.%RuntimeConvertTo.val]
-// CHECK:STDOUT:   return %.loc24_59 to %return
+// CHECK:STDOUT:   return %.loc24_59 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc27_6.2: %tuple.type, %A.loc27_20.2: @F.%tuple.elem0.loc27_25.1 (%tuple.elem0)) {
@@ -272,7 +272,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:     %impl.elem0: %.224 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%RuntimeConvertFrom.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method constants.%from, %impl.elem0 [symbolic = %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.bound (constants.%RuntimeConvertFrom.as.ImplicitAs.impl.Convert.bound)]
 // CHECK:STDOUT:     %.loc40_19.1: ref %RuntimeConvertTo = temporary_storage
-// CHECK:STDOUT:     %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.call: init %RuntimeConvertTo = call %bound_method(constants.%from) to %.loc40_19.1
+// CHECK:STDOUT:     %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.call: init %RuntimeConvertTo = call %bound_method(constants.%from, %.loc40_19.1)
 // CHECK:STDOUT:     %.loc40_19.2: init %RuntimeConvertTo = converted constants.%from, %RuntimeConvertFrom.as.ImplicitAs.impl.Convert.call
 // CHECK:STDOUT:     %.loc40_19.3: ref %RuntimeConvertTo = temporary %.loc40_19.1, %.loc40_19.2
 // CHECK:STDOUT:     %.loc40_19.4: %RuntimeConvertTo = acquire_value %.loc40_19.3
@@ -284,7 +284,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), from:! RuntimeConvertFrom) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %RuntimeConvertTo) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %RuntimeConvertTo) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%T) {
 // CHECK:STDOUT:   %T.loc17_17.1 => constants.%T

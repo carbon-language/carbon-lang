@@ -99,14 +99,14 @@ fn F() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %return.param: %struct_type.x.y.z;
+// CHECK:STDOUT: fn @G(%return.param: ref %struct_type.x.y.z);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %i32 {
+// CHECK:STDOUT: fn @F(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %.loc18_26.1: ref %struct_type.x.y.z = temporary_storage
-// CHECK:STDOUT:   %G.call: init %struct_type.x.y.z = call %G.ref() to %.loc18_26.1
+// CHECK:STDOUT:   %G.call: init %struct_type.x.y.z = call %G.ref(%.loc18_26.1)
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:   %.loc18_35.1: %struct_type.a.b.c.4ca = struct_literal (%int_1, %G.call, %int_3)
 // CHECK:STDOUT:   %.loc18_26.2: ref %struct_type.x.y.z = temporary %.loc18_26.1, %G.call
@@ -129,8 +129,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc18_38.2(%.loc18_38)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc18_26.2, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc18_26.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %struct_type.x.y.z) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %struct_type.x.y.z) = "no_op";
 // CHECK:STDOUT:

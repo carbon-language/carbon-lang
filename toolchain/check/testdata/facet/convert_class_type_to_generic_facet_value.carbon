@@ -566,7 +566,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %GenericParam) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %GenericParam) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%Scalar) {
 // CHECK:STDOUT:   %Scalar.loc4_19.1 => constants.%Scalar

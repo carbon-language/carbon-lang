@@ -134,7 +134,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%a.param: bool, %b.param: bool, %c.param: bool) -> %i32 {
+// CHECK:STDOUT: fn @F(%a.param: bool, %b.param: bool, %c.param: bool, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: bool = name_ref a, %a
 // CHECK:STDOUT:   if %a.ref br !if.expr.then.loc16_10 else br !if.expr.else.loc16_10
@@ -210,6 +210,6 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
 // CHECK:STDOUT:   %specific_fn.loc16_10: <specific function> = specific_function %impl.elem0.loc16_10, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc16_10.2: <bound method> = bound_method %.loc16_10, %specific_fn.loc16_10
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc16_10.2(%.loc16_10)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

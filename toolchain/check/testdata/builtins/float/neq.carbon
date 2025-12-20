@@ -52,12 +52,12 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.d77, %b.param: %f64.d77) -> bool {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.d77, %b.param: %f64.d77, %return.param: ref bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Neq.ref: %Neq.type = name_ref Neq, file.%Neq.decl [concrete = constants.%Neq]
 // CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %f64.d77 = name_ref b, %b
 // CHECK:STDOUT:   %Neq.call: init bool = call %Neq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   return %Neq.call to %return
+// CHECK:STDOUT:   return %Neq.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

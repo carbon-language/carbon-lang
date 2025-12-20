@@ -338,7 +338,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   .k = %.loc21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.F(%self.param.loc24: %Class) -> %i32 {
+// CHECK:STDOUT: fn @Class.F(%self.param.loc24: %Class, %return.param.loc24: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc24
 // CHECK:STDOUT:   %k.ref: %Class.elem = name_ref k, @Class.%.loc21 [concrete = @Class.%.loc21]
@@ -349,30 +349,30 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc25_14.2: <bound method> = bound_method %.loc25_14.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc25_14.2(%.loc25_14.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return.loc24
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return.loc24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.G(%self.param: %Class) -> %i32;
+// CHECK:STDOUT: fn @Class.G(%self.param: ref %Class, %return.param: ref %i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Call(%c.param: %Class) -> %i32 {
+// CHECK:STDOUT: fn @Call(%c.param: %Class, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class = name_ref c, %c
 // CHECK:STDOUT:   %F.ref: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
 // CHECK:STDOUT:   %Class.F.bound: <bound method> = bound_method %c.ref, %F.ref
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%c.ref)
-// CHECK:STDOUT:   return %Class.F.call to %return
+// CHECK:STDOUT:   return %Class.F.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallAlias(%c.param: %Class) -> %i32 {
+// CHECK:STDOUT: fn @CallAlias(%c.param: %Class, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class = name_ref c, %c
 // CHECK:STDOUT:   %A.ref: %Class.F.type = name_ref A, @Class.%A [concrete = constants.%Class.F]
 // CHECK:STDOUT:   %Class.F.bound: <bound method> = bound_method %c.ref, %A.ref
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%c.ref)
-// CHECK:STDOUT:   return %Class.F.call to %return
+// CHECK:STDOUT:   return %Class.F.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallOnConstBoundMethod() -> %i32 {
+// CHECK:STDOUT: fn @CallOnConstBoundMethod(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc39_18.1: %struct_type.k.240 = struct_literal (%int_1) [concrete = constants.%struct]
@@ -385,7 +385,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %.loc39_18.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc39_18.3: ref %Class = temporary_storage
 // CHECK:STDOUT:   %.loc39_18.4: ref %i32 = class_element_access %.loc39_18.3, element0
-// CHECK:STDOUT:   %.loc39_18.5: init %i32 = initialize_from %.loc39_18.2 to %.loc39_18.4 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc39_18.5: init %i32 = initialize_from %.loc39_18.2, %.loc39_18.4 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc39_18.6: init %Class = class_init (%.loc39_18.5), %.loc39_18.3 [concrete = constants.%Class.val]
 // CHECK:STDOUT:   %.loc39_18.7: ref %Class = temporary %.loc39_18.3, %.loc39_18.6
 // CHECK:STDOUT:   %.loc39_20.1: ref %Class = converted %.loc39_18.1, %.loc39_18.7
@@ -395,12 +395,12 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%.loc39_20.2)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc39_18.7, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc39_18.7)
-// CHECK:STDOUT:   return %Class.F.call to %return
+// CHECK:STDOUT:   return %Class.F.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Class) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Class) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallWithRef() -> %i32 {
+// CHECK:STDOUT: fn @CallWithRef(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.904 = ref_binding_pattern c [concrete]
@@ -415,10 +415,10 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.G.call: init %i32 = call %Class.G.bound(%c.ref)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %c.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%c.var)
-// CHECK:STDOUT:   return %Class.G.call to %return
+// CHECK:STDOUT:   return %Class.G.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallFThroughPointer(%p.param: %ptr.8e5) -> %i32 {
+// CHECK:STDOUT: fn @CallFThroughPointer(%p.param: %ptr.8e5, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.8e5 = name_ref p, %p
 // CHECK:STDOUT:   %.loc48_11.1: ref %Class = deref %p.ref
@@ -426,26 +426,26 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.F.bound: <bound method> = bound_method %.loc48_11.1, %F.ref
 // CHECK:STDOUT:   %.loc48_11.2: %Class = acquire_value %.loc48_11.1
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%.loc48_11.2)
-// CHECK:STDOUT:   return %Class.F.call to %return
+// CHECK:STDOUT:   return %Class.F.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallGThroughPointer(%p.param: %ptr.8e5) -> %i32 {
+// CHECK:STDOUT: fn @CallGThroughPointer(%p.param: %ptr.8e5, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.8e5 = name_ref p, %p
 // CHECK:STDOUT:   %.loc52: ref %Class = deref %p.ref
 // CHECK:STDOUT:   %G.ref: %Class.G.type = name_ref G, @Class.%Class.G.decl [concrete = constants.%Class.G]
 // CHECK:STDOUT:   %Class.G.bound: <bound method> = bound_method %.loc52, %G.ref
 // CHECK:STDOUT:   %Class.G.call: init %i32 = call %Class.G.bound(%.loc52)
-// CHECK:STDOUT:   return %Class.G.call to %return
+// CHECK:STDOUT:   return %Class.G.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return.param: %Class;
+// CHECK:STDOUT: fn @Make(%return.param: ref %Class);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallFOnInitializingExpr() -> %i32 {
+// CHECK:STDOUT: fn @CallFOnInitializingExpr(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc58_15.1: ref %Class = temporary_storage
-// CHECK:STDOUT:   %Make.call: init %Class = call %Make.ref() to %.loc58_15.1
+// CHECK:STDOUT:   %Make.call: init %Class = call %Make.ref(%.loc58_15.1)
 // CHECK:STDOUT:   %.loc58_15.2: ref %Class = temporary %.loc58_15.1, %Make.call
 // CHECK:STDOUT:   %F.ref: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
 // CHECK:STDOUT:   %Class.F.bound: <bound method> = bound_method %.loc58_15.2, %F.ref
@@ -453,20 +453,20 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%.loc58_15.3)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc58_15.2, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc58_15.2)
-// CHECK:STDOUT:   return %Class.F.call to %return
+// CHECK:STDOUT:   return %Class.F.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallGOnInitializingExpr() -> %i32 {
+// CHECK:STDOUT: fn @CallGOnInitializingExpr(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc62_15.1: ref %Class = temporary_storage
-// CHECK:STDOUT:   %Make.call: init %Class = call %Make.ref() to %.loc62_15.1
+// CHECK:STDOUT:   %Make.call: init %Class = call %Make.ref(%.loc62_15.1)
 // CHECK:STDOUT:   %.loc62_15.2: ref %Class = temporary %.loc62_15.1, %Make.call
 // CHECK:STDOUT:   %G.ref: %Class.G.type = name_ref G, @Class.%Class.G.decl [concrete = constants.%Class.G]
 // CHECK:STDOUT:   %Class.G.bound: <bound method> = bound_method %.loc62_15.2, %G.ref
 // CHECK:STDOUT:   %Class.G.call: init %i32 = call %Class.G.bound(%.loc62_15.2)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc62_15.2, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc62_15.2)
-// CHECK:STDOUT:   return %Class.G.call to %return
+// CHECK:STDOUT:   return %Class.G.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

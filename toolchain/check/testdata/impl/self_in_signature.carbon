@@ -334,23 +334,23 @@ impl D as SelfNested {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.e3d)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.431)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d), %x.param: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d)) -> @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d);
+// CHECK:STDOUT:   fn(%self.param: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d), %x.param: @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d), %return.param: ref @UseSelf.F.%Self.binding.as_type (%Self.binding.as_type.e3d));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.UseSelf.impl.F(%self.param: %C, %x.param: %C) -> %return.param: %C {
+// CHECK:STDOUT: fn @C.as.UseSelf.impl.F(%self.param: %C, %x.param: %C, %return.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc24_38.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc24_38.2: init %C = class_init (), %return [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc24_39: init %C = converted %.loc24_38.1, %.loc24_38.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   return %.loc24_39 to %return
+// CHECK:STDOUT:   return %.loc24_39 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @D.as.UseSelf.impl.F(%self.param: %D, %x.param: %D) -> %return.param: %D {
+// CHECK:STDOUT: fn @D.as.UseSelf.impl.F(%self.param: %D, %x.param: %D, %return.param: ref %D) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc28_47.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc28_47.2: init %D = class_init (), %return [concrete = constants.%D.val]
 // CHECK:STDOUT:   %.loc28_48: init %D = converted %.loc28_47.1, %.loc28_47.2 [concrete = constants.%D.val]
-// CHECK:STDOUT:   return %.loc28_48 to %return
+// CHECK:STDOUT:   return %.loc28_48 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @SelfNested.F(@SelfNested.%Self: %SelfNested.type) {

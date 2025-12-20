@@ -212,8 +212,7 @@ class Formatter {
 
   // Formats parameters, eliding them completely if they're empty. Wraps input
   // parameters in parentheses. Formats output parameter as a return type.
-  auto FormatParamList(InstBlockId params_id, bool has_return_slot = false)
-      -> void;
+  auto FormatParamList(InstBlockId params_id) -> void;
 
   // Prints instructions for a code block.
   auto FormatCodeBlock(InstBlockId block_id) -> void;
@@ -246,9 +245,10 @@ class Formatter {
   // no such arguments.
   auto FormatPendingConstantValue(AddSpace space_where) -> void;
 
-  // Formats `<name>[: <type>] = `. Skips unnamed instructions (according to
-  // `inst_namer_`). Typed instructions must be named.
-  auto FormatInstLhs(InstId inst_id, Inst inst) -> void;
+  // Formats `<name>[: <type>]`. Skips unnamed instructions (according to
+  // `inst_namer_`). Typed instructions must be named. Returns false if the
+  // instruction was skipped.
+  auto FormatInstLhs(InstId inst_id, Inst inst) -> bool;
 
   // Formats arguments to an instruction. This will typically look like "
   // <arg0>, <arg1>".
@@ -326,8 +326,6 @@ class Formatter {
 
   // Calls `FormatArg` from an `ArgAndKind`.
   auto FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void;
-
-  auto FormatReturnSlotArg(InstId dest_id) -> void;
 
   // `FormatName` is used when we need the name from an id. Most id types use
   // equivalent name formatting from InstNamer, although there are a few special

@@ -71,11 +71,11 @@ var dyn: Float(dyn_size);
 // CHECK:STDOUT:   %Main.Float: %Float.type = import_ref Main//types, Float, loaded [concrete = constants.%Float]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GetFloat(%dyn_size.param: %i32) -> type {
+// CHECK:STDOUT: fn @GetFloat(%dyn_size.param: %i32, %return.param: ref type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Float.ref: %Float.type = name_ref Float, imports.%Main.Float [concrete = constants.%Float]
 // CHECK:STDOUT:   %dyn_size.ref: %i32 = name_ref dyn_size, %dyn_size
 // CHECK:STDOUT:   %Float.call: init type = call %Float.ref(%dyn_size.ref)
-// CHECK:STDOUT:   return %Float.call to %return
+// CHECK:STDOUT:   return %Float.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

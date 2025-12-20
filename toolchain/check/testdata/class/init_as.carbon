@@ -130,7 +130,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   .b = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %i32 {
+// CHECK:STDOUT: fn @F(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
@@ -144,7 +144,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %.loc21_26.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21_26.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc21_26.3: ref %Class = temporary_storage
 // CHECK:STDOUT:   %.loc21_26.4: ref %i32 = class_element_access %.loc21_26.3, element0
-// CHECK:STDOUT:   %.loc21_26.5: init %i32 = initialize_from %.loc21_26.2 to %.loc21_26.4 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc21_26.5: init %i32 = initialize_from %.loc21_26.2, %.loc21_26.4 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %impl.elem0.loc21_26.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc21_26.3: <bound method> = bound_method %int_2, %impl.elem0.loc21_26.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
 // CHECK:STDOUT:   %specific_fn.loc21_26.2: <specific function> = specific_function %impl.elem0.loc21_26.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -152,7 +152,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21_26.2: init %i32 = call %bound_method.loc21_26.4(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc21_26.6: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21_26.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc21_26.7: ref %i32 = class_element_access %.loc21_26.3, element1
-// CHECK:STDOUT:   %.loc21_26.8: init %i32 = initialize_from %.loc21_26.6 to %.loc21_26.7 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc21_26.8: init %i32 = initialize_from %.loc21_26.6, %.loc21_26.7 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc21_26.9: init %Class = class_init (%.loc21_26.5, %.loc21_26.8), %.loc21_26.3 [concrete = constants.%Class.val]
 // CHECK:STDOUT:   %.loc21_26.10: ref %Class = temporary %.loc21_26.3, %.loc21_26.9
 // CHECK:STDOUT:   %.loc21_28: ref %Class = converted %.loc21_26.1, %.loc21_26.10
@@ -166,8 +166,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc21_37.2(%.loc21_37.2)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc21_26.10, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc21_26.10)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %Class) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Class) = "no_op";
 // CHECK:STDOUT:

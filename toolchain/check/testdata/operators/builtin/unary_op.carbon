@@ -118,14 +118,14 @@ fn Constant() {
 // CHECK:STDOUT:   %Constant.decl: %Constant.type = fn_decl @Constant [concrete = constants.%Constant] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Not(%b.param: bool) -> bool {
+// CHECK:STDOUT: fn @Not(%b.param: bool, %return.param: ref bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   %.loc16: bool = not %b.ref
 // CHECK:STDOUT:   %impl.elem0: %.56b = impl_witness_access constants.%Copy.impl_witness.348, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc16, %impl.elem0
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method(%.loc16)
-// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Constant() {
@@ -136,7 +136,7 @@ fn Constant() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var %a.var_patt
 // CHECK:STDOUT:   %.loc23_43.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc23_43.2: init %empty_tuple.type = tuple_init () to %a.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc23_43.2: init %empty_tuple.type = tuple_init () %a.var [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc23_3: init %empty_tuple.type = converted %.loc23_43.1, %.loc23_43.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %a.var, %.loc23_3
 // CHECK:STDOUT:   br !.loc23_17
@@ -204,9 +204,9 @@ fn Constant() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc24(%self.param: bool) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc24(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc23(%self.param: %empty_tuple.type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc23(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

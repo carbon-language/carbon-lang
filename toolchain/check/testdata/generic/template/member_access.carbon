@@ -237,7 +237,7 @@ fn Test(e: E) {
 // CHECK:STDOUT:   %.loc5_17.6: type = type_of_inst %.loc5_17.5 [template]
 // CHECK:STDOUT:   %.loc5_17.7: <instruction> = convert_to_value_action %.loc5_17.2, constants.%i32 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.1 (%T.67db0b.1)) -> %i32 {
+// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.1 (%T.67db0b.1), %return.param: ref %i32) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
@@ -257,7 +257,7 @@ fn Test(e: E) {
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc6_10.2: <bound method> = bound_method %n.ref, %specific_fn
 // CHECK:STDOUT:     %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_10.2(%n.ref)
-// CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -427,7 +427,7 @@ fn Test(e: E) {
 // CHECK:STDOUT:   %.loc8_17.6: type = type_of_inst %.loc8_17.5 [template]
 // CHECK:STDOUT:   %.loc8_17.7: <instruction> = convert_to_value_action %.loc8_17.2, constants.%i32 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.1 (%T.67db0b.1)) -> %i32 {
+// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.1 (%T.67db0b.1), %return.param: ref %i32) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
@@ -447,7 +447,7 @@ fn Test(e: E) {
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc9_10.2: <bound method> = bound_method %n.ref, %specific_fn
 // CHECK:STDOUT:     %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc9_10.2(%n.ref)
-// CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -617,7 +617,7 @@ fn Test(e: E) {
 // CHECK:STDOUT:   %.loc11_17.6: type = type_of_inst %.loc11_17.5 [template]
 // CHECK:STDOUT:   %.loc11_17.7: <instruction> = convert_to_value_action %.loc11_17.2, constants.%i32 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.loc4.%T.loc4_15.1 (%T.67db0b.1)) -> %i32 {
+// CHECK:STDOUT:   fn(%x.param: @F.loc4.%T.loc4_15.1 (%T.67db0b.1), %return.param: ref %i32) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
@@ -637,7 +637,7 @@ fn Test(e: E) {
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc12_10.2: <bound method> = bound_method %n.ref, %specific_fn
 // CHECK:STDOUT:     %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc12_10.2(%n.ref)
-// CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

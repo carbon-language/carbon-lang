@@ -236,19 +236,19 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Foo(%n.param: %empty_tuple.type) -> %return.param: %tuple.type {
+// CHECK:STDOUT: fn @Foo(%n.param: %empty_tuple.type, %return.param: ref %tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %empty_tuple.type = name_ref n, %n
 // CHECK:STDOUT:   %.loc17_15.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc17_16.1: %tuple.type = tuple_literal (%n.ref, %.loc17_15.1)
 // CHECK:STDOUT:   %tuple.elem0: ref %empty_tuple.type = tuple_access %return, element0
-// CHECK:STDOUT:   %.loc17_11: init %empty_tuple.type = tuple_init () to %tuple.elem0 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc17_11: init %empty_tuple.type = tuple_init () %tuple.elem0 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc17_16.2: init %empty_tuple.type = converted %n.ref, %.loc17_11 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %tuple.elem1: ref %empty_tuple.type = tuple_access %return, element1
-// CHECK:STDOUT:   %.loc17_15.2: init %empty_tuple.type = tuple_init () to %tuple.elem1 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc17_15.2: init %empty_tuple.type = tuple_init () %tuple.elem1 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc17_16.3: init %empty_tuple.type = converted %.loc17_15.1, %.loc17_15.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc17_16.4: init %tuple.type = tuple_init (%.loc17_16.2, %.loc17_16.3) to %return [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc17_16.4: init %tuple.type = tuple_init (%.loc17_16.2, %.loc17_16.3) %return [concrete = constants.%tuple]
 // CHECK:STDOUT:   %.loc17_17: init %tuple.type = converted %.loc17_16.1, %.loc17_16.4 [concrete = constants.%tuple]
-// CHECK:STDOUT:   return %.loc17_17 to %return
+// CHECK:STDOUT:   return %.loc17_17 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

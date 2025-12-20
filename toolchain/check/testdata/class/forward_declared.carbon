@@ -77,7 +77,7 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%p.param: %ptr.8e5) -> %ptr.8e5 {
+// CHECK:STDOUT: fn @F(%p.param: %ptr.8e5, %return.param: ref %ptr.8e5) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.8e5 = name_ref p, %p
 // CHECK:STDOUT:   %impl.elem0: %.105 = impl_witness_access constants.%Copy.impl_witness.9d3, element0 [concrete = constants.%ptr.as.Copy.impl.Op.120]
@@ -85,6 +85,6 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%Class) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc17_36.2: <bound method> = bound_method %p.ref, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.8e5 = call %bound_method.loc17_36.2(%p.ref)
-// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

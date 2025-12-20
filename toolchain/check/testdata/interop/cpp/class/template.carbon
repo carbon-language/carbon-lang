@@ -131,7 +131,7 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:   %Copy.impl_witness_table.c3a = impl_witness_table (%Core.import_ref.203), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param: %A.0bedf0.1) -> %i32 {
+// CHECK:STDOUT: fn @F(%x.param: %A.0bedf0.1, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc9: %A.0bedf0.1 = name_ref x, %x
 // CHECK:STDOUT:   %f.ref: %A.f.cpp_overload_set.type = name_ref f, imports.%A.f.cpp_overload_set.value [concrete = constants.%A.f.cpp_overload_set.value]
@@ -146,10 +146,10 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc10_11.2: <bound method> = bound_method %.loc10_11.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc10_11.2(%.loc10_11.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p.param: %ptr.270) -> %ptr.fb2 {
+// CHECK:STDOUT: fn @G(%p.param: %ptr.270, %return.param: ref %ptr.fb2) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.270 = name_ref p, %p
 // CHECK:STDOUT:   %.loc17_11.1: ref %A.0bedf0.2 = deref %p.ref
@@ -161,7 +161,7 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%Base) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc17_11.2: <bound method> = bound_method %.loc17_11.3, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.fb2 = call %bound_method.loc17_11.2(%.loc17_11.3)
-// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_use_instantiation_error.carbon

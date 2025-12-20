@@ -124,7 +124,7 @@ fn H() {
 // CHECK:STDOUT:   %U.loc16_8.1: type = symbolic_binding U, 2 [symbolic = %U.loc16_8.1 (constants.%U)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %U.loc16_8.1 [symbolic = %pattern_type (constants.%pattern_type.62e)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @I.F.%U.loc16_8.1 (%U);
+// CHECK:STDOUT:   fn(%return.param: ref @I.F.%U.loc16_8.1 (%U));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @G(%T.loc19_6.2: type) {

@@ -221,7 +221,7 @@ class Class(U:! type) {
 // CHECK:STDOUT: generic fn @CompleteClass.F(@CompleteClass.%T.loc6_21.2: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %i32 {
+// CHECK:STDOUT:   fn(%return.param: ref %i32) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:     %impl.elem0: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
@@ -230,11 +230,11 @@ class Class(U:! type) {
 // CHECK:STDOUT:     %bound_method.loc8_27.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc8_27.2(%int_0) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:     %.loc8: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:     return %.loc8 to %return
+// CHECK:STDOUT:     return %.loc8 %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %CompleteClass.d85;
+// CHECK:STDOUT: fn @F(%return.param: ref %CompleteClass.d85);
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_13.1 => constants.%T
@@ -409,7 +409,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return.param: %CompleteClass.667 [from "foo.carbon"] {
+// CHECK:STDOUT: fn @F(%return.param: ref %CompleteClass.667) [from "foo.carbon"] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc9_17.1: %struct_type.n.44a = struct_literal (%int_1) [concrete = constants.%struct]
@@ -420,10 +420,10 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc9_17.2(%int_1) [concrete = constants.%int_1.47b]
 // CHECK:STDOUT:   %.loc9_17.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.47b]
 // CHECK:STDOUT:   %.loc9_17.3: ref %i32 = class_element_access %return, element0
-// CHECK:STDOUT:   %.loc9_17.4: init %i32 = initialize_from %.loc9_17.2 to %.loc9_17.3 [concrete = constants.%int_1.47b]
+// CHECK:STDOUT:   %.loc9_17.4: init %i32 = initialize_from %.loc9_17.2, %.loc9_17.3 [concrete = constants.%int_1.47b]
 // CHECK:STDOUT:   %.loc9_17.5: init %CompleteClass.667 = class_init (%.loc9_17.4), %return [concrete = constants.%CompleteClass.val]
 // CHECK:STDOUT:   %.loc9_18: init %CompleteClass.667 = converted %.loc9_17.1, %.loc9_17.5 [concrete = constants.%CompleteClass.val]
-// CHECK:STDOUT:   return %.loc9_18 to %return
+// CHECK:STDOUT:   return %.loc9_18 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
@@ -573,7 +573,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UseMethod() -> %i32 {
+// CHECK:STDOUT: fn @UseMethod(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.cb5 = ref_binding_pattern v [concrete]
@@ -582,7 +582,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.d85 = var %v.var_patt
 // CHECK:STDOUT:   %F.ref.loc6: %F.type = name_ref F, imports.%Main.F [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc6_3: ref %CompleteClass.d85 = splice_block %v.var {}
-// CHECK:STDOUT:   %F.call: init %CompleteClass.d85 = call %F.ref.loc6() to %.loc6_3
+// CHECK:STDOUT:   %F.call: init %CompleteClass.d85 = call %F.ref.loc6(%.loc6_3)
 // CHECK:STDOUT:   assign %v.var, %F.call
 // CHECK:STDOUT:   %.loc6_27: type = splice_block %CompleteClass [concrete = constants.%CompleteClass.d85] {
 // CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%Main.CompleteClass [concrete = constants.%CompleteClass.generic]
@@ -598,7 +598,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %CompleteClass.F.call: init %i32 = call %CompleteClass.F.specific_fn()
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %v.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%v.var)
-// CHECK:STDOUT:   return %CompleteClass.F.call to %return
+// CHECK:STDOUT:   return %CompleteClass.F.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @CompleteClass.F(imports.%Main.import_ref.b3bc94.1: type) [from "foo.carbon"] {
@@ -609,9 +609,9 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "foo.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %CompleteClass.d85) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %CompleteClass.d85) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UseField() -> %i32 {
+// CHECK:STDOUT: fn @UseField(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.cb5 = ref_binding_pattern v [concrete]
@@ -620,7 +620,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.d85 = var %v.var_patt
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.F [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc11_3: ref %CompleteClass.d85 = splice_block %v.var {}
-// CHECK:STDOUT:   %F.call: init %CompleteClass.d85 = call %F.ref() to %.loc11_3
+// CHECK:STDOUT:   %F.call: init %CompleteClass.d85 = call %F.ref(%.loc11_3)
 // CHECK:STDOUT:   assign %v.var, %F.call
 // CHECK:STDOUT:   %.loc11_27: type = splice_block %CompleteClass [concrete = constants.%CompleteClass.d85] {
 // CHECK:STDOUT:     %CompleteClass.ref: %CompleteClass.type = name_ref CompleteClass, imports.%Main.CompleteClass [concrete = constants.%CompleteClass.generic]
@@ -640,7 +640,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc12_11.2(%.loc12_11.2)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %v.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%v.var)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%T.67d) {
@@ -770,7 +770,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:   %v.var: ref %CompleteClass.582 = var %v.var_patt
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.F [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc14_34: ref %CompleteClass.667 = temporary_storage
-// CHECK:STDOUT:   %F.call: init %CompleteClass.667 = call %F.ref() to %.loc14_34
+// CHECK:STDOUT:   %F.call: init %CompleteClass.667 = call %F.ref(%.loc14_34)
 // CHECK:STDOUT:   %.loc14_3: %CompleteClass.582 = converted %F.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   %.loc14_28: type = splice_block %CompleteClass [concrete = constants.%CompleteClass.582] {
@@ -794,7 +794,7 @@ class Class(U:! type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "foo.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %CompleteClass.582) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %CompleteClass.582) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T

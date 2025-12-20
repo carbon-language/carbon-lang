@@ -88,11 +88,11 @@ fn F() -> array(i32, 1) {
 // CHECK:STDOUT:   %Copy.impl_witness_table.e76 = impl_witness_table (%Core.import_ref.18d), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%n.param: %i32) -> %i32 {
+// CHECK:STDOUT: fn @G(%n.param: %i32, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.F [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc6_12.1: ref %array_type = temporary_storage
-// CHECK:STDOUT:   %F.call: init %array_type = call %F.ref() to %.loc6_12.1
+// CHECK:STDOUT:   %F.call: init %array_type = call %F.ref(%.loc6_12.1)
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %.loc6_12.2: ref %array_type = temporary %.loc6_12.1, %F.call
 // CHECK:STDOUT:   %int_32.loc6: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -106,10 +106,10 @@ fn F() -> array(i32, 1) {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_15.2(%.loc6_15.2)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc6_12.2, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc6_12.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %array_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %array_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_symbolic_decl.carbon
 // CHECK:STDOUT:
@@ -127,11 +127,11 @@ fn F() -> array(i32, 1) {
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//symbolic_decl, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return.param: %array_type {
+// CHECK:STDOUT: fn @F(%return.param: ref %array_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   %val.ref: <error> = name_ref val, <error> [concrete = <error>]
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error> %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

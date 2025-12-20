@@ -127,15 +127,15 @@ class A {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.b09)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @DefaultConstructible.Make.%Self.binding.as_type (%Self.binding.as_type);
+// CHECK:STDOUT:   fn(%return.param: ref @DefaultConstructible.Make.%Self.binding.as_type (%Self.binding.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.DefaultConstructible.impl.Make() -> %return.param: %C {
+// CHECK:STDOUT: fn @C.as.DefaultConstructible.impl.Make(%return.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc25_33.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc25_33.2: init %C = class_init (), %return [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc25_34: init %C = converted %.loc25_33.1, %.loc25_33.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   return %.loc25_34 to %return
+// CHECK:STDOUT:   return %.loc25_34 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DefaultConstructible.Make(constants.%Self) {

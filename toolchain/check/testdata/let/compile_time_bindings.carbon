@@ -234,12 +234,12 @@ impl i32 as Empty {
 // CHECK:STDOUT:   .x = %x
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.F() -> %empty_tuple.type {
+// CHECK:STDOUT: fn @C.F(%return.param: ref %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, @C.%x
-// CHECK:STDOUT:   %.loc5_25: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_25: init %empty_tuple.type = tuple_init () %return [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_26: init %empty_tuple.type = converted %x.ref, %.loc5_25 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   return %.loc5_26 to %return
+// CHECK:STDOUT:   return %.loc5_26 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_let_before.carbon
@@ -304,12 +304,12 @@ impl i32 as Empty {
 // CHECK:STDOUT:   .F = %C.F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.F() -> %empty_tuple.type {
+// CHECK:STDOUT: fn @C.F(%return.param: ref %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, @C.%x
-// CHECK:STDOUT:   %.loc10_25: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc10_25: init %empty_tuple.type = tuple_init () %return [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc10_26: init %empty_tuple.type = converted %x.ref, %.loc10_25 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   return %.loc10_26 to %return
+// CHECK:STDOUT:   return %.loc10_26 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_multiple_lets.carbon
@@ -457,12 +457,12 @@ impl i32 as Empty {
 // CHECK:STDOUT:   .x = <unexpected>.inst{{[0-9A-F]+}}.loc14_7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.F() -> %empty_tuple.type {
+// CHECK:STDOUT: fn @C.F(%return.param: ref %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, <unexpected>.inst{{[0-9A-F]+}}.loc14_7
-// CHECK:STDOUT:   %.loc5_25: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_25: init %empty_tuple.type = tuple_init () %return [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_26: init %empty_tuple.type = converted %x.ref, %.loc5_25 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   return %.loc5_26 to %return
+// CHECK:STDOUT:   return %.loc5_26 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_use_in_function.carbon
@@ -472,7 +472,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %i32;
+// CHECK:STDOUT: fn @F(%return.param: ref %i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_use_in_block.carbon
 // CHECK:STDOUT:
@@ -481,7 +481,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %i32;
+// CHECK:STDOUT: fn @F(%return.param: ref %i32);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- return_in_interface.carbon
 // CHECK:STDOUT:
@@ -559,7 +559,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %impl.elem0.loc6_13.1: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc6_13.1 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %impl.elem0.loc6_13.1 [symbolic = %pattern_type (constants.%pattern_type.92d)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @I.F.%impl.elem0.loc6_13.1 (%impl.elem0);
+// CHECK:STDOUT:   fn(%return.param: ref @I.F.%impl.elem0.loc6_13.1 (%impl.elem0));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T(constants.%Self) {}
@@ -631,7 +631,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   .F = %I.F.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @I.F() -> <error>;
+// CHECK:STDOUT: fn @I.F(%return.param: ref <error>);
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_return_in_package_scope.carbon
 // CHECK:STDOUT:
@@ -678,7 +678,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> <error>;
+// CHECK:STDOUT: fn @F(%return.param: ref <error>);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

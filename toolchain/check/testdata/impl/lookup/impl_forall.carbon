@@ -199,7 +199,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %impl.elem0.loc14_12.2: @A.as.I.impl.F.%.loc14_12.2 (%.b46) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_12.2 (constants.%impl.elem0.201)]
 // CHECK:STDOUT:   %specific_impl_fn.loc14_12.2: <specific function> = specific_impl_function %impl.elem0.loc14_12.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc14_12.2 (constants.%specific_impl_fn.b84)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @A.as.I.impl.F.%A (%A.95c0c7.2)) -> @A.as.I.impl.F.%ptr.loc13_30.1 (%ptr.e8f8f9.2) {
+// CHECK:STDOUT:   fn(%self.param: ref @A.as.I.impl.F.%A (%A.95c0c7.2), %return.param: ref @A.as.I.impl.F.%ptr.loc13_30.1 (%ptr.e8f8f9.2)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: ref @A.as.I.impl.F.%A (%A.95c0c7.2) = name_ref self, %self
 // CHECK:STDOUT:     %n.ref: @A.as.I.impl.F.%A.elem (%A.elem.8a20fa.2) = name_ref n, @A.%.loc4 [concrete = @A.%.loc4]
@@ -210,7 +210,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:     %specific_impl_fn.loc14_12.1: <specific function> = specific_impl_function %impl.elem0.loc14_12.1, @Copy.Op(constants.%Copy.facet.c25) [symbolic = %specific_impl_fn.loc14_12.2 (constants.%specific_impl_fn.b84)]
 // CHECK:STDOUT:     %bound_method.loc14_12.2: <bound method> = bound_method %addr, %specific_impl_fn.loc14_12.1
 // CHECK:STDOUT:     %Copy.Op.call: init @A.as.I.impl.F.%ptr.loc13_30.1 (%ptr.e8f8f9.2) = call %bound_method.loc14_12.2(%addr)
-// CHECK:STDOUT:     return %Copy.Op.call to %return
+// CHECK:STDOUT:     return %Copy.Op.call %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -232,7 +232,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %specific_impl_fn.loc21_11.2: <specific function> = specific_impl_function %impl.elem0.loc21_11.2, @I.F(%W.loc19_16.1, %I.facet) [symbolic = %specific_impl_fn.loc21_11.2 (constants.%specific_impl_fn.898)]
 // CHECK:STDOUT:   %require_complete.loc21_11: <witness> = require_complete_type %A.loc19_32.1 [symbolic = %require_complete.loc21_11 (constants.%require_complete.fd656a.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%a.param: @TestGeneric.%ptr.loc19_33.1 (%ptr.5da)) -> @TestGeneric.%ptr.loc19_40.1 (%ptr.e8f8f9.4) {
+// CHECK:STDOUT:   fn(%a.param: @TestGeneric.%ptr.loc19_33.1 (%ptr.5da), %return.param: ref @TestGeneric.%ptr.loc19_40.1 (%ptr.e8f8f9.4)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %a.ref: @TestGeneric.%ptr.loc19_33.1 (%ptr.5da) = name_ref a, %a
 // CHECK:STDOUT:     %I.ref: %I.type.609 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
@@ -246,11 +246,11 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:     %specific_impl_fn.loc21_11.1: <specific function> = specific_impl_function %impl.elem0.loc21_11.1, @I.F(constants.%W, constants.%I.facet.558) [symbolic = %specific_impl_fn.loc21_11.2 (constants.%specific_impl_fn.898)]
 // CHECK:STDOUT:     %bound_method.loc21_22: <bound method> = bound_method %.loc21_11.1, %specific_impl_fn.loc21_11.1
 // CHECK:STDOUT:     %I.F.call: init @TestGeneric.%ptr.loc19_40.1 (%ptr.e8f8f9.4) = call %bound_method.loc21_22(%.loc21_11.1)
-// CHECK:STDOUT:     return %I.F.call to %return
+// CHECK:STDOUT:     return %I.F.call %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestSpecific(%a.param: %ptr.ed2) -> %ptr.c28 {
+// CHECK:STDOUT: fn @TestSpecific(%a.param: %ptr.ed2, %return.param: ref %ptr.c28) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %ptr.ed2 = name_ref a, %a
 // CHECK:STDOUT:   %I.ref: %I.type.609 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
@@ -265,7 +265,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @A.as.I.impl.F(constants.%empty_struct_type) [concrete = constants.%A.as.I.impl.F.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc27_23: <bound method> = bound_method %.loc27_11, %specific_fn
 // CHECK:STDOUT:   %A.as.I.impl.F.call: init %ptr.c28 = call %bound_method.loc27_23(%.loc27_11)
-// CHECK:STDOUT:   return %A.as.I.impl.F.call to %return
+// CHECK:STDOUT:   return %A.as.I.impl.F.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.as.I.impl(constants.%V.67d) {

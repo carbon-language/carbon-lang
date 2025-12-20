@@ -248,9 +248,9 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.loc15(%n.param: %i32, %m.param: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @A.loc15(%n.param: %i32, %m.param: %i32, %return.param: ref %i32) = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.loc23(%n.param: %i32, %m.param: %i32) -> %i32 {
+// CHECK:STDOUT: fn @A.loc23(%n.param: %i32, %m.param: %i32, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %impl.elem0: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
@@ -258,10 +258,10 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc23_38.2: <bound method> = bound_method %n.ref, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc23_38.2(%n.ref)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.loc25(%n.param: %i32, %m.param: %i32) -> %i32 {
+// CHECK:STDOUT: fn @B.loc25(%n.param: %i32, %m.param: %i32, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %impl.elem0: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
@@ -269,12 +269,12 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc25_38.2: <bound method> = bound_method %n.ref, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc25_38.2(%n.ref)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B.loc33(%n.param: %i32, %m.param: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @B.loc33(%n.param: %i32, %m.param: %i32, %return.param: ref %i32) = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.loc35(%n.param: %i32, %m.param: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @C.loc35(%n.param: %i32, %m.param: %i32, %return.param: ref %i32) = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.loc43(%n.param: %i32, %m.param: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @C.loc43(%n.param: %i32, %m.param: %i32, %return.param: ref %i32) = "int.sadd";
 // CHECK:STDOUT:

@@ -229,8 +229,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_48.2: init %f32.97e = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc11_48.3: ref %f32.97e = array_index %a.var, %int_0
-// CHECK:STDOUT:   %.loc11_48.4: init %f32.97e = initialize_from %.loc11_48.2 to %.loc11_48.3 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc11_48.5: init %array_type = array_init (%.loc11_48.4) to %a.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc11_48.4: init %f32.97e = initialize_from %.loc11_48.2, %.loc11_48.3 [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc11_48.5: init %array_type = array_init (%.loc11_48.4) %a.var [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc11_3: init %array_type = converted %.loc11_48.1, %.loc11_48.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc11_3
 // CHECK:STDOUT:   %.loc11_39: type = splice_block %array_type [concrete = constants.%array_type] {
@@ -261,7 +261,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %array_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %array_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- unsigned_long_long.carbon
 // CHECK:STDOUT:
@@ -395,8 +395,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_57.2: init %f32.97e = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc11_57.3: ref %f32.97e = array_index %a.var, %int_0
-// CHECK:STDOUT:   %.loc11_57.4: init %f32.97e = initialize_from %.loc11_57.2 to %.loc11_57.3 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc11_57.5: init %array_type = array_init (%.loc11_57.4) to %a.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc11_57.4: init %f32.97e = initialize_from %.loc11_57.2, %.loc11_57.3 [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc11_57.5: init %array_type = array_init (%.loc11_57.4) %a.var [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc11_3: init %array_type = converted %.loc11_57.1, %.loc11_57.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc11_3
 // CHECK:STDOUT:   %.loc11_48: type = splice_block %array_type [concrete = constants.%array_type] {
@@ -427,7 +427,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %array_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %array_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- long.carbon
 // CHECK:STDOUT:
@@ -683,8 +683,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc24_43.2: init %f32.97e = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc24_43.3: ref %f32.97e = array_index %a.var, %int_0
-// CHECK:STDOUT:   %.loc24_43.4: init %f32.97e = initialize_from %.loc24_43.2 to %.loc24_43.3 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc24_43.5: init %array_type = array_init (%.loc24_43.4) to %a.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc24_43.4: init %f32.97e = initialize_from %.loc24_43.2, %.loc24_43.3 [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc24_43.5: init %array_type = array_init (%.loc24_43.4) %a.var [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc24_3: init %array_type = converted %.loc24_43.1, %.loc24_43.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc24_3
 // CHECK:STDOUT:   %.loc24_34: type = splice_block %array_type [concrete = constants.%array_type] {
@@ -717,11 +717,11 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc24(%self.param: %array_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc24(%self.param: ref %array_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc22(%self.param: %IntResult) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc22(%self.param: ref %IntResult) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc19(%self.param: %LongResult) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc19(%self.param: ref %LongResult) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- unsigned_long.carbon
 // CHECK:STDOUT:
@@ -977,8 +977,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc24_52.2: init %f32.97e = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc24_52.3: ref %f32.97e = array_index %a.var, %int_0
-// CHECK:STDOUT:   %.loc24_52.4: init %f32.97e = initialize_from %.loc24_52.2 to %.loc24_52.3 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc24_52.5: init %array_type = array_init (%.loc24_52.4) to %a.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc24_52.4: init %f32.97e = initialize_from %.loc24_52.2, %.loc24_52.3 [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc24_52.5: init %array_type = array_init (%.loc24_52.4) %a.var [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc24_3: init %array_type = converted %.loc24_52.1, %.loc24_52.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc24_3
 // CHECK:STDOUT:   %.loc24_43: type = splice_block %array_type [concrete = constants.%array_type] {
@@ -1011,9 +1011,9 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc24(%self.param: %array_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc24(%self.param: ref %array_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc22(%self.param: %UIntResult) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc22(%self.param: ref %UIntResult) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc19(%self.param: %ULongResult) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc19(%self.param: ref %ULongResult) = "no_op";
 // CHECK:STDOUT:

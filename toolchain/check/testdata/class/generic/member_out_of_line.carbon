@@ -292,7 +292,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %impl.elem0.loc12_10.2: @Class.F.%.loc12 (%.72e) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc12_10.2 (constants.%impl.elem0.07b)]
 // CHECK:STDOUT:   %specific_impl_fn.loc12_10.2: <specific function> = specific_impl_function %impl.elem0.loc12_10.2, @Copy.Op(%T.loc6) [symbolic = %specific_impl_fn.loc12_10.2 (constants.%specific_impl_fn.2c9)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%n.param.loc11: @Class.F.%T.binding.as_type (%T.binding.as_type)) -> %return.param.loc11: @Class.F.%T.binding.as_type (%T.binding.as_type) {
+// CHECK:STDOUT:   fn(%n.param.loc11: @Class.F.%T.binding.as_type (%T.binding.as_type), %return.param.loc11: ref @Class.F.%T.binding.as_type (%T.binding.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %n.ref: @Class.F.%T.binding.as_type (%T.binding.as_type) = name_ref n, %n.loc11
 // CHECK:STDOUT:     %impl.elem0.loc12_10.1: @Class.F.%.loc12 (%.72e) = impl_witness_access constants.%Copy.lookup_impl_witness.58d, element0 [symbolic = %impl.elem0.loc12_10.2 (constants.%impl.elem0.07b)]
@@ -300,8 +300,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %specific_impl_fn.loc12_10.1: <specific function> = specific_impl_function %impl.elem0.loc12_10.1, @Copy.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc12_10.2 (constants.%specific_impl_fn.2c9)]
 // CHECK:STDOUT:     %bound_method.loc12_10.2: <bound method> = bound_method %n.ref, %specific_impl_fn.loc12_10.1
 // CHECK:STDOUT:     %.loc11_33: ref @Class.F.%T.binding.as_type (%T.binding.as_type) = splice_block %return.loc11 {}
-// CHECK:STDOUT:     %Copy.Op.call: init @Class.F.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc12_10.2(%n.ref) to %.loc11_33
-// CHECK:STDOUT:     return %Copy.Op.call to %return.loc11
+// CHECK:STDOUT:     %Copy.Op.call: init @Class.F.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc12_10.2(%n.ref, %.loc11_33)
+// CHECK:STDOUT:     return %Copy.Op.call %return.loc11
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -321,7 +321,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:   %impl.elem0.loc16_14.2: @Class.G.%.loc16_14.3 (%.72e) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc16_14.2 (constants.%impl.elem0.07b)]
 // CHECK:STDOUT:   %specific_impl_fn.loc16_14.2: <specific function> = specific_impl_function %impl.elem0.loc16_14.2, @Copy.Op(%T.loc7) [symbolic = %specific_impl_fn.loc16_14.2 (constants.%specific_impl_fn.2c9)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param.loc15: @Class.G.%Class (%Class)) -> %return.param.loc15: @Class.G.%T.binding.as_type (%T.binding.as_type) {
+// CHECK:STDOUT:   fn(%self.param.loc15: @Class.G.%Class (%Class), %return.param.loc15: ref @Class.G.%T.binding.as_type (%T.binding.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @Class.G.%Class (%Class) = name_ref self, %self.loc15
 // CHECK:STDOUT:     %n.ref: @Class.G.%Class.elem (%Class.elem) = name_ref n, @Class.%.loc8_8 [concrete = @Class.%.loc8_8]
@@ -332,8 +332,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %specific_impl_fn.loc16_14.1: <specific function> = specific_impl_function %impl.elem0.loc16_14.1, @Copy.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc16_14.2 (constants.%specific_impl_fn.2c9)]
 // CHECK:STDOUT:     %bound_method.loc16_14.2: <bound method> = bound_method %.loc16_14.2, %specific_impl_fn.loc16_14.1
 // CHECK:STDOUT:     %.loc15_41: ref @Class.G.%T.binding.as_type (%T.binding.as_type) = splice_block %return.loc15 {}
-// CHECK:STDOUT:     %Copy.Op.call: init @Class.G.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc16_14.2(%.loc16_14.2) to %.loc15_41
-// CHECK:STDOUT:     return %Copy.Op.call to %return.loc15
+// CHECK:STDOUT:     %Copy.Op.call: init @Class.G.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc16_14.2(%.loc16_14.2, %.loc15_41)
+// CHECK:STDOUT:     return %Copy.Op.call %return.loc15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

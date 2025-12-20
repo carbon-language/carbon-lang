@@ -330,7 +330,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> <error> {
+// CHECK:STDOUT: fn @G(%return.param: ref <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -340,7 +340,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H() -> <error> {
+// CHECK:STDOUT: fn @H(%return.param: ref <error>) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

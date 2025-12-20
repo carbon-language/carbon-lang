@@ -252,10 +252,10 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.d31)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.fa0)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @I.F.%Self.binding.as_type (%Self.binding.as_type.d31), %other.param: @I.F.%Self.binding.as_type (%Self.binding.as_type.d31)) -> @I.F.%Self.binding.as_type (%Self.binding.as_type.d31);
+// CHECK:STDOUT:   fn(%self.param: @I.F.%Self.binding.as_type (%Self.binding.as_type.d31), %other.param: @I.F.%Self.binding.as_type (%Self.binding.as_type.d31), %return.param: ref @I.F.%Self.binding.as_type (%Self.binding.as_type.d31));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @i32.as.I.impl.F(%self.param: %i32, %other.param: %i32) -> %i32 = "int.sadd";
+// CHECK:STDOUT: fn @i32.as.I.impl.F(%self.param: %i32, %other.param: %i32, %return.param: ref %i32) = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.F(constants.%Self.ab9) {
 // CHECK:STDOUT:   %Self => constants.%Self.ab9

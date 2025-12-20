@@ -254,9 +254,9 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc13(%self.param: %Optional.f08) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc13(%self.param: ref %Optional.f08) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: %array_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: ref %array_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_call_params_2.carbon
 // CHECK:STDOUT:
@@ -354,5 +354,5 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc22(%self.param: %array_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc22(%self.param: ref %array_type) = "no_op";
 // CHECK:STDOUT:

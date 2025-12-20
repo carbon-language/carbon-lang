@@ -164,7 +164,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT: generic fn @Inner.F(@Class.%F.loc5_13.2: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %i32 {
+// CHECK:STDOUT:   fn(%return.param: ref %i32) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:     %impl.elem0: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
@@ -173,7 +173,7 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:     %bound_method.loc8_29.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc8_29.2(%int_0) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:     %.loc8: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:     return %.loc8 to %return
+// CHECK:STDOUT:     return %.loc8 %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -184,13 +184,13 @@ fn Class(F:! type).Inner.G() -> i32 { return F(); }
 // CHECK:STDOUT:   %Inner.F: @Inner.G.%Inner.F.type (%Inner.F.type) = struct_value () [symbolic = %Inner.F (constants.%Inner.F)]
 // CHECK:STDOUT:   %Inner.F.specific_fn.loc13_46.2: <specific function> = specific_function %Inner.F, @Inner.F(%F.loc13_46) [symbolic = %Inner.F.specific_fn.loc13_46.2 (constants.%Inner.F.specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %i32 {
+// CHECK:STDOUT:   fn(%return.param.loc13: ref %i32) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc13: @Inner.G.%Inner.F.type (%Inner.F.type) = specific_constant @Inner.%Inner.F.decl, @Inner(constants.%F) [symbolic = %Inner.F (constants.%Inner.F)]
 // CHECK:STDOUT:     %F.ref: @Inner.G.%Inner.F.type (%Inner.F.type) = name_ref F, %.loc13 [symbolic = %Inner.F (constants.%Inner.F)]
 // CHECK:STDOUT:     %Inner.F.specific_fn.loc13_46.1: <specific function> = specific_function %F.ref, @Inner.F(constants.%F) [symbolic = %Inner.F.specific_fn.loc13_46.2 (constants.%Inner.F.specific_fn)]
 // CHECK:STDOUT:     %Inner.F.call: init %i32 = call %Inner.F.specific_fn.loc13_46.1()
-// CHECK:STDOUT:     return %Inner.F.call to %return.loc13
+// CHECK:STDOUT:     return %Inner.F.call %return.loc13
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

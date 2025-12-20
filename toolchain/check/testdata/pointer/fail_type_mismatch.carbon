@@ -78,10 +78,10 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConstMismatch(%p.param: %ptr.bf9) -> %const.987 {
+// CHECK:STDOUT: fn @ConstMismatch(%p.param: %ptr.bf9, %return.param: ref %const.987) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.bf9 = name_ref p, %p
 // CHECK:STDOUT:   %.loc23: %const.987 = converted %p.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error> %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

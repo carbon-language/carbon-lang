@@ -486,7 +486,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %S) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %S) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_non_nullable_pointer_param_using_const_pointer.carbon
 // CHECK:STDOUT:
@@ -550,7 +550,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %const) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %const) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_double_non_nullable_pointer_param.carbon
 // CHECK:STDOUT:
@@ -649,9 +649,9 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: %ptr.5c7) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: ref %ptr.5c7) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: %S) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: ref %S) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_non_nullable_pointer_to_const_param_using_const.carbon
 // CHECK:STDOUT:
@@ -695,7 +695,7 @@ fn F() {
 // CHECK:STDOUT:   %s.var: ref %const = var %s.var_patt
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %.loc10_3: ref %const = splice_block %s.var {}
-// CHECK:STDOUT:   %G.call: init %const = call %G.ref() to %.loc10_3
+// CHECK:STDOUT:   %G.call: init %const = call %G.ref(%.loc10_3)
 // CHECK:STDOUT:   assign %s.var, %G.call
 // CHECK:STDOUT:   %.loc10_10: type = splice_block %const [concrete = constants.%const] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -713,7 +713,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %const) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %const) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_non_nullable_pointer_to_const_param_using_non_const.carbon
 // CHECK:STDOUT:
@@ -758,7 +758,7 @@ fn F() {
 // CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %.loc8_3: ref %S = splice_block %s.var {}
-// CHECK:STDOUT:   %G.call: init %S = call %G.ref() to %.loc8_3
+// CHECK:STDOUT:   %G.call: init %S = call %G.ref(%.loc8_3)
 // CHECK:STDOUT:   assign %s.var, %G.call
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %S.ref [concrete = constants.%S] {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -777,7 +777,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %S) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %S) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_const_non_nullable_pointer_param_using_const.carbon
 // CHECK:STDOUT:
@@ -841,7 +841,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %const) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %const) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_const_non_nullable_pointer_param_using_non_const.carbon
 // CHECK:STDOUT:
@@ -901,7 +901,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %ptr) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %ptr) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_const_nullable_pointer_param_using_const.carbon
 // CHECK:STDOUT:
@@ -1032,9 +1032,9 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: %Optional.5a9) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: ref %Optional.5a9) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: %const.b9a) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: ref %const.b9a) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_const_nullable_pointer_param_using_non_const.carbon
 // CHECK:STDOUT:
@@ -1155,9 +1155,9 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: %Optional.5a9) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc11(%self.param: ref %Optional.5a9) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: %ptr.5c7) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc10(%self.param: ref %ptr.5c7) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_non_nullable_pointer_return.carbon
 // CHECK:STDOUT:
@@ -1413,9 +1413,9 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: %Optional.5a9) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: ref %Optional.5a9) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: %S) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: ref %S) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- null_pointer_arg_to_pointer_param.carbon
 // CHECK:STDOUT:
@@ -1514,7 +1514,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: %Optional.c5a) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: ref %Optional.c5a) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nonnull_pointer_arg_to_pointer_param.carbon
 // CHECK:STDOUT:
@@ -1641,9 +1641,9 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: %Optional.5a9) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc9(%self.param: ref %Optional.5a9) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: %S) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: ref %S) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- forward_nullable_pointer.carbon
 // CHECK:STDOUT:
@@ -1726,7 +1726,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: %Optional.4ac) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc8(%self.param: ref %Optional.4ac) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_deduced_any_param_as_pointer.carbon
 // CHECK:STDOUT:
@@ -1799,7 +1799,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %S) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %S) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_deduced_pointer_param_as_pointer.carbon
 // CHECK:STDOUT:
@@ -1987,7 +1987,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc13_58(%self.param: %Optional.5a9) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc13_58(%self.param: ref %Optional.5a9) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp.loc13_48(%self.param: %S) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp.loc13_48(%self.param: ref %S) = "no_op";
 // CHECK:STDOUT:

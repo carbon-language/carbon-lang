@@ -176,13 +176,13 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnCUnused() -> %C;
+// CHECK:STDOUT: fn @ReturnCUnused(%return.param: ref %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnCUsed() -> %C;
+// CHECK:STDOUT: fn @ReturnCUsed(%return.param: ref %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnDUnused() -> %D;
+// CHECK:STDOUT: fn @ReturnDUnused(%return.param: ref %D);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ReturnDUsed() -> %D;
+// CHECK:STDOUT: fn @ReturnDUsed(%return.param: ref %D);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call() {
 // CHECK:STDOUT: !entry:
@@ -267,11 +267,11 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %ReturnCUsed.call: init <error> = call %ReturnCUsed.ref()
 // CHECK:STDOUT:   %ReturnDUnused.ref: %ReturnDUnused.type = name_ref ReturnDUnused, imports.%Main.ReturnDUnused [concrete = constants.%ReturnDUnused]
 // CHECK:STDOUT:   %.loc33_17.1: ref %D = temporary_storage
-// CHECK:STDOUT:   %ReturnDUnused.call: init %D = call %ReturnDUnused.ref() to %.loc33_17.1
+// CHECK:STDOUT:   %ReturnDUnused.call: init %D = call %ReturnDUnused.ref(%.loc33_17.1)
 // CHECK:STDOUT:   %.loc33_17.2: ref %D = temporary %.loc33_17.1, %ReturnDUnused.call
 // CHECK:STDOUT:   %ReturnDUsed.ref: %ReturnDUsed.type = name_ref ReturnDUsed, imports.%Main.ReturnDUsed [concrete = constants.%ReturnDUsed]
 // CHECK:STDOUT:   %.loc34_15.1: ref %D = temporary_storage
-// CHECK:STDOUT:   %ReturnDUsed.call: init %D = call %ReturnDUsed.ref() to %.loc34_15.1
+// CHECK:STDOUT:   %ReturnDUsed.call: init %D = call %ReturnDUsed.ref(%.loc34_15.1)
 // CHECK:STDOUT:   %.loc34_15.2: ref %D = temporary %.loc34_15.1, %ReturnDUsed.call
 // CHECK:STDOUT:   %DestroyOp.bound.loc34: <bound method> = bound_method %.loc34_15.2, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call.loc34: init %empty_tuple.type = call %DestroyOp.bound.loc34(%.loc34_15.2)
@@ -288,5 +288,5 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnDUsed [from "fail_incomplete_return.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %D) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %D) = "no_op";
 // CHECK:STDOUT:

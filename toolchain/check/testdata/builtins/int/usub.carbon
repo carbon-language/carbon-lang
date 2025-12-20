@@ -47,13 +47,13 @@ let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> %i32 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Sub.ref: %Sub.type = name_ref Sub, file.%Sub.decl [concrete = constants.%Sub]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %Sub.call: init %i32 = call %Sub.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   return %Sub.call to %return
+// CHECK:STDOUT:   return %Sub.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -275,7 +275,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.loc5_21: type = pattern_type %SubscriptType [symbolic = %pattern_type.loc5_21 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %pattern_type.loc5_47: type = pattern_type %ElementType [symbolic = %pattern_type.loc5_47 (constants.%pattern_type.946)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @IndexWith.At.%Self.binding.as_type (%Self.binding.as_type), %subscript.param: @IndexWith.At.%SubscriptType (%SubscriptType)) -> @IndexWith.At.%ElementType (%ElementType);
+// CHECK:STDOUT:   fn(%self.param: @IndexWith.At.%Self.binding.as_type (%Self.binding.as_type), %subscript.param: @IndexWith.At.%SubscriptType (%SubscriptType), %return.param: ref @IndexWith.At.%ElementType (%ElementType));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(constants.%SubscriptType, constants.%ElementType) {
@@ -453,12 +453,12 @@ fn F() {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.IndexWith.impl.At(%self.param: %C, %subscript.param: %empty_tuple.type) -> %empty_tuple.type {
+// CHECK:STDOUT: fn @C.as.IndexWith.impl.At(%self.param: %C, %subscript.param: %empty_tuple.type, %return.param: ref %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_13.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc10_13.2: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc10_13.2: init %empty_tuple.type = tuple_init () %return [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc10_14: init %empty_tuple.type = converted %.loc10_13.1, %.loc10_13.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   return %.loc10_14 to %return
+// CHECK:STDOUT:   return %.loc10_14 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -481,7 +481,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %C) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(constants.%SubscriptType, constants.%ElementType) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType

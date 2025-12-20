@@ -122,11 +122,11 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeI32() -> %i32;
+// CHECK:STDOUT: fn @MakeI32(%return.param: ref %i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeF64() -> %f64.d77;
+// CHECK:STDOUT: fn @MakeF64(%return.param: ref %f64.d77);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return.param: %struct_type.a.b {
+// CHECK:STDOUT: fn @F(%return.param: ref %struct_type.a.b) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.a5c = value_binding_pattern x [concrete]
@@ -174,7 +174,7 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %bound_method.loc21_10.2: <bound method> = bound_method %.loc21_10.1, %specific_fn.loc21_10.1
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc21_10.2(%.loc21_10.1)
 // CHECK:STDOUT:   %.loc21_10.2: ref %i32 = struct_access %return, element1
-// CHECK:STDOUT:   %.loc21_10.3: init %i32 = initialize_from %Int.as.Copy.impl.Op.call to %.loc21_10.2
+// CHECK:STDOUT:   %.loc21_10.3: init %i32 = initialize_from %Int.as.Copy.impl.Op.call, %.loc21_10.2
 // CHECK:STDOUT:   %.loc21_10.4: %f64.d77 = struct_access %y.ref, element0
 // CHECK:STDOUT:   %impl.elem0.loc21_10.2: %.c41 = impl_witness_access constants.%Copy.impl_witness.1e3, element0 [concrete = constants.%Float.as.Copy.impl.Op.f05]
 // CHECK:STDOUT:   %bound_method.loc21_10.3: <bound method> = bound_method %.loc21_10.4, %impl.elem0.loc21_10.2
@@ -182,9 +182,9 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %bound_method.loc21_10.4: <bound method> = bound_method %.loc21_10.4, %specific_fn.loc21_10.2
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.call: init %f64.d77 = call %bound_method.loc21_10.4(%.loc21_10.4)
 // CHECK:STDOUT:   %.loc21_10.5: ref %f64.d77 = struct_access %return, element0
-// CHECK:STDOUT:   %.loc21_10.6: init %f64.d77 = initialize_from %Float.as.Copy.impl.Op.call to %.loc21_10.5
-// CHECK:STDOUT:   %.loc21_10.7: init %struct_type.a.b = struct_init (%.loc21_10.3, %.loc21_10.6) to %return
+// CHECK:STDOUT:   %.loc21_10.6: init %f64.d77 = initialize_from %Float.as.Copy.impl.Op.call, %.loc21_10.5
+// CHECK:STDOUT:   %.loc21_10.7: init %struct_type.a.b = struct_init (%.loc21_10.3, %.loc21_10.6) %return
 // CHECK:STDOUT:   %.loc21_11: init %struct_type.a.b = converted %y.ref, %.loc21_10.7
-// CHECK:STDOUT:   return %.loc21_11 to %return
+// CHECK:STDOUT:   return %.loc21_11 %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

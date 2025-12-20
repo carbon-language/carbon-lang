@@ -46,13 +46,13 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestOp(%a.param: %C) -> %return.param: %C {
+// CHECK:STDOUT: fn @TestOp(%a.param: %C, %return.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %impl.elem1: %.b59 = impl_witness_access constants.%BitComplement.impl_witness, element1 [concrete = constants.%C.as.BitComplement.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %C.as.BitComplement.impl.Op.call: init %C = call %bound_method(%a.ref) to %.loc27
-// CHECK:STDOUT:   return %C.as.BitComplement.impl.Op.call to %return
+// CHECK:STDOUT:   %C.as.BitComplement.impl.Op.call: init %C = call %bound_method(%a.ref, %.loc27)
+// CHECK:STDOUT:   return %C.as.BitComplement.impl.Op.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

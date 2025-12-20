@@ -240,13 +240,13 @@ let bad4: Core.IntLiteral() = LeftShiftOfLit(12, an_i32);
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> %i32 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32, %return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %LeftShift.ref: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [concrete = constants.%LeftShift]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %LeftShift.call: init %i32 = call %LeftShift.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   return %LeftShift.call to %return
+// CHECK:STDOUT:   return %LeftShift.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- u32.carbon
@@ -262,12 +262,12 @@ let bad4: Core.IntLiteral() = LeftShiftOfLit(12, an_i32);
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCall(%a.param: %u32, %b.param: %i32) -> %u32 {
+// CHECK:STDOUT: fn @RuntimeCall(%a.param: %u32, %b.param: %i32, %return.param: ref %u32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %LeftShift.ref: %LeftShift.type = name_ref LeftShift, file.%LeftShift.decl [concrete = constants.%LeftShift]
 // CHECK:STDOUT:   %a.ref: %u32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %LeftShift.call: init %u32 = call %LeftShift.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   return %LeftShift.call to %return
+// CHECK:STDOUT:   return %LeftShift.call %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

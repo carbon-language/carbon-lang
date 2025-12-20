@@ -137,7 +137,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   .b = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return.param: %C {
+// CHECK:STDOUT: fn @F(%return.param: ref %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %result.patt: %pattern_type.7c7 = ref_binding_pattern result [concrete]
@@ -153,7 +153,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21_43.1: init %i32 = call %bound_method.loc21_43.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc21_43.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21_43.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc21_43.3: ref %i32 = class_element_access %return, element0
-// CHECK:STDOUT:   %.loc21_43.4: init %i32 = initialize_from %.loc21_43.2 to %.loc21_43.3 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc21_43.4: init %i32 = initialize_from %.loc21_43.2, %.loc21_43.3 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %impl.elem0.loc21_43.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc21_43.3: <bound method> = bound_method %int_2, %impl.elem0.loc21_43.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
 // CHECK:STDOUT:   %specific_fn.loc21_43.2: <specific function> = specific_function %impl.elem0.loc21_43.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -161,16 +161,16 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21_43.2: init %i32 = call %bound_method.loc21_43.4(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc21_43.5: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21_43.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc21_43.6: ref %i32 = class_element_access %return, element1
-// CHECK:STDOUT:   %.loc21_43.7: init %i32 = initialize_from %.loc21_43.5 to %.loc21_43.6 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc21_43.7: init %i32 = initialize_from %.loc21_43.5, %.loc21_43.6 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc21_43.8: init %C = class_init (%.loc21_43.4, %.loc21_43.7), %return [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc21_12: init %C = converted %.loc21_43.1, %.loc21_43.8 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign %return, %.loc21_12
 // CHECK:STDOUT:   %C.ref.loc21: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %result: ref %C = ref_binding result, %return
-// CHECK:STDOUT:   return %result to %return
+// CHECK:STDOUT:   return %result %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %i32 {
+// CHECK:STDOUT: fn @G(%return.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %result.patt: %pattern_type.7ce = ref_binding_pattern result [concrete]
@@ -196,5 +196,5 @@ fn G() -> i32 {
 // CHECK:STDOUT:   return %.loc26_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyOp(%self.param: %i32) = "no_op";
+// CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:

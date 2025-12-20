@@ -129,7 +129,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   .p = %.loc22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.F(%self.param.loc25: %Class) -> %i32 {
+// CHECK:STDOUT: fn @Class.F(%self.param.loc25: %Class, %return.param.loc25: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Class = name_ref self, %self.loc25
 // CHECK:STDOUT:   %p.ref: %Class.elem = name_ref p, @Class.%.loc22 [concrete = @Class.%.loc22]
@@ -140,10 +140,10 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %Class.F.bound: <bound method> = bound_method %.loc26_11.1, %F.ref
 // CHECK:STDOUT:   %.loc26_11.2: %Class = acquire_value %.loc26_11.1
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%.loc26_11.2)
-// CHECK:STDOUT:   return %Class.F.call to %return.loc25
+// CHECK:STDOUT:   return %Class.F.call %return.loc25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.Make() -> %return.param: %Class {
+// CHECK:STDOUT: fn @Class.Make(%return.param: ref %Class) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type.904 = ref_binding_pattern s [concrete]
@@ -161,10 +161,10 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %bound_method.loc19_15.2: <bound method> = bound_method %addr, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.8e5 = call %bound_method.loc19_15.2(%addr)
 // CHECK:STDOUT:   %.loc19_17.2: ref %ptr.8e5 = class_element_access %s.ref.loc19_5, element0
-// CHECK:STDOUT:   %.loc19_17.3: init %ptr.8e5 = initialize_from %ptr.as.Copy.impl.Op.call to %.loc19_17.2
+// CHECK:STDOUT:   %.loc19_17.3: init %ptr.8e5 = initialize_from %ptr.as.Copy.impl.Op.call, %.loc19_17.2
 // CHECK:STDOUT:   %.loc19_17.4: init %Class = class_init (%.loc19_17.3), %s.ref.loc19_5
 // CHECK:STDOUT:   %.loc19_7: init %Class = converted %.loc19_17.1, %.loc19_17.4
 // CHECK:STDOUT:   assign %s.ref.loc19_5, %.loc19_7
-// CHECK:STDOUT:   return %s to %return
+// CHECK:STDOUT:   return %s %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

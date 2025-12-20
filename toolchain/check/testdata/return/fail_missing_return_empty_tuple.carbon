@@ -44,7 +44,7 @@ fn F() -> () {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %empty_tuple.type {
+// CHECK:STDOUT: fn @F(%return.param: ref %empty_tuple.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

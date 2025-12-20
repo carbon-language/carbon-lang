@@ -94,15 +94,15 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT:   .G = %Class.G.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.F() -> %i32 {
+// CHECK:STDOUT: fn @Class.F(%return.param.loc20: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:   %G.ref.loc21: %Class.G.type = name_ref G, @Class.%Class.G.decl [concrete = constants.%Class.G]
 // CHECK:STDOUT:   %Class.G.call.loc21: init %i32 = call %G.ref.loc21()
 // CHECK:STDOUT:   %G.ref.loc22: %Class.G.type = name_ref G, @Class.%Class.G.decl [concrete = constants.%Class.G]
 // CHECK:STDOUT:   %Class.G.call.loc22: init %i32 = call %G.ref.loc22()
-// CHECK:STDOUT:   return %Class.G.call.loc22 to %return.loc20
+// CHECK:STDOUT:   return %Class.G.call.loc22 %return.loc20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.G() -> %i32;
+// CHECK:STDOUT: fn @Class.G(%return.param: ref %i32);
 // CHECK:STDOUT:
