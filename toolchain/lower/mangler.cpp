@@ -135,6 +135,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
       case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
         MangleNameId(
             os, sem_ir().interfaces().Get(interface_decl.interface_id).name_id);
+        MangleSpecificId(os, specific_id);
         break;
       }
       case SemIR::Namespace::Kind: {

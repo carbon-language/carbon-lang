@@ -105,7 +105,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8"(ptr %self) #0 !dbg !49 {
-// CHECK:STDOUT:   call void @"_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.Core.dcdd24268af36579"(ptr %self, i32 1), !dbg !55
+// CHECK:STDOUT:   call void @"_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.e2da7149b7fcf782.Core.dcdd24268af36579"(ptr %self, i32 1), !dbg !55
 // CHECK:STDOUT:   ret void, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -137,8 +137,8 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.Core.dcdd24268af36579"(ptr %self, i32 %other) #3 !dbg !79 {
-// CHECK:STDOUT:   %1 = call i32 @"_CConvert.1e58d10da180d7d9:ImplicitAs.Core.255ef555a3d2f793"(i32 %other), !dbg !85
+// CHECK:STDOUT: define linkonce_odr void @"_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.e2da7149b7fcf782.Core.dcdd24268af36579"(ptr %self, i32 %other) #3 !dbg !79 {
+// CHECK:STDOUT:   %1 = call i32 @"_CConvert.1e58d10da180d7d9:ImplicitAs.39e2e54f50ee65cc.Core.255ef555a3d2f793"(i32 %other), !dbg !85
 // CHECK:STDOUT:   %2 = load i32, ptr %self, align 4, !dbg !86
 // CHECK:STDOUT:   %3 = add i32 %2, %1, !dbg !86
 // CHECK:STDOUT:   store i32 %3, ptr %self, align 4, !dbg !86
@@ -162,7 +162,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.1e58d10da180d7d9:ImplicitAs.Core.255ef555a3d2f793"(i32 %self) #0 !dbg !96 {
+// CHECK:STDOUT: define linkonce_odr i32 @"_CConvert.1e58d10da180d7d9:ImplicitAs.39e2e54f50ee65cc.Core.255ef555a3d2f793"(i32 %self) #0 !dbg !96 {
 // CHECK:STDOUT:   ret i32 %self, !dbg !102
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -256,7 +256,7 @@ fn F() {
 // CHECK:STDOUT: !76 = !DILocalVariable(arg: 1, scope: !74, type: !17)
 // CHECK:STDOUT: !77 = !DILocation(line: 116, column: 12, scope: !74)
 // CHECK:STDOUT: !78 = !DILocation(line: 116, column: 5, scope: !74)
-// CHECK:STDOUT: !79 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.Core.dcdd24268af36579", scope: null, file: !50, line: 275, type: !80, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !82)
+// CHECK:STDOUT: !79 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.e2da7149b7fcf782.Core.dcdd24268af36579", scope: null, file: !50, line: 275, type: !80, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !82)
 // CHECK:STDOUT: !80 = !DISubroutineType(types: !81)
 // CHECK:STDOUT: !81 = !{null, !16, !16}
 // CHECK:STDOUT: !82 = !{!83, !84}
@@ -273,7 +273,7 @@ fn F() {
 // CHECK:STDOUT: !93 = distinct !DISubprogram(name: "None", linkageName: "_CNone.3e8267224c5dc9c2:OptionalStorage.Core.329e9a7481f16207", scope: null, file: !37, line: 99, type: !65, spFlags: DISPFlagDefinition, unit: !2)
 // CHECK:STDOUT: !94 = !DILocation(line: 101, column: 5, scope: !93)
 // CHECK:STDOUT: !95 = !DILocation(line: 102, column: 5, scope: !93)
-// CHECK:STDOUT: !96 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.1e58d10da180d7d9:ImplicitAs.Core.255ef555a3d2f793", scope: null, file: !97, line: 24, type: !98, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !100)
+// CHECK:STDOUT: !96 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.1e58d10da180d7d9:ImplicitAs.39e2e54f50ee65cc.Core.255ef555a3d2f793", scope: null, file: !97, line: 24, type: !98, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !100)
 // CHECK:STDOUT: !97 = !DIFile(filename: "{{.*}}/prelude/operators/as.carbon", directory: "")
 // CHECK:STDOUT: !98 = !DISubroutineType(types: !99)
 // CHECK:STDOUT: !99 = !{!16, !16}
