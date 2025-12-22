@@ -1002,16 +1002,6 @@ auto Formatter::FormatInstArgAndKind(Inst::ArgAndKind arg_and_kind) -> void {
 
 auto Formatter::FormatInstRhs(Inst inst) -> void {
   CARBON_KIND_SWITCH(inst) {
-    case InstKind::ArrayInit:
-    case InstKind::StructInit:
-    case InstKind::TupleInit: {
-      auto init = inst.As<AnyAggregateInit>();
-      FormatArgs(init.elements_id);
-      out_ << " ";
-      FormatArg(init.dest_id);
-      return;
-    }
-
     case InstKind::ImportRefLoaded:
     case InstKind::ImportRefUnloaded:
       FormatImportRefRhs(inst.As<AnyImportRef>());
@@ -1114,11 +1104,6 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       return;
     }
 
-    case CARBON_KIND(InitializeFrom init): {
-      FormatArgs(init.src_id, init.dest_id);
-      return;
-    }
-
     case CARBON_KIND(InstValue inst): {
       out_ << ' ';
       OpenBrace();
@@ -1178,9 +1163,10 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
     }
 
     case CARBON_KIND(ReturnExpr ret): {
-      FormatArgs(ret.expr_id);
       if (ret.dest_id.has_value()) {
-        FormatArgs(ret.dest_id);
+        FormatArgs(ret.expr_id, ret.dest_id);
+      } else {
+        FormatArgs(ret.expr_id);
       }
       return;
     }

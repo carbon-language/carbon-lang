@@ -1235,7 +1235,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b.param
 // CHECK:STDOUT:   %return.ref: ref bool = name_ref <return slot>, %return.param
 // CHECK:STDOUT:   %FMissingParam.as.J.impl.F.bound: <bound method> = bound_method %self.ref, %F.ref
-// CHECK:STDOUT:   return <error> %return
+// CHECK:STDOUT:   return <error>, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @FMissingImplicitParam.as.J.impl.F.loc130_26.1(%b.param: bool, %return.param: ref bool);
@@ -1247,7 +1247,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b.param
 // CHECK:STDOUT:   %return.ref: ref bool = name_ref <return slot>, %return.param
 // CHECK:STDOUT:   %FMissingImplicitParam.as.J.impl.F.call: init bool = call %F.ref(%b.ref)
-// CHECK:STDOUT:   return %FMissingImplicitParam.as.J.impl.F.call %return
+// CHECK:STDOUT:   return %FMissingImplicitParam.as.J.impl.F.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @FMissingReturnType.as.J.impl.F.loc152_30.1(%self.param: bool, %b.param: bool);
@@ -1261,7 +1261,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %FMissingReturnType.as.J.impl.F.bound: <bound method> = bound_method %self.ref, %F.ref
 // CHECK:STDOUT:   %FMissingReturnType.as.J.impl.F.call: init %empty_tuple.type = call %FMissingReturnType.as.J.impl.F.bound(%self.ref, %b.ref)
 // CHECK:STDOUT:   %.loc152: bool = converted %FMissingReturnType.as.J.impl.F.call, <error> [concrete = <error>]
-// CHECK:STDOUT:   return <error> %return
+// CHECK:STDOUT:   return <error>, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @FDifferentParamType.as.J.impl.F.loc171_38.1(%self.param: bool, %b.param: %FDifferentParamType, %return.param: ref bool);
@@ -1275,7 +1275,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %FDifferentParamType.as.J.impl.F.bound: <bound method> = bound_method %self.ref, %F.ref
 // CHECK:STDOUT:   %.loc103: %FDifferentParamType = converted %b.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %FDifferentParamType.as.J.impl.F.call: init bool = call %FDifferentParamType.as.J.impl.F.bound(%self.ref, <error>)
-// CHECK:STDOUT:   return %FDifferentParamType.as.J.impl.F.call %return
+// CHECK:STDOUT:   return %FDifferentParamType.as.J.impl.F.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @FDifferentImplicitParamType.as.J.impl.F.loc184_38.1(%self.param: %FDifferentImplicitParamType, %b.param: bool, %return.param: ref bool);
@@ -1289,7 +1289,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %FDifferentImplicitParamType.as.J.impl.F.bound: <bound method> = bound_method %self.ref, %F.ref
 // CHECK:STDOUT:   %.loc103: %FDifferentImplicitParamType = converted %self.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %FDifferentImplicitParamType.as.J.impl.F.call: init bool = call %FDifferentImplicitParamType.as.J.impl.F.bound(<error>, %b.ref)
-// CHECK:STDOUT:   return %FDifferentImplicitParamType.as.J.impl.F.call %return
+// CHECK:STDOUT:   return %FDifferentImplicitParamType.as.J.impl.F.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @FDifferentReturnType.as.J.impl.F.loc200_38.1(%self.param: bool, %b.param: bool, %return.param: ref %FDifferentReturnType);
@@ -1304,7 +1304,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %.loc200_38.1: ref %FDifferentReturnType = temporary_storage
 // CHECK:STDOUT:   %FDifferentReturnType.as.J.impl.F.call: init %FDifferentReturnType = call %FDifferentReturnType.as.J.impl.F.bound(%self.ref, %b.ref, %.loc200_38.1)
 // CHECK:STDOUT:   %.loc200_38.2: bool = converted %FDifferentReturnType.as.J.impl.F.call, <error> [concrete = <error>]
-// CHECK:STDOUT:   return <error> %return
+// CHECK:STDOUT:   return <error>, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @SelfNested.F(@SelfNested.%Self: %SelfNested.type) {
@@ -1334,7 +1334,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %.loc211_9.1: %SelfNestedBadParam = struct_access %tuple.elem1, element0
 // CHECK:STDOUT:   %.loc211_9.2: %i32 = converted %.loc211_9.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   %SelfNestedBadParam.as.SelfNested.impl.F.call: init %array_type.388 = call %F.ref(<error>, %.loc211_41)
-// CHECK:STDOUT:   return %SelfNestedBadParam.as.SelfNested.impl.F.call %return
+// CHECK:STDOUT:   return %SelfNestedBadParam.as.SelfNested.impl.F.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SelfNestedBadReturnType.as.SelfNested.impl.F.loc239_112.1(%x.param: %tuple.type.064, %return.param: ref %array_type.388);
@@ -1347,7 +1347,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %.loc239_112.1: ref %array_type.388 = temporary_storage
 // CHECK:STDOUT:   %SelfNestedBadReturnType.as.SelfNested.impl.F.call: init %array_type.388 = call %F.ref(%x.ref, %.loc239_112.1)
 // CHECK:STDOUT:   %.loc239_112.2: %array_type.31b = converted %SelfNestedBadReturnType.as.SelfNested.impl.F.call, <error> [concrete = <error>]
-// CHECK:STDOUT:   return <error> %return
+// CHECK:STDOUT:   return <error>, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.F(constants.%Self.ab9) {}

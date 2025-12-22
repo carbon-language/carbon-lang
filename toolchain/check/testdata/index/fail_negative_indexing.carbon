@@ -155,7 +155,7 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %.loc15_31.6: ref %i32 = array_index file.%c.var, %int_1
 // CHECK:STDOUT:   %.loc15_31.7: init %i32 = initialize_from %.loc15_31.5, %.loc15_31.6 [concrete = constants.%int_42.c68]
-// CHECK:STDOUT:   %.loc15_31.8: init %array_type = array_init (%.loc15_31.4, %.loc15_31.7) file.%c.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc15_31.8: init %array_type = array_init (%.loc15_31.4, %.loc15_31.7), file.%c.var [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc15_1: init %array_type = converted %.loc15_31.1, %.loc15_31.8 [concrete = constants.%array]
 // CHECK:STDOUT:   assign file.%c.var, %.loc15_1
 // CHECK:STDOUT:   %c.ref: ref %array_type = name_ref c, file.%c [concrete = file.%c.var]

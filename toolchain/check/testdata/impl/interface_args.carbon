@@ -1250,7 +1250,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %impl.elem0: %.d31 = impl_witness_access constants.%Factory.impl_witness, element0 [concrete = constants.%A.as.Factory.impl.Make]
 // CHECK:STDOUT:   %.loc4: ref %B = splice_block %return {}
 // CHECK:STDOUT:   %A.as.Factory.impl.Make.call: init %B = call %impl.elem0(%.loc4)
-// CHECK:STDOUT:   return %A.as.Factory.impl.Make.call %return
+// CHECK:STDOUT:   return %A.as.Factory.impl.Make.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.as.Factory.impl.Make [from "factory.carbon"];
@@ -1267,7 +1267,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   %.loc7: ref %B = splice_block %return {}
 // CHECK:STDOUT:   %A.as.Factory.impl.Method.call: init %B = call %bound_method(%a.ref, %.loc7)
-// CHECK:STDOUT:   return %A.as.Factory.impl.Method.call %return
+// CHECK:STDOUT:   return %A.as.Factory.impl.Method.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.as.Factory.impl.Method [from "factory.carbon"];
@@ -1509,7 +1509,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(constants.%C)> [concrete = constants.%Factory.type.2db]
 // CHECK:STDOUT:   %.loc13: %Factory.assoc_type.930 = specific_constant imports.%Main.import_ref.6f2, @Factory(constants.%C) [concrete = constants.%assoc0.4ac]
 // CHECK:STDOUT:   %Make.ref: %Factory.assoc_type.930 = name_ref Make, %.loc13 [concrete = constants.%assoc0.4ac]
-// CHECK:STDOUT:   return <error> %return
+// CHECK:STDOUT:   return <error>, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InstanceC(%a.param: %A, %return.param: ref %C) {
@@ -1520,7 +1520,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(constants.%C)> [concrete = constants.%Factory.type.2db]
 // CHECK:STDOUT:   %.loc21: %Factory.assoc_type.930 = specific_constant imports.%Main.import_ref.fb1, @Factory(constants.%C) [concrete = constants.%assoc1.09b]
 // CHECK:STDOUT:   %Method.ref: %Factory.assoc_type.930 = name_ref Method, %.loc21 [concrete = constants.%assoc1.09b]
-// CHECK:STDOUT:   return <error> %return
+// CHECK:STDOUT:   return <error>, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Factory(constants.%T) {

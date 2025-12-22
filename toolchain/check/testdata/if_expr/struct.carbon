@@ -145,7 +145,7 @@ fn F(cond: bool) {
 // CHECK:STDOUT:   %.loc18_46.5: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_46.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc18_46.6: ref %i32 = struct_access %a.var, element1
 // CHECK:STDOUT:   %.loc18_46.7: init %i32 = initialize_from %.loc18_46.5, %.loc18_46.6 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc18_46.8: init %struct_type.a.b.501 = struct_init (%.loc18_46.4, %.loc18_46.7) %a.var [concrete = constants.%struct.ed5]
+// CHECK:STDOUT:   %.loc18_46.8: init %struct_type.a.b.501 = struct_init (%.loc18_46.4, %.loc18_46.7), %a.var [concrete = constants.%struct.ed5]
 // CHECK:STDOUT:   %.loc18_3: init %struct_type.a.b.501 = converted %.loc18_46.1, %.loc18_46.8 [concrete = constants.%struct.ed5]
 // CHECK:STDOUT:   assign %a.var, %.loc18_3
 // CHECK:STDOUT:   %.loc18_27: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b.501] {

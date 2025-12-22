@@ -182,7 +182,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   %DestroyOp.call.loc25: init %empty_tuple.type = call %DestroyOp.bound.loc25(%w.var)
 // CHECK:STDOUT:   %DestroyOp.bound.loc17: <bound method> = bound_method %v.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call.loc17: init %empty_tuple.type = call %DestroyOp.bound.loc17(%v.var)
-// CHECK:STDOUT:   return %.loc27 %return
+// CHECK:STDOUT:   return %.loc27, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i32) = "no_op";
@@ -250,6 +250,6 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   %DestroyOp.call.loc41: init %empty_tuple.type = call %DestroyOp.bound.loc41(%w.var)
 // CHECK:STDOUT:   %DestroyOp.bound.loc32: <bound method> = bound_method %v.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call.loc32: init %empty_tuple.type = call %DestroyOp.bound.loc32(%v.var)
-// CHECK:STDOUT:   return %.loc44 %return
+// CHECK:STDOUT:   return %.loc44, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

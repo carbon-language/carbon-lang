@@ -183,8 +183,8 @@ fn F() -> {.a: i32, .b: f64} {
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.call: init %f64.d77 = call %bound_method.loc21_10.4(%.loc21_10.4)
 // CHECK:STDOUT:   %.loc21_10.5: ref %f64.d77 = struct_access %return, element0
 // CHECK:STDOUT:   %.loc21_10.6: init %f64.d77 = initialize_from %Float.as.Copy.impl.Op.call, %.loc21_10.5
-// CHECK:STDOUT:   %.loc21_10.7: init %struct_type.a.b = struct_init (%.loc21_10.3, %.loc21_10.6) %return
+// CHECK:STDOUT:   %.loc21_10.7: init %struct_type.a.b = struct_init (%.loc21_10.3, %.loc21_10.6), %return
 // CHECK:STDOUT:   %.loc21_11: init %struct_type.a.b = converted %y.ref, %.loc21_10.7
-// CHECK:STDOUT:   return %.loc21_11 %return
+// CHECK:STDOUT:   return %.loc21_11, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

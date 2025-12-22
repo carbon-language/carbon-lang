@@ -133,6 +133,6 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %.loc28_45.3: %struct_type.c.d.8f4 = struct_literal (%MakeInner.call.loc28_26, %MakeInner.call.loc28_44)
 // CHECK:STDOUT:   %.loc28_45.4: init %Outer = class_init (%MakeInner.call.loc28_26, %MakeInner.call.loc28_44), %return
 // CHECK:STDOUT:   %.loc28_46: init %Outer = converted %.loc28_45.3, %.loc28_45.4
-// CHECK:STDOUT:   return %.loc28_46 %return
+// CHECK:STDOUT:   return %.loc28_46, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

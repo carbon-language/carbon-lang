@@ -226,7 +226,7 @@ class Derived {
 // CHECK:STDOUT:   %.loc14_35.6: init %i32 = initialize_from %.loc14_35.4, %.loc14_35.5 [concrete = constants.%int_7.0b1]
 // CHECK:STDOUT:   %.loc14_35.7: init %Derived = class_init (%.loc14_35.3, %.loc14_35.6), %return [concrete = constants.%Derived.val]
 // CHECK:STDOUT:   %.loc14_36: init %Derived = converted %.loc14_35.1, %.loc14_35.7 [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   return %.loc14_36 %return
+// CHECK:STDOUT:   return %.loc14_36, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%d.param: %Derived, %return.param: ref %tuple.type.d07) {
@@ -257,9 +257,9 @@ class Derived {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc18_22: init %i32 = call %bound_method.loc18_22.2(%.loc18_22.2)
 // CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return, element1
 // CHECK:STDOUT:   %.loc18_24.3: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc18_22, %tuple.elem1
-// CHECK:STDOUT:   %.loc18_24.4: init %tuple.type.d07 = tuple_init (%.loc18_24.2, %.loc18_24.3) %return
+// CHECK:STDOUT:   %.loc18_24.4: init %tuple.type.d07 = tuple_init (%.loc18_24.2, %.loc18_24.3), %return
 // CHECK:STDOUT:   %.loc18_25: init %tuple.type.d07 = converted %.loc18_24.1, %.loc18_24.4
-// CHECK:STDOUT:   return %.loc18_25 %return
+// CHECK:STDOUT:   return %.loc18_25, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_base_after_field.carbon

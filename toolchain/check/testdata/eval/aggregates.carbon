@@ -241,7 +241,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc4_37.2: init %i32 = call %bound_method.loc4_37.4(%tuple.elem1.loc4_37.1) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %tuple.elem1.loc4_37.2: ref %i32 = tuple_access file.%tuple_copy.var, element1 [concrete = constants.%tuple.elem1]
 // CHECK:STDOUT:   %.loc4_37.3: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc4_37.2, %tuple.elem1.loc4_37.2 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc4_37.4: init %tuple.type.d07 = tuple_init (%.loc4_37.2, %.loc4_37.3) file.%tuple_copy.var [concrete = constants.%tuple.21c]
+// CHECK:STDOUT:   %.loc4_37.4: init %tuple.type.d07 = tuple_init (%.loc4_37.2, %.loc4_37.3), file.%tuple_copy.var [concrete = constants.%tuple.21c]
 // CHECK:STDOUT:   %.loc4_1: init %tuple.type.d07 = converted %.loc4_37.1, %.loc4_37.4 [concrete = constants.%tuple.21c]
 // CHECK:STDOUT:   assign file.%tuple_copy.var, %.loc4_1
 // CHECK:STDOUT:   %int_3.loc6: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
@@ -302,7 +302,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc6_73.3: init %i32 = call %bound_method.loc6_73.6(%.loc6_73.8) [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc6_73.9: ref %i32 = struct_access file.%struct_copy.var, element2 [concrete = constants.%.f68]
 // CHECK:STDOUT:   %.loc6_73.10: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc6_73.3, %.loc6_73.9 [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc6_73.11: init %struct_type.a.b.c = struct_init (%.loc6_73.4, %.loc6_73.7, %.loc6_73.10) file.%struct_copy.var [concrete = constants.%struct.cff]
+// CHECK:STDOUT:   %.loc6_73.11: init %struct_type.a.b.c = struct_init (%.loc6_73.4, %.loc6_73.7, %.loc6_73.10), file.%struct_copy.var [concrete = constants.%struct.cff]
 // CHECK:STDOUT:   %.loc6_1: init %struct_type.a.b.c = converted %.loc6_73.1, %.loc6_73.11 [concrete = constants.%struct.cff]
 // CHECK:STDOUT:   assign file.%struct_copy.var, %.loc6_1
 // CHECK:STDOUT:   %int_0.loc8_35: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
@@ -329,7 +329,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %int_0.loc8_37: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc8_37.3: ref %i32 = array_index %.loc8_1, %int_0.loc8_37
 // CHECK:STDOUT:   %.loc8_37.4: init %i32 = initialize_from %.loc8_37.2, %.loc8_37.3 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc8_37.5: init %array_type = array_init (%.loc8_37.4) %.loc8_1 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc8_37.5: init %array_type = array_init (%.loc8_37.4), %.loc8_1 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc8_39: init %array_type = converted %.loc8_37.1, %.loc8_37.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign file.%tuple_index.var, %.loc8_39
 // CHECK:STDOUT:   %int_0.loc10_37: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
@@ -353,7 +353,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %int_0.loc10_39: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc10_39.3: ref %i32 = array_index %.loc10_1, %int_0.loc10_39
 // CHECK:STDOUT:   %.loc10_39.4: init %i32 = initialize_from %.loc10_39.2, %.loc10_39.3 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc10_39.5: init %array_type = array_init (%.loc10_39.4) %.loc10_1 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc10_39.5: init %array_type = array_init (%.loc10_39.4), %.loc10_1 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc10_41: init %array_type = converted %.loc10_39.1, %.loc10_39.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign file.%struct_access.var, %.loc10_41
 // CHECK:STDOUT:   <elided>
@@ -480,7 +480,7 @@ fn G(N:! i32) {
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:   %.loc9_65.13: ref %i32 = array_index %.loc9_65.3, %int_3
 // CHECK:STDOUT:   %.loc9_65.14: init %i32 = initialize_from %.loc9_65.12, %.loc9_65.13 [concrete = constants.%int_9.f88]
-// CHECK:STDOUT:   %.loc9_65.15: init %array_type.f32 = array_init (%.loc9_65.5, %.loc9_65.8, %.loc9_65.11, %.loc9_65.14) %.loc9_65.3 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc9_65.15: init %array_type.f32 = array_init (%.loc9_65.5, %.loc9_65.8, %.loc9_65.11, %.loc9_65.14), %.loc9_65.3 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc9_67.1: init %array_type.f32 = converted %.loc9_65.1, %.loc9_65.15 [concrete = constants.%array]
 // CHECK:STDOUT:   %int_2.loc9_85: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc9_67.2: ref %array_type.f32 = temporary %.loc9_65.3, %.loc9_67.1

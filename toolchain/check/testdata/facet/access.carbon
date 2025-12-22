@@ -495,7 +495,7 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:     %specific_impl_fn.loc10_11.1: <specific function> = specific_impl_function %impl.elem0.loc10_11.1, @I.Make(constants.%T) [symbolic = %specific_impl_fn.loc10_11.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %I.Make.call: init @Use.%T.binding.as_type (%T.binding.as_type) = call %specific_impl_fn.loc10_11.1(%.loc8_15)
-// CHECK:STDOUT:     return %I.Make.call %return
+// CHECK:STDOUT:     return %I.Make.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -578,7 +578,7 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:     %bound_method.loc10_17: <bound method> = bound_method %x.ref, %specific_impl_fn.loc10_11.1
 // CHECK:STDOUT:     %.loc9_21: ref @Use.%T.binding.as_type (%T.binding.as_type) = splice_block %return {}
 // CHECK:STDOUT:     %I.Copy.call: init @Use.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc10_17(%x.ref, %.loc9_21)
-// CHECK:STDOUT:     return %I.Copy.call %return
+// CHECK:STDOUT:     return %I.Copy.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -677,7 +677,7 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:     %bound_method.loc10_21: <bound method> = bound_method %x.ref, %specific_impl_fn.loc10_14.1
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %I.Copy.call: init @UseIndirect.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc10_21(%x.ref, %.loc8_29)
-// CHECK:STDOUT:     return %I.Copy.call %return
+// CHECK:STDOUT:     return %I.Copy.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -755,9 +755,9 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:   fn(%return.param: ref %empty_tuple.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc7_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc7_11.2: init %empty_tuple.type = tuple_init () %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc7_11.2: init %empty_tuple.type = tuple_init (), %return [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc7_12: init %empty_tuple.type = converted %.loc7_11.1, %.loc7_11.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     return %.loc7_12 %return
+// CHECK:STDOUT:     return %.loc7_12, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -915,9 +915,9 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:   fn(%return.param: ref %empty_tuple.type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc15_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc15_11.2: init %empty_tuple.type = tuple_init () %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc15_11.2: init %empty_tuple.type = tuple_init (), %return [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc15_12: init %empty_tuple.type = converted %.loc15_11.1, %.loc15_11.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     return %.loc15_12 %return
+// CHECK:STDOUT:     return %.loc15_12, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -931,9 +931,9 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:   fn(%return.param: ref %empty_struct_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc19_11.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc19_11.2: init %empty_struct_type = struct_init () %return [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc19_11.2: init %empty_struct_type = struct_init (), %return [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc19_12: init %empty_struct_type = converted %.loc19_11.1, %.loc19_11.2 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     return %.loc19_12 %return
+// CHECK:STDOUT:     return %.loc19_12, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -252,7 +252,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc10_13.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc10_13.2: init %ElementType = class_init (), %return [concrete = constants.%ElementType.val]
 // CHECK:STDOUT:   %.loc10_14: init %ElementType = converted %.loc10_13.1, %.loc10_13.2 [concrete = constants.%ElementType.val]
-// CHECK:STDOUT:   return %.loc10_14 %return
+// CHECK:STDOUT:   return %.loc10_14, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -435,10 +435,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %tuple.elem0: %C = tuple_access %self.ref, element0
 // CHECK:STDOUT:   %.loc10_18.1: %empty_tuple.type = as_compatible %tuple.elem0
 // CHECK:STDOUT:   %.loc10_18.2: ref %empty_tuple.type = as_compatible %return
-// CHECK:STDOUT:   %.loc10_18.3: init %empty_tuple.type = tuple_init () %.loc10_18.2 [concrete = constants.%empty_tuple.af4]
+// CHECK:STDOUT:   %.loc10_18.3: init %empty_tuple.type = tuple_init (), %.loc10_18.2 [concrete = constants.%empty_tuple.af4]
 // CHECK:STDOUT:   %.loc10_18.4: init %C = as_compatible %.loc10_18.3 [concrete = constants.%empty_tuple.bfb]
 // CHECK:STDOUT:   %.loc10_18.5: init %C = converted %tuple.elem0, %.loc10_18.4 [concrete = constants.%empty_tuple.bfb]
-// CHECK:STDOUT:   return %.loc10_18.5 %return
+// CHECK:STDOUT:   return %.loc10_18.5, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -616,7 +616,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %.loc10_13.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc10_13.2: init %ElementType = class_init (), %return [concrete = constants.%ElementType.val]
 // CHECK:STDOUT:   %.loc10_14: init %ElementType = converted %.loc10_13.1, %.loc10_13.2 [concrete = constants.%ElementType.val]
-// CHECK:STDOUT:   return %.loc10_14 %return
+// CHECK:STDOUT:   return %.loc10_14, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

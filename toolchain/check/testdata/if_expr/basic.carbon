@@ -151,7 +151,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %int_0.loc16_29: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc16_29.3: ref %i32 = array_index %x.var, %int_0.loc16_29
 // CHECK:STDOUT:   %.loc16_29.4: init %i32 = initialize_from %.loc16_29.2, %.loc16_29.3 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc16_29.5: init %array_type = array_init (%.loc16_29.4) %x.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc16_29.5: init %array_type = array_init (%.loc16_29.4), %x.var [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc16_3: init %array_type = converted %.loc16_29.1, %.loc16_29.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %x.var, %.loc16_3
 // CHECK:STDOUT:   %.loc16_22: type = splice_block %array_type [concrete = constants.%array_type] {
@@ -191,7 +191,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc17_10.2(%.loc17_10)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %x.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%x.var)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: ref %array_type) = "no_op";

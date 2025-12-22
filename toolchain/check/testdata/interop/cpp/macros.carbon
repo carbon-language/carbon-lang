@@ -1044,7 +1044,7 @@ fn F() {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc10_35.3: ref %f32.97e = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc10_35.4: init %f32.97e = initialize_from %.loc10_35.2, %.loc10_35.3 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc10_35.5: init %array_type = array_init (%.loc10_35.4) %a.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc10_35.5: init %array_type = array_init (%.loc10_35.4), %a.var [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc10_3: init %array_type = converted %.loc10_35.1, %.loc10_35.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc10_3
 // CHECK:STDOUT:   %.loc10_26: type = splice_block %array_type [concrete = constants.%array_type] {

@@ -169,7 +169,7 @@ class A {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc26_20.2(%.loc26_20.2)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc26_19.2, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc26_19.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B.Make(%return.param: ref %B) {
@@ -193,7 +193,7 @@ class A {
 // CHECK:STDOUT:   assign %return, %.loc19_18
 // CHECK:STDOUT:   %Self.ref.loc19: type = name_ref Self, constants.%B [concrete = constants.%B]
 // CHECK:STDOUT:   %b: ref %B = ref_binding b, %return
-// CHECK:STDOUT:   return %b %return
+// CHECK:STDOUT:   return %b, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: ref %B) = "no_op";

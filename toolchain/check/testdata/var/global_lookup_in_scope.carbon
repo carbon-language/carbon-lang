@@ -76,9 +76,9 @@ fn Main() {
 // CHECK:STDOUT:   %x.ref: ref %struct_type.v = name_ref x, file.%x [concrete = file.%x.var]
 // CHECK:STDOUT:   %.loc5_21.1: ref %empty_tuple.type = struct_access %x.ref, element0 [concrete = constants.%.c0c]
 // CHECK:STDOUT:   %.loc5_21.2: ref %empty_tuple.type = struct_access %y.var, element0
-// CHECK:STDOUT:   %.loc5_21.3: init %empty_tuple.type = tuple_init () %.loc5_21.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_21.3: init %empty_tuple.type = tuple_init (), %.loc5_21.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_21.4: init %empty_tuple.type = converted %.loc5_21.1, %.loc5_21.3 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_21.5: init %struct_type.v = struct_init (%.loc5_21.4) %y.var [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc5_21.5: init %struct_type.v = struct_init (%.loc5_21.4), %y.var [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc5_3: init %struct_type.v = converted %x.ref, %.loc5_21.5 [concrete = constants.%struct]
 // CHECK:STDOUT:   assign %y.var, %.loc5_3
 // CHECK:STDOUT:   %.loc5_17: type = splice_block %struct_type.v [concrete = constants.%struct_type.v] {
@@ -99,9 +99,9 @@ fn Main() {
 // CHECK:STDOUT:   %.loc2_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc2_27.1: %struct_type.v = struct_literal (%.loc2_26.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc2_27.2: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete = constants.%.c0c]
-// CHECK:STDOUT:   %.loc2_26.2: init %empty_tuple.type = tuple_init () %.loc2_27.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc2_26.2: init %empty_tuple.type = tuple_init (), %.loc2_27.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc2_27.3: init %empty_tuple.type = converted %.loc2_26.1, %.loc2_26.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc2_27.4: init %struct_type.v = struct_init (%.loc2_27.3) file.%x.var [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc2_27.4: init %struct_type.v = struct_init (%.loc2_27.3), file.%x.var [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc2_1: init %struct_type.v = converted %.loc2_27.1, %.loc2_27.4 [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc2_1
 // CHECK:STDOUT:   return

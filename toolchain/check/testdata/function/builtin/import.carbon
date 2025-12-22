@@ -284,7 +284,7 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:   %int_2.loc4_130: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc4_130.6: ref %i32.builtin = array_index file.%arr.var, %int_2.loc4_130
 // CHECK:STDOUT:   %.loc4_130.7: init %i32.builtin = initialize_from %AsI32.call.loc4_129, %.loc4_130.6 [concrete = constants.%int_3.a0f]
-// CHECK:STDOUT:   %.loc4_130.8: init %array_type = array_init (%.loc4_130.3, %.loc4_130.5, %.loc4_130.7) file.%arr.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc4_130.8: init %array_type = array_init (%.loc4_130.3, %.loc4_130.5, %.loc4_130.7), file.%arr.var [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc4_1: init %array_type = converted %.loc4_130.1, %.loc4_130.8 [concrete = constants.%array]
 // CHECK:STDOUT:   assign file.%arr.var, %.loc4_1
 // CHECK:STDOUT:   return

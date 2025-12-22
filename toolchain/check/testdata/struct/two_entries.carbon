@@ -185,7 +185,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc18_44.5: init %i32 = converted %int_2.loc18, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18_44.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc18_44.6: ref %i32 = struct_access file.%x.var, element1 [concrete = constants.%.fe1]
 // CHECK:STDOUT:   %.loc18_44.7: init %i32 = initialize_from %.loc18_44.5, %.loc18_44.6 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc18_44.8: init %struct_type.a.b.501 = struct_init (%.loc18_44.4, %.loc18_44.7) file.%x.var [concrete = constants.%struct.ed5]
+// CHECK:STDOUT:   %.loc18_44.8: init %struct_type.a.b.501 = struct_init (%.loc18_44.4, %.loc18_44.7), file.%x.var [concrete = constants.%struct.ed5]
 // CHECK:STDOUT:   %.loc18_1: init %struct_type.a.b.501 = converted %.loc18_44.1, %.loc18_44.8 [concrete = constants.%struct.ed5]
 // CHECK:STDOUT:   assign file.%x.var, %.loc18_1
 // CHECK:STDOUT:   %x.ref: ref %struct_type.a.b.501 = name_ref x, file.%x [concrete = file.%x.var]
@@ -207,7 +207,7 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc19_29.2: init %i32 = call %bound_method.loc19_29.4(%.loc19_29.6)
 // CHECK:STDOUT:   %.loc19_29.7: ref %i32 = struct_access file.%y.var, element1 [concrete = constants.%.960]
 // CHECK:STDOUT:   %.loc19_29.8: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc19_29.2, %.loc19_29.7
-// CHECK:STDOUT:   %.loc19_29.9: init %struct_type.a.b.501 = struct_init (%.loc19_29.4, %.loc19_29.8) file.%y.var
+// CHECK:STDOUT:   %.loc19_29.9: init %struct_type.a.b.501 = struct_init (%.loc19_29.4, %.loc19_29.8), file.%y.var
 // CHECK:STDOUT:   %.loc19_1: init %struct_type.a.b.501 = converted %x.ref, %.loc19_29.9
 // CHECK:STDOUT:   assign file.%y.var, %.loc19_1
 // CHECK:STDOUT:   return

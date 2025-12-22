@@ -173,7 +173,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:     %F.specific_fn.loc6_37.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %F.specific_fn.loc6_37.2 (constants.%F.specific_fn.643)]
 // CHECK:STDOUT:     %.loc6_23: ref @F.%T.loc6_6.1 (%T) = splice_block %return {}
 // CHECK:STDOUT:     %F.call: init @F.%T.loc6_6.1 (%T) = call %F.specific_fn.loc6_37.1(%p.ref, %.loc6_23)
-// CHECK:STDOUT:     return %F.call %return
+// CHECK:STDOUT:     return %F.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -184,7 +184,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [concrete = constants.%F.specific_fn.540]
 // CHECK:STDOUT:   %.loc8_13: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %F.call: init %C = call %F.specific_fn(%p.ref, %.loc8_13)
-// CHECK:STDOUT:   return %F.call %return
+// CHECK:STDOUT:   return %F.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
@@ -322,7 +322,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:     %F.specific_fn.loc6_43.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %F.specific_fn.loc6_43.2 (constants.%F.specific_fn.643)]
 // CHECK:STDOUT:     %.loc6_29: ref @F.%T.loc6_6.1 (%T) = splice_block %return {}
 // CHECK:STDOUT:     %F.call: init @F.%T.loc6_6.1 (%T) = call %F.specific_fn.loc6_43.1(%p.ref, %.loc6_29)
-// CHECK:STDOUT:     return %F.call %return
+// CHECK:STDOUT:     return %F.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -333,7 +333,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [concrete = constants.%F.specific_fn.540]
 // CHECK:STDOUT:   %.loc8_19: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %F.call: init %C = call %F.specific_fn(%p.ref, %.loc8_19)
-// CHECK:STDOUT:   return %F.call %return
+// CHECK:STDOUT:   return %F.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
@@ -471,7 +471,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:     %F.specific_fn.loc6_37.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %F.specific_fn.loc6_37.2 (constants.%F.specific_fn.643)]
 // CHECK:STDOUT:     %.loc6_23: ref @F.%T.loc6_6.1 (%T) = splice_block %return {}
 // CHECK:STDOUT:     %F.call: init @F.%T.loc6_6.1 (%T) = call %F.specific_fn.loc6_37.1(%p.ref, %.loc6_23)
-// CHECK:STDOUT:     return %F.call %return
+// CHECK:STDOUT:     return %F.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -482,7 +482,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%const) [concrete = constants.%F.specific_fn.98a]
 // CHECK:STDOUT:   %.loc8_19: ref %const = splice_block %return {}
 // CHECK:STDOUT:   %F.call: init %const = call %F.specific_fn(%p.ref, %.loc8_19)
-// CHECK:STDOUT:   return %F.call %return
+// CHECK:STDOUT:   return %F.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
@@ -618,7 +618,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:     %F.specific_fn.loc6_43.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %F.specific_fn.loc6_43.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %.loc6_29: ref @F.%T.loc6_6.1 (%T) = splice_block %return {}
 // CHECK:STDOUT:     %F.call: init @F.%T.loc6_6.1 (%T) = call %F.specific_fn.loc6_43.1(%p.ref, %.loc6_29)
-// CHECK:STDOUT:     return %F.call %return
+// CHECK:STDOUT:     return %F.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -626,7 +626,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %p.ref: %ptr.31e = name_ref p, %p
-// CHECK:STDOUT:   return <error> %return
+// CHECK:STDOUT:   return <error>, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {

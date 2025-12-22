@@ -124,6 +124,6 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc11: ref %AbstractFinal = splice_block %return {}
 // CHECK:STDOUT:   %F.call: init %AbstractFinal = call %F.ref(%.loc11)
-// CHECK:STDOUT:   return %F.call %return
+// CHECK:STDOUT:   return %F.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -135,8 +135,8 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT:   %.loc16_33.7: init %i32 = converted %int_0.loc16_32, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc16_33.2 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc16_33.8: ref %i32 = struct_access %return, element2
 // CHECK:STDOUT:   %.loc16_33.9: init %i32 = initialize_from %.loc16_33.7, %.loc16_33.8 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc16_33.10: init %struct_type.a.b.c.0b6 = struct_init (%.loc16_33.4, %.loc16_33.6, %.loc16_33.9) %return
+// CHECK:STDOUT:   %.loc16_33.10: init %struct_type.a.b.c.0b6 = struct_init (%.loc16_33.4, %.loc16_33.6, %.loc16_33.9), %return
 // CHECK:STDOUT:   %.loc16_34: init %struct_type.a.b.c.0b6 = converted %.loc16_33.1, %.loc16_33.10
-// CHECK:STDOUT:   return %.loc16_34 %return
+// CHECK:STDOUT:   return %.loc16_34, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

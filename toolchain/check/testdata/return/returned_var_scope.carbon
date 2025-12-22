@@ -190,7 +190,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   %DestroyOp.call.loc20: init %empty_tuple.type = call %DestroyOp.bound.loc20(%w.var)
 // CHECK:STDOUT:   %DestroyOp.bound.loc17: <bound method> = bound_method %v.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call.loc17: init %empty_tuple.type = call %DestroyOp.bound.loc17(%v.var)
-// CHECK:STDOUT:   return %.loc22 %return
+// CHECK:STDOUT:   return %.loc22, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: ref %i32) = "no_op";

@@ -135,6 +135,6 @@ fn G() -> str {
 // CHECK:STDOUT:   %addr: %ptr.85f = addr_of %.loc13
 // CHECK:STDOUT:   %Produce__carbon_thunk.call: init %empty_tuple.type = call imports.%Produce__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %.loc14: init %str.ee0 = in_place_init %Produce__carbon_thunk.call, %.loc13
-// CHECK:STDOUT:   return %.loc14 %return
+// CHECK:STDOUT:   return %.loc14, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

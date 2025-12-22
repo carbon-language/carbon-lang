@@ -111,8 +111,8 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %.loc17_17.4: init %i32 = converted %int_35, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc17_17.2 [concrete = constants.%int_35.c78]
 // CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return, element1
 // CHECK:STDOUT:   %.loc17_17.5: init %i32 = initialize_from %.loc17_17.4, %tuple.elem1 [concrete = constants.%int_35.c78]
-// CHECK:STDOUT:   %.loc17_17.6: init %tuple.type.d07 = tuple_init (%.loc17_17.3, %.loc17_17.5) %return [concrete = constants.%tuple.851]
+// CHECK:STDOUT:   %.loc17_17.6: init %tuple.type.d07 = tuple_init (%.loc17_17.3, %.loc17_17.5), %return [concrete = constants.%tuple.851]
 // CHECK:STDOUT:   %.loc17_18: init %tuple.type.d07 = converted %.loc17_17.1, %.loc17_17.6 [concrete = constants.%tuple.851]
-// CHECK:STDOUT:   return %.loc17_18 %return
+// CHECK:STDOUT:   return %.loc17_18, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

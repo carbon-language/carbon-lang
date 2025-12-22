@@ -576,7 +576,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc6_40.7: init %i32 = initialize_from %.loc6_40.5, %.loc6_40.6 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.8: init %D = class_init (%.loc6_40.4, %.loc6_40.7), %return [concrete = constants.%D.val]
 // CHECK:STDOUT:   %.loc6_41: init %D = converted %.loc6_40.1, %.loc6_40.8 [concrete = constants.%D.val]
-// CHECK:STDOUT:   return %.loc6_41 %return
+// CHECK:STDOUT:   return %.loc6_41, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc8(%self.param: %C.4f5, %return.param: ref %D) {
@@ -584,7 +584,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc8: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref(%.loc8)
-// CHECK:STDOUT:   return %Make.call %return
+// CHECK:STDOUT:   return %Make.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc9(%self.param: %C.95b, %return.param: ref %D) {
@@ -592,7 +592,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc9: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref(%.loc9)
-// CHECK:STDOUT:   return %Make.call %return
+// CHECK:STDOUT:   return %Make.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc10(%self.param: %C.a93, %return.param: ref %D) {
@@ -600,7 +600,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc10: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref(%.loc10)
-// CHECK:STDOUT:   return %Make.call %return
+// CHECK:STDOUT:   return %Make.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc11(%self.param: %C.1d7, %return.param: ref %D) {
@@ -608,7 +608,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc11: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref(%.loc11)
-// CHECK:STDOUT:   return %Make.call %return
+// CHECK:STDOUT:   return %Make.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc12(%self.param: %C.e40, %return.param: ref %D) {
@@ -616,7 +616,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc12: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref(%.loc12)
-// CHECK:STDOUT:   return %Make.call %return
+// CHECK:STDOUT:   return %Make.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc13(%self.param: %C.3f1, %return.param: ref %D) {
@@ -624,7 +624,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc13: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref(%.loc13)
-// CHECK:STDOUT:   return %Make.call %return
+// CHECK:STDOUT:   return %Make.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc14(%self.param: %C.0fa, %return.param: ref %D) {
@@ -632,7 +632,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc14: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref(%.loc14)
-// CHECK:STDOUT:   return %Make.call %return
+// CHECK:STDOUT:   return %Make.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc15(%self.param: %C.2b7, %return.param: ref %D) {
@@ -640,7 +640,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc15: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %Make.call: init %D = call %Make.ref(%.loc15)
-// CHECK:STDOUT:   return %Make.call %return
+// CHECK:STDOUT:   return %Make.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%N.5de) {
@@ -1031,7 +1031,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc7_35: init %D = converted %.loc7_26.1, %C.as.ImplicitAs.impl.Convert.call.loc7
 // CHECK:STDOUT:   %DestroyOp.bound.loc7_24.1: <bound method> = bound_method %.loc7_24.4, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc7_24.1: init %empty_tuple.type = call %DestroyOp.bound.loc7_24.1(%.loc7_24.4)
-// CHECK:STDOUT:   return %.loc7_35 %return
+// CHECK:STDOUT:   return %.loc7_35, %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc7:
 // CHECK:STDOUT:   %false.loc8: bool = bool_literal false [concrete = constants.%false]
@@ -1064,7 +1064,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %DestroyOp.call.loc8_24.1: init %empty_tuple.type = call %DestroyOp.bound.loc8_24.1(%.loc8_24.4)
 // CHECK:STDOUT:   %DestroyOp.bound.loc7_24.2: <bound method> = bound_method %.loc7_24.4, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc7_24.2: init %empty_tuple.type = call %DestroyOp.bound.loc7_24.2(%.loc7_24.4)
-// CHECK:STDOUT:   return %.loc8_35 %return
+// CHECK:STDOUT:   return %.loc8_35, %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc8:
 // CHECK:STDOUT:   %false.loc9: bool = bool_literal false [concrete = constants.%false]
@@ -1099,7 +1099,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %DestroyOp.call.loc8_24.2: init %empty_tuple.type = call %DestroyOp.bound.loc8_24.2(%.loc8_24.4)
 // CHECK:STDOUT:   %DestroyOp.bound.loc7_24.3: <bound method> = bound_method %.loc7_24.4, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc7_24.3: init %empty_tuple.type = call %DestroyOp.bound.loc7_24.3(%.loc7_24.4)
-// CHECK:STDOUT:   return %.loc9_35 %return
+// CHECK:STDOUT:   return %.loc9_35, %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc9:
 // CHECK:STDOUT:   %false.loc10: bool = bool_literal false [concrete = constants.%false]
@@ -1136,7 +1136,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %DestroyOp.call.loc8_24.3: init %empty_tuple.type = call %DestroyOp.bound.loc8_24.3(%.loc8_24.4)
 // CHECK:STDOUT:   %DestroyOp.bound.loc7_24.4: <bound method> = bound_method %.loc7_24.4, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc7_24.4: init %empty_tuple.type = call %DestroyOp.bound.loc7_24.4(%.loc7_24.4)
-// CHECK:STDOUT:   return %.loc10_35 %return
+// CHECK:STDOUT:   return %.loc10_35, %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc10:
 // CHECK:STDOUT:   %false.loc11: bool = bool_literal false [concrete = constants.%false]
@@ -1175,7 +1175,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %DestroyOp.call.loc8_24.4: init %empty_tuple.type = call %DestroyOp.bound.loc8_24.4(%.loc8_24.4)
 // CHECK:STDOUT:   %DestroyOp.bound.loc7_24.5: <bound method> = bound_method %.loc7_24.4, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc7_24.5: init %empty_tuple.type = call %DestroyOp.bound.loc7_24.5(%.loc7_24.4)
-// CHECK:STDOUT:   return %.loc11_35 %return
+// CHECK:STDOUT:   return %.loc11_35, %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc11:
 // CHECK:STDOUT:   %false.loc12: bool = bool_literal false [concrete = constants.%false]
@@ -1216,7 +1216,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %DestroyOp.call.loc8_24.5: init %empty_tuple.type = call %DestroyOp.bound.loc8_24.5(%.loc8_24.4)
 // CHECK:STDOUT:   %DestroyOp.bound.loc7_24.6: <bound method> = bound_method %.loc7_24.4, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc7_24.6: init %empty_tuple.type = call %DestroyOp.bound.loc7_24.6(%.loc7_24.4)
-// CHECK:STDOUT:   return %.loc12_35 %return
+// CHECK:STDOUT:   return %.loc12_35, %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc12:
 // CHECK:STDOUT:   %false.loc13: bool = bool_literal false [concrete = constants.%false]
@@ -1259,7 +1259,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %DestroyOp.call.loc8_24.6: init %empty_tuple.type = call %DestroyOp.bound.loc8_24.6(%.loc8_24.4)
 // CHECK:STDOUT:   %DestroyOp.bound.loc7_24.7: <bound method> = bound_method %.loc7_24.4, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc7_24.7: init %empty_tuple.type = call %DestroyOp.bound.loc7_24.7(%.loc7_24.4)
-// CHECK:STDOUT:   return %.loc13_35 %return
+// CHECK:STDOUT:   return %.loc13_35, %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc13:
 // CHECK:STDOUT:   %false.loc14: bool = bool_literal false [concrete = constants.%false]
@@ -1304,7 +1304,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %DestroyOp.call.loc8_24.7: init %empty_tuple.type = call %DestroyOp.bound.loc8_24.7(%.loc8_24.4)
 // CHECK:STDOUT:   %DestroyOp.bound.loc7_24.8: <bound method> = bound_method %.loc7_24.4, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc7_24.8: init %empty_tuple.type = call %DestroyOp.bound.loc7_24.8(%.loc7_24.4)
-// CHECK:STDOUT:   return %.loc14_35 %return
+// CHECK:STDOUT:   return %.loc14_35, %return
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else.loc14:
 // CHECK:STDOUT:   %P.ref.loc15: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
@@ -1327,7 +1327,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %DestroyOp.call.loc8_24.8: init %empty_tuple.type = call %DestroyOp.bound.loc8_24.8(%.loc8_24.4)
 // CHECK:STDOUT:   %DestroyOp.bound.loc7_24.9: <bound method> = bound_method %.loc7_24.4, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc7_24.9: init %empty_tuple.type = call %DestroyOp.bound.loc7_24.9(%.loc7_24.4)
-// CHECK:STDOUT:   return %Make.call %return
+// CHECK:STDOUT:   return %Make.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.1 [from "library.carbon"];

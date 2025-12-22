@@ -118,7 +118,7 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc4_15.2: <bound method> = bound_method %.loc4_15.3, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc4_15.2(%.loc4_15.3)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%return.param: ref %i32) {
@@ -157,7 +157,7 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %int_2.loc10_20: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc10_20.10: ref %i32 = array_index %.loc10_20.3, %int_2.loc10_20
 // CHECK:STDOUT:   %.loc10_20.11: init %i32 = initialize_from %.loc10_20.9, %.loc10_20.10 [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc10_20.12: init %array_type = array_init (%.loc10_20.5, %.loc10_20.8, %.loc10_20.11) %.loc10_20.3 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc10_20.12: init %array_type = array_init (%.loc10_20.5, %.loc10_20.8, %.loc10_20.11), %.loc10_20.3 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc10_20.13: init %array_type = converted %.loc10_20.1, %.loc10_20.12 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc10_20.14: ref %array_type = temporary %.loc10_20.3, %.loc10_20.13
 // CHECK:STDOUT:   %.loc10_20.15: %array_type = acquire_value %.loc10_20.14
@@ -171,7 +171,7 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.ref(%.loc10_20.15, %.loc10_23.2)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc10_20.14, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc10_20.14)
-// CHECK:STDOUT:   return %F.call %return
+// CHECK:STDOUT:   return %F.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: ref %array_type) = "no_op";
@@ -230,8 +230,8 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   %.loc6_30.2: ref %empty_struct_type = array_index %.loc6_30.1, %.loc6_24.3
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc6_30.3: %empty_struct_type = converted %.loc6_30.2, %empty_struct [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc6_30.4: init %empty_struct_type = struct_init () %return [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc6_30.4: init %empty_struct_type = struct_init (), %return [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc6_31: init %empty_struct_type = converted %.loc6_30.3, %.loc6_30.4 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   return %.loc6_31 %return
+// CHECK:STDOUT:   return %.loc6_31, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -217,8 +217,8 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc26_19: init %i32 = call %bound_method.loc26_19.2(%self.ref.loc26_19)
 // CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return.loc25, element1
 // CHECK:STDOUT:   %.loc26_25.3: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc26_19, %tuple.elem1
-// CHECK:STDOUT:   %.loc26_25.4: init %tuple.type.d07 = tuple_init (%.loc26_25.2, %.loc26_25.3) %return.loc25
+// CHECK:STDOUT:   %.loc26_25.4: init %tuple.type.d07 = tuple_init (%.loc26_25.2, %.loc26_25.3), %return.loc25
 // CHECK:STDOUT:   %.loc26_26: init %tuple.type.d07 = converted %.loc26_25.1, %.loc26_25.4
-// CHECK:STDOUT:   return %.loc26_26 %return.loc25
+// CHECK:STDOUT:   return %.loc26_26, %return.loc25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

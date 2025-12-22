@@ -180,7 +180,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %.loc21_31.5: init %ptr.8e5 = initialize_from %ptr.as.Copy.impl.Op.call, %.loc21_31.4
 // CHECK:STDOUT:   %.loc21_31.6: init %Class = class_init (%.loc21_31.3, %.loc21_31.5), %return
 // CHECK:STDOUT:   %.loc21_32: init %Class = converted %.loc21_31.1, %.loc21_31.6
-// CHECK:STDOUT:   return %.loc21_32 %return
+// CHECK:STDOUT:   return %.loc21_32, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MakeReorder(%n.param: %i32, %next.param: %ptr.8e5, %return.param: ref %Class) {
@@ -204,6 +204,6 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
 // CHECK:STDOUT:   %.loc25_31.5: init %ptr.8e5 = initialize_from %ptr.as.Copy.impl.Op.call, %.loc25_31.4
 // CHECK:STDOUT:   %.loc25_31.6: init %Class = class_init (%.loc25_31.3, %.loc25_31.5), %return
 // CHECK:STDOUT:   %.loc25_32: init %Class = converted %.loc25_31.1, %.loc25_31.6
-// CHECK:STDOUT:   return %.loc25_32 %return
+// CHECK:STDOUT:   return %.loc25_32, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

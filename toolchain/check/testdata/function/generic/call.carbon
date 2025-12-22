@@ -174,7 +174,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:     %bound_method.loc6_10.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc6_10.1
 // CHECK:STDOUT:     %.loc5_34: ref @Function.%T.binding.as_type (%T.binding.as_type) = splice_block %return {}
 // CHECK:STDOUT:     %Copy.Op.call: init @Function.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc6_10.2(%x.ref, %.loc5_34)
-// CHECK:STDOUT:     return %Copy.Op.call %return
+// CHECK:STDOUT:     return %Copy.Op.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -195,7 +195,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:     %Function.specific_fn.loc12_10.1: <specific function> = specific_function %Function.ref, @Function(constants.%T.035) [symbolic = %Function.specific_fn.loc12_10.2 (constants.%Function.specific_fn.a87)]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %Function.call: init @CallGeneric.%T.binding.as_type (%T.binding.as_type) = call %Function.specific_fn.loc12_10.1(%x.ref, %.loc10_37)
-// CHECK:STDOUT:     return %Function.call %return
+// CHECK:STDOUT:     return %Function.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -223,7 +223,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:     %.loc18_24.3: %Copy.type = converted constants.%ptr.e8f, %Copy.facet.loc18_24.3 [symbolic = %Copy.facet.loc18_24.4 (constants.%Copy.facet.c25)]
 // CHECK:STDOUT:     %Function.specific_fn.loc18_10.1: <specific function> = specific_function %Function.ref, @Function(constants.%Copy.facet.c25) [symbolic = %Function.specific_fn.loc18_10.2 (constants.%Function.specific_fn.919)]
 // CHECK:STDOUT:     %Function.call: init @CallGenericPtr.%ptr.loc16_33.1 (%ptr.e8f) = call %Function.specific_fn.loc18_10.1(%x.ref)
-// CHECK:STDOUT:     return %Function.call %return
+// CHECK:STDOUT:     return %Function.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -241,7 +241,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %.loc26_24.3: %Copy.type = converted constants.%ptr.31e, %Copy.facet.loc26_24.3 [concrete = constants.%Copy.facet.a7f]
 // CHECK:STDOUT:   %Function.specific_fn: <specific function> = specific_function %Function.ref, @Function(constants.%Copy.facet.a7f) [concrete = constants.%Function.specific_fn.9da]
 // CHECK:STDOUT:   %Function.call: init %ptr.31e = call %Function.specific_fn(%x.ref)
-// CHECK:STDOUT:   return %Function.call %return
+// CHECK:STDOUT:   return %Function.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(constants.%T.035) {
@@ -399,7 +399,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:     %bound_method.loc6_10.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc6_10.1
 // CHECK:STDOUT:     %.loc5_34: ref @Function.%T.binding.as_type (%T.binding.as_type) = splice_block %return {}
 // CHECK:STDOUT:     %Copy.Op.call: init @Function.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc6_10.2(%x.ref, %.loc5_34)
-// CHECK:STDOUT:     return %Copy.Op.call %return
+// CHECK:STDOUT:     return %Copy.Op.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -419,7 +419,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:     %Function.specific_fn.loc12_10.1: <specific function> = specific_function %Function.ref, @Function(constants.%T.035) [symbolic = %Function.specific_fn.loc12_10.2 (constants.%Function.specific_fn.a87)]
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %Function.call: init @CallGeneric.%T.binding.as_type (%T.binding.as_type) = call %Function.specific_fn.loc12_10.1(%x.ref, %.loc10_37)
-// CHECK:STDOUT:     return %Function.call %return
+// CHECK:STDOUT:     return %Function.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -443,7 +443,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:     %.loc18_20.2: %Copy.type = converted constants.%ptr.e8f, %Copy.facet.loc18_20.2 [symbolic = %Copy.facet.loc18_20.3 (constants.%Copy.facet.c25)]
 // CHECK:STDOUT:     %Function.specific_fn.loc18_10.1: <specific function> = specific_function %Function.ref, @Function(constants.%Copy.facet.c25) [symbolic = %Function.specific_fn.loc18_10.2 (constants.%Function.specific_fn.919)]
 // CHECK:STDOUT:     %Function.call: init @CallGenericPtr.%ptr.loc16_33.1 (%ptr.e8f) = call %Function.specific_fn.loc18_10.1(%x.ref)
-// CHECK:STDOUT:     return %Function.call %return
+// CHECK:STDOUT:     return %Function.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -457,7 +457,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %.loc26_20.2: %Copy.type = converted constants.%ptr.31e, %Copy.facet.loc26_20.2 [concrete = constants.%Copy.facet.a7f]
 // CHECK:STDOUT:   %Function.specific_fn: <specific function> = specific_function %Function.ref, @Function(constants.%Copy.facet.a7f) [concrete = constants.%Function.specific_fn.9da]
 // CHECK:STDOUT:   %Function.call: init %ptr.31e = call %Function.specific_fn(%x.ref)
-// CHECK:STDOUT:   return %Function.call %return
+// CHECK:STDOUT:   return %Function.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Function(constants.%T.035) {

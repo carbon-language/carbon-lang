@@ -199,7 +199,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %F.specific_fn.loc7_39.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %F.specific_fn.loc7_39.2 (constants.%F.specific_fn.643)]
 // CHECK:STDOUT:     %.loc7_25: ref @F.%T.loc7_6.1 (%T) = splice_block %return {}
 // CHECK:STDOUT:     %F.call: init @F.%T.loc7_6.1 (%T) = call %F.specific_fn.loc7_39.1(%p.ref, %.loc7_25)
-// CHECK:STDOUT:     return %F.call %return
+// CHECK:STDOUT:     return %F.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -210,7 +210,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%D) [concrete = constants.%F.specific_fn.e8a]
 // CHECK:STDOUT:   %.loc9_15: ref %D = splice_block %return {}
 // CHECK:STDOUT:   %F.call: init %D = call %F.specific_fn(%p.ref, %.loc9_15)
-// CHECK:STDOUT:   return %F.call %return
+// CHECK:STDOUT:   return %F.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%T) {
@@ -375,7 +375,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %F.specific_fn.loc7_39.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %F.specific_fn.loc7_39.2 (constants.%F.specific_fn.643)]
 // CHECK:STDOUT:     %.loc7_25: ref %C = splice_block %return {}
 // CHECK:STDOUT:     %F.call: init %C = call %F.specific_fn.loc7_39.1(%p.ref, %.loc7_25)
-// CHECK:STDOUT:     return %F.call %return
+// CHECK:STDOUT:     return %F.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -386,7 +386,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [concrete = constants.%F.specific_fn.540]
 // CHECK:STDOUT:   %.loc9_15: ref %C = splice_block %return {}
 // CHECK:STDOUT:   %F.call: init %C = call %F.specific_fn(%p.ref, %.loc9_15)
-// CHECK:STDOUT:   return %F.call %return
+// CHECK:STDOUT:   return %F.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T) {
@@ -623,7 +623,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %F.specific_fn.loc13_67.1: <specific function> = specific_function %F.ref, @F(constants.%T, constants.%U) [symbolic = %F.specific_fn.loc13_67.2 (constants.%F.specific_fn.a54)]
 // CHECK:STDOUT:     %.loc13_48: ref @F.%tuple.type (%tuple.type.a5e) = splice_block %return {}
 // CHECK:STDOUT:     %F.call: init @F.%tuple.type (%tuple.type.a5e) = call %F.specific_fn.loc13_67.1(%p.ref, %.loc13_48)
-// CHECK:STDOUT:     return %F.call %return
+// CHECK:STDOUT:     return %F.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -634,7 +634,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C, constants.%D) [concrete = constants.%F.specific_fn.107]
 // CHECK:STDOUT:   %.loc15_28: ref %tuple.type.281 = splice_block %return {}
 // CHECK:STDOUT:   %F.call: init %tuple.type.281 = call %F.specific_fn(%p.ref, %.loc15_28)
-// CHECK:STDOUT:   return %F.call %return
+// CHECK:STDOUT:   return %F.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%T) {
@@ -873,7 +873,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc6_50.2: <bound method> = bound_method %N.ref.loc6_50, %specific_fn [symbolic = %bound_method.loc6_50.3 (constants.%bound_method.207)]
 // CHECK:STDOUT:     %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_50.2(%N.ref.loc6_50) [symbolic = %N.loc6_6.1 (constants.%N.5de)]
-// CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call %return
+// CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -900,7 +900,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%.loc9_15.2)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc9_13.4, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc9_13.4)
-// CHECK:STDOUT:   return %F.call %return
+// CHECK:STDOUT:   return %F.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: ref %WithNontype.6bb) = "no_op";

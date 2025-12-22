@@ -696,7 +696,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %.loc5_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc5_15.2: init @Inner.A.%Outer.loc4_22.1 (%Outer.387) = class_init (), %return [symbolic = %Outer.val (constants.%Outer.val.ca1)]
 // CHECK:STDOUT:     %.loc5_16: init @Inner.A.%Outer.loc4_22.1 (%Outer.387) = converted %.loc5_15.1, %.loc5_15.2 [symbolic = %Outer.val (constants.%Outer.val.ca1)]
-// CHECK:STDOUT:     return %.loc5_16 %return
+// CHECK:STDOUT:     return %.loc5_16, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -714,7 +714,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %.loc8_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc8_15.2: init @Inner.B.%Outer.loc7_22.1 (%Outer.d2f) = class_init (), %return [symbolic = %Outer.val (constants.%Outer.val.756)]
 // CHECK:STDOUT:     %.loc8_16: init @Inner.B.%Outer.loc7_22.1 (%Outer.d2f) = converted %.loc8_15.1, %.loc8_15.2 [symbolic = %Outer.val (constants.%Outer.val.756)]
-// CHECK:STDOUT:     return %.loc8_16 %return
+// CHECK:STDOUT:     return %.loc8_16, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -734,7 +734,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %.loc11_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc11_15.2: init @Inner.C.%Inner.loc10_22.1 (%Inner.ddc) = class_init (), %return [symbolic = %Inner.val (constants.%Inner.val.240)]
 // CHECK:STDOUT:     %.loc11_16: init @Inner.C.%Inner.loc10_22.1 (%Inner.ddc) = converted %.loc11_15.1, %.loc11_15.2 [symbolic = %Inner.val (constants.%Inner.val.240)]
-// CHECK:STDOUT:     return %.loc11_16 %return
+// CHECK:STDOUT:     return %.loc11_16, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -755,7 +755,7 @@ class Outer(T:! type) {
 // CHECK:STDOUT:     %.loc14_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc14_15.2: init @Inner.D.%Inner.loc13_22.1 (%Inner.e21) = class_init (), %return [symbolic = %Inner.val (constants.%Inner.val.43a)]
 // CHECK:STDOUT:     %.loc14_16: init @Inner.D.%Inner.loc13_22.1 (%Inner.e21) = converted %.loc14_15.1, %.loc14_15.2 [symbolic = %Inner.val (constants.%Inner.val.43a)]
-// CHECK:STDOUT:     return %.loc14_16 %return
+// CHECK:STDOUT:     return %.loc14_16, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

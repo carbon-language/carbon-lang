@@ -252,7 +252,7 @@ fn Test() {
 // CHECK:STDOUT:   %.loc20_51.3: init %i32 = initialize_from %Int.as.Copy.impl.Op.call, %.loc20_51.2
 // CHECK:STDOUT:   %.loc20_51.4: init %X = class_init (%.loc20_51.3), %return
 // CHECK:STDOUT:   %.loc20_52: init %X = converted %.loc20_51.1, %.loc20_51.4
-// CHECK:STDOUT:   return %.loc20_52 %return
+// CHECK:STDOUT:   return %.loc20_52, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @X.as.ImplicitAs.impl.Convert(%self.param: %X, %return.param: ref %i32) {
@@ -266,7 +266,7 @@ fn Test() {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc24_45.2: <bound method> = bound_method %.loc24_45.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc24_45.2(%.loc24_45.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Sink_i32(%n.param: %i32);
@@ -288,7 +288,7 @@ fn Test() {
 // CHECK:STDOUT:     %Source.specific_fn.loc31_35.1: <specific function> = specific_function %Source.ref, @Source(constants.%T.67d) [symbolic = %Source.specific_fn.loc31_35.2 (constants.%Source.specific_fn.24a)]
 // CHECK:STDOUT:     %.loc31: ref @Source.%T.loc31_11.1 (%T.67d) = splice_block %return {}
 // CHECK:STDOUT:     %Source.call: init @Source.%T.loc31_11.1 (%T.67d) = call %Source.specific_fn.loc31_35.1(%.loc31)
-// CHECK:STDOUT:     return %Source.call %return
+// CHECK:STDOUT:     return %Source.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

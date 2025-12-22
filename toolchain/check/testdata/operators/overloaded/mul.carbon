@@ -72,7 +72,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.as.MulWith.impl.Op.call: init %C = call %bound_method(%a.ref, %b.ref, %.loc30)
-// CHECK:STDOUT:   return %C.as.MulWith.impl.Op.call %return
+// CHECK:STDOUT:   return %C.as.MulWith.impl.Op.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestAssign(%a.param: %ptr.872, %b.param: %C) {

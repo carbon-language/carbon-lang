@@ -301,7 +301,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %bound_method.loc12_10.2: <bound method> = bound_method %n.ref, %specific_impl_fn.loc12_10.1
 // CHECK:STDOUT:     %.loc11_33: ref @Class.F.%T.binding.as_type (%T.binding.as_type) = splice_block %return.loc11 {}
 // CHECK:STDOUT:     %Copy.Op.call: init @Class.F.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc12_10.2(%n.ref, %.loc11_33)
-// CHECK:STDOUT:     return %Copy.Op.call %return.loc11
+// CHECK:STDOUT:     return %Copy.Op.call, %return.loc11
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -333,7 +333,7 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %bound_method.loc16_14.2: <bound method> = bound_method %.loc16_14.2, %specific_impl_fn.loc16_14.1
 // CHECK:STDOUT:     %.loc15_41: ref @Class.G.%T.binding.as_type (%T.binding.as_type) = splice_block %return.loc15 {}
 // CHECK:STDOUT:     %Copy.Op.call: init @Class.G.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc16_14.2(%.loc16_14.2, %.loc15_41)
-// CHECK:STDOUT:     return %Copy.Op.call %return.loc15
+// CHECK:STDOUT:     return %Copy.Op.call, %return.loc15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

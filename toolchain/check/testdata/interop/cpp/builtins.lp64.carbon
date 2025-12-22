@@ -230,7 +230,7 @@ fn F() {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc11_43.3: ref %f32.97e = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc11_43.4: init %f32.97e = initialize_from %.loc11_43.2, %.loc11_43.3 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc11_43.5: init %array_type = array_init (%.loc11_43.4) %a.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc11_43.5: init %array_type = array_init (%.loc11_43.4), %a.var [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc11_3: init %array_type = converted %.loc11_43.1, %.loc11_43.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc11_3
 // CHECK:STDOUT:   %.loc11_34: type = splice_block %array_type [concrete = constants.%array_type] {
@@ -396,7 +396,7 @@ fn F() {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc11_52.3: ref %f32.97e = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc11_52.4: init %f32.97e = initialize_from %.loc11_52.2, %.loc11_52.3 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc11_52.5: init %array_type = array_init (%.loc11_52.4) %a.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc11_52.5: init %array_type = array_init (%.loc11_52.4), %a.var [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc11_3: init %array_type = converted %.loc11_52.1, %.loc11_52.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc11_3
 // CHECK:STDOUT:   %.loc11_43: type = splice_block %array_type [concrete = constants.%array_type] {
@@ -685,7 +685,7 @@ fn F() {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc24_48.3: ref %f32.97e = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc24_48.4: init %f32.97e = initialize_from %.loc24_48.2, %.loc24_48.3 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc24_48.5: init %array_type = array_init (%.loc24_48.4) %a.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc24_48.5: init %array_type = array_init (%.loc24_48.4), %a.var [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc24_3: init %array_type = converted %.loc24_48.1, %.loc24_48.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc24_3
 // CHECK:STDOUT:   %.loc24_39: type = splice_block %array_type [concrete = constants.%array_type] {
@@ -980,7 +980,7 @@ fn F() {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc24_57.3: ref %f32.97e = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc24_57.4: init %f32.97e = initialize_from %.loc24_57.2, %.loc24_57.3 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc24_57.5: init %array_type = array_init (%.loc24_57.4) %a.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc24_57.5: init %array_type = array_init (%.loc24_57.4), %a.var [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc24_3: init %array_type = converted %.loc24_57.1, %.loc24_57.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc24_3
 // CHECK:STDOUT:   %.loc24_48: type = splice_block %array_type [concrete = constants.%array_type] {

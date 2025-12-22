@@ -282,7 +282,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %.loc15_21.4: init %i32 = initialize_from %.loc15_21.2, %.loc15_21.3 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc15_21.5: init %Param = class_init (%.loc15_21.4), %return [concrete = constants.%Param.val]
 // CHECK:STDOUT:   %.loc15_22: init %Param = converted %.loc15_21.1, %.loc15_21.5 [concrete = constants.%Param.val]
-// CHECK:STDOUT:   return %.loc15_22 %return
+// CHECK:STDOUT:   return %.loc15_22, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%c.param: %C) {

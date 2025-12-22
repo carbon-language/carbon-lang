@@ -964,7 +964,7 @@ fn G() {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %.loc24_25.3: ref type = array_index %.loc24_25.2, %int_0
 // CHECK:STDOUT:   %.loc24_25.4: init type = initialize_from %type.as.Copy.impl.Op.call, %.loc24_25.3 [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc24_25.5: init %array_type = array_init (%.loc24_25.4) %.loc24_25.2 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc24_25.5: init %array_type = array_init (%.loc24_25.4), %.loc24_25.2 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc24_27.1: init %array_type = converted %.loc24_25.1, %.loc24_25.5 [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc24_27.2: ref %array_type = temporary %.loc24_25.2, %.loc24_27.1
 // CHECK:STDOUT:   %.loc24_27.3: %array_type = acquire_value %.loc24_27.2

@@ -2147,7 +2147,7 @@ class T2(G2:! type) {
 // CHECK:STDOUT:   %.loc12_13.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc12_13.2: init %T1 = class_init (), %return [concrete = constants.%T1.val]
 // CHECK:STDOUT:   %.loc12_14: init %T1 = converted %.loc12_13.1, %.loc12_13.2 [concrete = constants.%T1.val]
-// CHECK:STDOUT:   return %.loc12_14 %return
+// CHECK:STDOUT:   return %.loc12_14, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @Base.F(%self.param: %Base, %return.param: ref %T1);

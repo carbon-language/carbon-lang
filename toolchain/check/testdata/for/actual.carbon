@@ -511,7 +511,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:     %.loc6_39.5: init @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1) = initialize_from %Copy.Op.call.loc6_36, %.loc6_39.4
 // CHECK:STDOUT:     %.loc6_39.6: init @IntRange.Make.%IntRange (%IntRange.265) = class_init (%.loc6_39.3, %.loc6_39.5), %return
 // CHECK:STDOUT:     %.loc6_40: init @IntRange.Make.%IntRange (%IntRange.265) = converted %.loc6_39.1, %.loc6_39.6
-// CHECK:STDOUT:     return %.loc6_40 %return
+// CHECK:STDOUT:     return %.loc6_40, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -546,7 +546,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:     %specific_impl_fn.loc10_60.1: <specific function> = specific_impl_function %impl.elem0.loc10_60.1, @Copy.Op(constants.%Copy.facet.3b9) [symbolic = %specific_impl_fn.loc10_60.2 (constants.%specific_impl_fn.62b)]
 // CHECK:STDOUT:     %bound_method.loc10_60.2: <bound method> = bound_method %.loc10_60.2, %specific_impl_fn.loc10_60.1
 // CHECK:STDOUT:     %Copy.Op.call: init @IntRange.as.Iterate.impl.NewCursor.%Int.loc10_45.1 (%Int.fc6021.1) = call %bound_method.loc10_60.2(%.loc10_60.2)
-// CHECK:STDOUT:     return %Copy.Op.call %return
+// CHECK:STDOUT:     return %Copy.Op.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -675,7 +675,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:     %Optional.Some.call: init @IntRange.as.Iterate.impl.Next.%Optional.loc11_75.1 (%Optional.e48) = call %Optional.Some.specific_fn.loc15_42.1(%.loc15_48, %.loc11_47.1)
 // CHECK:STDOUT:     %DestroyOp.bound.loc12_7.1: <bound method> = bound_method %value.var, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:     %DestroyOp.call.loc12_7.1: init %empty_tuple.type = call %DestroyOp.bound.loc12_7.1(%value.var)
-// CHECK:STDOUT:     return %Optional.Some.call %return
+// CHECK:STDOUT:     return %Optional.Some.call, %return
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !if.else:
 // CHECK:STDOUT:     %Core.ref.loc17_16: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -694,7 +694,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:     %Optional.None.call: init @IntRange.as.Iterate.impl.Next.%Optional.loc11_75.1 (%Optional.e48) = call %Optional.None.specific_fn.loc17_42.1(%.loc11_47.2)
 // CHECK:STDOUT:     %DestroyOp.bound.loc12_7.2: <bound method> = bound_method %value.var, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:     %DestroyOp.call.loc12_7.2: init %empty_tuple.type = call %DestroyOp.bound.loc12_7.2(%value.var)
-// CHECK:STDOUT:     return %Optional.None.call %return
+// CHECK:STDOUT:     return %Optional.None.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -717,7 +717,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %.loc27_28.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc27_28.2: %i32 = converted %int_0, %.loc27_28.1 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %IntRange.Make.call: init %IntRange.a89 = call %IntRange.Make.specific_fn(%.loc27_28.2, %end.ref, %.loc26_20)
-// CHECK:STDOUT:   return %IntRange.Make.call %return
+// CHECK:STDOUT:   return %IntRange.Make.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IntRange(constants.%N) {

@@ -349,7 +349,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc25_14.2: <bound method> = bound_method %.loc25_14.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc25_14.2(%.loc25_14.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return.loc24
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call, %return.loc24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.G(%self.param: ref %Class, %return.param: ref %i32);
@@ -360,7 +360,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %F.ref: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
 // CHECK:STDOUT:   %Class.F.bound: <bound method> = bound_method %c.ref, %F.ref
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%c.ref)
-// CHECK:STDOUT:   return %Class.F.call %return
+// CHECK:STDOUT:   return %Class.F.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallAlias(%c.param: %Class, %return.param: ref %i32) {
@@ -369,7 +369,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %A.ref: %Class.F.type = name_ref A, @Class.%A [concrete = constants.%Class.F]
 // CHECK:STDOUT:   %Class.F.bound: <bound method> = bound_method %c.ref, %A.ref
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%c.ref)
-// CHECK:STDOUT:   return %Class.F.call %return
+// CHECK:STDOUT:   return %Class.F.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallOnConstBoundMethod(%return.param: ref %i32) {
@@ -395,7 +395,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%.loc39_20.2)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc39_18.7, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc39_18.7)
-// CHECK:STDOUT:   return %Class.F.call %return
+// CHECK:STDOUT:   return %Class.F.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Class) = "no_op";
@@ -415,7 +415,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.G.call: init %i32 = call %Class.G.bound(%c.ref)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %c.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%c.var)
-// CHECK:STDOUT:   return %Class.G.call %return
+// CHECK:STDOUT:   return %Class.G.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallFThroughPointer(%p.param: %ptr.8e5, %return.param: ref %i32) {
@@ -426,7 +426,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.F.bound: <bound method> = bound_method %.loc48_11.1, %F.ref
 // CHECK:STDOUT:   %.loc48_11.2: %Class = acquire_value %.loc48_11.1
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%.loc48_11.2)
-// CHECK:STDOUT:   return %Class.F.call %return
+// CHECK:STDOUT:   return %Class.F.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallGThroughPointer(%p.param: %ptr.8e5, %return.param: ref %i32) {
@@ -436,7 +436,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %G.ref: %Class.G.type = name_ref G, @Class.%Class.G.decl [concrete = constants.%Class.G]
 // CHECK:STDOUT:   %Class.G.bound: <bound method> = bound_method %.loc52, %G.ref
 // CHECK:STDOUT:   %Class.G.call: init %i32 = call %Class.G.bound(%.loc52)
-// CHECK:STDOUT:   return %Class.G.call %return
+// CHECK:STDOUT:   return %Class.G.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Make(%return.param: ref %Class);
@@ -453,7 +453,7 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%.loc58_15.3)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc58_15.2, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc58_15.2)
-// CHECK:STDOUT:   return %Class.F.call %return
+// CHECK:STDOUT:   return %Class.F.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallGOnInitializingExpr(%return.param: ref %i32) {
@@ -467,6 +467,6 @@ fn CallGOnInitializingExpr() -> i32 {
 // CHECK:STDOUT:   %Class.G.call: init %i32 = call %Class.G.bound(%.loc62_15.2)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc62_15.2, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc62_15.2)
-// CHECK:STDOUT:   return %Class.G.call %return
+// CHECK:STDOUT:   return %Class.G.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

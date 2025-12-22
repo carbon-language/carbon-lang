@@ -279,7 +279,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %.loc9_39.3: init @Outer.F.%T.binding.as_type (%T.binding.as_type) = initialize_from %Copy.Op.call, %.loc9_39.2
 // CHECK:STDOUT:     %.loc9_39.4: init @Outer.F.%Inner (%Inner.bcf) = class_init (%.loc9_39.3), %return
 // CHECK:STDOUT:     %.loc9_40: init @Outer.F.%Inner (%Inner.bcf) = converted %.loc9_39.1, %.loc9_39.4
-// CHECK:STDOUT:     return %.loc9_40 %return
+// CHECK:STDOUT:     return %.loc9_40, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -336,7 +336,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc14_11.2(%.loc14_11.2)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %c.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%c.var)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: ref %Inner.74c) = "no_op";
@@ -730,7 +730,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %bound_method.loc11_52: <bound method> = bound_method %self.ref, %specific_impl_fn.loc11_41.1
 // CHECK:STDOUT:     %.loc11_23: ref @C.as.Inner.impl.F.%T (%T) = splice_block %return {}
 // CHECK:STDOUT:     %Inner.F.call: init @C.as.Inner.impl.F.%T (%T) = call %bound_method.loc11_52(%self.ref, %.loc11_23)
-// CHECK:STDOUT:     return %Inner.F.call %return
+// CHECK:STDOUT:     return %Inner.F.call, %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -773,7 +773,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %C.as.Inner.impl.F.call: init %i32 = call %bound_method.loc24_33(%.loc24_10)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %c.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%c.var)
-// CHECK:STDOUT:   return %C.as.Inner.impl.F.call %return
+// CHECK:STDOUT:   return %C.as.Inner.impl.F.call, %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: ref %C.d3f) = "no_op";

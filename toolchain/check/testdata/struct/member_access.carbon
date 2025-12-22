@@ -164,7 +164,7 @@ var z: i32 = y;
 // CHECK:STDOUT:   %.loc15_46.5: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc15_46.6: ref %i32 = struct_access file.%x.var, element1 [concrete = constants.%.b93]
 // CHECK:STDOUT:   %.loc15_46.7: init %i32 = initialize_from %.loc15_46.5, %.loc15_46.6 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc15_46.8: init %struct_type.a.b.d2f = struct_init (%.loc15_46.4, %.loc15_46.7) file.%x.var [concrete = constants.%struct.454]
+// CHECK:STDOUT:   %.loc15_46.8: init %struct_type.a.b.d2f = struct_init (%.loc15_46.4, %.loc15_46.7), file.%x.var [concrete = constants.%struct.454]
 // CHECK:STDOUT:   %.loc15_1: init %struct_type.a.b.d2f = converted %.loc15_46.1, %.loc15_46.8 [concrete = constants.%struct.454]
 // CHECK:STDOUT:   assign file.%x.var, %.loc15_1
 // CHECK:STDOUT:   %x.ref: ref %struct_type.a.b.d2f = name_ref x, file.%x [concrete = file.%x.var]

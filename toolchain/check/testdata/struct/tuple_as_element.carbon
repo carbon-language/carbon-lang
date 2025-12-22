@@ -149,10 +149,10 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc15_49: init %i32 = call %bound_method.loc15_49.2(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc15_49.2: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc15_49 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc15_50.5: ref %tuple.type.a1c = struct_access file.%x.var, element1 [concrete = constants.%.03e]
-// CHECK:STDOUT:   %.loc15_49.3: init %tuple.type.a1c = tuple_init (%.loc15_49.2) %.loc15_50.5 [concrete = constants.%tuple.092]
+// CHECK:STDOUT:   %.loc15_49.3: init %tuple.type.a1c = tuple_init (%.loc15_49.2), %.loc15_50.5 [concrete = constants.%tuple.092]
 // CHECK:STDOUT:   %.loc15_50.6: init %tuple.type.a1c = converted %.loc15_49.1, %.loc15_49.3 [concrete = constants.%tuple.092]
 // CHECK:STDOUT:   %.loc15_50.7: init %tuple.type.a1c = initialize_from %.loc15_50.6, %.loc15_50.5 [concrete = constants.%tuple.092]
-// CHECK:STDOUT:   %.loc15_50.8: init %struct_type.a.b.3d5 = struct_init (%.loc15_50.4, %.loc15_50.7) file.%x.var [concrete = constants.%struct.646]
+// CHECK:STDOUT:   %.loc15_50.8: init %struct_type.a.b.3d5 = struct_init (%.loc15_50.4, %.loc15_50.7), file.%x.var [concrete = constants.%struct.646]
 // CHECK:STDOUT:   %.loc15_1: init %struct_type.a.b.3d5 = converted %.loc15_50.1, %.loc15_50.8 [concrete = constants.%struct.646]
 // CHECK:STDOUT:   assign file.%x.var, %.loc15_1
 // CHECK:STDOUT:   %x.ref: ref %struct_type.a.b.3d5 = name_ref x, file.%x [concrete = file.%x.var]
@@ -174,10 +174,10 @@ var y: {.a: i32, .b: (i32,)} = x;
 // CHECK:STDOUT:   %bound_method.loc16_32.4: <bound method> = bound_method %.loc16_32.6, %specific_fn.loc16_32.2
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc16_32.2: init %i32 = call %bound_method.loc16_32.4(%.loc16_32.6)
 // CHECK:STDOUT:   %.loc16_32.7: ref %tuple.type.a1c = struct_access file.%y.var, element1 [concrete = constants.%.07f]
-// CHECK:STDOUT:   %.loc16_32.8: init %tuple.type.a1c = tuple_init (%Int.as.Copy.impl.Op.call.loc16_32.2) %.loc16_32.7
+// CHECK:STDOUT:   %.loc16_32.8: init %tuple.type.a1c = tuple_init (%Int.as.Copy.impl.Op.call.loc16_32.2), %.loc16_32.7
 // CHECK:STDOUT:   %.loc16_32.9: init %tuple.type.a1c = converted %.loc16_32.5, %.loc16_32.8
 // CHECK:STDOUT:   %.loc16_32.10: init %tuple.type.a1c = initialize_from %.loc16_32.9, %.loc16_32.7
-// CHECK:STDOUT:   %.loc16_32.11: init %struct_type.a.b.3d5 = struct_init (%.loc16_32.4, %.loc16_32.10) file.%y.var
+// CHECK:STDOUT:   %.loc16_32.11: init %struct_type.a.b.3d5 = struct_init (%.loc16_32.4, %.loc16_32.10), file.%y.var
 // CHECK:STDOUT:   %.loc16_1: init %struct_type.a.b.3d5 = converted %x.ref, %.loc16_32.11
 // CHECK:STDOUT:   assign file.%y.var, %.loc16_1
 // CHECK:STDOUT:   return

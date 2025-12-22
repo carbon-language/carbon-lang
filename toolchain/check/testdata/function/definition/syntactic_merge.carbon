@@ -816,7 +816,7 @@ fn Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %.loc8_25.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_25.2: init %C = class_init (), %return.loc8 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc8_26: init %C = converted %.loc8_25.1, %.loc8_25.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   return %.loc8_26 %return.loc8
+// CHECK:STDOUT:   return %.loc8_26, %return.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- alias_two_file.carbon
