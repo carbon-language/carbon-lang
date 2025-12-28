@@ -32,6 +32,7 @@
 #include "llvm/Support/Error.h"
 #include "llvm/Support/FormatAdapters.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/ThreadPool.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/TargetParser/Host.h"
@@ -207,6 +208,12 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::CompileMember(
                                src_file,
                                llvm::fmt_consume(obj_result.takeError())));
   }
+
+  // Only use the basename as the member name to match the behavior of `ar`. We
+  // also specifically use the LLVM path function rather than the standard
+  // library as it allows us to get the filename within the member-owned
+  // filename storage.
+  obj_result->MemberName = llvm::sys::path::filename(obj_result->MemberName);
 
   // Unlink the object file once we've read it -- we only want to retain the
   // copy inside the archive member and there's no advantage to using
