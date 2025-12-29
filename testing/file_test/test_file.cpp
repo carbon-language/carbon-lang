@@ -49,12 +49,14 @@ static auto TryConsumeConflictMarker(bool running_autoupdate,
   }
 
   if (is_jj_diff && running_autoupdate) {
+    // TODO: Add support for JJ's diff-style conflict markers.
     return ErrorBuilder()
            << "Found jj \"diff\" style conflict marker."
               " Autoupdate only supports \"snapshot\" style conflict markers."
               " To switch, use `jj config set --repo ui.conflict-marker-style"
-              " \"snapshot\"`, and then navigate to a different change and "
-              "back.";
+              " \"snapshot\"`, and then run `jj new` (or `jj edit`) again to "
+              " materialize the new style. For more details, see: "
+              "https://docs.jj-vcs.dev/latest/conflicts/";
   }
 
   // Autoupdate tracks conflict markers for context, and will discard
