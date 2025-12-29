@@ -5,25 +5,45 @@
 #ifndef CARBON_COMMON_BAZEL_WORKING_DIR_H_
 #define CARBON_COMMON_BAZEL_WORKING_DIR_H_
 
-#include "llvm/Support/FileSystem.h"
+#include <stdlib.h>
+
+#include <filesystem>
+#include <system_error>
+
+#include "common/check.h"
+#include "common/filesystem.h"
 
 namespace Carbon {
 
-// Behave as if the working directory is where `bazel run` was invoked.
-// This should only be used in development binaries, not release.
-inline auto SetWorkingDirForBazel() -> bool {
+// Change working directory to behave as if it is where `bazel run` was invoked.
+//
+// Accepts an optional `exe_path` argument that will be adjusted to continue to
+// be valid after this adjustment.
+//
+// There is no reasonable recovery we can do if either we can't make the path
+// absolute or we can't change directory. As a consequence, this aborts if
+// either of those fail rather than propagating any error.
+inline auto SetWorkingDirForBazelRun(std::filesystem::path exe_path = {})
+    -> std::filesystem::path {
   char* build_working_dir = getenv("BUILD_WORKING_DIRECTORY");
   if (build_working_dir == nullptr) {
-    return true;
+    return exe_path;
   }
 
-  if (std::error_code err =
-          llvm::sys::fs::set_current_path(build_working_dir)) {
-    llvm::errs() << "Failed to set working directory: " << err.message();
-    return false;
+  // Adjust `exe_path` before changing directory.
+  if (!exe_path.empty()) {
+    std::error_code err;
+    exe_path = std::filesystem::absolute(exe_path, err);
+    CARBON_CHECK(!err, "Unable to make an absolute path for `{0}`: {1}",
+                 exe_path, err.message());
   }
 
-  return true;
+  auto chdir_result = Filesystem::Cwd().Chdir(build_working_dir);
+  CARBON_CHECK(chdir_result.ok(),
+               "Unable to change working directory to `{0}`: {1}",
+               build_working_dir, chdir_result.error());
+
+  return exe_path;
 }
 
 }  // namespace Carbon

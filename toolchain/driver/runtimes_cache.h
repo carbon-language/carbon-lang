@@ -176,10 +176,7 @@ class Runtimes {
         base_dir_(std::move(base_dir)),
         lock_file_(std::move(lock_file)),
         flock_(std::move(flock)),
-        vlog_stream_(vlog_stream) {
-    CARBON_CHECK(base_path_.is_absolute(),
-                 "The base path must be absolute: {0}", base_path_);
-  }
+        vlog_stream_(vlog_stream) {}
 
   // Implementation of building the Clang resource directory. This exposes the
   // deadline and poll interval to allow testing with artificial values.
@@ -401,7 +398,7 @@ class Runtimes::Builder : public Printable<Builder> {
   // The build's staging directory.
   auto dir() const -> Filesystem::DirRef { return dir_; }
   // The build's staging directory path.
-  auto path() const -> const std::filesystem::path& { return dir_.abs_path(); }
+  auto path() const -> const std::filesystem::path& { return dir_.path(); }
 
   // Commits the new runtime to the cache.
   //

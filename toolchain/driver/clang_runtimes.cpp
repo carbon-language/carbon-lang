@@ -383,8 +383,6 @@ auto ClangArchiveRuntimesBuilder<Component>::CollectCflags()
   }
 
   for (const auto& include_path : include_paths_) {
-    CARBON_CHECK(include_path.is_absolute(),
-                 "Unexpected relative include path: {0}", include_path);
     cflags.append({"-I", include_path.native()});
   }
   return cflags;

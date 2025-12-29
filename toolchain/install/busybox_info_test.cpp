@@ -26,7 +26,7 @@ using ::testing::Eq;
 class BusyboxInfoTest : public ::testing::Test {
  public:
   explicit BusyboxInfoTest()
-      : dir_(std::move(*Filesystem::MakeTmpDir())), path_(dir_.abs_path()) {
+      : dir_(std::move(*Filesystem::MakeTmpDir())), path_(dir_.path()) {
     // Most tests need the running binary for `MakeBusyboxFile`.
     static int static_for_main_addr;
     running_binary_ = llvm::sys::fs::getMainExecutable("busybox_info_test",

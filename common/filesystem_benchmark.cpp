@@ -160,7 +160,7 @@ auto BM_Access(benchmark::State& state) -> void {
       } else if constexpr (Comp == Std) {
         std::error_code ec;
         bool exists = std::filesystem::exists(
-            context.tmpdir.abs_path() / context.file_paths[i], ec);
+            context.tmpdir.path() / context.file_paths[i], ec);
         CARBON_CHECK(!ec, "{0}", ec.message());
         CARBON_CHECK(exists);
       } else {
@@ -183,7 +183,7 @@ auto BM_AccessMissing(benchmark::State& state) -> void {
       } else if constexpr (Comp == Std) {
         std::error_code ec;
         auto exists = std::filesystem::exists(
-            context.tmpdir.abs_path() / context.missing_paths[i], ec);
+            context.tmpdir.path() / context.missing_paths[i], ec);
         CARBON_CHECK(!ec, "{0}", ec.message());
         CARBON_CHECK(!exists);
       } else {
@@ -207,7 +207,7 @@ auto BM_Stat(benchmark::State& state) -> void {
       } else if constexpr (Comp == Std) {
         std::error_code ec;
         auto status = std::filesystem::status(
-            context.tmpdir.abs_path() / context.file_paths[i], ec);
+            context.tmpdir.path() / context.file_paths[i], ec);
         CARBON_CHECK(!ec, "{0}", ec.message());
         benchmark::DoNotOptimize(status.permissions());
       } else {
@@ -230,7 +230,7 @@ auto BM_StatMissing(benchmark::State& state) -> void {
       } else if constexpr (Comp == Std) {
         std::error_code ec;
         auto status = std::filesystem::status(
-            context.tmpdir.abs_path() / context.missing_paths[i], ec);
+            context.tmpdir.path() / context.missing_paths[i], ec);
         CARBON_CHECK(ec.value() == ENOENT, "{0}", ec.message());
       } else {
         static_assert(false, "Invalid benchmark comparable");
@@ -250,7 +250,7 @@ auto BM_OpenMissing(benchmark::State& state) -> void {
         auto f = context.tmpdir.OpenReadOnly(context.missing_paths[i]);
         CARBON_CHECK(f.error().no_entity());
       } else if constexpr (Comp == Std) {
-        std::ifstream f(context.tmpdir.abs_path() / context.missing_paths[i]);
+        std::ifstream f(context.tmpdir.path() / context.missing_paths[i]);
         CARBON_CHECK(!f.is_open());
       } else {
         static_assert(false, "Invalid benchmark comparable");
@@ -272,7 +272,7 @@ auto BM_OpenClose(benchmark::State& state) -> void {
         auto close_result = std::move(*f).Close();
         CARBON_CHECK(close_result.ok(), "{0}", close_result.error());
       } else if constexpr (Comp == Std) {
-        std::ifstream f(context.tmpdir.abs_path() / context.file_paths[i]);
+        std::ifstream f(context.tmpdir.path() / context.file_paths[i]);
         CARBON_CHECK(f.is_open());
       } else {
         static_assert(false, "Invalid benchmark comparable");
@@ -300,7 +300,7 @@ auto BM_CreateRemove(benchmark::State& state) -> void {
         auto remove_result = context.tmpdir.Unlink(context.missing_paths[i]);
         CARBON_CHECK(remove_result.ok(), "{0}", remove_result.error());
       } else if constexpr (Comp == Std) {
-        auto path = context.tmpdir.abs_path() / context.missing_paths[i];
+        auto path = context.tmpdir.path() / context.missing_paths[i];
         // Create the file by opening it.
         std::ofstream f(path);
         CARBON_CHECK(f.is_open());
@@ -343,7 +343,7 @@ auto BM_Read(benchmark::State& state) -> void {
         CARBON_CHECK(read_result.ok(), "{0}", read_result.error());
         benchmark::DoNotOptimize(*read_result);
       } else if constexpr (Comp == Std) {
-        std::ifstream f(context.tmpdir.abs_path() / context.file_paths[i],
+        std::ifstream f(context.tmpdir.path() / context.file_paths[i],
                         std::ios::binary);
         CARBON_CHECK(f.is_open());
         // This may be a somewhat surprising implementation, but benchmarking
@@ -379,7 +379,7 @@ auto BM_Write(benchmark::State& state) -> void {
             context.tmpdir.WriteFileFromString(context.file_paths[i], content);
         CARBON_CHECK(write_result.ok(), "{0}", write_result.error());
       } else if constexpr (Comp == Std) {
-        std::ofstream f(context.tmpdir.abs_path() / context.file_paths[i],
+        std::ofstream f(context.tmpdir.path() / context.file_paths[i],
                         std::ios::binary | std::ios::trunc);
         CARBON_CHECK(f.is_open());
         f.write(content.data(), content.length());
@@ -417,7 +417,7 @@ auto BM_Rmtree(benchmark::State& state) -> void {
         CARBON_CHECK(rmdir_result.ok(), "{0}", rmdir_result.error());
       } else if constexpr (Comp == Std) {
         std::error_code ec;
-        std::filesystem::remove_all(context.tmpdir.abs_path() / tree, ec);
+        std::filesystem::remove_all(context.tmpdir.path() / tree, ec);
         CARBON_CHECK(!ec, "{0}", ec.message());
       } else {
         static_assert(false, "Invalid benchmark comparable");
@@ -492,7 +492,7 @@ auto BM_CreateDirectories(benchmark::State& state) -> void {
         auto close_result = std::move(*f).Close();
         CARBON_CHECK(close_result.ok(), "{0}", close_result.error());
       } else if constexpr (Comp == Std) {
-        std::filesystem::path path = context.tmpdir.abs_path() / paths[i];
+        std::filesystem::path path = context.tmpdir.path() / paths[i];
         std::error_code ec;
         std::filesystem::create_directories(path, ec);
         CARBON_CHECK(!ec, "{0}", ec.message());

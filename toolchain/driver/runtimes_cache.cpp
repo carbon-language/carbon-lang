@@ -28,34 +28,15 @@
 
 namespace Carbon {
 
-static auto MakeAbsolute(std::filesystem::path path)
-    -> ErrorOr<std::filesystem::path> {
-  if (!path.is_absolute()) {
-    std::error_code ec;
-    path = std::filesystem::absolute(path, ec);
-    if (ec) {
-      return Error(llvm::formatv("Unable to compute an absolute path: {0}",
-                                 ec.message()));
-    }
-  }
-  return std::move(path);
-}
-
 auto Runtimes::OpenExisting(std::filesystem::path path,
                             llvm::raw_ostream* vlog_stream)
     -> ErrorOr<Runtimes> {
-  CARBON_ASSIGN_OR_RETURN(path, MakeAbsolute(std::move(path)));
-
-  CARBON_ASSIGN_OR_RETURN(
-      Filesystem::Dir dir,
-      Filesystem::Cwd().OpenDir(path, Filesystem::OpenExisting));
+  CARBON_ASSIGN_OR_RETURN(Filesystem::Dir dir, Filesystem::Cwd().OpenDir(path));
   return Runtimes(std::move(path), std::move(dir), {}, {}, vlog_stream);
 }
 
 auto Runtimes::Make(std::filesystem::path path, llvm::raw_ostream* vlog_stream)
     -> ErrorOr<Runtimes> {
-  CARBON_ASSIGN_OR_RETURN(path, MakeAbsolute(std::move(path)));
-
   CARBON_ASSIGN_OR_RETURN(Filesystem::Dir dir,
                           Filesystem::Cwd().CreateDirectories(path));
   return Runtimes(std::move(path), std::move(dir), {}, {}, vlog_stream);
@@ -183,7 +164,7 @@ auto Runtimes::Cache::FindXdgCachePath()
 
 auto Runtimes::Cache::InitTmpSystemCache() -> ErrorOr<Success> {
   CARBON_ASSIGN_OR_RETURN(dir_owner_, Filesystem::MakeTmpDir());
-  path_ = std::get<Filesystem::RemovingDir>(dir_owner_).abs_path();
+  path_ = std::get<Filesystem::RemovingDir>(dir_owner_).path();
   dir_ = std::get<Filesystem::RemovingDir>(dir_owner_);
   CARBON_VLOG("Using temporary cache: {0}", path_);
   return Success();
@@ -467,12 +448,12 @@ auto Runtimes::Builder::Commit() && -> ErrorOr<std::filesystem::path> {
 
   // First, try to do the atomic commit of the built runtimes into the final
   // location.
-  CARBON_CHECK(dir_.abs_path().parent_path() == runtimes_->base_path(),
+  CARBON_CHECK(dir_.path().parent_path() == runtimes_->base_path(),
                "Building a temporary directory '{0}' that is not in the "
                "runtimes tree '{1}'",
-               dir_.abs_path(), runtimes_->base_path());
+               dir_.path(), runtimes_->base_path());
   auto rename_result = runtimes_->base_dir().Rename(
-      dir_.abs_path().filename(), runtimes_->base_dir(), dest_);
+      dir_.path().filename(), runtimes_->base_dir(), dest_);
   // If the rename was successful, then we don't need to remove anything so
   // release that state.
   if (rename_result.ok()) {

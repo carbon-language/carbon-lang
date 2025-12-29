@@ -688,9 +688,6 @@ auto MakeTmpDir() -> ErrorOr<RemovingDir, Error> {
       continue;
     }
     std::filesystem::path tmpdir_env = tmpdir_env_cstr;
-    if (!tmpdir_env.is_absolute()) {
-      continue;
-    }
     tmpdir_path = std::move(tmpdir_env);
     break;
   }
