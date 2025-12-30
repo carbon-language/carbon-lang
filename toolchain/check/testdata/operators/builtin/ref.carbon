@@ -17,9 +17,9 @@ library "[[@TEST_NAME]]";
 
 fn F() {
   var x: () = ();
-  // CHECK:STDERR: fail_discarded_ref.carbon:[[@LINE+4]]:3: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
+  // CHECK:STDERR: fail_discarded_ref.carbon:[[@LINE+4]]:7: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
   // CHECK:STDERR:   ref x;
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   ref x;
 }
