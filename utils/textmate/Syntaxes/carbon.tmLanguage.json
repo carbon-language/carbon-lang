@@ -43,10 +43,13 @@
       "include": "#type-literals"
     },
     {
+      "include": "#customs"
+    },
+    {
       "include": "#functions"
     },
     {
-      "include": "#customs"
+      "include": "#variables"
     }
   ],
   "repository": {
@@ -107,11 +110,11 @@
       "patterns": [
         {
           "name": "keyword.operator.carbon",
-          "match": "\\b(>>=|<=>|<<=|\\&=|==|!=|>=|>>|<=|<<|-=|->|--|%=|\\|=|\\+=|\\+\\+|/=|\\*=|\\&|\\^|=|>|<|-|%|.|\\||\\+|/|\\*)\\b"
+          "match": "\\b(>>=|<=>|<<=|\\&=|==|!=|>=|>>|<=|<<|-=|->|--|%=|\\|=|\\+=|\\+\\+|/=|\\*=|\\&|\\^|=|>|<|-|%|\\.|\\||\\+|/|\\*)\\b"
         },
         {
-          "name": "keyword.operator.carbon",
-          "match": "\\b(addr|and|as|impls|in|like|not|or|partial|template|where)\\b"
+          "name": "keyword.control.carbon",
+          "match": "\\b(addr|and|as|impls|in|like|not|or|partial|ref|template|where)\\b"
         }
       ]
     },
@@ -215,32 +218,12 @@
       "patterns": [
         {
           "name": "constant.language.carbon",
-          "match": "\\b(bool|[iuf][1-9][0-9]*|type)\\b"
-        }
-      ]
-    },
-    "functions": {
-      "patterns": [
-        {
-          "name": "support.function.carbon",
-          "match": "\\b[a-zA-Z]+\\s*\\("
+          "match": "\\b(array|bool|[iuf][1-9][0-9]*|type)\\b"
         }
       ]
     },
     "customs": {
       "patterns": [
-        {
-          "name": "support.class.carbon",
-          "match": "(?<=\\b(package|Core)\\s)\\w+"
-        },
-        {
-          "name": "support.variable.carbon",
-          "match": "(?<=\\s*\\.)\\w+"
-        },
-        {
-          "name": "support.variable.carbon",
-          "match": "(?<=\\bas\\s)\\w+"
-        },
         {
           "name": "support.variable.carbon",
           "match": "\\w+(?=\\s*:)"
@@ -258,16 +241,44 @@
           "match": "(?<=\\bfn\\s)\\w+"
         },
         {
-          "name": "support.other.carbon",
-          "match": "(?<=\\bimpl\\s)\\w+"
-        },
-        {
           "name": "support.type.property-name.carbon",
           "match": "(?<=\\bimport\\s)\\w+"
         },
         {
           "name": "support.class.carbon",
-          "match": "(?<=\\bclass\\s)\\w+"
+          "match": "(?<=\\b(package|Core|class|interface|impl|as)\\s(\\s|\\()*)\\w+(\\(+\\s*\\w+\\s*\\)+)?"
+        },
+        {
+          "name": "support.class.carbon",
+          "match": "(?<=\\)\\s*->\\s*)\\w+"
+        },
+        {
+          "name": "support.class.carbon",
+          "match": "(?<=\\w+:(!)?(\\s|\\()*)\\w+(\\(+\\s*\\w+\\s*\\)+)?"
+        },
+        {
+          "name": "support.class.carbon",
+          "match": "(?<=\\w+\\.\\((\\s|\\()*)\\w+(\\(+\\s*\\w+\\s*\\)+)?"
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "name": "support.function.carbon",
+          "match": "\\b[a-zA-Z]([_0-9a-zA-Z]+)?\\("
+        },
+        {
+          "name": "support.function.carbon",
+          "match": "(?<=\\w+\\.\\((\\s|\\()*\\w+(\\(+\\s*\\w+\\s*\\)+)?\\.)\\w+(\\s|\\))*\\)\\s*\\("
+        }
+      ]
+    },
+    "variables": {
+      "patterns": [
+        {
+          "name": "support.variable.carbon",
+          "match": "\\b[_a-zA-Z]([_0-9a-zA-Z]+)?"
         }
       ]
     },
@@ -275,15 +286,15 @@
       "patterns": [
         {
           "name": "constant.numeric.carbon",
-          "match": "0x[_0-9A-F]+(\\.[_0-9A-F]+(p[-+]?[1-9][0-9]*)?)?"
+          "match": "0x[_0-9a-fA-F]*(\\.[_0-9a-fA-F]+([pP][-+]?[0-9][0-9]*)?)?"
         },
         {
           "name": "constant.numeric.carbon",
-          "match": "0b[_01]+"
+          "match": "0b[_01]*"
         },
         {
           "name": "constant.numeric.carbon",
-          "match": "[1-9][_0-9]*(\\.[_0-9]+(e[-+]?[1-9][0-9]*)?)?"
+          "match": "[0-9][_0-9]*(\\.[_0-9]+([eE][-+]?[0-9][0-9]*)?)?"
         }
       ]
     }
