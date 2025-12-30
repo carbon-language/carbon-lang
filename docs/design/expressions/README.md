@@ -145,7 +145,7 @@ graph BT
 
     logicalExpression((" "))
 
-    ref>"ref"]
+    ref["ref x"]
 
     if>"if x then y else z"]
     click if "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/if.md"
