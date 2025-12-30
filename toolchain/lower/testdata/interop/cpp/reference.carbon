@@ -92,13 +92,13 @@ auto ReturnConstIntRef() -> const int&;
 ''';
 
 fn GetRefs() {
-  var _: Cpp.C* = Cpp.ReturnCRef();
-  var _: Cpp.C* = Cpp.ReturnCRRef();
-  var _: const Cpp.C* = Cpp.ReturnConstCRef();
+  let ref _: Cpp.C = Cpp.ReturnCRef();
+  let ref _: Cpp.C = Cpp.ReturnCRRef();
+  let ref _: const Cpp.C = Cpp.ReturnConstCRef();
 
-  var _: i32* = Cpp.ReturnIntRef();
-  var _: i32* = Cpp.ReturnIntRRef();
-  var _: const i32* = Cpp.ReturnConstIntRef();
+  let ref _: i32 = Cpp.ReturnIntRef();
+  let ref _: i32 = Cpp.ReturnIntRRef();
+  let ref _: const i32 = Cpp.ReturnConstIntRef();
 }
 
 // --- return_references_via_thunk.carbon
@@ -119,13 +119,13 @@ auto ReturnConstIntRef(ForceThunk = {}) -> const int&;
 ''';
 
 fn GetRefs() {
-  var _: Cpp.C* = Cpp.ReturnCRef();
-  var _: Cpp.C* = Cpp.ReturnCRRef();
-  var _: const Cpp.C* = Cpp.ReturnConstCRef();
+  let ref _: Cpp.C = Cpp.ReturnCRef();
+  let ref _: Cpp.C = Cpp.ReturnCRRef();
+  let ref _: const Cpp.C = Cpp.ReturnConstCRef();
 
-  var _: i32* = Cpp.ReturnIntRef();
-  var _: i32* = Cpp.ReturnIntRRef();
-  var _: const i32* = Cpp.ReturnConstIntRef();
+  let ref _: i32 = Cpp.ReturnIntRef();
+  let ref _: i32 = Cpp.ReturnIntRRef();
+  let ref _: const i32 = Cpp.ReturnConstIntRef();
 }
 
 // CHECK:STDOUT: ; ModuleID = 'pass_references.carbon'
@@ -438,31 +438,13 @@ fn GetRefs() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CGetRefs.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var.loc17 = alloca ptr, align 8, !dbg !15
-// CHECK:STDOUT:   %_.var.loc18 = alloca ptr, align 8, !dbg !16
-// CHECK:STDOUT:   %_.var.loc19 = alloca ptr, align 8, !dbg !17
-// CHECK:STDOUT:   %_.var.loc21 = alloca ptr, align 8, !dbg !18
-// CHECK:STDOUT:   %_.var.loc22 = alloca ptr, align 8, !dbg !19
-// CHECK:STDOUT:   %_.var.loc23 = alloca ptr, align 8, !dbg !20
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc17), !dbg !15
-// CHECK:STDOUT:   %ReturnCRef.call = call ptr @_Z10ReturnCRefv(), !dbg !21
-// CHECK:STDOUT:   store ptr %ReturnCRef.call, ptr %_.var.loc17, align 8, !dbg !15
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc18), !dbg !16
-// CHECK:STDOUT:   %ReturnCRRef.call = call ptr @_Z11ReturnCRRefv(), !dbg !22
-// CHECK:STDOUT:   store ptr %ReturnCRRef.call, ptr %_.var.loc18, align 8, !dbg !16
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc19), !dbg !17
-// CHECK:STDOUT:   %ReturnConstCRef.call = call ptr @_Z15ReturnConstCRefv(), !dbg !23
-// CHECK:STDOUT:   store ptr %ReturnConstCRef.call, ptr %_.var.loc19, align 8, !dbg !17
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc21), !dbg !18
-// CHECK:STDOUT:   %ReturnIntRef.call = call ptr @_Z12ReturnIntRefv(), !dbg !24
-// CHECK:STDOUT:   store ptr %ReturnIntRef.call, ptr %_.var.loc21, align 8, !dbg !18
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc22), !dbg !19
-// CHECK:STDOUT:   %ReturnIntRRef.call = call ptr @_Z13ReturnIntRRefv(), !dbg !25
-// CHECK:STDOUT:   store ptr %ReturnIntRRef.call, ptr %_.var.loc22, align 8, !dbg !19
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc23), !dbg !20
-// CHECK:STDOUT:   %ReturnConstIntRef.call = call ptr @_Z17ReturnConstIntRefv(), !dbg !26
-// CHECK:STDOUT:   store ptr %ReturnConstIntRef.call, ptr %_.var.loc23, align 8, !dbg !20
-// CHECK:STDOUT:   ret void, !dbg !27
+// CHECK:STDOUT:   %ReturnCRef.call = call ptr @_Z10ReturnCRefv(), !dbg !15
+// CHECK:STDOUT:   %ReturnCRRef.call = call ptr @_Z11ReturnCRRefv(), !dbg !16
+// CHECK:STDOUT:   %ReturnConstCRef.call = call ptr @_Z15ReturnConstCRefv(), !dbg !17
+// CHECK:STDOUT:   %ReturnIntRef.call = call ptr @_Z12ReturnIntRefv(), !dbg !18
+// CHECK:STDOUT:   %ReturnIntRRef.call = call ptr @_Z13ReturnIntRRefv(), !dbg !19
+// CHECK:STDOUT:   %ReturnConstIntRef.call = call ptr @_Z17ReturnConstIntRefv(), !dbg !20
+// CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare ptr @_Z10ReturnCRefv()
@@ -477,14 +459,7 @@ fn GetRefs() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare ptr @_Z17ReturnConstIntRefv()
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 5, 4, 3, 2, 1, 0 }
-// CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
-// CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!6}
@@ -505,19 +480,13 @@ fn GetRefs() {
 // CHECK:STDOUT: !12 = distinct !DISubprogram(name: "GetRefs", linkageName: "_CGetRefs.Main", scope: null, file: !7, line: 16, type: !13, spFlags: DISPFlagDefinition, unit: !6)
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{null}
-// CHECK:STDOUT: !15 = !DILocation(line: 17, column: 3, scope: !12)
-// CHECK:STDOUT: !16 = !DILocation(line: 18, column: 3, scope: !12)
-// CHECK:STDOUT: !17 = !DILocation(line: 19, column: 3, scope: !12)
-// CHECK:STDOUT: !18 = !DILocation(line: 21, column: 3, scope: !12)
-// CHECK:STDOUT: !19 = !DILocation(line: 22, column: 3, scope: !12)
-// CHECK:STDOUT: !20 = !DILocation(line: 23, column: 3, scope: !12)
-// CHECK:STDOUT: !21 = !DILocation(line: 17, column: 19, scope: !12)
-// CHECK:STDOUT: !22 = !DILocation(line: 18, column: 19, scope: !12)
-// CHECK:STDOUT: !23 = !DILocation(line: 19, column: 25, scope: !12)
-// CHECK:STDOUT: !24 = !DILocation(line: 21, column: 17, scope: !12)
-// CHECK:STDOUT: !25 = !DILocation(line: 22, column: 17, scope: !12)
-// CHECK:STDOUT: !26 = !DILocation(line: 23, column: 23, scope: !12)
-// CHECK:STDOUT: !27 = !DILocation(line: 16, column: 1, scope: !12)
+// CHECK:STDOUT: !15 = !DILocation(line: 17, column: 22, scope: !12)
+// CHECK:STDOUT: !16 = !DILocation(line: 18, column: 22, scope: !12)
+// CHECK:STDOUT: !17 = !DILocation(line: 19, column: 28, scope: !12)
+// CHECK:STDOUT: !18 = !DILocation(line: 21, column: 20, scope: !12)
+// CHECK:STDOUT: !19 = !DILocation(line: 22, column: 20, scope: !12)
+// CHECK:STDOUT: !20 = !DILocation(line: 23, column: 26, scope: !12)
+// CHECK:STDOUT: !21 = !DILocation(line: 16, column: 1, scope: !12)
 // CHECK:STDOUT: ; ModuleID = 'return_references_via_thunk.carbon'
 // CHECK:STDOUT: source_filename = "return_references_via_thunk.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
@@ -528,103 +497,78 @@ fn GetRefs() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CGetRefs.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var.loc18 = alloca ptr, align 8, !dbg !15
-// CHECK:STDOUT:   %_.var.loc19 = alloca ptr, align 8, !dbg !16
-// CHECK:STDOUT:   %_.var.loc20 = alloca ptr, align 8, !dbg !17
-// CHECK:STDOUT:   %_.var.loc22 = alloca ptr, align 8, !dbg !18
-// CHECK:STDOUT:   %_.var.loc23 = alloca ptr, align 8, !dbg !19
-// CHECK:STDOUT:   %_.var.loc24 = alloca ptr, align 8, !dbg !20
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc18), !dbg !15
-// CHECK:STDOUT:   %ReturnCRef__carbon_thunk.call = call ptr @_Z10ReturnCRef10ForceThunk.carbon_thunk0(), !dbg !21
-// CHECK:STDOUT:   store ptr %ReturnCRef__carbon_thunk.call, ptr %_.var.loc18, align 8, !dbg !15
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc19), !dbg !16
-// CHECK:STDOUT:   %ReturnCRRef__carbon_thunk.call = call ptr @_Z11ReturnCRRef10ForceThunk.carbon_thunk0(), !dbg !22
-// CHECK:STDOUT:   store ptr %ReturnCRRef__carbon_thunk.call, ptr %_.var.loc19, align 8, !dbg !16
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc20), !dbg !17
-// CHECK:STDOUT:   %ReturnConstCRef__carbon_thunk.call = call ptr @_Z15ReturnConstCRef10ForceThunk.carbon_thunk0(), !dbg !23
-// CHECK:STDOUT:   store ptr %ReturnConstCRef__carbon_thunk.call, ptr %_.var.loc20, align 8, !dbg !17
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc22), !dbg !18
-// CHECK:STDOUT:   %ReturnIntRef__carbon_thunk.call = call ptr @_Z12ReturnIntRef10ForceThunk.carbon_thunk0(), !dbg !24
-// CHECK:STDOUT:   store ptr %ReturnIntRef__carbon_thunk.call, ptr %_.var.loc22, align 8, !dbg !18
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc23), !dbg !19
-// CHECK:STDOUT:   %ReturnIntRRef__carbon_thunk.call = call ptr @_Z13ReturnIntRRef10ForceThunk.carbon_thunk0(), !dbg !25
-// CHECK:STDOUT:   store ptr %ReturnIntRRef__carbon_thunk.call, ptr %_.var.loc23, align 8, !dbg !19
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc24), !dbg !20
-// CHECK:STDOUT:   %ReturnConstIntRef__carbon_thunk.call = call ptr @_Z17ReturnConstIntRef10ForceThunk.carbon_thunk0(), !dbg !26
-// CHECK:STDOUT:   store ptr %ReturnConstIntRef__carbon_thunk.call, ptr %_.var.loc24, align 8, !dbg !20
-// CHECK:STDOUT:   ret void, !dbg !27
+// CHECK:STDOUT:   %ReturnCRef__carbon_thunk.call = call ptr @_Z10ReturnCRef10ForceThunk.carbon_thunk0(), !dbg !15
+// CHECK:STDOUT:   %ReturnCRRef__carbon_thunk.call = call ptr @_Z11ReturnCRRef10ForceThunk.carbon_thunk0(), !dbg !16
+// CHECK:STDOUT:   %ReturnConstCRef__carbon_thunk.call = call ptr @_Z15ReturnConstCRef10ForceThunk.carbon_thunk0(), !dbg !17
+// CHECK:STDOUT:   %ReturnIntRef__carbon_thunk.call = call ptr @_Z12ReturnIntRef10ForceThunk.carbon_thunk0(), !dbg !18
+// CHECK:STDOUT:   %ReturnIntRRef__carbon_thunk.call = call ptr @_Z13ReturnIntRRef10ForceThunk.carbon_thunk0(), !dbg !19
+// CHECK:STDOUT:   %ReturnConstIntRef__carbon_thunk.call = call ptr @_Z17ReturnConstIntRef10ForceThunk.carbon_thunk0(), !dbg !20
+// CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define dso_local noundef nonnull align 1 dereferenceable(1) ptr @_Z10ReturnCRef10ForceThunk.carbon_thunk0() #2 {
+// CHECK:STDOUT: define dso_local noundef nonnull align 1 dereferenceable(1) ptr @_Z10ReturnCRef10ForceThunk.carbon_thunk0() #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
 // CHECK:STDOUT:   %call = call noundef nonnull align 1 dereferenceable(1) ptr @_Z10ReturnCRef10ForceThunk()
 // CHECK:STDOUT:   ret ptr %call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare noundef nonnull align 1 dereferenceable(1) ptr @_Z10ReturnCRef10ForceThunk() #3
+// CHECK:STDOUT: declare noundef nonnull align 1 dereferenceable(1) ptr @_Z10ReturnCRef10ForceThunk() #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define dso_local noundef nonnull align 1 dereferenceable(1) ptr @_Z11ReturnCRRef10ForceThunk.carbon_thunk0() #2 {
+// CHECK:STDOUT: define dso_local noundef nonnull align 1 dereferenceable(1) ptr @_Z11ReturnCRRef10ForceThunk.carbon_thunk0() #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
 // CHECK:STDOUT:   %call = call noundef nonnull align 1 dereferenceable(1) ptr @_Z11ReturnCRRef10ForceThunk()
 // CHECK:STDOUT:   ret ptr %call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare noundef nonnull align 1 dereferenceable(1) ptr @_Z11ReturnCRRef10ForceThunk() #3
+// CHECK:STDOUT: declare noundef nonnull align 1 dereferenceable(1) ptr @_Z11ReturnCRRef10ForceThunk() #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define dso_local noundef nonnull align 1 dereferenceable(1) ptr @_Z15ReturnConstCRef10ForceThunk.carbon_thunk0() #2 {
+// CHECK:STDOUT: define dso_local noundef nonnull align 1 dereferenceable(1) ptr @_Z15ReturnConstCRef10ForceThunk.carbon_thunk0() #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
 // CHECK:STDOUT:   %call = call noundef nonnull align 1 dereferenceable(1) ptr @_Z15ReturnConstCRef10ForceThunk()
 // CHECK:STDOUT:   ret ptr %call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare noundef nonnull align 1 dereferenceable(1) ptr @_Z15ReturnConstCRef10ForceThunk() #3
+// CHECK:STDOUT: declare noundef nonnull align 1 dereferenceable(1) ptr @_Z15ReturnConstCRef10ForceThunk() #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define dso_local noundef nonnull align 4 dereferenceable(4) ptr @_Z12ReturnIntRef10ForceThunk.carbon_thunk0() #2 {
+// CHECK:STDOUT: define dso_local noundef nonnull align 4 dereferenceable(4) ptr @_Z12ReturnIntRef10ForceThunk.carbon_thunk0() #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
 // CHECK:STDOUT:   %call = call noundef nonnull align 4 dereferenceable(4) ptr @_Z12ReturnIntRef10ForceThunk()
 // CHECK:STDOUT:   ret ptr %call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare noundef nonnull align 4 dereferenceable(4) ptr @_Z12ReturnIntRef10ForceThunk() #3
+// CHECK:STDOUT: declare noundef nonnull align 4 dereferenceable(4) ptr @_Z12ReturnIntRef10ForceThunk() #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define dso_local noundef nonnull align 4 dereferenceable(4) ptr @_Z13ReturnIntRRef10ForceThunk.carbon_thunk0() #2 {
+// CHECK:STDOUT: define dso_local noundef nonnull align 4 dereferenceable(4) ptr @_Z13ReturnIntRRef10ForceThunk.carbon_thunk0() #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
 // CHECK:STDOUT:   %call = call noundef nonnull align 4 dereferenceable(4) ptr @_Z13ReturnIntRRef10ForceThunk()
 // CHECK:STDOUT:   ret ptr %call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare noundef nonnull align 4 dereferenceable(4) ptr @_Z13ReturnIntRRef10ForceThunk() #3
+// CHECK:STDOUT: declare noundef nonnull align 4 dereferenceable(4) ptr @_Z13ReturnIntRRef10ForceThunk() #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define dso_local noundef nonnull align 4 dereferenceable(4) ptr @_Z17ReturnConstIntRef10ForceThunk.carbon_thunk0() #2 {
+// CHECK:STDOUT: define dso_local noundef nonnull align 4 dereferenceable(4) ptr @_Z17ReturnConstIntRef10ForceThunk.carbon_thunk0() #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
 // CHECK:STDOUT:   %call = call noundef nonnull align 4 dereferenceable(4) ptr @_Z17ReturnConstIntRef10ForceThunk()
 // CHECK:STDOUT:   ret ptr %call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare noundef nonnull align 4 dereferenceable(4) ptr @_Z17ReturnConstIntRef10ForceThunk() #3
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 5, 4, 3, 2, 1, 0 }
+// CHECK:STDOUT: declare noundef nonnull align 4 dereferenceable(4) ptr @_Z17ReturnConstIntRef10ForceThunk() #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
-// CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #2 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #3 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!6}
@@ -645,16 +589,10 @@ fn GetRefs() {
 // CHECK:STDOUT: !12 = distinct !DISubprogram(name: "GetRefs", linkageName: "_CGetRefs.Main", scope: null, file: !7, line: 17, type: !13, spFlags: DISPFlagDefinition, unit: !6)
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
 // CHECK:STDOUT: !14 = !{null}
-// CHECK:STDOUT: !15 = !DILocation(line: 18, column: 3, scope: !12)
-// CHECK:STDOUT: !16 = !DILocation(line: 19, column: 3, scope: !12)
-// CHECK:STDOUT: !17 = !DILocation(line: 20, column: 3, scope: !12)
-// CHECK:STDOUT: !18 = !DILocation(line: 22, column: 3, scope: !12)
-// CHECK:STDOUT: !19 = !DILocation(line: 23, column: 3, scope: !12)
-// CHECK:STDOUT: !20 = !DILocation(line: 24, column: 3, scope: !12)
-// CHECK:STDOUT: !21 = !DILocation(line: 18, column: 19, scope: !12)
-// CHECK:STDOUT: !22 = !DILocation(line: 19, column: 19, scope: !12)
-// CHECK:STDOUT: !23 = !DILocation(line: 20, column: 25, scope: !12)
-// CHECK:STDOUT: !24 = !DILocation(line: 22, column: 17, scope: !12)
-// CHECK:STDOUT: !25 = !DILocation(line: 23, column: 17, scope: !12)
-// CHECK:STDOUT: !26 = !DILocation(line: 24, column: 23, scope: !12)
-// CHECK:STDOUT: !27 = !DILocation(line: 17, column: 1, scope: !12)
+// CHECK:STDOUT: !15 = !DILocation(line: 18, column: 22, scope: !12)
+// CHECK:STDOUT: !16 = !DILocation(line: 19, column: 22, scope: !12)
+// CHECK:STDOUT: !17 = !DILocation(line: 20, column: 28, scope: !12)
+// CHECK:STDOUT: !18 = !DILocation(line: 22, column: 20, scope: !12)
+// CHECK:STDOUT: !19 = !DILocation(line: 23, column: 20, scope: !12)
+// CHECK:STDOUT: !20 = !DILocation(line: 24, column: 26, scope: !12)
+// CHECK:STDOUT: !21 = !DILocation(line: 17, column: 1, scope: !12)
