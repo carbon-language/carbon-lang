@@ -246,19 +246,27 @@
         },
         {
           "name": "support.class.carbon",
-          "match": "(?<=\\b(package|Core|class|interface|impl|as)\\s(\\s|\\()*)\\w+(\\(+\\s*\\w+\\s*\\)+)?"
+          "match": "(?<=\\b(package|Core)\\s)\\w+"
         },
         {
           "name": "support.class.carbon",
+          "comment": "Handles `class C`, `class C(I)`, `impl C as I(A)`, etc.",
+          "match": "(?<=\\b(as|class|impl|interface)\\s[\\s\\(]*)\\w+(\\(+\\s*\\w+\\s*\\)+)?"
+        },
+        {
+          "name": "support.class.carbon",
+          "comment": "Handles function return types. `) -> T`",
           "match": "(?<=\\)\\s*->\\s*)\\w+"
         },
         {
           "name": "support.class.carbon",
-          "match": "(?<=\\w+:(!)?(\\s|\\()*)\\w+(\\(+\\s*\\w+\\s*\\)+)?"
+          "comment": "Handles type definitions. `x: C`, `x:! I(A)`, etc.",
+          "match": "(?<=\\w+:!?[\\s\\(]*)\\w+(\\(+\\s*\\w+\\s*\\)+)?"
         },
         {
           "name": "support.class.carbon",
-          "match": "(?<=\\w+\\.\\((\\s|\\()*)\\w+(\\(+\\s*\\w+\\s*\\)+)?"
+          "comment": "Handles the interface/type in compound member access. `x.(I)`, `x.(I.y)`, `x.(I(A).F)()`, etc.",
+          "match": "(?<=\\w+\\.\\([\\s\\(]*)\\w+(\\(+\\s*\\w+\\s*\\)+)?"
         }
       ]
     },
@@ -270,7 +278,8 @@
         },
         {
           "name": "support.function.carbon",
-          "match": "(?<=\\w+\\.\\((\\s|\\()*\\w+(\\(+\\s*\\w+\\s*\\)+)?\\.)\\w+(\\s|\\))*\\)\\s*\\("
+          "comment": "Handles the function in compound member access. `x.(I(A).F)()`",
+          "match": "(?<=\\w+\\.\\([\\s\\(]*\\w+(\\(+\\s*\\w+\\s*\\)+)?\\.)\\w+[\\s\\)]*\\)\\s*\\("
         }
       ]
     },
