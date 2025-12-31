@@ -196,7 +196,9 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::CompileMember(
       obj_path.native(),
       src_path.native(),
   });
-  if (!builder_->clang_->RunWithNoRuntimes(args)) {
+  CARBON_ASSIGN_OR_RETURN(bool success,
+                          builder_->clang_->RunWithNoRuntimes(args));
+  if (!success) {
     return Error(
         llvm::formatv("Failed to compile runtime source file '{0}'", src_file));
   }
@@ -583,21 +585,21 @@ auto ClangResourceDirBuilder::BuildCrtFile(llvm::StringRef src_file)
       installation().runtimes_root() / std::string_view(src_file);
   CARBON_VLOG("Building `{0}' from `{1}`...\n", out_path, src_path);
 
-  bool success = clang_->RunWithNoRuntimes({
-      "-no-canonical-prefixes",
-      "-DCRT_HAS_INITFINI_ARRAY",
-      "-DEH_USE_FRAME_REGISTRY",
-      "-O3",
-      "-fPIC",
-      "-ffreestanding",
-      "-std=c11",
-      "-w",
-      "-c",
-      target_flag_,
-      "-o",
-      out_path.native(),
-      src_path.native(),
-  });
+  CARBON_ASSIGN_OR_RETURN(bool success, clang_->RunWithNoRuntimes({
+                                            "-no-canonical-prefixes",
+                                            "-DCRT_HAS_INITFINI_ARRAY",
+                                            "-DEH_USE_FRAME_REGISTRY",
+                                            "-O3",
+                                            "-fPIC",
+                                            "-ffreestanding",
+                                            "-std=c11",
+                                            "-w",
+                                            "-c",
+                                            target_flag_,
+                                            "-o",
+                                            out_path.native(),
+                                            src_path.native(),
+                                        }));
 
   if (success) {
     return Success();

@@ -223,7 +223,7 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
 }
 
 auto ClangRunner::RunWithNoRuntimes(llvm::ArrayRef<llvm::StringRef> args,
-                                    bool enable_leaking) -> bool {
+                                    bool enable_leaking) -> ErrorOr<bool> {
   std::string target = ComputeClangTarget(args);
   return RunInternal(args, target, /*target_resource_dir_path=*/std::nullopt,
                      /*libunwind_path=*/std::nullopt,
@@ -236,7 +236,7 @@ auto ClangRunner::RunInternal(
 
     std::optional<std::filesystem::path> libunwind_path,
     std::optional<std::filesystem::path> libcxx_path, bool enable_leaking)
-    -> bool {
+    -> ErrorOr<bool> {
   llvm::BumpPtrAllocator alloc;
 
   // Handle special dispatch for CC1 commands as they don't use the driver and
@@ -297,6 +297,14 @@ auto ClangRunner::RunInternal(
   // Rebuild the args as C-string args.
   llvm::SmallVector<const char*, 64> cstr_args =
       BuildCStrArgs(clang_path_.native(), prefix_args, args, alloc);
+
+  // Expand any response files in the arguments.
+  bool is_clang_cl_mode = clang::driver::IsClangCL(
+      clang::driver::getDriverMode(clang_path_.native(), cstr_args));
+  if (llvm::Error error = clang::driver::expandResponseFiles(
+          cstr_args, is_clang_cl_mode, alloc, fs_.get())) {
+    return Error(llvm::toString(std::move(error)));
+  }
 
   CARBON_VLOG("Running Clang driver with the following arguments:\n");
   for (const char* cstr_arg : llvm::ArrayRef(cstr_args)) {

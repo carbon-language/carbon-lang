@@ -70,6 +70,7 @@ cc_test(
         ":runtimes_cache",
         "//common:all_llvm_targets",
         "//common:check",
+        "//common:error_test_helpers",
         "//common:ostream",
         "//common:raw_string_ostream",
         "//testing/base:capture_std_streams",

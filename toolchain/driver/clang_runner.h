@@ -102,7 +102,7 @@ class ClangRunner : ToolRunnerBase {
   // This function simply returns true or false depending on whether Clang runs
   // successfully, as it should display any needed error messages.
   auto RunWithNoRuntimes(llvm::ArrayRef<llvm::StringRef> args,
-                         bool enable_leaking = false) -> bool;
+                         bool enable_leaking = false) -> ErrorOr<bool>;
 
  private:
   friend class ClangRuntimesBuilderBase;
@@ -112,7 +112,7 @@ class ClangRunner : ToolRunnerBase {
                    std::optional<llvm::StringRef> target_resource_dir_path,
                    std::optional<std::filesystem::path> libunwind_path,
                    std::optional<std::filesystem::path> libcxx_path,
-                   bool enable_leaking) -> bool;
+                   bool enable_leaking) -> ErrorOr<bool>;
 
   // Returns the target-specific source files for the builtins runtime library.
   auto CollectBuiltinsSrcFiles(const llvm::Triple& target_triple)
