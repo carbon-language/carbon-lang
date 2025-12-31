@@ -12,7 +12,7 @@
 
 fn Run() -> i32 {
   var x: (i32, ) = (1, );
-  var y: (i32, ) = x;
+  var _: (i32, ) = x;
   return 0;
 }
 
@@ -23,14 +23,14 @@ fn Run() -> i32 {
 // CHECK:STDOUT: define i32 @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { i32 }, align 8, !dbg !8
-// CHECK:STDOUT:   %y.var = alloca { i32 }, align 8, !dbg !9
+// CHECK:STDOUT:   %_.var = alloca { i32 }, align 8, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !8
 // CHECK:STDOUT:   store { i32 } { i32 1 }, ptr %x.var, align 4, !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %y.var), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !9
 // CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !10
 // CHECK:STDOUT:   %.loc15_20.1 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !10
 // CHECK:STDOUT:   %.loc15_20.2.tuple.init = insertvalue { i32 } poison, i32 %.loc15_20.1, 0, !dbg !10
-// CHECK:STDOUT:   store { i32 } %.loc15_20.2.tuple.init, ptr %y.var, align 4, !dbg !9
+// CHECK:STDOUT:   store { i32 } %.loc15_20.2.tuple.init, ptr %_.var, align 4, !dbg !9
 // CHECK:STDOUT:   ret i32 0, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

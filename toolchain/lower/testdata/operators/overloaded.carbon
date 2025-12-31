@@ -47,7 +47,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.Number.Main:MulWith.Core"(ptr sret({ i1 }) %return, ptr %self, ptr %other) #0 !dbg !14 {
+// CHECK:STDOUT: define void @"_COp.Number.Main:MulWith.44027391c5135f93.Core"(ptr sret({ i1 }) %return, ptr %self, ptr %other) #0 !dbg !14 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc24_33.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !20
 // CHECK:STDOUT:   %.loc24_33.2 = load i8, ptr %.loc24_33.1.is_positive, align 1, !dbg !20
@@ -97,7 +97,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:   %.loc30_10.1.temp = alloca { i1 }, align 8, !dbg !33
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc30_10.1.temp), !dbg !33
 // CHECK:STDOUT:   call void @"_COp.Number.Main:Negate.Core"(ptr %.loc30_10.1.temp, ptr %a), !dbg !33
-// CHECK:STDOUT:   call void @"_COp.Number.Main:MulWith.Core"(ptr %return, ptr %.loc30_10.1.temp, ptr %b), !dbg !33
+// CHECK:STDOUT:   call void @"_COp.Number.Main:MulWith.44027391c5135f93.Core"(ptr %return, ptr %.loc30_10.1.temp, ptr %b), !dbg !33
 // CHECK:STDOUT:   ret void, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -124,7 +124,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !11 = !DILocation(line: 19, column: 28, scope: !4)
 // CHECK:STDOUT: !12 = !DILocation(line: 19, column: 12, scope: !4)
 // CHECK:STDOUT: !13 = !DILocation(line: 19, column: 5, scope: !4)
-// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Number.Main:MulWith.Core", scope: null, file: !3, line: 23, type: !15, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !17)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Number.Main:MulWith.44027391c5135f93.Core", scope: null, file: !3, line: 23, type: !15, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !17)
 // CHECK:STDOUT: !15 = !DISubroutineType(types: !16)
 // CHECK:STDOUT: !16 = !{!7, !7, !7}
 // CHECK:STDOUT: !17 = !{!18, !19}

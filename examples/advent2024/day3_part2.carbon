@@ -12,14 +12,14 @@ import library "io_utils";
 fn Run() {
   var total: i32 = 0;
   var enabled: bool = true;
-  while (PeekChar() != Core.EOF()) {
-    if (PeekChar() == 0x6D) {
+  while (PeekChar() != CharOrEOF.EOF()) {
+    if (PeekChar() == 'm') {
       // TODO: Use `if let` when available.
       let result: (bool, i32, i32) = ReadMul();
       if (result.0 and enabled) {
         total += result.1 * result.2;
       }
-    } else if (PeekChar() == 0x64) {
+    } else if (PeekChar() == 'd') {
       // TODO: Use `if let` when available.
       let result: (bool, bool) = ReadDoOrDont();
       if (result.0) {

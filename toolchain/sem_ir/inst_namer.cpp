@@ -617,8 +617,8 @@ auto InstNamer::PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
       *this, require_loc,
       // TODO: Include the Interface being required if there's only one, instead
       // of the index.
-      llvm::formatv("{0}{1}require{2}", scope_prefix,
-                    scope_prefix.empty() ? "" : ".", require_impls_id.index));
+      llvm::formatv("{0}{1}{2}", scope_prefix, scope_prefix.empty() ? "" : ".",
+                    require_impls_id));
 
   auto decl = sem_ir_->insts().GetAs<SemIR::RequireImplsDecl>(require.decl_id);
   AddBlockLabel(scope_id, decl.decl_block_id, "require", require_loc);
@@ -673,6 +673,7 @@ auto InstNamer::PushEntity(ImplId impl_id, ScopeId scope_id, Scope& scope)
 
   // Push blocks in reverse order.
   PushGeneric(scope_id, impl.generic_id);
+  PushBlockId(scope_id, impl.witness_block_id);
   PushBlockId(scope_id, impl.body_block_id);
   PushBlockId(scope_id, impl.pattern_block_id);
 }
@@ -907,8 +908,12 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstName("const");
       return;
     }
-    case CppWitness::Kind: {
-      AddInstName("cpp_witness");
+    case CARBON_KIND(CppTemplateNameType inst): {
+      AddInstNameId(sem_ir().entity_names().Get(inst.name_id).name_id, ".type");
+      return;
+    }
+    case CustomWitness::Kind: {
+      AddInstName("custom_witness");
       return;
     }
     case CARBON_KIND(FacetAccessType inst): {
@@ -942,7 +947,6 @@ auto InstNamer::NamingContext::NameInst() -> void {
       const auto& facet_type_info =
           sem_ir().facet_types().Get(inst.facet_type_id);
       bool has_where = facet_type_info.other_requirements ||
-                       !facet_type_info.builtin_constraint_mask.empty() ||
                        !facet_type_info.self_impls_constraints.empty() ||
                        !facet_type_info.self_impls_named_constraints.empty() ||
                        !facet_type_info.rewrite_constraints.empty();
@@ -1264,6 +1268,12 @@ auto InstNamer::NamingContext::NameInst() -> void {
                           .Get(generic_interface_ty->interface_id)
                           .name_id,
                       ".generic");
+      } else if (auto template_name_ty =
+                     sem_ir().types().TryGetAs<CppTemplateNameType>(
+                         inst.type_id)) {
+        AddInstNameId(
+            sem_ir().entity_names().Get(template_name_ty->name_id).name_id,
+            ".template");
       } else {
         if (sem_ir().inst_blocks().Get(inst.elements_id).empty()) {
           AddInstName("empty_struct");

@@ -307,14 +307,14 @@ fn B() {}
 // CHECK:STDOUT: --- fail_redef_after_def.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %A.type.00d7e7.1: type = fn_type @A.1 [concrete]
-// CHECK:STDOUT:   %A.1db889.1: %A.type.00d7e7.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %A.type.00d7e7.2: type = fn_type @A.loc12 [concrete]
-// CHECK:STDOUT:   %A.1db889.2: %A.type.00d7e7.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %A.type.8165c1.1: type = fn_type @A.1 [concrete]
+// CHECK:STDOUT:   %A.8aef9d.1: %A.type.8165c1.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %A.type.8165c1.2: type = fn_type @A.loc12 [concrete]
+// CHECK:STDOUT:   %A.8aef9d.2: %A.type.8165c1.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.A: %A.type.00d7e7.1 = import_ref Main//redef_after_def, A, loaded [concrete = constants.%A.1db889.1]
+// CHECK:STDOUT:   %Main.A: %A.type.8165c1.1 = import_ref Main//redef_after_def, A, loaded [concrete = constants.%A.8aef9d.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -323,7 +323,7 @@ fn B() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_31.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_31.2 = import <none>
-// CHECK:STDOUT:   %A.decl: %A.type.00d7e7.2 = fn_decl @A.loc12 [concrete = constants.%A.1db889.2] {} {}
+// CHECK:STDOUT:   %A.decl: %A.type.8165c1.2 = fn_decl @A.loc12 [concrete = constants.%A.8aef9d.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.1 [from "redef_after_def.carbon"];

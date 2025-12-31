@@ -145,6 +145,8 @@ graph BT
 
     logicalExpression((" "))
 
+    ref["ref x"]
+
     if>"if x then y else z"]
     click if "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/if.md"
 
@@ -187,7 +189,8 @@ graph BT
 
     and & or --> logicalOperand
     logicalExpression --> as & where & and & or
-    if & expressionStatement --> logicalExpression
+    ref & expressionStatement --> logicalExpression
+    if ---> ref
     insideParens & assignment --> if
 ```
 

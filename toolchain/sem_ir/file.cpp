@@ -41,6 +41,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       classes_(check_ir_id),
       interfaces_(check_ir_id),
       named_constraints_(check_ir_id),
+      require_impls_(check_ir_id),
       // 1 reserved id for `RequireImplsBlockId::Empty`.
       require_impls_blocks_(allocator_, IdTag(check_ir_id.index, 1)),
       associated_constants_(check_ir_id),

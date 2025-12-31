@@ -10,26 +10,60 @@
 
 namespace Carbon::Check {
 
-// Returns the initial witness value for a new `impl` declaration.
+struct RedeclaredImpl {
+  // The previous Impl which the query Impl is redeclaring.
+  SemIR::ImplId prev_impl_id;
+};
+struct NewImpl {
+  // The lookup bucket for the query Impl where it should be added once an
+  // ImplId is known.
+  SemIR::ImplStore::LookupBucketRef lookup_bucket;
+  // Indicates the query Impl is not a redeclaration but an error was diagnosed.
+  // The caller should avoid diagnosing more errors in the query impl.
+  bool find_had_error;
+};
+
+// Finds an existing impl if the `query_impl` is a redeclaration, and returns
+// its `ImplId`. This ensures all (valid) redeclarations share the same
+// `ImplId`. Otherwise, returns the bucket where a new `ImplId` should be added.
+auto FindImplId(Context& context, const SemIR::Impl& query_impl)
+    -> std::variant<RedeclaredImpl, NewImpl>;
+
+// Adds an impl to the ImplStore, and returns a new `ImplId`.
 //
-// `has_definition` is whether this declaration is immediately followed by the
-// opening of the definition.
-auto ImplWitnessForDeclaration(Context& context, const SemIR::Impl& impl,
-                               bool has_definition) -> SemIR::InstId;
+// If the impl is modified with `extend` then the parent's scope is extended
+// with it.
+auto AddImpl(Context& context, const SemIR::Impl& impl,
+             SemIR::ImplStore::LookupBucketRef lookup_bucket,
+             Parse::NodeId extend_node, SemIR::LocId implicit_params_loc_id)
+    -> SemIR::ImplId;
+
+// Creates and returns an impl witness instruction for an impl declaration.
+//
+// If there are no rewrites into a name of the interface being implemented, a
+// placeholder witness table is created, to be replaced in the impl definition.
+//
+// Adds and returns an `ImplWitness` instruction (created with location set to
+// `loc_id`) that shows the "`Self` type" (from a facet in `impl.self_id`)
+// implements an identified interface (from a facet type in
+// `impl.constraint_id`). This witness reflects the values assigned to
+// associated constant members of that interface by rewrite constraints in the
+// constraint facet type. `self_specific_id` will be the `specific_id` of the
+// resulting witness.
+auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
+                                  const SemIR::Impl& impl,
+                                  SemIR::SpecificId self_specific_id)
+    -> SemIR::InstId;
 
 // Update `impl`'s witness at the start of a definition.
 auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void;
 
 // Adds the function members to the witness for `impl`.
-auto FinishImplWitness(Context& context, SemIR::ImplId impl_id) -> void;
+auto FinishImplWitness(Context& context, const SemIR::Impl& impl_id) -> void;
 
 // Sets all unset members of the witness for `impl` to the error instruction and
 // sets the witness id in the `Impl` to an error.
 auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void;
-
-// Sets the `ImplId` in the `ImplWitnessTable`.
-auto AssignImplIdInWitness(Context& context, SemIR::ImplId impl_id,
-                           SemIR::InstId witness_id) -> void;
 
 // Returns whether the impl is either `final` explicitly, or implicitly due to
 // being concrete.
@@ -51,17 +85,6 @@ auto CheckAssociatedFunctionImplementation(
 auto CheckConstraintIsInterface(Context& context, SemIR::InstId impl_decl_id,
                                 SemIR::TypeInstId constraint_id)
     -> SemIR::SpecificInterface;
-
-// Finds an existing `Impl` if the `impl` is a redeclaration. Otherwise,
-// finishes construction of the `impl`, adds it to the ImplStore, and returns
-// the new `ImplId`. This ensures all redeclarations share the same `ImplId`.
-//
-// If the impl is modified with `extend` then the parent's scope is extended
-// with it.
-auto GetOrAddImpl(Context& context, SemIR::LocId loc_id,
-                  SemIR::LocId implicit_params_loc_id, SemIR::Impl impl,
-                  bool is_definition, Parse::NodeId extend_node)
-    -> SemIR::ImplId;
 
 }  // namespace Carbon::Check
 

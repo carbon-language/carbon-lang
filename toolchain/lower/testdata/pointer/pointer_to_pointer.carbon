@@ -11,7 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/pointer/pointer_to_pointer.carbon
 
 fn F(p: i32**) -> i32 {
-  var a: i32** = p;
+  var _: i32** = p;
   var b: i32* = *p;
   var c: i32** = &b;
   return **c;
@@ -23,11 +23,11 @@ fn F(p: i32**) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CF.Main(ptr %p) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %a.var = alloca ptr, align 8, !dbg !11
+// CHECK:STDOUT:   %_.var = alloca ptr, align 8, !dbg !11
 // CHECK:STDOUT:   %b.var = alloca ptr, align 8, !dbg !12
 // CHECK:STDOUT:   %c.var = alloca ptr, align 8, !dbg !13
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !11
-// CHECK:STDOUT:   store ptr %p, ptr %a.var, align 8, !dbg !11
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !11
+// CHECK:STDOUT:   store ptr %p, ptr %_.var, align 8, !dbg !11
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !12
 // CHECK:STDOUT:   %.loc15_17.2 = load ptr, ptr %p, align 8, !dbg !14
 // CHECK:STDOUT:   store ptr %.loc15_17.2, ptr %b.var, align 8, !dbg !12

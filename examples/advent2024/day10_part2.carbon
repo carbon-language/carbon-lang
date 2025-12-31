@@ -58,5 +58,5 @@ fn Run() {
   for (i: i32 in Core.InclusiveRange(0, 8)) {
     total = paths.AddLevel(terrain, 8 - i);
   }
-  PrintInt64(total);
+  PrintInt(total);
 }

@@ -5,6 +5,7 @@
 #include <optional>
 #include <utility>
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
@@ -18,9 +19,11 @@
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
+#include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -190,8 +193,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
 
 // Build an ImplDecl describing the signature of an impl. This handles the
 // common logic shared by impl forward declarations and impl definitions.
-static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
-                          bool is_definition)
+static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id)
     -> std::pair<SemIR::ImplId, SemIR::InstId> {
   auto [constraint_node, constraint_id] =
       context.node_stack().PopExprWithNodeId();
@@ -233,22 +235,80 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
 
   auto impl_id = SemIR::ImplId::None;
   {
-    SemIR::Impl impl_info = {
-        name_context.MakeEntityWithParamsBase(name, impl_decl_id,
-                                              /*is_extern=*/false,
-                                              SemIR::LibraryNameId::None),
-        {.self_id = self_type_inst_id,
-         .constraint_id = constraint_type_inst_id,
-         .interface = specific_interface,
-         .is_final = is_final}};
-    auto extend_node = introducer.modifier_node_id(ModifierOrder::Extend);
-    impl_id = GetOrAddImpl(context, node_id, name.implicit_params_loc_id,
-                           impl_info, is_definition, extend_node);
+    SemIR::Impl impl = {name_context.MakeEntityWithParamsBase(
+                            name, impl_decl_id,
+                            /*is_extern=*/false, SemIR::LibraryNameId::None),
+                        {.self_id = self_type_inst_id,
+                         .constraint_id = constraint_type_inst_id,
+                         .interface = specific_interface,
+                         .is_final = is_final}};
+    // There's a bunch of places that may represent a diagnostic that occurred
+    // in checking the impl up to this point, which we consolidate into this
+    // bool. Due to lack of an instruction to set to `ErrorInst`, an
+    // `InterfaceId::None` indicates that the interface could not be identified
+    // and an error was diagnosed.
+    bool impl_had_error =
+        context.types().GetTypeIdForTypeInstId(impl.self_id) ==
+            SemIR::ErrorInst::TypeId ||
+        context.types().GetTypeIdForTypeInstId(impl.constraint_id) ==
+            SemIR::ErrorInst::TypeId ||
+        !impl.interface.interface_id.has_value();
+
+    CARBON_KIND_SWITCH(FindImplId(context, impl)) {
+      case CARBON_KIND(RedeclaredImpl redeclared_impl): {
+        // This is a redeclaration of another impl, now held in `impl_id`.
+        impl_id = redeclared_impl.prev_impl_id;
+
+        // Note that we don't reconstruct the witness for a redeclaration, which
+        // was the instruction that came last in the first declaration's eval
+        // block. And FinishGenericRedecl allows the redecl to have fewer
+        // instructions to support this case.
+        const auto& prev_impl = context.impls().Get(impl_id);
+        FinishGenericRedecl(context, prev_impl.generic_id);
+        break;
+      }
+      case CARBON_KIND(NewImpl new_impl): {
+        // This is a new declaration (possibly with an attached definition).
+        // Create a new `impl_id`, filling the missing generic and witness in
+        // `Impl` structure.
+        impl_had_error |= new_impl.find_had_error;
+
+        impl.generic_id = BuildGeneric(context, impl_decl_id);
+
+        if (impl_had_error) {
+          // If there's any error in the construction of the impl, then the
+          // witness can't be constructed. We set it to `ErrorInst` to make the
+          // impl unusable for impl lookup.
+          impl.witness_id = SemIR::ErrorInst::InstId;
+        } else {
+          context.inst_block_stack().Push();
+          // This makes either a placeholder witness table or a full witness
+          // table. The full witness table is deferred to the impl definition
+          // unless the declaration uses rewrite constraints to set values of
+          // associated constants in the interface.
+          //
+          // The witness instruction contains the SelfSpecific that is
+          // constructed by BuildGeneric(), but the witness and its rewrites
+          // also must be part of the generic eval block by coming before
+          // FinishGenericDecl().
+          impl.witness_id = AddImplWitnessForDeclaration(
+              context, node_id, impl,
+              context.generics().GetSelfSpecific(impl.generic_id));
+          impl.witness_block_id = context.inst_block_stack().Pop();
+        }
+
+        FinishGenericDecl(context, node_id, impl.generic_id);
+
+        auto extend_node = introducer.modifier_node_id(ModifierOrder::Extend);
+        impl_id = AddImpl(context, impl, new_impl.lookup_bucket, extend_node,
+                          name.implicit_params_loc_id);
+      }
+    }
   }
 
-  // `GetOrAddImpl` either filled in the `impl_info` and returned a fresh
-  // ImplId, or if we're redeclaring a previous impl, returned an existing
-  // ImplId. Write that ImplId into the ImplDecl instruction and finish it.
+  // `FindImplId` returned an existing ImplId, or we added a new id with
+  // `AddImpl` above. Write that ImplId into the ImplDecl instruction and finish
+  // it.
   auto impl_decl = context.insts().GetAs<SemIR::ImplDecl>(impl_decl_id);
   impl_decl.impl_id = impl_id;
   ReplaceInstBeforeConstantUse(context, impl_decl_id, impl_decl);
@@ -257,8 +317,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
 }
 
 auto HandleParseNode(Context& context, Parse::ImplDeclId node_id) -> bool {
-  auto [impl_id, impl_decl_id] =
-      BuildImplDecl(context, node_id, /*is_definition=*/false);
+  auto [impl_id, impl_decl_id] = BuildImplDecl(context, node_id);
   auto& impl = context.impls().Get(impl_id);
 
   context.decl_name_stack().PopScope();
@@ -275,8 +334,7 @@ auto HandleParseNode(Context& context, Parse::ImplDeclId node_id) -> bool {
 
 auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
     -> bool {
-  auto [impl_id, impl_decl_id] =
-      BuildImplDecl(context, node_id, /*is_definition=*/true);
+  auto [impl_id, impl_decl_id] = BuildImplDecl(context, node_id);
   auto& impl = context.impls().Get(impl_id);
 
   CARBON_CHECK(!impl.has_definition_started());
@@ -289,7 +347,6 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
       impl_decl_id, impl.scope_id,
       context.generics().GetSelfSpecific(impl.generic_id));
   StartGenericDefinition(context, impl.generic_id);
-  // This requires that the facet type is complete.
   ImplWitnessStartDefinition(context, impl);
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);
@@ -311,10 +368,10 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionId /*node_id*/)
     -> bool {
   auto impl_id =
       context.node_stack().Pop<Parse::NodeKind::ImplDefinitionStart>();
-
-  FinishImplWitness(context, impl_id);
-
   auto& impl = context.impls().Get(impl_id);
+
+  FinishImplWitness(context, impl);
+
   impl.defined = true;
   FinishGenericDefinition(context, impl.generic_id);
 

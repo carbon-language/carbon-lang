@@ -43,7 +43,7 @@ class ReportState {
 fn ReadReport() -> ReportState {
   returned var report: ReportState = ReportState.Make();
   var n: i32;
-  while (ReadInt(&n)) {
+  while (ReadInt(ref n)) {
     report.Add(n);
     SkipSpaces();
   }

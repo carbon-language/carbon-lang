@@ -15,7 +15,7 @@ class Terrain {
     returned var me: Terrain;
     for (y: i32 in Core.Range(43)) {
       for (x: i32 in Core.Range(43)) {
-        me.height[x][y] = ReadChar() - 0x30;
+        me.height[x][y] = ReadChar() - '0';
       }
       SkipNewline();
     }

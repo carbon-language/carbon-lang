@@ -324,6 +324,15 @@ struct Namespace {
 // Pattern nodes
 // -------------
 
+// An unused pattern: `unused pattern`.
+struct UnusedPattern {
+  static constexpr auto Kind = NodeKind::UnusedPattern.Define(
+      {.category = NodeCategory::Pattern, .child_count = 1});
+
+  Lex::UnusedTokenIndex token;
+  AnyPatternId inner;
+};
+
 // A ref binding name: `ref name`.
 struct RefBindingName {
   static constexpr auto Kind =
@@ -995,15 +1004,6 @@ struct CallExpr {
   CallExprStartId start;
   CommaSeparatedList<AnyExprId, TupleLiteralCommaId> arguments;
   Lex::CloseParenTokenIndex token;
-};
-
-// A callsite `ref` tag: `F(ref x)` or `F({.x = ref x})
-struct RefTag {
-  static constexpr auto Kind = NodeKind::RefTag.Define(
-      {.category = NodeCategory::Expr, .child_count = 1});
-
-  Lex::RefTokenIndex token;
-  AnyExprId tagged_expr;
 };
 
 // A member access expression: `a.b` or `a.(b)`.

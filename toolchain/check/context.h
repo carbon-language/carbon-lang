@@ -12,6 +12,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/value_store.h"
+#include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/context.h"
 #include "toolchain/check/decl_introducer_state.h"
 #include "toolchain/check/decl_name_stack.h"
@@ -89,7 +90,7 @@ class Context {
 
   // TODO: Remove this and pass the C++ context to the constructor.
   auto set_cpp_context(std::unique_ptr<CppContext> cpp_context) {
-    CARBON_CHECK(cpp_context, "C++ context set more than once");
+    CARBON_CHECK(!cpp_context_ || !cpp_context, "Already have a C++ context");
     cpp_context_ = std::move(cpp_context);
   }
 
@@ -232,9 +233,9 @@ class Context {
   }
 
   // A map from a (self, interface) pair to a final witness.
-  using ImplLookupCacheMap =
-      Map<std::pair<SemIR::ConstantId, SemIR::SpecificInterfaceId>,
-          SemIR::InstId>;
+  using ImplLookupCacheKey =
+      std::pair<SemIR::ConstantId, SemIR::SpecificInterfaceId>;
+  using ImplLookupCacheMap = Map<ImplLookupCacheKey, SemIR::InstId>;
   auto impl_lookup_cache() -> ImplLookupCacheMap& { return impl_lookup_cache_; }
 
   // An impl lookup query that resulted in a concrete witness from finding an
@@ -278,6 +279,8 @@ class Context {
     CARBON_CHECK(return_type_inst_id_ != std::nullopt);
     return *std::exchange(return_type_inst_id_, std::nullopt);
   }
+
+  auto core_identifiers() -> CoreIdentifierCache& { return core_identifiers_; }
 
   // --------------------------------------------------------------------------
   // Directly expose SemIR::File data accessors for brevity in calls.
@@ -517,6 +520,9 @@ class Context {
 
   // Declared return type for the in-progress function declaration, if any.
   std::optional<SemIR::TypeInstId> return_type_inst_id_;
+
+  // See `CoreIdentifierCache` for details.
+  CoreIdentifierCache core_identifiers_;
 };
 
 }  // namespace Carbon::Check

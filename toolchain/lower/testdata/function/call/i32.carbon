@@ -15,7 +15,7 @@ fn Echo(a: i32) -> i32 {
 }
 
 fn Main() {
-  var b: i32 = Echo(1);
+  var _: i32 = Echo(1);
 }
 
 // CHECK:STDOUT: ; ModuleID = 'i32.carbon'
@@ -30,10 +30,10 @@ fn Main() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %b.var = alloca i32, align 4, !dbg !14
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !14
+// CHECK:STDOUT:   %_.var = alloca i32, align 4, !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !14
 // CHECK:STDOUT:   %Echo.call = call i32 @_CEcho.Main(i32 1), !dbg !15
-// CHECK:STDOUT:   store i32 %Echo.call, ptr %b.var, align 4, !dbg !14
+// CHECK:STDOUT:   store i32 %Echo.call, ptr %_.var, align 4, !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -327,6 +327,11 @@ class Stringifier {
     step_stack_->PushInstId(inst.inner_id);
   }
 
+  auto StringifyInst(InstId /*inst_id*/, CppTemplateNameType inst) -> void {
+    *out_ << "<type of ";
+    step_stack_->Push(inst.name_id, ">");
+  }
+
   auto StringifyInst(InstId /*inst_id*/, CustomLayoutType inst) -> void {
     auto layout = sem_ir_->custom_layouts().Get(inst.layout_id);
     *out_ << "<size " << layout[CustomLayoutId::SizeIndex] << ", align "
@@ -675,14 +680,6 @@ class Stringifier {
     bool some_where = false;
     if (facet_type_info.other_requirements) {
       step_stack_->PushString("...");
-      some_where = true;
-    }
-    if (facet_type_info.builtin_constraint_mask.HasAnyOf(
-            SemIR::BuiltinConstraintMask::TypeCanDestroy)) {
-      if (some_where) {
-        step_stack_->PushString(" and");
-      }
-      step_stack_->PushString(" .Self impls Core.CanDestroy");
       some_where = true;
     }
     for (auto rewrite : llvm::reverse(facet_type_info.rewrite_constraints)) {

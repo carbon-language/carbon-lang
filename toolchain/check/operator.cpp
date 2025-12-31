@@ -35,8 +35,7 @@ static auto GetOperatorOpFunction(Context& context, SemIR::LocId loc_id,
   }
 
   // Look up the interface member.
-  auto op_name_id =
-      SemIR::NameId::ForIdentifier(context.identifiers().Add(op.op_name));
+  auto op_name_id = context.core_identifiers().AddNameId(op.op_name);
   return PerformMemberAccess(context, implicit_loc_id, interface_id,
                              op_name_id);
 }

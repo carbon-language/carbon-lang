@@ -12,13 +12,13 @@
 
 class X {}
 
-fn OneVar_i32(var n: i32) {}
-fn OneVar_X(var x: X) {}
+fn OneVar_i32(var _: i32) {}
+fn OneVar_X(var _: X) {}
 
-fn TwoVars(var a: i32, var b: X) {}
+fn TwoVars(var _: i32, var _: X) {}
 
-fn VarThenLet(var a: i32, b: X) {}
-fn LetThenVar(a: i32, var b: X) {}
+fn VarThenLet(var _: i32, _: X) {}
+fn LetThenVar(_: i32, var _: X) {}
 
 fn Call() {
   OneVar_i32(1);
@@ -34,31 +34,31 @@ fn Call() {
 // CHECK:STDOUT: @X.val.loc16_13.2 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_COneVar_i32.Main(ptr %n) #0 !dbg !4 {
+// CHECK:STDOUT: define void @_COneVar_i32.Main(ptr %_) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_COneVar_X.Main(ptr %x) #0 !dbg !11 {
+// CHECK:STDOUT: define void @_COneVar_X.Main(ptr %_) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CTwoVars.Main(ptr %a, ptr %b) #0 !dbg !18 {
+// CHECK:STDOUT: define void @_CTwoVars.Main(ptr %_, ptr %_1) #0 !dbg !18 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CVarThenLet.Main(ptr %a, ptr %b) #0 !dbg !25 {
+// CHECK:STDOUT: define void @_CVarThenLet.Main(ptr %_, ptr %_1) #0 !dbg !25 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !29
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CLetThenVar.Main(i32 %a, ptr %b) #0 !dbg !30 {
+// CHECK:STDOUT: define void @_CLetThenVar.Main(i32 %_, ptr %_1) #0 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !34
 // CHECK:STDOUT: }

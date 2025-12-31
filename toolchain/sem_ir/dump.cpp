@@ -377,6 +377,30 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
   return out.TakeStr();
 }
 
+LLVM_DUMP_METHOD auto Dump(const File& file,
+                           RequireImplsBlockId require_impls_block_id)
+    -> std::string {
+  RawStringOstream out;
+  out << require_impls_block_id;
+  if (require_impls_block_id.has_value()) {
+    for (auto require_id :
+         file.require_impls_blocks().Get(require_impls_block_id)) {
+      out << "\n  - " << Dump(file, require_id);
+    }
+  }
+  return out.TakeStr();
+}
+
+LLVM_DUMP_METHOD auto Dump(const File& file, RequireImplsId require_impls_id)
+    -> std::string {
+  RawStringOstream out;
+  out << require_impls_id;
+  if (require_impls_id.has_value()) {
+    out << ": " << file.require_impls().Get(require_impls_id);
+  }
+  return out.TakeStr();
+}
+
 LLVM_DUMP_METHOD auto Dump(const File& file, SpecificId specific_id)
     -> std::string {
   RawStringOstream out;
@@ -482,6 +506,13 @@ LLVM_DUMP_METHOD static auto MakeIdentifiedFacetTypeId(int id)
 LLVM_DUMP_METHOD static auto MakeNamedConstraintId(int id)
     -> NamedConstraintId {
   return NamedConstraintId(id);
+}
+LLVM_DUMP_METHOD static auto MakeRequireImplsBlockId(int id)
+    -> RequireImplsBlockId {
+  return RequireImplsBlockId(id);
+}
+LLVM_DUMP_METHOD static auto MakeRequireImplsId(int id) -> RequireImplsId {
+  return RequireImplsId(id);
 }
 LLVM_DUMP_METHOD static auto MakeSpecificId(int id) -> SpecificId {
   return SpecificId(id);

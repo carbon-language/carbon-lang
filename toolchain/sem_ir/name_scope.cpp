@@ -99,11 +99,4 @@ auto NameScopeStore::GetInstIfValid(NameScopeId scope_id) const
   return {inst_id, file_->insts().Get(inst_id)};
 }
 
-auto NameScopeStore::IsCorePackage(NameScopeId scope_id) const -> bool {
-  if (!IsPackage(scope_id)) {
-    return false;
-  }
-  return Get(scope_id).name_id() == NameId::Core;
-}
-
 }  // namespace Carbon::SemIR

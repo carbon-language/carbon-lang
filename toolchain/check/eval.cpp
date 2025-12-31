@@ -617,10 +617,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
                                      SemIR::LocId loc_id,
                                      const SemIR::FacetTypeInfo& orig,
                                      Phase* phase) -> SemIR::FacetTypeInfo {
-  SemIR::FacetTypeInfo info = {
-      .builtin_constraint_mask = orig.builtin_constraint_mask,
-      // TODO: Process other requirements.
-      .other_requirements = orig.other_requirements};
+  SemIR::FacetTypeInfo info = {};
 
   info.extend_constraints.reserve(orig.extend_constraints.size());
   for (const auto& extend : orig.extend_constraints) {
@@ -680,6 +677,9 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
                                                          rewrite.rhs_id, phase);
     rewrite = {.lhs_id = lhs_id, .rhs_id = rhs_id};
   }
+
+  // TODO: Process other requirements.
+  info.other_requirements = orig.other_requirements;
 
   info.Canonicalize();
   return info;
@@ -1688,8 +1688,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     case SemIR::BuiltinFunctionKind::None:
       CARBON_FATAL("Not a builtin function.");
 
-    case SemIR::BuiltinFunctionKind::NoOp:
-    case SemIR::BuiltinFunctionKind::TypeDestroy: {
+    case SemIR::BuiltinFunctionKind::NoOp: {
       // Return an empty tuple value.
       auto type_id = GetTupleType(eval_context.context(), {});
       return MakeConstantResult(
@@ -1699,20 +1698,66 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
           phase);
     }
 
-    case SemIR::BuiltinFunctionKind::TypeCanDestroy: {
-      CARBON_CHECK(arg_ids.empty());
-      auto id = eval_context.facet_types().Add(
-          {.builtin_constraint_mask =
-               SemIR::BuiltinConstraintMask::TypeCanDestroy});
-      return MakeConstantResult(
-          eval_context.context(),
-          SemIR::FacetType{.type_id = SemIR::TypeType::TypeId,
-                           .facet_type_id = id},
-          phase);
-    }
-
     case SemIR::BuiltinFunctionKind::PrimitiveCopy: {
       return context.constant_values().Get(arg_ids[0]);
+    }
+
+    case SemIR::BuiltinFunctionKind::StringAt: {
+      Phase phase = Phase::Concrete;
+      auto str_id = GetConstantValue(eval_context, arg_ids[0], &phase);
+      auto index_id = GetConstantValue(eval_context, arg_ids[1], &phase);
+
+      if (phase != Phase::Concrete) {
+        return MakeNonConstantResult(phase);
+      }
+
+      auto str_struct = eval_context.insts().GetAs<SemIR::StructValue>(str_id);
+      auto elements = eval_context.inst_blocks().Get(str_struct.elements_id);
+      // String struct has two fields: a pointer to the string data and the
+      // length.
+      CARBON_CHECK(elements.size() == 2, "String struct should have 2 fields.");
+
+      auto string_literal = eval_context.insts().GetAs<SemIR::StringLiteral>(
+          eval_context.constant_values().GetConstantInstId(elements[0]));
+
+      const auto& string_value =
+          eval_context.sem_ir().string_literal_values().Get(
+              string_literal.string_literal_id);
+
+      auto index_inst = eval_context.insts().GetAs<SemIR::IntValue>(index_id);
+      const auto& index_val = eval_context.ints().Get(index_inst.int_id);
+
+      if (index_val.isNegative()) {
+        CARBON_DIAGNOSTIC(StringAtIndexNegative, Error,
+                          "index `{0}` is negative.", TypedInt);
+        context.emitter().Emit(
+            loc_id, StringAtIndexNegative,
+            {.type = eval_context.insts().Get(index_id).type_id(),
+             .value = index_val});
+        return SemIR::ConstantId::NotConstant;
+      }
+
+      if (index_val.getZExtValue() >= string_value.size()) {
+        CARBON_DIAGNOSTIC(
+            StringAtIndexOutOfBounds, Error,
+            "string index `{0}` is out of bounds; string has length {1}.",
+            TypedInt, size_t);
+        context.emitter().Emit(
+            loc_id, StringAtIndexOutOfBounds,
+            {.type = eval_context.insts().Get(index_id).type_id(),
+             .value = index_val},
+            string_value.size());
+        return SemIR::ConstantId::NotConstant;
+      }
+
+      auto char_value =
+          static_cast<uint8_t>(string_value[index_val.getZExtValue()]);
+
+      auto int_id = eval_context.ints().Add(
+          llvm::APSInt(llvm::APInt(32, char_value), /*isUnsigned=*/false));
+      return MakeConstantResult(
+          eval_context.context(),
+          SemIR::IntValue{.type_id = call.type_id, .int_id = int_id}, phase);
     }
 
     case SemIR::BuiltinFunctionKind::PrintChar:
@@ -2298,7 +2343,6 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
           info.extend_constraints.append(base_info.extend_constraints);
           info.self_impls_constraints.append(base_info.self_impls_constraints);
           info.rewrite_constraints.append(base_info.rewrite_constraints);
-          info.builtin_constraint_mask.Add(base_info.builtin_constraint_mask);
           info.other_requirements |= base_info.other_requirements;
         }
       } else if (auto rewrite =
@@ -2337,7 +2381,6 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
             // Other requirements are copied in.
             llvm::append_range(info.rewrite_constraints,
                                more_info.rewrite_constraints);
-            info.builtin_constraint_mask.Add(more_info.builtin_constraint_mask);
             info.other_requirements |= more_info.other_requirements;
           }
         } else {

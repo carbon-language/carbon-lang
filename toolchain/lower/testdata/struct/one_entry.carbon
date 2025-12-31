@@ -12,7 +12,7 @@
 
 fn Run() -> i32 {
   var x: {.a: i32} = {.a = 4};
-  var y: {.a: i32} = x;
+  var _: {.a: i32} = x;
   return 0;
 }
 
@@ -23,14 +23,14 @@ fn Run() -> i32 {
 // CHECK:STDOUT: define i32 @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { i32 }, align 8, !dbg !8
-// CHECK:STDOUT:   %y.var = alloca { i32 }, align 8, !dbg !9
+// CHECK:STDOUT:   %_.var = alloca { i32 }, align 8, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !8
 // CHECK:STDOUT:   store { i32 } { i32 4 }, ptr %x.var, align 4, !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %y.var), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !9
 // CHECK:STDOUT:   %.loc15_22.1.a = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !10
 // CHECK:STDOUT:   %.loc15_22.2 = load i32, ptr %.loc15_22.1.a, align 4, !dbg !10
 // CHECK:STDOUT:   %.loc15_22.3.struct.init = insertvalue { i32 } poison, i32 %.loc15_22.2, 0, !dbg !10
-// CHECK:STDOUT:   store { i32 } %.loc15_22.3.struct.init, ptr %y.var, align 4, !dbg !9
+// CHECK:STDOUT:   store { i32 } %.loc15_22.3.struct.init, ptr %_.var, align 4, !dbg !9
 // CHECK:STDOUT:   ret i32 0, !dbg !11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

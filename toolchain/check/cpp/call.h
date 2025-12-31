@@ -31,6 +31,16 @@ auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
                               llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId;
 
+// Checks and builds SemIR for a call to a C++ template name with arguments
+// `arg_ids`.
+//
+// Converts the arguments to a C++ template argument list and attempts to
+// instantiate a template specialization and import a declaration of it.
+auto PerformCallToCppTemplateName(Context& context, SemIR::LocId loc_id,
+                                  SemIR::ClangDeclId template_decl_id,
+                                  llvm::ArrayRef<SemIR::InstId> arg_ids)
+    -> SemIR::InstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CPP_CALL_H_

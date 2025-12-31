@@ -32,6 +32,9 @@ struct ImplFields {
   // reference. Note that the entries in the witness are updated at the end of
   // the impl definition.
   InstId witness_id = InstId::None;
+  // A block for instructions that make up the impl's witness so that they can
+  // be formatted as part of the impl.
+  InstBlockId witness_block_id = InstBlockId::None;
 
   // The following members are set at the `{` of the impl definition.
 

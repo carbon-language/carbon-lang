@@ -162,7 +162,7 @@ static auto AddCleanupBlock(Context& context) -> void {
     // cleanup blocks, so we'll want to avoid this in the future.
     BuildUnaryOperator(context,
                        context.insts().GetLocIdForDesugaring(destroy_id),
-                       {.interface_name = "Destroy"}, destroy_id);
+                       {.interface_name = CoreIdentifier::Destroy}, destroy_id);
   }
 }
 

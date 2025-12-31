@@ -26,7 +26,6 @@ cc_library(
         "cpp/context.cpp",
         "cpp/custom_type_mapping.cpp",
         "cpp/generate_ast.cpp",
-        "cpp/generate_ast.h",
         "cpp/impl_lookup.cpp",
         "cpp/import.cpp",
         "cpp/location.cpp",
@@ -35,6 +34,7 @@ cc_library(
         "cpp/overload_resolution.cpp",
         "cpp/thunk.cpp",
         "cpp/type_mapping.cpp",
+        "custom_witness.cpp",
         "decl_name_stack.cpp",
         "deduce.cpp",
         "deferred_definition_worklist.cpp",
@@ -83,6 +83,7 @@ cc_library(
         "cpp/call.h",
         "cpp/context.h",
         "cpp/custom_type_mapping.h",
+        "cpp/generate_ast.h",
         "cpp/impl_lookup.h",
         "cpp/import.h",
         "cpp/location.h",
@@ -91,6 +92,7 @@ cc_library(
         "cpp/overload_resolution.h",
         "cpp/thunk.h",
         "cpp/type_mapping.h",
+        "custom_witness.h",
         "decl_introducer_state.h",
         "decl_name_stack.h",
         "deduce.h",
@@ -134,6 +136,7 @@ cc_library(
         "type_structure.h",
     ],
     deps = [
+        ":core_identifier",
         ":node_stack",
         "//common:array_stack",
         "//common:check",
@@ -217,6 +220,7 @@ cc_library(
     hdrs = ["check.h"],
     deps = [
         ":context",
+        ":core_identifier",
         ":diagnostic_emitter",
         ":dump",
         ":scope_stack",
@@ -319,6 +323,19 @@ cc_library(
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "core_identifier",
+    srcs = ["core_identifier.cpp"],
+    hdrs = ["core_identifier.h"],
+    textual_hdrs = ["core_identifier.def"],
+    deps = [
+        "//common:enum_base",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/base:value_ids",
+        "//toolchain/sem_ir:typed_insts",
     ],
 )
 

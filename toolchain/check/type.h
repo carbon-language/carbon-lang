@@ -52,6 +52,10 @@ auto GetCppOverloadSetType(Context& context,
                            SemIR::CppOverloadSetId overload_set_id,
                            SemIR::SpecificId specific_id) -> SemIR::TypeId;
 
+// Gets a C++ template name type. The returned type will be complete.
+auto GetCppTemplateNameType(Context& context, SemIR::EntityNameId name_id,
+                            SemIR::ClangDeclId decl_id) -> SemIR::TypeId;
+
 // Gets a function type. The returned type will be complete.
 auto GetFunctionType(Context& context, SemIR::FunctionId fn_id,
                      SemIR::SpecificId specific_id) -> SemIR::TypeId;

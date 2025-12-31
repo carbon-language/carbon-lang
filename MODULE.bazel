@@ -121,6 +121,7 @@ http_archive(
         "@carbon//bazel/llvm_project:0005_Introduce_basic_sources_exporting_for_libcxx_and_libcxxabi.patch",
         "@carbon//bazel/llvm_project:0006_Add_a_filegroup_containing__all__sources_to_the_libc_build_rules.patch",
         "@carbon//bazel/llvm_project:0007_Remove_target_compatibility_restrictions_for_float128.patch",
+        "@carbon//bazel/llvm_project:0008_Add_filegroups_for_installed_compiler-rt_headers.patch",
     ],
     strip_prefix = "llvm-project-{0}".format(llvm_project_version),
     urls = ["https://github.com/llvm/llvm-project/archive/{0}.tar.gz".format(llvm_project_version)],

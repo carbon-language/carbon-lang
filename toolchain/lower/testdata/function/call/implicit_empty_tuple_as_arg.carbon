@@ -16,7 +16,7 @@ fn Foo() {}
 fn Bar(a: ()) -> () { return a; }
 
 fn Main() {
-  var x: () = Bar(Foo());
+  var _: () = Bar(Foo());
 }
 
 // CHECK:STDOUT: ; ModuleID = 'implicit_empty_tuple_as_arg.carbon'
@@ -37,9 +37,9 @@ fn Main() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x.var = alloca {}, align 8, !dbg !14
+// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !14
 // CHECK:STDOUT:   %.loc19_23.1.temp = alloca {}, align 8, !dbg !15
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !14
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !14
 // CHECK:STDOUT:   call void @_CFoo.Main(), !dbg !15
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_23.1.temp), !dbg !15
 // CHECK:STDOUT:   call void @_CBar.Main(), !dbg !16

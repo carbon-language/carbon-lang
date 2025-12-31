@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/function/call/params_one_comma.carbon
 
-fn Foo(a: i32,) {}
+fn Foo(_: i32,) {}
 
 fn Main() {
   Foo(1);
@@ -21,7 +21,7 @@ fn Main() {
 // CHECK:STDOUT: source_filename = "params_one_comma.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CFoo.Main(i32 %a) #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CFoo.Main(i32 %_) #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !10
 // CHECK:STDOUT: }

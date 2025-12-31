@@ -21,6 +21,10 @@ auto GenerateAst(Context& context,
                  std::shared_ptr<clang::CompilerInvocation> base_invocation)
     -> bool;
 
+// Finishes AST generation for the given checking context. Performs end of file
+// steps such as template instantiation and warning on unused declarations.
+auto FinishAst(Context& context) -> void;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CPP_GENERATE_AST_H_

@@ -1,0 +1,35 @@
+Commit ID: e92461dc72d53b737ac14fe2c4c9c539946a4318
+Change ID: xyswklonuwpozzpkzwowszwnrzvkonxu
+Author   : Chandler Carruth <chandlerc@gmail.com> (2025-12-30 10:19:01)
+Committer: Chandler Carruth <chandlerc@gmail.com> (2025-12-30 21:28:56)
+
+    Add filegroups for installed compiler-rt headers
+
+    These are installed along-side the builtin Clang headers.
+
+diff --git a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
+index 115da4cb77..ebe376fcaa 100644
+--- a/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
++++ b/utils/bazel/llvm-project-overlay/compiler-rt/BUILD.bazel
+@@ -131,6 +131,21 @@
+     ],
+ )
+ 
++filegroup(
++    name = "fuzzer_installed_hdrs",
++    srcs = glob(["include/fuzzer/*.h"]),
++)
++
++filegroup(
++    name = "profile_installed_hdrs",
++    srcs = glob(["include/profile/*.h"]),
++)
++
++filegroup(
++    name = "sanitizer_installed_hdrs",
++    srcs = glob(["include/sanitizer/*.h"]),
++)
++
+ BUILTINS_CRTBEGIN_SRCS = ["lib/builtins/crtbegin.c"]
+ 
+ filegroup(

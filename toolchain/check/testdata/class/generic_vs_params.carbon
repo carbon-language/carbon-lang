@@ -91,35 +91,35 @@ class Foo[T:! type];
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %GenericAndParams.type.c8d: type = generic_class_type @GenericAndParams.loc6 [concrete]
-// CHECK:STDOUT:   %GenericAndParams.generic.1e4: %GenericAndParams.type.c8d = struct_value () [concrete]
-// CHECK:STDOUT:   %GenericAndParams.b2c: type = class_type @GenericAndParams.loc6, @GenericAndParams.loc6(%T) [symbolic]
+// CHECK:STDOUT:   %GenericAndParams.type.fa0: type = generic_class_type @GenericAndParams.loc6 [concrete]
+// CHECK:STDOUT:   %GenericAndParams.generic.e6f: %GenericAndParams.type.fa0 = struct_value () [concrete]
+// CHECK:STDOUT:   %GenericAndParams.2b4: type = class_type @GenericAndParams.loc6, @GenericAndParams.loc6(%T) [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C.20b: type = class_type @C, @C(%T) [symbolic]
-// CHECK:STDOUT:   %GenericNoParams.3d2: type = class_type @GenericNoParams, @GenericNoParams(%T) [symbolic]
+// CHECK:STDOUT:   %C.5a3: type = class_type @C, @C(%T) [symbolic]
+// CHECK:STDOUT:   %GenericNoParams.6cf: type = class_type @GenericNoParams, @GenericNoParams(%T) [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 1 [symbolic]
-// CHECK:STDOUT:   %GenericAndParams.type.d1d: type = generic_class_type @GenericAndParams.loc10, @C(%T) [symbolic]
-// CHECK:STDOUT:   %GenericAndParams.generic.cd0: %GenericAndParams.type.d1d = struct_value () [symbolic]
-// CHECK:STDOUT:   %GenericAndParams.36f: type = class_type @GenericAndParams.loc10, @GenericAndParams.loc10(%T, %U) [symbolic]
+// CHECK:STDOUT:   %GenericAndParams.type.208: type = generic_class_type @GenericAndParams.loc10, @C(%T) [symbolic]
+// CHECK:STDOUT:   %GenericAndParams.generic.cc2: %GenericAndParams.type.208 = struct_value () [symbolic]
+// CHECK:STDOUT:   %GenericAndParams.015: type = class_type @GenericAndParams.loc10, @GenericAndParams.loc10(%T, %U) [symbolic]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %pattern_type.71d: type = pattern_type %NotGenericNoParams [concrete]
+// CHECK:STDOUT:   %pattern_type.673: type = pattern_type %NotGenericNoParams [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %NotGenericNoParams.val: %NotGenericNoParams = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.4f9: type = pattern_type %NotGenericButParams [concrete]
+// CHECK:STDOUT:   %pattern_type.749: type = pattern_type %NotGenericButParams [concrete]
 // CHECK:STDOUT:   %NotGenericButParams.val: %NotGenericButParams = struct_value () [concrete]
-// CHECK:STDOUT:   %GenericAndParams.2bb: type = class_type @GenericAndParams.loc6, @GenericAndParams.loc6(%X) [concrete]
-// CHECK:STDOUT:   %pattern_type.569: type = pattern_type %GenericAndParams.2bb [concrete]
-// CHECK:STDOUT:   %GenericAndParams.val.0b2: %GenericAndParams.2bb = struct_value () [concrete]
-// CHECK:STDOUT:   %C.fac: type = class_type @C, @C(%X) [concrete]
-// CHECK:STDOUT:   %GenericNoParams.fa1: type = class_type @GenericNoParams, @GenericNoParams(%X) [concrete]
-// CHECK:STDOUT:   %GenericAndParams.type.c20: type = generic_class_type @GenericAndParams.loc10, @C(%X) [concrete]
-// CHECK:STDOUT:   %GenericAndParams.generic.a55: %GenericAndParams.type.c20 = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.518: type = pattern_type %GenericNoParams.fa1 [concrete]
-// CHECK:STDOUT:   %GenericNoParams.val: %GenericNoParams.fa1 = struct_value () [concrete]
-// CHECK:STDOUT:   %GenericAndParams.eb7: type = class_type @GenericAndParams.loc10, @GenericAndParams.loc10(%X, %X) [concrete]
-// CHECK:STDOUT:   %pattern_type.3cd: type = pattern_type %GenericAndParams.eb7 [concrete]
-// CHECK:STDOUT:   %GenericAndParams.val.b63: %GenericAndParams.eb7 = struct_value () [concrete]
+// CHECK:STDOUT:   %GenericAndParams.d3d: type = class_type @GenericAndParams.loc6, @GenericAndParams.loc6(%X) [concrete]
+// CHECK:STDOUT:   %pattern_type.856: type = pattern_type %GenericAndParams.d3d [concrete]
+// CHECK:STDOUT:   %GenericAndParams.val.835: %GenericAndParams.d3d = struct_value () [concrete]
+// CHECK:STDOUT:   %C.513: type = class_type @C, @C(%X) [concrete]
+// CHECK:STDOUT:   %GenericNoParams.efa: type = class_type @GenericNoParams, @GenericNoParams(%X) [concrete]
+// CHECK:STDOUT:   %GenericAndParams.type.23d: type = generic_class_type @GenericAndParams.loc10, @C(%X) [concrete]
+// CHECK:STDOUT:   %GenericAndParams.generic.fd2: %GenericAndParams.type.23d = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.1fb: type = pattern_type %GenericNoParams.efa [concrete]
+// CHECK:STDOUT:   %GenericNoParams.val: %GenericNoParams.efa = struct_value () [concrete]
+// CHECK:STDOUT:   %GenericAndParams.ed1: type = class_type @GenericAndParams.loc10, @GenericAndParams.loc10(%X, %X) [concrete]
+// CHECK:STDOUT:   %pattern_type.1b8: type = pattern_type %GenericAndParams.ed1 [concrete]
+// CHECK:STDOUT:   %GenericAndParams.val.e35: %GenericAndParams.ed1 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -137,7 +137,7 @@ class Foo[T:! type];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %NotGenericNoParams.decl: type = class_decl @NotGenericNoParams [concrete = constants.%NotGenericNoParams] {} {}
 // CHECK:STDOUT:   %NotGenericButParams.decl: %NotGenericButParams.type = class_decl @NotGenericButParams [concrete = constants.%NotGenericButParams.generic] {} {}
-// CHECK:STDOUT:   %GenericAndParams.decl: %GenericAndParams.type.c8d = class_decl @GenericAndParams.loc6 [concrete = constants.%GenericAndParams.generic.1e4] {
+// CHECK:STDOUT:   %GenericAndParams.decl: %GenericAndParams.type.fa0 = class_decl @GenericAndParams.loc6 [concrete = constants.%GenericAndParams.generic.e6f] {
 // CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -151,15 +151,15 @@ class Foo[T:! type];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.71d = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.71d = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:     %a.patt: %pattern_type.673 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.673 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %NotGenericNoParams = var %a.var_patt [concrete]
 // CHECK:STDOUT:   %NotGenericNoParams.ref: type = name_ref NotGenericNoParams, %NotGenericNoParams.decl [concrete = constants.%NotGenericNoParams]
 // CHECK:STDOUT:   %a: ref %NotGenericNoParams = ref_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.4f9 = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.4f9 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.749 = ref_binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.749 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %NotGenericButParams = var %b.var_patt [concrete]
 // CHECK:STDOUT:   %.loc16: type = splice_block %NotGenericButParams [concrete = constants.%NotGenericButParams] {
@@ -168,44 +168,44 @@ class Foo[T:! type];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %NotGenericButParams = ref_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.569 = ref_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.var_patt: %pattern_type.569 = var_pattern %c.patt [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.856 = ref_binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.var_patt: %pattern_type.856 = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c.var: ref %GenericAndParams.2bb = var %c.var_patt [concrete]
-// CHECK:STDOUT:   %.loc17: type = splice_block %GenericAndParams.loc17 [concrete = constants.%GenericAndParams.2bb] {
-// CHECK:STDOUT:     %GenericAndParams.ref.loc17: %GenericAndParams.type.c8d = name_ref GenericAndParams, %GenericAndParams.decl [concrete = constants.%GenericAndParams.generic.1e4]
+// CHECK:STDOUT:   %c.var: ref %GenericAndParams.d3d = var %c.var_patt [concrete]
+// CHECK:STDOUT:   %.loc17: type = splice_block %GenericAndParams.loc17 [concrete = constants.%GenericAndParams.d3d] {
+// CHECK:STDOUT:     %GenericAndParams.ref.loc17: %GenericAndParams.type.fa0 = name_ref GenericAndParams, %GenericAndParams.decl [concrete = constants.%GenericAndParams.generic.e6f]
 // CHECK:STDOUT:     %X.ref.loc17: type = name_ref X, %X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %GenericAndParams.loc17: type = class_type @GenericAndParams.loc6, @GenericAndParams.loc6(constants.%X) [concrete = constants.%GenericAndParams.2bb]
+// CHECK:STDOUT:     %GenericAndParams.loc17: type = class_type @GenericAndParams.loc6, @GenericAndParams.loc6(constants.%X) [concrete = constants.%GenericAndParams.d3d]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: ref %GenericAndParams.2bb = ref_binding c, %c.var [concrete = %c.var]
+// CHECK:STDOUT:   %c: ref %GenericAndParams.d3d = ref_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %d.patt: %pattern_type.518 = ref_binding_pattern d [concrete]
-// CHECK:STDOUT:     %d.var_patt: %pattern_type.518 = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:     %d.patt: %pattern_type.1fb = ref_binding_pattern d [concrete]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.1fb = var_pattern %d.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d.var: ref %GenericNoParams.fa1 = var %d.var_patt [concrete]
-// CHECK:STDOUT:   %.loc18_12.1: type = splice_block %GenericNoParams.ref [concrete = constants.%GenericNoParams.fa1] {
+// CHECK:STDOUT:   %d.var: ref %GenericNoParams.efa = var %d.var_patt [concrete]
+// CHECK:STDOUT:   %.loc18_12.1: type = splice_block %GenericNoParams.ref [concrete = constants.%GenericNoParams.efa] {
 // CHECK:STDOUT:     %C.ref.loc18: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %X.ref.loc18: type = name_ref X, %X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %C.loc18: type = class_type @C, @C(constants.%X) [concrete = constants.%C.fac]
-// CHECK:STDOUT:     %.loc18_12.2: type = specific_constant @C.%GenericNoParams.decl, @C(constants.%X) [concrete = constants.%GenericNoParams.fa1]
-// CHECK:STDOUT:     %GenericNoParams.ref: type = name_ref GenericNoParams, %.loc18_12.2 [concrete = constants.%GenericNoParams.fa1]
+// CHECK:STDOUT:     %C.loc18: type = class_type @C, @C(constants.%X) [concrete = constants.%C.513]
+// CHECK:STDOUT:     %.loc18_12.2: type = specific_constant @C.%GenericNoParams.decl, @C(constants.%X) [concrete = constants.%GenericNoParams.efa]
+// CHECK:STDOUT:     %GenericNoParams.ref: type = name_ref GenericNoParams, %.loc18_12.2 [concrete = constants.%GenericNoParams.efa]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %d: ref %GenericNoParams.fa1 = ref_binding d, %d.var [concrete = %d.var]
+// CHECK:STDOUT:   %d: ref %GenericNoParams.efa = ref_binding d, %d.var [concrete = %d.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %e.patt: %pattern_type.3cd = ref_binding_pattern e [concrete]
-// CHECK:STDOUT:     %e.var_patt: %pattern_type.3cd = var_pattern %e.patt [concrete]
+// CHECK:STDOUT:     %e.patt: %pattern_type.1b8 = ref_binding_pattern e [concrete]
+// CHECK:STDOUT:     %e.var_patt: %pattern_type.1b8 = var_pattern %e.patt [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %e.var: ref %GenericAndParams.eb7 = var %e.var_patt [concrete]
-// CHECK:STDOUT:   %.loc19_31: type = splice_block %GenericAndParams.loc19 [concrete = constants.%GenericAndParams.eb7] {
+// CHECK:STDOUT:   %e.var: ref %GenericAndParams.ed1 = var %e.var_patt [concrete]
+// CHECK:STDOUT:   %.loc19_31: type = splice_block %GenericAndParams.loc19 [concrete = constants.%GenericAndParams.ed1] {
 // CHECK:STDOUT:     %C.ref.loc19: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %X.ref.loc19_10: type = name_ref X, %X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %C.loc19: type = class_type @C, @C(constants.%X) [concrete = constants.%C.fac]
-// CHECK:STDOUT:     %.loc19_12: %GenericAndParams.type.c20 = specific_constant @C.%GenericAndParams.decl, @C(constants.%X) [concrete = constants.%GenericAndParams.generic.a55]
-// CHECK:STDOUT:     %GenericAndParams.ref.loc19: %GenericAndParams.type.c20 = name_ref GenericAndParams, %.loc19_12 [concrete = constants.%GenericAndParams.generic.a55]
+// CHECK:STDOUT:     %C.loc19: type = class_type @C, @C(constants.%X) [concrete = constants.%C.513]
+// CHECK:STDOUT:     %.loc19_12: %GenericAndParams.type.23d = specific_constant @C.%GenericAndParams.decl, @C(constants.%X) [concrete = constants.%GenericAndParams.generic.fd2]
+// CHECK:STDOUT:     %GenericAndParams.ref.loc19: %GenericAndParams.type.23d = name_ref GenericAndParams, %.loc19_12 [concrete = constants.%GenericAndParams.generic.fd2]
 // CHECK:STDOUT:     %X.ref.loc19_30: type = name_ref X, %X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %GenericAndParams.loc19: type = class_type @GenericAndParams.loc10, @GenericAndParams.loc10(constants.%X, constants.%X) [concrete = constants.%GenericAndParams.eb7]
+// CHECK:STDOUT:     %GenericAndParams.loc19: type = class_type @GenericAndParams.loc10, @GenericAndParams.loc10(constants.%X, constants.%X) [concrete = constants.%GenericAndParams.ed1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %e: ref %GenericAndParams.eb7 = ref_binding e, %e.var [concrete = %e.var]
+// CHECK:STDOUT:   %e: ref %GenericAndParams.ed1 = ref_binding e, %e.var [concrete = %e.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @NotGenericNoParams {
@@ -234,7 +234,7 @@ class Foo[T:! type];
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%GenericAndParams.b2c
+// CHECK:STDOUT:     .Self = constants.%GenericAndParams.2b4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -242,13 +242,13 @@ class Foo[T:! type];
 // CHECK:STDOUT:   %T.loc8_9.1: type = symbolic_binding T, 0 [symbolic = %T.loc8_9.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %GenericNoParams: type = class_type @GenericNoParams, @GenericNoParams(%T.loc8_9.1) [symbolic = %GenericNoParams (constants.%GenericNoParams.3d2)]
-// CHECK:STDOUT:   %GenericAndParams.type: type = generic_class_type @GenericAndParams.loc10, @C(%T.loc8_9.1) [symbolic = %GenericAndParams.type (constants.%GenericAndParams.type.d1d)]
-// CHECK:STDOUT:   %GenericAndParams.generic: @C.%GenericAndParams.type (%GenericAndParams.type.d1d) = struct_value () [symbolic = %GenericAndParams.generic (constants.%GenericAndParams.generic.cd0)]
+// CHECK:STDOUT:   %GenericNoParams: type = class_type @GenericNoParams, @GenericNoParams(%T.loc8_9.1) [symbolic = %GenericNoParams (constants.%GenericNoParams.6cf)]
+// CHECK:STDOUT:   %GenericAndParams.type: type = generic_class_type @GenericAndParams.loc10, @C(%T.loc8_9.1) [symbolic = %GenericAndParams.type (constants.%GenericAndParams.type.208)]
+// CHECK:STDOUT:   %GenericAndParams.generic: @C.%GenericAndParams.type (%GenericAndParams.type.208) = struct_value () [symbolic = %GenericAndParams.generic (constants.%GenericAndParams.generic.cc2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %GenericNoParams.decl: type = class_decl @GenericNoParams [symbolic = @C.%GenericNoParams (constants.%GenericNoParams.3d2)] {} {}
-// CHECK:STDOUT:     %GenericAndParams.decl: @C.%GenericAndParams.type (%GenericAndParams.type.d1d) = class_decl @GenericAndParams.loc10 [symbolic = @C.%GenericAndParams.generic (constants.%GenericAndParams.generic.cd0)] {
+// CHECK:STDOUT:     %GenericNoParams.decl: type = class_decl @GenericNoParams [symbolic = @C.%GenericNoParams (constants.%GenericNoParams.6cf)] {} {}
+// CHECK:STDOUT:     %GenericAndParams.decl: @C.%GenericAndParams.type (%GenericAndParams.type.208) = class_decl @GenericAndParams.loc10 [symbolic = @C.%GenericAndParams.generic (constants.%GenericAndParams.generic.cc2)] {
 // CHECK:STDOUT:       %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 1 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -258,7 +258,7 @@ class Foo[T:! type];
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.20b
+// CHECK:STDOUT:     .Self = constants.%C.5a3
 // CHECK:STDOUT:     .GenericNoParams = %GenericNoParams.decl
 // CHECK:STDOUT:     .GenericAndParams = %GenericAndParams.decl
 // CHECK:STDOUT:   }
@@ -272,7 +272,7 @@ class Foo[T:! type];
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%GenericNoParams.3d2
+// CHECK:STDOUT:     .Self = constants.%GenericNoParams.6cf
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -286,7 +286,7 @@ class Foo[T:! type];
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%GenericAndParams.36f
+// CHECK:STDOUT:     .Self = constants.%GenericAndParams.015
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -309,16 +309,16 @@ class Foo[T:! type];
 // CHECK:STDOUT:   %.loc16_1: init %NotGenericButParams = converted %.loc16_33.1, %.loc16_33.2 [concrete = constants.%NotGenericButParams.val]
 // CHECK:STDOUT:   assign file.%b.var, %.loc16_1
 // CHECK:STDOUT:   %.loc17_31.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc17_31.2: init %GenericAndParams.2bb = class_init (), file.%c.var [concrete = constants.%GenericAndParams.val.0b2]
-// CHECK:STDOUT:   %.loc17_1: init %GenericAndParams.2bb = converted %.loc17_31.1, %.loc17_31.2 [concrete = constants.%GenericAndParams.val.0b2]
+// CHECK:STDOUT:   %.loc17_31.2: init %GenericAndParams.d3d = class_init (), file.%c.var [concrete = constants.%GenericAndParams.val.835]
+// CHECK:STDOUT:   %.loc17_1: init %GenericAndParams.d3d = converted %.loc17_31.1, %.loc17_31.2 [concrete = constants.%GenericAndParams.val.835]
 // CHECK:STDOUT:   assign file.%c.var, %.loc17_1
 // CHECK:STDOUT:   %.loc18_32.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc18_32.2: init %GenericNoParams.fa1 = class_init (), file.%d.var [concrete = constants.%GenericNoParams.val]
-// CHECK:STDOUT:   %.loc18_1: init %GenericNoParams.fa1 = converted %.loc18_32.1, %.loc18_32.2 [concrete = constants.%GenericNoParams.val]
+// CHECK:STDOUT:   %.loc18_32.2: init %GenericNoParams.efa = class_init (), file.%d.var [concrete = constants.%GenericNoParams.val]
+// CHECK:STDOUT:   %.loc18_1: init %GenericNoParams.efa = converted %.loc18_32.1, %.loc18_32.2 [concrete = constants.%GenericNoParams.val]
 // CHECK:STDOUT:   assign file.%d.var, %.loc18_1
 // CHECK:STDOUT:   %.loc19_36.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc19_36.2: init %GenericAndParams.eb7 = class_init (), file.%e.var [concrete = constants.%GenericAndParams.val.b63]
-// CHECK:STDOUT:   %.loc19_1: init %GenericAndParams.eb7 = converted %.loc19_36.1, %.loc19_36.2 [concrete = constants.%GenericAndParams.val.b63]
+// CHECK:STDOUT:   %.loc19_36.2: init %GenericAndParams.ed1 = class_init (), file.%e.var [concrete = constants.%GenericAndParams.val.e35]
+// CHECK:STDOUT:   %.loc19_1: init %GenericAndParams.ed1 = converted %.loc19_36.1, %.loc19_36.2 [concrete = constants.%GenericAndParams.val.e35]
 // CHECK:STDOUT:   assign file.%e.var, %.loc19_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -347,9 +347,9 @@ class Foo[T:! type];
 // CHECK:STDOUT:   %T.loc8_9.1 => constants.%X
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %GenericNoParams => constants.%GenericNoParams.fa1
-// CHECK:STDOUT:   %GenericAndParams.type => constants.%GenericAndParams.type.c20
-// CHECK:STDOUT:   %GenericAndParams.generic => constants.%GenericAndParams.generic.a55
+// CHECK:STDOUT:   %GenericNoParams => constants.%GenericNoParams.efa
+// CHECK:STDOUT:   %GenericAndParams.type => constants.%GenericAndParams.type.23d
+// CHECK:STDOUT:   %GenericAndParams.generic => constants.%GenericAndParams.generic.fd2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @GenericNoParams(constants.%X) {

@@ -24,6 +24,11 @@ namespace Carbon::Check {
 // better, more specified, match.
 class TypeStructure : public Printable<TypeStructure> {
  public:
+  // TypeStructure is a pretty heavy data structure, avoid accidental copies.
+  // TODO: Add a Clone() method if we want to make a copy of this in the future.
+  TypeStructure(TypeStructure&&) noexcept = default;
+  auto operator=(TypeStructure&&) noexcept -> TypeStructure& = default;
+
   enum class CompareTest {
     // Test whether `this` has the same structure as `other`, or `this` is
     // strictly more specific (has more concrete values) than `other` while

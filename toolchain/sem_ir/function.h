@@ -68,7 +68,7 @@ struct FunctionFields {
 
   // Which, if any, virtual modifier (virtual, abstract, or impl) is applied to
   // this function.
-  VirtualModifier virtual_modifier;
+  VirtualModifier virtual_modifier = VirtualModifier::None;
 
   // The index of the vtable slot for this virtual function. -1 if the function
   // is not virtual (ie: (virtual_modifier == None) == (virtual_index == -1)).

@@ -9,9 +9,11 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/var/var.carbon
 
 var v: i32 = 0;
+var _: i32 = 0;
 var w: i32;
 fn F() {
   var s: str = "hello";
+  var _: str = "anonymous";
 }
 
 // CHECK:STDOUT: - filename: var.carbon
@@ -19,6 +21,14 @@ fn F() {
 // CHECK:STDOUT:     {kind: 'FileStart', text: ''},
 // CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
 // CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeParams', text: 'v'},
+// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
+// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
+// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:       {kind: 'IntLiteral', text: '0'},
+// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:           {kind: 'UnderscoreName', text: '_'},
 // CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
 // CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
 // CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
@@ -44,6 +54,14 @@ fn F() {
 // CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
 // CHECK:STDOUT:         {kind: 'StringLiteral', text: '"hello"'},
 // CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 14},
+// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
+// CHECK:STDOUT:             {kind: 'UnderscoreName', text: '_'},
+// CHECK:STDOUT:             {kind: 'StringTypeLiteral', text: 'str'},
+// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
+// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
+// CHECK:STDOUT:         {kind: 'VariableInitializer', text: '='},
+// CHECK:STDOUT:         {kind: 'StringLiteral', text: '"anonymous"'},
+// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 8},
+// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 22},
 // CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
 // CHECK:STDOUT:   ]

@@ -8,6 +8,9 @@ import library "prelude/copy";
 import library "prelude/destroy";
 import library "prelude/types/char";
 import library "prelude/types/uint";
+import library "prelude/operators/index";
+import library "prelude/types/int";
+import library "prelude/operators/as";
 
 class String {
   fn Size[self: Self]() -> u64 { return self.size; }
@@ -15,9 +18,12 @@ class String {
   impl as Copy {
     fn Op[self: Self]() -> Self { return {.ptr = self.ptr, .size = self.size}; }
   }
-
   // TODO: This should be an array iterator.
   private var ptr: Char*;
   // TODO: This should be a word-sized integer.
   private var size: u64;
+}
+
+impl forall [T:! ImplicitAs(i64)] String as IndexWith(T) where .ElementType = Char {
+  fn At[self: Self](subscript: T) -> Char = "string.at";
 }
