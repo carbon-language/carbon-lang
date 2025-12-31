@@ -38,17 +38,28 @@ struct FunctionFields {
   // the return slot.
   //
   // The parameters appear in declaration order: `self` (if present), then the
-  // explicit runtime parameters, then the return slot (which is "declared" by
-  // the function's return type declaration). This is not populated on imported
-  // functions, because it is relevant only for a function definition.
+  // explicit runtime parameters, then the return parameters (which are
+  // "declared" by the function's return type declaration). This is not
+  // populated on imported functions, because it is relevant only for a function
+  // definition.
   InstBlockId call_params_id;
 
-  // A reference to the instruction in the entity's pattern block that depends
-  // on all other pattern insts pertaining to the return slot pattern. This may
-  // or may not be used by the function, depending on whether the return type
-  // needs a return slot, but is always present if the function has a declared
-  // return type.
-  InstId return_slot_pattern_id;
+  // The type inst representing the function's explicitly declared return type,
+  // if any.
+  TypeInstId return_type_inst_id;
+
+  // The call parameter pattern insts that are declared by the function's return
+  // form declaration. They will all be OutParamPatterns, and there will be one
+  // for each primitive initializing form in the return form, but they may or
+  // may not be used, depending on whether the type has an in-place initializing
+  // representation.
+  //
+  // Note: As of this writing we don't support non-initializing return forms,
+  // so this will always be have exactly 1 element if the function has an
+  // explicitly declared return type.
+  //
+  // TODO: replace this with a block of all call parameter patterns.
+  InstBlockId return_patterns_id;
 
   // Which kind of special function this is, if any. This is used in cases where
   // a special function would otherwise be indistinguishable from a normal
@@ -57,7 +68,7 @@ struct FunctionFields {
 
   // Which, if any, virtual modifier (virtual, abstract, or impl) is applied to
   // this function.
-  VirtualModifier virtual_modifier;
+  VirtualModifier virtual_modifier = VirtualModifier::None;
 
   // The index of the vtable slot for this virtual function. -1 if the function
   // is not virtual (ie: (virtual_modifier == None) == (virtual_index == -1)).
@@ -102,8 +113,11 @@ struct Function : public EntityWithParamsBase,
     if (call_params_id.has_value()) {
       out << ", call_params_id: " << call_params_id;
     }
-    if (return_slot_pattern_id.has_value()) {
-      out << ", return_slot_pattern: " << return_slot_pattern_id;
+    if (return_type_inst_id.has_value()) {
+      out << ", return_type_inst_id: " << return_type_inst_id;
+    }
+    if (return_patterns_id.has_value()) {
+      out << ", return_patterns_id: " << return_patterns_id;
     }
     if (!body_block_ids.empty()) {
       out << llvm::formatv(
@@ -218,13 +232,14 @@ struct CalleeNonFunction {};
 using Callee = std::variant<CalleeCppOverloadSet, CalleeError, CalleeFunction,
                             CalleeNonFunction>;
 
-// Returns information for the function corresponding to callee_id.
+// Returns information for the function corresponding to callee_id in
+// caller_specific_id.
 auto GetCallee(const File& sem_ir, InstId callee_id,
-               SpecificId specific_id = SpecificId::None) -> Callee;
+               SpecificId caller_specific_id = SpecificId::None) -> Callee;
 
 // Like `GetCallee`, but restricts to the `Function` callee kind.
 auto GetCalleeAsFunction(const File& sem_ir, InstId callee_id,
-                         SpecificId specific_id = SpecificId::None)
+                         SpecificId caller_specific_id = SpecificId::None)
     -> CalleeFunction;
 
 struct DecomposedVirtualFunction {

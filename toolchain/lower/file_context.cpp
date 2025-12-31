@@ -73,27 +73,12 @@ auto FileContext::PrepareToLower() -> void {
     // Clang code generation should not actually modify the AST, but isn't
     // const-correct.
     cpp_code_generator_->Initialize(
-        const_cast<clang::ASTContext&>(clang_ast_unit()->getASTContext()));
-
-    // Work around `visitLocalTopLevelDecls` not being const. It doesn't modify
-    // the AST unit other than triggering deserialization.
-    auto* non_const_ast_unit = const_cast<clang::ASTUnit*>(clang_ast_unit());
+        const_cast<clang::ASTContext&>(cpp_file()->ast_context()));
 
     // Emit any top-level declarations now.
-    // TODO: This may miss things that we need to emit which are handed to the
-    // ASTConsumer in other ways. Instead of doing this, we should create the
-    // CodeGenerator earlier and register it as an ASTConsumer before we parse
-    // the C++ inputs.
-    non_const_ast_unit->visitLocalTopLevelDecls(
-        cpp_code_generator_.get(),
-        [](void* codegen_ptr, const clang::Decl* decl) {
-          auto* codegen = static_cast<clang::CodeGenerator*>(codegen_ptr);
-          // CodeGenerator won't modify the declaration it's given, but we can
-          // only call it via the ASTConsumer interface which doesn't know that.
-          auto* non_const_decl = const_cast<clang::Decl*>(decl);
-          codegen->HandleTopLevelDecl(clang::DeclGroupRef(non_const_decl));
-          return true;
-        });
+    for (auto decl_group : cpp_file()->decl_groups()) {
+      cpp_code_generator_->HandleTopLevelDecl(decl_group);
+    }
   }
 
   // Lower all types that were required to be complete.
@@ -180,7 +165,7 @@ auto FileContext::Finalize() -> void {
     // Clang code generation should not actually modify the AST, but isn't
     // const-correct.
     cpp_code_generator_->HandleTranslationUnit(
-        const_cast<clang::ASTContext&>(clang_ast_unit()->getASTContext()));
+        const_cast<clang::ASTContext&>(cpp_file()->ast_context()));
     bool link_error = llvm::Linker::linkModules(
         /*Dest=*/llvm_module(),
         /*Src=*/std::unique_ptr<llvm::Module>(
@@ -196,7 +181,7 @@ auto FileContext::Finalize() -> void {
 
 auto FileContext::CreateCppCodeGenerator()
     -> std::unique_ptr<clang::CodeGenerator> {
-  if (!clang_ast_unit()) {
+  if (!cpp_file()) {
     return nullptr;
   }
 
@@ -207,10 +192,9 @@ auto FileContext::CreateCppCodeGenerator()
   cpp_code_gen_options_.EmitVersionIdentMetadata = false;
 
   return std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
-      clang_ast_unit()->getASTContext().getDiagnostics(),
-      clang_module_name_stream.TakeStr(), context().file_system(),
-      cpp_header_search_options_, cpp_preprocessor_options_,
-      cpp_code_gen_options_, llvm_context()));
+      cpp_file()->diagnostics(), clang_module_name_stream.TakeStr(),
+      context().file_system(), cpp_header_search_options_,
+      cpp_preprocessor_options_, cpp_code_gen_options_, llvm_context()));
 }
 
 auto FileContext::GetConstant(SemIR::ConstantId const_id,
@@ -345,7 +329,11 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
   if (return_info.has_return_slot()) {
     param_types.push_back(
         llvm::PointerType::get(llvm_context(), /*AddressSpace=*/0));
-    return_param_id = function.return_slot_pattern_id;
+    auto return_patterns =
+        sem_ir_->inst_blocks().Get(function.return_patterns_id);
+    CARBON_CHECK(return_patterns.size() == 1,
+                 "TODO: implement support for multiple return params");
+    return_param_id = return_patterns[0];
     param_inst_ids.push_back(return_param_id);
   }
   for (auto param_pattern_id : llvm::concat<const SemIR::InstId>(
@@ -403,10 +391,6 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
 
 auto FileContext::HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
     -> void {
-  // TODO: To support recursive inline functions, collect all calls to
-  // `HandleTopLevelDecl()` in a custom `ASTConsumer` configured in the
-  // `ASTUnit`, and replay them in lowering in the `CodeGenerator`. See
-  // https://discord.com/channels/655572317891461132/768530752592805919/1370509111585935443
   clang::FunctionDecl* cpp_def = cpp_decl->getDefinition();
   if (!cpp_def) {
     return;
@@ -692,13 +676,19 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     function_lowering.SetLocal(param_id, param_value);
   };
 
-  // Lower the return slot parameter.
-  if (declaration_function.return_slot_pattern_id.has_value()) {
+  // Lower to the return slot parameter.
+  auto return_patterns = sem_ir_->inst_blocks().GetOrEmpty(
+      declaration_function.return_patterns_id);
+  if (!return_patterns.empty()) {
+    CARBON_CHECK(sem_ir_->inst_blocks()
+                         .Get(declaration_function.return_patterns_id)
+                         .size() == 1,
+                 "TODO: implement support for multiple return patterns");
     auto call_param_id = call_param_ids.consume_back();
     // The LLVM calling convention has the return slot first rather than last.
     // Note that this queries whether there is a return slot at the LLVM level,
-    // whereas `function.return_slot_pattern_id.has_value()` queries whether
-    // there is a return slot at the SemIR level.
+    // whereas `return_patterns.empty()` queries whether there are any output
+    // parameters at the SemIR level.
     if (SemIR::ReturnTypeInfo::ForFunction(sem_ir(), declaration_function,
                                            specific_id)
             .has_return_slot()) {
@@ -792,7 +782,7 @@ auto FileContext::BuildDISubroutineType(const SemIR::Function& function,
 
   auto return_info =
       SemIR::ReturnTypeInfo::ForFunction(sem_ir(), function, specific_id);
-  if (function.return_slot_pattern_id.has_value()) {
+  if (function.return_type_inst_id.has_value()) {
     // TODO: If int_repr.kind == SemIR::InitRepr::ByCopy - be sure the return
     // type is tagged with indirect calling convention.
   }
@@ -1020,7 +1010,8 @@ static auto BuildTypeForInst(FileContext& context,
 template <typename InstT>
   requires(InstT::Kind.template IsAnyOf<
            SemIR::AssociatedEntityType, SemIR::AutoType, SemIR::BoundMethodType,
-           SemIR::CharLiteralType, SemIR::CppOverloadSetType, SemIR::FacetType,
+           SemIR::CharLiteralType, SemIR::CppOverloadSetType,
+           SemIR::CppTemplateNameType, SemIR::FacetType,
            SemIR::FloatLiteralType, SemIR::FunctionType,
            SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
            SemIR::GenericInterfaceType, SemIR::GenericNamedConstraintType,

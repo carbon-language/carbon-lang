@@ -54,8 +54,11 @@ auto ValueRepr::IsCopyOfObjectRepr(const File& file, TypeId orig_type_id) const
 }
 
 auto InitRepr::ForType(const File& file, TypeId type_id) -> InitRepr {
-  auto value_rep = ValueRepr::ForType(file, type_id);
-  switch (value_rep.kind) {
+  auto type_info = file.types().GetCompleteTypeInfo(type_id);
+  if (type_info.abstract_class_id.has_value()) {
+    return {.kind = InitRepr::Abstract};
+  }
+  switch (type_info.value_repr.kind) {
     case ValueRepr::None:
       return {.kind = InitRepr::None};
 
@@ -74,6 +77,15 @@ auto InitRepr::ForType(const File& file, TypeId type_id) -> InitRepr {
     case ValueRepr::Unknown:
       return {.kind = InitRepr::Incomplete};
   }
+}
+
+auto ReturnTypeInfo::ForCallee(const File& file, InstId callee_id,
+                               SemIR::SpecificId caller_specific_id)
+    -> ReturnTypeInfo {
+  auto callee_function =
+      SemIR::GetCalleeAsFunction(file, callee_id, caller_specific_id);
+  auto function = file.functions().Get(callee_function.function_id);
+  return ForFunction(file, function, callee_function.resolved_specific_id);
 }
 
 auto NumericTypeLiteralInfo::ForType(const File& file, ClassType class_type)
@@ -202,9 +214,8 @@ static auto PrintCppCompatLiteral(
     const File& file, clang::CanQualType clang::ASTContext::* qual_type_member,
     unsigned int carbon_bit_width, llvm::StringRef cpp_builtin_name,
     llvm::raw_ostream& out) -> bool {
-  if (file.clang_ast_unit()) {
-    const clang::ASTContext& ast_context =
-        file.clang_ast_unit()->getASTContext();
+  if (const auto* cpp_file = file.cpp_file()) {
+    const clang::ASTContext& ast_context = cpp_file->ast_context();
     if (ast_context.getIntWidth(ast_context.*qual_type_member) ==
         carbon_bit_width) {
       out << "Cpp." << cpp_builtin_name;
@@ -238,13 +249,13 @@ auto RecognizedTypeInfo::PrintLiteral(const File& file,
       return PrintCppCompatLiteral(file, &clang::ASTContext::UnsignedLongLongTy,
                                    64, "unsigned_long_long", out);
     case CppNullptrT:
-      if (file.clang_ast_unit()) {
+      if (file.cpp_file()) {
         out << "Cpp.nullptr_t";
         return true;
       }
       break;
     case CppVoidBase:
-      if (file.clang_ast_unit()) {
+      if (file.cpp_file()) {
         out << "Cpp.void";
         return true;
       }

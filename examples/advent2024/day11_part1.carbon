@@ -12,7 +12,7 @@ import library "io_utils";
 fn Run() {
   var n: i64;
   var total: i32 = 0;
-  while (ReadInt64(&n)) {
+  while (ReadInt(ref n)) {
     total += Count(n, 25);
     SkipSpaces();
   }

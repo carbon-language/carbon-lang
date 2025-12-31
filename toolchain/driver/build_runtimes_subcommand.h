@@ -22,6 +22,7 @@ struct BuildRuntimesOptions {
 
   CodegenOptions codegen_options;
   llvm::StringRef directory;
+  bool force;
 };
 
 // Implements the link subcommand of the driver.

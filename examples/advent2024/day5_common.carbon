@@ -24,7 +24,7 @@ class Rules {
 
     var a: i32;
     var b: i32;
-    while (ReadInt(&a) and ConsumeChar(0x7C) and ReadInt(&b)) {
+    while (ReadInt(ref a) and ConsumeChar('|') and ReadInt(ref b)) {
       rules.disallowed_before[a] |= PageMask(b);
       SkipNewline();
     }
@@ -49,12 +49,12 @@ class PageList {
     returned var me: PageList = Empty();
 
     var page: i32;
-    if (not ReadInt(&page)) {
+    if (not ReadInt(ref page)) {
       return var;
     }
     me.Add(page);
-    while (ConsumeChar(0x2C)) {
-      ReadInt(&page);
+    while (ConsumeChar(',')) {
+      ReadInt(ref page);
       me.Add(page);
     }
     SkipNewline();

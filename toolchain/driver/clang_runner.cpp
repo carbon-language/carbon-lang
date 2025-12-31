@@ -30,6 +30,7 @@
 #include "clang/Serialization/PCHContainerOperations.h"
 #include "common/check.h"
 #include "common/error.h"
+#include "common/string_helpers.h"
 #include "common/vlog.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
@@ -214,12 +215,13 @@ auto ClangRunner::RunInternal(
   // Rebuild the args as C-string args.
   llvm::OwningArrayRef<char> cstr_arg_storage;
   llvm::SmallVector<const char*, 64> cstr_args =
-      BuildCStrArgs("Clang", clang_path, "-v", args, cstr_arg_storage);
+      BuildCStrArgs(clang_path, args, cstr_arg_storage);
 
-  // Handle special dispatch for CC1 commands as they don't use the driver.
+  // Handle special dispatch for CC1 commands as they don't use the driver and
+  // we don't synthesize any default arguments there.
   if (!args.empty() && args[0].starts_with("-cc1")) {
     if (args[0] == "-cc1") {
-      CARBON_VLOG("Dispatching `-cc1` command line");
+      CARBON_VLOG("Dispatching `-cc1` command line...");
       int exit_code =
           RunClangCC1(*installation_, fs_, cstr_args, enable_leaking);
       // TODO: Should this be forwarding the full exit code?
@@ -244,7 +246,10 @@ auto ClangRunner::RunInternal(
     return exit_code == 0;
   }
 
-  CARBON_VLOG("Preparing Clang driver...\n");
+  CARBON_VLOG("Running Clang driver with the following arguments:\n");
+  for (const char* cstr_arg : llvm::ArrayRef(cstr_args)) {
+    CARBON_VLOG("    '{0}'\n", cstr_arg);
+  }
 
   // Create the diagnostic options and parse arguments controlling them out of
   // our arguments.

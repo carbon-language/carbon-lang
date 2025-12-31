@@ -39,14 +39,14 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %Inner.elem: type = unbound_element_type %Inner, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.705: <witness> = complete_type_witness %struct_type.a.b [concrete]
-// CHECK:STDOUT:   %pattern_type.a31: type = pattern_type %Inner [concrete]
+// CHECK:STDOUT:   %pattern_type.84b: type = pattern_type %Inner [concrete]
 // CHECK:STDOUT:   %MakeInner.type: type = fn_type @MakeInner [concrete]
 // CHECK:STDOUT:   %MakeInner: %MakeInner.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Outer: type = class_type @Outer [concrete]
 // CHECK:STDOUT:   %Outer.elem: type = unbound_element_type %Outer, %Inner [concrete]
-// CHECK:STDOUT:   %struct_type.c.d.dce: type = struct_type {.c: %Inner, .d: %Inner} [concrete]
-// CHECK:STDOUT:   %complete_type.8b6: <witness> = complete_type_witness %struct_type.c.d.dce [concrete]
-// CHECK:STDOUT:   %pattern_type.e74: type = pattern_type %Outer [concrete]
+// CHECK:STDOUT:   %struct_type.c.d.8f4: type = struct_type {.c: %Inner, .d: %Inner} [concrete]
+// CHECK:STDOUT:   %complete_type.3ed: <witness> = complete_type_witness %struct_type.c.d.8f4 [concrete]
+// CHECK:STDOUT:   %pattern_type.9ae: type = pattern_type %Outer [concrete]
 // CHECK:STDOUT:   %MakeOuter.type: type = fn_type @MakeOuter [concrete]
 // CHECK:STDOUT:   %MakeOuter: %MakeOuter.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -71,8 +71,8 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Inner.decl: type = class_decl @Inner [concrete = constants.%Inner] {} {}
 // CHECK:STDOUT:   %MakeInner.decl: %MakeInner.type = fn_decl @MakeInner [concrete = constants.%MakeInner] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.a31 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.a31 = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.84b = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.84b = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, file.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:     %return.param: ref %Inner = out_param call_param0
@@ -80,8 +80,8 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Outer.decl: type = class_decl @Outer [concrete = constants.%Outer] {} {}
 // CHECK:STDOUT:   %MakeOuter.decl: %MakeOuter.type = fn_decl @MakeOuter [concrete = constants.%MakeOuter] {
-// CHECK:STDOUT:     %return.patt: %pattern_type.e74 = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.e74 = out_param_pattern %return.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.9ae = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.9ae = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Outer.ref: type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer]
 // CHECK:STDOUT:     %return.param: ref %Outer = out_param call_param0
@@ -110,7 +110,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %.loc23: %Outer.elem = field_decl c, element0 [concrete]
 // CHECK:STDOUT:   %Inner.ref.loc24: type = name_ref Inner, file.%Inner.decl [concrete = constants.%Inner]
 // CHECK:STDOUT:   %.loc24: %Outer.elem = field_decl d, element1 [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.c.d.dce [concrete = constants.%complete_type.8b6]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.c.d.8f4 [concrete = constants.%complete_type.3ed]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -130,7 +130,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %MakeInner.ref.loc28_34: %MakeInner.type = name_ref MakeInner, file.%MakeInner.decl [concrete = constants.%MakeInner]
 // CHECK:STDOUT:   %.loc28_45.2: ref %Inner = class_element_access %return, element1
 // CHECK:STDOUT:   %MakeInner.call.loc28_44: init %Inner = call %MakeInner.ref.loc28_34() to %.loc28_45.2
-// CHECK:STDOUT:   %.loc28_45.3: %struct_type.c.d.dce = struct_literal (%MakeInner.call.loc28_26, %MakeInner.call.loc28_44)
+// CHECK:STDOUT:   %.loc28_45.3: %struct_type.c.d.8f4 = struct_literal (%MakeInner.call.loc28_26, %MakeInner.call.loc28_44)
 // CHECK:STDOUT:   %.loc28_45.4: init %Outer = class_init (%MakeInner.call.loc28_26, %MakeInner.call.loc28_44), %return
 // CHECK:STDOUT:   %.loc28_46: init %Outer = converted %.loc28_45.3, %.loc28_45.4
 // CHECK:STDOUT:   return %.loc28_46 to %return

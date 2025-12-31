@@ -13,6 +13,7 @@
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/pattern.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Lower {
 
@@ -29,6 +30,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
   // Maintain a stack of names for delayed rendering of interface impls.
   struct NameEntry {
     SemIR::NameScopeId name_scope_id;
+    SemIR::SpecificId specific_id;
 
     // The prefix emitted before this name component. If '\0', no prefix will be
     // emitted.
@@ -37,9 +39,11 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
     char prefix;
   };
   llvm::SmallVector<NameEntry> names_to_render;
-  names_to_render.push_back({.name_scope_id = name_scope_id, .prefix = '.'});
+  names_to_render.push_back({.name_scope_id = name_scope_id,
+                             .specific_id = SemIR::SpecificId::None,
+                             .prefix = '.'});
   while (!names_to_render.empty()) {
-    auto [name_scope_id, prefix] = names_to_render.pop_back_val();
+    auto [name_scope_id, specific_id, prefix] = names_to_render.pop_back_val();
     if (prefix) {
       os << prefix;
     }
@@ -70,8 +74,9 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
         auto interface_type = facet_type_info.extend_constraints.front();
         const auto& interface =
             sem_ir().interfaces().Get(interface_type.interface_id);
-        names_to_render.push_back(
-            {.name_scope_id = interface.scope_id, .prefix = ':'});
+        names_to_render.push_back({.name_scope_id = interface.scope_id,
+                                   .specific_id = interface_type.specific_id,
+                                   .prefix = ':'});
 
         auto self_const_inst_id =
             constant_values().GetConstantInstId(impl.self_id);
@@ -80,8 +85,9 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
           case CARBON_KIND(SemIR::ClassType class_type): {
             auto next_name_scope_id =
                 sem_ir().classes().Get(class_type.class_id).scope_id;
-            names_to_render.push_back(
-                {.name_scope_id = next_name_scope_id, .prefix = '\0'});
+            names_to_render.push_back({.name_scope_id = next_name_scope_id,
+                                       .specific_id = class_type.specific_id,
+                                       .prefix = '\0'});
             break;
           }
           case SemIR::AutoType::Kind:
@@ -123,11 +129,13 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
       }
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
         MangleNameId(os, sem_ir().classes().Get(class_decl.class_id).name_id);
+        MangleSpecificId(os, specific_id);
         break;
       }
       case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
         MangleNameId(
             os, sem_ir().interfaces().Get(interface_decl.interface_id).name_id);
+        MangleSpecificId(os, specific_id);
         break;
       }
       case SemIR::Namespace::Kind: {
@@ -139,8 +147,9 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
         break;
     }
     if (!name_scope.is_imported_package()) {
-      names_to_render.push_back(
-          {.name_scope_id = name_scope.parent_scope_id(), .prefix = '.'});
+      names_to_render.push_back({.name_scope_id = name_scope.parent_scope_id(),
+                                 .specific_id = SemIR::SpecificId::None,
+                                 .prefix = '.'});
     }
   }
 }

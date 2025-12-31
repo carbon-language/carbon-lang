@@ -4,11 +4,18 @@
 
 #include "common/string_helpers.h"
 
+#include <string.h>
+#include <sys/types.h>
+
 #include <algorithm>
+#include <array>
 #include <optional>
 #include <string>
 
 #include "common/check.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ConvertUTF.h"
@@ -200,6 +207,54 @@ auto ParseBlockStringLiteral(llvm::StringRef source, const int hashtag_num)
 auto StringRefContainsPointer(llvm::StringRef ref, const char* ptr) -> bool {
   auto le = std::less_equal<>();
   return le(ref.begin(), ptr) && le(ptr, ref.end());
+}
+
+auto BuildCStrArgs(llvm::StringRef tool_path,
+                   llvm::ArrayRef<llvm::StringRef> args,
+                   llvm::OwningArrayRef<char>& cstr_arg_storage)
+    -> llvm::SmallVector<const char*, 64> {
+  return BuildCStrArgs(tool_path, /*prefix_args=*/{}, args, cstr_arg_storage);
+}
+
+auto BuildCStrArgs(llvm::StringRef tool_path,
+                   llvm::ArrayRef<std::string> prefix_args,
+                   llvm::ArrayRef<llvm::StringRef> args,
+                   llvm::OwningArrayRef<char>& cstr_arg_storage)
+    -> llvm::SmallVector<const char*, 64> {
+  // Render the arguments into null-terminated C-strings. Command lines can get
+  // quite long in build systems so this tries to minimize the memory allocation
+  // overhead.
+
+  // Precompute the total C-string data size needed.
+  int total_size = tool_path.size() + 1;
+  for (llvm::StringRef arg : args) {
+    // Accumulate both the string size and a null terminator byte.
+    total_size += arg.size() + 1;
+  }
+
+  // Allocate one chunk of storage for the actual C-strings, and reserve a
+  // vector of pointers into the storage.
+  cstr_arg_storage = llvm::OwningArrayRef<char>(total_size);
+  ssize_t i = 0;
+  auto make_cstr = [&](llvm::StringRef arg) {
+    char* cstr = &cstr_arg_storage[i];
+    memcpy(cstr, arg.data(), arg.size());
+    cstr[arg.size()] = '\0';
+    i += arg.size() + 1;
+    return cstr;
+  };
+
+  llvm::SmallVector<const char*, 64> cstr_args;
+  cstr_args.reserve(1 + prefix_args.size() + args.size());
+  cstr_args.push_back(make_cstr(tool_path));
+  for (const std::string& prefix_arg : prefix_args) {
+    cstr_args.push_back(prefix_arg.c_str());
+  }
+  for (llvm::StringRef arg : args) {
+    cstr_args.push_back(make_cstr(arg));
+  }
+
+  return cstr_args;
 }
 
 }  // namespace Carbon

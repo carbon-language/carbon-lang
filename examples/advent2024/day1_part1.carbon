@@ -15,9 +15,9 @@ fn Abs(n: i32) -> i32 { return if n < 0 then -n else n; }
 fn Run() {
   var a: array(i32, 1000);
   var b: array(i32, 1000);
-  var n: i32 = ReadInputs(&a, &b);
-  Quicksort(&a, 0, n);
-  Quicksort(&b, 0, n);
+  let n: i32 = ReadInputs(ref a, ref b);
+  Quicksort(ref a, 0, n);
+  Quicksort(ref b, 0, n);
 
   var difference: i32 = 0;
   for (i: i32 in Core.Range(n)) {

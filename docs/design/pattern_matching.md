@@ -16,13 +16,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Alternatives considered](#alternatives-considered)
     -   [Binding patterns](#binding-patterns)
         -   [Name binding patterns](#name-binding-patterns)
-        -   [Unused bindings](#unused-bindings)
+        -   [Anonymous bindings](#anonymous-bindings)
             -   [Alternatives considered](#alternatives-considered-1)
         -   [Compile-time bindings](#compile-time-bindings)
         -   [`auto` and type deduction](#auto-and-type-deduction)
         -   [Alternatives considered](#alternatives-considered-2)
     -   [`var`](#var)
         -   [Alternatives considered](#alternatives-considered-3)
+    -   [`unused`](#unused)
     -   [Tuple patterns](#tuple-patterns)
     -   [Struct patterns](#struct-patterns)
         -   [Alternatives considered](#alternatives-considered-4)
@@ -198,17 +199,12 @@ fn H(n: i32) {
 }
 ```
 
-#### Unused bindings
+#### Anonymous bindings
 
-A syntax like a binding but with `_` in place of an identifier, or `unused`
-before the name, can be used to ignore part of a value. Names that are qualified
-with the `unused` keyword are visible for name lookup but uses are invalid,
-including when they cause ambiguous name lookup errors. If attempted to be used,
-a compiler error will be shown to the user, instructing them to either remove
-the `unused` qualifier or remove the use.
+A syntax like a binding but with `_` in place of an identifier can be used to
+ignore part of a value.
 
 -   _binding-pattern_ ::= `_` `:` _expression_
--   _binding-pattern_ ::= `unused` _identifier_ `:` _expression_
 
 ```carbon
 fn F(n: i32) {
@@ -233,8 +229,6 @@ fn J(n: i32);
 fn G(_: i32) {}
 // ❌ Error: name of parameter does not match declaration.
 fn H(m: i32) {}
-// ✅ Does not use `n`.
-fn J(unused n: i32);
 ```
 
 ##### Alternatives considered
@@ -344,6 +338,45 @@ _pattern_ `=` _expression_ `;`.
 -   [Treat all bindings under `var` as variable bindings](/proposals/p5164.md#treat-all-bindings-under-var-as-variable-bindings)
 -   [Make `var` a binding pattern modifier](/proposals/p5164.md#make-var-a-binding-pattern-modifier)
 -   [Initialize storage once pattern matching succeeds](/proposals/p5164.md#initialize-storage-once-pattern-matching-succeeds)
+
+### `unused`
+
+When a name introduced by a binding is not used, a warning is issued. It is
+possible to avoid the warning while keeping a name, by using an `unused` marker.
+
+An `unused` marker indicates that all names in a pattern are visible for name
+lookup but uses are invalid. This includes situations when they cause ambiguous
+name lookup errors. If attempted to be used, a compiler error will be shown to
+the user, instructing them to either remove the `unused` qualifier or remove the
+use.
+
+-   _proper-pattern_ ::= `unused` _proper-pattern_
+
+An `unused` marker can be applied to any pattern and it will apply to all name
+bindings in a pattern. Nesting `unused` markers is an error. When an `unused`
+marker applies only to anonymous bindings `_` and is thus redundant, a warning
+is produced. `var` and `unused` may appear in any order in a pattern.
+
+As specified in [#3763](/proposals/p3763.md), `unused` markers may only appear
+on definitions, not on non-defining declarations. Function redeclarations that
+are also definitions may have difference due to `unused` markers, but they may
+not have different names.
+
+```carbon
+fn J(n: i32);
+
+// ✅ Does not use `n`.
+fn J(unused n: i32) { ... };
+
+fn G() {
+  match ((1, 2)) {
+    // `x` is unused
+    case (var n: i32, unused x: i32) => { F(&n); }
+    // `n` and `m` are both unused
+    case unused (n: i32, m: i32) => { J(42); }
+  }
+}
+```
 
 ### Tuple patterns
 

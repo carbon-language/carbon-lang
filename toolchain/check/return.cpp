@@ -48,18 +48,12 @@ static auto NoteNoReturnTypeProvided(DiagnosticBuilder& diag,
 
 // Produces a note describing the return type of the given function, which
 // must be a function whose definition is currently being checked.
-static auto NoteReturnType(Context& context, DiagnosticBuilder& diag,
+static auto NoteReturnType(DiagnosticBuilder& diag,
                            const SemIR::Function& function) {
-  auto out_param_pattern = context.insts().GetAs<SemIR::OutParamPattern>(
-      function.return_slot_pattern_id);
-  auto return_type_inst_id =
-      context.insts()
-          .GetAs<SemIR::ReturnSlotPattern>(out_param_pattern.subpattern_id)
-          .type_inst_id;
   CARBON_DIAGNOSTIC(ReturnTypeHereNote, Note, "return type of function is {0}",
                     InstIdAsType);
-  diag.Note(function.return_slot_pattern_id, ReturnTypeHereNote,
-            return_type_inst_id);
+  diag.Note(function.return_type_inst_id, ReturnTypeHereNote,
+            function.return_type_inst_id);
 }
 
 // Produces a note pointing at the currently in scope `returned var`.
@@ -99,7 +93,7 @@ auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
                       SemIR::TypeId);
     auto diag =
         context.emitter().Build(type_node, ReturnedVarWrongType, type_id);
-    NoteReturnType(context, diag, function);
+    NoteReturnType(diag, function);
     diag.Emit();
   }
 
@@ -122,7 +116,7 @@ auto BuildReturnWithNoExpr(Context& context, SemIR::LocId loc_id) -> void {
     CARBON_DIAGNOSTIC(ReturnStatementMissingExpr, Error,
                       "missing return value");
     auto diag = context.emitter().Build(loc_id, ReturnStatementMissingExpr);
-    NoteReturnType(context, diag, function);
+    NoteReturnType(diag, function);
     diag.Emit();
   }
 

@@ -85,7 +85,7 @@ struct CompleteTypeInfo : public Printable<CompleteTypeInfo> {
   ClassId abstract_class_id = ClassId::None;
 };
 
-// The initializing representation to use when returning by value.
+// The representation to use for an initializing expression of some type.
 struct InitRepr : Printable<InitRepr> {
   // Returns information about the initializing representation to use for a
   // type.
@@ -104,7 +104,9 @@ struct InitRepr : Printable<InitRepr> {
     // An initializing expression takes a location as input, which is
     // initialized as a side effect of evaluating the expression.
     InPlace,
-    // No initializing expressions should exist because the type is not
+    // No initializing expressions should exist because the type is abstract.
+    Abstract,
+    // No initializing expressions should exist yet, because the type is not
     // complete.
     Incomplete,
     // TODO: Consider adding a kind where the expression takes an advisory
@@ -114,9 +116,11 @@ struct InitRepr : Printable<InitRepr> {
   // The kind of initializing representation used by this type.
   Kind kind;
 
-  // Returns whether the initializing representation information could be fully
-  // computed.
-  auto is_valid() const -> bool { return kind != Incomplete; }
+  // Returns whether the type can be used as the type of an initializing
+  // expression in the current context.
+  auto is_valid() const -> bool {
+    return kind != Incomplete && kind != Abstract;
+  }
 
   // Returns whether the initializing representation is a copy of the object
   // representation of the type. Provided for symmetry with `ValueRepr`.
@@ -149,6 +153,9 @@ struct InitRepr : Printable<InitRepr> {
       case InPlace:
         out << "InPlace";
         break;
+      case Abstract:
+        out << "Abstract";
+        break;
       case Incomplete:
         out << "Incomplete";
         break;
@@ -159,20 +166,22 @@ struct InitRepr : Printable<InitRepr> {
 
 // Information about a function's return type.
 struct ReturnTypeInfo : public Printable<ReturnTypeInfo> {
-  // Builds return type information for a given declared return type.
-  static auto ForType(const File& file, TypeId type_id) -> ReturnTypeInfo {
+  // Builds return type information for a given function.
+  static auto ForFunction(const File& file, const Function& function,
+                          SpecificId specific_id = SpecificId::None)
+      -> ReturnTypeInfo {
+    auto type_id = function.GetDeclaredReturnType(file, specific_id);
     return {.type_id = type_id,
             .init_repr = type_id.has_value()
                              ? InitRepr::ForType(file, type_id)
                              : InitRepr{.kind = InitRepr::None}};
   }
 
-  // Builds return type information for a given function.
-  static auto ForFunction(const File& file, const Function& function,
-                          SpecificId specific_id = SpecificId::None)
-      -> ReturnTypeInfo {
-    return ForType(file, function.GetDeclaredReturnType(file, specific_id));
-  }
+  // Builds return type information for the function corresponding to callee_id
+  // in caller_specific_id.
+  static auto ForCallee(const File& file, InstId callee_id,
+                        SpecificId caller_specific_id = SemIR::SpecificId::None)
+      -> ReturnTypeInfo;
 
   // Returns whether the return information could be fully computed.
   auto is_valid() const -> bool { return init_repr.is_valid(); }

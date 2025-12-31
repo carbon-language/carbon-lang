@@ -121,7 +121,7 @@ struct Worklist {
     } else {
       Add(entity_name.name_id);
     }
-    // TODO: Should we include the parent index?
+    Add(entity_name.parent_scope_id);
   }
 
   auto AddInFile(const File* file, InstId inner_id) -> void {
@@ -200,8 +200,8 @@ struct Worklist {
     }
     const auto& scope = sem_ir->name_scopes().Get(name_scope_id);
     Add(scope.name_id());
-    if (!sem_ir->name_scopes().IsPackage(name_scope_id) &&
-        scope.parent_scope_id().has_value()) {
+    // For non-package scopes, add the parent scope.
+    if (!scope.is_imported_package() && scope.parent_scope_id().has_value()) {
       Add(sem_ir->name_scopes().Get(scope.parent_scope_id()).inst_id());
     }
   }
@@ -227,6 +227,13 @@ struct Worklist {
               .Get(cpp_overload_set.parent_scope_id)
               .inst_id());
     }
+  }
+
+  auto Add(ClangDeclId /*decl_id*/) -> void {
+    // TODO: For `CppTemplateNameType` we don't need to fingerprint the
+    // `decl_id`, because fingerprinting the `NameId` is sufficient to identify
+    // the template, but this won't necessarily be true for other
+    // `ClangDeclId`s.
   }
 
   auto Add(ClassId class_id) -> void {
@@ -296,7 +303,6 @@ struct Worklist {
     add_constraints(facet_type.extend_constraints);
     add_constraints(facet_type.self_impls_constraints);
     add_constraints(facet_type.rewrite_constraints);
-    contents.push_back(facet_type.builtin_constraint_mask.AsInt());
     contents.push_back(facet_type.other_requirements);
   }
 

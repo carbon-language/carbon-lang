@@ -20,5 +20,5 @@ fn Run() {
       break;
     }
   }
-  PrintInt64(total_cost);
+  PrintInt(total_cost);
 }

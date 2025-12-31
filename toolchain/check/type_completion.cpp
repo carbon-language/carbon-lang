@@ -54,6 +54,20 @@ auto NoteIncompleteInterface(Context& context, SemIR::InterfaceId interface_id,
   }
 }
 
+auto NoteAbstractClass(Context& context, SemIR::ClassId class_id,
+                       bool direct_use, DiagnosticBuilder& builder) -> void {
+  const auto& class_info = context.classes().Get(class_id);
+  CARBON_CHECK(
+      class_info.inheritance_kind == SemIR::Class::InheritanceKind::Abstract,
+      "Class is not abstract");
+  CARBON_DIAGNOSTIC(
+      ClassAbstractHere, Note,
+      "{0:=0:uses class that|=1:class} was declared abstract here",
+      Diagnostics::IntAsSelect);
+  builder.Note(class_info.definition_id, ClassAbstractHere,
+               static_cast<int>(direct_use));
+}
+
 static auto NoteIncompleteNamedConstraint(
     Context& context, SemIR::NamedConstraintId named_constraint_id,
     DiagnosticBuilder& builder) -> void {
@@ -223,10 +237,10 @@ class TypeCompleter {
   template <typename InstT>
     requires(InstT::Kind.template IsAnyOf<
              SemIR::AssociatedEntityType, SemIR::CppOverloadSetType,
-             SemIR::FunctionType, SemIR::FunctionTypeWithSelfType,
-             SemIR::GenericClassType, SemIR::GenericInterfaceType,
-             SemIR::GenericNamedConstraintType, SemIR::InstType,
-             SemIR::UnboundElementType, SemIR::WhereExpr>())
+             SemIR::CppTemplateNameType, SemIR::FunctionType,
+             SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
+             SemIR::GenericInterfaceType, SemIR::GenericNamedConstraintType,
+             SemIR::InstType, SemIR::UnboundElementType, SemIR::WhereExpr>())
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
     // These types have no runtime operations, so we use an empty value
@@ -726,22 +740,6 @@ auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
   }
 
   return true;
-}
-
-// Adds a note to a diagnostic explaining that a class is abstract.
-static auto NoteAbstractClass(Context& context, SemIR::ClassId class_id,
-                              bool direct_use, DiagnosticBuilder& builder)
-    -> void {
-  const auto& class_info = context.classes().Get(class_id);
-  CARBON_CHECK(
-      class_info.inheritance_kind == SemIR::Class::InheritanceKind::Abstract,
-      "Class is not abstract");
-  CARBON_DIAGNOSTIC(
-      ClassAbstractHere, Note,
-      "{0:=0:uses class that|=1:class} was declared abstract here",
-      Diagnostics::IntAsSelect);
-  builder.Note(class_info.definition_id, ClassAbstractHere,
-               static_cast<int>(direct_use));
 }
 
 auto RequireConcreteType(Context& context, SemIR::TypeId type_id,

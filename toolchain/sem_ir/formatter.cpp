@@ -519,6 +519,7 @@ auto Formatter::FormatImpl(ImplId id, const Impl& impl_info) -> void {
     out_ << ' ';
     OpenBrace();
     FormatCodeBlock(impl_info.body_block_id);
+    FormatCodeBlock(impl_info.witness_block_id);
 
     // Print the !members label even if the name scope is empty because we
     // always list the witness in this section.
@@ -1086,6 +1087,13 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
       return;
     }
 
+    case CARBON_KIND(CppTemplateNameType type): {
+      // Omit the Clang declaration. We don't have a good way to format it, and
+      // the entity name should suffice to identify the template.
+      FormatArgs(type.name_id);
+      return;
+    }
+
     case CARBON_KIND(CustomLayoutType type): {
       out_ << " {";
       auto layout = sem_ir_->custom_layouts().Get(type.layout_id);
@@ -1279,12 +1287,16 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
 
   llvm::ArrayRef<InstId> args = sem_ir_->inst_blocks().Get(inst.args_id);
 
-  auto return_info = ReturnTypeInfo::ForType(*sem_ir_, inst.type_id);
+  auto return_info = ReturnTypeInfo::ForCallee(*sem_ir_, inst.callee_id);
   if (!return_info.is_valid()) {
     out_ << "(<invalid return info>)";
     return;
   }
-  bool has_return_slot = return_info.has_return_slot();
+
+  // Error in the inst type may indicate that the return type was incomplete
+  // when the inst was created, and so no return slot was added.
+  bool has_return_slot =
+      return_info.has_return_slot() && inst.type_id != SemIR::ErrorInst::TypeId;
   InstId return_slot_arg_id = InstId::None;
   if (has_return_slot) {
     return_slot_arg_id = args.consume_back();
@@ -1440,8 +1452,7 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
     }
   }
 
-  if (info.other_requirements || !info.builtin_constraint_mask.empty() ||
-      !info.self_impls_constraints.empty() ||
+  if (info.other_requirements || !info.self_impls_constraints.empty() ||
       !info.rewrite_constraints.empty()) {
     out_ << " where ";
     llvm::ListSeparator and_sep(" and ");
@@ -1471,10 +1482,6 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
       FormatArg(rewrite.lhs_id);
       out_ << " = ";
       FormatArg(rewrite.rhs_id);
-    }
-    if (info.builtin_constraint_mask.HasAnyOf(
-            BuiltinConstraintMask::TypeCanDestroy)) {
-      out_ << and_sep << ".Self impls <CanDestroy>";
     }
     if (info.other_requirements) {
       out_ << and_sep << "TODO";

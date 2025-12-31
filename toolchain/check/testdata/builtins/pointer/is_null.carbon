@@ -101,9 +101,9 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %IsNullEmptyStruct.type: type = fn_type @IsNullEmptyStruct [concrete]
 // CHECK:STDOUT:   %IsNullEmptyStruct: %IsNullEmptyStruct.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %.273: type = maybe_unformed_type %ptr.019 [concrete]
-// CHECK:STDOUT:   %pattern_type.ad6: type = pattern_type %.273 [concrete]
+// CHECK:STDOUT:   %ptr.31e: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %.edf: type = maybe_unformed_type %ptr.31e [concrete]
+// CHECK:STDOUT:   %pattern_type.b78: type = pattern_type %.edf [concrete]
 // CHECK:STDOUT:   %IsNullC.type: type = fn_type @IsNullC [concrete]
 // CHECK:STDOUT:   %IsNullC: %IsNullC.type = struct_value () [concrete]
 // CHECK:STDOUT:   %TestEmptyStruct.type: type = fn_type @TestEmptyStruct [concrete]
@@ -140,24 +140,24 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestC.decl: %TestC.type = fn_decl @TestC [concrete = constants.%TestC] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.ad6 = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.ad6 = value_param_pattern %c.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.b78 = value_binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type.b78 = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc15_34.1: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:     %.loc15_34.2: type = converted %Bool.call, %.loc15_34.1 [concrete = bool]
-// CHECK:STDOUT:     %c.param: %.273 = value_param call_param0
-// CHECK:STDOUT:     %.loc15_28.1: type = splice_block %.loc15_28.3 [concrete = constants.%.273] {
+// CHECK:STDOUT:     %c.param: %.edf = value_param call_param0
+// CHECK:STDOUT:     %.loc15_28.1: type = splice_block %.loc15_28.3 [concrete = constants.%.edf] {
 // CHECK:STDOUT:       %MakeUnformed.ref: %MakeUnformed.type = name_ref MakeUnformed, file.%MakeUnformed.decl [concrete = constants.%MakeUnformed]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %ptr: type = ptr_type %C.ref [concrete = constants.%ptr.019]
-// CHECK:STDOUT:       %MakeUnformed.call: init type = call %MakeUnformed.ref(%ptr) [concrete = constants.%.273]
-// CHECK:STDOUT:       %.loc15_28.2: type = value_of_initializer %MakeUnformed.call [concrete = constants.%.273]
-// CHECK:STDOUT:       %.loc15_28.3: type = converted %MakeUnformed.call, %.loc15_28.2 [concrete = constants.%.273]
+// CHECK:STDOUT:       %ptr: type = ptr_type %C.ref [concrete = constants.%ptr.31e]
+// CHECK:STDOUT:       %MakeUnformed.call: init type = call %MakeUnformed.ref(%ptr) [concrete = constants.%.edf]
+// CHECK:STDOUT:       %.loc15_28.2: type = value_of_initializer %MakeUnformed.call [concrete = constants.%.edf]
+// CHECK:STDOUT:       %.loc15_28.3: type = converted %MakeUnformed.call, %.loc15_28.2 [concrete = constants.%.edf]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %.273 = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %.edf = value_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param1
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -171,10 +171,10 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   return %IsNullEmptyStruct.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestC(%c.param: %.273) -> bool {
+// CHECK:STDOUT: fn @TestC(%c.param: %.edf) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %IsNullC.ref: %IsNullC.type = name_ref IsNullC, file.%IsNullC.decl [concrete = constants.%IsNullC]
-// CHECK:STDOUT:   %c.ref: %.273 = name_ref c, %c
+// CHECK:STDOUT:   %c.ref: %.edf = name_ref c, %c
 // CHECK:STDOUT:   %IsNullC.call: init bool = call %IsNullC.ref(%c.ref)
 // CHECK:STDOUT:   return %IsNullC.call to %return
 // CHECK:STDOUT: }
@@ -197,13 +197,13 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   %pattern_type.b42: type = pattern_type %.b2d [concrete]
 // CHECK:STDOUT:   %TestEmptyStruct.type: type = fn_type @TestEmptyStruct [concrete]
 // CHECK:STDOUT:   %TestEmptyStruct: %TestEmptyStruct.type = struct_value () [concrete]
-// CHECK:STDOUT:   %IsNull.specific_fn.c98: <specific function> = specific_function %IsNull, @IsNull(%empty_struct_type) [concrete]
-// CHECK:STDOUT:   %ptr.019: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %.273: type = maybe_unformed_type %ptr.019 [concrete]
-// CHECK:STDOUT:   %pattern_type.ad6: type = pattern_type %.273 [concrete]
+// CHECK:STDOUT:   %IsNull.specific_fn.34e: <specific function> = specific_function %IsNull, @IsNull(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %ptr.31e: type = ptr_type %C [concrete]
+// CHECK:STDOUT:   %.edf: type = maybe_unformed_type %ptr.31e [concrete]
+// CHECK:STDOUT:   %pattern_type.b78: type = pattern_type %.edf [concrete]
 // CHECK:STDOUT:   %TestC.type: type = fn_type @TestC [concrete]
 // CHECK:STDOUT:   %TestC: %TestC.type = struct_value () [concrete]
-// CHECK:STDOUT:   %IsNull.specific_fn.87c: <specific function> = specific_function %IsNull, @IsNull(%C) [concrete]
+// CHECK:STDOUT:   %IsNull.specific_fn.b1f: <specific function> = specific_function %IsNull, @IsNull(%C) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -234,24 +234,24 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestC.decl: %TestC.type = fn_decl @TestC [concrete = constants.%TestC] {
-// CHECK:STDOUT:     %c.patt: %pattern_type.ad6 = value_binding_pattern c [concrete]
-// CHECK:STDOUT:     %c.param_patt: %pattern_type.ad6 = value_param_pattern %c.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %c.patt: %pattern_type.b78 = value_binding_pattern c [concrete]
+// CHECK:STDOUT:     %c.param_patt: %pattern_type.b78 = value_param_pattern %c.patt, call_param0 [concrete]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc14_34.1: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:     %.loc14_34.2: type = converted %Bool.call, %.loc14_34.1 [concrete = bool]
-// CHECK:STDOUT:     %c.param: %.273 = value_param call_param0
-// CHECK:STDOUT:     %.loc14_28.1: type = splice_block %.loc14_28.3 [concrete = constants.%.273] {
+// CHECK:STDOUT:     %c.param: %.edf = value_param call_param0
+// CHECK:STDOUT:     %.loc14_28.1: type = splice_block %.loc14_28.3 [concrete = constants.%.edf] {
 // CHECK:STDOUT:       %MakeUnformed.ref: %MakeUnformed.type = name_ref MakeUnformed, file.%MakeUnformed.decl [concrete = constants.%MakeUnformed]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %ptr: type = ptr_type %C.ref [concrete = constants.%ptr.019]
-// CHECK:STDOUT:       %MakeUnformed.call: init type = call %MakeUnformed.ref(%ptr) [concrete = constants.%.273]
-// CHECK:STDOUT:       %.loc14_28.2: type = value_of_initializer %MakeUnformed.call [concrete = constants.%.273]
-// CHECK:STDOUT:       %.loc14_28.3: type = converted %MakeUnformed.call, %.loc14_28.2 [concrete = constants.%.273]
+// CHECK:STDOUT:       %ptr: type = ptr_type %C.ref [concrete = constants.%ptr.31e]
+// CHECK:STDOUT:       %MakeUnformed.call: init type = call %MakeUnformed.ref(%ptr) [concrete = constants.%.edf]
+// CHECK:STDOUT:       %.loc14_28.2: type = value_of_initializer %MakeUnformed.call [concrete = constants.%.edf]
+// CHECK:STDOUT:       %.loc14_28.3: type = converted %MakeUnformed.call, %.loc14_28.2 [concrete = constants.%.edf]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %c: %.273 = value_binding c, %c.param
+// CHECK:STDOUT:     %c: %.edf = value_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param1
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -261,16 +261,16 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %IsNull.ref: %IsNull.type = name_ref IsNull, file.%IsNull.decl [concrete = constants.%IsNull]
 // CHECK:STDOUT:   %s.ref: %.b2d = name_ref s, %s
-// CHECK:STDOUT:   %IsNull.specific_fn: <specific function> = specific_function %IsNull.ref, @IsNull(constants.%empty_struct_type) [concrete = constants.%IsNull.specific_fn.c98]
+// CHECK:STDOUT:   %IsNull.specific_fn: <specific function> = specific_function %IsNull.ref, @IsNull(constants.%empty_struct_type) [concrete = constants.%IsNull.specific_fn.34e]
 // CHECK:STDOUT:   %IsNull.call: init bool = call %IsNull.specific_fn(%s.ref)
 // CHECK:STDOUT:   return %IsNull.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestC(%c.param: %.273) -> bool {
+// CHECK:STDOUT: fn @TestC(%c.param: %.edf) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %IsNull.ref: %IsNull.type = name_ref IsNull, file.%IsNull.decl [concrete = constants.%IsNull]
-// CHECK:STDOUT:   %c.ref: %.273 = name_ref c, %c
-// CHECK:STDOUT:   %IsNull.specific_fn: <specific function> = specific_function %IsNull.ref, @IsNull(constants.%C) [concrete = constants.%IsNull.specific_fn.87c]
+// CHECK:STDOUT:   %c.ref: %.edf = name_ref c, %c
+// CHECK:STDOUT:   %IsNull.specific_fn: <specific function> = specific_function %IsNull.ref, @IsNull(constants.%C) [concrete = constants.%IsNull.specific_fn.b1f]
 // CHECK:STDOUT:   %IsNull.call: init bool = call %IsNull.specific_fn(%c.ref)
 // CHECK:STDOUT:   return %IsNull.call to %return
 // CHECK:STDOUT: }

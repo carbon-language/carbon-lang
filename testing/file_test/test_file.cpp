@@ -33,12 +33,30 @@ static auto TryConsumeConflictMarker(bool running_autoupdate,
                                      bool& inside_conflict_marker)
     -> ErrorOr<bool> {
   bool is_start = line.starts_with("<<<<<<<");
-  bool is_middle = line.starts_with("=======") || line.starts_with("|||||||");
   bool is_end = line.starts_with(">>>>>>>");
+  bool is_middle =
+      // git internal conflict markers ("merge" and "diff3" style).
+      line.starts_with("=======") ||
+      line.starts_with("|||||||")
+      // jj internal conflict markers ("snapshot" style).
+      || line.starts_with("+++++++") || line.starts_with("-------");
+  // jj internal conflict marker ("diff" style)
+  bool is_jj_diff = line.starts_with("%%%%%%%");
 
   // When running the test, any conflict marker is an error.
-  if (!running_autoupdate && (is_start || is_middle || is_end)) {
+  if (!running_autoupdate && (is_start || is_middle || is_end || is_jj_diff)) {
     return ErrorBuilder() << "Conflict marker found:\n" << line;
+  }
+
+  if (is_jj_diff && running_autoupdate) {
+    // TODO: Add support for JJ's diff-style conflict markers.
+    return ErrorBuilder()
+           << "Found jj \"diff\" style conflict marker."
+              " Autoupdate only supports \"snapshot\" style conflict markers."
+              " To switch, use `jj config set --repo ui.conflict-marker-style"
+              " \"snapshot\"`, and then run `jj new` (or `jj edit`) again to "
+              " materialize the new style. For more details, see: "
+              "https://docs.jj-vcs.dev/latest/conflicts/";
   }
 
   // Autoupdate tracks conflict markers for context, and will discard

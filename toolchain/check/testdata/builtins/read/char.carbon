@@ -31,8 +31,8 @@ fn Main() {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %ReadChar.type.fa8: type = fn_type @ReadChar.loc4 [concrete]
-// CHECK:STDOUT:   %ReadChar.7f4: %ReadChar.type.fa8 = struct_value () [concrete]
+// CHECK:STDOUT:   %ReadChar.type.c36: type = fn_type @ReadChar.loc4 [concrete]
+// CHECK:STDOUT:   %ReadChar.6ad: %ReadChar.type.c36 = struct_value () [concrete]
 // CHECK:STDOUT:   %ReadChar.type.9f3: type = fn_type @ReadChar.1 [concrete]
 // CHECK:STDOUT:   %ReadChar.01f: %ReadChar.type.9f3 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -54,7 +54,7 @@ fn Main() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ReadChar.ref.loc8: %ReadChar.type.fa8 = name_ref ReadChar, file.%ReadChar.decl [concrete = constants.%ReadChar.7f4]
+// CHECK:STDOUT:   %ReadChar.ref.loc8: %ReadChar.type.c36 = name_ref ReadChar, file.%ReadChar.decl [concrete = constants.%ReadChar.6ad]
 // CHECK:STDOUT:   %ReadChar.call.loc8: init %i32 = call %ReadChar.ref.loc8()
 // CHECK:STDOUT:   %.loc8_10: type = splice_block %i32.loc8 [concrete = constants.%i32] {
 // CHECK:STDOUT:     %int_32.loc8: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

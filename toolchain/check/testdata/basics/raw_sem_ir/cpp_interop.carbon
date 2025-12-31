@@ -63,7 +63,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:   cpp_global_vars:
 // CHECK:STDOUT:     cpp_global_var60000000: {key: {entity_name_id: entity_name60000003}, clang_decl_id: clang_decl_id60000007}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function60000000: {name: name0, parent_scope: name_scope0, call_params_id: inst_block60000006, body: [inst_block60000009]}
+// CHECK:STDOUT:     function60000000: {name: name0, parent_scope: name_scope0, call_params_id: inst_block60000006, return_patterns_id: inst_block_empty, body: [inst_block60000009]}
 // CHECK:STDOUT:     function60000001: {name: name3, parent_scope: name_scope60000001, call_params_id: inst_block_empty}
 // CHECK:STDOUT:     function60000002: {name: name6, parent_scope: name_scope60000001, call_params_id: inst_block_empty}
 // CHECK:STDOUT:     function60000003: {name: name3, parent_scope: name_scope60000001, call_params_id: inst_block6000000D}

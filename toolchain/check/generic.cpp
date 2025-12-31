@@ -412,9 +412,6 @@ auto StartGenericDefinition(Context& context, SemIR::GenericId generic_id)
 auto DiscardGenericDecl(Context& context) -> void {
   // Unattach any types and constant values we might have created in the
   // generic.
-  // TODO: We should re-evaluate the contents of the eval block in a synthesized
-  // specific to form these values, in order to propagate the values of local
-  // `let :!` bindings.
   for (auto inst_id : context.generic_region_stack().PeekDependentInsts()) {
     // Note that `Get` returns an instruction with an unattached type.
     context.sem_ir().insts().Set(inst_id, context.insts().Get(inst_id));

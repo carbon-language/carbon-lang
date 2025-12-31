@@ -472,6 +472,20 @@ struct ImportIRId : public IdBase<ImportIRId> {
 inline constexpr ImportIRId ImportIRId::ApiForImpl = ImportIRId(0);
 inline constexpr ImportIRId ImportIRId::Cpp = ImportIRId(ApiForImpl.index + 1);
 
+// The ID of a `ClangDecl`.
+//
+// These IDs are importantly distinct from the `inst_id` associated with each
+// declaration. These form a dense range of IDs that is used to reference the
+// AST node pointers without storing those pointers directly into SemIR and
+// needing space to hold a full pointer. We can't avoid having these IDs without
+// embedding pointers directly into the storage of SemIR as part of an
+// instruction.
+struct ClangDeclId : public IdBase<ClangDeclId> {
+  static constexpr llvm::StringLiteral Label = "clang_decl_id";
+
+  using IdBase::IdBase;
+};
+
 // A boolean value.
 struct BoolValue : public IdBase<BoolValue> {
   // Not used by `Print`, but for `IdKind`.
@@ -588,8 +602,14 @@ inline constexpr FloatKind FloatKind::PPCFloat128 = FloatKind(6);
   X(Core)                                                        \
   /* The name of the package `Cpp`. */                           \
   X(Cpp)                                                         \
+  /* The name of imported C++ destructors. */                    \
+  X(CppDestructor)                                               \
+  /* The name of imported C++ operator functions */              \
+  X(CppOperator)                                                 \
+  /* The name of the default package `Main`. */                  \
+  X(MainPackage)                                                 \
   /* The name of `package`. */                                   \
-  X(PackageNamespace)                                            \
+  X(PackageKeyword)                                              \
   /* The name of `.Self`. */                                     \
   X(PeriodSelf)                                                  \
   /* The name of the return slot in a function. */               \
@@ -601,9 +621,7 @@ inline constexpr FloatKind FloatKind::PPCFloat128 = FloatKind(6);
   /* The name of `_`. */                                         \
   X(Underscore)                                                  \
   /* The name of `vptr`. */                                      \
-  X(Vptr)                                                        \
-  /* The name of imported C++ operator functions */              \
-  X(CppOperator)
+  X(Vptr)
 
 // The ID of a name. A name is either a string or a special name such as
 // `self`, `Self`, or `base`.
@@ -934,14 +952,14 @@ struct ImportIRInstId : public IdBase<ImportIRInstId> {
 
 // The ID of a `RequireImpls`.
 struct RequireImplsId : public IdBase<RequireImplsId> {
-  static constexpr llvm::StringLiteral Label = "require_impls";
+  static constexpr llvm::StringLiteral Label = "require";
 
   using IdBase::IdBase;
 };
 
 // The ID of a `RequireImplsId` block.
 struct RequireImplsBlockId : public IdBase<RequireImplsBlockId> {
-  static constexpr llvm::StringLiteral Label = "require_impls_block";
+  static constexpr llvm::StringLiteral Label = "require_block";
 
   // The canonical empty block, reused to avoid allocating empty vectors. Always
   // the 0-index block.

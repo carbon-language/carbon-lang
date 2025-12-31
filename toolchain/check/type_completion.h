@@ -85,6 +85,10 @@ auto NoteIncompleteClass(Context& context, SemIR::ClassId class_id,
 auto NoteIncompleteInterface(Context& context, SemIR::InterfaceId interface_id,
                              DiagnosticBuilder& builder) -> void;
 
+// Adds a note to a diagnostic explaining that a class is abstract.
+auto NoteAbstractClass(Context& context, SemIR::ClassId class_id,
+                       bool direct_use, DiagnosticBuilder& builder) -> void;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_TYPE_COMPLETION_H_

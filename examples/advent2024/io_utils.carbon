@@ -7,90 +7,142 @@ library "io_utils";
 import Core library "io";
 import Core library "range";
 
-// If non-zero, this is the most recently read character plus 2.
-// The +2 is necessary to distinguish the case of no unread character
-// from the case of unreading an EOF.
-var unread_char: i32 = 0;
+class EOFType {}
 
-fn ReadChar() -> i32 {
-  if (unread_char != 0) {
-    var result: i32 = unread_char - 2;
-    unread_char = 0;
+class CharOrEOF {
+  adapt i32;
+
+  fn EOF() -> Self;
+}
+
+impl CharOrEOF as Core.Copy {
+  fn Op[self: Self]() -> Self {
+    return (self as i32).(Core.Copy.Op)() as Self;
+  }
+}
+
+fn CharOrEOF.EOF() -> Self {
+  // Ordering between `CharOrEOF` and `char` treats EOF as less than all `char`
+  // values.
+  return (-1 as i32) as CharOrEOF;
+}
+
+impl forall [U:! Core.ImplicitAs(char)] U as Core.ImplicitAs(CharOrEOF) {
+  fn Convert[self: char]() -> CharOrEOF {
+    return ((self as u8) as i32) as CharOrEOF;
+  }
+}
+
+impl forall [U:! Core.ImplicitAs(CharOrEOF)]
+    CharOrEOF as Core.EqWith(U) {
+  fn Equal[self: Self](other: CharOrEOF) -> bool {
+    return (self as i32) == (other as i32);
+  }
+  fn NotEqual[self: Self](other: CharOrEOF) -> bool {
+    return (self as i32) != (other as i32);
+  }
+}
+
+impl forall [U:! Core.ImplicitAs(CharOrEOF)]
+    CharOrEOF as Core.OrderedWith(U) {
+  fn Less[self: Self](other: CharOrEOF) -> bool {
+    return (self as i32) < (other as i32);
+  }
+  fn LessOrEquivalent[self: Self](other: CharOrEOF) -> bool {
+    return (self as i32) <= (other as i32);
+  }
+  fn Greater[self: Self](other: CharOrEOF) -> bool {
+    return (self as i32) > (other as i32);
+  }
+  fn GreaterOrEquivalent[self: Self](other: CharOrEOF) -> bool {
+    return (self as i32) >= (other as i32);
+  }
+}
+
+impl forall [U:! Core.ImplicitAs(char)]
+    CharOrEOF as Core.SubWith(U) where .Result = i32 {
+  fn Op[self: Self](other: char) -> i32 {
+    return (self as i32) - ((other as u8) as i32);
+  }
+}
+
+var unread_char: Core.Optional(CharOrEOF)
+  = Core.Optional(CharOrEOF).None();
+
+fn ReadChar() -> CharOrEOF {
+  if (unread_char.HasValue()) {
+    var result: CharOrEOF = unread_char.Get();
+    unread_char = Core.Optional(CharOrEOF).None();
     return result;
   }
 
-  return Core.ReadChar();
+  var value: i32 = Core.ReadChar();
+  if (value == Core.EOF()) {
+    return CharOrEOF.EOF();
+  } else {
+    return value as CharOrEOF;
+  }
 }
 
-fn UnreadChar(c: i32) {
+fn UnreadChar(c: CharOrEOF) {
   // TODO: assert(unread_char == 0);
-  unread_char = c + 2;
+  // TODO: unread_char = c;
+  unread_char = Core.Optional(CharOrEOF).Some(c);
 }
 
-// TODO: Make generic.
-fn ReadInt(p: i32*) -> bool {
+fn ReadInt[N:! Core.IntLiteral()](ref p: Core.Int(N)) -> bool {
   var read_any_digits: bool = false;
-  *p = 0;
+  // TODO: `p = 0;` crashes the toolchain, see
+  // https://github.com/carbon-language/carbon-lang/issues/6500.
+  p = (0 as i32) as Core.Int(N);
 
   while (true) {
-    var c: i32 = ReadChar();
-    if (c < 0x30 or c > 0x39) {
+    var c: CharOrEOF = ReadChar();
+    if (c < '0' or c > '9') {
       UnreadChar(c);
       break;
     }
     // TODO: Check for overflow.
-    *p *= 10;
-    *p += c - 0x30;
+    // TODO: p *= 10; crashes the toolchain.
+    p *= (10 as i32) as Core.Int(N);
+    p += (c - '0') as Core.Int(N);
     read_any_digits = true;
   }
   return read_any_digits;
 }
 
-fn ReadInt64(p: i64*) -> bool {
-  var read_any_digits: bool = false;
-  *p = 0;
-
-  while (true) {
-    var c: i32 = ReadChar();
-    if (c < 0x30 or c > 0x39) {
-      UnreadChar(c);
-      break;
-    }
-    // TODO: Check for overflow.
-    *p = *p * 10;
-    *p = *p + ((c - 0x30) as i64);
-    read_any_digits = true;
+fn PrintIntNoNewline[N:! Core.IntLiteral()](n_val: Core.Int(N)) {
+  // TODO: var pow10: Core.Int(N) = 1; crashes the toolchain.
+  var pow10: Core.Int(N) = (1 as i32) as Core.Int(N);
+  var n: Core.Int(N) = n_val;
+  // TODO: let ten: Core.Int(N) = 10;
+  let ten: Core.Int(N) = (10 as i32) as Core.Int(N);
+  while (n / ten >= pow10) {
+    pow10 = pow10 * ten;
   }
-  return read_any_digits;
-}
-
-fn PrintInt64NoNewline(n_val: i64) {
-  var pow10: i64 = 1;
-  var n: i64 = n_val;
-  while (n / 10 >= pow10) {
-    pow10 = pow10 * 10;
-  }
-  while (pow10 != 0) {
-    let d: i64 = n / pow10;
-    Core.PrintChar(((d + 0x30) as u8) as char);
+  // TODO: while (pow10 != 0) {
+  while (pow10 != ((0 as i32) as Core.Int(N))) {
+    let d: Core.Int(N) = n / pow10;
+    // TODO: Core.PrintChar('0' + d);
+    Core.PrintChar(((d as u8) + (('0' as char) as u8)) as char);
     n = n % pow10;
-    pow10 = pow10 / 10;
+    pow10 = pow10 / ten;
   }
 }
 
-fn PrintInt64(n_val: i64) {
-  PrintInt64NoNewline(n_val);
+fn PrintInt[N:! Core.IntLiteral()](n_val: Core.Int(N)) {
+  PrintIntNoNewline(n_val);
   Core.PrintChar('\n');
 }
 
-fn PeekChar() -> i32 {
-  var next: i32 = ReadChar();
+fn PeekChar() -> CharOrEOF {
+  var next: CharOrEOF = ReadChar();
   UnreadChar(next);
   return next;
 }
 
-fn ConsumeChar(c: i32) -> bool {
-  var next: i32 = ReadChar();
+fn ConsumeChar(c: char) -> bool {
+  var next: CharOrEOF = ReadChar();
   if (next != c) {
     UnreadChar(next);
     return false;
@@ -100,7 +152,7 @@ fn ConsumeChar(c: i32) -> bool {
 
 fn SkipSpaces() -> bool {
   var skipped_any_spaces: bool = false;
-  while (ConsumeChar(0x20)) {
+  while (ConsumeChar(' ')) {
     skipped_any_spaces = true;
   }
   return skipped_any_spaces;
@@ -108,15 +160,15 @@ fn SkipSpaces() -> bool {
 
 fn SkipNewline() -> bool {
   // Optional carriage return.
-  ConsumeChar(0x0D);
+  ConsumeChar('\r');
   // Newline.
   // TODO: Unread the CR if it was present?
-  return ConsumeChar(0x0A);
+  return ConsumeChar('\n');
 }
 
 fn SkipNChars(n: i32) -> bool {
   for (_: i32 in Core.Range(n)) {
-    if (ReadChar() == Core.EOF()) {
+    if (ReadChar() == CharOrEOF.EOF()) {
       return false;
     }
   }

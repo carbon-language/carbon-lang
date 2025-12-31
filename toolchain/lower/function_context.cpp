@@ -115,7 +115,7 @@ static auto LowerInstHelper(FunctionContext& context, SemIR::InstId inst_id,
 // in `requires`-style overloads.
 // NOLINTNEXTLINE(readability-function-size): The define confuses lint.
 auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
-  // Skip over constants. `FileContext::GetGlobal` lowers them as needed.
+  // Skip over constants. `FileContext::GetConstant` lowers them as needed.
   if (sem_ir().constant_values().Get(inst_id).is_constant()) {
     return;
   }
@@ -282,6 +282,9 @@ auto FunctionContext::FinishInit(TypeInFile type, SemIR::InstId dest_id,
     case SemIR::InitRepr::ByCopy:
       CopyValue(type, source_id, dest_id);
       break;
+    case SemIR::InitRepr::Abstract:
+      CARBON_FATAL("Lowering aggregate initialization of abstract type {0}",
+                   type.file->types().GetAsInst(type.type_id));
     case SemIR::InitRepr::Incomplete:
       CARBON_FATAL("Lowering aggregate initialization of incomplete type {0}",
                    type.file->types().GetAsInst(type.type_id));
@@ -312,11 +315,11 @@ auto FunctionContext::GetInitRepr(TypeInFile type) -> SemIR::InitRepr {
   return result;
 }
 
-auto FunctionContext::GetReturnTypeInfo(TypeInFile type)
+auto FunctionContext::GetReturnTypeInfo(InstInFile callee)
     -> ReturnTypeInfoInFile {
   ReturnTypeInfoInFile result = {
-      .file = type.file,
-      .info = SemIR::ReturnTypeInfo::ForType(*type.file, type.type_id)};
+      .file = callee.file,
+      .info = SemIR::ReturnTypeInfo::ForCallee(*callee.file, callee.inst_id)};
   AddEnumToCurrentFingerprint(result.info.init_repr.kind);
   return result;
 }

@@ -65,9 +65,9 @@ import library "b";
 // CHECK:STDERR: class A.C;
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR: fail_named_indirectly_same_package.carbon:[[@LINE-10]]:1: in import [InImport]
-// CHECK:STDERR: b.carbon:7:8: note: return type declared here [IncompleteReturnTypeHere]
+// CHECK:STDERR: b.carbon:7:11: note: return type declared here [IncompleteReturnTypeHere]
 // CHECK:STDERR: fn F() -> A.C;
-// CHECK:STDERR:        ^~~~~~
+// CHECK:STDERR:           ^~~
 // CHECK:STDERR:
 fn G() { F(); }
 
@@ -86,9 +86,9 @@ import Same library "b";
 // CHECK:STDERR: class A.C;
 // CHECK:STDERR: ^~~~~~~~~~
 // CHECK:STDERR: fail_named_indirectly_different_package.carbon:[[@LINE-10]]:1: in import [InImport]
-// CHECK:STDERR: b.carbon:7:8: note: return type declared here [IncompleteReturnTypeHere]
+// CHECK:STDERR: b.carbon:7:11: note: return type declared here [IncompleteReturnTypeHere]
 // CHECK:STDERR: fn F() -> A.C;
-// CHECK:STDERR:        ^~~~~~
+// CHECK:STDERR:           ^~~
 // CHECK:STDERR:
 fn G() { Same.F(); }
 
@@ -338,7 +338,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Same.F [concrete = constants.%F]
-// CHECK:STDOUT:   %F.call: init <error> = call %F.ref()
+// CHECK:STDOUT:   %F.call: init <error> = call %F.ref(<invalid return info>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -382,7 +382,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Same.ref: <namespace> = name_ref Same, imports.%Same [concrete = imports.%Same]
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Same.F [concrete = constants.%F]
-// CHECK:STDOUT:   %F.call: init <error> = call %F.ref()
+// CHECK:STDOUT:   %F.call: init <error> = call %F.ref(<invalid return info>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

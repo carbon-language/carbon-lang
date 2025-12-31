@@ -8,7 +8,6 @@
 #include <string>
 #include <utility>
 
-#include "clang/AST/Mangle.h"
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -42,6 +41,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       classes_(check_ir_id),
       interfaces_(check_ir_id),
       named_constraints_(check_ir_id),
+      require_impls_(check_ir_id),
       // 1 reserved id for `RequireImplsBlockId::Empty`.
       require_impls_blocks_(allocator_, IdTag(check_ir_id.index, 1)),
       associated_constants_(check_ir_id),
@@ -222,10 +222,8 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "types_"), types_);
 }
 
-auto File::set_clang_ast_unit(clang::ASTUnit* clang_ast_unit) -> void {
-  clang_ast_unit_ = clang_ast_unit;
-  clang_mangle_context_.reset(
-      clang_ast_unit->getASTContext().createMangleContext());
+auto File::set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void {
+  cpp_file_ = std::move(cpp_file);
 }
 
 }  // namespace Carbon::SemIR

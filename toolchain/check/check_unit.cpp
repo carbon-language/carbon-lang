@@ -17,6 +17,7 @@
 #include "llvm/Support/VirtualFileSystem.h"
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/cpp/generate_ast.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
@@ -104,11 +105,19 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   auto namespace_type_id =
       GetSingletonType(context_, SemIR::NamespaceType::TypeInstId);
 
+  // Use the name of the package for the package scope.
+  SemIR::NameId package_name_id = SemIR::NameId::MainPackage;
+  const auto& packaging = context_.parse_tree().packaging_decl();
+  if (packaging && packaging->names.package_id.has_value()) {
+    package_name_id =
+        SemIR::NameId::ForPackageName(packaging->names.package_id);
+  }
+
   // Define the package scope, with an instruction for `package` expressions to
   // reference.
-  auto package_scope_id = context_.name_scopes().Add(
-      SemIR::Namespace::PackageInstId, SemIR::NameId::PackageNamespace,
-      SemIR::NameScopeId::None);
+  auto package_scope_id =
+      context_.name_scopes().Add(SemIR::Namespace::PackageInstId,
+                                 package_name_id, SemIR::NameScopeId::None);
   CARBON_CHECK(package_scope_id == SemIR::NameScopeId::Package);
 
   auto package_inst_id =
@@ -121,7 +130,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   // Call `SetSpecialImportIRs()` to set `ImportIRId::ApiForImpl` and
   // `ImportIRId::Cpp` first, as required.
   if (unit_and_imports_->api_for_impl) {
-    const auto& names = context_.parse_tree().packaging_decl()->names;
+    const auto& names = packaging->names;
     auto import_decl_id = AddInst<SemIR::ImportDecl>(
         context_, names.node_id,
         {.package_id = SemIR::NameId::ForPackageName(names.package_id)});
@@ -154,11 +163,7 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
 
   const auto& cpp_imports = unit_and_imports_->cpp_imports;
   if (!cpp_imports.empty()) {
-    auto* clang_ast_unit = unit_and_imports_->unit->clang_ast_unit;
-    CARBON_CHECK(clang_ast_unit);
-    CARBON_CHECK(!clang_ast_unit->get());
-    *clang_ast_unit =
-        ImportCppFiles(context_, cpp_imports, fs_, clang_invocation_);
+    ImportCpp(context_, cpp_imports, fs_, clang_invocation_);
   }
 }
 
@@ -584,12 +589,8 @@ auto CheckUnit::FinishRun() -> void {
   CheckPoisonedConcreteImplLookupQueries();
   CheckImpls();
 
-  if (auto* clang_ast = context_.sem_ir().clang_ast_unit()) {
-    // Ask Clang to perform any cleanups required, including instantiating used
-    // templates.
-    clang_ast->getSema().ActOnEndOfTranslationUnit();
-    context_.emitter().Flush();
-  }
+  // Finalizes the C++ portion of the compilation.
+  FinishAst(context_);
 
   // Pop information for the file-level scope.
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());

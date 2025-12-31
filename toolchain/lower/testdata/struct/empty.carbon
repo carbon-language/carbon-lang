@@ -12,7 +12,7 @@
 
 fn Run() -> i32 {
   var x: {} = {};
-  var y: {} = x;
+  var _: {} = x;
   return 0;
 }
 
@@ -23,9 +23,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT: define i32 @main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca {}, align 8, !dbg !8
-// CHECK:STDOUT:   %y.var = alloca {}, align 8, !dbg !9
+// CHECK:STDOUT:   %_.var = alloca {}, align 8, !dbg !9
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %y.var), !dbg !9
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !9
 // CHECK:STDOUT:   ret i32 0, !dbg !10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

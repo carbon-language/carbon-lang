@@ -36,6 +36,7 @@ cc_library(
         "//common:filesystem",
         "//common:latch",
         "//common:ostream",
+        "//common:string_helpers",
         "//common:vlog",
         "//third_party/llvm:clang_cc1",
         "//toolchain/base:install_paths",
@@ -250,6 +251,7 @@ cc_library(
     deps = [
         ":tool_runner_base",
         "//common:ostream",
+        "//common:string_helpers",
         "//common:vlog",
         "//toolchain/base:install_paths",
         "@llvm-project//lld:Common",
@@ -288,6 +290,7 @@ cc_library(
     deps = [
         ":tool_runner_base",
         "//common:ostream",
+        "//common:string_helpers",
         "//common:vlog",
         "//toolchain/base:install_paths",
         "//toolchain/base:llvm_tools",

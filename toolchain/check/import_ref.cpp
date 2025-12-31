@@ -2071,6 +2071,36 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::CustomWitness inst) -> ResolveResult {
+  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
+               SemIR::WitnessType::TypeInstId);
+
+  auto elements = GetLocalInstBlockContents(resolver, inst.elements_id);
+  const auto& import_specific_interface =
+      resolver.import_specific_interfaces().Get(
+          inst.query_specific_interface_id);
+  auto data =
+      GetLocalSpecificInterfaceData(resolver, import_specific_interface);
+
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  auto elements_id =
+      GetLocalCanonicalInstBlockId(resolver, inst.elements_id, elements);
+  auto specific_interface =
+      GetLocalSpecificInterface(resolver, import_specific_interface, data);
+  auto query_specific_interface_id =
+      resolver.local_specific_interfaces().Add(specific_interface);
+
+  return ResolveResult::Deduplicated<SemIR::CustomWitness>(
+      resolver, {.type_id = GetSingletonType(resolver.local_context(),
+                                             SemIR::WitnessType::TypeInstId),
+                 .elements_id = elements_id,
+                 .query_specific_interface_id = query_specific_interface_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ExportDecl inst) -> ResolveResult {
   auto value_id = GetLocalConstantId(resolver, inst.value_id);
   return ResolveResult::RetryOrDone(resolver, value_id);
@@ -2155,7 +2185,8 @@ static auto MakeFunctionDecl(ImportContext& context,
   function_decl.function_id = context.local_functions().Add(
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
        {.call_params_id = SemIR::InstBlockId::None,
-        .return_slot_pattern_id = SemIR::InstId::None,
+        .return_type_inst_id = SemIR::TypeInstId::None,
+        .return_patterns_id = SemIR::InstBlockId::None,
         .virtual_modifier = import_function.virtual_modifier,
         .virtual_index = import_function.virtual_index}});
 
@@ -2211,10 +2242,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   auto return_type_const_id = SemIR::ConstantId::None;
-  if (import_function.return_slot_pattern_id.has_value()) {
-    return_type_const_id = GetLocalConstantId(
-        resolver, resolver.import_insts().GetAttachedType(
-                      import_function.return_slot_pattern_id));
+  if (import_function.return_type_inst_id.has_value()) {
+    return_type_const_id =
+        GetLocalConstantId(resolver, import_function.return_type_inst_id);
   }
   auto parent_scope_id =
       GetLocalNameScopeId(resolver, import_function.parent_scope_id);
@@ -2225,9 +2255,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto generic_data = GetLocalGenericData(resolver, import_function.generic_id);
   auto self_param_id =
       GetLocalConstantInstId(resolver, import_function.self_param_id);
-  auto return_slot_pattern_id =
-      GetLocalConstantInstId(resolver, import_function.return_slot_pattern_id);
-
+  auto return_patterns =
+      GetLocalInstBlockContents(resolver, import_function.return_patterns_id);
   auto& new_function = resolver.local_functions().Get(function_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry(function_const_id,
@@ -2242,8 +2271,13 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   new_function.self_param_id = self_param_id;
   new_function.param_patterns_id = GetLocalCanonicalInstBlockId(
       resolver, import_function.param_patterns_id, param_patterns);
-  new_function.return_slot_pattern_id = return_slot_pattern_id;
-
+  new_function.return_type_inst_id = SemIR::TypeInstId::None;
+  if (import_function.return_type_inst_id.has_value()) {
+    new_function.return_type_inst_id = AddLoadedImportRefForType(
+        resolver, import_function.return_type_inst_id, return_type_const_id);
+  }
+  new_function.return_patterns_id = GetLocalCanonicalInstBlockId(
+      resolver, import_function.return_patterns_id, return_patterns);
   if (import_function.definition_id.has_value()) {
     new_function.definition_id = new_function.first_owning_decl_id;
   }
@@ -3078,7 +3112,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   SemIR::FacetTypeInfo local_facet_type_info = {
-      .builtin_constraint_mask = import_facet_type_info.builtin_constraint_mask,
       // TODO: Also process the other requirements.
       .other_requirements = import_facet_type_info.other_requirements};
   // Re-resolve and add values to the local `FacetTypeInfo`.
@@ -3101,12 +3134,17 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
 
+  auto witnesses_block_id = SemIR::InstBlockId::None;
+  if (inst.witnesses_block_id.has_value()) {
+    witnesses_block_id =
+        AddCanonicalWitnessesBlock(resolver.local_ir(), witnesses);
+  }
+
   return ResolveResult::Deduplicated<SemIR::FacetValue>(
       resolver,
       {.type_id = resolver.local_types().GetTypeIdForTypeConstantId(type_id),
        .type_inst_id = type_inst_id,
-       .witnesses_block_id = GetLocalCanonicalInstBlockId(
-           resolver, inst.witnesses_block_id, witnesses)});
+       .witnesses_block_id = witnesses_block_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -3710,6 +3748,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::CppOverloadSetValue inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::CustomWitness inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ExportDecl inst): {

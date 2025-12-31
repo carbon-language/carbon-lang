@@ -15,7 +15,7 @@ class Grid {
     returned var me: Grid;
     for (y: i32 in Core.Range(50)) {
       for (x: i32 in Core.Range(50)) {
-        me.data[x][y] = ReadChar();
+        me.data[x][y] = ReadChar() as i32;
       }
       SkipNewline();
     }

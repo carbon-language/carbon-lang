@@ -21,10 +21,17 @@ class D {}
 
 var c: C;
 var d: D;
-// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+7]]:19: error: cannot implicitly convert expression of type `C` to `C*` [ConversionFailure]
+// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+14]]:19: error: cannot implicitly convert expression of type `C` to `C*` [ConversionFailure]
 // CHECK:STDERR: var x: (C*, C*) = (c, d);
 // CHECK:STDERR:                   ^~~~~~
-// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+4]]:19: note: type `C` does not implement interface `Core.ImplicitAs(C*)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+11]]:19: note: type `C` does not implement interface `Core.ImplicitAs(C*)` [MissingImplInMemberAccessNote]
+// CHECK:STDERR: var x: (C*, C*) = (c, d);
+// CHECK:STDERR:                   ^~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+7]]:19: error: cannot implicitly convert expression of type `D` to `C*` [ConversionFailure]
+// CHECK:STDERR: var x: (C*, C*) = (c, d);
+// CHECK:STDERR:                   ^~~~~~
+// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+4]]:19: note: type `D` does not implement interface `Core.ImplicitAs(C*)` [MissingImplInMemberAccessNote]
 // CHECK:STDERR: var x: (C*, C*) = (c, d);
 // CHECK:STDERR:                   ^~~~~~
 // CHECK:STDERR:

@@ -12,6 +12,11 @@ auto CreateGlobalDecl(const clang::NamedDecl* decl) -> clang::GlobalDecl {
                              clang::CXXCtorType::Ctor_Complete);
   }
 
+  if (const auto* destructor_decl = dyn_cast<clang::CXXDestructorDecl>(decl)) {
+    return clang::GlobalDecl(destructor_decl,
+                             clang::CXXDtorType::Dtor_Complete);
+  }
+
   return clang::GlobalDecl(decl);
 }
 

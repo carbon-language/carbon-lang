@@ -95,6 +95,13 @@ class Context {
     // could help catch errors.
     bool in_var_pattern : 1 = false;
 
+    // Set to true to indicate that this state is handling a pattern nested
+    // inside an `unused` pattern.
+    // TODO: This is meaningful only for patterns, and the precedence fields
+    // are meaningful only for expressions, so expressing them as a union
+    // could help catch errors.
+    bool in_unused_pattern : 1 = false;
+
     // Precedence information used by expression states in order to determine
     // operator precedence. The ambient_precedence deals with how the expression
     // should interact with outside context, while the lhs_precedence is
@@ -112,7 +119,7 @@ class Context {
 
   // We expect State to fit into 12 bytes:
   //   state = 1 byte
-  //   has_error and in_var_pattern = 1 byte
+  //   has_error, in_var_pattern, and in_unused_pattern = 1 byte
   //   ambient_precedence = 1 byte
   //   lhs_precedence = 1 byte
   //   token = 4 bytes
@@ -318,11 +325,14 @@ class Context {
                .subtree_start = tree_->size()});
   }
 
-  // Pushes a new state for handling a pattern. `in_var_pattern` indicates
-  // whether that pattern is nested inside a `var` pattern.
-  auto PushStateForPattern(StateKind kind, bool in_var_pattern) -> void {
+  // Pushes a new state for handling a pattern. `in_var_pattern` and
+  // `in_unused_pattern` indicate whether that pattern is nested inside a `var`
+  // or `unused` pattern.
+  auto PushStateForPattern(StateKind kind, bool in_var_pattern,
+                           bool in_unused_pattern) -> void {
     PushState({.kind = kind,
                .in_var_pattern = in_var_pattern,
+               .in_unused_pattern = in_unused_pattern,
                .token = *position_,
                .subtree_start = tree_->size()});
   }

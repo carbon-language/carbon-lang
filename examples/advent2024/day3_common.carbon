@@ -14,9 +14,9 @@ import library "io_utils";
 fn ReadMul() -> (bool, i32, i32) {
   var a: i32;
   var b: i32;
-  if (ConsumeChar(0x6D) and ConsumeChar(0x75) and ConsumeChar(0x6C) and
-      ConsumeChar(0x28) and ReadInt(&a) and ConsumeChar(0x2C) and
-      ReadInt(&b) and ConsumeChar(0x29)) {
+  if (ConsumeChar('m') and ConsumeChar('u') and ConsumeChar('l') and
+      ConsumeChar('(') and ReadInt(ref a) and ConsumeChar(',') and
+      ReadInt(ref b) and ConsumeChar(')')) {
     return (true, a, b);
   }
   return (false, 0, 0);
@@ -26,21 +26,21 @@ fn ReadMul() -> (bool, i32, i32) {
 // On error, stops before the first invalid character and returns (false, false).
 fn ReadDoOrDont() -> (bool, bool) {
   // "do"
-  if (not ConsumeChar(0x64) or not ConsumeChar(0x6F)) {
+  if (not ConsumeChar('d') or not ConsumeChar('o')) {
     return (false, false);
   }
 
   var do: bool = true;
   // "n't"
-  if (ConsumeChar(0x6E)) {
-    if (not ConsumeChar(0x27) or not ConsumeChar(0x74)) {
+  if (ConsumeChar('n')) {
+    if (not ConsumeChar('\'') or not ConsumeChar('t')) {
       return (false, false);
     }
     do = false;
   }
 
   // "()"
-  if (not ConsumeChar(0x28) or not ConsumeChar(0x29)) {
+  if (not ConsumeChar('(') or not ConsumeChar(')')) {
     return (false, false);
   }
   return (true, do);
