@@ -182,8 +182,50 @@ auto HandleParseNode(Context& context,
 }
 
 auto HandleParseNode(Context& context,
-                     Parse::IdentifierNameQualifierWithoutParamsId /*node_id*/)
+                     Parse::IdentifierNameQualifierWithoutParamsId node_id)
     -> bool {
+  // If the decl_name_stack is empty, we're in a binding pattern context
+  // (e.g., `let NS.x: i32 = 0;`). In this case, resolve the namespace
+  // and store it for later use instead of using decl_name_stack.
+  if (context.decl_name_stack().IsEmpty()) {
+    auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
+
+    SemIR::InstId inst_id = SemIR::InstId::None;
+    auto target_scope = context.qualified_binding_target_scope();
+    if (target_scope.has_value()) {
+      // If we already have a target scope, look up the next component in that
+      // scope. This handles nested namespaces like `let A.B.x: ...`.
+      auto result =
+          LookupNameInExactScope(context, name_node, name_id, target_scope,
+                                 context.name_scopes().Get(target_scope));
+      if (result.is_found()) {
+        inst_id = result.target_inst_id();
+      }
+    } else {
+      // Look up the first component of the name unqualified.
+      auto result = LookupUnqualifiedName(context, name_node, name_id);
+      if (result.scope_result.is_found()) {
+        inst_id = result.scope_result.target_inst_id();
+      }
+    }
+
+    if (!inst_id.has_value()) {
+      // Name not found - error already diagnosed by LookupUnqualifiedName or
+      // LookupNameInExactScope.
+      return true;
+    }
+
+    // Check if it's a namespace.
+    auto inst = context.insts().Get(inst_id);
+    if (auto ns = inst.TryAs<SemIR::Namespace>()) {
+      context.set_qualified_binding_target_scope(ns->name_scope_id);
+    } else {
+      CARBON_DIAGNOSTIC(QualifierNotNamespace, Error,
+                        "qualifier `{0}` is not a namespace", SemIR::NameId);
+      context.emitter().Emit(node_id, QualifierNotNamespace, name_id);
+    }
+    return true;
+  }
   return ApplyNameQualifier(context);
 }
 

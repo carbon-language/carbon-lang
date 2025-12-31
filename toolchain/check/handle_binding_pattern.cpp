@@ -77,26 +77,49 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       context.decl_introducer_state_stack().innermost();
 
   auto make_binding_pattern = [&]() -> SemIR::InstId {
-    // TODO: Eventually the name will need to support associations with other
-    // scopes, but right now we don't support qualified names here.
-    auto binding =
-        AddBindingPattern(context, name_node, name_id, cast_type_id,
-                          type_expr_region_id, pattern_inst_kind, is_template);
-
-    // TODO: If `is_generic`, then `binding.bind_id is a SymbolicBinding. Subst
-    // the `.Self` of type `type` in the `cast_type_id` type (a `FacetType`)
-    // with the `binding.bind_id` itself, and build a new pattern with that.
-    // This is kind of cyclical. So we need to reuse the EntityNameId, which
-    // will also reuse the CompileTimeBinding for the new SymbolicBinding.
+    auto target_scope = context.qualified_binding_target_scope();
+    auto binding = AddBindingPattern(context, name_node, name_id, cast_type_id,
+                                     type_expr_region_id, pattern_inst_kind,
+                                     is_template, target_scope);
 
     if (name_id != SemIR::NameId::Underscore) {
       // Add name to lookup immediately, so it can be used in the rest of the
       // enclosing pattern.
-      auto name_context =
-          context.decl_name_stack().MakeUnqualifiedName(name_node, name_id);
-      context.decl_name_stack().AddNameOrDiagnose(
-          name_context, binding.bind_id,
-          introducer.modifier_set.GetAccessKind());
+      if (target_scope.has_value()) {
+        // Clear the target scope after using it.
+        context.clear_qualified_binding_target_scope();
+
+        // Perform lookup in the target scope to detect duplicate names.
+        auto loc_id = context.insts().GetCanonicalLocId(name_node);
+        auto lookup_result =
+            LookupNameInExactScope(context, loc_id, name_id, target_scope,
+                                   context.name_scopes().Get(target_scope),
+                                   /*is_being_declared=*/true);
+
+        // Create a qualified name context with the target scope.
+        DeclNameStack::NameContext name_context{
+            .initial_scope_index = context.scope_stack().PeekIndex(),
+            .state = lookup_result.is_found()
+                         ? DeclNameStack::NameContext::State::Resolved
+                         : DeclNameStack::NameContext::State::Unresolved,
+            .has_qualifiers = true,
+            .parent_scope_id = target_scope,
+            .loc_id = loc_id,
+            .name_id = name_id,
+            .resolved_inst_id = lookup_result.is_found()
+                                    ? lookup_result.target_inst_id()
+                                    : SemIR::InstId::None,
+        };
+        context.decl_name_stack().AddNameOrDiagnose(
+            name_context, binding.bind_id,
+            introducer.modifier_set.GetAccessKind());
+      } else {
+        auto name_context =
+            context.decl_name_stack().MakeUnqualifiedName(name_node, name_id);
+        context.decl_name_stack().AddNameOrDiagnose(
+            name_context, binding.bind_id,
+            introducer.modifier_set.GetAccessKind());
+      }
       context.full_pattern_stack().AddBindName(name_id);
     }
 

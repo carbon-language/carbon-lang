@@ -49,7 +49,8 @@ auto EndSubpatternAsNonExpr(Context& context) -> void {
 auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                        SemIR::NameId name_id, SemIR::TypeId type_id,
                        SemIR::ExprRegionId type_region_id,
-                       SemIR::InstKind pattern_kind, bool is_template)
+                       SemIR::InstKind pattern_kind, bool is_template,
+                       SemIR::NameScopeId parent_scope_id)
     -> BindingPatternInfo {
   SemIR::InstKind bind_name_kind;
   switch (pattern_kind) {
@@ -67,8 +68,11 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
   }
   bool is_generic = pattern_kind == SemIR::SymbolicBindingPattern::Kind;
 
+  if (!parent_scope_id.has_value()) {
+    parent_scope_id = context.scope_stack().PeekNameScopeId();
+  }
   auto entity_name_id = context.entity_names().AddSymbolicBindingName(
-      name_id, context.scope_stack().PeekNameScopeId(),
+      name_id, parent_scope_id,
       is_generic ? context.scope_stack().AddCompileTimeBinding()
                  : SemIR::CompileTimeBindIndex::None,
       is_template);

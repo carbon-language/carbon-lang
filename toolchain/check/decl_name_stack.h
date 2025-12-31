@@ -219,6 +219,9 @@ class DeclNameStack {
   // This should be called at the end of the declaration.
   auto PopScope() -> void;
 
+  // Returns true if the decl name stack is empty
+  auto IsEmpty() const -> bool { return decl_name_stack_.empty(); }
+
   // Peeks the current parent scope of the name on top of the stack. Note
   // that if we're still processing the name qualifiers, this can change before
   // the name is completed. Also, if the name up to this point was already

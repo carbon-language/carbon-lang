@@ -39,10 +39,11 @@ struct BindingPatternInfo {
 // instruction.
 // TODO: remove is_template once we have a separate InstKind for template
 // bindings.
-auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
-                       SemIR::NameId name_id, SemIR::TypeId type_id,
-                       SemIR::ExprRegionId type_region_id,
-                       SemIR::InstKind pattern_kind, bool is_template)
+auto AddBindingPattern(
+    Context& context, SemIR::LocId name_loc, SemIR::NameId name_id,
+    SemIR::TypeId type_id, SemIR::ExprRegionId type_region_id,
+    SemIR::InstKind pattern_kind, bool is_template,
+    SemIR::NameScopeId parent_scope_id = SemIR::NameScopeId::None)
     -> BindingPatternInfo;
 
 // Creates storage for `var` patterns nested within the given pattern at the

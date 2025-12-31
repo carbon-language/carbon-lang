@@ -494,6 +494,22 @@ class Context {
   // value on the RHS. Used during checking of a `where` expression to allow
   // constraints to access values from earlier constraints.
   llvm::SmallVector<Map<SemIR::ConstantId, SemIR::InstId>> rewrites_stack_;
+
+  // When parsing a binding pattern like `Foo.x`, stores the target namespace
+  // scope where the name should be registered. Reset after use.
+  SemIR::NameScopeId qualified_binding_target_scope_ = SemIR::NameScopeId::None;
+
+ public:
+  // Get/set the target scope for qualified binding patterns.
+  auto qualified_binding_target_scope() const -> SemIR::NameScopeId {
+    return qualified_binding_target_scope_;
+  }
+  auto set_qualified_binding_target_scope(SemIR::NameScopeId scope_id) -> void {
+    qualified_binding_target_scope_ = scope_id;
+  }
+  auto clear_qualified_binding_target_scope() -> void {
+    qualified_binding_target_scope_ = SemIR::NameScopeId::None;
+  }
 };
 
 }  // namespace Carbon::Check
