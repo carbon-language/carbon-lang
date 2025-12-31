@@ -95,9 +95,9 @@ auto BuildClangInvocation(Diagnostics::Consumer& consumer,
 
   // The clang driver inconveniently wants an array of `const char*`, so convert
   // the arguments.
-  llvm::OwningArrayRef<char> cstr_arg_storage;
+  llvm::BumpPtrAllocator alloc;
   llvm::SmallVector<const char*> cstr_args = BuildCStrArgs(
-      install_paths.clang_path().native(), args, extra_args, cstr_arg_storage);
+      install_paths.clang_path().native(), args, extra_args, alloc);
 
   // Build a diagnostics engine. Note that we don't have any diagnostic options
   // yet; they're produced by running the driver.
