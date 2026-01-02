@@ -115,6 +115,7 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
 auto ImportCpp(Context& context,
                llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+               llvm::LLVMContext* llvm_context,
                std::shared_ptr<clang::CompilerInvocation> invocation) -> void {
   if (imports.empty()) {
     // TODO: Consider always having a (non-null) AST even if there are no Cpp
@@ -130,7 +131,7 @@ auto ImportCpp(Context& context,
   auto name_scope_id = AddNamespace(context, package_id, imports);
 
   bool ast_has_error =
-      !GenerateAst(context, imports, fs, std::move(invocation));
+      !GenerateAst(context, imports, fs, llvm_context, std::move(invocation));
 
   SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
   name_scope.set_is_closed_import(true);

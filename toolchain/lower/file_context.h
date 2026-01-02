@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 #define CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 
-#include "clang/Basic/CodeGenOptions.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Lex/PreprocessorOptions.h"
 #include "toolchain/lower/context.h"
@@ -26,10 +25,6 @@ class FileContext {
   explicit FileContext(Context& context, const SemIR::File& sem_ir,
                        const SemIR::InstNamer* inst_namer,
                        llvm::raw_ostream* vlog_stream);
-
-  // Creates the Clang `CodeGenerator` to generate LLVM module from imported C++
-  // code. Returns null when not importing C++.
-  auto CreateCppCodeGenerator() -> std::unique_ptr<clang::CodeGenerator>;
 
   // Prepares to lower code in this IR, by precomputing needed LLVM types,
   // constants, declarations, etc. Should only be called once, before we lower
@@ -228,15 +223,9 @@ class FileContext {
   // The input SemIR.
   const SemIR::File* const sem_ir_;
 
-  // The options used to create the Clang Code Generator.
-  clang::HeaderSearchOptions cpp_header_search_options_;
-  clang::PreprocessorOptions cpp_preprocessor_options_;
-  clang::CodeGenOptions cpp_code_gen_options_;
-
   // The Clang `CodeGenerator` to generate LLVM module from imported C++
-  // code. Should be initialized using `CreateCppCodeGenerator()`. Can be null
-  // if no C++ code is imported.
-  std::unique_ptr<clang::CodeGenerator> cpp_code_generator_;
+  // code. Can be null if no C++ code is imported.
+  clang::CodeGenerator* cpp_code_generator_;
 
   // The instruction namer, if given.
   const SemIR::InstNamer* const inst_namer_;

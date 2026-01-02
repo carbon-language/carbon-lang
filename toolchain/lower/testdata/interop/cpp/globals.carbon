@@ -39,24 +39,30 @@ fn MyF() {
 // CHECK:STDOUT: @global = dso_local global %class.C zeroinitializer, align 1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !7 {
+// CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !10
+// CHECK:STDOUT:   ret void, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
+// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!6}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!8}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !2 = !{i32 1, !"wchar_size", i32 4}
 // CHECK:STDOUT: !3 = !{i32 8, !"PIC Level", i32 0}
 // CHECK:STDOUT: !4 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "import_global.carbon", directory: "")
-// CHECK:STDOUT: !7 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !6, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !8 = !DISubroutineType(types: !9)
-// CHECK:STDOUT: !9 = !{null}
-// CHECK:STDOUT: !10 = !DILocation(line: 6, column: 1, scope: !7)
+// CHECK:STDOUT: !5 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !6 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !7, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !7 = !DIFile(filename: "import_global.carbon", directory: "")
+// CHECK:STDOUT: !8 = !{!9, !9, i64 0}
+// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
+// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
+// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !7, line: 6, type: !13, spFlags: DISPFlagDefinition, unit: !6)
+// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
+// CHECK:STDOUT: !14 = !{null}
+// CHECK:STDOUT: !15 = !DILocation(line: 6, column: 1, scope: !12)

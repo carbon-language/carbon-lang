@@ -127,6 +127,7 @@ class CheckUnit {
       UnitAndImports* unit_and_imports,
       const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+      llvm::LLVMContext* llvm_context,
       std::shared_ptr<clang::CompilerInvocation> clang_invocation,
       llvm::raw_ostream* vlog_stream);
 
@@ -188,6 +189,7 @@ class CheckUnit {
   UnitAndImports* unit_and_imports_;
   Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter_;
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
+  llvm::LLVMContext* llvm_context_;
   std::shared_ptr<clang::CompilerInvocation> clang_invocation_;
 
   DiagnosticEmitter emitter_;

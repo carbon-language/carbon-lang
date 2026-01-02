@@ -62,25 +62,13 @@ FileContext::FileContext(Context& context, const SemIR::File& sem_ir,
       vtables_(decltype(vtables_)::MakeForOverwrite(sem_ir.vtables())),
       specific_vtables_(sem_ir.specifics(), nullptr) {
   // Initialization that relies on invariants of the class.
-  cpp_code_generator_ = CreateCppCodeGenerator();
+  cpp_code_generator_ = cpp_file() ? cpp_file()->GetCodeGenerator() : nullptr;
   CARBON_CHECK(!sem_ir.has_errors(),
                "Generating LLVM IR from invalid SemIR::File is unsupported.");
 }
 
 // TODO: Move this to lower.cpp.
 auto FileContext::PrepareToLower() -> void {
-  if (cpp_code_generator_) {
-    // Clang code generation should not actually modify the AST, but isn't
-    // const-correct.
-    cpp_code_generator_->Initialize(
-        const_cast<clang::ASTContext&>(cpp_file()->ast_context()));
-
-    // Emit any top-level declarations now.
-    for (auto decl_group : cpp_file()->decl_groups()) {
-      cpp_code_generator_->HandleTopLevelDecl(decl_group);
-    }
-  }
-
   // Lower all types that were required to be complete.
   for (auto type_id : sem_ir_->types().complete_types()) {
     if (type_id.index >= 0) {
@@ -177,24 +165,6 @@ auto FileContext::Finalize() -> void {
   // remove duplicately lowered function definitions.
   coalescer_.CoalesceEquivalentSpecifics(lowered_specifics_,
                                          specific_functions_);
-}
-
-auto FileContext::CreateCppCodeGenerator()
-    -> std::unique_ptr<clang::CodeGenerator> {
-  if (!cpp_file()) {
-    return nullptr;
-  }
-
-  RawStringOstream clang_module_name_stream;
-  clang_module_name_stream << llvm_module().getName() << ".clang";
-
-  // Do not emit Clang's name and version as the creator of the output file.
-  cpp_code_gen_options_.EmitVersionIdentMetadata = false;
-
-  return std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
-      cpp_file()->diagnostics(), clang_module_name_stream.TakeStr(),
-      context().file_system(), cpp_header_search_options_,
-      cpp_preprocessor_options_, cpp_code_gen_options_, llvm_context()));
 }
 
 auto FileContext::GetConstant(SemIR::ConstantId const_id,

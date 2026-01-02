@@ -570,8 +570,8 @@ class CompilationUnit {
   std::optional<Parse::TreeAndSubtrees> parse_tree_and_subtrees_;
   std::optional<std::function<auto()->const Parse::TreeAndSubtrees&>>
       tree_and_subtrees_getter_;
-  std::optional<SemIR::File> sem_ir_;
   std::unique_ptr<llvm::LLVMContext> llvm_context_;
+  std::optional<SemIR::File> sem_ir_;
   std::unique_ptr<llvm::Module> module_;
   std::unique_ptr<llvm::TargetMachine> target_machine_;
 };
@@ -759,10 +759,14 @@ auto CompilationUnit::GetCheckUnit() -> Check::Unit {
   };
   sem_ir_.emplace(&*parse_tree_, check_ir_id_, parse_tree_->packaging_decl(),
                   value_stores_, input_filename_);
+  if (!llvm_context_) {
+    llvm_context_ = std::make_unique<llvm::LLVMContext>();
+  }
   return {.consumer = consumer_,
           .value_stores = &value_stores_,
           .timings = timings_ ? &*timings_ : nullptr,
           .sem_ir = &*sem_ir_,
+          .llvm_context = llvm_context_.get(),
           .total_ir_count = total_ir_count_};
 }
 
@@ -785,7 +789,9 @@ auto CompilationUnit::PostCheck() -> void {
 
 auto CompilationUnit::RunLower() -> void {
   LogCall("Lower::LowerToLLVM", "lower", [&] {
-    llvm_context_ = std::make_unique<llvm::LLVMContext>();
+    if (!llvm_context_) {
+      llvm_context_ = std::make_unique<llvm::LLVMContext>();
+    }
     Lower::LowerToLLVMOptions options;
     options.llvm_verifier_stream =
         options_->run_llvm_verifier ? driver_env_->error_stream : nullptr;

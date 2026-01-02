@@ -175,6 +175,7 @@ cc_library(
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//clang:ast",
         "@llvm-project//clang:basic",
+        "@llvm-project//clang:codegen",
         "@llvm-project//clang:frontend",
         "@llvm-project//clang:lex",
         "@llvm-project//clang:parse",
