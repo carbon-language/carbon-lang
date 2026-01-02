@@ -556,8 +556,6 @@ class Context {
 
   static constexpr SemIR::NameScopeId QualifiedBindingScopeError =
       SemIR::NameScopeId(-2);
-
- public:
 };
 
 }  // namespace Carbon::Check
