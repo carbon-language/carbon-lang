@@ -190,11 +190,15 @@ auto HandleParseNode(Context& context,
   if (context.decl_name_stack().IsEmpty()) {
     auto [name_node, name_id] = context.node_stack().PopNameWithNodeId();
 
+    if (context.qualified_binding_has_error()) {
+      return true;
+    }
+
     SemIR::InstId inst_id = SemIR::InstId::None;
     auto target_scope = context.qualified_binding_target_scope();
     if (target_scope.has_value()) {
       // If we already have a target scope, look up the next component in that
-      // scope. This handles nested namespaces like `let A.B.x: ...`.
+      // scope
       auto result =
           LookupNameInExactScope(context, name_node, name_id, target_scope,
                                  context.name_scopes().Get(target_scope));
@@ -210,12 +214,11 @@ auto HandleParseNode(Context& context,
     }
 
     if (!inst_id.has_value()) {
-      // Name not found - error already diagnosed by LookupUnqualifiedName or
-      // LookupNameInExactScope.
+      DiagnoseNameNotFound(context, node_id, name_id);
+      context.set_qualified_binding_has_error(true);
       return true;
     }
 
-    // Check if it's a namespace.
     auto inst = context.insts().Get(inst_id);
     if (auto ns = inst.TryAs<SemIR::Namespace>()) {
       context.set_qualified_binding_target_scope(ns->name_scope_id);
@@ -223,6 +226,7 @@ auto HandleParseNode(Context& context,
       CARBON_DIAGNOSTIC(QualifierNotNamespace, Error,
                         "qualifier `{0}` is not a namespace", SemIR::NameId);
       context.emitter().Emit(node_id, QualifierNotNamespace, name_id);
+      context.set_qualified_binding_has_error(true);
     }
     return true;
   }

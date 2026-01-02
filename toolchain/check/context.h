@@ -282,6 +282,32 @@ class Context {
 
   auto core_identifiers() -> CoreIdentifierCache& { return core_identifiers_; }
 
+  auto qualified_binding_target_scope() const -> SemIR::NameScopeId {
+    return qualified_binding_target_scope_;
+  }
+  auto set_qualified_binding_target_scope(SemIR::NameScopeId scope_id) -> void {
+    qualified_binding_target_scope_ = scope_id;
+  }
+  auto clear_qualified_binding_target_scope() -> void {
+    qualified_binding_target_scope_ = SemIR::NameScopeId::None;
+  }
+
+  auto qualified_binding_has_error() const -> bool {
+    return qualified_binding_target_scope_ == QualifiedBindingScopeError;
+  }
+  auto set_qualified_binding_has_error(bool has_error) -> void {
+    if (has_error) {
+      qualified_binding_target_scope_ = QualifiedBindingScopeError;
+    } else if (qualified_binding_target_scope_ == QualifiedBindingScopeError) {
+      qualified_binding_target_scope_ = SemIR::NameScopeId::None;
+    }
+  }
+  auto clear_qualified_binding_has_error() -> void {
+    if (qualified_binding_target_scope_ == QualifiedBindingScopeError) {
+      qualified_binding_target_scope_ = SemIR::NameScopeId::None;
+    }
+  }
+
   // --------------------------------------------------------------------------
   // Directly expose SemIR::File data accessors for brevity in calls.
   // --------------------------------------------------------------------------
@@ -528,17 +554,10 @@ class Context {
   // scope where the name should be registered. Reset after use.
   SemIR::NameScopeId qualified_binding_target_scope_ = SemIR::NameScopeId::None;
 
+  static constexpr SemIR::NameScopeId QualifiedBindingScopeError =
+      SemIR::NameScopeId(-2);
+
  public:
-  // Get/set the target scope for qualified binding patterns.
-  auto qualified_binding_target_scope() const -> SemIR::NameScopeId {
-    return qualified_binding_target_scope_;
-  }
-  auto set_qualified_binding_target_scope(SemIR::NameScopeId scope_id) -> void {
-    qualified_binding_target_scope_ = scope_id;
-  }
-  auto clear_qualified_binding_target_scope() -> void {
-    qualified_binding_target_scope_ = SemIR::NameScopeId::None;
-  }
 };
 
 }  // namespace Carbon::Check

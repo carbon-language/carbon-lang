@@ -130,8 +130,11 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
 
   const DeclIntroducerState& introducer =
       context.decl_introducer_state_stack().innermost();
-  x auto make_binding_pattern = [&]() -> SemIR::InstId {
+  auto make_binding_pattern = [&]() -> SemIR::InstId {
     auto target_scope = context.qualified_binding_target_scope();
+    if (context.qualified_binding_has_error()) {
+      target_scope = SemIR::NameScopeId::None;
+    }
     auto binding = AddBindingPattern(context, name_node, name_id, cast_type_id,
                                      type_expr_region_id, pattern_inst_kind,
                                      is_template, target_scope);
@@ -144,18 +147,29 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     if (name_id != SemIR::NameId::Underscore) {
       // Add name to lookup immediately, so it can be used in the rest of the
       // enclosing pattern.
-      if (target_scope.has_value()) {
-        // Clear the target scope after using it.
+      if (context.qualified_binding_has_error()) {
+        context.clear_qualified_binding_has_error();
         context.clear_qualified_binding_target_scope();
 
-        // Perform lookup in the target scope to detect duplicate names.
+        DeclNameStack::NameContext name_context{
+            .initial_scope_index = context.scope_stack().PeekIndex(),
+            .state = DeclNameStack::NameContext::State::Error,
+            .parent_scope_id = SemIR::NameScopeId::None,
+            .loc_id = context.insts().GetCanonicalLocId(name_node),
+            .name_id = name_id,
+        };
+        context.decl_name_stack().AddNameOrDiagnose(
+            name_context, binding.bind_id,
+            introducer.modifier_set.GetAccessKind());
+      } else if (target_scope.has_value()) {
+        context.clear_qualified_binding_target_scope();
+
         auto loc_id = context.insts().GetCanonicalLocId(name_node);
         auto lookup_result =
             LookupNameInExactScope(context, loc_id, name_id, target_scope,
                                    context.name_scopes().Get(target_scope),
                                    /*is_being_declared=*/true);
 
-        // Create a qualified name context with the target scope.
         DeclNameStack::NameContext name_context{
             .initial_scope_index = context.scope_stack().PeekIndex(),
             .state = lookup_result.is_found()
