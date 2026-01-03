@@ -5,7 +5,6 @@
 #include "toolchain/driver/link_subcommand.h"
 
 #include "llvm/TargetParser/Triple.h"
-#include "toolchain/base/clang_invocation.h"
 #include "toolchain/driver/clang_runner.h"
 
 namespace Carbon {
