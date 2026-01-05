@@ -1292,7 +1292,7 @@ static auto CreateFunctionSignatureInsts(Context& context, SemIR::LocId loc_id,
     -> std::optional<FunctionSignatureInsts> {
   context.full_pattern_stack().PushFullPattern(
       FullPatternStack::Kind::ImplicitParamList);
-  auto pop = llvm::make_scope_exit(
+  std::optional pop = llvm::make_scope_exit(
       [&context] { context.full_pattern_stack().PopFullPattern(); });
   auto implicit_param_patterns_id =
       MakeImplicitParamPatternsBlockId(context, loc_id, *clang_decl);
@@ -1310,8 +1310,7 @@ static auto CreateFunctionSignatureInsts(Context& context, SemIR::LocId loc_id,
   if (return_type_inst_id == SemIR::ErrorInst::TypeInstId) {
     return std::nullopt;
   }
-  pop.release();
-  context.full_pattern_stack().PopFullPattern();
+  pop.reset();
 
   auto call_params_id =
       CalleePatternMatch(context, implicit_param_patterns_id, param_patterns_id,
