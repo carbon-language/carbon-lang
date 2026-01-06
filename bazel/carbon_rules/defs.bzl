@@ -113,11 +113,11 @@ _carbon_binary_internal = rule(
         "deps": attr.label_list(allow_files = True, providers = [[CcInfo]]),
         "flags": attr.string_list(),
 
-        # The exec config toolchain driver and data. These will be `None` when
-        # using the target config and populated when using the exec config. We
-        # have to use duplicate attributes here and below to have different
-        # `cfg` settings, as that isn't `select`-able, and we'll use `select`s
-        # when populating these.
+        # The exec config toolchain attributes. These will be `None` when using
+        # the target config and populated when using the exec config. We have to
+        # use duplicate attributes here and below to have different `cfg`
+        # settings, as that isn't `select`-able, and we'll use `select`s when
+        # populating these.
         "internal_exec_prebuilt_runtimes": attr.label(
             cfg = "exec",
         ),
@@ -130,7 +130,7 @@ _carbon_binary_internal = rule(
             cfg = "exec",
         ),
 
-        # The target config toolchain driver and data. These will be 'None' when
+        # The target config toolchain attributes. These will be 'None' when
         # using the exec config and populated when using the target config. We
         # have to use duplicate attributes here and below to have different
         # `cfg` settings, as that isn't `select`-able, and we'll use `select`s
