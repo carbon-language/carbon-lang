@@ -199,7 +199,6 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
     return Error("Invoked without command line arguments");
   }
 
-  // Resolve paths before calling SetWorkingDirForBazel.
   std::filesystem::path exe_path = argv[0];
   exe_path = SetWorkingDirForBazelRun(exe_path);
 
