@@ -70,28 +70,22 @@ impl () as Y(A) {}
 // --- require_for_concrete_type.carbon
 library "[[@TEST_NAME]]";
 
-interface Z1(T:! type) {}
-interface Z2(T:! type) {}
+interface Z {}
 
-class A;
-class B;
-
-interface Y(U:! type) {
-  extend require impls Z1(U) & Z2(B);
+interface Y {
+  extend require impls Z;
 }
 
-// () does not need to impl Z1(A) and Z2(B) yet.
-impl () as Y(A);
+// () does not need to impl Z yet.
+impl () as Y;
 
-// Now we know () impls Z1(A) and Z2(B).
-impl () as Z1(A);
-impl () as Z2(B);
+// Now we know () impls Z.
+impl () as Z;
 
 // So no error here.
-impl () as Y(A) {}
+impl () as Y {}
 
-impl () as Z1(A) {}
-impl () as Z2(B) {}
+impl () as Z {}
 
 // --- require_for_symbolic_type.carbon
 library "[[@TEST_NAME]]";
@@ -124,6 +118,32 @@ interface Y {
 
 // This only matches T that impl Z so no error here.
 impl forall [T:! Z] T as Y {}
+
+// --- require_for_generic_interfaces.carbon
+library "[[@TEST_NAME]]";
+
+interface Z1(T:! type) {}
+interface Z2(T:! type) {}
+
+class A;
+class B;
+
+interface Y(U:! type) {
+  extend require impls Z1(U) & Z2(B);
+}
+
+// () does not need to impl Z1(A) and Z2(B) yet.
+impl () as Y(A);
+
+// Now we know () impls Z1(A) and Z2(B).
+impl () as Z1(A);
+impl () as Z2(B);
+
+// So no error here.
+impl () as Y(A) {}
+
+impl () as Z1(A) {}
+impl () as Z2(B) {}
 
 // --- fail_require_non_self_missing.carbon
 library "[[@TEST_NAME]]";
