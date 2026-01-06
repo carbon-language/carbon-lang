@@ -79,6 +79,15 @@ auto InitRepr::ForType(const File& file, TypeId type_id) -> InitRepr {
   }
 }
 
+auto ReturnTypeInfo::ForCallee(const File& file, InstId callee_id,
+                               SemIR::SpecificId caller_specific_id)
+    -> ReturnTypeInfo {
+  auto callee_function =
+      SemIR::GetCalleeAsFunction(file, callee_id, caller_specific_id);
+  auto function = file.functions().Get(callee_function.function_id);
+  return ForFunction(file, function, callee_function.resolved_specific_id);
+}
+
 auto NumericTypeLiteralInfo::ForType(const File& file, ClassType class_type)
     -> NumericTypeLiteralInfo {
   // Quickly rule out any class that's not a specific.

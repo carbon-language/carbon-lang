@@ -1006,15 +1006,6 @@ struct CallExpr {
   Lex::CloseParenTokenIndex token;
 };
 
-// A callsite `ref` tag: `F(ref x)` or `F({.x = ref x})
-struct RefTag {
-  static constexpr auto Kind = NodeKind::RefTag.Define(
-      {.category = NodeCategory::Expr, .child_count = 1});
-
-  Lex::RefTokenIndex token;
-  AnyExprId tagged_expr;
-};
-
 // A member access expression: `a.b` or `a.(b)`.
 struct MemberAccessExpr {
   static constexpr auto Kind = NodeKind::MemberAccessExpr.Define(

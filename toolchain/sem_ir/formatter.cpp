@@ -1005,6 +1005,7 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
       case ExprCategory::Value:
       case ExprCategory::Pattern:
       case ExprCategory::Mixed:
+      case ExprCategory::RefTagged:
         break;
       case ExprCategory::DurableRef:
       case ExprCategory::EphemeralRef:
@@ -1287,12 +1288,16 @@ auto Formatter::FormatCallRhs(Call inst) -> void {
 
   llvm::ArrayRef<InstId> args = sem_ir_->inst_blocks().Get(inst.args_id);
 
-  auto return_info = ReturnTypeInfo::ForType(*sem_ir_, inst.type_id);
+  auto return_info = ReturnTypeInfo::ForCallee(*sem_ir_, inst.callee_id);
   if (!return_info.is_valid()) {
     out_ << "(<invalid return info>)";
     return;
   }
-  bool has_return_slot = return_info.has_return_slot();
+
+  // Error in the inst type may indicate that the return type was incomplete
+  // when the inst was created, and so no return slot was added.
+  bool has_return_slot =
+      return_info.has_return_slot() && inst.type_id != SemIR::ErrorInst::TypeId;
   InstId return_slot_arg_id = InstId::None;
   if (has_return_slot) {
     return_slot_arg_id = args.consume_back();
@@ -1448,8 +1453,7 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
     }
   }
 
-  if (info.other_requirements || !info.builtin_constraint_mask.empty() ||
-      !info.self_impls_constraints.empty() ||
+  if (info.other_requirements || !info.self_impls_constraints.empty() ||
       !info.rewrite_constraints.empty()) {
     out_ << " where ";
     llvm::ListSeparator and_sep(" and ");
@@ -1479,10 +1483,6 @@ auto Formatter::FormatArg(FacetTypeId id) -> void {
       FormatArg(rewrite.lhs_id);
       out_ << " = ";
       FormatArg(rewrite.rhs_id);
-    }
-    if (info.builtin_constraint_mask.HasAnyOf(
-            BuiltinConstraintMask::TypeCanDestroy)) {
-      out_ << and_sep << ".Self impls <CanDestroy>";
     }
     if (info.other_requirements) {
       out_ << and_sep << "TODO";

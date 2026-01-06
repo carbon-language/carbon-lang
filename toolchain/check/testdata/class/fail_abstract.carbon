@@ -875,7 +875,7 @@ fn CallReturnAbstract() {
 // CHECK:STDOUT: fn @CallReturnAbstract() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ReturnAbstract.ref: %ReturnAbstract.type = name_ref ReturnAbstract, file.%ReturnAbstract.decl [concrete = constants.%ReturnAbstract]
-// CHECK:STDOUT:   %ReturnAbstract.call: init <error> = call %ReturnAbstract.ref()
+// CHECK:STDOUT:   %ReturnAbstract.call: init <error> = call %ReturnAbstract.ref(<invalid return info>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

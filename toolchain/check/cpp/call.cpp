@@ -22,8 +22,8 @@ namespace Carbon::Check {
 auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
                               SemIR::CppOverloadSetId overload_set_id,
                               SemIR::InstId self_id,
-                              llvm::ArrayRef<SemIR::InstId> arg_ids)
-    -> SemIR::InstId {
+                              llvm::ArrayRef<SemIR::InstId> arg_ids,
+                              bool is_operator_syntax) -> SemIR::InstId {
   SemIR::InstId callee_id = PerformCppOverloadResolution(
       context, loc_id, overload_set_id, self_id, arg_ids);
   SemIR::Callee callee = GetCallee(context.sem_ir(), callee_id);
@@ -37,7 +37,8 @@ auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
         // Preserve the `self` argument from the original callee.
         fn.self_id = self_id;
       }
-      return PerformCallToFunction(context, loc_id, callee_id, fn, arg_ids);
+      return PerformCallToFunction(context, loc_id, callee_id, fn, arg_ids,
+                                   is_operator_syntax);
     }
     case CARBON_KIND(SemIR::CalleeCppOverloadSet _): {
       CARBON_FATAL("overloads can't be recursive");

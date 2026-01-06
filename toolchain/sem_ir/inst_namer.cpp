@@ -617,8 +617,8 @@ auto InstNamer::PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
       *this, require_loc,
       // TODO: Include the Interface being required if there's only one, instead
       // of the index.
-      llvm::formatv("{0}{1}require{2}", scope_prefix,
-                    scope_prefix.empty() ? "" : ".", require_impls_id.index));
+      llvm::formatv("{0}{1}{2}", scope_prefix, scope_prefix.empty() ? "" : ".",
+                    require_impls_id));
 
   auto decl = sem_ir_->insts().GetAs<SemIR::RequireImplsDecl>(require.decl_id);
   AddBlockLabel(scope_id, decl.decl_block_id, "require", require_loc);
@@ -947,7 +947,6 @@ auto InstNamer::NamingContext::NameInst() -> void {
       const auto& facet_type_info =
           sem_ir().facet_types().Get(inst.facet_type_id);
       bool has_where = facet_type_info.other_requirements ||
-                       !facet_type_info.builtin_constraint_mask.empty() ||
                        !facet_type_info.self_impls_constraints.empty() ||
                        !facet_type_info.self_impls_named_constraints.empty() ||
                        !facet_type_info.rewrite_constraints.empty();

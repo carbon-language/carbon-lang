@@ -53,7 +53,9 @@ cc_library(
     srcs = ["clang_invocation.cpp"],
     hdrs = ["clang_invocation.h"],
     deps = [
+        ":install_paths",
         "//common:check",
+        "//common:string_helpers",
         "//toolchain/diagnostics:diagnostic_emitter",
         "@llvm-project//clang:basic",
         "@llvm-project//clang:frontend",

@@ -9,6 +9,7 @@
 
 #include "common/concepts.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/core_identifier.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"

@@ -8,6 +8,7 @@ import library "prelude/destroy";
 
 private fn MakeMaybeUnformed(t: type) -> type = "maybe_unformed.make_type";
 
-class MaybeUnformed(T:! type) {
+// TODO: This should probably support non-destructible types.
+class MaybeUnformed(T:! Destroy) {
   adapt MakeMaybeUnformed(T);
 }

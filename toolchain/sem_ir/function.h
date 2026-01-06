@@ -68,7 +68,7 @@ struct FunctionFields {
 
   // Which, if any, virtual modifier (virtual, abstract, or impl) is applied to
   // this function.
-  VirtualModifier virtual_modifier;
+  VirtualModifier virtual_modifier = VirtualModifier::None;
 
   // The index of the vtable slot for this virtual function. -1 if the function
   // is not virtual (ie: (virtual_modifier == None) == (virtual_index == -1)).
@@ -232,13 +232,14 @@ struct CalleeNonFunction {};
 using Callee = std::variant<CalleeCppOverloadSet, CalleeError, CalleeFunction,
                             CalleeNonFunction>;
 
-// Returns information for the function corresponding to callee_id.
+// Returns information for the function corresponding to callee_id in
+// caller_specific_id.
 auto GetCallee(const File& sem_ir, InstId callee_id,
-               SpecificId specific_id = SpecificId::None) -> Callee;
+               SpecificId caller_specific_id = SpecificId::None) -> Callee;
 
 // Like `GetCallee`, but restricts to the `Function` callee kind.
 auto GetCalleeAsFunction(const File& sem_ir, InstId callee_id,
-                         SpecificId specific_id = SpecificId::None)
+                         SpecificId caller_specific_id = SpecificId::None)
     -> CalleeFunction;
 
 struct DecomposedVirtualFunction {

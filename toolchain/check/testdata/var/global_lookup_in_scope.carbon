@@ -32,11 +32,8 @@ fn Main() {
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value %struct_type.v, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.b09: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.dc8: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.b09 = struct_value () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.dc8, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value) [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -90,12 +87,12 @@ fn Main() {
 // CHECK:STDOUT:     %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete = constants.%struct_type.v]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %struct_type.v = ref_binding y, %y.var
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %y.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.dc8
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.dc8, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %y.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%y.var)
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %y.var, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%y.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp(%self.param: %struct_type.v) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

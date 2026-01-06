@@ -484,8 +484,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
 
     case SemIR::BuiltinFunctionKind::CharConvertChecked:
     case SemIR::BuiltinFunctionKind::FloatConvertChecked:
-    case SemIR::BuiltinFunctionKind::IntConvertChecked:
-    case SemIR::BuiltinFunctionKind::TypeCanDestroy: {
+    case SemIR::BuiltinFunctionKind::IntConvertChecked: {
       // TODO: Check this statically.
       CARBON_CHECK(builtin_kind.IsCompTimeOnly(
           context.sem_ir(), arg_ids,
@@ -506,10 +505,6 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                                     context.GetValue(arg_ids[0])));
       return;
     }
-
-    case SemIR::BuiltinFunctionKind::TypeDestroy:
-      // TODO: Destroy aggregate members.
-      return;
   }
 
   CARBON_FATAL("Unsupported builtin call.");
@@ -579,29 +574,30 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   // TODO: Should the `bound_method` be removed when forming the `call`
   // instruction? The `self` parameter is transferred into the call argument
   // list.
-  auto callee_id = inst.callee_id;
-  if (auto bound_method =
-          context.sem_ir().insts().TryGetAs<SemIR::BoundMethod>(callee_id)) {
-    callee_id = bound_method->function_decl_id;
+  FunctionContext::InstInFile callee = {.file = &context.sem_ir(),
+                                        .inst_id = inst.callee_id};
+  if (auto bound_method = context.sem_ir().insts().TryGetAs<SemIR::BoundMethod>(
+          callee.inst_id)) {
+    callee.inst_id = bound_method->function_decl_id;
   }
 
   // Map to the callee in the specific. This might be in a different file than
   // the one we're currently lowering.
-  const auto* callee_file = &context.sem_ir();
   if (context.specific_id().has_value()) {
     auto [const_file, const_id] = GetConstantValueInSpecific(
         context.specific_sem_ir(), context.specific_id(), context.sem_ir(),
-        callee_id);
-    callee_file = const_file;
-    callee_id = const_file->constant_values().GetInstIdIfValid(const_id);
-    CARBON_CHECK(callee_id.has_value());
+        callee.inst_id);
+    callee.file = const_file;
+    callee.inst_id = const_file->constant_values().GetInstIdIfValid(const_id);
+    CARBON_CHECK(callee.inst_id.has_value());
   }
 
-  auto callee_function = SemIR::GetCalleeAsFunction(*callee_file, callee_id);
+  auto callee_function =
+      SemIR::GetCalleeAsFunction(*callee.file, callee.inst_id);
 
   const SemIR::Function& function =
-      callee_file->functions().Get(callee_function.function_id);
-  context.AddCallToCurrentFingerprint(callee_file->check_ir_id(),
+      callee.file->functions().Get(callee_function.function_id);
+  context.AddCallToCurrentFingerprint(callee.file->check_ir_id(),
                                       callee_function.function_id,
                                       callee_function.resolved_specific_id);
 
@@ -613,11 +609,10 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
   std::vector<llvm::Value*> args;
 
-  auto inst_type = context.GetTypeIdOfInst(inst_id);
   bool call_has_return_slot =
-      SemIR::ReturnTypeInfo::ForType(context.sem_ir(), inst.type_id)
+      SemIR::ReturnTypeInfo::ForCallee(context.sem_ir(), inst.callee_id)
           .has_return_slot();
-  if (context.GetReturnTypeInfo(inst_type).info.has_return_slot()) {
+  if (context.GetReturnTypeInfo(callee).info.has_return_slot()) {
     CARBON_CHECK(call_has_return_slot);
     args.push_back(context.GetValue(arg_ids.consume_back()));
   } else if (call_has_return_slot) {
@@ -635,14 +630,14 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
   llvm::CallInst* call;
   if (function.virtual_modifier == SemIR::Function::VirtualModifier::None) {
-    auto* callee =
-        context.GetFileContext(callee_file)
+    auto* llvm_callee =
+        context.GetFileContext(callee.file)
             .GetOrCreateFunction(callee_function.function_id,
                                  callee_function.resolved_specific_id);
     auto describe_call = [&] {
       RawStringOstream out;
       out << "call ";
-      callee->printAsOperand(out);
+      llvm_callee->printAsOperand(out);
       out << "(";
       llvm::ListSeparator sep;
       for (auto* arg : args) {
@@ -650,14 +645,14 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
         arg->printAsOperand(out);
       }
       out << ")\n";
-      callee->print(out);
+      llvm_callee->print(out);
       return out.TakeStr();
     };
-    CARBON_CHECK(callee->arg_size() == args.size(),
+    CARBON_CHECK(llvm_callee->arg_size() == args.size(),
                  "Argument count mismatch: {0}", describe_call());
-    call = context.builder().CreateCall(callee, args);
+    call = context.builder().CreateCall(llvm_callee, args);
   } else {
-    call = HandleVirtualCall(context, args, callee_file, function,
+    call = HandleVirtualCall(context, args, callee.file, function,
                              callee_function);
   }
 

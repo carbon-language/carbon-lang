@@ -33,6 +33,7 @@
 namespace Carbon {
 namespace {
 
+using ::testing::Each;
 using ::testing::Eq;
 using ::testing::HasSubstr;
 using ::testing::IsSupersetOf;
@@ -59,6 +60,12 @@ MATCHER_P(TextSymbolNamed, name_matcher, "") {
     return false;
   }
   return true;
+}
+
+// NOLINTNEXTLINE(modernize-use-trailing-return-type): Macro based function.
+MATCHER(IsBasename, "") {
+  std::filesystem::path path = arg;
+  return path == path.filename();
 }
 
 class ClangRuntimesTest : public ::testing::Test {
@@ -91,6 +98,28 @@ class ClangRuntimesTest : public ::testing::Test {
 
     // Do the actual match with `HasSubstr` so it can explain failures.
     EXPECT_THAT(nm_list, HasSubstr(symbol_substr));
+  }
+
+  // Helper to get the names of archive members.
+  auto ListArchiveMemberNames(const std::filesystem::path& archive_path)
+      -> llvm::SmallVector<std::string> {
+    llvm::SmallVector<std::string> result;
+
+    auto archive_buffer_result =
+        llvm::MemoryBuffer::getFile(archive_path.native());
+    CARBON_CHECK(!archive_buffer_result.getError(), "Unable to open {0}: {1}",
+                 archive_path, archive_buffer_result.getError().message());
+    auto archive = llvm::cantFail(llvm::object::Archive::create(
+        archive_buffer_result.get()->getMemBufferRef()));
+
+    llvm::Error error = llvm::Error::success();
+    for (const auto& child : archive->children(error)) {
+      result.push_back(child.getName()->str());
+    }
+    CARBON_CHECK(!error, "Error reading members of archive {0}: {1}",
+                 archive_path, error);
+
+    return result;
   }
 
   InstallPaths install_paths_ =
@@ -177,6 +206,11 @@ TEST_F(ClangRuntimesTest, ResourceDir) {
   if (!target_triple_.isOSWindows()) {
     EXPECT_THAT(builtins_symbols, Not(HasSubstr("chkstk")));
   }
+
+  // Check that member names don't contain full paths, as that is the
+  // canonical format produced by `ar`.
+  auto member_names = ListArchiveMemberNames(builtins_path);
+  EXPECT_THAT(member_names, Each(IsBasename()));
 }
 
 TEST_F(ClangRuntimesTest, Libunwind) {
@@ -196,6 +230,11 @@ TEST_F(ClangRuntimesTest, Libunwind) {
   ExpectSymbol(libunwind_symbols, "_Unwind_Backtrace");
   ExpectSymbol(libunwind_symbols, "__unw_getcontext");
   ExpectSymbol(libunwind_symbols, "__unw_get_proc_info");
+
+  // Check that member names don't contain full paths, as that is the
+  // canonical format produced by `ar`.
+  auto member_names = ListArchiveMemberNames(libunwind_path);
+  EXPECT_THAT(member_names, Each(IsBasename()));
 }
 
 TEST_F(ClangRuntimesTest, Libcxx) {
@@ -232,6 +271,11 @@ TEST_F(ClangRuntimesTest, Libcxx) {
   ExpectSymbol(libcxx_symbols, "__cxa_demangle");
   ExpectSymbol(libcxx_symbols, "__cxa_get_globals");
   ExpectSymbol(libcxx_symbols, "_ZSt9terminatev");
+
+  // Check that member names don't contain full paths, as that is the
+  // canonical format produced by `ar`.
+  auto member_names = ListArchiveMemberNames(libcxx_path);
+  EXPECT_THAT(member_names, Each(IsBasename()));
 }
 
 }  // namespace

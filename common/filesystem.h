@@ -1023,25 +1023,22 @@ class Dir : public DirRef {
 class RemovingDir : public Dir {
  public:
   // Takes ownership of the open directory `d` and wraps it in a `RemovingDir`
-  // that will remove it on destruction using `abs_path`. Requires `abs_path` to
-  // be an absolute path and the desired path to remove on destruction.
+  // that will remove it on destruction using `path`. Note that for a relative
+  // `path`, the removal will re-resolve this relative to the current working
+  // directory on removal.
   //
   // Note that there is no way for the implementation to validate what directory
-  // `abs_path` refers to, that is the responsibility of the caller.
-  explicit RemovingDir(Dir d, std::filesystem::path abs_path)
-      : Dir(std::move(d)), abs_path_(std::move(abs_path)) {
-    CARBON_CHECK(abs_path_.is_absolute(), "Relative path used for removal: {0}",
-                 abs_path_);
-  }
+  // `path` refers to, that is the responsibility of the caller.
+  explicit RemovingDir(Dir d, std::filesystem::path path)
+      : Dir(std::move(d)), path_(std::move(path)) {}
 
   RemovingDir() = default;
   RemovingDir(RemovingDir&& arg) = default;
   auto operator=(RemovingDir&& rhs) -> RemovingDir& = default;
   ~RemovingDir();
 
-  auto abs_path() const [[clang::lifetimebound]]
-  -> const std::filesystem::path& {
-    return abs_path_;
+  auto path() const [[clang::lifetimebound]] -> const std::filesystem::path& {
+    return path_;
   }
 
   // Releases the directory from being removed and returns just the underlying
@@ -1054,7 +1051,7 @@ class RemovingDir : public Dir {
  private:
   friend Dir;
 
-  std::filesystem::path abs_path_;
+  std::filesystem::path path_;
 };
 
 // A named entry in a directory.
@@ -1745,7 +1742,7 @@ inline auto Dir::TakeAndRead() && -> ErrorOr<Reader, FdError> {
 }
 
 inline Dir::Dir(RemovingDir&& arg) noexcept : Dir(static_cast<Dir&&>(arg)) {
-  arg.abs_path_.clear();
+  arg.path_.clear();
 }
 
 constexpr auto Dir::Destroy() -> void {
@@ -1794,7 +1791,7 @@ inline auto RemovingDir::Remove() && -> ErrorOr<Success, PathError> {
 
   // Close the directory base object prior to removing it.
   static_cast<Dir&>(*this) = Dir();
-  return Cwd().Rmtree(abs_path_);
+  return Cwd().Rmtree(path_);
 }
 
 inline auto Dir::Iterator::operator++() -> Iterator& {

@@ -132,7 +132,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %Add.Op.type: type = fn_type @Add.Op [concrete]
 // CHECK:STDOUT:   %Add.Op: %Add.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
-// CHECK:STDOUT:   %pattern_type.f84: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %pattern_type.5af: type = pattern_type %Self.binding.as_type [symbolic]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %C.as.Add.impl.Op.type: type = fn_type @C.as.Add.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.Add.impl.Op: %C.as.Add.impl.Op.type = struct_value () [concrete]
@@ -142,7 +142,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type @Add [concrete]
 // CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, imports.%Main.import_ref.4b6 [concrete]
-// CHECK:STDOUT:   %.f0f: type = fn_type_with_self_type %Add.Op.type, %Add.facet [concrete]
+// CHECK:STDOUT:   %.b2f: type = fn_type_with_self_type %Add.Op.type, %Add.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -151,10 +151,10 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.381 = import_ref Main//a, loc4_15, unloaded
+// CHECK:STDOUT:   %Main.import_ref.17c = import_ref Main//a, loc4_15, unloaded
 // CHECK:STDOUT:   %Main.import_ref.f0e: %Add.assoc_type = import_ref Main//a, loc5_41, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.Op: %Add.Op.type = import_ref Main//a, Op, loaded [concrete = constants.%Add.Op]
-// CHECK:STDOUT:   %Main.import_ref.241: %Add.type = import_ref Main//a, loc4_15, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.bb0: %Add.type = import_ref Main//a, loc4_15, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.4b6: %Add.Op.type = import_ref Main//a, loc5_41, loaded [concrete = constants.%Add.Op]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -194,7 +194,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Add [from "a.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.381
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.17c
 // CHECK:STDOUT:   .Op = imports.%Main.import_ref.f0e
 // CHECK:STDOUT:   witness = (imports.%Main.Op)
 // CHECK:STDOUT:
@@ -240,10 +240,10 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Add.Op(imports.%Main.import_ref.241: %Add.type) [from "a.carbon"] {
+// CHECK:STDOUT: generic fn @Add.Op(imports.%Main.import_ref.bb0: %Add.type) [from "a.carbon"] {
 // CHECK:STDOUT:   %Self: %Add.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.f84)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.5af)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -268,7 +268,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %x.ref: %C = name_ref x, %x
 // CHECK:STDOUT:   %Add.ref: type = name_ref Add, imports.%Main.Add [concrete = constants.%Add.type]
 // CHECK:STDOUT:   %Op.ref: %Add.assoc_type = name_ref Op, imports.%Main.import_ref.f0e [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.f0f = impl_witness_access constants.%Add.impl_witness, element0 [concrete = constants.%C.as.Add.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.b2f = impl_witness_access constants.%Add.impl_witness, element0 [concrete = constants.%C.as.Add.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.ref, %impl.elem0
 // CHECK:STDOUT:   %y.ref: %C = name_ref y, %y
 // CHECK:STDOUT:   %C.as.Add.impl.Op.call: init %C = call %bound_method(%x.ref, %y.ref)
@@ -278,7 +278,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT: specific @Add.Op(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.f84
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.5af
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.Op(constants.%Add.facet) {

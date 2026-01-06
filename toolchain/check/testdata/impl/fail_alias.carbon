@@ -37,7 +37,7 @@ impl AC as AI {}
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.518eb8.1.%I.impl_witness_table [concrete]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.e47215.1.%I.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -53,11 +53,11 @@ impl AC as AI {}
 // CHECK:STDOUT:   %AI: type = alias_binding AI, %I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %AC: type = alias_binding AC, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   impl_decl @C.as.I.impl.518eb8.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @C.as.I.impl.e47215.1 [concrete] {} {
 // CHECK:STDOUT:     %AC.ref: type = name_ref AC, file.%AC [concrete = constants.%C]
 // CHECK:STDOUT:     %AI.ref: type = name_ref AI, file.%AI [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   impl_decl @C.as.I.impl.518eb8.2 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @C.as.I.impl.e47215.2 [concrete] {} {
 // CHECK:STDOUT:     %AC.ref: type = name_ref AC, file.%AC [concrete = constants.%C]
 // CHECK:STDOUT:     %AI.ref: type = name_ref AI, file.%AI [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
@@ -73,15 +73,15 @@ impl AC as AI {}
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.I.impl.518eb8.1: %AC.ref as %AI.ref {
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @C.as.I.impl.518eb8.1 [concrete]
+// CHECK:STDOUT: impl @C.as.I.impl.e47215.1: %AC.ref as %AI.ref {
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @C.as.I.impl.e47215.1 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.I.impl.518eb8.2: %AC.ref as %AI.ref {
+// CHECK:STDOUT: impl @C.as.I.impl.e47215.2: %AC.ref as %AI.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }

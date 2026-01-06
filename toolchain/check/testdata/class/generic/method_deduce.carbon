@@ -76,11 +76,8 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %Class.GetNoDeduce.specific_fn.83b: <specific function> = specific_function %Class.GetNoDeduce.472, @Class.GetNoDeduce(%A, %B) [concrete]
 // CHECK:STDOUT:   %A.val: %A = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value %A, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.68e: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.31a: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.68e = struct_value () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.31a, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value) [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT:   %complete_type.f71: <witness> = complete_type_witness %tuple.type.e87 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -303,12 +300,12 @@ fn CallGenericMethodWithNonDeducedParam(c: Class(A)) -> (A, B) {
 // CHECK:STDOUT:   %.loc28_25.5: ref %A = converted %.loc28_25.1, %.loc28_25.4
 // CHECK:STDOUT:   %.loc28_25.6: %A = acquire_value %.loc28_25.5
 // CHECK:STDOUT:   %Class.GetNoDeduce.call: init %tuple.type.e87 = call %Class.GetNoDeduce.specific_fn(%.loc28_25.6) to %.loc27_54
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc28_25.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.31a
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.31a, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc28_25.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc28_25.4)
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc28_25.4, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc28_25.4)
 // CHECK:STDOUT:   return %Class.GetNoDeduce.call to %return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp(%self.param: %A) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Class(constants.%T) {
 // CHECK:STDOUT:   %T.loc18_13.1 => constants.%T

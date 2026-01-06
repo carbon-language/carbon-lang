@@ -242,11 +242,8 @@ fn Call3() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc12_12.2.temp), !dbg !10
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc12_12.2.temp, ptr align 1 @X.val.loc12_12.3, i64 0, i1 false), !dbg !10
 // CHECK:STDOUT:   call void @_Z3fooIJEEv1XDpT_.carbon_thunk(ptr %.loc12_12.2.temp), !dbg !11
-// CHECK:STDOUT:   call void @_ZN1XD1Ev(ptr %.loc12_12.2.temp), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZN1XD1Ev(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCall2.Main() #0 !dbg !13 {
@@ -255,7 +252,6 @@ fn Call3() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_12.2.temp), !dbg !14
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc18_12.2.temp, ptr align 1 @X.val.loc12_12.3, i64 0, i1 false), !dbg !14
 // CHECK:STDOUT:   call void @_Z3fooIJiEEv1XDpT_.carbon_thunk(ptr %.loc18_12.2.temp, i32 2), !dbg !15
-// CHECK:STDOUT:   call void @_ZN1XD1Ev(ptr %.loc18_12.2.temp), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -266,7 +262,6 @@ fn Call3() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc24_12.2.temp), !dbg !18
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc24_12.2.temp, ptr align 1 @X.val.loc12_12.3, i64 0, i1 false), !dbg !18
 // CHECK:STDOUT:   call void @_Z3fooIJiiEEv1XDpT_.carbon_thunk(ptr %.loc24_12.2.temp, i32 2, i32 3), !dbg !19
-// CHECK:STDOUT:   call void @_ZN1XD1Ev(ptr %.loc24_12.2.temp), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

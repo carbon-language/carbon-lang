@@ -49,10 +49,12 @@ class MatchContext {
     // `None` when processing the callee side.
     SemIR::InstId scrutinee_id;
 
-    bool is_self = false;
+    // If true, disables diagnostics that would otherwise require scrutinee_id
+    // to be tagged with `ref`. Only affects caller pattern matching.
+    bool allow_unmarked_ref = false;
     auto Print(llvm::raw_ostream& out) const -> void {
       out << "{pattern_id: " << pattern_id << ", scrutinee_id: " << scrutinee_id
-          << ", is_self = " << is_self << "}";
+          << ", allow_unmarked_ref = " << allow_unmarked_ref << "}";
     }
   };
 
@@ -61,7 +63,7 @@ class MatchContext {
   // specific.
   explicit MatchContext(MatchKind kind, SemIR::SpecificId callee_specific_id =
                                             SemIR::SpecificId::None)
-      : next_index_(0), kind_(kind), callee_specific_id_(callee_specific_id) {}
+      : kind_(kind), callee_specific_id_(callee_specific_id) {}
 
   // Adds a work item to the stack.
   auto AddWork(WorkItem work_item) -> void { stack_.push_back(work_item); }
@@ -73,13 +75,6 @@ class MatchContext {
   auto DoWork(Context& context) -> SemIR::InstBlockId;
 
  private:
-  // Allocates the next unallocated RuntimeParamIndex, starting from 0.
-  auto NextRuntimeIndex() -> SemIR::CallParamIndex {
-    auto result = next_index_;
-    ++next_index_.index;
-    return result;
-  }
-
   // Emits the pattern-match insts necessary to match the pattern inst
   // `entry.pattern_id` against the scrutinee value `entry.scrutinee_id`, and
   // adds to `stack_` any work necessary to traverse into its subpatterns. This
@@ -119,9 +114,6 @@ class MatchContext {
 
   // The stack of work to be processed.
   llvm::SmallVector<WorkItem> stack_;
-
-  // The next index to be allocated by `NextRuntimeIndex`.
-  SemIR::CallParamIndex next_index_;
 
   // The pending results that will be returned by the current `DoWork` call.
   // It represents the contents of the `Call` arguments block when kind_
@@ -277,10 +269,6 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
       break;
     }
     case MatchKind::Callee: {
-      CARBON_CHECK(!param_pattern.index.has_value(),
-                   "ValueParamPattern index set before callee pattern match");
-      param_pattern.index = NextRuntimeIndex();
-      ReplaceInstBeforeConstantUse(context, entry.pattern_id, param_pattern);
       auto param_id = AddInst<SemIR::ValueParam>(
           context, SemIR::LocId(entry.pattern_id),
           {.type_id =
@@ -323,15 +311,14 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
                                          entry.pattern_id));
       results_.push_back(Convert(
           context, SemIR::LocId(entry.scrutinee_id), entry.scrutinee_id,
-          {.kind = ConversionTarget::RefParam, .type_id = scrutinee_type_id}));
+          {.kind = entry.allow_unmarked_ref ? ConversionTarget::UnmarkedRefParam
+                                            : ConversionTarget::RefParam,
+           .type_id = scrutinee_type_id}));
       // Do not traverse farther, because the caller side of the pattern
       // ends here.
       break;
     }
     case MatchKind::Callee: {
-      CARBON_CHECK(!param_pattern.index.has_value());
-      param_pattern.index = NextRuntimeIndex();
-      ReplaceInstBeforeConstantUse(context, entry.pattern_id, param_pattern);
       auto param_id = AddInst<SemIR::RefParam>(
           context, SemIR::LocId(entry.pattern_id),
           {.type_id =
@@ -374,9 +361,6 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
     case MatchKind::Callee: {
       // TODO: Consider ways to address near-duplication with the
       // other ParamPattern cases.
-      CARBON_CHECK(!param_pattern.index.has_value());
-      param_pattern.index = NextRuntimeIndex();
-      ReplaceInstBeforeConstantUse(context, entry.pattern_id, param_pattern);
       auto param_id = AddInst<SemIR::OutParam>(
           context, SemIR::LocId(entry.pattern_id),
           {.type_id =
@@ -645,8 +629,8 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
                         SemIR::InstBlockId return_patterns_id,
                         SemIR::InstId self_arg_id,
                         llvm::ArrayRef<SemIR::InstId> arg_refs,
-                        SemIR::InstId return_slot_arg_id)
-    -> SemIR::InstBlockId {
+                        SemIR::InstId return_slot_arg_id,
+                        bool is_operator_syntax) -> SemIR::InstBlockId {
   MatchContext match(MatchKind::Caller, specific_id);
 
   auto return_patterns = context.inst_blocks().GetOrEmpty(return_patterns_id);
@@ -661,13 +645,15 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
   // Check type conversions per-element.
   for (auto [arg_id, param_pattern_id] : llvm::reverse(llvm::zip_equal(
            arg_refs, context.inst_blocks().GetOrEmpty(param_patterns_id)))) {
-    match.AddWork({.pattern_id = param_pattern_id, .scrutinee_id = arg_id});
+    match.AddWork({.pattern_id = param_pattern_id,
+                   .scrutinee_id = arg_id,
+                   .allow_unmarked_ref = is_operator_syntax});
   }
 
   if (self_pattern_id.has_value()) {
     match.AddWork({.pattern_id = self_pattern_id,
                    .scrutinee_id = self_arg_id,
-                   .is_self = true});
+                   .allow_unmarked_ref = true});
   }
 
   return match.DoWork(context);

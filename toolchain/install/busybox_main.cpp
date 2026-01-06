@@ -27,11 +27,10 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
   // Start by resolving any symlinks.
   CARBON_ASSIGN_OR_RETURN(auto busybox_info, GetBusyboxInfo(argv[0]));
 
-  auto fs = llvm::vfs::getRealFileSystem();
+  std::filesystem::path exe_path = busybox_info.bin_path.string();
+  exe_path = SetWorkingDirForBazelRun(exe_path);
 
-  // Resolve paths before calling SetWorkingDirForBazel.
-  std::string exe_path = busybox_info.bin_path.string();
-  const auto install_paths = InstallPaths::MakeExeRelative(exe_path);
+  const auto install_paths = InstallPaths::MakeExeRelative(exe_path.native());
   if (install_paths.error()) {
     return Error(*install_paths.error());
   }
@@ -44,7 +43,7 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
       (install_paths.llvm_install_bin().native() + "llvm-symbolizer").c_str(),
       /*overwrite=*/0);
 
-  SetWorkingDirForBazel();
+  auto fs = llvm::vfs::getRealFileSystem();
 
   llvm::SmallVector<llvm::StringRef> args;
   args.reserve(argc + 1);

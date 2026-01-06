@@ -11,6 +11,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "toolchain/base/install_paths.h"
 #include "toolchain/diagnostics/diagnostic_emitter.h"
 
 namespace Carbon {
@@ -20,8 +21,19 @@ namespace Carbon {
 // `consumer` if the arguments are invalid.
 auto BuildClangInvocation(Diagnostics::Consumer& consumer,
                           llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                          llvm::ArrayRef<std::string> clang_path_and_args)
+                          const InstallPaths& install_paths,
+                          llvm::StringRef target_str,
+                          llvm::ArrayRef<llvm::StringRef> extra_args = {})
     -> std::unique_ptr<clang::CompilerInvocation>;
+
+// Appends the default Clang command line arguments used when building a
+// Carbon-compatible Clang invocation.
+//
+// Where possible, code should use `BuildClangInvocation` above. However, when
+// invoking Clang directly, this can be used to get the core compatible flags.
+auto AppendDefaultClangArgs(const InstallPaths& install_paths,
+                            llvm::StringRef target_str,
+                            llvm::SmallVectorImpl<std::string>& args) -> void;
 
 }  // namespace Carbon
 

@@ -22,6 +22,17 @@ generation options.
       },
       [&](auto& arg_b) { arg_b.Set(&directory); });
 
+  b.AddFlag(
+      {
+          .name = "force",
+          .help = R"""(
+Force re-creating the provided output path from scratch
+
+This will **remove** the provided output path and re-create it from scratch.
+)""",
+      },
+      [&](CommandLine::FlagBuilder& arg_b) { arg_b.Set(&force); });
+
   codegen_options.Build(b);
 }
 
@@ -74,22 +85,19 @@ auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
       .target = options_.codegen_options.target.str()};
 
   bool is_cache = options_.directory.empty();
-  std::filesystem::path explicit_output_path = options_.directory.str();
-  if (!is_cache) {
-    auto access_result = Filesystem::Cwd().Access(explicit_output_path);
-    if (access_result.ok()) {
-      return Error("output directory already exists");
-    }
-    if (!access_result.error().no_entity()) {
-      return std::move(access_result).error();
-    }
-  }
+  std::filesystem::path output_path = options_.directory.str();
 
   CARBON_ASSIGN_OR_RETURN(
-      auto runtimes,
-      is_cache ? driver_env.runtimes_cache.Lookup(features)
-               : Runtimes::Make(explicit_output_path, driver_env.vlog_stream));
-  CARBON_ASSIGN_OR_RETURN(auto tmp_dir, Filesystem::MakeTmpDir());
+      auto runtimes, is_cache
+                         ? driver_env.runtimes_cache.Lookup(features)
+                         : Runtimes::Make(output_path, driver_env.vlog_stream));
+
+  if (options_.force) {
+    // Remove existing runtimes to force a rebuild.
+    CARBON_RETURN_IF_ERROR(runtimes.Remove(Runtimes::ClangResourceDir));
+    CARBON_RETURN_IF_ERROR(runtimes.Remove(Runtimes::LibUnwind));
+    CARBON_RETURN_IF_ERROR(runtimes.Remove(Runtimes::Libcxx));
+  }
 
   ClangResourceDirBuilder resource_dir_builder(&runner, driver_env.thread_pool,
                                                llvm::Triple(features.target),

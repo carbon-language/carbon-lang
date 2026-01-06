@@ -38,36 +38,6 @@ The linked file name. The output is always a linked binary.
   codegen_options.Build(b);
 }
 
-static void AddOSFlags(llvm::StringRef target,
-                       llvm::SmallVectorImpl<llvm::StringRef>& args) {
-  llvm::Triple triple(target);
-  switch (triple.getOS()) {
-    case llvm::Triple::Darwin:
-    case llvm::Triple::MacOSX:
-      // On macOS we need to set the sysroot to a viable SDK. Currently, this
-      // hard codes the path to be the unversioned symlink. The prefix is also
-      // hard coded in Homebrew and so this seems likely to work reasonably
-      // well. Homebrew and I suspect the Xcode Clang both have this hard coded
-      // at build time, so this seems reasonably safe but we can revisit if/when
-      // needed.
-      args.push_back(
-          "--sysroot=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk");
-      // We also need to insist on a modern linker, otherwise the driver tries
-      // too old and deprecated flags. The specific number here comes from an
-      // inspection of the Clang driver source code to understand where features
-      // were enabled, and this appears to be the latest version to control
-      // driver behavior.
-      //
-      // TODO: We should replace this with use of `lld` eventually.
-      args.push_back("-mlinker-version=705");
-      break;
-
-    default:
-      // By default, just let the Clang driver handle everything.
-      break;
-  }
-}
-
 static constexpr CommandLine::CommandInfo SubcommandInfo = {
     .name = "link",
     .help = R"""(
@@ -99,9 +69,6 @@ auto LinkSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       llvm::formatv("--target={0}", options_.codegen_options.target).str();
   clang_args.push_back(target_arg);
 
-  // Use LLD, which we provide in our install directory, for linking.
-  clang_args.push_back("-fuse-ld=lld");
-
   // Disable linking the C++ standard library until can build and ship it as
   // part of the Carbon toolchain. This clearly won't work once we get into
   // interop, but for now it avoids spurious failures and distraction. The plan
@@ -109,9 +76,6 @@ auto LinkSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // pointing at our bundled library.
   // TODO: Replace this when ready.
   clang_args.push_back("-nostdlib++");
-
-  // Add OS-specific flags based on the target.
-  AddOSFlags(options_.codegen_options.target, clang_args);
 
   clang_args.push_back("-o");
   clang_args.push_back(options_.output_filename);

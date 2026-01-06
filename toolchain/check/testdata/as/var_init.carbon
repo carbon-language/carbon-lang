@@ -33,19 +33,17 @@ fn Convert(t: ()) {
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.37a: type = facet_type <@ImplicitAs, @ImplicitAs(%X)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.062: type = facet_type <@ImplicitAs, @ImplicitAs(%X)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness @empty_tuple.type.as.ImplicitAs.impl.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.9f8: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%X) [concrete]
 // CHECK:STDOUT:   %pattern_type.05f: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.ImplicitAs.impl.Convert.type: type = fn_type @empty_tuple.type.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.ImplicitAs.impl.Convert: %empty_tuple.type.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.37a = facet_value %empty_tuple.type, (%ImplicitAs.impl_witness) [concrete]
-// CHECK:STDOUT:   %.5dd: type = fn_type_with_self_type %ImplicitAs.Convert.type.9f8, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.062 = facet_value %empty_tuple.type, (%ImplicitAs.impl_witness) [concrete]
+// CHECK:STDOUT:   %.198: type = fn_type_with_self_type %ImplicitAs.Convert.type.9f8, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %empty_tuple, %empty_tuple.type.as.ImplicitAs.impl.Convert [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value %X, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.e4a: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.cae: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.e4a = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -59,20 +57,20 @@ fn Convert(t: ()) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %X = var %x.var_patt
 // CHECK:STDOUT:   %.loc12_15.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %impl.elem0: %.5dd = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%empty_tuple.type.as.ImplicitAs.impl.Convert]
-// CHECK:STDOUT:   %bound_method.loc12_3.1: <bound method> = bound_method %.loc12_15.1, %impl.elem0 [concrete = constants.%empty_tuple.type.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %impl.elem0: %.198 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%empty_tuple.type.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc12_15.1, %impl.elem0 [concrete = constants.%empty_tuple.type.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %.loc12_3.1: ref %X = splice_block %x.var {}
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc12_15.2: %empty_tuple.type = converted %.loc12_15.1, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %empty_tuple.type.as.ImplicitAs.impl.Convert.call: init %X = call %bound_method.loc12_3.1(%.loc12_15.2) to %.loc12_3.1
+// CHECK:STDOUT:   %empty_tuple.type.as.ImplicitAs.impl.Convert.call: init %X = call %bound_method(%.loc12_15.2) to %.loc12_3.1
 // CHECK:STDOUT:   %.loc12_3.2: init %X = converted %.loc12_15.1, %empty_tuple.type.as.ImplicitAs.impl.Convert.call
 // CHECK:STDOUT:   assign %x.var, %.loc12_3.2
 // CHECK:STDOUT:   %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %x: ref %X = ref_binding x, %x.var
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %x.var, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.cae
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %bound_method.loc12_3.2: <bound method> = bound_method %x.var, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method.loc12_3.2(%x.var)
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %x.var, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%x.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp(%self.param: %X) = "no_op";
 // CHECK:STDOUT:

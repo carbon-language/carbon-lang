@@ -403,6 +403,8 @@ fn Use(y: Cpp.Y) -> i32 {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp(%self.param: %X) = "no_op";
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- import_special_name_call_escpaed.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

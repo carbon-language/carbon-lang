@@ -229,8 +229,8 @@ static auto CheckCalleeFunctionReturnType(Context& context, SemIR::LocId loc_id,
 auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
                            SemIR::InstId callee_id,
                            const SemIR::CalleeFunction& callee_function,
-                           llvm::ArrayRef<SemIR::InstId> arg_ids)
-    -> SemIR::InstId {
+                           llvm::ArrayRef<SemIR::InstId> arg_ids,
+                           bool is_operator_syntax) -> SemIR::InstId {
   // If the callee is a generic function, determine the generic argument values
   // for the call.
   auto callee_specific_id = ResolveCalleeInCall(
@@ -280,9 +280,9 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
   auto& callee = context.functions().Get(callee_function.function_id);
 
   // Convert the arguments to match the parameters.
-  auto converted_args_id =
-      ConvertCallArgs(context, loc_id, callee_function.self_id, arg_ids,
-                      return_slot_arg_id, callee, *callee_specific_id);
+  auto converted_args_id = ConvertCallArgs(
+      context, loc_id, callee_function.self_id, arg_ids, return_slot_arg_id,
+      callee, *callee_specific_id, is_operator_syntax);
 
   switch (callee.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::Thunk: {
@@ -355,7 +355,8 @@ static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
 }
 
 auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
-                 llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
+                 llvm::ArrayRef<SemIR::InstId> arg_ids, bool is_operator_syntax)
+    -> SemIR::InstId {
   // Try treating the callee as a function first.
   auto callee = GetCallee(context.sem_ir(), callee_id);
   CARBON_KIND_SWITCH(callee) {
@@ -363,18 +364,17 @@ auto PerformCall(Context& context, SemIR::LocId loc_id, SemIR::InstId callee_id,
       return SemIR::ErrorInst::InstId;
     }
     case CARBON_KIND(SemIR::CalleeFunction fn): {
-      context.ref_tags().Insert(fn.self_id, Context::RefTag::NotRequired);
-      return PerformCallToFunction(context, loc_id, callee_id, fn, arg_ids);
+      return PerformCallToFunction(context, loc_id, callee_id, fn, arg_ids,
+                                   is_operator_syntax);
     }
     case CARBON_KIND(SemIR::CalleeNonFunction _): {
       return PerformCallToNonFunction(context, loc_id, callee_id, arg_ids);
     }
 
     case CARBON_KIND(SemIR::CalleeCppOverloadSet overload): {
-      context.ref_tags().Insert(overload.self_id, Context::RefTag::NotRequired);
-      return PerformCallToCppFunction(context, loc_id,
-                                      overload.cpp_overload_set_id,
-                                      overload.self_id, arg_ids);
+      return PerformCallToCppFunction(
+          context, loc_id, overload.cpp_overload_set_id, overload.self_id,
+          arg_ids, is_operator_syntax);
     }
   }
 }

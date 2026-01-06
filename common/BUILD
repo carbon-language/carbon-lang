@@ -32,6 +32,8 @@ cc_library(
     name = "bazel_working_dir",
     hdrs = ["bazel_working_dir.h"],
     deps = [
+        ":check",
+        ":filesystem",
         "@llvm-project//llvm:Support",
     ],
 )

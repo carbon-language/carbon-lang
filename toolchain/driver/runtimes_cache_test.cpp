@@ -74,7 +74,7 @@ using ::testing::VariantWith;
 class RuntimesCacheTest : public ::testing::Test {
  public:
   RuntimesCacheTest()
-      : cache_(*Runtimes::Cache::MakeCustom(install_, tmp_dir_.abs_path())) {}
+      : cache_(*Runtimes::Cache::MakeCustom(install_, tmp_dir_.path())) {}
 
   auto LookupNRuntimes(int n) -> llvm::SmallVector<Runtimes> {
     llvm::SmallVector<Runtimes> runtimes;
@@ -98,13 +98,13 @@ TEST_F(RuntimesCacheTest, BuildSystemCache) {
   bad_install_dir.WriteFileFromString("carbon_install.txt", "no digest")
       .Check();
   InstallPaths bad_install =
-      InstallPaths::Make((tmp_dir_.abs_path() / "bad_install").native());
+      InstallPaths::Make((tmp_dir_.path() / "bad_install").native());
 
   // Create directories to use in various environment variables.
   auto xdg_dir = *tmp_dir_.CreateDirectories("xdg_cache_home");
-  std::filesystem::path xdg_path = tmp_dir_.abs_path() / "xdg_cache_home";
+  std::filesystem::path xdg_path = tmp_dir_.path() / "xdg_cache_home";
   auto test_home = *tmp_dir_.CreateDirectories("test_home");
-  std::filesystem::path home_path = tmp_dir_.abs_path() / "test_home";
+  std::filesystem::path home_path = tmp_dir_.path() / "test_home";
   auto home_cache_dir = *test_home.CreateDirectories(".cache");
   std::filesystem::path home_cache_path = home_path / ".cache";
 
@@ -276,8 +276,8 @@ TEST_F(RuntimesCacheTest, DifferentKeys) {
       .Check();
   custom_install_dir.WriteFileFromString("install_digest.txt", "abcd").Check();
   InstallPaths install2 =
-      InstallPaths::Make((tmp_dir_.abs_path() / "custom_install").native());
-  auto cache2 = *Runtimes::Cache::MakeCustom(install2, tmp_dir_.abs_path());
+      InstallPaths::Make((tmp_dir_.path() / "custom_install").native());
+  auto cache2 = *Runtimes::Cache::MakeCustom(install2, tmp_dir_.path());
   auto runtimes2 = *cache2.Lookup({.target = target});
 
   // The parent paths of these runtimes should be the same.
@@ -295,7 +295,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuilds) {
 
   // Build a second cache and runtimes pointing at the same directory and target
   // to simulate concurrent processes.
-  auto cache2 = *Runtimes::Cache::MakeCustom(install_, tmp_dir_.abs_path());
+  auto cache2 = *Runtimes::Cache::MakeCustom(install_, tmp_dir_.path());
   auto runtimes2 = *cache2.Lookup({.target = target});
 
   // Start the first build, this will lock the directory.
@@ -378,7 +378,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsWithFailedLocking) {
 
   // Build a second cache and runtimes pointing at the same directory and target
   // to simulate concurrent processes.
-  auto cache2 = *Runtimes::Cache::MakeCustom(install_, tmp_dir_.abs_path());
+  auto cache2 = *Runtimes::Cache::MakeCustom(install_, tmp_dir_.path());
   auto runtimes2 = *cache2.Lookup({.target = target});
 
   // Start the first build, this will lock the directory.
@@ -476,7 +476,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsLockTimeout) {
 
   // Build a second cache and runtimes pointing at the same directory and target
   // to simulate concurrent processes.
-  auto cache2 = *Runtimes::Cache::MakeCustom(install_, tmp_dir_.abs_path());
+  auto cache2 = *Runtimes::Cache::MakeCustom(install_, tmp_dir_.path());
   auto runtimes2 = *cache2.Lookup({.target = target});
 
   // Start the first build, this will lock the directory.
@@ -549,7 +549,7 @@ TEST_F(RuntimesCacheTest, Lookup) {
 
 TEST_F(RuntimesCacheTest, LookupFailsIfCannotCreateDir) {
   // Create a read-only directory with the cache in it to cause failures.
-  std::filesystem::path ro_cache_path = tmp_dir_.abs_path() / "ro_cache";
+  std::filesystem::path ro_cache_path = tmp_dir_.path() / "ro_cache";
   tmp_dir_.CreateDirectories("ro_cache", /*creation_mode=*/0500).Check();
   auto ro_cache = *Runtimes::Cache::MakeCustom(install_, ro_cache_path);
 

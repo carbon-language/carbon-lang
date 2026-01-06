@@ -315,11 +315,11 @@ auto FunctionContext::GetInitRepr(TypeInFile type) -> SemIR::InitRepr {
   return result;
 }
 
-auto FunctionContext::GetReturnTypeInfo(TypeInFile type)
+auto FunctionContext::GetReturnTypeInfo(InstInFile callee)
     -> ReturnTypeInfoInFile {
   ReturnTypeInfoInFile result = {
-      .file = type.file,
-      .info = SemIR::ReturnTypeInfo::ForType(*type.file, type.type_id)};
+      .file = callee.file,
+      .info = SemIR::ReturnTypeInfo::ForCallee(*callee.file, callee.inst_id)};
   AddEnumToCurrentFingerprint(result.info.init_repr.kind);
   return result;
 }

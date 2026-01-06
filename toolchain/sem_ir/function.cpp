@@ -14,8 +14,8 @@
 
 namespace Carbon::SemIR {
 
-auto GetCallee(const File& sem_ir, InstId callee_id, SpecificId specific_id)
-    -> Callee {
+auto GetCallee(const File& sem_ir, InstId callee_id,
+               SpecificId caller_specific_id) -> Callee {
   CalleeFunction fn = {.function_id = FunctionId::None,
                        .enclosing_specific_id = SpecificId::None,
                        .resolved_specific_id = SpecificId::None,
@@ -26,9 +26,9 @@ auto GetCallee(const File& sem_ir, InstId callee_id, SpecificId specific_id)
     callee_id = bound_method->function_decl_id;
   }
 
-  if (specific_id.has_value()) {
+  if (caller_specific_id.has_value()) {
     callee_id = sem_ir.constant_values().GetInstIdIfValid(
-        GetConstantValueInSpecific(sem_ir, specific_id, callee_id));
+        GetConstantValueInSpecific(sem_ir, caller_specific_id, callee_id));
     CARBON_CHECK(callee_id.has_value(),
                  "Invalid callee id in a specific context");
   }
@@ -80,8 +80,9 @@ auto GetCallee(const File& sem_ir, InstId callee_id, SpecificId specific_id)
 }
 
 auto GetCalleeAsFunction(const File& sem_ir, InstId callee_id,
-                         SpecificId specific_id) -> CalleeFunction {
-  return std::get<CalleeFunction>(GetCallee(sem_ir, callee_id, specific_id));
+                         SpecificId caller_specific_id) -> CalleeFunction {
+  return std::get<CalleeFunction>(
+      GetCallee(sem_ir, callee_id, caller_specific_id));
 }
 
 auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,

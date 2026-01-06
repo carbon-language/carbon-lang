@@ -156,11 +156,12 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
   pattern_id = AddPatternInst(
       context,
       SemIR::LocIdAndInst::UncheckedLoc(
-          loc_id, SemIR::AnyParamPattern{
-                      .kind = param_pattern_kind,
-                      .type_id = context.insts().Get(pattern_id).type_id(),
-                      .subpattern_id = pattern_id,
-                      .index = SemIR::CallParamIndex::None}));
+          loc_id,
+          SemIR::AnyParamPattern{
+              .kind = param_pattern_kind,
+              .type_id = context.insts().Get(pattern_id).type_id(),
+              .subpattern_id = pattern_id,
+              .index = context.full_pattern_stack().NextCallParamIndex()}));
 
   return pattern_id;
 }

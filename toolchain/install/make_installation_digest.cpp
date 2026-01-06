@@ -53,7 +53,7 @@ class DigestProgram {
 
 auto DigestProgram::Run(int argc, char** argv) -> ErrorOr<int> {
   InitLLVM init_llvm(argc, argv);
-  SetWorkingDirForBazel();
+  SetWorkingDirForBazelRun();
   llvm::SHA256 sha256;
 
   // If the first argument is `--verbose`, enable verbose logging.

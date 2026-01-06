@@ -224,6 +224,13 @@ def _impl(ctx):
                             # Pass the clang version as a define so that bazel
                             # caching is more likely to notice version changes.
                             "-DCLANG_VERSION_FOR_CACHE=\"%s\"" % clang_version_for_cache,
+
+                            # Enable the use of zlib and zstd in LLVM. We define
+                            # these here and use the normal Bazel builds of both
+                            # rather than using the custom zlib and zstd `BUILD`
+                            # files shipped with LLVM that use `defines`.
+                            "-DLLVM_ENABLE_ZLIB",
+                            "-DLLVM_ENABLE_ZSTD",
                         ],
                     ),
                     flag_group(

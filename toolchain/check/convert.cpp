@@ -795,6 +795,7 @@ static auto IsValidExprCategoryForConversionTarget(
              category == SemIR::ExprCategory::EphemeralRef ||
              category == SemIR::ExprCategory::Initializing;
     case ConversionTarget::RefParam:
+    case ConversionTarget::UnmarkedRefParam:
       return category == SemIR::ExprCategory::DurableRef ||
              category == SemIR::ExprCategory::EphemeralRef ||
              category == SemIR::ExprCategory::Initializing;
@@ -1428,25 +1429,204 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
                       action.target_type_inst_id)});
 }
 
-// Diagnoses a missing or unnecessary `ref` tag when converting `expr_id` to
-// `target`, and returns whether a `ref` tag is present.
-static auto CheckRefTag(Context& context, SemIR::InstId expr_id,
-                        ConversionTarget target) -> bool {
-  if (auto lookup_result = context.ref_tags().Lookup(expr_id)) {
-    if (lookup_result.value() == Context::RefTag::Present &&
-        target.kind != ConversionTarget::RefParam) {
-      CARBON_DIAGNOSTIC(RefTagNoRefParam, Error,
-                        "`ref` tag is not an argument to a `ref` parameter");
-      context.emitter().Emit(expr_id, RefTagNoRefParam);
+// State machine for performing category conversions.
+class CategoryConverter {
+ public:
+  // Constructs a converter which converts an expression at the given location
+  // to the given conversion target. performed_builtin_conversion indicates
+  // whether builtin conversions were performed prior to this.
+  CategoryConverter(Context& context, SemIR::LocId loc_id,
+                    ConversionTarget& target, bool performed_builtin_conversion)
+      : context_(context),
+        sem_ir_(context.sem_ir()),
+        loc_id_(loc_id),
+        target_(target),
+        performed_builtin_conversion_(performed_builtin_conversion) {}
+
+  // Converts expr_id to the target specified in the constructor, and returns
+  // the converted inst.
+  auto Convert(SemIR::InstId expr_id) && -> SemIR::InstId {
+    auto category = SemIR::GetExprCategory(sem_ir_, expr_id);
+    while (true) {
+      if (expr_id == SemIR::ErrorInst::InstId) {
+        return expr_id;
+      }
+      CARBON_KIND_SWITCH(DoStep(expr_id, category)) {
+        case CARBON_KIND(NextStep next_step): {
+          CARBON_CHECK(next_step.expr_id != SemIR::InstId::None);
+          expr_id = next_step.expr_id;
+          category = next_step.category;
+          break;
+        }
+        case CARBON_KIND(Done done): {
+          return done.expr_id;
+        }
+      }
     }
-    return true;
-  } else {
-    if (target.kind == ConversionTarget::RefParam) {
-      CARBON_DIAGNOSTIC(RefParamNoRefTag, Error,
-                        "argument to `ref` parameter not marked with `ref`");
-      context.emitter().Emit(expr_id, RefParamNoRefTag);
+  }
+
+ private:
+  // State that indicates there's more work to be done. As a convenience,
+  // if expr_id is SemIR::ErrorInst::InstId, this is equivalent to
+  // Done{SemIR::ErrorInst::InstId}.
+  struct NextStep {
+    // The inst to convert.
+    SemIR::InstId expr_id;
+    // The category of expr_id.
+    SemIR::ExprCategory category;
+  };
+
+  // State that indicates we've finished category conversion.
+  struct Done {
+    // The result of the conversion.
+    SemIR::InstId expr_id;
+  };
+
+  using State = std::variant<NextStep, Done>;
+
+  // Performs the first step of converting `expr_id` with category `category`
+  // to the target specified in the constructor, and returns the state after
+  // that step.
+  auto DoStep(SemIR::InstId expr_id, SemIR::ExprCategory category) const
+      -> State;
+
+  Context& context_;
+  SemIR::File& sem_ir_;
+  SemIR::LocId loc_id_;
+  ConversionTarget& target_;
+  bool performed_builtin_conversion_;
+};
+
+auto CategoryConverter::DoStep(const SemIR::InstId expr_id,
+                               const SemIR::ExprCategory category) const
+    -> State {
+  CARBON_DCHECK(SemIR::GetExprCategory(sem_ir_, expr_id) == category);
+  switch (category) {
+    case SemIR::ExprCategory::NotExpr:
+    case SemIR::ExprCategory::Mixed:
+    case SemIR::ExprCategory::Pattern:
+      CARBON_FATAL("Unexpected expression {0} after builtin conversions",
+                   sem_ir_.insts().Get(expr_id));
+
+    case SemIR::ExprCategory::Error:
+      return Done{SemIR::ErrorInst::InstId};
+
+    case SemIR::ExprCategory::Initializing:
+      if (target_.is_initializer()) {
+        if (!performed_builtin_conversion_) {
+          // Don't fill in the return slot if we created the expression through
+          // a builtin conversion. In that case, we will have created it with
+          // the target already set.
+          // TODO: Find a better way to track whether we need to do this,
+          // and then make target_ immutable if possible.
+          MarkInitializerFor(sem_ir_, expr_id, target_);
+        }
+        return Done{expr_id};
+      }
+
+      // Commit to using a temporary for this initializing expression.
+      // TODO: Don't create a temporary if the initializing representation
+      // is already a value representation.
+      // TODO: If the target is DurableRef, materialize a VarStorage instead of
+      // a TemporaryStorage to lifetime-extend.
+      if (target_.kind == ConversionTarget::Discarded) {
+        return Done{FinalizeTemporary(context_, expr_id, /*discarded=*/true)};
+      } else {
+        return NextStep{.expr_id = FinalizeTemporary(context_, expr_id,
+                                                     /*discarded=*/false),
+                        .category = SemIR::ExprCategory::EphemeralRef};
+      }
+
+    case SemIR::ExprCategory::RefTagged: {
+      auto tagged_expr_id =
+          sem_ir_.insts().GetAs<SemIR::RefTagExpr>(expr_id).expr_id;
+      auto tagged_expr_category =
+          SemIR::GetExprCategory(sem_ir_, tagged_expr_id);
+      if (target_.diagnose &&
+          tagged_expr_category != SemIR::ExprCategory::DurableRef) {
+        CARBON_DIAGNOSTIC(
+            RefTagNotDurableRef, Error,
+            "expression tagged with `ref` is not a durable reference");
+        context_.emitter().Emit(tagged_expr_id, RefTagNotDurableRef);
+      }
+
+      if (target_.kind == ConversionTarget::RefParam) {
+        return Done{expr_id};
+      }
+
+      // If the target isn't a reference parameter, ignore the `ref` tag.
+      // Unnecessary `ref` tags are diagnosed earlier.
+      return NextStep{.expr_id = tagged_expr_id,
+                      .category = tagged_expr_category};
     }
-    return false;
+
+    case SemIR::ExprCategory::DurableRef:
+      if (target_.kind == ConversionTarget::DurableRef ||
+          target_.kind == ConversionTarget::UnmarkedRefParam) {
+        return Done{expr_id};
+      }
+      if (target_.kind == ConversionTarget::RefParam) {
+        if (target_.diagnose) {
+          CARBON_DIAGNOSTIC(
+              RefParamNoRefTag, Error,
+              "argument to `ref` parameter not marked with `ref`");
+          context_.emitter().Emit(expr_id, RefParamNoRefTag);
+        }
+        return Done{expr_id};
+      }
+      [[fallthrough]];
+
+    case SemIR::ExprCategory::EphemeralRef:
+      // If a reference expression is an acceptable result, we're done.
+      if (target_.kind == ConversionTarget::ValueOrRef ||
+          target_.kind == ConversionTarget::Discarded ||
+          target_.kind == ConversionTarget::CppThunkRef ||
+          target_.kind == ConversionTarget::RefParam ||
+          target_.kind == ConversionTarget::UnmarkedRefParam) {
+        return Done{expr_id};
+      }
+
+      // If we have a reference and don't want one, form a value binding.
+      // TODO: Support types with custom value representations.
+      return NextStep{.expr_id = AddInst<SemIR::AcquireValue>(
+                          context_, SemIR::LocId(expr_id),
+                          {.type_id = target_.type_id, .value_id = expr_id}),
+                      .category = SemIR::ExprCategory::Value};
+
+    case SemIR::ExprCategory::Value:
+      if (target_.kind == ConversionTarget::DurableRef) {
+        if (target_.diagnose) {
+          CARBON_DIAGNOSTIC(ConversionFailureNonRefToRef, Error,
+                            "cannot bind durable reference to non-reference "
+                            "value of type {0}",
+                            SemIR::TypeId);
+          context_.emitter().Emit(loc_id_, ConversionFailureNonRefToRef,
+                                  target_.type_id);
+        }
+        return Done{SemIR::ErrorInst::InstId};
+      }
+      if (target_.kind == ConversionTarget::RefParam ||
+          target_.kind == ConversionTarget::UnmarkedRefParam) {
+        if (target_.diagnose) {
+          CARBON_DIAGNOSTIC(ValueForRefParam, Error,
+                            "value expression passed to reference parameter");
+          context_.emitter().Emit(loc_id_, ValueForRefParam);
+        }
+        return Done{SemIR::ErrorInst::InstId};
+      }
+
+      // When initializing from a value, perform a copy.
+      if (target_.is_initializer()) {
+        return Done{PerformCopy(context_, expr_id, target_)};
+      }
+
+      // When initializing a C++ thunk parameter, form a reference, creating a
+      // temporary if needed.
+      if (target_.kind == ConversionTarget::CppThunkRef) {
+        return Done{ConvertValueForCppThunkRef(context_, expr_id)};
+      }
+
+      return Done{expr_id};
   }
 }
 
@@ -1463,7 +1643,8 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     return SemIR::ErrorInst::InstId;
   }
 
-  if (SemIR::GetExprCategory(sem_ir, expr_id) == SemIR::ExprCategory::NotExpr) {
+  auto starting_category = SemIR::GetExprCategory(sem_ir, expr_id);
+  if (starting_category == SemIR::ExprCategory::NotExpr) {
     // TODO: We currently encounter this for use of namespaces and functions.
     // We should provide a better diagnostic for inappropriate use of
     // namespace names, and allow use of functions as values.
@@ -1475,7 +1656,14 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     return SemIR::ErrorInst::InstId;
   }
 
-  bool has_ref_tag = CheckRefTag(context, expr_id, target);
+  // Diagnose unnecessary `ref` tags early, so that they're not obscured by
+  // conversions.
+  if (starting_category == SemIR::ExprCategory::RefTagged &&
+      target.kind != ConversionTarget::RefParam && target.diagnose) {
+    CARBON_DIAGNOSTIC(RefTagNoRefParam, Error,
+                      "`ref` tag is not an argument to a `ref` parameter");
+    context.emitter().Emit(expr_id, RefTagNoRefParam);
+  }
 
   // We can only perform initialization for complete, non-abstract types. Note
   // that `RequireConcreteType` returns true for facet types, since their
@@ -1609,9 +1797,6 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
                                         {.type_id = target.type_id,
                                          .original_id = orig_expr_id,
                                          .result_id = expr_id});
-    if (has_ref_tag) {
-      context.ref_tags().Insert(expr_id, Context::RefTag::NotRequired);
-    }
   }
 
   // For `as`, don't perform any value category conversions. In particular, an
@@ -1621,108 +1806,9 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   }
 
   // Now perform any necessary value category conversions.
-  // This uses fallthrough to implement a very simple state machine over the
-  // category of expr_id, which is tracked by current_category.
-  switch (auto current_category = SemIR::GetExprCategory(sem_ir, expr_id);
-          current_category) {
-    case SemIR::ExprCategory::NotExpr:
-    case SemIR::ExprCategory::Mixed:
-    case SemIR::ExprCategory::Pattern:
-      CARBON_FATAL("Unexpected expression {0} after builtin conversions",
-                   sem_ir.insts().Get(expr_id));
-
-    case SemIR::ExprCategory::Error:
-      return SemIR::ErrorInst::InstId;
-
-    case SemIR::ExprCategory::Initializing:
-      if (target.is_initializer()) {
-        if (!performed_builtin_conversion) {
-          // Don't fill in the return slot if we created the expression through
-          // a builtin conversion. In that case, we will have created it with
-          // the target already set.
-          // TODO: Find a better way to track whether we need to do this.
-          MarkInitializerFor(sem_ir, expr_id, target);
-        }
-        break;
-      }
-
-      // Commit to using a temporary for this initializing expression.
-      // TODO: Don't create a temporary if the initializing representation
-      // is already a value representation.
-      // TODO: If the target is DurableRef, materialize a VarStorage instead of
-      // a TemporaryStorage to lifetime-extend.
-      expr_id = FinalizeTemporary(context, expr_id,
-                                  target.kind == ConversionTarget::Discarded);
-      // We now have an ephemeral reference.
-      current_category = SemIR::ExprCategory::EphemeralRef;
-      [[fallthrough]];
-
-    case SemIR::ExprCategory::DurableRef:
-    case SemIR::ExprCategory::EphemeralRef:
-      if (current_category == SemIR::ExprCategory::DurableRef &&
-          target.kind == ConversionTarget::DurableRef) {
-        break;
-      }
-
-      // If a reference expression is an acceptable result, we're done.
-      if (target.kind == ConversionTarget::ValueOrRef ||
-          target.kind == ConversionTarget::Discarded ||
-          target.kind == ConversionTarget::CppThunkRef ||
-          target.kind == ConversionTarget::RefParam) {
-        break;
-      }
-
-      // If we have a reference and don't want one, form a value binding.
-      // TODO: Support types with custom value representations.
-      expr_id = AddInst<SemIR::AcquireValue>(
-          context, SemIR::LocId(expr_id),
-          {.type_id = target.type_id, .value_id = expr_id});
-      // We now have a value expression.
-      current_category = SemIR::ExprCategory::Value;
-      [[fallthrough]];
-
-    case SemIR::ExprCategory::Value:
-      if (target.kind == ConversionTarget::DurableRef) {
-        if (target.diagnose) {
-          CARBON_DIAGNOSTIC(ConversionFailureNonRefToRef, Error,
-                            "cannot bind durable reference to non-reference "
-                            "value of type {0}",
-                            SemIR::TypeId);
-          context.emitter().Emit(loc_id, ConversionFailureNonRefToRef,
-                                 target.type_id);
-        }
-        return SemIR::ErrorInst::InstId;
-      }
-      if (target.kind == ConversionTarget::RefParam) {
-        // Don't diagnose a non-reference scrutinee if it has a user-written
-        // `ref` tag, because that's diagnosed in `CheckRefTag`.
-        if (target.diagnose) {
-          if (auto lookup_result = context.ref_tags().Lookup(expr_id);
-              !lookup_result ||
-              lookup_result.value() != Context::RefTag::Present) {
-            CARBON_DIAGNOSTIC(ValueForRefParam, Error,
-                              "value expression passed to reference parameter");
-            context.emitter().Emit(loc_id, ValueForRefParam);
-          }
-        }
-        return SemIR::ErrorInst::InstId;
-      }
-
-      // When initializing from a value, perform a copy.
-      if (target.is_initializer()) {
-        expr_id = PerformCopy(context, expr_id, target);
-        current_category = SemIR::ExprCategory::Initializing;
-      }
-
-      // When initializing a C++ thunk parameter, form a reference, creating a
-      // temporary if needed.
-      if (target.kind == ConversionTarget::CppThunkRef) {
-        expr_id = ConvertValueForCppThunkRef(context, expr_id);
-        current_category = SemIR::ExprCategory::EphemeralRef;
-      }
-
-      break;
-  }
+  expr_id =
+      CategoryConverter(context, loc_id, target, performed_builtin_conversion)
+          .Convert(expr_id);
 
   // Perform a final destination store, if necessary.
   if (target.kind == ConversionTarget::FullInitializer) {
@@ -1809,8 +1895,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
                      SemIR::InstId return_slot_arg_id,
                      const SemIR::Function& callee,
-                     SemIR::SpecificId callee_specific_id)
-    -> SemIR::InstBlockId {
+                     SemIR::SpecificId callee_specific_id,
+                     bool is_operator_syntax) -> SemIR::InstBlockId {
   auto param_patterns =
       context.inst_blocks().GetOrEmpty(callee.param_patterns_id);
   auto return_patterns_id = callee.return_patterns_id;
@@ -1831,7 +1917,8 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
   return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
                             callee.param_patterns_id, return_patterns_id,
-                            self_id, arg_refs, return_slot_arg_id);
+                            self_id, arg_refs, return_slot_arg_id,
+                            is_operator_syntax);
 }
 
 auto TypeExpr::ForUnsugared(Context& context, SemIR::TypeId type_id)

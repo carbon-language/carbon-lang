@@ -22,6 +22,7 @@
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/int.h"
@@ -1257,9 +1258,10 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
       context,
       MakeImportedLocIdAndInst(
           context, return_type_import_ir_inst_id,
-          SemIR::OutParamPattern({.type_id = pattern_type_id,
-                                  .subpattern_id = return_slot_pattern_id,
-                                  .index = SemIR::CallParamIndex::None})));
+          SemIR::OutParamPattern(
+              {.type_id = pattern_type_id,
+               .subpattern_id = return_slot_pattern_id,
+               .index = context.full_pattern_stack().NextCallParamIndex()})));
   auto return_patterns_id = context.inst_blocks().Add({param_pattern_id});
   return {.return_type_inst_id = type_inst_id,
           .return_patterns_id = return_patterns_id};
@@ -1288,11 +1290,16 @@ static auto CreateFunctionSignatureInsts(Context& context, SemIR::LocId loc_id,
                                          clang::FunctionDecl* clang_decl,
                                          int num_params)
     -> std::optional<FunctionSignatureInsts> {
+  context.full_pattern_stack().PushFullPattern(
+      FullPatternStack::Kind::ImplicitParamList);
+  std::optional pop = llvm::make_scope_exit(
+      [&context] { context.full_pattern_stack().PopFullPattern(); });
   auto implicit_param_patterns_id =
       MakeImplicitParamPatternsBlockId(context, loc_id, *clang_decl);
   if (!implicit_param_patterns_id.has_value()) {
     return std::nullopt;
   }
+  context.full_pattern_stack().EndImplicitParamList();
   auto param_patterns_id =
       MakeParamPatternsBlockId(context, loc_id, *clang_decl, num_params);
   if (!param_patterns_id.has_value()) {
@@ -1303,6 +1310,7 @@ static auto CreateFunctionSignatureInsts(Context& context, SemIR::LocId loc_id,
   if (return_type_inst_id == SemIR::ErrorInst::TypeInstId) {
     return std::nullopt;
   }
+  pop.reset();
 
   auto call_params_id =
       CalleePatternMatch(context, implicit_param_patterns_id, param_patterns_id,
@@ -1479,6 +1487,19 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
     // instantiation if needed.
     context.clang_sema().MarkFunctionReferenced(GetCppLocation(context, loc_id),
                                                 clang_decl);
+
+    // If the function is trivial, mark it as being a builtin if possible.
+    if (clang_decl->isTrivial()) {
+      // Trivial destructors map to a "no_op" builtin.
+      if (isa<clang::CXXDestructorDecl>(clang_decl)) {
+        function_info.SetBuiltinFunction(SemIR::BuiltinFunctionKind::NoOp);
+      }
+      // TODO: Should we model a trivial default constructor as performing
+      // value-initialization (zero-initializing all fields) or
+      // default-initialization (leaving fields uniniitalized)? Either way we
+      // could model that effect as a builtin.
+      // TODO: Add a builtin to model trivial copies.
+    }
   }
 
   return function_info.first_owning_decl_id;

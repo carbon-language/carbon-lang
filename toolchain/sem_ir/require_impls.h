@@ -37,7 +37,7 @@ struct RequireImpls : Printable<RequireImpls> {
     out << '{';
     out << "self_id: " << self_id
         << ", facet_type_inst_id: " << facet_type_inst_id
-        << ", extend_self: " << extend_self
+        << ", extend_self: " << (extend_self ? "true" : "false")
         << ", parent_scope: " << parent_scope_id;
     out << '}';
   }

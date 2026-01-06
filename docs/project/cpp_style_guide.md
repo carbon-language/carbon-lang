@@ -16,10 +16,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [General naming rules](#general-naming-rules)
     -   [File names](#file-names)
     -   [Syntax and formatting](#syntax-and-formatting)
+        -   [Line comments](#line-comments)
+        -   [Initialization](#initialization)
+        -   [Passing addresses](#passing-addresses)
     -   [Naming variable types and the use of `auto`](#naming-variable-types-and-the-use-of-auto)
     -   [Copyable and movable types](#copyable-and-movable-types)
     -   [Static and global variables](#static-and-global-variables)
     -   [Foundational libraries and data types](#foundational-libraries-and-data-types)
+    -   [Iterative algorithms](#iterative-algorithms)
 -   [Suggested `.clang-format` contents](#suggested-clang-format-contents)
 
 <!-- tocstop -->
@@ -98,31 +102,6 @@ these.
 -   Only declare one variable at a time (declaring multiple variables requires
     confusing repetition of part of the type).
 -   Write `const` before the type when at the outer level: `const int N = 42;`.
--   Only use line comments (with `//`, not `/* ... */`), on a line by
-    themselves, except for
-    [argument name comments](https://clang.llvm.org/extra/clang-tidy/checks/bugprone/argument-comment.html),
-    [closing namespace comments](https://google.github.io/styleguide/cppguide.html#Namespaces),
-    and similar structural comments. In particular, don't append comments about
-    a line of code to the end of its line:
-
-    ```
-    int bad = 42;  // Don't comment here.
-
-    // Instead comment here.
-    int good = 42;
-
-    // Closing namespace comments are structural, and both okay and expected.
-    }  // namespace MyNamespace
-    ```
-
-    This dogfoods our planned commenting syntax for Carbon. It also provides a
-    single, consistent placement rule. It also provides more resilience against
-    automated refactorings. Those changes often make code longer, which forces
-    ever more difficult formatting decisions, and can easily spread one line
-    across multiple lines, leaving it impossible to know where to place the
-    comment. Comments on their own line preceding such code, while still
-    imprecise, are at least less confusing over the course of such refactorings.
-
 -   Use the `using`-based type alias syntax instead of `typedef`.
 -   Don't use `using` to support unqualified lookup on `std` types; for example,
     `using std::vector;`. This also applies to other short namespaces,
@@ -132,51 +111,8 @@ these.
     -   An exception is made for functions like `std::swap` that are
         intentionally called using ADL. This pattern should be written as
         `{ using std::swap; swap(thing1, thing2); }`.
--   For initialization:
-    -   Use assignment syntax (`=`) when initializing directly with the intended
-        value (or with a braced initializer directly specifying that value).
-    -   Prefer braced initialization for aggregate initialization, such as
-        structs, pairs, and initializer lists.
-        -   Use designated initializers (`{.a = 1}`) when possible for structs,
-            but not for pairs or tuples. Prefer to only include the typename
-            when required to compile (`WizType{.a = 1}`). This is analogous to
-            how structs and tuples would be written in Carbon code.
-        -   Avoid braced initialization for types that define a constructor,
-            except as an initializer list
-            (`llvm::SmallVector<int> v = {0, 1};`), `std::pair`, or
-            `std::tuple`. Never use it with `auto` (`auto a = {0, 1}`).
-    -   Prefer parenthesized initialization (`FooType foo(10);`) in most other
-        cases.
-    -   Braced initialization without `=` (`BarType bar{10}`) should be treated
-        as a fallback, preferred only when other constructor syntax doesn't
-        compile.
-    -   Some additional commentary is in
-        [Abseil's tip #88](https://abseil.io/tips/88#best-practices-for-initialization),
-        although these guidelines differ slightly.
 -   Always mark constructors `explicit` unless there's a specific reason to
     support implicit or `{}` initialization.
--   When passing an object's address as an argument, use a reference unless one
-    of the following cases applies:
-
-    -   If the parameter is optional, use a pointer and document that it may be
-        null.
-    -   If it is captured and must outlive the call expression itself, use a
-        pointer and document that it must not be null (unless it is also
-        optional).
-
-        -   When storing an object's address as a non-owned member, prefer
-            storing a pointer. For example:
-
-            ```cpp
-            class Bar {
-             public:
-              // `foo` must not be null.
-              explicit Bar(Foo* foo) : foo_(foo) {}
-             private:
-              Foo* foo_;
-            };
-            ```
-
 -   Always use braces for conditional, `switch`, and loop statements, even when
     the body is a single statement.
     -   Within a `switch` statement, use braces after a `case` label when
@@ -197,6 +133,79 @@ these.
     specifically for test fixtures in `.cpp` files, we use `public` instead of
     `protected`. This is motivated by the
     `misc-non-private-member-variables-in-classes` tidy check.
+
+#### Line comments
+
+Only use line comments (with `//`, not `/* ... */`), on a line by themselves,
+except for
+[argument name comments](https://clang.llvm.org/extra/clang-tidy/checks/bugprone/argument-comment.html),
+[closing namespace comments](https://google.github.io/styleguide/cppguide.html#Namespaces),
+and similar structural comments. In particular, don't append comments about a
+line of code to the end of its line:
+
+```
+int bad = 42;  // Don't comment here.
+
+// Instead comment here.
+int good = 42;
+
+// Closing namespace comments are structural, and both okay and expected.
+}  // namespace MyNamespace
+```
+
+This dogfoods our planned commenting syntax for Carbon. It also provides a
+single, consistent placement rule. It also provides more resilience against
+automated refactorings. Those changes often make code longer, which forces ever
+more difficult formatting decisions, and can easily spread one line across
+multiple lines, leaving it impossible to know where to place the comment.
+Comments on their own line preceding such code, while still imprecise, are at
+least less confusing over the course of such refactorings.
+
+#### Initialization
+
+Initialization syntax has guidelines based on what compiles. See also
+[Abseil's tip #88](https://abseil.io/tips/88#best-practices-for-initialization),
+although these guidelines differ slightly.
+
+-   Use assignment syntax (`=`) when initializing directly with the intended
+    value (or with a braced initializer directly specifying that value).
+-   Prefer braced initialization for aggregate initialization, such as structs,
+    pairs, and initializer lists.
+    -   Use designated initializers (`{.a = 1}`) when possible for structs, but
+        not for pairs or tuples. Prefer to only include the typename when
+        required to compile (`WizType{.a = 1}`). This is analogous to how
+        structs and tuples would be written in Carbon code.
+    -   Avoid braced initialization for types that define a constructor, except
+        as an initializer list (`llvm::SmallVector<int> v = {0, 1};`),
+        `std::pair`, or `std::tuple`. Never use it with `auto`
+        (`auto a = {0, 1}`).
+-   Prefer parenthesized initialization (`FooType foo(10);`) in most other
+    cases.
+-   Braced initialization without `=` (`BarType bar{10}`) should be treated as a
+    fallback, preferred only when other constructor syntax doesn't compile.
+
+#### Passing addresses
+
+When passing an object's address as an argument, use a reference unless one of
+the following cases applies:
+
+-   If the parameter is optional, use a pointer and document that it may be
+    null.
+-   If it is captured and must outlive the call expression itself, use a pointer
+    and document that it must not be null (unless it is also optional).
+
+    -   When storing an object's address as a non-owned member, prefer storing a
+        pointer. For example:
+
+        ```cpp
+        class Bar {
+          public:
+            // `foo` must not be null.
+            explicit Bar(Foo* foo) : foo_(foo) {}
+          private:
+            Foo* foo_;
+        };
+        ```
 
 ### Naming variable types and the use of `auto`
 
@@ -235,18 +244,24 @@ class entity, we might call these `class_id`, `class_inst_id`, and
         patterns that tend to occur while building compilers.
     -   They also minimize the vocabulary type friction when using actual LLVM
         and Clang APIs.
--   In explorer, prefer standard C++ facilities, but use LLVM facilities when
-    there is no standard equivalent.
-    -   This approach is aimed to make the explorer codebase more approachable
-        to new contributors.
-    -   In explorer, performance is not a high priority, and friction with LLVM
-        and Clang APIs is much less of a concern.
 -   Do not add other third-party library dependencies to any code that might
     conceivably be used as part of the compiler or runtime.
     -   Compilers and runtime libraries have unique constraints on their
         licensing. For simplicity, we want all transitive dependencies of these
         layers to be under the LLVM license that the Carbon project as a whole
         uses (as well as LLVM itself).
+
+### Iterative algorithms
+
+We choose iterative over recursive algorithms, and use clang-tidy to help
+enforce this. We expect Carbon to be used in codebases which stress test the
+compiler, for example due to complex interactions of APIs or simply due to
+repetitive code structures from code generators.
+
+Other solutions that make recursion work better have been considered, but we
+prefer iteration for its performance and robustness. For example, Clang launches
+threads when it gets close to a stack limit; that has performance overhead and
+relies on developers correctly identifying recursion which may have limits.
 
 ## Suggested `.clang-format` contents
 

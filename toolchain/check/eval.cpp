@@ -617,10 +617,7 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
                                      SemIR::LocId loc_id,
                                      const SemIR::FacetTypeInfo& orig,
                                      Phase* phase) -> SemIR::FacetTypeInfo {
-  SemIR::FacetTypeInfo info = {
-      .builtin_constraint_mask = orig.builtin_constraint_mask,
-      // TODO: Process other requirements.
-      .other_requirements = orig.other_requirements};
+  SemIR::FacetTypeInfo info = {};
 
   info.extend_constraints.reserve(orig.extend_constraints.size());
   for (const auto& extend : orig.extend_constraints) {
@@ -680,6 +677,9 @@ static auto GetConstantFacetTypeInfo(EvalContext& eval_context,
                                                          rewrite.rhs_id, phase);
     rewrite = {.lhs_id = lhs_id, .rhs_id = rhs_id};
   }
+
+  // TODO: Process other requirements.
+  info.other_requirements = orig.other_requirements;
 
   info.Canonicalize();
   return info;
@@ -1688,26 +1688,13 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
     case SemIR::BuiltinFunctionKind::None:
       CARBON_FATAL("Not a builtin function.");
 
-    case SemIR::BuiltinFunctionKind::NoOp:
-    case SemIR::BuiltinFunctionKind::TypeDestroy: {
+    case SemIR::BuiltinFunctionKind::NoOp: {
       // Return an empty tuple value.
       auto type_id = GetTupleType(eval_context.context(), {});
       return MakeConstantResult(
           eval_context.context(),
           SemIR::TupleValue{.type_id = type_id,
                             .elements_id = SemIR::InstBlockId::Empty},
-          phase);
-    }
-
-    case SemIR::BuiltinFunctionKind::TypeCanDestroy: {
-      CARBON_CHECK(arg_ids.empty());
-      auto id = eval_context.facet_types().Add(
-          {.builtin_constraint_mask =
-               SemIR::BuiltinConstraintMask::TypeCanDestroy});
-      return MakeConstantResult(
-          eval_context.context(),
-          SemIR::FacetType{.type_id = SemIR::TypeType::TypeId,
-                           .facet_type_id = id},
           phase);
     }
 
@@ -2356,7 +2343,6 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
           info.extend_constraints.append(base_info.extend_constraints);
           info.self_impls_constraints.append(base_info.self_impls_constraints);
           info.rewrite_constraints.append(base_info.rewrite_constraints);
-          info.builtin_constraint_mask.Add(base_info.builtin_constraint_mask);
           info.other_requirements |= base_info.other_requirements;
         }
       } else if (auto rewrite =
@@ -2395,7 +2381,6 @@ auto TryEvalTypedInst<SemIR::WhereExpr>(EvalContext& eval_context,
             // Other requirements are copied in.
             llvm::append_range(info.rewrite_constraints,
                                more_info.rewrite_constraints);
-            info.builtin_constraint_mask.Add(more_info.builtin_constraint_mask);
             info.other_requirements |= more_info.other_requirements;
           }
         } else {

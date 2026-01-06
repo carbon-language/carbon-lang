@@ -114,11 +114,8 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT:   %_.var = alloca [40 x i8], align 1, !dbg !10
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !10
 // CHECK:STDOUT:   call void @_ZN1DC1Ev.carbon_thunk(ptr %_.var), !dbg !11
-// CHECK:STDOUT:   call void @_ZN1DD1Ev(ptr %_.var), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !12
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZN1DD1Ev(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAccessD.Main(ptr %d) #0 !dbg !13 {

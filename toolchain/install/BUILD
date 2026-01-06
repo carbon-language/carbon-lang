@@ -363,6 +363,23 @@ install_dirs = {
             remove_prefix = "staging/include/",
         ),
     ],
+    "lib/carbon/llvm/lib/clang/" + LLVM_VERSION_MAJOR + "/include": [
+        install_filegroup(
+            "fuzzer",
+            "@llvm-project//compiler-rt:fuzzer_installed_hdrs",
+            remove_prefix = "include/fuzzer/",
+        ),
+        install_filegroup(
+            "profile",
+            "@llvm-project//compiler-rt:profile_installed_hdrs",
+            remove_prefix = "include/profile/",
+        ),
+        install_filegroup(
+            "sanitizer",
+            "@llvm-project//compiler-rt:sanitizer_installed_hdrs",
+            remove_prefix = "include/sanitizer/",
+        ),
+    ],
 }
 
 make_install_filegroups(

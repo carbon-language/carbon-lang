@@ -132,8 +132,7 @@ auto InstallPaths::MakeFromFile(std::filesystem::path file_path)
   // FHS-like install prefix. We remove the filename and walk up to find the
   // expected install prefix.
   std::error_code ec;
-  InstallPaths paths(std::filesystem::absolute(
-      std::move(file_path).remove_filename() / "../..", ec));
+  InstallPaths paths(std::move(file_path).remove_filename() / "../..");
   if (ec) {
     paths.SetError(ec.message());
     return paths;
@@ -159,11 +158,6 @@ auto InstallPaths::SetError(llvm::Twine message) -> void {
 }
 
 auto InstallPaths::CheckMarkerFile() -> void {
-  if (!prefix_.is_absolute()) {
-    SetError(llvm::Twine("Not an absolute path: ") + prefix_.native());
-    return;
-  }
-
   auto access_result = prefix_dir_.Access(MarkerPath.str());
   if (!access_result.ok()) {
     SetError(access_result.error().ToString());

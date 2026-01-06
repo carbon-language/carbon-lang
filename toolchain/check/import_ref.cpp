@@ -2071,6 +2071,36 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::CustomWitness inst) -> ResolveResult {
+  CARBON_CHECK(resolver.import_types().GetInstId(inst.type_id) ==
+               SemIR::WitnessType::TypeInstId);
+
+  auto elements = GetLocalInstBlockContents(resolver, inst.elements_id);
+  const auto& import_specific_interface =
+      resolver.import_specific_interfaces().Get(
+          inst.query_specific_interface_id);
+  auto data =
+      GetLocalSpecificInterfaceData(resolver, import_specific_interface);
+
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  auto elements_id =
+      GetLocalCanonicalInstBlockId(resolver, inst.elements_id, elements);
+  auto specific_interface =
+      GetLocalSpecificInterface(resolver, import_specific_interface, data);
+  auto query_specific_interface_id =
+      resolver.local_specific_interfaces().Add(specific_interface);
+
+  return ResolveResult::Deduplicated<SemIR::CustomWitness>(
+      resolver, {.type_id = GetSingletonType(resolver.local_context(),
+                                             SemIR::WitnessType::TypeInstId),
+                 .elements_id = elements_id,
+                 .query_specific_interface_id = query_specific_interface_id});
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::ExportDecl inst) -> ResolveResult {
   auto value_id = GetLocalConstantId(resolver, inst.value_id);
   return ResolveResult::RetryOrDone(resolver, value_id);
@@ -3082,7 +3112,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   SemIR::FacetTypeInfo local_facet_type_info = {
-      .builtin_constraint_mask = import_facet_type_info.builtin_constraint_mask,
       // TODO: Also process the other requirements.
       .other_requirements = import_facet_type_info.other_requirements};
   // Re-resolve and add values to the local `FacetTypeInfo`.
@@ -3719,6 +3748,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::CppOverloadSetValue inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::CustomWitness inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ExportDecl inst): {

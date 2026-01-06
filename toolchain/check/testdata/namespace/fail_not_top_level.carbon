@@ -51,8 +51,8 @@ interface I {
 // CHECK:STDOUT:   %F.4ca: %F.type.994 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %I.type.61f: type = facet_type <@I.loc33> [concrete]
-// CHECK:STDOUT:   %Self: %I.type.61f = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %I.type.c78: type = facet_type <@I.loc33> [concrete]
+// CHECK:STDOUT:   %Self: %I.type.c78 = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.type.aee: type = fn_type @I.loc39 [concrete]
 // CHECK:STDOUT:   %I: %I.type.aee = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -74,11 +74,11 @@ interface I {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type.117 = fn_decl @F.loc15 [concrete = constants.%F.d98] {} {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I.loc33 [concrete = constants.%I.type.61f] {} {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I.loc33 [concrete = constants.%I.type.c78] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I.loc33 {
-// CHECK:STDOUT:   %Self: %I.type.61f = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Self: %I.type.c78 = symbolic_binding Self, 0 [symbolic = constants.%Self]
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
@@ -124,7 +124,7 @@ interface I {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @I.loc39(@I.loc33.%Self: %I.type.61f) {
+// CHECK:STDOUT: generic fn @I.loc39(@I.loc33.%Self: %I.type.c78) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {

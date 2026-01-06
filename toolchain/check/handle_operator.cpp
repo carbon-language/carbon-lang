@@ -357,6 +357,16 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorPlusPlusId node_id)
   return HandleUnaryOperator(context, node_id, CoreIdentifier::Inc);
 }
 
+auto HandleParseNode(Context& context, Parse::PrefixOperatorRefId node_id)
+    -> bool {
+  auto expr_id = context.node_stack().PopExpr();
+  auto ref_id = AddInst<SemIR::RefTagExpr>(
+      context, node_id,
+      {.type_id = context.insts().Get(expr_id).type_id(), .expr_id = expr_id});
+  context.node_stack().Push(node_id, ref_id);
+  return true;
+}
+
 auto HandleParseNode(Context& context, Parse::PrefixOperatorStarId node_id)
     -> bool {
   auto base_id = context.node_stack().PopExpr();

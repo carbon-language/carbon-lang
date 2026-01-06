@@ -27,17 +27,17 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete]
-// CHECK:STDOUT:   %Self.614: %Animal.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.c49: %Animal.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %T: %Animal.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type.71b: type = pattern_type %Animal.type [concrete]
+// CHECK:STDOUT:   %pattern_type.e10: type = pattern_type %Animal.type [concrete]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T [symbolic]
-// CHECK:STDOUT:   %pattern_type.5aa: type = pattern_type %T.binding.as_type [symbolic]
+// CHECK:STDOUT:   %pattern_type.892: type = pattern_type %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %WalkAnimal.type: type = fn_type @WalkAnimal [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %WalkAnimal: %WalkAnimal.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.1b9: <witness> = require_complete_type %T.binding.as_type [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.binding.as_type [symbolic]
 // CHECK:STDOUT:   %Goat: type = class_type @Goat [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -50,11 +50,8 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.234: type = pattern_type %Goat [concrete]
 // CHECK:STDOUT:   %WalkAnimal.specific_fn: <specific function> = specific_function %WalkAnimal, @WalkAnimal(%Animal.facet) [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls <CanDestroy>> [concrete]
-// CHECK:STDOUT:   %facet_value: %type_where = facet_value %Goat, () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.type.e32: type = fn_type @DestroyT.binding.as_type.as.Destroy.impl.Op, @DestroyT.binding.as_type.as.Destroy.impl(%facet_value) [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.8f6: %DestroyT.binding.as_type.as.Destroy.impl.Op.type.e32 = struct_value () [concrete]
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function %DestroyT.binding.as_type.as.Destroy.impl.Op.8f6, @DestroyT.binding.as_type.as.Destroy.impl.Op(%facet_value) [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -77,9 +74,9 @@ fn F() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
 // CHECK:STDOUT:   %WalkAnimal.decl: %WalkAnimal.type = fn_decl @WalkAnimal [concrete = constants.%WalkAnimal] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.71b = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %a.patt: @WalkAnimal.%pattern_type (%pattern_type.5aa) = value_binding_pattern a [concrete]
-// CHECK:STDOUT:     %a.param_patt: @WalkAnimal.%pattern_type (%pattern_type.5aa) = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %T.patt: %pattern_type.e10 = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %a.patt: @WalkAnimal.%pattern_type (%pattern_type.892) = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: @WalkAnimal.%pattern_type (%pattern_type.892) = value_param_pattern %a.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc17_19: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
@@ -103,7 +100,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Animal {
-// CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic = constants.%Self.614]
+// CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic = constants.%Self.c49]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -131,10 +128,10 @@ fn F() {
 // CHECK:STDOUT: generic fn @WalkAnimal(%T.loc17_15.2: %Animal.type) {
 // CHECK:STDOUT:   %T.loc17_15.1: %Animal.type = symbolic_binding T, 0 [symbolic = %T.loc17_15.1 (constants.%T)]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.loc17_15.1 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.5aa)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.892)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete (constants.%require_complete.1b9)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.binding.as_type [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%a.param: @WalkAnimal.%T.binding.as_type (%T.binding.as_type)) {
 // CHECK:STDOUT:   !entry:
@@ -158,17 +155,17 @@ fn F() {
 // CHECK:STDOUT:   %WalkAnimal.specific_fn: <specific function> = specific_function %WalkAnimal.ref, @WalkAnimal(constants.%Animal.facet) [concrete = constants.%WalkAnimal.specific_fn]
 // CHECK:STDOUT:   %.loc23_17.2: %Goat = acquire_value %.loc23_17.1
 // CHECK:STDOUT:   %WalkAnimal.call: init %empty_tuple.type = call %WalkAnimal.specific_fn(%.loc23_17.2)
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.bound: <bound method> = bound_method %.loc23_15.4, constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.8f6
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn: <specific function> = specific_function constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.8f6, @DestroyT.binding.as_type.as.Destroy.impl.Op(constants.%facet_value) [concrete = constants.%DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc23_15.4, %DestroyT.binding.as_type.as.Destroy.impl.Op.specific_fn
-// CHECK:STDOUT:   %DestroyT.binding.as_type.as.Destroy.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc23_15.4)
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc23_15.4, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc23_15.4)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp(%self.param: %Goat) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WalkAnimal(constants.%T) {
 // CHECK:STDOUT:   %T.loc17_15.1 => constants.%T
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.5aa
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.892
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WalkAnimal(constants.%Animal.facet) {

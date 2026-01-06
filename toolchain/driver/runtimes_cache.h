@@ -52,9 +52,22 @@ class Runtimes {
     NumComponents,
   };
 
-  // Creates a `Runtimes` object for a specific existing directory.
+  // Creates a `Runtimes` object for a specific, existing directory.
   //
-  // Requires that the `path` is an absolute path that is an existing directory.
+  // If `path` is a relative path, it will be resolved to an absolute path
+  // relative to the current working directory.
+  //
+  // If there is not a directory at `path`, this will return an error.
+  static auto OpenExisting(std::filesystem::path path,
+                           llvm::raw_ostream* vlog_stream = nullptr)
+      -> ErrorOr<Runtimes>;
+
+  // Creates a `Runtimes` object for a specific directory.
+  //
+  // Opens or creates `path`, including any intervening directories needed.
+  //
+  // If `path` is a relative path, it will be resolved to an absolute path
+  // relative to the current working directory.
   static auto Make(std::filesystem::path path,
                    llvm::raw_ostream* vlog_stream = nullptr)
       -> ErrorOr<Runtimes>;
@@ -87,24 +100,28 @@ class Runtimes {
   // The base directory for the runtimes.
   auto base_dir() const -> Filesystem::DirRef { return base_dir_; }
 
-  // Gets the path to an _existing_ Clang resource directory.
-  //
-  // Clang's resource directory contains all of the compiler-builtin runtime
-  // libraries, headers, and data files.
-  //
-  // This will return the path to the Clang resource directory if it exists in
-  // the runtimes tree. Otherwise, it will return an error.
+  // Gets the path to an _existing_ built component subdirectory of the
+  // runtimes. If the component subdirectory doesn't exist, returns an error.
   auto Get(Component component) -> ErrorOr<std::filesystem::path>;
 
-  // Builds or returns a Clang resource directory.
+  // Builds or returns a component subdirectory of the runtimes.
   //
-  // If there is an existing, built Clang resource directory, this will return
-  // its path, the same as `GetExistingClangResourceDir` would. However, if
-  // there is not yet a Clang resource directory in this runtimes tree, returns
-  // a `Builder` object that can be used to build and commit a Clang resource
-  // directory to this runtimes tree.
+  // If there is an existing, built component subdirectory, this will return its
+  // path, the same as `Get` would. However, if there is not yet a built
+  // subdirectory in this runtimes tree, returns a `Builder` object that can be
+  // used to build and commit a component subdirectory to this runtimes tree.
   auto Build(Component component)
       -> ErrorOr<std::variant<std::filesystem::path, Builder>>;
+
+  // Removes a component subdirectory of the runtimes.
+  //
+  // This can be used to force a subsequent `Build` invocation to actually build
+  // the relevant component. It is a separate operation though because there is
+  // no way to atomically and reliably replace a component with a fresh build --
+  // there is always a chance that a racing build occurs instead. The separate
+  // API surfaces this, but is still useful in inherently non-racing cases like
+  // direct build requests for a given set of runtimes.
+  auto Remove(Component component) -> ErrorOr<Success>;
 
  private:
   friend Builder;
@@ -159,10 +176,7 @@ class Runtimes {
         base_dir_(std::move(base_dir)),
         lock_file_(std::move(lock_file)),
         flock_(std::move(flock)),
-        vlog_stream_(vlog_stream) {
-    CARBON_CHECK(base_path_.is_absolute(),
-                 "The base path must be absolute: {0}", base_path_);
-  }
+        vlog_stream_(vlog_stream) {}
 
   // Implementation of building the Clang resource directory. This exposes the
   // deadline and poll interval to allow testing with artificial values.
@@ -384,7 +398,7 @@ class Runtimes::Builder : public Printable<Builder> {
   // The build's staging directory.
   auto dir() const -> Filesystem::DirRef { return dir_; }
   // The build's staging directory path.
-  auto path() const -> const std::filesystem::path& { return dir_.abs_path(); }
+  auto path() const -> const std::filesystem::path& { return dir_.path(); }
 
   // Commits the new runtime to the cache.
   //
