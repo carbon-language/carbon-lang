@@ -686,10 +686,10 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::Impl& impl) -> void {
     auto result =
         LookupImplWitness(context, SemIR::LocId(impl.latest_decl_id()),
                           self_const_id, facet_type_const_id);
-    // TODO: If the facet type contains 2 interfaces, and one is not impld, it
-    // would be nice to diagnose which one was not impld, but that requires
-    // LookupImplWitness to return a partial result, or take a diagnostic lambda
-    // or something.
+    // TODO: If the facet type contains 2 interfaces, and one is not `impl`ed,
+    // it would be nice to diagnose which one was not `impl`ed, but that
+    // requires LookupImplWitness to return a partial result, or take a
+    // diagnostic lambda or something.
     if (!result.has_value()) {
       auto facet_type_inst_id =
           context.constant_values().GetInstId(facet_type_const_id);

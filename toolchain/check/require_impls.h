@@ -40,8 +40,9 @@ auto GetRequireImplsSpecificFromEnclosingSpecificWithSelfType(
     SemIR::SpecificId enclosing_specific_id, SemIR::TypeInstId self_id,
     SemIR::InstId witness_id) -> RequireImplsSpecific;
 
-// Returns the constant value inside a RequireImpls declaration, mapped into
-// `enclosing_specific_id`. If an error results, it returns ErrorInst.
+// Returns the constant value of `inst_id` from inside a RequireImpls
+// declaration, mapped into `enclosing_specific_id`. If an error results, it
+// returns ErrorInst.
 //
 // An error can occur during monomorphization when the self-type was valid as a
 // symbolic but becomes invalid with a more concrete specific.
