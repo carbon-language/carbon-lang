@@ -84,14 +84,9 @@ interface BeingDefined {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @BeingDefined {
 // CHECK:STDOUT:   %Self: %BeingDefined.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %BeingDefined.H.decl: %BeingDefined.H.type = fn_decl @BeingDefined.H [concrete = constants.%BeingDefined.H] {
-// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
+// CHECK:STDOUT:   %BeingDefined.H.decl: %BeingDefined.H.type = fn_decl @BeingDefined.H [concrete = constants.%BeingDefined.H] {} {
 // CHECK:STDOUT:     %BeingDefined.ref: type = name_ref BeingDefined, file.%BeingDefined.decl [concrete = constants.%BeingDefined.type]
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, <error> [concrete = <error>]
-// CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
-// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %BeingDefined.assoc_type = assoc_entity element0, %BeingDefined.H.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %BeingDefined.I.decl: %BeingDefined.I.type = fn_decl @BeingDefined.I [concrete = constants.%BeingDefined.I] {} {}
@@ -115,7 +110,7 @@ interface BeingDefined {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @BeingDefined.H(@BeingDefined.%Self: %BeingDefined.type) {
-// CHECK:STDOUT:   fn() -> <error>;
+// CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @BeingDefined.I(@BeingDefined.%Self: %BeingDefined.type) {

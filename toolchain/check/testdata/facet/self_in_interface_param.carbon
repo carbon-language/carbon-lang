@@ -44,6 +44,7 @@ fn G(_:! I(.Self) where .I1 = ()) {}
 // CHECK:STDOUT:   %pattern_type.033: type = pattern_type %I_where.type [symbolic_self]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T.706 [symbolic]
 // CHECK:STDOUT:   %I.lookup_impl_witness.94d: <witness> = lookup_impl_witness %T.706, @I, @I(%.Self.binding.as_type.8db) [symbolic]
+// CHECK:STDOUT:   %.62c: form = init_form %empty_tuple.type, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -61,6 +62,7 @@ fn G(_:! I(.Self) where .I1 = ()) {}
 // CHECK:STDOUT:     %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     %.loc18_39.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
 // CHECK:STDOUT:     %impl.elem0.loc18_39: type = impl_witness_access constants.%I.lookup_impl_witness.94d, element0 [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc18_39.3: form = init_form %impl.elem0.loc18_39, call_param0 [concrete = constants.%.62c]
 // CHECK:STDOUT:     %.loc18_19.1: type = splice_block %.loc18_19.2 [symbolic_self = constants.%I_where.type] {
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:       %I.ref: %I.type.609 = name_ref I, file.%I.decl [concrete = constants.%I.generic]

@@ -69,6 +69,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %assoc0.624: %Interface.assoc_type.5a2 = assoc_entity element0, @Interface.%X [symbolic]
 // CHECK:STDOUT:   %I.682: %Interface.type.442 = symbolic_binding I, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.cbe: type = pattern_type %Interface.type.442 [symbolic]
+// CHECK:STDOUT:   %.9e5: form = init_form %ptr.e8f, call_param0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %AccessGeneric.type: type = fn_type @AccessGeneric [concrete]
 // CHECK:STDOUT:   %AccessGeneric: %AccessGeneric.type = struct_value () [concrete]
@@ -96,6 +97,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %I.50d: %Interface.type.389 = symbolic_binding I, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.e2d: type = pattern_type %Interface.type.389 [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %.740: form = init_form %ptr.235, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %ptr.235 [concrete]
 // CHECK:STDOUT:   %AccessConcrete.type: type = fn_type @AccessConcrete [concrete]
 // CHECK:STDOUT:   %AccessConcrete: %AccessConcrete.type = struct_value () [concrete]
@@ -151,9 +153,10 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8_49: type = name_ref T, %T.loc8_18.2 [symbolic = %T.loc8_18.1 (constants.%T.67d)]
 // CHECK:STDOUT:     %ptr.loc8_50.2: type = ptr_type %T.ref.loc8_49 [symbolic = %ptr.loc8_50.1 (constants.%ptr.e8f)]
+// CHECK:STDOUT:     %.loc8_50.2: form = init_form %ptr.loc8_50.2, call_param0 [symbolic = %.loc8_50.1 (constants.%.9e5)]
 // CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc8_18.2: type = symbolic_binding T, 0 [symbolic = %T.loc8_18.1 (constants.%T.67d)]
-// CHECK:STDOUT:     %.loc8: type = splice_block %Interface.type.loc8_43.2 [symbolic = %Interface.type.loc8_43.1 (constants.%Interface.type.442)] {
+// CHECK:STDOUT:     %.loc8_43: type = splice_block %Interface.type.loc8_43.2 [symbolic = %Interface.type.loc8_43.1 (constants.%Interface.type.442)] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Interface.ref: %Interface.type.815 = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.generic]
 // CHECK:STDOUT:       %T.ref.loc8_42: type = name_ref T, %T.loc8_18.2 [symbolic = %T.loc8_18.1 (constants.%T.67d)]
@@ -171,7 +174,8 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:     %int_32.loc12_42: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc12_42: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32.loc12_42 [concrete = constants.%ptr.235]
-// CHECK:STDOUT:     %.loc12: type = splice_block %Interface.type [concrete = constants.%Interface.type.389] {
+// CHECK:STDOUT:     %.loc12_45: form = init_form %ptr, call_param0 [concrete = constants.%.740]
+// CHECK:STDOUT:     %.loc12_36: type = splice_block %Interface.type [concrete = constants.%Interface.type.389] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Interface.ref: %Interface.type.815 = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.generic]
 // CHECK:STDOUT:       %int_32.loc12_33: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -223,16 +227,17 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %I.loc8_28.1: @AccessGeneric.%Interface.type.loc8_43.1 (%Interface.type.442) = symbolic_binding I, 1 [symbolic = %I.loc8_28.1 (constants.%I.682)]
 // CHECK:STDOUT:   %pattern_type.loc8_28: type = pattern_type %Interface.type.loc8_43.1 [symbolic = %pattern_type.loc8_28 (constants.%pattern_type.cbe)]
 // CHECK:STDOUT:   %ptr.loc8_50.1: type = ptr_type %T.loc8_18.1 [symbolic = %ptr.loc8_50.1 (constants.%ptr.e8f)]
+// CHECK:STDOUT:   %.loc8_50.1: form = init_form %ptr.loc8_50.1, call_param0 [symbolic = %.loc8_50.1 (constants.%.9e5)]
 // CHECK:STDOUT:   %pattern_type.loc8_46: type = pattern_type %ptr.loc8_50.1 [symbolic = %pattern_type.loc8_46 (constants.%pattern_type.4f4)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc9_10: <witness> = require_complete_type %Interface.type.loc8_43.1 [symbolic = %require_complete.loc9_10 (constants.%require_complete.46e)]
+// CHECK:STDOUT:   %require_complete.loc8: <witness> = require_complete_type %ptr.loc8_50.1 [symbolic = %require_complete.loc8 (constants.%require_complete.ef1)]
+// CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type %Interface.type.loc8_43.1 [symbolic = %require_complete.loc9 (constants.%require_complete.46e)]
 // CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface, @Interface(%T.loc8_18.1) [symbolic = %Interface.assoc_type (constants.%Interface.assoc_type.5a2)]
 // CHECK:STDOUT:   %assoc0: @AccessGeneric.%Interface.assoc_type (%Interface.assoc_type.5a2) = assoc_entity element0, @Interface.%X [symbolic = %assoc0 (constants.%assoc0.624)]
 // CHECK:STDOUT:   %I.binding.as_type: type = symbolic_binding_type I, 1, %I.loc8_28.1 [symbolic = %I.binding.as_type (constants.%I.binding.as_type.24f)]
 // CHECK:STDOUT:   %Interface.lookup_impl_witness: <witness> = lookup_impl_witness %I.loc8_28.1, @Interface, @Interface(%T.loc8_18.1) [symbolic = %Interface.lookup_impl_witness (constants.%Interface.lookup_impl_witness.9f1)]
 // CHECK:STDOUT:   %impl.elem0.loc9_11.3: @AccessGeneric.%ptr.loc8_50.1 (%ptr.e8f) = impl_witness_access %Interface.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_11.3 (constants.%impl.elem0.117)]
-// CHECK:STDOUT:   %require_complete.loc9_13: <witness> = require_complete_type %ptr.loc8_50.1 [symbolic = %require_complete.loc9_13 (constants.%require_complete.ef1)]
 // CHECK:STDOUT:   %.loc9_11.3: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.loc8_18.1) [symbolic = %.loc9_11.3 (constants.%.2f2)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc8_50.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.2e6)]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.loc8_50.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet (constants.%Copy.facet.c25)]
@@ -308,6 +313,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %I.loc8_28.1 => constants.%I.682
 // CHECK:STDOUT:   %pattern_type.loc8_28 => constants.%pattern_type.cbe
 // CHECK:STDOUT:   %ptr.loc8_50.1 => constants.%ptr.e8f
+// CHECK:STDOUT:   %.loc8_50.1 => constants.%.9e5
 // CHECK:STDOUT:   %pattern_type.loc8_46 => constants.%pattern_type.4f4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -354,6 +360,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %assoc0.624: %Interface.assoc_type.5a2 = assoc_entity element0, @Interface.%X [symbolic]
 // CHECK:STDOUT:   %I.682: %Interface.type.442 = symbolic_binding I, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.cbe: type = pattern_type %Interface.type.442 [symbolic]
+// CHECK:STDOUT:   %.c6c: form = init_form %T, call_param0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %AccessMissingGeneric.type: type = fn_type @AccessMissingGeneric [concrete]
 // CHECK:STDOUT:   %AccessMissingGeneric: %AccessMissingGeneric.type = struct_value () [concrete]
@@ -366,6 +373,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %Interface.type.389: type = facet_type <@Interface, @Interface(%i32)> [concrete]
 // CHECK:STDOUT:   %I.50d: %Interface.type.389 = symbolic_binding I, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.e2d: type = pattern_type %Interface.type.389 [concrete]
+// CHECK:STDOUT:   %.941: form = init_form %i32, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %AccessMissingConcrete.type: type = fn_type @AccessMissingConcrete [concrete]
 // CHECK:STDOUT:   %AccessMissingConcrete: %AccessMissingConcrete.type = struct_value () [concrete]
@@ -404,9 +412,10 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:     %return.param_patt: @AccessMissingGeneric.%pattern_type.loc8_53 (%pattern_type.51d) = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc8_56: type = name_ref T, %T.loc8_25.2 [symbolic = %T.loc8_25.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc8_56.2: form = init_form %T.ref.loc8_56, call_param0 [symbolic = %.loc8_56.1 (constants.%.c6c)]
 // CHECK:STDOUT:     %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc8_25.2: type = symbolic_binding T, 0 [symbolic = %T.loc8_25.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc8: type = splice_block %Interface.type.loc8_50.2 [symbolic = %Interface.type.loc8_50.1 (constants.%Interface.type.442)] {
+// CHECK:STDOUT:     %.loc8_50: type = splice_block %Interface.type.loc8_50.2 [symbolic = %Interface.type.loc8_50.1 (constants.%Interface.type.442)] {
 // CHECK:STDOUT:       %.Self.2: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Interface.ref: %Interface.type.815 = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.generic]
 // CHECK:STDOUT:       %T.ref.loc8_49: type = name_ref T, %T.loc8_25.2 [symbolic = %T.loc8_25.1 (constants.%T)]
@@ -423,7 +432,8 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc16_49: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc16_49: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc16: type = splice_block %Interface.type [concrete = constants.%Interface.type.389] {
+// CHECK:STDOUT:     %.loc16_49: form = init_form %i32.loc16_49, call_param0 [concrete = constants.%.941]
+// CHECK:STDOUT:     %.loc16_43: type = splice_block %Interface.type [concrete = constants.%Interface.type.389] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Interface.ref: %Interface.type.815 = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.generic]
 // CHECK:STDOUT:       %int_32.loc16_40: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -475,6 +485,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %Interface.type.loc8_50.1: type = facet_type <@Interface, @Interface(%T.loc8_25.1)> [symbolic = %Interface.type.loc8_50.1 (constants.%Interface.type.442)]
 // CHECK:STDOUT:   %I.loc8_35.1: @AccessMissingGeneric.%Interface.type.loc8_50.1 (%Interface.type.442) = symbolic_binding I, 1 [symbolic = %I.loc8_35.1 (constants.%I.682)]
 // CHECK:STDOUT:   %pattern_type.loc8_35: type = pattern_type %Interface.type.loc8_50.1 [symbolic = %pattern_type.loc8_35 (constants.%pattern_type.cbe)]
+// CHECK:STDOUT:   %.loc8_56.1: form = init_form %T.loc8_25.1, call_param0 [symbolic = %.loc8_56.1 (constants.%.c6c)]
 // CHECK:STDOUT:   %pattern_type.loc8_53: type = pattern_type %T.loc8_25.1 [symbolic = %pattern_type.loc8_53 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -523,6 +534,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %Interface.type.loc8_50.1 => constants.%Interface.type.442
 // CHECK:STDOUT:   %I.loc8_35.1 => constants.%I.682
 // CHECK:STDOUT:   %pattern_type.loc8_35 => constants.%pattern_type.cbe
+// CHECK:STDOUT:   %.loc8_56.1 => constants.%.c6c
 // CHECK:STDOUT:   %pattern_type.loc8_53 => constants.%pattern_type.51d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

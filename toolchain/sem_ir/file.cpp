@@ -69,10 +69,13 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       custom_layouts_(allocator_, IdTag(check_ir_id.index, 1)),
       expr_regions_(check_ir_id),
       clang_source_locs_(check_ir_id) {
-  // `type` and the error type are both complete & concrete types.
+  // `type`, `form`, and the error type are both complete & concrete types.
   types_.SetComplete(
       TypeType::TypeId,
       {.value_repr = {.kind = ValueRepr::Copy, .type_id = TypeType::TypeId}});
+  types_.SetComplete(
+      FormType::TypeId,
+      {.value_repr = {.kind = ValueRepr::Copy, .type_id = FormType::TypeId}});
   types_.SetComplete(
       ErrorInst::TypeId,
       {.value_repr = {.kind = ValueRepr::Copy, .type_id = ErrorInst::TypeId}});

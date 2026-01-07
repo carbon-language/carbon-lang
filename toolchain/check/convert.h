@@ -169,6 +169,11 @@ inline constexpr TypeExpr TypeExpr::None = {.inst_id = SemIR::TypeInstId::None,
 auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
                 bool diagnose = true) -> TypeExpr;
 
+// Converts an expression for use as a form. If the expression is a type
+// expression, it is interpreted as an initializing form.
+auto ExprAsReturnForm(Context& context, SemIR::LocId loc_id,
+                      SemIR::InstId value_id) -> Context::FormExpr;
+
 // Handles an expression whose result value is unused.
 auto DiscardExpr(Context& context, SemIR::InstId expr_id) -> void;
 

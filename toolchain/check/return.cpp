@@ -147,7 +147,8 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
     NoteReturnedVar(diag, returned_var_id);
     diag.Emit();
     expr_id = SemIR::ErrorInst::InstId;
-  } else if (!return_info.is_valid()) {
+  } else if (!return_info.is_valid() ||
+             return_info.type_id == SemIR::ErrorInst::TypeId) {
     // We already diagnosed that the return type is invalid. Don't try to
     // convert to it.
     expr_id = SemIR::ErrorInst::InstId;

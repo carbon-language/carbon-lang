@@ -369,6 +369,16 @@ Whether to run the LLVM verifier on modules.
         arg_b.Default(true);
         arg_b.Set(&run_llvm_verifier);
       });
+  b.AddStringOption(
+      {
+          .name = "sem-ir-crash-dump",
+          .value_name = "PATH",
+          .help = R"""(
+Where to write a dump of the raw SemIR emitted so far, in the event of a crash
+in the check phase. If empty, the dump is not written.
+)""",
+      },
+      [&](auto& arg_b) { arg_b.Set(&sem_ir_crash_dump); });
 }
 
 static constexpr CommandLine::CommandInfo SubcommandInfo = {
@@ -1240,6 +1250,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       options.raw_dump_stream = driver_env.output_stream;
       options.dump_raw_sem_ir_builtins = options_.builtin_sem_ir;
     }
+    options.sem_ir_crash_dump = options_.sem_ir_crash_dump;
   }
   Check::CheckParseTrees(check_units, cache.tree_and_subtrees_getters(),
                          driver_env.fs, options, clang_invocation);

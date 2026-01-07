@@ -997,6 +997,11 @@ static auto BuildTypeForInst(FileContext& context, SemIR::TypeType /*inst*/)
   return {context.GetTypeType(), nullptr};
 }
 
+static auto BuildTypeForInst(FileContext& context, SemIR::FormType /*inst*/)
+    -> FileContext::LoweredTypes {
+  return {context.GetFormType(), nullptr};
+}
+
 static auto BuildTypeForInst(FileContext& context, SemIR::VtableType /*inst*/)
     -> FileContext::LoweredTypes {
   return {llvm::Type::getVoidTy(context.llvm_context()), nullptr};

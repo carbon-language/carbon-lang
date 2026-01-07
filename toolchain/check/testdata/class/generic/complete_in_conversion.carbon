@@ -42,6 +42,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:   %IntLiteral: %IntLiteral.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
+// CHECK:STDOUT:   %.39d: form = init_form type, call_param1 [concrete]
 // CHECK:STDOUT:   %Int.type.b3e: type = fn_type @Int.loc2 [concrete]
 // CHECK:STDOUT:   %Int.d6d: %Int.type.b3e = struct_value () [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
@@ -139,6 +140,7 @@ fn F(a: A(0)*) {
 // CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc2_33: form = init_form type, call_param1 [concrete = constants.%.39d]
 // CHECK:STDOUT:     %N.param: Core.IntLiteral = value_param call_param0
 // CHECK:STDOUT:     %.loc2_27.1: type = splice_block %.loc2_27.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]

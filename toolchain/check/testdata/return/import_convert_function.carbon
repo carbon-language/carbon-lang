@@ -67,6 +67,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %D.elem: type = unbound_element_type %D, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.n.m.de8: type = struct_type {.n: %i32, .m: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.ea0: <witness> = complete_type_witness %struct_type.n.m.de8 [concrete]
+// CHECK:STDOUT:   %.6ef: form = init_form %D, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.c49: type = pattern_type %D [concrete]
 // CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
 // CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
@@ -94,6 +95,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %ImplicitAs.type.1a9: type = facet_type <@ImplicitAs, @ImplicitAs(%D)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.78c: <witness> = impl_witness @C.as.ImplicitAs.impl.c43.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.2de: type = pattern_type %C.4f5 [concrete]
+// CHECK:STDOUT:   %.382: form = init_form %D, call_param1 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type.f45: type = fn_type @C.as.ImplicitAs.impl.Convert.loc8 [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.72e: %C.as.ImplicitAs.impl.Convert.type.f45 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
@@ -198,6 +200,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.c49 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %.loc6_14: form = init_form %D.ref, call_param0 [concrete = constants.%.6ef]
 // CHECK:STDOUT:     %return.param: ref %D = out_param call_param0
 // CHECK:STDOUT:     %return: ref %D = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -339,6 +342,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.c49 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %.loc8_63: form = init_form %D.ref, call_param1 [concrete = constants.%.382]
 // CHECK:STDOUT:     %self.param: %C.4f5 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.ImplicitAs.impl.c43.%C [concrete = constants.%C.4f5]
 // CHECK:STDOUT:     %self: %C.4f5 = value_binding self, %self.param
@@ -363,6 +367,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.c49 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %.loc9_63: form = init_form %D.ref, call_param1 [concrete = constants.%.382]
 // CHECK:STDOUT:     %self.param: %C.95b = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.ImplicitAs.impl.7c3.%C [concrete = constants.%C.95b]
 // CHECK:STDOUT:     %self: %C.95b = value_binding self, %self.param
@@ -387,6 +392,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.c49 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %.loc10_63: form = init_form %D.ref, call_param1 [concrete = constants.%.382]
 // CHECK:STDOUT:     %self.param: %C.a93 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.ImplicitAs.impl.fa3.%C [concrete = constants.%C.a93]
 // CHECK:STDOUT:     %self: %C.a93 = value_binding self, %self.param
@@ -411,6 +417,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.c49 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %.loc11_63: form = init_form %D.ref, call_param1 [concrete = constants.%.382]
 // CHECK:STDOUT:     %self.param: %C.1d7 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.ImplicitAs.impl.158.%C [concrete = constants.%C.1d7]
 // CHECK:STDOUT:     %self: %C.1d7 = value_binding self, %self.param
@@ -435,6 +442,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.c49 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %.loc12_63: form = init_form %D.ref, call_param1 [concrete = constants.%.382]
 // CHECK:STDOUT:     %self.param: %C.e40 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.ImplicitAs.impl.f64.%C [concrete = constants.%C.e40]
 // CHECK:STDOUT:     %self: %C.e40 = value_binding self, %self.param
@@ -459,6 +467,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.c49 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %.loc13_63: form = init_form %D.ref, call_param1 [concrete = constants.%.382]
 // CHECK:STDOUT:     %self.param: %C.3f1 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.ImplicitAs.impl.d86.%C [concrete = constants.%C.3f1]
 // CHECK:STDOUT:     %self: %C.3f1 = value_binding self, %self.param
@@ -483,6 +492,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.c49 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %.loc14_63: form = init_form %D.ref, call_param1 [concrete = constants.%.382]
 // CHECK:STDOUT:     %self.param: %C.0fa = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.ImplicitAs.impl.f13.%C [concrete = constants.%C.0fa]
 // CHECK:STDOUT:     %self: %C.0fa = value_binding self, %self.param
@@ -507,6 +517,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.c49 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %.loc15_63: form = init_form %D.ref, call_param1 [concrete = constants.%.382]
 // CHECK:STDOUT:     %self.param: %C.2b7 = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, @C.as.ImplicitAs.impl.83b.%C [concrete = constants.%C.2b7]
 // CHECK:STDOUT:     %self: %C.2b7 = value_binding self, %self.param
@@ -582,64 +593,64 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc8(%self.param: %C.4f5) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc8: ref %D = splice_block %return {}
-// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc8
+// CHECK:STDOUT:   %.loc8_60: ref %D = splice_block %return {}
+// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc8_60
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc9(%self.param: %C.95b) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc9: ref %D = splice_block %return {}
-// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc9
+// CHECK:STDOUT:   %.loc9_60: ref %D = splice_block %return {}
+// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc9_60
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc10(%self.param: %C.a93) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc10: ref %D = splice_block %return {}
-// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc10
+// CHECK:STDOUT:   %.loc10_60: ref %D = splice_block %return {}
+// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc10_60
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc11(%self.param: %C.1d7) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc11: ref %D = splice_block %return {}
-// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc11
+// CHECK:STDOUT:   %.loc11_60: ref %D = splice_block %return {}
+// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc11_60
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc12(%self.param: %C.e40) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc12: ref %D = splice_block %return {}
-// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc12
+// CHECK:STDOUT:   %.loc12_60: ref %D = splice_block %return {}
+// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc12_60
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc13(%self.param: %C.3f1) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc13: ref %D = splice_block %return {}
-// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc13
+// CHECK:STDOUT:   %.loc13_60: ref %D = splice_block %return {}
+// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc13_60
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc14(%self.param: %C.0fa) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc14: ref %D = splice_block %return {}
-// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc14
+// CHECK:STDOUT:   %.loc14_60: ref %D = splice_block %return {}
+// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc14_60
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc15(%self.param: %C.2b7) -> %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc15: ref %D = splice_block %return {}
-// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc15
+// CHECK:STDOUT:   %.loc15_60: ref %D = splice_block %return {}
+// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc15_60
 // CHECK:STDOUT:   return %Make.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -707,6 +718,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
 // CHECK:STDOUT:   %struct_type.n.m: type = struct_type {.n: %i32, .m: %i32} [concrete]
 // CHECK:STDOUT:   %complete_type.ea0: <witness> = complete_type_witness %struct_type.n.m [concrete]
+// CHECK:STDOUT:   %.6c0: form = init_form %D, call_param1 [concrete]
 // CHECK:STDOUT:   %pattern_type.f8a: type = pattern_type %D [concrete]
 // CHECK:STDOUT:   %F0.type: type = fn_type @F0 [concrete]
 // CHECK:STDOUT:   %F0: %F0.type = struct_value () [concrete]
@@ -928,6 +940,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %P.ref.loc6: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
 // CHECK:STDOUT:     %D.ref: type = name_ref D, imports.%P.D [concrete = constants.%D]
+// CHECK:STDOUT:     %.loc6_19: form = init_form %D.ref, call_param1 [concrete = constants.%.6c0]
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc6_10: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]

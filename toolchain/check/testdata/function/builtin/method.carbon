@@ -29,6 +29,7 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:   %Self.ab9: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type.d31: type = symbolic_binding_type Self, 0, %Self.ab9 [symbolic]
 // CHECK:STDOUT:   %pattern_type.fa0: type = pattern_type %Self.binding.as_type.d31 [symbolic]
+// CHECK:STDOUT:   %.1fc: form = init_form %Self.binding.as_type.d31, call_param2 [symbolic]
 // CHECK:STDOUT:   %I.F.type: type = fn_type @I.F [concrete]
 // CHECK:STDOUT:   %I.F: %I.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
@@ -39,6 +40,7 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @i32.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %.88a: form = init_form %i32, call_param2 [concrete]
 // CHECK:STDOUT:   %i32.as.I.impl.F.type: type = fn_type @i32.as.I.impl.F [concrete]
 // CHECK:STDOUT:   %i32.as.I.impl.F: %i32.as.I.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %i32, (%I.impl_witness) [concrete]
@@ -185,7 +187,8 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc16_36: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self.ab9)]
 // CHECK:STDOUT:     %Self.as_type.loc16_36: type = facet_access_type %Self.ref.loc16_36 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.d31)]
-// CHECK:STDOUT:     %.loc16_36: type = converted %Self.ref.loc16_36, %Self.as_type.loc16_36 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.d31)]
+// CHECK:STDOUT:     %.loc16_36.2: type = converted %Self.ref.loc16_36, %Self.as_type.loc16_36 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.d31)]
+// CHECK:STDOUT:     %.loc16_36.3: form = init_form %.loc16_36.2, call_param2 [symbolic = %.loc16_36.1 (constants.%.1fc)]
 // CHECK:STDOUT:     %self.param: @I.F.%Self.binding.as_type (%Self.binding.as_type.d31) = value_param call_param0
 // CHECK:STDOUT:     %.loc16_14.1: type = splice_block %.loc16_14.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.d31)] {
 // CHECK:STDOUT:       %Self.ref.loc16_14: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self.ab9)]
@@ -224,6 +227,7 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc20_34: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc20_34: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc20_34: form = init_form %i32.loc20_34, call_param2 [concrete = constants.%.88a]
 // CHECK:STDOUT:     %self.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc20_14: type = splice_block %i32.loc20_14 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc20_14: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -251,6 +255,7 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.ab9)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.d31)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.fa0)]
+// CHECK:STDOUT:   %.loc16_36.1: form = init_form %Self.binding.as_type, call_param2 [symbolic = %.loc16_36.1 (constants.%.1fc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @I.F.%Self.binding.as_type (%Self.binding.as_type.d31), %other.param: @I.F.%Self.binding.as_type (%Self.binding.as_type.d31)) -> @I.F.%Self.binding.as_type (%Self.binding.as_type.d31);
 // CHECK:STDOUT: }
@@ -261,11 +266,13 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:   %Self => constants.%Self.ab9
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.d31
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.fa0
+// CHECK:STDOUT:   %.loc16_36.1 => constants.%.1fc
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.F(constants.%I.facet) {
 // CHECK:STDOUT:   %Self => constants.%I.facet
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%i32
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7ce
+// CHECK:STDOUT:   %.loc16_36.1 => constants.%.88a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -426,6 +426,7 @@ class NodeStack {
       case Parse::NodeKind::IfExprIf:
       case Parse::NodeKind::ImplicitParamList:
       case Parse::NodeKind::WhileConditionStart:
+      case Parse::NodeKind::ReturnType:
         return Id::KindFor<SemIR::InstBlockId>();
       case Parse::NodeKind::FunctionDefinitionStart:
       case Parse::NodeKind::BuiltinFunctionDefinitionStart:
@@ -446,8 +447,6 @@ class NodeStack {
       case Parse::NodeKind::DefaultLibrary:
       case Parse::NodeKind::LibraryName:
         return Id::KindFor<SemIR::LibraryNameId>();
-      case Parse::NodeKind::ReturnType:
-        return Id::KindFor<SemIR::InstId>();
       case Parse::NodeKind::AssociatedConstantInitializer:
       case Parse::NodeKind::AssociatedConstantIntroducer:
       case Parse::NodeKind::BuiltinName:

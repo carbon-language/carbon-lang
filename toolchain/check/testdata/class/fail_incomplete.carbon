@@ -45,10 +45,17 @@ fn CallClassFunction() {
 // CHECK:STDERR:
 var global_var: Class;
 
-// CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+7]]:27: error: function returns incomplete type `Class` [IncompleteTypeInFunctionReturnType]
+// CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+14]]:27: error: function returns incomplete type `Class` [IncompleteTypeInFunctionReturnType]
 // CHECK:STDERR: fn ConvertFromStruct() -> Class { return {}; }
 // CHECK:STDERR:                           ^~~~~
 // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-34]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: class Class;
+// CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+7]]:27: error: parameter has incomplete type `Class` in function definition [IncompleteTypeInFunctionParam]
+// CHECK:STDERR: fn ConvertFromStruct() -> Class { return {}; }
+// CHECK:STDERR:                           ^~~~~
+// CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-41]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class Class;
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -58,7 +65,7 @@ fn G(p: Class*) -> () {
   // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+7]]:10: error: member access into object of incomplete type `Class` [IncompleteTypeInMemberAccess]
   // CHECK:STDERR:   return p->n;
   // CHECK:STDERR:          ^~~~
-  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-44]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-51]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
   // CHECK:STDERR:
@@ -69,17 +76,24 @@ fn MemberAccess(p: Class*) -> () {
   // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+7]]:11: error: member access into object of incomplete type `Class` [IncompleteTypeInMemberAccess]
   // CHECK:STDERR:   return (*p).n;
   // CHECK:STDERR:           ^~
-  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-55]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-62]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
   // CHECK:STDERR:
   return (*p).n;
 }
 
-// CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+7]]:23: error: function returns incomplete type `Class` [IncompleteTypeInFunctionReturnType]
+// CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+14]]:23: error: function returns incomplete type `Class` [IncompleteTypeInFunctionReturnType]
 // CHECK:STDERR: fn Copy(p: Class*) -> Class {
 // CHECK:STDERR:                       ^~~~~
-// CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-65]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-72]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: class Class;
+// CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+7]]:23: error: parameter has incomplete type `Class` in function definition [IncompleteTypeInFunctionParam]
+// CHECK:STDERR: fn Copy(p: Class*) -> Class {
+// CHECK:STDERR:                       ^~~~~
+// CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-79]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR: class Class;
 // CHECK:STDERR: ^~~~~~~~~~~~
 // CHECK:STDERR:
@@ -91,7 +105,7 @@ fn Let(p: Class*) {
   // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+7]]:10: error: binding pattern has incomplete type `Class` in name binding declaration [IncompleteTypeInBindingDecl]
   // CHECK:STDERR:   let c: Class = *p;
   // CHECK:STDERR:          ^~~~~
-  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-77]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-91]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
   // CHECK:STDERR:
@@ -106,7 +120,7 @@ fn CallTakeIncomplete(p: Class*) {
   // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+10]]:18: error: forming value of incomplete type `Class` [IncompleteTypeInValueConversion]
   // CHECK:STDERR:   TakeIncomplete(*p);
   // CHECK:STDERR:                  ^~
-  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-92]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-106]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
   // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-11]]:19: note: initializing function parameter [InCallToFunctionParam]
@@ -118,7 +132,7 @@ fn CallTakeIncomplete(p: Class*) {
   // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+10]]:18: error: forming value of incomplete type `Class` [IncompleteTypeInValueConversion]
   // CHECK:STDERR:   TakeIncomplete({});
   // CHECK:STDERR:                  ^~
-  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-104]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-118]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
   // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-23]]:19: note: initializing function parameter [InCallToFunctionParam]
@@ -132,7 +146,7 @@ fn CallReturnIncomplete() {
   // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+10]]:3: error: function returns incomplete type `Class` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:   ReturnIncomplete();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-118]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-132]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
   // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-35]]:26: note: return type declared here [IncompleteReturnTypeHere]
@@ -151,7 +165,7 @@ fn CallIncompleteAddrSelf(p: Class*) {
   // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+10]]:3: error: invalid use of incomplete type `Class` [IncompleteTypeInConversion]
   // CHECK:STDERR:   p->(IncompleteRefSelf.F)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-137]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-151]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: class Class;
   // CHECK:STDERR: ^~~~~~~~~~~~
   // CHECK:STDERR: fail_forward_decl.carbon:[[@LINE-11]]:8: note: initializing function parameter [InCallToFunctionParam]

@@ -24,6 +24,7 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT: --- fail_call_in_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %.d96: form = init_form type, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %ReturnType.type: type = fn_type @ReturnType [concrete]
 // CHECK:STDOUT:   %ReturnType: %ReturnType.type = struct_value () [concrete]
@@ -68,19 +69,15 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:     %return.patt: %pattern_type.98f = return_slot_pattern [concrete]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.98f = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc17: form = init_form type, call_param0 [concrete = constants.%.d96]
 // CHECK:STDOUT:     %return.param: ref type = out_param call_param0
 // CHECK:STDOUT:     %return: ref type = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [concrete = constants.%Six] {
-// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
+// CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [concrete = constants.%Six] {} {
 // CHECK:STDOUT:     %ReturnType.ref: %ReturnType.type = name_ref ReturnType, file.%ReturnType.decl [concrete = constants.%ReturnType]
 // CHECK:STDOUT:     %ReturnType.call: init type = call %ReturnType.ref()
 // CHECK:STDOUT:     %.loc22_24.1: type = value_of_initializer %ReturnType.call
 // CHECK:STDOUT:     %.loc22_24.2: type = converted %ReturnType.call, %.loc22_24.1
-// CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
-// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -94,9 +91,9 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:   return %type.as.Copy.impl.Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Six() -> <error> {
+// CHECK:STDOUT: fn @Six() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [concrete = constants.%int_6]
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

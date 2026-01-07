@@ -70,6 +70,10 @@ struct CheckParseTreesOptions {
 
   // When dumping raw SemIR, whether to include builtins.
   bool dump_raw_sem_ir_builtins = false;
+
+  // If not empty, a raw SemIR dump should be written to this path in the event
+  // of a crash.
+  llvm::StringRef sem_ir_crash_dump;
 };
 
 // Checks a group of parse trees. This will use imports to decide the order of

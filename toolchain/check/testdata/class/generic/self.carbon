@@ -34,6 +34,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Class.generic: %Class.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic]
+// CHECK:STDOUT:   %.859: form = init_form %Class, call_param0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.466: type = pattern_type %Class [symbolic]
 // CHECK:STDOUT:   %Class.MakeSelf.type: type = fn_type @Class.MakeSelf, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %Class.MakeSelf: %Class.MakeSelf.type = struct_value () [symbolic]
@@ -96,8 +97,9 @@ class Class(T:! type) {
 // CHECK:STDOUT:       %return.patt: @Class.MakeSelf.%pattern_type (%pattern_type.466) = return_slot_pattern [concrete]
 // CHECK:STDOUT:       %return.param_patt: @Class.MakeSelf.%pattern_type (%pattern_type.466) = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %.loc18_20: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc18_20 [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:       %.loc18_20.2: type = specific_constant constants.%Class, @Class(constants.%T) [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:       %Self.ref: type = name_ref Self, %.loc18_20.2 [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:       %.loc18_20.3: form = init_form %Self.ref, call_param0 [symbolic = %.loc18_20.1 (constants.%.859)]
 // CHECK:STDOUT:       %return.param: ref @Class.MakeSelf.%Class (%Class) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @Class.MakeSelf.%Class (%Class) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -108,6 +110,7 @@ class Class(T:! type) {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc15_13.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %Class.loc19_28.2: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc19_28.1 (constants.%Class)]
+// CHECK:STDOUT:       %.loc19_28.2: form = init_form %Class.loc19_28.2, call_param0 [symbolic = %.loc19_28.1 (constants.%.859)]
 // CHECK:STDOUT:       %return.param: ref @Class.MakeClass.%Class.loc19_28.1 (%Class) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @Class.MakeClass.%Class.loc19_28.1 (%Class) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -128,6 +131,7 @@ class Class(T:! type) {
 // CHECK:STDOUT: generic fn @Class.MakeSelf(@Class.%T.loc15_13.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [symbolic = %Class (constants.%Class)]
+// CHECK:STDOUT:   %.loc18_20.1: form = init_form %Class, call_param0 [symbolic = %.loc18_20.1 (constants.%.859)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Class [symbolic = %pattern_type (constants.%pattern_type.466)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -146,6 +150,7 @@ class Class(T:! type) {
 // CHECK:STDOUT: generic fn @Class.MakeClass(@Class.%T.loc15_13.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %Class.loc19_28.1: type = class_type @Class, @Class(%T) [symbolic = %Class.loc19_28.1 (constants.%Class)]
+// CHECK:STDOUT:   %.loc19_28.1: form = init_form %Class.loc19_28.1, call_param0 [symbolic = %.loc19_28.1 (constants.%.859)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Class.loc19_28.1 [symbolic = %pattern_type (constants.%pattern_type.466)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -236,6 +241,7 @@ class Class(T:! type) {
 // CHECK:STDOUT: specific @Class.MakeSelf(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
+// CHECK:STDOUT:   %.loc18_20.1 => constants.%.859
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.466
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -246,6 +252,7 @@ class Class(T:! type) {
 // CHECK:STDOUT: specific @Class.MakeClass(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class.loc19_28.1 => constants.%Class
+// CHECK:STDOUT:   %.loc19_28.1 => constants.%.859
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.466
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

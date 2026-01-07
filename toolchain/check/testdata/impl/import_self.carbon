@@ -43,6 +43,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %Self: %Add.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %.b66: form = init_form %Self.binding.as_type, call_param2 [symbolic]
 // CHECK:STDOUT:   %Add.Op.type: type = fn_type @Add.Op [concrete]
 // CHECK:STDOUT:   %Add.Op: %Add.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type @Add [concrete]
@@ -77,7 +78,8 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc5_37: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:     %Self.as_type.loc5_37: type = facet_access_type %Self.ref.loc5_37 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
-// CHECK:STDOUT:     %.loc5_37: type = converted %Self.ref.loc5_37, %Self.as_type.loc5_37 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:     %.loc5_37.2: type = converted %Self.ref.loc5_37, %Self.as_type.loc5_37 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
+// CHECK:STDOUT:     %.loc5_37.3: form = init_form %.loc5_37.2, call_param2 [symbolic = %.loc5_37.1 (constants.%.b66)]
 // CHECK:STDOUT:     %self.param: @Add.Op.%Self.binding.as_type (%Self.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc5_15.1: type = splice_block %.loc5_15.2 [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)] {
 // CHECK:STDOUT:       %Self.ref.loc5_15: %Add.type = name_ref Self, @Add.%Self [symbolic = %Self (constants.%Self)]
@@ -109,6 +111,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %Self: %Add.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type)]
+// CHECK:STDOUT:   %.loc5_37.1: form = init_form %Self.binding.as_type, call_param2 [symbolic = %.loc5_37.1 (constants.%.b66)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param: @Add.Op.%Self.binding.as_type (%Self.binding.as_type), %other.param: @Add.Op.%Self.binding.as_type (%Self.binding.as_type)) -> @Add.Op.%Self.binding.as_type (%Self.binding.as_type);
 // CHECK:STDOUT: }
@@ -117,6 +120,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type
+// CHECK:STDOUT:   %.loc5_37.1 => constants.%.b66
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- b.carbon
@@ -133,7 +137,9 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %Add.Op: %Add.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type.5af: type = pattern_type %Self.binding.as_type [symbolic]
+// CHECK:STDOUT:   %.789: form = init_form %Self.binding.as_type, call_param2 [symbolic]
 // CHECK:STDOUT:   %pattern_type.7c7: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %.355: form = init_form %C, call_param2 [concrete]
 // CHECK:STDOUT:   %C.as.Add.impl.Op.type: type = fn_type @C.as.Add.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.Add.impl.Op: %C.as.Add.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Add.facet: %Add.type = facet_value %C, (%Add.impl_witness) [concrete]
@@ -181,6 +187,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc12_21: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %.loc12: form = init_form %C.ref.loc12_21, call_param2 [concrete = constants.%.355]
 // CHECK:STDOUT:     %x.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc12_9: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %x: %C = value_binding x, %x.param
@@ -211,6 +218,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt, call_param2 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref.loc9_37: type = name_ref Self, @C.as.Add.impl.%C.ref [concrete = constants.%C]
+// CHECK:STDOUT:     %.loc9_37: form = init_form %Self.ref.loc9_37, call_param2 [concrete = constants.%.355]
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc9_15: type = name_ref Self, @C.as.Add.impl.%C.ref [concrete = constants.%C]
 // CHECK:STDOUT:     %self: %C = value_binding self, %self.param
@@ -244,6 +252,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %Self: %Add.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.5af)]
+// CHECK:STDOUT:   %.1: form = init_form %Self.binding.as_type, call_param2 [symbolic = %.1 (constants.%.789)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -279,11 +288,13 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.5af
+// CHECK:STDOUT:   %.1 => constants.%.789
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.Op(constants.%Add.facet) {
 // CHECK:STDOUT:   %Self => constants.%Add.facet
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7c7
+// CHECK:STDOUT:   %.1 => constants.%.355
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
