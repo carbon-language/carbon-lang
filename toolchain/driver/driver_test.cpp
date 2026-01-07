@@ -70,7 +70,7 @@ class DriverTest : public testing::Test {
     std::filesystem::current_path(test_dir, ec);
     CARBON_CHECK(!ec, "Could not change the current working dir to '{0}': {1}",
                  test_dir, ec.message());
-    return llvm::make_scope_exit([original_dir, test_dir] {
+    return llvm::scope_exit([original_dir, test_dir] {
       std::error_code ec;
       std::filesystem::current_path(original_dir, ec);
       CARBON_CHECK(!ec,
