@@ -315,6 +315,8 @@ install_dirs = {
         ),
     ],
     "lib/carbon": [
+        install_target("MODULE.bazel", "bazel/install.MODULE.bazel"),
+        install_target("BUILD", "bazel/install.BUILD"),
         install_target("carbon_install.txt", "carbon_install.txt"),
         install_target(
             "install_digest.txt",
@@ -329,9 +331,16 @@ install_dirs = {
             executable = True,
             is_driver = True,
         ),
+        install_filegroup("bazel", "//bazel/cc_toolchains:installed_cc_toolchain_starlark"),
         # TODO: Consider if we want to keep `core` here or group it with
         # runtimes. It is a bit of both -- standard library, and runtimes.
         install_filegroup("core", "//core:prelude"),
+    ],
+    "lib/carbon/bazel": [
+        install_target("carbon_cc_toolchain_config.bzl", "bazel/carbon_cc_toolchain_config.bzl"),
+        install_target("carbon_detected_variables.tpl.bzl", "bazel/carbon_detected_variables.tpl.bzl"),
+        install_target("carbon_toolchain.bzl", "bazel/carbon_toolchain.bzl"),
+        install_target("BUILD", "bazel/empty.BUILD"),
     ],
     "lib/carbon/llvm/bin": [install_symlink(
         name,
