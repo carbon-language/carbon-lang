@@ -68,8 +68,7 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:   %x: ref type = ref_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [concrete = constants.%Six] {} {
 // CHECK:STDOUT:     %x.ref: ref type = name_ref x, file.%x [concrete = file.%x.var]
-// CHECK:STDOUT:     %.loc20_13.1: type = acquire_value %x.ref
-// CHECK:STDOUT:     %.loc20_13.2: form = init_form %.loc20_13.1, call_param0
+// CHECK:STDOUT:     %.loc20: type = acquire_value %x.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

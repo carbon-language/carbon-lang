@@ -88,7 +88,6 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   %x: type = value_binding x, @__global_init.%i32.loc15
 // CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [concrete = constants.%Six] {} {
 // CHECK:STDOUT:     %x.ref: type = name_ref x, file.%x
-// CHECK:STDOUT:     %.loc20: form = init_form %x.ref, call_param0
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.98f = value_binding_pattern y [concrete]
@@ -97,7 +96,6 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   %y: type = value_binding y, @__global_init.%i32.loc27
 // CHECK:STDOUT:   %HalfDozen.decl: %HalfDozen.type = fn_decl @HalfDozen [concrete = constants.%HalfDozen] {} {
 // CHECK:STDOUT:     %y.ref: type = name_ref y, file.%y
-// CHECK:STDOUT:     %.loc32: form = init_form %y.ref, call_param0
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %z.patt: %pattern_type.98f = value_binding_pattern z [concrete]
@@ -106,7 +104,6 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   %z: type = value_binding z, @__global_init.%i32.loc39
 // CHECK:STDOUT:   %FirstPerfectNumber.decl: %FirstPerfectNumber.type = fn_decl @FirstPerfectNumber [concrete = constants.%FirstPerfectNumber] {} {
 // CHECK:STDOUT:     %z.ref: type = name_ref z, file.%z
-// CHECK:STDOUT:     %.loc44: form = init_form %z.ref, call_param0
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

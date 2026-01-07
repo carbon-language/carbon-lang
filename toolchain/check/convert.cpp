@@ -1969,6 +1969,11 @@ auto ExprAsReturnForm(Context& context, SemIR::LocId loc_id,
     if (type_inst_id == SemIR::ErrorInst::InstId) {
       return ErrorFormExpr;
     }
+    if (!context.constant_values().Get(type_inst_id).is_constant()) {
+      DiagnoseTypeExprEvaluationFailure(context,
+                                        SemIR::LocId(ref_tag->expr_id));
+      return ErrorFormExpr;
+    }
     form_inst_id = AddInst(
         context,
         SemIR::LocIdAndInst::UncheckedLoc(
@@ -1980,6 +1985,10 @@ auto ExprAsReturnForm(Context& context, SemIR::LocId loc_id,
     if (type_inst_id == SemIR::ErrorInst::InstId) {
       return ErrorFormExpr;
     }
+    if (!context.constant_values().Get(type_inst_id).is_constant()) {
+      DiagnoseTypeExprEvaluationFailure(context, loc_id);
+      return ErrorFormExpr;
+    }
     form_inst_id = AddInst(
         context,
         SemIR::LocIdAndInst::UncheckedLoc(
@@ -1989,11 +1998,7 @@ auto ExprAsReturnForm(Context& context, SemIR::LocId loc_id,
                 .type_component_inst_id = type_inst_id,
                 .index = context.full_pattern_stack().NextCallParamIndex()}));
   }
-
-  if (!context.constant_values().Get(form_inst_id).is_constant()) {
-    DiagnoseTypeExprEvaluationFailure(context, loc_id);
-    return ErrorFormExpr;
-  }
+  CARBON_CHECK(context.constant_values().Get(form_inst_id).is_constant());
 
   auto type_const_id = context.constant_values().Get(type_inst_id);
   CARBON_CHECK(type_const_id.is_constant());

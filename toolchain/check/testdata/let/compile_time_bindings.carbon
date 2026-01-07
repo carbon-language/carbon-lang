@@ -626,7 +626,6 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %T: type = value_binding T, %i32
 // CHECK:STDOUT:   %I.F.decl: %I.F.type = fn_decl @I.F [concrete = constants.%I.F] {} {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, @I.%T
-// CHECK:STDOUT:     %.loc14: form = init_form %T.ref, call_param0
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -676,7 +675,6 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %T: type = value_binding T, @__global_init.%i32
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {
 // CHECK:STDOUT:     %T.ref: type = name_ref T, file.%T
-// CHECK:STDOUT:     %.loc13: form = init_form %T.ref, call_param0
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -78,7 +78,6 @@ fn Six() -> ReturnType() { return 6; }
 // CHECK:STDOUT:     %ReturnType.call: init type = call %ReturnType.ref()
 // CHECK:STDOUT:     %.loc22_24.1: type = value_of_initializer %ReturnType.call
 // CHECK:STDOUT:     %.loc22_24.2: type = converted %ReturnType.call, %.loc22_24.1
-// CHECK:STDOUT:     %.loc22_24.3: form = init_form %.loc22_24.2, call_param0
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
