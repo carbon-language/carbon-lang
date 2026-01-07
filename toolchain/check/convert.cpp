@@ -1998,7 +1998,6 @@ auto ExprAsReturnForm(Context& context, SemIR::LocId loc_id,
                 .type_component_inst_id = type_inst_id,
                 .index = context.full_pattern_stack().NextCallParamIndex()}));
   }
-  CARBON_CHECK(context.constant_values().Get(form_inst_id).is_constant());
 
   auto type_const_id = context.constant_values().Get(type_inst_id);
   CARBON_CHECK(type_const_id.is_constant());
