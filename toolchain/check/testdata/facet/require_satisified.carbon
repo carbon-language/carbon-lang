@@ -153,6 +153,8 @@ interface Z(T:! type) {}
 class C;
 
 interface Y(U:! type) {
+  // `Self` must appear somewhere in the require decl, so it's in the interface
+  // specific because we want to test a different self-type.
   require C impls Z(Self);
 }
 
@@ -171,6 +173,8 @@ interface Z(T:! type) {}
 class C;
 
 interface Y(U:! type) {
+  // `Self` must appear somewhere in the require decl, so it's in the interface
+  // specific because we want to test a different self-type.
   require C impls Z(Self);
 }
 
