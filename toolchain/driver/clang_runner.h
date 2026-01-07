@@ -77,8 +77,8 @@ class ClangRunner : ToolRunnerBase {
   // both to use and incorporate into the cache.
   //
   // Returns an error only if unable to successfully run Clang with the
-  // arguments. If able to run Clang, no error is returned a bool indicating
-  // whether than Clang invocation succeeded is returned.
+  // arguments. If able to run Clang, no error is returned, and a bool
+  // indicating whether than Clang invocation succeeded is returned.
   auto Run(llvm::ArrayRef<llvm::StringRef> args,
            Runtimes::Cache& runtimes_cache,
            llvm::ThreadPoolInterface& runtimes_build_thread_pool,
@@ -94,13 +94,12 @@ class ClangRunner : ToolRunnerBase {
 
   // Run Clang with the provided arguments and without any target runtimes.
   //
+  // Similar to `Run`, but omits any target runtimes.
+  //
   // This method can be used to avoid building target-dependent resources when
   // unnecessary, but not all Clang command lines will work correctly.
   // Specifically, compile-only commands will typically work, while linking will
   // not.
-  //
-  // This function simply returns true or false depending on whether Clang runs
-  // successfully, as it should display any needed error messages.
   auto RunWithNoRuntimes(llvm::ArrayRef<llvm::StringRef> args,
                          bool enable_leaking = false) -> ErrorOr<bool>;
 
