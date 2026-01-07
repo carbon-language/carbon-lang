@@ -628,6 +628,10 @@ minimal context for how the current function is reached, we use LLVM's
 `PrettyStackTrace` to include details about the state stack. The state stack
 will be above the function stack in crash output.
 
+You can also use the `--sem-ir-crash-dump=path/to/file` flag to get a raw SemIR
+dump in the event of a crash in the check phase. This can be particularly useful
+for interpreting IDs you encounter during interactive debugging.
+
 #### Dumping objects in interactive debuggers
 
 We provide namespace-scoped `Dump` functions in several components, such as
@@ -637,6 +641,10 @@ regarding support.
 
 Objects which inherit from `Printable` also have `Dump` member functions, but
 these will lack contextual information.
+
+IDs are dumped in hexadecimal, so it's often convenient to set your interactive
+debugger to print integers in hexadecimal as well. In LLDB you can do this with
+`type format add --format hex int`.
 
 #### Dumping prelude files
 

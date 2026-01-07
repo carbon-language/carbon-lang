@@ -352,9 +352,9 @@ static auto LookupImplWitnessInSelfFacetValue(
       RequireIdentifiedFacetType(context, loc_id, *facet_type, nullptr);
   // This should not be possible as FacetValue is constructed by a conversion
   // to a facet type, which performs impl lookup for that facet type, and
-  // lookup only succeeds for complete facet types.
+  // lookup only succeeds for identified facet types.
   CARBON_CHECK(identified_id.has_value(),
-               "FacetValue was constructed with an incomplete facet type");
+               "FacetValue was constructed with an unidentified facet type");
   auto facet_type_required_interfaces =
       llvm::enumerate(context.identified_facet_types()
                           .Get(identified_id)

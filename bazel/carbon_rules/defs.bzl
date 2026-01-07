@@ -6,20 +6,34 @@
 
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 
+def _runtimes_path(runtimes_target):
+    path = None
+    for f in runtimes_target:
+        if f.short_path.endswith("clang_resource_dir/lib"):
+            path = f.path
+            break
+
+    if not path:
+        fail("Could not find the `clang_resource_dir` in target {}".format(runtimes_target.label))
+
+    return path[:-len("/clang_resource_dir/lib")]
+
 def _carbon_binary_impl(ctx):
     toolchain_driver = ctx.executable.internal_exec_toolchain_driver
     toolchain_data = ctx.files.internal_exec_toolchain_data
+    prebuilt_runtimes = ctx.files.internal_exec_prebuilt_runtimes
 
     # If the exec driver isn't provided, that means we're trying to use a target
     # config toolchain, likely to avoid build overhead of two configs.
     if toolchain_driver == None:
         toolchain_driver = ctx.executable.internal_target_toolchain_driver
         toolchain_data = ctx.files.internal_target_toolchain_data
+        prebuilt_runtimes = ctx.files.internal_target_prebuilt_runtimes
 
     # Pass any C++ flags from our dependencies onto Carbon.
     dep_flags = []
     dep_hdrs = []
-    dep_link_flags = ["-lc++"]
+    dep_link_flags = []
     dep_link_inputs = []
     for dep in ctx.attr.deps:
         if CcInfo in dep:
@@ -75,7 +89,7 @@ def _carbon_binary_impl(ctx):
                 inputs = depset(direct = srcs_reordered, transitive = dep_hdrs),
                 executable = toolchain_driver,
                 tools = depset(toolchain_data),
-                arguments = ["compile", "--output=" + out.path, "--clang-arg=-stdlib=libc++"] +
+                arguments = ["compile", "--output=" + out.path] +
                             [s.path for s in srcs_reordered] + extra_flags + ctx.attr.flags,
                 mnemonic = "CarbonCompile",
                 progress_message = "Compiling " + src.short_path,
@@ -86,8 +100,8 @@ def _carbon_binary_impl(ctx):
         outputs = [bin],
         inputs = objs + dep_link_inputs,
         executable = toolchain_driver,
-        tools = depset(toolchain_data),
-        arguments = ["link", "--output=" + bin.path] + ["--"] + dep_link_flags + [o.path for o in objs],
+        tools = depset(toolchain_data + prebuilt_runtimes),
+        arguments = ["--prebuilt-runtimes=" + _runtimes_path(prebuilt_runtimes), "link", "--output=" + bin.path] + ["--"] + dep_link_flags + [o.path for o in objs],
         mnemonic = "CarbonLink",
         progress_message = "Linking " + bin.short_path,
     )
@@ -98,11 +112,15 @@ _carbon_binary_internal = rule(
     attrs = {
         "deps": attr.label_list(allow_files = True, providers = [[CcInfo]]),
         "flags": attr.string_list(),
-        # The exec config toolchain driver and data. These will be `None` when
-        # using the target config and populated when using the exec config. We
-        # have to use duplicate attributes here and below to have different
-        # `cfg` settings, as that isn't `select`-able, and we'll use `select`s
-        # when populating these.
+
+        # The exec config toolchain attributes. These will be `None` when using
+        # the target config and populated when using the exec config. We have to
+        # use duplicate attributes here and below to have different `cfg`
+        # settings, as that isn't `select`-able, and we'll use `select`s when
+        # populating these.
+        "internal_exec_prebuilt_runtimes": attr.label(
+            cfg = "exec",
+        ),
         "internal_exec_toolchain_data": attr.label(
             cfg = "exec",
         ),
@@ -112,11 +130,14 @@ _carbon_binary_internal = rule(
             cfg = "exec",
         ),
 
-        # The target config toolchain driver and data. These will be 'None' when
+        # The target config toolchain attributes. These will be 'None' when
         # using the exec config and populated when using the target config. We
         # have to use duplicate attributes here and below to have different
         # `cfg` settings, as that isn't `select`-able, and we'll use `select`s
         # when populating these.
+        "internal_target_prebuilt_runtimes": attr.label(
+            cfg = "target",
+        ),
         "internal_target_toolchain_data": attr.label(
             cfg = "target",
         ),
@@ -162,12 +183,20 @@ def carbon_binary(name, srcs, deps = [], flags = [], tags = []):
             "//bazel/carbon_rules:use_target_config_carbon_rules_config": None,
             "//conditions:default": "//toolchain/install:install_data",
         }),
+        internal_exec_prebuilt_runtimes = select({
+            "//bazel/carbon_rules:use_target_config_carbon_rules_config": None,
+            "//conditions:default": "//toolchain/driver:prebuilt_runtimes",
+        }),
         internal_target_toolchain_driver = select({
             "//bazel/carbon_rules:use_target_config_carbon_rules_config": "//toolchain/install:prefix_root/bin/carbon",
             "//conditions:default": None,
         }),
         internal_target_toolchain_data = select({
             "//bazel/carbon_rules:use_target_config_carbon_rules_config": "//toolchain/install:install_data",
+            "//conditions:default": None,
+        }),
+        internal_target_prebuilt_runtimes = select({
+            "//bazel/carbon_rules:use_target_config_carbon_rules_config": "//toolchain/driver:prebuilt_runtimes",
             "//conditions:default": None,
         }),
     )

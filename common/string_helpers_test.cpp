@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Allocator.h"
 
 using ::testing::Eq;
 using ::testing::Optional;
@@ -233,23 +234,23 @@ TEST(ParseBlockStringLiteral, OkMultipleSlashes) {
 }
 
 TEST(BuildCStrArgs, NoArgs) {
-  llvm::OwningArrayRef<char> storage;
-  auto result = BuildCStrArgs("tool", {}, storage);
+  llvm::BumpPtrAllocator alloc;
+  auto result = BuildCStrArgs("tool", {}, alloc);
   ASSERT_THAT(result.size(), Eq(1));
   EXPECT_THAT(result[0], StrEq("tool"));
 }
 
 TEST(BuildCStrArgs, OneArg) {
-  llvm::OwningArrayRef<char> storage;
-  auto result = BuildCStrArgs("tool", {"arg1"}, storage);
+  llvm::BumpPtrAllocator alloc;
+  auto result = BuildCStrArgs("tool", {"arg1"}, alloc);
   ASSERT_THAT(result.size(), Eq(2));
   EXPECT_THAT(result[0], StrEq("tool"));
   EXPECT_THAT(result[1], StrEq("arg1"));
 }
 
 TEST(BuildCStrArgs, MultipleArgs) {
-  llvm::OwningArrayRef<char> storage;
-  auto result = BuildCStrArgs("tool", {"arg1", "arg2"}, storage);
+  llvm::BumpPtrAllocator alloc;
+  auto result = BuildCStrArgs("tool", {"arg1", "arg2"}, alloc);
   ASSERT_THAT(result.size(), Eq(3));
   EXPECT_THAT(result[0], StrEq("tool"));
   EXPECT_THAT(result[1], StrEq("arg1"));
@@ -257,16 +258,16 @@ TEST(BuildCStrArgs, MultipleArgs) {
 }
 
 TEST(BuildCStrArgsWithPrefix, NoArgs) {
-  llvm::OwningArrayRef<char> storage;
-  auto result = BuildCStrArgs("tool", {}, {}, storage);
+  llvm::BumpPtrAllocator alloc;
+  auto result = BuildCStrArgs("tool", {}, {}, alloc);
   ASSERT_THAT(result.size(), Eq(1));
   EXPECT_THAT(result[0], StrEq("tool"));
 }
 
 TEST(BuildCStrArgsWithPrefix, PrefixOnly) {
-  llvm::OwningArrayRef<char> storage;
+  llvm::BumpPtrAllocator alloc;
   std::string prefix_args[] = {"p_arg1", "p_arg2"};
-  auto result = BuildCStrArgs("tool", prefix_args, {}, storage);
+  auto result = BuildCStrArgs("tool", prefix_args, {}, alloc);
   ASSERT_THAT(result.size(), Eq(3));
   EXPECT_THAT(result[0], StrEq("tool"));
   EXPECT_THAT(result[1], Eq(prefix_args[0].c_str()));
@@ -274,8 +275,8 @@ TEST(BuildCStrArgsWithPrefix, PrefixOnly) {
 }
 
 TEST(BuildCStrArgsWithPrefix, ArgsOnly) {
-  llvm::OwningArrayRef<char> storage;
-  auto result = BuildCStrArgs("tool", {}, {"arg1", "arg2"}, storage);
+  llvm::BumpPtrAllocator alloc;
+  auto result = BuildCStrArgs("tool", {}, {"arg1", "arg2"}, alloc);
   ASSERT_THAT(result.size(), Eq(3));
   EXPECT_THAT(result[0], StrEq("tool"));
   EXPECT_THAT(result[1], StrEq("arg1"));
@@ -283,9 +284,9 @@ TEST(BuildCStrArgsWithPrefix, ArgsOnly) {
 }
 
 TEST(BuildCStrArgsWithPrefix, BothPrefixAndArgs) {
-  llvm::OwningArrayRef<char> storage;
+  llvm::BumpPtrAllocator alloc;
   std::string prefix_args[] = {"p_arg1", "p_arg2"};
-  auto result = BuildCStrArgs("tool", prefix_args, {"arg1", "arg2"}, storage);
+  auto result = BuildCStrArgs("tool", prefix_args, {"arg1", "arg2"}, alloc);
   ASSERT_THAT(result.size(), Eq(5));
   EXPECT_THAT(result[0], StrEq("tool"));
   EXPECT_THAT(result[1], Eq(prefix_args[0].c_str()));

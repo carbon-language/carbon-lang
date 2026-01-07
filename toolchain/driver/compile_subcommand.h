@@ -68,6 +68,8 @@ struct CompileOptions {
   bool run_llvm_verifier = true;
 
   llvm::SmallVector<llvm::StringRef> exclude_dump_file_prefixes;
+
+  llvm::StringRef sem_ir_crash_dump;
 };
 
 // Implements the compile subcommand of the driver.

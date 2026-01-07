@@ -22,6 +22,7 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
 // CHECK:STDOUT:   %ptr.8e5: type = ptr_type %Class [concrete]
 // CHECK:STDOUT:   %pattern_type.018: type = pattern_type %ptr.8e5 [concrete]
+// CHECK:STDOUT:   %.c54: form = init_form %ptr.8e5, call_param1 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -64,8 +65,9 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Class.ref.loc17_20: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:     %ptr.loc17_25: type = ptr_type %Class.ref.loc17_20 [concrete = constants.%ptr.8e5]
+// CHECK:STDOUT:     %.loc17_25: form = init_form %ptr.loc17_25, call_param1 [concrete = constants.%.c54]
 // CHECK:STDOUT:     %p.param: %ptr.8e5 = value_param call_param0
-// CHECK:STDOUT:     %.loc17: type = splice_block %ptr.loc17_14 [concrete = constants.%ptr.8e5] {
+// CHECK:STDOUT:     %.loc17_14: type = splice_block %ptr.loc17_14 [concrete = constants.%ptr.8e5] {
 // CHECK:STDOUT:       %Class.ref.loc17_9: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:       %ptr.loc17_14: type = ptr_type %Class.ref.loc17_9 [concrete = constants.%ptr.8e5]
 // CHECK:STDOUT:     }

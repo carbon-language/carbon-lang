@@ -52,7 +52,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %impl.elem1: %.e21 = impl_witness_access constants.%Negate.impl_witness, element1 [concrete = constants.%C.as.Negate.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %C.as.Negate.impl.Op.call: init %C = call %bound_method(%a.ref) to %.loc27
+// CHECK:STDOUT:   %C.as.Negate.impl.Op.call: init %C = call %bound_method(%a.ref) to %.loc27_17
 // CHECK:STDOUT:   return %C.as.Negate.impl.Op.call to %return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

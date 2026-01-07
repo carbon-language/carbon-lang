@@ -57,6 +57,7 @@ fn Test() {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.f5e: <witness> = impl_witness @i32.as.ImplicitAs.impl.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %ImplicitAs.Convert.type.9f8: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%X) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %.f39: form = init_form %X, call_param1 [concrete]
 // CHECK:STDOUT:   %pattern_type.05f: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.type: type = fn_type @i32.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert: %i32.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
@@ -71,6 +72,7 @@ fn Test() {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.664: %Int.as.Copy.impl.Op.type.546 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.f17) [concrete]
 // CHECK:STDOUT:   %.f79: type = fn_type_with_self_type %Copy.Op.type, %Copy.facet [concrete]
+// CHECK:STDOUT:   %.4d5: form = init_form %i32, call_param1 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.664, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.e8c: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.d6a: <witness> = impl_witness @X.as.ImplicitAs.impl.%ImplicitAs.impl_witness_table [concrete]
@@ -84,6 +86,7 @@ fn Test() {
 // CHECK:STDOUT:   %Sink_X: %Sink_X.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.c6c: form = init_form %T.67d, call_param0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d1c4.2: type = pattern_type %T.67d [symbolic]
 // CHECK:STDOUT:   %Source.type: type = fn_type @Source [concrete]
 // CHECK:STDOUT:   %Source: %Source.type = struct_value () [concrete]
@@ -91,8 +94,10 @@ fn Test() {
 // CHECK:STDOUT:   %Source.specific_fn.24a: <specific function> = specific_function %Source, @Source(%T.67d) [symbolic]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [concrete]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.599: form = init_form %X, call_param0 [concrete]
 // CHECK:STDOUT:   %Source.specific_fn.b43: <specific function> = specific_function %Source, @Source(%X) [concrete]
 // CHECK:STDOUT:   %.3af: type = fn_type_with_self_type %ImplicitAs.Convert.type.1b6, %ImplicitAs.facet.5c6 [concrete]
+// CHECK:STDOUT:   %.941: form = init_form %i32, call_param0 [concrete]
 // CHECK:STDOUT:   %Source.specific_fn.217: <specific function> = specific_function %Source, @Source(%i32) [concrete]
 // CHECK:STDOUT:   %.3d8: type = fn_type_with_self_type %ImplicitAs.Convert.type.9f8, %ImplicitAs.facet.be6 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
@@ -169,6 +174,7 @@ fn Test() {
 // CHECK:STDOUT:     %return.param_patt: @Source.%pattern_type (%pattern_type.51d1c4.2) = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc31_24: type = name_ref T, %T.loc31_11.2 [symbolic = %T.loc31_11.1 (constants.%T.67d)]
+// CHECK:STDOUT:     %.loc31_24.2: form = init_form %T.ref.loc31_24, call_param0 [symbolic = %.loc31_24.1 (constants.%.c6c)]
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc31_11.2: type = symbolic_binding T, 0 [symbolic = %T.loc31_11.1 (constants.%T.67d)]
 // CHECK:STDOUT:     %return.param: ref @Source.%T.loc31_11.1 (%T.67d) = out_param call_param0
@@ -185,6 +191,7 @@ fn Test() {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.05f = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:     %.loc20_30: form = init_form %X.ref, call_param1 [concrete = constants.%.f39]
 // CHECK:STDOUT:     %self.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %.loc20_20: type = splice_block %i32 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -212,6 +219,7 @@ fn Test() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc24_28: form = init_form %i32, call_param1 [concrete = constants.%.4d5]
 // CHECK:STDOUT:     %self.param: %X = value_param call_param0
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %self: %X = value_binding self, %self.param
@@ -275,6 +283,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Source(%T.loc31_11.2: type) {
 // CHECK:STDOUT:   %T.loc31_11.1: type = symbolic_binding T, 0 [symbolic = %T.loc31_11.1 (constants.%T.67d)]
+// CHECK:STDOUT:   %.loc31_24.1: form = init_form %T.loc31_11.1, call_param0 [symbolic = %.loc31_24.1 (constants.%.c6c)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc31_11.1 [symbolic = %pattern_type (constants.%pattern_type.51d1c4.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -286,8 +295,8 @@ fn Test() {
 // CHECK:STDOUT:     %Source.ref: %Source.type = name_ref Source, file.%Source.decl [concrete = constants.%Source]
 // CHECK:STDOUT:     %T.ref.loc31_42: type = name_ref T, %T.loc31_11.2 [symbolic = %T.loc31_11.1 (constants.%T.67d)]
 // CHECK:STDOUT:     %Source.specific_fn.loc31_35.1: <specific function> = specific_function %Source.ref, @Source(constants.%T.67d) [symbolic = %Source.specific_fn.loc31_35.2 (constants.%Source.specific_fn.24a)]
-// CHECK:STDOUT:     %.loc31: ref @Source.%T.loc31_11.1 (%T.67d) = splice_block %return {}
-// CHECK:STDOUT:     %Source.call: init @Source.%T.loc31_11.1 (%T.67d) = call %Source.specific_fn.loc31_35.1() to %.loc31
+// CHECK:STDOUT:     %.loc31_21: ref @Source.%T.loc31_11.1 (%T.67d) = splice_block %return {}
+// CHECK:STDOUT:     %Source.call: init @Source.%T.loc31_11.1 (%T.67d) = call %Source.specific_fn.loc31_35.1() to %.loc31_21
 // CHECK:STDOUT:     return %Source.call to %return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -335,6 +344,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%T.67d) {
 // CHECK:STDOUT:   %T.loc31_11.1 => constants.%T.67d
+// CHECK:STDOUT:   %.loc31_24.1 => constants.%.c6c
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d1c4.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -344,6 +354,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%X) {
 // CHECK:STDOUT:   %T.loc31_11.1 => constants.%X
+// CHECK:STDOUT:   %.loc31_24.1 => constants.%.599
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.05f
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -353,6 +364,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Source(constants.%i32) {
 // CHECK:STDOUT:   %T.loc31_11.1 => constants.%i32
+// CHECK:STDOUT:   %.loc31_24.1 => constants.%.941
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7ce
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

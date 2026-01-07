@@ -38,12 +38,11 @@ auto GetRequireImplsSpecificFromEnclosingSpecific(
   if (enclosing_specific_id.has_value()) {
     auto enclosing_generic_decl =
         GetEnclosingDeclFromEnclosingSpecificId(context, enclosing_specific_id);
-    CARBON_CHECK(
-        (enclosing_generic_decl
-             .IsOneOf<SemIR::InterfaceDecl, SemIR::NamedConstraintDecl>()),
-        "Incorrect enclosing specific for RequireImpls. Expected an "
-        "interface or named constraint. Found {0}.",
-        enclosing_generic_decl);
+    CARBON_CHECK(enclosing_generic_decl.Is<SemIR::InterfaceDecl>() ||
+                     enclosing_generic_decl.Is<SemIR::NamedConstraintDecl>(),
+                 "Incorrect enclosing specific for RequireImpls. Expected an "
+                 "interface or named constraint. Found {0}.",
+                 enclosing_generic_decl);
   }
 
   auto arg_ids =

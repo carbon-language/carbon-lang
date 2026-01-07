@@ -89,6 +89,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   %H.414c03.2: %H.type.7917a6.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %I.type.f30c8e.1: type = fn_type @I.loc42 [concrete]
 // CHECK:STDOUT:   %I.73832e.1: %I.type.f30c8e.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %.62c: form = init_form %empty_tuple.type, call_param0 [concrete]
 // CHECK:STDOUT:   %I.type.f30c8e.2: type = fn_type @I.loc50 [concrete]
 // CHECK:STDOUT:   %I.73832e.2: %I.type.f30c8e.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %J.type.fe0423.1: type = fn_type @J.loc52 [concrete]
@@ -99,6 +100,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   %K.548a8d.1: %K.type.4b1c50.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %.e6e: form = init_form %empty_struct_type, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %K.type.4b1c50.2: type = fn_type @K.loc70 [concrete]
 // CHECK:STDOUT:   %K.548a8d.2: %K.type.4b1c50.2 = struct_value () [concrete]
@@ -162,6 +164,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc50_12.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc50_12.2: type = converted %.loc50_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc50_12.3: form = init_form %.loc50_12.2, call_param0 [concrete = constants.%.62c]
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -171,6 +174,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc52_12.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc52_12.2: type = converted %.loc52_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc52_12.3: form = init_form %.loc52_12.2, call_param0 [concrete = constants.%.62c]
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -181,6 +185,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc62_12.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc62_12.2: type = converted %.loc62_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc62_12.3: form = init_form %.loc62_12.2, call_param0 [concrete = constants.%.62c]
 // CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -190,6 +195,7 @@ fn K() -> {} { return {}; }
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc70_12.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc70_12.2: type = converted %.loc70_12.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc70_12.3: form = init_form %.loc70_12.2, call_param0 [concrete = constants.%.e6e]
 // CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param call_param0
 // CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
 // CHECK:STDOUT:   }

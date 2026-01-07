@@ -35,9 +35,11 @@ common:non-fatal-checks --per_file_copt=common/check_internal.cpp@-DCARBON_NON_F
 # enable use of the target config here to make our build and tests more
 # efficient, see the documentation in //bazel/carbon_rules/BUILD for details.
 common --flag_alias=use_target_config_carbon_rules=//bazel/carbon_rules:use_target_config_carbon_rules
+common --flag_alias=use_target_config_runtimes_builder=//toolchain/driver:use_target_config_runtimes_builder
 # Bazel doesn't track what commands the flag_alias is valid for, so we can't use
 # common here.
 build --use_target_config_carbon_rules
+build --use_target_config_runtimes_builder
 
 # Default to using a disk cache to minimize re-building LLVM and Clang which we
 # try to avoid updating too frequently to minimize rebuild cost. The location

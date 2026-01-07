@@ -395,7 +395,11 @@ py_test(
     name = "llvm_symlinks_test",
     size = "small",
     srcs = ["llvm_symlinks_test.py"],
-    data = [":install_data"],
+    data = [
+        ":install_data",
+        "//toolchain/driver:prebuilt_runtimes",
+    ],
+    deps = ["@bazel_tools//tools/python/runfiles"],
 )
 
 manifest(
