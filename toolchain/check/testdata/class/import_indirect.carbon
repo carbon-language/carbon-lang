@@ -218,7 +218,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_17.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc8_17.2: init %C = class_init (), file.%b_val.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc8_17.2: init %C to file.%b_val.var = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc8_1: init %C = converted %.loc8_17.1, %.loc8_17.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%b_val.var, %.loc8_1
 // CHECK:STDOUT:   %b_val.ref: ref %C = name_ref b_val, file.%b_val [concrete = file.%b_val.var]
@@ -314,7 +314,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_17.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc8_17.2: init %C = class_init (), file.%c_val.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc8_17.2: init %C to file.%c_val.var = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc8_1: init %C = converted %.loc8_17.1, %.loc8_17.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c_val.var, %.loc8_1
 // CHECK:STDOUT:   %c_val.ref: ref %C = name_ref c_val, file.%c_val [concrete = file.%c_val.var]
@@ -413,7 +413,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc7_15.2: init %C = class_init (), file.%val.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc7_15.2: init %C to file.%val.var = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_15.1, %.loc7_15.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_1
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val [concrete = file.%val.var]
@@ -512,7 +512,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc7_15.2: init %C = class_init (), file.%val.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc7_15.2: init %C to file.%val.var = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_15.1, %.loc7_15.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_1
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val [concrete = file.%val.var]
@@ -615,7 +615,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc7_15.2: init %C = class_init (), file.%val.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc7_15.2: init %C to file.%val.var = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_15.1, %.loc7_15.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_1
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val [concrete = file.%val.var]
@@ -718,7 +718,7 @@ var ptr: E* = &val;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc7_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc7_15.2: init %C = class_init (), file.%val.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc7_15.2: init %C to file.%val.var = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_15.1, %.loc7_15.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%val.var, %.loc7_1
 // CHECK:STDOUT:   %val.ref: ref %C = name_ref val, file.%val [concrete = file.%val.var]

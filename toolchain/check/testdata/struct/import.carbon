@@ -246,7 +246,7 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc6_47.1: init %i32 = call %bound_method.loc6_47.2(%.loc6_47.3)
 // CHECK:STDOUT:   %.loc6_47.4: ref %struct_type.b.c = struct_access file.%b.var, element0 [concrete = constants.%.273]
 // CHECK:STDOUT:   %.loc6_47.5: ref %i32 = struct_access %.loc6_47.4, element0 [concrete = constants.%.e4e]
-// CHECK:STDOUT:   %.loc6_47.6: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc6_47.1 to %.loc6_47.5
+// CHECK:STDOUT:   %.loc6_47.6: init %i32 to %.loc6_47.5 = initialize_from %Int.as.Copy.impl.Op.call.loc6_47.1
 // CHECK:STDOUT:   %.loc6_47.7: ref %tuple.type.dd4 = struct_access %.loc6_47.1, element1 [concrete = constants.%.d35]
 // CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %.loc6_47.7, element0 [concrete = constants.%tuple.elem0.4a3]
 // CHECK:STDOUT:   %.loc6_47.8: %i32 = acquire_value %tuple.elem0
@@ -256,10 +256,10 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:   %bound_method.loc6_47.4: <bound method> = bound_method %.loc6_47.8, %specific_fn.loc6_47.2
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc6_47.2: init %i32 = call %bound_method.loc6_47.4(%.loc6_47.8)
 // CHECK:STDOUT:   %.loc6_47.9: ref %tuple.type.dd4 = struct_access %.loc6_47.4, element1 [concrete = constants.%.de6]
-// CHECK:STDOUT:   %.loc6_47.10: init %tuple.type.dd4 = tuple_init (%Int.as.Copy.impl.Op.call.loc6_47.2) to %.loc6_47.9
+// CHECK:STDOUT:   %.loc6_47.10: init %tuple.type.dd4 to %.loc6_47.9 = tuple_init (%Int.as.Copy.impl.Op.call.loc6_47.2)
 // CHECK:STDOUT:   %.loc6_47.11: init %tuple.type.dd4 = converted %.loc6_47.7, %.loc6_47.10
-// CHECK:STDOUT:   %.loc6_47.12: init %tuple.type.dd4 = initialize_from %.loc6_47.11 to %.loc6_47.9
-// CHECK:STDOUT:   %.loc6_47.13: init %struct_type.b.c = struct_init (%.loc6_47.6, %.loc6_47.12) to %.loc6_47.4
+// CHECK:STDOUT:   %.loc6_47.12: init %tuple.type.dd4 to %.loc6_47.9 = initialize_from %.loc6_47.11
+// CHECK:STDOUT:   %.loc6_47.13: init %struct_type.b.c to %.loc6_47.4 = struct_init (%.loc6_47.6, %.loc6_47.12)
 // CHECK:STDOUT:   %.loc6_47.14: init %struct_type.b.c = converted %.loc6_47.1, %.loc6_47.13
 // CHECK:STDOUT:   %.loc6_47.15: ref %i32 = struct_access %b_ref.ref, element1 [concrete = constants.%.7f4]
 // CHECK:STDOUT:   %.loc6_47.16: %i32 = acquire_value %.loc6_47.15
@@ -269,13 +269,13 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:   %bound_method.loc6_47.6: <bound method> = bound_method %.loc6_47.16, %specific_fn.loc6_47.3
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc6_47.3: init %i32 = call %bound_method.loc6_47.6(%.loc6_47.16)
 // CHECK:STDOUT:   %.loc6_47.17: ref %i32 = struct_access file.%b.var, element1 [concrete = constants.%.440]
-// CHECK:STDOUT:   %.loc6_47.18: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc6_47.3 to %.loc6_47.17
-// CHECK:STDOUT:   %.loc6_47.19: init %struct_type.a.d.9db = struct_init (%.loc6_47.14, %.loc6_47.18) to file.%b.var
+// CHECK:STDOUT:   %.loc6_47.18: init %i32 to %.loc6_47.17 = initialize_from %Int.as.Copy.impl.Op.call.loc6_47.3
+// CHECK:STDOUT:   %.loc6_47.19: init %struct_type.a.d.9db to file.%b.var = struct_init (%.loc6_47.14, %.loc6_47.18)
 // CHECK:STDOUT:   %.loc6_1: init %struct_type.a.d.9db = converted %b_ref.ref, %.loc6_47.19
 // CHECK:STDOUT:   assign file.%b.var, %.loc6_1
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Implicit.F [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc7: ref %C.2ee = splice_block file.%c.var [concrete = file.%c.var] {}
-// CHECK:STDOUT:   %F.call: init %C.2ee = call %F.ref() to %.loc7
+// CHECK:STDOUT:   %F.call: init %C.2ee to %.loc7 = call %F.ref()
 // CHECK:STDOUT:   assign file.%c.var, %F.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -321,7 +321,7 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:   %Copy.impl_witness_table.e76 = impl_witness_table (%Core.import_ref.18d), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %struct_type.x {
+// CHECK:STDOUT: fn @F() -> out %return.param: %struct_type.x {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]

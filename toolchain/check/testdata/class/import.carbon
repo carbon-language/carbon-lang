@@ -324,7 +324,7 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %Empty = var %a.var_patt
 // CHECK:STDOUT:   %.loc7_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc7_19.2: init %Empty = class_init (), %a.var [concrete = constants.%Empty.val]
+// CHECK:STDOUT:   %.loc7_19.2: init %Empty to %a.var = class_init () [concrete = constants.%Empty.val]
 // CHECK:STDOUT:   %.loc7_3: init %Empty = converted %.loc7_19.1, %.loc7_19.2 [concrete = constants.%Empty.val]
 // CHECK:STDOUT:   assign %a.var, %.loc7_3
 // CHECK:STDOUT:   %Empty.ref: type = name_ref Empty, imports.%Main.Empty [concrete = constants.%Empty]
@@ -343,8 +343,8 @@ fn Run() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9: init %i32 = call %bound_method.loc9_25.2(%int_1) [concrete = constants.%int_1.47b]
 // CHECK:STDOUT:   %.loc9_25.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9 [concrete = constants.%int_1.47b]
 // CHECK:STDOUT:   %.loc9_25.3: ref %i32 = class_element_access %b.var, element0
-// CHECK:STDOUT:   %.loc9_25.4: init %i32 = initialize_from %.loc9_25.2 to %.loc9_25.3 [concrete = constants.%int_1.47b]
-// CHECK:STDOUT:   %.loc9_25.5: init %Field = class_init (%.loc9_25.4), %b.var [concrete = constants.%Field.val]
+// CHECK:STDOUT:   %.loc9_25.4: init %i32 to %.loc9_25.3 = initialize_from %.loc9_25.2 [concrete = constants.%int_1.47b]
+// CHECK:STDOUT:   %.loc9_25.5: init %Field to %b.var = class_init (%.loc9_25.4) [concrete = constants.%Field.val]
 // CHECK:STDOUT:   %.loc9_3: init %Field = converted %.loc9_25.1, %.loc9_25.5 [concrete = constants.%Field.val]
 // CHECK:STDOUT:   assign %b.var, %.loc9_3
 // CHECK:STDOUT:   %Field.ref: type = name_ref Field, imports.%Main.Field [concrete = constants.%Field]
@@ -366,7 +366,7 @@ fn Run() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %ForwardDeclared.20f323.1 = var %c.var_patt
 // CHECK:STDOUT:   %.loc12_29.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc12_29.2: init %ForwardDeclared.20f323.1 = class_init (), %c.var [concrete = constants.%ForwardDeclared.val]
+// CHECK:STDOUT:   %.loc12_29.2: init %ForwardDeclared.20f323.1 to %c.var = class_init () [concrete = constants.%ForwardDeclared.val]
 // CHECK:STDOUT:   %.loc12_3: init %ForwardDeclared.20f323.1 = converted %.loc12_29.1, %.loc12_29.2 [concrete = constants.%ForwardDeclared.val]
 // CHECK:STDOUT:   assign %c.var, %.loc12_3
 // CHECK:STDOUT:   %ForwardDeclared.ref.loc12: type = name_ref ForwardDeclared, imports.%Main.ForwardDeclared [concrete = constants.%ForwardDeclared.20f323.1]

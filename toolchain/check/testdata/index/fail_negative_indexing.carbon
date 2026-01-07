@@ -145,7 +145,7 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   %.loc15_31.2: init %i32 = converted %int_42.loc15_25, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc15_31.1 [concrete = constants.%int_42.c68]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc15_31.3: ref %i32 = array_index file.%c.var, %int_0
-// CHECK:STDOUT:   %.loc15_31.4: init %i32 = initialize_from %.loc15_31.2 to %.loc15_31.3 [concrete = constants.%int_42.c68]
+// CHECK:STDOUT:   %.loc15_31.4: init %i32 to %.loc15_31.3 = initialize_from %.loc15_31.2 [concrete = constants.%int_42.c68]
 // CHECK:STDOUT:   %impl.elem0.loc15_31.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc15_31.3: <bound method> = bound_method %int_42.loc15_29, %impl.elem0.loc15_31.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.c83]
 // CHECK:STDOUT:   %specific_fn.loc15_31.2: <specific function> = specific_function %impl.elem0.loc15_31.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -154,8 +154,8 @@ var d: i32 = c[-10];
 // CHECK:STDOUT:   %.loc15_31.5: init %i32 = converted %int_42.loc15_29, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc15_31.2 [concrete = constants.%int_42.c68]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %.loc15_31.6: ref %i32 = array_index file.%c.var, %int_1
-// CHECK:STDOUT:   %.loc15_31.7: init %i32 = initialize_from %.loc15_31.5 to %.loc15_31.6 [concrete = constants.%int_42.c68]
-// CHECK:STDOUT:   %.loc15_31.8: init %array_type = array_init (%.loc15_31.4, %.loc15_31.7) to file.%c.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc15_31.7: init %i32 to %.loc15_31.6 = initialize_from %.loc15_31.5 [concrete = constants.%int_42.c68]
+// CHECK:STDOUT:   %.loc15_31.8: init %array_type to file.%c.var = array_init (%.loc15_31.4, %.loc15_31.7) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc15_1: init %array_type = converted %.loc15_31.1, %.loc15_31.8 [concrete = constants.%array]
 // CHECK:STDOUT:   assign file.%c.var, %.loc15_1
 // CHECK:STDOUT:   %c.ref: ref %array_type = name_ref c, file.%c [concrete = file.%c.var]

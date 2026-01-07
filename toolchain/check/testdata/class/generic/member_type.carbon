@@ -272,7 +272,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %impl.elem0.loc9_38.2: @Outer.F.%.loc9_38 (%.72e) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_38.2 (constants.%impl.elem0.07b)]
 // CHECK:STDOUT:   %specific_impl_fn.loc9_38.2: <specific function> = specific_impl_function %impl.elem0.loc9_38.2, @Copy.Op(%T) [symbolic = %specific_impl_fn.loc9_38.2 (constants.%specific_impl_fn.2c9)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%n.param: @Outer.F.%T.binding.as_type (%T.binding.as_type)) -> %return.param: @Outer.F.%Inner (%Inner.bcf) {
+// CHECK:STDOUT:   fn(%n.param: @Outer.F.%T.binding.as_type (%T.binding.as_type)) -> out %return.param: @Outer.F.%Inner (%Inner.bcf) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %n.ref: @Outer.F.%T.binding.as_type (%T.binding.as_type) = name_ref n, %n
 // CHECK:STDOUT:     %.loc9_39.1: @Outer.F.%struct_type.n (%struct_type.n.47a) = struct_literal (%n.ref)
@@ -281,15 +281,15 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %specific_impl_fn.loc9_38.1: <specific function> = specific_impl_function %impl.elem0.loc9_38.1, @Copy.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc9_38.2 (constants.%specific_impl_fn.2c9)]
 // CHECK:STDOUT:     %bound_method.loc9_38.2: <bound method> = bound_method %n.ref, %specific_impl_fn.loc9_38.1
 // CHECK:STDOUT:     %.loc9_39.2: ref @Outer.F.%T.binding.as_type (%T.binding.as_type) = class_element_access %return.param, element0
-// CHECK:STDOUT:     %Copy.Op.call: init @Outer.F.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc9_38.2(%n.ref) to %.loc9_39.2
-// CHECK:STDOUT:     %.loc9_39.3: init @Outer.F.%T.binding.as_type (%T.binding.as_type) = initialize_from %Copy.Op.call to %.loc9_39.2
-// CHECK:STDOUT:     %.loc9_39.4: init @Outer.F.%Inner (%Inner.bcf) = class_init (%.loc9_39.3), %return.param
+// CHECK:STDOUT:     %Copy.Op.call: init @Outer.F.%T.binding.as_type (%T.binding.as_type) to %.loc9_39.2 = call %bound_method.loc9_38.2(%n.ref)
+// CHECK:STDOUT:     %.loc9_39.3: init @Outer.F.%T.binding.as_type (%T.binding.as_type) to %.loc9_39.2 = initialize_from %Copy.Op.call
+// CHECK:STDOUT:     %.loc9_39.4: init @Outer.F.%Inner (%Inner.bcf) to %return.param = class_init (%.loc9_39.3)
 // CHECK:STDOUT:     %.loc9_40: init @Outer.F.%Inner (%Inner.bcf) = converted %.loc9_39.1, %.loc9_39.4
 // CHECK:STDOUT:     return %.loc9_40 to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Test() -> %i32 {
+// CHECK:STDOUT: fn @Test() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.35b = ref_binding_pattern c [concrete]
@@ -318,7 +318,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc13_42.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc13_42.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc13_42.2: %i32 = converted %int_1, %.loc13_42.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %Outer.F.call: init %Inner.74c = call %Outer.F.specific_fn(%.loc13_42.2) to %.loc13_3
+// CHECK:STDOUT:   %Outer.F.call: init %Inner.74c to %.loc13_3 = call %Outer.F.specific_fn(%.loc13_42.2)
 // CHECK:STDOUT:   assign %c.var, %Outer.F.call
 // CHECK:STDOUT:   %.loc13_20.1: type = splice_block %Inner.ref [concrete = constants.%Inner.74c] {
 // CHECK:STDOUT:     %Outer.ref.loc13_10: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
@@ -709,7 +709,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %.loc6_27.1: form = init_form %T, call_param1 [symbolic = %.loc6_27.1 (constants.%.e5f)]
 // CHECK:STDOUT:   %pattern_type.loc6_24: type = pattern_type %T [symbolic = %pattern_type.loc6_24 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Inner.F.%Self.binding.as_type (%Self.binding.as_type.534)) -> %return.param: @Inner.F.%T (%T);
+// CHECK:STDOUT:   fn(%self.param: @Inner.F.%Self.binding.as_type (%Self.binding.as_type.534)) -> out %return.param: @Inner.F.%T (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @C.as.Inner.impl.F(@Outer.%T.loc4_13.2: type) {
@@ -734,7 +734,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %impl.elem0.loc11_41.2: @C.as.Inner.impl.F.%.loc11_41.2 (%.455) = impl_witness_access %Inner.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_41.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc11_41.2: <specific function> = specific_impl_function %impl.elem0.loc11_41.2, @Inner.F(%T, %Inner.facet) [symbolic = %specific_impl_fn.loc11_41.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @C.as.Inner.impl.F.%C (%C.131)) -> %return.param: @C.as.Inner.impl.F.%T (%T) {
+// CHECK:STDOUT:   fn(%self.param: @C.as.Inner.impl.F.%C (%C.131)) -> out %return.param: @C.as.Inner.impl.F.%T (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @C.as.Inner.impl.F.%C (%C.131) = name_ref self, %self
 // CHECK:STDOUT:     %.loc11_43: type = specific_constant @Outer.%Inner.decl, @Outer(constants.%T) [symbolic = %Inner.type (constants.%Inner.type.6ef)]
@@ -746,14 +746,14 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %specific_impl_fn.loc11_41.1: <specific function> = specific_impl_function %impl.elem0.loc11_41.1, @Inner.F(constants.%T, constants.%Inner.facet.f78) [symbolic = %specific_impl_fn.loc11_41.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc11_52: <bound method> = bound_method %self.ref, %specific_impl_fn.loc11_41.1
 // CHECK:STDOUT:     %.loc11_26.1: ref @C.as.Inner.impl.F.%T (%T) = splice_block %return.param {}
-// CHECK:STDOUT:     %Inner.F.call: init @C.as.Inner.impl.F.%T (%T) = call %bound_method.loc11_52(%self.ref) to %.loc11_26.1
+// CHECK:STDOUT:     %Inner.F.call: init @C.as.Inner.impl.F.%T (%T) to %.loc11_26.1 = call %bound_method.loc11_52(%self.ref)
 // CHECK:STDOUT:     return %Inner.F.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @D.as.Inner.impl.F(%self.param: %D) -> %i32;
+// CHECK:STDOUT: fn @D.as.Inner.impl.F(%self.param: %D) -> out %return.param: %i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Test() -> %i32 {
+// CHECK:STDOUT: fn @Test() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.129 = ref_binding_pattern c [concrete]
@@ -761,7 +761,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %C.d3f = var %c.var_patt
 // CHECK:STDOUT:   %.loc23_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc23_26.2: init %C.d3f = class_init (), %c.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc23_26.2: init %C.d3f to %c.var = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc23_3: init %C.d3f = converted %.loc23_26.1, %.loc23_26.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign %c.var, %.loc23_3
 // CHECK:STDOUT:   %.loc23_20.1: type = splice_block %C.ref [concrete = constants.%C.d3f] {

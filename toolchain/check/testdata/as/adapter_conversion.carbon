@@ -237,7 +237,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %Make.ref: %A.Make.type = name_ref Make, @A.%A.Make.decl [concrete = constants.%A.Make]
 // CHECK:STDOUT:   %.loc25_1: ref %B = splice_block file.%b_factory.var [concrete = file.%b_factory.var] {}
-// CHECK:STDOUT:   %A.Make.call: init %A = call %Make.ref() to %.loc25_1
+// CHECK:STDOUT:   %A.Make.call: init %A to %.loc25_1 = call %Make.ref()
 // CHECK:STDOUT:   %B.ref.loc25: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %.loc25_29.1: init %B = as_compatible %A.Make.call
 // CHECK:STDOUT:   %.loc25_29.2: init %B = converted %A.Make.call, %.loc25_29.1
@@ -406,7 +406,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %.loc14_34.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc14_34.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc14_34.3: ref %A = temporary_storage
 // CHECK:STDOUT:   %.loc14_34.4: ref %i32 = class_element_access %.loc14_34.3, element0
-// CHECK:STDOUT:   %.loc14_34.5: init %i32 = initialize_from %.loc14_34.2 to %.loc14_34.4 [concrete = constants.%int_1.5d2]
+// CHECK:STDOUT:   %.loc14_34.5: init %i32 to %.loc14_34.4 = initialize_from %.loc14_34.2 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %impl.elem0.loc14_34.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc14_34.3: <bound method> = bound_method %int_2, %impl.elem0.loc14_34.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
 // CHECK:STDOUT:   %specific_fn.loc14_34.2: <specific function> = specific_function %impl.elem0.loc14_34.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -414,8 +414,8 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc14_34.2: init %i32 = call %bound_method.loc14_34.4(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc14_34.6: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc14_34.2 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc14_34.7: ref %i32 = class_element_access %.loc14_34.3, element1
-// CHECK:STDOUT:   %.loc14_34.8: init %i32 = initialize_from %.loc14_34.6 to %.loc14_34.7 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc14_34.9: init %A = class_init (%.loc14_34.5, %.loc14_34.8), %.loc14_34.3 [concrete = constants.%A.val]
+// CHECK:STDOUT:   %.loc14_34.8: init %i32 to %.loc14_34.7 = initialize_from %.loc14_34.6 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc14_34.9: init %A to %.loc14_34.3 = class_init (%.loc14_34.5, %.loc14_34.8) [concrete = constants.%A.val]
 // CHECK:STDOUT:   %.loc14_34.10: ref %A = temporary %.loc14_34.3, %.loc14_34.9
 // CHECK:STDOUT:   %.loc14_36: ref %A = converted %.loc14_34.1, %.loc14_34.10
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]

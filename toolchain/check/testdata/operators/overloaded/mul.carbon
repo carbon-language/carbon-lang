@@ -64,14 +64,14 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestOp(%a.param: %C, %b.param: %C) -> %return.param: %C {
+// CHECK:STDOUT: fn @TestOp(%a.param: %C, %b.param: %C) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
 // CHECK:STDOUT:   %impl.elem1: %.92e = impl_witness_access constants.%MulWith.impl_witness, element1 [concrete = constants.%C.as.MulWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %C.as.MulWith.impl.Op.call: init %C = call %bound_method(%a.ref, %b.ref) to %.loc30_26.1
+// CHECK:STDOUT:   %C.as.MulWith.impl.Op.call: init %C to %.loc30_26.1 = call %bound_method(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %C.as.MulWith.impl.Op.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

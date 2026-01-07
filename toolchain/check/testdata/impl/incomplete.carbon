@@ -693,7 +693,7 @@ interface B {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.I.impl.F();
+// CHECK:STDOUT: fn @C.as.I.impl.F() -> <error>;
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_unidentified_constraint.carbon
 // CHECK:STDOUT:

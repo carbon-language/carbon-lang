@@ -244,7 +244,7 @@ fn Use() {
 // CHECK:STDOUT:   %i.var: ref %MaybeUnformed.b49 = var %i.var_patt
 // CHECK:STDOUT:   %Init.ref: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
 // CHECK:STDOUT:   %.loc19_39: ref %X = temporary_storage
-// CHECK:STDOUT:   %Init.call: init %X = call %Init.ref() to %.loc19_39
+// CHECK:STDOUT:   %Init.call: init %X to %.loc19_39 = call %Init.ref()
 // CHECK:STDOUT:   %Core.ref.loc19_44: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:   %MaybeUnformed.ref.loc19_48: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
 // CHECK:STDOUT:   %X.ref.loc19_63: type = name_ref X, file.%X.decl [concrete = constants.%X]

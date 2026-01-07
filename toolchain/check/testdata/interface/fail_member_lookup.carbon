@@ -167,7 +167,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %U.loc32_6.1: %Different.type = symbolic_binding U, 0 [symbolic = %U.loc32_6.1 (constants.%U)]
 // CHECK:STDOUT:   %U.binding.as_type: type = symbolic_binding_type U, 0, %U.loc32_6.1 [symbolic = %U.binding.as_type (constants.%U.binding.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn();
+// CHECK:STDOUT:   fn() -> <error>;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface.F(constants.%Self.887) {}

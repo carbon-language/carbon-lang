@@ -341,15 +341,15 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.OrderedWith.impl.Less(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @C.as.OrderedWith.impl.Less(%self.param: %C, %other.param: %C) -> out %return.param: bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.OrderedWith.impl.LessOrEquivalent(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @C.as.OrderedWith.impl.LessOrEquivalent(%self.param: %C, %other.param: %C) -> out %return.param: bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.OrderedWith.impl.Greater(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @C.as.OrderedWith.impl.Greater(%self.param: %C, %other.param: %C) -> out %return.param: bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.OrderedWith.impl.GreaterOrEquivalent(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @C.as.OrderedWith.impl.GreaterOrEquivalent(%self.param: %C, %other.param: %C) -> out %return.param: bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestLess(%a.param: %C, %b.param: %C) -> bool {
+// CHECK:STDOUT: fn @TestLess(%a.param: %C, %b.param: %C) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
@@ -359,7 +359,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   return %C.as.OrderedWith.impl.Less.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestLessEqual(%a.param: %C, %b.param: %C) -> bool {
+// CHECK:STDOUT: fn @TestLessEqual(%a.param: %C, %b.param: %C) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
@@ -369,7 +369,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   return %C.as.OrderedWith.impl.LessOrEquivalent.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestGreater(%a.param: %C, %b.param: %C) -> bool {
+// CHECK:STDOUT: fn @TestGreater(%a.param: %C, %b.param: %C) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
@@ -379,7 +379,7 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   return %C.as.OrderedWith.impl.Greater.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestGreaterEqual(%a.param: %C, %b.param: %C) -> bool {
+// CHECK:STDOUT: fn @TestGreaterEqual(%a.param: %C, %b.param: %C) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
@@ -528,28 +528,28 @@ fn TestGreaterEqual(a: D, b: D) -> bool {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestLess(%a.param: %D, %b.param: %D) -> bool {
+// CHECK:STDOUT: fn @TestLess(%a.param: %D, %b.param: %D) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestLessEqual(%a.param: %D, %b.param: %D) -> bool {
+// CHECK:STDOUT: fn @TestLessEqual(%a.param: %D, %b.param: %D) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestGreater(%a.param: %D, %b.param: %D) -> bool {
+// CHECK:STDOUT: fn @TestGreater(%a.param: %D, %b.param: %D) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestGreaterEqual(%a.param: %D, %b.param: %D) -> bool {
+// CHECK:STDOUT: fn @TestGreaterEqual(%a.param: %D, %b.param: %D) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b

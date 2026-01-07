@@ -110,7 +110,7 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT:   %Make.ref.loc11: %X.Make.type.4e2 = name_ref Make, %.loc11_45 [concrete = constants.%X.Make.ae0]
 // CHECK:STDOUT:   %X.Make.specific_fn.loc11: <specific function> = specific_function %Make.ref.loc11, @X.Make(constants.%false) [concrete = constants.%X.Make.specific_fn.9a2]
 // CHECK:STDOUT:   %.loc11_1: ref %X.49c = splice_block file.%x1.var [concrete = file.%x1.var] {}
-// CHECK:STDOUT:   %X.Make.call.loc11: init %X.49c = call %X.Make.specific_fn.loc11() to %.loc11_1
+// CHECK:STDOUT:   %X.Make.call.loc11: init %X.49c to %.loc11_1 = call %X.Make.specific_fn.loc11()
 // CHECK:STDOUT:   assign file.%x1.var, %X.Make.call.loc11
 // CHECK:STDOUT:   %X.ref.loc12: %X.type = name_ref X, file.%X.decl [concrete = constants.%X.generic]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
@@ -119,7 +119,7 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT:   %Make.ref.loc12: %X.Make.type.7d1 = name_ref Make, %.loc12_44 [concrete = constants.%X.Make.3ee]
 // CHECK:STDOUT:   %X.Make.specific_fn.loc12: <specific function> = specific_function %Make.ref.loc12, @X.Make(constants.%true) [concrete = constants.%X.Make.specific_fn.5a7]
 // CHECK:STDOUT:   %.loc12_1: ref %X.07f = splice_block file.%x2.var [concrete = file.%x2.var] {}
-// CHECK:STDOUT:   %X.Make.call.loc12: init %X.07f = call %X.Make.specific_fn.loc12() to %.loc12_1
+// CHECK:STDOUT:   %X.Make.call.loc12: init %X.07f to %.loc12_1 = call %X.Make.specific_fn.loc12()
 // CHECK:STDOUT:   assign file.%x2.var, %X.Make.call.loc12
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

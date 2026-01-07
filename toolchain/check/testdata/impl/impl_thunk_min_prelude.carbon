@@ -132,7 +132,7 @@ fn Call() -> i32 {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.74f = impl_witness_table (%Core.import_ref.42d), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Call() -> %i32 {
+// CHECK:STDOUT: fn @Call() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a

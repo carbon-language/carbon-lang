@@ -170,7 +170,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %SubscriptType.ref: type = name_ref SubscriptType, %SubscriptType.decl [concrete = constants.%SubscriptType.9ec]
 // CHECK:STDOUT:   %.loc14_25.1: ref %SubscriptType.9ec = temporary_storage
-// CHECK:STDOUT:   %.loc14_25.2: init %SubscriptType.9ec = class_init (), %.loc14_25.1 [concrete = constants.%SubscriptType.val]
+// CHECK:STDOUT:   %.loc14_25.2: init %SubscriptType.9ec to %.loc14_25.1 = class_init () [concrete = constants.%SubscriptType.val]
 // CHECK:STDOUT:   %.loc14_25.3: ref %SubscriptType.9ec = temporary %.loc14_25.1, %.loc14_25.2
 // CHECK:STDOUT:   %.loc14_25.4: ref %SubscriptType.9ec = converted @__global_init.%.loc14, %.loc14_25.3
 // CHECK:STDOUT:   %.loc14_25.5: %SubscriptType.9ec = acquire_value %.loc14_25.4
@@ -180,7 +180,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc15_13.1: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc15_13.2: init %C = class_init (), %.loc15_13.1 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc15_13.2: init %C to %.loc15_13.1 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc15_13.3: ref %C = temporary %.loc15_13.1, %.loc15_13.2
 // CHECK:STDOUT:   %.loc15_13.4: ref %C = converted @__global_init.%.loc15, %.loc15_13.3
 // CHECK:STDOUT:   %.loc15_13.5: %C = acquire_value %.loc15_13.4
@@ -249,10 +249,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   .Self = constants.%SubscriptType.9ec
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.IndexWith.impl.At(%self.param: %C, %subscript.param: %SubscriptType.9ec) -> %return.param: %ElementType {
+// CHECK:STDOUT: fn @C.as.IndexWith.impl.At(%self.param: %C, %subscript.param: %SubscriptType.9ec) -> out %return.param: %ElementType {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_13.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc10_13.2: init %ElementType = class_init (), %return.param [concrete = constants.%ElementType.val]
+// CHECK:STDOUT:   %.loc10_13.2: init %ElementType to %return.param = class_init () [concrete = constants.%ElementType.val]
 // CHECK:STDOUT:   %.loc10_14: init %ElementType = converted %.loc10_13.1, %.loc10_13.2 [concrete = constants.%ElementType.val]
 // CHECK:STDOUT:   return %.loc10_14 to %return.param
 // CHECK:STDOUT: }
@@ -266,7 +266,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %impl.elem1: %.068 = impl_witness_access constants.%IndexWith.impl_witness, element1 [concrete = constants.%C.as.IndexWith.impl.At]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem1
 // CHECK:STDOUT:   %.loc16: ref %ElementType = temporary_storage
-// CHECK:STDOUT:   %C.as.IndexWith.impl.At.call: init %ElementType = call %bound_method(%c.ref, %s.ref) to %.loc16
+// CHECK:STDOUT:   %C.as.IndexWith.impl.At.call: init %ElementType to %.loc16 = call %bound_method(%c.ref, %s.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -432,7 +432,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @tuple.type.as.IndexWith.impl.At(%self.param: %tuple.type.d23, %subscript.param: Core.IntLiteral) -> %C {
+// CHECK:STDOUT: fn @tuple.type.as.IndexWith.impl.At(%self.param: %tuple.type.d23, %subscript.param: Core.IntLiteral) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %tuple.type.d23 = name_ref self, %self
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
@@ -549,7 +549,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc14_13.1: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc14_13.2: init %C = class_init (), %.loc14_13.1 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc14_13.2: init %C to %.loc14_13.1 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc14_13.3: ref %C = temporary %.loc14_13.1, %.loc14_13.2
 // CHECK:STDOUT:   %.loc14_13.4: ref %C = converted @__global_init.%.loc14, %.loc14_13.3
 // CHECK:STDOUT:   %.loc14_13.5: %C = acquire_value %.loc14_13.4
@@ -616,10 +616,10 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   .Self = constants.%SubscriptType.9ec
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.IndexWith.impl.At(%self.param: %C, %subscript.param: %SubscriptType.9ec) -> %return.param: %ElementType {
+// CHECK:STDOUT: fn @C.as.IndexWith.impl.At(%self.param: %C, %subscript.param: %SubscriptType.9ec) -> out %return.param: %ElementType {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_13.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc10_13.2: init %ElementType = class_init (), %return.param [concrete = constants.%ElementType.val]
+// CHECK:STDOUT:   %.loc10_13.2: init %ElementType to %return.param = class_init () [concrete = constants.%ElementType.val]
 // CHECK:STDOUT:   %.loc10_14: init %ElementType = converted %.loc10_13.1, %.loc10_13.2 [concrete = constants.%ElementType.val]
 // CHECK:STDOUT:   return %.loc10_14 to %return.param
 // CHECK:STDOUT: }
@@ -676,7 +676,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc6_13.1: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc6_13.2: init %C = class_init (), %.loc6_13.1 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc6_13.2: init %C to %.loc6_13.1 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc6_13.3: ref %C = temporary %.loc6_13.1, %.loc6_13.2
 // CHECK:STDOUT:   %.loc6_13.4: ref %C = converted @__global_init.%.loc6, %.loc6_13.3
 // CHECK:STDOUT:   %.loc6_13.5: %C = acquire_value %.loc6_13.4

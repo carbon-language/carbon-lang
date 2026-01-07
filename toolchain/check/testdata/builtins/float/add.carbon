@@ -80,7 +80,7 @@ fn AddLiteral(a: Literal(), b: Literal()) -> Literal() = "float.add";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.d77, %b.param: %f64.d77) -> %f64.d77 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.d77, %b.param: %f64.d77) -> out %return.param: %f64.d77 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Add.ref: %Add.type = name_ref Add, file.%Add.decl [concrete = constants.%Add]
 // CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a

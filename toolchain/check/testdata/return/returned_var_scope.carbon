@@ -131,7 +131,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @UnrelatedScopes() -> %i32 {
+// CHECK:STDOUT: fn @UnrelatedScopes() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true.loc16: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   if %true.loc16 br !if.then.loc16 else br !if.else.loc16
@@ -199,7 +199,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @EnclosingButAfter(%b.param: bool) -> %i32 {
+// CHECK:STDOUT: fn @EnclosingButAfter(%b.param: bool) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else

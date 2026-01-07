@@ -103,7 +103,7 @@ fn F() {
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%b.param: bool) -> type {
+// CHECK:STDOUT: fn @F(%b.param: bool) -> out %return.param: type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst{{[0-9A-F]+}}.loc5_6
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else
@@ -147,7 +147,7 @@ fn F() {
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%b.param: bool) -> type {
+// CHECK:STDOUT: fn @F(%b.param: bool) -> out %return.param: type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, <unexpected>.inst{{[0-9A-F]+}}.loc5_6
 // CHECK:STDOUT:   if %b.ref br !if.expr.then else br !if.expr.else

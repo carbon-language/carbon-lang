@@ -44,7 +44,7 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> bool {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> bool {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Greater.ref: %Greater.type = name_ref Greater, file.%Greater.decl [concrete = constants.%Greater]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a

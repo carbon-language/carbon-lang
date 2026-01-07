@@ -356,9 +356,9 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%b.param: %i32) -> %i32;
+// CHECK:STDOUT: fn @B(%b.param: %i32) -> out %return.param: %i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C(%c.param: %tuple.type.a1c) -> %struct_type.c;
+// CHECK:STDOUT: fn @C(%c.param: %tuple.type.a1c) -> out %return.param: %struct_type.c;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:
@@ -460,9 +460,9 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @B(%b.param: %i32) -> %i32;
+// CHECK:STDOUT: extern fn @B(%b.param: %i32) -> out %return.param: %i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: extern fn @C(%c.param: %tuple.type.a1c) -> %struct_type.c;
+// CHECK:STDOUT: extern fn @C(%c.param: %tuple.type.a1c) -> out %return.param: %struct_type.c;
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @D();
 // CHECK:STDOUT:

@@ -158,7 +158,7 @@ fn Use() {
 // CHECK:STDOUT:   %i.var: ref %.4b5 = var %i.var_patt
 // CHECK:STDOUT:   %Init.ref: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
 // CHECK:STDOUT:   %.loc14_3: ref %.4b5 = splice_block %i.var {}
-// CHECK:STDOUT:   %Init.call: init %X = call %Init.ref() to %.loc14_3
+// CHECK:STDOUT:   %Init.call: init %X to %.loc14_3 = call %Init.ref()
 // CHECK:STDOUT:   %X.ref.loc14_40: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc14_32: type = partial_type %X.ref.loc14_40 [concrete = constants.%.4b5]
 // CHECK:STDOUT:   %.loc14_29.1: init %.4b5 = as_compatible %Init.call
@@ -249,7 +249,7 @@ fn Use() {
 // CHECK:STDOUT:   %i.var: ref %X = var %i.var_patt
 // CHECK:STDOUT:   %Init.ref.loc18: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
 // CHECK:STDOUT:   %.loc18_19: ref %.4b5 = temporary_storage
-// CHECK:STDOUT:   %Init.call.loc18: init %.4b5 = call %Init.ref.loc18() to %.loc18_19
+// CHECK:STDOUT:   %Init.call.loc18: init %.4b5 to %.loc18_19 = call %Init.ref.loc18()
 // CHECK:STDOUT:   %.loc18_3: %X = converted %Init.call.loc18, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %i.var, <error>
 // CHECK:STDOUT:   %X.ref.loc18: type = name_ref X, file.%X.decl [concrete = constants.%X]
@@ -261,7 +261,7 @@ fn Use() {
 // CHECK:STDOUT:   %j.var: ref %X = var %j.var_patt
 // CHECK:STDOUT:   %Init.ref.loc26: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
 // CHECK:STDOUT:   %.loc26_19: ref %.4b5 = temporary_storage
-// CHECK:STDOUT:   %Init.call.loc26: init %.4b5 = call %Init.ref.loc26() to %.loc26_19
+// CHECK:STDOUT:   %Init.call.loc26: init %.4b5 to %.loc26_19 = call %Init.ref.loc26()
 // CHECK:STDOUT:   %X.ref.loc26_24: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc26_21: %X = converted %Init.call.loc26, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %j.var, <error>
@@ -274,7 +274,7 @@ fn Use() {
 // CHECK:STDOUT:   %k.var: ref %X = var %k.var_patt
 // CHECK:STDOUT:   %Init.ref.loc34: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
 // CHECK:STDOUT:   %.loc34_19: ref %.4b5 = temporary_storage
-// CHECK:STDOUT:   %Init.call.loc34: init %.4b5 = call %Init.ref.loc34() to %.loc34_19
+// CHECK:STDOUT:   %Init.call.loc34: init %.4b5 to %.loc34_19 = call %Init.ref.loc34()
 // CHECK:STDOUT:   %X.ref.loc34_31: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc34_28: %X = converted %Init.call.loc34, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %k.var, <error>

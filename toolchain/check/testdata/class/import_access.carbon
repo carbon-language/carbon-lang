@@ -245,7 +245,7 @@ private class Redecl {}
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc4_15.2: init %Def = class_init (), file.%c.var [concrete = constants.%Def.val]
+// CHECK:STDOUT:   %.loc4_15.2: init %Def to file.%c.var = class_init () [concrete = constants.%Def.val]
 // CHECK:STDOUT:   %.loc4_1: init %Def = converted %.loc4_15.1, %.loc4_15.2 [concrete = constants.%Def.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc4_1
 // CHECK:STDOUT:   return
@@ -362,7 +362,7 @@ private class Redecl {}
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_26.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc4_26.2: init %ForwardWithDef = class_init (), file.%c.var [concrete = constants.%ForwardWithDef.val]
+// CHECK:STDOUT:   %.loc4_26.2: init %ForwardWithDef to file.%c.var = class_init () [concrete = constants.%ForwardWithDef.val]
 // CHECK:STDOUT:   %.loc4_1: init %ForwardWithDef = converted %.loc4_26.1, %.loc4_26.2 [concrete = constants.%ForwardWithDef.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc4_1
 // CHECK:STDOUT:   return

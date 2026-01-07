@@ -500,7 +500,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %impl.elem0.loc6_22.2: @IntRange.Make.%.loc6_22.2 (%.3676) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc6_22.2 (constants.%impl.elem0.053)]
 // CHECK:STDOUT:   %specific_impl_fn.loc6_22.2: <specific function> = specific_impl_function %impl.elem0.loc6_22.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc6_22.2 (constants.%specific_impl_fn.62b)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%start.param: @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1), %end.param: @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1)) -> %return.param: @IntRange.Make.%IntRange (%IntRange.265) {
+// CHECK:STDOUT:   fn(%start.param: @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1), %end.param: @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1)) -> out %return.param: @IntRange.Make.%IntRange (%IntRange.265) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %start.ref: @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1) = name_ref start, %start
 // CHECK:STDOUT:     %end.ref: @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1) = name_ref end, %end
@@ -511,15 +511,15 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:     %bound_method.loc6_22.2: <bound method> = bound_method %start.ref, %specific_impl_fn.loc6_22.1
 // CHECK:STDOUT:     %Copy.Op.call.loc6_22: init @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1) = call %bound_method.loc6_22.2(%start.ref)
 // CHECK:STDOUT:     %.loc6_39.2: ref @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1) = class_element_access %return.param, element0
-// CHECK:STDOUT:     %.loc6_39.3: init @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1) = initialize_from %Copy.Op.call.loc6_22 to %.loc6_39.2
+// CHECK:STDOUT:     %.loc6_39.3: init @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1) to %.loc6_39.2 = initialize_from %Copy.Op.call.loc6_22
 // CHECK:STDOUT:     %impl.elem0.loc6_36: @IntRange.Make.%.loc6_22.2 (%.3676) = impl_witness_access constants.%Copy.lookup_impl_witness.7a8, element0 [symbolic = %impl.elem0.loc6_22.2 (constants.%impl.elem0.053)]
 // CHECK:STDOUT:     %bound_method.loc6_36.1: <bound method> = bound_method %end.ref, %impl.elem0.loc6_36
 // CHECK:STDOUT:     %specific_impl_fn.loc6_36: <specific function> = specific_impl_function %impl.elem0.loc6_36, @Copy.Op(constants.%Copy.facet.3b9) [symbolic = %specific_impl_fn.loc6_22.2 (constants.%specific_impl_fn.62b)]
 // CHECK:STDOUT:     %bound_method.loc6_36.2: <bound method> = bound_method %end.ref, %specific_impl_fn.loc6_36
 // CHECK:STDOUT:     %Copy.Op.call.loc6_36: init @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1) = call %bound_method.loc6_36.2(%end.ref)
 // CHECK:STDOUT:     %.loc6_39.4: ref @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1) = class_element_access %return.param, element1
-// CHECK:STDOUT:     %.loc6_39.5: init @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1) = initialize_from %Copy.Op.call.loc6_36 to %.loc6_39.4
-// CHECK:STDOUT:     %.loc6_39.6: init @IntRange.Make.%IntRange (%IntRange.265) = class_init (%.loc6_39.3, %.loc6_39.5), %return.param
+// CHECK:STDOUT:     %.loc6_39.5: init @IntRange.Make.%Int.loc5_28.1 (%Int.fc6021.1) to %.loc6_39.4 = initialize_from %Copy.Op.call.loc6_36
+// CHECK:STDOUT:     %.loc6_39.6: init @IntRange.Make.%IntRange (%IntRange.265) to %return.param = class_init (%.loc6_39.3, %.loc6_39.5)
 // CHECK:STDOUT:     %.loc6_40: init @IntRange.Make.%IntRange (%IntRange.265) = converted %.loc6_39.1, %.loc6_39.6
 // CHECK:STDOUT:     return %.loc6_40 to %return.param
 // CHECK:STDOUT:   }
@@ -546,7 +546,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %impl.elem0.loc10_60.2: @IntRange.as.Iterate.impl.NewCursor.%.loc10_60.4 (%.3676) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_60.2 (constants.%impl.elem0.053)]
 // CHECK:STDOUT:   %specific_impl_fn.loc10_60.2: <specific function> = specific_impl_function %impl.elem0.loc10_60.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc10_60.2 (constants.%specific_impl_fn.62b)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @IntRange.as.Iterate.impl.NewCursor.%IntRange (%IntRange.265)) -> @IntRange.as.Iterate.impl.NewCursor.%Int.loc10_45.1 (%Int.fc6021.1) {
+// CHECK:STDOUT:   fn(%self.param: @IntRange.as.Iterate.impl.NewCursor.%IntRange (%IntRange.265)) -> out %return.param: @IntRange.as.Iterate.impl.NewCursor.%Int.loc10_45.1 (%Int.fc6021.1) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @IntRange.as.Iterate.impl.NewCursor.%IntRange (%IntRange.265) = name_ref self, %self
 // CHECK:STDOUT:     %start.ref: @IntRange.as.Iterate.impl.NewCursor.%IntRange.elem (%IntRange.elem.541) = name_ref start, @IntRange.%.loc22 [concrete = @IntRange.%.loc22]
@@ -616,7 +616,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %Optional.None: @IntRange.as.Iterate.impl.Next.%Optional.None.type (%Optional.None.type.d56) = struct_value () [symbolic = %Optional.None (constants.%Optional.None.b26)]
 // CHECK:STDOUT:   %Optional.None.specific_fn.loc17_42.2: <specific function> = specific_function %Optional.None, @Optional.None(%OptionalStorage.facet.loc11_75.1) [symbolic = %Optional.None.specific_fn.loc17_42.2 (constants.%Optional.None.specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @IntRange.as.Iterate.impl.Next.%IntRange (%IntRange.265), %cursor.param: @IntRange.as.Iterate.impl.Next.%ptr.loc11_44.1 (%ptr.c9c)) -> %return.param: @IntRange.as.Iterate.impl.Next.%Optional.loc11_75.1 (%Optional.e48) {
+// CHECK:STDOUT:   fn(%self.param: @IntRange.as.Iterate.impl.Next.%IntRange (%IntRange.265), %cursor.param: @IntRange.as.Iterate.impl.Next.%ptr.loc11_44.1 (%ptr.c9c)) -> out %return.param: @IntRange.as.Iterate.impl.Next.%Optional.loc11_75.1 (%Optional.e48) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %value.patt: @IntRange.as.Iterate.impl.Next.%pattern_type.loc12 (%pattern_type.764eab.1) = ref_binding_pattern value [concrete]
@@ -684,7 +684,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:     %Optional.Some.specific_fn.loc15_42.1: <specific function> = specific_function %Some.ref, @Optional.Some(constants.%OptionalStorage.facet.01e) [symbolic = %Optional.Some.specific_fn.loc15_42.2 (constants.%Optional.Some.specific_fn)]
 // CHECK:STDOUT:     %.loc11_75.1: ref @IntRange.as.Iterate.impl.Next.%Optional.loc11_75.1 (%Optional.e48) = splice_block %return.param {}
 // CHECK:STDOUT:     %.loc15_48: @IntRange.as.Iterate.impl.Next.%Int.loc11_43.1 (%Int.fc6021.1) = acquire_value %value.ref.loc15
-// CHECK:STDOUT:     %Optional.Some.call: init @IntRange.as.Iterate.impl.Next.%Optional.loc11_75.1 (%Optional.e48) = call %Optional.Some.specific_fn.loc15_42.1(%.loc15_48) to %.loc11_75.1
+// CHECK:STDOUT:     %Optional.Some.call: init @IntRange.as.Iterate.impl.Next.%Optional.loc11_75.1 (%Optional.e48) to %.loc11_75.1 = call %Optional.Some.specific_fn.loc15_42.1(%.loc15_48)
 // CHECK:STDOUT:     %DestroyOp.bound.loc12_7.1: <bound method> = bound_method %value.var, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:     %DestroyOp.call.loc12_7.1: init %empty_tuple.type = call %DestroyOp.bound.loc12_7.1(%value.var)
 // CHECK:STDOUT:     return %Optional.Some.call to %return.param
@@ -703,14 +703,14 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:     %None.ref: @IntRange.as.Iterate.impl.Next.%Optional.None.type (%Optional.None.type.d56) = name_ref None, %.loc17_42 [symbolic = %Optional.None (constants.%Optional.None.b26)]
 // CHECK:STDOUT:     %Optional.None.specific_fn.loc17_42.1: <specific function> = specific_function %None.ref, @Optional.None(constants.%OptionalStorage.facet.01e) [symbolic = %Optional.None.specific_fn.loc17_42.2 (constants.%Optional.None.specific_fn)]
 // CHECK:STDOUT:     %.loc11_75.2: ref @IntRange.as.Iterate.impl.Next.%Optional.loc11_75.1 (%Optional.e48) = splice_block %return.param {}
-// CHECK:STDOUT:     %Optional.None.call: init @IntRange.as.Iterate.impl.Next.%Optional.loc11_75.1 (%Optional.e48) = call %Optional.None.specific_fn.loc17_42.1() to %.loc11_75.2
+// CHECK:STDOUT:     %Optional.None.call: init @IntRange.as.Iterate.impl.Next.%Optional.loc11_75.1 (%Optional.e48) to %.loc11_75.2 = call %Optional.None.specific_fn.loc17_42.1()
 // CHECK:STDOUT:     %DestroyOp.bound.loc12_7.2: <bound method> = bound_method %value.var, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:     %DestroyOp.call.loc12_7.2: init %empty_tuple.type = call %DestroyOp.bound.loc12_7.2(%value.var)
 // CHECK:STDOUT:     return %Optional.None.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Range(%end.param: %i32) -> %return.param: %IntRange.a89 {
+// CHECK:STDOUT: fn @Range(%end.param: %i32) -> out %return.param: %IntRange.a89 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %IntRange.ref.loc27: %IntRange.type = name_ref IntRange, file.%IntRange.decl [concrete = constants.%IntRange.generic]
 // CHECK:STDOUT:   %int_32.loc27: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -728,7 +728,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc27_28.2(%int_0) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc27_28.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc27_28.2: %i32 = converted %int_0, %.loc27_28.1 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %IntRange.Make.call: init %IntRange.a89 = call %IntRange.Make.specific_fn(%.loc27_28.2, %end.ref) to %.loc26_34.1
+// CHECK:STDOUT:   %IntRange.Make.call: init %IntRange.a89 to %.loc26_34.1 = call %IntRange.Make.specific_fn(%.loc27_28.2, %end.ref)
 // CHECK:STDOUT:   return %IntRange.Make.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1005,7 +1005,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:     %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc5_31.1: init %i32 = call %bound_method.loc5_31.2(%y.ref) [symbolic = %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc5_31.2 (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.call)]
 // CHECK:STDOUT:     %.loc5_31.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc5_31.1 [symbolic = %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc5_31.2 (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.call)]
 // CHECK:STDOUT:     %.loc5_31.2: %i32 = converted %y.ref, %.loc5_31.1 [symbolic = %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc5_31.2 (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.call)]
-// CHECK:STDOUT:     %Range.call: init %IntRange.a89 = call %Range.ref(%.loc5_31.2) to %.loc5_3
+// CHECK:STDOUT:     %Range.call: init %IntRange.a89 to %.loc5_3 = call %Range.ref(%.loc5_31.2)
 // CHECK:STDOUT:     assign %x.var, %Range.call
 // CHECK:STDOUT:     %.loc5_21: type = splice_block %IntRange [concrete = constants.%IntRange.a89] {
 // CHECK:STDOUT:       %IntRange.ref: %IntRange.type = name_ref IntRange, imports.%Main.IntRange [concrete = constants.%IntRange.generic]

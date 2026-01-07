@@ -94,7 +94,7 @@ var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 // CHECK:STDOUT:   %Cpp.ref.loc7_44: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %B.ref.loc7_47: type = name_ref B, imports.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %.loc7_39.2: ref %B = temporary_storage
-// CHECK:STDOUT:   %.loc7_39.3: init %B = class_init (), %.loc7_39.2 [concrete = constants.%B.val]
+// CHECK:STDOUT:   %.loc7_39.3: init %B to %.loc7_39.2 = class_init () [concrete = constants.%B.val]
 // CHECK:STDOUT:   %.loc7_39.4: ref %B = temporary %.loc7_39.2, %.loc7_39.3
 // CHECK:STDOUT:   %.loc7_41.1: ref %B = converted %.loc7_39.1, %.loc7_39.4
 // CHECK:STDOUT:   %.loc7_1: ref %A = splice_block file.%a.var [concrete = file.%a.var] {}
@@ -103,7 +103,7 @@ var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 // CHECK:STDOUT:   %addr.loc7_49.1: %ptr.a04 = addr_of %.loc7_41.3
 // CHECK:STDOUT:   %addr.loc7_49.2: %ptr.270 = addr_of %.loc7_1
 // CHECK:STDOUT:   %f__carbon_thunk.call: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%addr.loc7_49.1, %addr.loc7_49.2)
-// CHECK:STDOUT:   %.loc7_49: init %A = in_place_init %f__carbon_thunk.call, %.loc7_1
+// CHECK:STDOUT:   %.loc7_49: init %A to %.loc7_1 = in_place_init %f__carbon_thunk.call
 // CHECK:STDOUT:   assign file.%a.var, %.loc7_49
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

@@ -44,5 +44,5 @@ fn Six() -> x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Six();
+// CHECK:STDOUT: fn @Six() -> <error>;
 // CHECK:STDOUT:

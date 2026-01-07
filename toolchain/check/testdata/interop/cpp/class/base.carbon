@@ -533,7 +533,7 @@ class V {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ConvertPtr(%d.param: %ptr.ddb) -> %ptr.fb2 {
+// CHECK:STDOUT: fn @ConvertPtr(%d.param: %ptr.ddb) -> out %return.param: %ptr.fb2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %ptr.ddb = name_ref d, %d
 // CHECK:STDOUT:   %.loc8_11.1: ref %Derived = deref %d.ref
@@ -642,7 +642,7 @@ class V {
 // CHECK:STDOUT:   %Copy.impl_witness_table.e76 = impl_witness_table (%Core.import_ref.18d), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AccessDirect(%d.param: %Derived) -> %i32 {
+// CHECK:STDOUT: fn @AccessDirect(%d.param: %Derived) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.1 [concrete = @Base.%.1]
@@ -658,7 +658,7 @@ class V {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AccessQualified(%d.param: %Derived) -> %i32 {
+// CHECK:STDOUT: fn @AccessQualified(%d.param: %Derived) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
 // CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]

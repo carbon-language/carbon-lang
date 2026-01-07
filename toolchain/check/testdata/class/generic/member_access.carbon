@@ -174,7 +174,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %impl.elem0.loc9_16.2: @Class.Get.%.loc9_16.3 (%.72e) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_16.2 (constants.%impl.elem0.07b)]
 // CHECK:STDOUT:   %specific_impl_fn.loc9_16.2: <specific function> = specific_impl_function %impl.elem0.loc9_16.2, @Copy.Op(%T) [symbolic = %specific_impl_fn.loc9_16.2 (constants.%specific_impl_fn.2c9)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Class.Get.%Class (%Class.847)) -> %return.param: @Class.Get.%T.binding.as_type (%T.binding.as_type) {
+// CHECK:STDOUT:   fn(%self.param: @Class.Get.%Class (%Class.847)) -> out %return.param: @Class.Get.%T.binding.as_type (%T.binding.as_type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: @Class.Get.%Class (%Class.847) = name_ref self, %self
 // CHECK:STDOUT:     %x.ref: @Class.Get.%Class.elem (%Class.elem.05d) = name_ref x, @Class.%.loc5_8 [concrete = @Class.%.loc5_8]
@@ -185,7 +185,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     %specific_impl_fn.loc9_16.1: <specific function> = specific_impl_function %impl.elem0.loc9_16.1, @Copy.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc9_16.2 (constants.%specific_impl_fn.2c9)]
 // CHECK:STDOUT:     %bound_method.loc9_16.2: <bound method> = bound_method %.loc9_16.2, %specific_impl_fn.loc9_16.1
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %Copy.Op.call: init @Class.Get.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc9_16.2(%.loc9_16.2) to %.loc7_27.1
+// CHECK:STDOUT:     %Copy.Op.call: init @Class.Get.%T.binding.as_type (%T.binding.as_type) to %.loc7_27.1 = call %bound_method.loc9_16.2(%.loc9_16.2)
 // CHECK:STDOUT:     return %Copy.Op.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -203,7 +203,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %impl.elem0.loc15_12.2: @Class.GetAddr.%.loc15_12.2 (%.f11) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc15_12.2 (constants.%impl.elem0.a55)]
 // CHECK:STDOUT:   %specific_impl_fn.loc15_12.2: <specific function> = specific_impl_function %impl.elem0.loc15_12.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc15_12.2 (constants.%specific_impl_fn.0df)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Class.GetAddr.%Class (%Class.847)) -> @Class.GetAddr.%ptr.loc13_36.1 (%ptr.e7d) {
+// CHECK:STDOUT:   fn(%self.param: @Class.GetAddr.%Class (%Class.847)) -> out %return.param: @Class.GetAddr.%ptr.loc13_36.1 (%ptr.e7d) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %self.ref: ref @Class.GetAddr.%Class (%Class.847) = name_ref self, %self
 // CHECK:STDOUT:     %x.ref: @Class.GetAddr.%Class.elem (%Class.elem.05d) = name_ref x, @Class.%.loc5_8 [concrete = @Class.%.loc5_8]
@@ -218,7 +218,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DirectFieldAccess(%x.param: %Class.06a) -> %i32 {
+// CHECK:STDOUT: fn @DirectFieldAccess(%x.param: %Class.06a) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc22_10: %Class.06a = name_ref x, %x
 // CHECK:STDOUT:   %x.ref.loc22_11: %Class.elem.da5 = name_ref x, @Class.%.loc5_8 [concrete = @Class.%.loc5_8]
@@ -232,7 +232,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MethodCall(%x.param: %Class.06a) -> %i32 {
+// CHECK:STDOUT: fn @MethodCall(%x.param: %Class.06a) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %Class.06a = name_ref x, %x
 // CHECK:STDOUT:   %.loc28: %Class.Get.type.bea = specific_constant @Class.%Class.Get.decl, @Class(constants.%Copy.facet.de4) [concrete = constants.%Class.Get.275]
@@ -244,7 +244,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   return %Class.Get.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @AddrMethodCall(%p.param: %ptr.7d6) -> %i32 {
+// CHECK:STDOUT: fn @AddrMethodCall(%p.param: %ptr.7d6) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.7d6 = name_ref p, %p
 // CHECK:STDOUT:   %.loc34_12.1: ref %Class.06a = deref %p.ref
@@ -382,7 +382,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class.Make: @StaticMemberFunctionCall.%Class.Make.type (%Class.Make.type) = struct_value () [symbolic = %Class.Make (constants.%Class.Make)]
 // CHECK:STDOUT:   %Class.Make.specific_fn.loc10_18.2: <specific function> = specific_function %Class.Make, @Class.Make(%T.loc8_29.1) [symbolic = %Class.Make.specific_fn.loc10_18.2 (constants.%Class.Make.specific_fn)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return.param: @StaticMemberFunctionCall.%Class.loc8_49.1 (%Class) {
+// CHECK:STDOUT:   fn() -> out %return.param: @StaticMemberFunctionCall.%Class.loc8_49.1 (%Class) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Class.ref.loc10: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
 // CHECK:STDOUT:     %T.ref.loc10: type = name_ref T, %T.loc8_29.2 [symbolic = %T.loc8_29.1 (constants.%T)]
@@ -391,7 +391,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     %Make.ref: @StaticMemberFunctionCall.%Class.Make.type (%Class.Make.type) = name_ref Make, %.loc10 [symbolic = %Class.Make (constants.%Class.Make)]
 // CHECK:STDOUT:     %Class.Make.specific_fn.loc10_18.1: <specific function> = specific_function %Make.ref, @Class.Make(constants.%T) [symbolic = %Class.Make.specific_fn.loc10_18.2 (constants.%Class.Make.specific_fn)]
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %Class.Make.call: init @StaticMemberFunctionCall.%Class.loc8_49.1 (%Class) = call %Class.Make.specific_fn.loc10_18.1() to %.loc8_49.1
+// CHECK:STDOUT:     %Class.Make.call: init @StaticMemberFunctionCall.%Class.loc8_49.1 (%Class) to %.loc8_49.1 = call %Class.Make.specific_fn.loc10_18.1()
 // CHECK:STDOUT:     return %Class.Make.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

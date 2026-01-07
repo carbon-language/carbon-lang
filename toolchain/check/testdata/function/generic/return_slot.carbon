@@ -167,13 +167,13 @@ fn G() {
 // CHECK:STDOUT:   %Wrap.Make: @Wrap.Make.%Wrap.Make.type (%Wrap.Make.type.6e9) = struct_value () [symbolic = %Wrap.Make (constants.%Wrap.Make.e25)]
 // CHECK:STDOUT:   %Wrap.Make.specific_fn.loc16_27.2: <specific function> = specific_function %Wrap.Make, @Wrap.Make(%T) [symbolic = %Wrap.Make.specific_fn.loc16_27.2 (constants.%Wrap.Make.specific_fn.5c8)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %return.param: @Wrap.Make.%T (%T) {
+// CHECK:STDOUT:   fn() -> out %return.param: @Wrap.Make.%T (%T) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc16_27: @Wrap.Make.%Wrap.Make.type (%Wrap.Make.type.6e9) = specific_constant @Wrap.%Wrap.Make.decl, @Wrap(constants.%T) [symbolic = %Wrap.Make (constants.%Wrap.Make.e25)]
 // CHECK:STDOUT:     %Make.ref: @Wrap.Make.%Wrap.Make.type (%Wrap.Make.type.6e9) = name_ref Make, %.loc16_27 [symbolic = %Wrap.Make (constants.%Wrap.Make.e25)]
 // CHECK:STDOUT:     %Wrap.Make.specific_fn.loc16_27.1: <specific function> = specific_function %Make.ref, @Wrap.Make(constants.%T) [symbolic = %Wrap.Make.specific_fn.loc16_27.2 (constants.%Wrap.Make.specific_fn.5c8)]
 // CHECK:STDOUT:     %.loc16_16.1: ref @Wrap.Make.%T (%T) = splice_block %return.param {}
-// CHECK:STDOUT:     %Wrap.Make.call: init @Wrap.Make.%T (%T) = call %Wrap.Make.specific_fn.loc16_27.1() to %.loc16_16.1
+// CHECK:STDOUT:     %Wrap.Make.call: init @Wrap.Make.%T (%T) to %.loc16_16.1 = call %Wrap.Make.specific_fn.loc16_27.1()
 // CHECK:STDOUT:     return %Wrap.Make.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -230,7 +230,7 @@ fn G() {
 // CHECK:STDOUT:   %Make.ref.loc24: %Wrap.Make.type.a8f = name_ref Make, %.loc24_21 [concrete = constants.%Wrap.Make.62a]
 // CHECK:STDOUT:   %Wrap.Make.specific_fn.loc24: <specific function> = specific_function %Make.ref.loc24, @Wrap.Make(constants.%C) [concrete = constants.%Wrap.Make.specific_fn.cb9]
 // CHECK:STDOUT:   %.loc24_3: ref %C = splice_block %c.var {}
-// CHECK:STDOUT:   %Wrap.Make.call.loc24: init %C = call %Wrap.Make.specific_fn.loc24() to %.loc24_3
+// CHECK:STDOUT:   %Wrap.Make.call.loc24: init %C to %.loc24_3 = call %Wrap.Make.specific_fn.loc24()
 // CHECK:STDOUT:   assign %c.var, %Wrap.Make.call.loc24
 // CHECK:STDOUT:   %C.ref.loc24_10: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: ref %C = ref_binding c, %c.var

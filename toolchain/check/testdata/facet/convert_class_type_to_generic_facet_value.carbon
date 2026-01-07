@@ -553,7 +553,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc18_36.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %GenericParam.ref: type = name_ref GenericParam, file.%GenericParam.decl [concrete = constants.%GenericParam]
 // CHECK:STDOUT:   %.loc18_36.2: ref %GenericParam = temporary_storage
-// CHECK:STDOUT:   %.loc18_36.3: init %GenericParam = class_init (), %.loc18_36.2 [concrete = constants.%GenericParam.val]
+// CHECK:STDOUT:   %.loc18_36.3: init %GenericParam to %.loc18_36.2 = class_init () [concrete = constants.%GenericParam.val]
 // CHECK:STDOUT:   %.loc18_36.4: ref %GenericParam = temporary %.loc18_36.2, %.loc18_36.3
 // CHECK:STDOUT:   %.loc18_38.1: ref %GenericParam = converted %.loc18_36.1, %.loc18_36.4
 // CHECK:STDOUT:   %Generic.facet: %Generic.type.498 = facet_value constants.%ImplsGeneric, (constants.%Generic.impl_witness) [concrete = constants.%Generic.facet]

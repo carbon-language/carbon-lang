@@ -206,7 +206,7 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %empty_struct_type {
+// CHECK:STDOUT:   fn() -> out %return.param: %empty_struct_type {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc4_41.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc4_41.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
@@ -361,7 +361,7 @@ var n: {} = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %empty_tuple.type {
+// CHECK:STDOUT:   fn() -> out %return.param: %empty_tuple.type {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc8_41.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_41.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]

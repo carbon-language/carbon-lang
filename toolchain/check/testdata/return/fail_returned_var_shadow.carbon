@@ -129,7 +129,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SameScope() -> %i32 {
+// CHECK:STDOUT: fn @SameScope() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   if %true br !if.then else br !if.else
@@ -190,7 +190,7 @@ fn DifferentScopes() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DifferentScopes() -> %i32 {
+// CHECK:STDOUT: fn @DifferentScopes() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true.loc31: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   if %true.loc31 br !if.then.loc31 else br !if.else.loc31

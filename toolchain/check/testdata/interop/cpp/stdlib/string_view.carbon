@@ -129,14 +129,14 @@ fn G() -> str {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> %return.param: %str.ee0 {
+// CHECK:STDOUT: fn @G() -> out %return.param: %str.ee0 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Produce.ref: %Produce.cpp_overload_set.type = name_ref Produce, imports.%Produce.cpp_overload_set.value [concrete = constants.%Produce.cpp_overload_set.value]
 // CHECK:STDOUT:   %.loc13_11.1: ref %str.ee0 = splice_block %return.param {}
 // CHECK:STDOUT:   %addr: %ptr.85f = addr_of %.loc13_11.1
 // CHECK:STDOUT:   %Produce__carbon_thunk.call: init %empty_tuple.type = call imports.%Produce__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc14: init %str.ee0 = in_place_init %Produce__carbon_thunk.call, %.loc13_11.1
+// CHECK:STDOUT:   %.loc14: init %str.ee0 to %.loc13_11.1 = in_place_init %Produce__carbon_thunk.call
 // CHECK:STDOUT:   return %.loc14 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

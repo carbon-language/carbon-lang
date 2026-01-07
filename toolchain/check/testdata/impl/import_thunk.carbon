@@ -296,7 +296,7 @@ fn G() {
 // CHECK:STDOUT:     %x.ref: %empty_struct_type = name_ref x, %x.param
 // CHECK:STDOUT:     %C.as.I.impl.F.specific_fn.loc8_17.1: <specific function> = specific_function %F.ref, @C.as.I.impl.F.loc8_17.1(constants.%Y) [symbolic = %C.as.I.impl.F.specific_fn.loc8_17.2 (constants.%C.as.I.impl.F.specific_fn)]
 // CHECK:STDOUT:     %.1: ref @C.as.I.impl.F.loc8_17.2.%C (%C.c8540f.2) = temporary_storage
-// CHECK:STDOUT:     %.2: init @C.as.I.impl.F.loc8_17.2.%C (%C.c8540f.2) = class_init (), %.1 [symbolic = %C.val (constants.%C.val)]
+// CHECK:STDOUT:     %.2: init @C.as.I.impl.F.loc8_17.2.%C (%C.c8540f.2) to %.1 = class_init () [symbolic = %C.val (constants.%C.val)]
 // CHECK:STDOUT:     %.3: ref @C.as.I.impl.F.loc8_17.2.%C (%C.c8540f.2) = temporary %.1, %.2
 // CHECK:STDOUT:     %.4: ref @C.as.I.impl.F.loc8_17.2.%C (%C.c8540f.2) = converted %x.ref, %.3
 // CHECK:STDOUT:     %.5: @C.as.I.impl.F.loc8_17.2.%C (%C.c8540f.2) = acquire_value %.4
@@ -504,7 +504,7 @@ fn G() {
 // CHECK:STDOUT:   %F.ref.loc7_17: %C.as.I.impl.F.type.0e1915.1 = name_ref F, %.loc7_17.2 [concrete = constants.%C.as.I.impl.F.fcfec4.1]
 // CHECK:STDOUT:   %C.as.I.impl.F.specific_fn: <specific function> = specific_function %F.ref.loc7_17, @C.as.I.impl.F.2(constants.%empty_tuple) [concrete = constants.%C.as.I.impl.F.specific_fn.a77113.2]
 // CHECK:STDOUT:   %.loc7_16.3: ref %C.387 = temporary_storage
-// CHECK:STDOUT:   %.loc7_16.4: init %C.387 = class_init (), %.loc7_16.3 [concrete = constants.%C.val.135]
+// CHECK:STDOUT:   %.loc7_16.4: init %C.387 to %.loc7_16.3 = class_init () [concrete = constants.%C.val.135]
 // CHECK:STDOUT:   %.loc7_16.5: ref %C.387 = temporary %.loc7_16.3, %.loc7_16.4
 // CHECK:STDOUT:   %.loc7_16.6: ref %C.387 = converted %.loc7_16.2, %.loc7_16.5
 // CHECK:STDOUT:   %.loc7_16.7: %C.387 = acquire_value %.loc7_16.6

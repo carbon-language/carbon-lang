@@ -22,10 +22,12 @@ inline auto IsRefCategory(ExprCategory cat) -> bool {
 }
 
 // Given a primitive-form initializing expression, find its return slot
-// argument. Returns `None` if there is no return slot, because the
-// initialization is not performed in place.
-auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id)
-    -> InstId;
+// argument. If `allow_transitive` is true, the result may be an argument to
+// some other inst whose outcome is forwarded by `init_id`; otherwise the result
+// must be an argument to `init_id` itself. Returns `None` if no such return
+// slot is found.
+auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id,
+                                     bool allow_transitive = true) -> InstId;
 
 }  // namespace Carbon::SemIR
 

@@ -122,7 +122,7 @@ fn Use() {
 // CHECK:STDOUT:   %i.var: ref %const = var %i.var_patt
 // CHECK:STDOUT:   %Init.ref: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
 // CHECK:STDOUT:   %.loc14_3: ref %const = splice_block %i.var {}
-// CHECK:STDOUT:   %Init.call: init %X = call %Init.ref() to %.loc14_3
+// CHECK:STDOUT:   %Init.call: init %X to %.loc14_3 = call %Init.ref()
 // CHECK:STDOUT:   %X.ref.loc14_36: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %const.loc14_30: type = const_type %X.ref.loc14_36 [concrete = constants.%const]
 // CHECK:STDOUT:   %.loc14_27.1: init %const = as_compatible %Init.call
@@ -213,7 +213,7 @@ fn Use() {
 // CHECK:STDOUT:   %i.var: ref %X = var %i.var_patt
 // CHECK:STDOUT:   %Init.ref: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
 // CHECK:STDOUT:   %.loc12_3: ref %X = splice_block %i.var {}
-// CHECK:STDOUT:   %Init.call: init %const = call %Init.ref() to %.loc12_3
+// CHECK:STDOUT:   %Init.call: init %const to %.loc12_3 = call %Init.ref()
 // CHECK:STDOUT:   %X.ref.loc12_24: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc12_21.1: init %X = as_compatible %Init.call
 // CHECK:STDOUT:   %.loc12_21.2: init %X = converted %Init.call, %.loc12_21.1

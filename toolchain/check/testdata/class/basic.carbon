@@ -187,7 +187,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   .k = %.loc22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.F(%n.param: %i32) -> %i32 {
+// CHECK:STDOUT: fn @Class.F(%n.param: %i32) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %impl.elem0: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
@@ -198,7 +198,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Class.G(%n.param.loc25: %i32) -> %i32 {
+// CHECK:STDOUT: fn @Class.G(%n.param.loc25: %i32) -> out %return.param.loc25: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n.loc25
 // CHECK:STDOUT:   %impl.elem0: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
@@ -209,7 +209,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Run() -> %i32 {
+// CHECK:STDOUT: fn @Run() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Class.ref: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %F.ref: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]

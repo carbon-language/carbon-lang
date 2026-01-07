@@ -468,7 +468,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
 // CHECK:STDOUT:   %.loc8_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc8_19.2: init %S = class_init (), %s.var [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc8_19.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc8_3: init %S = converted %.loc8_19.1, %.loc8_19.2 [concrete = constants.%S.val]
 // CHECK:STDOUT:   assign %s.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %S.ref [concrete = constants.%S] {
@@ -610,7 +610,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
 // CHECK:STDOUT:   %.loc8_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc8_19.2: init %S = class_init (), %s.var [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc8_19.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc8_3: init %S = converted %.loc8_19.1, %.loc8_19.2 [concrete = constants.%S.val]
 // CHECK:STDOUT:   assign %s.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %S.ref.loc8 [concrete = constants.%S] {
@@ -695,7 +695,7 @@ fn F() {
 // CHECK:STDOUT:   %s.var: ref %const = var %s.var_patt
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %.loc10_3: ref %const = splice_block %s.var {}
-// CHECK:STDOUT:   %G.call: init %const = call %G.ref() to %.loc10_3
+// CHECK:STDOUT:   %G.call: init %const to %.loc10_3 = call %G.ref()
 // CHECK:STDOUT:   assign %s.var, %G.call
 // CHECK:STDOUT:   %.loc10_10: type = splice_block %const [concrete = constants.%const] {
 // CHECK:STDOUT:     %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -758,7 +758,7 @@ fn F() {
 // CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %.loc8_3: ref %S = splice_block %s.var {}
-// CHECK:STDOUT:   %G.call: init %S = call %G.ref() to %.loc8_3
+// CHECK:STDOUT:   %G.call: init %S to %.loc8_3 = call %G.ref()
 // CHECK:STDOUT:   assign %s.var, %G.call
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %S.ref [concrete = constants.%S] {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -1384,7 +1384,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
 // CHECK:STDOUT:   %.loc8_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc8_19.2: init %S = class_init (), %s.var [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc8_19.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc8_3: init %S = converted %.loc8_19.1, %.loc8_19.2 [concrete = constants.%S.val]
 // CHECK:STDOUT:   assign %s.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %S.ref [concrete = constants.%S] {
@@ -1602,7 +1602,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
 // CHECK:STDOUT:   %.loc8_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc8_19.2: init %S = class_init (), %s.var [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc8_19.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc8_3: init %S = converted %.loc8_19.1, %.loc8_19.2 [concrete = constants.%S.val]
 // CHECK:STDOUT:   assign %s.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %S.ref.loc8 [concrete = constants.%S] {
@@ -1770,7 +1770,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
 // CHECK:STDOUT:   %.loc8_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc8_19.2: init %S = class_init (), %s.var [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc8_19.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc8_3: init %S = converted %.loc8_19.1, %.loc8_19.2 [concrete = constants.%S.val]
 // CHECK:STDOUT:   assign %s.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %S.ref.loc8 [concrete = constants.%S] {
@@ -1924,7 +1924,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %s.var: ref %S = var %s.var_patt
 // CHECK:STDOUT:   %.loc10_19.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc10_19.2: init %S = class_init (), %s.var [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc10_19.2: init %S to %s.var = class_init () [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc10_3: init %S = converted %.loc10_19.1, %.loc10_19.2 [concrete = constants.%S.val]
 // CHECK:STDOUT:   assign %s.var, %.loc10_3
 // CHECK:STDOUT:   %.loc10_13: type = splice_block %S.ref.loc10 [concrete = constants.%S] {
@@ -1955,7 +1955,7 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.ref.loc13_53: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %S.ref.loc13_56: type = name_ref S, imports.%S.decl [concrete = constants.%S]
 // CHECK:STDOUT:   %.loc13_48.2: ref %S = temporary_storage
-// CHECK:STDOUT:   %.loc13_48.3: init %S = class_init (), %.loc13_48.2 [concrete = constants.%S.val]
+// CHECK:STDOUT:   %.loc13_48.3: init %S to %.loc13_48.2 = class_init () [concrete = constants.%S.val]
 // CHECK:STDOUT:   %.loc13_48.4: ref %S = temporary %.loc13_48.2, %.loc13_48.3
 // CHECK:STDOUT:   %.loc13_50.1: ref %S = converted %.loc13_48.1, %.loc13_48.4
 // CHECK:STDOUT:   %.loc13_50.2: %S = acquire_value %.loc13_50.1

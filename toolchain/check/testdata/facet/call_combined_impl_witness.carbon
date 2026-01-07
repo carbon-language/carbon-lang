@@ -360,7 +360,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc45_6.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc45_6.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc45_6.3: init %C = class_init (), %.loc45_6.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc45_6.3: init %C to %.loc45_6.2 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc45_6.4: ref %C = temporary %.loc45_6.2, %.loc45_6.3
 // CHECK:STDOUT:   %.loc45_8.1: ref %C = converted %.loc45_6.1, %.loc45_6.4
 // CHECK:STDOUT:   %facet_value.loc45_12.1: %facet_type.dc7 = facet_value constants.%C, (constants.%Empty.impl_witness, constants.%A.impl_witness, constants.%B.impl_witness) [concrete = constants.%facet_value]

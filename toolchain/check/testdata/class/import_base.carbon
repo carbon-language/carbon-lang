@@ -266,7 +266,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc7_49.2: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc7_49.1 [concrete = constants.%int_0.263]
 // CHECK:STDOUT:   %.loc7_50.2: ref %Base = class_element_access %a.var, element0
 // CHECK:STDOUT:   %.loc7_49.3: ref %i32 = class_element_access %.loc7_50.2, element0
-// CHECK:STDOUT:   %.loc7_49.4: init %i32 = initialize_from %.loc7_49.2 to %.loc7_49.3 [concrete = constants.%int_0.263]
+// CHECK:STDOUT:   %.loc7_49.4: init %i32 to %.loc7_49.3 = initialize_from %.loc7_49.2 [concrete = constants.%int_0.263]
 // CHECK:STDOUT:   %impl.elem0.loc7_49.2: %.952 = impl_witness_access constants.%ImplicitAs.impl_witness.58d, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.5f4]
 // CHECK:STDOUT:   %bound_method.loc7_49.3: <bound method> = bound_method %int_1, %impl.elem0.loc7_49.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.f07]
 // CHECK:STDOUT:   %specific_fn.loc7_49.2: <specific function> = specific_function %impl.elem0.loc7_49.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -274,10 +274,10 @@ fn Run() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc7_49.2: init %i32 = call %bound_method.loc7_49.4(%int_1) [concrete = constants.%int_1.47b]
 // CHECK:STDOUT:   %.loc7_49.5: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc7_49.2 [concrete = constants.%int_1.47b]
 // CHECK:STDOUT:   %.loc7_49.6: ref %i32 = class_element_access %.loc7_50.2, element1
-// CHECK:STDOUT:   %.loc7_49.7: init %i32 = initialize_from %.loc7_49.5 to %.loc7_49.6 [concrete = constants.%int_1.47b]
-// CHECK:STDOUT:   %.loc7_49.8: init %Base = class_init (%.loc7_49.4, %.loc7_49.7), %.loc7_50.2 [concrete = constants.%Base.val]
+// CHECK:STDOUT:   %.loc7_49.7: init %i32 to %.loc7_49.6 = initialize_from %.loc7_49.5 [concrete = constants.%int_1.47b]
+// CHECK:STDOUT:   %.loc7_49.8: init %Base to %.loc7_50.2 = class_init (%.loc7_49.4, %.loc7_49.7) [concrete = constants.%Base.val]
 // CHECK:STDOUT:   %.loc7_50.3: init %Base = converted %.loc7_49.1, %.loc7_49.8 [concrete = constants.%Base.val]
-// CHECK:STDOUT:   %.loc7_50.4: init %Child = class_init (%.loc7_50.3), %a.var [concrete = constants.%Child.val]
+// CHECK:STDOUT:   %.loc7_50.4: init %Child to %a.var = class_init (%.loc7_50.3) [concrete = constants.%Child.val]
 // CHECK:STDOUT:   %.loc7_3: init %Child = converted %.loc7_50.1, %.loc7_50.4 [concrete = constants.%Child.val]
 // CHECK:STDOUT:   assign %a.var, %.loc7_3
 // CHECK:STDOUT:   %Child.ref: type = name_ref Child, imports.%Main.Child [concrete = constants.%Child]

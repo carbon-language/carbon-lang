@@ -78,7 +78,7 @@ fn Mul = "int.smul";
 // CHECK:STDOUT:   %Mul.decl: %Mul.type = fn_decl @Mul [concrete = constants.%Mul] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Add() -> %i32;
+// CHECK:STDOUT: fn @Add() -> out %return.param: %i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Mul;
 // CHECK:STDOUT:

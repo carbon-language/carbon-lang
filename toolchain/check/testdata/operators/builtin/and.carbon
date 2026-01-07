@@ -140,7 +140,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> bool {
+// CHECK:STDOUT: fn @F() -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %impl.elem0: %.56b = impl_witness_access constants.%Copy.impl_witness.348, element0 [concrete = constants.%bool.as.Copy.impl.Op]
@@ -149,7 +149,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> bool {
+// CHECK:STDOUT: fn @G() -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %impl.elem0: %.56b = impl_witness_access constants.%Copy.impl_witness.348, element0 [concrete = constants.%bool.as.Copy.impl.Op]
@@ -158,7 +158,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @And() -> bool {
+// CHECK:STDOUT: fn @And() -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: init bool = call %F.ref()

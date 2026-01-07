@@ -68,7 +68,7 @@ fn Main() {
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() -> %empty_tuple.type {
+// CHECK:STDOUT: fn @A() -> out %return.param: %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_24.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc15_24.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]

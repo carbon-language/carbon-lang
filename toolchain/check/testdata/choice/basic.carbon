@@ -114,9 +114,9 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc6_1.3: %struct_type.discriminant = struct_literal (%.loc6_1.2) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc6_1.4: ref %Always = temporary_storage
 // CHECK:STDOUT:   %.loc6_1.5: ref %empty_tuple.type = class_element_access %.loc6_1.4, element0
-// CHECK:STDOUT:   %.loc6_1.6: init %empty_tuple.type = tuple_init () to %.loc6_1.5 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_1.6: init %empty_tuple.type to %.loc6_1.5 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_1.7: init %empty_tuple.type = converted %.loc6_1.2, %.loc6_1.6 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc6_1.8: init %Always = class_init (%.loc6_1.7), %.loc6_1.4 [concrete = constants.%Always.val]
+// CHECK:STDOUT:   %.loc6_1.8: init %Always to %.loc6_1.4 = class_init (%.loc6_1.7) [concrete = constants.%Always.val]
 // CHECK:STDOUT:   %.loc6_1.9: ref %Always = temporary %.loc6_1.4, %.loc6_1.8
 // CHECK:STDOUT:   %.loc6_1.10: ref %Always = converted %.loc6_1.3, %.loc6_1.9
 // CHECK:STDOUT:   %.loc6_1.11: %Always = acquire_value %.loc6_1.10
@@ -250,8 +250,8 @@ let never: Never = {};
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.call.loc5: init %u2 = call %bound_method.loc5_7.4(%.loc5_7.2) [concrete = constants.%int_0.9fd]
 // CHECK:STDOUT:   %.loc5_7.4: ref %Ordering = temporary_storage
 // CHECK:STDOUT:   %.loc5_7.5: ref %u2 = class_element_access %.loc5_7.4, element0
-// CHECK:STDOUT:   %.loc5_7.6: init %u2 = initialize_from %UInt.as.Copy.impl.Op.call.loc5 to %.loc5_7.5 [concrete = constants.%int_0.9fd]
-// CHECK:STDOUT:   %.loc5_7.7: init %Ordering = class_init (%.loc5_7.6), %.loc5_7.4 [concrete = constants.%Ordering.val.9ea]
+// CHECK:STDOUT:   %.loc5_7.6: init %u2 to %.loc5_7.5 = initialize_from %UInt.as.Copy.impl.Op.call.loc5 [concrete = constants.%int_0.9fd]
+// CHECK:STDOUT:   %.loc5_7.7: init %Ordering to %.loc5_7.4 = class_init (%.loc5_7.6) [concrete = constants.%Ordering.val.9ea]
 // CHECK:STDOUT:   %.loc5_7.8: ref %Ordering = temporary %.loc5_7.4, %.loc5_7.7
 // CHECK:STDOUT:   %.loc5_7.9: ref %Ordering = converted %.loc5_7.3, %.loc5_7.8
 // CHECK:STDOUT:   %.loc5_7.10: %Ordering = acquire_value %.loc5_7.9
@@ -272,8 +272,8 @@ let never: Never = {};
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.call.loc6: init %u2 = call %bound_method.loc6_13.4(%.loc6_13.2) [concrete = constants.%int_1.b2c]
 // CHECK:STDOUT:   %.loc6_13.4: ref %Ordering = temporary_storage
 // CHECK:STDOUT:   %.loc6_13.5: ref %u2 = class_element_access %.loc6_13.4, element0
-// CHECK:STDOUT:   %.loc6_13.6: init %u2 = initialize_from %UInt.as.Copy.impl.Op.call.loc6 to %.loc6_13.5 [concrete = constants.%int_1.b2c]
-// CHECK:STDOUT:   %.loc6_13.7: init %Ordering = class_init (%.loc6_13.6), %.loc6_13.4 [concrete = constants.%Ordering.val.d41]
+// CHECK:STDOUT:   %.loc6_13.6: init %u2 to %.loc6_13.5 = initialize_from %UInt.as.Copy.impl.Op.call.loc6 [concrete = constants.%int_1.b2c]
+// CHECK:STDOUT:   %.loc6_13.7: init %Ordering to %.loc6_13.4 = class_init (%.loc6_13.6) [concrete = constants.%Ordering.val.d41]
 // CHECK:STDOUT:   %.loc6_13.8: ref %Ordering = temporary %.loc6_13.4, %.loc6_13.7
 // CHECK:STDOUT:   %.loc6_13.9: ref %Ordering = converted %.loc6_13.3, %.loc6_13.8
 // CHECK:STDOUT:   %.loc6_13.10: %Ordering = acquire_value %.loc6_13.9
@@ -294,8 +294,8 @@ let never: Never = {};
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.call.loc7: init %u2 = call %bound_method.loc7_10.4(%.loc7_10.2) [concrete = constants.%int_2.788]
 // CHECK:STDOUT:   %.loc7_10.4: ref %Ordering = temporary_storage
 // CHECK:STDOUT:   %.loc7_10.5: ref %u2 = class_element_access %.loc7_10.4, element0
-// CHECK:STDOUT:   %.loc7_10.6: init %u2 = initialize_from %UInt.as.Copy.impl.Op.call.loc7 to %.loc7_10.5 [concrete = constants.%int_2.788]
-// CHECK:STDOUT:   %.loc7_10.7: init %Ordering = class_init (%.loc7_10.6), %.loc7_10.4 [concrete = constants.%Ordering.val.e86]
+// CHECK:STDOUT:   %.loc7_10.6: init %u2 to %.loc7_10.5 = initialize_from %UInt.as.Copy.impl.Op.call.loc7 [concrete = constants.%int_2.788]
+// CHECK:STDOUT:   %.loc7_10.7: init %Ordering to %.loc7_10.4 = class_init (%.loc7_10.6) [concrete = constants.%Ordering.val.e86]
 // CHECK:STDOUT:   %.loc7_10.8: ref %Ordering = temporary %.loc7_10.4, %.loc7_10.7
 // CHECK:STDOUT:   %.loc7_10.9: ref %Ordering = converted %.loc7_10.3, %.loc7_10.8
 // CHECK:STDOUT:   %.loc7_10.10: %Ordering = acquire_value %.loc7_10.9
@@ -316,8 +316,8 @@ let never: Never = {};
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.call.loc9: init %u2 = call %bound_method.loc9_1.4(%.loc9_1.2) [concrete = constants.%int_3.975]
 // CHECK:STDOUT:   %.loc9_1.4: ref %Ordering = temporary_storage
 // CHECK:STDOUT:   %.loc9_1.5: ref %u2 = class_element_access %.loc9_1.4, element0
-// CHECK:STDOUT:   %.loc9_1.6: init %u2 = initialize_from %UInt.as.Copy.impl.Op.call.loc9 to %.loc9_1.5 [concrete = constants.%int_3.975]
-// CHECK:STDOUT:   %.loc9_1.7: init %Ordering = class_init (%.loc9_1.6), %.loc9_1.4 [concrete = constants.%Ordering.val.a17]
+// CHECK:STDOUT:   %.loc9_1.6: init %u2 to %.loc9_1.5 = initialize_from %UInt.as.Copy.impl.Op.call.loc9 [concrete = constants.%int_3.975]
+// CHECK:STDOUT:   %.loc9_1.7: init %Ordering to %.loc9_1.4 = class_init (%.loc9_1.6) [concrete = constants.%Ordering.val.a17]
 // CHECK:STDOUT:   %.loc9_1.8: ref %Ordering = temporary %.loc9_1.4, %.loc9_1.7
 // CHECK:STDOUT:   %.loc9_1.9: ref %Ordering = converted %.loc9_1.3, %.loc9_1.8
 // CHECK:STDOUT:   %.loc9_1.10: %Ordering = acquire_value %.loc9_1.9

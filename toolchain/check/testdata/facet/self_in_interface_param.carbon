@@ -97,7 +97,7 @@ fn G(_:! I(.Self) where .I1 = ()) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> %empty_tuple.type {
+// CHECK:STDOUT:   fn() -> out %return.param: %empty_tuple.type {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc19_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc19_11.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]

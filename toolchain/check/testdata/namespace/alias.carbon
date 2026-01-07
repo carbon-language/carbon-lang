@@ -121,7 +121,7 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() -> %i32 {
+// CHECK:STDOUT: fn @A() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
@@ -133,7 +133,7 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT:   return %.loc19_28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B() -> %i32 {
+// CHECK:STDOUT: fn @B() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ns.ref: <namespace> = name_ref ns, file.%ns [concrete = file.%NS]
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
@@ -141,7 +141,7 @@ fn D() -> i32 { return C(); }
 // CHECK:STDOUT:   return %A.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @D() -> %i32 {
+// CHECK:STDOUT: fn @D() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: %A.type = name_ref C, file.%C [concrete = constants.%A]
 // CHECK:STDOUT:   %A.call: init %i32 = call %C.ref()

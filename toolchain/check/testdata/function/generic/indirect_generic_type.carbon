@@ -54,7 +54,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:   %impl.elem0.loc6_10.2: @F.%.loc6_10.4 (%.b46) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc6_10.2 (constants.%impl.elem0.201)]
 // CHECK:STDOUT:   %specific_impl_fn.loc6_10.2: <specific function> = specific_impl_function %impl.elem0.loc6_10.2, @Copy.Op(%Copy.facet) [symbolic = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.b84)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%p.param: @F.%ptr.loc4_21.1 (%ptr.125)) -> @F.%ptr.loc4_20.1 (%ptr.e8f) {
+// CHECK:STDOUT:   fn(%p.param: @F.%ptr.loc4_21.1 (%ptr.125)) -> out %return.param: @F.%ptr.loc4_20.1 (%ptr.e8f) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %p.ref: @F.%ptr.loc4_21.1 (%ptr.125) = name_ref p, %p
 // CHECK:STDOUT:     %.loc6_10.1: ref @F.%ptr.loc4_20.1 (%ptr.e8f) = deref %p.ref
