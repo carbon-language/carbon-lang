@@ -32,15 +32,18 @@ static auto DumpConstantSummary(const File& file, ConstantId const_id)
   }
   if (const_id.is_symbolic()) {
     out << ": " << file.constant_values().GetSymbolicConstant(const_id);
+    if (file.constant_values().IsAttached(const_id)) {
+      // TODO: Consider including attachment information here, like in formatted
+      // SemIR.
+      out << " (attached)";
+    } else {
+      out << " (unattached)";
+    }
   } else if (const_id.is_concrete()) {
     out << ": "
         << file.insts().GetWithAttachedType(
-               file.constant_values().GetInstId(const_id));
-  }
-  if (file.constant_values().IsAttached(const_id)) {
-    out << " (attached)";
-  } else {
-    out << " (unattached)";
+               file.constant_values().GetInstId(const_id))
+        << " (concrete)";
   }
   return out.TakeStr();
 }
@@ -105,7 +108,8 @@ LLVM_DUMP_METHOD auto Dump(const File& file, ConstantId const_id)
     out << Dump(file, symbolic.inst_id) << '\n'
         << DumpGenericSummary(file, symbolic.generic_id);
   } else if (const_id.is_concrete()) {
-    out << ": " << Dump(file, file.constant_values().GetInstId(const_id));
+    out << ": " << Dump(file, file.constant_values().GetInstId(const_id))
+        << " (concrete)";
   }
   return out.TakeStr();
 }
@@ -478,10 +482,15 @@ LLVM_DUMP_METHOD auto Dump(const File& file, TypeId type_id) -> std::string {
   InstId inst_id = file.types().GetInstId(type_id);
   out << ": " << StringifyConstantInst(file, inst_id) << "; "
       << file.insts().Get(inst_id);
-  if (file.types().IsAttached(type_id)) {
-    out << " (attached)";
+  auto const_id = file.types().GetConstantId(type_id);
+  if (const_id.is_symbolic()) {
+    if (file.constant_values().IsAttached(const_id)) {
+      out << " (attached)";
+    } else {
+      out << " (unattached)";
+    }
   } else {
-    out << " (unattached)";
+    out << " (concrete)";
   }
   return out.TakeStr();
 }

@@ -52,7 +52,6 @@ class NameStoreWrapper {
 
   auto OutputYaml() const -> Yaml::OutputMapping {
     return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-      // TODO: print non-identifier name IDs as well.
       for (auto [identifier_id, value] : identifiers_->enumerate()) {
         map.Add(PrintToString(NameId{identifier_id.index}),
                 Yaml::OutputScalar(value));

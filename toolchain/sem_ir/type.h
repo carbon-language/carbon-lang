@@ -87,10 +87,6 @@ class TypeStore : public Yaml::Printable<TypeStore> {
   // Returns the unattached form of the given type.
   auto GetUnattachedType(TypeId type_id) const -> TypeId;
 
-  auto IsAttached(TypeId type_id) const -> bool {
-    return type_id != GetUnattachedType(type_id);
-  }
-
   // Converts an ArrayRef of `InstId`s to a range of `TypeInstId`s via
   // GetAsTypeInstId().
   auto GetBlockAsTypeInstIds(llvm::ArrayRef<InstId> array
