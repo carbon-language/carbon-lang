@@ -22,6 +22,7 @@ static auto AsAnyInstId(Inst::ArgAndKind arg) -> InstId {
   return arg.As<SemIR::AbsoluteInstId>();
 }
 
+// NOLINTBEGIN(readability-function-size)
 auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
   const File* ir = &file;
 
@@ -136,6 +137,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
     }
   }
 }
+// NOLINTEND(readability-function-size)
 
 auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id)
     -> InstId {
