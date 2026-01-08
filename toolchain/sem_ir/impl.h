@@ -74,6 +74,8 @@ struct Impl : public EntityWithParamsBase,
 // constraint implemented.
 class ImplStore {
  private:
+  using ValueStore = ValueStore<ImplId, Impl, IdTag<ImplId, CheckIRId>>;
+
   // An ID of either a single impl or a lookup bucket.
   class ImplOrLookupBucketId : public IdBase<ImplOrLookupBucketId> {
    public:
@@ -201,8 +203,7 @@ class ImplStore {
     mem_usage.Collect(MemUsage::ConcatLabel(label, "lookup_"), lookup_);
   }
 
-  auto values() const [[clang::lifetimebound]]
-  -> ValueStore<ImplId, Impl>::Range {
+  auto values() const [[clang::lifetimebound]] -> ValueStore::Range {
     return values_.values();
   }
   auto size() const -> size_t { return values_.size(); }
@@ -212,7 +213,7 @@ class ImplStore {
 
  private:
   File& sem_ir_;
-  ValueStore<ImplId, Impl> values_;
+  ValueStore values_;
   Map<std::pair<InstId, SpecificInterface>, ImplOrLookupBucketId> lookup_;
   // Buckets with at least 2 entries, which will be rare; see LookupBucketRef.
   llvm::SmallVector<llvm::SmallVector<ImplId, 2>> lookup_buckets_;

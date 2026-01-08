@@ -50,7 +50,8 @@ struct CppGlobalVar : public Printable<CppGlobalVar> {
 
 // Use the name of a C++ global variable when doing `Lookup` to find an ID.
 using CppGlobalVarStore =
-    CanonicalValueStore<CppGlobalVarId, CppGlobalVarKey, CppGlobalVar>;
+    CanonicalValueStore<CppGlobalVarId, CppGlobalVarKey,
+                        IdTag<CppGlobalVarId, CheckIRId>, CppGlobalVar>;
 
 }  // namespace Carbon::SemIR
 

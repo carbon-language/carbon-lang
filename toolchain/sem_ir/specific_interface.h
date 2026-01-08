@@ -27,7 +27,8 @@ inline constexpr SpecificInterface SpecificInterface::None = {
     .interface_id = InterfaceId::None, .specific_id = SpecificId::None};
 
 using SpecificInterfaceStore =
-    CanonicalValueStore<SpecificInterfaceId, SpecificInterface>;
+    CanonicalValueStore<SpecificInterfaceId, SpecificInterface,
+                        IdTag<SpecificInterfaceId, CheckIRId>>;
 
 }  // namespace Carbon::SemIR
 

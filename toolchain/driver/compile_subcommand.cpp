@@ -616,8 +616,8 @@ class MultiUnitCache {
 
   auto include_in_dumps() -> const IncludeInDumpsStore& {
     if (!include_in_dumps_) {
-      include_in_dumps_.emplace(IncludeInDumpsStore::MakeWithExplicitSize(
-          IdTag(), units_.size(), false));
+      include_in_dumps_.emplace(
+          IncludeInDumpsStore::MakeWithExplicitSize(units_.size(), false));
       for (const auto& [i, unit] : llvm::enumerate(units_)) {
         // If this is first accessed after lexing is complete, we need to apply
         // per-file includes. Otherwise, this is based only on the exclude
@@ -637,8 +637,8 @@ class MultiUnitCache {
   auto tree_and_subtrees_getters() -> const TreeAndSubtreesGettersStore& {
     if (!tree_and_subtrees_getters_) {
       tree_and_subtrees_getters_.emplace(
-          TreeAndSubtreesGettersStore::MakeWithExplicitSize(
-              IdTag(), units_.size(), nullptr));
+          TreeAndSubtreesGettersStore::MakeWithExplicitSize(units_.size(),
+                                                            nullptr));
       for (const auto& [i, unit] : llvm::enumerate(units_)) {
         if (unit->has_source()) {
           tree_and_subtrees_getters_->Set(SemIR::CheckIRId(i),

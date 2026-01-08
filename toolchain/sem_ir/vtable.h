@@ -29,7 +29,7 @@ struct Vtable : public VtableFields, public Printable<Vtable> {
   }
 };
 
-using VtableStore = ValueStore<VtableId, Vtable>;
+using VtableStore = ValueStore<VtableId, Vtable, IdTag<VtableId, CheckIRId>>;
 
 }  // namespace Carbon::SemIR
 

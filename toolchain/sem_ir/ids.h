@@ -173,6 +173,11 @@ class MetaInstId : public InstId {
 // constant instruction that defines the constant. Symbolic constants are an
 // index into a separate table of `SymbolicConstant`s maintained by the constant
 // value store.
+//
+// IdTags for ConstantIds are slightly complex, and you need to know if the
+// constant is concrete or symbolic to know its tag:
+// - Concrete ConstantIds use the tag of the store of InstIds.
+// - Symbolic ConstantIds are tagged by the internal SymbolicId.
 struct ConstantId : public IdBase<ConstantId> {
   static constexpr llvm::StringLiteral Label = "constant";
 

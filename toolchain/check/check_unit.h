@@ -134,15 +134,17 @@ class CheckUnit {
   auto Run() -> void;
 
  private:
+  using CheckIRIdToIntStore = FixedSizeValueStore<SemIR::CheckIRId, int>;
+
   // Add imports to the root block.
   auto InitPackageScopeAndImports() -> void;
 
   // Collects direct imports, for CollectTransitiveImports.
-  auto CollectDirectImports(
-      llvm::SmallVector<SemIR::ImportIR>& results,
-      FixedSizeValueStore<SemIR::CheckIRId, int>& ir_to_result_index,
-      SemIR::InstId import_decl_id, const PackageImports& imports,
-      bool is_local) -> void;
+  auto CollectDirectImports(llvm::SmallVector<SemIR::ImportIR>& results,
+                            CheckIRIdToIntStore& ir_to_result_index,
+                            SemIR::InstId import_decl_id,
+                            const PackageImports& imports, bool is_local)
+      -> void;
 
   // Collects transitive imports, handling deduplication. These will be unified
   // between local_imports and api_imports.

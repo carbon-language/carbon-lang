@@ -52,7 +52,8 @@ struct Interface : public EntityWithParamsBase,
   }
 };
 
-using InterfaceStore = ValueStore<InterfaceId, Interface>;
+using InterfaceStore =
+    ValueStore<InterfaceId, Interface, IdTag<InterfaceId, CheckIRId>>;
 
 }  // namespace Carbon::SemIR
 

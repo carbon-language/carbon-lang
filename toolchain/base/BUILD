@@ -88,6 +88,7 @@ cc_library(
     hdrs = ["id_tag.h"],
     deps = [
         "//common:check",
+        "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
 )

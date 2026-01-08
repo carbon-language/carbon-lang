@@ -35,6 +35,7 @@ template <typename RelatedStoreT, typename IdT, typename ValueT>
 class RelationalValueStore {
  public:
   using RelatedIdType = RelatedStoreT::IdType;
+  using RelatedIdTagType = RelatedStoreT::IdTagType;
   using ValueType = ValueStoreTypes<ValueT>::ValueType;
   using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
 
@@ -50,7 +51,7 @@ class RelationalValueStore {
     CARBON_CHECK(!opt.has_value(),
                  "Add with `related_id` that was already added to the store");
     opt.emplace(std::move(value));
-    return IdT(related_store_->GetIdTag().Apply(related_index));
+    return IdT(related_store_->GetIdTag().Apply(related_index).index);
   }
 
   // Returns the ID of a value in the store if the `related_id` was previously
@@ -64,7 +65,7 @@ class RelationalValueStore {
     if (!opt.has_value()) {
       return IdT::None;
     }
-    return IdT(related_store_->GetIdTag().Apply(related_index));
+    return IdT(related_store_->GetIdTag().Apply(related_index).index);
   }
 
   // Returns a value for an ID.
@@ -73,7 +74,7 @@ class RelationalValueStore {
   }
 
  private:
-  ValueStore<RelatedIdType, std::optional<ValueType>> values_;
+  ValueStore<RelatedIdType, std::optional<ValueType>, RelatedIdTagType> values_;
   const RelatedStoreT* related_store_;
 };
 

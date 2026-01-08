@@ -96,7 +96,8 @@ struct ClangDecl : public Printable<ClangDecl> {
 
 // Use the AST node pointer directly when doing `Lookup` to find an ID.
 using ClangDeclStore =
-    CanonicalValueStore<ClangDeclId, ClangDeclKey, ClangDecl>;
+    CanonicalValueStore<ClangDeclId, ClangDeclKey,
+                        IdTag<ClangDeclId, CheckIRId>, ClangDecl>;
 
 }  // namespace Carbon::SemIR
 

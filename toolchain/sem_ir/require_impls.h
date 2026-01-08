@@ -43,10 +43,12 @@ struct RequireImpls : Printable<RequireImpls> {
   }
 };
 
-using RequireImplsStore = ValueStore<RequireImplsId, RequireImpls>;
+using RequireImplsStore =
+    ValueStore<RequireImplsId, RequireImpls, IdTag<RequireImplsId, CheckIRId>>;
 
 using RequireImplsBlockStore =
-    BlockValueStore<RequireImplsBlockId, RequireImplsId>;
+    BlockValueStore<RequireImplsBlockId, RequireImplsId,
+                    IdTag<RequireImplsBlockId, CheckIRId>>;
 
 }  // namespace Carbon::SemIR
 
