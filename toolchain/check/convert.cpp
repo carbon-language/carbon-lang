@@ -1977,8 +1977,10 @@ auto ExprAsReturnForm(Context& context, SemIR::LocId loc_id,
     form_inst_id = AddInst(
         context,
         SemIR::LocIdAndInst::UncheckedLoc(
-            loc_id, SemIR::RefForm{.type_id = SemIR::FormType::TypeId,
-                                   .type_component_inst_id = type_inst_id}));
+            loc_id,
+            SemIR::RefForm{.type_id = SemIR::FormType::TypeId,
+                           .type_component_inst_id =
+                               context.types().GetAsTypeInstId(type_inst_id)}));
   } else {
     type_inst_id = ConvertToValueOfType(context, loc_id, value_id,
                                         SemIR::TypeType::TypeId);
@@ -1995,7 +1997,8 @@ auto ExprAsReturnForm(Context& context, SemIR::LocId loc_id,
             loc_id,
             SemIR::InitForm{
                 .type_id = SemIR::FormType::TypeId,
-                .type_component_inst_id = type_inst_id,
+                .type_component_inst_id =
+                    context.types().GetAsTypeInstId(type_inst_id),
                 .index = context.full_pattern_stack().NextCallParamIndex()}));
   }
 

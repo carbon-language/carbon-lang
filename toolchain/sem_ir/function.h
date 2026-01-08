@@ -178,9 +178,9 @@ struct Function : public EntityWithParamsBase,
                              SpecificId specific_id = SpecificId::None) const
       -> TypeId;
 
-  // Gets the declared return form for a specific version of this function, or
-  // the canonical return form for the original declaration no specific is
-  // specified.  Returns `None` if no return form was specified, in which
+  // Gets the canonical declared return form for a specific version of this
+  // function, or for the original declaration if no specific is specified.
+  // Returns `None` if the function was declared without a return form, in which
   // case the effective return form is an empty tuple initializing expression.
   auto GetDeclaredReturnForm(const File& file,
                              SpecificId specific_id = SpecificId::None) const

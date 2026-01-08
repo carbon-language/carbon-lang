@@ -50,11 +50,13 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
         // Therefore, if the base is a value, the result is an ephemeral
         // reference.
         value_category = ExprCategory::EphemeralRef;
+        return std::nullopt;
       } else if constexpr (std::same_as<TypedInstT, ImportRefLoaded> ||
                            std::same_as<TypedInstT, ImportRefUnloaded>) {
         auto import_ir_inst = ir->import_ir_insts().Get(inst.import_ir_inst_id);
         ir = ir->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
         inst_id = import_ir_inst.inst_id();
+        return std::nullopt;
       } else if constexpr (std::same_as<TypedInstT, Call>) {
         auto callee = GetCallee(file, inst.callee_id);
         CARBON_KIND_SWITCH(callee) {
@@ -96,7 +98,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
                 ComputedExprCategory::DependsOnOperands,
             "Missing expression category computation for type");
       }
-      return std::nullopt;
+      CARBON_FATAL("Unreachable");
     };
 
     // If the category depends on the operands of the instruction, determine it.

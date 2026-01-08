@@ -3261,8 +3261,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       SemIR::InitForm{
           .type_id =
               resolver.local_types().GetTypeIdForTypeConstantId(type_const_id),
-          .type_component_inst_id = resolver.local_constant_values().GetInstId(
-              type_component_const_id),
+          .type_component_inst_id = resolver.local_types().GetAsTypeInstId(
+              resolver.local_constant_values().GetInstId(
+                  type_component_const_id)),
           .index = inst.index});
 }
 
