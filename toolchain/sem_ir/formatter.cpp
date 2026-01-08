@@ -1544,8 +1544,10 @@ auto Formatter::FormatArg(StringLiteralValueId id) -> void {
 }
 
 auto Formatter::FormatReturnSlotArg(InstId dest_id) -> void {
-  out_ << " to ";
-  FormatArg(dest_id);
+  if (dest_id.has_value()) {
+    out_ << " to ";
+    FormatArg(dest_id);
+  }
 }
 
 auto Formatter::FormatName(NameId id) -> void {

@@ -55,8 +55,8 @@ struct ConversionTarget {
   Kind kind;
   // The target type for the conversion.
   SemIR::TypeId type_id;
-  // For an initializer, the object being initialized.
-  SemIR::InstId init_id = SemIR::InstId::None;
+  // For in-place initialization, the storage being initialized.
+  SemIR::InstId storage_id = SemIR::InstId::None;
   // For an initializer, a block of pending instructions that are needed to
   // form the value of `init_id`, and that can be discarded if no
   // initialization is needed.
@@ -86,10 +86,16 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
              ConversionTarget target,
              SemIR::ClassType* vtable_class_type = nullptr) -> SemIR::InstId;
 
-// Performs initialization of `target_id` from `value_id`. Returns the
-// possibly-converted initializing expression, which should be assigned to the
-// target using a suitable node for the kind of initialization.
-auto Initialize(Context& context, SemIR::LocId loc_id, SemIR::InstId target_id,
+// Converts `value_id` to an initializing expression of the type of
+// `storage_id`, and returns the possibly-converted initializing expression. If
+// initialization is in-place, `storage_id` is used as the in-place storage;
+// otherwise it is used only to determine the target type. The caller is
+// responsible for assigning the returned initializing expression to the target
+// using a suitable node for the kind of initialization.
+//
+// TODO: Consider making the target type a separate parameter, and making
+// storage_id optional.
+auto Initialize(Context& context, SemIR::LocId loc_id, SemIR::InstId storage_id,
                 SemIR::InstId value_id) -> SemIR::InstId;
 
 // Convert the given expression to a value expression of the same type.

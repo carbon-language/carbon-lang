@@ -159,8 +159,11 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
     CARBON_KIND_SWITCH(return_form) {
       case CARBON_KIND(SemIR::InitForm _): {
         return_slot_id = GetCurrentReturnSlot(context);
-        CARBON_CHECK(return_slot_id.has_value());
         expr_id = Initialize(context, loc_id, return_slot_id, expr_id);
+        if (!SemIR::InitRepr::ForType(context.sem_ir(), return_info.type_id)
+                 .MightBeInPlace()) {
+          return_slot_id = SemIR::InstId::None;
+        }
         break;
       }
       case CARBON_KIND(SemIR::RefForm ref_form): {
@@ -175,7 +178,6 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
         CARBON_FATAL("Unexpected inst kind: {0}", return_form);
     }
   }
-
   AddReturnCleanupBlockWithExpr(
       context, loc_id, {.expr_id = expr_id, .dest_id = return_slot_id});
 }

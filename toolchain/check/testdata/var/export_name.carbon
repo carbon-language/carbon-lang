@@ -124,7 +124,7 @@ var w: () = v;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.ref: ref %empty_tuple.type = name_ref v, imports.%Main.v [concrete = imports.%v.var]
-// CHECK:STDOUT:   %.loc6_13: init %empty_tuple.type = tuple_init () to file.%w.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_13: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_1: init %empty_tuple.type = converted %v.ref, %.loc6_13 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%w.var, %.loc6_1
 // CHECK:STDOUT:   return

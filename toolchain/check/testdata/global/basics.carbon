@@ -98,7 +98,7 @@ var a: A = Make();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc4_14.2: init %empty_struct_type = struct_init () to file.%a.var [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc4_14.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc4_1: init %empty_struct_type = converted %.loc4_14.1, %.loc4_14.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%a.var, %.loc4_1
 // CHECK:STDOUT:   <elided>
