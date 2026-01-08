@@ -84,6 +84,15 @@ cc_library(
 )
 
 cc_library(
+    name = "id_tag",
+    hdrs = ["id_tag.h"],
+    deps = [
+        "//common:check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "index_base",
     hdrs = ["index_base.h"],
     deps = [
@@ -219,6 +228,7 @@ cc_library(
     name = "value_store",
     hdrs = ["value_store.h"],
     deps = [
+        ":id_tag",
         ":mem_usage",
         ":value_store_types",
         ":yaml",
