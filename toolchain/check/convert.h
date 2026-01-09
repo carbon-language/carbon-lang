@@ -44,10 +44,15 @@ struct ConversionTarget {
     // The result of the conversion is discarded. It can't be an initializing
     // expression, but can be anything else.
     Discarded,
-    // Convert to an initializer for the object denoted by `init_id`.
+    // Convert to an initializing expression, which a subsequent operation (such
+    // as `InitializeFrom` or `Temporary`) can use to initialize `storage_id`.
+    // `storage_id` is only used if `type_id` has an in-place initializing
+    // representation; otherwise, `storage_id` can be `None`, and the resulting
+    // initializing expression can be used to initialize any object of the
+    // appropriate type.
     Initializer,
-    // Convert to an initializer for the object denoted by `init_id`,
-    // including a final destination store if needed.
+    // Convert to an initializing expression, and use it to initialize
+    // `storage_id` (which must not be `None`).
     FullInitializer,
     Last = FullInitializer
   };
@@ -55,12 +60,11 @@ struct ConversionTarget {
   Kind kind;
   // The target type for the conversion.
   SemIR::TypeId type_id;
-  // For in-place initialization, the storage being initialized.
+  // The storage being initialized, if any.
   SemIR::InstId storage_id = SemIR::InstId::None;
-  // For an initializer, a block of pending instructions that are needed to
-  // form the value of `init_id`, and that can be discarded if no
-  // initialization is needed.
-  PendingBlock* init_block = nullptr;
+  // For an initializer, a block of pending instructions that `storage_id`
+  // depends on, and that can be discarded if `storage_id` is not accessed.
+  PendingBlock* storage_access_block = nullptr;
   // Whether failure of conversion is an error and is diagnosed to the user.
   // When looking for a possible conversion but with graceful fallback, diagnose
   // should be false.
