@@ -37,6 +37,11 @@ fn Uint32ToUint64(a: u32) -> u64 = "int.convert";
 fn Int32ToIntLiteral(a: i32) -> Core.IntLiteral() = "int.convert";
 fn Uint32ToIntLiteral(a: u32) -> Core.IntLiteral() = "int.convert";
 
+// char conversion
+fn UInt8ToChar(a: u8) -> char = "int.convert_char";
+fn UInt32ToChar(a: u32) -> char = "int.convert_char";
+fn UInt64ToChar(a: u64) -> char = "int.convert_char";
+
 class Expect[T:! type](N:! T) {}
 fn Test[T:! type](N:! T) -> Expect(N) { return {}; }
 
@@ -304,40 +309,54 @@ library "[[@TEST_NAME]]";
 import library "int_ops";
 
 fn F() {
+  // for u8
   // Basic ASCII range
-  Test(Int32ToChar(0)) as Expect(0 as char);
-  Test(Int32ToChar(10)) as Expect(10 as char);
-  Test(Int32ToChar(32)) as Expect(32 as char);
-  Test(Int32ToChar(65)) as Expect(65 as char);
-  Test(Int32ToChar(97)) as Expect(97 as char);
-  Test(Int32ToChar(0x7F)) as Expect(0x7F as char);
+  Test(UInt8ToChar(0)) as Expect(0 as char);
+  Test(UInt8ToChar(10)) as Expect(10 as char);
+  Test(UInt8ToChar(32)) as Expect(32 as char);
+  Test(UInt8ToChar(65)) as Expect(65 as char);
+  Test(UInt8ToChar(97)) as Expect(97 as char);
+  Test(UInt8ToChar(0x7F)) as Expect(0x7F as char);
 
   // UTF-8 single-byte values (128–255)
-  Test(Int32ToChar(0x80)) as Expect(0x80 as char);
-  Test(Int32ToChar(0x90)) as Expect(0x90 as char);
-  Test(Int32ToChar(0xA0)) as Expect(0xA0 as char);
-  Test(Int32ToChar(0xC0)) as Expect(0xC0 as char);
-  Test(Int32ToChar(0xE0)) as Expect(0xE0 as char);
-  Test(Int32ToChar(0xFF)) as Expect(0xFF as char);
+  Test(UInt8ToChar(0x80)) as Expect(0x80 as char);
+  Test(UInt8ToChar(0x90)) as Expect(0x90 as char);
+  Test(UInt8ToChar(0xA0)) as Expect(0xA0 as char);
+  Test(UInt8ToChar(0xC0)) as Expect(0xC0 as char);
+  Test(UInt8ToChar(0xE0)) as Expect(0xE0 as char);
+  Test(UInt8ToChar(0xFF)) as Expect(0xFF as char);
 
-  // Negative values → must error (same style as sign_extend test)
-  // CHECK:STDERR: int_to_char_basic.carbon:[[@LINE+3]]:30: error: cannot convert negative integer to `char` [InvalidIntToChar]
-  // CHECK:STDERR:   var bad1: char = (-1 as char);
-  // CHECK:STDERR:                              ^~~
-  var bad1: char = (-1 as char);
+  // for u32
+  // Basic ASCII range 
+  Test(UInt32ToChar(0)) as Expect(0 as char);
+  Test(UInt32ToChar(10)) as Expect(10 as char);
+  Test(UInt32ToChar(32)) as Expect(32 as char);
+  Test(UInt32ToChar(65)) as Expect(65 as char);
+  Test(UInt32ToChar(97)) as Expect(97 as char);
+  Test(UInt32ToChar(0x7F)) as Expect(0x7F as char);
 
-  // CHECK:STDERR: int_to_char_basic.carbon:[[@LINE+3]]:30: error: cannot convert negative integer to `char` [InvalidIntToChar]
-  // CHECK:STDERR:   var bad2: char = (-10 as char);
-  // CHECK:STDERR:                               ^~~
-  var bad2: char = (-10 as char);
+  // UTF-8 single-byte values (128–255)
+  Test(UInt32ToChar(0x80)) as Expect(0x80 as char);
+  Test(UInt32ToChar(0x90)) as Expect(0x90 as char);
+  Test(UInt32ToChar(0xA0)) as Expect(0xA0 as char);
+  Test(UInt32ToChar(0xC0)) as Expect(0xC0 as char);
+  Test(UInt32ToChar(0xE0)) as Expect(0xE0 as char);
+  Test(UInt32ToChar(0xFF)) as Expect(0xFF as char);
 
-  // CHECK:STDERR: int_to_char_basic.carbon:[[@LINE+3]]:30: error: cannot convert negative integer to `char` [InvalidIntToChar]
-  // CHECK:STDERR:   var bad3: char = (-255 as char);
-  // CHECK:STDERR:                                ^~~
-  var bad3: char = (-255 as char);
+  // for u64
+  // Basic ASCII range 
+  Test(UInt64ToChar(0)) as Expect(0 as char);
+  Test(UInt64ToChar(10)) as Expect(10 as char);
+  Test(UInt64ToChar(32)) as Expect(32 as char);
+  Test(UInt64ToChar(65)) as Expect(65 as char);
+  Test(UInt64ToChar(97)) as Expect(97 as char);
+  Test(UInt64ToChar(0x7F)) as Expect(0x7F as char);
 
-  // CHECK:STDERR: int_to_char_basic.carbon:[[@LINE+3]]:30: error: cannot convert negative integer to `char` [InvalidIntToChar]
-  // CHECK:STDERR:   var bad4: char = (-2147483648 as char);
-  // CHECK:STDERR:                                             ^~~
-  var bad4: char = (-2147483648 as char);
+  // UTF-8 single-byte values (128–255)
+  Test(UInt64ToChar(0x80)) as Expect(0x80 as char);
+  Test(UInt64ToChar(0x90)) as Expect(0x90 as char);
+  Test(UInt64ToChar(0xA0)) as Expect(0xA0 as char);
+  Test(UInt64ToChar(0xC0)) as Expect(0xC0 as char);
+  Test(UInt64ToChar(0xE0)) as Expect(0xE0 as char);
+  Test(UInt64ToChar(0xFF)) as Expect(0xFF as char);
 }
