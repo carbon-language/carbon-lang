@@ -327,7 +327,7 @@ fn F() {
   Test(UInt8ToChar(0xFF)) as Expect(0xFF as char);
 
   // for u32
-  // Basic ASCII range 
+  // Basic ASCII range
   Test(UInt32ToChar(0)) as Expect(0 as char);
   Test(UInt32ToChar(10)) as Expect(10 as char);
   Test(UInt32ToChar(32)) as Expect(32 as char);
