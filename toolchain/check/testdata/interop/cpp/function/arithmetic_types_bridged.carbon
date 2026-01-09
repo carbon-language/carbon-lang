@@ -1721,7 +1721,7 @@ fn F() {
 // CHECK:STDOUT:   %As.Convert.type.c23: type = fn_type @As.Convert, @As(%f16.a6a) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.type.882: type = fn_type @Core.FloatLiteral.as.As.impl.Convert, @Core.FloatLiteral.as.As.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.27d: %Core.FloatLiteral.as.As.impl.Convert.type.882 = struct_value () [symbolic]
-// CHECK:STDOUT:   %As.impl_witness.0d1: <witness> = impl_witness imports.%As.impl_witness_table, @Core.FloatLiteral.as.As.impl(%int_16) [concrete]
+// CHECK:STDOUT:   %As.impl_witness.0d1: <witness> = impl_witness imports.%As.impl_witness_table.7c1, @Core.FloatLiteral.as.As.impl(%int_16) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.type.ae9: type = fn_type @Core.FloatLiteral.as.As.impl.Convert, @Core.FloatLiteral.as.As.impl(%int_16) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.3fd: %Core.FloatLiteral.as.As.impl.Convert.type.ae9 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.b64 = facet_value Core.FloatLiteral, (%As.impl_witness.0d1) [concrete]
@@ -1756,7 +1756,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %Core.import_ref.509: @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert.type (%Core.FloatLiteral.as.As.impl.Convert.type.882) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert (constants.%Core.FloatLiteral.as.As.impl.Convert.27d)]
-// CHECK:STDOUT:   %As.impl_witness_table = impl_witness_table (%Core.import_ref.509), @Core.FloatLiteral.as.As.impl [concrete]
+// CHECK:STDOUT:   %As.impl_witness_table.7c1 = impl_witness_table (%Core.import_ref.509), @Core.FloatLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -1810,7 +1810,7 @@ fn F() {
 // CHECK:STDOUT:   %As.Convert.type.f5e: type = fn_type @As.Convert, @As(%f32.97e) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.type.882: type = fn_type @Core.FloatLiteral.as.As.impl.Convert, @Core.FloatLiteral.as.As.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.27d: %Core.FloatLiteral.as.As.impl.Convert.type.882 = struct_value () [symbolic]
-// CHECK:STDOUT:   %As.impl_witness.748: <witness> = impl_witness imports.%As.impl_witness_table, @Core.FloatLiteral.as.As.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %As.impl_witness.748: <witness> = impl_witness imports.%As.impl_witness_table.7c1, @Core.FloatLiteral.as.As.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.type.847: type = fn_type @Core.FloatLiteral.as.As.impl.Convert, @Core.FloatLiteral.as.As.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.683: %Core.FloatLiteral.as.As.impl.Convert.type.847 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.9fc = facet_value Core.FloatLiteral, (%As.impl_witness.748) [concrete]
@@ -1845,7 +1845,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %Core.import_ref.509: @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert.type (%Core.FloatLiteral.as.As.impl.Convert.type.882) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert (constants.%Core.FloatLiteral.as.As.impl.Convert.27d)]
-// CHECK:STDOUT:   %As.impl_witness_table = impl_witness_table (%Core.import_ref.509), @Core.FloatLiteral.as.As.impl [concrete]
+// CHECK:STDOUT:   %As.impl_witness_table.7c1 = impl_witness_table (%Core.import_ref.509), @Core.FloatLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -1899,7 +1899,7 @@ fn F() {
 // CHECK:STDOUT:   %As.Convert.type.8fc: type = fn_type @As.Convert, @As(%f64.d77) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.type.882: type = fn_type @Core.FloatLiteral.as.As.impl.Convert, @Core.FloatLiteral.as.As.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.27d: %Core.FloatLiteral.as.As.impl.Convert.type.882 = struct_value () [symbolic]
-// CHECK:STDOUT:   %As.impl_witness.187: <witness> = impl_witness imports.%As.impl_witness_table, @Core.FloatLiteral.as.As.impl(%int_64) [concrete]
+// CHECK:STDOUT:   %As.impl_witness.187: <witness> = impl_witness imports.%As.impl_witness_table.7c1, @Core.FloatLiteral.as.As.impl(%int_64) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.type.07c: type = fn_type @Core.FloatLiteral.as.As.impl.Convert, @Core.FloatLiteral.as.As.impl(%int_64) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.4b9: %Core.FloatLiteral.as.As.impl.Convert.type.07c = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.a57 = facet_value Core.FloatLiteral, (%As.impl_witness.187) [concrete]
@@ -1934,7 +1934,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %Core.import_ref.509: @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert.type (%Core.FloatLiteral.as.As.impl.Convert.type.882) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert (constants.%Core.FloatLiteral.as.As.impl.Convert.27d)]
-// CHECK:STDOUT:   %As.impl_witness_table = impl_witness_table (%Core.import_ref.509), @Core.FloatLiteral.as.As.impl [concrete]
+// CHECK:STDOUT:   %As.impl_witness_table.7c1 = impl_witness_table (%Core.import_ref.509), @Core.FloatLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -1988,7 +1988,7 @@ fn F() {
 // CHECK:STDOUT:   %As.Convert.type.3bf: type = fn_type @As.Convert, @As(%f128.b8c) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.type.882: type = fn_type @Core.FloatLiteral.as.As.impl.Convert, @Core.FloatLiteral.as.As.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.27d: %Core.FloatLiteral.as.As.impl.Convert.type.882 = struct_value () [symbolic]
-// CHECK:STDOUT:   %As.impl_witness.738: <witness> = impl_witness imports.%As.impl_witness_table, @Core.FloatLiteral.as.As.impl(%int_128) [concrete]
+// CHECK:STDOUT:   %As.impl_witness.738: <witness> = impl_witness imports.%As.impl_witness_table.7c1, @Core.FloatLiteral.as.As.impl(%int_128) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.type.e6b: type = fn_type @Core.FloatLiteral.as.As.impl.Convert, @Core.FloatLiteral.as.As.impl(%int_128) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.As.impl.Convert.3b3: %Core.FloatLiteral.as.As.impl.Convert.type.e6b = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.6c6 = facet_value Core.FloatLiteral, (%As.impl_witness.738) [concrete]
@@ -2023,7 +2023,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %Core.import_ref.509: @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert.type (%Core.FloatLiteral.as.As.impl.Convert.type.882) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.As.impl.%Core.FloatLiteral.as.As.impl.Convert (constants.%Core.FloatLiteral.as.As.impl.Convert.27d)]
-// CHECK:STDOUT:   %As.impl_witness_table = impl_witness_table (%Core.import_ref.509), @Core.FloatLiteral.as.As.impl [concrete]
+// CHECK:STDOUT:   %As.impl_witness_table.7c1 = impl_witness_table (%Core.import_ref.509), @Core.FloatLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.decl: %foo__carbon_thunk.type = fn_decl @foo__carbon_thunk [concrete = constants.%foo__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {

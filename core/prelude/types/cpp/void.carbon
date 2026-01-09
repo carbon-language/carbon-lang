@@ -4,6 +4,8 @@
 
 package Core library "prelude/types/cpp/void";
 
+import library "prelude/operators/as";
+
 namespace CppCompat;
 
 // C++ `void` as a Carbon type.
@@ -23,7 +25,26 @@ abstract class CppCompat.VoidBase {
   adapt ();
 }
 
-// TODO: An unqualified pointer to `T` should implicitly convert to a pointer to
-// `<qualifiers> void` if `<qualifiers>` includes all of the qualifiers for `T`.
-// Similarly, a value of type `T` should implicitly convert to a value of type
-// `void`.
+// TODO: Support a conversion from a value of any type to a value of type
+// `Cpp.void` once we allow defining a conversion to a value category rather
+// than to an initializing category.
+
+// TODO: Do not allow a pointer to `const T` to convert to `Cpp.void*`.
+// #6357 allows it, and we don't have a good way to express "non-const" as a
+// constraint on this impl, but this conversion is not const-correct.
+impl forall [T:! type] T* as ImplicitAs(CppCompat.VoidBase*) {
+  fn Convert[self: T*]() -> CppCompat.VoidBase* = "pointer.unsafe_convert";
+}
+
+impl forall [T:! type] T* as ImplicitAs(const CppCompat.VoidBase*) {
+  fn Convert[self: T*]() -> CppCompat.VoidBase* = "pointer.unsafe_convert";
+}
+
+impl forall [T:! type] CppCompat.VoidBase* as UnsafeAs(T*) {
+  fn Convert[self: CppCompat.VoidBase*]() -> T* = "pointer.unsafe_convert";
+}
+
+// TODO: Should `unsafe as` be able to remove `const`?
+impl forall [T:! type] const CppCompat.VoidBase* as UnsafeAs(const T*) {
+  fn Convert[self: const CppCompat.VoidBase*]() -> const T* = "pointer.unsafe_convert";
+}

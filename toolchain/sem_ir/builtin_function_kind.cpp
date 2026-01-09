@@ -719,6 +719,13 @@ constexpr BuiltinInfo PointerIsNull = {
     "pointer.is_null",
     ValidateSignature<auto(MaybeUnformed<PointerTo<AnyType>>)->Bool>};
 
+// "pointer.unsafe_convert": convert a pointer of one type to a pointer of a
+// different type without performing any checking that the conversion makes
+// sense.
+constexpr BuiltinInfo PointerUnsafeConvert = {
+    "pointer.unsafe_convert",
+    ValidateSignature<auto(PointerTo<AnyType>)->PointerTo<AnyType>>};
+
 // "type.and": facet type combination.
 constexpr BuiltinInfo TypeAnd = {"type.and",
                                  ValidateSignature<auto(Type, Type)->Type>};

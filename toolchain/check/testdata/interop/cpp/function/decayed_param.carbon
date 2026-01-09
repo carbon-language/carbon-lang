@@ -150,10 +150,10 @@ fn F() {
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %uninit, %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.2fd [concrete]
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.2fd, @Cpp.nullptr_t.as.ImplicitAs.impl.Convert(%i32) [concrete]
 // CHECK:STDOUT:   %bound_method.3f0: <bound method> = bound_method %uninit, %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.specific_fn [concrete]
-// CHECK:STDOUT:   %DestroyOp.type.3e79c2.6: type = fn_type @DestroyOp.loc13 [concrete]
-// CHECK:STDOUT:   %DestroyOp.b0ebf8.6: %DestroyOp.type.3e79c2.6 = struct_value () [concrete]
-// CHECK:STDOUT:   %DestroyOp.type.3e79c2.7: type = fn_type @DestroyOp.loc10 [concrete]
+// CHECK:STDOUT:   %DestroyOp.type.3e79c2.7: type = fn_type @DestroyOp.loc13 [concrete]
 // CHECK:STDOUT:   %DestroyOp.b0ebf8.7: %DestroyOp.type.3e79c2.7 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyOp.type.3e79c2.8: type = fn_type @DestroyOp.loc10 [concrete]
+// CHECK:STDOUT:   %DestroyOp.b0ebf8.8: %DestroyOp.type.3e79c2.8 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -245,11 +245,11 @@ fn F() {
 // CHECK:STDOUT:   %.loc13_21.3: ref %Optional.f08 = temporary %.loc13_21.2, %.loc13_21.1
 // CHECK:STDOUT:   %.loc13_21.4: %Optional.f08 = acquire_value %.loc13_21.3
 // CHECK:STDOUT:   %TakesArray.call.loc13: init %empty_tuple.type = call imports.%TakesArray.decl(%.loc13_21.4)
-// CHECK:STDOUT:   %DestroyOp.bound.loc13: <bound method> = bound_method %.loc13_21.3, constants.%DestroyOp.b0ebf8.6
+// CHECK:STDOUT:   %DestroyOp.bound.loc13: <bound method> = bound_method %.loc13_21.3, constants.%DestroyOp.b0ebf8.7
 // CHECK:STDOUT:   %DestroyOp.call.loc13: init %empty_tuple.type = call %DestroyOp.bound.loc13(%.loc13_21.3)
-// CHECK:STDOUT:   %DestroyOp.bound.loc11: <bound method> = bound_method %.loc11_18.3, constants.%DestroyOp.b0ebf8.6
+// CHECK:STDOUT:   %DestroyOp.bound.loc11: <bound method> = bound_method %.loc11_18.3, constants.%DestroyOp.b0ebf8.7
 // CHECK:STDOUT:   %DestroyOp.call.loc11: init %empty_tuple.type = call %DestroyOp.bound.loc11(%.loc11_18.3)
-// CHECK:STDOUT:   %DestroyOp.bound.loc10: <bound method> = bound_method %n.var, constants.%DestroyOp.b0ebf8.7
+// CHECK:STDOUT:   %DestroyOp.bound.loc10: <bound method> = bound_method %n.var, constants.%DestroyOp.b0ebf8.8
 // CHECK:STDOUT:   %DestroyOp.call.loc10: init %empty_tuple.type = call %DestroyOp.bound.loc10(%n.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
