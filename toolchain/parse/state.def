@@ -678,6 +678,83 @@ CARBON_PARSE_STATE(ExprStatementFinish)
 //   2. FunctionAfterParams
 CARBON_PARSE_STATE(FunctionIntroducer)
 
+// Handles a lambda's introducer.
+//
+// fn ...
+//   ^
+//   1. LambdaIntroducer
+//   2. LambdaAfterIntroducer
+CARBON_PARSE_STATE(LambdaIntroducer)
+
+// Handles processing of a lambda after the introducer.
+//
+// fn [ ... ] ...
+//    ^
+//   1. PatternListAsImplicit
+//   2. LambdaAfterImplicitParams
+//
+// fn ( ... ) ...
+//    ^
+//   1. PatternListAsExplicit
+//   2. LambdaAfterParams
+//
+// fn ...
+//   ^
+//   1. LambdaAfterParams
+CARBON_PARSE_STATE(LambdaAfterIntroducer)
+
+// Handles processing of a lambda after implicit parameters.
+//
+// fn [ ... ] ( ... ) ...
+//            ^
+//   1. PatternListAsExplicit
+//   2. LambdaAfterParams
+//
+// fn [ ... ] ...
+//           ^
+//   1. LambdaAfterParams
+CARBON_PARSE_STATE(LambdaAfterImplicitParams)
+
+// Handles processing of a lambda after optional parameters.
+//
+// fn ... -> ...
+//        ^
+//   1. FunctionReturnTypeFinish  (Reused)
+//   2. LambdaBody
+//
+// fn ... => ...
+//        ^
+//   1. Expr
+//   2. LambdaBodyFinish
+//
+// fn ... { ... }
+//        ^
+//   1. StatementScopeLoop
+//   2. LambdaBodyFinish
+CARBON_PARSE_STATE(LambdaAfterParams)
+
+// Handles processing of a lambda body.
+//
+// fn ... -> ... { ... }
+//               ^
+//   1. StatementScopeLoop
+//   2. LambdaBodyFinish
+//
+// fn ... -> ... => ...
+//               ^
+//   1. Expr
+//   2. LambdaBodyFinish
+CARBON_PARSE_STATE(LambdaBody)
+
+// Finishes a lambda expression.
+//
+// fn ... }
+//         ^
+// fn ... => expr
+//               ^
+//   (state done)
+CARBON_PARSE_STATE(LambdaBodyFinish)
+
 // Handles processing of a function's syntax after `)`, primarily the
 // possibility a `->` return type is there. Always enqueues signature finish
 // handling.

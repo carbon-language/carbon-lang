@@ -462,6 +462,7 @@ class NodeStack {
       case Parse::NodeKind::ImplicitParamListStart:
       case Parse::NodeKind::ImplIntroducer:
       case Parse::NodeKind::InterfaceIntroducer:
+      case Parse::NodeKind::LambdaIntroducer:
       case Parse::NodeKind::LetInitializer:
       case Parse::NodeKind::LetIntroducer:
       case Parse::NodeKind::NamedConstraintIntroducer:

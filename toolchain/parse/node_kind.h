@@ -14,7 +14,7 @@
 
 namespace Carbon::Parse {
 
-CARBON_DEFINE_RAW_ENUM_CLASS(NodeKind, uint8_t) {
+CARBON_DEFINE_RAW_ENUM_CLASS(NodeKind, uint16_t) {
 #define CARBON_PARSE_NODE_KIND(Name) CARBON_RAW_ENUM_ENUMERATOR(Name)
 #include "toolchain/parse/node_kind.def"
 };
@@ -91,8 +91,8 @@ static_assert(
     "a `constexpr` context despite being declared as merely `const`. We use it "
     "in a static assert here to ensure that.");
 
-// We expect the parse node kind to fit compactly into 8 bits.
-static_assert(sizeof(NodeKind) == 1, "Kind objects include padding!");
+// We expect the parse node kind to fit compactly into 16 bits.
+static_assert(sizeof(NodeKind) == 2, "Kind objects include padding!");
 
 // Optional arguments that can be supplied when defining a node kind. At least
 // one of `bracketed_by` and `child_count` is required.

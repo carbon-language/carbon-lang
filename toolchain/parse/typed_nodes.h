@@ -661,6 +661,23 @@ struct CodeBlock {
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
+using LambdaIntroducer =
+    LeafNode<NodeKind::LambdaIntroducer, Lex::FnTokenIndex>;
+
+struct Lambda {
+  static constexpr auto Kind = NodeKind::Lambda.Define(
+      {.category = NodeCategory::Expr, .bracketed_by = LambdaIntroducer::Kind});
+
+  LambdaIntroducerId introducer;
+  std::optional<ImplicitParamListId> implicit_params;
+  std::optional<ExplicitParamListId> explicit_params;
+  std::optional<ReturnTypeId> return_type;
+  NodeId body;
+  // Use a generic token index because the token might be `}` or part of an
+  // expression.
+  Lex::TokenIndex token;
+};
+
 // An expression statement: `F(x);`.
 struct ExprStatement {
   static constexpr auto Kind = NodeKind::ExprStatement.Define(
