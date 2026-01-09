@@ -1035,23 +1035,6 @@ static auto MakeFloatTypeResult(Context& context, SemIR::LocId loc_id,
   return MakeConstantResult(context, result, phase);
 }
 
-//// Performs a conversion from integer to character type.
-static auto PerformIntToCharConvert(Context& context, SemIR::LocId loc_id,
-                                    SemIR::InstId arg_id,
-                                    SemIR::TypeId dest_type_id)
-    -> SemIR::ConstantId {
-  auto arg = context.insts().GetAs<SemIR::IntValue>(arg_id);
-  auto arg_val = context.ints().Get(arg.int_id);
-
-  auto [is_signed, bit_width_id] =
-      context.sem_ir().types().GetIntTypeInfo(dest_type_id);
-
-  int64_t value = arg_val.getSExtValue();
-  
-  llvm::APInt int_val(8, value, /*isSigned=*/false);
-  return MakeIntResult(context, dest_type_id, /*is_signed=*/false, int_val);
-}
-
 // Performs a conversion between integer types, truncating if the value doesn't
 // fit in the destination type.
 static auto PerformIntConvert(Context& context, SemIR::InstId arg_id,
@@ -1841,7 +1824,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       if (phase != Phase::Concrete) {
         return MakeConstantResult(context, call, phase);
       }
-      return PerformIntToCharConvert(context, loc_id, arg_ids[0], call.type_id);
+      return PerformIntConvert(context, arg_ids[0], call.type_id);
     }
     case SemIR::BuiltinFunctionKind::IntConvert: {
       if (phase != Phase::Concrete) {
