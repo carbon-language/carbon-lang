@@ -182,7 +182,6 @@ class CheckUnit {
 
   // Loops over all nodes in the tree. On some errors, this may return early,
   // for example if an unrecoverable state is encountered.
-  // NOLINTNEXTLINE(readability-function-size)
   auto ProcessNodeIds() -> bool;
 
   UnitAndImports* unit_and_imports_;

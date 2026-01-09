@@ -374,7 +374,6 @@ auto CheckUnit::ImportOtherPackages(SemIR::TypeId namespace_type_id) -> void {
 
 // Loops over all nodes in the tree. On some errors, this may return early,
 // for example if an unrecoverable state is encountered.
-// NOLINTNEXTLINE(readability-function-size)
 auto CheckUnit::ProcessNodeIds() -> bool {
   NodeIdTraversal traversal(&context_);
 

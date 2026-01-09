@@ -325,7 +325,6 @@ static auto MaybeEmitAsConstant(ConstantContext& context, InstT inst)
   }
 }
 
-// NOLINTNEXTLINE(readability-function-size): Macro-generated.
 auto LowerConstants(FileContext& file_context,
                     FileContext::LoweredConstantStore& constants) -> void {
   ConstantContext context(file_context, &constants);
