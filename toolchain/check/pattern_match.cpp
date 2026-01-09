@@ -347,6 +347,12 @@ auto MatchContext::DoEmitPatternMatch(Context& context,
           "Parameters out of order; expecting {0} but got {1}", results_.size(),
           param_pattern.index.index);
       CARBON_CHECK(entry.scrutinee_id.has_value());
+      CARBON_CHECK(
+          context.insts().Get(entry.scrutinee_id).type_id() ==
+          ExtractScrutineeType(
+              context.sem_ir(),
+              SemIR::GetTypeOfInstInSpecific(
+                  context.sem_ir(), callee_specific_id_, entry.pattern_id)));
       results_.push_back(entry.scrutinee_id);
       // Do not traverse farther, because the caller side of the pattern
       // ends here.
