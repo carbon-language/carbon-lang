@@ -1218,6 +1218,7 @@ static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
 // fields of SemIR::Function with the same names.
 struct ReturnInfo {
   SemIR::TypeInstId return_type_inst_id;
+  SemIR::InstId return_form_inst_id;
   SemIR::InstBlockId return_patterns_id;
 };
 
@@ -1231,10 +1232,12 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
   if (!type_inst_id.has_value()) {
     // void.
     return {.return_type_inst_id = type_inst_id,
+            .return_form_inst_id = SemIR::InstId::None,
             .return_patterns_id = SemIR::InstBlockId::None};
   }
   if (type_inst_id == SemIR::ErrorInst::TypeInstId) {
     return {.return_type_inst_id = type_inst_id,
+            .return_form_inst_id = SemIR::InstId::None,
             .return_patterns_id = SemIR::InstBlockId::None};
   }
   auto pattern_type_id = GetPatternType(context, type_id);
@@ -1254,16 +1257,25 @@ static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
                    context, return_type_import_ir_inst_id,
                    SemIR::ReturnSlotPattern({.type_id = pattern_type_id,
                                              .type_inst_id = type_inst_id})));
+  auto return_index = context.full_pattern_stack().NextCallParamIndex();
   SemIR::InstId param_pattern_id = AddPatternInst(
       context,
       MakeImportedLocIdAndInst(
           context, return_type_import_ir_inst_id,
-          SemIR::OutParamPattern(
-              {.type_id = pattern_type_id,
-               .subpattern_id = return_slot_pattern_id,
-               .index = context.full_pattern_stack().NextCallParamIndex()})));
+          SemIR::OutParamPattern({.type_id = pattern_type_id,
+                                  .subpattern_id = return_slot_pattern_id,
+                                  .index = return_index})));
   auto return_patterns_id = context.inst_blocks().Add({param_pattern_id});
+
+  // For consistency with how C++ import handles types, we use TryEvalInst to
+  // directly create a constant rather than adding it to insts() first.
+  auto return_form_const_id = TryEvalInst(
+      context, SemIR::InitForm{.type_id = SemIR::FormType::TypeId,
+                               .type_component_inst_id = type_inst_id,
+                               .index = return_index});
   return {.return_type_inst_id = type_inst_id,
+          .return_form_inst_id =
+              context.constant_values().GetInstId(return_form_const_id),
           .return_patterns_id = return_patterns_id};
 }
 
@@ -1275,6 +1287,7 @@ struct FunctionSignatureInsts {
   SemIR::InstBlockId implicit_param_patterns_id;
   SemIR::InstBlockId param_patterns_id;
   SemIR::TypeInstId return_type_inst_id;
+  SemIR::InstId return_form_inst_id;
   SemIR::InstBlockId return_patterns_id;
   SemIR::InstBlockId call_params_id;
 };
@@ -1305,7 +1318,7 @@ static auto CreateFunctionSignatureInsts(Context& context, SemIR::LocId loc_id,
   if (!param_patterns_id.has_value()) {
     return std::nullopt;
   }
-  auto [return_type_inst_id, return_patterns_id] =
+  auto [return_type_inst_id, return_form_inst_id, return_patterns_id] =
       GetReturnInfo(context, loc_id, clang_decl);
   if (return_type_inst_id == SemIR::ErrorInst::TypeInstId) {
     return std::nullopt;
@@ -1319,6 +1332,7 @@ static auto CreateFunctionSignatureInsts(Context& context, SemIR::LocId loc_id,
   return {{.implicit_param_patterns_id = implicit_param_patterns_id,
            .param_patterns_id = param_patterns_id,
            .return_type_inst_id = return_type_inst_id,
+           .return_form_inst_id = return_form_inst_id,
            .return_patterns_id = return_patterns_id,
            .call_params_id = call_params_id}};
 }
@@ -1410,6 +1424,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
        .definition_id = SemIR::InstId::None},
       {.call_params_id = function_params_insts->call_params_id,
        .return_type_inst_id = function_params_insts->return_type_inst_id,
+       .return_form_inst_id = function_params_insts->return_form_inst_id,
        .return_patterns_id = function_params_insts->return_patterns_id,
        .virtual_modifier = virtual_modifier,
        .virtual_index = virtual_index,
@@ -1607,40 +1622,40 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   }
   SemIR::NameId var_name_id = AddIdentifierName(context, var_decl->getName());
 
-  SemIR::VarStorage var_storage{.type_id = var_type_id,
-                                .pattern_id = SemIR::InstId::None};
-  // We can't use the convenience for `AddPlaceholderInstInNoBlock()` with typed
-  // nodes because it doesn't support insts with cleanup.
-  SemIR::InstId var_storage_inst_id =
-      AddPlaceholderImportedInstInNoBlock(context, {loc_id, var_storage});
-
-  auto clang_decl_id = context.clang_decls().Add(
-      {.key = SemIR::ClangDeclKey(var_decl), .inst_id = var_storage_inst_id});
-
-  // Entity name referring to a Clang decl for mangling.
+  // Create an entity name to identify this variable.
   SemIR::EntityNameId entity_name_id =
       context.entity_names().AddSymbolicBindingName(
           var_name_id, GetParentNameScopeId(context, var_decl),
           SemIR::CompileTimeBindIndex::None, false);
-  context.cpp_global_names().Add({.key = {.entity_name_id = entity_name_id},
-                                  .clang_decl_id = clang_decl_id});
 
-  // Create `RefBindingPattern` and `VarPattern` in a `NameBindingDecl`.
-  context.pattern_block_stack().Push();
+  // Create `RefBindingPattern` and `VarPattern`. Mirror the behavior of
+  // import_ref and don't create a `NameBindingDecl` here; we'd never use it for
+  // anything.
   SemIR::TypeId pattern_type_id = GetPatternType(context, var_type_id);
   SemIR::InstId binding_pattern_inst_id =
-      AddPatternInst<SemIR::RefBindingPattern>(
+      AddInstInNoBlock<SemIR::RefBindingPattern>(
           context, loc_id,
           {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
-  var_storage.pattern_id = AddPatternInst<SemIR::VarPattern>(
+  context.imports().push_back(binding_pattern_inst_id);
+  auto pattern_id = AddInstInNoBlock<SemIR::VarPattern>(
       context, Parse::VariablePatternId::None,
       {.type_id = pattern_type_id, .subpattern_id = binding_pattern_inst_id});
-  context.imports().push_back(AddInstInNoBlock<SemIR::NameBindingDecl>(
-      context, loc_id,
-      {.pattern_block_id = context.pattern_block_stack().Pop()}));
+  context.imports().push_back(pattern_id);
 
-  // Finalize the `VarStorage` instruction.
-  ReplaceInstBeforeConstantUse(context, var_storage_inst_id, var_storage);
+  // Create the imported storage for the global. We intentionally use the
+  // untyped form of `AddInstInNoBlock` to bypass the check on adding an
+  // instruction that requires a cleanup, because we don't want a cleanup here!
+  SemIR::InstId var_storage_inst_id = AddInstInNoBlock(
+      context, {loc_id, SemIR::VarStorage{.type_id = var_type_id,
+                                          .pattern_id = pattern_id}});
+  context.imports().push_back(var_storage_inst_id);
+
+  // Register the variable so we don't create it again, and track the
+  // corresponding declaration to use for mangling.
+  auto clang_decl_id = context.clang_decls().Add(
+      {.key = SemIR::ClangDeclKey(var_decl), .inst_id = var_storage_inst_id});
+  context.cpp_global_names().Add({.key = {.entity_name_id = entity_name_id},
+                                  .clang_decl_id = clang_decl_id});
 
   // Inform Clang that the variable has been referenced.
   context.clang_sema().MarkVariableReferenced(GetCppLocation(context, loc_id),

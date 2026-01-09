@@ -22,6 +22,7 @@ static auto AsAnyInstId(Inst::ArgAndKind arg) -> InstId {
   return arg.As<SemIR::AbsoluteInstId>();
 }
 
+// NOLINTBEGIN(readability-function-size)
 auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
   const File* ir = &file;
 
@@ -41,24 +42,64 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
 
     // Handle any special cases that use
     // ComputedExprCategory::DependsOnOperands.
-    auto handle_special_case = [&]<typename TypedInstT>(TypedInstT inst) {
+    auto handle_special_case =
+        [&]<typename TypedInstT>(
+            TypedInstT inst) -> std::optional<ExprCategory> {
       if constexpr (std::same_as<TypedInstT, ClassElementAccess>) {
         inst_id = inst.base_id;
         // A value of class type is a pointer to an object representation.
         // Therefore, if the base is a value, the result is an ephemeral
         // reference.
         value_category = ExprCategory::EphemeralRef;
+        return std::nullopt;
       } else if constexpr (std::same_as<TypedInstT, ImportRefLoaded> ||
                            std::same_as<TypedInstT, ImportRefUnloaded>) {
         auto import_ir_inst = ir->import_ir_insts().Get(inst.import_ir_inst_id);
         ir = ir->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
         inst_id = import_ir_inst.inst_id();
+        return std::nullopt;
+      } else if constexpr (std::same_as<TypedInstT, Call>) {
+        auto callee = GetCallee(file, inst.callee_id);
+        CARBON_KIND_SWITCH(callee) {
+          case CARBON_KIND(SemIR::CalleeError _): {
+            return ExprCategory::Error;
+          }
+          case CARBON_KIND(SemIR::CalleeFunction callee_function): {
+            const auto& function =
+                file.functions().Get(callee_function.function_id);
+            auto return_form_id = function.GetDeclaredReturnForm(
+                file, callee_function.resolved_specific_id);
+            if (!return_form_id.has_value()) {
+              // Treat as equivalent to `-> ()`.
+              return ExprCategory::Initializing;
+            }
+            auto return_form = file.insts().Get(return_form_id);
+            CARBON_KIND_SWITCH(return_form) {
+              case CARBON_KIND(InitForm _):
+                return ExprCategory::Initializing;
+              case CARBON_KIND(RefForm _):
+                return ExprCategory::DurableRef;
+              case CARBON_KIND(ErrorInst _):
+                return ExprCategory::Error;
+              default:
+                CARBON_FATAL("Unexpected inst kind: {0}", return_form);
+            }
+          }
+          case CARBON_KIND(SemIR::CalleeNonFunction _): {
+            return ExprCategory::NotExpr;
+          }
+          case CARBON_KIND(SemIR::CalleeCppOverloadSet _): {
+            // TODO: support `ref` returns from C++.
+            return ExprCategory::Initializing;
+          }
+        }
       } else {
         static_assert(
             TypedInstT::Kind.expr_category().TryAsComputedCategory() !=
                 ComputedExprCategory::DependsOnOperands,
             "Missing expression category computation for type");
       }
+      CARBON_FATAL("Unreachable");
     };
 
     // If the category depends on the operands of the instruction, determine it.
@@ -82,16 +123,21 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
 
       case ComputedExprCategory::DependsOnOperands: {
         switch (untyped_inst.kind()) {
-#define CARBON_SEM_IR_INST_KIND(TypedInstT)             \
-  case TypedInstT::Kind:                                \
-    handle_special_case(untyped_inst.As<TypedInstT>()); \
-    break;
+#define CARBON_SEM_IR_INST_KIND(TypedInstT)                             \
+  case TypedInstT::Kind: {                                              \
+    auto category = handle_special_case(untyped_inst.As<TypedInstT>()); \
+    if (category.has_value()) {                                         \
+      return *category;                                                 \
+    }                                                                   \
+    break;                                                              \
+  }
 #include "toolchain/sem_ir/inst_kind.def"
         }
       }
     }
   }
 }
+// NOLINTEND(readability-function-size)
 
 auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id)
     -> InstId {

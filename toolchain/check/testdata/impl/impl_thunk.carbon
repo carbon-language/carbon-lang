@@ -966,6 +966,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   %T.loc5_8.1 => constants.%T.67d
 // CHECK:STDOUT:   %ptr => constants.%ptr.e8f
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4f4
+// CHECK:STDOUT:   %.loc5 => constants.%.ba4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @empty_tuple.type.as.I.impl.F.loc10_34.1(constants.%Copy.facet) {
@@ -1139,6 +1140,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   %T.loc5_20.1 => constants.%T.67d
 // CHECK:STDOUT:   %ptr => constants.%ptr.e8f
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.4f4
+// CHECK:STDOUT:   %.loc5 => constants.%.7c9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @empty_tuple.type.as.I.impl.F.loc10_44.1(constants.%Copy.facet) {

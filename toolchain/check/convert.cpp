@@ -998,8 +998,8 @@ static auto PerformBuiltinConversion(
     if (auto foundation_type_id =
             context.types().GetTransitiveAdaptedType(value_type_id);
         foundation_type_id != value_type_id &&
-        (context.types().Is<SemIR::TupleType>(foundation_type_id) ||
-         context.types().Is<SemIR::StructType>(foundation_type_id))) {
+        context.types().IsOneOf<SemIR::StructType, SemIR::TupleType>(
+            foundation_type_id)) {
       auto foundation_value_id = AddInst<SemIR::AsCompatible>(
           context, loc_id,
           {.type_id = foundation_type_id, .source_id = value_id});
@@ -1264,8 +1264,8 @@ static auto PerformBuiltinConversion(
   // other facet values, as long as they satisfy the required interfaces of the
   // target `FacetType`.
   if (sem_ir.types().Is<SemIR::FacetType>(target.type_id) &&
-      (sem_ir.types().Is<SemIR::TypeType>(value_type_id) ||
-       sem_ir.types().Is<SemIR::FacetType>(value_type_id))) {
+      sem_ir.types().IsOneOf<SemIR::TypeType, SemIR::FacetType>(
+          value_type_id)) {
     // TODO: Runtime facet values should be allowed to convert based on their
     // FacetTypes, but we assume constant values for impl lookup at the moment.
     if (!context.constant_values().Get(value_id).is_constant()) {
@@ -1977,8 +1977,10 @@ auto ExprAsReturnForm(Context& context, SemIR::LocId loc_id,
     form_inst_id = AddInst(
         context,
         SemIR::LocIdAndInst::UncheckedLoc(
-            loc_id, SemIR::RefForm{.type_id = SemIR::FormType::TypeId,
-                                   .type_component_inst_id = type_inst_id}));
+            loc_id,
+            SemIR::RefForm{.type_id = SemIR::FormType::TypeId,
+                           .type_component_inst_id =
+                               context.types().GetAsTypeInstId(type_inst_id)}));
   } else {
     type_inst_id = ConvertToValueOfType(context, loc_id, value_id,
                                         SemIR::TypeType::TypeId);
@@ -1995,7 +1997,8 @@ auto ExprAsReturnForm(Context& context, SemIR::LocId loc_id,
             loc_id,
             SemIR::InitForm{
                 .type_id = SemIR::FormType::TypeId,
-                .type_component_inst_id = type_inst_id,
+                .type_component_inst_id =
+                    context.types().GetAsTypeInstId(type_inst_id),
                 .index = context.full_pattern_stack().NextCallParamIndex()}));
   }
 

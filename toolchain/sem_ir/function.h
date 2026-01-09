@@ -44,9 +44,13 @@ struct FunctionFields {
   // definition.
   InstBlockId call_params_id;
 
-  // The type inst representing the function's explicitly declared return type,
-  // if any.
+  // The inst representing the type component of return_form_inst_id.
+  // TODO: remove this in favor of return_form_inst_id.
   TypeInstId return_type_inst_id;
+
+  // The inst representing the function's explicitly declared return form, if
+  // any.
+  InstId return_form_inst_id;
 
   // The call parameter pattern insts that are declared by the function's return
   // form declaration. They will all be OutParamPatterns, and there will be one
@@ -116,6 +120,9 @@ struct Function : public EntityWithParamsBase,
     if (return_type_inst_id.has_value()) {
       out << ", return_type_inst_id: " << return_type_inst_id;
     }
+    if (return_type_inst_id.has_value()) {
+      out << ", return_form_inst_id: " << return_form_inst_id;
+    }
     if (return_patterns_id.has_value()) {
       out << ", return_patterns_id: " << return_patterns_id;
     }
@@ -170,6 +177,14 @@ struct Function : public EntityWithParamsBase,
   auto GetDeclaredReturnType(const File& file,
                              SpecificId specific_id = SpecificId::None) const
       -> TypeId;
+
+  // Gets the canonical declared return form for a specific version of this
+  // function, or for the original declaration if no specific is specified.
+  // Returns `None` if the function was declared without a return form, in which
+  // case the effective return form is an empty tuple initializing expression.
+  auto GetDeclaredReturnForm(const File& file,
+                             SpecificId specific_id = SpecificId::None) const
+      -> InstId;
 
   // Sets that this function is a builtin function.
   auto SetBuiltinFunction(BuiltinFunctionKind kind) -> void {

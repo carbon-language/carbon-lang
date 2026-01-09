@@ -865,8 +865,7 @@ static auto GetLocalConstantId(ImportRefResolver& resolver,
   auto import_decl_inst_id = resolver.import_generics().Get(generic_id).decl_id;
   auto import_decl_inst =
       resolver.import_insts().GetWithAttachedType(import_decl_inst_id);
-  if (import_decl_inst.Is<SemIR::ImplDecl>() ||
-      import_decl_inst.Is<SemIR::RequireImplsDecl>()) {
+  if (import_decl_inst.IsOneOf<SemIR::ImplDecl, SemIR::RequireImplsDecl>()) {
     // For these decl types, the imported entity can be found via the
     // declaration's operands.
     return GetLocalConstantId(resolver, import_decl_inst_id);
@@ -2186,6 +2185,7 @@ static auto MakeFunctionDecl(ImportContext& context,
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
        {.call_params_id = SemIR::InstBlockId::None,
         .return_type_inst_id = SemIR::TypeInstId::None,
+        .return_form_inst_id = SemIR::InstId::None,
         .return_patterns_id = SemIR::InstBlockId::None,
         .virtual_modifier = import_function.virtual_modifier,
         .virtual_index = import_function.virtual_index}});
@@ -2246,6 +2246,11 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return_type_const_id =
         GetLocalConstantId(resolver, import_function.return_type_inst_id);
   }
+  auto return_form_const_id = SemIR::ConstantId::None;
+  if (import_function.return_form_inst_id.has_value()) {
+    return_form_const_id =
+        GetLocalConstantId(resolver, import_function.return_form_inst_id);
+  }
   auto parent_scope_id =
       GetLocalNameScopeId(resolver, import_function.parent_scope_id);
   auto implicit_param_patterns = GetLocalInstBlockContents(
@@ -2275,6 +2280,12 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   if (import_function.return_type_inst_id.has_value()) {
     new_function.return_type_inst_id = AddLoadedImportRefForType(
         resolver, import_function.return_type_inst_id, return_type_const_id);
+  }
+  new_function.return_form_inst_id = SemIR::InstId::None;
+  if (import_function.return_form_inst_id.has_value()) {
+    new_function.return_form_inst_id = AddLoadedImportRef(
+        resolver, SemIR::FormType::TypeId, import_function.return_form_inst_id,
+        return_form_const_id);
   }
   new_function.return_patterns_id = GetLocalCanonicalInstBlockId(
       resolver, import_function.return_patterns_id, return_patterns);
@@ -3249,8 +3260,9 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       SemIR::InitForm{
           .type_id =
               resolver.local_types().GetTypeIdForTypeConstantId(type_const_id),
-          .type_component_inst_id = resolver.local_constant_values().GetInstId(
-              type_component_const_id),
+          .type_component_inst_id = resolver.local_types().GetInstId(
+              resolver.local_types().GetTypeIdForTypeConstantId(
+                  type_component_const_id)),
           .index = inst.index});
 }
 

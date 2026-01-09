@@ -371,7 +371,7 @@ struct Call {
   // conversions.
   static constexpr auto Kind = InstKind::Call.Define<Parse::NodeId>(
       {.ir_name = "call",
-       .expr_category = ExprCategory::Initializing,
+       .expr_category = ComputedExprCategory::DependsOnOperands,
        .constant_needs_inst_id =
            InstConstantNeedsInstIdKind::DuringEvaluation});
 
@@ -1049,13 +1049,13 @@ struct InPlaceInit {
 struct InitForm {
   static constexpr auto Kind = InstKind::InitForm.Define<Parse::NodeId>(
       {.ir_name = "init_form",
-       .constant_kind = InstConstantKind::WheneverPossible,
+       .constant_kind = InstConstantKind::Always,
        .is_lowered = false});
 
   // Always FormType
   TypeId type_id;
   // The type component of the form.
-  InstId type_component_inst_id;
+  TypeInstId type_component_inst_id;
   // If this is a function's return form, the index of the corresponding
   // `OutParam` in the function's `Call` parameter list.
   CallParamIndex index;
@@ -1366,11 +1366,11 @@ struct RefForm {
   static constexpr auto Kind =
       InstKind::RefForm.Define<Parse::PrefixOperatorRefId>(
           {.ir_name = "ref_form",
-           .constant_kind = InstConstantKind::WheneverPossible,
+           .constant_kind = InstConstantKind::Always,
            .is_lowered = false});
 
   TypeId type_id;
-  InstId type_component_inst_id;
+  TypeInstId type_component_inst_id;
 };
 
 // A by-reference `Call` parameter. See AnyParam for member documentation. Note

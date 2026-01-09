@@ -811,8 +811,8 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %Core.import_ref.ad5: <witness> = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%As.impl_witness]
 // CHECK:STDOUT:   %Core.import_ref.a86459.1: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = Core.IntLiteral]
 // CHECK:STDOUT:   %Core.import_ref.412: type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%As.type.ffe]
-// CHECK:STDOUT:   %Core.import_ref.d9d: %Core.IntLiteral.as.As.impl.Convert.type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.As.impl.Convert]
-// CHECK:STDOUT:   %As.impl_witness_table = impl_witness_table (%Core.import_ref.d9d), @Core.IntLiteral.as.As.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.d9dc: %Core.IntLiteral.as.As.impl.Convert.type = import_ref Core//default, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.As.impl.Convert]
+// CHECK:STDOUT:   %As.impl_witness_table = impl_witness_table (%Core.import_ref.d9dc), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %Core.AddWith: %AddWith.type.e05 = import_ref Core//default, AddWith, loaded [concrete = constants.%AddWith.generic]
 // CHECK:STDOUT:   %Core.import_ref.a40 = import_ref Core//default, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.91c: @AddWith.%AddWith.assoc_type (%AddWith.assoc_type.b6a) = import_ref Core//default, loc{{\d+_\d+}}, loaded [symbolic = @AddWith.%assoc0 (constants.%assoc0.7a7)]

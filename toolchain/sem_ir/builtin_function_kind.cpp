@@ -758,8 +758,7 @@ static auto IsLiteralType(const File& sem_ir, TypeId type_id) -> bool {
   // Unwrap adapters.
   type_id = sem_ir.types().GetTransitiveAdaptedType(type_id);
   auto type_inst_id = sem_ir.types().GetAsInst(type_id);
-  return type_inst_id.Is<IntLiteralType>() ||
-         type_inst_id.Is<FloatLiteralType>();
+  return type_inst_id.IsOneOf<IntLiteralType, FloatLiteralType>();
 }
 
 // Determines whether a builtin call involves an integer or floating-point
