@@ -25,16 +25,14 @@ auto GetCurrentFunctionForReturn(Context& context) -> SemIR::Function& {
 auto GetReturnedVarParam(Context& context, const SemIR::Function& function)
     -> SemIR::InstId {
   auto return_form_id = function.GetDeclaredReturnForm(context.sem_ir());
-  if (return_form_id.has_value()) {
-    if (auto return_form =
-            context.insts().TryGetAs<SemIR::InitForm>(return_form_id)) {
-      auto call_params = context.inst_blocks().Get(function.call_params_id);
-      auto return_param_id = call_params[return_form->index.index];
-      auto return_type_id = context.insts().Get(return_param_id).type_id();
-      if (SemIR::InitRepr::ForType(context.sem_ir(), return_type_id)
-              .MightBeInPlace()) {
-        return return_param_id;
-      }
+  if (auto return_form =
+          context.insts().TryGetAsIfValid<SemIR::InitForm>(return_form_id)) {
+    auto call_params = context.inst_blocks().Get(function.call_params_id);
+    auto return_param_id = call_params[return_form->index.index];
+    auto return_type_id = context.insts().Get(return_param_id).type_id();
+    if (SemIR::InitRepr::ForType(context.sem_ir(), return_type_id)
+            .MightBeInPlace()) {
+      return return_param_id;
     }
   }
   return SemIR::InstId::None;
