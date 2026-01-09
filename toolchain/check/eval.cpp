@@ -1047,18 +1047,7 @@ static auto PerformIntToCharConvert(Context& context, SemIR::LocId loc_id,
       context.sem_ir().types().GetIntTypeInfo(dest_type_id);
 
   int64_t value = arg_val.getSExtValue();
-
-  if (!is_signed && value < 0) {
-    CARBON_DIAGNOSTIC(
-        NegativeIntInUnsignedTypeInCast, Error,
-        "negative integer value {0} converted to unsigned type {1}", TypedInt,
-        SemIR::TypeId);
-    context.emitter().Emit(loc_id, NegativeIntInUnsignedTypeInCast,
-                           {.type = arg.type_id, .value = arg_val},
-                           dest_type_id);
-    return SemIR::ErrorInst::ConstantId;
-  }
-
+  
   llvm::APInt int_val(8, value, /*isSigned=*/false);
   return MakeIntResult(context, dest_type_id, /*is_signed=*/false, int_val);
 }
