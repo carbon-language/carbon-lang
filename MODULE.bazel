@@ -29,13 +29,13 @@ http_archive = use_repo_rule(
 )
 
 bazel_dep(name = "abseil-cpp", version = "20250512.1")
-bazel_dep(name = "bazel_skylib", version = "1.8.1")
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "google_benchmark", version = "1.9.4")
 bazel_dep(name = "googletest", version = "1.17.0")
 bazel_dep(name = "re2", version = "2024-07-02.bcr.1")
-bazel_dep(name = "rules_cc", version = "0.1.4")
+bazel_dep(name = "rules_cc", version = "0.2.6")
 bazel_dep(name = "rules_pkg", version = "1.1.0")
-bazel_dep(name = "rules_shell", version = "0.5.0")
+bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "tcmalloc", version = "0.0.0-20250331-43fcf6e")
 bazel_dep(name = "tree-sitter-bazel", version = "0.26.3")
 

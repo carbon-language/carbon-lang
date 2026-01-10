@@ -2,8 +2,8 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_python//python:defs.bzl", "py_test")
+load("//bazel/cc_rules:defs.bzl", "cc_library")
 
 py_test(
     name = "no_op_test",
