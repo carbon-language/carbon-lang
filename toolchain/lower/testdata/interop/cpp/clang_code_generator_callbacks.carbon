@@ -14,13 +14,20 @@
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
+
+// Clang uses an implementation of clang::ASTConsumer to implement code
+// generation, it has a variety of callbacks that may be called throughout the
+// process of parsing/semantically analyzing the source code. Below are test
+// cases based on those callbacks to ensure that C++ code compiled as part of
+// Carbon interop imports preserve Clang's behavior.
+
 struct t1 {
   virtual void f1();
 };
 // HandleVTable - Emit a definition for `t1`'s vtable.
 void t1::f1() { }
 
-// CompleteExternalDeclaration - Only be related to BPF.
+// CompleteExternalDeclaration - Only be related to the BPF target.
 
 // CompleteTentativeDefinition - Only relevant to C code.
 
