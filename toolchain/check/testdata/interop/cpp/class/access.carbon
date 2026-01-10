@@ -1597,6 +1597,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %S.decl: type = class_decl @S [concrete = constants.%S] {} {}
+// CHECK:STDOUT:   %static_data.patt: %pattern_type.7ce = ref_binding_pattern static_data [concrete]
+// CHECK:STDOUT:   %static_data.var_patt: %pattern_type.7ce = var_pattern %static_data.patt [concrete]
 // CHECK:STDOUT:   %static_data.var: ref %i32 = var %static_data.var_patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1642,6 +1644,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %static_data.patt: %pattern_type.7ce = ref_binding_pattern static_data [concrete]
+// CHECK:STDOUT:   %static_data.var_patt: %pattern_type.7ce = var_pattern %static_data.patt [concrete]
 // CHECK:STDOUT:   %static_data.var: ref %i32 = var %static_data.var_patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1693,6 +1697,8 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %static_data.patt: %pattern_type.7ce = ref_binding_pattern static_data [concrete]
+// CHECK:STDOUT:   %static_data.var_patt: %pattern_type.7ce = var_pattern %static_data.patt [concrete]
 // CHECK:STDOUT:   %static_data.var: ref %i32 = var %static_data.var_patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

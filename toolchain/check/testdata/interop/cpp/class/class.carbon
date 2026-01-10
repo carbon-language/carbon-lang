@@ -373,6 +373,8 @@ fn MyF(bar: Cpp.Bar(Cpp.X)*);
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl: type = class_decl @Bar [concrete = constants.%Bar] {} {}
+// CHECK:STDOUT:   %foo.patt: %pattern_type = ref_binding_pattern foo [concrete]
+// CHECK:STDOUT:   %foo.var_patt: %pattern_type = var_pattern %foo.patt [concrete]
 // CHECK:STDOUT:   %foo.var: ref %ptr.f68 = var %foo.var_patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

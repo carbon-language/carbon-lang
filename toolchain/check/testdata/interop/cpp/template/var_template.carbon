@@ -42,10 +42,12 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:   %pattern_type.bcf: type = pattern_type %ptr.270 [concrete]
 // CHECK:STDOUT:   %var.type.230: type = cpp_type_template_type r#var [concrete]
 // CHECK:STDOUT:   %var.template.326: %var.type.230 = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.9de: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %addr.0b0: %ptr.270 = addr_of imports.%var.var.2f7 [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %ptr.a04: type = ptr_type %B [concrete]
 // CHECK:STDOUT:   %pattern_type.837: type = pattern_type %ptr.a04 [concrete]
+// CHECK:STDOUT:   %pattern_type.d0f: type = pattern_type %B [concrete]
 // CHECK:STDOUT:   %addr.324: %ptr.a04 = addr_of imports.%var.var.a15 [concrete]
 // CHECK:STDOUT:   %Wrap: type = class_type @Wrap [concrete]
 // CHECK:STDOUT:   %var.type.17b: type = cpp_type_template_type r#var [concrete]
@@ -62,12 +64,20 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %var.template.326: %var.type.230 = struct_value () [concrete = constants.%var.template.326]
+// CHECK:STDOUT:   %var.patt.5a2: %pattern_type.9de = ref_binding_pattern r#var [concrete]
+// CHECK:STDOUT:   %var.var_patt.093: %pattern_type.9de = var_pattern %var.patt.5a2 [concrete]
 // CHECK:STDOUT:   %var.var.2f7: ref %A = var %var.var_patt.093 [concrete]
 // CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
+// CHECK:STDOUT:   %var.patt.7db: %pattern_type.d0f = ref_binding_pattern r#var [concrete]
+// CHECK:STDOUT:   %var.var_patt.56c: %pattern_type.d0f = var_pattern %var.patt.7db [concrete]
 // CHECK:STDOUT:   %var.var.a15: ref %B = var %var.var_patt.56c [concrete]
 // CHECK:STDOUT:   %Wrap.decl: type = class_decl @Wrap [concrete = constants.%Wrap] {} {}
 // CHECK:STDOUT:   %var.template.df3: %var.type.17b = struct_value () [concrete = constants.%var.template.df3]
+// CHECK:STDOUT:   %var.patt.022: %pattern_type.9de = ref_binding_pattern r#var [concrete]
+// CHECK:STDOUT:   %var.var_patt.0cb: %pattern_type.9de = var_pattern %var.patt.022 [concrete]
 // CHECK:STDOUT:   %var.var.2e6: ref %A = var %var.var_patt.0cb
+// CHECK:STDOUT:   %var.patt.605: %pattern_type.d0f = ref_binding_pattern r#var [concrete]
+// CHECK:STDOUT:   %var.var_patt.efb: %pattern_type.d0f = var_pattern %var.patt.605 [concrete]
 // CHECK:STDOUT:   %var.var.bab: ref %B = var %var.var_patt.efb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
