@@ -85,8 +85,7 @@ struct SymbolicConstant : Printable<SymbolicConstant> {
   ConstantDependence dependence;
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "{inst: " << inst_id << ", generic: " << generic_id
-        << ", index: " << index << ", kind: ";
+    out << "{inst: " << inst_id << ", kind: ";
     switch (dependence) {
       case ConstantDependence::None:
         out << "<error: concrete>";
@@ -100,6 +99,13 @@ struct SymbolicConstant : Printable<SymbolicConstant> {
       case ConstantDependence::Template:
         out << "template";
         break;
+    }
+    out << ", ";
+    if (generic_id.has_value()) {
+      out << "attached: {generic: " << generic_id << ", index: " << index
+          << "}";
+    } else {
+      out << "<unattached>";
     }
     out << "}";
   }
