@@ -26,6 +26,9 @@ auto operator--(C& operand) -> C&;
 // Arithmetic.
 auto operator-(C operand) -> C;
 
+// Bitwise.
+auto operator~(C operand) -> C;
+
 // --- import_unary_operators.carbon
 
 library "[[@TEST_NAME]]";
@@ -42,6 +45,9 @@ fn F() {
 
   // Arithmetic.
   let minus: Cpp.C = -c;
+
+  // Bitwise.
+  let complement: Cpp.C = ^c;
   //@dump-sem-ir-end
 }
 
@@ -111,7 +117,11 @@ fn F() {
 
 // --- binary_operators.h
 
-class C {};
+class C {
+ public:
+  void operator=(int);
+  int operator[](int);
+};
 
 // Arithmetic.
 auto operator+(C lhs, C rhs) -> C;
@@ -174,14 +184,14 @@ fn F() {
   let left_shift: Cpp.C = c1 << 3;
   let right_shift: Cpp.C = c1 >> 5;
 
-  // Compound Assignment Arithmetic.
+  // Compound assignment, arithmetic.
   c1 += c2;
   c1 -= c2;
   c1 *= c2;
   c1 /= c2;
   c1 %= c2;
 
-  // Compound Assignment Bitwise.
+  // Compound assignment, bitwise.
   c1 &= c2;
   c1 |= c2;
   c1 ^= c2;
@@ -195,7 +205,30 @@ fn F() {
   let less_than: bool = c1 < c2;
   let greater_than_or_equal: bool = c1 >= c2;
   let less_than_or_equal: bool = c1 <= c2;
+
+  // Indexing.
+  let index: i32 = c1[42];
   //@dump-sem-ir-end
+}
+
+// --- fail_todo_import_assignment.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "binary_operators.h";
+
+fn F() {
+  var c: Cpp.C = {};
+
+  // Simple assignment.
+  // CHECK:STDERR: fail_todo_import_assignment.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Core.IntLiteral` to `Cpp.C` [ConversionFailure]
+  // CHECK:STDERR:   c = 42;
+  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_todo_import_assignment.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(Cpp.C)` [MissingImplInMemberAccessNote]
+  // CHECK:STDERR:   c = 42;
+  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:
+  c = 42;
 }
 
 // --- multiple_calls.carbon
@@ -1055,6 +1088,8 @@ fn F() {
 // CHECK:STDOUT:   %cpp_operator.0a3797.2: %cpp_operator.type.1ea478.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %operator-__carbon_thunk.type: type = fn_type @operator-__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator-__carbon_thunk: %operator-__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %operator~__carbon_thunk.type: type = fn_type @operator~__carbon_thunk [concrete]
+// CHECK:STDOUT:   %operator~__carbon_thunk: %operator~__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor: %C.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -1082,6 +1117,11 @@ fn F() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %operator-__carbon_thunk.decl: %operator-__carbon_thunk.type = fn_decl @operator-__carbon_thunk [concrete = constants.%operator-__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %operator~__carbon_thunk.decl: %operator~__carbon_thunk.type = fn_decl @operator~__carbon_thunk [concrete = constants.%operator~__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -1130,6 +1170,26 @@ fn F() {
 // CHECK:STDOUT:   %.loc15_22.3: ref %C = temporary %.loc15_22.1, %.loc15_22.2
 // CHECK:STDOUT:   %.loc15_22.4: %C = acquire_value %.loc15_22.3
 // CHECK:STDOUT:   %minus: %C = value_binding minus, %.loc15_22.4
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %complement.patt: %pattern_type.217 = value_binding_pattern complement [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c.ref.loc18: ref %C = name_ref c, %c
+// CHECK:STDOUT:   %.loc18_27.1: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc18_28.1: %C = acquire_value %c.ref.loc18
+// CHECK:STDOUT:   %.loc18_28.2: ref %C = value_as_ref %.loc18_28.1
+// CHECK:STDOUT:   %addr.loc18_27.1: %ptr.d9e = addr_of %.loc18_28.2
+// CHECK:STDOUT:   %addr.loc18_27.2: %ptr.d9e = addr_of %.loc18_27.1
+// CHECK:STDOUT:   %operator~__carbon_thunk.call: init %empty_tuple.type = call imports.%operator~__carbon_thunk.decl(%addr.loc18_27.1, %addr.loc18_27.2)
+// CHECK:STDOUT:   %.loc18_27.2: init %C = in_place_init %operator~__carbon_thunk.call, %.loc18_27.1
+// CHECK:STDOUT:   %.loc18_22: type = splice_block %C.ref.loc18 [concrete = constants.%C] {
+// CHECK:STDOUT:     %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %C.ref.loc18: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc18_27.3: ref %C = temporary %.loc18_27.1, %.loc18_27.2
+// CHECK:STDOUT:   %.loc18_27.4: %C = acquire_value %.loc18_27.3
+// CHECK:STDOUT:   %complement: %C = value_binding complement, %.loc18_27.4
+// CHECK:STDOUT:   %C.cpp_destructor.bound.loc18: <bound method> = bound_method %.loc18_27.3, constants.%C.cpp_destructor
+// CHECK:STDOUT:   %C.cpp_destructor.call.loc18: init %empty_tuple.type = call %C.cpp_destructor.bound.loc18(%.loc18_27.3)
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc15: <bound method> = bound_method %.loc15_22.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc15: init %empty_tuple.type = call %C.cpp_destructor.bound.loc15(%.loc15_22.3)
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc8: <bound method> = bound_method %c.var, constants.%C.cpp_destructor
@@ -1169,6 +1229,7 @@ fn F() {
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %operator<<__carbon_thunk.type: type = fn_type @operator<<__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator<<__carbon_thunk: %operator<<__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.e8c: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
@@ -1228,6 +1289,12 @@ fn F() {
 // CHECK:STDOUT:   %operator>=__carbon_thunk: %operator>=__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %operator<=__carbon_thunk.type: type = fn_type @operator<=__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator<=__carbon_thunk: %operator<=__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_42.20e: Core.IntLiteral = int_value 42 [concrete]
+// CHECK:STDOUT:   %C.cpp_operator.type: type = fn_type @C.cpp_operator [concrete]
+// CHECK:STDOUT:   %C.cpp_operator: %C.cpp_operator.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.c83: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5 [concrete]
+// CHECK:STDOUT:   %bound_method.cb9: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_42.c68: %i32 = int_value 42 [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor.type: type = fn_type @C.cpp_destructor [concrete]
 // CHECK:STDOUT:   %C.cpp_destructor: %C.cpp_destructor.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -1374,6 +1441,16 @@ fn F() {
 // CHECK:STDOUT:   %operator<=__carbon_thunk.decl: %operator<=__carbon_thunk.type = fn_decl @operator<=__carbon_thunk [concrete = constants.%operator<=__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.cpp_operator.decl: %C.cpp_operator.type = fn_decl @C.cpp_operator [concrete = constants.%C.cpp_operator] {
+// CHECK:STDOUT:     %self.patt: %pattern_type.217 = ref_binding_pattern self [concrete]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.217 = ref_param_pattern %self.patt, call_param0 [concrete]
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:     %self.param: ref %C = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %C = ref_binding self, %self.param
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1850,6 +1927,27 @@ fn F() {
 // CHECK:STDOUT:   %.loc45_37.3: bool = value_of_initializer %.loc45_37.2
 // CHECK:STDOUT:   %.loc45_37.4: bool = converted %.loc45_37.2, %.loc45_37.3
 // CHECK:STDOUT:   %less_than_or_equal: bool = value_binding less_than_or_equal, %.loc45_37.4
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %index.patt: %pattern_type.7ce = value_binding_pattern index [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c1.ref.loc48: ref %C = name_ref c1, %c1
+// CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]
+// CHECK:STDOUT:   %C.cpp_operator.bound: <bound method> = bound_method %c1.ref.loc48, imports.%C.cpp_operator.decl
+// CHECK:STDOUT:   %impl.elem0.loc48: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
+// CHECK:STDOUT:   %bound_method.loc48_23.1: <bound method> = bound_method %int_42, %impl.elem0.loc48 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.c83]
+// CHECK:STDOUT:   %specific_fn.loc48: <specific function> = specific_function %impl.elem0.loc48, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc48_23.2: <bound method> = bound_method %int_42, %specific_fn.loc48 [concrete = constants.%bound_method.cb9]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc48: init %i32 = call %bound_method.loc48_23.2(%int_42) [concrete = constants.%int_42.c68]
+// CHECK:STDOUT:   %.loc48_23.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc48 [concrete = constants.%int_42.c68]
+// CHECK:STDOUT:   %.loc48_23.2: %i32 = converted %int_42, %.loc48_23.1 [concrete = constants.%int_42.c68]
+// CHECK:STDOUT:   %C.cpp_operator.call: init %i32 = call %C.cpp_operator.bound(%c1.ref.loc48, %.loc48_23.2)
+// CHECK:STDOUT:   %.loc48_14: type = splice_block %i32 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
+// CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc48_25.1: %i32 = value_of_initializer %C.cpp_operator.call
+// CHECK:STDOUT:   %.loc48_25.2: %i32 = converted %C.cpp_operator.call, %.loc48_25.1
+// CHECK:STDOUT:   %index: %i32 = value_binding index, %.loc48_25.2
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc23: <bound method> = bound_method %.loc23_31.3, constants.%C.cpp_destructor
 // CHECK:STDOUT:   %C.cpp_destructor.call.loc23: init %empty_tuple.type = call %C.cpp_destructor.bound.loc23(%.loc23_31.3)
 // CHECK:STDOUT:   %C.cpp_destructor.bound.loc22: <bound method> = bound_method %.loc22_30.3, constants.%C.cpp_destructor
