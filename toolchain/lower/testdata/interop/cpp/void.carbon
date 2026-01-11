@@ -15,7 +15,6 @@
 void take_void_ptr(void *p);
 void take_const_void_ptr(const void *p);
 void *return_void_ptr();
-const void *return_const_void_ptr();
 
 // --- pass.carbon
 
