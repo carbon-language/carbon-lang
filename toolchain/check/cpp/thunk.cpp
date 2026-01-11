@@ -328,9 +328,9 @@ static auto GetDeclNameForThunk(clang::ASTContext& ast_context,
     case clang::DeclarationName::NameKind::CXXOperatorName: {
       thunk_name = "operator_";
       switch (name.getCXXOverloadedOperator()) {
-          case clang::OO_None:
-          case clang::NUM_OVERLOADED_OPERATORS:
-            break;
+        case clang::OO_None:
+        case clang::NUM_OVERLOADED_OPERATORS:
+          break;
 #define OVERLOADED_OPERATOR(Name, Spelling, Token, Unary, Binary, MemberOnly) \
   case clang::OO_##Name:                                                      \
     thunk_name += #Name;                                                      \
