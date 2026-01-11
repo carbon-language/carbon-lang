@@ -250,7 +250,7 @@
         },
         {
           "name": "support.class.carbon",
-          "comment": "Handles `class C`, `class C(I)`, `impl C as I(A)`, etc.",
+          "comment": "Handles `class C`, `class C(I)`, `impl C as I(A)`, etc. Keywords are not affected.",
           "match": "(?<=\\b(as|class|impl|interface)\\s[\\s\\(]*)\\w+(\\(+\\s*\\w+\\s*\\)+)?"
         },
         {
@@ -292,6 +292,7 @@
       ]
     },
     "numbers": {
+      "comment": "Invalid formats are also highlighted, language server handles error highlighting",
       "patterns": [
         {
           "name": "constant.numeric.carbon",
