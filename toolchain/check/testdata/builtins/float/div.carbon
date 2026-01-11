@@ -97,7 +97,7 @@ fn DivLiteral(a: Literal(), b: Literal()) -> Literal() = "float.div";
 // CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %f64.d77 = name_ref b, %b
 // CHECK:STDOUT:   %Div.call: init %f64.d77 = call %Div.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   return %Div.call to %return
+// CHECK:STDOUT:   return %Div.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

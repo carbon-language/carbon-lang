@@ -374,7 +374,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %specific_impl_fn.loc20_11.1: <specific function> = specific_impl_function %impl.elem0.loc20_11.1, @Add.Op(constants.%Add.facet.9ab) [symbolic = %specific_impl_fn.loc20_11.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %bound_method.loc20_22: <bound method> = bound_method %x.ref.loc20_10, %specific_impl_fn.loc20_11.1
 // CHECK:STDOUT:     %Add.Op.call: init @Double.%MyInt.loc19_39.1 (%MyInt) = call %bound_method.loc20_22(%x.ref.loc20_10, %x.ref.loc20_21)
-// CHECK:STDOUT:     return %Add.Op.call to %return
+// CHECK:STDOUT:     return %Add.Op.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -585,7 +585,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %n.ref: %MyInt.f9e = name_ref n, %n
 // CHECK:STDOUT:   %Double.specific_fn: <specific function> = specific_function %Double.ref, @Double(constants.%int_64) [concrete = constants.%Double.specific_fn]
 // CHECK:STDOUT:   %Double.call: init %MyInt.f9e = call %Double.specific_fn(%n.ref)
-// CHECK:STDOUT:   return %Double.call to %return
+// CHECK:STDOUT:   return %Double.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Double(imports.%Main.import_ref.6b552a.2: Core.IntLiteral) [from "generic_impl.carbon"] {
@@ -986,7 +986,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %N.ref.loc9_57: %i32.builtin = name_ref N, %N.loc9_9.2 [symbolic = %N.loc9_9.1 (constants.%N.7e8)]
 // CHECK:STDOUT:     %Make.specific_fn.loc9_52.1: <specific function> = specific_function %Make.ref, @Make(constants.%N.7e8) [symbolic = %Make.specific_fn.loc9_52.2 (constants.%Make.specific_fn)]
 // CHECK:STDOUT:     %Make.call: init @Make.%iN.builtin (%iN.builtin.b5d) = call %Make.specific_fn.loc9_52.1()
-// CHECK:STDOUT:     return %Make.call to %return
+// CHECK:STDOUT:     return %Make.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1010,7 +1010,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:     %N.ref.loc18_77: %OtherInt = name_ref N, %N.loc18_18.2 [symbolic = %N.loc18_18.1 (constants.%N.0f7)]
 // CHECK:STDOUT:     %MakeFromClass.specific_fn.loc18_63.1: <specific function> = specific_function %MakeFromClass.ref, @MakeFromClass(constants.%N.0f7) [symbolic = %MakeFromClass.specific_fn.loc18_63.2 (constants.%MakeFromClass.specific_fn)]
 // CHECK:STDOUT:     %MakeFromClass.call: init @MakeFromClass.%iN.builtin (%iN.builtin.63a) = call %MakeFromClass.specific_fn.loc18_63.1()
-// CHECK:STDOUT:     return %MakeFromClass.call to %return
+// CHECK:STDOUT:     return %MakeFromClass.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

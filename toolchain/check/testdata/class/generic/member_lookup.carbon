@@ -122,8 +122,8 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     %specific_impl_fn.loc15_11.1: <specific function> = specific_impl_function %impl.elem0.loc15_11.1, @Copy.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc15_11.2 (constants.%specific_impl_fn.2c9)]
 // CHECK:STDOUT:     %bound_method.loc15_11.2: <bound method> = bound_method %.loc15_11.2, %specific_impl_fn.loc15_11.1
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %Copy.Op.call: init @AccessDerived.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc15_11.2(%.loc15_11.2) to %.loc13_48
-// CHECK:STDOUT:     return %Copy.Op.call to %return
+// CHECK:STDOUT:     %Copy.Op.call: init @AccessDerived.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc15_11.2(%.loc15_11.2) to %.loc13_51.1
+// CHECK:STDOUT:     return %Copy.Op.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -153,8 +153,8 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:     %specific_impl_fn.loc21_11.1: <specific function> = specific_impl_function %impl.elem0.loc21_11.1, @Copy.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc21_11.2 (constants.%specific_impl_fn.2c9)]
 // CHECK:STDOUT:     %bound_method.loc21_11.2: <bound method> = bound_method %.loc21_11.4, %specific_impl_fn.loc21_11.1
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %Copy.Op.call: init @AccessBase.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc21_11.2(%.loc21_11.4) to %.loc19_45
-// CHECK:STDOUT:     return %Copy.Op.call to %return
+// CHECK:STDOUT:     %Copy.Op.call: init @AccessBase.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc21_11.2(%.loc21_11.4) to %.loc19_48.1
+// CHECK:STDOUT:     return %Copy.Op.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -163,7 +163,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %Derived.loc13_45.1 => constants.%Derived.ad7
 // CHECK:STDOUT:   %pattern_type.loc13_33 => constants.%pattern_type.d85
-// CHECK:STDOUT:   %.loc13_51.1 => constants.%.075d25.1
+// CHECK:STDOUT:   %.loc13_51.2 => constants.%.075d25.1
 // CHECK:STDOUT:   %pattern_type.loc13_48 => constants.%pattern_type.9b9f0c.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -172,7 +172,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
 // CHECK:STDOUT:   %Derived.loc19_42.1 => constants.%Derived.ad7
 // CHECK:STDOUT:   %pattern_type.loc19_30 => constants.%pattern_type.d85
-// CHECK:STDOUT:   %.loc19_48.1 => constants.%.075d25.1
+// CHECK:STDOUT:   %.loc19_48.2 => constants.%.075d25.1
 // CHECK:STDOUT:   %pattern_type.loc19_45 => constants.%pattern_type.9b9f0c.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

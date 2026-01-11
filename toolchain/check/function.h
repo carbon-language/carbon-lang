@@ -55,12 +55,10 @@ inline auto CheckFunctionTypeMatches(Context& context,
 
 // Checks that the return type of the specified function is complete, issuing an
 // error if not. This computes the return slot usage for the function if
-// necessary, and returns information about how the function returns its return
-// value.
+// necessary, and returns the function's return type.
 auto CheckFunctionReturnType(Context& context, SemIR::LocId loc_id,
                              const SemIR::Function& function,
-                             SemIR::SpecificId specific_id)
-    -> SemIR::ReturnTypeInfo;
+                             SemIR::SpecificId specific_id) -> SemIR::TypeId;
 
 // Checks that a function declaration's signature is suitable to support a
 // function definition. This requires the parameter types to be complete and the

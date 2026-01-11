@@ -370,7 +370,7 @@ fn Interface.C.F[self: Self](U:! type, u: U*) -> U* { return u; }
 // CHECK:STDOUT:     %specific_impl_fn.loc20_62.1: <specific function> = specific_impl_function %impl.elem0.loc20_62.1, @Copy.Op(constants.%Copy.facet) [symbolic = %specific_impl_fn.loc20_62.2 (constants.%specific_impl_fn.9f4)]
 // CHECK:STDOUT:     %bound_method.loc20_62.2: <bound method> = bound_method %u.ref, %specific_impl_fn.loc20_62.1
 // CHECK:STDOUT:     %Copy.Op.call: init @C.F.%ptr.loc14_36.1 (%ptr.18e) = call %bound_method.loc20_62.2(%u.ref)
-// CHECK:STDOUT:     return %Copy.Op.call to %return.loc20
+// CHECK:STDOUT:     return %Copy.Op.call to %return.param.loc20
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

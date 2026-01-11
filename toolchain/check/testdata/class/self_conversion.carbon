@@ -225,7 +225,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc27_14.2: <bound method> = bound_method %.loc27_14.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc27_14.2(%.loc27_14.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return.loc26
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return.param.loc26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Derived.RefSelfBase(%self.param.loc30: %Base) {
@@ -261,6 +261,6 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %.loc36_11.3: ref %Base = converted %.loc36_11.1, %.loc36_11.2
 // CHECK:STDOUT:   %.loc36_11.4: %Base = acquire_value %.loc36_11.3
 // CHECK:STDOUT:   %Derived.SelfBase.call: init %i32 = call %Derived.SelfBase.bound(%.loc36_11.4)
-// CHECK:STDOUT:   return %Derived.SelfBase.call to %return
+// CHECK:STDOUT:   return %Derived.SelfBase.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

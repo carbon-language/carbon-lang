@@ -465,7 +465,7 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst60000048:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst60000025)}
 // CHECK:STDOUT:     inst60000049:    {kind: TupleLiteral, arg0: inst_block60000018, type: type(symbolic_constantA)}
 // CHECK:STDOUT:     inst6000004A:    {kind: RequireCompleteType, arg0: inst6000002E, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst6000004B:    {kind: TupleAccess, arg0: inst6000003B, arg1: element0, type: type(symbolic_constant4)}
+// CHECK:STDOUT:     inst6000004B:    {kind: TupleAccess, arg0: inst6000003A, arg1: element0, type: type(symbolic_constant4)}
 // CHECK:STDOUT:     inst6000004C:    {kind: RequireCompleteType, arg0: inst6000001C, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst6000004D:    {kind: ImportRefLoaded, arg0: import_ir_inst0, arg1: entity_name60000003, type: type(TypeType)}
 // CHECK:STDOUT:     inst6000004E:    {kind: InterfaceDecl, arg0: interface60000000, arg1: inst_block_empty, type: type(TypeType)}
@@ -759,12 +759,12 @@ fn Foo[T:! type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst6000016E:    {kind: RequireCompleteType, arg0: inst6000001C, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst6000016F:    {kind: Call, arg0: inst6000016D, arg1: inst_block60000079, type: type(symbolic_constant4)}
 // CHECK:STDOUT:     inst60000170:    {kind: InitializeFrom, arg0: inst6000016F, arg1: inst6000004B, type: type(symbolic_constant4)}
-// CHECK:STDOUT:     inst60000171:    {kind: TupleAccess, arg0: inst6000003B, arg1: element1, type: type(inst60000025)}
+// CHECK:STDOUT:     inst60000171:    {kind: TupleAccess, arg0: inst6000003A, arg1: element1, type: type(inst60000025)}
 // CHECK:STDOUT:     inst60000172:    {kind: TupleInit, arg0: inst_block_empty, arg1: inst60000171, type: type(inst60000025)}
 // CHECK:STDOUT:     inst60000173:    {kind: Converted, arg0: inst60000048, arg1: inst60000172, type: type(inst60000025)}
-// CHECK:STDOUT:     inst60000174:    {kind: TupleInit, arg0: inst_block6000007A, arg1: inst6000003B, type: type(symbolic_constantA)}
+// CHECK:STDOUT:     inst60000174:    {kind: TupleInit, arg0: inst_block6000007A, arg1: inst6000003A, type: type(symbolic_constantA)}
 // CHECK:STDOUT:     inst60000175:    {kind: Converted, arg0: inst60000049, arg1: inst60000174, type: type(symbolic_constantA)}
-// CHECK:STDOUT:     inst60000176:    {kind: ReturnExpr, arg0: inst60000175, arg1: inst6000003B}
+// CHECK:STDOUT:     inst60000176:    {kind: ReturnExpr, arg0: inst60000175, arg1: inst6000003A}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
 // CHECK:STDOUT:       instF:           concrete_constant(instF)

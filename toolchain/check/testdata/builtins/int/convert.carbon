@@ -278,7 +278,7 @@ let convert_not_constant: i16 = IntLiteralToInt16(not_constant);
 // CHECK:STDOUT:   %Int32ToUint32.ref: %Int32ToUint32.type = name_ref Int32ToUint32, imports.%Main.Int32ToUint32 [concrete = constants.%Int32ToUint32]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %Int32ToUint32.call: init %u32 = call %Int32ToUint32.ref(%a.ref)
-// CHECK:STDOUT:   return %Int32ToUint32.call to %return
+// CHECK:STDOUT:   return %Int32ToUint32.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Narrowing(%a.param: %i32) -> %i16 {
@@ -286,7 +286,7 @@ let convert_not_constant: i16 = IntLiteralToInt16(not_constant);
 // CHECK:STDOUT:   %Int32ToInt16.ref: %Int32ToInt16.type = name_ref Int32ToInt16, imports.%Main.Int32ToInt16 [concrete = constants.%Int32ToInt16]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %Int32ToInt16.call: init %i16 = call %Int32ToInt16.ref(%a.ref)
-// CHECK:STDOUT:   return %Int32ToInt16.call to %return
+// CHECK:STDOUT:   return %Int32ToInt16.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Widening(%a.param: %i32) -> %i64 {
@@ -294,6 +294,6 @@ let convert_not_constant: i16 = IntLiteralToInt16(not_constant);
 // CHECK:STDOUT:   %Int32ToInt64.ref: %Int32ToInt64.type = name_ref Int32ToInt64, imports.%Main.Int32ToInt64 [concrete = constants.%Int32ToInt64]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %Int32ToInt64.call: init %i64 = call %Int32ToInt64.ref(%a.ref)
-// CHECK:STDOUT:   return %Int32ToInt64.call to %return
+// CHECK:STDOUT:   return %Int32ToInt64.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

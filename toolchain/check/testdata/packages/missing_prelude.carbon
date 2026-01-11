@@ -209,9 +209,9 @@ var n: {} = i32;
 // CHECK:STDOUT:   fn() -> %empty_struct_type {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc4_41.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc4_41.2: init %empty_struct_type = struct_init () to %return [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc4_41.2: init %empty_struct_type = struct_init () to %return.param [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc4_42: init %empty_struct_type = converted %.loc4_41.1, %.loc4_41.2 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     return %.loc4_42 to %return
+// CHECK:STDOUT:     return %.loc4_42 to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -364,9 +364,9 @@ var n: {} = i32;
 // CHECK:STDOUT:   fn() -> %empty_tuple.type {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc8_41.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc8_41.2: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc8_41.2: init %empty_tuple.type = tuple_init () to %return.param [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_42: init %empty_tuple.type = converted %.loc8_41.1, %.loc8_41.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     return %.loc8_42 to %return
+// CHECK:STDOUT:     return %.loc8_42 to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

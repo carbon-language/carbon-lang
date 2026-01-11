@@ -283,11 +283,11 @@ class X(U:! type) {
 // CHECK:STDOUT:   %bound_method.loc15_21.2: <bound method> = bound_method %int_2, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc15_21.2(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc15_21.2: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc15_21.3: ref %i32 = class_element_access %return, element0
+// CHECK:STDOUT:   %.loc15_21.3: ref %i32 = class_element_access %return.param, element0
 // CHECK:STDOUT:   %.loc15_21.4: init %i32 = initialize_from %.loc15_21.2 to %.loc15_21.3 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc15_21.5: init %Param = class_init (%.loc15_21.4), %return [concrete = constants.%Param.val]
+// CHECK:STDOUT:   %.loc15_21.5: init %Param = class_init (%.loc15_21.4), %return.param [concrete = constants.%Param.val]
 // CHECK:STDOUT:   %.loc15_22: init %Param = converted %.loc15_21.1, %.loc15_21.5 [concrete = constants.%Param.val]
-// CHECK:STDOUT:   return %.loc15_22 to %return
+// CHECK:STDOUT:   return %.loc15_22 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%c.param: %C) {

@@ -14,9 +14,11 @@ namespace Carbon::Check {
 // return from.
 auto GetCurrentFunctionForReturn(Context& context) -> SemIR::Function&;
 
-// Gets the return slot of the function that lexically encloses the current
-// location.
-auto GetCurrentReturnSlot(Context& context) -> SemIR::InstId;
+// Gets the return parameter corresponding to `function`'s `returned var`.
+// Returns None if the `returned var` doesn't correspond to a return parameter
+// (e.g. because it doesn't have an in-place init representation).
+auto GetReturnedVarParam(Context& context, const SemIR::Function& function)
+    -> SemIR::InstId;
 
 // Checks a `returned var` binding and registers it as the current `returned
 // var` in this scope.

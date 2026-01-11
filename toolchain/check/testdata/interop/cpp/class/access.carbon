@@ -2113,7 +2113,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %addr.loc11_49: %ptr.dfa = addr_of %.loc11_49.1
 // CHECK:STDOUT:   %PublicCall__carbon_thunk.call: init %empty_tuple.type = call imports.%PublicCall__carbon_thunk.decl(%addr.loc11_49)
 // CHECK:STDOUT:   %.loc11_49.2: init %PublicCall = in_place_init %PublicCall__carbon_thunk.call, %.loc11_49.1
-// CHECK:STDOUT:   %.loc11_51.1: ref %C = class_element_access %return, element0
+// CHECK:STDOUT:   %.loc11_51.1: ref %C = class_element_access %return.param, element0
 // CHECK:STDOUT:   %.loc11_49.3: ref %PublicCall = temporary %.loc11_49.1, %.loc11_49.2
 // CHECK:STDOUT:   %.loc11_49.4: %PublicCall = acquire_value %.loc11_49.3
 // CHECK:STDOUT:   %.loc11_49.5: ref %PublicCall = value_as_ref %.loc11_49.4
@@ -2122,11 +2122,11 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %C__carbon_thunk.call: init %empty_tuple.type = call imports.%C__carbon_thunk.decl.8acdfe.1(%addr.loc11_50.1, %addr.loc11_50.2)
 // CHECK:STDOUT:   %.loc11_50: init %C = in_place_init %C__carbon_thunk.call, %.loc11_51.1
 // CHECK:STDOUT:   %.loc11_51.2: %struct_type.base.7c3 = struct_literal (%.loc11_50)
-// CHECK:STDOUT:   %.loc11_51.3: init %D = class_init (%.loc11_50), %return
+// CHECK:STDOUT:   %.loc11_51.3: init %D = class_init (%.loc11_50), %return.param
 // CHECK:STDOUT:   %.loc11_52: init %D = converted %.loc11_51.2, %.loc11_51.3
 // CHECK:STDOUT:   %PublicCall.cpp_destructor.bound: <bound method> = bound_method %.loc11_49.3, constants.%PublicCall.cpp_destructor
 // CHECK:STDOUT:   %PublicCall.cpp_destructor.call: init %empty_tuple.type = call %PublicCall.cpp_destructor.bound(%.loc11_49.3)
-// CHECK:STDOUT:   return %.loc11_52 to %return
+// CHECK:STDOUT:   return %.loc11_52 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D.MakeProtected() -> %return.param: %D {
@@ -2139,7 +2139,7 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %addr.loc17_55: %ptr.8e6 = addr_of %.loc17_55.1
 // CHECK:STDOUT:   %ProtectedCall__carbon_thunk.call: init %empty_tuple.type = call imports.%ProtectedCall__carbon_thunk.decl(%addr.loc17_55)
 // CHECK:STDOUT:   %.loc17_55.2: init %ProtectedCall = in_place_init %ProtectedCall__carbon_thunk.call, %.loc17_55.1
-// CHECK:STDOUT:   %.loc17_57.1: ref %C = class_element_access %return, element0
+// CHECK:STDOUT:   %.loc17_57.1: ref %C = class_element_access %return.param, element0
 // CHECK:STDOUT:   %.loc17_55.3: ref %ProtectedCall = temporary %.loc17_55.1, %.loc17_55.2
 // CHECK:STDOUT:   %.loc17_55.4: %ProtectedCall = acquire_value %.loc17_55.3
 // CHECK:STDOUT:   %.loc17_55.5: ref %ProtectedCall = value_as_ref %.loc17_55.4
@@ -2148,11 +2148,11 @@ fn Call(var instance: Cpp.PublicPrivate) {
 // CHECK:STDOUT:   %C__carbon_thunk.call: init %empty_tuple.type = call imports.%C__carbon_thunk.decl.8acdfe.2(%addr.loc17_56.1, %addr.loc17_56.2)
 // CHECK:STDOUT:   %.loc17_56: init %C = in_place_init %C__carbon_thunk.call, %.loc17_57.1
 // CHECK:STDOUT:   %.loc17_57.2: %struct_type.base.7c3 = struct_literal (%.loc17_56)
-// CHECK:STDOUT:   %.loc17_57.3: init %D = class_init (%.loc17_56), %return
+// CHECK:STDOUT:   %.loc17_57.3: init %D = class_init (%.loc17_56), %return.param
 // CHECK:STDOUT:   %.loc17_58: init %D = converted %.loc17_57.2, %.loc17_57.3
 // CHECK:STDOUT:   %ProtectedCall.cpp_destructor.bound: <bound method> = bound_method %.loc17_55.3, constants.%ProtectedCall.cpp_destructor
 // CHECK:STDOUT:   %ProtectedCall.cpp_destructor.call: init %empty_tuple.type = call %ProtectedCall.cpp_destructor.bound(%.loc17_55.3)
-// CHECK:STDOUT:   return %.loc17_58 to %return
+// CHECK:STDOUT:   return %.loc17_58 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D.CallPublic() {

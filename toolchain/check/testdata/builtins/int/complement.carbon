@@ -79,7 +79,7 @@ fn F(a: Core.IntLiteral()) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %Complement.ref: %Complement.type = name_ref Complement, file.%Complement.decl [concrete = constants.%Complement]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %Complement.call: init %i32 = call %Complement.ref(%a.ref)
-// CHECK:STDOUT:   return %Complement.call to %return
+// CHECK:STDOUT:   return %Complement.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

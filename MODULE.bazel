@@ -37,7 +37,7 @@ bazel_dep(name = "rules_cc", version = "0.1.4")
 bazel_dep(name = "rules_pkg", version = "1.1.0")
 bazel_dep(name = "rules_shell", version = "0.5.0")
 bazel_dep(name = "tcmalloc", version = "0.0.0-20250331-43fcf6e")
-bazel_dep(name = "tree-sitter-bazel", version = "0.24.4")
+bazel_dep(name = "tree-sitter-bazel", version = "0.26.3")
 
 # The registry only has an old version. We use that here to avoid a miss but
 # override it with a newer version.

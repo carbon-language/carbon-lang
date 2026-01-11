@@ -194,7 +194,7 @@ fn G() -> C {
 // CHECK:STDOUT:   %bound_method.loc29_38.2: <bound method> = bound_method %int_1, %specific_fn.loc29_38.1 [concrete = constants.%bound_method.38b]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc29_38.1: init %i32 = call %bound_method.loc29_38.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc29_38.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc29_38.1 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc29_38.3: ref %i32 = class_element_access %return, element0
+// CHECK:STDOUT:   %.loc29_38.3: ref %i32 = class_element_access %return.param, element0
 // CHECK:STDOUT:   %.loc29_38.4: init %i32 = initialize_from %.loc29_38.2 to %.loc29_38.3 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %impl.elem0.loc29_38.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc29_38.3: <bound method> = bound_method %int_2, %impl.elem0.loc29_38.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4e5]
@@ -202,13 +202,13 @@ fn G() -> C {
 // CHECK:STDOUT:   %bound_method.loc29_38.4: <bound method> = bound_method %int_2, %specific_fn.loc29_38.2 [concrete = constants.%bound_method.646]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc29_38.2: init %i32 = call %bound_method.loc29_38.4(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc29_38.5: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc29_38.2 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc29_38.6: ref %i32 = class_element_access %return, element1
+// CHECK:STDOUT:   %.loc29_38.6: ref %i32 = class_element_access %return.param, element1
 // CHECK:STDOUT:   %.loc29_38.7: init %i32 = initialize_from %.loc29_38.5 to %.loc29_38.6 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc29_38.8: init %C = class_init (%.loc29_38.4, %.loc29_38.7), %return [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc29_38.8: init %C = class_init (%.loc29_38.4, %.loc29_38.7), %return.param [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc29_12: init %C = converted %.loc29_38.1, %.loc29_38.8 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign %return, %.loc29_12
+// CHECK:STDOUT:   assign %return.param, %.loc29_12
 // CHECK:STDOUT:   %C.ref.loc29: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %c: ref %C = ref_binding c, %return
+// CHECK:STDOUT:   %c: ref %C = ref_binding c, %return.param
 // CHECK:STDOUT:   %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

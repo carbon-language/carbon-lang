@@ -6,6 +6,7 @@
 
 #include "common/find.h"
 #include "toolchain/check/merge.h"
+#include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/pattern.h"
@@ -93,8 +94,7 @@ auto CheckFunctionTypeMatches(Context& context,
 
 auto CheckFunctionReturnType(Context& context, SemIR::LocId loc_id,
                              const SemIR::Function& function,
-                             SemIR::SpecificId specific_id)
-    -> SemIR::ReturnTypeInfo {
+                             SemIR::SpecificId specific_id) -> SemIR::TypeId {
   auto return_info = SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(),
                                                         function, specific_id);
 
@@ -125,7 +125,14 @@ auto CheckFunctionReturnType(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  return return_info;
+  if (return_info.init_repr.kind == SemIR::InitRepr::Incomplete ||
+      return_info.init_repr.kind == SemIR::InitRepr::Abstract) {
+    return SemIR::ErrorInst::TypeId;
+  }
+  if (!return_info.type_id.has_value()) {
+    return GetTupleType(context, {});
+  }
+  return return_info.type_id;
 }
 
 auto CheckFunctionDefinitionSignature(Context& context,
