@@ -218,7 +218,12 @@
       "patterns": [
         {
           "name": "constant.language.carbon",
-          "match": "\\b(array|bool|[iuf][1-9][0-9]*|type)\\b"
+          "match": "\\b(array|bool|type)\\b"
+        },
+        {
+          "name": "constant.language.carbon",
+          "comment": "Match common numeric type literals. Language server should highlight other valid literals.",
+          "match": "\\b[iuf](8|16|32|64|128)\\b"
         }
       ]
     },
