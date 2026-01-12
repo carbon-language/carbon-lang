@@ -132,7 +132,8 @@ final impl CppCompat.ULongLong64 as ImplicitAs(u64) {
 // TODO: As from Int(N) to LongLong64 if N > 64.
 // TODO: As from UInt(N) to ULongLong64 if N > 64.
 
-// TODO: Operations on Long32, ULong32, LongLong64, ULongLong64.
+// TODO: Operations on ULong32, LongLong64, ULongLong64.
+// TODO: Long32: heterogeneous arithmetic operators, bitwise operators, compound assignments.
 
 // Arithmetic.
 
