@@ -175,8 +175,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.loc11: %Copy.type = symbolic_binding T, 0 [symbolic = @Class.%T.loc5_13.1 (constants.%T.035)]
 // CHECK:STDOUT:     %T.ref.loc11_36: %Copy.type = name_ref T, %T.loc11 [symbolic = %T.loc6 (constants.%T.035)]
 // CHECK:STDOUT:     %T.as_type.loc11_36: type = facet_access_type %T.ref.loc11_36 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %.loc11_36.1: type = converted %T.ref.loc11_36, %T.as_type.loc11_36 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %.loc11_36.2: form = init_form %.loc11_36.1, call_param1 [symbolic = %.loc6_17.1 (constants.%.075d25.1)]
+// CHECK:STDOUT:     %.loc11_36.2: type = converted %T.ref.loc11_36, %T.as_type.loc11_36 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:     %.loc11_36.3: form = init_form %.loc11_36.2, call_param1 [symbolic = %.loc6_17.1 (constants.%.075d25.1)]
 // CHECK:STDOUT:     %n.param.loc11: @Class.F.%T.binding.as_type (%T.binding.as_type) = value_param call_param0
 // CHECK:STDOUT:     %.loc11_30.1: type = splice_block %.loc11_30.2 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)] {
 // CHECK:STDOUT:       %T.ref.loc11_30: %Copy.type = name_ref T, %T.loc11 [symbolic = %T.loc6 (constants.%T.035)]
@@ -201,8 +201,8 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %T.loc15: %Copy.type = symbolic_binding T, 0 [symbolic = @Class.%T.loc5_13.1 (constants.%T.035)]
 // CHECK:STDOUT:     %T.ref.loc15: %Copy.type = name_ref T, %T.loc15 [symbolic = %T.loc7 (constants.%T.035)]
 // CHECK:STDOUT:     %T.as_type.loc15: type = facet_access_type %T.ref.loc15 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %.loc15_44.1: type = converted %T.ref.loc15, %T.as_type.loc15 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:     %.loc15_44.2: form = init_form %.loc15_44.1, call_param1 [symbolic = %.loc7_25.1 (constants.%.075d25.1)]
+// CHECK:STDOUT:     %.loc15_44.2: type = converted %T.ref.loc15, %T.as_type.loc15 [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:     %.loc15_44.3: form = init_form %.loc15_44.2, call_param1 [symbolic = %.loc7_25.1 (constants.%.075d25.1)]
 // CHECK:STDOUT:     %self.param.loc15: @Class.G.%Class (%Class) = value_param call_param0
 // CHECK:STDOUT:     %.loc15_33.1: type = splice_block %Self.ref.loc15 [symbolic = %Class (constants.%Class)] {
 // CHECK:STDOUT:       %.loc15_33.2: type = specific_constant constants.%Class, @Class(constants.%T.035) [symbolic = %Class (constants.%Class)]
@@ -305,9 +305,9 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %bound_method.loc12_10.1: <bound method> = bound_method %n.ref, %impl.elem0.loc12_10.1
 // CHECK:STDOUT:     %specific_impl_fn.loc12_10.1: <specific function> = specific_impl_function %impl.elem0.loc12_10.1, @Copy.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc12_10.2 (constants.%specific_impl_fn.2c9)]
 // CHECK:STDOUT:     %bound_method.loc12_10.2: <bound method> = bound_method %n.ref, %specific_impl_fn.loc12_10.1
-// CHECK:STDOUT:     %.loc11_33: ref @Class.F.%T.binding.as_type (%T.binding.as_type) = splice_block %return.loc11 {}
-// CHECK:STDOUT:     %Copy.Op.call: init @Class.F.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc12_10.2(%n.ref) to %.loc11_33
-// CHECK:STDOUT:     return %Copy.Op.call to %return.loc11
+// CHECK:STDOUT:     %.loc11_36.1: ref @Class.F.%T.binding.as_type (%T.binding.as_type) = splice_block %return.param.loc11 {}
+// CHECK:STDOUT:     %Copy.Op.call: init @Class.F.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc12_10.2(%n.ref) to %.loc11_36.1
+// CHECK:STDOUT:     return %Copy.Op.call to %return.param.loc11
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -338,9 +338,9 @@ fn Generic(T:! ()).WrongType() {}
 // CHECK:STDOUT:     %bound_method.loc16_14.1: <bound method> = bound_method %.loc16_14.2, %impl.elem0.loc16_14.1
 // CHECK:STDOUT:     %specific_impl_fn.loc16_14.1: <specific function> = specific_impl_function %impl.elem0.loc16_14.1, @Copy.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc16_14.2 (constants.%specific_impl_fn.2c9)]
 // CHECK:STDOUT:     %bound_method.loc16_14.2: <bound method> = bound_method %.loc16_14.2, %specific_impl_fn.loc16_14.1
-// CHECK:STDOUT:     %.loc15_41: ref @Class.G.%T.binding.as_type (%T.binding.as_type) = splice_block %return.loc15 {}
-// CHECK:STDOUT:     %Copy.Op.call: init @Class.G.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc16_14.2(%.loc16_14.2) to %.loc15_41
-// CHECK:STDOUT:     return %Copy.Op.call to %return.loc15
+// CHECK:STDOUT:     %.loc15_44.1: ref @Class.G.%T.binding.as_type (%T.binding.as_type) = splice_block %return.param.loc15 {}
+// CHECK:STDOUT:     %Copy.Op.call: init @Class.G.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc16_14.2(%.loc16_14.2) to %.loc15_44.1
+// CHECK:STDOUT:     return %Copy.Op.call to %return.param.loc15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

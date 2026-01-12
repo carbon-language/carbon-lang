@@ -103,16 +103,15 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
 }
 
 // Returns a VarStorage inst for the given `var` pattern. If the pattern
-// is the body of a returned var, this reuses the return slot, and otherwise it
-// adds a new inst.
+// is the body of a returned var, this reuses the return parameter, and
+// otherwise it adds a new inst.
 static auto GetOrAddVarStorage(Context& context, SemIR::InstId var_pattern_id,
                                bool is_returned_var) -> SemIR::InstId {
   if (is_returned_var) {
-    auto& function = GetCurrentFunctionForReturn(context);
-    auto return_info =
-        SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(), function);
-    if (return_info.has_return_slot()) {
-      return GetCurrentReturnSlot(context);
+    if (auto return_param_id =
+            GetReturnedVarParam(context, GetCurrentFunctionForReturn(context));
+        return_param_id.has_value()) {
+      return return_param_id;
     }
   }
   auto pattern = context.insts().GetWithLocId(var_pattern_id);

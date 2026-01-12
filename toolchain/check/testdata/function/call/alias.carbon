@@ -71,9 +71,9 @@ fn Main() {
 // CHECK:STDOUT: fn @A() -> %empty_tuple.type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_24.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc15_24.2: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc15_24.2: init %empty_tuple.type = tuple_init () to %return.param [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc15_25: init %empty_tuple.type = converted %.loc15_24.1, %.loc15_24.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   return %.loc15_25 to %return
+// CHECK:STDOUT:   return %.loc15_25 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

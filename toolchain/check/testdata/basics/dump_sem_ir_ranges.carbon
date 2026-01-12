@@ -157,11 +157,11 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %B.call: init %empty_tuple.type = call %B.ref()
 // CHECK:STDOUT:   assign %c.ref.loc19, %B.call
 // CHECK:STDOUT:   %c.ref.loc20: ref %empty_tuple.type = name_ref c, %c
-// CHECK:STDOUT:   %.loc20_10: init %empty_tuple.type = tuple_init () to %return [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc20_10: init %empty_tuple.type = tuple_init () to %return.param [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc20_11: init %empty_tuple.type = converted %c.ref.loc20, %.loc20_10 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %c.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%c.var)
-// CHECK:STDOUT:   return %.loc20_11 to %return
+// CHECK:STDOUT:   return %.loc20_11 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- class.carbon

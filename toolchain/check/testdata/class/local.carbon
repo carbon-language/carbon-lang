@@ -173,7 +173,7 @@ class A {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc26_20.2(%.loc26_20.2)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc26_19.2, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc26_19.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B.Make() -> %return.param: %B {
@@ -190,14 +190,14 @@ class A {
 // CHECK:STDOUT:   %bound_method.loc19_39.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc19_39.2(%int_1) [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc19_39.2: init %i32 = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc19_39.3: ref %i32 = class_element_access %return, element0
+// CHECK:STDOUT:   %.loc19_39.3: ref %i32 = class_element_access %return.param, element0
 // CHECK:STDOUT:   %.loc19_39.4: init %i32 = initialize_from %.loc19_39.2 to %.loc19_39.3 [concrete = constants.%int_1.5d2]
-// CHECK:STDOUT:   %.loc19_39.5: init %B = class_init (%.loc19_39.4), %return [concrete = constants.%B.val]
+// CHECK:STDOUT:   %.loc19_39.5: init %B = class_init (%.loc19_39.4), %return.param [concrete = constants.%B.val]
 // CHECK:STDOUT:   %.loc19_18: init %B = converted %.loc19_39.1, %.loc19_39.5 [concrete = constants.%B.val]
-// CHECK:STDOUT:   assign %return, %.loc19_18
+// CHECK:STDOUT:   assign %return.param, %.loc19_18
 // CHECK:STDOUT:   %Self.ref.loc19: type = name_ref Self, constants.%B [concrete = constants.%B]
-// CHECK:STDOUT:   %b: ref %B = ref_binding b, %return
-// CHECK:STDOUT:   return %b to %return
+// CHECK:STDOUT:   %b: ref %B = ref_binding b, %return.param
+// CHECK:STDOUT:   return %b to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: %B) = "no_op";

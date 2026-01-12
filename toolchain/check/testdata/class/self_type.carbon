@@ -145,7 +145,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %Class.F.bound: <bound method> = bound_method %.loc26_11.1, %F.ref
 // CHECK:STDOUT:   %.loc26_11.2: %Class = acquire_value %.loc26_11.1
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%.loc26_11.2)
-// CHECK:STDOUT:   return %Class.F.call to %return.loc25
+// CHECK:STDOUT:   return %Class.F.call to %return.param.loc25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.Make() -> %return.param: %Class {
@@ -155,7 +155,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:     %s.var_patt: %pattern_type.904 = var_pattern %s.patt [concrete]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Self.ref.loc18: type = name_ref Self, constants.%Class [concrete = constants.%Class]
-// CHECK:STDOUT:   %s: ref %Class = ref_binding s, %return
+// CHECK:STDOUT:   %s: ref %Class = ref_binding s, %return.param
 // CHECK:STDOUT:   %s.ref.loc19_5: ref %Class = name_ref s, %s
 // CHECK:STDOUT:   %s.ref.loc19_16: ref %Class = name_ref s, %s
 // CHECK:STDOUT:   %addr: %ptr.8e5 = addr_of %s.ref.loc19_16
@@ -170,6 +170,6 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %.loc19_17.4: init %Class = class_init (%.loc19_17.3), %s.ref.loc19_5
 // CHECK:STDOUT:   %.loc19_7: init %Class = converted %.loc19_17.1, %.loc19_17.4
 // CHECK:STDOUT:   assign %s.ref.loc19_5, %.loc19_7
-// CHECK:STDOUT:   return %s to %return
+// CHECK:STDOUT:   return %s to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

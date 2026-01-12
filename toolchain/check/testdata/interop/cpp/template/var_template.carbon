@@ -52,6 +52,8 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:   %Wrap: type = class_type @Wrap [concrete]
 // CHECK:STDOUT:   %var.type.17b: type = cpp_type_template_type r#var [concrete]
 // CHECK:STDOUT:   %var.template.df3: %var.type.17b = struct_value () [concrete]
+// CHECK:STDOUT:   %addr.113: %ptr.270 = addr_of imports.%var.var.2e6 [concrete]
+// CHECK:STDOUT:   %addr.594: %ptr.a04 = addr_of imports.%var.var.bab [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -75,10 +77,10 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:   %var.template.df3: %var.type.17b = struct_value () [concrete = constants.%var.template.df3]
 // CHECK:STDOUT:   %var.patt.022: %pattern_type.9de = ref_binding_pattern r#var [concrete]
 // CHECK:STDOUT:   %var.var_patt.0cb: %pattern_type.9de = var_pattern %var.patt.022 [concrete]
-// CHECK:STDOUT:   %var.var.2e6: ref %A = var %var.var_patt.0cb
+// CHECK:STDOUT:   %var.var.2e6: ref %A = var %var.var_patt.0cb [concrete]
 // CHECK:STDOUT:   %var.patt.605: %pattern_type.d0f = ref_binding_pattern r#var [concrete]
 // CHECK:STDOUT:   %var.var_patt.efb: %pattern_type.d0f = var_pattern %var.patt.605 [concrete]
-// CHECK:STDOUT:   %var.var.bab: ref %B = var %var.var_patt.efb
+// CHECK:STDOUT:   %var.var.bab: ref %B = var %var.var_patt.efb [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -137,13 +139,13 @@ let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 // CHECK:STDOUT:   %var.ref.loc9: %var.type.17b = name_ref r#var, imports.%var.template.df3 [concrete = constants.%var.template.df3]
 // CHECK:STDOUT:   %Cpp.ref.loc9_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %A.ref.loc9: type = name_ref A, imports.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %addr.loc9: %ptr.270 = addr_of imports.%var.var.2e6
+// CHECK:STDOUT:   %addr.loc9: %ptr.270 = addr_of imports.%var.var.2e6 [concrete = constants.%addr.113]
 // CHECK:STDOUT:   %Cpp.ref.loc10_20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Wrap.ref.loc10: type = name_ref Wrap, imports.%Wrap.decl [concrete = constants.%Wrap]
 // CHECK:STDOUT:   %var.ref.loc10: %var.type.17b = name_ref r#var, imports.%var.template.df3 [concrete = constants.%var.template.df3]
 // CHECK:STDOUT:   %Cpp.ref.loc10_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %B.ref.loc10: type = name_ref B, imports.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %addr.loc10: %ptr.a04 = addr_of imports.%var.var.bab
+// CHECK:STDOUT:   %addr.loc10: %ptr.a04 = addr_of imports.%var.var.bab [concrete = constants.%addr.594]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

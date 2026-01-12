@@ -215,7 +215,7 @@ class Derived {
 // CHECK:STDOUT:   %bound_method.loc14_26.2: <bound method> = bound_method %int_4, %specific_fn.loc14_26 [concrete = constants.%bound_method.6d7]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc14_26: init %i32 = call %bound_method.loc14_26.2(%int_4) [concrete = constants.%int_4.940]
 // CHECK:STDOUT:   %.loc14_26.2: init %i32 = converted %int_4, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc14_26 [concrete = constants.%int_4.940]
-// CHECK:STDOUT:   %.loc14_35.2: ref %Base = class_element_access %return, element0
+// CHECK:STDOUT:   %.loc14_35.2: ref %Base = class_element_access %return.param, element0
 // CHECK:STDOUT:   %.loc14_26.3: ref %i32 = class_element_access %.loc14_35.2, element0
 // CHECK:STDOUT:   %.loc14_26.4: init %i32 = initialize_from %.loc14_26.2 to %.loc14_26.3 [concrete = constants.%int_4.940]
 // CHECK:STDOUT:   %.loc14_26.5: init %Base = class_init (%.loc14_26.4), %.loc14_35.2 [concrete = constants.%Base.val]
@@ -226,11 +226,11 @@ class Derived {
 // CHECK:STDOUT:   %bound_method.loc14_35.2: <bound method> = bound_method %int_7, %specific_fn.loc14_35 [concrete = constants.%bound_method.bf2]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc14_35: init %i32 = call %bound_method.loc14_35.2(%int_7) [concrete = constants.%int_7.0b1]
 // CHECK:STDOUT:   %.loc14_35.4: init %i32 = converted %int_7, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc14_35 [concrete = constants.%int_7.0b1]
-// CHECK:STDOUT:   %.loc14_35.5: ref %i32 = class_element_access %return, element1
+// CHECK:STDOUT:   %.loc14_35.5: ref %i32 = class_element_access %return.param, element1
 // CHECK:STDOUT:   %.loc14_35.6: init %i32 = initialize_from %.loc14_35.4 to %.loc14_35.5 [concrete = constants.%int_7.0b1]
-// CHECK:STDOUT:   %.loc14_35.7: init %Derived = class_init (%.loc14_35.3, %.loc14_35.6), %return [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc14_35.7: init %Derived = class_init (%.loc14_35.3, %.loc14_35.6), %return.param [concrete = constants.%Derived.val]
 // CHECK:STDOUT:   %.loc14_36: init %Derived = converted %.loc14_35.1, %.loc14_35.7 [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   return %.loc14_36 to %return
+// CHECK:STDOUT:   return %.loc14_36 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Access(%d.param: %Derived) -> %return.param: %tuple.type.d07 {
@@ -252,18 +252,18 @@ class Derived {
 // CHECK:STDOUT:   %specific_fn.loc18_12: <specific function> = specific_function %impl.elem0.loc18_12, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc18_12.2: <bound method> = bound_method %.loc18_12.2, %specific_fn.loc18_12
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc18_12: init %i32 = call %bound_method.loc18_12.2(%.loc18_12.2)
-// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return, element0
+// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return.param, element0
 // CHECK:STDOUT:   %.loc18_24.2: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc18_12 to %tuple.elem0
 // CHECK:STDOUT:   %impl.elem0.loc18_22: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
 // CHECK:STDOUT:   %bound_method.loc18_22.1: <bound method> = bound_method %.loc18_22.2, %impl.elem0.loc18_22
 // CHECK:STDOUT:   %specific_fn.loc18_22: <specific function> = specific_function %impl.elem0.loc18_22, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc18_22.2: <bound method> = bound_method %.loc18_22.2, %specific_fn.loc18_22
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc18_22: init %i32 = call %bound_method.loc18_22.2(%.loc18_22.2)
-// CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return, element1
+// CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return.param, element1
 // CHECK:STDOUT:   %.loc18_24.3: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc18_22 to %tuple.elem1
-// CHECK:STDOUT:   %.loc18_24.4: init %tuple.type.d07 = tuple_init (%.loc18_24.2, %.loc18_24.3) to %return
+// CHECK:STDOUT:   %.loc18_24.4: init %tuple.type.d07 = tuple_init (%.loc18_24.2, %.loc18_24.3) to %return.param
 // CHECK:STDOUT:   %.loc18_25: init %tuple.type.d07 = converted %.loc18_24.1, %.loc18_24.4
-// CHECK:STDOUT:   return %.loc18_25 to %return
+// CHECK:STDOUT:   return %.loc18_25 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_base_after_field.carbon

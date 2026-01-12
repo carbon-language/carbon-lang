@@ -52,7 +52,7 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %impl.elem1: %.b59 = impl_witness_access constants.%BitComplement.impl_witness, element1 [concrete = constants.%C.as.BitComplement.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %C.as.BitComplement.impl.Op.call: init %C = call %bound_method(%a.ref) to %.loc27_17
-// CHECK:STDOUT:   return %C.as.BitComplement.impl.Op.call to %return
+// CHECK:STDOUT:   %C.as.BitComplement.impl.Op.call: init %C = call %bound_method(%a.ref) to %.loc27_20.1
+// CHECK:STDOUT:   return %C.as.BitComplement.impl.Op.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

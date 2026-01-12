@@ -313,6 +313,45 @@ static auto BuildThunkParameters(clang::ASTContext& ast_context,
   return thunk_params;
 }
 
+// Computes a name to use for a thunk, based on the name of the thunk's target.
+// The actual name used isn't critical, since it doesn't show up much except in
+// AST dumps and SemIR output, but we try to produce a valid C++ identifier.
+static auto GetDeclNameForThunk(clang::ASTContext& ast_context,
+                                clang::DeclarationName name)
+    -> clang::DeclarationName {
+  llvm::SmallString<64> thunk_name;
+  switch (name.getNameKind()) {
+    case clang::DeclarationName::NameKind::Identifier: {
+      thunk_name = name.getAsIdentifierInfo()->getName();
+      break;
+    }
+    case clang::DeclarationName::NameKind::CXXOperatorName: {
+      thunk_name = "operator_";
+      switch (name.getCXXOverloadedOperator()) {
+        case clang::OO_None:
+        case clang::NUM_OVERLOADED_OPERATORS:
+          break;
+#define OVERLOADED_OPERATOR(Name, Spelling, Token, Unary, Binary, MemberOnly) \
+  case clang::OO_##Name:                                                      \
+    thunk_name += #Name;                                                      \
+    break;
+#include "clang/Basic/OperatorKinds.def"
+      }
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+  if (auto type = name.getCXXNameType(); !type.isNull()) {
+    if (auto* class_decl = type->getAsCXXRecordDecl()) {
+      thunk_name += class_decl->getName();
+    }
+  }
+  thunk_name += "__carbon_thunk";
+  return &ast_context.Idents.get(thunk_name);
+}
+
 // Returns the thunk function declaration given the callee function and the
 // thunk parameter types.
 static auto CreateThunkFunctionDecl(
@@ -320,9 +359,8 @@ static auto CreateThunkFunctionDecl(
     llvm::ArrayRef<clang::QualType> thunk_param_types) -> clang::FunctionDecl* {
   clang::ASTContext& ast_context = context.ast_context();
   clang::SourceLocation clang_loc = callee_info.decl->getLocation();
-
-  clang::IdentifierInfo& identifier_info = ast_context.Idents.get(
-      callee_info.decl->getNameAsString() + "__carbon_thunk");
+  clang::DeclarationName name =
+      GetDeclNameForThunk(ast_context, callee_info.decl->getDeclName());
 
   auto ext_proto_info = clang::FunctionProtoType::ExtProtoInfo();
   clang::QualType thunk_function_type = ast_context.getFunctionType(
@@ -332,10 +370,10 @@ static auto CreateThunkFunctionDecl(
 
   clang::DeclContext* decl_context = ast_context.getTranslationUnitDecl();
   // TODO: Thunks should not have external linkage, consider using `SC_Static`.
-  clang::FunctionDecl* thunk_function_decl = clang::FunctionDecl::Create(
-      ast_context, decl_context, clang_loc, clang_loc,
-      clang::DeclarationName(&identifier_info), thunk_function_type,
-      /*TInfo=*/nullptr, clang::SC_Extern);
+  clang::FunctionDecl* thunk_function_decl =
+      clang::FunctionDecl::Create(ast_context, decl_context, clang_loc,
+                                  clang_loc, name, thunk_function_type,
+                                  /*TInfo=*/nullptr, clang::SC_Extern);
   decl_context->addDecl(thunk_function_decl);
 
   thunk_function_decl->setParams(

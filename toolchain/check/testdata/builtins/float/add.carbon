@@ -86,7 +86,7 @@ fn AddLiteral(a: Literal(), b: Literal()) -> Literal() = "float.add";
 // CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %f64.d77 = name_ref b, %b
 // CHECK:STDOUT:   %Add.call: init %f64.d77 = call %Add.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   return %Add.call to %return
+// CHECK:STDOUT:   return %Add.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -60,6 +60,6 @@ fn LessEq(a: Core.FloatLiteral(), b: Core.FloatLiteral()) -> bool = "float.less_
 // CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %f64.d77 = name_ref b, %b
 // CHECK:STDOUT:   %LessEq.call: init bool = call %LessEq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   return %LessEq.call to %return
+// CHECK:STDOUT:   return %LessEq.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

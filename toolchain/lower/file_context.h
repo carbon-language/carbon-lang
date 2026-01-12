@@ -71,8 +71,9 @@ class FileContext {
     CARBON_CHECK(type_id.is_concrete(), "Lowering symbolic type {0}: {1}",
                  type_id, sem_ir().types().GetAsInst(type_id));
     auto result = types_.Get(type_id);
-    CARBON_CHECK(result.llvm_ir_type, "Missing type {0}: {1}", type_id,
-                 sem_ir().types().GetAsInst(type_id));
+    if (!result.llvm_ir_type) {
+      result.llvm_ir_type = context_->GetOpaqueType();
+    }
     return result;
   }
 

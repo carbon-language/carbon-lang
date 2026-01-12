@@ -77,6 +77,17 @@ impl forall [T:! Destroy & OptionalStorage, U:! ImplicitAs(T)]
   }
 }
 
+impl forall [T:! Destroy & OptionalStorage,
+             U:! Destroy & OptionalStorage & ImplicitAs(T)]
+    Optional(U) as OptionalAs(T) {
+  fn Convert[self: Self]() -> Optional(T) {
+    if (self.HasValue()) {
+      return Optional(T).Some(self.Get().Convert());
+    }
+    return Optional(T).None();
+  }
+}
+
 impl forall [T:! OptionalStorage, U:! OptionalAs(T)]
     U as ImplicitAs(Optional(T)) {
   fn Convert[self: Self]() -> Optional(T) {
@@ -117,6 +128,8 @@ impl forall [T:! Copy & Destroy] T as OptionalStorage
   }
 }
 
+private fn PointerIsNull[T:! type](value: MaybeUnformed(T*)) -> bool = "pointer.is_null";
+
 // For pointers, we use a null pointer value as the "None" value. This allows
 // `Optional(T*)` to be ABI-compatible with a C++ nullable pointer.
 final impl forall [T:! type] T* as OptionalStorage
@@ -127,7 +140,9 @@ final impl forall [T:! type] T* as OptionalStorage
     result unsafe as T* = self;
     return var;
   }
-  fn Has(value: MaybeUnformed(T*)) -> bool = "pointer.is_null";
+  fn Has(value: MaybeUnformed(T*)) -> bool {
+    return not PointerIsNull(value);
+  }
   fn Get(value: MaybeUnformed(T*)) -> T* {
     return value unsafe as T*;
   }

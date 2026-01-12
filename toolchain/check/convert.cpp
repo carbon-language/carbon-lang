@@ -1893,7 +1893,7 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
 auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
                      SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
-                     SemIR::InstId return_slot_arg_id,
+                     llvm::ArrayRef<SemIR::InstId> return_arg_ids,
                      const SemIR::Function& callee,
                      SemIR::SpecificId callee_specific_id,
                      bool is_operator_syntax) -> SemIR::InstBlockId {
@@ -1917,7 +1917,7 @@ auto ConvertCallArgs(Context& context, SemIR::LocId call_loc_id,
 
   return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
                             callee.param_patterns_id, return_patterns_id,
-                            self_id, arg_refs, return_slot_arg_id,
+                            self_id, arg_refs, return_arg_ids,
                             is_operator_syntax);
 }
 

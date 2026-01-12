@@ -1177,7 +1177,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.1f4 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.ref.loc4: type = name_ref B, imports.%Main.B [concrete = constants.%B]
-// CHECK:STDOUT:     %.loc4_15: form = init_form %B.ref.loc4, call_param0 [concrete = constants.%.312]
+// CHECK:STDOUT:     %.loc4_15.2: form = init_form %B.ref.loc4, call_param0 [concrete = constants.%.312]
 // CHECK:STDOUT:     %return.param: ref %B = out_param call_param0
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1188,7 +1188,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.1f4 = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.ref.loc7: type = name_ref B, imports.%Main.B [concrete = constants.%B]
-// CHECK:STDOUT:     %.loc7_23: form = init_form %B.ref.loc7, call_param1 [concrete = constants.%.521]
+// CHECK:STDOUT:     %.loc7_23.2: form = init_form %B.ref.loc7, call_param1 [concrete = constants.%.521]
 // CHECK:STDOUT:     %a.param: %A = value_param call_param0
 // CHECK:STDOUT:     %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A]
 // CHECK:STDOUT:     %a: %A = value_binding a, %a.param
@@ -1274,9 +1274,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Factory.facet: %Factory.type.5dd = facet_value %A.ref, (constants.%Factory.impl_witness) [concrete = constants.%Factory.facet]
 // CHECK:STDOUT:   %.loc5_11: %Factory.type.5dd = converted %A.ref, %Factory.facet [concrete = constants.%Factory.facet]
 // CHECK:STDOUT:   %impl.elem0: %.d31 = impl_witness_access constants.%Factory.impl_witness, element0 [concrete = constants.%A.as.Factory.impl.Make]
-// CHECK:STDOUT:   %.loc4_12: ref %B = splice_block %return {}
-// CHECK:STDOUT:   %A.as.Factory.impl.Make.call: init %B = call %impl.elem0() to %.loc4_12
-// CHECK:STDOUT:   return %A.as.Factory.impl.Make.call to %return
+// CHECK:STDOUT:   %.loc4_15.1: ref %B = splice_block %return.param {}
+// CHECK:STDOUT:   %A.as.Factory.impl.Make.call: init %B = call %impl.elem0() to %.loc4_15.1
+// CHECK:STDOUT:   return %A.as.Factory.impl.Make.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.as.Factory.impl.Make [from "factory.carbon"];
@@ -1291,9 +1291,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Method.ref: %Factory.assoc_type.3bd = name_ref Method, %.loc8 [concrete = constants.%assoc1.be2]
 // CHECK:STDOUT:   %impl.elem1: %.b77 = impl_witness_access constants.%Factory.impl_witness, element1 [concrete = constants.%A.as.Factory.impl.Method]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
-// CHECK:STDOUT:   %.loc7_20: ref %B = splice_block %return {}
-// CHECK:STDOUT:   %A.as.Factory.impl.Method.call: init %B = call %bound_method(%a.ref) to %.loc7_20
-// CHECK:STDOUT:   return %A.as.Factory.impl.Method.call to %return
+// CHECK:STDOUT:   %.loc7_23.1: ref %B = splice_block %return.param {}
+// CHECK:STDOUT:   %A.as.Factory.impl.Method.call: init %B = call %bound_method(%a.ref) to %.loc7_23.1
+// CHECK:STDOUT:   return %A.as.Factory.impl.Method.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.as.Factory.impl.Method [from "factory.carbon"];
@@ -1545,7 +1545,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(constants.%C)> [concrete = constants.%Factory.type.2db]
 // CHECK:STDOUT:   %.loc13: %Factory.assoc_type.930 = specific_constant imports.%Main.import_ref.6f2, @Factory(constants.%C) [concrete = constants.%assoc0.4ac]
 // CHECK:STDOUT:   %Make.ref: %Factory.assoc_type.930 = name_ref Make, %.loc13 [concrete = constants.%assoc0.4ac]
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InstanceC(%a.param: %A) -> %return.param: %C {
@@ -1556,7 +1556,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %Factory.type: type = facet_type <@Factory, @Factory(constants.%C)> [concrete = constants.%Factory.type.2db]
 // CHECK:STDOUT:   %.loc21: %Factory.assoc_type.930 = specific_constant imports.%Main.import_ref.fb1, @Factory(constants.%C) [concrete = constants.%assoc1.09b]
 // CHECK:STDOUT:   %Method.ref: %Factory.assoc_type.930 = name_ref Method, %.loc21 [concrete = constants.%assoc1.09b]
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Factory(constants.%T) {

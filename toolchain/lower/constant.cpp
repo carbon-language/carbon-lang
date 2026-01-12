@@ -10,6 +10,7 @@
 #include "llvm/IR/Value.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/lower/file_context.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -345,9 +346,10 @@ auto LowerConstants(FileContext& file_context,
 
     auto inst = file_context.sem_ir().insts().Get(inst_id);
     if (inst.type_id().has_value() &&
-        !file_context.sem_ir().types().IsComplete(inst.type_id())) {
-      // If a constant doesn't have a complete type, that means we imported it
-      // but didn't actually use it.
+        !file_context.sem_ir().types().IsComplete(inst.type_id()) &&
+        !IsRefCategory(SemIR::GetExprCategory(context.sem_ir(), inst_id))) {
+      // If a non-reference constant doesn't have a complete type, that means we
+      // imported it but didn't actually use it.
       continue;
     }
 
