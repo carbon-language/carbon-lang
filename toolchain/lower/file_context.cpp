@@ -63,6 +63,9 @@ FileContext::FileContext(Context& context, const SemIR::File& sem_ir,
       specific_vtables_(sem_ir.specifics(), nullptr) {
   // Initialization that relies on invariants of the class.
   cpp_code_generator_ = cpp_file() ? cpp_file()->GetCodeGenerator() : nullptr;
+  CARBON_CHECK(
+      !cpp_code_generator_ ||
+      (&cpp_code_generator_->GetModule()->getContext() == &llvm_context()));
   CARBON_CHECK(!sem_ir.has_errors(),
                "Generating LLVM IR from invalid SemIR::File is unsupported.");
 }
