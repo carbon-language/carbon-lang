@@ -14,13 +14,10 @@ namespace Carbon::Lower {
 // Coalescing functionality for lowering fewer specifics of the same generic.
 class SpecificCoalescer {
  public:
-  using LoweredSpecificsStore =
-      FixedSizeValueStore<SemIR::GenericId,
-                          llvm::SmallVector<SemIR::SpecificId>,
-                          IdTag<SemIR::GenericId, SemIR::CheckIRId>>;
+  using LoweredSpecificsStore = FixedSizeValueStore<
+      SemIR::GenericId, llvm::SmallVector<SemIR::SpecificId>, SemIR::CheckIRId>;
   using LoweredLlvmFunctionStore =
-      FixedSizeValueStore<SemIR::SpecificId, llvm::Function*,
-                          IdTag<SemIR::SpecificId, SemIR::CheckIRId>>;
+      FixedSizeValueStore<SemIR::SpecificId, llvm::Function*, SemIR::CheckIRId>;
 
   // Describes a specific function's body fingerprint.
   struct SpecificFunctionFingerprint {
@@ -131,12 +128,12 @@ class SpecificCoalescer {
   // For specifics that exist in lowered_specifics, a hash of their function
   // type information.
   FixedSizeValueStore<SemIR::SpecificId, llvm::BLAKE3Result<32>,
-                      IdTag<SemIR::SpecificId, SemIR::CheckIRId>>
+                      SemIR::CheckIRId>
       lowered_specifics_type_fingerprint_;
 
   // This is initialized and populated while lowering a specific.
   FixedSizeValueStore<SemIR::SpecificId, SpecificFunctionFingerprint,
-                      IdTag<SemIR::SpecificId, SemIR::CheckIRId>>
+                      SemIR::CheckIRId>
       lowered_specific_fingerprint_;
 
   // Equivalent specifics that have been found. For each specific, this points
@@ -146,8 +143,7 @@ class SpecificCoalescer {
   //
   // Entries are initialized to `SpecificId::None`, which defines that there is
   // no other equivalent specific to this `SpecificId`.
-  FixedSizeValueStore<SemIR::SpecificId, SemIR::SpecificId,
-                      IdTag<SemIR::SpecificId, SemIR::CheckIRId>>
+  FixedSizeValueStore<SemIR::SpecificId, SemIR::SpecificId, SemIR::CheckIRId>
       equivalent_specifics_;
 
   // Non-equivalent specifics found.

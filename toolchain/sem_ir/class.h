@@ -116,7 +116,7 @@ struct Class : public EntityWithParamsBase,
   auto GetObjectRepr(const File& file, SpecificId specific_id) const -> TypeId;
 };
 
-using ClassStore = ValueStore<ClassId, Class, IdTag<ClassId, CheckIRId>>;
+using ClassStore = ValueStore<ClassId, Class, CheckIRId>;
 
 }  // namespace Carbon::SemIR
 

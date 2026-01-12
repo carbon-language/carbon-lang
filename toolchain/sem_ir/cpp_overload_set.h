@@ -39,8 +39,8 @@ struct CppOverloadSet : public Printable<CppOverloadSet> {
   }
 };
 
-using CppOverloadSetStore = ValueStore<CppOverloadSetId, CppOverloadSet,
-                                       IdTag<CppOverloadSetId, CheckIRId>>;
+using CppOverloadSetStore =
+    ValueStore<CppOverloadSetId, CppOverloadSet, CheckIRId>;
 
 }  // namespace Carbon::SemIR
 

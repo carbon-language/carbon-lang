@@ -25,8 +25,7 @@ namespace Carbon::SemIR {
 
 namespace {
 struct Worklist {
-  using FingerprintStore =
-      FixedSizeValueStore<InstId, uint64_t, IdTag<InstId, CheckIRId>>;
+  using FingerprintStore = FixedSizeValueStore<InstId, uint64_t, CheckIRId>;
   using FilesFingerprintStores =
       FixedSizeValueStore<CheckIRId, FingerprintStore>;
 

@@ -25,8 +25,7 @@ struct StructTypeField : Printable<StructTypeField> {
 };
 
 using StructTypeFieldsStore =
-    BlockValueStore<StructTypeFieldsId, StructTypeField,
-                    IdTag<StructTypeFieldsId, CheckIRId>>;
+    BlockValueStore<StructTypeFieldsId, StructTypeField, CheckIRId>;
 
 // See common/hashing.h. Supports canonicalization of fields.
 inline auto CarbonHashValue(const StructTypeField& value, uint64_t seed)

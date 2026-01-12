@@ -53,8 +53,7 @@ struct Generic : public Printable<Generic> {
 };
 
 // Provides storage for generics.
-class GenericStore
-    : public ValueStore<GenericId, Generic, IdTag<GenericId, CheckIRId>> {
+class GenericStore : public ValueStore<GenericId, Generic, CheckIRId> {
  public:
   using ValueStore::ValueStore;
 
@@ -110,8 +109,7 @@ struct Specific : Printable<Specific> {
 class SpecificStore : public Yaml::Printable<SpecificStore> {
  public:
   using IdType = SpecificId;
-  using ValueStore =
-      ValueStore<SpecificId, Specific, IdTag<SpecificId, CheckIRId>>;
+  using ValueStore = ValueStore<SpecificId, Specific, CheckIRId>;
 
   explicit SpecificStore(CheckIRId check_ir_id) : specifics_(check_ir_id) {}
 

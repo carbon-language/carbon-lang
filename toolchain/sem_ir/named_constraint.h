@@ -49,8 +49,8 @@ struct NamedConstraint : public EntityWithParamsBase,
   }
 };
 
-using NamedConstraintStore = ValueStore<NamedConstraintId, NamedConstraint,
-                                        IdTag<NamedConstraintId, CheckIRId>>;
+using NamedConstraintStore =
+    ValueStore<NamedConstraintId, NamedConstraint, CheckIRId>;
 
 }  // namespace Carbon::SemIR
 

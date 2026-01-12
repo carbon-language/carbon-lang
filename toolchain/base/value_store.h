@@ -35,14 +35,14 @@ class ValueStoreNotPrintable {};
 
 // A simple wrapper for accumulating values, providing IDs to later retrieve the
 // value. This does not do deduplication.
-template <typename IdT, typename ValueT, typename IdTagT = IdTag<IdT, Untagged>>
+template <typename IdT, typename ValueT, typename TagIdT = Untagged>
 class ValueStore
     : public std::conditional<std::is_base_of_v<Printable<ValueT>, ValueT>,
-                              Yaml::Printable<ValueStore<IdT, ValueT, IdTagT>>,
+                              Yaml::Printable<ValueStore<IdT, ValueT, TagIdT>>,
                               Internal::ValueStoreNotPrintable> {
  public:
   using IdType = IdT;
-  using IdTagType = IdTagT;
+  using IdTagType = IdTag<IdT, TagIdT>;
   using ValueType = ValueStoreTypes<ValueT>::ValueType;
   using RefType = ValueStoreTypes<ValueT>::RefType;
   using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
@@ -78,18 +78,18 @@ class ValueStore
 
   // Default constructor, only valid when the IdTag's tag type is Untagged.
   ValueStore()
-    requires(IdTagIsUntagged<IdTagT>)
+    requires(IdTagIsUntagged<IdTagType>)
   = default;
 
   // Construct a ValueStore sharing the IdTag from another ValueStore. Useful
   // for when two ValueStores are sharing the same ID types.
-  explicit ValueStore(IdTagT tag)
-    requires(!IdTagIsUntagged<IdTagT>)
+  explicit ValueStore(IdTagType tag)
+    requires(!IdTagIsUntagged<IdTagType>)
       : tag_(tag) {}
 
   // Construct a ValueStore with a given tag and set of untagged (reserved) ids.
-  explicit ValueStore(IdTagT::TagIdType id, int32_t initial_reserved_ids = 0)
-    requires(!IdTagIsUntagged<IdTagT>)
+  explicit ValueStore(IdTagType::TagIdType id, int32_t initial_reserved_ids = 0)
+    requires(!IdTagIsUntagged<IdTagType>)
       : tag_(id, initial_reserved_ids) {}
 
   // Stores the value and returns an ID to reference it.
@@ -230,7 +230,7 @@ class ValueStore
     return llvm::map_range(llvm::seq(size_), index_to_id);
   }
 
-  auto GetIdTag() const -> IdTagT { return tag_; }
+  auto GetIdTag() const -> IdTagType { return tag_; }
   auto GetRawIndex(IdT id) const -> int32_t {
     CARBON_DCHECK(id.index >= 0, "{0}", index);
     auto index = tag_.Remove(id);
@@ -241,7 +241,7 @@ class ValueStore
       //
       // TODO: Teach ValueStore the type of the tag id with a template, then we
       // can print it with proper formatting instead of just as an integer.
-      auto [id_tag, id_untagged_index] = IdTagT::DecomposeWithBestEffort(id);
+      auto [id_tag, id_untagged_index] = IdTagType::DecomposeWithBestEffort(id);
       CARBON_DCHECK(
           index < size_,
           "Untagged index was outside of container range. Tagged index {0}. "
@@ -400,7 +400,7 @@ class ValueStore
   // fits in an `int32_t`, which is checked in non-optimized builds in Add().
   int32_t size_ = 0;
 
-  IdTagT tag_;
+  IdTagType tag_;
 
   // Storage for the `ValueType` objects, indexed by the id. We use a vector of
   // chunks of `ValueType` instead of just a vector of `ValueType` so that

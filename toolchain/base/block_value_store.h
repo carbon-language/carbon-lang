@@ -22,19 +22,18 @@ namespace Carbon::SemIR {
 //
 // BlockValueStore is used as-is, but there are also children that expose the
 // protected members for type-specific functionality.
-template <typename IdT, typename ElementT,
-          typename IdTagT = IdTag<IdT, Untagged>>
+template <typename IdT, typename ElementT, typename TagIdT = Untagged>
 class BlockValueStore
-    : public Yaml::Printable<BlockValueStore<IdT, ElementT, IdTagT>> {
+    : public Yaml::Printable<BlockValueStore<IdT, ElementT, TagIdT>> {
  public:
   using IdType = IdT;
-  using IdTagType = IdTagT;
+  using IdTagType = IdTag<IdT, TagIdT>;
   using ElementType = ElementT;
   using RefType = llvm::MutableArrayRef<ElementT>;
   using ConstRefType = llvm::ArrayRef<ElementT>;
 
   explicit BlockValueStore(llvm::BumpPtrAllocator& allocator,
-                           IdTagT::TagIdType tag_id,
+                           IdTagType::TagIdType tag_id,
                            int32_t initial_reserved_ids = 0)
       : allocator_(&allocator), values_(tag_id, initial_reserved_ids) {
     auto empty = RefType();
@@ -133,18 +132,18 @@ class BlockValueStore
   }
 
   // Allow children to have more complex value handling.
-  auto values() -> ValueStore<IdT, RefType, IdTagT>& { return values_; }
+  auto values() -> ValueStore<IdT, RefType, TagIdT>& { return values_; }
 
  private:
   class KeyContext;
 
   llvm::BumpPtrAllocator* allocator_;
-  ValueStore<IdT, RefType, IdTagT> values_;
+  ValueStore<IdT, RefType, TagIdT> values_;
   Set<IdT, /*SmallSize=*/0, KeyContext> canonical_blocks_;
 };
 
-template <typename IdT, typename ElementT, typename IdTagT>
-class BlockValueStore<IdT, ElementT, IdTagT>::KeyContext
+template <typename IdT, typename ElementT, typename TagIdT>
+class BlockValueStore<IdT, ElementT, TagIdT>::KeyContext
     : public TranslatingKeyContext<KeyContext> {
  public:
   explicit KeyContext(const BlockValueStore* store) : store_(store) {}

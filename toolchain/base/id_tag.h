@@ -20,6 +20,7 @@ struct Untagged : Printable<Untagged> {
   auto Print(llvm::raw_ostream& out) const -> void { out << "<untagged>"; }
 };
 
+// Tests if an `IdTag` type is untagged.
 template <typename IdTagT>
 concept IdTagIsUntagged = std::same_as<typename IdTagT::TagIdType, Untagged>;
 
@@ -136,6 +137,7 @@ struct IdTag {
   // when the id indices are interchangeable, as they will have the same tag and
   // the same reserved ids.
   template <typename OtherIdT>
+    requires(!IdTagIsUntagged<IdTag>)
   auto ForEquivalentIdType() -> IdTag<OtherIdT, TagIdT> {
     return {GetContainerTag(), initial_reserved_ids_};
   }

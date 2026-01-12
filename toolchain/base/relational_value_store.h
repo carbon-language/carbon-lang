@@ -36,6 +36,7 @@ class RelationalValueStore {
  public:
   using RelatedIdType = RelatedStoreT::IdType;
   using RelatedIdTagType = RelatedStoreT::IdTagType;
+  using RelatedTagIdType = RelatedIdTagType::TagIdType;
   using ValueType = ValueStoreTypes<ValueT>::ValueType;
   using ConstRefType = ValueStoreTypes<ValueT>::ConstRefType;
 
@@ -74,7 +75,7 @@ class RelationalValueStore {
   }
 
  private:
-  ValueStore<RelatedIdType, std::optional<ValueType>, RelatedIdTagType> values_;
+  ValueStore<RelatedIdType, std::optional<ValueType>, RelatedTagIdType> values_;
   const RelatedStoreT* related_store_;
 };
 

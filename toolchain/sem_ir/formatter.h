@@ -407,8 +407,7 @@ class Formatter {
 
   // Indexes of chunks of output that should be included when an instruction is
   // referenced, indexed by the instruction's index.
-  FixedSizeValueStore<InstId, size_t, IdTag<InstId, CheckIRId>>
-      tentative_inst_chunks_;
+  FixedSizeValueStore<InstId, size_t, CheckIRId> tentative_inst_chunks_;
 
   // Maps nodes to their parents. Only set when dump ranges are in use, because
   // the parents aren't used otherwise.

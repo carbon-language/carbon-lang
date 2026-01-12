@@ -209,8 +209,7 @@ struct Function : public EntityWithParamsBase,
   }
 };
 
-using FunctionStore =
-    ValueStore<FunctionId, Function, IdTag<FunctionId, CheckIRId>>;
+using FunctionStore = ValueStore<FunctionId, Function, CheckIRId>;
 
 class File;
 

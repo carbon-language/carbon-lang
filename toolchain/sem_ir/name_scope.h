@@ -366,7 +366,7 @@ class NameScopeStore {
 
  private:
   const File* file_;
-  ValueStore<NameScopeId, NameScope, IdTag<NameScopeId, CheckIRId>> values_;
+  ValueStore<NameScopeId, NameScope, CheckIRId> values_;
 };
 
 }  // namespace Carbon::SemIR

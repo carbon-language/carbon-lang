@@ -278,15 +278,14 @@ class ConstantValueStore {
   //
   // Set inline size to 0 because these will typically be too large for the
   // stack, while this does make File smaller.
-  ValueStore<InstId, ConstantId, IdTag<InstId, CheckIRId>> values_;
+  ValueStore<InstId, ConstantId, CheckIRId> values_;
 
   // A mapping from a symbolic constant ID index to information about the
   // symbolic constant. For a concrete constant, the only information that we
   // track is the instruction ID, which is stored directly within the
   // `ConstantId`. For a symbolic constant, we also track information about
   // where the constant was used, which is stored here.
-  ValueStore<ConstantId::SymbolicId, SymbolicConstant,
-             IdTag<ConstantId::SymbolicId, CheckIRId>>
+  ValueStore<ConstantId::SymbolicId, SymbolicConstant, CheckIRId>
       symbolic_constants_;
 
   const InstStore* insts_;
