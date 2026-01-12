@@ -132,8 +132,6 @@ final impl CppCompat.ULongLong64 as ImplicitAs(u64) {
 // TODO: As from Int(N) to LongLong64 if N > 64.
 // TODO: As from UInt(N) to ULongLong64 if N > 64.
 
-// TODO: Operations on ULong32, LongLong64, ULongLong64.
-// TODO: Long32: heterogeneous arithmetic operators, bitwise operators, compound assignments.
 
 // Arithmetic.
 
@@ -162,3 +160,39 @@ final impl CppCompat.Long32 as DivWith(Self) where .Result = Self {
 final impl CppCompat.Long32 as ModWith(Self) where .Result = Self {
   fn Op[self: Self](other: Self) -> Self = "int.smod";
 }
+
+// TODO: ULong32, LongLong64, ULongLong64: homogeneous arithmetic operators.
+// TODO: Long32, ULong32, LongLong64, ULongLong64: heterogeneous arithmetic operators.
+
+// Bitwise operators.
+
+// - Homogeneous.
+
+final impl CppCompat.Long32 as BitComplement where .Result = Self {
+  fn Op[self: Self]() -> Self = "int.complement";
+}
+
+final impl CppCompat.Long32 as BitAndWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.and";
+}
+
+final impl CppCompat.Long32 as BitOrWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.or";
+}
+
+final impl CppCompat.Long32 as BitXorWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.xor";
+}
+
+final impl CppCompat.Long32 as LeftShiftWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.left_shift";
+}
+
+final impl CppCompat.Long32 as RightShiftWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.right_shift";
+}
+
+// TODO: ULong32, LongLong64, ULongLong64: homogeneous bitwise operators.
+// TODO: Long32, ULong32, LongLong64, ULongLong64: heterogeneous bitwise operators.
+
+// TODO: Compound assignments for Long32, ULong32, LongLong64, ULongLong64.
