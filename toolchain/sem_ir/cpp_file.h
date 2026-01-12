@@ -22,9 +22,7 @@ class CppFile {
  public:
   explicit CppFile(std::unique_ptr<clang::CompilerInstance> clang,
                    llvm::LLVMContext* llvm_context)
-      : clang_(std::move(clang)), llvm_context_(llvm_context) {
-    clang_->getCodeGenOpts().EmitVersionIdentMetadata = false;
-  }
+      : clang_(std::move(clang)), llvm_context_(llvm_context) {}
 
   // Access to compilation options.
   auto diagnostic_options() const -> const clang::DiagnosticOptions& {
