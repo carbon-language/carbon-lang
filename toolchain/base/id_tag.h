@@ -51,7 +51,7 @@ struct IdTag {
   auto Apply(int32_t index) const -> IdT {
     CARBON_DCHECK(index >= 0, "{0}", index);
     if (index < initial_reserved_ids_) {
-      return IdT{index};
+      return IdT(index);
     }
     // TODO: Assert that tag_ doesn't have the second highest bit set.
     auto tagged_index = index ^ tag_;
@@ -80,7 +80,7 @@ struct IdTag {
     if constexpr (IdTagIsUntagged<IdTag>) {
       return TagIdT();
     } else {
-      return TagIdT{(llvm::reverseBits(tag_) >> 2) - 1};
+      return TagIdT((llvm::reverseBits(tag_) >> 2) - 1);
     }
   }
 
@@ -128,7 +128,7 @@ struct IdTag {
       auto index_mask = llvm::maskTrailingOnes<uint32_t>(location);
       auto tag = (llvm::reverseBits(id.index & ~index_mask) >> 2) - 1;
       auto index = id.index & index_mask;
-      return {.tag = TagIdT{static_cast<int32_t>(tag)},
+      return {.tag = TagIdT(static_cast<int32_t>(tag)),
               .index = static_cast<int32_t>(index)};
     }
   }
@@ -138,7 +138,7 @@ struct IdTag {
   // the same reserved ids.
   template <typename OtherIdT>
     requires(!IdTagIsUntagged<IdTag>)
-  auto ForEquivalentIdType() -> IdTag<OtherIdT, TagIdT> {
+  auto ToEquivalentIdType() -> IdTag<OtherIdT, TagIdT> {
     return {GetContainerTag(), initial_reserved_ids_};
   }
 

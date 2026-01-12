@@ -177,7 +177,7 @@ class MetaInstId : public InstId {
 // IdTags for ConstantIds are slightly complex, and you need to know if the
 // constant is concrete or symbolic to know its tag:
 // - Concrete ConstantIds use the tag of the store of InstIds.
-// - Symbolic ConstantIds are tagged by the internal SymbolicId.
+// - Symbolic ConstantIds use the tag of the store of internal SymbolicIds.
 struct ConstantId : public IdBase<ConstantId> {
   static constexpr llvm::StringLiteral Label = "constant";
 

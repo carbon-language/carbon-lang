@@ -253,12 +253,12 @@ class ConstantValueStore {
   // The tag used in ConstantIds for concrete constants.
   using ConcreteIdTagType = IdTag<SemIR::ConstantId, SemIR::CheckIRId>;
   auto GetConcreteIdTag() const -> ConcreteIdTagType {
-    return values_.GetIdTag().ForEquivalentIdType<SemIR::ConstantId>();
+    return values_.GetIdTag().ToEquivalentIdType<SemIR::ConstantId>();
   }
   // The tag used for TypeId, which are concrete constants internally.
   using TypeIdTagType = IdTag<SemIR::TypeId, SemIR::CheckIRId>;
   auto GetTypeIdTag() const -> TypeIdTagType {
-    return values_.GetIdTag().ForEquivalentIdType<SemIR::TypeId>();
+    return values_.GetIdTag().ToEquivalentIdType<SemIR::TypeId>();
   }
   // The tag used in ConstantIds for symbolic constants.
   using SymbolicIdTagType = IdTag<ConstantId::SymbolicId, SemIR::CheckIRId>;
