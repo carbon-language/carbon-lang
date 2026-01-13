@@ -140,4 +140,15 @@ auto Function::GetDeclaredReturnType(const File& file,
       GetConstantValueInSpecific(file, specific_id, return_type_inst_id));
 }
 
+auto Function::GetDeclaredReturnForm(const File& file,
+                                     SpecificId specific_id) const -> InstId {
+  if (!return_form_inst_id.has_value()) {
+    // Treat as equivalent to `-> ()`.
+    return InstId::None;
+  }
+  auto return_form_constant_id =
+      GetConstantValueInSpecific(file, specific_id, return_form_inst_id);
+  return file.constant_values().GetInstId(return_form_constant_id);
+}
+
 }  // namespace Carbon::SemIR

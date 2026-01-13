@@ -118,7 +118,7 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
           context, node_id,
           {.type_id = type_id,
            .subpattern_id = subpattern_id,
-           .index = SemIR::CallParamIndex::None});
+           .index = context.full_pattern_stack().NextCallParamIndex()});
       break;
     case FullPatternStack::Kind::NameBindingDecl:
       break;

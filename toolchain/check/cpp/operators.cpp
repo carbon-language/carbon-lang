@@ -29,6 +29,7 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
     case CoreIdentifier::Destroy:
     case CoreIdentifier::As:
     case CoreIdentifier::ImplicitAs:
+    case CoreIdentifier::UnsafeAs:
     case CoreIdentifier::Copy: {
       // TODO: Support destructors and conversions.
       return std::nullopt;
@@ -48,6 +49,12 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
     case CoreIdentifier::Negate: {
       CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_Minus;
+    }
+
+    // Bitwise.
+    case CoreIdentifier::BitComplement: {
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
+      return clang::OO_Tilde;
     }
 
     // Binary operators.
@@ -94,6 +101,14 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
     case CoreIdentifier::RightShiftWith: {
       CARBON_CHECK(op_name == CoreIdentifier::Op);
       return clang::OO_GreaterGreater;
+    }
+
+    // Assignment.
+    case CoreIdentifier::AssignWith: {
+      // TODO: This is not yet reached because we don't use the `AssignWith`
+      // interface for assignment yet.
+      CARBON_CHECK(op_name == CoreIdentifier::Op);
+      return clang::OO_Equal;
     }
 
     // Compound assignment arithmetic operators.
@@ -163,10 +178,17 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
       }
     }
 
-    default:
+    // Array indexing.
+    case CoreIdentifier::IndexWith: {
+      CARBON_CHECK(op_name == CoreIdentifier::At);
+      return clang::OO_Subscript;
+    }
+
+    default: {
       context.TODO(loc_id, llvm::formatv("Unsupported operator interface `{0}`",
                                          interface_name));
       return std::nullopt;
+    }
   }
 }
 

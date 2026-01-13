@@ -371,7 +371,7 @@ struct Call {
   // conversions.
   static constexpr auto Kind = InstKind::Call.Define<Parse::NodeId>(
       {.ir_name = "call",
-       .expr_category = ExprCategory::Initializing,
+       .expr_category = ComputedExprCategory::DependsOnOperands,
        .constant_needs_inst_id =
            InstConstantNeedsInstIdKind::DuringEvaluation});
 
@@ -739,6 +739,13 @@ struct FloatValue {
   FloatId float_id;
 };
 
+// The type `Core.Form`.
+struct FormType : public SingletonTypeInst<InstKind::FormType, "form"> {
+  // `FormType` is always set complete in file.cpp.
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
+};
+
 // A function declaration.
 struct FunctionDecl {
   static constexpr auto Kind =
@@ -1036,6 +1043,22 @@ struct InPlaceInit {
   // meaning.
   InstId src_id;
   DestInstId dest_id;
+};
+
+// An initializing primitive form.
+struct InitForm {
+  static constexpr auto Kind = InstKind::InitForm.Define<Parse::NodeId>(
+      {.ir_name = "init_form",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
+
+  // Always FormType
+  TypeId type_id;
+  // The type component of the form.
+  TypeInstId type_component_inst_id;
+  // If this is a function's return form, the index of the corresponding
+  // `OutParam` in the function's `Call` parameter list.
+  CallParamIndex index;
 };
 
 // Finalizes the initialization of `dest_id` from the initializer expression
@@ -1339,6 +1362,17 @@ struct RefBindingPattern {
   EntityNameId entity_name_id;
 };
 
+struct RefForm {
+  static constexpr auto Kind =
+      InstKind::RefForm.Define<Parse::PrefixOperatorRefId>(
+          {.ir_name = "ref_form",
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  TypeId type_id;
+  TypeInstId type_component_inst_id;
+};
+
 // A by-reference `Call` parameter. See AnyParam for member documentation. Note
 // that this may correspond to either a RefParamPattern or a VarParamPattern.
 struct RefParam {
@@ -1366,6 +1400,26 @@ struct RefParamPattern {
   TypeId type_id;
   InstId subpattern_id;
   CallParamIndex index;
+};
+
+// A `ref x` expression. The semantics of this instruction depend on the usage
+// context:
+// - As an argument to a `ref` parameter, it evaluates to `x`, but requires
+//   `x` to be a durable reference expression.
+// - In a return type expression or form literal, it evaluates to a `Core.Form`
+//   value representing a reference to `x`, which must be a type.
+// - In any other context, it's an error.
+//
+// See issue #6342 for background.
+struct RefTagExpr {
+  static constexpr auto Kind =
+      InstKind::RefTagExpr.Define<Parse::PrefixOperatorRefId>(
+          {.ir_name = "ref_tag",
+           .expr_category = ExprCategory::RefTagged,
+           .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+  InstId expr_id;
 };
 
 // Requires a type to be complete. This is only created for generic types and

@@ -70,7 +70,7 @@ var A: () = ();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc33_14.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc33_14.2: init %empty_tuple.type = tuple_init () to file.%A.var.loc33 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc33_14.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc33_1: init %empty_tuple.type = converted %.loc33_14.1, %.loc33_14.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%A.var.loc33, %.loc33_1
 // CHECK:STDOUT:   return

@@ -18,13 +18,21 @@ namespace Carbon {
 
 // Locates the toolchain installation and provides paths to various components.
 //
-// The Carbon toolchain expects to be installed into some install prefix; see
-// `prefix_` for details. When locating an install, we verify it with
-// `CheckMarkerFile`. When errors occur, `SetError` makes `error()`
-// available for diagnostics and clears the install prefix (leaving things
-// minimally functional).
+// The Carbon toolchain expects to be installed into a tree rooted at `root_`.
+// This root contains the marker file and the busy box binary.
 //
-// The factory methods locate the install prefix based on their use-case:
+// In a Unix-like filesystem environment, the root is typically located as
+// `<some prefix>/lib/carbon`, with symlinks in the other parts of the FHS-based
+// layout back to entries below this tree. However, this class and the toolchain
+// itself should only directly use things below the installation root to support
+// non-FHS usage.
+//
+// When locating an install, we verify it with `CheckMarkerFile`. When errors
+// occur, `SetError` makes `error()` available for diagnostics and clears the
+// install root, leaving things minimally functional but with the installation
+// root of the current working directory.
+//
+// The factory methods locate the install root based on their use-case:
 //
 //   - `MakeExeRelative` for command line tools in an install.
 //   - `MakeForBazelRunfiles` for locating through Bazel's runfile tree.
@@ -46,26 +54,22 @@ namespace Carbon {
 class InstallPaths {
  public:
   // Provide the current executable's path to detect the correct installation
-  // prefix path. This assumes the toolchain to be in its installed layout.
-  //
-  // If detection fails, this reverts to using the current working directory as
-  // the install prefix, and the error detected can be checked with `errors()`.
+  // root. This assumes the toolchain to be in its installed layout.
   static auto MakeExeRelative(llvm::StringRef exe_path) -> InstallPaths;
 
   // Provide the current executable's path, and use that to detect a Bazel or
-  // Bazel-compatible runfiles install prefix path. This should only be used
-  // where it is reasonable to rely on this rather than a fixed install location
-  // such as for internal development purposes or other Bazel users of the
-  // Carbon library.
+  // Bazel-compatible runfiles install root. This should only be used where it
+  // is reasonable to rely on this rather than a fixed install location such as
+  // for internal development purposes or other Bazel users of the Carbon
+  // library.
   //
   // This method of construction also ensures the result is valid. If detection
   // fails for any reason, it will `CARBON_CHECK` fail with the error message.
   static auto MakeForBazelRunfiles(llvm::StringRef exe_path) -> InstallPaths;
 
-  // Provide an explicit install paths prefix, which must be absolute. This is
-  // useful for testing or for using Carbon in an environment with an unusual
-  // path to the installed files.
-  static auto Make(llvm::StringRef install_prefix) -> InstallPaths;
+  // Provide an explicit install paths root. This is useful for testing or for
+  // using Carbon in an environment with an unusual path to the installed files.
+  static auto Make(llvm::StringRef install_root) -> InstallPaths;
 
   // Returns the contents of the prelude manifest file. This is the list of
   // files that define the prelude, and will always be non-empty on success.
@@ -131,18 +135,17 @@ class InstallPaths {
  private:
   friend class InstallPathsTestPeer;
 
-  InstallPaths() { SetError("No prefix provided!"); }
-  explicit InstallPaths(std::filesystem::path prefix)
-      : prefix_(std::move(prefix)) {}
+  InstallPaths() { SetError("No root provided!"); }
+  explicit InstallPaths(std::filesystem::path root) : root_(std::move(root)) {}
 
   static auto MakeFromFile(std::filesystem::path file) -> InstallPaths;
 
-  // Set an error message on the install paths and reset the prefix to empty,
+  // Set an error message on the install paths and reset the `root_` to empty,
   // which should use the current working directory.
   auto SetError(llvm::Twine message) -> void;
 
   // Check that the install paths have a marker file at
-  // `prefix()/lib/carbon/carbon_install.txt". If not, calls `SetError` with the
+  // `root()/lib/carbon/carbon_install.txt". If not, calls `SetError` with the
   // relevant error message.
   auto CheckMarkerFile() -> void;
 
@@ -151,32 +154,31 @@ class InstallPaths {
                     std::filesystem::path manifest_file) const
       -> ErrorOr<llvm::SmallVector<std::string>>;
 
-  // The computed installation prefix. This will be an absolute path. We keep an
-  // absolute path for when the command line uses a relative path
-  // (`./bin/carbon`) and the working directory changes after initialization
-  // (for example, to Bazel's working directory). In the event of an error, this
-  // will be the empty string.
+  // The computed installation root. In the event of an error, this will be the
+  // empty string.
   //
-  // When run from bazel (for example, in unit tests or development binaries)
+  // When run from Bazel (for example, in unit tests or development binaries)
   // this will look like:
-  // `bazel-bin/some/bazel/target.runfiles/_main/toolchain/install/prefix_root`
+  // `bazel-bin/some/bazel/target.runfiles/_main/toolchain/install/prefix/lib/carbon`
   //
-  // When installed, it's expected to be similar to the CMake install prefix:
+  // When installed, it's expected to be similar to the CMake install prefix,
+  // followed by `lib/carbon`:
   //
-  // - `C:/Program Files/Carbon` or similar on Windows.
-  // - `/usr` or `/usr/local` on Linux and most BSDs.
-  // - `/opt/homebrew` or similar on macOS with Homebrew.
+  // - `/usr/lib/carbon` or `/usr/local/lib/carbon` on Linux and most BSDs.
+  // - `/opt/homebrew/lib/carbon` or similar on macOS with Homebrew.
+  // - TODO: Figure out if this is `C:/Program Files/Carbon` or something else
+  //   on Windows.
   //
   // See https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_PREFIX.html
   // for more details. While we don't build the toolchain with CMake, we expect
   // our installation to behave in a similar and compatible way.
   //
-  // The hierarchy of files beneath the install prefix can be found in the
-  // BUILD's `install_dirs`.
-  std::filesystem::path prefix_;
+  // The hierarchy of files beneath the install root can be found in the
+  // BUILD's `install_dirs` entry for `lib/carbon`.
+  std::filesystem::path root_;
 
-  // The opened prefix directory, suitable for relative path access.
-  Filesystem::Dir prefix_dir_;
+  // The opened root directory.
+  Filesystem::Dir root_dir_;
 
   std::optional<std::string> error_;
 };

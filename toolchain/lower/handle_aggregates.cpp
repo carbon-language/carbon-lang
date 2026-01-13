@@ -45,9 +45,8 @@ static auto GetElementIndex(FunctionContext::TypeInFile type,
 
   // For now, struct and tuple types map directly into LLVM struct types with
   // identical field numbering.
-  CARBON_CHECK(
-      type_inst.Is<SemIR::StructType>() || type_inst.Is<SemIR::TupleType>(),
-      "Indexing unexpected aggregate type {0}", type_inst);
+  CARBON_CHECK((type_inst.IsOneOf<SemIR::StructType, SemIR::TupleType>()),
+               "Indexing unexpected aggregate type {0}", type_inst);
   return idx.index;
 }
 
@@ -62,6 +61,7 @@ static auto GetAggregateElement(FunctionContext& context,
   auto* aggr_value = context.GetValue(aggr_inst_id);
 
   switch (SemIR::GetExprCategory(context.sem_ir(), aggr_inst_id)) {
+    case SemIR::ExprCategory::RefTagged:
     case SemIR::ExprCategory::Error:
     case SemIR::ExprCategory::NotExpr:
     case SemIR::ExprCategory::Pattern:

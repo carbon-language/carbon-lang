@@ -93,6 +93,24 @@ class Context {
     return type_type_;
   }
 
+  // Returns the empty LLVM struct type used to represent the type `type`.
+  auto GetFormType() -> llvm::StructType* {
+    if (!form_type_) {
+      // `Core.Form` is lowered to an empty LLVM StructType.
+      form_type_ = llvm::StructType::create(*llvm_context_, {}, "Core.Form");
+    }
+    return form_type_;
+  }
+
+  // Returns the opaque LLVM struct type used to represent an incomplete type.
+  auto GetOpaqueType() -> llvm::StructType* {
+    if (!opaque_type_) {
+      // `type` is lowered to an empty LLVM StructType.
+      opaque_type_ = llvm::StructType::create(*llvm_context_, "opaque");
+    }
+    return opaque_type_;
+  }
+
   auto llvm_context() -> llvm::LLVMContext& { return *llvm_context_; }
   auto llvm_module() -> llvm::Module& { return *llvm_module_; }
   auto file_system() -> llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem>& {
@@ -157,6 +175,12 @@ class Context {
 
   // Lowered version of the builtin type `type`.
   llvm::StructType* type_type_ = nullptr;
+
+  // Lowered version of the builtin type `Core.Form`.
+  llvm::StructType* form_type_ = nullptr;
+
+  // An opaque type, used for external globals with incomplete types.
+  llvm::StructType* opaque_type_ = nullptr;
 
   // Global format string for `printf.int.format` used by the PrintInt builtin.
   llvm::Value* printf_int_format_string_ = nullptr;

@@ -178,8 +178,10 @@ class A {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.e9d: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_5.0f6: %i32 = int_value 5 [concrete]
+// CHECK:STDOUT:   %.941: form = init_form %i32, call_param0 [concrete]
 // CHECK:STDOUT:   %Circle.SomeInternalFunction.type: type = fn_type @Circle.SomeInternalFunction [concrete]
 // CHECK:STDOUT:   %Circle.SomeInternalFunction: %Circle.SomeInternalFunction.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.aaa: form = init_form %Circle, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.fcb: type = pattern_type %Circle [concrete]
 // CHECK:STDOUT:   %Circle.Make.type: type = fn_type @Circle.Make [concrete]
 // CHECK:STDOUT:   %Circle.Make: %Circle.Make.type = struct_value () [concrete]
@@ -251,6 +253,7 @@ class A {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc8: form = init_form %i32, call_param0 [concrete = constants.%.941]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -259,6 +262,7 @@ class A {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.fcb = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [concrete = constants.%Circle]
+// CHECK:STDOUT:     %.loc12: form = init_form %Self.ref, call_param0 [concrete = constants.%.aaa]
 // CHECK:STDOUT:     %return.param: ref %Circle = out_param call_param0
 // CHECK:STDOUT:     %return: ref %Circle = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -282,7 +286,7 @@ class A {
 // CHECK:STDOUT:   %bound_method.loc9_13.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method.d2e]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc9_13.2(%int_0) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc9: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   return %.loc9 to %return
+// CHECK:STDOUT:   return %.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Circle.Make() -> %return.param: %Circle {
@@ -295,11 +299,11 @@ class A {
 // CHECK:STDOUT:   %bound_method.loc13_24.2: <bound method> = bound_method %int_5, %specific_fn [concrete = constants.%bound_method.e9d]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc13_24.2(%int_5) [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc13_24.2: init %i32 = converted %int_5, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_5.0f6]
-// CHECK:STDOUT:   %.loc13_24.3: ref %i32 = class_element_access %return, element0
+// CHECK:STDOUT:   %.loc13_24.3: ref %i32 = class_element_access %return.param, element0
 // CHECK:STDOUT:   %.loc13_24.4: init %i32 = initialize_from %.loc13_24.2 to %.loc13_24.3 [concrete = constants.%int_5.0f6]
-// CHECK:STDOUT:   %.loc13_24.5: init %Circle = class_init (%.loc13_24.4), %return [concrete = constants.%Circle.val]
+// CHECK:STDOUT:   %.loc13_24.5: init %Circle = class_init (%.loc13_24.4), %return.param [concrete = constants.%Circle.val]
 // CHECK:STDOUT:   %.loc13_25: init %Circle = converted %.loc13_24.1, %.loc13_24.5 [concrete = constants.%Circle.val]
-// CHECK:STDOUT:   return %.loc13_25 to %return
+// CHECK:STDOUT:   return %.loc13_25 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -414,9 +418,11 @@ class A {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Circle.elem: type = unbound_element_type %Circle, %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.fcb: type = pattern_type %Circle [concrete]
+// CHECK:STDOUT:   %.4d5: form = init_form %i32, call_param1 [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Circle.GetRadius.type: type = fn_type @Circle.GetRadius [concrete]
 // CHECK:STDOUT:   %Circle.GetRadius: %Circle.GetRadius.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.941: form = init_form %i32, call_param0 [concrete]
 // CHECK:STDOUT:   %Circle.SomeInternalFunction.type: type = fn_type @Circle.SomeInternalFunction [concrete]
 // CHECK:STDOUT:   %Circle.SomeInternalFunction: %Circle.SomeInternalFunction.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Circle.Compute.type: type = fn_type @Circle.Compute [concrete]
@@ -490,6 +496,7 @@ class A {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc7: form = init_form %i32, call_param1 [concrete = constants.%.4d5]
 // CHECK:STDOUT:     %self.param: %Circle = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [concrete = constants.%Circle]
 // CHECK:STDOUT:     %self: %Circle = value_binding self, %self.param
@@ -502,6 +509,7 @@ class A {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc11: form = init_form %i32, call_param0 [concrete = constants.%.941]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -513,6 +521,7 @@ class A {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc15: form = init_form %i32, call_param1 [concrete = constants.%.4d5]
 // CHECK:STDOUT:     %self.param: %Circle = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Circle [concrete = constants.%Circle]
 // CHECK:STDOUT:     %self: %Circle = value_binding self, %self.param
@@ -541,7 +550,7 @@ class A {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_16.2: <bound method> = bound_method %.loc8_16.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc8_16.2(%.loc8_16.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Circle.SomeInternalFunction() -> %i32 {
@@ -553,7 +562,7 @@ class A {
 // CHECK:STDOUT:   %bound_method.loc12_13.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc12_13.2(%int_0) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc12: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   return %.loc12 to %return
+// CHECK:STDOUT:   return %.loc12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Circle.Compute(%self.param: %Circle) -> %i32 {
@@ -561,7 +570,7 @@ class A {
 // CHECK:STDOUT:   %self.ref: %Circle = name_ref self, %self
 // CHECK:STDOUT:   %SomeInternalFunction.ref: %Circle.SomeInternalFunction.type = name_ref SomeInternalFunction, @Circle.%Circle.SomeInternalFunction.decl [concrete = constants.%Circle.SomeInternalFunction]
 // CHECK:STDOUT:   %Circle.SomeInternalFunction.call: init %i32 = call %SomeInternalFunction.ref()
-// CHECK:STDOUT:   return %Circle.SomeInternalFunction.call to %return
+// CHECK:STDOUT:   return %Circle.SomeInternalFunction.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- public_global_access.carbon

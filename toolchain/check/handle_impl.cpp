@@ -156,14 +156,11 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
         .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
     // Emit the `forall` match. This shouldn't produce any valid `Call` params,
     // because `impl`s are never actually called at runtime.
-    auto call_params_id =
+    auto [call_param_patterns_id, call_params_id] =
         CalleePatternMatch(context, *implicit_param_patterns_id,
                            SemIR::InstBlockId::None, SemIR::InstBlockId::None);
-    CARBON_CHECK(call_params_id == SemIR::InstBlockId::Empty ||
-                 llvm::all_of(context.inst_blocks().Get(call_params_id),
-                              [](SemIR::InstId inst_id) {
-                                return inst_id == SemIR::ErrorInst::InstId;
-                              }));
+    CARBON_CHECK(call_params_id == SemIR::InstBlockId::Empty);
+    CARBON_CHECK(call_param_patterns_id == SemIR::InstBlockId::Empty);
   }
 
   Parse::NodeId first_param_node_id =
@@ -187,6 +184,7 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
               implicit_param_patterns_id.value_or(SemIR::InstBlockId::None),
           .params_loc_id = Parse::NodeId::None,
           .param_patterns_id = SemIR::InstBlockId::None,
+          .call_param_patterns_id = SemIR::InstBlockId::None,
           .call_params_id = SemIR::InstBlockId::None,
           .pattern_block_id = pattern_block_id};
 }
@@ -348,6 +346,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
       context.generics().GetSelfSpecific(impl.generic_id));
   StartGenericDefinition(context, impl.generic_id);
   ImplWitnessStartDefinition(context, impl);
+  CheckRequireDeclsSatisfied(context, impl);
   context.inst_block_stack().Push();
   context.node_stack().Push(node_id, impl_id);
 

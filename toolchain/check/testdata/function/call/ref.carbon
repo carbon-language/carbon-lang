@@ -49,9 +49,12 @@ fn F(ref x: i32);
 
 fn G() {
   let y: i32 = 0;
-  // CHECK:STDERR: fail_ref_not_durable_ref.carbon:[[@LINE+4]]:5: error: expression tagged with `ref` is not a durable reference [RefTagNotDurableRef]
+  // CHECK:STDERR: fail_ref_not_durable_ref.carbon:[[@LINE+7]]:9: error: expression tagged with `ref` is not a durable reference [RefTagNotDurableRef]
   // CHECK:STDERR:   F(ref y);
-  // CHECK:STDERR:     ^~~~~
+  // CHECK:STDERR:         ^
+  // CHECK:STDERR: fail_ref_not_durable_ref.carbon:[[@LINE-7]]:6: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fn F(ref x: i32);
+  // CHECK:STDERR:      ^~~~~~~~~~
   // CHECK:STDERR:
   F(ref y);
 }
@@ -83,14 +86,14 @@ fn F(x: i32);
 fn G() {
   var y: i32 = 0;
 
-  // CHECK:STDERR: fail_unnecessary_ref.carbon:[[@LINE+4]]:24: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
+  // CHECK:STDERR: fail_unnecessary_ref.carbon:[[@LINE+4]]:20: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
   // CHECK:STDERR:   var z: (i32,) = (ref y,);
-  // CHECK:STDERR:                        ^
+  // CHECK:STDERR:                    ^~~~~
   // CHECK:STDERR:
   var z: (i32,) = (ref y,);
-  // CHECK:STDERR: fail_unnecessary_ref.carbon:[[@LINE+7]]:9: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
+  // CHECK:STDERR: fail_unnecessary_ref.carbon:[[@LINE+7]]:5: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
   // CHECK:STDERR:   F(ref y);
-  // CHECK:STDERR:         ^
+  // CHECK:STDERR:     ^~~~~
   // CHECK:STDERR: fail_unnecessary_ref.carbon:[[@LINE-13]]:6: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: fn F(x: i32);
   // CHECK:STDERR:      ^~~~~~
@@ -172,7 +175,8 @@ fn G() {
 // CHECK:STDOUT:   %y: ref %i32 = ref_binding y, %y.var
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %y.ref: ref %i32 = name_ref y, %y
-// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%y.ref)
+// CHECK:STDOUT:   %.loc10: %i32 = ref_tag %y.ref
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.ref(%.loc10)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %y.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%y.var)
 // CHECK:STDOUT:   return

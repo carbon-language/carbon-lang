@@ -48,6 +48,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %ptr.f74: type = ptr_type %Derived [concrete]
 // CHECK:STDOUT:   %pattern_type.0dd: type = pattern_type %ptr.f74 [concrete]
 // CHECK:STDOUT:   %ptr.235: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %.4f9: form = init_form %ptr.235, call_param1 [concrete]
 // CHECK:STDOUT:   %pattern_type.fe8: type = pattern_type %ptr.235 [concrete]
 // CHECK:STDOUT:   %Access.type: type = fn_type @Access [concrete]
 // CHECK:STDOUT:   %Access: %Access.type = struct_value () [concrete]
@@ -96,8 +97,9 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr.loc28_30: type = ptr_type %i32 [concrete = constants.%ptr.235]
+// CHECK:STDOUT:     %.loc28_30: form = init_form %ptr.loc28_30, call_param1 [concrete = constants.%.4f9]
 // CHECK:STDOUT:     %p.param: %ptr.f74 = value_param call_param0
-// CHECK:STDOUT:     %.loc28: type = splice_block %ptr.loc28_21 [concrete = constants.%ptr.f74] {
+// CHECK:STDOUT:     %.loc28_21: type = splice_block %ptr.loc28_21 [concrete = constants.%ptr.f74] {
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:       %ptr.loc28_21: type = ptr_type %Derived.ref [concrete = constants.%ptr.f74]
 // CHECK:STDOUT:     }
@@ -163,6 +165,6 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%i32) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc29_10.2: <bound method> = bound_method %addr, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.235 = call %bound_method.loc29_10.2(%addr)
-// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

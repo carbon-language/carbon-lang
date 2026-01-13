@@ -1005,6 +1005,7 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
       case ExprCategory::Value:
       case ExprCategory::Pattern:
       case ExprCategory::Mixed:
+      case ExprCategory::RefTagged:
         break;
       case ExprCategory::DurableRef:
       case ExprCategory::EphemeralRef:
@@ -1543,8 +1544,10 @@ auto Formatter::FormatArg(StringLiteralValueId id) -> void {
 }
 
 auto Formatter::FormatReturnSlotArg(InstId dest_id) -> void {
-  out_ << " to ";
-  FormatArg(dest_id);
+  if (dest_id.has_value()) {
+    out_ << " to ";
+    FormatArg(dest_id);
+  }
 }
 
 auto Formatter::FormatName(NameId id) -> void {

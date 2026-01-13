@@ -42,7 +42,10 @@ enum class ExprCategory : int8_t {
   // and struct literals, where the subexpressions for different elements can
   // have different categories.
   Mixed,
-  Last = Mixed
+  // This instruction is a `RefTagExpr`, and so its semantics (including its
+  // expression category) depends on the usage context.
+  RefTagged,
+  Last = RefTagged
 };
 
 // The computation used to determine the expression category for an instruction,

@@ -66,21 +66,16 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref type = var %x.var_patt [concrete]
 // CHECK:STDOUT:   %x: ref type = ref_binding x, %x.var [concrete = %x.var]
-// CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [concrete = constants.%Six] {
-// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
+// CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [concrete = constants.%Six] {} {
 // CHECK:STDOUT:     %x.ref: ref type = name_ref x, file.%x [concrete = file.%x.var]
 // CHECK:STDOUT:     %.loc20: type = acquire_value %x.ref
-// CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
-// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Six() -> <error> {
+// CHECK:STDOUT: fn @Six() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [concrete = constants.%int_6]
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -66,8 +66,9 @@ class FileContext {
     CARBON_CHECK(type_id.is_concrete(), "Lowering symbolic type {0}: {1}",
                  type_id, sem_ir().types().GetAsInst(type_id));
     auto result = types_.Get(type_id);
-    CARBON_CHECK(result.llvm_ir_type, "Missing type {0}: {1}", type_id,
-                 sem_ir().types().GetAsInst(type_id));
+    if (!result.llvm_ir_type) {
+      result.llvm_ir_type = context_->GetOpaqueType();
+    }
     return result;
   }
 
@@ -104,6 +105,7 @@ class FileContext {
 
   // Returns the empty LLVM struct type used to represent the type `type`.
   auto GetTypeType() -> llvm::StructType* { return context().GetTypeType(); }
+  auto GetFormType() -> llvm::StructType* { return context().GetFormType(); }
 
   auto context() -> Context& { return *context_; }
   auto llvm_context() -> llvm::LLVMContext& { return context().llvm_context(); }

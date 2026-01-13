@@ -125,6 +125,7 @@ fn D() {}
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %.4d5: form = init_form %i32, call_param1 [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -142,6 +143,7 @@ fn D() {}
 // CHECK:STDOUT:   %tuple.type.a1c: type = tuple_type (%i32) [concrete]
 // CHECK:STDOUT:   %pattern_type.b74: type = pattern_type %tuple.type.a1c [concrete]
 // CHECK:STDOUT:   %struct_type.c: type = struct_type {.c: %i32} [concrete]
+// CHECK:STDOUT:   %.d06: form = init_form %struct_type.c, call_param1 [concrete]
 // CHECK:STDOUT:   %pattern_type.688: type = pattern_type %struct_type.c [concrete]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [concrete]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [concrete]
@@ -181,8 +183,9 @@ fn D() {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc5_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc5_17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc5_17: form = init_form %i32.loc5_17, call_param1 [concrete = constants.%.4d5]
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc5: type = splice_block %i32.loc5_9 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.loc5_9: type = splice_block %i32.loc5_9 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc5_9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc5_9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }
@@ -199,6 +202,7 @@ fn D() {}
 // CHECK:STDOUT:     %int_32.loc6_25: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc6_25: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %i32} [concrete = constants.%struct_type.c]
+// CHECK:STDOUT:     %.loc6_28: form = init_form %struct_type.c, call_param1 [concrete = constants.%.d06]
 // CHECK:STDOUT:     %c.param: %tuple.type.a1c = value_param call_param0
 // CHECK:STDOUT:     %.loc6_14.1: type = splice_block %.loc6_14.3 [concrete = constants.%tuple.type.a1c] {
 // CHECK:STDOUT:       %int_32.loc6_10: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
@@ -226,7 +230,7 @@ fn D() {}
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc5_30.2: <bound method> = bound_method %b.ref, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc5_30.2(%b.ref)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C(%c.param: %tuple.type.a1c) -> %struct_type.c {
@@ -240,9 +244,9 @@ fn D() {}
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc6_46.2: <bound method> = bound_method %tuple.elem0, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_46.2(%tuple.elem0)
-// CHECK:STDOUT:   %.loc6_48.2: init %struct_type.c = struct_init (%Int.as.Copy.impl.Op.call) to %return
+// CHECK:STDOUT:   %.loc6_48.2: init %struct_type.c = struct_init (%Int.as.Copy.impl.Op.call)
 // CHECK:STDOUT:   %.loc6_49: init %struct_type.c = converted %.loc6_48.1, %.loc6_48.2
-// CHECK:STDOUT:   return %.loc6_49 to %return
+// CHECK:STDOUT:   return %.loc6_49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D();
@@ -427,6 +431,7 @@ fn D() {}
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %.4d5: form = init_form %i32, call_param1 [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -457,8 +462,9 @@ fn D() {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {} {
 // CHECK:STDOUT:     %int_32.loc23_17: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc23_17: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc23_17: form = init_form %i32.loc23_17, call_param1 [concrete = constants.%.4d5]
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %.loc23: type = splice_block %i32.loc23_9 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %.loc23_9: type = splice_block %i32.loc23_9 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %int_32.loc23_9: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:       %i32.loc23_9: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     }

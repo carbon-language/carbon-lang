@@ -69,14 +69,6 @@ auto LinkSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       llvm::formatv("--target={0}", options_.codegen_options.target).str();
   clang_args.push_back(target_arg);
 
-  // Disable linking the C++ standard library until can build and ship it as
-  // part of the Carbon toolchain. This clearly won't work once we get into
-  // interop, but for now it avoids spurious failures and distraction. The plan
-  // is to build and bundle libc++ at which point we can replace this with
-  // pointing at our bundled library.
-  // TODO: Replace this when ready.
-  clang_args.push_back("-nostdlib++");
-
   clang_args.push_back("-o");
   clang_args.push_back(options_.output_filename);
   clang_args.append(options_.object_filenames.begin(),
@@ -84,8 +76,13 @@ auto LinkSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   ClangRunner runner(driver_env.installation, driver_env.fs,
                      driver_env.vlog_stream);
-  ErrorOr<bool> run_result = runner.Run(clang_args, driver_env.runtimes_cache,
-                                        *driver_env.thread_pool);
+  ErrorOr<bool> run_result =
+      driver_env.prebuilt_runtimes
+          ? runner.RunWithPrebuiltRuntimes(clang_args,
+                                           *driver_env.prebuilt_runtimes,
+                                           driver_env.enable_leaking)
+          : runner.Run(clang_args, driver_env.runtimes_cache,
+                       *driver_env.thread_pool, driver_env.enable_leaking);
   if (!run_result.ok()) {
     // This is not a Clang failure, but a failure to even run Clang, so we need
     // to diagnose it here.

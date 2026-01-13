@@ -89,7 +89,7 @@ static auto CompileTwoSources(const InstallPaths& install_paths,
   std::string target_arg = llvm::formatv("--target={0}", target).str();
   std::string out;
   std::string err;
-  CARBON_CHECK(Testing::CallWithCapturedOutput(
+  CARBON_CHECK(*Testing::CallWithCapturedOutput(
                    out, err,
                    [&] {
                      auto run_result = clang.RunWithNoRuntimes(
@@ -101,7 +101,7 @@ static auto CompileTwoSources(const InstallPaths& install_paths,
                verbose_out.TakeStr(), err);
   verbose_out.clear();
 
-  CARBON_CHECK(Testing::CallWithCapturedOutput(
+  CARBON_CHECK(*Testing::CallWithCapturedOutput(
                    out, err,
                    [&] {
                      auto run_result = clang.RunWithNoRuntimes(

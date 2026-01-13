@@ -24,6 +24,7 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %struct_type.a.ba9: type = struct_type {.a: %i32} [concrete]
+// CHECK:STDOUT:   %.563: form = init_form %struct_type.a.ba9, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.268: type = pattern_type %struct_type.a.ba9 [concrete]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
@@ -75,6 +76,7 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a.ba9]
+// CHECK:STDOUT:     %.loc15: form = init_form %struct_type.a, call_param0 [concrete = constants.%.563]
 // CHECK:STDOUT:     %return.param: ref %struct_type.a.ba9 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %struct_type.a.ba9 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -90,8 +92,8 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   %bound_method.loc16_17.2: <bound method> = bound_method %int_3, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc16_17.2(%int_3) [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc16_17.2: init %i32 = converted %int_3, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc16_17.3: init %struct_type.a.ba9 = struct_init (%.loc16_17.2) to %return [concrete = constants.%struct.384]
+// CHECK:STDOUT:   %.loc16_17.3: init %struct_type.a.ba9 = struct_init (%.loc16_17.2) [concrete = constants.%struct.384]
 // CHECK:STDOUT:   %.loc16_18: init %struct_type.a.ba9 = converted %.loc16_17.1, %.loc16_17.3 [concrete = constants.%struct.384]
-// CHECK:STDOUT:   return %.loc16_18 to %return
+// CHECK:STDOUT:   return %.loc16_18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

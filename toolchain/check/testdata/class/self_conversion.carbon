@@ -52,6 +52,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [concrete]
 // CHECK:STDOUT:   %pattern_type.101: type = pattern_type %Base [concrete]
+// CHECK:STDOUT:   %.4d5: form = init_form %i32, call_param1 [concrete]
 // CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Derived.SelfBase.type: type = fn_type @Derived.SelfBase [concrete]
 // CHECK:STDOUT:   %Derived.SelfBase: %Derived.SelfBase.type = struct_value () [concrete]
@@ -127,6 +128,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc26: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc26: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc26: form = init_form %i32.loc26, call_param1 [concrete = constants.%.4d5]
 // CHECK:STDOUT:     %self.param.loc26: %Base = value_param call_param0
 // CHECK:STDOUT:     %Base.ref.loc26: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:     %self.loc26: %Base = value_binding self, %self.param.loc26
@@ -149,8 +151,9 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc34_25: form = init_form %i32, call_param1 [concrete = constants.%.4d5]
 // CHECK:STDOUT:     %p.param: %ptr.f74 = value_param call_param0
-// CHECK:STDOUT:     %.loc34: type = splice_block %ptr [concrete = constants.%ptr.f74] {
+// CHECK:STDOUT:     %.loc34_19: type = splice_block %ptr [concrete = constants.%ptr.f74] {
 // CHECK:STDOUT:       %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Derived.ref [concrete = constants.%ptr.f74]
 // CHECK:STDOUT:     }
@@ -184,6 +187,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32.loc22: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %i32.loc22: type = class_type @Int, @Int(constants.%int_32) [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc22: form = init_form %i32.loc22, call_param1 [concrete = constants.%.4d5]
 // CHECK:STDOUT:     %self.param.loc22: %Base = value_param call_param0
 // CHECK:STDOUT:     %Base.ref.loc22: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:     %self.loc22: %Base = value_binding self, %self.param.loc22
@@ -221,7 +225,7 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc27_14.2: <bound method> = bound_method %.loc27_14.2, %specific_fn
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc27_14.2(%.loc27_14.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return.loc26
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Derived.RefSelfBase(%self.param.loc30: %Base) {
@@ -257,6 +261,6 @@ fn Call(p: Derived*) -> i32 {
 // CHECK:STDOUT:   %.loc36_11.3: ref %Base = converted %.loc36_11.1, %.loc36_11.2
 // CHECK:STDOUT:   %.loc36_11.4: %Base = acquire_value %.loc36_11.3
 // CHECK:STDOUT:   %Derived.SelfBase.call: init %i32 = call %Derived.SelfBase.bound(%.loc36_11.4)
-// CHECK:STDOUT:   return %Derived.SelfBase.call to %return
+// CHECK:STDOUT:   return %Derived.SelfBase.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

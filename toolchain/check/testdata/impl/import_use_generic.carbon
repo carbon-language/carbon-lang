@@ -257,21 +257,13 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%empty_struct_type) [concrete = constants.%C.850]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %C.850 = ref_binding c, %c.var [concrete = %c.var]
-// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {
 // CHECK:STDOUT:     %c.ref: ref %C.850 = name_ref c, file.%c [concrete = file.%c.var]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.ce7 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %.loc16: %I.type = converted %c.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
-// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
-// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0 [concrete]
-// CHECK:STDOUT:   } {
+// CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {} {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, imports.%Main.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %.loc25_14: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc25_15: type = converted %.loc25_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
@@ -284,8 +276,6 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @C.as.I.impl.F(constants.%empty_struct_type) [concrete = constants.%C.as.I.impl.F.specific_fn]
 // CHECK:STDOUT:     %C.as.I.impl.F.call: init %empty_tuple.type = call %specific_fn()
 // CHECK:STDOUT:     %.loc25_23: type = converted %C.as.I.impl.F.call, <error> [concrete = <error>]
-// CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
-// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -330,7 +320,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() -> <error> {
+// CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -340,7 +330,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H() -> <error> {
+// CHECK:STDOUT: fn @H() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

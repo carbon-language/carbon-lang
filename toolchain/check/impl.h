@@ -61,6 +61,11 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void;
 // Adds the function members to the witness for `impl`.
 auto FinishImplWitness(Context& context, const SemIR::Impl& impl_id) -> void;
 
+// Checks that any `require` declarations in the interface being implemented by
+// `impl` are satisfied. Otherwise, a diagnostic is issued and the `impl` is
+// made invalid.
+auto CheckRequireDeclsSatisfied(Context& context, SemIR::Impl& impl) -> void;
+
 // Sets all unset members of the witness for `impl` to the error instruction and
 // sets the witness id in the `Impl` to an error.
 auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void;
@@ -75,9 +80,9 @@ auto IsImplEffectivelyFinal(Context& context, const SemIR::Impl& impl) -> bool;
 // `ErrorInst::InstId` if the function is not usable.
 auto CheckAssociatedFunctionImplementation(
     Context& context, SemIR::FunctionType interface_function_type,
-    SemIR::InstId impl_decl_id, SemIR::TypeId self_type_id,
-    SemIR::InstId witness_inst_id, bool defer_thunk_definition)
-    -> SemIR::InstId;
+    SemIR::SpecificId enclosing_specific_id, SemIR::InstId impl_decl_id,
+    SemIR::TypeId self_type_id, SemIR::InstId witness_inst_id,
+    bool defer_thunk_definition) -> SemIR::InstId;
 
 // Checks that the constraint specified for the impl is valid and identified.
 // Returns the interface that the impl implements. On error, issues a diagnostic

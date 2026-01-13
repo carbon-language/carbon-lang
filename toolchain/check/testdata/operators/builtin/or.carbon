@@ -35,6 +35,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.528: form = init_form bool, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -98,6 +99,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc15_11.1: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:     %.loc15_11.2: type = converted %Bool.call, %.loc15_11.1 [concrete = bool]
+// CHECK:STDOUT:     %.loc15_11.3: form = init_form %.loc15_11.2, call_param0 [concrete = constants.%.528]
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -108,6 +110,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc16_11.1: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:     %.loc16_11.2: type = converted %Bool.call, %.loc16_11.1 [concrete = bool]
+// CHECK:STDOUT:     %.loc16_11.3: form = init_form %.loc16_11.2, call_param0 [concrete = constants.%.528]
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -118,6 +121,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc18_12.1: type = value_of_initializer %Bool.call [concrete = bool]
 // CHECK:STDOUT:     %.loc18_12.2: type = converted %Bool.call, %.loc18_12.1 [concrete = bool]
+// CHECK:STDOUT:     %.loc18_12.3: form = init_form %.loc18_12.2, call_param0 [concrete = constants.%.528]
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param0
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -142,7 +146,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %impl.elem0: %.56b = impl_witness_access constants.%Copy.impl_witness.348, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %true, %impl.elem0 [concrete = constants.%bool.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method(%true) [concrete = constants.%true]
-// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> bool {
@@ -151,7 +155,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %impl.elem0: %.56b = impl_witness_access constants.%Copy.impl_witness.348, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %true, %impl.elem0 [concrete = constants.%bool.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method(%true) [concrete = constants.%true]
-// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Or() -> bool {
@@ -176,7 +180,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %impl.elem0: %.56b = impl_witness_access constants.%Copy.impl_witness.348, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc19_14.6, %impl.elem0
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method(%.loc19_14.6)
-// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Constant() {
@@ -316,7 +320,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var %d.var_patt
 // CHECK:STDOUT:   %.loc26_49.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc26_49.2: init %empty_tuple.type = tuple_init () to %d.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc26_49.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc26_3: init %empty_tuple.type = converted %.loc26_49.1, %.loc26_49.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %d.var, %.loc26_3
 // CHECK:STDOUT:   br !.loc26_13

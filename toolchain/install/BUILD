@@ -20,7 +20,7 @@ package(default_visibility = ["//visibility:public"])
 # Build rules supporting the install data tree for the Carbon toolchain.
 #
 # This populates a synthetic Carbon toolchain installation under the
-# `prefix_root` directory. For details on its layout, see `install_dirs` below.
+# `prefix` directory. For details on its layout, see `install_dirs` below.
 
 cc_library(
     name = "busybox_info",
@@ -294,15 +294,18 @@ filegroup(
     ],
 )
 
-# Given a root `prefix_root`, the hierarchy looks like:
+# Given a CMake-style install prefix[1], the hierarchy looks like:
 #
-# - prefix_root/bin: Binaries intended for direct use.
-# - prefix_root/lib/carbon: Private data and files.
-# - prefix_root/lib/carbon/core: The `Core` package files.
-# - prefix_root/lib/carbon/llvm/bin: LLVM binaries.
+# - prefix/bin: Binaries intended for direct use.
+# - prefix/lib/carbon: Private data and files.
+# - prefix/lib/carbon/core: The `Core` package files.
+# - prefix/lib/carbon/llvm/bin: LLVM binaries.
 #
 # This will be how installs are provided on Unix-y platforms, and is loosely
-# based on the FHS (Filesystem Hierarchy Standard).
+# based on the FHS (Filesystem Hierarchy Standard). See the CMake install prefix
+# documentation[1] for more details.
+#
+# [1]: https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_PREFIX.html
 install_dirs = {
     "bin": [
         install_symlink(
@@ -388,14 +391,18 @@ make_install_filegroups(
     no_digest_name = "install_data.no_digest",
     no_driver_name = "install_data.no_driver",
     pkg_name = "pkg_data",
-    prefix = "prefix_root",
+    prefix = "prefix",
 )
 
 py_test(
     name = "llvm_symlinks_test",
     size = "small",
     srcs = ["llvm_symlinks_test.py"],
-    data = [":install_data"],
+    data = [
+        ":install_data",
+        "//toolchain/driver:prebuilt_runtimes",
+    ],
+    deps = ["@bazel_tools//tools/python/runfiles"],
 )
 
 manifest(

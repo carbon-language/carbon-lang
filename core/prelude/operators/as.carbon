@@ -20,6 +20,14 @@ interface ImplicitAs(Dest:! type) {
   fn Convert[self: Self]() -> Dest;
 }
 
+impl forall [U:! type, T:! ImplicitAs(U)] T as As(U) {
+  fn Convert[self: Self]() -> U { return self.Convert(); }
+}
+
+impl forall [U:! type, T:! As(U)] T as UnsafeAs(U) {
+  fn Convert[self: Self]() -> U { return self.Convert(); }
+}
+
 impl forall [T:! Copy] T as ImplicitAs(T) {
   fn Convert[self: Self]() -> Self { return self.(Copy.Op)(); }
 }

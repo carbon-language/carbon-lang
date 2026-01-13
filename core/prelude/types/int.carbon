@@ -31,7 +31,9 @@ final impl forall [From:! IntLiteral()] Int(From) as ImplicitAs(IntLiteral()) {
   fn Convert[self: Self]() -> IntLiteral() = "int.convert_checked";
 }
 
-// TODO: Remove these once ImplicitAs extends As.
+// TODO: Remove these once ImplicitAs extends As. For now we need them because
+// the forwarding impl of As in terms of ImplicitAs is not usable at compile
+// time.
 impl forall [To:! IntLiteral()] IntLiteral() as As(Int(To)) {
   fn Convert[self: Self]() -> Int(To) = "int.convert_checked";
 }

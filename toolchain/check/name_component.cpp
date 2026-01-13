@@ -44,13 +44,16 @@ auto PopNameComponent(Context& context, SemIR::InstBlockId return_patterns_id)
     implicit_param_patterns_id = SemIR::InstBlockId::None;
   }
 
+  auto call_param_patterns_id = SemIR::InstBlockId::None;
   auto call_params_id = SemIR::InstBlockId::None;
   auto pattern_block_id = SemIR::InstBlockId::None;
   if (param_patterns_id->has_value() ||
       implicit_param_patterns_id->has_value() ||
       (!context.inst_blocks().GetOrEmpty(return_patterns_id).empty())) {
-    call_params_id = CalleePatternMatch(context, *implicit_param_patterns_id,
-                                        *param_patterns_id, return_patterns_id);
+    auto results = CalleePatternMatch(context, *implicit_param_patterns_id,
+                                      *param_patterns_id, return_patterns_id);
+    call_param_patterns_id = results.call_param_patterns_id;
+    call_params_id = results.call_params_id;
     pattern_block_id = context.pattern_block_stack().Pop();
     context.full_pattern_stack().PopFullPattern();
   }
@@ -67,6 +70,7 @@ auto PopNameComponent(Context& context, SemIR::InstBlockId return_patterns_id)
       .implicit_param_patterns_id = *implicit_param_patterns_id,
       .params_loc_id = params_node_id,
       .param_patterns_id = *param_patterns_id,
+      .call_param_patterns_id = call_param_patterns_id,
       .call_params_id = call_params_id,
       .pattern_block_id = pattern_block_id,
   };

@@ -18,7 +18,7 @@ Future runtimes we plan to add support for but not yet included:
 - Profiling runtimes
 """
 
-load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//bazel/cc_rules:defs.bzl", "cc_library")
 
 CRT_FILES = {
     "crtbegin_src": "@llvm-project//compiler-rt:builtins_crtbegin_src",
