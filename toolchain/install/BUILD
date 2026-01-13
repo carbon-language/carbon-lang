@@ -294,7 +294,7 @@ filegroup(
     ],
 )
 
-# Given an CMake-style install prefix[1], the hierarchy looks like:
+# Given a CMake-style install prefix[1], the hierarchy looks like:
 #
 # - prefix/bin: Binaries intended for direct use.
 # - prefix/lib/carbon: Private data and files.
