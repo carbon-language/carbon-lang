@@ -56,7 +56,7 @@ struct IdTag {
     // TODO: Assert that tag_ doesn't have the second highest bit set.
     auto tagged_index = index ^ tag_;
     CARBON_DCHECK(tagged_index >= 0, "{0}", tagged_index);
-    return IdT{tagged_index};
+    return IdT(tagged_index);
   }
 
   auto Remove(IdT id) const -> int32_t {
