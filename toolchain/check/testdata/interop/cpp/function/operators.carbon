@@ -1803,7 +1803,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc40_24.1: ref bool = temporary_storage
 // CHECK:STDOUT:   %addr.loc40_24.3: %ptr.bb2 = addr_of %.loc40_24.1
 // CHECK:STDOUT:   %operator_EqualEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_EqualEqual__carbon_thunk.decl(%addr.loc40_24.1, %addr.loc40_24.2, %addr.loc40_24.3)
-// CHECK:STDOUT:   %.loc40_24.2: init bool = in_place_init %operator_EqualEqual__carbon_thunk.call
+// CHECK:STDOUT:   %.loc40_24.2: init bool to %.loc40_24.1 = in_place_init %operator_EqualEqual__carbon_thunk.call
 // CHECK:STDOUT:   %.loc40_14.1: type = splice_block %.loc40_14.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call.loc40: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc40_14.2: type = value_of_initializer %Bool.call.loc40 [concrete = bool]
@@ -1826,7 +1826,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc41_28.1: ref bool = temporary_storage
 // CHECK:STDOUT:   %addr.loc41_28.3: %ptr.bb2 = addr_of %.loc41_28.1
 // CHECK:STDOUT:   %operator_ExclaimEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_ExclaimEqual__carbon_thunk.decl(%addr.loc41_28.1, %addr.loc41_28.2, %addr.loc41_28.3)
-// CHECK:STDOUT:   %.loc41_28.2: init bool = in_place_init %operator_ExclaimEqual__carbon_thunk.call
+// CHECK:STDOUT:   %.loc41_28.2: init bool to %.loc41_28.1 = in_place_init %operator_ExclaimEqual__carbon_thunk.call
 // CHECK:STDOUT:   %.loc41_18.1: type = splice_block %.loc41_18.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call.loc41: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc41_18.2: type = value_of_initializer %Bool.call.loc41 [concrete = bool]
@@ -1849,7 +1849,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc42_31.1: ref bool = temporary_storage
 // CHECK:STDOUT:   %addr.loc42_31.3: %ptr.bb2 = addr_of %.loc42_31.1
 // CHECK:STDOUT:   %operator_Greater__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Greater__carbon_thunk.decl(%addr.loc42_31.1, %addr.loc42_31.2, %addr.loc42_31.3)
-// CHECK:STDOUT:   %.loc42_31.2: init bool = in_place_init %operator_Greater__carbon_thunk.call
+// CHECK:STDOUT:   %.loc42_31.2: init bool to %.loc42_31.1 = in_place_init %operator_Greater__carbon_thunk.call
 // CHECK:STDOUT:   %.loc42_21.1: type = splice_block %.loc42_21.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call.loc42: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc42_21.2: type = value_of_initializer %Bool.call.loc42 [concrete = bool]
@@ -1872,7 +1872,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc43_28.1: ref bool = temporary_storage
 // CHECK:STDOUT:   %addr.loc43_28.3: %ptr.bb2 = addr_of %.loc43_28.1
 // CHECK:STDOUT:   %operator_Less__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Less__carbon_thunk.decl(%addr.loc43_28.1, %addr.loc43_28.2, %addr.loc43_28.3)
-// CHECK:STDOUT:   %.loc43_28.2: init bool = in_place_init %operator_Less__carbon_thunk.call
+// CHECK:STDOUT:   %.loc43_28.2: init bool to %.loc43_28.1 = in_place_init %operator_Less__carbon_thunk.call
 // CHECK:STDOUT:   %.loc43_18.1: type = splice_block %.loc43_18.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call.loc43: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc43_18.2: type = value_of_initializer %Bool.call.loc43 [concrete = bool]
@@ -1895,7 +1895,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc44_40.1: ref bool = temporary_storage
 // CHECK:STDOUT:   %addr.loc44_40.3: %ptr.bb2 = addr_of %.loc44_40.1
 // CHECK:STDOUT:   %operator_GreaterEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_GreaterEqual__carbon_thunk.decl(%addr.loc44_40.1, %addr.loc44_40.2, %addr.loc44_40.3)
-// CHECK:STDOUT:   %.loc44_40.2: init bool = in_place_init %operator_GreaterEqual__carbon_thunk.call
+// CHECK:STDOUT:   %.loc44_40.2: init bool to %.loc44_40.1 = in_place_init %operator_GreaterEqual__carbon_thunk.call
 // CHECK:STDOUT:   %.loc44_30.1: type = splice_block %.loc44_30.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call.loc44: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc44_30.2: type = value_of_initializer %Bool.call.loc44 [concrete = bool]
@@ -1918,7 +1918,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc45_37.1: ref bool = temporary_storage
 // CHECK:STDOUT:   %addr.loc45_37.3: %ptr.bb2 = addr_of %.loc45_37.1
 // CHECK:STDOUT:   %operator_LessEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_LessEqual__carbon_thunk.decl(%addr.loc45_37.1, %addr.loc45_37.2, %addr.loc45_37.3)
-// CHECK:STDOUT:   %.loc45_37.2: init bool = in_place_init %operator_LessEqual__carbon_thunk.call
+// CHECK:STDOUT:   %.loc45_37.2: init bool to %.loc45_37.1 = in_place_init %operator_LessEqual__carbon_thunk.call
 // CHECK:STDOUT:   %.loc45_27.1: type = splice_block %.loc45_27.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call.loc45: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc45_27.2: type = value_of_initializer %Bool.call.loc45 [concrete = bool]
@@ -2223,7 +2223,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc19_31.1: ref bool = temporary_storage
 // CHECK:STDOUT:   %addr.loc19_31.3: %ptr.bb2 = addr_of %.loc19_31.1
 // CHECK:STDOUT:   %operator_Greater__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Greater__carbon_thunk.decl(%addr.loc19_31.1, %addr.loc19_31.2, %addr.loc19_31.3)
-// CHECK:STDOUT:   %.loc19_31.2: init bool = in_place_init %operator_Greater__carbon_thunk.call
+// CHECK:STDOUT:   %.loc19_31.2: init bool to %.loc19_31.1 = in_place_init %operator_Greater__carbon_thunk.call
 // CHECK:STDOUT:   %.loc19_21.1: type = splice_block %.loc19_21.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call.loc19: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc19_21.2: type = value_of_initializer %Bool.call.loc19 [concrete = bool]
@@ -2268,7 +2268,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc36_37.1: ref bool = temporary_storage
 // CHECK:STDOUT:   %addr.loc36_37.3: %ptr.bb2 = addr_of %.loc36_37.1
 // CHECK:STDOUT:   %operator_LessEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_LessEqual__carbon_thunk.decl(%addr.loc36_37.1, %addr.loc36_37.2, %addr.loc36_37.3)
-// CHECK:STDOUT:   %.loc36_37.2: init bool = in_place_init %operator_LessEqual__carbon_thunk.call
+// CHECK:STDOUT:   %.loc36_37.2: init bool to %.loc36_37.1 = in_place_init %operator_LessEqual__carbon_thunk.call
 // CHECK:STDOUT:   %.loc36_27.1: type = splice_block %.loc36_27.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call.loc36: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc36_27.2: type = value_of_initializer %Bool.call.loc36 [concrete = bool]
@@ -2378,7 +2378,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc16_24.1: ref bool = temporary_storage
 // CHECK:STDOUT:   %addr.loc16_24.3: %ptr.bb2 = addr_of %.loc16_24.1
 // CHECK:STDOUT:   %operator_EqualEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_EqualEqual__carbon_thunk.decl(%addr.loc16_24.1, %addr.loc16_24.2, %addr.loc16_24.3)
-// CHECK:STDOUT:   %.loc16_24.2: init bool = in_place_init %operator_EqualEqual__carbon_thunk.call
+// CHECK:STDOUT:   %.loc16_24.2: init bool to %.loc16_24.1 = in_place_init %operator_EqualEqual__carbon_thunk.call
 // CHECK:STDOUT:   %.loc16_14.1: type = splice_block %.loc16_14.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call.loc16: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc16_14.2: type = value_of_initializer %Bool.call.loc16 [concrete = bool]
