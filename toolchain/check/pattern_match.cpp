@@ -187,7 +187,11 @@ auto MatchContext::CalleeResults(
 
 MatchContext::~MatchContext() {
   CARBON_CHECK(call_args_.empty() && call_params_.empty() &&
-               call_param_patterns_.empty());
+                   call_param_patterns_.empty(),
+               "Unhandled pattern matching outputs. call_args_.size(): {0}, "
+               "call_params_.size(): {1}, call_param_patterns_.size(): {2}",
+               call_args_.size(), call_params_.size(),
+               call_param_patterns_.size());
 }
 
 // Inserts the given region into the current code block. If the region
