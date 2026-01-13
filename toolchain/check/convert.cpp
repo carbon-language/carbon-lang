@@ -42,9 +42,12 @@
 
 namespace Carbon::Check {
 
-// Marks the initializer `init_id` as initializing `target.init_id`.
+// Marks the initializer `init_id` as initializing `target.storage_id`.
 static auto MarkInitializerFor(SemIR::File& sem_ir, SemIR::InstId init_id,
                                ConversionTarget& target) -> void {
+  if (!target.storage_id.has_value()) {
+    return;
+  }
   CARBON_CHECK(target.is_initializer());
   auto return_slot_arg_id = FindReturnSlotArgForInitializer(sem_ir, init_id);
   if (return_slot_arg_id.has_value()) {
@@ -54,8 +57,8 @@ static auto MarkInitializerFor(SemIR::File& sem_ir, SemIR::InstId init_id,
                  "Return slot for initializer does not contain a temporary; "
                  "initialized multiple times? Have {0}",
                  sem_ir.insts().Get(return_slot_arg_id));
-    target.init_id =
-        target.init_block->MergeReplacing(return_slot_arg_id, target.init_id);
+    target.storage_id = target.storage_access_block->MergeReplacing(
+        return_slot_arg_id, target.storage_id);
   }
 }
 
@@ -133,6 +136,9 @@ static auto MakeElementAccessInst(Context& context, SemIR::LocId loc_id,
                                   SemIR::InstId aggregate_id,
                                   SemIR::TypeId elem_type_id, InstBlockT& block,
                                   size_t i) -> SemIR::InstId {
+  if (!aggregate_id.has_value()) {
+    return SemIR::InstId::None;
+  }
   if constexpr (std::is_same_v<AccessInstT, SemIR::ArrayIndex>) {
     // TODO: Add a new instruction kind for indexing an array at a constant
     // index so that we don't need an integer literal instruction here, and
@@ -217,8 +223,8 @@ static auto ConvertAggregateElement(
 
   // Compute the location of the target element and initialize it.
   PendingBlock::DiscardUnusedInstsScope scope(target_block);
-  target.init_block = target_block;
-  target.init_id = MakeElementAccessInst<TargetAccessInstT>(
+  target.storage_access_block = target_block;
+  target.storage_id = MakeElementAccessInst<TargetAccessInstT>(
       context, loc_id, target_id, target_elem_type, *target_block,
       target_field_index);
   return Convert(context, loc_id, src_elem_id, target, vtable_class_type);
@@ -281,13 +287,14 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
   }
 
   PendingBlock target_block_storage(&context);
-  PendingBlock* target_block =
-      target.init_block ? target.init_block : &target_block_storage;
+  PendingBlock* target_block = target.storage_access_block
+                                   ? target.storage_access_block
+                                   : &target_block_storage;
 
   // Arrays are always initialized in-place. Allocate a temporary as the
   // destination for the array initialization if we weren't given one.
-  SemIR::InstId return_slot_arg_id = target.init_id;
-  if (!target.init_id.has_value()) {
+  SemIR::InstId return_slot_arg_id = target.storage_id;
+  if (!target.storage_id.has_value()) {
     return_slot_arg_id = target_block->AddInst<SemIR::TemporaryStorage>(
         value_loc_id, {.type_id = target.type_id});
   }
@@ -382,8 +389,8 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
     auto init_id =
         ConvertAggregateElement<SemIR::TupleAccess, SemIR::TupleAccess>(
             context, value_loc_id, value_id, src_type_inst_id, literal_elems,
-            inner_kind, target.init_id, dest_type_inst_id, target.init_block, i,
-            i);
+            inner_kind, target.storage_id, dest_type_inst_id,
+            target.storage_access_block, i, i);
     if (init_id == SemIR::ErrorInst::InstId) {
       return SemIR::ErrorInst::InstId;
     }
@@ -391,11 +398,11 @@ static auto ConvertTupleToTuple(Context& context, SemIR::TupleType src_type,
   }
 
   if (target.is_initializer()) {
-    target.init_block->InsertHere();
+    target.storage_access_block->InsertHere();
     return AddInst<SemIR::TupleInit>(context, value_loc_id,
                                      {.type_id = target.type_id,
                                       .elements_id = new_block.id(),
-                                      .dest_id = target.init_id});
+                                      .dest_id = target.storage_id});
   } else {
     return AddInst<SemIR::TupleValue>(
         context, value_loc_id,
@@ -536,13 +543,13 @@ static auto ConvertStructToStructOrClass(
       if constexpr (!ToClass) {
         CARBON_FATAL("Only classes should have vptrs.");
       }
-      target.init_block->InsertHere();
+      target.storage_access_block->InsertHere();
       auto vptr_type_id =
           context.types().GetTypeIdForTypeInstId(dest_field.type_inst_id);
       auto dest_id =
           AddInst<SemIR::ClassElementAccess>(context, value_loc_id,
                                              {.type_id = vptr_type_id,
-                                              .base_id = target.init_id,
+                                              .base_id = target.storage_id,
                                               .index = SemIR::ElementIndex(i)});
       auto vtable_decl_id =
           context.classes().Get(vtable_class_type->class_id).vtable_decl_id;
@@ -599,9 +606,10 @@ static auto ConvertStructToStructOrClass(
     auto init_id =
         ConvertAggregateElement<SemIR::StructAccess, TargetAccessInstT>(
             context, value_loc_id, value_id, src_field.type_inst_id,
-            literal_elems, inner_kind, target.init_id, dest_field.type_inst_id,
-            target.init_block, src_field_index,
-            src_field_index + dest_vptr_offset, vtable_class_type);
+            literal_elems, inner_kind, target.storage_id,
+            dest_field.type_inst_id, target.storage_access_block,
+            src_field_index, src_field_index + dest_vptr_offset,
+            vtable_class_type);
     if (init_id == SemIR::ErrorInst::InstId) {
       return SemIR::ErrorInst::InstId;
     }
@@ -610,19 +618,19 @@ static auto ConvertStructToStructOrClass(
 
   bool is_init = target.is_initializer();
   if (ToClass) {
-    target.init_block->InsertHere();
+    target.storage_access_block->InsertHere();
     CARBON_CHECK(is_init,
                  "Converting directly to a class value is not supported");
     return AddInst<SemIR::ClassInit>(context, value_loc_id,
                                      {.type_id = target.type_id,
                                       .elements_id = new_block.id(),
-                                      .dest_id = target.init_id});
+                                      .dest_id = target.storage_id});
   } else if (is_init) {
-    target.init_block->InsertHere();
+    target.storage_access_block->InsertHere();
     return AddInst<SemIR::StructInit>(context, value_loc_id,
                                       {.type_id = target.type_id,
                                        .elements_id = new_block.id(),
-                                       .dest_id = target.init_id});
+                                       .dest_id = target.storage_id});
   } else {
     return AddInst<SemIR::StructValue>(
         context, value_loc_id,
@@ -670,8 +678,8 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
   bool need_temporary = !target.is_initializer();
   if (need_temporary) {
     target.kind = ConversionTarget::Initializer;
-    target.init_block = &target_block;
-    target.init_id = target_block.AddInst<SemIR::TemporaryStorage>(
+    target.storage_access_block = &target_block;
+    target.storage_id = target_block.AddInst<SemIR::TemporaryStorage>(
         SemIR::LocId(value_id), {.type_id = target.type_id});
   }
 
@@ -684,7 +692,7 @@ static auto ConvertStructToClass(Context& context, SemIR::StructType src_type,
     result_id =
         AddInstWithCleanup<SemIR::Temporary>(context, SemIR::LocId(value_id),
                                              {.type_id = target.type_id,
-                                              .storage_id = target.init_id,
+                                              .storage_id = target.storage_id,
                                               .init_id = result_id});
   }
   return result_id;
@@ -1004,11 +1012,12 @@ static auto PerformBuiltinConversion(
           context, loc_id,
           {.type_id = foundation_type_id, .source_id = value_id});
 
-      auto foundation_init_id = target.init_id;
+      auto foundation_init_id = target.storage_id;
       if (foundation_init_id != SemIR::InstId::None) {
-        foundation_init_id = target.init_block->AddInst<SemIR::AsCompatible>(
-            loc_id,
-            {.type_id = foundation_type_id, .source_id = target.init_id});
+        foundation_init_id =
+            target.storage_access_block->AddInst<SemIR::AsCompatible>(
+                loc_id, {.type_id = foundation_type_id,
+                         .source_id = target.storage_id});
       }
 
       {
@@ -1021,13 +1030,13 @@ static auto PerformBuiltinConversion(
               builder.Note(value_id, InCopy, value_id);
             });
 
-        foundation_value_id =
-            PerformBuiltinConversion(context, loc_id, foundation_value_id,
-                                     {.kind = target.kind,
-                                      .type_id = foundation_type_id,
-                                      .init_id = foundation_init_id,
-                                      .init_block = target.init_block,
-                                      .diagnose = target.diagnose});
+        foundation_value_id = PerformBuiltinConversion(
+            context, loc_id, foundation_value_id,
+            {.kind = target.kind,
+             .type_id = foundation_type_id,
+             .storage_id = foundation_init_id,
+             .storage_access_block = target.storage_access_block,
+             .diagnose = target.diagnose});
         if (foundation_value_id == SemIR::ErrorInst::InstId) {
           return SemIR::ErrorInst::InstId;
         }
@@ -1704,6 +1713,16 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
     return SemIR::ErrorInst::InstId;
   }
 
+  if (target.kind != ConversionTarget::FullInitializer &&
+      (target.kind != ConversionTarget::Initializer ||
+       !SemIR::InitRepr::ForType(context.sem_ir(), target.type_id)
+            .MightBeInPlace())) {
+    // storage_id should only be used for a FullInitializer, or an Initializer
+    // if the type has an in-place init representation. This ensures we don't
+    // accidentally use it for anything else.
+    target.storage_id = SemIR::InstId::None;
+  }
+
   // The source type doesn't need to be complete, but its completeness can
   // affect the result. For example, we don't know what type it adapts or
   // derives from unless it's complete.
@@ -1814,25 +1833,25 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   if (target.kind == ConversionTarget::FullInitializer) {
     if (auto init_rep = SemIR::InitRepr::ForType(sem_ir, target.type_id);
         init_rep.MightBeByCopy()) {
-      target.init_block->InsertHere();
+      target.storage_access_block->InsertHere();
       expr_id = AddInst<SemIR::InitializeFrom>(context, loc_id,
                                                {.type_id = target.type_id,
                                                 .src_id = expr_id,
-                                                .dest_id = target.init_id});
+                                                .dest_id = target.storage_id});
     }
   }
 
   return expr_id;
 }
 
-auto Initialize(Context& context, SemIR::LocId loc_id, SemIR::InstId target_id,
+auto Initialize(Context& context, SemIR::LocId loc_id, SemIR::InstId storage_id,
                 SemIR::InstId value_id) -> SemIR::InstId {
   PendingBlock target_block(&context);
   return Convert(context, loc_id, value_id,
                  {.kind = ConversionTarget::Initializer,
-                  .type_id = context.insts().Get(target_id).type_id(),
-                  .init_id = target_id,
-                  .init_block = &target_block});
+                  .type_id = context.insts().Get(storage_id).type_id(),
+                  .storage_id = storage_id,
+                  .storage_access_block = &target_block});
 }
 
 auto ConvertToValueExpr(Context& context, SemIR::InstId expr_id)

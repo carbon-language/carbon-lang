@@ -52,7 +52,7 @@ let b: i32 = Mul(0x8000, 0x10000);
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %Mul.call: init %i32 = call %Mul.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   return %Mul.call to %return.param
+// CHECK:STDOUT:   return %Mul.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

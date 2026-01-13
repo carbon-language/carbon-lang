@@ -1289,6 +1289,7 @@ struct FunctionSignatureInsts {
   SemIR::TypeInstId return_type_inst_id;
   SemIR::InstId return_form_inst_id;
   SemIR::InstBlockId return_patterns_id;
+  SemIR::InstBlockId call_param_patterns_id;
   SemIR::InstBlockId call_params_id;
 };
 }  // namespace
@@ -1325,7 +1326,7 @@ static auto CreateFunctionSignatureInsts(Context& context, SemIR::LocId loc_id,
   }
   pop.reset();
 
-  auto call_params_id =
+  auto [call_param_patterns_id, call_params_id] =
       CalleePatternMatch(context, implicit_param_patterns_id, param_patterns_id,
                          return_patterns_id);
 
@@ -1334,6 +1335,7 @@ static auto CreateFunctionSignatureInsts(Context& context, SemIR::LocId loc_id,
            .return_type_inst_id = return_type_inst_id,
            .return_form_inst_id = return_form_inst_id,
            .return_patterns_id = return_patterns_id,
+           .call_param_patterns_id = call_param_patterns_id,
            .call_params_id = call_params_id}};
 }
 
@@ -1422,7 +1424,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
        .non_owning_decl_id = SemIR::InstId::None,
        .first_owning_decl_id = decl_id,
        .definition_id = SemIR::InstId::None},
-      {.call_params_id = function_params_insts->call_params_id,
+      {.call_param_patterns_id = function_params_insts->call_param_patterns_id,
+       .call_params_id = function_params_insts->call_params_id,
        .return_type_inst_id = function_params_insts->return_type_inst_id,
        .return_form_inst_id = function_params_insts->return_form_inst_id,
        .return_patterns_id = function_params_insts->return_patterns_id,

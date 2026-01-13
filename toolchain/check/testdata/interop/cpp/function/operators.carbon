@@ -3168,7 +3168,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc14_14: ref %B = value_as_ref %x.ref.loc14_14
 // CHECK:STDOUT:   %addr.loc14_12.2: %ptr.a04 = addr_of %.loc14_14
 // CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %i32 = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc14_12.1, %addr.loc14_12.2)
-// CHECK:STDOUT:   return %operator_Plus__carbon_thunk.call to %return.param
+// CHECK:STDOUT:   return %operator_Plus__carbon_thunk.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_overloading.carbon

@@ -215,7 +215,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:     %specific_impl_fn.loc14_12.1: <specific function> = specific_impl_function %impl.elem0.loc14_12.1, @Copy.Op(constants.%Copy.facet.c25) [symbolic = %specific_impl_fn.loc14_12.2 (constants.%specific_impl_fn.b84)]
 // CHECK:STDOUT:     %bound_method.loc14_12.2: <bound method> = bound_method %addr, %specific_impl_fn.loc14_12.1
 // CHECK:STDOUT:     %Copy.Op.call: init @A.as.I.impl.F.%ptr.loc13_30.1 (%ptr.e8f8f9.2) = call %bound_method.loc14_12.2(%addr)
-// CHECK:STDOUT:     return %Copy.Op.call to %return.param
+// CHECK:STDOUT:     return %Copy.Op.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -251,7 +251,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:     %specific_impl_fn.loc21_11.1: <specific function> = specific_impl_function %impl.elem0.loc21_11.1, @I.F(constants.%W, constants.%I.facet.558) [symbolic = %specific_impl_fn.loc21_11.2 (constants.%specific_impl_fn.898)]
 // CHECK:STDOUT:     %bound_method.loc21_22: <bound method> = bound_method %.loc21_11.1, %specific_impl_fn.loc21_11.1
 // CHECK:STDOUT:     %I.F.call: init @TestGeneric.%ptr.loc19_40.1 (%ptr.e8f8f9.4) = call %bound_method.loc21_22(%.loc21_11.1)
-// CHECK:STDOUT:     return %I.F.call to %return.param
+// CHECK:STDOUT:     return %I.F.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -270,7 +270,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @A.as.I.impl.F(constants.%empty_struct_type) [concrete = constants.%A.as.I.impl.F.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc27_23: <bound method> = bound_method %.loc27_11, %specific_fn
 // CHECK:STDOUT:   %A.as.I.impl.F.call: init %ptr.c28 = call %bound_method.loc27_23(%.loc27_11)
-// CHECK:STDOUT:   return %A.as.I.impl.F.call to %return.param
+// CHECK:STDOUT:   return %A.as.I.impl.F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.as.I.impl(constants.%V.67d) {

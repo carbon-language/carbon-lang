@@ -194,7 +194,7 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
 
   // Perform callee-side pattern matching to rebuild the parameter list.
   context.inst_block_stack().Push();
-  auto call_params_id =
+  auto [call_param_patterns_id, call_params_id] =
       CalleePatternMatch(context, implicit_param_patterns_id, param_patterns_id,
                          return_patterns_id);
   auto decl_block_id = context.inst_block_stack().Pop();
@@ -222,7 +222,8 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
                        .non_owning_decl_id = SemIR::InstId::None,
                        .first_owning_decl_id = decl_id,
                        .definition_id = decl_id},
-                      {.call_params_id = call_params_id,
+                      {.call_param_patterns_id = call_param_patterns_id,
+                       .call_params_id = call_params_id,
                        .return_type_inst_id = return_type_inst_id,
                        .return_form_inst_id = return_form_inst_id,
                        .return_patterns_id = return_patterns_id,

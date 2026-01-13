@@ -112,7 +112,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %F.ref()
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %c.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%c.var)
-// CHECK:STDOUT:   return %Class.F.call to %return.param
+// CHECK:STDOUT:   return %Class.F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: %Class) = "no_op";

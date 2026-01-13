@@ -83,7 +83,7 @@ fn RuntimeCallIsValidBadReturnType(a: f64) -> bool {
 // CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
 // CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a
 // CHECK:STDOUT:   %Negate.call: init %f64.d77 = call %Negate.ref(%a.ref)
-// CHECK:STDOUT:   return %Negate.call to %return.param
+// CHECK:STDOUT:   return %Negate.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

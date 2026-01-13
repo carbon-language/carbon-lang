@@ -20,7 +20,7 @@ from bazel_tools.tools.python.runfiles import runfiles
 class LLVMSymlinksTest(unittest.TestCase):
     def setUp(self) -> None:
         # The install root is adjacent to the test script
-        self.install_root = Path(sys.argv[0]).parent / "prefix_root"
+        self.install_root = Path(sys.argv[0]).parent / "prefix"
         self.tmpdir = Path(os.environ["TEST_TMPDIR"])
         self.test_o_file = self.tmpdir / "test.o"
         self.test_o_file.touch()

@@ -300,7 +300,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %.loc24: %AdaptCopyable = acquire_value %d.ref
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %d.var, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%d.var)
-// CHECK:STDOUT:   return <error> to %return.param
+// CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp.loc16(%self.param: %AdaptCopyable) = "no_op";

@@ -400,6 +400,6 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc14_20.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %.loc14_20.2: %i32 = converted %int_1, %.loc14_20.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %bar.call: init %i32 = call imports.%bar.decl(%.loc14_20.2)
-// CHECK:STDOUT:   return %bar.call to %return.param
+// CHECK:STDOUT:   return %bar.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

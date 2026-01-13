@@ -451,9 +451,9 @@ fn F() {
   // CHECK:STDERR: struct S;
   // CHECK:STDERR:        ^
   // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE-14]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./decl_value_return_type.h:2:8: note: return type declared here [IncompleteReturnTypeHere]
-  // CHECK:STDERR: struct S;
-  // CHECK:STDERR:        ^
+  // CHECK:STDERR: ./decl_value_return_type.h:4:1: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: auto foo() -> S;
+  // CHECK:STDERR: ^
   // CHECK:STDERR:
   Cpp.foo();
 }

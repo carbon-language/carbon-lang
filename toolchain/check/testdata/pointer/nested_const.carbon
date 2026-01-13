@@ -111,6 +111,6 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @const.as.Copy.impl.Op(constants.%Copy.facet.de4) [concrete = constants.%const.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc17_10.2: <bound method> = bound_method %.loc17_10.2, %specific_fn
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.call: init %const.20a = call %bound_method.loc17_10.2(%.loc17_10.2)
-// CHECK:STDOUT:   return %const.as.Copy.impl.Op.call to %return.param
+// CHECK:STDOUT:   return %const.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

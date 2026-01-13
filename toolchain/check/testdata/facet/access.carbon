@@ -765,9 +765,9 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:   fn() -> %empty_tuple.type {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc7_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc7_11.2: init %empty_tuple.type = tuple_init () to %return.param [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc7_11.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc7_12: init %empty_tuple.type = converted %.loc7_11.1, %.loc7_11.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     return %.loc7_12 to %return.param
+// CHECK:STDOUT:     return %.loc7_12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -929,9 +929,9 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:   fn() -> %empty_tuple.type {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc15_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc15_11.2: init %empty_tuple.type = tuple_init () to %return.param [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc15_11.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc15_12: init %empty_tuple.type = converted %.loc15_11.1, %.loc15_11.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     return %.loc15_12 to %return.param
+// CHECK:STDOUT:     return %.loc15_12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -945,9 +945,9 @@ fn F2(U:! Z) {
 // CHECK:STDOUT:   fn() -> %empty_struct_type {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc19_11.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc19_11.2: init %empty_struct_type = struct_init () to %return.param [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc19_11.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc19_12: init %empty_struct_type = converted %.loc19_11.1, %.loc19_11.2 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     return %.loc19_12 to %return.param
+// CHECK:STDOUT:     return %.loc19_12
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

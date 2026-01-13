@@ -58,7 +58,7 @@ static auto MakeNoOpFunction(Context& context, SemIR::LocId loc_id,
       context, loc_id, SemIR::NameId::SelfValue, type_expr_region_id, type_id,
       /*is_ref=*/true);
   auto implicit_param_patterns_id = context.inst_blocks().Add({self_param_id});
-  auto call_params_id =
+  auto [call_param_patterns_id, call_params_id] =
       CalleePatternMatch(context, implicit_param_patterns_id,
                          /*param_patterns_id=*/SemIR::InstBlockId::Empty,
                          /*return_patterns_id=*/SemIR::InstBlockId::None);
@@ -95,6 +95,7 @@ static auto MakeNoOpFunction(Context& context, SemIR::LocId loc_id,
           .first_owning_decl_id = noop_id,
       },
       {
+          .call_param_patterns_id = call_param_patterns_id,
           .call_params_id = call_params_id,
           .return_type_inst_id = SemIR::TypeInstId::None,
           .return_form_inst_id = SemIR::InstId::None,
