@@ -609,8 +609,13 @@ def _impl(ctx):
 
     # Clang HARDENING_MODE has 4 possible values:
     # https://libcxx.llvm.org/Hardening.html#notes-for-users
+    #
+    # Do not enable DEBUG hardening mode, even for -c dbg, because its
+    # performance impact on llvm-symbolizer is too severe -- this flag
+    # results in symbolization becoming quadratic in the number of debug
+    # symbols, in practice meaning it never completes.
     libcpp_debug_flags = [
-        "-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG",
+        "-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE",
     ]
     libcpp_release_flags = [
         "-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST",
