@@ -54,9 +54,9 @@ inline auto CheckFunctionTypeMatches(Context& context,
 }
 
 // Checks that the scrutinee type of `return_pattern_id` in `specific_id` is
-// concrete, issuing an error if not, and returns that type. `return_pattern_id`
-// must be part of a function's return form, or the error message will be
-// nonsensical.
+// concrete. If so, it returns that type; if not, it issues an error and returns
+// SemIR::ErrorInst::TypeId. `return_pattern_id` must be part of a function's
+// return form, or the error message will be nonsensical.
 auto CheckFunctionReturnPatternType(Context& context, SemIR::LocId loc_id,
                                     SemIR::InstId return_pattern_id,
                                     SemIR::SpecificId specific_id)

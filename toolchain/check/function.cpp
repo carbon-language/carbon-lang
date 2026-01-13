@@ -116,9 +116,11 @@ auto CheckFunctionReturnPatternType(Context& context, SemIR::LocId loc_id,
 
     // TODO: Consider suppressing the diagnostic if we've already diagnosed a
     // definition or call to this function.
-    RequireConcreteType(context, arg_type_id, SemIR::LocId(return_pattern_id),
-                        diagnose_incomplete_return_type,
-                        diagnose_abstract_return_type);
+    if (!RequireConcreteType(
+            context, arg_type_id, SemIR::LocId(return_pattern_id),
+            diagnose_incomplete_return_type, diagnose_abstract_return_type)) {
+      return SemIR::ErrorInst::TypeId;
+    }
   }
 
   return arg_type_id;

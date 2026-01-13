@@ -250,6 +250,9 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
         });
     auto arg_type_id = CheckFunctionReturnPatternType(
         context, loc_id, return_pattern_id, *callee_specific_id);
+    if (arg_type_id == SemIR::ErrorInst::TypeId) {
+      return_type_id = SemIR::ErrorInst::TypeId;
+    }
     switch (SemIR::InitRepr::ForType(context.sem_ir(), arg_type_id).kind) {
       case SemIR::InitRepr::InPlace:
       case SemIR::InitRepr::Dependent:
@@ -258,12 +261,10 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
         return_arg_ids.push_back(AddInst<SemIR::TemporaryStorage>(
             context, loc_id, {.type_id = arg_type_id}));
         break;
-      case SemIR::InitRepr::Incomplete:
-      case SemIR::InitRepr::Abstract:
-        return_type_id = SemIR::ErrorInst::TypeId;
-        [[fallthrough]];
       case SemIR::InitRepr::None:
       case SemIR::InitRepr::ByCopy:
+      case SemIR::InitRepr::Incomplete:
+      case SemIR::InitRepr::Abstract:
         return_arg_ids.push_back(SemIR::InstId::None);
         break;
     }
