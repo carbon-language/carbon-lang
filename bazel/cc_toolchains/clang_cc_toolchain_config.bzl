@@ -59,7 +59,6 @@ load(
     "clang_bindir",
     "clang_include_dirs_list",
     "clang_resource_dir",
-    "clang_version",
     "clang_version_for_cache",
     "llvm_bindir",
     "sysroot_dir",
@@ -71,16 +70,6 @@ def _build_features(ctx):
     # libc++ is only used on non-Windows platforms.
     if ctx.attr.target_os != "windows":
         std_compile_flags.append("-stdlib=libc++")
-
-    # TODO: Regression that warns on anonymous unions; remove depending on fix.
-    # Sets the flag for unknown clang versions, which are assumed to be at head.
-    # https://github.com/llvm/llvm-project/issues/70384
-    if not clang_version or clang_version == 18:
-        missing_field_init_flags = ["-Wno-missing-field-initializers"]
-    elif clang_version > 18:
-        missing_field_init_flags = ["-Wno-missing-designated-field-initializers"]
-    else:
-        missing_field_init_flags = []
 
     # TODO: Refactor this into a reusable form in its own file.
     default_flags_feature = feature(
@@ -115,6 +104,11 @@ def _build_features(ctx):
                         "-Wmissing-prototypes",
                         "-Wzero-as-null-pointer-constant",
                         "-Wdelete-non-virtual-dtor",
+
+                        # TODO: Regression that warns on anonymous unions;
+                        # remove depending on fix.
+                        "-Wno-missing-designated-field-initializers",
+
                         # Don't warn on external code as we can't
                         # necessarily patch it easily. Note that these have
                         # to be initial directories in the `#include` line.
@@ -132,7 +126,7 @@ def _build_features(ctx):
                         "--system-header-prefix=tree_sitter/",
                         # Compile actions shouldn't link anything.
                         "-c",
-                    ] + missing_field_init_flags),
+                    ]),
                     flag_group(
                         expand_if_available = "output_assembly_file",
                         flags = ["-S"],
