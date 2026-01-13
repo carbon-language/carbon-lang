@@ -405,7 +405,7 @@ def _build_features(ctx):
     else:
         fail("Unsupported target OS!")
 
-    # Finally append the libraries to link and any final flags.
+    # Next, append the libraries to link.
     features += linking_features
 
     # TODO: Refactor the target-specific feature management here to be part of
