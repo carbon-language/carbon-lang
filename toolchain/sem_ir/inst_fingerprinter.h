@@ -44,7 +44,8 @@ class InstFingerprinter {
   // the `GetOrCompute` overload for `InstBlockId`s, and may save some work if
   // the same canonical inst block is used by multiple instructions, for example
   // as a specific argument list.
-  using FingerprintStore = FixedSizeValueStore<InstId, uint64_t, CheckIRId>;
+  using FingerprintStore =
+      FixedSizeValueStore<InstId, uint64_t, Tag<CheckIRId>>;
   using FilesFingerprintStores =
       FixedSizeValueStore<CheckIRId, FingerprintStore>;
   FilesFingerprintStores fingerprints_;

@@ -20,23 +20,41 @@ struct Untagged : Printable<Untagged> {
   auto Print(llvm::raw_ostream& out) const -> void { out << "<untagged>"; }
 };
 
+// A wrapper type used as the template argument to IdTag, in order to mark the
+// tag type as such.
+template <typename TagIdT>
+struct Tag {};
+
+template <typename T>
+struct GetTagIdType {
+  static_assert(false, "IdTag with TagT that is neither Untagged nor Tag");
+};
+template <>
+struct GetTagIdType<Untagged> {
+  using TagIdType = Untagged;
+};
+template <typename TagIdT>
+struct GetTagIdType<Tag<TagIdT>> {
+  using TagIdType = TagIdT;
+};
+
 // Tests if an `IdTag` type is untagged.
 template <typename IdTagT>
 concept IdTagIsUntagged = std::same_as<typename IdTagT::TagIdType, Untagged>;
 
 // A tagged Id. It is used to add a tag into the unused bits of the id, in order
-// to verify ids are used in the correct context. The tag type must be an id
-// type or `Untagged`.
-template <typename IdT, typename TagIdT>
+// to verify ids are used in the correct context. The tag type must be `Tag` or
+// `Untagged`.
+template <typename IdT, typename TagT>
 struct IdTag {
   using IdType = IdT;
-  using TagIdType = TagIdT;
+  using TagIdType = GetTagIdType<TagT>::TagIdType;
 
   IdTag()
     requires(IdTagIsUntagged<IdTag>)
   = default;
 
-  IdTag(TagIdT tag, int32_t initial_reserved_ids)
+  IdTag(TagIdType tag, int32_t initial_reserved_ids)
     requires(!IdTagIsUntagged<IdTag>)
       :  // Shift down by 1 to get out of the high bit to avoid using any
          // negative ids, since they have special uses. Shift down by another 1
@@ -76,11 +94,11 @@ struct IdTag {
 
   // Gets the value unique to this IdTag instance that is added to indices in
   // Apply, and removed in Remove.
-  auto GetContainerTag() const -> TagIdT {
+  auto GetContainerTag() const -> TagIdType {
     if constexpr (IdTagIsUntagged<IdTag>) {
-      return TagIdT();
+      return TagIdType();
     } else {
-      return TagIdT((llvm::reverseBits(tag_) >> 2) - 1);
+      return TagIdType((llvm::reverseBits(tag_) >> 2) - 1);
     }
   }
 
@@ -91,19 +109,19 @@ struct IdTag {
   }
 
   struct TagAndIndex {
-    TagIdT tag;
+    TagIdType tag;
     int32_t index;
   };
 
   static auto DecomposeWithBestEffort(IdT id) -> TagAndIndex {
     if constexpr (IdTagIsUntagged<IdTag>) {
-      return {TagIdT(), id.index};
+      return {TagIdType(), id.index};
     } else {
       if (!id.has_value()) {
-        return {TagIdT::None, id.index};
+        return {TagIdType::None, id.index};
       }
       if (!HasTag(id.index)) {
-        return {TagIdT::None, id.index};
+        return {TagIdType::None, id.index};
       }
       int length = 0;
       int location = 0;
@@ -123,12 +141,12 @@ struct IdTag {
         }
       }
       if (length < 8) {
-        return {TagIdT::None, id.index};
+        return {TagIdType::None, id.index};
       }
       auto index_mask = llvm::maskTrailingOnes<uint32_t>(location);
       auto tag = (llvm::reverseBits(id.index & ~index_mask) >> 2) - 1;
       auto index = id.index & index_mask;
-      return {.tag = TagIdT(static_cast<int32_t>(tag)),
+      return {.tag = TagIdType(static_cast<int32_t>(tag)),
               .index = static_cast<int32_t>(index)};
     }
   }
@@ -138,7 +156,7 @@ struct IdTag {
   // the same reserved ids.
   template <typename OtherIdT>
     requires(!IdTagIsUntagged<IdTag>)
-  auto ToEquivalentIdType() -> IdTag<OtherIdT, TagIdT> {
+  auto ToEquivalentIdType() -> IdTag<OtherIdT, Tag<TagIdType>> {
     return {GetContainerTag(), initial_reserved_ids_};
   }
 

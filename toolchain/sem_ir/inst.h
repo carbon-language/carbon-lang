@@ -459,7 +459,7 @@ struct LocIdAndInst {
 class InstStore {
  public:
   using IdType = InstId;
-  using IdTagType = IdTag<IdType, CheckIRId>;
+  using IdTagType = IdTag<IdType, Tag<CheckIRId>>;
 
   explicit InstStore(File* file, int32_t reserved_inst_ids);
 
@@ -659,7 +659,7 @@ class InstStore {
   }
 
   auto values() const [[clang::lifetimebound]]
-  -> ValueStore<InstId, Inst, CheckIRId>::Range {
+  -> ValueStore<InstId, Inst, Tag<CheckIRId>>::Range {
     return values_.values();
   }
   auto size() const -> int { return values_.size(); }
@@ -688,13 +688,14 @@ class InstStore {
 
   File* file_;
   llvm::SmallVector<LocId> loc_ids_;
-  ValueStore<InstId, Inst, CheckIRId> values_;
+  ValueStore<InstId, Inst, Tag<CheckIRId>> values_;
 };
 
 // Adapts BlockValueStore for instruction blocks.
-class InstBlockStore : public BlockValueStore<InstBlockId, InstId, CheckIRId> {
+class InstBlockStore
+    : public BlockValueStore<InstBlockId, InstId, Tag<CheckIRId>> {
  public:
-  using BaseType = BlockValueStore<InstBlockId, InstId, CheckIRId>;
+  using BaseType = BlockValueStore<InstBlockId, InstId, Tag<CheckIRId>>;
 
   explicit InstBlockStore(llvm::BumpPtrAllocator& allocator,
                           CheckIRId check_ir_id = CheckIRId::None)

@@ -63,9 +63,10 @@ struct ExprRegion {
   InstId result_id;
 };
 
-using ExprRegionStore = ValueStore<ExprRegionId, ExprRegion, CheckIRId>;
+using ExprRegionStore = ValueStore<ExprRegionId, ExprRegion, Tag<CheckIRId>>;
 
-using CustomLayoutStore = BlockValueStore<CustomLayoutId, uint64_t, CheckIRId>;
+using CustomLayoutStore =
+    BlockValueStore<CustomLayoutId, uint64_t, Tag<CheckIRId>>;
 
 // The semantic IR for a single file.
 class File : public Printable<File> {
@@ -264,7 +265,7 @@ class File : public Printable<File> {
   auto expr_regions() const -> const ExprRegionStore& { return expr_regions_; }
 
   using ClangSourceLocStore =
-      ValueStore<ClangSourceLocId, clang::SourceLocation, CheckIRId>;
+      ValueStore<ClangSourceLocId, clang::SourceLocation, Tag<CheckIRId>>;
   auto clang_source_locs() -> ClangSourceLocStore& {
     return clang_source_locs_;
   }

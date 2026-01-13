@@ -21,7 +21,8 @@ namespace Carbon::Lower {
 class FileContext {
  public:
   using LoweredConstantStore =
-      FixedSizeValueStore<SemIR::InstId, llvm::Constant*, SemIR::CheckIRId>;
+      FixedSizeValueStore<SemIR::InstId, llvm::Constant*,
+                          Tag<SemIR::CheckIRId>>;
 
   explicit FileContext(Context& context, const SemIR::File& sem_ir,
                        const SemIR::InstNamer* inst_namer,
@@ -249,18 +250,19 @@ class FileContext {
   // Maps callables to lowered functions. SemIR treats callables as the
   // canonical form of a function, so lowering needs to do the same.
   using LoweredFunctionStore =
-      FixedSizeValueStore<SemIR::FunctionId, llvm::Function*, SemIR::CheckIRId>;
+      FixedSizeValueStore<SemIR::FunctionId, llvm::Function*,
+                          Tag<SemIR::CheckIRId>>;
   LoweredFunctionStore functions_;
 
   // Maps specific callables to lowered functions.
-  FixedSizeValueStore<SemIR::SpecificId, llvm::Function*, SemIR::CheckIRId>
+  FixedSizeValueStore<SemIR::SpecificId, llvm::Function*, Tag<SemIR::CheckIRId>>
       specific_functions_;
 
   // Provides lowered versions of types. Entries are non-symbolic types.
   //
   // TypeIds internally are concrete ConstantIds.
   using LoweredTypeStore =
-      FixedSizeValueStore<SemIR::TypeId, LoweredTypes, SemIR::CheckIRId>;
+      FixedSizeValueStore<SemIR::TypeId, LoweredTypes, Tag<SemIR::CheckIRId>>;
   LoweredTypeStore types_;
 
   // Maps constants to their lowered values. Indexes are the `InstId` for
@@ -274,15 +276,16 @@ class FileContext {
   // function declarations were created. Those can be retrieved then from
   // `specific_functions_`.
   FixedSizeValueStore<SemIR::GenericId, llvm::SmallVector<SemIR::SpecificId>,
-                      SemIR::CheckIRId>
+                      Tag<SemIR::CheckIRId>>
       lowered_specifics_;
 
   SpecificCoalescer coalescer_;
 
-  FixedSizeValueStore<SemIR::VtableId, llvm::GlobalVariable*, SemIR::CheckIRId>
+  FixedSizeValueStore<SemIR::VtableId, llvm::GlobalVariable*,
+                      Tag<SemIR::CheckIRId>>
       vtables_;
   FixedSizeValueStore<SemIR::SpecificId, llvm::GlobalVariable*,
-                      SemIR::CheckIRId>
+                      Tag<SemIR::CheckIRId>>
       specific_vtables_;
 };
 

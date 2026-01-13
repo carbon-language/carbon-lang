@@ -251,17 +251,18 @@ class ConstantValueStore {
   }
 
   // The tag used in ConstantIds for concrete constants.
-  using ConcreteIdTagType = IdTag<SemIR::ConstantId, SemIR::CheckIRId>;
+  using ConcreteIdTagType = IdTag<SemIR::ConstantId, Tag<SemIR::CheckIRId>>;
   auto GetConcreteIdTag() const -> ConcreteIdTagType {
     return values_.GetIdTag().ToEquivalentIdType<SemIR::ConstantId>();
   }
   // The tag used for TypeId, which are concrete constants internally.
-  using TypeIdTagType = IdTag<SemIR::TypeId, SemIR::CheckIRId>;
+  using TypeIdTagType = IdTag<SemIR::TypeId, Tag<SemIR::CheckIRId>>;
   auto GetTypeIdTag() const -> TypeIdTagType {
     return values_.GetIdTag().ToEquivalentIdType<SemIR::TypeId>();
   }
   // The tag used in ConstantIds for symbolic constants.
-  using SymbolicIdTagType = IdTag<ConstantId::SymbolicId, SemIR::CheckIRId>;
+  using SymbolicIdTagType =
+      IdTag<ConstantId::SymbolicId, Tag<SemIR::CheckIRId>>;
   auto GetSymbolicIdTag() const -> SymbolicIdTagType {
     return symbolic_constants_.GetIdTag();
   }
@@ -278,14 +279,14 @@ class ConstantValueStore {
   //
   // Set inline size to 0 because these will typically be too large for the
   // stack, while this does make File smaller.
-  ValueStore<InstId, ConstantId, CheckIRId> values_;
+  ValueStore<InstId, ConstantId, Tag<CheckIRId>> values_;
 
   // A mapping from a symbolic constant ID index to information about the
   // symbolic constant. For a concrete constant, the only information that we
   // track is the instruction ID, which is stored directly within the
   // `ConstantId`. For a symbolic constant, we also track information about
   // where the constant was used, which is stored here.
-  ValueStore<ConstantId::SymbolicId, SymbolicConstant, CheckIRId>
+  ValueStore<ConstantId::SymbolicId, SymbolicConstant, Tag<CheckIRId>>
       symbolic_constants_;
 
   const InstStore* insts_;
