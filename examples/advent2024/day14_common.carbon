@@ -10,7 +10,11 @@ import Core library "io";
 import library "io_utils";
 
 fn ReadXY(xy: (i32, i32)*) -> bool {
-  return ReadInt(&xy->0) and ConsumeChar(0x2C) and ReadInt(&xy->1);
+  return ReadInt(ref xy->0) and ConsumeChar(',') and ReadInt(ref xy->1);
+}
+
+fn SkipString(s: str) -> bool {
+  return SkipNChars(s.Size() as i32);
 }
 
 fn Mod(a: i32, d: i32) -> i32 {
@@ -21,11 +25,9 @@ fn Mod(a: i32, d: i32) -> i32 {
 class Robot {
   fn Read() -> Robot {
     returned var me: Robot;
-    // "p="
-    SkipNChars(2);
+    SkipString("p=");
     ReadXY(&me.p);
-    // " v="
-    SkipNChars(3);
+    SkipString(" v=");
     ReadXY(&me.v);
     SkipNewline();
     return var;
@@ -34,6 +36,12 @@ class Robot {
   fn Pos[self: Self](t: i32) -> (i32, i32) {
     return (Mod((self.p.0 + self.v.0 * Mod(t, 101)), 101),
             Mod((self.p.1 + self.v.1 * Mod(t, 103)), 103));
+  }
+
+  impl as Core.Copy {
+    fn Op[self: Self]() -> Self {
+      return {.p = self.p, .v = self.v};
+    }
   }
 
   var p: (i32, i32);

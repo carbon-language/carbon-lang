@@ -5,6 +5,7 @@
 // https://adventofcode.com/2024/day/14
 
 import Core library "io";
+import Core library "range";
 
 import library "day14_common";
 import library "io_utils";
@@ -32,51 +33,38 @@ fn CRT(a: i32, b: i32, p: i32, q: i32) -> i32 {
   return Mod(x, p * (q / e.gcd));
 }
 
+fn PrintState(r: array(Robot, 500), t: i32) {
+  var display: array(array(char, 101), 103);
+
+  for (y: i32 in Core.Range(103)) {
+    for (x: i32 in Core.Range(101)) {
+      display[y][x] = '.';
+    }
+  }
+
+  for (ri: Robot in r) {
+    let xy: (i32, i32) = ri.Pos(t);
+    display[xy.1][xy.0] = '#';
+  }
+
+  for (y: i32 in Core.Range(103)) {
+    for (x: i32 in Core.Range(101)) {
+      Core.PrintChar(display[y][x]);
+    }
+    Core.PrintChar('\n');
+  }
+}
+
 fn Run() {
-  var r: [Robot; 500];
-  var i: i32 = 0;
-  while (i < 500) {
+  var r: array(Robot, 500);
+  for (i: i32 in Core.Range(500)) {
     r[i] = Robot.Read();
-    ++i;
   }
 
   let first_match_x: i32 = 28;
   let first_match_y: i32 = 84;
 
   var t: i32 = CRT(first_match_x, first_match_y, 101, 103);
-  while (true) {
-    Core.Print(t);
-    var display: [[i32; 101]; 103];
-
-    var y: i32 = 0;
-    while (y < 103) {
-      var x: i32 = 0;
-      while (x < 101) {
-        display[y][x] = 0x2E;
-        ++x;
-      }
-      ++y;
-    }
-
-    i = 0;
-    while (i < 500) {
-      let xy: (i32, i32) = r[i].Pos(t);
-      display[xy.1][xy.0] = 0x23;
-      ++i;
-    }
-
-    y = 0;
-    while (y < 103) {
-      var x: i32 = 0;
-      while (x < 101) {
-        Core.PrintChar(display[y][x]);
-        ++x;
-      }
-      Core.PrintChar(0xA);
-      ++y;
-    }
-    Core.PrintChar(0xA);
-
-    t += 101 * 103;
-  }
+  Core.Print(t);
+  PrintState(r, t);
 }

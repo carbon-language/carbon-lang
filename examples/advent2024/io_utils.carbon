@@ -125,7 +125,7 @@ fn ReadInt[N:! Core.IntLiteral()](ref p: Core.Int(N)) -> bool {
     read_any_digits = true;
   }
   if (negative) {
-    *p = -*p;
+    p = -p;
     if (not read_any_digits) {
       UnreadChar('-');
     }

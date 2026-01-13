@@ -10,8 +10,8 @@ import library "day14_common";
 import library "io_utils";
 
 fn Run() {
-  var q: [[i32; 3]; 3] = ((0,0,0), (0,0,0), (0,0,0));
-  while (PeekChar() != Core.EOF()) {
+  var q: array(array(i32, 3), 3) = ((0,0,0), (0,0,0), (0,0,0));
+  while (PeekChar() != CharOrEOF.EOF()) {
     var r: Robot = Robot.Read();
     let xy: (i32, i32) = r.Pos(100);
     ++q[if xy.0 < 50 then 0 else if xy.0 > 50 then 2 else 1]
