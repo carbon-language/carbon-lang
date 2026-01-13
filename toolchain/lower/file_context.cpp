@@ -90,6 +90,11 @@ auto FileContext::PrepareToLower() -> void {
 
   // Lower function declarations.
   for (auto [id, _] : sem_ir_->functions().enumerate()) {
+    if (id == sem_ir().global_ctor_id()) {
+      // The global constructor is only lowered when we generate its definition.
+      // LLVM doesn't allow an internal linkage function to be undefined.
+      continue;
+    }
     functions_.Set(id, BuildFunctionDecl(id));
   }
 
@@ -151,11 +156,12 @@ auto FileContext::LowerDefinitions() -> void {
   // variables.
   if (auto global_ctor_id = sem_ir().global_ctor_id();
       global_ctor_id.has_value()) {
+    auto* llvm_function = BuildFunctionDecl(global_ctor_id);
+    functions_.Set(global_ctor_id, llvm_function);
     const auto& global_ctor = sem_ir().functions().Get(global_ctor_id);
     BuildFunctionBody(global_ctor_id, SemIR::SpecificId::None, global_ctor,
                       *this, global_ctor);
-    llvm::appendToGlobalCtors(llvm_module(),
-                              GetFunction(sem_ir().global_ctor_id()),
+    llvm::appendToGlobalCtors(llvm_module(), llvm_function,
                               /*Priority=*/0);
   }
 }
@@ -460,6 +466,11 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   // `available_externally` definition.
   auto linkage = specific_id.has_value() ? llvm::Function::LinkOnceODRLinkage
                                          : llvm::Function::ExternalLinkage;
+  if (function_id == sem_ir().global_ctor_id()) {
+    // The global constructor name would collide with global constructors for
+    // other files in the same package, so use an internal linkage symbol.
+    linkage = llvm::Function::InternalLinkage;
+  }
 
   Mangler m(*this);
   std::string mangled_name = m.Mangle(function_id, specific_id);
