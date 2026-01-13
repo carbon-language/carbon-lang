@@ -31,7 +31,7 @@ namespace Carbon {
 // occur, `SetError` makes `error()` available for diagnostics and clears the
 // install prefix (leaving things minimally functional).
 //
-// The factory methods locate the install prefix based on their use-case:
+// The factory methods locate the install root based on their use-case:
 //
 //   - `MakeExeRelative` for command line tools in an install.
 //   - `MakeForBazelRunfiles` for locating through Bazel's runfile tree.
@@ -137,7 +137,7 @@ class InstallPaths {
  private:
   friend class InstallPathsTestPeer;
 
-  InstallPaths() { SetError("No prefix provided!"); }
+  InstallPaths() { SetError("No root provided!"); }
   explicit InstallPaths(std::filesystem::path root) : root_(std::move(root)) {}
 
   static auto MakeFromFile(std::filesystem::path file) -> InstallPaths;
