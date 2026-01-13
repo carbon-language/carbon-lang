@@ -21,7 +21,7 @@
 namespace Carbon {
 
 // The location within our Bazel output tree of the install root.
-static constexpr llvm::StringLiteral PrefixRoot =
+static constexpr llvm::StringLiteral BazelRoot =
     "carbon/toolchain/install/prefix/lib/carbon/";
 
 // Path within an install root for our marker of a valid install.
@@ -53,7 +53,7 @@ auto InstallPaths::MakeForBazelRunfiles(llvm::StringRef exe_path)
   CARBON_CHECK(runfiles != nullptr, "Failed to find runtimes tree: {0}",
                runtimes_error);
 
-  std::string relative_marker_path = (PrefixRoot.str() + MarkerPath).str();
+  std::string relative_marker_path = (BazelRoot.str() + MarkerPath).str();
   std::filesystem::path runtimes_marker_path =
       runfiles->Rlocation(relative_marker_path);
 

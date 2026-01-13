@@ -29,7 +29,8 @@ namespace Carbon {
 //
 // When locating an install, we verify it with `CheckMarkerFile`. When errors
 // occur, `SetError` makes `error()` available for diagnostics and clears the
-// install prefix (leaving things minimally functional).
+// install root, leaving things minimally functional but with the installation
+// root of the current working directory.
 //
 // The factory methods locate the install root based on their use-case:
 //
@@ -54,9 +55,6 @@ class InstallPaths {
  public:
   // Provide the current executable's path to detect the correct installation
   // root. This assumes the toolchain to be in its installed layout.
-  //
-  // If detection fails, this reverts to using the current working directory as
-  // the install root, and the error detected can be checked with `errors()`.
   static auto MakeExeRelative(llvm::StringRef exe_path) -> InstallPaths;
 
   // Provide the current executable's path, and use that to detect a Bazel or
@@ -142,12 +140,12 @@ class InstallPaths {
 
   static auto MakeFromFile(std::filesystem::path file) -> InstallPaths;
 
-  // Set an error message on the install paths and reset the prefix to empty,
+  // Set an error message on the install paths and reset the `root_` to empty,
   // which should use the current working directory.
   auto SetError(llvm::Twine message) -> void;
 
   // Check that the install paths have a marker file at
-  // `prefix()/lib/carbon/carbon_install.txt". If not, calls `SetError` with the
+  // `root()/lib/carbon/carbon_install.txt". If not, calls `SetError` with the
   // relevant error message.
   auto CheckMarkerFile() -> void;
 

@@ -294,7 +294,7 @@ filegroup(
     ],
 )
 
-# Given a root `prefix`, the hierarchy looks like:
+# Given an CMake-style install prefix[1], the hierarchy looks like:
 #
 # - prefix/bin: Binaries intended for direct use.
 # - prefix/lib/carbon: Private data and files.
@@ -302,7 +302,10 @@ filegroup(
 # - prefix/lib/carbon/llvm/bin: LLVM binaries.
 #
 # This will be how installs are provided on Unix-y platforms, and is loosely
-# based on the FHS (Filesystem Hierarchy Standard).
+# based on the FHS (Filesystem Hierarchy Standard). See the CMake install prefix
+# documentation[1] for more details.
+#
+# [1]: https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_PREFIX.html
 install_dirs = {
     "bin": [
         install_symlink(

@@ -45,11 +45,11 @@ auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
       //
       // This will never occur in a "bin" subdirectory, so doesn't need to be
       // handled in the other return path.
-      std::string prefix = info.bin_path.parent_path().string() +
-                           "/prefix/lib/carbon/carbon-busybox";
-      if (auto access = Filesystem::Cwd().Access(prefix);
+      std::string busybox_path = info.bin_path.parent_path().string() +
+                                 "/prefix/lib/carbon/carbon-busybox";
+      if (auto access = Filesystem::Cwd().Access(busybox_path);
           access.ok() && *access) {
-        info.bin_path = prefix;
+        info.bin_path = busybox_path;
       }
       return info;
     }
