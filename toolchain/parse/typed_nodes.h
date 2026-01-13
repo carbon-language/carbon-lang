@@ -469,8 +469,8 @@ struct FunctionSignature {
 using FunctionDecl = FunctionSignature<NodeKind::FunctionDecl,
                                        Lex::SemiTokenIndex, NodeCategory::Decl>;
 using FunctionDefinitionStart =
-    FunctionSignature<NodeKind::FunctionDefinitionStart,
-                      Lex::OpenCurlyBraceTokenIndex, NodeCategory::None>;
+    FunctionSignature<NodeKind::FunctionDefinitionStart, Lex::TokenIndex,
+                      NodeCategory::None>;
 
 // A function definition: `fn F() -> i32 { ... }`.
 struct FunctionDefinition {
@@ -481,6 +481,18 @@ struct FunctionDefinition {
   FunctionDefinitionStartId signature;
   llvm::SmallVector<AnyStatementId> body;
   Lex::CloseCurlyBraceTokenIndex token;
+};
+
+// A terse function definition: `fn F() -> i32 => expr;`.
+struct FunctionTerseDefinition {
+  static constexpr auto Kind = NodeKind::FunctionTerseDefinition.Define(
+      {.category = NodeCategory::Decl,
+       .bracketed_by = FunctionDefinitionStart::Kind});
+
+  FunctionDefinitionStartId signature;
+  TerseBodyArrowId arrow;
+  AnyExprId body;
+  Lex::SemiTokenIndex token;
 };
 
 using BuiltinFunctionDefinitionStart =
@@ -651,6 +663,9 @@ struct VariablePattern {
 using CodeBlockStart =
     LeafNode<NodeKind::CodeBlockStart, Lex::OpenCurlyBraceTokenIndex>;
 
+using TerseBodyArrow =
+    LeafNode<NodeKind::TerseBodyArrow, Lex::EqualGreaterTokenIndex>;
+
 // A code block: `{ statement; statement; ... }`.
 struct CodeBlock {
   static constexpr auto Kind =
@@ -672,6 +687,7 @@ struct Lambda {
   std::optional<ImplicitParamListId> implicit_params;
   std::optional<ExplicitParamListId> explicit_params;
   std::optional<ReturnTypeId> return_type;
+  std::optional<TerseBodyArrowId> arrow;
   NodeId body;
   // Use a generic token index because the token might be `}` or part of an
   // expression.

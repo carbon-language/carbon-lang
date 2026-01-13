@@ -160,6 +160,9 @@ using AnyClassDeclId =
                 ChoiceDefinitionStartId>;
 using AnyFunctionDeclId = NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId,
                                       BuiltinFunctionDefinitionStartId>;
+using AnyFunctionDefinitionId =
+    NodeIdOneOf<FunctionDefinitionId, FunctionTerseDefinitionId,
+                BuiltinFunctionDefinitionId>;
 using AnyImplDeclId = NodeIdOneOf<ImplDeclId, ImplDefinitionStartId>;
 using AnyInterfaceDeclId =
     NodeIdOneOf<InterfaceDeclId, InterfaceDefinitionStartId>;

@@ -682,4 +682,9 @@ auto HandleParseNode(Context& context,
   return true;
 }
 
+auto HandleParseNode(Context& context, Parse::FunctionTerseDefinitionId node_id)
+    -> bool {
+  return context.TODO(node_id, "HandleFunctionTerseDefinition");
+}
+
 }  // namespace Carbon::Check

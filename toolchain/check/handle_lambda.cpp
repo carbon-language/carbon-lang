@@ -16,4 +16,9 @@ auto HandleParseNode(Context& context, Parse::LambdaId node_id) -> bool {
   return context.TODO(node_id, "HandleLambda");
 }
 
+auto HandleParseNode(Context& context, Parse::TerseBodyArrowId node_id)
+    -> bool {
+  return context.TODO(node_id, "HandleTerseBodyArrow");
+}
+
 }  // namespace Carbon::Check

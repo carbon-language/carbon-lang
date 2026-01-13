@@ -51,6 +51,13 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
       context.PushState(StateKind::StatementScopeLoop);
       break;
     }
+    case Lex::TokenKind::EqualGreater: {
+      context.AddFunctionDefinitionStart(context.Consume(), state.has_error);
+      context.AddLeafNode(NodeKind::TerseBodyArrow, *(context.position() - 1));
+      context.PushState(state, StateKind::FunctionTerseBodyFinish);
+      context.PushStateForExpr(PrecedenceGroup::ForTopLevelExpr());
+      break;
+    }
     case Lex::TokenKind::Equal: {
       context.AddNode(NodeKind::BuiltinFunctionDefinitionStart,
                       context.Consume(), state.has_error);
@@ -93,6 +100,18 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
 auto HandleFunctionDefinitionFinish(Context& context) -> void {
   auto state = context.PopState();
   context.AddFunctionDefinition(context.Consume(), state.has_error);
+}
+
+auto HandleFunctionTerseBodyFinish(Context& context) -> void {
+  auto state = context.PopState();
+
+  auto semi = context.ConsumeIf(Lex::TokenKind::Semi);
+  if (!semi && !state.has_error) {
+    context.DiagnoseExpectedDeclSemi(Lex::TokenKind::Fn);
+    state.has_error = true;
+  }
+  context.AddFunctionTerseDefinition(semi ? *semi : *(context.position() - 1),
+                                     state.has_error);
 }
 
 }  // namespace Carbon::Parse

@@ -51,7 +51,7 @@ auto HandleLambdaAfterParams(Context& context) -> void {
     context.PushStateForExpr(PrecedenceGroup::ForType());
   } else if (context.PositionIs(Lex::TokenKind::EqualGreater)) {
     // Terse body `=> expr`
-    context.ConsumeAndDiscard();
+    context.AddLeafNode(NodeKind::TerseBodyArrow, context.Consume());
     context.PushState(state, StateKind::LambdaBodyFinish);
     context.PushStateForExpr(PrecedenceGroup::ForTopLevelExpr());
   } else if (context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
@@ -75,7 +75,7 @@ auto HandleLambdaBody(Context& context) -> void {
 
   if (context.PositionIs(Lex::TokenKind::EqualGreater)) {
     // Terse body `=> expr`
-    context.ConsumeAndDiscard();
+    context.AddLeafNode(NodeKind::TerseBodyArrow, context.Consume());
     context.PushState(state, StateKind::LambdaBodyFinish);
     context.PushStateForExpr(PrecedenceGroup::ForTopLevelExpr());
   } else if (context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {

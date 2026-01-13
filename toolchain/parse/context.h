@@ -406,6 +406,10 @@ class Context {
   // Adds a function definition node, and ends tracking a deferred definition if
   // necessary.
   auto AddFunctionDefinition(Lex::TokenIndex token, bool has_error) -> void;
+  // Adds a function terse definition node, and ends tracking a deferred
+  // definition if necessary.
+  auto AddFunctionTerseDefinition(Lex::TokenIndex token, bool has_error)
+      -> void;
 
   // Prints information for a stack dump.
   auto PrintForStackDump(llvm::raw_ostream& output) const -> void;

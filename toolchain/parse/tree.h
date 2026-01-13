@@ -40,7 +40,7 @@ struct DeferredDefinition {
   // The node that starts the function definition.
   FunctionDefinitionStartId start_id;
   // The function definition node.
-  FunctionDefinitionId definition_id = NodeId::None;
+  AnyFunctionDefinitionId definition_id = NodeId::None;
   // The index of the next method that is not nested within this one.
   DeferredDefinitionIndex next_definition_index = DeferredDefinitionIndex::None;
 };

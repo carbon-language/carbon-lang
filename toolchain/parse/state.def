@@ -803,6 +803,13 @@ CARBON_PARSE_STATE(FunctionSignatureFinish)
 //   (state done)
 CARBON_PARSE_STATE(FunctionDefinitionFinish)
 
+// Finishes a function with a terse body.
+//
+// fn ... => expr ;
+//                ^
+//   (state done)
+CARBON_PARSE_STATE(FunctionTerseBodyFinish)
+
 // Handles `export <name>`.
 //
 // export Name;
