@@ -43,7 +43,7 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
                         SemIR::InstBlockId return_patterns_id,
                         SemIR::InstId self_arg_id,
                         llvm::ArrayRef<SemIR::InstId> arg_refs,
-                        SemIR::InstId return_slot_arg_id,
+                        llvm::ArrayRef<SemIR::InstId> return_arg_ids,
                         bool is_operator_syntax) -> SemIR::InstBlockId;
 
 // Emits the pattern-match IR for a local pattern matching operation with the

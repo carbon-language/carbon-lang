@@ -496,7 +496,7 @@ fn AccessMissingConcrete(I:! Interface(i32)) -> i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %I.ref: @AccessMissingGeneric.%Interface.type.loc8_50.1 (%Interface.type.442) = name_ref I, %I.loc8_35.2 [symbolic = %I.loc8_35.1 (constants.%I.682)]
 // CHECK:STDOUT:     %nonesuch.ref: <error> = name_ref nonesuch, <error> [concrete = <error>]
-// CHECK:STDOUT:     return <error> to %return
+// CHECK:STDOUT:     return <error> to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

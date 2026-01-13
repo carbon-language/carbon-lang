@@ -147,8 +147,8 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %T.ref: %Copy.type = name_ref T, @Outer.%T.loc4_13.2 [symbolic = %T (constants.%T.035)]
 // CHECK:STDOUT:       %T.as_type: type = facet_access_type %T.ref [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:       %.loc7_17.2: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:       %.loc7_17.3: form = init_form %.loc7_17.2, call_param0 [symbolic = %.loc7_17.1 (constants.%.504)]
+// CHECK:STDOUT:       %.loc7_17.3: type = converted %T.ref, %T.as_type [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
+// CHECK:STDOUT:       %.loc7_17.4: form = init_form %.loc7_17.3, call_param0 [symbolic = %.loc7_17.2 (constants.%.504)]
 // CHECK:STDOUT:       %return.param: ref @Inner.Get.%T.binding.as_type (%T.binding.as_type) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @Inner.Get.%T.binding.as_type (%T.binding.as_type) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -166,7 +166,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT: generic fn @Inner.Get(@Outer.%T.loc4_13.2: %Copy.type, @Inner.%U.loc5_15.2: @Inner.%T.binding.as_type (%T.binding.as_type)) {
 // CHECK:STDOUT:   %T: %Copy.type = symbolic_binding T, 0 [symbolic = %T (constants.%T.035)]
 // CHECK:STDOUT:   %T.binding.as_type: type = symbolic_binding_type T, 0, %T [symbolic = %T.binding.as_type (constants.%T.binding.as_type)]
-// CHECK:STDOUT:   %.loc7_17.1: form = init_form %T.binding.as_type, call_param0 [symbolic = %.loc7_17.1 (constants.%.504)]
+// CHECK:STDOUT:   %.loc7_17.2: form = init_form %T.binding.as_type, call_param0 [symbolic = %.loc7_17.2 (constants.%.504)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.binding.as_type [symbolic = %pattern_type (constants.%pattern_type.9b9f0c.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -186,9 +186,9 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:     %bound_method.loc7_28.1: <bound method> = bound_method %U.ref, %impl.elem0.loc7_28.1 [symbolic = %bound_method.loc7_28.3 (constants.%bound_method.949)]
 // CHECK:STDOUT:     %specific_impl_fn.loc7_28.1: <specific function> = specific_impl_function %impl.elem0.loc7_28.1, @Copy.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc7_28.2 (constants.%specific_impl_fn.2c9)]
 // CHECK:STDOUT:     %bound_method.loc7_28.2: <bound method> = bound_method %U.ref, %specific_impl_fn.loc7_28.1 [symbolic = %bound_method.loc7_28.4 (constants.%bound_method.397)]
-// CHECK:STDOUT:     %.loc7_14: ref @Inner.Get.%T.binding.as_type (%T.binding.as_type) = splice_block %return {}
-// CHECK:STDOUT:     %Copy.Op.call: init @Inner.Get.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc7_28.2(%U.ref) to %.loc7_14
-// CHECK:STDOUT:     return %Copy.Op.call to %return
+// CHECK:STDOUT:     %.loc7_17.1: ref @Inner.Get.%T.binding.as_type (%T.binding.as_type) = splice_block %return.param {}
+// CHECK:STDOUT:     %Copy.Op.call: init @Inner.Get.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc7_28.2(%U.ref) to %.loc7_17.1
+// CHECK:STDOUT:     return %Copy.Op.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -243,7 +243,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT: specific @Inner.Get(constants.%T.035, constants.%U.959) {
 // CHECK:STDOUT:   %T => constants.%T.035
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
-// CHECK:STDOUT:   %.loc7_17.1 => constants.%.504
+// CHECK:STDOUT:   %.loc7_17.2 => constants.%.504
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9b9f0c.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -269,7 +269,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT: specific @Inner.Get(constants.%Copy.facet.de4, constants.%int_42.c68) {
 // CHECK:STDOUT:   %T => constants.%Copy.facet.de4
 // CHECK:STDOUT:   %T.binding.as_type => constants.%i32
-// CHECK:STDOUT:   %.loc7_17.1 => constants.%.941
+// CHECK:STDOUT:   %.loc7_17.2 => constants.%.941
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7ce
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

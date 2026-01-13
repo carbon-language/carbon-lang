@@ -414,10 +414,10 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %.loc17_18.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %u.ref: @Y.as.A.impl.F.%ptr.loc16_22.1 (%ptr.e8f8f9.1) = name_ref u, %u
 // CHECK:STDOUT:     %.loc17_22.1: @Y.as.A.impl.F.%tuple.type.loc17 (%tuple.type.dd2) = tuple_literal (%.loc17_14.1, %.loc17_18.1, %u.ref)
-// CHECK:STDOUT:     %tuple.elem0: ref %X = tuple_access %return, element0
+// CHECK:STDOUT:     %tuple.elem0: ref %X = tuple_access %return.param, element0
 // CHECK:STDOUT:     %.loc17_14.2: init %X = class_init (), %tuple.elem0 [concrete = constants.%X.val]
 // CHECK:STDOUT:     %.loc17_22.2: init %X = converted %.loc17_14.1, %.loc17_14.2 [concrete = constants.%X.val]
-// CHECK:STDOUT:     %tuple.elem1: ref %Y = tuple_access %return, element1
+// CHECK:STDOUT:     %tuple.elem1: ref %Y = tuple_access %return.param, element1
 // CHECK:STDOUT:     %.loc17_18.2: init %Y = class_init (), %tuple.elem1 [concrete = constants.%Y.val]
 // CHECK:STDOUT:     %.loc17_22.3: init %Y = converted %.loc17_18.1, %.loc17_18.2 [concrete = constants.%Y.val]
 // CHECK:STDOUT:     %impl.elem0.loc17_21.1: @Y.as.A.impl.F.%.loc17_21.2 (%.b46) = impl_witness_access constants.%Copy.lookup_impl_witness.2e6, element0 [symbolic = %impl.elem0.loc17_21.2 (constants.%impl.elem0.201)]
@@ -425,11 +425,11 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %specific_impl_fn.loc17_21.1: <specific function> = specific_impl_function %impl.elem0.loc17_21.1, @Copy.Op(constants.%Copy.facet.c25) [symbolic = %specific_impl_fn.loc17_21.2 (constants.%specific_impl_fn.b84)]
 // CHECK:STDOUT:     %bound_method.loc17_21.2: <bound method> = bound_method %u.ref, %specific_impl_fn.loc17_21.1
 // CHECK:STDOUT:     %Copy.Op.call: init @Y.as.A.impl.F.%ptr.loc16_22.1 (%ptr.e8f8f9.1) = call %bound_method.loc17_21.2(%u.ref)
-// CHECK:STDOUT:     %tuple.elem2: ref @Y.as.A.impl.F.%ptr.loc16_22.1 (%ptr.e8f8f9.1) = tuple_access %return, element2
+// CHECK:STDOUT:     %tuple.elem2: ref @Y.as.A.impl.F.%ptr.loc16_22.1 (%ptr.e8f8f9.1) = tuple_access %return.param, element2
 // CHECK:STDOUT:     %.loc17_22.4: init @Y.as.A.impl.F.%ptr.loc16_22.1 (%ptr.e8f8f9.1) = initialize_from %Copy.Op.call to %tuple.elem2
-// CHECK:STDOUT:     %.loc17_22.5: init @Y.as.A.impl.F.%tuple.type.loc16 (%tuple.type.244) = tuple_init (%.loc17_22.2, %.loc17_22.3, %.loc17_22.4) to %return
+// CHECK:STDOUT:     %.loc17_22.5: init @Y.as.A.impl.F.%tuple.type.loc16 (%tuple.type.244) = tuple_init (%.loc17_22.2, %.loc17_22.3, %.loc17_22.4) to %return.param
 // CHECK:STDOUT:     %.loc17_23: init @Y.as.A.impl.F.%tuple.type.loc16 (%tuple.type.244) = converted %.loc17_22.1, %.loc17_22.5
-// CHECK:STDOUT:     return %.loc17_23 to %return
+// CHECK:STDOUT:     return %.loc17_23 to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -916,10 +916,10 @@ fn CallIndirect() {
 // CHECK:STDOUT:       %V2.ref: type = name_ref V2, @tuple.type.as.A.impl.%V2.loc14_25.2 [symbolic = %V2 (constants.%V2)]
 // CHECK:STDOUT:       %.loc17_38: %tuple.type.24b = tuple_literal (%V1.ref, %V2.ref) [symbolic = %tuple.loc17_38 (constants.%tuple.4b9)]
 // CHECK:STDOUT:       %U.ref.loc17_41: type = name_ref U, %U.loc17_8.2 [symbolic = %U.loc17_8.1 (constants.%U.ce4)]
-// CHECK:STDOUT:       %.loc17_42.2: %tuple.type.11f = tuple_literal (%W.ref, %.loc17_38, %U.ref.loc17_41) [symbolic = %tuple.loc17_42 (constants.%tuple.117)]
-// CHECK:STDOUT:       %.loc17_42.3: type = converted constants.%tuple.4b9, constants.%tuple.type.a5e [symbolic = %tuple.type.loc17_42.1 (constants.%tuple.type.a5e)]
-// CHECK:STDOUT:       %.loc17_42.4: type = converted %.loc17_42.2, constants.%tuple.type.897 [symbolic = %tuple.type.loc17_42.2 (constants.%tuple.type.897)]
-// CHECK:STDOUT:       %.loc17_42.5: form = init_form %.loc17_42.4, call_param1 [symbolic = %.loc17_42.1 (constants.%.c84)]
+// CHECK:STDOUT:       %.loc17_42.3: %tuple.type.11f = tuple_literal (%W.ref, %.loc17_38, %U.ref.loc17_41) [symbolic = %tuple.loc17_42 (constants.%tuple.117)]
+// CHECK:STDOUT:       %.loc17_42.4: type = converted constants.%tuple.4b9, constants.%tuple.type.a5e [symbolic = %tuple.type.loc17_42.1 (constants.%tuple.type.a5e)]
+// CHECK:STDOUT:       %.loc17_42.5: type = converted %.loc17_42.3, constants.%tuple.type.897 [symbolic = %tuple.type.loc17_42.2 (constants.%tuple.type.897)]
+// CHECK:STDOUT:       %.loc17_42.6: form = init_form %.loc17_42.5, call_param1 [symbolic = %.loc17_42.2 (constants.%.c84)]
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %U.loc17_8.2: type = symbolic_binding U, 3 [symbolic = %U.loc17_8.1 (constants.%U.ce4)]
 // CHECK:STDOUT:       %u.param: @tuple.type.as.A.impl.F.%U.loc17_8.1 (%U.ce4) = value_param call_param0
@@ -998,7 +998,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %tuple.loc17_42: %tuple.type.11f = tuple_value (%W, %tuple.loc17_38, %U.loc17_8.1) [symbolic = %tuple.loc17_42 (constants.%tuple.117)]
 // CHECK:STDOUT:   %tuple.type.loc17_42.1: type = tuple_type (%V1, %V2) [symbolic = %tuple.type.loc17_42.1 (constants.%tuple.type.a5e)]
 // CHECK:STDOUT:   %tuple.type.loc17_42.2: type = tuple_type (%W, %tuple.type.loc17_42.1, %U.loc17_8.1) [symbolic = %tuple.type.loc17_42.2 (constants.%tuple.type.897)]
-// CHECK:STDOUT:   %.loc17_42.1: form = init_form %tuple.type.loc17_42.2, call_param1 [symbolic = %.loc17_42.1 (constants.%.c84)]
+// CHECK:STDOUT:   %.loc17_42.2: form = init_form %tuple.type.loc17_42.2, call_param1 [symbolic = %.loc17_42.2 (constants.%.c84)]
 // CHECK:STDOUT:   %pattern_type.loc17_24: type = pattern_type %tuple.type.loc17_42.2 [symbolic = %pattern_type.loc17_24 (constants.%pattern_type.5cc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1015,9 +1015,9 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %U.ref.loc18: type = name_ref U, %U.loc17_8.2 [symbolic = %U.loc17_8.1 (constants.%U.ce4)]
 // CHECK:STDOUT:     %u.ref: @tuple.type.as.A.impl.F.%U.loc17_8.1 (%U.ce4) = name_ref u, %u
 // CHECK:STDOUT:     %tuple.type.as.A.impl.F.specific_fn.loc18_12.1: <specific function> = specific_function %F.ref, @tuple.type.as.A.impl.F(constants.%V1, constants.%V2, constants.%W, constants.%U.ce4) [symbolic = %tuple.type.as.A.impl.F.specific_fn.loc18_12.2 (constants.%tuple.type.as.A.impl.F.specific_fn.009)]
-// CHECK:STDOUT:     %.loc17_24: ref @tuple.type.as.A.impl.F.%tuple.type.loc17_42.2 (%tuple.type.897) = splice_block %return {}
-// CHECK:STDOUT:     %tuple.type.as.A.impl.F.call: init @tuple.type.as.A.impl.F.%tuple.type.loc17_42.2 (%tuple.type.897) = call %tuple.type.as.A.impl.F.specific_fn.loc18_12.1(%u.ref) to %.loc17_24
-// CHECK:STDOUT:     return %tuple.type.as.A.impl.F.call to %return
+// CHECK:STDOUT:     %.loc17_42.1: ref @tuple.type.as.A.impl.F.%tuple.type.loc17_42.2 (%tuple.type.897) = splice_block %return.param {}
+// CHECK:STDOUT:     %tuple.type.as.A.impl.F.call: init @tuple.type.as.A.impl.F.%tuple.type.loc17_42.2 (%tuple.type.897) = call %tuple.type.as.A.impl.F.specific_fn.loc18_12.1(%u.ref) to %.loc17_42.1
+// CHECK:STDOUT:     return %tuple.type.as.A.impl.F.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1172,7 +1172,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %tuple.loc17_42 => constants.%tuple.117
 // CHECK:STDOUT:   %tuple.type.loc17_42.1 => constants.%tuple.type.a5e
 // CHECK:STDOUT:   %tuple.type.loc17_42.2 => constants.%tuple.type.897
-// CHECK:STDOUT:   %.loc17_42.1 => constants.%.c84
+// CHECK:STDOUT:   %.loc17_42.2 => constants.%.c84
 // CHECK:STDOUT:   %pattern_type.loc17_24 => constants.%pattern_type.5cc
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1234,7 +1234,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %tuple.loc17_42 => constants.%tuple.66d
 // CHECK:STDOUT:   %tuple.type.loc17_42.1 => constants.%tuple.type.ab2
 // CHECK:STDOUT:   %tuple.type.loc17_42.2 => constants.%tuple.type.65a
-// CHECK:STDOUT:   %.loc17_42.1 => constants.%.d4d
+// CHECK:STDOUT:   %.loc17_42.2 => constants.%.d4d
 // CHECK:STDOUT:   %pattern_type.loc17_24 => constants.%pattern_type.30b
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

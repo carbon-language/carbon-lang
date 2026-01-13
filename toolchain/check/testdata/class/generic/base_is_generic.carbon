@@ -635,7 +635,7 @@ fn H() {
 // CHECK:STDOUT:       %return.param_patt: @X.G.%pattern_type (%pattern_type.51d) = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %U.ref: type = name_ref U, @X.%U.loc4_14.2 [symbolic = %U (constants.%U)]
-// CHECK:STDOUT:       %.loc5_13.2: form = init_form %U.ref, call_param0 [symbolic = %.loc5_13.1 (constants.%.c6c)]
+// CHECK:STDOUT:       %.loc5_13.3: form = init_form %U.ref, call_param0 [symbolic = %.loc5_13.2 (constants.%.c6c)]
 // CHECK:STDOUT:       %return.param: ref @X.G.%U (%U) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @X.G.%U (%U) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -680,7 +680,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @X.G(@X.%U.loc4_14.2: type) {
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic = %U (constants.%U)]
-// CHECK:STDOUT:   %.loc5_13.1: form = init_form %U, call_param0 [symbolic = %.loc5_13.1 (constants.%.c6c)]
+// CHECK:STDOUT:   %.loc5_13.2: form = init_form %U, call_param0 [symbolic = %.loc5_13.2 (constants.%.c6c)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %U [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -694,9 +694,9 @@ fn H() {
 // CHECK:STDOUT:     %.loc5_24: @X.G.%X.G.type (%X.G.type.20eb90.1) = specific_constant @X.%X.G.decl, @X(constants.%U) [symbolic = %X.G (constants.%X.G.f9f685.1)]
 // CHECK:STDOUT:     %G.ref: @X.G.%X.G.type (%X.G.type.20eb90.1) = name_ref G, %.loc5_24 [symbolic = %X.G (constants.%X.G.f9f685.1)]
 // CHECK:STDOUT:     %X.G.specific_fn.loc5_24.1: <specific function> = specific_function %G.ref, @X.G(constants.%U) [symbolic = %X.G.specific_fn.loc5_24.2 (constants.%X.G.specific_fn.974)]
-// CHECK:STDOUT:     %.loc5_10: ref @X.G.%U (%U) = splice_block %return {}
-// CHECK:STDOUT:     %X.G.call: init @X.G.%U (%U) = call %X.G.specific_fn.loc5_24.1() to %.loc5_10
-// CHECK:STDOUT:     return %X.G.call to %return
+// CHECK:STDOUT:     %.loc5_13.1: ref @X.G.%U (%U) = splice_block %return.param {}
+// CHECK:STDOUT:     %X.G.call: init @X.G.%U (%U) = call %X.G.specific_fn.loc5_24.1() to %.loc5_13.1
+// CHECK:STDOUT:     return %X.G.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -733,7 +733,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X.G(constants.%U) {
 // CHECK:STDOUT:   %U => constants.%U
-// CHECK:STDOUT:   %.loc5_13.1 => constants.%.c6c
+// CHECK:STDOUT:   %.loc5_13.2 => constants.%.c6c
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -777,7 +777,7 @@ fn H() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X.G(constants.%i32) {
 // CHECK:STDOUT:   %U => constants.%i32
-// CHECK:STDOUT:   %.loc5_13.1 => constants.%.941
+// CHECK:STDOUT:   %.loc5_13.2 => constants.%.941
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.7ce
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

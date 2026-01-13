@@ -2150,9 +2150,9 @@ class T2(G2:! type) {
 // CHECK:STDOUT: fn @T2.as.ImplicitAs.impl.Convert(%self.param: %T2) -> %return.param: %T1 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc12_13.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc12_13.2: init %T1 = class_init (), %return [concrete = constants.%T1.val]
+// CHECK:STDOUT:   %.loc12_13.2: init %T1 = class_init (), %return.param [concrete = constants.%T1.val]
 // CHECK:STDOUT:   %.loc12_14: init %T1 = converted %.loc12_13.1, %.loc12_13.2 [concrete = constants.%T1.val]
-// CHECK:STDOUT:   return %.loc12_14 to %return
+// CHECK:STDOUT:   return %.loc12_14 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @Base.F(%self.param: %Base) -> %return.param: %T1;

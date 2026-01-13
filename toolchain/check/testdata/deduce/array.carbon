@@ -214,7 +214,7 @@ fn G() {
 // CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc6_32 (%pattern_type.51d) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc6_35: type = name_ref T, %T.loc6_6.2 [symbolic = %T.loc6_6.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc6_35.2: form = init_form %T.ref.loc6_35, call_param1 [symbolic = %.loc6_35.1 (constants.%.e5f)]
+// CHECK:STDOUT:     %.loc6_35.3: form = init_form %T.ref.loc6_35, call_param1 [symbolic = %.loc6_35.2 (constants.%.e5f)]
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc6_6.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_6.1 (constants.%T)]
 // CHECK:STDOUT:     %a.param: @F.%array_type.loc6_29.1 (%array_type.3ec) = value_param call_param0
@@ -232,7 +232,7 @@ fn G() {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc8_11: form = init_form %C.ref.loc8, call_param0 [concrete = constants.%.64f]
+// CHECK:STDOUT:     %.loc8_11.2: form = init_form %C.ref.loc8, call_param0 [concrete = constants.%.64f]
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -250,7 +250,7 @@ fn G() {
 // CHECK:STDOUT:   %T.loc6_6.1: type = symbolic_binding T, 0 [symbolic = %T.loc6_6.1 (constants.%T)]
 // CHECK:STDOUT:   %array_type.loc6_29.1: type = array_type constants.%int_3, %T.loc6_6.1 [symbolic = %array_type.loc6_29.1 (constants.%array_type.3ec)]
 // CHECK:STDOUT:   %pattern_type.loc6_16: type = pattern_type %array_type.loc6_29.1 [symbolic = %pattern_type.loc6_16 (constants.%pattern_type.b3f)]
-// CHECK:STDOUT:   %.loc6_35.1: form = init_form %T.loc6_6.1, call_param1 [symbolic = %.loc6_35.1 (constants.%.e5f)]
+// CHECK:STDOUT:   %.loc6_35.2: form = init_form %T.loc6_6.1, call_param1 [symbolic = %.loc6_35.2 (constants.%.e5f)]
 // CHECK:STDOUT:   %pattern_type.loc6_32: type = pattern_type %T.loc6_6.1 [symbolic = %pattern_type.loc6_32 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -263,9 +263,9 @@ fn G() {
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %a.ref: @F.%array_type.loc6_29.1 (%array_type.3ec) = name_ref a, %a
 // CHECK:STDOUT:     %F.specific_fn.loc6_46.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %F.specific_fn.loc6_46.2 (constants.%F.specific_fn.643)]
-// CHECK:STDOUT:     %.loc6_32: ref @F.%T.loc6_6.1 (%T) = splice_block %return {}
-// CHECK:STDOUT:     %F.call: init @F.%T.loc6_6.1 (%T) = call %F.specific_fn.loc6_46.1(%a.ref) to %.loc6_32
-// CHECK:STDOUT:     return %F.call to %return
+// CHECK:STDOUT:     %.loc6_35.1: ref @F.%T.loc6_6.1 (%T) = splice_block %return.param {}
+// CHECK:STDOUT:     %F.call: init @F.%T.loc6_6.1 (%T) = call %F.specific_fn.loc6_46.1(%a.ref) to %.loc6_35.1
+// CHECK:STDOUT:     return %F.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -304,12 +304,12 @@ fn G() {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type.931 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [concrete = constants.%F.specific_fn.540]
-// CHECK:STDOUT:   %.loc8_8: ref %C = splice_block %return {}
+// CHECK:STDOUT:   %.loc8_11.1: ref %C = splice_block %return.param {}
 // CHECK:STDOUT:   %.loc10: %array_type.931 = acquire_value %a.ref
-// CHECK:STDOUT:   %F.call: init %C = call %F.specific_fn(%.loc10) to %.loc8_8
+// CHECK:STDOUT:   %F.call: init %C = call %F.specific_fn(%.loc10) to %.loc8_11.1
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %a.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%a.var)
-// CHECK:STDOUT:   return %F.call to %return
+// CHECK:STDOUT:   return %F.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: %array_type.931) = "no_op";
@@ -318,7 +318,7 @@ fn G() {
 // CHECK:STDOUT:   %T.loc6_6.1 => constants.%T
 // CHECK:STDOUT:   %array_type.loc6_29.1 => constants.%array_type.3ec
 // CHECK:STDOUT:   %pattern_type.loc6_16 => constants.%pattern_type.b3f
-// CHECK:STDOUT:   %.loc6_35.1 => constants.%.e5f
+// CHECK:STDOUT:   %.loc6_35.2 => constants.%.e5f
 // CHECK:STDOUT:   %pattern_type.loc6_32 => constants.%pattern_type.51d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -331,7 +331,7 @@ fn G() {
 // CHECK:STDOUT:   %T.loc6_6.1 => constants.%C
 // CHECK:STDOUT:   %array_type.loc6_29.1 => constants.%array_type.931
 // CHECK:STDOUT:   %pattern_type.loc6_16 => constants.%pattern_type.f21
-// CHECK:STDOUT:   %.loc6_35.1 => constants.%.887
+// CHECK:STDOUT:   %.loc6_35.2 => constants.%.887
 // CHECK:STDOUT:   %pattern_type.loc6_32 => constants.%pattern_type.7c7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -812,7 +812,7 @@ fn G() {
 // CHECK:STDOUT:     %return.param_patt: @F.%pattern_type.loc6_32 (%pattern_type.51d1c4.1) = out_param_pattern %return.patt, call_param1 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref.loc6_35: type = name_ref T, %T.loc6_6.2 [symbolic = %T.loc6_6.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc6_35.2: form = init_form %T.ref.loc6_35, call_param1 [symbolic = %.loc6_35.1 (constants.%.e5ffed.1)]
+// CHECK:STDOUT:     %.loc6_35.3: form = init_form %T.ref.loc6_35, call_param1 [symbolic = %.loc6_35.2 (constants.%.e5ffed.1)]
 // CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:     %T.loc6_6.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_6.1 (constants.%T)]
 // CHECK:STDOUT:     %a.param: @F.%array_type.loc6_29.1 (%array_type.a0b) = value_param call_param0
@@ -830,7 +830,7 @@ fn G() {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.7c7 = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref.loc8: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc8_11: form = init_form %C.ref.loc8, call_param0 [concrete = constants.%.64f]
+// CHECK:STDOUT:     %.loc8_11.2: form = init_form %C.ref.loc8, call_param0 [concrete = constants.%.64f]
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -848,7 +848,7 @@ fn G() {
 // CHECK:STDOUT:   %T.loc6_6.1: type = symbolic_binding T, 0 [symbolic = %T.loc6_6.1 (constants.%T)]
 // CHECK:STDOUT:   %array_type.loc6_29.1: type = array_type constants.%int_2, %T.loc6_6.1 [symbolic = %array_type.loc6_29.1 (constants.%array_type.a0b)]
 // CHECK:STDOUT:   %pattern_type.loc6_16: type = pattern_type %array_type.loc6_29.1 [symbolic = %pattern_type.loc6_16 (constants.%pattern_type.b42)]
-// CHECK:STDOUT:   %.loc6_35.1: form = init_form %T.loc6_6.1, call_param1 [symbolic = %.loc6_35.1 (constants.%.e5ffed.1)]
+// CHECK:STDOUT:   %.loc6_35.2: form = init_form %T.loc6_6.1, call_param1 [symbolic = %.loc6_35.2 (constants.%.e5ffed.1)]
 // CHECK:STDOUT:   %pattern_type.loc6_32: type = pattern_type %T.loc6_6.1 [symbolic = %pattern_type.loc6_32 (constants.%pattern_type.51d1c4.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -861,9 +861,9 @@ fn G() {
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %a.ref: @F.%array_type.loc6_29.1 (%array_type.a0b) = name_ref a, %a
 // CHECK:STDOUT:     %F.specific_fn.loc6_46.1: <specific function> = specific_function %F.ref, @F(constants.%T) [symbolic = %F.specific_fn.loc6_46.2 (constants.%F.specific_fn.643)]
-// CHECK:STDOUT:     %.loc6_32: ref @F.%T.loc6_6.1 (%T) = splice_block %return {}
-// CHECK:STDOUT:     %F.call: init @F.%T.loc6_6.1 (%T) = call %F.specific_fn.loc6_46.1(%a.ref) to %.loc6_32
-// CHECK:STDOUT:     return %F.call to %return
+// CHECK:STDOUT:     %.loc6_35.1: ref @F.%T.loc6_6.1 (%T) = splice_block %return.param {}
+// CHECK:STDOUT:     %F.call: init @F.%T.loc6_6.1 (%T) = call %F.specific_fn.loc6_46.1(%a.ref) to %.loc6_35.1
+// CHECK:STDOUT:     return %F.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -902,12 +902,12 @@ fn G() {
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %a.ref: ref %array_type.931 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%C) [concrete = constants.%F.specific_fn.540]
-// CHECK:STDOUT:   %.loc8_8: ref %C = splice_block %return {}
+// CHECK:STDOUT:   %.loc8_11.1: ref %C = splice_block %return.param {}
 // CHECK:STDOUT:   %.loc21: %array_type.158 = converted %a.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %F.call: init %C = call %F.specific_fn(<error>) to %.loc8_8
+// CHECK:STDOUT:   %F.call: init %C = call %F.specific_fn(<error>) to %.loc8_11.1
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %a.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%a.var)
-// CHECK:STDOUT:   return %F.call to %return
+// CHECK:STDOUT:   return %F.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: %array_type.931) = "no_op";
@@ -916,7 +916,7 @@ fn G() {
 // CHECK:STDOUT:   %T.loc6_6.1 => constants.%T
 // CHECK:STDOUT:   %array_type.loc6_29.1 => constants.%array_type.a0b
 // CHECK:STDOUT:   %pattern_type.loc6_16 => constants.%pattern_type.b42
-// CHECK:STDOUT:   %.loc6_35.1 => constants.%.e5ffed.1
+// CHECK:STDOUT:   %.loc6_35.2 => constants.%.e5ffed.1
 // CHECK:STDOUT:   %pattern_type.loc6_32 => constants.%pattern_type.51d1c4.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -929,7 +929,7 @@ fn G() {
 // CHECK:STDOUT:   %T.loc6_6.1 => constants.%C
 // CHECK:STDOUT:   %array_type.loc6_29.1 => constants.%array_type.158
 // CHECK:STDOUT:   %pattern_type.loc6_16 => constants.%pattern_type.6d3
-// CHECK:STDOUT:   %.loc6_35.1 => constants.%.887
+// CHECK:STDOUT:   %.loc6_35.2 => constants.%.887
 // CHECK:STDOUT:   %pattern_type.loc6_32 => constants.%pattern_type.7c7
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

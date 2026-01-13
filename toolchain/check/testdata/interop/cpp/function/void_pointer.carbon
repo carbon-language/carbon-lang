@@ -231,11 +231,11 @@ fn F() {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.a2f: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.840, @U.binding.as_type.as.ImplicitAs.impl.71c(%OptionalStorage.facet.309, %OptionalAs.facet) [concrete]
 // CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.type.e82: type = fn_type @U.binding.as_type.as.ImplicitAs.impl.Convert.2, @U.binding.as_type.as.ImplicitAs.impl.71c(%OptionalStorage.facet.309, %OptionalAs.facet) [concrete]
 // CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.247: %U.binding.as_type.as.ImplicitAs.impl.Convert.type.e82 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.8e2 = facet_value %ptr.874, (%ImplicitAs.impl_witness.a2f) [concrete]
-// CHECK:STDOUT:   %.0d5: type = fn_type_with_self_type %ImplicitAs.Convert.type.2c8, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet.a05: %ImplicitAs.type.8e2 = facet_value %ptr.874, (%ImplicitAs.impl_witness.a2f) [concrete]
+// CHECK:STDOUT:   %.0d5: type = fn_type_with_self_type %ImplicitAs.Convert.type.2c8, %ImplicitAs.facet.a05 [concrete]
 // CHECK:STDOUT:   %U.binding.as_type.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %U.binding.as_type.as.ImplicitAs.impl.Convert.247, @U.binding.as_type.as.ImplicitAs.impl.Convert.2(%OptionalStorage.facet.309, %OptionalAs.facet) [concrete]
-// CHECK:STDOUT:   %DestroyOp.type.3e79c2.5: type = fn_type @DestroyOp.loc10 [concrete]
-// CHECK:STDOUT:   %DestroyOp.b0ebf8.5: %DestroyOp.type.3e79c2.5 = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyOp.type.3e79c2.6: type = fn_type @DestroyOp.loc10 [concrete]
+// CHECK:STDOUT:   %DestroyOp.b0ebf8.6: %DestroyOp.type.3e79c2.6 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -283,7 +283,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc10_11.3: ref %Optional.367 = temporary %.loc10_11.2, %.loc10_11.1
 // CHECK:STDOUT:   %.loc10_11.4: %Optional.367 = acquire_value %.loc10_11.3
 // CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc10_11.4)
-// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc10_11.3, constants.%DestroyOp.b0ebf8.5
+// CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc10_11.3, constants.%DestroyOp.b0ebf8.6
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc10_11.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

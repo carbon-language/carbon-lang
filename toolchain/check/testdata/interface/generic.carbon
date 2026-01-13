@@ -316,9 +316,9 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT: fn @C.as.WithAssocFn.impl.F() -> %return.param: %X {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc17_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc17_15.2: init %X = class_init (), %return [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc17_15.2: init %X = class_init (), %return.param [concrete = constants.%X.val]
 // CHECK:STDOUT:   %.loc17_16: init %X = converted %.loc17_15.1, %.loc17_15.2 [concrete = constants.%X.val]
-// CHECK:STDOUT:   return %.loc17_16 to %return
+// CHECK:STDOUT:   return %.loc17_16 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Receive(%T.loc24_12.2: %Simple.type.12a) {

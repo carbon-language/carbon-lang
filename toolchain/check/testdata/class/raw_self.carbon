@@ -211,17 +211,17 @@ fn Class.G[self: Self](r#self: i32) -> (i32, i32) {
 // CHECK:STDOUT:   %specific_fn.loc26_15: <specific function> = specific_function %impl.elem0.loc26_15, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc26_15.2: <bound method> = bound_method %.loc26_15.2, %specific_fn.loc26_15
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc26_15: init %i32 = call %bound_method.loc26_15.2(%.loc26_15.2)
-// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return.loc25, element0
+// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return.param.loc25, element0
 // CHECK:STDOUT:   %.loc26_25.2: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc26_15 to %tuple.elem0
 // CHECK:STDOUT:   %impl.elem0.loc26_19: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
 // CHECK:STDOUT:   %bound_method.loc26_19.1: <bound method> = bound_method %self.ref.loc26_19, %impl.elem0.loc26_19
 // CHECK:STDOUT:   %specific_fn.loc26_19: <specific function> = specific_function %impl.elem0.loc26_19, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc26_19.2: <bound method> = bound_method %self.ref.loc26_19, %specific_fn.loc26_19
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc26_19: init %i32 = call %bound_method.loc26_19.2(%self.ref.loc26_19)
-// CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return.loc25, element1
+// CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return.param.loc25, element1
 // CHECK:STDOUT:   %.loc26_25.3: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc26_19 to %tuple.elem1
-// CHECK:STDOUT:   %.loc26_25.4: init %tuple.type.d07 = tuple_init (%.loc26_25.2, %.loc26_25.3) to %return.loc25
+// CHECK:STDOUT:   %.loc26_25.4: init %tuple.type.d07 = tuple_init (%.loc26_25.2, %.loc26_25.3) to %return.param.loc25
 // CHECK:STDOUT:   %.loc26_26: init %tuple.type.d07 = converted %.loc26_25.1, %.loc26_25.4
-// CHECK:STDOUT:   return %.loc26_26 to %return.loc25
+// CHECK:STDOUT:   return %.loc26_26 to %return.param.loc25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

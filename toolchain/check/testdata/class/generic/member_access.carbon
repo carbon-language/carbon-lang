@@ -185,8 +185,8 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     %specific_impl_fn.loc9_16.1: <specific function> = specific_impl_function %impl.elem0.loc9_16.1, @Copy.Op(constants.%T.035) [symbolic = %specific_impl_fn.loc9_16.2 (constants.%specific_impl_fn.2c9)]
 // CHECK:STDOUT:     %bound_method.loc9_16.2: <bound method> = bound_method %.loc9_16.2, %specific_impl_fn.loc9_16.1
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %Copy.Op.call: init @Class.Get.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc9_16.2(%.loc9_16.2) to %.loc7_24
-// CHECK:STDOUT:     return %Copy.Op.call to %return
+// CHECK:STDOUT:     %Copy.Op.call: init @Class.Get.%T.binding.as_type (%T.binding.as_type) = call %bound_method.loc9_16.2(%.loc9_16.2) to %.loc7_27.1
+// CHECK:STDOUT:     return %Copy.Op.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -287,7 +287,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class => constants.%Class.847
 // CHECK:STDOUT:   %pattern_type.loc7_10 => constants.%pattern_type.893
 // CHECK:STDOUT:   %T.binding.as_type => constants.%T.binding.as_type
-// CHECK:STDOUT:   %.loc7_27.1 => constants.%.075d25.1
+// CHECK:STDOUT:   %.loc7_27.2 => constants.%.075d25.1
 // CHECK:STDOUT:   %pattern_type.loc7_24 => constants.%pattern_type.9b9f0c.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -322,7 +322,7 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:   %Class => constants.%Class.06a
 // CHECK:STDOUT:   %pattern_type.loc7_10 => constants.%pattern_type.cea
 // CHECK:STDOUT:   %T.binding.as_type => constants.%i32
-// CHECK:STDOUT:   %.loc7_27.1 => constants.%.4d5
+// CHECK:STDOUT:   %.loc7_27.2 => constants.%.4d5
 // CHECK:STDOUT:   %pattern_type.loc7_24 => constants.%pattern_type.7ce
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -391,15 +391,15 @@ fn StaticMemberFunctionCall(T:! type) -> Class(T) {
 // CHECK:STDOUT:     %Make.ref: @StaticMemberFunctionCall.%Class.Make.type (%Class.Make.type) = name_ref Make, %.loc10 [symbolic = %Class.Make (constants.%Class.Make)]
 // CHECK:STDOUT:     %Class.Make.specific_fn.loc10_18.1: <specific function> = specific_function %Make.ref, @Class.Make(constants.%T) [symbolic = %Class.Make.specific_fn.loc10_18.2 (constants.%Class.Make.specific_fn)]
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %Class.Make.call: init @StaticMemberFunctionCall.%Class.loc8_49.1 (%Class) = call %Class.Make.specific_fn.loc10_18.1() to %.loc8_39
-// CHECK:STDOUT:     return %Class.Make.call to %return
+// CHECK:STDOUT:     %Class.Make.call: init @StaticMemberFunctionCall.%Class.loc8_49.1 (%Class) = call %Class.Make.specific_fn.loc10_18.1() to %.loc8_49.1
+// CHECK:STDOUT:     return %Class.Make.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @StaticMemberFunctionCall(constants.%T) {
 // CHECK:STDOUT:   %T.loc8_29.1 => constants.%T
 // CHECK:STDOUT:   %Class.loc8_49.1 => constants.%Class
-// CHECK:STDOUT:   %.loc8_49.1 => constants.%.859
+// CHECK:STDOUT:   %.loc8_49.2 => constants.%.859
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.466
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

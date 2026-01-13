@@ -153,9 +153,9 @@ fn Run() {
 // CHECK:STDOUT: fn @F() -> %return.param: %A {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc8_27.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc8_27.2: init %A = class_init (), %return [concrete = constants.%A.val]
+// CHECK:STDOUT:   %.loc8_27.2: init %A = class_init (), %return.param [concrete = constants.%A.val]
 // CHECK:STDOUT:   %.loc8_28: init %A = converted %.loc8_27.1, %.loc8_27.2 [concrete = constants.%A.val]
-// CHECK:STDOUT:   return %.loc8_28 to %return
+// CHECK:STDOUT:   return %.loc8_28 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- main.carbon

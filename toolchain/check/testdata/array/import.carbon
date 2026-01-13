@@ -132,6 +132,6 @@ fn F() -> array(i32, 1) {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   %val.ref: <error> = name_ref val, <error> [concrete = <error>]
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -30,7 +30,7 @@ fn G() {
   // CHECK:STDERR: fail_void_abstract.carbon:[[@LINE+7]]:10: error: binding pattern has abstract type `Cpp.void` in `var` pattern [AbstractTypeInVarPattern]
   // CHECK:STDERR:   var x: Cpp.void;
   // CHECK:STDERR:          ^~~~~~~~
-  // CHECK:STDERR: {{.*}}/prelude/types/cpp/void.carbon:22:1: note: class was declared abstract here [ClassAbstractHere]
+  // CHECK:STDERR: {{.*}}/prelude/types/cpp/void.carbon:24:1: note: class was declared abstract here [ClassAbstractHere]
   // CHECK:STDERR: abstract class CppCompat.VoidBase {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

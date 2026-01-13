@@ -1354,13 +1354,13 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %F.ref: %SelfNestedBadParam.as.SelfNested.impl.F.type.789632.1 = name_ref F, @SelfNestedBadParam.as.SelfNested.impl.%SelfNestedBadParam.as.SelfNested.impl.F.decl.loc223_87.1 [concrete = constants.%SelfNestedBadParam.as.SelfNested.impl.F.6e1661.1]
 // CHECK:STDOUT:   %x.ref: %tuple.type.7ea = name_ref x, %x.param
 // CHECK:STDOUT:   %return.ref: ref %array_type.388 = name_ref <return slot>, %return.param
-// CHECK:STDOUT:   %.loc211_41: ref %array_type.388 = splice_block %return {}
+// CHECK:STDOUT:   %.loc211_57: ref %array_type.388 = splice_block %return.param {}
 // CHECK:STDOUT:   %tuple.elem0: %ptr.cf2 = tuple_access %x.ref, element0
 // CHECK:STDOUT:   %tuple.elem1: %struct_type.x.y.62a = tuple_access %x.ref, element1
 // CHECK:STDOUT:   %.loc211_9.1: %SelfNestedBadParam = struct_access %tuple.elem1, element0
 // CHECK:STDOUT:   %.loc211_9.2: %i32 = converted %.loc211_9.1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %SelfNestedBadParam.as.SelfNested.impl.F.call: init %array_type.388 = call %F.ref(<error>) to %.loc211_41
-// CHECK:STDOUT:   return %SelfNestedBadParam.as.SelfNested.impl.F.call to %return
+// CHECK:STDOUT:   %SelfNestedBadParam.as.SelfNested.impl.F.call: init %array_type.388 = call %F.ref(<error>) to %.loc211_57
+// CHECK:STDOUT:   return %SelfNestedBadParam.as.SelfNested.impl.F.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SelfNestedBadReturnType.as.SelfNested.impl.F.loc239_112.1(%x.param: %tuple.type.064) -> %return.param: %array_type.388;
@@ -1373,7 +1373,7 @@ class SelfNestedBadReturnType {
 // CHECK:STDOUT:   %.loc239_112.1: ref %array_type.388 = temporary_storage
 // CHECK:STDOUT:   %SelfNestedBadReturnType.as.SelfNested.impl.F.call: init %array_type.388 = call %F.ref(%x.ref) to %.loc239_112.1
 // CHECK:STDOUT:   %.loc239_112.2: %array_type.31b = converted %SelfNestedBadReturnType.as.SelfNested.impl.F.call, <error> [concrete = <error>]
-// CHECK:STDOUT:   return <error> to %return
+// CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.F(constants.%Self.ab9) {}

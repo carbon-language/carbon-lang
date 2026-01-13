@@ -166,6 +166,7 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.7ce: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.824: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
@@ -183,6 +184,8 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT:     .foo = %foo.var
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %foo.patt: %pattern_type.7ce = ref_binding_pattern foo [concrete]
+// CHECK:STDOUT:   %foo.var_patt: %pattern_type.7ce = var_pattern %foo.patt [concrete]
 // CHECK:STDOUT:   %foo.var: ref %i32 = var %foo.var_patt [concrete]
 // CHECK:STDOUT:   %Core.import_ref.18d: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.824) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.9b9)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.e76 = impl_witness_table (%Core.import_ref.18d), @Int.as.Copy.impl [concrete]
@@ -208,12 +211,12 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %ptr.1f9: type = ptr_type %X [concrete]
-// CHECK:STDOUT:   %operator+__carbon_thunk.type: type = fn_type @operator+__carbon_thunk [concrete]
-// CHECK:STDOUT:   %operator+__carbon_thunk: %operator+__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %operator_Plus__carbon_thunk.type: type = fn_type @operator_Plus__carbon_thunk [concrete]
+// CHECK:STDOUT:   %operator_Plus__carbon_thunk: %operator_Plus__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %operator+__carbon_thunk.decl: %operator+__carbon_thunk.type = fn_decl @operator+__carbon_thunk [concrete = constants.%operator+__carbon_thunk] {
+// CHECK:STDOUT:   %operator_Plus__carbon_thunk.decl: %operator_Plus__carbon_thunk.type = fn_decl @operator_Plus__carbon_thunk [concrete = constants.%operator_Plus__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -229,9 +232,9 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT:   %addr.loc11_12.1: %ptr.1f9 = addr_of %.loc11_10
 // CHECK:STDOUT:   %.loc11_14: ref %X = value_as_ref %b.ref
 // CHECK:STDOUT:   %addr.loc11_12.2: %ptr.1f9 = addr_of %.loc11_14
-// CHECK:STDOUT:   %addr.loc11_12.3: %ptr.1f9 = addr_of %.loc9_28
-// CHECK:STDOUT:   %operator+__carbon_thunk.call: init %empty_tuple.type = call imports.%operator+__carbon_thunk.decl(%addr.loc11_12.1, %addr.loc11_12.2, %addr.loc11_12.3)
-// CHECK:STDOUT:   %.loc11_12: init %X = in_place_init %operator+__carbon_thunk.call, %.loc9_28
-// CHECK:STDOUT:   return %.loc11_12 to %return
+// CHECK:STDOUT:   %addr.loc11_12.3: %ptr.1f9 = addr_of %.loc9_34.1
+// CHECK:STDOUT:   %operator_Plus__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_Plus__carbon_thunk.decl(%addr.loc11_12.1, %addr.loc11_12.2, %addr.loc11_12.3)
+// CHECK:STDOUT:   %.loc11_12: init %X = in_place_init %operator_Plus__carbon_thunk.call, %.loc9_34.1
+// CHECK:STDOUT:   return %.loc11_12 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

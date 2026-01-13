@@ -742,10 +742,16 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   }
 
   auto scope_id = context.entity_names().Get(entity_name_id).parent_scope_id;
-  if (!scope_id.has_value() ||
-      !context.insts().Is<SemIR::Namespace>(
-          context.name_scopes().Get(scope_id).inst_id())) {
-    // Only namespace-scope variables are reference constants.
+  if (!scope_id.has_value()) {
+    return ConstantEvalResult::NotConstant;
+  }
+  auto scope_inst =
+      context.insts().Get(context.name_scopes().Get(scope_id).inst_id());
+  if (!scope_inst.Is<SemIR::Namespace>() &&
+      !scope_inst.Is<SemIR::ClassDecl>()) {
+    // Only namespace-scope and class-scope variables are reference constants.
+    // Class-scope variables cannot currently be declared directly, but can
+    // occur when static data members are imported from C++.
     return ConstantEvalResult::NotConstant;
   }
 

@@ -102,6 +102,7 @@ fn MyF() {
 // CHECK:STDOUT:   %ptr.d9e: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.a31: type = pattern_type %ptr.d9e [concrete]
 // CHECK:STDOUT:   %const: type = const_type %ptr.d9e [concrete]
+// CHECK:STDOUT:   %pattern_type.8ca: type = pattern_type %const [concrete]
 // CHECK:STDOUT:   %global_ref.var: ref %ptr.d9e = var imports.%global_ref.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -118,8 +119,14 @@ fn MyF() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %global.patt: %pattern_type.217 = ref_binding_pattern global [concrete]
+// CHECK:STDOUT:   %global.var_patt: %pattern_type.217 = var_pattern %global.patt [concrete]
 // CHECK:STDOUT:   %global.var: ref %C = var %global.var_patt [concrete]
+// CHECK:STDOUT:   %global_ptr.patt: %pattern_type.a31 = ref_binding_pattern global_ptr [concrete]
+// CHECK:STDOUT:   %global_ptr.var_patt: %pattern_type.a31 = var_pattern %global_ptr.patt [concrete]
 // CHECK:STDOUT:   %global_ptr.var: ref %ptr.d9e = var %global_ptr.var_patt [concrete]
+// CHECK:STDOUT:   %global_ref.patt: %pattern_type.8ca = ref_binding_pattern global_ref [concrete]
+// CHECK:STDOUT:   %global_ref.var_patt: %pattern_type.8ca = var_pattern %global_ref.patt [concrete]
 // CHECK:STDOUT:   %global_ref.var: ref %const = var %global_ref.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -213,6 +220,8 @@ fn MyF() {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %global.patt: %pattern_type = ref_binding_pattern global [concrete]
+// CHECK:STDOUT:   %global.var_patt: %pattern_type = var_pattern %global.patt [concrete]
 // CHECK:STDOUT:   %global.var: ref %C = var %global.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

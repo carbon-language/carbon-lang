@@ -141,9 +141,9 @@ class Class(T:! type) {
 // CHECK:STDOUT:   fn() -> %return.param: @Class.MakeSelf.%Class (%Class) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc18_35.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc18_35.2: init @Class.MakeSelf.%Class (%Class) = class_init (), %return [symbolic = %Class.val (constants.%Class.val)]
+// CHECK:STDOUT:     %.loc18_35.2: init @Class.MakeSelf.%Class (%Class) = class_init (), %return.param [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:     %.loc18_36: init @Class.MakeSelf.%Class (%Class) = converted %.loc18_35.1, %.loc18_35.2 [symbolic = %Class.val (constants.%Class.val)]
-// CHECK:STDOUT:     return %.loc18_36 to %return
+// CHECK:STDOUT:     return %.loc18_36 to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -160,9 +160,9 @@ class Class(T:! type) {
 // CHECK:STDOUT:   fn() -> %return.param: @Class.MakeClass.%Class.loc19_28.1 (%Class) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc19_40.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc19_40.2: init @Class.MakeClass.%Class.loc19_28.1 (%Class) = class_init (), %return [symbolic = %Class.val (constants.%Class.val)]
+// CHECK:STDOUT:     %.loc19_40.2: init @Class.MakeClass.%Class.loc19_28.1 (%Class) = class_init (), %return.param [symbolic = %Class.val (constants.%Class.val)]
 // CHECK:STDOUT:     %.loc19_41: init @Class.MakeClass.%Class.loc19_28.1 (%Class) = converted %.loc19_40.1, %.loc19_40.2 [symbolic = %Class.val (constants.%Class.val)]
-// CHECK:STDOUT:     return %.loc19_41 to %return
+// CHECK:STDOUT:     return %.loc19_41 to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

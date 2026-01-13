@@ -299,11 +299,11 @@ class A {
 // CHECK:STDOUT:   %bound_method.loc13_24.2: <bound method> = bound_method %int_5, %specific_fn [concrete = constants.%bound_method.e9d]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc13_24.2(%int_5) [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %.loc13_24.2: init %i32 = converted %int_5, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_5.0f6]
-// CHECK:STDOUT:   %.loc13_24.3: ref %i32 = class_element_access %return, element0
+// CHECK:STDOUT:   %.loc13_24.3: ref %i32 = class_element_access %return.param, element0
 // CHECK:STDOUT:   %.loc13_24.4: init %i32 = initialize_from %.loc13_24.2 to %.loc13_24.3 [concrete = constants.%int_5.0f6]
-// CHECK:STDOUT:   %.loc13_24.5: init %Circle = class_init (%.loc13_24.4), %return [concrete = constants.%Circle.val]
+// CHECK:STDOUT:   %.loc13_24.5: init %Circle = class_init (%.loc13_24.4), %return.param [concrete = constants.%Circle.val]
 // CHECK:STDOUT:   %.loc13_25: init %Circle = converted %.loc13_24.1, %.loc13_24.5 [concrete = constants.%Circle.val]
-// CHECK:STDOUT:   return %.loc13_25 to %return
+// CHECK:STDOUT:   return %.loc13_25 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

@@ -1622,40 +1622,40 @@ static auto ImportVarDecl(Context& context, SemIR::LocId loc_id,
   }
   SemIR::NameId var_name_id = AddIdentifierName(context, var_decl->getName());
 
-  SemIR::VarStorage var_storage{.type_id = var_type_id,
-                                .pattern_id = SemIR::InstId::None};
-  // We can't use the convenience for `AddPlaceholderInstInNoBlock()` with typed
-  // nodes because it doesn't support insts with cleanup.
-  SemIR::InstId var_storage_inst_id =
-      AddPlaceholderImportedInstInNoBlock(context, {loc_id, var_storage});
-
-  auto clang_decl_id = context.clang_decls().Add(
-      {.key = SemIR::ClangDeclKey(var_decl), .inst_id = var_storage_inst_id});
-
-  // Entity name referring to a Clang decl for mangling.
+  // Create an entity name to identify this variable.
   SemIR::EntityNameId entity_name_id =
       context.entity_names().AddSymbolicBindingName(
           var_name_id, GetParentNameScopeId(context, var_decl),
           SemIR::CompileTimeBindIndex::None, false);
-  context.cpp_global_names().Add({.key = {.entity_name_id = entity_name_id},
-                                  .clang_decl_id = clang_decl_id});
 
-  // Create `RefBindingPattern` and `VarPattern` in a `NameBindingDecl`.
-  context.pattern_block_stack().Push();
+  // Create `RefBindingPattern` and `VarPattern`. Mirror the behavior of
+  // import_ref and don't create a `NameBindingDecl` here; we'd never use it for
+  // anything.
   SemIR::TypeId pattern_type_id = GetPatternType(context, var_type_id);
   SemIR::InstId binding_pattern_inst_id =
-      AddPatternInst<SemIR::RefBindingPattern>(
+      AddInstInNoBlock<SemIR::RefBindingPattern>(
           context, loc_id,
           {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
-  var_storage.pattern_id = AddPatternInst<SemIR::VarPattern>(
+  context.imports().push_back(binding_pattern_inst_id);
+  auto pattern_id = AddInstInNoBlock<SemIR::VarPattern>(
       context, Parse::VariablePatternId::None,
       {.type_id = pattern_type_id, .subpattern_id = binding_pattern_inst_id});
-  context.imports().push_back(AddInstInNoBlock<SemIR::NameBindingDecl>(
-      context, loc_id,
-      {.pattern_block_id = context.pattern_block_stack().Pop()}));
+  context.imports().push_back(pattern_id);
 
-  // Finalize the `VarStorage` instruction.
-  ReplaceInstBeforeConstantUse(context, var_storage_inst_id, var_storage);
+  // Create the imported storage for the global. We intentionally use the
+  // untyped form of `AddInstInNoBlock` to bypass the check on adding an
+  // instruction that requires a cleanup, because we don't want a cleanup here!
+  SemIR::InstId var_storage_inst_id = AddInstInNoBlock(
+      context, {loc_id, SemIR::VarStorage{.type_id = var_type_id,
+                                          .pattern_id = pattern_id}});
+  context.imports().push_back(var_storage_inst_id);
+
+  // Register the variable so we don't create it again, and track the
+  // corresponding declaration to use for mangling.
+  auto clang_decl_id = context.clang_decls().Add(
+      {.key = SemIR::ClangDeclKey(var_decl), .inst_id = var_storage_inst_id});
+  context.cpp_global_names().Add({.key = {.entity_name_id = entity_name_id},
+                                  .clang_decl_id = clang_decl_id});
 
   // Inform Clang that the variable has been referenced.
   context.clang_sema().MarkVariableReferenced(GetCppLocation(context, loc_id),

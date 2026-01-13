@@ -108,10 +108,10 @@ fn H() {
 // CHECK:STDOUT:   assign %v.ref, %F.call.loc8
 // CHECK:STDOUT:   %F.ref.loc9: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %F.call.loc9: init %tuple.type.d07 = call %F.ref.loc9() to %.loc5_8
+// CHECK:STDOUT:   %F.call.loc9: init %tuple.type.d07 = call %F.ref.loc9() to %.loc5_20.1
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %v.var, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%v.var)
-// CHECK:STDOUT:   return %F.call.loc9 to %return
+// CHECK:STDOUT:   return %F.call.loc9 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyOp(%self.param: %tuple.type.d07) = "no_op";

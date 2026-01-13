@@ -252,9 +252,9 @@ let x: i32 = c[0];
 // CHECK:STDOUT: fn @C.as.IndexWith.impl.At(%self.param: %C, %subscript.param: %SubscriptType.9ec) -> %return.param: %ElementType {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_13.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc10_13.2: init %ElementType = class_init (), %return [concrete = constants.%ElementType.val]
+// CHECK:STDOUT:   %.loc10_13.2: init %ElementType = class_init (), %return.param [concrete = constants.%ElementType.val]
 // CHECK:STDOUT:   %.loc10_14: init %ElementType = converted %.loc10_13.1, %.loc10_13.2 [concrete = constants.%ElementType.val]
-// CHECK:STDOUT:   return %.loc10_14 to %return
+// CHECK:STDOUT:   return %.loc10_14 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -619,9 +619,9 @@ let x: i32 = c[0];
 // CHECK:STDOUT: fn @C.as.IndexWith.impl.At(%self.param: %C, %subscript.param: %SubscriptType.9ec) -> %return.param: %ElementType {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_13.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc10_13.2: init %ElementType = class_init (), %return [concrete = constants.%ElementType.val]
+// CHECK:STDOUT:   %.loc10_13.2: init %ElementType = class_init (), %return.param [concrete = constants.%ElementType.val]
 // CHECK:STDOUT:   %.loc10_14: init %ElementType = converted %.loc10_13.1, %.loc10_13.2 [concrete = constants.%ElementType.val]
-// CHECK:STDOUT:   return %.loc10_14 to %return
+// CHECK:STDOUT:   return %.loc10_14 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

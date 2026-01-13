@@ -413,7 +413,7 @@ class B {
 // CHECK:STDOUT:   %specific_fn.loc13_17: <specific function> = specific_function %impl.elem0.loc13_17, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc13_17.2: <bound method> = bound_method %.loc13_17.4, %specific_fn.loc13_17
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc13_17: init %i32 = call %bound_method.loc13_17.2(%.loc13_17.4)
-// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return, element0
+// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return.param, element0
 // CHECK:STDOUT:   %.loc13_27.2: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc13_17 to %tuple.elem0
 // CHECK:STDOUT:   %.loc13_25.4: %i32 = acquire_value %.loc13_25.3
 // CHECK:STDOUT:   %impl.elem0.loc13_25: %.f79 = impl_witness_access constants.%Copy.impl_witness.f17, element0 [concrete = constants.%Int.as.Copy.impl.Op.664]
@@ -421,11 +421,11 @@ class B {
 // CHECK:STDOUT:   %specific_fn.loc13_25: <specific function> = specific_function %impl.elem0.loc13_25, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc13_25.2: <bound method> = bound_method %.loc13_25.4, %specific_fn.loc13_25
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc13_25: init %i32 = call %bound_method.loc13_25.2(%.loc13_25.4)
-// CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return, element1
+// CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return.param, element1
 // CHECK:STDOUT:   %.loc13_27.3: init %i32 = initialize_from %Int.as.Copy.impl.Op.call.loc13_25 to %tuple.elem1
-// CHECK:STDOUT:   %.loc13_27.4: init %tuple.type.d07 = tuple_init (%.loc13_27.2, %.loc13_27.3) to %return
+// CHECK:STDOUT:   %.loc13_27.4: init %tuple.type.d07 = tuple_init (%.loc13_27.2, %.loc13_27.3) to %return.param
 // CHECK:STDOUT:   %.loc13_28: init %tuple.type.d07 = converted %.loc13_27.1, %.loc13_27.4
-// CHECK:STDOUT:   return %.loc13_28 to %return
+// CHECK:STDOUT:   return %.loc13_28 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- shadowing_access.carbon
