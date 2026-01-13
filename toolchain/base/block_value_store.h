@@ -10,6 +10,7 @@
 #include "common/check.h"
 #include "common/set.h"
 #include "llvm/Support/Allocator.h"
+#include "toolchain/base/id_tag.h"
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/base/yaml.h"
@@ -35,6 +36,7 @@ class BlockValueStore
   explicit BlockValueStore(llvm::BumpPtrAllocator& allocator,
                            IdTagType::TagIdType tag_id,
                            int32_t initial_reserved_ids = 0)
+    requires(!IdTagIsUntagged<IdTagType>)
       : allocator_(&allocator), values_(tag_id, initial_reserved_ids) {
     auto empty = RefType();
     auto empty_val = canonical_blocks_.Insert(
