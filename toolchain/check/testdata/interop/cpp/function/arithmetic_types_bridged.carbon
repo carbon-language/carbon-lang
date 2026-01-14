@@ -2100,7 +2100,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_30.1: ref bool = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr = addr_of %.loc8_30.1
 // CHECK:STDOUT:   %foo_bool__carbon_thunk.call: init %empty_tuple.type = call imports.%foo_bool__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc8_30.2: init bool to %.loc8_30.1 = in_place_init %foo_bool__carbon_thunk.call
+// CHECK:STDOUT:   %.loc8_30.2: init bool = in_place_init %foo_bool__carbon_thunk.call, %.loc8_30.1
 // CHECK:STDOUT:   %.loc8_10.1: type = splice_block %.loc8_10.3 [concrete = bool] {
 // CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc8_10.2: type = value_of_initializer %Bool.call [concrete = bool]
@@ -2149,7 +2149,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_30.1: ref %i16 = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr = addr_of %.loc8_30.1
 // CHECK:STDOUT:   %foo_short__carbon_thunk.call: init %empty_tuple.type = call imports.%foo_short__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc8_30.2: init %i16 to %.loc8_30.1 = in_place_init %foo_short__carbon_thunk.call
+// CHECK:STDOUT:   %.loc8_30.2: init %i16 = in_place_init %foo_short__carbon_thunk.call, %.loc8_30.1
 // CHECK:STDOUT:   %.loc8_10: type = splice_block %i16 [concrete = constants.%i16] {
 // CHECK:STDOUT:     %int_16: Core.IntLiteral = int_value 16 [concrete = constants.%int_16]
 // CHECK:STDOUT:     %i16: type = class_type @Int, @Int(constants.%int_16) [concrete = constants.%i16]
@@ -2221,7 +2221,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc8_31.1: ref %f64.d77 = temporary_storage
 // CHECK:STDOUT:   %addr: %ptr = addr_of %.loc8_31.1
 // CHECK:STDOUT:   %foo_double__carbon_thunk.call: init %empty_tuple.type = call imports.%foo_double__carbon_thunk.decl(%addr)
-// CHECK:STDOUT:   %.loc8_31.2: init %f64.d77 to %.loc8_31.1 = in_place_init %foo_double__carbon_thunk.call
+// CHECK:STDOUT:   %.loc8_31.2: init %f64.d77 = in_place_init %foo_double__carbon_thunk.call, %.loc8_31.1
 // CHECK:STDOUT:   %.loc8_10: type = splice_block %f64 [concrete = constants.%f64.d77] {
 // CHECK:STDOUT:     %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
 // CHECK:STDOUT:     %f64: type = class_type @Float, @Float(constants.%int_64) [concrete = constants.%f64.d77]

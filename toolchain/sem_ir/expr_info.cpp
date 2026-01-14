@@ -174,6 +174,9 @@ auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id,
         return init.dest_id;
       }
       case CARBON_KIND(InPlaceInit init): {
+        if (!InitRepr::ForType(sem_ir, init.type_id).MightBeInPlace()) {
+          return InstId::None;
+        }
         return init.dest_id;
       }
       case CARBON_KIND(Call call): {
