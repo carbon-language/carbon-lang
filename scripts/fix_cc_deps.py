@@ -160,7 +160,7 @@ def get_rules(bazel: str, targets: str, keep_going: bool) -> dict[str, Rule]:
             elif rule_class == "genrule":
                 if list_name == "outs":
                     outs = get_bazel_list(list_child, True)
-            elif rule_class == "tree_sitter_cc_library":
+            elif rule_class in ("tree_sitter_cc_library", "cc_library_wrapper"):
                 continue
             else:
                 exit(f"unexpected rule type: {rule_class}")

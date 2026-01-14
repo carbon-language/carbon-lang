@@ -121,7 +121,7 @@ auto RunTestFile(const FileTestBase& test_base, bool dump_output,
 
   // stdin needs to exist on-disk for compatibility. We'll use a pointer for it.
   FILE* input_stream = nullptr;
-  auto erase_input_on_exit = llvm::make_scope_exit([&input_stream]() {
+  auto erase_input_on_exit = llvm::scope_exit([&input_stream]() {
     if (input_stream) {
       // fclose should delete the tmpfile.
       fclose(input_stream);

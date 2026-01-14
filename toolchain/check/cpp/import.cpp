@@ -1307,7 +1307,7 @@ static auto CreateFunctionSignatureInsts(Context& context, SemIR::LocId loc_id,
     -> std::optional<FunctionSignatureInsts> {
   context.full_pattern_stack().PushFullPattern(
       FullPatternStack::Kind::ImplicitParamList);
-  std::optional pop = llvm::make_scope_exit(
+  std::optional pop = llvm::scope_exit(
       [&context] { context.full_pattern_stack().PopFullPattern(); });
   auto implicit_param_patterns_id =
       MakeImplicitParamPatternsBlockId(context, loc_id, *clang_decl);

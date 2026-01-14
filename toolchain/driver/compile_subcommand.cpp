@@ -1163,7 +1163,7 @@ auto CompileSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     unit->SetMultiUnitCache(&cache);
   }
 
-  auto on_exit = llvm::make_scope_exit([&]() {
+  auto on_exit = llvm::scope_exit([&]() {
     // Finish compilation units. This flushes their diagnostics in the order in
     // which they were specified on the command line.
     for (auto& unit : units) {
