@@ -27,13 +27,9 @@ constraint J(N:! i32) {
   require impls K(array(i32, N));
 }
 
-// CHECK:STDERR: fail_error_in_identifying_require_facet_type.carbon:[[@LINE+8]]:12: note: identifying facet type `J(-1)` here [IdentifyingFacetTypeHere]
+// CHECK:STDERR: fail_error_in_identifying_require_facet_type.carbon:[[@LINE+4]]:12: note: identifying facet type `J(-1)` here [IdentifyingFacetTypeHere]
 // CHECK:STDERR: impl {} as J(-1) {}
 // CHECK:STDERR:            ^~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_error_in_identifying_require_facet_type.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl {} as J(-1) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl {} as J(-1) {}
 
@@ -56,12 +52,8 @@ constraint J(N:! i32) {
   extend require impls K(array(i32, N));
 }
 
-// CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+8]]:12: note: identifying facet type `J(-1)` here [IdentifyingFacetTypeHere]
+// CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+4]]:12: note: identifying facet type `J(-1)` here [IdentifyingFacetTypeHere]
 // CHECK:STDERR: impl {} as J(-1) {}
 // CHECK:STDERR:            ^~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl {} as J(-1) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl {} as J(-1) {}

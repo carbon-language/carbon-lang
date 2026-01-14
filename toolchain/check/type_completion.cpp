@@ -931,19 +931,21 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
             context, require_specific, require.self_id);
         auto require_facet_type = GetConstantValueInRequireImplsSpecific(
             context, require_specific, require.facet_type_inst_id);
-        if (require_self != SemIR::ErrorInst::ConstantId &&
-            require_facet_type != SemIR::ErrorInst::ConstantId) {
-          // TODO: Add and use constant_values().GetAs<SemIR::FacetType>().
-          auto facet_type_inst_id =
-              context.constant_values().GetInstId(require_facet_type);
-          auto facet_type_id = context.insts()
-                                   .GetAs<SemIR::FacetType>(facet_type_inst_id)
-                                   .facet_type_id;
-          if (facet_type_extends && require.extend_self) {
-            extend_facet_types.push_back({require_self, facet_type_id});
-          } else {
-            impls_facet_types.push_back({require_self, facet_type_id});
-          }
+        if (require_self == SemIR::ErrorInst::ConstantId ||
+            require_facet_type == SemIR::ErrorInst::ConstantId) {
+          return SemIR::IdentifiedFacetTypeId::None;
+        }
+
+        // TODO: Add and use constant_values().GetAs<SemIR::FacetType>().
+        auto facet_type_inst_id =
+            context.constant_values().GetInstId(require_facet_type);
+        auto facet_type_id = context.insts()
+                                 .GetAs<SemIR::FacetType>(facet_type_inst_id)
+                                 .facet_type_id;
+        if (facet_type_extends && require.extend_self) {
+          extend_facet_types.push_back({require_self, facet_type_id});
+        } else {
+          impls_facet_types.push_back({require_self, facet_type_id});
         }
       }
     }
@@ -961,16 +963,18 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
             context, require_specific, require.self_id);
         auto require_facet_type = GetConstantValueInRequireImplsSpecific(
             context, require_specific, require.facet_type_inst_id);
-        if (require_self != SemIR::ErrorInst::ConstantId &&
-            require_facet_type != SemIR::ErrorInst::ConstantId) {
-          // TODO: Add and use constant_values().GetAs<SemIR::FacetType>().
-          auto facet_type_inst_id =
-              context.constant_values().GetInstId(require_facet_type);
-          auto facet_type_id = context.insts()
-                                   .GetAs<SemIR::FacetType>(facet_type_inst_id)
-                                   .facet_type_id;
-          impls_facet_types.push_back({require_self, facet_type_id});
+        if (require_self == SemIR::ErrorInst::ConstantId ||
+            require_facet_type == SemIR::ErrorInst::ConstantId) {
+          return SemIR::IdentifiedFacetTypeId::None;
         }
+
+        // TODO: Add and use constant_values().GetAs<SemIR::FacetType>().
+        auto facet_type_inst_id =
+            context.constant_values().GetInstId(require_facet_type);
+        auto facet_type_id = context.insts()
+                                 .GetAs<SemIR::FacetType>(facet_type_inst_id)
+                                 .facet_type_id;
+        impls_facet_types.push_back({require_self, facet_type_id});
       }
     }
   }
