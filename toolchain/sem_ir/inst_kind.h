@@ -34,9 +34,21 @@ enum class ExprCategory : int8_t {
   // This instruction represents an ephemeral reference expression, that denotes
   // an object that does not outlive the current full expression context.
   EphemeralRef,
-  // This instruction represents an initializing expression, that describes how
-  // to initialize an object.
-  Initializing,
+  // This instruction represents an initializing expression that initializes an
+  // object using the type's initializing representation. If that representation
+  // is not in-place, the instruction doesn't actually initialize the target
+  // storage (and may not even specify the target storage), but a separate
+  // "final destination store" inst (such as `Temporary` or `InitializeFrom`)
+  // can use it to perform that initialization.
+  //
+  // NOTE: the distinction between ReprInitializing and InPlaceInitializing is
+  // not visible at the language level, so it must not affect whether code is
+  // rejected.
+  ReprInitializing,
+  // This instruction represents an initializing expression that initializes
+  // a particular target object in-place, regardless of the type's initializing
+  // representation.
+  InPlaceInitializing,
   // This instruction represents a syntactic combination of expressions that are
   // permitted to have different expression categories. This is used for tuple
   // and struct literals, where the subexpressions for different elements can

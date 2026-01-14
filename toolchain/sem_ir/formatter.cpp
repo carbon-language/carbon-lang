@@ -1029,10 +1029,11 @@ auto Formatter::FormatInstLhs(InstId inst_id, Inst inst) -> void {
         out_ << "ref ";
         FormatTypeOfInst(inst_id);
         break;
-      case ExprCategory::Initializing: {
+      case ExprCategory::InPlaceInitializing:
+      case ExprCategory::ReprInitializing: {
         out_ << "init ";
         FormatTypeOfInst(inst_id);
-        auto init_target_id = FindReturnSlotArgForInitializer(
+        auto init_target_id = FindStorageArgForInitializer(
             *sem_ir_, inst_id, /*allow_transitive=*/false);
         FormatReturnSlotArg(init_target_id);
         break;
@@ -1270,7 +1271,7 @@ auto Formatter::FormatInstRhs(Inst inst) -> void {
     case CARBON_KIND(InPlaceInit in_place): {
       // Omit dest_id if it will be part of the expression form.
       //
-      // TODO: should it always be part of the expression form? If so, fix
+      // FIXME: should it always be part of the expression form? If so, fix
       // FindReturnSlotArgForInitializer to always return it, and then
       // FormatInstRhsDefault will do the right thing.
       if (SemIR::InitRepr::ForType(*sem_ir_, in_place.type_id)

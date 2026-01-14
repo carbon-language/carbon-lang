@@ -70,12 +70,12 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
                 file, callee_function.resolved_specific_id);
             if (!return_form_id.has_value()) {
               // Treat as equivalent to `-> ()`.
-              return ExprCategory::Initializing;
+              return ExprCategory::ReprInitializing;
             }
             auto return_form = file.insts().Get(return_form_id);
             CARBON_KIND_SWITCH(return_form) {
               case CARBON_KIND(InitForm _):
-                return ExprCategory::Initializing;
+                return ExprCategory::ReprInitializing;
               case CARBON_KIND(RefForm _):
                 return ExprCategory::DurableRef;
               case CARBON_KIND(ErrorInst _):
@@ -89,7 +89,7 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
           }
           case CARBON_KIND(SemIR::CalleeCppOverloadSet _): {
             // TODO: support `ref` returns from C++.
-            return ExprCategory::Initializing;
+            return ExprCategory::ReprInitializing;
           }
         }
       } else {
@@ -137,7 +137,8 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
   }
 }
 
-auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id,
+// FIXME rename
+auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
                                      bool allow_transitive) -> InstId {
   while (true) {
     Inst init_untyped = sem_ir.insts().Get(init_id);
@@ -172,6 +173,7 @@ auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id,
         return init.dest_id;
       }
       case CARBON_KIND(InPlaceInit init): {
+        // FIXME delete this
         if (!InitRepr::ForType(sem_ir, init.type_id).MightBeInPlace()) {
           return InstId::None;
         }

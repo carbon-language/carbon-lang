@@ -334,7 +334,8 @@ auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr* {
       break;
 
     case SemIR::ExprCategory::Value:
-    case SemIR::ExprCategory::Initializing:
+    case SemIR::ExprCategory::ReprInitializing:
+    case SemIR::ExprCategory::InPlaceInitializing:
       value_kind = clang::ExprValueKind::VK_PRValue;
       break;
 

@@ -166,7 +166,8 @@ struct ArrayIndex {
 // `dest_id` is the destination array object for the initialization.
 struct ArrayInit {
   static constexpr auto Kind = InstKind::ArrayInit.Define<Parse::NodeId>(
-      {.ir_name = "array_init", .expr_category = ExprCategory::Initializing});
+      {.ir_name = "array_init",
+       .expr_category = ExprCategory::ReprInitializing});
 
   TypeId type_id;
   InstBlockId inits_id;
@@ -435,7 +436,8 @@ struct ClassElementAccess {
 // Initializes a class object at dest_id with the contents of elements_id.
 struct ClassInit {
   static constexpr auto Kind = InstKind::ClassInit.Define<Parse::NodeId>(
-      {.ir_name = "class_init", .expr_category = ExprCategory::Initializing});
+      {.ir_name = "class_init",
+       .expr_category = ExprCategory::ReprInitializing});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -1035,7 +1037,7 @@ struct ImportRefLoaded {
 struct InPlaceInit {
   static constexpr auto Kind = InstKind::InPlaceInit.Define<Parse::NodeId>(
       {.ir_name = "in_place_init",
-       .expr_category = ExprCategory::Initializing,
+       .expr_category = ExprCategory::InPlaceInitializing,
        .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
@@ -1070,7 +1072,7 @@ struct InitializeFrom {
   // TODO: Figure out if there's a better way to handle this case.
   static constexpr auto Kind = InstKind::InitializeFrom.Define<Parse::NodeId>(
       {.ir_name = "initialize_from",
-       .expr_category = ExprCategory::Initializing});
+       .expr_category = ExprCategory::InPlaceInitializing});
 
   TypeId type_id;
   InstId src_id;
@@ -1730,7 +1732,8 @@ struct StructAccess {
 // Initializes a dest struct with the provided elements.
 struct StructInit {
   static constexpr auto Kind = InstKind::StructInit.Define<Parse::NodeId>(
-      {.ir_name = "struct_init", .expr_category = ExprCategory::Initializing});
+      {.ir_name = "struct_init",
+       .expr_category = ExprCategory::ReprInitializing});
 
   TypeId type_id;
   InstBlockId elements_id;
@@ -1859,7 +1862,8 @@ struct TupleAccess {
 // Initializes the destination tuple with the given elements.
 struct TupleInit {
   static constexpr auto Kind = InstKind::TupleInit.Define<Parse::NodeId>(
-      {.ir_name = "tuple_init", .expr_category = ExprCategory::Initializing});
+      {.ir_name = "tuple_init",
+       .expr_category = ExprCategory::ReprInitializing});
 
   TypeId type_id;
   InstBlockId elements_id;
