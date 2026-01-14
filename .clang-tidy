@@ -150,4 +150,5 @@ CheckOptions:
   - key: readability-function-size.StatementThreshold
     value: none
   - key: readability-function-size.LineThreshold
+    # Chose 800 to match the default for StatementThreshold.
     value: 800
