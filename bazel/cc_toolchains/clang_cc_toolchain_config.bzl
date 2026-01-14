@@ -29,6 +29,7 @@ load(
     "output_flags_feature",
     "user_flags_feature",
 )
+load(":cc_toolchain_config_features.bzl", "target_os_features")
 load(":cc_toolchain_debugging.bzl", "debugging_features")
 load(
     ":cc_toolchain_linking.bzl",
@@ -65,12 +66,6 @@ load(
 )
 
 def _build_features(ctx):
-    std_compile_flags = ["-std=c++20"]
-
-    # libc++ is only used on non-Windows platforms.
-    if ctx.attr.target_os != "windows":
-        std_compile_flags.append("-stdlib=libc++")
-
     # TODO: Refactor this into a reusable form in its own file.
     default_flags_feature = feature(
         name = "default_flags",
@@ -92,6 +87,7 @@ def _build_features(ctx):
             flag_set(
                 actions = all_compile_actions,
                 flag_groups = [
+                    # First, flags for all compiles, regardless of output.
                     flag_group(flags = [
                         "-Werror",
                         "-Wall",
@@ -127,6 +123,9 @@ def _build_features(ctx):
                         # Compile actions shouldn't link anything.
                         "-c",
                     ]),
+
+                    # Flags controlling the production of specific outputs from
+                    # compile actions.
                     flag_group(
                         expand_if_available = "output_assembly_file",
                         flags = ["-S"],
@@ -146,8 +145,11 @@ def _build_features(ctx):
                 ],
             ),
             flag_set(
-                actions = all_cpp_compile_actions + all_link_actions,
-                flag_groups = [flag_group(flags = std_compile_flags)],
+                # Flags specific to compiling C++ source.
+                actions = all_cpp_compile_actions,
+                flag_groups = [flag_group(flags = [
+                    "-std=c++20",
+                ])],
             ),
             flag_set(
                 actions = codegen_compile_actions,
@@ -239,6 +241,33 @@ def _build_features(ctx):
         ],
     )
 
+    libcxx_feature = feature(
+        name = "libcxx",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_cpp_compile_actions + all_link_actions,
+                flag_groups = [flag_group(flags = [
+                    "-stdlib=libc++",
+                ])],
+                with_features = [
+                    # libc++ is only used on non-Windows platforms.
+                    with_feature_set(not_features = ["windows_target"]),
+                ],
+            ),
+            flag_set(
+                actions = all_link_actions,
+                flag_groups = [flag_group(flags = [
+                    "-unwindlib=libunwind",
+                ])],
+                with_features = [
+                    # libc++ is only used on non-Windows platforms.
+                    with_feature_set(not_features = ["windows_target"]),
+                ],
+            ),
+        ],
+    )
+
     # An enabled feature that requires the `fastbuild` compilation. This is used
     # to toggle general features on by default, while allowing them to be
     # directly enabled and disabled more generally as desired.
@@ -278,8 +307,6 @@ def _build_features(ctx):
                 flag_groups = [flag_group(
                     flags = [
                         "-fuse-ld=lld",
-                        "-stdlib=libc++",
-                        "-unwindlib=libunwind",
                         # Force the C++ standard library and runtime libraries
                         # to be statically linked. This works even with libc++
                         # and libunwind despite the names, provided libc++ is
@@ -367,7 +394,11 @@ def _build_features(ctx):
     # The order of the features determines the relative order of flags used.
     features = []
     features += base_features
-    features.append(default_flags_feature)
+    features += target_os_features(ctx.attr.target_os)
+    features += [
+        default_flags_feature,
+        libcxx_feature,
+    ]
     features += sanitizer_features
 
     features += optimization_features
