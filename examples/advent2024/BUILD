@@ -21,7 +21,7 @@ excluded = []
         name = carbon_file.removesuffix(".carbon"),
         srcs = [
             carbon_file,
-            carbon_file.rsplit("_", 1)[0] + "_common.carbon"
+            carbon_file.rsplit("_", 1)[0] + "_common.carbon",
         ] + utils,
     )
     for carbon_file in glob(["day*_part*.carbon"])
