@@ -18,6 +18,7 @@ namespace Carbon::Check {
 auto GenerateAst(Context& context,
                  llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                  llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                 llvm::LLVMContext* llvm_context,
                  std::shared_ptr<clang::CompilerInvocation> base_invocation)
     -> bool;
 

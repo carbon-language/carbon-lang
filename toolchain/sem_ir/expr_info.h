@@ -21,9 +21,9 @@ inline auto IsRefCategory(ExprCategory cat) -> bool {
   return cat == ExprCategory::DurableRef || cat == ExprCategory::EphemeralRef;
 }
 
-// Given an initializing expression, find its return slot argument. Returns
-// `None` if there is no return slot, because the initialization is not
-// performed in place.
+// Given a primitive-form initializing expression, find its return slot
+// argument. Returns `None` if there is no return slot, because the
+// initialization is not performed in place.
 auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id)
     -> InstId;
 

@@ -222,6 +222,7 @@ cc_library(
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:typed_insts",
         "//toolchain/source:source_buffer",
+        "@llvm-project//clang:codegen",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:MC",
         "@llvm-project//llvm:Passes",

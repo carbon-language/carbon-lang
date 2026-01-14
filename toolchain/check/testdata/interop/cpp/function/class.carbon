@@ -452,9 +452,9 @@ fn F() {
   // CHECK:STDERR: class C;
   // CHECK:STDERR:       ^
   // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE-14]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./decl_value_return_type.h:2:7: note: return type declared here [IncompleteReturnTypeHere]
-  // CHECK:STDERR: class C;
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR: ./decl_value_return_type.h:4:1: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR: auto foo() -> C;
+  // CHECK:STDERR: ^
   // CHECK:STDERR:
   Cpp.foo();
 }

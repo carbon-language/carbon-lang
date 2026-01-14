@@ -55,7 +55,7 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !4 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   store i32 42, ptr @_Cv.Main, align 4, !dbg !7
 // CHECK:STDOUT:   ret void, !dbg !8
@@ -113,7 +113,7 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !4 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cv.Main, ptr align 4 @tuple.21c.loc4_1, i64 8, i1 false), !dbg !7
 // CHECK:STDOUT:   store i32 4, ptr @_Cy.Main, align 4, !dbg !8

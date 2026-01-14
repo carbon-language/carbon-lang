@@ -65,7 +65,7 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var.loc3: ref %empty_tuple.type = var %x.var_patt.loc3
 // CHECK:STDOUT:   %.loc3_16.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc3_16.2: init %empty_tuple.type = tuple_init () to %x.var.loc3 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc3_16.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc3_3: init %empty_tuple.type = converted %.loc3_16.1, %.loc3_16.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %x.var.loc3, %.loc3_3
 // CHECK:STDOUT:   %.loc3_11.1: type = splice_block %.loc3_11.3 [concrete = constants.%empty_tuple.type] {
@@ -79,7 +79,7 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var.loc11: ref %empty_tuple.type = var %x.var_patt.loc11
 // CHECK:STDOUT:   %.loc11_16.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc11_16.2: init %empty_tuple.type = tuple_init () to %x.var.loc11 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc11_16.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_3: init %empty_tuple.type = converted %.loc11_16.1, %.loc11_16.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %x.var.loc11, %.loc11_3
 // CHECK:STDOUT:   %.loc11_11.1: type = splice_block %.loc11_11.3 [concrete = constants.%empty_tuple.type] {

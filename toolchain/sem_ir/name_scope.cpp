@@ -14,7 +14,7 @@ namespace Carbon::SemIR {
 NameScopeStore::NameScopeStore(const File* file)
     // 1 reserved untagged id because the Package NameScope is used across
     // Files.
-    : file_(file), values_(IdTag(file->check_ir_id().index, 1)) {}
+    : file_(file), values_(file->check_ir_id(), 1) {}
 
 auto NameScope::Print(llvm::raw_ostream& out) const -> void {
   out << "{inst: " << inst_id_ << ", parent_scope: " << parent_scope_id_

@@ -112,6 +112,13 @@ class TypeStore : public Yaml::Printable<TypeStore> {
     return GetAsInst(type_id).Is<InstT>();
   }
 
+  // Returns whether one of the specified kinds of instruction was used to
+  // define the type.
+  template <typename... InstTs>
+  auto IsOneOf(TypeId type_id) const -> bool {
+    return GetAsInst(type_id).IsOneOf<InstTs...>();
+  }
+
   // Returns the instruction used to define the specified type, which is known
   // to be a particular kind of instruction.
   template <typename InstT>

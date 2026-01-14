@@ -37,9 +37,8 @@ fn HelloStdio() {
 
 // Demonstrate passing a string as a void pointer to a C++ function.
 fn HelloWrite() {
-  // TODO: Requires conversion from `const char*` to `const void*`.
-  // let s: str = "Hello world!\n";
-  // Cpp.write(1, Cpp.std.data(s), Cpp.std.size(s));
+  let s: str = "Hello world!\n";
+  Cpp.write(1, Cpp.std.data(s), Cpp.std.size(s));
 }
 
 fn HelloIostreams() {

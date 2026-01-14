@@ -71,8 +71,8 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %impl.elem1: %.6b7 = impl_witness_access constants.%RightShiftWith.impl_witness, element1 [concrete = constants.%C.as.RightShiftWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %C.as.RightShiftWith.impl.Op.call: init %C = call %bound_method(%a.ref, %b.ref) to %.loc30_23
-// CHECK:STDOUT:   return %C.as.RightShiftWith.impl.Op.call to %return
+// CHECK:STDOUT:   %C.as.RightShiftWith.impl.Op.call: init %C = call %bound_method(%a.ref, %b.ref) to %.loc30_26.1
+// CHECK:STDOUT:   return %C.as.RightShiftWith.impl.Op.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestAssign(%a.param: %ptr.872, %b.param: %C) {

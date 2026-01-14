@@ -22,10 +22,12 @@ namespace Carbon {
 // `KeyT` can optionally be different from `ValueT`, and if so is used for the
 // argument to `Lookup`. In this case, `ValueT` must provide a `GetAsKey` member
 // function that returns the corresponding key.
-template <typename IdT, typename KeyT, typename ValueT = KeyT>
+template <typename IdT, typename KeyT, typename TagIdT = Untagged,
+          typename ValueT = KeyT>
 class CanonicalValueStore {
  public:
   using IdType = IdT;
+  using IdTagType = IdTag<IdT, TagIdT>;
   using KeyType = std::remove_cvref_t<KeyT>;
   using ValueType = ValueStoreTypes<ValueT>::ValueType;
   using RefType = ValueStoreTypes<ValueT>::RefType;
@@ -56,7 +58,7 @@ class CanonicalValueStore {
   }
 
   auto values() const [[clang::lifetimebound]]
-  -> ValueStore<IdT, ValueType>::Range {
+  -> ValueStore<IdT, ValueType, TagIdT>::Range {
     return values_.values();
   }
   auto size() const -> size_t { return values_.size(); }
@@ -71,7 +73,7 @@ class CanonicalValueStore {
 
   auto GetRawIndex(IdT id) const -> int32_t { return values_.GetRawIndex(id); }
 
-  auto GetIdTag() const -> IdTag { return values_.GetIdTag(); }
+  auto GetIdTag() const -> IdTagType { return values_.GetIdTag(); }
 
  private:
   class KeyContext;
@@ -87,15 +89,15 @@ class CanonicalValueStore {
     return value.GetAsKey();
   }
 
-  ValueStore<IdT, ValueType> values_;
+  ValueStore<IdT, ValueType, TagIdT> values_;
   Set<IdT, /*SmallSize=*/0, KeyContext> set_;
 };
 
-template <typename IdT, typename KeyT, typename ValueT>
-class CanonicalValueStore<IdT, KeyT, ValueT>::KeyContext
+template <typename IdT, typename KeyT, typename TagIdT, typename ValueT>
+class CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::KeyContext
     : public TranslatingKeyContext<KeyContext> {
  public:
-  explicit KeyContext(const ValueStore<IdT, ValueType>* values)
+  explicit KeyContext(const ValueStore<IdT, ValueType, TagIdT>* values)
       : values_(values) {}
 
   // Note that it is safe to return a reference here as the underlying object's
@@ -106,25 +108,28 @@ class CanonicalValueStore<IdT, KeyT, ValueT>::KeyContext
   }
 
  private:
-  const ValueStore<IdT, ValueType>* values_;
+  const ValueStore<IdT, ValueType, TagIdT>* values_;
 };
 
-template <typename IdT, typename KeyT, typename ValueT>
-auto CanonicalValueStore<IdT, KeyT, ValueT>::Add(ValueType value) -> IdT {
+template <typename IdT, typename KeyT, typename TagIdT, typename ValueT>
+auto CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::Add(ValueType value)
+    -> IdT {
   auto make_key = [&] { return IdT(values_.Add(std::move(value))); };
   return set_.Insert(GetAsKey(value), make_key, KeyContext(&values_)).key();
 }
 
-template <typename IdT, typename KeyT, typename ValueT>
-auto CanonicalValueStore<IdT, KeyT, ValueT>::Lookup(KeyType key) const -> IdT {
+template <typename IdT, typename KeyT, typename TagIdT, typename ValueT>
+auto CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::Lookup(KeyType key) const
+    -> IdT {
   if (auto result = set_.Lookup(key, KeyContext(&values_))) {
     return result.key();
   }
   return IdT::None;
 }
 
-template <typename IdT, typename KeyT, typename ValueT>
-auto CanonicalValueStore<IdT, KeyT, ValueT>::Reserve(size_t size) -> void {
+template <typename IdT, typename KeyT, typename TagIdT, typename ValueT>
+auto CanonicalValueStore<IdT, KeyT, TagIdT, ValueT>::Reserve(size_t size)
+    -> void {
   // Compute the resulting new insert count using the size of values -- the
   // set doesn't have a fast to compute current size.
   if (size > values_.size()) {

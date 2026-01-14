@@ -22,10 +22,10 @@ class ToolchainTarTest(unittest.TestCase):
 
         # Gather install data files.
         with open(install_data_manifest) as manifest:
-            # Remove everything up to and including `prefix_root`.
+            # Remove everything up to and including `prefix`.
             install_files = set(
                 [
-                    re.sub("^.*/prefix_root/", "", entry.strip())
+                    re.sub("^.*/prefix/", "", entry.strip())
                     for entry in manifest.readlines()
                 ]
             )

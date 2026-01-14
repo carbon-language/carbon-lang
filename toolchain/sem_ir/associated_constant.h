@@ -50,7 +50,7 @@ struct AssociatedConstant : public Printable<AssociatedConstant> {
 };
 
 using AssociatedConstantStore =
-    ValueStore<AssociatedConstantId, AssociatedConstant>;
+    ValueStore<AssociatedConstantId, AssociatedConstant, Tag<CheckIRId>>;
 
 }  // namespace Carbon::SemIR
 

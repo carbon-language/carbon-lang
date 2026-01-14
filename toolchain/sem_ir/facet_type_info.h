@@ -113,7 +113,8 @@ constexpr FacetTypeInfo::RewriteConstraint
     FacetTypeInfo::RewriteConstraint::None = {.lhs_id = InstId::None,
                                               .rhs_id = InstId::None};
 
-using FacetTypeInfoStore = CanonicalValueStore<FacetTypeId, FacetTypeInfo>;
+using FacetTypeInfoStore =
+    CanonicalValueStore<FacetTypeId, FacetTypeInfo, Tag<CheckIRId>>;
 
 struct IdentifiedFacetType {
   using RequiredInterface = SpecificInterface;

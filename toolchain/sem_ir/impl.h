@@ -202,7 +202,7 @@ class ImplStore {
   }
 
   auto values() const [[clang::lifetimebound]]
-  -> ValueStore<ImplId, Impl>::Range {
+  -> ValueStore<ImplId, Impl, Tag<CheckIRId>>::Range {
     return values_.values();
   }
   auto size() const -> size_t { return values_.size(); }
@@ -212,7 +212,7 @@ class ImplStore {
 
  private:
   File& sem_ir_;
-  ValueStore<ImplId, Impl> values_;
+  ValueStore<ImplId, Impl, Tag<CheckIRId>> values_;
   Map<std::pair<InstId, SpecificInterface>, ImplOrLookupBucketId> lookup_;
   // Buckets with at least 2 entries, which will be rare; see LookupBucketRef.
   llvm::SmallVector<llvm::SmallVector<ImplId, 2>> lookup_buckets_;

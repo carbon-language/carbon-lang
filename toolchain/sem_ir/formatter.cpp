@@ -120,7 +120,7 @@ auto Formatter::Format() -> void {
 auto Formatter::ComputeNodeParents() -> void {
   CARBON_CHECK(!node_parents_);
   node_parents_ = NodeParentStore::MakeWithExplicitSize(
-      IdTag(), sem_ir_->parse_tree().size(), Parse::NodeId::None);
+      sem_ir_->parse_tree().size(), Parse::NodeId::None);
   for (auto n : sem_ir_->parse_tree().postorder()) {
     for (auto child : get_tree_and_subtrees_().children(n)) {
       node_parents_->Set(child, n);
@@ -1544,8 +1544,10 @@ auto Formatter::FormatArg(StringLiteralValueId id) -> void {
 }
 
 auto Formatter::FormatReturnSlotArg(InstId dest_id) -> void {
-  out_ << " to ";
-  FormatArg(dest_id);
+  if (dest_id.has_value()) {
+    out_ << " to ";
+    FormatArg(dest_id);
+  }
 }
 
 auto Formatter::FormatName(NameId id) -> void {

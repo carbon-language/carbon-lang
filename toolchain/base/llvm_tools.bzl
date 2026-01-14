@@ -4,7 +4,7 @@
 
 """Provides variables and rules to automate working with LLVM's CLI tools."""
 
-load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//bazel/cc_rules:defs.bzl", "cc_library")
 
 # The main LLVM command line tools, including their "primary" name, binary name,
 # and the library dependency required to use them.

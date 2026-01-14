@@ -43,7 +43,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       named_constraints_(check_ir_id),
       require_impls_(check_ir_id),
       // 1 reserved id for `RequireImplsBlockId::Empty`.
-      require_impls_blocks_(allocator_, IdTag(check_ir_id.index, 1)),
+      require_impls_blocks_(allocator_, check_ir_id, 1),
       associated_constants_(check_ir_id),
       facet_types_(check_ir_id),
       identified_facet_types_(&facet_types_),
@@ -53,7 +53,7 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       specifics_(check_ir_id),
       // The `2` prevents adding a tag for the global ids
       // `ImportIRId::{ApiForImpl,Cpp}`.
-      import_irs_(IdTag(check_ir_id.index, 2)),
+      import_irs_(check_ir_id, 2),
       clang_decls_(check_ir_id),
       // The `+1` prevents adding a tag to the global `NameSpace::PackageInstId`
       // instruction. It's not a "singleton" instruction, but it's a unique
@@ -64,9 +64,9 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       inst_blocks_(allocator_, check_ir_id),
       constants_(this),
       // 1 reserved id for `StructTypeFieldsId::Empty`.
-      struct_type_fields_(allocator_, IdTag(check_ir_id.index, 1)),
+      struct_type_fields_(allocator_, check_ir_id, 1),
       // 1 reserved id for `CustomLayoutId::Empty`.
-      custom_layouts_(allocator_, IdTag(check_ir_id.index, 1)),
+      custom_layouts_(allocator_, check_ir_id, 1),
       expr_regions_(check_ir_id),
       clang_source_locs_(check_ir_id) {
   // `type`, `form`, and the error type are both complete & concrete types.

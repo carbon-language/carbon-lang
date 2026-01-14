@@ -53,11 +53,11 @@ var y: {} = x;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc15_14.2: init %empty_struct_type = struct_init () to file.%x.var [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc15_14.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc15_1: init %empty_struct_type = converted %.loc15_14.1, %.loc15_14.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc15_1
 // CHECK:STDOUT:   %x.ref: ref %empty_struct_type = name_ref x, file.%x [concrete = file.%x.var]
-// CHECK:STDOUT:   %.loc16_13: init %empty_struct_type = struct_init () to file.%y.var [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc16_13: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc16_1: init %empty_struct_type = converted %x.ref, %.loc16_13 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%y.var, %.loc16_1
 // CHECK:STDOUT:   return

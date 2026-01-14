@@ -58,7 +58,7 @@ static auto MakeNoOpFunction(Context& context, SemIR::LocId loc_id,
       context, loc_id, SemIR::NameId::SelfValue, type_expr_region_id, type_id,
       /*is_ref=*/true);
   auto implicit_param_patterns_id = context.inst_blocks().Add({self_param_id});
-  auto call_params_id =
+  auto [call_param_patterns_id, call_params_id] =
       CalleePatternMatch(context, implicit_param_patterns_id,
                          /*param_patterns_id=*/SemIR::InstBlockId::Empty,
                          /*return_patterns_id=*/SemIR::InstBlockId::None);
@@ -95,8 +95,10 @@ static auto MakeNoOpFunction(Context& context, SemIR::LocId loc_id,
           .first_owning_decl_id = noop_id,
       },
       {
+          .call_param_patterns_id = call_param_patterns_id,
           .call_params_id = call_params_id,
           .return_type_inst_id = SemIR::TypeInstId::None,
+          .return_form_inst_id = SemIR::InstId::None,
           .return_patterns_id = SemIR::InstBlockId::None,
           .self_param_id = self_param_id,
       }};
@@ -174,7 +176,8 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
         entries.push_back(CheckAssociatedFunctionImplementation(
             context,
             context.types().GetAs<SemIR::FunctionType>(struct_value.type_id),
-            value_id, self_type_id, make_witness(),
+            query_specific_interface.specific_id, value_id, self_type_id,
+            make_witness(),
             /*defer_thunk_definition=*/false));
         break;
       }

@@ -9,6 +9,7 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/FrontendAction.h"
@@ -330,21 +331,6 @@ class ShallowCopyCompilerInvocation : public clang::CompilerInvocation {
   }
 };
 
-// An AST consumer that tracks top-level declarations so they can be handed off
-// to code generation later.
-class BufferingConsumer : public clang::ASTConsumer {
- public:
-  explicit BufferingConsumer(SemIR::CppFile& file) : file_(&file) {}
-
-  auto HandleTopLevelDecl(clang::DeclGroupRef decl_group) -> bool override {
-    file_->decl_groups().push_back(decl_group);
-    return true;
-  }
-
- private:
-  SemIR::CppFile* file_;
-};
-
 // An action and a set of registered Clang callbacks used to generate an AST
 // from a set of Cpp imports.
 class GenerateASTAction : public clang::ASTFrontendAction {
@@ -352,10 +338,22 @@ class GenerateASTAction : public clang::ASTFrontendAction {
   explicit GenerateASTAction(Context& context) : context_(&context) {}
 
  protected:
-  auto CreateASTConsumer(clang::CompilerInstance& /*clang_instance*/,
-                         llvm::StringRef /*file*/)
+  auto CreateASTConsumer(clang::CompilerInstance& clang_instance,
+                         llvm::StringRef file)
       -> std::unique_ptr<clang::ASTConsumer> override {
-    return std::make_unique<BufferingConsumer>(*context_->sem_ir().cpp_file());
+    auto& cpp_file = *context_->sem_ir().cpp_file();
+    if (!cpp_file.llvm_context()) {
+      return std::make_unique<clang::ASTConsumer>();
+    }
+    auto code_generator =
+        std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
+            cpp_file.diagnostics(), file,
+            clang_instance.getVirtualFileSystemPtr(),
+            clang_instance.getHeaderSearchOpts(),
+            clang_instance.getPreprocessorOpts(),
+            clang_instance.getCodeGenOpts(), *cpp_file.llvm_context()));
+    cpp_file.SetCodeGenerator(code_generator.get());
+    return code_generator;
   }
 
   auto BeginSourceFileAction(clang::CompilerInstance& /*clang_instance*/)
@@ -414,6 +412,7 @@ class GenerateASTAction : public clang::ASTFrontendAction {
 auto GenerateAst(Context& context,
                  llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                  llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                 llvm::LLVMContext* llvm_context,
                  std::shared_ptr<clang::CompilerInvocation> base_invocation)
     -> bool {
   CARBON_CHECK(!context.cpp_context());
@@ -454,8 +453,8 @@ auto GenerateAst(Context& context,
   auto clang_instance_ptr =
       std::make_unique<clang::CompilerInstance>(invocation);
   auto& clang_instance = *clang_instance_ptr;
-  context.sem_ir().set_cpp_file(
-      std::make_unique<SemIR::CppFile>(std::move(clang_instance_ptr)));
+  context.sem_ir().set_cpp_file(std::make_unique<SemIR::CppFile>(
+      std::move(clang_instance_ptr), llvm_context));
 
   clang_instance.setDiagnostics(diags);
   clang_instance.setVirtualFileSystem(fs);

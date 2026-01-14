@@ -185,12 +185,14 @@ constraint Y {
   require impls Z;
 }
 interface X {
+  let X1:! type;
+
   // Not extend, so only required to be identified.
   require impls Y;
 }
 
-class C {}
-impl C as X {}
+// Requires `X` to be complete, doesn't require Z to be complete.
+fn F(T:! X where .X1 = {}) {}
 
 // --- fail_incomplete_constraint.carbon
 library "[[@TEST_NAME]]";
@@ -736,11 +738,22 @@ interface B {
 // CHECK:STDOUT:   %Self.binding.as_type.5cb: type = symbolic_binding_type Self, 0, %Self.550 [symbolic]
 // CHECK:STDOUT:   %X.type: type = facet_type <@X> [concrete]
 // CHECK:STDOUT:   %Self.e52: %X.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %X.assoc_type: type = assoc_entity_type @X [concrete]
+// CHECK:STDOUT:   %assoc0: %X.assoc_type = assoc_entity element0, @X.%X1 [concrete]
 // CHECK:STDOUT:   %Self.binding.as_type.806: type = symbolic_binding_type Self, 0, %Self.e52 [symbolic]
-// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.c39: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.637: %X.type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.binding.as_type: type = symbolic_binding_type .Self, %.Self.637 [symbolic_self]
+// CHECK:STDOUT:   %X.lookup_impl_witness: <witness> = lookup_impl_witness %.Self.637, @X [symbolic_self]
+// CHECK:STDOUT:   %impl.elem0: type = impl_witness_access %X.lookup_impl_witness, element0 [symbolic_self]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %X.impl_witness: <witness> = impl_witness @C.as.X.impl.%X.impl_witness_table [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %X_where.type: type = facet_type <@X where %impl.elem0 = %empty_struct_type> [concrete]
+// CHECK:STDOUT:   %T: %X_where.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %X_where.type [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -748,15 +761,31 @@ interface B {
 // CHECK:STDOUT:     .Z = %Z.decl
 // CHECK:STDOUT:     .Y = %Y.decl
 // CHECK:STDOUT:     .X = %X.decl
-// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Z.decl: type = interface_decl @Z [concrete = constants.%Z.type] {} {}
 // CHECK:STDOUT:   %Y.decl: type = constraint_decl @Y [concrete = constants.%Y.type] {} {}
 // CHECK:STDOUT:   %X.decl: type = interface_decl @X [concrete = constants.%X.type] {} {}
-// CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   impl_decl @C.as.X.impl [concrete] {} {
-// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X.type]
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc16_12.1: type = splice_block %.loc16_12.2 [concrete = constants.%X_where.type] {
+// CHECK:STDOUT:       %.Self.1: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.c39]
+// CHECK:STDOUT:       %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X.type]
+// CHECK:STDOUT:       %.Self.2: %X.type = symbolic_binding .Self [symbolic_self = constants.%.Self.637]
+// CHECK:STDOUT:       %.Self.ref: %X.type = name_ref .Self, %.Self.2 [symbolic_self = constants.%.Self.637]
+// CHECK:STDOUT:       %X1.ref: %X.assoc_type = name_ref X1, @X1.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:       %.loc16_18: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.binding.as_type]
+// CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%X.lookup_impl_witness, element0 [symbolic_self = constants.%impl.elem0]
+// CHECK:STDOUT:       %.loc16_25.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %.loc16_25.2: type = converted %.loc16_25.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:       %.loc16_12.2: type = where_expr %.Self.2 [concrete = constants.%X_where.type] {
+// CHECK:STDOUT:         requirement_base_facet_type constants.%X.type
+// CHECK:STDOUT:         requirement_rewrite %impl.elem0, %.loc16_25.2
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %T.loc16_6.2: %X_where.type = symbolic_binding T, 0 [symbolic = %T.loc16_6.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -764,6 +793,9 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @X {
 // CHECK:STDOUT:   %Self: %X.type = symbolic_binding Self, 0 [symbolic = constants.%Self.e52]
+// CHECK:STDOUT:   %X1: type = assoc_const_decl @X1 [concrete] {
+// CHECK:STDOUT:     %assoc0: %X.assoc_type = assoc_entity element0, @X.%X1 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.require54000001.decl = require_decl @X.require54000001 [concrete] {
 // CHECK:STDOUT:     require %Self.as_type impls %Y.ref
 // CHECK:STDOUT:   } {
@@ -773,8 +805,9 @@ interface B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   .X1 = @X1.%assoc0
 // CHECK:STDOUT:   .Y = <poisoned>
-// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:   witness = (%X1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @X.require54000001 {
@@ -811,20 +844,19 @@ interface B {
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.806)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @C.as.X.impl: %C.ref as %X.ref {
-// CHECK:STDOUT:   %X.impl_witness_table = impl_witness_table (), @C.as.X.impl [concrete]
-// CHECK:STDOUT:   %X.impl_witness: <witness> = impl_witness %X.impl_witness_table [concrete = constants.%X.impl_witness]
-// CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   witness = %X.impl_witness
+// CHECK:STDOUT: generic assoc_const @X1(@X.%Self: %X.type) {
+// CHECK:STDOUT:   assoc_const X1:! type;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
-// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT: generic fn @F(%T.loc16_6.2: %X_where.type) {
+// CHECK:STDOUT:   %T.loc16_6.1: %X_where.type = symbolic_binding T, 0 [symbolic = %T.loc16_6.1 (constants.%T)]
 // CHECK:STDOUT:
-// CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Y.require54000000(constants.%Self.550) {
@@ -832,9 +864,17 @@ interface B {
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.5cb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @X1(constants.%Self.e52) {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @X.require54000001(constants.%Self.e52) {
 // CHECK:STDOUT:   %Self => constants.%Self.e52
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.806
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @X1(constants.%.Self.637) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @F(constants.%T) {
+// CHECK:STDOUT:   %T.loc16_6.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_incomplete_constraint.carbon

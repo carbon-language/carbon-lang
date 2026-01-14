@@ -103,7 +103,7 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %bound_method.loc17_17.2: <bound method> = bound_method %int_15, %specific_fn.loc17_17.1 [concrete = constants.%bound_method.9f9]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc17_17.1: init %i32 = call %bound_method.loc17_17.2(%int_15) [concrete = constants.%int_15.7f7]
 // CHECK:STDOUT:   %.loc17_17.2: init %i32 = converted %int_15, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc17_17.1 [concrete = constants.%int_15.7f7]
-// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return, element0
+// CHECK:STDOUT:   %tuple.elem0: ref %i32 = tuple_access %return.param, element0
 // CHECK:STDOUT:   %.loc17_17.3: init %i32 = initialize_from %.loc17_17.2 to %tuple.elem0 [concrete = constants.%int_15.7f7]
 // CHECK:STDOUT:   %impl.elem0.loc17_17.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc17_17.3: <bound method> = bound_method %int_35, %impl.elem0.loc17_17.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.4c2]
@@ -111,10 +111,10 @@ fn Main() -> (i32, i32) {
 // CHECK:STDOUT:   %bound_method.loc17_17.4: <bound method> = bound_method %int_35, %specific_fn.loc17_17.2 [concrete = constants.%bound_method.d89]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc17_17.2: init %i32 = call %bound_method.loc17_17.4(%int_35) [concrete = constants.%int_35.c78]
 // CHECK:STDOUT:   %.loc17_17.4: init %i32 = converted %int_35, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc17_17.2 [concrete = constants.%int_35.c78]
-// CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return, element1
+// CHECK:STDOUT:   %tuple.elem1: ref %i32 = tuple_access %return.param, element1
 // CHECK:STDOUT:   %.loc17_17.5: init %i32 = initialize_from %.loc17_17.4 to %tuple.elem1 [concrete = constants.%int_35.c78]
-// CHECK:STDOUT:   %.loc17_17.6: init %tuple.type.d07 = tuple_init (%.loc17_17.3, %.loc17_17.5) to %return [concrete = constants.%tuple.851]
+// CHECK:STDOUT:   %.loc17_17.6: init %tuple.type.d07 = tuple_init (%.loc17_17.3, %.loc17_17.5) to %return.param [concrete = constants.%tuple.851]
 // CHECK:STDOUT:   %.loc17_18: init %tuple.type.d07 = converted %.loc17_17.1, %.loc17_17.6 [concrete = constants.%tuple.851]
-// CHECK:STDOUT:   return %.loc17_18 to %return
+// CHECK:STDOUT:   return %.loc17_18 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
