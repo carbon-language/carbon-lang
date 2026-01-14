@@ -100,12 +100,11 @@ struct SymbolicConstant : Printable<SymbolicConstant> {
         out << "template";
         break;
     }
-    out << ", ";
+    out << ", attached: ";
     if (generic_id.has_value()) {
-      out << "attached: {generic: " << generic_id << ", index: " << index
-          << "}";
+      out << "{generic: " << generic_id << ", index: " << index << "}";
     } else {
-      out << "<unattached>";
+      out << "null";
     }
     out << "}";
   }
