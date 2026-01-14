@@ -15,26 +15,15 @@ load(
     "feature",
 )
 
-unix_like_target_feature = feature(name = "unix_like_target")
-linux_target_feature = feature(
-    name = "linux_target",
-    implies = ["unix_like_target"],
-)
-macos_target_feature = feature(
-    name = "macos_target",
-    implies = ["unix_like_target"],
-)
-freebsd_target_feature = feature(
-    name = "freebsd_target",
-    implies = ["unix_like_target"],
-)
-
+freebsd_target_feature = feature(name = "freebsd_target")
+linux_target_feature = feature(name = "linux_target")
+macos_target_feature = feature(name = "macos_target")
 windows_target_feature = feature(name = "windows_target")
 
 os_target_features = {
-    "freebsd": [unix_like_target_feature, freebsd_target_feature],
-    "linux": [unix_like_target_feature, linux_target_feature],
-    "macos": [unix_like_target_feature, macos_target_feature],
+    "freebsd": [freebsd_target_feature],
+    "linux": [linux_target_feature],
+    "macos": [macos_target_feature],
     "windows": [windows_target_feature],
 }
 
