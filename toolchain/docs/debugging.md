@@ -201,7 +201,7 @@ debugger to print integers in hexadecimal as well. In LLDB you can do this with
 #### The LLDB `dump` command
 
 Our LLDB configuration includes a `dump` command (see
-[above](#debugging-with-gdb) for how to enable that configuration), which allows
+[above](#debugging-with-lldb) for how to enable that configuration), which allows
 you to dump the contents of a value associated with an id. Since most data in
 the toolchain is referenced by id, this ends up being a very frequent task.
 
