@@ -120,6 +120,7 @@ auto BuildClangInvocation(Diagnostics::Consumer& consumer,
   if (invocation) {
     // Do not emit Clang's name and version as the creator of the output file.
     invocation->getCodeGenOpts().EmitVersionIdentMetadata = false;
+    invocation->getCodeGenOpts().DiscardValueNames = false;
   }
 
   return invocation;
