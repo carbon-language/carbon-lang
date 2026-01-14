@@ -796,7 +796,7 @@ interface B {
 // CHECK:STDOUT:   %X1: type = assoc_const_decl @X1 [concrete] {
 // CHECK:STDOUT:     %assoc0: %X.assoc_type = assoc_entity element0, @X.%X1 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %X.require54000001.decl = require_decl @X.require54000001 [concrete] {
+// CHECK:STDOUT:   %X.Self.binding.as_type.impls.Y.type.require.decl = require_decl @X.Self.binding.as_type.impls.Y.type.require [concrete] {
 // CHECK:STDOUT:     require %Self.as_type impls %Y.ref
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @X.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.806)]
@@ -810,14 +810,14 @@ interface B {
 // CHECK:STDOUT:   witness = (%X1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @X.require54000001 {
-// CHECK:STDOUT:     require @X.require54000001.%Self.as_type impls @X.require54000001.%Y.ref
+// CHECK:STDOUT:   @X.Self.binding.as_type.impls.Y.type.require {
+// CHECK:STDOUT:     require @X.Self.binding.as_type.impls.Y.type.require.%Self.as_type impls @X.Self.binding.as_type.impls.Y.type.require.%Y.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @Y {
 // CHECK:STDOUT:   %Self: %Y.type = symbolic_binding Self, 0 [symbolic = constants.%Self.550]
-// CHECK:STDOUT:   %Y.require54000000.decl = require_decl @Y.require54000000 [concrete] {
+// CHECK:STDOUT:   %Y.Self.binding.as_type.impls.Z.type.require.decl = require_decl @Y.Self.binding.as_type.impls.Z.type.require [concrete] {
 // CHECK:STDOUT:     require %Self.as_type impls %Z.ref
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @Y.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.5cb)]
@@ -829,17 +829,17 @@ interface B {
 // CHECK:STDOUT:   .Z = <poisoned>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
-// CHECK:STDOUT:   @Y.require54000000 {
-// CHECK:STDOUT:     require @Y.require54000000.%Self.as_type impls @Y.require54000000.%Z.ref
+// CHECK:STDOUT:   @Y.Self.binding.as_type.impls.Z.type.require {
+// CHECK:STDOUT:     require @Y.Self.binding.as_type.impls.Z.type.require.%Self.as_type impls @Y.Self.binding.as_type.impls.Z.type.require.%Z.ref
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @Y.require54000000(@Y.%Self: %Y.type) {
+// CHECK:STDOUT: generic require @Y.Self.binding.as_type.impls.Z.type.require(@Y.%Self: %Y.type) {
 // CHECK:STDOUT:   %Self: %Y.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.550)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.5cb)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @X.require54000001(@X.%Self: %X.type) {
+// CHECK:STDOUT: generic require @X.Self.binding.as_type.impls.Y.type.require(@X.%Self: %X.type) {
 // CHECK:STDOUT:   %Self: %X.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.e52)]
 // CHECK:STDOUT:   %Self.binding.as_type: type = symbolic_binding_type Self, 0, %Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type.806)]
 // CHECK:STDOUT: }
@@ -859,19 +859,19 @@ interface B {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y.require54000000(constants.%Self.550) {
+// CHECK:STDOUT: specific @Y.Self.binding.as_type.impls.Z.type.require(constants.%Self.550) {
 // CHECK:STDOUT:   %Self => constants.%Self.550
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.5cb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @X1(constants.%Self.e52) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y.require54000000(constants.%Self.e52) {
+// CHECK:STDOUT: specific @Y.Self.binding.as_type.impls.Z.type.require(constants.%Self.e52) {
 // CHECK:STDOUT:   %Self => constants.%Self.e52
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.806
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X.require54000001(constants.%Self.e52) {
+// CHECK:STDOUT: specific @X.Self.binding.as_type.impls.Y.type.require(constants.%Self.e52) {
 // CHECK:STDOUT:   %Self => constants.%Self.e52
 // CHECK:STDOUT:   %Self.binding.as_type => constants.%Self.binding.as_type.806
 // CHECK:STDOUT: }

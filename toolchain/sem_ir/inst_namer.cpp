@@ -618,12 +618,36 @@ auto InstNamer::PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
 
   auto scope_prefix = GetNameForParentNameScope(require.parent_scope_id);
 
+  llvm::StringRef self_name;
+  auto self_const_id =
+      sem_ir_->constant_values().GetConstantInstId(require.self_id);
+  auto self_index = sem_ir_->insts().GetRawIndex(self_const_id);
+  if (IsSingletonInstId(self_const_id)) {
+    self_name = sem_ir_->insts().Get(self_const_id).kind().ir_name();
+  } else if (const auto& inst_name = insts_[self_index].second) {
+    self_name = inst_name.GetBaseName();
+  } else {
+    self_name = "<unexpected self>";
+  }
+
+  llvm::StringRef facet_type_name;
+  auto facet_type_const_id =
+      sem_ir_->constant_values().GetConstantInstId(require.facet_type_inst_id);
+  auto facet_type_index = sem_ir_->insts().GetRawIndex(facet_type_const_id);
+  if (IsSingletonInstId(facet_type_const_id)) {
+    facet_type_name =
+        sem_ir_->insts().Get(facet_type_const_id).kind().ir_name();
+  } else if (const auto& inst_name = insts_[facet_type_index].second) {
+    facet_type_name = inst_name.GetBaseName();
+  } else {
+    facet_type_name = "<unexpected facet type>";
+  }
+
   scope.name = globals_.AllocateName(
       *this, require_loc,
-      // TODO: Include the Interface being required if there's only one, instead
-      // of the index.
-      llvm::formatv("{0}{1}{2}", scope_prefix, scope_prefix.empty() ? "" : ".",
-                    require_impls_id));
+      llvm::formatv("{0}{1}{2}.impls.{3}.require", scope_prefix,
+                    scope_prefix.empty() ? "" : ".", self_name,
+                    facet_type_name));
 
   auto decl = sem_ir_->insts().GetAs<SemIR::RequireImplsDecl>(require.decl_id);
   AddBlockLabel(scope_id, decl.decl_block_id, "require", require_loc);
