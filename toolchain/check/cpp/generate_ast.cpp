@@ -339,7 +339,7 @@ class GenerateASTAction : public clang::ASTFrontendAction {
 
  protected:
   auto CreateASTConsumer(clang::CompilerInstance& clang_instance,
-                         llvm::StringRef file)
+                         llvm::StringRef /*file*/)
       -> std::unique_ptr<clang::ASTConsumer> override {
     auto& cpp_file = *context_->sem_ir().cpp_file();
     if (!cpp_file.llvm_context()) {
@@ -347,7 +347,7 @@ class GenerateASTAction : public clang::ASTFrontendAction {
     }
     auto code_generator =
         std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
-            cpp_file.diagnostics(), file,
+            cpp_file.diagnostics(), context_->sem_ir().filename(),
             clang_instance.getVirtualFileSystemPtr(),
             clang_instance.getHeaderSearchOpts(),
             clang_instance.getPreprocessorOpts(),
