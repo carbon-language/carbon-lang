@@ -421,7 +421,6 @@ cc_binary(
         "//common:init_llvm",
         "//common:map",
         "//common:vlog",
-        "//toolchain/base:install_paths",
         "@llvm-project//llvm:Support",
     ],
 )
