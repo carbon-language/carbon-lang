@@ -12,6 +12,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Allocator.h"
 
 namespace Carbon {
 
@@ -44,7 +45,7 @@ auto StringRefContainsPointer(llvm::StringRef ref, const char* ptr) -> bool;
 // lines to avoid extra allocations and growth passes.
 auto BuildCStrArgs(llvm::StringRef tool_path,
                    llvm::ArrayRef<llvm::StringRef> args,
-                   llvm::OwningArrayRef<char>& cstr_arg_storage)
+                   llvm::BumpPtrAllocator& alloc)
     -> llvm::SmallVector<const char*, 64>;
 
 // An overload of `BuildCStrArgs` with the same core behavior as the above, but
@@ -61,7 +62,7 @@ auto BuildCStrArgs(llvm::StringRef tool_path,
 auto BuildCStrArgs(llvm::StringRef tool_path,
                    llvm::ArrayRef<std::string> prefix_args,
                    llvm::ArrayRef<llvm::StringRef> args,
-                   llvm::OwningArrayRef<char>& cstr_arg_storage)
+                   llvm::BumpPtrAllocator& alloc)
     -> llvm::SmallVector<const char*, 64>;
 
 }  // namespace Carbon

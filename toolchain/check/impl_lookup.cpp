@@ -352,9 +352,9 @@ static auto LookupImplWitnessInSelfFacetValue(
       RequireIdentifiedFacetType(context, loc_id, *facet_type, nullptr);
   // This should not be possible as FacetValue is constructed by a conversion
   // to a facet type, which performs impl lookup for that facet type, and
-  // lookup only succeeds for complete facet types.
+  // lookup only succeeds for identified facet types.
   CARBON_CHECK(identified_id.has_value(),
-               "FacetValue was constructed with an incomplete facet type");
+               "FacetValue was constructed with an unidentified facet type");
   auto facet_type_required_interfaces =
       llvm::enumerate(context.identified_facet_types()
                           .Get(identified_id)
@@ -578,8 +578,8 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
         context.insts()
             .Get(context.constant_values().GetInstId(query_self_const_id))
             .type_id();
-    CARBON_CHECK(context.types().Is<SemIR::TypeType>(query_self_type_id) ||
-                 context.types().Is<SemIR::FacetType>(query_self_type_id));
+    CARBON_CHECK((context.types().IsOneOf<SemIR::TypeType, SemIR::FacetType>(
+        query_self_type_id)));
     // The query facet type value is indeed a facet type.
     CARBON_CHECK(context.insts().Is<SemIR::FacetType>(
         context.constant_values().GetInstId(query_facet_type_const_id)));

@@ -97,8 +97,6 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %Different.decl: type = interface_decl @Different [concrete = constants.%Different.type] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %U.patt: %pattern_type.cb4 = symbolic_binding_pattern U, 0 [concrete]
-// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern [concrete]
-// CHECK:STDOUT:     %return.param_patt: <error> = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %U.ref: %Different.type = name_ref U, %U.loc32_6.2 [symbolic = %U.loc32_6.1 (constants.%U)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
@@ -109,8 +107,6 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:       %Different.ref: type = name_ref Different, file.%Different.decl [concrete = constants.%Different.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc32_6.2: %Different.type = symbolic_binding U, 0 [symbolic = %U.loc32_6.1 (constants.%U)]
-// CHECK:STDOUT:     %return.param: ref <error> = out_param call_param0
-// CHECK:STDOUT:     %return: ref <error> = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -171,7 +167,7 @@ fn G(U:! Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %U.loc32_6.1: %Different.type = symbolic_binding U, 0 [symbolic = %U.loc32_6.1 (constants.%U)]
 // CHECK:STDOUT:   %U.binding.as_type: type = symbolic_binding_type U, 0, %U.loc32_6.1 [symbolic = %U.binding.as_type (constants.%U.binding.as_type)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> <error>;
+// CHECK:STDOUT:   fn();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface.F(constants.%Self.887) {}

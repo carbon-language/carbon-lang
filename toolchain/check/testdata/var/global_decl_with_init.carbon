@@ -38,7 +38,6 @@ var (x: (), y: ()) = ((), ());
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.v [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.v = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.c0c: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -62,11 +61,10 @@ var (x: (), y: ()) = ((), ());
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_27.1: %struct_type.v = struct_literal (%.loc4_26.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc4_27.2: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete = constants.%.c0c]
-// CHECK:STDOUT:   %.loc4_26.2: init %empty_tuple.type = tuple_init () to %.loc4_27.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc4_27.3: init %empty_tuple.type = converted %.loc4_26.1, %.loc4_26.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc4_27.4: init %struct_type.v = struct_init (%.loc4_27.3) to file.%x.var [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc4_1: init %struct_type.v = converted %.loc4_27.1, %.loc4_27.4 [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc4_26.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc4_27.2: init %empty_tuple.type = converted %.loc4_26.1, %.loc4_26.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc4_27.3: init %struct_type.v = struct_init (%.loc4_27.2) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc4_1: init %struct_type.v = converted %.loc4_27.1, %.loc4_27.3 [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc4_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -113,7 +111,7 @@ var (x: (), y: ()) = ((), ());
 // CHECK:STDOUT:   %.loc4_28: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_33: %tuple.type = tuple_literal (%.loc4_28, %.loc4_32.1) [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc4_32.2: init %empty_tuple.type = tuple_init () to file.%y.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc4_32.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_13: init %empty_tuple.type = converted %.loc4_32.1, %.loc4_32.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%y.var, %.loc4_13
 // CHECK:STDOUT:   return

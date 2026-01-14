@@ -12,6 +12,7 @@ cc_library(
     name = "block_value_store",
     hdrs = ["block_value_store.h"],
     deps = [
+        ":id_tag",
         ":mem_usage",
         ":value_store",
         ":yaml",
@@ -79,6 +80,16 @@ cc_library(
     name = "for_each_macro",
     hdrs = ["for_each_macro.h"],
     deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "id_tag",
+    hdrs = ["id_tag.h"],
+    deps = [
+        "//common:check",
+        "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -219,6 +230,7 @@ cc_library(
     name = "value_store",
     hdrs = ["value_store.h"],
     deps = [
+        ":id_tag",
         ":mem_usage",
         ":value_store_types",
         ":yaml",

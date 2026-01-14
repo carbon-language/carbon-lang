@@ -28,9 +28,9 @@ fn Main() {
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %pattern_type.c4c: type = pattern_type %struct_type.v [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.v = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %.c0c: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.c0c: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
 // CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
@@ -75,11 +75,10 @@ fn Main() {
 // CHECK:STDOUT:   %y.var: ref %struct_type.v = var %y.var_patt
 // CHECK:STDOUT:   %x.ref: ref %struct_type.v = name_ref x, file.%x [concrete = file.%x.var]
 // CHECK:STDOUT:   %.loc5_21.1: ref %empty_tuple.type = struct_access %x.ref, element0 [concrete = constants.%.c0c]
-// CHECK:STDOUT:   %.loc5_21.2: ref %empty_tuple.type = struct_access %y.var, element0
-// CHECK:STDOUT:   %.loc5_21.3: init %empty_tuple.type = tuple_init () to %.loc5_21.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_21.4: init %empty_tuple.type = converted %.loc5_21.1, %.loc5_21.3 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_21.5: init %struct_type.v = struct_init (%.loc5_21.4) to %y.var [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc5_3: init %struct_type.v = converted %x.ref, %.loc5_21.5 [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc5_21.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_21.3: init %empty_tuple.type = converted %.loc5_21.1, %.loc5_21.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_21.4: init %struct_type.v = struct_init (%.loc5_21.3) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc5_3: init %struct_type.v = converted %x.ref, %.loc5_21.4 [concrete = constants.%struct]
 // CHECK:STDOUT:   assign %y.var, %.loc5_3
 // CHECK:STDOUT:   %.loc5_17: type = splice_block %struct_type.v [concrete = constants.%struct_type.v] {
 // CHECK:STDOUT:     %.loc5_16.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
@@ -98,11 +97,10 @@ fn Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc2_26.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc2_27.1: %struct_type.v = struct_literal (%.loc2_26.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc2_27.2: ref %empty_tuple.type = struct_access file.%x.var, element0 [concrete = constants.%.c0c]
-// CHECK:STDOUT:   %.loc2_26.2: init %empty_tuple.type = tuple_init () to %.loc2_27.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc2_27.3: init %empty_tuple.type = converted %.loc2_26.1, %.loc2_26.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc2_27.4: init %struct_type.v = struct_init (%.loc2_27.3) to file.%x.var [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc2_1: init %struct_type.v = converted %.loc2_27.1, %.loc2_27.4 [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc2_26.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc2_27.2: init %empty_tuple.type = converted %.loc2_26.1, %.loc2_26.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc2_27.3: init %struct_type.v = struct_init (%.loc2_27.2) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc2_1: init %struct_type.v = converted %.loc2_27.1, %.loc2_27.3 [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, %.loc2_1
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

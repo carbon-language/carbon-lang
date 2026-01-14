@@ -27,6 +27,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:   %ptr.e8f: type = ptr_type %T.67d [symbolic]
 // CHECK:STDOUT:   %ptr.125: type = ptr_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %pattern_type.8bb: type = pattern_type %ptr.125 [symbolic]
+// CHECK:STDOUT:   %.ba4: form = init_form %ptr.e8f, call_param1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.Op.type: type = fn_type @Copy.Op [concrete]
@@ -63,7 +64,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:     %specific_impl_fn.loc6_10.1: <specific function> = specific_impl_function %impl.elem0.loc6_10.1, @Copy.Op(constants.%Copy.facet) [symbolic = %specific_impl_fn.loc6_10.2 (constants.%specific_impl_fn.b84)]
 // CHECK:STDOUT:     %bound_method.loc6_10.2: <bound method> = bound_method %.loc6_10.2, %specific_impl_fn.loc6_10.1
 // CHECK:STDOUT:     %Copy.Op.call: init @F.%ptr.loc4_20.1 (%ptr.e8f) = call %bound_method.loc6_10.2(%.loc6_10.2)
-// CHECK:STDOUT:     return %Copy.Op.call to %return
+// CHECK:STDOUT:     return %Copy.Op.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -72,6 +73,7 @@ fn F(T:! type, p: T**) -> T* {
 // CHECK:STDOUT:   %ptr.loc4_20.1 => constants.%ptr.e8f
 // CHECK:STDOUT:   %ptr.loc4_21.1 => constants.%ptr.125
 // CHECK:STDOUT:   %pattern_type.loc4_16 => constants.%pattern_type.8bb
+// CHECK:STDOUT:   %.loc4_28.1 => constants.%.ba4
 // CHECK:STDOUT:   %pattern_type.loc4_24 => constants.%pattern_type.4f4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

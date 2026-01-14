@@ -60,12 +60,14 @@ CheckUnit::CheckUnit(
     UnitAndImports* unit_and_imports,
     const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    llvm::LLVMContext* llvm_context,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation,
     llvm::raw_ostream* vlog_stream)
     : unit_and_imports_(unit_and_imports),
       tree_and_subtrees_getter_(tree_and_subtrees_getters->Get(
           unit_and_imports->unit->sem_ir->check_ir_id())),
       fs_(std::move(fs)),
+      llvm_context_(llvm_context),
       clang_invocation_(std::move(clang_invocation)),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
@@ -163,15 +165,14 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
 
   const auto& cpp_imports = unit_and_imports_->cpp_imports;
   if (!cpp_imports.empty()) {
-    ImportCpp(context_, cpp_imports, fs_, clang_invocation_);
+    ImportCpp(context_, cpp_imports, fs_, llvm_context_, clang_invocation_);
   }
 }
 
 auto CheckUnit::CollectDirectImports(
     llvm::SmallVector<SemIR::ImportIR>& results,
-    FixedSizeValueStore<SemIR::CheckIRId, int>& ir_to_result_index,
-    SemIR::InstId import_decl_id, const PackageImports& imports, bool is_local)
-    -> void {
+    CheckIRIdToIntStore& ir_to_result_index, SemIR::InstId import_decl_id,
+    const PackageImports& imports, bool is_local) -> void {
   for (const auto& import : imports.imports) {
     const auto& direct_ir = *import.unit_info->unit->sem_ir;
     auto& index = ir_to_result_index.Get(direct_ir.check_ir_id());
@@ -198,9 +199,8 @@ auto CheckUnit::CollectTransitiveImports(SemIR::InstId import_decl_id,
   // Track whether an IR was imported in full, including `export import`. This
   // distinguishes from IRs that are indirectly added without all names being
   // exported to this IR.
-  auto ir_to_result_index =
-      FixedSizeValueStore<SemIR::CheckIRId, int>::MakeWithExplicitSize(
-          IdTag(), unit_and_imports_->unit->total_ir_count, -1);
+  auto ir_to_result_index = CheckIRIdToIntStore::MakeWithExplicitSize(
+      unit_and_imports_->unit->total_ir_count, -1);
 
   // First add direct imports. This means that if an entity is imported both
   // directly and indirectly, the import path will reflect the direct import.

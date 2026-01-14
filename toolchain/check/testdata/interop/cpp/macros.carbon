@@ -1023,6 +1023,8 @@ fn F() {
 // CHECK:STDOUT:     .n = %n.var
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %n.patt: %pattern_type.201 = ref_binding_pattern n [concrete]
+// CHECK:STDOUT:   %n.var_patt: %pattern_type.201 = var_pattern %n.patt [concrete]
 // CHECK:STDOUT:   %n.var: ref %f32.97e = var %n.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

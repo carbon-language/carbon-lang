@@ -81,14 +81,10 @@ static auto GetSelfBinding(Context& context,
   return self_binding_id;
 }
 
-// Given a `Self` type and a witness that it implements an interface, along with
-// that interface's `Self` binding, forms and returns a facet that can be used
-// as the argument for that `Self` binding.
-static auto GetSelfFacet(Context& context,
-                         SemIR::SpecificId interface_specific_id,
-                         SemIR::GenericId generic_id,
-                         SemIR::TypeId self_type_id,
-                         SemIR::InstId self_witness_id) -> SemIR::InstId {
+auto GetSelfFacetValueForInterfaceMemberSpecific(
+    Context& context, SemIR::SpecificId interface_specific_id,
+    SemIR::GenericId generic_id, SemIR::TypeId self_type_id,
+    SemIR::InstId self_witness_id) -> SemIR::InstId {
   auto self_binding_id =
       GetSelfBinding(context, interface_specific_id, generic_id);
   auto self_facet_type_id = SemIR::GetTypeOfInstInSpecific(
@@ -126,8 +122,9 @@ static auto GetGenericArgsWithSelfType(Context& context,
   llvm::append_range(arg_ids, interface_args);
 
   // Add the `Self` argument.
-  arg_ids.push_back(GetSelfFacet(context, interface_specific_id, generic_id,
-                                 self_type_id, witness_inst_id));
+  arg_ids.push_back(GetSelfFacetValueForInterfaceMemberSpecific(
+      context, interface_specific_id, generic_id, self_type_id,
+      witness_inst_id));
 
   return arg_ids;
 }
@@ -212,10 +209,10 @@ auto GetTypeForSpecificAssociatedEntity(Context& context, SemIR::LocId loc_id,
     // type.
     auto interface_fn_type_id = SemIR::GetTypeOfInstInSpecific(
         context.sem_ir(), interface_specific_id, decl_id);
-    auto self_facet_id =
-        GetSelfFacet(context, interface_specific_id,
-                     context.functions().Get(fn->function_id).generic_id,
-                     self_type_id, self_witness_id);
+    auto self_facet_id = GetSelfFacetValueForInterfaceMemberSpecific(
+        context, interface_specific_id,
+        context.functions().Get(fn->function_id).generic_id, self_type_id,
+        self_witness_id);
     return GetFunctionTypeWithSelfType(
         context, context.types().GetInstId(interface_fn_type_id),
         self_facet_id);

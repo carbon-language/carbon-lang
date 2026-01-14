@@ -158,10 +158,9 @@ class Context {
 
   auto exports() -> llvm::SmallVector<SemIR::InstId>& { return exports_; }
 
-  auto check_ir_map()
-      -> FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId>& {
-    return check_ir_map_;
-  }
+  using CheckIRToImpportIRStore =
+      FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId>;
+  auto check_ir_map() -> CheckIRToImpportIRStore& { return check_ir_map_; }
 
   auto import_ir_constant_values()
       -> llvm::SmallVector<SemIR::ConstantValueStore, 0>& {
@@ -254,23 +253,33 @@ class Context {
     return rewrites_stack_;
   }
 
-  // Pushes inst_id onto the stack of return type declarations for in-progress
+  // Data about a form expression.
+  struct FormExpr {
+    // The inst ID of the form expression itself.
+    SemIR::InstId form_inst_id;
+    // The inst ID of the form expression's type component.
+    SemIR::TypeInstId type_component_id;
+    // The type ID corresponding to type_component_id.
+    SemIR::TypeId type_id;
+  };
+
+  // Pushes form_expr onto the stack of return form declarations for in-progress
   // function declarations.
   //
   // Note: the "stack" currently can only have one element, but that restriction
   // can be relaxed if it becomes possible to have multiple pending return type
   // declarations.
-  auto PushReturnTypeInstId(SemIR::TypeInstId inst_id) -> void {
-    CARBON_CHECK(return_type_inst_id_ == std::nullopt,
-                 "TODO: make return_type_inst_id_ a stack if necessary");
-    return_type_inst_id_ = inst_id;
+  auto PushReturnForm(FormExpr form_expr) -> void {
+    CARBON_CHECK(return_form_expr_ == std::nullopt,
+                 "TODO: make form_expr_ a stack if necessary");
+    return_form_expr_ = form_expr;
   }
 
-  // Pops a TypeInstId off the stack of return type declarations for in-progress
+  // Pops a FormExpr off the stack of return form declarations for in-progress
   // function declarations.
-  auto PopReturnTypeInstId() -> SemIR::TypeInstId {
-    CARBON_CHECK(return_type_inst_id_ != std::nullopt);
-    return *std::exchange(return_type_inst_id_, std::nullopt);
+  auto PopReturnForm() -> FormExpr {
+    CARBON_CHECK(return_form_expr_ != std::nullopt);
+    return *std::exchange(return_form_expr_, std::nullopt);
   }
 
   auto core_identifiers() -> CoreIdentifierCache& { return core_identifiers_; }
@@ -435,7 +444,7 @@ class Context {
   llvm::SmallVector<SemIR::InstId> exports_;
 
   // Maps CheckIRId to ImportIRId.
-  FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId> check_ir_map_;
+  CheckIRToImpportIRStore check_ir_map_;
 
   // Per-import constant values. These refer to the main IR and mainly serve as
   // a lookup table for quick access.
@@ -504,8 +513,8 @@ class Context {
   // constraints to access values from earlier constraints.
   llvm::SmallVector<Map<SemIR::ConstantId, SemIR::InstId>> rewrites_stack_;
 
-  // Declared return type for the in-progress function declaration, if any.
-  std::optional<SemIR::TypeInstId> return_type_inst_id_;
+  // Declared return form for the in-progress function declaration, if any.
+  std::optional<FormExpr> return_form_expr_;
 
   // See `CoreIdentifierCache` for details.
   CoreIdentifierCache core_identifiers_;

@@ -35,7 +35,9 @@ struct NameComponent {
   SemIR::InstBlockId param_patterns_id;
 
   // The `Call` parameters of the entity, if it's a function (see the
-  // corresponding member of SemIR::EntityWithParamsBase).
+  // corresponding members of SemIR::FunctionFields and
+  // SemIR::EntityWithParamsBase).
+  SemIR::InstBlockId call_param_patterns_id;
   SemIR::InstBlockId call_params_id;
 
   // The pattern block.

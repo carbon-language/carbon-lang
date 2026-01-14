@@ -30,6 +30,7 @@ fn Constant() {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %.df2: form = init_form bool, call_param1 [concrete]
 // CHECK:STDOUT:   %Not.type: type = fn_type @Not [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Not: %Not.type = struct_value () [concrete]
@@ -87,6 +88,7 @@ fn Constant() {
 // CHECK:STDOUT:     %Bool.call.loc15_20: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc15_20.1: type = value_of_initializer %Bool.call.loc15_20 [concrete = bool]
 // CHECK:STDOUT:     %.loc15_20.2: type = converted %Bool.call.loc15_20, %.loc15_20.1 [concrete = bool]
+// CHECK:STDOUT:     %.loc15_20.3: form = init_form %.loc15_20.2, call_param1 [concrete = constants.%.df2]
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc15_11.1: type = splice_block %.loc15_11.3 [concrete = bool] {
 // CHECK:STDOUT:       %Bool.call.loc15_11: init type = call constants.%Bool() [concrete = bool]
@@ -125,7 +127,7 @@ fn Constant() {
 // CHECK:STDOUT:   %impl.elem0: %.56b = impl_witness_access constants.%Copy.impl_witness.348, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc16, %impl.elem0
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method(%.loc16)
-// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Constant() {
@@ -136,7 +138,7 @@ fn Constant() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var %a.var_patt
 // CHECK:STDOUT:   %.loc23_43.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc23_43.2: init %empty_tuple.type = tuple_init () to %a.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc23_43.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc23_3: init %empty_tuple.type = converted %.loc23_43.1, %.loc23_43.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %a.var, %.loc23_3
 // CHECK:STDOUT:   br !.loc23_17

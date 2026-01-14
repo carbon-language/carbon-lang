@@ -1188,7 +1188,7 @@ fn Base.F[ref self: Base]() {
 // CHECK:STDOUT:   %a.ref: %Base.elem = name_ref a, @Base.%.loc5_8 [concrete = @Base.%.loc5_8]
 // CHECK:STDOUT:   %.loc18_7: ref %empty_tuple.type = class_element_access %self.ref, element0
 // CHECK:STDOUT:   %.loc18_13.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc18_13.2: init %empty_tuple.type = tuple_init () to %.loc18_7 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc18_13.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc18_10: init %empty_tuple.type = converted %.loc18_13.1, %.loc18_13.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %.loc18_7, %.loc18_10
 // CHECK:STDOUT:   return

@@ -505,6 +505,11 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                                     context.GetValue(arg_ids[0])));
       return;
     }
+
+    case SemIR::BuiltinFunctionKind::PointerUnsafeConvert: {
+      context.SetLocal(inst_id, context.GetValue(arg_ids[0]));
+      return;
+    }
   }
 
   CARBON_FATAL("Unsupported builtin call.");

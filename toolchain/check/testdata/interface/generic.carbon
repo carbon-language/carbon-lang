@@ -95,6 +95,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:   %WithAssocFn.generic: %WithAssocFn.type.daa = struct_value () [concrete]
 // CHECK:STDOUT:   %WithAssocFn.type.d36: type = facet_type <@WithAssocFn, @WithAssocFn(%T.67d)> [symbolic]
 // CHECK:STDOUT:   %Self.629: %WithAssocFn.type.d36 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %.599: form = init_form %X, call_param0 [concrete]
 // CHECK:STDOUT:   %pattern_type.05f: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %WithAssocFn.F.type.b86: type = fn_type @WithAssocFn.F, @WithAssocFn(%T.67d) [symbolic]
 // CHECK:STDOUT:   %WithAssocFn.F.c8d: %WithAssocFn.F.type.b86 = struct_value () [symbolic]
@@ -225,6 +226,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:       %return.param_patt: %pattern_type.05f = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:       %.loc10: form = init_form %X.ref, call_param0 [concrete = constants.%.599]
 // CHECK:STDOUT:       %return.param: ref %X = out_param call_param0
 // CHECK:STDOUT:       %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -262,6 +264,7 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.05f = out_param_pattern %return.patt, call_param0 [concrete]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:     %.loc16: form = init_form %X.ref, call_param0 [concrete = constants.%.599]
 // CHECK:STDOUT:     %return.param: ref %X = out_param call_param0
 // CHECK:STDOUT:     %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -313,9 +316,9 @@ fn F(T:! Generic((), ())) {}
 // CHECK:STDOUT: fn @C.as.WithAssocFn.impl.F() -> %return.param: %X {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc17_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc17_15.2: init %X = class_init (), %return [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc17_15.2: init %X = class_init (), %return.param [concrete = constants.%X.val]
 // CHECK:STDOUT:   %.loc17_16: init %X = converted %.loc17_15.1, %.loc17_15.2 [concrete = constants.%X.val]
-// CHECK:STDOUT:   return %.loc17_16 to %return
+// CHECK:STDOUT:   return %.loc17_16 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Receive(%T.loc24_12.2: %Simple.type.12a) {

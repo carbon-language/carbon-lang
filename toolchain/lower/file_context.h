@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 #define CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 
-#include "clang/Basic/CodeGenOptions.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Lex/PreprocessorOptions.h"
 #include "toolchain/lower/context.h"
@@ -21,15 +20,12 @@ namespace Carbon::Lower {
 class FileContext {
  public:
   using LoweredConstantStore =
-      FixedSizeValueStore<SemIR::InstId, llvm::Constant*>;
+      FixedSizeValueStore<SemIR::InstId, llvm::Constant*,
+                          Tag<SemIR::CheckIRId>>;
 
   explicit FileContext(Context& context, const SemIR::File& sem_ir,
                        const SemIR::InstNamer* inst_namer,
                        llvm::raw_ostream* vlog_stream);
-
-  // Creates the Clang `CodeGenerator` to generate LLVM module from imported C++
-  // code. Returns null when not importing C++.
-  auto CreateCppCodeGenerator() -> std::unique_ptr<clang::CodeGenerator>;
 
   // Prepares to lower code in this IR, by precomputing needed LLVM types,
   // constants, declarations, etc. Should only be called once, before we lower
@@ -71,8 +67,9 @@ class FileContext {
     CARBON_CHECK(type_id.is_concrete(), "Lowering symbolic type {0}: {1}",
                  type_id, sem_ir().types().GetAsInst(type_id));
     auto result = types_.Get(type_id);
-    CARBON_CHECK(result.llvm_ir_type, "Missing type {0}: {1}", type_id,
-                 sem_ir().types().GetAsInst(type_id));
+    if (!result.llvm_ir_type) {
+      result.llvm_ir_type = context_->GetOpaqueType();
+    }
     return result;
   }
 
@@ -109,6 +106,7 @@ class FileContext {
 
   // Returns the empty LLVM struct type used to represent the type `type`.
   auto GetTypeType() -> llvm::StructType* { return context().GetTypeType(); }
+  auto GetFormType() -> llvm::StructType* { return context().GetFormType(); }
 
   auto context() -> Context& { return *context_; }
   auto llvm_context() -> llvm::LLVMContext& { return context().llvm_context(); }
@@ -228,15 +226,9 @@ class FileContext {
   // The input SemIR.
   const SemIR::File* const sem_ir_;
 
-  // The options used to create the Clang Code Generator.
-  clang::HeaderSearchOptions cpp_header_search_options_;
-  clang::PreprocessorOptions cpp_preprocessor_options_;
-  clang::CodeGenOptions cpp_code_gen_options_;
-
   // The Clang `CodeGenerator` to generate LLVM module from imported C++
-  // code. Should be initialized using `CreateCppCodeGenerator()`. Can be null
-  // if no C++ code is imported.
-  std::unique_ptr<clang::CodeGenerator> cpp_code_generator_;
+  // code. Can be null if no C++ code is imported.
+  clang::CodeGenerator* cpp_code_generator_;
 
   // The instruction namer, if given.
   const SemIR::InstNamer* const inst_namer_;
@@ -247,14 +239,19 @@ class FileContext {
   // Maps callables to lowered functions. SemIR treats callables as the
   // canonical form of a function, so lowering needs to do the same.
   using LoweredFunctionStore =
-      FixedSizeValueStore<SemIR::FunctionId, llvm::Function*>;
+      FixedSizeValueStore<SemIR::FunctionId, llvm::Function*,
+                          Tag<SemIR::CheckIRId>>;
   LoweredFunctionStore functions_;
 
   // Maps specific callables to lowered functions.
-  FixedSizeValueStore<SemIR::SpecificId, llvm::Function*> specific_functions_;
+  FixedSizeValueStore<SemIR::SpecificId, llvm::Function*, Tag<SemIR::CheckIRId>>
+      specific_functions_;
 
   // Provides lowered versions of types. Entries are non-symbolic types.
-  using LoweredTypeStore = FixedSizeValueStore<SemIR::TypeId, LoweredTypes>;
+  //
+  // TypeIds internally are concrete ConstantIds.
+  using LoweredTypeStore =
+      FixedSizeValueStore<SemIR::TypeId, LoweredTypes, Tag<SemIR::CheckIRId>>;
   LoweredTypeStore types_;
 
   // Maps constants to their lowered values. Indexes are the `InstId` for
@@ -267,13 +264,17 @@ class FileContext {
   // For a generic function, keep track of the specifics for which LLVM
   // function declarations were created. Those can be retrieved then from
   // `specific_functions_`.
-  FixedSizeValueStore<SemIR::GenericId, llvm::SmallVector<SemIR::SpecificId>>
+  FixedSizeValueStore<SemIR::GenericId, llvm::SmallVector<SemIR::SpecificId>,
+                      Tag<SemIR::CheckIRId>>
       lowered_specifics_;
 
   SpecificCoalescer coalescer_;
 
-  FixedSizeValueStore<SemIR::VtableId, llvm::GlobalVariable*> vtables_;
-  FixedSizeValueStore<SemIR::SpecificId, llvm::GlobalVariable*>
+  FixedSizeValueStore<SemIR::VtableId, llvm::GlobalVariable*,
+                      Tag<SemIR::CheckIRId>>
+      vtables_;
+  FixedSizeValueStore<SemIR::SpecificId, llvm::GlobalVariable*,
+                      Tag<SemIR::CheckIRId>>
       specific_vtables_;
 };
 

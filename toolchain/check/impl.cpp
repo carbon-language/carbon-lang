@@ -12,12 +12,14 @@
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/name_scope.h"
+#include "toolchain/check/require_impls.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -43,9 +45,9 @@ static auto NoteAssociatedFunction(Context& context, DiagnosticBuilder& builder,
 
 auto CheckAssociatedFunctionImplementation(
     Context& context, SemIR::FunctionType interface_function_type,
-    SemIR::InstId impl_decl_id, SemIR::TypeId self_type_id,
-    SemIR::InstId witness_inst_id, bool defer_thunk_definition)
-    -> SemIR::InstId {
+    SemIR::SpecificId enclosing_specific_id, SemIR::InstId impl_decl_id,
+    SemIR::TypeId self_type_id, SemIR::InstId witness_inst_id,
+    bool defer_thunk_definition) -> SemIR::InstId {
   auto impl_function_decl =
       context.insts().TryGetAs<SemIR::FunctionDecl>(impl_decl_id);
   if (!impl_function_decl) {
@@ -64,11 +66,6 @@ auto CheckAssociatedFunctionImplementation(
     return SemIR::ErrorInst::InstId;
   }
 
-  auto impl_enclosing_specific_id =
-      context.types()
-          .GetAs<SemIR::FunctionType>(impl_function_decl->type_id)
-          .specific_id;
-
   // Map from the specific for the function type to the specific for the
   // function signature. The function signature may have additional generic
   // parameters.
@@ -79,7 +76,7 @@ auto CheckAssociatedFunctionImplementation(
           context.functions()
               .Get(interface_function_type.function_id)
               .generic_id,
-          impl_enclosing_specific_id, self_type_id, witness_inst_id);
+          enclosing_specific_id, self_type_id, witness_inst_id);
 
   return BuildThunk(context, interface_function_type.function_id,
                     interface_function_specific_id, impl_decl_id,
@@ -632,8 +629,10 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
         if (lookup_result.is_found()) {
           used_decl_ids.push_back(lookup_result.target_inst_id());
           witness_value = CheckAssociatedFunctionImplementation(
-              context, *fn_type, lookup_result.target_inst_id(), self_type_id,
-              impl.witness_id, /*defer_thunk_definition=*/true);
+              context, *fn_type,
+              context.generics().GetSelfSpecific(impl.generic_id),
+              lookup_result.target_inst_id(), self_type_id, impl.witness_id,
+              /*defer_thunk_definition=*/true);
         } else {
           CARBON_DIAGNOSTIC(
               ImplMissingFunction, Error,
@@ -662,6 +661,59 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
   }
 
   // TODO: Diagnose if any declarations in the impl are not in used_decl_ids.
+}
+
+auto CheckRequireDeclsSatisfied(Context& context, SemIR::Impl& impl) -> void {
+  if (impl.witness_id == SemIR::ErrorInst::InstId) {
+    return;
+  }
+
+  const auto& interface = context.interfaces().Get(impl.interface.interface_id);
+  auto require_ids =
+      context.require_impls_blocks().Get(interface.require_impls_block_id);
+  for (auto require_id : require_ids) {
+    const auto& require = context.require_impls().Get(require_id);
+
+    auto require_specific =
+        GetRequireImplsSpecificFromEnclosingSpecificWithSelfType(
+            context, require, impl.interface.specific_id, impl.self_id,
+            impl.witness_id);
+    auto self_const_id = GetConstantValueInRequireImplsSpecific(
+        context, require_specific, require.self_id);
+    auto facet_type_const_id = GetConstantValueInRequireImplsSpecific(
+        context, require_specific, require.facet_type_inst_id);
+
+    auto result =
+        LookupImplWitness(context, SemIR::LocId(impl.latest_decl_id()),
+                          self_const_id, facet_type_const_id);
+    // TODO: If the facet type contains 2 interfaces, and one is not `impl`ed,
+    // it would be nice to diagnose which one was not `impl`ed, but that
+    // requires LookupImplWitness to return a partial result, or take a
+    // diagnostic lambda or something.
+    if (!result.has_value()) {
+      auto facet_type_inst_id =
+          context.constant_values().GetInstId(facet_type_const_id);
+
+      if (!result.has_error_value() &&
+          facet_type_inst_id != SemIR::ErrorInst::InstId) {
+        CARBON_DIAGNOSTIC(RequireImplsNotImplemented, Error,
+                          "interface `{0}` being implemented requires that {1} "
+                          "implements {2}",
+                          SemIR::SpecificInterface, SemIR::TypeId,
+                          SemIR::FacetTypeId);
+        context.emitter().Emit(
+            impl.latest_decl_id(), RequireImplsNotImplemented, impl.interface,
+            context.types().GetTypeIdForTypeConstantId(self_const_id),
+            context.insts()
+                .GetAs<SemIR::FacetType>(facet_type_inst_id)
+                .facet_type_id);
+      }
+    }
+    if (!result.has_value() || result.has_error_value()) {
+      FillImplWitnessWithErrors(context, impl);
+      break;
+    }
+  }
 }
 
 auto FillImplWitnessWithErrors(Context& context, SemIR::Impl& impl) -> void {

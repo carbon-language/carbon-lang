@@ -29,7 +29,7 @@ var a: i32 = test_a();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !9 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %test_a.call = call i32 @_Ctest_a.Main(), !dbg !12
 // CHECK:STDOUT:   store i32 %test_a.call, ptr @_Ca.Main, align 4, !dbg !13

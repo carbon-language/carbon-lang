@@ -218,6 +218,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
 // CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %.df2: form = init_form bool, call_param1 [concrete]
 // CHECK:STDOUT:   %If.type: type = fn_type @If [concrete]
 // CHECK:STDOUT:   %If: %If.type = struct_value () [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
@@ -248,6 +249,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:     %Bool.call.loc4_19: init type = call constants.%Bool() [concrete = bool]
 // CHECK:STDOUT:     %.loc4_19.1: type = value_of_initializer %Bool.call.loc4_19 [concrete = bool]
 // CHECK:STDOUT:     %.loc4_19.2: type = converted %Bool.call.loc4_19, %.loc4_19.1 [concrete = bool]
+// CHECK:STDOUT:     %.loc4_19.3: form = init_form %.loc4_19.2, call_param1 [concrete = constants.%.df2]
 // CHECK:STDOUT:     %b.param: bool = value_param call_param0
 // CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.3 [concrete = bool] {
 // CHECK:STDOUT:       %Bool.call.loc4_10: init type = call constants.%Bool() [concrete = bool]
@@ -270,13 +272,13 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   %impl.elem0.loc6: %.56b = impl_witness_access constants.%Copy.impl_witness.348, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc6: <bound method> = bound_method %false, %impl.elem0.loc6 [concrete = constants.%bool.as.Copy.impl.Op.bound.082]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call.loc6: init bool = call %bound_method.loc6(%false) [concrete = constants.%false]
-// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call.loc6 to %return
+// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call.loc6
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.else:
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %impl.elem0.loc8: %.56b = impl_witness_access constants.%Copy.impl_witness.348, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %true, %impl.elem0.loc8 [concrete = constants.%bool.as.Copy.impl.Op.bound.12b]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call.loc8: init bool = call %bound_method.loc8(%true) [concrete = constants.%true]
-// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call.loc8 to %return
+// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

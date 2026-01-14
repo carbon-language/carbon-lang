@@ -56,7 +56,7 @@ struct Generic : public Printable<Generic> {
 };
 
 // Provides storage for generics.
-class GenericStore : public ValueStore<GenericId, Generic> {
+class GenericStore : public ValueStore<GenericId, Generic, Tag<CheckIRId>> {
  public:
   using ValueStore::ValueStore;
 
@@ -114,6 +114,7 @@ struct Specific : Printable<Specific> {
 class SpecificStore : public Yaml::Printable<SpecificStore> {
  public:
   using IdType = SpecificId;
+  using ValueStore = ValueStore<SpecificId, Specific, Tag<CheckIRId>>;
 
   explicit SpecificStore(CheckIRId check_ir_id) : specifics_(check_ir_id) {}
 
@@ -149,8 +150,7 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void;
 
-  auto values() const [[clang::lifetimebound]]
-  -> ValueStore<SpecificId, Specific>::Range {
+  auto values() const [[clang::lifetimebound]] -> ValueStore::Range {
     return specifics_.values();
   }
   auto size() const -> size_t { return specifics_.size(); }
@@ -164,7 +164,7 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
   // Context for hashing keys.
   class KeyContext;
 
-  ValueStore<SpecificId, Specific> specifics_;
+  ValueStore specifics_;
   Carbon::Set<SpecificId, 0, KeyContext> lookup_table_;
 };
 

@@ -132,4 +132,33 @@ final impl CppCompat.ULongLong64 as ImplicitAs(u64) {
 // TODO: As from Int(N) to LongLong64 if N > 64.
 // TODO: As from UInt(N) to ULongLong64 if N > 64.
 
-// TODO: Operations on Long32, ULong32, LongLong64, ULongLong64.
+// TODO: Operations on ULong32, LongLong64, ULongLong64.
+// TODO: Long32: heterogeneous arithmetic operators, bitwise operators, compound assignments.
+
+// Arithmetic.
+
+// - Homogeneous.
+
+final impl CppCompat.Long32 as Negate where .Result = Self {
+  fn Op[self: Self]() -> Self = "int.snegate";
+}
+
+final impl CppCompat.Long32 as AddWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.sadd";
+}
+
+final impl CppCompat.Long32 as SubWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.ssub";
+}
+
+final impl CppCompat.Long32 as MulWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.smul";
+}
+
+final impl CppCompat.Long32 as DivWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.sdiv";
+}
+
+final impl CppCompat.Long32 as ModWith(Self) where .Result = Self {
+  fn Op[self: Self](other: Self) -> Self = "int.smod";
+}

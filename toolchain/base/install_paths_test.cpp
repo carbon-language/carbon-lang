@@ -23,8 +23,8 @@ namespace Carbon {
 
 class InstallPathsTestPeer {
  public:
-  static auto GetPrefix(const InstallPaths& paths) -> std::filesystem::path {
-    return paths.prefix_;
+  static auto GetRoot(const InstallPaths& paths) -> std::filesystem::path {
+    return paths.root_;
   }
 };
 
@@ -32,6 +32,7 @@ namespace {
 
 using ::bazel::tools::cpp::runfiles::Runfiles;
 using ::testing::_;
+using ::testing::EndsWith;
 using ::testing::Eq;
 using ::testing::HasSubstr;
 using Testing::IsSuccess;
@@ -47,35 +48,35 @@ class InstallPathsTest : public ::testing::Test {
   }
 
   // Test the install paths found with the given `exe_path`. Will check that
-  // the detected install prefix path starts with `prefix_startswith`, and then
-  // check that the path accessors point to the right kind of file or
-  // directory.
+  // the detected install root path has the expected location relative to the
+  // FHS layout, and then check that the path accessors point to the right kind
+  // of file or directory.
   auto TestInstallPaths(const InstallPaths& paths) -> void {
-    std::filesystem::path prefix_path = InstallPathsTestPeer::GetPrefix(paths);
+    std::filesystem::path root_path = InstallPathsTestPeer::GetRoot(paths);
 
-    SCOPED_TRACE(llvm::formatv("Install prefix: '{0}'", prefix_path));
+    SCOPED_TRACE(llvm::formatv("Install root: '{0}'", root_path));
 
-    // Open the prefix directory.
-    auto prefix_result = Filesystem::Cwd().OpenDir(prefix_path);
-    ASSERT_THAT(prefix_result, IsSuccess(_));
-    Filesystem::Dir prefix = *std::move(prefix_result);
+    // Open the root directory.
+    auto root_result = Filesystem::Cwd().OpenDir(root_path);
+    ASSERT_THAT(root_result, IsSuccess(_));
+    Filesystem::Dir root = *std::move(root_result);
 
-    // Now check that all the expected parts of the toolchain's install are in
-    // fact found using the API.
+    // Check that the root is located in the expected part of the FHS layout.
     // TODO: Adjust this to work equally well on Windows.
+    EXPECT_THAT(root_path.native(), EndsWith("lib/carbon/"));
     EXPECT_THAT(
-        prefix.Access("bin/carbon", Filesystem::AccessCheckFlags::Execute),
+        root.Access("../../bin/carbon", Filesystem::AccessCheckFlags::Execute),
         IsSuccess(Eq(true)))
-        << "path: " << (prefix_path / "bin/carbon");
+        << "path: " << (root_path / "../../bin/carbon");
 
     std::filesystem::path core_package_path = paths.core_package();
-    ASSERT_THAT(core_package_path, StartsWith(prefix_path));
+    ASSERT_THAT(core_package_path, StartsWith(root_path));
     EXPECT_THAT(Filesystem::Cwd().Access(core_package_path / "prelude.carbon"),
                 IsSuccess(Eq(true)))
         << "path: " << core_package_path;
 
     std::filesystem::path llvm_bin_path = paths.llvm_install_bin();
-    ASSERT_THAT(llvm_bin_path, StartsWith(prefix_path));
+    ASSERT_THAT(llvm_bin_path, StartsWith(root_path));
     auto open_result = Filesystem::Cwd().OpenDir(llvm_bin_path);
     ASSERT_THAT(open_result, IsSuccess(_));
     Filesystem::Dir llvm_bin = *std::move(open_result);
@@ -91,24 +92,24 @@ class InstallPathsTest : public ::testing::Test {
   std::unique_ptr<Runfiles> test_runfiles_;
 };
 
-TEST_F(InstallPathsTest, PrefixRootBusybox) {
-  std::string installed_driver_path = test_runfiles_->Rlocation(
-      "carbon/toolchain/install/prefix_root/lib/carbon/carbon-busybox");
+TEST_F(InstallPathsTest, RootBusybox) {
+  std::string installed_busybox_path = test_runfiles_->Rlocation(
+      "carbon/toolchain/install/prefix/lib/carbon/carbon-busybox");
 
-  auto paths = InstallPaths::MakeExeRelative(installed_driver_path);
+  auto paths = InstallPaths::MakeExeRelative(installed_busybox_path);
   ASSERT_THAT(paths.error(), Eq(std::nullopt)) << *paths.error();
   TestInstallPaths(paths);
 }
 
-TEST_F(InstallPathsTest, PrefixRootExplicit) {
+TEST_F(InstallPathsTest, RootExplicit) {
   std::string marker_path = test_runfiles_->Rlocation(
-      "carbon/toolchain/install/prefix_root/lib/carbon/carbon_install.txt");
+      "carbon/toolchain/install/prefix/lib/carbon/carbon_install.txt");
 
-  llvm::StringRef prefix_path = marker_path;
-  CARBON_CHECK(prefix_path.consume_back("lib/carbon/carbon_install.txt"),
+  llvm::StringRef root_path = marker_path;
+  CARBON_CHECK(root_path.consume_back("carbon_install.txt"),
                "Unexpected suffix of the marker path: {0}", marker_path);
 
-  auto paths = InstallPaths::Make(prefix_path);
+  auto paths = InstallPaths::Make(root_path);
   ASSERT_THAT(paths.error(), Eq(std::nullopt)) << *paths.error();
   TestInstallPaths(paths);
 }
@@ -135,11 +136,11 @@ TEST_F(InstallPathsTest, BinaryRunfiles) {
 TEST_F(InstallPathsTest, Errors) {
   auto paths = InstallPaths::Make("/foo/bar/baz");
   EXPECT_THAT(paths.error(), Optional(HasSubstr("foo/bar/baz")));
-  EXPECT_THAT(InstallPathsTestPeer::GetPrefix(paths), Eq(""));
+  EXPECT_THAT(InstallPathsTestPeer::GetRoot(paths), Eq(""));
 
   paths = InstallPaths::MakeExeRelative("foo/bar/baz");
   EXPECT_THAT(paths.error(), Optional(HasSubstr("foo/bar/baz")));
-  EXPECT_THAT(InstallPathsTestPeer::GetPrefix(paths), Eq(""));
+  EXPECT_THAT(InstallPathsTestPeer::GetRoot(paths), Eq(""));
 
   // Note that we can't test the runfiles code path from within a test because
   // it succeeds some of the time even with a bogus executable name.

@@ -371,7 +371,7 @@ struct Call {
   // conversions.
   static constexpr auto Kind = InstKind::Call.Define<Parse::NodeId>(
       {.ir_name = "call",
-       .expr_category = ExprCategory::Initializing,
+       .expr_category = ComputedExprCategory::DependsOnOperands,
        .constant_needs_inst_id =
            InstConstantNeedsInstIdKind::DuringEvaluation});
 
@@ -739,6 +739,13 @@ struct FloatValue {
   FloatId float_id;
 };
 
+// The type `Core.Form`.
+struct FormType : public SingletonTypeInst<InstKind::FormType, "form"> {
+  // `FormType` is always set complete in file.cpp.
+  static constexpr auto TypeId =
+      TypeId::ForTypeConstant(ConstantId::ForConcreteConstant(TypeInstId));
+};
+
 // A function declaration.
 struct FunctionDecl {
   static constexpr auto Kind =
@@ -1036,6 +1043,22 @@ struct InPlaceInit {
   // meaning.
   InstId src_id;
   DestInstId dest_id;
+};
+
+// An initializing primitive form.
+struct InitForm {
+  static constexpr auto Kind = InstKind::InitForm.Define<Parse::NodeId>(
+      {.ir_name = "init_form",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
+
+  // Always FormType
+  TypeId type_id;
+  // The type component of the form.
+  TypeInstId type_component_inst_id;
+  // If this is a function's return form, the index of the corresponding
+  // `OutParam` in the function's `Call` parameter list.
+  CallParamIndex index;
 };
 
 // Finalizes the initialization of `dest_id` from the initializer expression
@@ -1337,6 +1360,17 @@ struct RefBindingPattern {
 
   TypeId type_id;
   EntityNameId entity_name_id;
+};
+
+struct RefForm {
+  static constexpr auto Kind =
+      InstKind::RefForm.Define<Parse::PrefixOperatorRefId>(
+          {.ir_name = "ref_form",
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  TypeId type_id;
+  TypeInstId type_component_inst_id;
 };
 
 // A by-reference `Call` parameter. See AnyParam for member documentation. Note

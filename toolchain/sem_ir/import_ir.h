@@ -26,7 +26,7 @@ struct ImportIR : public Printable<ImportIR> {
 
 static_assert(sizeof(ImportIR) == 8 + sizeof(uintptr_t), "Unexpected size");
 
-using ImportIRStore = ValueStore<ImportIRId, ImportIR>;
+using ImportIRStore = ValueStore<ImportIRId, ImportIR, Tag<CheckIRId>>;
 
 // A reference to an instruction in an imported IR. Used for diagnostics with
 // LocId. For a `Cpp` import, points to a Clang source location.

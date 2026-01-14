@@ -49,6 +49,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Int: type = class_type @Int, @Int(%N) [symbolic]
 // CHECK:STDOUT:   %pattern_type.764: type = pattern_type %Int [symbolic]
+// CHECK:STDOUT:   %.026: form = init_form Core.IntLiteral, call_param1 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.901: <witness> = require_complete_type %Int [symbolic]
@@ -105,6 +106,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %IntLiteral.call.loc4_64: init type = call %IntLiteral.ref.loc4_52() [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_64.1: type = value_of_initializer %IntLiteral.call.loc4_64 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_64.2: type = converted %IntLiteral.call.loc4_64, %.loc4_64.1 [concrete = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc4_64.3: form = init_form %.loc4_64.2, call_param1 [concrete = constants.%.026]
 // CHECK:STDOUT:     %.loc4_26.1: type = splice_block %.loc4_26.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Core.ref.loc4_10: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -136,6 +138,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %IntLiteral.call: init type = call %IntLiteral.ref() [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc8_33.1: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc8_33.2: type = converted %IntLiteral.call, %.loc8_33.1 [concrete = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc8_33.3: form = init_form %.loc8_33.2, call_param1 [concrete = constants.%.026]
 // CHECK:STDOUT:     %a.param: %i64 = value_param call_param0
 // CHECK:STDOUT:     %.loc8_9: type = splice_block %i64 [concrete = constants.%i64] {
 // CHECK:STDOUT:       %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
@@ -162,7 +165,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %impl.elem0: %.6b5 = impl_witness_access constants.%Copy.impl_witness.98e, element0 [concrete = constants.%Core.IntLiteral.as.Copy.impl.Op]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %N.ref.loc5, %impl.elem0 [symbolic = %Core.IntLiteral.as.Copy.impl.Op.bound (constants.%Core.IntLiteral.as.Copy.impl.Op.bound.555)]
 // CHECK:STDOUT:     %Core.IntLiteral.as.Copy.impl.Op.call: init Core.IntLiteral = call %bound_method(%N.ref.loc5) [symbolic = %N.loc4_6.1 (constants.%N)]
-// CHECK:STDOUT:     return %Core.IntLiteral.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:     return %Core.IntLiteral.as.Copy.impl.Op.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -172,7 +175,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %a.ref: %i64 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_64) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init Core.IntLiteral = call %F.specific_fn(%a.ref)
-// CHECK:STDOUT:   return %F.call to %return
+// CHECK:STDOUT:   return %F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
@@ -204,6 +207,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %Float.generic: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Float: type = class_type @Float, @Float(%N) [symbolic]
 // CHECK:STDOUT:   %pattern_type.7d0: type = pattern_type %Float [symbolic]
+// CHECK:STDOUT:   %.026: form = init_form Core.IntLiteral, call_param1 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.dc0: <witness> = require_complete_type %Float [symbolic]
@@ -260,6 +264,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %IntLiteral.call.loc4_66: init type = call %IntLiteral.ref.loc4_54() [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_66.1: type = value_of_initializer %IntLiteral.call.loc4_66 [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc4_66.2: type = converted %IntLiteral.call.loc4_66, %.loc4_66.1 [concrete = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc4_66.3: form = init_form %.loc4_66.2, call_param1 [concrete = constants.%.026]
 // CHECK:STDOUT:     %.loc4_26.1: type = splice_block %.loc4_26.3 [concrete = Core.IntLiteral] {
 // CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
 // CHECK:STDOUT:       %Core.ref.loc4_10: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
@@ -291,6 +296,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %IntLiteral.call: init type = call %IntLiteral.ref() [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc8_33.1: type = value_of_initializer %IntLiteral.call [concrete = Core.IntLiteral]
 // CHECK:STDOUT:     %.loc8_33.2: type = converted %IntLiteral.call, %.loc8_33.1 [concrete = Core.IntLiteral]
+// CHECK:STDOUT:     %.loc8_33.3: form = init_form %.loc8_33.2, call_param1 [concrete = constants.%.026]
 // CHECK:STDOUT:     %a.param: %f64.d77 = value_param call_param0
 // CHECK:STDOUT:     %.loc8_9: type = splice_block %f64 [concrete = constants.%f64.d77] {
 // CHECK:STDOUT:       %int_64: Core.IntLiteral = int_value 64 [concrete = constants.%int_64]
@@ -317,7 +323,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %impl.elem0: %.6b5 = impl_witness_access constants.%Copy.impl_witness.98e, element0 [concrete = constants.%Core.IntLiteral.as.Copy.impl.Op]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %N.ref.loc5, %impl.elem0 [symbolic = %Core.IntLiteral.as.Copy.impl.Op.bound (constants.%Core.IntLiteral.as.Copy.impl.Op.bound.555)]
 // CHECK:STDOUT:     %Core.IntLiteral.as.Copy.impl.Op.call: init Core.IntLiteral = call %bound_method(%N.ref.loc5) [symbolic = %N.loc4_6.1 (constants.%N)]
-// CHECK:STDOUT:     return %Core.IntLiteral.as.Copy.impl.Op.call to %return
+// CHECK:STDOUT:     return %Core.IntLiteral.as.Copy.impl.Op.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -327,7 +333,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_64) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init Core.IntLiteral = call %F.specific_fn(%a.ref)
-// CHECK:STDOUT:   return %F.call to %return
+// CHECK:STDOUT:   return %F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {

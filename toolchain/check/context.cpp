@@ -32,9 +32,8 @@ Context::Context(DiagnosticEmitterBase* emitter,
       scope_stack_(sem_ir_),
       deferred_definition_worklist_(vlog_stream),
       vtable_stack_("vtable_stack_", *sem_ir, vlog_stream),
-      check_ir_map_(FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId>::
-                        MakeWithExplicitSize(IdTag(), total_ir_count_,
-                                             SemIR::ImportIRId::None)),
+      check_ir_map_(CheckIRToImpportIRStore::MakeWithExplicitSize(
+          total_ir_count_, SemIR::ImportIRId::None)),
       global_init_(this),
       region_stack_([this](SemIR::LocId loc_id, std::string label) {
         TODO(loc_id, label);
@@ -73,7 +72,7 @@ auto Context::VerifyOnFinish() const -> void {
   vtable_stack_.VerifyOnFinish();
   region_stack_.VerifyOnFinish();
   CARBON_CHECK(impl_lookup_stack_.empty());
-  CARBON_CHECK(return_type_inst_id_ == std::nullopt);
+  CARBON_CHECK(return_form_expr_ == std::nullopt);
 
 #ifndef NDEBUG
   if (auto verify = sem_ir_->Verify(); !verify.ok()) {

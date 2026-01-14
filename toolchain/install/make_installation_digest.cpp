@@ -82,7 +82,7 @@ auto DigestProgram::Run(int argc, char** argv) -> ErrorOr<int> {
       continue;
     }
     // Compute the full path and installed path for each file. The installed
-    // path comes from the path components below the `prefix_root` component.
+    // path comes from the path components below the `prefix` component.
     std::filesystem::path full_path = manifest_line.trim().str();
     std::filesystem::path install_path;
     bool append = false;
@@ -92,7 +92,7 @@ auto DigestProgram::Run(int argc, char** argv) -> ErrorOr<int> {
         continue;
       }
 
-      if (component == "prefix_root") {
+      if (component == "prefix") {
         append = true;
       }
     }

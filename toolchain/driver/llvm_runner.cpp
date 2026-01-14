@@ -15,6 +15,7 @@
 #include "lld/Common/Driver.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Allocator.h"
 
 namespace Carbon {
 
@@ -24,9 +25,9 @@ auto LLVMRunner::Run(LLVMTool tool, llvm::ArrayRef<llvm::StringRef> args)
 
   // Allocate one chunk of storage for the actual C-strings and a vector of
   // pointers into the storage.
-  llvm::OwningArrayRef<char> cstr_arg_storage;
+  llvm::BumpPtrAllocator alloc;
   llvm::SmallVector<const char*, 64> cstr_args =
-      BuildCStrArgs(path, args, cstr_arg_storage);
+      BuildCStrArgs(path, args, alloc);
 
   CARBON_VLOG("Running LLVM's {0} tool with args:\n", tool.name());
   for (const char* cstr_arg : cstr_args) {
