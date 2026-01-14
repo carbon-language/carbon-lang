@@ -51,36 +51,27 @@ FileContext::FileContext(Context& context, const SemIR::File& sem_ir,
       vlog_stream_(vlog_stream),
       functions_(LoweredFunctionStore::MakeForOverwrite(sem_ir.functions())),
       specific_functions_(sem_ir.specifics(), nullptr),
-      types_(LoweredTypeStore::MakeWithExplicitSize(sem_ir.insts().GetIdTag(),
-                                                    sem_ir.insts().size(),
-                                                    {nullptr, nullptr})),
+      types_(LoweredTypeStore::MakeWithExplicitSize(
+          sem_ir.constant_values().ConcreteStoreSize(),
+          sem_ir.constant_values().GetTypeIdTag(), {nullptr, nullptr})),
       constants_(LoweredConstantStore::MakeWithExplicitSize(
-          sem_ir.insts().GetIdTag(), sem_ir.insts().size(), nullptr)),
+          sem_ir.insts().size(), sem_ir.insts().GetIdTag(), nullptr)),
       lowered_specifics_(sem_ir.generics(),
                          llvm::SmallVector<SemIR::SpecificId>()),
       coalescer_(vlog_stream_, sem_ir.specifics()),
       vtables_(decltype(vtables_)::MakeForOverwrite(sem_ir.vtables())),
       specific_vtables_(sem_ir.specifics(), nullptr) {
   // Initialization that relies on invariants of the class.
-  cpp_code_generator_ = CreateCppCodeGenerator();
+  cpp_code_generator_ = cpp_file() ? cpp_file()->GetCodeGenerator() : nullptr;
+  CARBON_CHECK(
+      !cpp_code_generator_ ||
+      (&cpp_code_generator_->GetModule()->getContext() == &llvm_context()));
   CARBON_CHECK(!sem_ir.has_errors(),
                "Generating LLVM IR from invalid SemIR::File is unsupported.");
 }
 
 // TODO: Move this to lower.cpp.
 auto FileContext::PrepareToLower() -> void {
-  if (cpp_code_generator_) {
-    // Clang code generation should not actually modify the AST, but isn't
-    // const-correct.
-    cpp_code_generator_->Initialize(
-        const_cast<clang::ASTContext&>(cpp_file()->ast_context()));
-
-    // Emit any top-level declarations now.
-    for (auto decl_group : cpp_file()->decl_groups()) {
-      cpp_code_generator_->HandleTopLevelDecl(decl_group);
-    }
-  }
-
   // Lower all types that were required to be complete.
   for (auto type_id : sem_ir_->types().complete_types()) {
     if (type_id.index >= 0) {
@@ -90,6 +81,11 @@ auto FileContext::PrepareToLower() -> void {
 
   // Lower function declarations.
   for (auto [id, _] : sem_ir_->functions().enumerate()) {
+    if (id == sem_ir().global_ctor_id()) {
+      // The global constructor is only lowered when we generate its definition.
+      // LLVM doesn't allow an internal linkage function to be undefined.
+      continue;
+    }
     functions_.Set(id, BuildFunctionDecl(id));
   }
 
@@ -151,11 +147,12 @@ auto FileContext::LowerDefinitions() -> void {
   // variables.
   if (auto global_ctor_id = sem_ir().global_ctor_id();
       global_ctor_id.has_value()) {
+    auto* llvm_function = BuildFunctionDecl(global_ctor_id);
+    functions_.Set(global_ctor_id, llvm_function);
     const auto& global_ctor = sem_ir().functions().Get(global_ctor_id);
     BuildFunctionBody(global_ctor_id, SemIR::SpecificId::None, global_ctor,
                       *this, global_ctor);
-    llvm::appendToGlobalCtors(llvm_module(),
-                              GetFunction(sem_ir().global_ctor_id()),
+    llvm::appendToGlobalCtors(llvm_module(), llvm_function,
                               /*Priority=*/0);
   }
 }
@@ -177,24 +174,6 @@ auto FileContext::Finalize() -> void {
   // remove duplicately lowered function definitions.
   coalescer_.CoalesceEquivalentSpecifics(lowered_specifics_,
                                          specific_functions_);
-}
-
-auto FileContext::CreateCppCodeGenerator()
-    -> std::unique_ptr<clang::CodeGenerator> {
-  if (!cpp_file()) {
-    return nullptr;
-  }
-
-  RawStringOstream clang_module_name_stream;
-  clang_module_name_stream << llvm_module().getName() << ".clang";
-
-  // Do not emit Clang's name and version as the creator of the output file.
-  cpp_code_gen_options_.EmitVersionIdentMetadata = false;
-
-  return std::unique_ptr<clang::CodeGenerator>(clang::CreateLLVMCodeGen(
-      cpp_file()->diagnostics(), clang_module_name_stream.TakeStr(),
-      context().file_system(), cpp_header_search_options_,
-      cpp_preprocessor_options_, cpp_code_gen_options_, llvm_context()));
 }
 
 auto FileContext::GetConstant(SemIR::ConstantId const_id,
@@ -460,6 +439,11 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   // `available_externally` definition.
   auto linkage = specific_id.has_value() ? llvm::Function::LinkOnceODRLinkage
                                          : llvm::Function::ExternalLinkage;
+  if (function_id == sem_ir().global_ctor_id()) {
+    // The global constructor name would collide with global constructors for
+    // other files in the same package, so use an internal linkage symbol.
+    linkage = llvm::Function::InternalLinkage;
+  }
 
   Mangler m(*this);
   std::string mangled_name = m.Mangle(function_id, specific_id);

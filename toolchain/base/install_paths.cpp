@@ -20,13 +20,12 @@
 
 namespace Carbon {
 
-// The location within our Bazel output tree of the prefix_root.
-static constexpr llvm::StringLiteral PrefixRoot =
-    "carbon/toolchain/install/prefix_root/";
+// The location within our Bazel output tree of the install root.
+static constexpr llvm::StringLiteral BazelRoot =
+    "carbon/toolchain/install/prefix/lib/carbon/";
 
-// Path within an install prefix for our marker of a valid install.
-static constexpr llvm::StringLiteral MarkerPath =
-    "lib/carbon/carbon_install.txt";
+// Path within an install root for our marker of a valid install.
+static constexpr llvm::StringLiteral MarkerPath = "carbon_install.txt";
 
 auto InstallPaths::MakeExeRelative(llvm::StringRef exe_path) -> InstallPaths {
   InstallPaths paths;
@@ -54,22 +53,21 @@ auto InstallPaths::MakeForBazelRunfiles(llvm::StringRef exe_path)
   CARBON_CHECK(runfiles != nullptr, "Failed to find runtimes tree: {0}",
                runtimes_error);
 
-  std::string relative_marker_path = (PrefixRoot.str() + MarkerPath).str();
+  std::string relative_marker_path = (BazelRoot.str() + MarkerPath).str();
   std::filesystem::path runtimes_marker_path =
       runfiles->Rlocation(relative_marker_path);
 
-  // Start from the marker, remove that filename, and walk up to find the
-  // install prefix.
+  // Directly use the marker file's path.
   return MakeFromFile(std::move(runtimes_marker_path));
 }
 
-auto InstallPaths::Make(llvm::StringRef install_prefix) -> InstallPaths {
-  InstallPaths paths(install_prefix.str());
-  auto open_result = Filesystem::Cwd().OpenDir(paths.prefix_);
+auto InstallPaths::Make(llvm::StringRef install_root) -> InstallPaths {
+  InstallPaths paths(install_root.str());
+  auto open_result = Filesystem::Cwd().OpenDir(paths.root_);
   if (!open_result.ok()) {
     paths.SetError(open_result.error().ToString());
   } else {
-    paths.prefix_dir_ = *std::move(open_result);
+    paths.root_dir_ = *std::move(open_result);
     paths.CheckMarkerFile();
   }
   return paths;
@@ -82,7 +80,11 @@ auto InstallPaths::ReadPreludeManifest() const
 
 auto InstallPaths::ReadClangHeadersManifest() const
     -> ErrorOr<llvm::SmallVector<std::string>> {
-  return ReadManifest(prefix_ / "..", "clang_headers_manifest.txt");
+  // TODO: This is the only place where we read from outside of the install
+  // root. Consider whether this manifest should be within the install or
+  // consider moving the code to access it to be separate and specific to the
+  // infrastructure needing it.
+  return ReadManifest(root_ / "../../..", "clang_headers_manifest.txt");
 }
 
 auto InstallPaths::ReadManifest(std::filesystem::path manifest_path,
@@ -93,7 +95,7 @@ auto InstallPaths::ReadManifest(std::filesystem::path manifest_path,
       llvm::SmallVector<std::string>();
 
   // TODO: It would be nice to adjust the manifests to be within the install
-  // prefix and use that open directory to access the manifest. Also to update
+  // root and use that open directory to access the manifest. Also to update
   // callers to be able to use the relative paths via an open directory rather
   // than having to form absolute paths for all the entries.
   auto read_result =
@@ -125,47 +127,42 @@ auto InstallPaths::ReadManifest(std::filesystem::path manifest_path,
 
 auto InstallPaths::MakeFromFile(std::filesystem::path file_path)
     -> InstallPaths {
-  // TODO: Detect a Windows executable path and use custom logic to map to the
-  // correct install prefix for that platform.
+  // TODO: Add any custom logic needed to detect the correct install root on
+  // Windows once we have support for that platform.
   //
-  // We assume an executable will be in a `bin` directory and this is a
-  // FHS-like install prefix. We remove the filename and walk up to find the
-  // expected install prefix.
-  std::error_code ec;
-  InstallPaths paths(std::move(file_path).remove_filename() / "../..");
-  if (ec) {
-    paths.SetError(ec.message());
-    return paths;
-  }
+  // We assume the provided path is either the marker file itself or the busybox
+  // executable that is adjacent to the marker file. That means the root is just
+  // the directory of this path.
+  InstallPaths paths(std::move(file_path).remove_filename());
 
-  auto open_result = Filesystem::Cwd().OpenDir(paths.prefix_);
+  auto open_result = Filesystem::Cwd().OpenDir(paths.root_);
   if (!open_result.ok()) {
     paths.SetError(open_result.error().ToString());
     return paths;
   }
 
-  paths.prefix_dir_ = *std::move(open_result);
+  paths.root_dir_ = *std::move(open_result);
   paths.CheckMarkerFile();
   return paths;
 }
 
 auto InstallPaths::SetError(llvm::Twine message) -> void {
-  // Use an empty prefix on error as that should use the working directory which
+  // Use an empty root on error as that should use the working directory which
   // is the least likely problematic.
-  prefix_ = "";
-  prefix_dir_ = Filesystem::Dir();
+  root_ = "";
+  root_dir_ = Filesystem::Dir();
   error_ = {message.str()};
 }
 
 auto InstallPaths::CheckMarkerFile() -> void {
-  auto access_result = prefix_dir_.Access(MarkerPath.str());
+  auto access_result = root_dir_.Access(MarkerPath.str());
   if (!access_result.ok()) {
     SetError(access_result.error().ToString());
     return;
   }
   if (!*access_result) {
     SetError(llvm::Twine("No install marker at path: ") +
-             (prefix_ / std::string_view(MarkerPath)).native());
+             (root_ / std::string_view(MarkerPath)).native());
     return;
   }
 
@@ -174,73 +171,73 @@ auto InstallPaths::CheckMarkerFile() -> void {
 
 auto InstallPaths::core_package() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  return prefix_ / "lib/carbon/core";
+  return root_ / "core";
 }
 
 auto InstallPaths::llvm_install_bin() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  return prefix_ / "lib/carbon/llvm/bin/";
+  return root_ / "llvm/bin";
 }
 
 auto InstallPaths::clang_path() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  return prefix_ / "lib/carbon/llvm/bin/clang";
+  return llvm_install_bin() / "clang";
 }
 
 auto InstallPaths::lld_path() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  return prefix_ / "lib/carbon/llvm/bin/lld";
+  return llvm_install_bin() / "lld";
 }
 
 auto InstallPaths::ld_lld_path() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  return prefix_ / "lib/carbon/llvm/bin/ld.lld";
+  return llvm_install_bin() / "ld.lld";
 }
 
 auto InstallPaths::ld64_lld_path() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  return prefix_ / "lib/carbon/llvm/bin/ld64.lld";
+  return llvm_install_bin() / "ld64.lld";
 }
 
 auto InstallPaths::llvm_tool_path(LLVMTool tool) const
     -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  return prefix_ / "lib/carbon/llvm/bin" / std::string_view(tool.bin_name());
+  return llvm_install_bin() / std::string_view(tool.bin_name());
 }
 
 auto InstallPaths::clang_resource_path() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  return prefix_ / "lib/carbon/llvm/lib/clang/" CLANG_VERSION_MAJOR_STRING;
+  return root_ / "llvm/lib/clang/" CLANG_VERSION_MAJOR_STRING;
 }
 
 auto InstallPaths::runtimes_root() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  return prefix_ / "lib/carbon/runtimes";
+  return root_ / "runtimes";
 }
 
 auto InstallPaths::libunwind_path() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  return prefix_ / "lib/carbon/runtimes/libunwind";
+  return runtimes_root() / "libunwind";
 }
 
 auto InstallPaths::libcxx_path() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  return prefix_ / "lib/carbon/runtimes/libcxx";
+  return runtimes_root() / "libcxx";
 }
 
 auto InstallPaths::libcxxabi_path() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  return prefix_ / "lib/carbon/runtimes/libcxxabi";
+  return runtimes_root() / "libcxxabi";
 }
 
 auto InstallPaths::libc_path() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  return prefix_ / "lib/carbon/runtimes/libc";
+  return runtimes_root() / "libc";
 }
 
 auto InstallPaths::digest_path() const -> std::filesystem::path {
   // TODO: Adjust this to work equally well on Windows.
-  return prefix_ / "lib/carbon/install_digest.txt";
+  return root_ / "install_digest.txt";
 }
 
 }  // namespace Carbon

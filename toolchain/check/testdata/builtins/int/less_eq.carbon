@@ -123,6 +123,6 @@ fn Test(n: Core.IntLiteral()) {
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %LessEq.call: init bool = call %LessEq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   return %LessEq.call to %return.param
+// CHECK:STDOUT:   return %LessEq.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

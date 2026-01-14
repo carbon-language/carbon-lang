@@ -78,7 +78,7 @@ let b: i32 = Div(0, 0);
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %Div.call: init %i32 = call %Div.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   return %Div.call to %return.param
+// CHECK:STDOUT:   return %Div.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

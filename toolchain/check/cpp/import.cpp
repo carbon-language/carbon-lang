@@ -116,6 +116,7 @@ static auto AddNamespace(Context& context, PackageNameId cpp_package_id,
 auto ImportCpp(Context& context,
                llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+               llvm::LLVMContext* llvm_context,
                std::shared_ptr<clang::CompilerInvocation> invocation) -> void {
   if (imports.empty()) {
     // TODO: Consider always having a (non-null) AST even if there are no Cpp
@@ -131,7 +132,7 @@ auto ImportCpp(Context& context,
   auto name_scope_id = AddNamespace(context, package_id, imports);
 
   bool ast_has_error =
-      !GenerateAst(context, imports, fs, std::move(invocation));
+      !GenerateAst(context, imports, fs, llvm_context, std::move(invocation));
 
   SemIR::NameScope& name_scope = context.name_scopes().Get(name_scope_id);
   name_scope.set_is_closed_import(true);
@@ -1289,6 +1290,7 @@ struct FunctionSignatureInsts {
   SemIR::TypeInstId return_type_inst_id;
   SemIR::InstId return_form_inst_id;
   SemIR::InstBlockId return_patterns_id;
+  SemIR::InstBlockId call_param_patterns_id;
   SemIR::InstBlockId call_params_id;
 };
 }  // namespace
@@ -1325,7 +1327,7 @@ static auto CreateFunctionSignatureInsts(Context& context, SemIR::LocId loc_id,
   }
   pop.reset();
 
-  auto call_params_id =
+  auto [call_param_patterns_id, call_params_id] =
       CalleePatternMatch(context, implicit_param_patterns_id, param_patterns_id,
                          return_patterns_id);
 
@@ -1334,6 +1336,7 @@ static auto CreateFunctionSignatureInsts(Context& context, SemIR::LocId loc_id,
            .return_type_inst_id = return_type_inst_id,
            .return_form_inst_id = return_form_inst_id,
            .return_patterns_id = return_patterns_id,
+           .call_param_patterns_id = call_param_patterns_id,
            .call_params_id = call_params_id}};
 }
 
@@ -1422,7 +1425,8 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
        .non_owning_decl_id = SemIR::InstId::None,
        .first_owning_decl_id = decl_id,
        .definition_id = SemIR::InstId::None},
-      {.call_params_id = function_params_insts->call_params_id,
+      {.call_param_patterns_id = function_params_insts->call_param_patterns_id,
+       .call_params_id = function_params_insts->call_params_id,
        .return_type_inst_id = function_params_insts->return_type_inst_id,
        .return_form_inst_id = function_params_insts->return_form_inst_id,
        .return_patterns_id = function_params_insts->return_patterns_id,

@@ -75,15 +75,10 @@ auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
                          Parse::NodeId type_node, SemIR::TypeId type_id,
                          SemIR::InstId bind_id) -> void {
   auto& function = GetCurrentFunctionForReturn(context);
-  auto return_info =
-      SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(), function);
-  if (!return_info.is_valid()) {
-    // We already diagnosed this when we started defining the function.
-    return;
-  }
+  auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
 
   // A `returned var` requires an explicit return type.
-  if (!return_info.type_id.has_value()) {
+  if (!return_type_id.has_value()) {
     CARBON_DIAGNOSTIC(ReturnedVarWithNoReturnType, Error,
                       "cannot declare a `returned var` in this function");
     auto diag =
@@ -94,7 +89,7 @@ auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
   }
 
   // The declared type of the var must match the return type of the function.
-  if (return_info.type_id != type_id) {
+  if (return_type_id != type_id) {
     CARBON_DIAGNOSTIC(ReturnedVarWrongType, Error,
                       "type {0} of `returned var` does not match "
                       "return type of enclosing function",
@@ -102,6 +97,17 @@ auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
     auto diag =
         context.emitter().Build(type_node, ReturnedVarWrongType, type_id);
     NoteReturnType(diag, function);
+    diag.Emit();
+  }
+
+  auto form_inst_id = function.GetDeclaredReturnForm(context.sem_ir());
+  if (!context.insts().Is<SemIR::InitForm>(form_inst_id)) {
+    CARBON_DIAGNOSTIC(ReturnedVarNotInit, Error,
+                      "`returned var` declaration in function with "
+                      "non-initializing return form");
+    auto diag = context.emitter().Build(returned_node, ReturnedVarNotInit);
+    CARBON_DIAGNOSTIC(ReturnFormHereNote, Note, "return form declared here");
+    diag.Note(function.return_form_inst_id, ReturnFormHereNote);
     diag.Emit();
   }
 
@@ -174,6 +180,10 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
         out_param_id = call_params[init_form.index.index];
         CARBON_CHECK(out_param_id.has_value());
         expr_id = Initialize(context, loc_id, out_param_id, expr_id);
+        if (!SemIR::InitRepr::ForType(context.sem_ir(), return_type_id)
+                 .MightBeInPlace()) {
+          out_param_id = SemIR::InstId::None;
+        }
         break;
       }
       case CARBON_KIND(SemIR::RefForm ref_form): {

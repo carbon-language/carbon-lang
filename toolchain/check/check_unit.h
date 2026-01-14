@@ -127,6 +127,7 @@ class CheckUnit {
       UnitAndImports* unit_and_imports,
       const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
       llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+      llvm::LLVMContext* llvm_context,
       std::shared_ptr<clang::CompilerInvocation> clang_invocation,
       llvm::raw_ostream* vlog_stream);
 
@@ -134,15 +135,17 @@ class CheckUnit {
   auto Run() -> void;
 
  private:
+  using CheckIRIdToIntStore = FixedSizeValueStore<SemIR::CheckIRId, int>;
+
   // Add imports to the root block.
   auto InitPackageScopeAndImports() -> void;
 
   // Collects direct imports, for CollectTransitiveImports.
-  auto CollectDirectImports(
-      llvm::SmallVector<SemIR::ImportIR>& results,
-      FixedSizeValueStore<SemIR::CheckIRId, int>& ir_to_result_index,
-      SemIR::InstId import_decl_id, const PackageImports& imports,
-      bool is_local) -> void;
+  auto CollectDirectImports(llvm::SmallVector<SemIR::ImportIR>& results,
+                            CheckIRIdToIntStore& ir_to_result_index,
+                            SemIR::InstId import_decl_id,
+                            const PackageImports& imports, bool is_local)
+      -> void;
 
   // Collects transitive imports, handling deduplication. These will be unified
   // between local_imports and api_imports.
@@ -188,6 +191,7 @@ class CheckUnit {
   UnitAndImports* unit_and_imports_;
   Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter_;
   llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs_;
+  llvm::LLVMContext* llvm_context_;
   std::shared_ptr<clang::CompilerInvocation> clang_invocation_;
 
   DiagnosticEmitter emitter_;

@@ -116,12 +116,15 @@ class ConstantValueStore {
   // Constructs an unusable ConstantValueStore, only good as a placeholder (eg:
   // in C++ interop, where there's no foreign SemIR to reference)
   explicit ConstantValueStore(UnusableType /* tag */)
-      : default_(ConstantId::None), insts_(nullptr) {}
+      : default_(ConstantId::None),
+        values_(CheckIRId::None),
+        symbolic_constants_(CheckIRId::None),
+        insts_(nullptr) {}
 
   explicit ConstantValueStore(ConstantId default_value, const InstStore* insts)
       : default_(default_value),
-        values_((CARBON_CHECK(insts), insts->GetIdTag())),
-        symbolic_constants_(insts->GetIdTag()),
+        values_(insts->GetIdTag()),
+        symbolic_constants_(insts->GetIdTag().GetContainerTag()),
         insts_(insts) {}
 
   // Returns the constant value of the requested instruction, which is default_
@@ -247,6 +250,26 @@ class ConstantValueStore {
     });
   }
 
+  // The tag used in ConstantIds for concrete constants.
+  using ConcreteIdTagType = IdTag<SemIR::ConstantId, Tag<SemIR::CheckIRId>>;
+  auto GetConcreteIdTag() const -> ConcreteIdTagType {
+    return values_.GetIdTag().ToEquivalentIdType<SemIR::ConstantId>();
+  }
+  // The tag used for TypeId, which are concrete constants internally.
+  using TypeIdTagType = IdTag<SemIR::TypeId, Tag<SemIR::CheckIRId>>;
+  auto GetTypeIdTag() const -> TypeIdTagType {
+    return values_.GetIdTag().ToEquivalentIdType<SemIR::TypeId>();
+  }
+  // The tag used in ConstantIds for symbolic constants.
+  using SymbolicIdTagType =
+      IdTag<ConstantId::SymbolicId, Tag<SemIR::CheckIRId>>;
+  auto GetSymbolicIdTag() const -> SymbolicIdTagType {
+    return symbolic_constants_.GetIdTag();
+  }
+
+  // The size of the value store for concrete constant values.
+  auto ConcreteStoreSize() const -> size_t { return values_.size(); }
+
  private:
   const ConstantId default_;
 
@@ -256,14 +279,15 @@ class ConstantValueStore {
   //
   // Set inline size to 0 because these will typically be too large for the
   // stack, while this does make File smaller.
-  ValueStore<InstId, ConstantId> values_;
+  ValueStore<InstId, ConstantId, Tag<CheckIRId>> values_;
 
   // A mapping from a symbolic constant ID index to information about the
   // symbolic constant. For a concrete constant, the only information that we
   // track is the instruction ID, which is stored directly within the
   // `ConstantId`. For a symbolic constant, we also track information about
   // where the constant was used, which is stored here.
-  ValueStore<ConstantId::SymbolicId, SymbolicConstant> symbolic_constants_;
+  ValueStore<ConstantId::SymbolicId, SymbolicConstant, Tag<CheckIRId>>
+      symbolic_constants_;
 
   const InstStore* insts_;
 };

@@ -105,7 +105,7 @@ fn Class.F() -> i32 {
 // CHECK:STDOUT:   %Class.G.call.loc21: init %i32 = call %G.ref.loc21()
 // CHECK:STDOUT:   %G.ref.loc22: %Class.G.type = name_ref G, @Class.%Class.G.decl [concrete = constants.%Class.G]
 // CHECK:STDOUT:   %Class.G.call.loc22: init %i32 = call %G.ref.loc22()
-// CHECK:STDOUT:   return %Class.G.call.loc22 to %return.param.loc20
+// CHECK:STDOUT:   return %Class.G.call.loc22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.G() -> %i32;

@@ -557,7 +557,7 @@ fn Read(y:! Core.IntLiteral()) {
 // CHECK:STDOUT:     %specific_impl_fn.loc10_60.1: <specific function> = specific_impl_function %impl.elem0.loc10_60.1, @Copy.Op(constants.%Copy.facet.3b9) [symbolic = %specific_impl_fn.loc10_60.2 (constants.%specific_impl_fn.62b)]
 // CHECK:STDOUT:     %bound_method.loc10_60.2: <bound method> = bound_method %.loc10_60.2, %specific_impl_fn.loc10_60.1
 // CHECK:STDOUT:     %Copy.Op.call: init @IntRange.as.Iterate.impl.NewCursor.%Int.loc10_45.1 (%Int.fc6021.1) = call %bound_method.loc10_60.2(%.loc10_60.2)
-// CHECK:STDOUT:     return %Copy.Op.call to %return.param
+// CHECK:STDOUT:     return %Copy.Op.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

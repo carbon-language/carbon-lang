@@ -60,7 +60,8 @@ struct EntityName : public Printable<EntityName> {
 
 // Value store for EntityName. In addition to the regular ValueStore
 // functionality, this can provide optional canonical IDs for EntityNames.
-struct EntityNameStore : public ValueStore<EntityNameId, EntityName> {
+struct EntityNameStore
+    : public ValueStore<EntityNameId, EntityName, Tag<CheckIRId>> {
  public:
   using ValueStore::ValueStore;
 

@@ -508,7 +508,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%B) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc14_37.2: <bound method> = bound_method %.loc14_37.5, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.27c = call %bound_method.loc14_37.2(%.loc14_37.5)
-// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call to %return.param
+// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- inheritance_value_conversion.carbon
@@ -660,7 +660,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%B) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc14_37.2: <bound method> = bound_method %.loc14_37.5, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.27c = call %bound_method.loc14_37.2(%.loc14_37.5)
-// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call to %return.param
+// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- inheritance_value_conversion_pointer_addr.carbon
@@ -757,7 +757,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%B) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc14_37.2: <bound method> = bound_method %.loc14_37.5, %specific_fn
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.27c = call %bound_method.loc14_37.2(%.loc14_37.5)
-// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call to %return.param
+// CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_inheritance_value_conversion_copy_return.carbon
@@ -951,7 +951,7 @@ impl () as I({}) {
 // CHECK:STDOUT:     %.loc10_34.2: %Copy.type = converted constants.%ptr.e8f, %Copy.facet.loc10_34.2 [symbolic = %Copy.facet.loc10_34.3 (constants.%Copy.facet)]
 // CHECK:STDOUT:     %empty_tuple.type.as.I.impl.F.specific_fn.loc10_34.1: <specific function> = specific_function %F.ref, @empty_tuple.type.as.I.impl.F.loc10_34.1(constants.%Copy.facet) [symbolic = %empty_tuple.type.as.I.impl.F.specific_fn.loc10_34.2 (constants.%empty_tuple.type.as.I.impl.F.specific_fn)]
 // CHECK:STDOUT:     %empty_tuple.type.as.I.impl.F.call: init @empty_tuple.type.as.I.impl.F.loc10_34.2.%ptr (%ptr.e8f) = call %empty_tuple.type.as.I.impl.F.specific_fn.loc10_34.1(%x.ref)
-// CHECK:STDOUT:     return %empty_tuple.type.as.I.impl.F.call to %return.param
+// CHECK:STDOUT:     return %empty_tuple.type.as.I.impl.F.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1125,7 +1125,7 @@ impl () as I({}) {
 // CHECK:STDOUT:     %empty_tuple.type.as.I.impl.F.specific_fn.loc10_44.1: <specific function> = specific_function %F.ref, @empty_tuple.type.as.I.impl.F.loc10_44.1(constants.%Copy.facet) [symbolic = %empty_tuple.type.as.I.impl.F.specific_fn.loc10_44.2 (constants.%empty_tuple.type.as.I.impl.F.specific_fn)]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %self.ref, %empty_tuple.type.as.I.impl.F.specific_fn.loc10_44.1
 // CHECK:STDOUT:     %empty_tuple.type.as.I.impl.F.call: init @empty_tuple.type.as.I.impl.F.loc10_44.2.%ptr (%ptr.e8f) = call %bound_method(%self.ref, %x.ref)
-// CHECK:STDOUT:     return %empty_tuple.type.as.I.impl.F.call to %return.param
+// CHECK:STDOUT:     return %empty_tuple.type.as.I.impl.F.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

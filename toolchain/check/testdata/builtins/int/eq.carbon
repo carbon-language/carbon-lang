@@ -125,6 +125,6 @@ fn Test(n: Core.IntLiteral()) {
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
 // CHECK:STDOUT:   %Eq.call: init bool = call %Eq.ref(%a.ref, %b.ref)
-// CHECK:STDOUT:   return %Eq.call to %return.param
+// CHECK:STDOUT:   return %Eq.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

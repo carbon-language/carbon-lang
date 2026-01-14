@@ -180,7 +180,7 @@ fn F() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_.var: ref %empty_struct_type = var %_.var_patt
 // CHECK:STDOUT:   %.loc9_16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc9_16.2: init %empty_struct_type = struct_init () to %_.var [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc9_16.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_3: init %empty_struct_type = converted %.loc9_16.1, %.loc9_16.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign %_.var, %.loc9_3
 // CHECK:STDOUT:   %.loc9_11.1: type = splice_block %.loc9_11.3 [concrete = constants.%empty_struct_type] {
@@ -199,7 +199,7 @@ fn F() -> {} {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc5_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc5_14.2: init %empty_struct_type = struct_init () to file.%_.var [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc5_14.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc5_1: init %empty_struct_type = converted %.loc5_14.1, %.loc5_14.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%_.var, %.loc5_1
 // CHECK:STDOUT:   return

@@ -122,7 +122,8 @@ constexpr FacetTypeInfo::RewriteConstraint
     FacetTypeInfo::RewriteConstraint::None = {.lhs_id = InstId::None,
                                               .rhs_id = InstId::None};
 
-using FacetTypeInfoStore = CanonicalValueStore<FacetTypeId, FacetTypeInfo>;
+using FacetTypeInfoStore =
+    CanonicalValueStore<FacetTypeId, FacetTypeInfo, Tag<CheckIRId>>;
 
 struct IdentifiedFacetTypeKey {
   FacetTypeId facet_type_id;
@@ -199,7 +200,7 @@ struct IdentifiedFacetType {
 
 using IdentifiedFacetTypeStore =
     CanonicalValueStore<IdentifiedFacetTypeId, IdentifiedFacetTypeKey,
-                        IdentifiedFacetType>;
+                        Tag<CheckIRId>, IdentifiedFacetType>;
 
 // See common/hashing.h.
 inline auto CarbonHashValue(const FacetTypeInfo& value, uint64_t seed)

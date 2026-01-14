@@ -250,7 +250,7 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   %specific_fn.loc5: <specific function> = specific_function %impl.elem0.loc5, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc5_17.2: <bound method> = bound_method %.loc5_17.1, %specific_fn.loc5
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc5: init %i32 = call %bound_method.loc5_17.2(%.loc5_17.1)
-// CHECK:STDOUT:   %.loc5_17.2: init %tuple.type.dd4 = tuple_init (%Int.as.Copy.impl.Op.call.loc5) to file.%a.var
+// CHECK:STDOUT:   %.loc5_17.2: init %tuple.type.dd4 = tuple_init (%Int.as.Copy.impl.Op.call.loc5)
 // CHECK:STDOUT:   %.loc5_1: init %tuple.type.dd4 = converted %a_ref.ref, %.loc5_17.2
 // CHECK:STDOUT:   assign file.%a.var, %.loc5_1
 // CHECK:STDOUT:   %b_ref.ref: ref %tuple.type.cfa = name_ref b_ref, imports.%Implicit.b_ref [concrete = imports.%b_ref.var]
@@ -368,8 +368,8 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0.loc7_18.2, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_18.2: <bound method> = bound_method %tuple.elem0, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc7_18.2(%tuple.elem0) [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc7_18.2: init %tuple.type.a1c = tuple_init (%Int.as.Copy.impl.Op.call) to %return.param [concrete = constants.%tuple.246]
+// CHECK:STDOUT:   %.loc7_18.2: init %tuple.type.a1c = tuple_init (%Int.as.Copy.impl.Op.call) [concrete = constants.%tuple.246]
 // CHECK:STDOUT:   %.loc7_22: init %tuple.type.a1c = converted %impl.elem0.loc7_18.1, %.loc7_18.2 [concrete = constants.%tuple.246]
-// CHECK:STDOUT:   return %.loc7_22 to %return.param
+// CHECK:STDOUT:   return %.loc7_22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

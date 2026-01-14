@@ -12,6 +12,7 @@ cc_library(
     name = "block_value_store",
     hdrs = ["block_value_store.h"],
     deps = [
+        ":id_tag",
         ":mem_usage",
         ":value_store",
         ":yaml",
@@ -88,6 +89,7 @@ cc_library(
     hdrs = ["id_tag.h"],
     deps = [
         "//common:check",
+        "//common:ostream",
         "@llvm-project//llvm:Support",
     ],
 )

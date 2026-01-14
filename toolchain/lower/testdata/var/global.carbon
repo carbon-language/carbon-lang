@@ -57,7 +57,7 @@ var (_: i32, _: i32) = (3, 4);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !9 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !9 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   store i32 1, ptr @_Ca.Main, align 4, !dbg !12
 // CHECK:STDOUT:   ret void, !dbg !13
@@ -102,7 +102,7 @@ var (_: i32, _: i32) = (3, 4);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !11 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   store i32 2, ptr @_Cb.Main, align 4, !dbg !14
 // CHECK:STDOUT:   store i32 3, ptr @_Cc.Main, align 4, !dbg !15
@@ -151,7 +151,7 @@ var (_: i32, _: i32) = (3, 4);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !11 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !11 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cd.Main, ptr align 4 @tuple.0a0.loc4_1, i64 8, i1 false), !dbg !14
 // CHECK:STDOUT:   ret void, !dbg !15
@@ -195,7 +195,7 @@ var (_: i32, _: i32) = (3, 4);
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !4 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cx.Main, ptr align 4 @tuple.21c.loc4_1, i64 8, i1 false), !dbg !7
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @var.anon.var_patt.loc5, ptr align 4 @tuple.ffd.loc5_1, i64 8, i1 false), !dbg !8

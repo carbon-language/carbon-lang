@@ -265,11 +265,10 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %.loc9_54.1: %C = as_compatible %empty_tuple [concrete = constants.%empty_tuple.bfb]
 // CHECK:STDOUT:   %.loc9_54.2: %C = converted %.loc9_52, %.loc9_54.1 [concrete = constants.%empty_tuple.bfb]
 // CHECK:STDOUT:   %.loc9_58.1: %empty_tuple.type = as_compatible %.loc9_54.2 [concrete = constants.%empty_tuple.af4]
-// CHECK:STDOUT:   %.loc9_58.2: ref %empty_tuple.type = as_compatible %return.param
-// CHECK:STDOUT:   %.loc9_58.3: init %empty_tuple.type = tuple_init () to %.loc9_58.2 [concrete = constants.%empty_tuple.af4]
-// CHECK:STDOUT:   %.loc9_58.4: init %C = as_compatible %.loc9_58.3 [concrete = constants.%empty_tuple.bfb]
-// CHECK:STDOUT:   %.loc9_58.5: init %C = converted %.loc9_54.2, %.loc9_58.4 [concrete = constants.%empty_tuple.bfb]
-// CHECK:STDOUT:   return %.loc9_58.5 to %return.param
+// CHECK:STDOUT:   %.loc9_58.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple.af4]
+// CHECK:STDOUT:   %.loc9_58.3: init %C = as_compatible %.loc9_58.2 [concrete = constants.%empty_tuple.bfb]
+// CHECK:STDOUT:   %.loc9_58.4: init %C = converted %.loc9_54.2, %.loc9_58.3 [concrete = constants.%empty_tuple.bfb]
+// CHECK:STDOUT:   return %.loc9_58.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param: %C, %y.param: %C) -> %C {
@@ -281,7 +280,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %x.ref, %impl.elem0
 // CHECK:STDOUT:   %y.ref: %C = name_ref y, %y
 // CHECK:STDOUT:   %C.as.Add.impl.Op.call: init %C = call %bound_method(%x.ref, %y.ref)
-// CHECK:STDOUT:   return %C.as.Add.impl.Op.call to %return.param
+// CHECK:STDOUT:   return %C.as.Add.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.Op(constants.%Self) {

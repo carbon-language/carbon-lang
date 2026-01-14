@@ -174,6 +174,8 @@ def _configure_clang_toolchain_impl(repository_ctx):
         repository_ctx.attr._clang_cc_toolchain_config,
         "cc_toolchain_config.bzl",
     )
+    for file_label in repository_ctx.attr._clang_toolchain_files:
+        repository_ctx.symlink(file_label, file_label.name)
 
     # Find a Clang C++ compiler, and where it lives. We need to walk symlinks
     # here as the other LLVM tools may not be symlinked into the PATH even if
@@ -257,6 +259,18 @@ configure_clang_toolchain = repository_rule(
         "_clang_toolchain_build": attr.label(
             default = Label("//bazel/cc_toolchains:clang_toolchain.BUILD"),
             allow_single_file = True,
+        ),
+        "_clang_toolchain_files": attr.label_list(
+            default = [
+                Label("//bazel/cc_toolchains:cc_toolchain_actions.bzl"),
+                Label("//bazel/cc_toolchains:cc_toolchain_base_features.bzl"),
+                Label("//bazel/cc_toolchains:cc_toolchain_debugging.bzl"),
+                Label("//bazel/cc_toolchains:cc_toolchain_linking.bzl"),
+                Label("//bazel/cc_toolchains:cc_toolchain_modules.bzl"),
+                Label("//bazel/cc_toolchains:cc_toolchain_optimization.bzl"),
+                Label("//bazel/cc_toolchains:cc_toolchain_sanitizer_features.bzl"),
+                Label("//bazel/cc_toolchains:cc_toolchain_tools.bzl"),
+            ],
         ),
     },
     environ = ["CC"],

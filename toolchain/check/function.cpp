@@ -92,47 +92,38 @@ auto CheckFunctionTypeMatches(Context& context,
                                         prev_specific_id, diagnose);
 }
 
-auto CheckFunctionReturnType(Context& context, SemIR::LocId loc_id,
-                             const SemIR::Function& function,
-                             SemIR::SpecificId specific_id) -> SemIR::TypeId {
-  auto return_info = SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(),
-                                                        function, specific_id);
-
-  // If we couldn't determine the return information due to the return type
-  // being incomplete, try to complete it now.
-  if (return_info.init_repr.kind == SemIR::InitRepr::Incomplete ||
-      return_info.init_repr.kind == SemIR::InitRepr::Abstract) {
+auto CheckFunctionReturnPatternType(Context& context, SemIR::LocId loc_id,
+                                    SemIR::InstId return_pattern_id,
+                                    SemIR::SpecificId specific_id)
+    -> SemIR::TypeId {
+  auto arg_type_id = SemIR::ExtractScrutineeType(
+      context.sem_ir(), SemIR::GetTypeOfInstInSpecific(
+                            context.sem_ir(), specific_id, return_pattern_id));
+  auto init_repr = SemIR::InitRepr::ForType(context.sem_ir(), arg_type_id);
+  if (!init_repr.is_valid()) {
     auto diagnose_incomplete_return_type = [&] {
       CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
                         "function returns incomplete type {0}", SemIR::TypeId);
       return context.emitter().Build(loc_id, IncompleteTypeInFunctionReturnType,
-                                     return_info.type_id);
+                                     arg_type_id);
     };
     auto diagnose_abstract_return_type = [&] {
       CARBON_DIAGNOSTIC(AbstractTypeInFunctionReturnType, Error,
                         "function returns abstract type {0}", SemIR::TypeId);
       return context.emitter().Build(loc_id, AbstractTypeInFunctionReturnType,
-                                     return_info.type_id);
+                                     arg_type_id);
     };
 
     // TODO: Consider suppressing the diagnostic if we've already diagnosed a
     // definition or call to this function.
-    if (RequireConcreteType(context, return_info.type_id, loc_id,
-                            diagnose_incomplete_return_type,
-                            diagnose_abstract_return_type)) {
-      return_info = SemIR::ReturnTypeInfo::ForFunction(context.sem_ir(),
-                                                       function, specific_id);
+    if (!RequireConcreteType(
+            context, arg_type_id, SemIR::LocId(return_pattern_id),
+            diagnose_incomplete_return_type, diagnose_abstract_return_type)) {
+      return SemIR::ErrorInst::TypeId;
     }
   }
 
-  if (return_info.init_repr.kind == SemIR::InitRepr::Incomplete ||
-      return_info.init_repr.kind == SemIR::InitRepr::Abstract) {
-    return SemIR::ErrorInst::TypeId;
-  }
-  if (!return_info.type_id.has_value()) {
-    return GetTupleType(context, {});
-  }
-  return return_info.type_id;
+  return arg_type_id;
 }
 
 auto CheckFunctionDefinitionSignature(Context& context,
@@ -143,9 +134,10 @@ auto CheckFunctionDefinitionSignature(Context& context,
       context.inst_blocks().GetOrEmpty(function.call_params_id);
 
   // Check the return type is complete.
-  if (function.return_type_inst_id.has_value()) {
-    CheckFunctionReturnType(context, SemIR::LocId(function.return_type_inst_id),
-                            function, SemIR::SpecificId::None);
+  for (auto return_pattern_id :
+       context.inst_blocks().GetOrEmpty(function.return_patterns_id)) {
+    CheckFunctionReturnPatternType(context, SemIR::LocId(return_pattern_id),
+                                   return_pattern_id, SemIR::SpecificId::None);
   }
 
   // Check the parameter types are complete.

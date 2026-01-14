@@ -32,7 +32,7 @@ fn F() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_C__global_init.Main() #0 !dbg !10 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !10 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   store i32 5, ptr @_Ca.Main, align 4, !dbg !13
 // CHECK:STDOUT:   %.loc14 = load i32, ptr @_Ca.Main, align 4, !dbg !14

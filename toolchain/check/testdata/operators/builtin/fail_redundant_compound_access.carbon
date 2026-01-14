@@ -127,7 +127,7 @@ fn Main() {
 // CHECK:STDOUT:   %bound_method.loc15_25.2: <bound method> = bound_method %int_0, %specific_fn [concrete = constants.%bound_method.d2e]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc15_25.2(%int_0) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc15_25: init %i32 = converted %int_0, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   return %.loc15_25 to %return.param
+// CHECK:STDOUT:   return %.loc15_25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

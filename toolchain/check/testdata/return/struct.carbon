@@ -92,8 +92,8 @@ fn Main() -> {.a: i32} {
 // CHECK:STDOUT:   %bound_method.loc16_17.2: <bound method> = bound_method %int_3, %specific_fn [concrete = constants.%bound_method]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc16_17.2(%int_3) [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %.loc16_17.2: init %i32 = converted %int_3, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_3.822]
-// CHECK:STDOUT:   %.loc16_17.3: init %struct_type.a.ba9 = struct_init (%.loc16_17.2) to %return.param [concrete = constants.%struct.384]
+// CHECK:STDOUT:   %.loc16_17.3: init %struct_type.a.ba9 = struct_init (%.loc16_17.2) [concrete = constants.%struct.384]
 // CHECK:STDOUT:   %.loc16_18: init %struct_type.a.ba9 = converted %.loc16_17.1, %.loc16_17.3 [concrete = constants.%struct.384]
-// CHECK:STDOUT:   return %.loc16_18 to %return.param
+// CHECK:STDOUT:   return %.loc16_18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

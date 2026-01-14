@@ -225,7 +225,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_14.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc4_14.2: init %empty_tuple.type = tuple_init () to file.%a.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc4_14.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc4_1: init %empty_tuple.type = converted %.loc4_14.1, %.loc4_14.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%a.var, %.loc4_1
 // CHECK:STDOUT:   return
@@ -272,7 +272,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a_alias.ref: ref %empty_tuple.type = name_ref a_alias, imports.%Main.a_alias [concrete = imports.%a.var]
-// CHECK:STDOUT:   %.loc8_13: init %empty_tuple.type = tuple_init () to file.%b.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc8_13: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc8_1: init %empty_tuple.type = converted %a_alias.ref, %.loc8_13 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%b.var, %.loc8_1
 // CHECK:STDOUT:   return
@@ -316,7 +316,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a_alias_alias.ref: ref %empty_tuple.type = name_ref a_alias_alias, imports.%Main.a_alias_alias [concrete = imports.%a.var]
-// CHECK:STDOUT:   %.loc6_13: init %empty_tuple.type = tuple_init () to file.%c.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_13: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_1: init %empty_tuple.type = converted %a_alias_alias.ref, %.loc6_13 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return

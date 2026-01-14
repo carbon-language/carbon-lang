@@ -62,9 +62,9 @@ fn Main() {
 // CHECK:STDOUT: fn @Echo(%a.param: %empty_struct_type) -> %empty_struct_type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %empty_struct_type = name_ref a, %a
-// CHECK:STDOUT:   %.loc16_10: init %empty_struct_type = struct_init () to %return.param [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc16_10: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc16_11: init %empty_struct_type = converted %a.ref, %.loc16_10 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   return %.loc16_11 to %return.param
+// CHECK:STDOUT:   return %.loc16_11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {

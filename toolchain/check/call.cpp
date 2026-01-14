@@ -211,21 +211,6 @@ static auto BuildCalleeSpecificFunction(
   return callee_id;
 }
 
-// Returns the return type, with a scoped annotation for any diagnostics.
-static auto CheckCalleeFunctionReturnType(Context& context, SemIR::LocId loc_id,
-                                          SemIR::FunctionId callee_function_id,
-                                          SemIR::SpecificId callee_specific_id)
-    -> SemIR::TypeId {
-  auto& function = context.functions().Get(callee_function_id);
-  Diagnostics::AnnotationScope annotate_diagnostics(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(IncompleteReturnTypeHere, Note,
-                          "return type declared here");
-        builder.Note(function.return_type_inst_id, IncompleteReturnTypeHere);
-      });
-  return CheckFunctionReturnType(context, loc_id, function, callee_specific_id);
-}
-
 auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
                            SemIR::InstId callee_id,
                            const SemIR::CalleeFunction& callee_function,
@@ -247,19 +232,27 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
                                             *callee_specific_id);
   }
 
-  auto return_type_id = CheckCalleeFunctionReturnType(
-      context, loc_id, callee_function.function_id, *callee_specific_id);
-
   auto& callee = context.functions().Get(callee_function.function_id);
+  auto return_type_id =
+      callee.GetDeclaredReturnType(context.sem_ir(), *callee_specific_id);
+  if (!return_type_id.has_value()) {
+    return_type_id = GetTupleType(context, {});
+  }
 
-  // Build storage for any output parameters.
   llvm::SmallVector<SemIR::InstId, 1> return_arg_ids;
   for (auto return_pattern_id :
        context.inst_blocks().GetOrEmpty(callee.return_patterns_id)) {
-    auto arg_type_id = SemIR::ExtractScrutineeType(
-        context.sem_ir(),
-        SemIR::GetTypeOfInstInSpecific(context.sem_ir(), *callee_specific_id,
-                                       return_pattern_id));
+    Diagnostics::AnnotationScope annotate_diagnostics(
+        &context.emitter(), [&](auto& builder) {
+          CARBON_DIAGNOSTIC(IncompleteReturnTypeHere, Note,
+                            "return type declared here");
+          builder.Note(return_pattern_id, IncompleteReturnTypeHere);
+        });
+    auto arg_type_id = CheckFunctionReturnPatternType(
+        context, loc_id, return_pattern_id, *callee_specific_id);
+    if (arg_type_id == SemIR::ErrorInst::TypeId) {
+      return_type_id = SemIR::ErrorInst::TypeId;
+    }
     switch (SemIR::InitRepr::ForType(context.sem_ir(), arg_type_id).kind) {
       case SemIR::InitRepr::InPlace:
       case SemIR::InitRepr::Dependent:

@@ -165,7 +165,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %impl.elem0: %.6b5 = impl_witness_access constants.%Copy.impl_witness.98e, element0 [concrete = constants.%Core.IntLiteral.as.Copy.impl.Op]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %N.ref.loc5, %impl.elem0 [symbolic = %Core.IntLiteral.as.Copy.impl.Op.bound (constants.%Core.IntLiteral.as.Copy.impl.Op.bound.555)]
 // CHECK:STDOUT:     %Core.IntLiteral.as.Copy.impl.Op.call: init Core.IntLiteral = call %bound_method(%N.ref.loc5) [symbolic = %N.loc4_6.1 (constants.%N)]
-// CHECK:STDOUT:     return %Core.IntLiteral.as.Copy.impl.Op.call to %return.param
+// CHECK:STDOUT:     return %Core.IntLiteral.as.Copy.impl.Op.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -175,7 +175,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %a.ref: %i64 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_64) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init Core.IntLiteral = call %F.specific_fn(%a.ref)
-// CHECK:STDOUT:   return %F.call to %return.param
+// CHECK:STDOUT:   return %F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {
@@ -323,7 +323,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:     %impl.elem0: %.6b5 = impl_witness_access constants.%Copy.impl_witness.98e, element0 [concrete = constants.%Core.IntLiteral.as.Copy.impl.Op]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %N.ref.loc5, %impl.elem0 [symbolic = %Core.IntLiteral.as.Copy.impl.Op.bound (constants.%Core.IntLiteral.as.Copy.impl.Op.bound.555)]
 // CHECK:STDOUT:     %Core.IntLiteral.as.Copy.impl.Op.call: init Core.IntLiteral = call %bound_method(%N.ref.loc5) [symbolic = %N.loc4_6.1 (constants.%N)]
-// CHECK:STDOUT:     return %Core.IntLiteral.as.Copy.impl.Op.call to %return.param
+// CHECK:STDOUT:     return %Core.IntLiteral.as.Copy.impl.Op.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -333,7 +333,7 @@ fn G(a: f64) -> Core.IntLiteral() {
 // CHECK:STDOUT:   %a.ref: %f64.d77 = name_ref a, %a
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_64) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init Core.IntLiteral = call %F.specific_fn(%a.ref)
-// CHECK:STDOUT:   return %F.call to %return.param
+// CHECK:STDOUT:   return %F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%N) {

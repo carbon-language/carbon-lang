@@ -146,7 +146,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %impl.elem0: %.56b = impl_witness_access constants.%Copy.impl_witness.348, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %true, %impl.elem0 [concrete = constants.%bool.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method(%true) [concrete = constants.%true]
-// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call to %return.param
+// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G() -> bool {
@@ -155,7 +155,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %impl.elem0: %.56b = impl_witness_access constants.%Copy.impl_witness.348, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %true, %impl.elem0 [concrete = constants.%bool.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method(%true) [concrete = constants.%true]
-// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call to %return.param
+// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @And() -> bool {
@@ -179,7 +179,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   %impl.elem0: %.56b = impl_witness_access constants.%Copy.impl_witness.348, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc19_14.5, %impl.elem0
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method(%.loc19_14.5)
-// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call to %return.param
+// CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Constant() {
@@ -232,7 +232,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %empty_tuple.type = var %b.var_patt
 // CHECK:STDOUT:   %.loc24_49.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc24_49.2: init %empty_tuple.type = tuple_init () to %b.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc24_49.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc24_3: init %empty_tuple.type = converted %.loc24_49.1, %.loc24_49.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %b.var, %.loc24_3
 // CHECK:STDOUT:   br !.loc24_13
@@ -273,7 +273,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %empty_tuple.type = var %c.var_patt
 // CHECK:STDOUT:   %.loc25_49.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc25_49.2: init %empty_tuple.type = tuple_init () to %c.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc25_49.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc25_3: init %empty_tuple.type = converted %.loc25_49.1, %.loc25_49.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %c.var, %.loc25_3
 // CHECK:STDOUT:   br !.loc25_13
@@ -314,7 +314,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var %d.var_patt
 // CHECK:STDOUT:   %.loc26_50.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc26_50.2: init %empty_tuple.type = tuple_init () to %d.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc26_50.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc26_3: init %empty_tuple.type = converted %.loc26_50.1, %.loc26_50.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %d.var, %.loc26_3
 // CHECK:STDOUT:   br !.loc26_13
@@ -372,7 +372,7 @@ fn PartialConstant(x: bool) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var %a.var_patt
 // CHECK:STDOUT:   %.loc30_46.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc30_46.2: init %empty_tuple.type = tuple_init () to %a.var [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc30_46.2: init %empty_tuple.type = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc30_3: init %empty_tuple.type = converted %.loc30_46.1, %.loc30_46.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   assign %a.var, %.loc30_3
 // CHECK:STDOUT:   br !.loc30_13

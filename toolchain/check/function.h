@@ -53,12 +53,14 @@ inline auto CheckFunctionTypeMatches(Context& context,
                                   /*check_syntax=*/true, /*check_self=*/true);
 }
 
-// Checks that the return type of the specified function is complete, issuing an
-// error if not. This computes the return slot usage for the function if
-// necessary, and returns the function's return type.
-auto CheckFunctionReturnType(Context& context, SemIR::LocId loc_id,
-                             const SemIR::Function& function,
-                             SemIR::SpecificId specific_id) -> SemIR::TypeId;
+// Checks that the scrutinee type of `return_pattern_id` in `specific_id` is
+// concrete. If so, it returns that type; if not, it issues an error and returns
+// SemIR::ErrorInst::TypeId. `return_pattern_id` must be part of a function's
+// return form, or the error message will be nonsensical.
+auto CheckFunctionReturnPatternType(Context& context, SemIR::LocId loc_id,
+                                    SemIR::InstId return_pattern_id,
+                                    SemIR::SpecificId specific_id)
+    -> SemIR::TypeId;
 
 // Checks that a function declaration's signature is suitable to support a
 // function definition. This requires the parameter types to be complete and the

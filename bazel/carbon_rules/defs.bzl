@@ -76,7 +76,7 @@ def _carbon_binary_impl(ctx):
             # TODO: This is a hack; replace with something better once the toolchain
             # supports doing so.
             #
-            # TODO: Switch to the `prefix_root` based rule similar to linking when
+            # TODO: Switch to the `prefix` based rule similar to linking when
             # the prelude moves there.
             out = ctx.actions.declare_file("_objs/{0}/{1}o".format(
                 ctx.label.name,
@@ -177,7 +177,7 @@ def carbon_binary(name, srcs, deps = [], flags = [], tags = []):
         # `select` which one we use.
         internal_exec_toolchain_driver = select({
             "//bazel/carbon_rules:use_target_config_carbon_rules_config": None,
-            "//conditions:default": "//toolchain/install:prefix_root/bin/carbon",
+            "//conditions:default": "//toolchain/install:prefix/bin/carbon",
         }),
         internal_exec_toolchain_data = select({
             "//bazel/carbon_rules:use_target_config_carbon_rules_config": None,
@@ -188,7 +188,7 @@ def carbon_binary(name, srcs, deps = [], flags = [], tags = []):
             "//conditions:default": "//toolchain/driver:prebuilt_runtimes",
         }),
         internal_target_toolchain_driver = select({
-            "//bazel/carbon_rules:use_target_config_carbon_rules_config": "//toolchain/install:prefix_root/bin/carbon",
+            "//bazel/carbon_rules:use_target_config_carbon_rules_config": "//toolchain/install:prefix/bin/carbon",
             "//conditions:default": None,
         }),
         internal_target_toolchain_data = select({

@@ -145,7 +145,7 @@ fn Class.F[self: Self]() -> i32 {
 // CHECK:STDOUT:   %Class.F.bound: <bound method> = bound_method %.loc26_11.1, %F.ref
 // CHECK:STDOUT:   %.loc26_11.2: %Class = acquire_value %.loc26_11.1
 // CHECK:STDOUT:   %Class.F.call: init %i32 = call %Class.F.bound(%.loc26_11.2)
-// CHECK:STDOUT:   return %Class.F.call to %return.param.loc25
+// CHECK:STDOUT:   return %Class.F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Class.Make() -> %return.param: %Class {

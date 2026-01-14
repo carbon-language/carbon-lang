@@ -460,7 +460,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc6_60.2: <bound method> = bound_method %B.ref.loc6_60, %specific_fn [symbolic = %bound_method.loc6_60.3 (constants.%bound_method.dfb)]
 // CHECK:STDOUT:     %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_60.2(%B.ref.loc6_60) [symbolic = %B.loc6_15.1 (constants.%B)]
-// CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call to %return.param
+// CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -470,7 +470,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %h.ref: %HasPair.867 = name_ref h, %h
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%int_1.5d2, constants.%int_2.ef8) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.specific_fn(%h.ref)
-// CHECK:STDOUT:   return %F.call to %return.param
+// CHECK:STDOUT:   return %F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasPair(constants.%Pair) {

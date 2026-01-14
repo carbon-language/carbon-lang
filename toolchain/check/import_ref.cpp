@@ -2183,7 +2183,8 @@ static auto MakeFunctionDecl(ImportContext& context,
   // Start with an incomplete function.
   function_decl.function_id = context.local_functions().Add(
       {GetIncompleteLocalEntityBase(context, function_decl_id, import_function),
-       {.call_params_id = SemIR::InstBlockId::None,
+       {.call_param_patterns_id = SemIR::InstBlockId::None,
+        .call_params_id = SemIR::InstBlockId::None,
         .return_type_inst_id = SemIR::TypeInstId::None,
         .return_form_inst_id = SemIR::InstId::None,
         .return_patterns_id = SemIR::InstBlockId::None,
@@ -2241,6 +2242,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     function_id = function_type.function_id;
   }
 
+  auto call_param_patterns = GetLocalInstBlockContents(
+      resolver, import_function.call_param_patterns_id);
   auto return_type_const_id = SemIR::ConstantId::None;
   if (import_function.return_type_inst_id.has_value()) {
     return_type_const_id =
@@ -2269,6 +2272,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   }
 
   // Add the function declaration.
+  new_function.call_param_patterns_id = GetLocalCanonicalInstBlockId(
+      resolver, import_function.call_param_patterns_id, call_param_patterns);
   new_function.parent_scope_id = parent_scope_id;
   new_function.implicit_param_patterns_id = GetLocalCanonicalInstBlockId(
       resolver, import_function.implicit_param_patterns_id,

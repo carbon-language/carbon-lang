@@ -459,6 +459,7 @@ struct LocIdAndInst {
 class InstStore {
  public:
   using IdType = InstId;
+  using IdTagType = IdTag<IdType, Tag<CheckIRId>>;
 
   explicit InstStore(File* file, int32_t reserved_inst_ids);
 
@@ -658,7 +659,7 @@ class InstStore {
   }
 
   auto values() const [[clang::lifetimebound]]
-  -> ValueStore<InstId, Inst>::Range {
+  -> ValueStore<InstId, Inst, Tag<CheckIRId>>::Range {
     return values_.values();
   }
   auto size() const -> int { return values_.size(); }
@@ -670,7 +671,7 @@ class InstStore {
     return values_.GetRawIndex(id);
   }
 
-  auto GetIdTag() const -> IdTag { return values_.GetIdTag(); }
+  auto GetIdTag() const -> IdTagType { return values_.GetIdTag(); }
 
  private:
   // Given a symbolic type, get the corresponding unattached type.
@@ -687,19 +688,20 @@ class InstStore {
 
   File* file_;
   llvm::SmallVector<LocId> loc_ids_;
-  ValueStore<InstId, Inst> values_;
+  ValueStore<InstId, Inst, Tag<CheckIRId>> values_;
 };
 
 // Adapts BlockValueStore for instruction blocks.
-class InstBlockStore : public BlockValueStore<InstBlockId, InstId> {
+class InstBlockStore
+    : public BlockValueStore<InstBlockId, InstId, Tag<CheckIRId>> {
  public:
-  using BaseType = BlockValueStore<InstBlockId, InstId>;
+  using BaseType = BlockValueStore<InstBlockId, InstId, Tag<CheckIRId>>;
 
   explicit InstBlockStore(llvm::BumpPtrAllocator& allocator,
                           CheckIRId check_ir_id = CheckIRId::None)
       // 4 reserved ids for the
       // `InstBlockId::{Empty,Exports,Imports,GlobalInit}` global ids.
-      : BaseType(allocator, IdTag(check_ir_id.index, 4)) {
+      : BaseType(allocator, check_ir_id, 4) {
     auto exports_id = AddPlaceholder();
     CARBON_CHECK(exports_id == InstBlockId::Exports);
     auto imports_id = AddPlaceholder();

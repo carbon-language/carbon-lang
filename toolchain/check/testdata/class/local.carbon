@@ -173,7 +173,7 @@ class A {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc26_20.2(%.loc26_20.2)
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc26_19.2, constants.%DestroyOp
 // CHECK:STDOUT:   %DestroyOp.call: init %empty_tuple.type = call %DestroyOp.bound(%.loc26_19.2)
-// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call to %return.param
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B.Make() -> %return.param: %B {

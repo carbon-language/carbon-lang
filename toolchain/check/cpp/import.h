@@ -23,6 +23,7 @@ namespace Carbon::Check {
 auto ImportCpp(Context& context,
                llvm::ArrayRef<Parse::Tree::PackagingNames> imports,
                llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+               llvm::LLVMContext* llvm_context,
                std::shared_ptr<clang::CompilerInvocation> invocation) -> void;
 
 // Imports a declaration from Clang to Carbon. If successful, returns the new
