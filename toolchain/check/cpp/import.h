@@ -74,6 +74,11 @@ auto ImportClassDefinitionForClangDecl(Context& context, SemIR::LocId loc_id,
                                        SemIR::ClangDeclId clang_decl_id)
     -> bool;
 
+// Gets the identifier info for a name. Returns `nullptr` if the name is not an
+// identifier name.
+auto GetClangIdentifierInfo(Context& context, SemIR::NameId name_id)
+    -> clang::IdentifierInfo*;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CPP_IMPORT_H_
