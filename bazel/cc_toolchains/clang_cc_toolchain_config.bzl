@@ -38,12 +38,7 @@ load(
     "libcxx_feature",
 )
 load(":cc_toolchain_debugging.bzl", "debugging_features")
-load(
-    ":cc_toolchain_linking.bzl",
-    "default_link_libraries_feature",
-    "linking_features",
-    "macos_link_libraries_feature",
-)
+load(":cc_toolchain_linking.bzl", "linking_features")
 load(":cc_toolchain_modules.bzl", "modules_features")
 load(":cc_toolchain_optimization.bzl", "optimization_features")
 load(":cc_toolchain_sanitizer_features.bzl", "sanitizer_features")
@@ -151,10 +146,6 @@ def _build_features(ctx):
         feature(name = "supports_dynamic_linker", enabled = ctx.attr.target_os == "linux"),
         feature(name = "supports_start_end_lib", enabled = ctx.attr.target_os == "linux"),
     ]
-    if ctx.attr.target_os == "macos":
-        features.append(macos_link_libraries_feature)
-    else:
-        features.append(default_link_libraries_feature)
 
     # Lastly, we add a feature that enables others in the default `fastbuild`
     # mode. This is also a good place to add any project-specific features.
