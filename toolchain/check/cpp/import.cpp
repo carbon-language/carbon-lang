@@ -263,8 +263,8 @@ static auto GetParentNameScopeId(Context& context, clang::Decl* clang_decl)
       // Rare case: the tag was imported as an existing Carbon class. This
       // happens for C++ classes that get mapped to Carbon prelude types, such
       // as `std::string_view`.
-      // TODO: In this case, should we set the parent to be the prelude type, or
-      // should we import the C++ class declaration and use it as the parent?
+      // TODO: In this case, should we import the C++ class declaration and use
+      // it as the parent, rather than using the existing Carbon class?
       class_id = class_inst.As<SemIR::ClassType>().class_id;
     }
     return context.classes().Get(class_id).scope_id;
