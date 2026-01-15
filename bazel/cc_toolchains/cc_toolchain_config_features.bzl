@@ -15,10 +15,10 @@ load(
     "feature",
 )
 
-freebsd_target_feature = feature(name = "freebsd_target")
-linux_target_feature = feature(name = "linux_target")
-macos_target_feature = feature(name = "macos_target")
-windows_target_feature = feature(name = "windows_target")
+freebsd_target_feature = feature(name = "freebsd_target", enabled = True)
+linux_target_feature = feature(name = "linux_target", enabled = True)
+macos_target_feature = feature(name = "macos_target", enabled = True)
+windows_target_feature = feature(name = "windows_target", enabled = True)
 
 os_target_features = {
     "freebsd": [freebsd_target_feature],
