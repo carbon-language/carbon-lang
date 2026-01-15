@@ -195,7 +195,7 @@ constraint Z(T:! type) {
   // it would appear in the type structure used for impl lookup (so inside a
   // `where` does not count). But they don't.
   //
-  // CHECK:STDERR: fail_require_impls_without_self.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic parameter for each `interface` or `constraint` [RequireImplsMissingSelf]
+  // CHECK:STDERR: fail_require_impls_without_self.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Y` without a `Self` argument [RequireImplsMissingSelf]
   // CHECK:STDERR:   require T impls Y where .Y1 = Self;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -211,7 +211,7 @@ interface Y(T:! type) {}
 constraint Z(T:! type) {
   // Self is in one interface but not the other.
   //
-  // CHECK:STDERR: fail_require_impls_without_self_in_one_interface.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic parameter for each `interface` or `constraint` [RequireImplsMissingSelf]
+  // CHECK:STDERR: fail_require_impls_without_self_in_one_interface.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Y({})` without a `Self` argument [RequireImplsMissingSelf]
   // CHECK:STDERR:   require T impls Y(Self) & Y({});
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -356,6 +356,61 @@ impl {} as Z(()) {}
 
 fn F() {
   () as N;
+}
+
+// --- require_different_type_impls_nested_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+
+constraint M(T:! type) {
+  extend require impls Z(T);
+}
+
+constraint N {
+  require {} impls M(Self);
+}
+
+impl {} as Z(()) {}
+
+fn F() {
+  () as N;
+}
+
+// --- fail_require_different_type_impls_nested_constraint_without_reference_to_outer_self.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T:! type) {}
+
+constraint M(T:! type) {
+  extend require impls Z(Self);
+}
+
+constraint N {
+  // `M(T)` does not make use of the `T`, which is assigned `Self`, so we end up
+  // without any interface specific referencing the `Self` of `N`.
+  //
+  // CHECK:STDERR: fail_require_different_type_impls_nested_constraint_without_reference_to_outer_self.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Z({})` without a `Self` argument [RequireImplsMissingSelf]
+  // CHECK:STDERR:   require {} impls M(Self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  require {} impls M(Self);
+}
+
+// --- fail_require_different_type_impls_nested_constraint_empty.carbon
+library "[[@TEST_NAME]]";
+
+constraint M(T:! type) {}
+
+constraint N {
+  // `M(T)` does not make use of the `T`, which is assigned `Self`, so we end up
+  // without any interface specific referencing the `Self` of `N`.
+  //
+  // CHECK:STDERR: fail_require_different_type_impls_nested_constraint_empty.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but no interfaces were found [RequireImplsMissingSelfEmptyFacetType]
+  // CHECK:STDERR:   require {} impls M(Self);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  require {} impls M(Self);
 }
 
 // --- fail_require_different_type_impls_different_parameter.carbon

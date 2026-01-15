@@ -107,7 +107,7 @@ auto HandleParseNode(Context& context, Parse::RequireTypeImplsId node_id)
 }
 
 static auto TypeStructureReferencesSelf(
-    Context& context, SemIR::TypeInstId inst_id,
+    Context& context, SemIR::LocId loc_id, SemIR::TypeInstId inst_id,
     const SemIR::IdentifiedFacetType& identified_facet_type) -> bool {
   auto find_self = [&](SemIR::TypeIterator& type_iter) -> bool {
     while (true) {
@@ -143,18 +143,32 @@ static auto TypeStructureReferencesSelf(
   }
 
   if (identified_facet_type.required_impls().empty()) {
+    CARBON_DIAGNOSTIC(
+        RequireImplsMissingSelfEmptyFacetType, Error,
+        "no `Self` reference found in `require` declaration; `Self` must "
+        "appear in the self-type or as a generic argument for each required "
+        "interface, but no interfaces were found");
+    context.emitter().Emit(loc_id, RequireImplsMissingSelfEmptyFacetType);
     return false;
   }
 
+  bool interfaces_all_reference_self = true;
   for (auto [_, specific_interface] : identified_facet_type.required_impls()) {
     SemIR::TypeIterator type_iter(&context.sem_ir());
     type_iter.Add(specific_interface);
     if (!find_self(type_iter)) {
-      return false;
+      CARBON_DIAGNOSTIC(
+          RequireImplsMissingSelf, Error,
+          "no `Self` reference found in `require` declaration; `Self` must "
+          "appear in the self-type or as a generic argument for each required "
+          "interface, but found interface `{0}` without a `Self` argument",
+          SemIR::SpecificInterface);
+      context.emitter().Emit(loc_id, RequireImplsMissingSelf,
+                             specific_interface);
+      interfaces_all_reference_self = false;
     }
   }
-
-  return true;
+  return interfaces_all_reference_self;
 }
 
 struct ValidateRequireResult {
@@ -215,12 +229,7 @@ static auto ValidateRequire(Context& context, SemIR::LocId loc_id,
   const auto& identified =
       context.identified_facet_types().Get(identified_facet_type_id);
 
-  if (!TypeStructureReferencesSelf(context, self_inst_id, identified)) {
-    CARBON_DIAGNOSTIC(RequireImplsMissingSelf, Error,
-                      "no `Self` reference found in `require` declaration; "
-                      "`Self` must appear in the self-type or as a generic "
-                      "parameter for each `interface` or `constraint`");
-    context.emitter().Emit(loc_id, RequireImplsMissingSelf);
+  if (!TypeStructureReferencesSelf(context, loc_id, self_inst_id, identified)) {
     return std::nullopt;
   }
 
