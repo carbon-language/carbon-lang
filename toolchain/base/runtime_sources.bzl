@@ -182,6 +182,7 @@ def generate_runtime_sources_cc_library(name, deps = [], **kwargs):
         name = name,
         hdrs = ["runtime_sources.h"],
         deps = [
+            // For StringRef.h
             "@llvm-project//llvm:Support",
         ] + deps,
         **kwargs
