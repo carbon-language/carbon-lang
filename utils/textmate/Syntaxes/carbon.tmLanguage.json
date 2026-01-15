@@ -255,13 +255,8 @@
         },
         {
           "name": "support.class.carbon",
-          "comment": "Matches identifiers in declarations `class C`, `impl C as I`, etc. Keywords are not affected.",
-          "match": "(?<=\\b(as|class|impl|interface)\\s[\\s\\(]*)\\w+"
-        },
-        {
-          "name": "support.class.carbon",
-          "comment": "Matches generic type arguments in declarations `interface I(A, B, Ns.C)`.",
-          "match": "(?<=\\b(as|class|impl|interface)\\s[\\s\\(]*\\w+\\([\\s\\w\\(,\\.]*)\\w+"
+          "comment": "Matches identifiers in declarations `class A`, `interface I(A, B, Ns.C)`, etc.",
+          "match": "(?<=\\b(as|class|impl|interface)\\s[\\s\\(]*[\\w\\.]*(\\([\\s\\w\\(\\),\\.]*)?)\\w+"
         },
         {
           "name": "support.class.carbon",
@@ -270,13 +265,8 @@
         },
         {
           "name": "support.class.carbon",
-          "comment": "Matches type definitions. `x: C`, `x:! I`, etc.",
-          "match": "(?<=\\w+:!?[\\s\\(]*)\\w+"
-        },
-        {
-          "name": "support.class.carbon",
-          "comment": "Matches generic type arguments in type definitions. `x: C(A, B, C)`, `x:! I(A, Ns.B)`, etc.",
-          "match": "(?<=\\w+:!?[\\s\\(]*\\w+\\([\\s\\w\\(,\\.]*)\\w+"
+          "comment": "Matches type definitions. `x: C`, `x:! I(A, Ns.B)`, etc.",
+          "match": "(?<=\\w+:!?[\\s\\(]*[\\w\\.]*(\\([\\s\\w\\(\\),\\.]*)?)\\w+"
         }
       ]
     },
