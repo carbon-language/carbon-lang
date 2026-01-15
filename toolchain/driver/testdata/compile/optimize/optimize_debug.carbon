@@ -71,11 +71,11 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call1 = shl i32 %Int.as.MulAssignWith.impl.Op.call, 1, !dbg !23
 // CHECK:STDOUT:   store i32 %Int.as.MulAssignWith.impl.Op.call1, ptr %.loc19_11.array.index, align 4, !dbg !23
 // CHECK:STDOUT:   %1 = add nuw nsw i32 %n.var.03, 1, !dbg !24
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.call = icmp samesign ult i32 %n.var.03, 65535, !dbg !37
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.call = icmp samesign ult i32 %n.var.03, 65535, !dbg !39
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Less.call, label %while.body, label %while.done, !dbg !22
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done:                                       ; preds = %while.body
-// CHECK:STDOUT:   ret void, !dbg !38
+// CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT:   uselistorder label %while.body, { 1, 0 }
@@ -117,14 +117,16 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !25 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk.Int.9452f4c51951679b.Core:AddAssignWith.5375cfcbca6d9e35.Core.75bec4d236c9daa5", scope: null, file: !26, line: 277, type: !27, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !29)
 // CHECK:STDOUT: !26 = !DIFile(filename: "{{.*}}/prelude/types/int.carbon", directory: "")
 // CHECK:STDOUT: !27 = !DISubroutineType(types: !28)
-// CHECK:STDOUT: !28 = !{null, !19, !7}
+// CHECK:STDOUT: !28 = !{null, !7, !7}
 // CHECK:STDOUT: !29 = !{!30, !31}
-// CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !25, type: !19)
+// CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !25, type: !7)
 // CHECK:STDOUT: !31 = !DILocalVariable(arg: 2, scope: !25, type: !7)
-// CHECK:STDOUT: !32 = distinct !DILocation(line: 343, column: 5, scope: !33, inlinedAt: !36)
-// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8", scope: null, file: !26, line: 341, type: !17, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !34)
-// CHECK:STDOUT: !34 = !{!35}
-// CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !33, type: !19)
-// CHECK:STDOUT: !36 = distinct !DILocation(line: 20, column: 5, scope: !16)
-// CHECK:STDOUT: !37 = !DILocation(line: 18, column: 10, scope: !16)
-// CHECK:STDOUT: !38 = !DILocation(line: 15, column: 1, scope: !16)
+// CHECK:STDOUT: !32 = distinct !DILocation(line: 343, column: 5, scope: !33, inlinedAt: !38)
+// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8", scope: null, file: !26, line: 341, type: !34, spFlags: DISPFlagDefinition, unit: !2, retainedNodes: !36)
+// CHECK:STDOUT: !34 = !DISubroutineType(types: !35)
+// CHECK:STDOUT: !35 = !{null, !7}
+// CHECK:STDOUT: !36 = !{!37}
+// CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !33, type: !7)
+// CHECK:STDOUT: !38 = distinct !DILocation(line: 20, column: 5, scope: !16)
+// CHECK:STDOUT: !39 = !DILocation(line: 18, column: 10, scope: !16)
+// CHECK:STDOUT: !40 = !DILocation(line: 15, column: 1, scope: !16)

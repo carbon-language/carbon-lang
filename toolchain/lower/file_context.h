@@ -25,12 +25,15 @@ struct FunctionInfo {
   // The debug info type of the lowered function.
   llvm::DISubroutineType* di_type;
 
-  // The function's `Call` param patterns, in the order they appear in the LLVM
-  // function's parameter list.
-  llvm::SmallVector<SemIR::InstId> param_pattern_ids;
+  // The `Call` parameter patterns that correspond to parameters of the LLVM IR
+  // function, in the order of the LLVM IR parameter list. Some `Call`
+  // parameters may be omitted (e.g. if they are stateless), and the order may
+  // differ from the SemIR `Call` parameter list (e.g. the return parameter, if
+  // any, always goes first).
+  llvm::SmallVector<SemIR::InstId> lowered_param_pattern_ids;
 
   // Any `Call` param patterns that aren't present in
-  // reordered_param_pattern_ids_.
+  // lowered_param_pattern_ids.
   llvm::SmallVector<SemIR::InstId> unused_param_pattern_ids;
 
   // The lowered function declaration.
@@ -194,7 +197,7 @@ class FileContext {
   struct FunctionTypeInfo {
     llvm::FunctionType* type;
     llvm::DISubroutineType* di_type;
-    llvm::SmallVector<SemIR::InstId> param_pattern_ids;
+    llvm::SmallVector<SemIR::InstId> lowered_param_pattern_ids;
     llvm::SmallVector<SemIR::InstId> unused_param_pattern_ids;
 
     // When return_param_id is not `None`, the corresponding lowered parameter

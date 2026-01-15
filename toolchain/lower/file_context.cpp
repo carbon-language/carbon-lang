@@ -319,7 +319,7 @@ class FileContext::FunctionTypeInfoBuilder {
   // a state where Finalize can be called, and no other operation should be
   // called.
   auto Abort() -> bool {
-    reordered_param_pattern_ids_.clear();
+    lowered_param_pattern_ids_.clear();
     param_types_.clear();
     param_di_types_.clear();
     return_type_ = nullptr;
@@ -383,7 +383,7 @@ class FileContext::FunctionTypeInfoBuilder {
   // IR and DI types.
   auto AddLoweredParam(SemIR::InstId param_pattern_id, LoweredTypes param_types)
       -> bool {
-    reordered_param_pattern_ids_.push_back(param_pattern_id);
+    lowered_param_pattern_ids_.push_back(param_pattern_id);
     param_types_.push_back(param_types.llvm_ir_type);
     param_di_types_.push_back(param_types.llvm_di_type);
     return true;
@@ -424,7 +424,7 @@ class FileContext::FunctionTypeInfoBuilder {
 
   // The SemIR function's `Call` param patterns that correspond to param_types_,
   // in the same order.
-  llvm::SmallVector<SemIR::InstId> reordered_param_pattern_ids_;
+  llvm::SmallVector<SemIR::InstId> lowered_param_pattern_ids_;
 
   // Any `Call` param patterns that aren't present in
   // reordered_param_pattern_ids_.
@@ -450,7 +450,7 @@ auto FileContext::FunctionTypeInfoBuilder::Build(
 
   auto call_param_pattern_ids =
       context_.sem_ir().inst_blocks().Get(function.call_param_patterns_id);
-  reordered_param_pattern_ids_.reserve(call_param_pattern_ids.size());
+  lowered_param_pattern_ids_.reserve(call_param_pattern_ids.size());
   param_types_.reserve(call_param_pattern_ids.size());
   param_di_types_.reserve(call_param_pattern_ids.size());
 
@@ -479,50 +479,50 @@ auto FileContext::FunctionTypeInfoBuilder::Build(
 
 auto FileContext::FunctionTypeInfoBuilder::HandleReturnForm(
     SemIR::InstId return_form_inst_id) -> bool {
-  if (return_form_inst_id.has_value()) {
-    auto return_form_const_id = SemIR::GetConstantValueInSpecific(
-        context_.sem_ir(), specific_id_, return_form_inst_id);
-    auto return_form_inst = context_.sem_ir().insts().Get(
-        context_.sem_ir().constant_values().GetInstId(return_form_const_id));
-    CARBON_KIND_SWITCH(return_form_inst) {
-      case CARBON_KIND(SemIR::InitForm init_form): {
-        CARBON_CHECK(std::exchange(semir_return_param_index_,
-                                   init_form.index.index) == -1,
-                     "TODO: Generalize this to support compound return forms");
-        auto return_type_id =
-            context_.sem_ir().types().GetTypeIdForTypeConstantId(
-                SemIR::GetConstantValueInSpecific(
-                    context_.sem_ir(), specific_id_,
-                    init_form.type_component_inst_id));
-        switch (
-            SemIR::InitRepr::ForType(context_.sem_ir(), return_type_id).kind) {
-          case SemIR::InitRepr::InPlace: {
-            return SetReturnInPlace(return_type_id);
-          }
-          case SemIR::InitRepr::ByCopy: {
-            return SetReturnByCopy(return_type_id);
-          }
-          case SemIR::InitRepr::None:
-            return SetReturnByCopy(SemIR::TypeId::None);
-          case SemIR::InitRepr::Dependent:
-          case SemIR::InitRepr::Incomplete:
-          case SemIR::InitRepr::Abstract:
-            return Abort();
-        }
-      }
-      case CARBON_KIND(SemIR::RefForm ref_form): {
-        auto return_type_id =
-            context_.sem_ir().types().GetTypeIdForTypeConstantId(
-                SemIR::GetConstantValueInSpecific(
-                    context_.sem_ir(), specific_id_,
-                    ref_form.type_component_inst_id));
-        return SetReturnByReference(return_type_id);
-      }
-      default:
-        CARBON_FATAL("Unexpected inst kind: {0}", return_form_inst);
-    }
-  } else {
+  if (!return_form_inst_id.has_value()) {
     return SetReturnByCopy(SemIR::TypeId::None);
+  }
+
+  auto return_form_const_id = SemIR::GetConstantValueInSpecific(
+      context_.sem_ir(), specific_id_, return_form_inst_id);
+  auto return_form_inst = context_.sem_ir().insts().Get(
+      context_.sem_ir().constant_values().GetInstId(return_form_const_id));
+  CARBON_KIND_SWITCH(return_form_inst) {
+    case CARBON_KIND(SemIR::InitForm init_form): {
+      CARBON_CHECK(
+          std::exchange(semir_return_param_index_, init_form.index.index) == -1,
+          "TODO: Generalize this to support compound return forms");
+      auto return_type_id =
+          context_.sem_ir().types().GetTypeIdForTypeConstantId(
+              SemIR::GetConstantValueInSpecific(
+                  context_.sem_ir(), specific_id_,
+                  init_form.type_component_inst_id));
+      switch (
+          SemIR::InitRepr::ForType(context_.sem_ir(), return_type_id).kind) {
+        case SemIR::InitRepr::InPlace: {
+          return SetReturnInPlace(return_type_id);
+        }
+        case SemIR::InitRepr::ByCopy: {
+          return SetReturnByCopy(return_type_id);
+        }
+        case SemIR::InitRepr::None:
+          return SetReturnByCopy(SemIR::TypeId::None);
+        case SemIR::InitRepr::Dependent:
+        case SemIR::InitRepr::Incomplete:
+        case SemIR::InitRepr::Abstract:
+          return Abort();
+      }
+    }
+    case CARBON_KIND(SemIR::RefForm ref_form): {
+      auto return_type_id =
+          context_.sem_ir().types().GetTypeIdForTypeConstantId(
+              SemIR::GetConstantValueInSpecific(
+                  context_.sem_ir(), specific_id_,
+                  ref_form.type_component_inst_id));
+      return SetReturnByReference(return_type_id);
+    }
+    default:
+      CARBON_FATAL("Unexpected inst kind: {0}", return_form_inst);
   }
 }
 
@@ -534,12 +534,13 @@ auto FileContext::FunctionTypeInfoBuilder::HandleParameter(
       SemIR::GetTypeOfInstInSpecific(context_.sem_ir(), specific_id_,
                                      param_pattern_id));
 
-  LoweredTypes pointer_lowered_types = {
-      .llvm_ir_type =
-          llvm::PointerType::get(context_.llvm_context(), /*AddressSpace=*/0),
-      // TODO: replace this untyped pointer placeholder.
-      .llvm_di_type =
-          context_.context().di_builder().createPointerType(nullptr, 8)};
+  // Returns the appropriate LoweredTypes for reference-like parameters.
+  auto ref_lowered_types = [&]() -> LoweredTypes {
+    return {.llvm_ir_type = llvm::PointerType::get(context_.llvm_context(),
+                                                   /*AddressSpace=*/0),
+            // TODO: replace this with a reference type.
+            .llvm_di_type = GetLoweredTypes(param_type_id).llvm_di_type};
+  };
 
   CARBON_CHECK(
       !param_type_id.AsConstantId().is_symbolic(),
@@ -548,12 +549,12 @@ auto FileContext::FunctionTypeInfoBuilder::HandleParameter(
   CARBON_KIND_SWITCH(param_pattern) {
     case SemIR::RefParamPattern::Kind:
     case SemIR::VarParamPattern::Kind: {
-      return AddLoweredParam(param_pattern_id, pointer_lowered_types);
+      return AddLoweredParam(param_pattern_id, ref_lowered_types());
     }
     case SemIR::OutParamPattern::Kind: {
       switch (SemIR::InitRepr::ForType(context_.sem_ir(), param_type_id).kind) {
         case SemIR::InitRepr::InPlace:
-          return AddLoweredParam(param_pattern_id, pointer_lowered_types);
+          return AddLoweredParam(param_pattern_id, ref_lowered_types());
         case SemIR::InitRepr::ByCopy:
         case SemIR::InitRepr::None:
           return IgnoreParam(param_pattern_id);
@@ -599,7 +600,7 @@ auto FileContext::FunctionTypeInfoBuilder::Finalize() -> FunctionTypeInfo {
           .di_type = di_builder.createSubroutineType(
               di_builder.getOrCreateTypeArray(param_di_types_),
               llvm::DINode::FlagZero),
-          .param_pattern_ids = std::move(reordered_param_pattern_ids_),
+          .lowered_param_pattern_ids = std::move(lowered_param_pattern_ids_),
           .unused_param_pattern_ids = std::move(unused_param_pattern_ids_),
           .sret_type = sret_type_};
 }
@@ -703,13 +704,13 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
     // diagnosed by check if detected, but it's not clear that check will always
     // be able to see this problem. In theory, name collisions could also occur
     // due to fingerprint collision.
-    return {
-        {.type = function_type_info.type,
-         .di_type = function_type_info.di_type,
-         .param_pattern_ids = std::move(function_type_info.param_pattern_ids),
-         .unused_param_pattern_ids =
-             std::move(function_type_info.unused_param_pattern_ids),
-         .llvm_function = existing}};
+    return {{.type = function_type_info.type,
+             .di_type = function_type_info.di_type,
+             .lowered_param_pattern_ids =
+                 std::move(function_type_info.lowered_param_pattern_ids),
+             .unused_param_pattern_ids =
+                 std::move(function_type_info.unused_param_pattern_ids),
+             .llvm_function = existing}};
   }
 
   // If this is a C++ function, tell Clang that we referenced it.
@@ -737,8 +738,9 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
                "Mangled name collision: {0}", mangled_name);
 
   // Set up parameters and the return slot.
-  for (auto [inst_id, arg] : llvm::zip_equal(
-           function_type_info.param_pattern_ids, llvm_function->args())) {
+  for (auto [inst_id, arg] :
+       llvm::zip_equal(function_type_info.lowered_param_pattern_ids,
+                       llvm_function->args())) {
     arg.setName(sem_ir().names().GetIRBaseName(
         SemIR::GetPrettyNameFromPatternId(sem_ir(), inst_id)));
   }
@@ -750,7 +752,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
 
   return {{.type = function_type_info.type,
            .di_type = function_type_info.di_type,
-           .param_pattern_ids = std::move(function_type_info.param_pattern_ids),
+           .lowered_param_pattern_ids =
+               std::move(function_type_info.lowered_param_pattern_ids),
            .unused_param_pattern_ids =
                std::move(function_type_info.unused_param_pattern_ids),
            .llvm_function = llvm_function}};
@@ -900,7 +903,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
 
   // Add local variables for the parameters.
   for (auto [llvm_index, param_pattern_id] :
-       llvm::enumerate(function_info->param_pattern_ids)) {
+       llvm::enumerate(function_info->lowered_param_pattern_ids)) {
     function_lowering.SetLocal(
         param_for_param_pattern(param_pattern_id),
         function_info->llvm_function->getArg(llvm_index));
