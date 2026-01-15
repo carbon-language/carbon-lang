@@ -539,8 +539,10 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
       !context.types().Is<SemIR::FacetType>(base_type_id);
 
   // Materialize a temporary for the base expression if necessary.
-  base_id = ConvertToValueOrRefExpr(context, base_id);
-  base_type_id = context.insts().Get(base_id).type_id();
+  if (perform_instance_binding) {
+    base_id = ConvertToValueOrRefExpr(context, base_id);
+    base_type_id = context.insts().Get(base_id).type_id();
+  }
 
   {
     // If `base_type_id` is a facet, we don't know its eventual type yet, but we
