@@ -18,9 +18,7 @@ load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load(
     ":cc_toolchain_actions.bzl",
     "all_compile_actions",
-    "all_cpp_compile_actions",
     "all_link_actions",
-    "codegen_compile_actions",
     "preprocessor_compile_actions",
 )
 load(
@@ -30,6 +28,12 @@ load(
     "user_flags_feature",
 )
 load(":cc_toolchain_config_features.bzl", "target_os_features")
+load(
+    ":cc_toolchain_cpp_features.bzl",
+    "clang_feature",
+    "clang_warnings_feature",
+    "libcxx_feature",
+)
 load(":cc_toolchain_debugging.bzl", "debugging_features")
 load(
     ":cc_toolchain_linking.bzl",
@@ -66,197 +70,37 @@ load(
 )
 
 def _build_features(ctx):
-    # TODO: Refactor this into a reusable form in its own file.
-    default_flags_feature = feature(
-        name = "default_flags",
+    project_flags_feature = feature(
+        name = "project_flags",
         enabled = True,
         flag_sets = [
             flag_set(
-                actions = all_compile_actions + all_link_actions,
-                flag_groups = [
-                    flag_group(flags = [
-                        "-no-canonical-prefixes",
-                        "-fcolor-diagnostics",
-                    ]),
-                    flag_group(
-                        expand_if_available = "sysroot",
-                        flags = ["--sysroot=%{sysroot}"],
-                    ),
-                ],
-            ),
-            flag_set(
                 actions = all_compile_actions,
-                flag_groups = [
-                    # First, flags for all compiles, regardless of output.
-                    flag_group(flags = [
-                        "-Werror",
-                        "-Wall",
-                        "-Wextra",
-                        "-Wthread-safety",
-                        "-Wself-assign",
-                        "-Wimplicit-fallthrough",
-                        "-Wctad-maybe-unsupported",
-                        "-Wextra-semi",
-                        "-Wmissing-prototypes",
-                        "-Wzero-as-null-pointer-constant",
-                        "-Wdelete-non-virtual-dtor",
-
-                        # TODO: Regression that warns on anonymous unions;
-                        # remove depending on fix.
-                        "-Wno-missing-designated-field-initializers",
-
-                        # Don't warn on external code as we can't
-                        # necessarily patch it easily. Note that these have
-                        # to be initial directories in the `#include` line.
-                        "--system-header-prefix=absl/",
-                        "--system-header-prefix=benchmark/",
-                        "--system-header-prefix=boost/",
-                        "--system-header-prefix=clang-tools-extra/",
-                        "--system-header-prefix=clang/",
-                        "--system-header-prefix=gmock/",
-                        "--system-header-prefix=gtest/",
-                        "--system-header-prefix=libfuzzer/",
-                        "--system-header-prefix=llvm/",
-                        "--system-header-prefix=re2/",
-                        "--system-header-prefix=tools/cpp/",
-                        "--system-header-prefix=tree_sitter/",
-                        # Compile actions shouldn't link anything.
-                        "-c",
-                    ]),
-
-                    # Flags controlling the production of specific outputs from
-                    # compile actions.
-                    flag_group(
-                        expand_if_available = "output_assembly_file",
-                        flags = ["-S"],
-                    ),
-                    flag_group(
-                        expand_if_available = "output_preprocess_file",
-                        flags = ["-E"],
-                    ),
-                    flag_group(
-                        expand_if_available = "dependency_file",
-                        flags = ["-MD", "-MF", "%{dependency_file}"],
-                    ),
-                    flag_group(
-                        expand_if_available = "output_file",
-                        flags = ["-frandom-seed=%{output_file}"],
-                    ),
-                ],
-            ),
-            flag_set(
-                # Flags specific to compiling C++ source.
-                actions = all_cpp_compile_actions,
                 flag_groups = [flag_group(flags = [
-                    "-std=c++20",
+                    # Don't warn on external code as we can't
+                    # necessarily patch it easily. Note that these have
+                    # to be initial directories in the `#include` line.
+                    "--system-header-prefix=absl/",
+                    "--system-header-prefix=benchmark/",
+                    "--system-header-prefix=boost/",
+                    "--system-header-prefix=clang-tools-extra/",
+                    "--system-header-prefix=clang/",
+                    "--system-header-prefix=gmock/",
+                    "--system-header-prefix=gtest/",
+                    "--system-header-prefix=libfuzzer/",
+                    "--system-header-prefix=llvm/",
+                    "--system-header-prefix=re2/",
+                    "--system-header-prefix=tools/cpp/",
+                    "--system-header-prefix=tree_sitter/",
                 ])],
-            ),
-            flag_set(
-                actions = codegen_compile_actions,
-                flag_groups = [flag_group(flags = [
-                    "-ffunction-sections",
-                    "-fdata-sections",
-                ])],
-            ),
-            flag_set(
-                actions = codegen_compile_actions,
-                flag_groups = [flag_group(
-                    expand_if_available = "pic",
-                    flags = ["-fPIC"],
-                )],
             ),
             flag_set(
                 actions = preprocessor_compile_actions,
-                flag_groups = [
-                    flag_group(flags = [
-                        # Disable a warning and override builtin macros to
-                        # ensure a hermetic build.
-                        "-Wno-builtin-macro-redefined",
-                        "-D__DATE__=\"redacted\"",
-                        "-D__TIMESTAMP__=\"redacted\"",
-                        "-D__TIME__=\"redacted\"",
-                        # Pass the clang version as a define so that bazel
-                        # caching is more likely to notice version changes.
-                        "-DCLANG_VERSION_FOR_CACHE=\"%s\"" % clang_version_for_cache,
-                    ]),
-                    flag_group(
-                        flags = ["-D%{preprocessor_defines}"],
-                        iterate_over = "preprocessor_defines",
-                    ),
-                    flag_group(
-                        expand_if_available = "includes",
-                        flags = ["-include", "%{includes}"],
-                        iterate_over = "includes",
-                    ),
-                    flag_group(
-                        flags = ["-iquote", "%{quote_include_paths}"],
-                        iterate_over = "quote_include_paths",
-                    ),
-                    flag_group(
-                        flags = ["-I%{include_paths}"],
-                        iterate_over = "include_paths",
-                    ),
-                    flag_group(
-                        flags = ["-isystem", "%{system_include_paths}"],
-                        iterate_over = "system_include_paths",
-                    ),
-                ],
-            ),
-            flag_set(
-                actions = [
-                    ACTION_NAMES.cpp_link_dynamic_library,
-                    ACTION_NAMES.cpp_link_nodeps_dynamic_library,
-                ],
-                flag_groups = [flag_group(flags = ["-shared"])],
-            ),
-            flag_set(
-                actions = all_link_actions,
-                flag_groups = [
-                    flag_group(
-                        expand_if_available = "strip_debug_symbols",
-                        flags = ["-Wl,-S"],
-                    ),
-                    flag_group(
-                        expand_if_available = "library_search_directories",
-                        flags = ["-L%{library_search_directories}"],
-                        iterate_over = "library_search_directories",
-                    ),
-                    flag_group(
-                        expand_if_available =
-                            "runtime_library_search_directories",
-                        iterate_over = "runtime_library_search_directories",
-                        flags = [
-                            "-Wl,-rpath,$ORIGIN/%{runtime_library_search_directories}",
-                        ],
-                    ),
-                ],
-            ),
-        ],
-    )
-
-    libcxx_feature = feature(
-        name = "libcxx",
-        enabled = True,
-        flag_sets = [
-            flag_set(
-                actions = all_cpp_compile_actions + all_link_actions,
                 flag_groups = [flag_group(flags = [
-                    "-stdlib=libc++",
+                    # Pass the Clang version to get better Bazel caching
+                    # behavior with system-installed Clang binaries.
+                    "-DCLANG_VERSION_FOR_CACHE=\"%s\"" % clang_version_for_cache,
                 ])],
-                with_features = [
-                    # libc++ is only used on non-Windows platforms.
-                    with_feature_set(not_features = ["windows_target"]),
-                ],
-            ),
-            flag_set(
-                actions = all_link_actions,
-                flag_groups = [flag_group(flags = [
-                    "-unwindlib=libunwind",
-                ])],
-                with_features = [
-                    # libc++ is only used on non-Windows platforms.
-                    with_feature_set(not_features = ["windows_target"]),
-                ],
             ),
         ],
     )
@@ -389,8 +233,15 @@ def _build_features(ctx):
     features += base_features
     features += target_os_features(ctx.attr.target_os)
     features += [
-        default_flags_feature,
+        # We always use Clang in the toolchain and enable all of its warnings.
+        clang_feature,
+        clang_warnings_feature,
+        # Enable libc++ where supported.
         libcxx_feature,
+
+        # Include any project-specific flags, importantly after the Clang and
+        # warnings features so we can override as necessary here.
+        project_flags_feature,
     ]
     features += sanitizer_features
 
