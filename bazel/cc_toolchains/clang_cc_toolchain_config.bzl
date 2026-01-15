@@ -11,7 +11,6 @@ load(
     "feature_set",
     "flag_group",
     "flag_set",
-    "with_feature_set",
 )
 load("@rules_cc//cc:defs.bzl", "cc_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
@@ -120,20 +119,6 @@ def _build_features(ctx):
         ],
     )
 
-    # Clang HARDENING_MODE has 4 possible values:
-    # https://libcxx.llvm.org/Hardening.html#notes-for-users
-    #
-    # Do not enable DEBUG hardening mode, even for -c dbg, because its
-    # performance impact on llvm-symbolizer is too severe -- this flag
-    # results in symbolization becoming quadratic in the number of debug
-    # symbols, in practice meaning it never completes.
-    libcpp_debug_flags = [
-        "-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE",
-    ]
-    libcpp_release_flags = [
-        "-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST",
-    ]
-
     # TODO: Refactor this into a reusable form in its own file.
     linux_flags_feature = feature(
         name = "linux_flags",
@@ -168,16 +153,6 @@ def _build_features(ctx):
                         "-l:libc++abi.a",
                     ],
                 )],
-            ),
-            flag_set(
-                actions = all_compile_actions,
-                flag_groups = [flag_group(flags = libcpp_debug_flags)],
-                with_features = [with_feature_set(not_features = ["opt"])],
-            ),
-            flag_set(
-                actions = all_compile_actions,
-                flag_groups = [flag_group(flags = libcpp_release_flags)],
-                with_features = [with_feature_set(features = ["opt"])],
             ),
             flag_set(
                 actions = [ACTION_NAMES.cpp_link_executable],
