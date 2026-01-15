@@ -47,12 +47,7 @@ load(
     "optimization_features",
     "x86_64_cpu_flags",
 )
-load(
-    ":cc_toolchain_sanitizer_features.bzl",
-    "macos_asan_workarounds",
-    "sanitizer_features",
-    "sanitizer_static_lib_flags",
-)
+load(":cc_toolchain_sanitizer_features.bzl", "sanitizer_features")
 load(
     ":cc_toolchain_tools.bzl",
     "llvm_action_configs",
@@ -161,18 +156,12 @@ def _build_features(ctx):
     # Next, add the features based on the target platform. Here too the
     # features are order sensitive.
     if ctx.attr.target_os == "linux":
-        features.append(sanitizer_static_lib_flags)
         sysroot = None
     elif ctx.attr.target_os == "windows":
-        # TODO: Need to figure out if we need to add windows specific features
-        # I think the .pdb debug files will need to be handled differently,
-        # so that might be an example where a feature must be added.
         sysroot = None
     elif ctx.attr.target_os == "macos":
-        features.append(macos_asan_workarounds)
         sysroot = sysroot_dir
     elif ctx.attr.target_os == "freebsd":
-        features.append(sanitizer_static_lib_flags)
         sysroot = sysroot_dir
     else:
         fail("Unsupported target OS!")
