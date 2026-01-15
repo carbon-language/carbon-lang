@@ -152,21 +152,6 @@ def _build_features(ctx):
 
     features += modules_features
     features += debugging_features
-
-    # Next, add the features based on the target platform. Here too the
-    # features are order sensitive.
-    if ctx.attr.target_os == "linux":
-        sysroot = None
-    elif ctx.attr.target_os == "windows":
-        sysroot = None
-    elif ctx.attr.target_os == "macos":
-        sysroot = sysroot_dir
-    elif ctx.attr.target_os == "freebsd":
-        sysroot = sysroot_dir
-    else:
-        fail("Unsupported target OS!")
-
-    # Next, append the libraries to link.
     features += linking_features
 
     # TODO: Refactor the target-specific feature management here to be part of
@@ -190,17 +175,10 @@ def _build_features(ctx):
     return features
 
 def _impl(ctx):
-    # TODO: See if this can be refactored into platform features.
-    if ctx.attr.target_os == "linux":
-        sysroot = None
-    elif ctx.attr.target_os == "windows":
-        sysroot = None
-    elif ctx.attr.target_os == "macos":
+    # Only use a sysroot if one was found when detecting Clang.
+    sysroot = None
+    if sysroot_dir != "None":
         sysroot = sysroot_dir
-    elif ctx.attr.target_os == "freebsd":
-        sysroot = sysroot_dir
-    else:
-        fail("Unsupported target OS!")
 
     identifier = "local-{0}-{1}".format(ctx.attr.target_cpu, ctx.attr.target_os)
     return cc_common.create_cc_toolchain_config_info(
