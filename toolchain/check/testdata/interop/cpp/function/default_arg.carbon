@@ -331,7 +331,7 @@ fn Call() {
 // CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %X.ref.loc10: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc10_5.2: ref %X = temporary_storage
-// CHECK:STDOUT:   %.loc10_5.3: init %X = class_init (), %.loc10_5.2 [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc10_5.3: init %X to %.loc10_5.2 = class_init () [concrete = constants.%X.val]
 // CHECK:STDOUT:   %.loc10_5.4: ref %X = temporary %.loc10_5.2, %.loc10_5.3
 // CHECK:STDOUT:   %.loc10_7: ref %X = converted %.loc10_5.1, %.loc10_5.4
 // CHECK:STDOUT:   %B.ref: %X.B.cpp_overload_set.type = name_ref B, imports.%X.B.cpp_overload_set.value [concrete = constants.%X.B.cpp_overload_set.value]
@@ -377,7 +377,7 @@ fn Call() {
 // CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %X.ref.loc12: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc12_5.2: ref %X = temporary_storage
-// CHECK:STDOUT:   %.loc12_5.3: init %X = class_init (), %.loc12_5.2 [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc12_5.3: init %X to %.loc12_5.2 = class_init () [concrete = constants.%X.val]
 // CHECK:STDOUT:   %.loc12_5.4: ref %X = temporary %.loc12_5.2, %.loc12_5.3
 // CHECK:STDOUT:   %.loc12_7.1: ref %X = converted %.loc12_5.1, %.loc12_5.4
 // CHECK:STDOUT:   %D.ref: %X.D.cpp_overload_set.type = name_ref D, imports.%X.D.cpp_overload_set.value [concrete = constants.%X.D.cpp_overload_set.value]
@@ -727,7 +727,7 @@ fn Call() {
 // CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %X.ref.loc11: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc11_5.2: ref %X = temporary_storage
-// CHECK:STDOUT:   %.loc11_5.3: init %X = class_init (), %.loc11_5.2 [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc11_5.3: init %X to %.loc11_5.2 = class_init () [concrete = constants.%X.val]
 // CHECK:STDOUT:   %.loc11_5.4: ref %X = temporary %.loc11_5.2, %.loc11_5.3
 // CHECK:STDOUT:   %.loc11_7: ref %X = converted %.loc11_5.1, %.loc11_5.4
 // CHECK:STDOUT:   %B.ref: %X.B.cpp_overload_set.type = name_ref B, imports.%X.B.cpp_overload_set.value [concrete = constants.%X.B.cpp_overload_set.value]
@@ -757,7 +757,7 @@ fn Call() {
 // CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %X.ref.loc13: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc13_5.2: ref %X = temporary_storage
-// CHECK:STDOUT:   %.loc13_5.3: init %X = class_init (), %.loc13_5.2 [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc13_5.3: init %X to %.loc13_5.2 = class_init () [concrete = constants.%X.val]
 // CHECK:STDOUT:   %.loc13_5.4: ref %X = temporary %.loc13_5.2, %.loc13_5.3
 // CHECK:STDOUT:   %.loc13_7.1: ref %X = converted %.loc13_5.1, %.loc13_5.4
 // CHECK:STDOUT:   %D.ref: %X.D.cpp_overload_set.type = name_ref D, imports.%X.D.cpp_overload_set.value [concrete = constants.%X.D.cpp_overload_set.value]
@@ -785,9 +785,9 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @GlobalNoReturn__carbon_thunk.1(%a.param: %i32, %b.param: %i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GlobalReturnInt(%a.param: %i32, %b.param: %i32) -> %i32;
+// CHECK:STDOUT: fn @GlobalReturnInt(%a.param: %i32, %b.param: %i32) -> out %return.param: %i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @GlobalReturnInt__carbon_thunk(%a.param: %i32, %b.param: %i32) -> %i32;
+// CHECK:STDOUT: fn @GlobalReturnInt__carbon_thunk(%a.param: %i32, %b.param: %i32) -> out %return.param: %i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @GlobalNoReturn.2(%a.param: %i32, %b.param: %i32, %c.param: %i32);
 // CHECK:STDOUT:
@@ -863,7 +863,7 @@ fn Call() {
 // CHECK:STDOUT:   %Cpp.ref.loc56: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %X.ref.loc56: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc56_5.2: ref %X = temporary_storage
-// CHECK:STDOUT:   %.loc56_5.3: init %X = class_init (), %.loc56_5.2 [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc56_5.3: init %X to %.loc56_5.2 = class_init () [concrete = constants.%X.val]
 // CHECK:STDOUT:   %.loc56_5.4: ref %X = temporary %.loc56_5.2, %.loc56_5.3
 // CHECK:STDOUT:   %.loc56_7: ref %X = converted %.loc56_5.1, %.loc56_5.4
 // CHECK:STDOUT:   %B.ref: %X.B.cpp_overload_set.type = name_ref B, imports.%X.B.cpp_overload_set.value [concrete = constants.%X.B.cpp_overload_set.value]
@@ -875,7 +875,7 @@ fn Call() {
 // CHECK:STDOUT:   %Cpp.ref.loc76: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %X.ref.loc76: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc76_5.2: ref %X = temporary_storage
-// CHECK:STDOUT:   %.loc76_5.3: init %X = class_init (), %.loc76_5.2 [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc76_5.3: init %X to %.loc76_5.2 = class_init () [concrete = constants.%X.val]
 // CHECK:STDOUT:   %.loc76_5.4: ref %X = temporary %.loc76_5.2, %.loc76_5.3
 // CHECK:STDOUT:   %.loc76_7: ref %X = converted %.loc76_5.1, %.loc76_5.4
 // CHECK:STDOUT:   %D.ref: %X.D.cpp_overload_set.type = name_ref D, imports.%X.D.cpp_overload_set.value [concrete = constants.%X.D.cpp_overload_set.value]

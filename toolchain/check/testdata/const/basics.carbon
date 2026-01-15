@@ -249,7 +249,7 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A(%p.param: %ptr.728) -> %ptr.728 {
+// CHECK:STDOUT: fn @A(%p.param: %ptr.728) -> out %return.param: %ptr.728 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.728 = name_ref p, %p
 // CHECK:STDOUT:   %impl.elem0: %.de7 = impl_witness_access constants.%Copy.impl_witness.795, element0 [concrete = constants.%ptr.as.Copy.impl.Op.f64]
@@ -260,7 +260,7 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @B(%p.param: %const.8ce) -> %const.8ce {
+// CHECK:STDOUT: fn @B(%p.param: %const.8ce) -> out %return.param: %const.8ce {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %const.8ce = name_ref p, %p
 // CHECK:STDOUT:   %impl.elem0: %.62c = impl_witness_access constants.%Copy.impl_witness.e93, element0 [concrete = constants.%const.as.Copy.impl.Op.c19]
@@ -326,7 +326,7 @@ fn PassConstReferenceToReference(p: const X*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%p.param: %ptr.728) -> %ptr.728 {
+// CHECK:STDOUT: fn @F(%p.param: %ptr.728) -> out %return.param: %ptr.728 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.728 = name_ref p, %p
 // CHECK:STDOUT:   %impl.elem0: %.de7 = impl_witness_access constants.%Copy.impl_witness.795, element0 [concrete = constants.%ptr.as.Copy.impl.Op.f64]

@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <string>
 
+#include "clang/Driver/CreateInvocationFromArgs.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/Utils.h"
 #include "common/string_helpers.h"

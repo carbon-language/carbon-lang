@@ -243,11 +243,11 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.EqWith.impl.Equal(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @C.as.EqWith.impl.Equal(%self.param: %C, %other.param: %C) -> out %return.param: bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.EqWith.impl.NotEqual(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @C.as.EqWith.impl.NotEqual(%self.param: %C, %other.param: %C) -> out %return.param: bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestEqual(%a.param: %C, %b.param: %C) -> bool {
+// CHECK:STDOUT: fn @TestEqual(%a.param: %C, %b.param: %C) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
@@ -257,7 +257,7 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   return %C.as.EqWith.impl.Equal.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestNotEqual(%a.param: %C, %b.param: %C) -> bool {
+// CHECK:STDOUT: fn @TestNotEqual(%a.param: %C, %b.param: %C) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
@@ -358,14 +358,14 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestEqual(%a.param: %D, %b.param: %D) -> bool {
+// CHECK:STDOUT: fn @TestEqual(%a.param: %D, %b.param: %D) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestNotEqual(%a.param: %D, %b.param: %D) -> bool {
+// CHECK:STDOUT: fn @TestNotEqual(%a.param: %D, %b.param: %D) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
@@ -541,18 +541,18 @@ fn TestLhsBad(a: D, b: C) -> bool {
 // CHECK:STDOUT:   .Self = constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.EqWith.impl.Equal(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @C.as.EqWith.impl.Equal(%self.param: %C, %other.param: %C) -> out %return.param: bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.EqWith.impl.NotEqual(%self.param: %C, %other.param: %C) -> bool;
+// CHECK:STDOUT: fn @C.as.EqWith.impl.NotEqual(%self.param: %C, %other.param: %C) -> out %return.param: bool;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestRhsBad(%a.param: %C, %b.param: %D) -> bool {
+// CHECK:STDOUT: fn @TestRhsBad(%a.param: %C, %b.param: %D) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %D = name_ref b, %b
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestLhsBad(%a.param: %D, %b.param: %C) -> bool {
+// CHECK:STDOUT: fn @TestLhsBad(%a.param: %D, %b.param: %C) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %D = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b

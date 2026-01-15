@@ -388,11 +388,11 @@ import Other library "o1";
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc6_15.2: init %C1 = class_init (), file.%c1.var [concrete = constants.%C1.val]
+// CHECK:STDOUT:   %.loc6_15.2: init %C1 to file.%c1.var = class_init () [concrete = constants.%C1.val]
 // CHECK:STDOUT:   %.loc6_1: init %C1 = converted %.loc6_15.1, %.loc6_15.2 [concrete = constants.%C1.val]
 // CHECK:STDOUT:   assign file.%c1.var, %.loc6_1
 // CHECK:STDOUT:   %.loc7_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc7_15.2: init %C2 = class_init (), file.%c2.var [concrete = constants.%C2.val]
+// CHECK:STDOUT:   %.loc7_15.2: init %C2 to file.%c2.var = class_init () [concrete = constants.%C2.val]
 // CHECK:STDOUT:   %.loc7_1: init %C2 = converted %.loc7_15.1, %.loc7_15.2 [concrete = constants.%C2.val]
 // CHECK:STDOUT:   assign file.%c2.var, %.loc7_1
 // CHECK:STDOUT:   return
@@ -454,7 +454,7 @@ import Other library "o1";
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc6_15.2: init %C1 = class_init (), file.%c1.var [concrete = constants.%C1.val]
+// CHECK:STDOUT:   %.loc6_15.2: init %C1 to file.%c1.var = class_init () [concrete = constants.%C1.val]
 // CHECK:STDOUT:   %.loc6_1: init %C1 = converted %.loc6_15.1, %.loc6_15.2 [concrete = constants.%C1.val]
 // CHECK:STDOUT:   assign file.%c1.var, %.loc6_1
 // CHECK:STDOUT:   return
@@ -527,7 +527,7 @@ import Other library "o1";
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc4_16.2: init %C = class_init (), file.%c.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc4_16.2: init %C to file.%c.var = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc4_1: init %C = converted %.loc4_16.1, %.loc4_16.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc4_1
 // CHECK:STDOUT:   return
@@ -625,11 +625,11 @@ import Other library "o1";
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_21.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc6_21.2: init %O1 = class_init (), file.%o1.var [concrete = constants.%O1.val]
+// CHECK:STDOUT:   %.loc6_21.2: init %O1 to file.%o1.var = class_init () [concrete = constants.%O1.val]
 // CHECK:STDOUT:   %.loc6_1: init %O1 = converted %.loc6_21.1, %.loc6_21.2 [concrete = constants.%O1.val]
 // CHECK:STDOUT:   assign file.%o1.var, %.loc6_1
 // CHECK:STDOUT:   %.loc7_21.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc7_21.2: init %O2 = class_init (), file.%o2.var [concrete = constants.%O2.val]
+// CHECK:STDOUT:   %.loc7_21.2: init %O2 to file.%o2.var = class_init () [concrete = constants.%O2.val]
 // CHECK:STDOUT:   %.loc7_1: init %O2 = converted %.loc7_21.1, %.loc7_21.2 [concrete = constants.%O2.val]
 // CHECK:STDOUT:   assign file.%o2.var, %.loc7_1
 // CHECK:STDOUT:   return
@@ -701,7 +701,7 @@ import Other library "o1";
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_21.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc6_21.2: init %O1 = class_init (), file.%o1.var [concrete = constants.%O1.val]
+// CHECK:STDOUT:   %.loc6_21.2: init %O1 to file.%o1.var = class_init () [concrete = constants.%O1.val]
 // CHECK:STDOUT:   %.loc6_1: init %O1 = converted %.loc6_21.1, %.loc6_21.2 [concrete = constants.%O1.val]
 // CHECK:STDOUT:   assign file.%o1.var, %.loc6_1
 // CHECK:STDOUT:   return

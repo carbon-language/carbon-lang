@@ -207,13 +207,13 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   .Make = %MyInt32.Make.decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @IntLiteral() -> type = "int_literal.make_type";
+// CHECK:STDOUT: fn @IntLiteral() -> out %return.param: type = "int_literal.make_type";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%N.param: %MyIntLiteral) -> type = "int.make_type_signed";
+// CHECK:STDOUT: fn @Int(%N.param: %MyIntLiteral) -> out %return.param: type = "int.make_type_signed";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyInt32.Make(%a.param.loc18: %MyIntLiteral) -> %MyInt32 = "int.convert_checked";
+// CHECK:STDOUT: fn @MyInt32.Make(%a.param.loc18: %MyIntLiteral) -> out %return.param.loc18: %MyInt32 = "int.convert_checked";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MyAdd(%a.param: %MyInt32, %b.param: %MyInt32) -> %MyInt32 = "int.sadd";
+// CHECK:STDOUT: fn @MyAdd(%a.param: %MyInt32, %b.param: %MyInt32) -> out %return.param: %MyInt32 = "int.sadd";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -287,5 +287,5 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   .Self = constants.%MyIntLiteral
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Int(%N.param: %MyIntLiteral) -> type;
+// CHECK:STDOUT: fn @Int(%N.param: %MyIntLiteral) -> out %return.param: type;
 // CHECK:STDOUT:

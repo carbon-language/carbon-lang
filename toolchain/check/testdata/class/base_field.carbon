@@ -151,7 +151,7 @@ fn Access(p: Derived*) -> i32* {
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Access(%p.param: %ptr.f74) -> %ptr.235 {
+// CHECK:STDOUT: fn @Access(%p.param: %ptr.f74) -> out %return.param: %ptr.235 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.f74 = name_ref p, %p
 // CHECK:STDOUT:   %.loc29_12: ref %Derived = deref %p.ref

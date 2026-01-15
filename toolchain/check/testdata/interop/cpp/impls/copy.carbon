@@ -243,7 +243,7 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CopyCopyable(%c.param: %Copyable) -> %return.param: %Copyable {
+// CHECK:STDOUT: fn @CopyCopyable(%c.param: %Copyable) -> out %return.param: %Copyable {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Copyable = name_ref c, %c
 // CHECK:STDOUT:   <elided>
@@ -258,11 +258,11 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   %.loc8_10.4: %ptr.29d = converted %addr.loc8_10.1, %.loc8_10.3
 // CHECK:STDOUT:   %addr.loc8_10.2: %ptr.e47 = addr_of %.loc6_40.1
 // CHECK:STDOUT:   %Copyable__carbon_thunk.call: init %empty_tuple.type = call imports.%Copyable__carbon_thunk.decl(%.loc8_10.4, %addr.loc8_10.2)
-// CHECK:STDOUT:   %.loc8_10.5: init %Copyable = in_place_init %Copyable__carbon_thunk.call, %.loc6_40.1
+// CHECK:STDOUT:   %.loc8_10.5: init %Copyable to %.loc6_40.1 = in_place_init %Copyable__carbon_thunk.call
 // CHECK:STDOUT:   return %.loc8_10.5 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CopyExplicitCopy(%c.param: %ExplicitCopy) -> %return.param: %ExplicitCopy {
+// CHECK:STDOUT: fn @CopyExplicitCopy(%c.param: %ExplicitCopy) -> out %return.param: %ExplicitCopy {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %ExplicitCopy = name_ref c, %c
 // CHECK:STDOUT:   <elided>
@@ -277,7 +277,7 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   %.loc14_10.4: %ptr.093 = converted %addr.loc14_10.1, %.loc14_10.3
 // CHECK:STDOUT:   %addr.loc14_10.2: %ptr.84c = addr_of %.loc12_48.1
 // CHECK:STDOUT:   %ExplicitCopy__carbon_thunk.call: init %empty_tuple.type = call imports.%ExplicitCopy__carbon_thunk.decl(%.loc14_10.4, %addr.loc14_10.2)
-// CHECK:STDOUT:   %.loc14_10.5: init %ExplicitCopy = in_place_init %ExplicitCopy__carbon_thunk.call, %.loc12_48.1
+// CHECK:STDOUT:   %.loc14_10.5: init %ExplicitCopy to %.loc12_48.1 = in_place_init %ExplicitCopy__carbon_thunk.call
 // CHECK:STDOUT:   return %.loc14_10.5 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -312,7 +312,7 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   %Copy.impl_witness_table.c3a = impl_witness_table (%Core.import_ref.203), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DoCopy(%c.param: %Copyable) -> %return.param: %Copyable {
+// CHECK:STDOUT: fn @DoCopy(%c.param: %Copyable) -> out %return.param: %Copyable {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Copy.ref: %Copy.type.4b4 = name_ref Copy, file.%Copy.decl [concrete = constants.%Copy]
 // CHECK:STDOUT:   %c.ref: %Copyable = name_ref c, %c
@@ -323,11 +323,11 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   %.loc12_16.2: %Copy.type.fb2 = converted constants.%Copyable, %Copy.facet.loc12_16.2 [concrete = constants.%Copy.facet.c39]
 // CHECK:STDOUT:   %Copy.specific_fn: <specific function> = specific_function %Copy.ref, @Copy.loc6(constants.%Copy.facet.c39) [concrete = constants.%Copy.specific_fn]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Copy.call: init %Copyable = call %Copy.specific_fn(%c.ref) to %.loc10_34.1
+// CHECK:STDOUT:   %Copy.call: init %Copyable to %.loc10_34.1 = call %Copy.specific_fn(%c.ref)
 // CHECK:STDOUT:   return %Copy.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @EqualWitnesses(%p.param: %ptr.fba) -> %ptr.fba {
+// CHECK:STDOUT: fn @EqualWitnesses(%p.param: %ptr.fba) -> out %return.param: %ptr.fba {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.fba = name_ref p, %p
 // CHECK:STDOUT:   %impl.elem0: %.de0 = impl_witness_access constants.%Copy.impl_witness.146, element0 [concrete = constants.%ptr.as.Copy.impl.Op.96a]

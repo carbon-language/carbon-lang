@@ -270,10 +270,10 @@ class X(U:! type) {
 // CHECK:STDOUT:   %.loc5_13.1: form = init_form %T, call_param0 [symbolic = %.loc5_13.1 (constants.%.c6c)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.51d1c4.1)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @HasF.F.%T (%T.67d);
+// CHECK:STDOUT:   fn() -> out %return.param: @HasF.F.%T (%T.67d);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.HasF.impl.F() -> %return.param: %Param {
+// CHECK:STDOUT: fn @C.as.HasF.impl.F() -> out %return.param: %Param {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc15_21.1: %struct_type.x.c96 = struct_literal (%int_2) [concrete = constants.%struct]
@@ -284,8 +284,8 @@ class X(U:! type) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc15_21.2(%int_2) [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc15_21.2: init %i32 = converted %int_2, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %.loc15_21.3: ref %i32 = class_element_access %return.param, element0
-// CHECK:STDOUT:   %.loc15_21.4: init %i32 = initialize_from %.loc15_21.2 to %.loc15_21.3 [concrete = constants.%int_2.ef8]
-// CHECK:STDOUT:   %.loc15_21.5: init %Param = class_init (%.loc15_21.4), %return.param [concrete = constants.%Param.val]
+// CHECK:STDOUT:   %.loc15_21.4: init %i32 to %.loc15_21.3 = initialize_from %.loc15_21.2 [concrete = constants.%int_2.ef8]
+// CHECK:STDOUT:   %.loc15_21.5: init %Param to %return.param = class_init (%.loc15_21.4) [concrete = constants.%Param.val]
 // CHECK:STDOUT:   %.loc15_22: init %Param = converted %.loc15_21.1, %.loc15_21.5 [concrete = constants.%Param.val]
 // CHECK:STDOUT:   return %.loc15_22 to %return.param
 // CHECK:STDOUT: }
@@ -300,7 +300,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %F.ref.loc21: %HasF.assoc_type.078 = name_ref F, %.loc21_17 [concrete = constants.%assoc0.2b0]
 // CHECK:STDOUT:   %impl.elem0.loc21: %.2bf = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%C.as.HasF.impl.F]
 // CHECK:STDOUT:   %.loc21_20.1: ref %Param = temporary_storage
-// CHECK:STDOUT:   %C.as.HasF.impl.F.call.loc21: init %Param = call %impl.elem0.loc21() to %.loc21_20.1
+// CHECK:STDOUT:   %C.as.HasF.impl.F.call.loc21: init %Param to %.loc21_20.1 = call %impl.elem0.loc21()
 // CHECK:STDOUT:   %.loc21_20.2: ref %Param = temporary %.loc21_20.1, %C.as.HasF.impl.F.call.loc21
 // CHECK:STDOUT:   %x.ref.loc21: %Param.elem = name_ref x, @Param.%.loc9 [concrete = @Param.%.loc9]
 // CHECK:STDOUT:   %.loc21_21.1: ref %i32 = class_element_access %.loc21_20.2, element0
@@ -320,7 +320,7 @@ class X(U:! type) {
 // CHECK:STDOUT:   %F.ref.loc22: %HasF.assoc_type.078 = name_ref F, %.loc22_17 [concrete = constants.%assoc0.2b0]
 // CHECK:STDOUT:   %impl.elem0.loc22_17: %.2bf = impl_witness_access constants.%HasF.impl_witness, element0 [concrete = constants.%C.as.HasF.impl.F]
 // CHECK:STDOUT:   %.loc22_20.1: ref %Param = temporary_storage
-// CHECK:STDOUT:   %C.as.HasF.impl.F.call.loc22: init %Param = call %impl.elem0.loc22_17() to %.loc22_20.1
+// CHECK:STDOUT:   %C.as.HasF.impl.F.call.loc22: init %Param to %.loc22_20.1 = call %impl.elem0.loc22_17()
 // CHECK:STDOUT:   %.loc22_20.2: ref %Param = temporary %.loc22_20.1, %C.as.HasF.impl.F.call.loc22
 // CHECK:STDOUT:   %x.ref.loc22: %Param.elem = name_ref x, @Param.%.loc9 [concrete = @Param.%.loc9]
 // CHECK:STDOUT:   %.loc22_21.1: ref %i32 = class_element_access %.loc22_20.2, element0

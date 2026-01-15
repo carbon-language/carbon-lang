@@ -328,13 +328,13 @@ fn B() {
 // CHECK:STDOUT:   %.loc20_22.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %ImplsGeneric.ref: type = name_ref ImplsGeneric, file.%ImplsGeneric.decl [concrete = constants.%ImplsGeneric]
 // CHECK:STDOUT:   %.loc20_22.2: ref %ImplsGeneric = temporary_storage
-// CHECK:STDOUT:   %.loc20_22.3: init %ImplsGeneric = class_init (), %.loc20_22.2 [concrete = constants.%ImplsGeneric.val]
+// CHECK:STDOUT:   %.loc20_22.3: init %ImplsGeneric to %.loc20_22.2 = class_init () [concrete = constants.%ImplsGeneric.val]
 // CHECK:STDOUT:   %.loc20_22.4: ref %ImplsGeneric = temporary %.loc20_22.2, %.loc20_22.3
 // CHECK:STDOUT:   %.loc20_24.1: ref %ImplsGeneric = converted %.loc20_22.1, %.loc20_22.4
 // CHECK:STDOUT:   %.loc20_42.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %GenericParam.ref: type = name_ref GenericParam, file.%GenericParam.decl [concrete = constants.%GenericParam]
 // CHECK:STDOUT:   %.loc20_42.2: ref %GenericParam = temporary_storage
-// CHECK:STDOUT:   %.loc20_42.3: init %GenericParam = class_init (), %.loc20_42.2 [concrete = constants.%GenericParam.val]
+// CHECK:STDOUT:   %.loc20_42.3: init %GenericParam to %.loc20_42.2 = class_init () [concrete = constants.%GenericParam.val]
 // CHECK:STDOUT:   %.loc20_42.4: ref %GenericParam = temporary %.loc20_42.2, %.loc20_42.3
 // CHECK:STDOUT:   %.loc20_44.1: ref %GenericParam = converted %.loc20_42.1, %.loc20_42.4
 // CHECK:STDOUT:   %Generic.facet: %Generic.type.498 = facet_value constants.%ImplsGeneric, (constants.%Generic.impl_witness) [concrete = constants.%Generic.facet]
@@ -595,7 +595,7 @@ fn B() {
 // CHECK:STDOUT:   %.loc12_6.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc12_6.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc12_6.3: init %C = class_init (), %.loc12_6.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc12_6.3: init %C to %.loc12_6.2 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc12_6.4: ref %C = temporary %.loc12_6.2, %.loc12_6.3
 // CHECK:STDOUT:   %.loc12_8.1: ref %C = converted %.loc12_6.1, %.loc12_6.4
 // CHECK:STDOUT:   %I.facet.loc12_12.1: %I.type.5f7 = facet_value constants.%C, (constants.%I.impl_witness.1c4) [concrete = constants.%I.facet]
@@ -835,7 +835,7 @@ fn B() {
 // CHECK:STDOUT:   %.loc19_6.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc19_6.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc19_6.3: init %C = class_init (), %.loc19_6.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc19_6.3: init %C to %.loc19_6.2 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc19_6.4: ref %C = temporary %.loc19_6.2, %.loc19_6.3
 // CHECK:STDOUT:   %.loc19_8: ref %C = converted %.loc19_6.1, %.loc19_6.4
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc19_6.4, constants.%DestroyOp
@@ -1044,7 +1044,7 @@ fn B() {
 // CHECK:STDOUT:   %.loc19_19.2: type = converted %.loc19_18, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%empty_struct_type, constants.%empty_struct_type) [concrete = constants.%C.9f1]
 // CHECK:STDOUT:   %.loc19_6.2: ref %C.9f1 = temporary_storage
-// CHECK:STDOUT:   %.loc19_6.3: init %C.9f1 = class_init (), %.loc19_6.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc19_6.3: init %C.9f1 to %.loc19_6.2 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc19_6.4: ref %C.9f1 = temporary %.loc19_6.2, %.loc19_6.3
 // CHECK:STDOUT:   %.loc19_8: ref %C.9f1 = converted %.loc19_6.1, %.loc19_6.4
 // CHECK:STDOUT:   %DestroyOp.bound: <bound method> = bound_method %.loc19_6.4, constants.%DestroyOp

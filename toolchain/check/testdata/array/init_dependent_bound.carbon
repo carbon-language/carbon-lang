@@ -105,7 +105,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %arr.var: ref @G.%array_type.loc7_22.2 (%array_type.1b3) = var %arr.var_patt
 // CHECK:STDOUT:     %.loc7_27.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc7_27.2: init @G.%array_type.loc7_22.2 (%array_type.1b3) = array_init () to %arr.var [symbolic = %array (constants.%array.ca4)]
+// CHECK:STDOUT:     %.loc7_27.2: init @G.%array_type.loc7_22.2 (%array_type.1b3) to %arr.var = array_init () [symbolic = %array (constants.%array.ca4)]
 // CHECK:STDOUT:     %.loc7_3.1: init @G.%array_type.loc7_22.2 (%array_type.1b3) = converted %.loc7_27.1, %.loc7_27.2 [symbolic = %array (constants.%array.ca4)]
 // CHECK:STDOUT:     assign %arr.var, %.loc7_3.1
 // CHECK:STDOUT:     %.loc7_22: type = splice_block %array_type.loc7_22.1 [symbolic = %array_type.loc7_22.2 (constants.%array_type.1b3)] {

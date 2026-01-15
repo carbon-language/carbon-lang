@@ -121,11 +121,11 @@ fn F() -> Cpp.AbstractFinal {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> %return.param: %AbstractFinal {
+// CHECK:STDOUT: fn @F() -> out %return.param: %AbstractFinal {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %.loc11_14.1: ref %AbstractFinal = splice_block %return.param {}
-// CHECK:STDOUT:   %F.call: init %AbstractFinal = call %F.ref() to %.loc11_14.1
+// CHECK:STDOUT:   %F.call: init %AbstractFinal to %.loc11_14.1 = call %F.ref()
 // CHECK:STDOUT:   return %F.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

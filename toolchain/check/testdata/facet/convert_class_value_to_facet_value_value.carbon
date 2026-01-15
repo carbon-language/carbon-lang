@@ -145,7 +145,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc23_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Goat.ref: type = name_ref Goat, file.%Goat.decl [concrete = constants.%Goat]
 // CHECK:STDOUT:   %.loc23_15.2: ref %Goat = temporary_storage
-// CHECK:STDOUT:   %.loc23_15.3: init %Goat = class_init (), %.loc23_15.2 [concrete = constants.%Goat.val]
+// CHECK:STDOUT:   %.loc23_15.3: init %Goat to %.loc23_15.2 = class_init () [concrete = constants.%Goat.val]
 // CHECK:STDOUT:   %.loc23_15.4: ref %Goat = temporary %.loc23_15.2, %.loc23_15.3
 // CHECK:STDOUT:   %.loc23_17.1: ref %Goat = converted %.loc23_15.1, %.loc23_15.4
 // CHECK:STDOUT:   %Animal.facet.loc23_24.1: %Animal.type = facet_value constants.%Goat, (constants.%Animal.impl_witness) [concrete = constants.%Animal.facet]

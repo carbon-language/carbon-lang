@@ -137,16 +137,22 @@ auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
   }
 }
 
-auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id)
-    -> InstId {
+auto FindReturnSlotArgForInitializer(const File& sem_ir, InstId init_id,
+                                     bool allow_transitive) -> InstId {
   while (true) {
     Inst init_untyped = sem_ir.insts().Get(init_id);
     CARBON_KIND_SWITCH(init_untyped) {
       case CARBON_KIND(AsCompatible init): {
+        if (!allow_transitive) {
+          return InstId::None;
+        }
         init_id = init.source_id;
         continue;
       }
       case CARBON_KIND(Converted init): {
+        if (!allow_transitive) {
+          return InstId::None;
+        }
         init_id = init.result_id;
         continue;
       }

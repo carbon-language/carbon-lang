@@ -46,13 +46,13 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @TestOp(%a.param: %C) -> %return.param: %C {
+// CHECK:STDOUT: fn @TestOp(%a.param: %C) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %impl.elem1: %.e21 = impl_witness_access constants.%Negate.impl_witness, element1 [concrete = constants.%C.as.Negate.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %C.as.Negate.impl.Op.call: init %C = call %bound_method(%a.ref) to %.loc27_20.1
+// CHECK:STDOUT:   %C.as.Negate.impl.Op.call: init %C to %.loc27_20.1 = call %bound_method(%a.ref)
 // CHECK:STDOUT:   return %C.as.Negate.impl.Op.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -144,7 +144,7 @@ let negative_lit_zero: Core.IntLiteral() = RightShiftLit(0, -1);
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> %i32 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %i32, %b.param: %i32) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %RightShift.ref: %RightShift.type = name_ref RightShift, file.%RightShift.decl [concrete = constants.%RightShift]
 // CHECK:STDOUT:   %a.ref: %i32 = name_ref a, %a
@@ -166,7 +166,7 @@ let negative_lit_zero: Core.IntLiteral() = RightShiftLit(0, -1);
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCall(%a.param: %u32, %b.param: %i32) -> %u32 {
+// CHECK:STDOUT: fn @RuntimeCall(%a.param: %u32, %b.param: %i32) -> out %return.param: %u32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %RightShift.ref: %RightShift.type = name_ref RightShift, file.%RightShift.decl [concrete = constants.%RightShift]
 // CHECK:STDOUT:   %a.ref: %u32 = name_ref a, %a

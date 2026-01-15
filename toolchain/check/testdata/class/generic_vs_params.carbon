@@ -301,23 +301,23 @@ class Foo[T:! type];
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc15_30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc15_30.2: init %NotGenericNoParams = class_init (), file.%a.var [concrete = constants.%NotGenericNoParams.val]
+// CHECK:STDOUT:   %.loc15_30.2: init %NotGenericNoParams to file.%a.var = class_init () [concrete = constants.%NotGenericNoParams.val]
 // CHECK:STDOUT:   %.loc15_1: init %NotGenericNoParams = converted %.loc15_30.1, %.loc15_30.2 [concrete = constants.%NotGenericNoParams.val]
 // CHECK:STDOUT:   assign file.%a.var, %.loc15_1
 // CHECK:STDOUT:   %.loc16_33.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc16_33.2: init %NotGenericButParams = class_init (), file.%b.var [concrete = constants.%NotGenericButParams.val]
+// CHECK:STDOUT:   %.loc16_33.2: init %NotGenericButParams to file.%b.var = class_init () [concrete = constants.%NotGenericButParams.val]
 // CHECK:STDOUT:   %.loc16_1: init %NotGenericButParams = converted %.loc16_33.1, %.loc16_33.2 [concrete = constants.%NotGenericButParams.val]
 // CHECK:STDOUT:   assign file.%b.var, %.loc16_1
 // CHECK:STDOUT:   %.loc17_31.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc17_31.2: init %GenericAndParams.d3d = class_init (), file.%c.var [concrete = constants.%GenericAndParams.val.835]
+// CHECK:STDOUT:   %.loc17_31.2: init %GenericAndParams.d3d to file.%c.var = class_init () [concrete = constants.%GenericAndParams.val.835]
 // CHECK:STDOUT:   %.loc17_1: init %GenericAndParams.d3d = converted %.loc17_31.1, %.loc17_31.2 [concrete = constants.%GenericAndParams.val.835]
 // CHECK:STDOUT:   assign file.%c.var, %.loc17_1
 // CHECK:STDOUT:   %.loc18_32.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc18_32.2: init %GenericNoParams.efa = class_init (), file.%d.var [concrete = constants.%GenericNoParams.val]
+// CHECK:STDOUT:   %.loc18_32.2: init %GenericNoParams.efa to file.%d.var = class_init () [concrete = constants.%GenericNoParams.val]
 // CHECK:STDOUT:   %.loc18_1: init %GenericNoParams.efa = converted %.loc18_32.1, %.loc18_32.2 [concrete = constants.%GenericNoParams.val]
 // CHECK:STDOUT:   assign file.%d.var, %.loc18_1
 // CHECK:STDOUT:   %.loc19_36.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc19_36.2: init %GenericAndParams.ed1 = class_init (), file.%e.var [concrete = constants.%GenericAndParams.val.e35]
+// CHECK:STDOUT:   %.loc19_36.2: init %GenericAndParams.ed1 to file.%e.var = class_init () [concrete = constants.%GenericAndParams.val.e35]
 // CHECK:STDOUT:   %.loc19_1: init %GenericAndParams.ed1 = converted %.loc19_36.1, %.loc19_36.2 [concrete = constants.%GenericAndParams.val.e35]
 // CHECK:STDOUT:   assign file.%e.var, %.loc19_1
 // CHECK:STDOUT:   return

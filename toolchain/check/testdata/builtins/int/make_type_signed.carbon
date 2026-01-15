@@ -114,12 +114,12 @@ var m: Int(1000000000);
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%n.param: %i64.builtin) -> %i64.builtin {
+// CHECK:STDOUT: fn @F(%n.param: %i64.builtin) -> out %return.param: %i64.builtin {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%n.param: %i13.builtin) -> %i13.builtin {
+// CHECK:STDOUT: fn @G(%n.param: %i13.builtin) -> out %return.param: %i13.builtin {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

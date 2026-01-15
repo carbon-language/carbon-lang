@@ -239,7 +239,7 @@ fn Test(e: E) {
 // CHECK:STDOUT:   %.loc5_17.6: type = type_of_inst %.loc5_17.5 [template]
 // CHECK:STDOUT:   %.loc5_17.7: <instruction> = convert_to_value_action %.loc5_17.2, constants.%i32 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.1 (%T.67db0b.1)) -> %i32 {
+// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.1 (%T.67db0b.1)) -> out %return.param: %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
@@ -431,7 +431,7 @@ fn Test(e: E) {
 // CHECK:STDOUT:   %.loc8_17.6: type = type_of_inst %.loc8_17.5 [template]
 // CHECK:STDOUT:   %.loc8_17.7: <instruction> = convert_to_value_action %.loc8_17.2, constants.%i32 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.1 (%T.67db0b.1)) -> %i32 {
+// CHECK:STDOUT:   fn(%x.param: @F.%T.loc4_15.1 (%T.67db0b.1)) -> out %return.param: %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]
@@ -623,7 +623,7 @@ fn Test(e: E) {
 // CHECK:STDOUT:   %.loc11_17.6: type = type_of_inst %.loc11_17.5 [template]
 // CHECK:STDOUT:   %.loc11_17.7: <instruction> = convert_to_value_action %.loc11_17.2, constants.%i32 [template]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.loc4.%T.loc4_15.1 (%T.67db0b.1)) -> %i32 {
+// CHECK:STDOUT:   fn(%x.param: @F.loc4.%T.loc4_15.1 (%T.67db0b.1)) -> out %return.param: %i32 {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %n.patt: %pattern_type.7ce = value_binding_pattern n [concrete]

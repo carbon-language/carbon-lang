@@ -131,7 +131,7 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:   %Copy.impl_witness_table.c3a = impl_witness_table (%Core.import_ref.203), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param: %A.0bedf0.1) -> %i32 {
+// CHECK:STDOUT: fn @F(%x.param: %A.0bedf0.1) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref.loc9: %A.0bedf0.1 = name_ref x, %x
 // CHECK:STDOUT:   %f.ref: %A.f.cpp_overload_set.type = name_ref f, imports.%A.f.cpp_overload_set.value [concrete = constants.%A.f.cpp_overload_set.value]
@@ -149,7 +149,7 @@ var y: Cpp.Xint.r#type = 0;
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G(%p.param: %ptr.270) -> %ptr.fb2 {
+// CHECK:STDOUT: fn @G(%p.param: %ptr.270) -> out %return.param: %ptr.fb2 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.270 = name_ref p, %p
 // CHECK:STDOUT:   %.loc17_11.1: ref %A.0bedf0.2 = deref %p.ref

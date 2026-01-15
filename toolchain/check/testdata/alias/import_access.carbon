@@ -127,7 +127,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc4_16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc4_16.2: init %C = class_init (), file.%inst.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc4_16.2: init %C to file.%inst.var = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc4_1: init %C = converted %.loc4_16.1, %.loc4_16.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%inst.var, %.loc4_1
 // CHECK:STDOUT:   return

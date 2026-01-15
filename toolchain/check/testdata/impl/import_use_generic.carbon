@@ -320,7 +320,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: fn @G() -> <error> {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -330,14 +330,14 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H() {
+// CHECK:STDOUT: fn @H() -> <error> {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_17.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc6_17.2: init %C.850 = class_init (), file.%c.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc6_17.2: init %C.850 to file.%c.var = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc6_1: init %C.850 = converted %.loc6_17.1, %.loc6_17.2 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return

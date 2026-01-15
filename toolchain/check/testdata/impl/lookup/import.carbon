@@ -1638,7 +1638,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %obj.var: ref %AnyParam.33d = var %obj.var_patt
 // CHECK:STDOUT:   %.loc13_58.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc13_58.2: init %AnyParam.33d = class_init (), %obj.var [concrete = constants.%AnyParam.val]
+// CHECK:STDOUT:   %.loc13_58.2: init %AnyParam.33d to %obj.var = class_init () [concrete = constants.%AnyParam.val]
 // CHECK:STDOUT:   %.loc13_3: init %AnyParam.33d = converted %.loc13_58.1, %.loc13_58.2 [concrete = constants.%AnyParam.val]
 // CHECK:STDOUT:   assign %obj.var, %.loc13_3
 // CHECK:STDOUT:   %.loc13_53: type = splice_block %AnyParam [concrete = constants.%AnyParam.33d] {
@@ -1838,7 +1838,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %obj.var: ref %AnyParam.861 = var %obj.var_patt
 // CHECK:STDOUT:   %.loc9_50.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc9_50.2: init %AnyParam.861 = class_init (), %obj.var [concrete = constants.%AnyParam.val]
+// CHECK:STDOUT:   %.loc9_50.2: init %AnyParam.861 to %obj.var = class_init () [concrete = constants.%AnyParam.val]
 // CHECK:STDOUT:   %.loc8: init %AnyParam.861 = converted %.loc9_50.1, %.loc9_50.2 [concrete = constants.%AnyParam.val]
 // CHECK:STDOUT:   assign %obj.var, %.loc8
 // CHECK:STDOUT:   %.loc9_45: type = splice_block %AnyParam [concrete = constants.%AnyParam.861] {
@@ -2075,7 +2075,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %obj.var: ref %AnyParam.8e0 = var %obj.var_patt
 // CHECK:STDOUT:   %.loc13_54.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc13_54.2: init %AnyParam.8e0 = class_init (), %obj.var [concrete = constants.%AnyParam.val]
+// CHECK:STDOUT:   %.loc13_54.2: init %AnyParam.8e0 to %obj.var = class_init () [concrete = constants.%AnyParam.val]
 // CHECK:STDOUT:   %.loc13_3: init %AnyParam.8e0 = converted %.loc13_54.1, %.loc13_54.2 [concrete = constants.%AnyParam.val]
 // CHECK:STDOUT:   assign %obj.var, %.loc13_3
 // CHECK:STDOUT:   %.loc13_49: type = splice_block %AnyParam [concrete = constants.%AnyParam.8e0] {
@@ -2271,7 +2271,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %obj.var: ref %AnyParam.d71 = var %obj.var_patt
 // CHECK:STDOUT:   %.loc8_74.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc8_74.2: init %AnyParam.d71 = class_init (), %obj.var [concrete = constants.%AnyParam.val]
+// CHECK:STDOUT:   %.loc8_74.2: init %AnyParam.d71 to %obj.var = class_init () [concrete = constants.%AnyParam.val]
 // CHECK:STDOUT:   %.loc8_3: init %AnyParam.d71 = converted %.loc8_74.1, %.loc8_74.2 [concrete = constants.%AnyParam.val]
 // CHECK:STDOUT:   assign %obj.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_69: type = splice_block %AnyParam [concrete = constants.%AnyParam.d71] {

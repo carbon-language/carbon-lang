@@ -139,7 +139,7 @@ fn G(o: Outer) {
 // CHECK:STDOUT:   .n = %.loc17
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%oi.param: %Inner) -> %i32 {
+// CHECK:STDOUT: fn @F(%oi.param: %Inner) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %oi.ref: %Inner = name_ref oi, %oi
 // CHECK:STDOUT:   %n.ref: %Inner.elem = name_ref n, @Inner.%.loc17 [concrete = @Inner.%.loc17]

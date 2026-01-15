@@ -59,7 +59,7 @@ fn Main() {
 // CHECK:STDOUT:   %Main.decl: %Main.type = fn_decl @Main [concrete = constants.%Main] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Echo(%a.param: %empty_struct_type) -> %empty_struct_type {
+// CHECK:STDOUT: fn @Echo(%a.param: %empty_struct_type) -> out %return.param: %empty_struct_type {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %empty_struct_type = name_ref a, %a
 // CHECK:STDOUT:   %.loc16_10: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]

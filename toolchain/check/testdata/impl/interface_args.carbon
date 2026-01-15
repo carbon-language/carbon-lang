@@ -193,7 +193,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %.loc4_31.1: form = init_form %Dest, call_param1 [symbolic = %.loc4_31.1 (constants.%.e5f)]
 // CHECK:STDOUT:   %pattern_type.loc4_28: type = pattern_type %Dest [symbolic = %pattern_type.loc4_28 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @ImplicitAs.Convert.%Self.binding.as_type (%Self.binding.as_type)) -> @ImplicitAs.Convert.%Dest (%Dest);
+// CHECK:STDOUT:   fn(%self.param: @ImplicitAs.Convert.%Self.binding.as_type (%Self.binding.as_type)) -> out %return.param: @ImplicitAs.Convert.%Dest (%Dest);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
@@ -999,7 +999,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %.loc6_16.1: form = init_form %T, call_param0 [symbolic = %.loc6_16.1 (constants.%.c6c)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> @Factory.Make.%T (%T);
+// CHECK:STDOUT:   fn() -> out %return.param: @Factory.Make.%T (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Factory.Method(@Factory.%T.loc4_19.2: type, @Factory.%Self.loc4_29.1: @Factory.%Factory.type (%Factory.type.142)) {
@@ -1011,12 +1011,12 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %.loc8_30.1: form = init_form %T, call_param1 [symbolic = %.loc8_30.1 (constants.%.e5f)]
 // CHECK:STDOUT:   %pattern_type.loc8_27: type = pattern_type %T [symbolic = %pattern_type.loc8_27 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @Factory.Method.%Self.binding.as_type (%Self.binding.as_type)) -> @Factory.Method.%T (%T);
+// CHECK:STDOUT:   fn(%self.param: @Factory.Method.%Self.binding.as_type (%Self.binding.as_type)) -> out %return.param: @Factory.Method.%T (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.as.Factory.impl.Make() -> %B;
+// CHECK:STDOUT: fn @A.as.Factory.impl.Make() -> out %return.param: %B;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.as.Factory.impl.Method(%self.param: %A) -> %B;
+// CHECK:STDOUT: fn @A.as.Factory.impl.Method(%self.param: %A) -> out %return.param: %B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Factory(constants.%T) {
 // CHECK:STDOUT:   %T.loc4_19.1 => constants.%T
@@ -1263,7 +1263,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeB() -> %return.param: %B {
+// CHECK:STDOUT: fn @MakeB() -> out %return.param: %B {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A]
 // CHECK:STDOUT:   %Factory.ref: %Factory.type.2e5 = name_ref Factory, imports.%Main.Factory [concrete = constants.%Factory.generic]
@@ -1275,13 +1275,13 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %.loc5_11: %Factory.type.5dd = converted %A.ref, %Factory.facet [concrete = constants.%Factory.facet]
 // CHECK:STDOUT:   %impl.elem0: %.d31 = impl_witness_access constants.%Factory.impl_witness, element0 [concrete = constants.%A.as.Factory.impl.Make]
 // CHECK:STDOUT:   %.loc4_15.1: ref %B = splice_block %return.param {}
-// CHECK:STDOUT:   %A.as.Factory.impl.Make.call: init %B = call %impl.elem0() to %.loc4_15.1
+// CHECK:STDOUT:   %A.as.Factory.impl.Make.call: init %B to %.loc4_15.1 = call %impl.elem0()
 // CHECK:STDOUT:   return %A.as.Factory.impl.Make.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.as.Factory.impl.Make [from "factory.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @InstanceB(%a.param: %A) -> %return.param: %B {
+// CHECK:STDOUT: fn @InstanceB(%a.param: %A) -> out %return.param: %B {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %Factory.ref: %Factory.type.2e5 = name_ref Factory, imports.%Main.Factory [concrete = constants.%Factory.generic]
@@ -1292,7 +1292,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %impl.elem1: %.b77 = impl_witness_access constants.%Factory.impl_witness, element1 [concrete = constants.%A.as.Factory.impl.Method]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   %.loc7_23.1: ref %B = splice_block %return.param {}
-// CHECK:STDOUT:   %A.as.Factory.impl.Method.call: init %B = call %bound_method(%a.ref) to %.loc7_23.1
+// CHECK:STDOUT:   %A.as.Factory.impl.Method.call: init %B to %.loc7_23.1 = call %bound_method(%a.ref)
 // CHECK:STDOUT:   return %A.as.Factory.impl.Method.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1537,7 +1537,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeC() -> %return.param: %C {
+// CHECK:STDOUT: fn @MakeC() -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%Main.A [concrete = constants.%A]
 // CHECK:STDOUT:   %Factory.ref: %Factory.type.2e5 = name_ref Factory, imports.%Main.Factory [concrete = constants.%Factory.generic]
@@ -1548,7 +1548,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @InstanceC(%a.param: %A) -> %return.param: %C {
+// CHECK:STDOUT: fn @InstanceC(%a.param: %A) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a
 // CHECK:STDOUT:   %Factory.ref: %Factory.type.2e5 = name_ref Factory, imports.%Main.Factory [concrete = constants.%Factory.generic]

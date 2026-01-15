@@ -437,9 +437,9 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc6_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.1: %struct_type.x = struct_literal (%.loc6_25.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc6_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
-// CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type = tuple_init () to %.loc6_26.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type to %.loc6_26.2 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.3: init %empty_tuple.type = converted %.loc6_25.1, %.loc6_25.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc6_26.4: init %C = class_init (%.loc6_26.3), file.%c.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc6_26.4: init %C to file.%c.var = class_init (%.loc6_26.3) [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_26.1, %.loc6_26.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
@@ -503,9 +503,9 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc7_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_26.1: %struct_type.x = struct_literal (%.loc7_25.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc7_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
-// CHECK:STDOUT:   %.loc7_25.2: init %empty_tuple.type = tuple_init () to %.loc7_26.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_25.2: init %empty_tuple.type to %.loc7_26.2 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_26.3: init %empty_tuple.type = converted %.loc7_25.1, %.loc7_25.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc7_26.4: init %C = class_init (%.loc7_26.3), file.%c.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc7_26.4: init %C to file.%c.var = class_init (%.loc7_26.3) [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_26.1, %.loc7_26.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc7_1
 // CHECK:STDOUT:   return
@@ -569,9 +569,9 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc6_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.1: %struct_type.x = struct_literal (%.loc6_25.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc6_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
-// CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type = tuple_init () to %.loc6_26.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type to %.loc6_26.2 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.3: init %empty_tuple.type = converted %.loc6_25.1, %.loc6_25.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc6_26.4: init %C = class_init (%.loc6_26.3), file.%c.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc6_26.4: init %C to file.%c.var = class_init (%.loc6_26.3) [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_26.1, %.loc6_26.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
@@ -633,9 +633,9 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc6_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.1: %struct_type.x = struct_literal (%.loc6_25.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc6_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
-// CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type = tuple_init () to %.loc6_26.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type to %.loc6_26.2 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.3: init %empty_tuple.type = converted %.loc6_25.1, %.loc6_25.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc6_26.4: init %C = class_init (%.loc6_26.3), file.%c.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc6_26.4: init %C to file.%c.var = class_init (%.loc6_26.3) [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_26.1, %.loc6_26.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
@@ -698,9 +698,9 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc7_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_26.1: %struct_type.x = struct_literal (%.loc7_25.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc7_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
-// CHECK:STDOUT:   %.loc7_25.2: init %empty_tuple.type = tuple_init () to %.loc7_26.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_25.2: init %empty_tuple.type to %.loc7_26.2 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_26.3: init %empty_tuple.type = converted %.loc7_25.1, %.loc7_25.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc7_26.4: init %C = class_init (%.loc7_26.3), file.%c.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc7_26.4: init %C to file.%c.var = class_init (%.loc7_26.3) [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc7_1: init %C = converted %.loc7_26.1, %.loc7_26.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc7_1
 // CHECK:STDOUT:   return
@@ -762,9 +762,9 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc6_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.1: %struct_type.x = struct_literal (%.loc6_25.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc6_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
-// CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type = tuple_init () to %.loc6_26.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_25.2: init %empty_tuple.type to %.loc6_26.2 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_26.3: init %empty_tuple.type = converted %.loc6_25.1, %.loc6_25.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc6_26.4: init %C = class_init (%.loc6_26.3), file.%c.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc6_26.4: init %C to file.%c.var = class_init (%.loc6_26.3) [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc6_1: init %C = converted %.loc6_26.1, %.loc6_26.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc6_1
 // CHECK:STDOUT:   return
@@ -832,9 +832,9 @@ alias C = Other.C;
 // CHECK:STDOUT:   %.loc11_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_26.1: %struct_type.x = struct_literal (%.loc11_25.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %.loc11_26.2: ref %empty_tuple.type = class_element_access file.%c.var, element0 [concrete = constants.%.dd7]
-// CHECK:STDOUT:   %.loc11_25.2: init %empty_tuple.type = tuple_init () to %.loc11_26.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc11_25.2: init %empty_tuple.type to %.loc11_26.2 = tuple_init () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc11_26.3: init %empty_tuple.type = converted %.loc11_25.1, %.loc11_25.2 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc11_26.4: init %C = class_init (%.loc11_26.3), file.%c.var [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc11_26.4: init %C to file.%c.var = class_init (%.loc11_26.3) [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc11_1: init %C = converted %.loc11_26.1, %.loc11_26.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   assign file.%c.var, %.loc11_1
 // CHECK:STDOUT:   return

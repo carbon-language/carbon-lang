@@ -229,8 +229,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_43.2: init %f32.97e = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc11_43.3: ref %f32.97e = array_index %a.var, %int_0
-// CHECK:STDOUT:   %.loc11_43.4: init %f32.97e = initialize_from %.loc11_43.2 to %.loc11_43.3 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc11_43.5: init %array_type = array_init (%.loc11_43.4) to %a.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc11_43.4: init %f32.97e to %.loc11_43.3 = initialize_from %.loc11_43.2 [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc11_43.5: init %array_type to %a.var = array_init (%.loc11_43.4) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc11_3: init %array_type = converted %.loc11_43.1, %.loc11_43.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc11_3
 // CHECK:STDOUT:   %.loc11_34: type = splice_block %array_type [concrete = constants.%array_type] {
@@ -395,8 +395,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_52.2: init %f32.97e = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc11_52.3: ref %f32.97e = array_index %a.var, %int_0
-// CHECK:STDOUT:   %.loc11_52.4: init %f32.97e = initialize_from %.loc11_52.2 to %.loc11_52.3 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc11_52.5: init %array_type = array_init (%.loc11_52.4) to %a.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc11_52.4: init %f32.97e to %.loc11_52.3 = initialize_from %.loc11_52.2 [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc11_52.5: init %array_type to %a.var = array_init (%.loc11_52.4) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc11_3: init %array_type = converted %.loc11_52.1, %.loc11_52.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc11_3
 // CHECK:STDOUT:   %.loc11_43: type = splice_block %array_type [concrete = constants.%array_type] {
@@ -603,7 +603,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc16_80.1: ref %LongLongResult = temporary_storage
 // CHECK:STDOUT:   %addr.loc16: %ptr.a95 = addr_of %.loc16_80.1
 // CHECK:STDOUT:   %PassLongLong__carbon_thunk.call.loc16: init %empty_tuple.type = call imports.%PassLongLong__carbon_thunk.decl.139b1c.1(%cpp_long_long.ref.loc16, %addr.loc16)
-// CHECK:STDOUT:   %.loc16_80.2: init %LongLongResult = in_place_init %PassLongLong__carbon_thunk.call.loc16, %.loc16_80.1
+// CHECK:STDOUT:   %.loc16_80.2: init %LongLongResult to %.loc16_80.1 = in_place_init %PassLongLong__carbon_thunk.call.loc16
 // CHECK:STDOUT:   %.loc16_32: type = splice_block %LongLongResult.ref.loc16 [concrete = constants.%LongLongResult] {
 // CHECK:STDOUT:     %Cpp.ref.loc16_29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %LongLongResult.ref.loc16: type = name_ref LongLongResult, imports.%LongLongResult.decl [concrete = constants.%LongLongResult]
@@ -630,7 +630,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc19_94.1: ref %LongLongResult = temporary_storage
 // CHECK:STDOUT:   %addr.loc19: %ptr.a95 = addr_of %.loc19_94.1
 // CHECK:STDOUT:   %PassLongLong__carbon_thunk.call.loc19: init %empty_tuple.type = call imports.%PassLongLong__carbon_thunk.decl.139b1c.1(%cpp_compat_long_long.ref, %addr.loc19)
-// CHECK:STDOUT:   %.loc19_94.2: init %LongLongResult = in_place_init %PassLongLong__carbon_thunk.call.loc19, %.loc19_94.1
+// CHECK:STDOUT:   %.loc19_94.2: init %LongLongResult to %.loc19_94.1 = in_place_init %PassLongLong__carbon_thunk.call.loc19
 // CHECK:STDOUT:   %.loc19_39: type = splice_block %LongLongResult.ref.loc19 [concrete = constants.%LongLongResult] {
 // CHECK:STDOUT:     %Cpp.ref.loc19_36: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %LongLongResult.ref.loc19: type = name_ref LongLongResult, imports.%LongLongResult.decl [concrete = constants.%LongLongResult]
@@ -661,7 +661,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc22_70.1: ref %LongResult = temporary_storage
 // CHECK:STDOUT:   %addr.loc22: %ptr.305 = addr_of %.loc22_70.1
 // CHECK:STDOUT:   %PassLongLong__carbon_thunk.call.loc22: init %empty_tuple.type = call imports.%PassLongLong__carbon_thunk.decl.139b1c.2(%carbon_i64.ref, %addr.loc22)
-// CHECK:STDOUT:   %.loc22_70.2: init %LongResult = in_place_init %PassLongLong__carbon_thunk.call.loc22, %.loc22_70.1
+// CHECK:STDOUT:   %.loc22_70.2: init %LongResult to %.loc22_70.1 = in_place_init %PassLongLong__carbon_thunk.call.loc22
 // CHECK:STDOUT:   %.loc22_29: type = splice_block %LongResult.ref [concrete = constants.%LongResult] {
 // CHECK:STDOUT:     %Cpp.ref.loc22_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %LongResult.ref: type = name_ref LongResult, imports.%LongResult.decl [concrete = constants.%LongResult]
@@ -684,8 +684,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc24_48.2: init %f32.97e = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc24_48.3: ref %f32.97e = array_index %a.var, %int_0
-// CHECK:STDOUT:   %.loc24_48.4: init %f32.97e = initialize_from %.loc24_48.2 to %.loc24_48.3 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc24_48.5: init %array_type = array_init (%.loc24_48.4) to %a.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc24_48.4: init %f32.97e to %.loc24_48.3 = initialize_from %.loc24_48.2 [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc24_48.5: init %array_type to %a.var = array_init (%.loc24_48.4) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc24_3: init %array_type = converted %.loc24_48.1, %.loc24_48.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc24_3
 // CHECK:STDOUT:   %.loc24_39: type = splice_block %array_type [concrete = constants.%array_type] {
@@ -898,7 +898,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc16_100.1: ref %ULongLongResult = temporary_storage
 // CHECK:STDOUT:   %addr.loc16: %ptr.d19 = addr_of %.loc16_100.1
 // CHECK:STDOUT:   %PassULongLong__carbon_thunk.call.loc16: init %empty_tuple.type = call imports.%PassULongLong__carbon_thunk.decl.f0c073.1(%cpp_unsigned_long_long.ref.loc16, %addr.loc16)
-// CHECK:STDOUT:   %.loc16_100.2: init %ULongLongResult = in_place_init %PassULongLong__carbon_thunk.call.loc16, %.loc16_100.1
+// CHECK:STDOUT:   %.loc16_100.2: init %ULongLongResult to %.loc16_100.1 = in_place_init %PassULongLong__carbon_thunk.call.loc16
 // CHECK:STDOUT:   %.loc16_41: type = splice_block %ULongLongResult.ref.loc16 [concrete = constants.%ULongLongResult] {
 // CHECK:STDOUT:     %Cpp.ref.loc16_38: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %ULongLongResult.ref.loc16: type = name_ref ULongLongResult, imports.%ULongLongResult.decl [concrete = constants.%ULongLongResult]
@@ -925,7 +925,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc19_98.1: ref %ULongLongResult = temporary_storage
 // CHECK:STDOUT:   %addr.loc19: %ptr.d19 = addr_of %.loc19_98.1
 // CHECK:STDOUT:   %PassULongLong__carbon_thunk.call.loc19: init %empty_tuple.type = call imports.%PassULongLong__carbon_thunk.decl.f0c073.1(%cpp_compat_ulong_long.ref, %addr.loc19)
-// CHECK:STDOUT:   %.loc19_98.2: init %ULongLongResult = in_place_init %PassULongLong__carbon_thunk.call.loc19, %.loc19_98.1
+// CHECK:STDOUT:   %.loc19_98.2: init %ULongLongResult to %.loc19_98.1 = in_place_init %PassULongLong__carbon_thunk.call.loc19
 // CHECK:STDOUT:   %.loc19_40: type = splice_block %ULongLongResult.ref.loc19 [concrete = constants.%ULongLongResult] {
 // CHECK:STDOUT:     %Cpp.ref.loc19_37: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %ULongLongResult.ref.loc19: type = name_ref ULongLongResult, imports.%ULongLongResult.decl [concrete = constants.%ULongLongResult]
@@ -956,7 +956,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc22_72.1: ref %ULongResult = temporary_storage
 // CHECK:STDOUT:   %addr.loc22: %ptr.f5e = addr_of %.loc22_72.1
 // CHECK:STDOUT:   %PassULongLong__carbon_thunk.call.loc22: init %empty_tuple.type = call imports.%PassULongLong__carbon_thunk.decl.f0c073.2(%carbon_u64.ref, %addr.loc22)
-// CHECK:STDOUT:   %.loc22_72.2: init %ULongResult = in_place_init %PassULongLong__carbon_thunk.call.loc22, %.loc22_72.1
+// CHECK:STDOUT:   %.loc22_72.2: init %ULongResult to %.loc22_72.1 = in_place_init %PassULongLong__carbon_thunk.call.loc22
 // CHECK:STDOUT:   %.loc22_29: type = splice_block %ULongResult.ref [concrete = constants.%ULongResult] {
 // CHECK:STDOUT:     %Cpp.ref.loc22_26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %ULongResult.ref: type = name_ref ULongResult, imports.%ULongResult.decl [concrete = constants.%ULongResult]
@@ -979,8 +979,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc24_57.2: init %f32.97e = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.e3b]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc24_57.3: ref %f32.97e = array_index %a.var, %int_0
-// CHECK:STDOUT:   %.loc24_57.4: init %f32.97e = initialize_from %.loc24_57.2 to %.loc24_57.3 [concrete = constants.%float.e3b]
-// CHECK:STDOUT:   %.loc24_57.5: init %array_type = array_init (%.loc24_57.4) to %a.var [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc24_57.4: init %f32.97e to %.loc24_57.3 = initialize_from %.loc24_57.2 [concrete = constants.%float.e3b]
+// CHECK:STDOUT:   %.loc24_57.5: init %array_type to %a.var = array_init (%.loc24_57.4) [concrete = constants.%array]
 // CHECK:STDOUT:   %.loc24_3: init %array_type = converted %.loc24_57.1, %.loc24_57.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc24_3
 // CHECK:STDOUT:   %.loc24_48: type = splice_block %array_type [concrete = constants.%array_type] {

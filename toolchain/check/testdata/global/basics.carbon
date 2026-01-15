@@ -158,7 +158,7 @@ var a: A = Make();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc6_13.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc6_13.2: init %A = class_init (), file.%a.var [concrete = constants.%A.val]
+// CHECK:STDOUT:   %.loc6_13.2: init %A to file.%a.var = class_init () [concrete = constants.%A.val]
 // CHECK:STDOUT:   %.loc6_1: init %A = converted %.loc6_13.1, %.loc6_13.2 [concrete = constants.%A.val]
 // CHECK:STDOUT:   assign file.%a.var, %.loc6_1
 // CHECK:STDOUT:   <elided>
@@ -187,7 +187,7 @@ var a: A = Make();
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc8: ref %A = splice_block file.%a.var [concrete = file.%a.var] {}
-// CHECK:STDOUT:   %Make.call: init %A = call %Make.ref() to %.loc8
+// CHECK:STDOUT:   %Make.call: init %A to %.loc8 = call %Make.ref()
 // CHECK:STDOUT:   assign file.%a.var, %Make.call
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

@@ -564,7 +564,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   .m = %.loc5_28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Make() -> %return.param: %D {
+// CHECK:STDOUT: fn @Make() -> out %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0.loc6_31: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %int_0.loc6_39: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
@@ -576,7 +576,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_40.1: init %i32 = call %bound_method.loc6_40.2(%int_0.loc6_31) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.2: init %i32 = converted %int_0.loc6_31, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_40.1 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.3: ref %i32 = class_element_access %return.param, element0
-// CHECK:STDOUT:   %.loc6_40.4: init %i32 = initialize_from %.loc6_40.2 to %.loc6_40.3 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc6_40.4: init %i32 to %.loc6_40.3 = initialize_from %.loc6_40.2 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %impl.elem0.loc6_40.2: %.863 = impl_witness_access constants.%ImplicitAs.impl_witness.6bc, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.0b5]
 // CHECK:STDOUT:   %bound_method.loc6_40.3: <bound method> = bound_method %int_0.loc6_39, %impl.elem0.loc6_40.2 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.897]
 // CHECK:STDOUT:   %specific_fn.loc6_40.2: <specific function> = specific_function %impl.elem0.loc6_40.2, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
@@ -584,73 +584,73 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_40.2: init %i32 = call %bound_method.loc6_40.4(%int_0.loc6_39) [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.5: init %i32 = converted %int_0.loc6_39, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_40.2 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %.loc6_40.6: ref %i32 = class_element_access %return.param, element1
-// CHECK:STDOUT:   %.loc6_40.7: init %i32 = initialize_from %.loc6_40.5 to %.loc6_40.6 [concrete = constants.%int_0.6a9]
-// CHECK:STDOUT:   %.loc6_40.8: init %D = class_init (%.loc6_40.4, %.loc6_40.7), %return.param [concrete = constants.%D.val]
+// CHECK:STDOUT:   %.loc6_40.7: init %i32 to %.loc6_40.6 = initialize_from %.loc6_40.5 [concrete = constants.%int_0.6a9]
+// CHECK:STDOUT:   %.loc6_40.8: init %D to %return.param = class_init (%.loc6_40.4, %.loc6_40.7) [concrete = constants.%D.val]
 // CHECK:STDOUT:   %.loc6_41: init %D = converted %.loc6_40.1, %.loc6_40.8 [concrete = constants.%D.val]
 // CHECK:STDOUT:   return %.loc6_41 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc8(%self.param: %C.4f5) -> %return.param: %D {
+// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc8(%self.param: %C.4f5) -> out %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc8_63.1: ref %D = splice_block %return.param {}
-// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc8_63.1
+// CHECK:STDOUT:   %Make.call: init %D to %.loc8_63.1 = call %Make.ref()
 // CHECK:STDOUT:   return %Make.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc9(%self.param: %C.95b) -> %return.param: %D {
+// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc9(%self.param: %C.95b) -> out %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc9_63.1: ref %D = splice_block %return.param {}
-// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc9_63.1
+// CHECK:STDOUT:   %Make.call: init %D to %.loc9_63.1 = call %Make.ref()
 // CHECK:STDOUT:   return %Make.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc10(%self.param: %C.a93) -> %return.param: %D {
+// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc10(%self.param: %C.a93) -> out %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc10_63.1: ref %D = splice_block %return.param {}
-// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc10_63.1
+// CHECK:STDOUT:   %Make.call: init %D to %.loc10_63.1 = call %Make.ref()
 // CHECK:STDOUT:   return %Make.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc11(%self.param: %C.1d7) -> %return.param: %D {
+// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc11(%self.param: %C.1d7) -> out %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc11_63.1: ref %D = splice_block %return.param {}
-// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc11_63.1
+// CHECK:STDOUT:   %Make.call: init %D to %.loc11_63.1 = call %Make.ref()
 // CHECK:STDOUT:   return %Make.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc12(%self.param: %C.e40) -> %return.param: %D {
+// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc12(%self.param: %C.e40) -> out %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc12_63.1: ref %D = splice_block %return.param {}
-// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc12_63.1
+// CHECK:STDOUT:   %Make.call: init %D to %.loc12_63.1 = call %Make.ref()
 // CHECK:STDOUT:   return %Make.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc13(%self.param: %C.3f1) -> %return.param: %D {
+// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc13(%self.param: %C.3f1) -> out %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc13_63.1: ref %D = splice_block %return.param {}
-// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc13_63.1
+// CHECK:STDOUT:   %Make.call: init %D to %.loc13_63.1 = call %Make.ref()
 // CHECK:STDOUT:   return %Make.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc14(%self.param: %C.0fa) -> %return.param: %D {
+// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc14(%self.param: %C.0fa) -> out %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc14_63.1: ref %D = splice_block %return.param {}
-// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc14_63.1
+// CHECK:STDOUT:   %Make.call: init %D to %.loc14_63.1 = call %Make.ref()
 // CHECK:STDOUT:   return %Make.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc15(%self.param: %C.2b7) -> %return.param: %D {
+// CHECK:STDOUT: fn @C.as.ImplicitAs.impl.Convert.loc15(%self.param: %C.2b7) -> out %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc15_63.1: ref %D = splice_block %return.param {}
-// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc15_63.1
+// CHECK:STDOUT:   %Make.call: init %D to %.loc15_63.1 = call %Make.ref()
 // CHECK:STDOUT:   return %Make.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1014,7 +1014,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F0(%n.param: %i32) -> %return.param: %D {
+// CHECK:STDOUT: fn @F0(%n.param: %i32) -> out %return.param: %D {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %false.loc7: bool = bool_literal false [concrete = constants.%false]
 // CHECK:STDOUT:   if %false.loc7 br !if.then.loc7 else br !if.else.loc7
@@ -1033,14 +1033,14 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc7_34.2: %i32 = converted %int_0, %.loc7_34.1 [concrete = constants.%int_0.6a9]
 // CHECK:STDOUT:   %C.loc7: type = class_type @C, @C(constants.%int_0.6a9) [concrete = constants.%C.b00]
 // CHECK:STDOUT:   %.loc7_24.2: ref %C.b00 = temporary_storage
-// CHECK:STDOUT:   %.loc7_24.3: init %C.b00 = class_init (), %.loc7_24.2 [concrete = constants.%C.val.452]
+// CHECK:STDOUT:   %.loc7_24.3: init %C.b00 to %.loc7_24.2 = class_init () [concrete = constants.%C.val.452]
 // CHECK:STDOUT:   %.loc7_24.4: ref %C.b00 = temporary %.loc7_24.2, %.loc7_24.3
 // CHECK:STDOUT:   %.loc7_26.1: ref %C.b00 = converted %.loc7_24.1, %.loc7_24.4
 // CHECK:STDOUT:   %impl.elem0.loc7_35: %.094 = impl_witness_access constants.%ImplicitAs.impl_witness.01b, element0 [concrete = constants.%C.as.ImplicitAs.impl.Convert.78d]
 // CHECK:STDOUT:   %bound_method.loc7_35: <bound method> = bound_method %.loc7_26.1, %impl.elem0.loc7_35
 // CHECK:STDOUT:   %.loc6_19.1: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %.loc7_26.2: %C.b00 = acquire_value %.loc7_26.1
-// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc7: init %D = call %bound_method.loc7_35(%.loc7_26.2) to %.loc6_19.1
+// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc7: init %D to %.loc6_19.1 = call %bound_method.loc7_35(%.loc7_26.2)
 // CHECK:STDOUT:   %.loc7_35: init %D = converted %.loc7_26.1, %C.as.ImplicitAs.impl.Convert.call.loc7
 // CHECK:STDOUT:   %DestroyOp.bound.loc7_24.1: <bound method> = bound_method %.loc7_24.4, constants.%DestroyOp.b0ebf8.1
 // CHECK:STDOUT:   %DestroyOp.call.loc7_24.1: init %empty_tuple.type = call %DestroyOp.bound.loc7_24.1(%.loc7_24.4)
@@ -1064,14 +1064,14 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc8_34.2: %i32 = converted %int_1, %.loc8_34.1 [concrete = constants.%int_1.5d2]
 // CHECK:STDOUT:   %C.loc8: type = class_type @C, @C(constants.%int_1.5d2) [concrete = constants.%C.674]
 // CHECK:STDOUT:   %.loc8_24.2: ref %C.674 = temporary_storage
-// CHECK:STDOUT:   %.loc8_24.3: init %C.674 = class_init (), %.loc8_24.2 [concrete = constants.%C.val.678]
+// CHECK:STDOUT:   %.loc8_24.3: init %C.674 to %.loc8_24.2 = class_init () [concrete = constants.%C.val.678]
 // CHECK:STDOUT:   %.loc8_24.4: ref %C.674 = temporary %.loc8_24.2, %.loc8_24.3
 // CHECK:STDOUT:   %.loc8_26.1: ref %C.674 = converted %.loc8_24.1, %.loc8_24.4
 // CHECK:STDOUT:   %impl.elem0.loc8_35: %.deb = impl_witness_access constants.%ImplicitAs.impl_witness.638, element0 [concrete = constants.%C.as.ImplicitAs.impl.Convert.b44]
 // CHECK:STDOUT:   %bound_method.loc8_35: <bound method> = bound_method %.loc8_26.1, %impl.elem0.loc8_35
 // CHECK:STDOUT:   %.loc6_19.2: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %.loc8_26.2: %C.674 = acquire_value %.loc8_26.1
-// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc8: init %D = call %bound_method.loc8_35(%.loc8_26.2) to %.loc6_19.2
+// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc8: init %D to %.loc6_19.2 = call %bound_method.loc8_35(%.loc8_26.2)
 // CHECK:STDOUT:   %.loc8_35: init %D = converted %.loc8_26.1, %C.as.ImplicitAs.impl.Convert.call.loc8
 // CHECK:STDOUT:   %DestroyOp.bound.loc8_24.1: <bound method> = bound_method %.loc8_24.4, constants.%DestroyOp.b0ebf8.2
 // CHECK:STDOUT:   %DestroyOp.call.loc8_24.1: init %empty_tuple.type = call %DestroyOp.bound.loc8_24.1(%.loc8_24.4)
@@ -1097,14 +1097,14 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc9_34.2: %i32 = converted %int_2, %.loc9_34.1 [concrete = constants.%int_2.ef8]
 // CHECK:STDOUT:   %C.loc9: type = class_type @C, @C(constants.%int_2.ef8) [concrete = constants.%C.681]
 // CHECK:STDOUT:   %.loc9_24.2: ref %C.681 = temporary_storage
-// CHECK:STDOUT:   %.loc9_24.3: init %C.681 = class_init (), %.loc9_24.2 [concrete = constants.%C.val.fb5]
+// CHECK:STDOUT:   %.loc9_24.3: init %C.681 to %.loc9_24.2 = class_init () [concrete = constants.%C.val.fb5]
 // CHECK:STDOUT:   %.loc9_24.4: ref %C.681 = temporary %.loc9_24.2, %.loc9_24.3
 // CHECK:STDOUT:   %.loc9_26.1: ref %C.681 = converted %.loc9_24.1, %.loc9_24.4
 // CHECK:STDOUT:   %impl.elem0.loc9_35: %.8f9 = impl_witness_access constants.%ImplicitAs.impl_witness.a8d, element0 [concrete = constants.%C.as.ImplicitAs.impl.Convert.dd6]
 // CHECK:STDOUT:   %bound_method.loc9_35: <bound method> = bound_method %.loc9_26.1, %impl.elem0.loc9_35
 // CHECK:STDOUT:   %.loc6_19.3: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %.loc9_26.2: %C.681 = acquire_value %.loc9_26.1
-// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc9: init %D = call %bound_method.loc9_35(%.loc9_26.2) to %.loc6_19.3
+// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc9: init %D to %.loc6_19.3 = call %bound_method.loc9_35(%.loc9_26.2)
 // CHECK:STDOUT:   %.loc9_35: init %D = converted %.loc9_26.1, %C.as.ImplicitAs.impl.Convert.call.loc9
 // CHECK:STDOUT:   %DestroyOp.bound.loc9_24.1: <bound method> = bound_method %.loc9_24.4, constants.%DestroyOp.b0ebf8.3
 // CHECK:STDOUT:   %DestroyOp.call.loc9_24.1: init %empty_tuple.type = call %DestroyOp.bound.loc9_24.1(%.loc9_24.4)
@@ -1132,14 +1132,14 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc10_34.2: %i32 = converted %int_3, %.loc10_34.1 [concrete = constants.%int_3.822]
 // CHECK:STDOUT:   %C.loc10: type = class_type @C, @C(constants.%int_3.822) [concrete = constants.%C.7ac]
 // CHECK:STDOUT:   %.loc10_24.2: ref %C.7ac = temporary_storage
-// CHECK:STDOUT:   %.loc10_24.3: init %C.7ac = class_init (), %.loc10_24.2 [concrete = constants.%C.val.fe7]
+// CHECK:STDOUT:   %.loc10_24.3: init %C.7ac to %.loc10_24.2 = class_init () [concrete = constants.%C.val.fe7]
 // CHECK:STDOUT:   %.loc10_24.4: ref %C.7ac = temporary %.loc10_24.2, %.loc10_24.3
 // CHECK:STDOUT:   %.loc10_26.1: ref %C.7ac = converted %.loc10_24.1, %.loc10_24.4
 // CHECK:STDOUT:   %impl.elem0.loc10_35: %.286 = impl_witness_access constants.%ImplicitAs.impl_witness.56b, element0 [concrete = constants.%C.as.ImplicitAs.impl.Convert.d1c]
 // CHECK:STDOUT:   %bound_method.loc10_35: <bound method> = bound_method %.loc10_26.1, %impl.elem0.loc10_35
 // CHECK:STDOUT:   %.loc6_19.4: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %.loc10_26.2: %C.7ac = acquire_value %.loc10_26.1
-// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc10: init %D = call %bound_method.loc10_35(%.loc10_26.2) to %.loc6_19.4
+// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc10: init %D to %.loc6_19.4 = call %bound_method.loc10_35(%.loc10_26.2)
 // CHECK:STDOUT:   %.loc10_35: init %D = converted %.loc10_26.1, %C.as.ImplicitAs.impl.Convert.call.loc10
 // CHECK:STDOUT:   %DestroyOp.bound.loc10_24.1: <bound method> = bound_method %.loc10_24.4, constants.%DestroyOp.b0ebf8.4
 // CHECK:STDOUT:   %DestroyOp.call.loc10_24.1: init %empty_tuple.type = call %DestroyOp.bound.loc10_24.1(%.loc10_24.4)
@@ -1169,14 +1169,14 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc11_34.2: %i32 = converted %int_4, %.loc11_34.1 [concrete = constants.%int_4.940]
 // CHECK:STDOUT:   %C.loc11: type = class_type @C, @C(constants.%int_4.940) [concrete = constants.%C.89d]
 // CHECK:STDOUT:   %.loc11_24.2: ref %C.89d = temporary_storage
-// CHECK:STDOUT:   %.loc11_24.3: init %C.89d = class_init (), %.loc11_24.2 [concrete = constants.%C.val.1dd]
+// CHECK:STDOUT:   %.loc11_24.3: init %C.89d to %.loc11_24.2 = class_init () [concrete = constants.%C.val.1dd]
 // CHECK:STDOUT:   %.loc11_24.4: ref %C.89d = temporary %.loc11_24.2, %.loc11_24.3
 // CHECK:STDOUT:   %.loc11_26.1: ref %C.89d = converted %.loc11_24.1, %.loc11_24.4
 // CHECK:STDOUT:   %impl.elem0.loc11_35: %.3c4 = impl_witness_access constants.%ImplicitAs.impl_witness.e05, element0 [concrete = constants.%C.as.ImplicitAs.impl.Convert.db5]
 // CHECK:STDOUT:   %bound_method.loc11_35: <bound method> = bound_method %.loc11_26.1, %impl.elem0.loc11_35
 // CHECK:STDOUT:   %.loc6_19.5: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %.loc11_26.2: %C.89d = acquire_value %.loc11_26.1
-// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc11: init %D = call %bound_method.loc11_35(%.loc11_26.2) to %.loc6_19.5
+// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc11: init %D to %.loc6_19.5 = call %bound_method.loc11_35(%.loc11_26.2)
 // CHECK:STDOUT:   %.loc11_35: init %D = converted %.loc11_26.1, %C.as.ImplicitAs.impl.Convert.call.loc11
 // CHECK:STDOUT:   %DestroyOp.bound.loc11_24.1: <bound method> = bound_method %.loc11_24.4, constants.%DestroyOp.b0ebf8.5
 // CHECK:STDOUT:   %DestroyOp.call.loc11_24.1: init %empty_tuple.type = call %DestroyOp.bound.loc11_24.1(%.loc11_24.4)
@@ -1208,14 +1208,14 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc12_34.2: %i32 = converted %int_5, %.loc12_34.1 [concrete = constants.%int_5.0f6]
 // CHECK:STDOUT:   %C.loc12: type = class_type @C, @C(constants.%int_5.0f6) [concrete = constants.%C.f0a]
 // CHECK:STDOUT:   %.loc12_24.2: ref %C.f0a = temporary_storage
-// CHECK:STDOUT:   %.loc12_24.3: init %C.f0a = class_init (), %.loc12_24.2 [concrete = constants.%C.val.a4a]
+// CHECK:STDOUT:   %.loc12_24.3: init %C.f0a to %.loc12_24.2 = class_init () [concrete = constants.%C.val.a4a]
 // CHECK:STDOUT:   %.loc12_24.4: ref %C.f0a = temporary %.loc12_24.2, %.loc12_24.3
 // CHECK:STDOUT:   %.loc12_26.1: ref %C.f0a = converted %.loc12_24.1, %.loc12_24.4
 // CHECK:STDOUT:   %impl.elem0.loc12_35: %.4d7 = impl_witness_access constants.%ImplicitAs.impl_witness.262, element0 [concrete = constants.%C.as.ImplicitAs.impl.Convert.a63]
 // CHECK:STDOUT:   %bound_method.loc12_35: <bound method> = bound_method %.loc12_26.1, %impl.elem0.loc12_35
 // CHECK:STDOUT:   %.loc6_19.6: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %.loc12_26.2: %C.f0a = acquire_value %.loc12_26.1
-// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc12: init %D = call %bound_method.loc12_35(%.loc12_26.2) to %.loc6_19.6
+// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc12: init %D to %.loc6_19.6 = call %bound_method.loc12_35(%.loc12_26.2)
 // CHECK:STDOUT:   %.loc12_35: init %D = converted %.loc12_26.1, %C.as.ImplicitAs.impl.Convert.call.loc12
 // CHECK:STDOUT:   %DestroyOp.bound.loc12_24.1: <bound method> = bound_method %.loc12_24.4, constants.%DestroyOp.b0ebf8.6
 // CHECK:STDOUT:   %DestroyOp.call.loc12_24.1: init %empty_tuple.type = call %DestroyOp.bound.loc12_24.1(%.loc12_24.4)
@@ -1249,14 +1249,14 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc13_34.2: %i32 = converted %int_6, %.loc13_34.1 [concrete = constants.%int_6.e56]
 // CHECK:STDOUT:   %C.loc13: type = class_type @C, @C(constants.%int_6.e56) [concrete = constants.%C.c60]
 // CHECK:STDOUT:   %.loc13_24.2: ref %C.c60 = temporary_storage
-// CHECK:STDOUT:   %.loc13_24.3: init %C.c60 = class_init (), %.loc13_24.2 [concrete = constants.%C.val.a4b]
+// CHECK:STDOUT:   %.loc13_24.3: init %C.c60 to %.loc13_24.2 = class_init () [concrete = constants.%C.val.a4b]
 // CHECK:STDOUT:   %.loc13_24.4: ref %C.c60 = temporary %.loc13_24.2, %.loc13_24.3
 // CHECK:STDOUT:   %.loc13_26.1: ref %C.c60 = converted %.loc13_24.1, %.loc13_24.4
 // CHECK:STDOUT:   %impl.elem0.loc13_35: %.3aa = impl_witness_access constants.%ImplicitAs.impl_witness.7d1, element0 [concrete = constants.%C.as.ImplicitAs.impl.Convert.e2f]
 // CHECK:STDOUT:   %bound_method.loc13_35: <bound method> = bound_method %.loc13_26.1, %impl.elem0.loc13_35
 // CHECK:STDOUT:   %.loc6_19.7: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %.loc13_26.2: %C.c60 = acquire_value %.loc13_26.1
-// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc13: init %D = call %bound_method.loc13_35(%.loc13_26.2) to %.loc6_19.7
+// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc13: init %D to %.loc6_19.7 = call %bound_method.loc13_35(%.loc13_26.2)
 // CHECK:STDOUT:   %.loc13_35: init %D = converted %.loc13_26.1, %C.as.ImplicitAs.impl.Convert.call.loc13
 // CHECK:STDOUT:   %DestroyOp.bound.loc13_24.1: <bound method> = bound_method %.loc13_24.4, constants.%DestroyOp.b0ebf8.7
 // CHECK:STDOUT:   %DestroyOp.call.loc13_24.1: init %empty_tuple.type = call %DestroyOp.bound.loc13_24.1(%.loc13_24.4)
@@ -1292,14 +1292,14 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %.loc14_34.2: %i32 = converted %int_7, %.loc14_34.1 [concrete = constants.%int_7.0b1]
 // CHECK:STDOUT:   %C.loc14: type = class_type @C, @C(constants.%int_7.0b1) [concrete = constants.%C.304]
 // CHECK:STDOUT:   %.loc14_24.2: ref %C.304 = temporary_storage
-// CHECK:STDOUT:   %.loc14_24.3: init %C.304 = class_init (), %.loc14_24.2 [concrete = constants.%C.val.f9f]
+// CHECK:STDOUT:   %.loc14_24.3: init %C.304 to %.loc14_24.2 = class_init () [concrete = constants.%C.val.f9f]
 // CHECK:STDOUT:   %.loc14_24.4: ref %C.304 = temporary %.loc14_24.2, %.loc14_24.3
 // CHECK:STDOUT:   %.loc14_26.1: ref %C.304 = converted %.loc14_24.1, %.loc14_24.4
 // CHECK:STDOUT:   %impl.elem0.loc14_35: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.356, element0 [concrete = constants.%C.as.ImplicitAs.impl.Convert.5ea]
 // CHECK:STDOUT:   %bound_method.loc14_35: <bound method> = bound_method %.loc14_26.1, %impl.elem0.loc14_35
 // CHECK:STDOUT:   %.loc6_19.8: ref %D = splice_block %return.param {}
 // CHECK:STDOUT:   %.loc14_26.2: %C.304 = acquire_value %.loc14_26.1
-// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc14: init %D = call %bound_method.loc14_35(%.loc14_26.2) to %.loc6_19.8
+// CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.call.loc14: init %D to %.loc6_19.8 = call %bound_method.loc14_35(%.loc14_26.2)
 // CHECK:STDOUT:   %.loc14_35: init %D = converted %.loc14_26.1, %C.as.ImplicitAs.impl.Convert.call.loc14
 // CHECK:STDOUT:   %DestroyOp.bound.loc14_24.1: <bound method> = bound_method %.loc14_24.4, constants.%DestroyOp.b0ebf8.8
 // CHECK:STDOUT:   %DestroyOp.call.loc14_24.1: init %empty_tuple.type = call %DestroyOp.bound.loc14_24.1(%.loc14_24.4)
@@ -1323,7 +1323,7 @@ fn F0(n: i32) -> P.D {
 // CHECK:STDOUT:   %P.ref.loc15: <namespace> = name_ref P, imports.%P [concrete = imports.%P]
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, imports.%P.Make [concrete = constants.%Make]
 // CHECK:STDOUT:   %.loc6_19.9: ref %D = splice_block %return.param {}
-// CHECK:STDOUT:   %Make.call: init %D = call %Make.ref() to %.loc6_19.9
+// CHECK:STDOUT:   %Make.call: init %D to %.loc6_19.9 = call %Make.ref()
 // CHECK:STDOUT:   %DestroyOp.bound.loc14_24.2: <bound method> = bound_method %.loc14_24.4, constants.%DestroyOp.b0ebf8.8
 // CHECK:STDOUT:   %DestroyOp.call.loc14_24.2: init %empty_tuple.type = call %DestroyOp.bound.loc14_24.2(%.loc14_24.4)
 // CHECK:STDOUT:   %DestroyOp.bound.loc13_24.3: <bound method> = bound_method %.loc13_24.4, constants.%DestroyOp.b0ebf8.7
