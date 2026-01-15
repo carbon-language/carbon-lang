@@ -120,9 +120,9 @@ def _build_features(ctx):
 
     # The order of the features determines the relative order of flags used.
     features = []
-    features += base_features
     features += target_os_features(ctx.attr.target_os)
     features += target_cpu_features(ctx.attr.target_cpu)
+    features += base_features
     features += [
         # We always use Clang in the toolchain and enable all of its warnings.
         clang_feature,
@@ -139,13 +139,6 @@ def _build_features(ctx):
     features += modules_features
     features += debugging_features
     features += linking_features
-
-    # TODO: Refactor the target-specific feature management here to be part of
-    # building `linking_features`.
-    features += [
-        feature(name = "supports_dynamic_linker", enabled = ctx.attr.target_os == "linux"),
-        feature(name = "supports_start_end_lib", enabled = ctx.attr.target_os == "linux"),
-    ]
 
     # Lastly, we add a feature that enables others in the default `fastbuild`
     # mode. This is also a good place to add any project-specific features.
