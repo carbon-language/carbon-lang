@@ -366,17 +366,12 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
 
 auto FileContext::HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
     -> llvm::Constant* {
-  clang::FunctionDecl* cpp_def = cpp_decl->getDefinition();
-  if (!cpp_def) {
-    return nullptr;
-  }
-
   // Create the LLVM function (`CodeGenModule::GetOrCreateLLVMFunction()`)
   // so that code generation (`CodeGenModule::EmitGlobal()`) would see this
   // function name (`CodeGenModule::getMangledName()`), and will generate
   // its definition.
   llvm::Constant* function_address =
-      cpp_code_generator_->GetAddrOfGlobal(CreateGlobalDecl(cpp_def),
+      cpp_code_generator_->GetAddrOfGlobal(CreateGlobalDecl(cpp_decl),
                                            /*isForDefinition=*/false);
   CARBON_CHECK(function_address);
 

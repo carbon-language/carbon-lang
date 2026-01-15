@@ -123,7 +123,7 @@ fn ReturnPtrWithThunk() -> Core.Optional(Cpp.C*) {
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z7TakePtrP1C(ptr)
+// CHECK:STDOUT: declare void @_Z7TakePtrP1C(ptr noundef) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CReturnPtr.Main() #2 !dbg !23 {
@@ -132,7 +132,7 @@ fn ReturnPtrWithThunk() -> Core.Optional(Cpp.C*) {
 // CHECK:STDOUT:   ret ptr %ReturnPtr.call, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare ptr @_Z9ReturnPtrv()
+// CHECK:STDOUT: declare noundef ptr @_Z9ReturnPtrv() #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassPtrWithThunk.Main(ptr %p) #2 !dbg !28 {
@@ -236,7 +236,7 @@ fn ReturnPtrWithThunk() -> Core.Optional(Cpp.C*) {
 // CHECK:STDOUT:   ret void, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z7TakePtrP1C(ptr)
+// CHECK:STDOUT: declare void @_Z7TakePtrP1C(ptr noundef) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CReturnPtr.Main() #2 !dbg !28 {
@@ -245,7 +245,7 @@ fn ReturnPtrWithThunk() -> Core.Optional(Cpp.C*) {
 // CHECK:STDOUT:   ret ptr %ReturnPtr.call, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare ptr @_Z9ReturnPtrv()
+// CHECK:STDOUT: declare noundef ptr @_Z9ReturnPtrv() #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassPtrWithThunk.Main(ptr %_) #2 !dbg !33 {

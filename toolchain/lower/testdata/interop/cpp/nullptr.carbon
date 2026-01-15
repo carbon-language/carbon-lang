@@ -96,7 +96,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z7TakePtrPi(ptr)
+// CHECK:STDOUT: declare void @_Z7TakePtrPi(ptr noundef) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare ptr @"_COp.NullptrT.CppCompat.Core:Copy.Core"(ptr)
 // CHECK:STDOUT:

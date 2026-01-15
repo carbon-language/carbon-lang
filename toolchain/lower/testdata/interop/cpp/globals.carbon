@@ -278,7 +278,7 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZN1C1fEv(ptr)
+// CHECK:STDOUT: declare void @_ZN1C1fEv(ptr noundef nonnull align 1 dereferenceable(1)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @inline_global, { 2, 3, 0, 1 }

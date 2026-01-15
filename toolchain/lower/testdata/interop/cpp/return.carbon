@@ -196,7 +196,7 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   ret i32 %ReturnU32.call, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i32 @_Z9ReturnU32v()
+// CHECK:STDOUT: declare noundef i32 @_Z9ReturnU32v() #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i64 @_CGetU64.Main() #2 !dbg !38 {
@@ -205,7 +205,7 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   ret i64 %ReturnU64.call, !dbg !43
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i64 @_Z9ReturnU64v()
+// CHECK:STDOUT: declare noundef i64 @_Z9ReturnU64v() #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i8 @_CGetI8.Main() #2 !dbg !44 {
@@ -234,7 +234,7 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   ret i32 %ReturnI32.call, !dbg !61
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i32 @_Z9ReturnI32v()
+// CHECK:STDOUT: declare noundef i32 @_Z9ReturnI32v() #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i64 @_CGetI64.Main() #2 !dbg !62 {
@@ -243,7 +243,7 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   ret i64 %ReturnI64.call, !dbg !67
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i64 @_Z9ReturnI64v()
+// CHECK:STDOUT: declare noundef i64 @_Z9ReturnI64v() #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CUse.Main(i8, i16, i32, i64, i8, i16, i32, i64)
 // CHECK:STDOUT:
@@ -492,7 +492,8 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZN1XD1Ev(ptr)
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: declare void @_ZN1XD1Ev(ptr noundef nonnull align 8 dereferenceable(16)) unnamed_addr #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CVar.Main() #2 !dbg !26 {
@@ -505,7 +506,7 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
@@ -513,7 +514,8 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { nounwind }
-// CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #3 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #4 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4, !5}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!6}
