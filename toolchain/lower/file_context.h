@@ -16,6 +16,29 @@
 
 namespace Carbon::Lower {
 
+// Information about how a given function declaration is lowered.
+struct FunctionInfo {
+  // The type of the lowered function.
+  llvm::FunctionType* type;
+
+  // The debug info type of the lowered function.
+  llvm::DISubroutineType* di_type;
+
+  // The `Call` parameter patterns that correspond to parameters of the LLVM IR
+  // function, in the order of the LLVM IR parameter list. Some `Call`
+  // parameters may be omitted (e.g. if they are stateless), and the order may
+  // differ from the SemIR `Call` parameter list (e.g. the return parameter, if
+  // any, always goes first).
+  llvm::SmallVector<SemIR::InstId> lowered_param_pattern_ids;
+
+  // Any `Call` param patterns that aren't present in
+  // lowered_param_pattern_ids.
+  llvm::SmallVector<SemIR::InstId> unused_param_pattern_ids;
+
+  // The lowered function declaration.
+  llvm::Function* llvm_function;
+};
+
 // Context and shared functionality for lowering within a SemIR file.
 class FileContext {
  public:
@@ -43,12 +66,25 @@ class FileContext {
   auto GetFunction(SemIR::FunctionId function_id,
                    SemIR::SpecificId specific_id = SemIR::SpecificId::None)
       -> llvm::Function* {
-    return *GetFunctionAddr(function_id, specific_id);
+    const auto& function_info = GetFunctionInfo(function_id, specific_id);
+    return function_info ? function_info->llvm_function : nullptr;
   }
 
-  // Gets a or creates callable's function. Returns nullptr for a builtin.
-  auto GetOrCreateFunction(SemIR::FunctionId function_id,
-                           SemIR::SpecificId specific_id) -> llvm::Function*;
+  // Returns the FunctionInfo for the given function in the given specific, if
+  // it has already been computed.
+  auto GetFunctionInfo(SemIR::FunctionId function_id,
+                       SemIR::SpecificId specific_id)
+      -> std::optional<FunctionInfo>& {
+    return specific_id.has_value() ? specific_functions_.Get(specific_id)
+                                   : functions_.Get(function_id);
+  }
+
+  // Returns the FunctionInfo for the given function in the given specific. If
+  // it's not already available, this function will compute it, including
+  // creating the `llvm::Function` for it. Returns nullopt for a builtin.
+  auto GetOrCreateFunctionInfo(SemIR::FunctionId function_id,
+                               SemIR::SpecificId specific_id)
+      -> std::optional<FunctionInfo>&;
 
   // Returns a lowered type for the given type_id.
   auto GetType(SemIR::TypeId type_id) -> llvm::Type* {
@@ -128,20 +164,6 @@ class FileContext {
     context().SetPrintfIntFormatString(printf_int_format_string);
   }
 
-  struct FunctionTypeInfo {
-    llvm::FunctionType* type;
-    llvm::SmallVector<SemIR::InstId> param_inst_ids;
-    llvm::Type* return_type = nullptr;
-    SemIR::InstId return_param_id = SemIR::InstId::None;
-  };
-
-  // Retrieve various features of the function's type useful for constructing
-  // the `llvm::Type` for the `llvm::Function`. If any part of the type can't be
-  // manifest (eg: incomplete return or parameter types), then the result is as
-  // if the type was `void()`.
-  auto BuildFunctionTypeInfo(const SemIR::Function& function,
-                             SemIR::SpecificId specific_id) -> FunctionTypeInfo;
-
   // Builds the global for the given instruction, which should then be cached by
   // the caller.
   auto BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
@@ -156,13 +178,6 @@ class FileContext {
       SemIR::SpecificId specific_id = SemIR::SpecificId::None) -> void;
 
  private:
-  // Gets the location in which a callable's function is stored.
-  auto GetFunctionAddr(SemIR::FunctionId function_id,
-                       SemIR::SpecificId specific_id) -> llvm::Function** {
-    return specific_id.has_value() ? &specific_functions_.Get(specific_id)
-                                   : &functions_.Get(function_id);
-  }
-
   // Notes that a C++ function has been referenced for the first time, so we
   // should ask Clang to generate a definition for it if possible.
   auto HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl) -> void;
@@ -175,11 +190,25 @@ class FileContext {
                                         SemIR::SpecificId specific_id,
                                         llvm::Type* llvm_type) -> void;
 
+  struct FunctionTypeInfo {
+    llvm::FunctionType* type;
+    llvm::DISubroutineType* di_type;
+    llvm::SmallVector<SemIR::InstId> lowered_param_pattern_ids;
+    llvm::SmallVector<SemIR::InstId> unused_param_pattern_ids;
+
+    // When return_param_id is not `None`, the corresponding lowered parameter
+    // should be given an `sret` attribute with this type.
+    llvm::Type* sret_type = nullptr;
+  };
+
+  class FunctionTypeInfoBuilder;
+
   // Builds the declaration for the given function, which should then be cached
   // by the caller.
-  auto BuildFunctionDecl(SemIR::FunctionId function_id,
-                         SemIR::SpecificId specific_id =
-                             SemIR::SpecificId::None) -> llvm::Function*;
+  auto BuildFunctionDecl(
+      SemIR::FunctionId function_id,
+      SemIR::SpecificId specific_id = SemIR::SpecificId::None)
+      -> std::optional<FunctionInfo>;
 
   // Builds a function's body. Common functionality for all functions.
   //
@@ -196,15 +225,8 @@ class FileContext {
 
   // Build the DISubprogram metadata for the given function.
   auto BuildDISubprogram(const SemIR::Function& function,
-                         SemIR::SpecificId specific_id,
-                         const llvm::Function* llvm_function)
+                         const FunctionInfo& function_info)
       -> llvm::DISubprogram*;
-
-  // Build a `DISubroutineType` for the given function, including the return and
-  // parameter types.
-  auto BuildDISubroutineType(const SemIR::Function&,
-                             SemIR::SpecificId specific_id)
-      -> llvm::DISubroutineType*;
 
   // Builds the `llvm::Type` and `llvm::DIType` for the given instruction, which
   // should then be cached by the caller.
@@ -239,12 +261,13 @@ class FileContext {
   // Maps callables to lowered functions. SemIR treats callables as the
   // canonical form of a function, so lowering needs to do the same.
   using LoweredFunctionStore =
-      FixedSizeValueStore<SemIR::FunctionId, llvm::Function*,
+      FixedSizeValueStore<SemIR::FunctionId, std::optional<FunctionInfo>,
                           Tag<SemIR::CheckIRId>>;
   LoweredFunctionStore functions_;
 
   // Maps specific callables to lowered functions.
-  FixedSizeValueStore<SemIR::SpecificId, llvm::Function*, Tag<SemIR::CheckIRId>>
+  FixedSizeValueStore<SemIR::SpecificId, std::optional<FunctionInfo>,
+                      Tag<SemIR::CheckIRId>>
       specific_functions_;
 
   // Provides lowered versions of types. Entries are non-symbolic types.

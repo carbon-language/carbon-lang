@@ -129,24 +129,6 @@ class FunctionContext {
                  sem_ir().insts().Get(inst_id));
   }
 
-  // Gets a callable's function.
-  auto GetFunction(SemIR::FunctionId function_id) -> llvm::Function* {
-    return file_context_->GetFunction(function_id);
-  }
-
-  // Gets or creates a callable's function.
-  auto GetOrCreateFunction(SemIR::FunctionId function_id,
-                           SemIR::SpecificId specific_id) -> llvm::Function* {
-    return file_context_->GetOrCreateFunction(function_id, specific_id);
-  }
-
-  // Builds LLVM function type information for the specified function.
-  auto BuildFunctionTypeInfo(const SemIR::Function& function,
-                             SemIR::SpecificId specific_id)
-      -> FileContext::FunctionTypeInfo {
-    return file_context_->BuildFunctionTypeInfo(function, specific_id);
-  }
-
   // Returns a lowered type for the given type_id in the given file. This adds
   // the specified type to the fingerprint.
   auto GetType(TypeInFile type) -> llvm::Type* {

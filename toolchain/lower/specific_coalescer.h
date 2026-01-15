@@ -11,6 +11,8 @@
 
 namespace Carbon::Lower {
 
+struct FunctionInfo;
+
 // Coalescing functionality for lowering fewer specifics of the same generic.
 class SpecificCoalescer {
  public:
@@ -19,7 +21,7 @@ class SpecificCoalescer {
                           llvm::SmallVector<SemIR::SpecificId>,
                           Tag<SemIR::CheckIRId>>;
   using LoweredLlvmFunctionStore =
-      FixedSizeValueStore<SemIR::SpecificId, llvm::Function*,
+      FixedSizeValueStore<SemIR::SpecificId, std::optional<FunctionInfo>,
                           Tag<SemIR::CheckIRId>>;
 
   // Describes a specific function's body fingerprint.
