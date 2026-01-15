@@ -255,23 +255,28 @@
         },
         {
           "name": "support.class.carbon",
-          "comment": "Handles `class C`, `class C(I)`, `impl C as I(A)`, etc. Keywords are not affected.",
-          "match": "(?<=\\b(as|class|impl|interface)\\s[\\s\\(]*)\\w+(\\(+\\s*\\w+\\s*\\)+)?"
+          "comment": "Matches identifiers in declarations `class C`, `impl C as I`, etc. Keywords are not affected.",
+          "match": "(?<=\\b(as|class|impl|interface)\\s[\\s\\(]*)\\w+"
         },
         {
           "name": "support.class.carbon",
-          "comment": "Handles function return types. `) -> T`",
+          "comment": "Matches generic type arguments in declarations `interface I(A, B, Ns.C)`.",
+          "match": "(?<=\\b(as|class|impl|interface)\\s[\\s\\(]*\\w+\\([\\s\\w\\(,\\.]*)\\w+"
+        },
+        {
+          "name": "support.class.carbon",
+          "comment": "Matches function return types. `) -> T`",
           "match": "(?<=\\)\\s*->\\s*)\\w+"
         },
         {
           "name": "support.class.carbon",
-          "comment": "Handles type definitions. `x: C`, `x:! I(A)`, etc.",
-          "match": "(?<=\\w+:!?[\\s\\(]*)\\w+(\\(+\\s*\\w+\\s*\\)+)?"
+          "comment": "Matches type definitions. `x: C`, `x:! I`, etc.",
+          "match": "(?<=\\w+:!?[\\s\\(]*)\\w+"
         },
         {
           "name": "support.class.carbon",
-          "comment": "Handles the interface/type in compound member access. `x.(I)`, `x.(I.y)`, `x.(I(A).F)()`, etc.",
-          "match": "(?<=\\w+\\.\\([\\s\\(]*)\\w+(\\(+\\s*\\w+\\s*\\)+)?"
+          "comment": "Matches generic type arguments in type definitions. `x: C(A, B, C)`, `x:! I(A, Ns.B)`, etc.",
+          "match": "(?<=\\w+:!?[\\s\\(]*\\w+\\([\\s\\w\\(,\\.]*)\\w+"
         }
       ]
     },
@@ -280,11 +285,6 @@
         {
           "name": "support.function.carbon",
           "match": "\\b[a-zA-Z]([_0-9a-zA-Z]+)?\\("
-        },
-        {
-          "name": "support.function.carbon",
-          "comment": "Handles the function in compound member access. `x.(I(A).F)()`",
-          "match": "(?<=\\w+\\.\\([\\s\\(]*\\w+(\\(+\\s*\\w+\\s*\\)+)?\\.)\\w+[\\s\\)]*\\)\\s*\\("
         }
       ]
     },
