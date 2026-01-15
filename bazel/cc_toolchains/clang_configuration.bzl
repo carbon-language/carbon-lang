@@ -264,6 +264,7 @@ configure_clang_toolchain = repository_rule(
             default = [
                 Label("//bazel/cc_toolchains:cc_toolchain_actions.bzl"),
                 Label("//bazel/cc_toolchains:cc_toolchain_base_features.bzl"),
+                Label("//bazel/cc_toolchains:cc_toolchain_carbon_project_features.bzl"),
                 Label("//bazel/cc_toolchains:cc_toolchain_config_features.bzl"),
                 Label("//bazel/cc_toolchains:cc_toolchain_cpp_features.bzl"),
                 Label("//bazel/cc_toolchains:cc_toolchain_debugging.bzl"),

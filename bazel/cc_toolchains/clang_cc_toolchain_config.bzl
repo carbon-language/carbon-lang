@@ -4,28 +4,15 @@
 
 """A Starlark cc_toolchain configuration rule"""
 
-load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
-load(
-    "@rules_cc//cc:cc_toolchain_config_lib.bzl",
-    "feature",
-    "feature_set",
-    "flag_group",
-    "flag_set",
-    "with_feature_set",
-)
 load("@rules_cc//cc:defs.bzl", "cc_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
-load(
-    ":cc_toolchain_actions.bzl",
-    "all_compile_actions",
-    "preprocessor_compile_actions",
-)
 load(
     ":cc_toolchain_base_features.bzl",
     "base_features",
     "output_flags_feature",
     "user_flags_feature",
 )
+load(":cc_toolchain_carbon_project_features.bzl", "carbon_project_features")
 load(
     ":cc_toolchain_config_features.bzl",
     "target_cpu_features",
@@ -58,66 +45,6 @@ load(
 )
 
 def _build_features(ctx):
-    project_flags_feature = feature(
-        name = "project_flags",
-        enabled = True,
-        flag_sets = [
-            flag_set(
-                actions = all_compile_actions,
-                flag_groups = [flag_group(flags = [
-                    # Don't warn on external code as we can't
-                    # necessarily patch it easily. Note that these have
-                    # to be initial directories in the `#include` line.
-                    "--system-header-prefix=absl/",
-                    "--system-header-prefix=benchmark/",
-                    "--system-header-prefix=boost/",
-                    "--system-header-prefix=clang-tools-extra/",
-                    "--system-header-prefix=clang/",
-                    "--system-header-prefix=gmock/",
-                    "--system-header-prefix=gtest/",
-                    "--system-header-prefix=libfuzzer/",
-                    "--system-header-prefix=llvm/",
-                    "--system-header-prefix=re2/",
-                    "--system-header-prefix=tools/cpp/",
-                    "--system-header-prefix=tree_sitter/",
-                ])],
-            ),
-            flag_set(
-                actions = preprocessor_compile_actions,
-                flag_groups = [flag_group(flags = [
-                    # Pass the Clang version to get better Bazel caching
-                    # behavior with system-installed Clang binaries.
-                    "-DCLANG_VERSION_FOR_CACHE=\"%s\"" % clang_version_for_cache,
-                ])],
-            ),
-            flag_set(
-                actions = [
-                    ACTION_NAMES.c_compile,
-                    ACTION_NAMES.cpp_compile,
-                    ACTION_NAMES.cpp_header_parsing,
-                    ACTION_NAMES.cpp_module_compile,
-                ],
-                flag_groups = [flag_group(flags = ["-DHAVE_MALLCTL"])],
-                with_features = [with_feature_set(["freebsd_target"])],
-            ),
-        ],
-    )
-
-    # An enabled feature that requires the `fastbuild` compilation. This is used
-    # to toggle general features on by default, while allowing them to be
-    # directly enabled and disabled more generally as desired.
-    enable_in_fastbuild = feature(
-        name = "enable_in_fastbuild",
-        enabled = True,
-        requires = [feature_set(["fastbuild"])],
-        implies = [
-            "asan",
-            "asan_min_size",
-            "minimal_optimization_flags",
-            "minimal_debug_info_flags",
-        ],
-    )
-
     # The order of the features determines the relative order of flags used.
     features = []
     features += target_os_features(ctx.attr.target_os)
@@ -129,10 +56,6 @@ def _build_features(ctx):
         clang_warnings_feature,
         # Enable libc++ where supported.
         libcxx_feature(llvm_bindir, clang_bindir),
-
-        # Include any project-specific flags, importantly after the Clang and
-        # warnings features so we can override as necessary here.
-        project_flags_feature,
     ]
     features += sanitizer_features
     features += optimization_features
@@ -140,13 +63,13 @@ def _build_features(ctx):
     features += debugging_features
     features += linking_features
 
-    # Lastly, we add a feature that enables others in the default `fastbuild`
-    # mode. This is also a good place to add any project-specific features.
-    features.append(enable_in_fastbuild)
-
-    # Add user flags and the output flags at the end.
-    features.append(user_flags_feature)
-    features.append(output_flags_feature)
+    # Lastly, we add project features and the user flags so they can override
+    # anything above, and the output flags last of all for ease of debugging.
+    features += carbon_project_features(clang_version_for_cache)
+    features += [
+        user_flags_feature,
+        output_flags_feature,
+    ]
     return features
 
 def _impl(ctx):
