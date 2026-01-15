@@ -10,10 +10,12 @@ load(
     "feature_set",
     "flag_group",
     "flag_set",
+    "with_feature_set",
 )
 load(
     ":cc_toolchain_actions.bzl",
     "all_compile_actions",
+    "all_link_actions",
     "codegen_compile_actions",
 )
 
@@ -43,22 +45,21 @@ default_optimization_flags = feature(
     ],
 )
 
-aarch64_cpu_flags = feature(
+cpu_flags = feature(
     name = "aarch64_cpu_flags",
     enabled = True,
-    flag_sets = [flag_set(
-        actions = all_compile_actions,
-        flag_groups = [flag_group(flags = ["-march=armv8.2-a"])],
-    )],
-)
-
-x86_64_cpu_flags = feature(
-    name = "x86_64_cpu_flags",
-    enabled = True,
-    flag_sets = [flag_set(
-        actions = all_compile_actions,
-        flag_groups = [flag_group(flags = ["-march=x86-64-v2"])],
-    )],
+    flag_sets = [
+        flag_set(
+            actions = all_compile_actions + all_link_actions,
+            flag_groups = [flag_group(flags = ["-march=armv8.2-a"])],
+            with_features = [with_feature_set(["aarch64_target"])],
+        ),
+        flag_set(
+            actions = all_compile_actions + all_link_actions,
+            flag_groups = [flag_group(flags = ["-march=x86-64-v2"])],
+            with_features = [with_feature_set(["x86_64_target"])],
+        ),
+    ],
 )
 
 # Note that the order of features is significant in this list and determines the
@@ -66,4 +67,5 @@ x86_64_cpu_flags = feature(
 optimization_features = [
     minimal_optimization_flags,
     default_optimization_flags,
+    cpu_flags,
 ]

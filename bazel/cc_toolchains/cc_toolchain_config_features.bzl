@@ -32,3 +32,18 @@ def target_os_features(os):
         fail("Unsupported target OS: %s" % os)
 
     return os_target_features[os]
+
+aarch64_target_feature = feature(name = "aarch64_target", enabled = True)
+x86_64_target_feature = feature(name = "x86_64_target", enabled = True)
+
+cpu_target_features = {
+    "aarch64": [aarch64_target_feature],
+    "arm64": [aarch64_target_feature],
+    "x86_64": [x86_64_target_feature],
+}
+
+def target_cpu_features(cpu):
+    if cpu not in cpu_target_features:
+        fail("Unsupported target CPU: %s" % cpu)
+
+    return cpu_target_features[cpu]

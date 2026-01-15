@@ -26,7 +26,11 @@ load(
     "output_flags_feature",
     "user_flags_feature",
 )
-load(":cc_toolchain_config_features.bzl", "target_os_features")
+load(
+    ":cc_toolchain_config_features.bzl",
+    "target_cpu_features",
+    "target_os_features",
+)
 load(
     ":cc_toolchain_cpp_features.bzl",
     "clang_feature",
@@ -41,12 +45,7 @@ load(
     "macos_link_libraries_feature",
 )
 load(":cc_toolchain_modules.bzl", "modules_features")
-load(
-    ":cc_toolchain_optimization.bzl",
-    "aarch64_cpu_flags",
-    "optimization_features",
-    "x86_64_cpu_flags",
-)
+load(":cc_toolchain_optimization.bzl", "optimization_features")
 load(":cc_toolchain_sanitizer_features.bzl", "sanitizer_features")
 load(
     ":cc_toolchain_tools.bzl",
@@ -128,6 +127,7 @@ def _build_features(ctx):
     features = []
     features += base_features
     features += target_os_features(ctx.attr.target_os)
+    features += target_cpu_features(ctx.attr.target_cpu)
     features += [
         # We always use Clang in the toolchain and enable all of its warnings.
         clang_feature,
@@ -140,16 +140,7 @@ def _build_features(ctx):
         project_flags_feature,
     ]
     features += sanitizer_features
-
     features += optimization_features
-
-    # TODO: Refactor target-specific feature management to be part of
-    # `optimization_features`.
-    if ctx.attr.target_cpu in ["aarch64", "arm64"]:
-        features.append(aarch64_cpu_flags)
-    else:
-        features.append(x86_64_cpu_flags)
-
     features += modules_features
     features += debugging_features
     features += linking_features
