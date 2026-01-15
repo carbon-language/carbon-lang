@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-"""A Starlark cc_toolchain configuration rule"""
+"""Defines `cc_toolchain_config` features specific to the Carbon project."""
 
 load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 load(
