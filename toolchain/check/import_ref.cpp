@@ -2779,9 +2779,6 @@ static auto AddInterfaceDefinition(ImportContext& context,
   new_interface.body_block_id =
       context.local_context().inst_block_stack().Pop();
   new_interface.self_param_id = self_param_id;
-
-  CARBON_CHECK(import_scope.extended_scopes().empty(),
-               "Interfaces don't currently have extended scopes to support.");
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -2930,10 +2927,6 @@ static auto AddNamedConstraintDefinition(
       context.local_context().inst_block_stack().Pop();
   new_named_constraint.self_param_id = self_param_id;
   new_named_constraint.complete = import_named_constraint.complete;
-
-  CARBON_CHECK(
-      import_scope.extended_scopes().empty(),
-      "Named constraints don't currently have extended scopes to support.");
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,

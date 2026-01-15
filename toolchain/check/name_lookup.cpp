@@ -327,11 +327,16 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
       auto facet_type_info =
           context.facet_types().Get(base_as_facet_type->facet_type_id);
       // Name lookup into "extend" constraints but not "self impls" constraints.
-      // TODO: Include named constraints, once they are supported.
-      for (const auto& interface : facet_type_info.extend_constraints) {
-        auto& interface_info = context.interfaces().Get(interface.interface_id);
-        scopes->push_back({.name_scope_id = interface_info.scope_id,
-                           .specific_id = interface.specific_id});
+      for (const auto& extend : facet_type_info.extend_constraints) {
+        auto& interface = context.interfaces().Get(extend.interface_id);
+        scopes->push_back({.name_scope_id = interface.scope_id,
+                           .specific_id = extend.specific_id});
+      }
+      for (const auto& extend : facet_type_info.extend_named_constraints) {
+        auto& constraint =
+            context.named_constraints().Get(extend.named_constraint_id);
+        scopes->push_back({.name_scope_id = constraint.scope_id,
+                           .specific_id = extend.specific_id});
       }
     } else {
       // Lookup into this scope should fail without producing an error since

@@ -23,8 +23,12 @@ interface Z {
 }
 //@dump-sem-ir-end
 
-fn F(T:! Z) {
-  // CHECK:STDERR: fail_todo_extend.carbon:[[@LINE+4]]:3: error: member name `YY` not found in `Z` [MemberNameNotFoundInInstScope]
+fn F(T:! Z, t:! T) {
+  // TODO: We find the name `YY`, but then fail to do impl lookup for `Y` in
+  // `T:! Z` since the identified facet type doesn't include `Y`. The
+  // identified facet type needs to include extends inside interfaces?
+
+  // CHECK:STDERR: fail_todo_extend.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Y` in type `T` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:   T.YY();
   // CHECK:STDERR:   ^~~~
   // CHECK:STDERR:
@@ -34,6 +38,12 @@ fn F(T:! Z) {
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR:
   T.(Y.YY)();
+
+  // CHECK:STDERR: fail_todo_extend.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Y` in type `T` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   t.YY();
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR:
+  t.YY();
 }
 
 // --- fail_todo_implicit_self_impls.carbon
@@ -293,11 +303,13 @@ interface Z(T:! type) {
 // CHECK:STDOUT:     %Self.as_type: type = facet_access_type @Z.%Self [symbolic = %Self.binding.as_type (constants.%Self.binding.as_type)]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc9: type = specific_constant @Z.Self.binding.as_type.impls.Y.type.require.%Y.ref, @Z.Self.binding.as_type.impls.Y.type.require(constants.%Self.c59) [concrete = constants.%Y.type]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
 // CHECK:STDOUT:   .Y = <poisoned>
 // CHECK:STDOUT:   .YY = <poisoned>
+// CHECK:STDOUT:   extend %.loc9
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
