@@ -585,7 +585,8 @@ static auto InventPrimitiveClangArg(Context& context, FormInfo form)
     CARBON_DIAGNOSTIC(CppCallArgTypeNotSupported, Error,
                       "call argument of type {0} is not supported",
                       SemIR::TypeId);
-    context.emitter().Emit(form.loc_id, CppCallArgTypeNotSupported, form.type_id);
+    context.emitter().Emit(form.loc_id, CppCallArgTypeNotSupported,
+                           form.type_id);
     return nullptr;
   }
 
