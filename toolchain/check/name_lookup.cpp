@@ -283,49 +283,50 @@ struct ProhibitedAccessInfo {
 };
 
 auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
-                                   SemIR::ConstantId base_const_id,
+                                   SemIR::ConstantId lookup_const_id,
                                    llvm::SmallVector<LookupScope>* scopes)
     -> bool {
-  auto base_id = context.constant_values().GetInstId(base_const_id);
-  auto base = context.insts().Get(base_id);
+  auto lookup_inst_id = context.constant_values().GetInstId(lookup_const_id);
+  auto lookup = context.insts().Get(lookup_inst_id);
 
-  if (auto base_as_namespace = base.TryAs<SemIR::Namespace>()) {
-    scopes->push_back(
-        LookupScope{.name_scope_id = base_as_namespace->name_scope_id,
-                    .specific_id = SemIR::SpecificId::None});
+  if (auto ns = lookup.TryAs<SemIR::Namespace>()) {
+    scopes->push_back(LookupScope{.name_scope_id = ns->name_scope_id,
+                                  .specific_id = SemIR::SpecificId::None});
     return true;
   }
-  if (auto base_as_class = base.TryAs<SemIR::ClassType>()) {
+  if (auto class_ty = lookup.TryAs<SemIR::ClassType>()) {
     // TODO: Allow name lookup into classes that are being defined even if they
     // are not complete.
     RequireCompleteType(
-        context, context.types().GetTypeIdForTypeConstantId(base_const_id),
+        context, context.types().GetTypeIdForTypeConstantId(lookup_const_id),
         loc_id, [&] {
           CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
                             "member access into incomplete class {0}",
                             InstIdAsType);
           return context.emitter().Build(
-              loc_id, QualifiedExprInIncompleteClassScope, base_id);
+              loc_id, QualifiedExprInIncompleteClassScope, lookup_inst_id);
         });
-    auto& class_info = context.classes().Get(base_as_class->class_id);
+    auto& class_info = context.classes().Get(class_ty->class_id);
     scopes->push_back(LookupScope{.name_scope_id = class_info.scope_id,
-                                  .specific_id = base_as_class->specific_id});
+                                  .specific_id = class_ty->specific_id});
     return true;
   }
-  if (auto base_as_facet_type = base.TryAs<SemIR::FacetType>()) {
+  if (auto facet_type = lookup.TryAs<SemIR::FacetType>()) {
     // TODO: Allow name lookup into facet types that are being defined even if
     // they are not complete.
     if (RequireCompleteType(
-            context, context.types().GetTypeIdForTypeConstantId(base_const_id),
-            loc_id, [&] {
+            context,
+            context.types().GetTypeIdForTypeConstantId(lookup_const_id), loc_id,
+            [&] {
               CARBON_DIAGNOSTIC(QualifiedExprInIncompleteFacetTypeScope, Error,
                                 "member access into incomplete facet type {0}",
                                 InstIdAsType);
               return context.emitter().Build(
-                  loc_id, QualifiedExprInIncompleteFacetTypeScope, base_id);
+                  loc_id, QualifiedExprInIncompleteFacetTypeScope,
+                  lookup_inst_id);
             })) {
       auto facet_type_info =
-          context.facet_types().Get(base_as_facet_type->facet_type_id);
+          context.facet_types().Get(facet_type->facet_type_id);
       // Name lookup into "extend" constraints but not "self impls" constraints.
       // TODO: Include named constraints, once they are supported.
       for (const auto& interface : facet_type_info.extend_constraints) {
@@ -341,7 +342,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     }
     return true;
   }
-  if (base_const_id == SemIR::ErrorInst::ConstantId) {
+  if (lookup_const_id == SemIR::ErrorInst::ConstantId) {
     // Lookup into this scope should fail without producing an error.
     scopes->push_back(LookupScope{.name_scope_id = SemIR::NameScopeId::None,
                                   .specific_id = SemIR::SpecificId::None});
