@@ -203,6 +203,62 @@ fn BitWiseHeterogeneousLong() {
   //@dump-sem-ir-end
 }
 
+// --- compound_assignment_homogeneous_long.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+fn CompoundAssignmentHomogeneousLong() {
+  //@dump-sem-ir-begin
+  var a: Cpp.long = 1;
+  var b: Cpp.long = 1;
+
+  a += b;
+  a -= b;
+  a *= b;
+  a /= b;
+  a %= b;
+
+  a &= b;
+  a |= b;
+  a ^= b;
+  a <<= b;
+  a >>= b;
+  //@dump-sem-ir-end
+}
+
+// --- fail_todo_compound_assignment_heterogeneous_long_and_i32.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+fn CompoundAssignmentHeterogeneousN32Long() {
+  var a: Cpp.long = 1;
+
+  // CHECK:STDERR: fail_todo_compound_assignment_heterogeneous_long_and_i32.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.AddAssignWith(i32)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   a += (1 as i32);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  a += (1 as i32);
+}
+
+// --- fail_compound_assignment_heterogeneous_long_and_i64.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+fn CompoundAssignmentHeterogeneousN64Long() {
+  var a: Cpp.long = 1;
+  // CHECK:STDERR: fail_compound_assignment_heterogeneous_long_and_i64.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.AddAssignWith(i64)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   a += (1 as i64);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  a += (1 as i64);
+}
+
 // --- unsigned_long.carbon
 
 library "[[@TEST_NAME]]";
@@ -1485,6 +1541,228 @@ fn F() {
 // CHECK:STDOUT:   %b.ref.loc41_25: %i64 = name_ref b, %b
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- compound_assignment_homogeneous_long.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %Cpp.long: type = class_type @Long32 [concrete]
+// CHECK:STDOUT:   %pattern_type.68c: type = pattern_type %Cpp.long [concrete]
+// CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.819: type = facet_type <@ImplicitAs, @ImplicitAs(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.Convert.type.4c2: type = fn_type @ImplicitAs.Convert, @ImplicitAs(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.2ce: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.903 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.819 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.2ce) [concrete]
+// CHECK:STDOUT:   %.dad: type = fn_type_with_self_type %ImplicitAs.Convert.type.4c2, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert [concrete]
+// CHECK:STDOUT:   %int_1.5a4: %Cpp.long = int_value 1 [concrete]
+// CHECK:STDOUT:   %AddAssignWith.type.bef: type = facet_type <@AddAssignWith, @AddAssignWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %AddAssignWith.Op.type.6a2: type = fn_type @AddAssignWith.Op, @AddAssignWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %AddAssignWith.impl_witness: <witness> = impl_witness imports.%AddAssignWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %AddAssignWith.facet: %AddAssignWith.type.bef = facet_value %Cpp.long, (%AddAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.2a7: type = fn_type_with_self_type %AddAssignWith.Op.type.6a2, %AddAssignWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.AddAssignWith.impl.Op.type: type = fn_type @Cpp.long.as.AddAssignWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.AddAssignWith.impl.Op: %Cpp.long.as.AddAssignWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %SubAssignWith.type.b12: type = facet_type <@SubAssignWith, @SubAssignWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %SubAssignWith.Op.type.628: type = fn_type @SubAssignWith.Op, @SubAssignWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %SubAssignWith.impl_witness: <witness> = impl_witness imports.%SubAssignWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %SubAssignWith.facet: %SubAssignWith.type.b12 = facet_value %Cpp.long, (%SubAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.c07: type = fn_type_with_self_type %SubAssignWith.Op.type.628, %SubAssignWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.SubAssignWith.impl.Op.type: type = fn_type @Cpp.long.as.SubAssignWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.SubAssignWith.impl.Op: %Cpp.long.as.SubAssignWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %MulAssignWith.type.59a: type = facet_type <@MulAssignWith, @MulAssignWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %MulAssignWith.Op.type.2a9: type = fn_type @MulAssignWith.Op, @MulAssignWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %MulAssignWith.impl_witness: <witness> = impl_witness imports.%MulAssignWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %MulAssignWith.facet: %MulAssignWith.type.59a = facet_value %Cpp.long, (%MulAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.4f0: type = fn_type_with_self_type %MulAssignWith.Op.type.2a9, %MulAssignWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.MulAssignWith.impl.Op.type: type = fn_type @Cpp.long.as.MulAssignWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.MulAssignWith.impl.Op: %Cpp.long.as.MulAssignWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %DivAssignWith.type.e6d: type = facet_type <@DivAssignWith, @DivAssignWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %DivAssignWith.Op.type.883: type = fn_type @DivAssignWith.Op, @DivAssignWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %DivAssignWith.impl_witness: <witness> = impl_witness imports.%DivAssignWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %DivAssignWith.facet: %DivAssignWith.type.e6d = facet_value %Cpp.long, (%DivAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.b89: type = fn_type_with_self_type %DivAssignWith.Op.type.883, %DivAssignWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivAssignWith.impl.Op.type: type = fn_type @Cpp.long.as.DivAssignWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.DivAssignWith.impl.Op: %Cpp.long.as.DivAssignWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %ModAssignWith.type.2a3: type = facet_type <@ModAssignWith, @ModAssignWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %ModAssignWith.Op.type.a01: type = fn_type @ModAssignWith.Op, @ModAssignWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %ModAssignWith.impl_witness: <witness> = impl_witness imports.%ModAssignWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %ModAssignWith.facet: %ModAssignWith.type.2a3 = facet_value %Cpp.long, (%ModAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.28d: type = fn_type_with_self_type %ModAssignWith.Op.type.a01, %ModAssignWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ModAssignWith.impl.Op.type: type = fn_type @Cpp.long.as.ModAssignWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.ModAssignWith.impl.Op: %Cpp.long.as.ModAssignWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %BitAndAssignWith.type.efd: type = facet_type <@BitAndAssignWith, @BitAndAssignWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %BitAndAssignWith.Op.type.3d8: type = fn_type @BitAndAssignWith.Op, @BitAndAssignWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %BitAndAssignWith.impl_witness: <witness> = impl_witness imports.%BitAndAssignWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %BitAndAssignWith.facet: %BitAndAssignWith.type.efd = facet_value %Cpp.long, (%BitAndAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.8d8: type = fn_type_with_self_type %BitAndAssignWith.Op.type.3d8, %BitAndAssignWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.BitAndAssignWith.impl.Op.type: type = fn_type @Cpp.long.as.BitAndAssignWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.BitAndAssignWith.impl.Op: %Cpp.long.as.BitAndAssignWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %BitOrAssignWith.type.b27: type = facet_type <@BitOrAssignWith, @BitOrAssignWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %BitOrAssignWith.Op.type.99d: type = fn_type @BitOrAssignWith.Op, @BitOrAssignWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %BitOrAssignWith.impl_witness: <witness> = impl_witness imports.%BitOrAssignWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %BitOrAssignWith.facet: %BitOrAssignWith.type.b27 = facet_value %Cpp.long, (%BitOrAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.ece: type = fn_type_with_self_type %BitOrAssignWith.Op.type.99d, %BitOrAssignWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.BitOrAssignWith.impl.Op.type: type = fn_type @Cpp.long.as.BitOrAssignWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.BitOrAssignWith.impl.Op: %Cpp.long.as.BitOrAssignWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %BitXorAssignWith.type.431: type = facet_type <@BitXorAssignWith, @BitXorAssignWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %BitXorAssignWith.Op.type.d3b: type = fn_type @BitXorAssignWith.Op, @BitXorAssignWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %BitXorAssignWith.impl_witness: <witness> = impl_witness imports.%BitXorAssignWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %BitXorAssignWith.facet: %BitXorAssignWith.type.431 = facet_value %Cpp.long, (%BitXorAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.da8: type = fn_type_with_self_type %BitXorAssignWith.Op.type.d3b, %BitXorAssignWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.BitXorAssignWith.impl.Op.type: type = fn_type @Cpp.long.as.BitXorAssignWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.BitXorAssignWith.impl.Op: %Cpp.long.as.BitXorAssignWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %LeftShiftAssignWith.type.bed: type = facet_type <@LeftShiftAssignWith, @LeftShiftAssignWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %LeftShiftAssignWith.Op.type.1b3: type = fn_type @LeftShiftAssignWith.Op, @LeftShiftAssignWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %LeftShiftAssignWith.impl_witness: <witness> = impl_witness imports.%LeftShiftAssignWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %LeftShiftAssignWith.facet: %LeftShiftAssignWith.type.bed = facet_value %Cpp.long, (%LeftShiftAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.959: type = fn_type_with_self_type %LeftShiftAssignWith.Op.type.1b3, %LeftShiftAssignWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.LeftShiftAssignWith.impl.Op.type: type = fn_type @Cpp.long.as.LeftShiftAssignWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.LeftShiftAssignWith.impl.Op: %Cpp.long.as.LeftShiftAssignWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %RightShiftAssignWith.type.222: type = facet_type <@RightShiftAssignWith, @RightShiftAssignWith(%Cpp.long)> [concrete]
+// CHECK:STDOUT:   %RightShiftAssignWith.Op.type.400: type = fn_type @RightShiftAssignWith.Op, @RightShiftAssignWith(%Cpp.long) [concrete]
+// CHECK:STDOUT:   %RightShiftAssignWith.impl_witness: <witness> = impl_witness imports.%RightShiftAssignWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %RightShiftAssignWith.facet: %RightShiftAssignWith.type.222 = facet_value %Cpp.long, (%RightShiftAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %.ff6: type = fn_type_with_self_type %RightShiftAssignWith.Op.type.400, %RightShiftAssignWith.facet [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op.type: type = fn_type @Cpp.long.as.RightShiftAssignWith.impl.Op [concrete]
+// CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op: %Cpp.long.as.RightShiftAssignWith.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyOp.type: type = fn_type @DestroyOp [concrete]
+// CHECK:STDOUT:   %DestroyOp: %DestroyOp.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .long = constants.%Cpp.long
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.b8a: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.903 = impl_witness_table (%Core.import_ref.b8a), @Core.IntLiteral.as.ImplicitAs.impl.052 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.5aa: %Cpp.long.as.AddAssignWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op]
+// CHECK:STDOUT:   %AddAssignWith.impl_witness_table = impl_witness_table (%Core.import_ref.5aa), @Cpp.long.as.AddAssignWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.7e7: %Cpp.long.as.SubAssignWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.SubAssignWith.impl.Op]
+// CHECK:STDOUT:   %SubAssignWith.impl_witness_table = impl_witness_table (%Core.import_ref.7e7), @Cpp.long.as.SubAssignWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.2efa: %Cpp.long.as.MulAssignWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.MulAssignWith.impl.Op]
+// CHECK:STDOUT:   %MulAssignWith.impl_witness_table = impl_witness_table (%Core.import_ref.2efa), @Cpp.long.as.MulAssignWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.ed0: %Cpp.long.as.DivAssignWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.DivAssignWith.impl.Op]
+// CHECK:STDOUT:   %DivAssignWith.impl_witness_table = impl_witness_table (%Core.import_ref.ed0), @Cpp.long.as.DivAssignWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.127: %Cpp.long.as.ModAssignWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.ModAssignWith.impl.Op]
+// CHECK:STDOUT:   %ModAssignWith.impl_witness_table = impl_witness_table (%Core.import_ref.127), @Cpp.long.as.ModAssignWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.462: %Cpp.long.as.BitAndAssignWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.BitAndAssignWith.impl.Op]
+// CHECK:STDOUT:   %BitAndAssignWith.impl_witness_table = impl_witness_table (%Core.import_ref.462), @Cpp.long.as.BitAndAssignWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.ebc: %Cpp.long.as.BitOrAssignWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.BitOrAssignWith.impl.Op]
+// CHECK:STDOUT:   %BitOrAssignWith.impl_witness_table = impl_witness_table (%Core.import_ref.ebc), @Cpp.long.as.BitOrAssignWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.c11: %Cpp.long.as.BitXorAssignWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.BitXorAssignWith.impl.Op]
+// CHECK:STDOUT:   %BitXorAssignWith.impl_witness_table = impl_witness_table (%Core.import_ref.c11), @Cpp.long.as.BitXorAssignWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.fdb: %Cpp.long.as.LeftShiftAssignWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.LeftShiftAssignWith.impl.Op]
+// CHECK:STDOUT:   %LeftShiftAssignWith.impl_witness_table = impl_witness_table (%Core.import_ref.fdb), @Cpp.long.as.LeftShiftAssignWith.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.791: %Cpp.long.as.RightShiftAssignWith.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.RightShiftAssignWith.impl.Op]
+// CHECK:STDOUT:   %RightShiftAssignWith.impl_witness_table = impl_witness_table (%Core.import_ref.791), @Cpp.long.as.RightShiftAssignWith.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @CompoundAssignmentHomogeneousLong() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.68c = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.68c = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a.var: ref %Cpp.long = var %a.var_patt
+// CHECK:STDOUT:   %int_1.loc8: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %impl.elem0.loc8: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %int_1.loc8, %impl.elem0.loc8 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8: init %Cpp.long = call %bound_method.loc8(%int_1.loc8) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc8_3: init %Cpp.long = converted %int_1.loc8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   assign %a.var, %.loc8_3
+// CHECK:STDOUT:   %.loc8_13: type = splice_block %long.ref.loc8 [concrete = constants.%Cpp.long] {
+// CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %long.ref.loc8: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: ref %Cpp.long = ref_binding a, %a.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %b.patt: %pattern_type.68c = ref_binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.68c = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b.var: ref %Cpp.long = var %b.var_patt
+// CHECK:STDOUT:   %int_1.loc9: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %impl.elem0.loc9: %.dad = impl_witness_access constants.%ImplicitAs.impl_witness.2ce, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %int_1.loc9, %impl.elem0.loc9 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9: init %Cpp.long = call %bound_method.loc9(%int_1.loc9) [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   %.loc9_3: init %Cpp.long = converted %int_1.loc9, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9 [concrete = constants.%int_1.5a4]
+// CHECK:STDOUT:   assign %b.var, %.loc9_3
+// CHECK:STDOUT:   %.loc9_13: type = splice_block %long.ref.loc9 [concrete = constants.%Cpp.long] {
+// CHECK:STDOUT:     %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %long.ref.loc9: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b: ref %Cpp.long = ref_binding b, %b.var
+// CHECK:STDOUT:   %a.ref.loc11: ref %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %b.ref.loc11: ref %Cpp.long = name_ref b, %b
+// CHECK:STDOUT:   %impl.elem0.loc11: %.2a7 = impl_witness_access constants.%AddAssignWith.impl_witness, element0 [concrete = constants.%Cpp.long.as.AddAssignWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc11: <bound method> = bound_method %a.ref.loc11, %impl.elem0.loc11
+// CHECK:STDOUT:   %.loc11: %Cpp.long = acquire_value %b.ref.loc11
+// CHECK:STDOUT:   %Cpp.long.as.AddAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method.loc11(%a.ref.loc11, %.loc11)
+// CHECK:STDOUT:   %a.ref.loc12: ref %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %b.ref.loc12: ref %Cpp.long = name_ref b, %b
+// CHECK:STDOUT:   %impl.elem0.loc12: %.c07 = impl_witness_access constants.%SubAssignWith.impl_witness, element0 [concrete = constants.%Cpp.long.as.SubAssignWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc12: <bound method> = bound_method %a.ref.loc12, %impl.elem0.loc12
+// CHECK:STDOUT:   %.loc12: %Cpp.long = acquire_value %b.ref.loc12
+// CHECK:STDOUT:   %Cpp.long.as.SubAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method.loc12(%a.ref.loc12, %.loc12)
+// CHECK:STDOUT:   %a.ref.loc13: ref %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %b.ref.loc13: ref %Cpp.long = name_ref b, %b
+// CHECK:STDOUT:   %impl.elem0.loc13: %.4f0 = impl_witness_access constants.%MulAssignWith.impl_witness, element0 [concrete = constants.%Cpp.long.as.MulAssignWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc13: <bound method> = bound_method %a.ref.loc13, %impl.elem0.loc13
+// CHECK:STDOUT:   %.loc13: %Cpp.long = acquire_value %b.ref.loc13
+// CHECK:STDOUT:   %Cpp.long.as.MulAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method.loc13(%a.ref.loc13, %.loc13)
+// CHECK:STDOUT:   %a.ref.loc14: ref %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %b.ref.loc14: ref %Cpp.long = name_ref b, %b
+// CHECK:STDOUT:   %impl.elem0.loc14: %.b89 = impl_witness_access constants.%DivAssignWith.impl_witness, element0 [concrete = constants.%Cpp.long.as.DivAssignWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc14: <bound method> = bound_method %a.ref.loc14, %impl.elem0.loc14
+// CHECK:STDOUT:   %.loc14: %Cpp.long = acquire_value %b.ref.loc14
+// CHECK:STDOUT:   %Cpp.long.as.DivAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method.loc14(%a.ref.loc14, %.loc14)
+// CHECK:STDOUT:   %a.ref.loc15: ref %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %b.ref.loc15: ref %Cpp.long = name_ref b, %b
+// CHECK:STDOUT:   %impl.elem0.loc15: %.28d = impl_witness_access constants.%ModAssignWith.impl_witness, element0 [concrete = constants.%Cpp.long.as.ModAssignWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc15: <bound method> = bound_method %a.ref.loc15, %impl.elem0.loc15
+// CHECK:STDOUT:   %.loc15: %Cpp.long = acquire_value %b.ref.loc15
+// CHECK:STDOUT:   %Cpp.long.as.ModAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method.loc15(%a.ref.loc15, %.loc15)
+// CHECK:STDOUT:   %a.ref.loc17: ref %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %b.ref.loc17: ref %Cpp.long = name_ref b, %b
+// CHECK:STDOUT:   %impl.elem0.loc17: %.8d8 = impl_witness_access constants.%BitAndAssignWith.impl_witness, element0 [concrete = constants.%Cpp.long.as.BitAndAssignWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc17: <bound method> = bound_method %a.ref.loc17, %impl.elem0.loc17
+// CHECK:STDOUT:   %.loc17: %Cpp.long = acquire_value %b.ref.loc17
+// CHECK:STDOUT:   %Cpp.long.as.BitAndAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method.loc17(%a.ref.loc17, %.loc17)
+// CHECK:STDOUT:   %a.ref.loc18: ref %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %b.ref.loc18: ref %Cpp.long = name_ref b, %b
+// CHECK:STDOUT:   %impl.elem0.loc18: %.ece = impl_witness_access constants.%BitOrAssignWith.impl_witness, element0 [concrete = constants.%Cpp.long.as.BitOrAssignWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc18: <bound method> = bound_method %a.ref.loc18, %impl.elem0.loc18
+// CHECK:STDOUT:   %.loc18: %Cpp.long = acquire_value %b.ref.loc18
+// CHECK:STDOUT:   %Cpp.long.as.BitOrAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method.loc18(%a.ref.loc18, %.loc18)
+// CHECK:STDOUT:   %a.ref.loc19: ref %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %b.ref.loc19: ref %Cpp.long = name_ref b, %b
+// CHECK:STDOUT:   %impl.elem0.loc19: %.da8 = impl_witness_access constants.%BitXorAssignWith.impl_witness, element0 [concrete = constants.%Cpp.long.as.BitXorAssignWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc19: <bound method> = bound_method %a.ref.loc19, %impl.elem0.loc19
+// CHECK:STDOUT:   %.loc19: %Cpp.long = acquire_value %b.ref.loc19
+// CHECK:STDOUT:   %Cpp.long.as.BitXorAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method.loc19(%a.ref.loc19, %.loc19)
+// CHECK:STDOUT:   %a.ref.loc20: ref %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %b.ref.loc20: ref %Cpp.long = name_ref b, %b
+// CHECK:STDOUT:   %impl.elem0.loc20: %.959 = impl_witness_access constants.%LeftShiftAssignWith.impl_witness, element0 [concrete = constants.%Cpp.long.as.LeftShiftAssignWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc20: <bound method> = bound_method %a.ref.loc20, %impl.elem0.loc20
+// CHECK:STDOUT:   %.loc20: %Cpp.long = acquire_value %b.ref.loc20
+// CHECK:STDOUT:   %Cpp.long.as.LeftShiftAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method.loc20(%a.ref.loc20, %.loc20)
+// CHECK:STDOUT:   %a.ref.loc21: ref %Cpp.long = name_ref a, %a
+// CHECK:STDOUT:   %b.ref.loc21: ref %Cpp.long = name_ref b, %b
+// CHECK:STDOUT:   %impl.elem0.loc21: %.ff6 = impl_witness_access constants.%RightShiftAssignWith.impl_witness, element0 [concrete = constants.%Cpp.long.as.RightShiftAssignWith.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc21: <bound method> = bound_method %a.ref.loc21, %impl.elem0.loc21
+// CHECK:STDOUT:   %.loc21: %Cpp.long = acquire_value %b.ref.loc21
+// CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method.loc21(%a.ref.loc21, %.loc21)
+// CHECK:STDOUT:   %DestroyOp.bound.loc9: <bound method> = bound_method %b.var, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call.loc9: init %empty_tuple.type = call %DestroyOp.bound.loc9(%b.var)
+// CHECK:STDOUT:   %DestroyOp.bound.loc8: <bound method> = bound_method %a.var, constants.%DestroyOp
+// CHECK:STDOUT:   %DestroyOp.call.loc8: init %empty_tuple.type = call %DestroyOp.bound.loc8(%a.var)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @DestroyOp(%self.param: %Cpp.long) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- unsigned_long.carbon
 // CHECK:STDOUT:
