@@ -365,14 +365,14 @@ auto FileContext::BuildFunctionTypeInfo(const SemIR::Function& function,
 }
 
 auto FileContext::HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
-    -> llvm::Constant* {
+    -> llvm::Function* {
   // Create the LLVM function (`CodeGenModule::GetOrCreateLLVMFunction()`)
   // so that code generation (`CodeGenModule::EmitGlobal()`) would see this
   // function name (`CodeGenModule::getMangledName()`), and will generate
   // its definition.
-  llvm::Constant* function_address =
+  auto* function_address = dyn_cast<llvm::Function>(
       cpp_code_generator_->GetAddrOfGlobal(CreateGlobalDecl(cpp_decl),
-                                           /*isForDefinition=*/false);
+                                           /*isForDefinition=*/false));
   CARBON_CHECK(function_address);
 
   return function_address;
@@ -456,13 +456,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
       clang_decl_id.has_value()) {
     CARBON_CHECK(!specific_id.has_value(),
                  "Specific functions cannot have C++ definitions");
-    if (llvm::Constant* llvm_function =
-            HandleReferencedCppFunction(sem_ir()
-                                            .clang_decls()
-                                            .Get(clang_decl_id)
-                                            .key.decl->getAsFunction())) {
-      return dyn_cast<llvm::Function>(llvm_function);
-    }
+    return HandleReferencedCppFunction(
+        sem_ir().clang_decls().Get(clang_decl_id).key.decl->getAsFunction());
   }
 
   // If this is a specific function, we may need to do additional work to emit
