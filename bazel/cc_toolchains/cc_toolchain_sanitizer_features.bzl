@@ -10,6 +10,7 @@ load(
     "feature_set",
     "flag_group",
     "flag_set",
+    "with_feature_set",
 )
 load(
     ":cc_toolchain_actions.bzl",
@@ -20,18 +21,13 @@ load(
 sanitizer_common_flags = feature(
     name = "sanitizer_common_flags",
     implies = ["minimal_debug_info_flags", "preserve_call_stacks"],
-)
-
-# Separated from the feature above so it can only be included on platforms
-# where it is supported. There is no negative flag in Clang so we can't just
-# override it later.
-sanitizer_static_lib_flags = feature(
-    name = "sanitizer_static_lib_flags",
-    enabled = True,
-    requires = [feature_set(["sanitizer_common_flags"])],
     flag_sets = [flag_set(
         actions = all_link_actions,
         flag_groups = [flag_group(flags = ["-static-libsan"])],
+        with_features = [
+            with_feature_set(["linux_target"]),
+            with_feature_set(["freebsd_target"]),
+        ],
     )],
 )
 
@@ -79,20 +75,6 @@ asan_min_size = feature(
     )],
 )
 
-# Likely due to being unable to use the static-linked and up-to-date
-# sanitizer runtimes, we have to disable a number of sanitizers on macOS.
-macos_asan_workarounds = feature(
-    name = "macos_sanitizer_workarounds",
-    enabled = True,
-    requires = [feature_set(["asan"])],
-    flag_sets = [flag_set(
-        actions = all_compile_actions + all_link_actions,
-        flag_groups = [flag_group(flags = [
-            "-fno-sanitize=function",
-        ])],
-    )],
-)
-
 fuzzer = feature(
     name = "fuzzer",
     flag_sets = [flag_set(
@@ -103,6 +85,21 @@ fuzzer = feature(
     )],
 )
 
+sanitizer_workarounds = feature(
+    name = "sanitizer_workarounds",
+    enabled = True,
+    requires = [feature_set(["asan"])],
+    flag_sets = [flag_set(
+        actions = all_compile_actions + all_link_actions,
+        flag_groups = [flag_group(flags = [
+            # Likely due to being unable to use the static-linked and up-to-date
+            # sanitizer runtimes, we have to disable this sanitizer on macOS.
+            "-fno-sanitize=function",
+        ])],
+        with_features = [with_feature_set(["macos_target"])],
+    )],
+)
+
 # Note that the order of features is significant in this list and determines the
 # relative order of flags from the features listed.
 sanitizer_features = [
@@ -110,4 +107,7 @@ sanitizer_features = [
     asan,
     asan_min_size,
     fuzzer,
+
+    # Note that the workarounds must come last here to override earlier flags.
+    sanitizer_workarounds,
 ]

@@ -7,6 +7,7 @@
 load(
     "@rules_cc//cc:cc_toolchain_config_lib.bzl",
     "feature",
+    "feature_set",
     "flag_group",
     "flag_set",
 )
@@ -25,6 +26,17 @@ opt_feature = feature(name = "opt")
 # Declare features that control enabling and disabling Bazel logic.
 no_legacy_features_feature = feature(name = "no_legacy_features")
 supports_pic_feature = feature(name = "supports_pic", enabled = True)
+
+supports_dynamic_linker_feature = feature(
+    name = "supports_dynamic_linker",
+    enabled = True,
+    requires = [feature_set(["linux_target"])],
+)
+supports_start_end_lib_feature = feature(
+    name = "supports_start_end_lib",
+    enabled = True,
+    requires = [feature_set(["linux_target"])],
+)
 
 user_flags_feature = feature(
     name = "user_flags",
@@ -87,4 +99,6 @@ base_features = [
     no_legacy_features_feature,
     opt_feature,
     supports_pic_feature,
+    supports_dynamic_linker_feature,
+    supports_start_end_lib_feature,
 ]

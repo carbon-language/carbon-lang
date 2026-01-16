@@ -18,7 +18,6 @@ load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load(
     ":cc_toolchain_actions.bzl",
     "all_compile_actions",
-    "all_link_actions",
     "preprocessor_compile_actions",
 )
 load(
@@ -27,7 +26,11 @@ load(
     "output_flags_feature",
     "user_flags_feature",
 )
-load(":cc_toolchain_config_features.bzl", "target_os_features")
+load(
+    ":cc_toolchain_config_features.bzl",
+    "target_cpu_features",
+    "target_os_features",
+)
 load(
     ":cc_toolchain_cpp_features.bzl",
     "clang_feature",
@@ -35,25 +38,10 @@ load(
     "libcxx_feature",
 )
 load(":cc_toolchain_debugging.bzl", "debugging_features")
-load(
-    ":cc_toolchain_linking.bzl",
-    "default_link_libraries_feature",
-    "linking_features",
-    "macos_link_libraries_feature",
-)
+load(":cc_toolchain_linking.bzl", "linking_features")
 load(":cc_toolchain_modules.bzl", "modules_features")
-load(
-    ":cc_toolchain_optimization.bzl",
-    "aarch64_cpu_flags",
-    "optimization_features",
-    "x86_64_cpu_flags",
-)
-load(
-    ":cc_toolchain_sanitizer_features.bzl",
-    "macos_asan_workarounds",
-    "sanitizer_features",
-    "sanitizer_static_lib_flags",
-)
+load(":cc_toolchain_optimization.bzl", "optimization_features")
+load(":cc_toolchain_sanitizer_features.bzl", "sanitizer_features")
 load(
     ":cc_toolchain_tools.bzl",
     "llvm_action_configs",
@@ -102,6 +90,16 @@ def _build_features(ctx):
                     "-DCLANG_VERSION_FOR_CACHE=\"%s\"" % clang_version_for_cache,
                 ])],
             ),
+            flag_set(
+                actions = [
+                    ACTION_NAMES.c_compile,
+                    ACTION_NAMES.cpp_compile,
+                    ACTION_NAMES.cpp_header_parsing,
+                    ACTION_NAMES.cpp_module_compile,
+                ],
+                flag_groups = [flag_group(flags = ["-DHAVE_MALLCTL"])],
+                with_features = [with_feature_set(["freebsd_target"])],
+            ),
         ],
     )
 
@@ -120,178 +118,27 @@ def _build_features(ctx):
         ],
     )
 
-    # Clang HARDENING_MODE has 4 possible values:
-    # https://libcxx.llvm.org/Hardening.html#notes-for-users
-    #
-    # Do not enable DEBUG hardening mode, even for -c dbg, because its
-    # performance impact on llvm-symbolizer is too severe -- this flag
-    # results in symbolization becoming quadratic in the number of debug
-    # symbols, in practice meaning it never completes.
-    libcpp_debug_flags = [
-        "-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE",
-    ]
-    libcpp_release_flags = [
-        "-D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_FAST",
-    ]
-
-    # TODO: Refactor this into a reusable form in its own file.
-    linux_flags_feature = feature(
-        name = "linux_flags",
-        enabled = True,
-        flag_sets = [
-            flag_set(
-                actions = all_link_actions,
-                flag_groups = [flag_group(
-                    flags = [
-                        "-fuse-ld=lld",
-                        # Force the C++ standard library and runtime libraries
-                        # to be statically linked. This works even with libc++
-                        # and libunwind despite the names, provided libc++ is
-                        # built with the CMake option:
-                        # - `-DCMAKE_POSITION_INDEPENDENT_CODE=ON`
-                        "-static-libstdc++",
-                        "-static-libgcc",
-                        # Link with Clang's runtime library. This is always
-                        # linked statically.
-                        "-rtlib=compiler-rt",
-                        # Explicitly add LLVM libs to the search path to preempt
-                        # the detected GCC installation's library paths. Those
-                        # might have a system installed libc++ and we want to
-                        # find the one next to our Clang.
-                        "-L" + llvm_bindir + "/../lib",
-                        # Link with pthread.
-                        "-lpthread",
-                        # Force linking the static libc++abi archive here. This
-                        # *should* be linked automatically, but not every
-                        # release of LLVM correctly sets the CMake flags to do
-                        # so.
-                        "-l:libc++abi.a",
-                    ],
-                )],
-            ),
-            flag_set(
-                actions = all_compile_actions,
-                flag_groups = [flag_group(flags = libcpp_debug_flags)],
-                with_features = [with_feature_set(not_features = ["opt"])],
-            ),
-            flag_set(
-                actions = all_compile_actions,
-                flag_groups = [flag_group(flags = libcpp_release_flags)],
-                with_features = [with_feature_set(features = ["opt"])],
-            ),
-            flag_set(
-                actions = [ACTION_NAMES.cpp_link_executable],
-                flag_groups = [flag_group(
-                    expand_if_available = "force_pic",
-                    flags = ["-pie"],
-                )],
-            ),
-        ],
-    )
-
-    # TODO: Refactor this into a reusable form in its own file.
-    macos_flags_feature = feature(
-        name = "macos_flags",
-        enabled = True,
-        flag_sets = [
-            flag_set(
-                actions = [ACTION_NAMES.cpp_link_executable],
-                flag_groups = [flag_group(
-                    expand_if_available = "force_pic",
-                    flags = ["-fpie"],
-                )],
-            ),
-        ],
-    )
-
-    # TODO: Refactor this into a reusable form in its own file.
-    freebsd_flags_feature = feature(
-        name = "freebsd_flags",
-        enabled = True,
-        flag_sets = [
-            flag_set(
-                actions = [
-                    ACTION_NAMES.c_compile,
-                    ACTION_NAMES.cpp_compile,
-                    ACTION_NAMES.cpp_header_parsing,
-                    ACTION_NAMES.cpp_module_compile,
-                ],
-                flag_groups = [flag_group(flags = ["-DHAVE_MALLCTL"])],
-            ),
-            flag_set(
-                actions = [ACTION_NAMES.cpp_link_executable],
-                flag_groups = [flag_group(
-                    expand_if_available = "force_pic",
-                    flags = ["-pie"],
-                )],
-            ),
-        ],
-    )
-
     # The order of the features determines the relative order of flags used.
     features = []
-    features += base_features
     features += target_os_features(ctx.attr.target_os)
+    features += target_cpu_features(ctx.attr.target_cpu)
+    features += base_features
     features += [
         # We always use Clang in the toolchain and enable all of its warnings.
         clang_feature,
         clang_warnings_feature,
         # Enable libc++ where supported.
-        libcxx_feature,
+        libcxx_feature(llvm_bindir, clang_bindir),
 
         # Include any project-specific flags, importantly after the Clang and
         # warnings features so we can override as necessary here.
         project_flags_feature,
     ]
     features += sanitizer_features
-
     features += optimization_features
-
-    # TODO: Refactor target-specific feature management to be part of
-    # `optimization_features`.
-    if ctx.attr.target_cpu in ["aarch64", "arm64"]:
-        features.append(aarch64_cpu_flags)
-    else:
-        features.append(x86_64_cpu_flags)
-
     features += modules_features
     features += debugging_features
-
-    # Next, add the features based on the target platform. Here too the
-    # features are order sensitive.
-    if ctx.attr.target_os == "linux":
-        features.append(sanitizer_static_lib_flags)
-        features.append(linux_flags_feature)
-        sysroot = None
-    elif ctx.attr.target_os == "windows":
-        # TODO: Need to figure out if we need to add windows specific features
-        # I think the .pdb debug files will need to be handled differently,
-        # so that might be an example where a feature must be added.
-        sysroot = None
-    elif ctx.attr.target_os == "macos":
-        features.append(macos_asan_workarounds)
-        features.append(macos_flags_feature)
-        sysroot = sysroot_dir
-    elif ctx.attr.target_os == "freebsd":
-        features.append(sanitizer_static_lib_flags)
-        features.append(freebsd_flags_feature)
-        sysroot = sysroot_dir
-    else:
-        fail("Unsupported target OS!")
-
-    # Next, append the libraries to link.
     features += linking_features
-
-    # TODO: Refactor the target-specific feature management here to be part of
-    # building `linking_features`.
-    features += [
-        feature(name = "supports_dynamic_linker", enabled = ctx.attr.target_os == "linux"),
-        feature(name = "supports_start_end_lib", enabled = ctx.attr.target_os == "linux"),
-    ]
-    if ctx.attr.target_os == "macos":
-        features.append(macos_link_libraries_feature)
-    else:
-        features.append(default_link_libraries_feature)
 
     # Lastly, we add a feature that enables others in the default `fastbuild`
     # mode. This is also a good place to add any project-specific features.
@@ -303,17 +150,10 @@ def _build_features(ctx):
     return features
 
 def _impl(ctx):
-    # TODO: See if this can be refactored into platform features.
-    if ctx.attr.target_os == "linux":
-        sysroot = None
-    elif ctx.attr.target_os == "windows":
-        sysroot = None
-    elif ctx.attr.target_os == "macos":
+    # Only use a sysroot if one was found when detecting Clang.
+    sysroot = None
+    if sysroot_dir != "None":
         sysroot = sysroot_dir
-    elif ctx.attr.target_os == "freebsd":
-        sysroot = sysroot_dir
-    else:
-        fail("Unsupported target OS!")
 
     identifier = "local-{0}-{1}".format(ctx.attr.target_cpu, ctx.attr.target_os)
     return cc_common.create_cc_toolchain_config_info(

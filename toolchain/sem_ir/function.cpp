@@ -112,25 +112,6 @@ auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,
           .specific_id = specific_id};
 }
 
-auto Function::GetParamPatternInfoFromPatternId(const File& sem_ir,
-                                                InstId pattern_id)
-    -> std::optional<ParamPatternInfo> {
-  auto inst_id = pattern_id;
-  auto inst = sem_ir.insts().Get(inst_id);
-
-  sem_ir.insts().TryUnwrap(inst, inst_id, &VarPattern::subpattern_id);
-  auto [param_pattern, param_pattern_id] =
-      sem_ir.insts().TryUnwrap(inst, inst_id, &AnyParamPattern::subpattern_id);
-  if (!param_pattern) {
-    return std::nullopt;
-  }
-
-  auto binding_pattern = inst.As<AnyBindingPattern>();
-  return {{.inst_id = param_pattern_id,
-           .inst = *param_pattern,
-           .entity_name_id = binding_pattern.entity_name_id}};
-}
-
 auto Function::GetDeclaredReturnType(const File& file,
                                      SpecificId specific_id) const -> TypeId {
   if (!return_type_inst_id.has_value()) {

@@ -15,20 +15,40 @@ load(
     "feature",
 )
 
-freebsd_target_feature = feature(name = "freebsd_target")
-linux_target_feature = feature(name = "linux_target")
-macos_target_feature = feature(name = "macos_target")
-windows_target_feature = feature(name = "windows_target")
+os_names = [
+    "freebsd",
+    "linux",
+    "macos",
+    "windows",
+]
 
-os_target_features = {
-    "freebsd": [freebsd_target_feature],
-    "linux": [linux_target_feature],
-    "macos": [macos_target_feature],
-    "windows": [windows_target_feature],
+def target_os_features(target_os):
+    if target_os not in os_names:
+        fail("Unsupported target OS: %s" % target_os)
+    return [
+        feature(name = os_name + "_target", enabled = os_name == target_os)
+        for os_name in os_names
+    ]
+
+cpu_names = [
+    "aarch64",
+    "x86_64",
+]
+
+# Also support canonicalizing different spellings of CPUs to one of the above
+# names.
+cpu_canonical_name_map = {
+    "aarch64": "aarch64",
+    "arm64": "aarch64",
+    "x86_64": "x86_64",
 }
 
-def target_os_features(os):
-    if os not in os_target_features:
-        fail("Unsupported target OS: %s" % os)
+def target_cpu_features(target_cpu):
+    if target_cpu not in cpu_canonical_name_map:
+        fail("Unsupported target CPU: %s" % target_cpu)
+    target_cpu = cpu_canonical_name_map[target_cpu]
 
-    return os_target_features[os]
+    return [
+        feature(name = cpu_name + "_target", enabled = cpu_name == target_cpu)
+        for cpu_name in cpu_names
+    ]

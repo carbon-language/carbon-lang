@@ -24,6 +24,10 @@ namespace std {
       basic_string_view() = default;
       size_t size() const { return size_; }
 
+      constexpr bool starts_with(basic_string_view sv) const {
+        return false;
+      }
+
      private:
       const CharT* data_;
       size_t size_;
@@ -36,7 +40,9 @@ namespace std {
 auto Consume(std::string_view sv) -> void;
 auto Produce() -> std::string_view;
 
-// --- import_multiple.carbon
+struct DerivedFromStringView : std::string_view {};
+
+// --- pass_and_return.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -54,7 +60,19 @@ fn G() -> str {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- import_multiple.carbon
+// --- call_base_method.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp library "string_view.h";
+
+//@dump-sem-ir-begin
+fn StarstWith(a: str, b: str) -> bool {
+  return a.(Cpp.DerivedFromStringView.starts_with)(b);
+}
+//@dump-sem-ir-end
+
+// CHECK:STDOUT: --- pass_and_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -138,5 +156,79 @@ fn G() -> str {
 // CHECK:STDOUT:   %Produce__carbon_thunk.call: init %empty_tuple.type = call imports.%Produce__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %.loc14: init %str.ee0 to %.loc13_11.1 = in_place_init %Produce__carbon_thunk.call
 // CHECK:STDOUT:   return %.loc14 to %return.param
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- call_base_method.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   %str: type = class_type @String [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %pattern_type.461: type = pattern_type %str [concrete]
+// CHECK:STDOUT:   %Bool.type: type = fn_type @Bool [concrete]
+// CHECK:STDOUT:   %Bool: %Bool.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.650: form = init_form bool, call_param2 [concrete]
+// CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %StarstWith.type: type = fn_type @StarstWith [concrete]
+// CHECK:STDOUT:   %StarstWith: %StarstWith.type = struct_value () [concrete]
+// CHECK:STDOUT:   %DerivedFromStringView: type = class_type @DerivedFromStringView [concrete]
+// CHECK:STDOUT:   %DerivedFromStringView.starts_with.cpp_overload_set.type: type = cpp_overload_set_type @DerivedFromStringView.starts_with.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %DerivedFromStringView.starts_with.cpp_overload_set.value: %DerivedFromStringView.starts_with.cpp_overload_set.type = cpp_overload_set_value @DerivedFromStringView.starts_with.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %ptr.85f: type = ptr_type %str [concrete]
+// CHECK:STDOUT:   %ptr.bb2: type = ptr_type bool [concrete]
+// CHECK:STDOUT:   %starts_with__carbon_thunk.type: type = fn_type @starts_with__carbon_thunk [concrete]
+// CHECK:STDOUT:   %starts_with__carbon_thunk: %starts_with__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .DerivedFromStringView = %DerivedFromStringView.decl
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %DerivedFromStringView.decl: type = class_decl @DerivedFromStringView [concrete = constants.%DerivedFromStringView] {} {}
+// CHECK:STDOUT:   %DerivedFromStringView.starts_with.cpp_overload_set.value: %DerivedFromStringView.starts_with.cpp_overload_set.type = cpp_overload_set_value @DerivedFromStringView.starts_with.cpp_overload_set [concrete = constants.%DerivedFromStringView.starts_with.cpp_overload_set.value]
+// CHECK:STDOUT:   %starts_with__carbon_thunk.decl: %starts_with__carbon_thunk.type = fn_decl @starts_with__carbon_thunk [concrete = constants.%starts_with__carbon_thunk] {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %StarstWith.decl: %StarstWith.type = fn_decl @StarstWith [concrete = constants.%StarstWith] {
+// CHECK:STDOUT:     %a.patt: %pattern_type.461 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.461 = value_param_pattern %a.patt, call_param0 [concrete]
+// CHECK:STDOUT:     %b.patt: %pattern_type.461 = value_binding_pattern b [concrete]
+// CHECK:STDOUT:     %b.param_patt: %pattern_type.461 = value_param_pattern %b.patt, call_param1 [concrete]
+// CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern %return.patt, call_param2 [concrete]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %Bool.call: init type = call constants.%Bool() [concrete = bool]
+// CHECK:STDOUT:     %.loc7_34.1: type = value_of_initializer %Bool.call [concrete = bool]
+// CHECK:STDOUT:     %.loc7_34.2: type = converted %Bool.call, %.loc7_34.1 [concrete = bool]
+// CHECK:STDOUT:     %.loc7_34.3: form = init_form %.loc7_34.2, call_param2 [concrete = constants.%.650]
+// CHECK:STDOUT:     %a.param: %str = value_param call_param0
+// CHECK:STDOUT:     %a: %str = value_binding a, %a.param
+// CHECK:STDOUT:     %b.param: %str = value_param call_param1
+// CHECK:STDOUT:     %b: %str = value_binding b, %b.param
+// CHECK:STDOUT:     %return.param: ref bool = out_param call_param2
+// CHECK:STDOUT:     %return: ref bool = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @StarstWith(%a.param: %str, %b.param: %str) -> out %return.param: bool {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %a.ref: %str = name_ref a, %a
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %DerivedFromStringView.ref: type = name_ref DerivedFromStringView, imports.%DerivedFromStringView.decl [concrete = constants.%DerivedFromStringView]
+// CHECK:STDOUT:   %starts_with.ref: %DerivedFromStringView.starts_with.cpp_overload_set.type = name_ref starts_with, imports.%DerivedFromStringView.starts_with.cpp_overload_set.value [concrete = constants.%DerivedFromStringView.starts_with.cpp_overload_set.value]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %starts_with.ref
+// CHECK:STDOUT:   %b.ref: %str = name_ref b, %b
+// CHECK:STDOUT:   %.loc8_52: ref %str = value_as_ref %b.ref
+// CHECK:STDOUT:   %addr.loc8_53.1: %ptr.85f = addr_of %.loc8_52
+// CHECK:STDOUT:   %.loc8_53.1: ref bool = temporary_storage
+// CHECK:STDOUT:   %addr.loc8_53.2: %ptr.bb2 = addr_of %.loc8_53.1
+// CHECK:STDOUT:   %starts_with__carbon_thunk.call: init %empty_tuple.type = call imports.%starts_with__carbon_thunk.decl(%a.ref, %addr.loc8_53.1, %addr.loc8_53.2)
+// CHECK:STDOUT:   %.loc8_53.2: init bool = in_place_init %starts_with__carbon_thunk.call, %.loc8_53.1
+// CHECK:STDOUT:   return %.loc8_53.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

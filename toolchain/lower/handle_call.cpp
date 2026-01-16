@@ -535,10 +535,10 @@ static auto HandleVirtualCall(FunctionContext& context,
   auto* i32_type = llvm::IntegerType::getInt32Ty(context.llvm_context());
   auto* pointer_type =
       llvm::PointerType::get(context.llvm_context(), /* address space */ 0);
-  auto function_type_info =
+  auto function_info =
       context.GetFileContext(callee_file)
-          .BuildFunctionTypeInfo(function,
-                                 callee_function.resolved_specific_id);
+          .GetOrCreateFunctionInfo(callee_function.function_id,
+                                   callee_function.resolved_specific_id);
   llvm::Value* virtual_fn;
   if (function.clang_decl_id.has_value()) {
     // Use absolute vtables for clang interop - the itanium vtable contains
@@ -566,9 +566,9 @@ static auto HandleVirtualCall(FunctionContext& context,
          llvm::ConstantInt::get(
              i32_type, static_cast<uint64_t>(function.virtual_index) * 4)});
   }
-  return context.builder().CreateCall(function_type_info.type, virtual_fn,
-                                      args);
+  return context.builder().CreateCall(function_info->type, virtual_fn, args);
 }
+
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::Call inst) -> void {
   llvm::ArrayRef<SemIR::InstId> arg_ids =
@@ -612,33 +612,24 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     return;
   }
 
+  auto& function_info =
+      context.GetFileContext(callee.file)
+          .GetOrCreateFunctionInfo(callee_function.function_id,
+                                   callee_function.resolved_specific_id);
+
+  // Lower args in the LLVM parameter order, rather than the SemIR parameter
+  // order.
   std::vector<llvm::Value*> args;
-
-  bool call_has_return_slot =
-      SemIR::ReturnTypeInfo::ForCallee(context.sem_ir(), inst.callee_id)
-          .has_return_slot();
-  if (context.GetReturnTypeInfo(callee).info.has_return_slot()) {
-    CARBON_CHECK(call_has_return_slot);
-    args.push_back(context.GetValue(arg_ids.consume_back()));
-  } else if (call_has_return_slot) {
-    // Call instruction has a return slot but this specific callee does not.
-    // Just ignore it.
-    arg_ids.consume_back();
-  }
-
-  for (auto arg_id : arg_ids) {
-    auto arg_type = context.GetTypeIdOfInst(arg_id);
-    if (context.GetValueRepr(arg_type).repr.kind != SemIR::ValueRepr::None) {
-      args.push_back(context.GetValue(arg_id));
-    }
+  for (auto param_pattern_id : function_info->lowered_param_pattern_ids) {
+    auto sem_ir_index = callee.file->insts()
+                            .GetAs<SemIR::AnyParamPattern>(param_pattern_id)
+                            .index.index;
+    args.push_back(context.GetValue(arg_ids[sem_ir_index]));
   }
 
   llvm::CallInst* call;
   if (function.virtual_modifier == SemIR::Function::VirtualModifier::None) {
-    auto* llvm_callee =
-        context.GetFileContext(callee.file)
-            .GetOrCreateFunction(callee_function.function_id,
-                                 callee_function.resolved_specific_id);
+    auto* llvm_callee = function_info->llvm_function;
     auto describe_call = [&] {
       RawStringOstream out;
       out << "call ";

@@ -119,6 +119,16 @@ fn CallQualified(d: Cpp.Derived) {
   //@dump-sem-ir-end
 }
 
+fn CallBaseQualifiedByDerived(d: Cpp.Derived, b: Cpp.Base) {
+  //@dump-sem-ir-begin
+  // `Cpp.Derived.f` names a member of `Cpp.Base`, so we allow that to be used
+  // when `self` is a `Cpp.Base` or anything that implicitly converts to
+  // `Cpp.Base`, such as `Cpp.Derived`.
+  d.(Cpp.Derived.f)();
+  b.(Cpp.Derived.f)();
+  //@dump-sem-ir-end
+}
+
 // --- multiple_inheritance.h
 
 struct A { int a; };
@@ -737,6 +747,26 @@ class V {
 // CHECK:STDOUT:   %.loc14_3.2: ref %Base = converted %d.ref, %.loc14_3.1
 // CHECK:STDOUT:   %.loc14_3.3: %Base = acquire_value %.loc14_3.2
 // CHECK:STDOUT:   %g__carbon_thunk.call: init %empty_tuple.type = call imports.%g__carbon_thunk.decl(%.loc14_3.3)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @CallBaseQualifiedByDerived(%d.param: %Derived, %b.param: %Base) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %d.ref: %Derived = name_ref d, %d
+// CHECK:STDOUT:   %Cpp.ref.loc23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Derived.ref.loc23: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
+// CHECK:STDOUT:   %f.ref.loc23: %Derived.f.cpp_overload_set.type = name_ref f, imports.%Derived.f.cpp_overload_set.value [concrete = constants.%Derived.f.cpp_overload_set.value]
+// CHECK:STDOUT:   %bound_method.loc23: <bound method> = bound_method %d.ref, %f.ref.loc23
+// CHECK:STDOUT:   %.loc23_3.1: ref %Base = class_element_access %d.ref, element0
+// CHECK:STDOUT:   %.loc23_3.2: ref %Base = converted %d.ref, %.loc23_3.1
+// CHECK:STDOUT:   %.loc23_3.3: %Base = acquire_value %.loc23_3.2
+// CHECK:STDOUT:   %f__carbon_thunk.call.loc23: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%.loc23_3.3)
+// CHECK:STDOUT:   %b.ref: %Base = name_ref b, %b
+// CHECK:STDOUT:   %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Derived.ref.loc24: type = name_ref Derived, imports.%Derived.decl [concrete = constants.%Derived]
+// CHECK:STDOUT:   %f.ref.loc24: %Derived.f.cpp_overload_set.type = name_ref f, imports.%Derived.f.cpp_overload_set.value [concrete = constants.%Derived.f.cpp_overload_set.value]
+// CHECK:STDOUT:   %bound_method.loc24: <bound method> = bound_method %b.ref, %f.ref.loc24
+// CHECK:STDOUT:   %f__carbon_thunk.call.loc24: init %empty_tuple.type = call imports.%f__carbon_thunk.decl(%b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
