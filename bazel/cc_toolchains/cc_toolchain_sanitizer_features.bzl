@@ -93,7 +93,7 @@ sanitizer_workarounds = feature(
         actions = all_compile_actions + all_link_actions,
         flag_groups = [flag_group(flags = [
             # Likely due to being unable to use the static-linked and up-to-date
-            # sanitizer runtimes, we have to disable this sanitizers on macOS.
+            # sanitizer runtimes, we have to disable this sanitizer on macOS.
             "-fno-sanitize=function",
         ])],
         with_features = [with_feature_set(["macos_target"])],
