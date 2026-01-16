@@ -2123,8 +2123,6 @@ static auto LookupMacro(Context& context, SemIR::NameScopeId scope_id,
   return nullptr;
 }
 
-// Gets the identifier info for a name. Returns `nullptr` if the name is not an
-// identifier name.
 auto GetClangIdentifierInfo(Context& context, SemIR::NameId name_id)
     -> clang::IdentifierInfo* {
   std::optional<llvm::StringRef> string_name =
