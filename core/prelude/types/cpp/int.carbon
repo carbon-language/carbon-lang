@@ -195,4 +195,32 @@ final impl CppCompat.Long32 as RightShiftWith(Self) where .Result = Self {
 // TODO: ULong32, LongLong64, ULongLong64: homogeneous bitwise operators.
 // TODO: Long32, ULong32, LongLong64, ULongLong64: heterogeneous bitwise operators.
 
-// TODO: Compound assignments for Long32, ULong32, LongLong64, ULongLong64.
+// Compound assignments.
+
+// Compound arithmetic assignments.
+
+impl CppCompat.Long32 as AddAssignWith(CppCompat.Long32) {
+  fn Op[ref self: Self](other: Self) = "int.sadd_assign";
+}
+
+impl CppCompat.Long32 as SubAssignWith(CppCompat.Long32) {
+  fn Op[ref self: Self](other: Self) = "int.ssub_assign";
+}
+
+// Increment and decrement.
+
+impl CppCompat.Long32 as Dec {
+  fn Op[ref self: Self]() {
+    fn AsInt(n: IntLiteral()) -> CppCompat.Long32 = "int.convert_checked";
+    self -= AsInt(1);
+  }
+}
+
+impl CppCompat.Long32 as Inc {
+  fn Op[ref self: Self]() {
+    fn AsInt(n: IntLiteral()) -> CppCompat.Long32 = "int.convert_checked";
+    self += AsInt(1);
+  }
+}
+
+// TODO: Increment/decrement operations for ULong32, LongLong64, ULongLong64.
