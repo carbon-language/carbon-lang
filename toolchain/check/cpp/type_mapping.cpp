@@ -340,9 +340,7 @@ struct FormInfo {
   SemIR::InstId inst_id;
 
   // Returns whether this is a compound form.
-  auto is_compound() const -> bool {
-    return kind == Tuple || kind == Struct;
-  }
+  auto is_compound() const -> bool { return kind == Tuple || kind == Struct; }
 };
 }  // namespace
 
@@ -457,15 +455,14 @@ static auto VisitTupleElementForms(Context& context, FormInfo form,
 
   for (auto [type_inst_id, const_inst_id] :
        llvm::zip_longest(element_type_inst_ids, tuple_const_inst_ids)) {
-    visitor(
-        {.kind = FormInfo::Primitive,
-         .category = form.category,
-         .type_id = context.types().GetTypeIdForTypeInstId(*type_inst_id),
-         .constant_id = const_inst_id
-                            ? context.constant_values().Get(*const_inst_id)
-                            : SemIR::ConstantId::NotConstant,
-         .loc_id = form.loc_id,
-         .inst_id = SemIR::InstId::None});
+    visitor({.kind = FormInfo::Primitive,
+             .category = form.category,
+             .type_id = context.types().GetTypeIdForTypeInstId(*type_inst_id),
+             .constant_id = const_inst_id
+                                ? context.constant_values().Get(*const_inst_id)
+                                : SemIR::ConstantId::NotConstant,
+             .loc_id = form.loc_id,
+             .inst_id = SemIR::InstId::None});
   }
 }
 
