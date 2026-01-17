@@ -419,25 +419,25 @@ static auto DecomposeForm(Context& context, FormInfo form) -> FormInfo {
   return form;
 }
 
+using FormVisitor = llvm::function_ref<auto(FormInfo)->void>;
+
 // Gets information about the forms of the instructions in a block.
-static auto GetFormInfos(Context& context, SemIR::InstBlockId inst_block_id)
-    -> llvm::SmallVector<FormInfo> {
-  llvm::SmallVector<FormInfo> result;
+static auto VisitFormInfos(Context& context, SemIR::InstBlockId inst_block_id,
+                           FormVisitor visitor) -> void {
   auto inst_ids = context.inst_blocks().Get(inst_block_id);
-  result.reserve(inst_ids.size());
   for (auto inst_id : inst_ids) {
-    result.push_back(GetFormInfo(context, inst_id));
+    visitor(GetFormInfo(context, inst_id));
   }
-  return result;
 }
 
-// Given a tuple form, returns the forms of the elements.
-static auto GetTupleElementForms(Context& context, FormInfo form)
-    -> llvm::SmallVector<FormInfo> {
+// Given a tuple form, visits the forms of the elements.
+static auto VisitTupleElementForms(Context& context, FormInfo form,
+                                   FormVisitor visitor) -> void {
   // If we have a tuple literal, directly grab the forms of its elements.
   if (auto tuple_lit_inst =
           context.insts().TryGetAsIfValid<SemIR::TupleLiteral>(form.inst_id)) {
-    return GetFormInfos(context, tuple_lit_inst->elements_id);
+    VisitFormInfos(context, tuple_lit_inst->elements_id, visitor);
+    return;
   }
 
   // Otherwise, decompose the type and, if available, the constant value.
@@ -457,7 +457,7 @@ static auto GetTupleElementForms(Context& context, FormInfo form)
 
   for (auto [type_inst_id, const_inst_id] :
        llvm::zip_longest(element_type_inst_ids, tuple_const_inst_ids)) {
-    result.push_back(
+    visitor(
         {.kind = FormInfo::Primitive,
          .category = form.category,
          .type_id = context.types().GetTypeIdForTypeInstId(*type_inst_id),
@@ -467,16 +467,16 @@ static auto GetTupleElementForms(Context& context, FormInfo form)
          .loc_id = form.loc_id,
          .inst_id = SemIR::InstId::None});
   }
-  return result;
 }
 
 // Given a struct form, returns the forms of the elements.
-static auto GetStructElementForms(Context& context, FormInfo form)
-    -> llvm::SmallVector<FormInfo> {
+static auto VisitStructElementForms(Context& context, FormInfo form,
+                                    FormVisitor visitor) -> void {
   // If we have a struct literal, directly grab the forms of its elements.
   if (auto struct_lit_inst =
           context.insts().TryGetAsIfValid<SemIR::StructLiteral>(form.inst_id)) {
-    return GetFormInfos(context, struct_lit_inst->elements_id);
+    VisitFormInfos(context, struct_lit_inst->elements_id, visitor);
+    return;
   }
 
   // Otherwise, decompose the type and, if available, the constant value.
@@ -495,7 +495,7 @@ static auto GetStructElementForms(Context& context, FormInfo form)
 
   for (auto [field, const_inst_id] :
        llvm::zip_longest(fields, struct_const_inst_ids)) {
-    result.push_back(
+    visitor(
         {.kind = FormInfo::Primitive,
          .category = form.category,
          .type_id = context.types().GetTypeIdForTypeInstId(field->type_inst_id),
@@ -505,7 +505,6 @@ static auto GetStructElementForms(Context& context, FormInfo form)
          .loc_id = form.loc_id,
          .inst_id = SemIR::InstId::None});
   }
-  return result;
 }
 
 // Invent a primitive Clang argument given the form of the corresponding Carbon
@@ -674,6 +673,7 @@ auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr* {
           case FormInfo::Error: {
             return nullptr;
           }
+
           case FormInfo::None:
           case FormInfo::Primitive: {
             auto* expr = InventPrimitiveClangArg(context, form);
@@ -683,20 +683,21 @@ auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr* {
             pending_results.push_back(expr);
             break;
           }
-          case FormInfo::Tuple: {
-            worklist.push_back({form, AfterSubexpressions});
-            auto element_forms = GetTupleElementForms(context, form);
-            for (auto element : llvm::reverse(element_forms)) {
-              worklist.push_back({element, Initial});
-            }
-            break;
-          }
+
+          case FormInfo::Tuple:
           case FormInfo::Struct: {
             worklist.push_back({form, AfterSubexpressions});
-            auto element_forms = GetStructElementForms(context, form);
-            for (auto element : llvm::reverse(element_forms)) {
+            auto initial_size = worklist.size();
+            auto visitor = [&](FormInfo element) {
               worklist.push_back({element, Initial});
+            };
+            if (form.kind == FormInfo::Tuple) {
+              VisitTupleElementForms(context, form, visitor);
+            } else {
+              VisitStructElementForms(context, form, visitor);
             }
+            // Reverse the added elements so that we pop them in element order.
+            std::reverse(worklist.begin() + initial_size, worklist.end());
             break;
           }
         }
