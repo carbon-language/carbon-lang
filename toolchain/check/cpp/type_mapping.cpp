@@ -385,14 +385,16 @@ auto InventClangArg(Context& context, SemIR::InstId arg_id) -> clang::Expr* {
 
 auto InventClangArgs(Context& context, llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> std::optional<llvm::SmallVector<clang::Expr*>> {
-  llvm::SmallVector<clang::Expr*> arg_exprs;
-  arg_exprs.reserve(arg_ids.size());
+  std::optional<llvm::SmallVector<clang::Expr*>> arg_exprs;
+  arg_exprs.emplace();
+  arg_exprs->reserve(arg_ids.size());
   for (SemIR::InstId arg_id : arg_ids) {
     auto* arg_expr = InventClangArg(context, arg_id);
     if (!arg_expr) {
-      return std::nullopt;
+      arg_exprs = std::nullopt;
+      return arg_exprs;
     }
-    arg_exprs.push_back(arg_expr);
+    arg_exprs->push_back(arg_expr);
   }
   return arg_exprs;
 }
